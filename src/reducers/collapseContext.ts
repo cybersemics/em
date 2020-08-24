@@ -17,21 +17,21 @@ import { Path } from '../types'
 const collapseContext = (state: State) => {
   const { cursor } = state
 
-  // @ts-ignore
+  if (!cursor) {
+    return
+  }
+
   const children = getChildren(state, pathToContext(cursor))
   return reducerFlow(
     [
       ...children.map(child =>
         (state: State) => existingThoughtMove(state, {
-          // @ts-ignore
           oldPath: cursor.concat(child),
-          // @ts-ignore
           newPath: contextOf(cursor).concat(child) as Path,
         })
       ),
       archiveThought({ path: cursor }),
       setCursor({
-        // @ts-ignore
         thoughtsRanked: contextOf(cursor).concat(children[0]),
         editing: state.editing,
         offset: children.length
