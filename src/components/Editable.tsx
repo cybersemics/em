@@ -204,7 +204,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
 
     const thought = getThought(state, oldValue)
-
     if (thought) {
       dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
 
@@ -305,7 +304,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // disabled={readonly} removes contenteditable property
 
     dispatch(setEditingValue(newValue))
-
     if (newValue === oldValue) {
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
@@ -406,10 +404,12 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
-    dispatch(setEditingValue(value))
+    // set editingValue in order to position superscript correctly if edited thought is duplicate
+    oldValueRef.current && dispatch(setEditingValue(oldValueRef.current))
     // reset rendered value to previous non-duplicate
     if (contentRef.current) {
-      contentRef.current.innerHTML = value
+      contentRef.current.innerHTML = oldValueRef.current
+      contentRef.current.style.opacity = '1.0'
       showDuplicationAlert(false, dispatch)
     }
     // showDuplicationAlert(false, dispatch, state.alert)
