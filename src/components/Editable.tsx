@@ -404,6 +404,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
+    const { invalidState } = state
+    throttledChangeRef.current.flush()
     // set editingValue in order to position superscript correctly if edited thought is duplicate
     oldValueRef.current && dispatch(setEditingValue(oldValueRef.current))
     // reset rendered value to previous non-duplicate
@@ -412,9 +414,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       contentRef.current.style.opacity = '1.0'
       showDuplicationAlert(false, dispatch)
     }
-    // showDuplicationAlert(false, dispatch, state.alert)
-    const { invalidState } = state
-    throttledChangeRef.current.flush()
 
     // on blur remove error, remove invalid-option class, and reset editable html
     if (invalidState) {
