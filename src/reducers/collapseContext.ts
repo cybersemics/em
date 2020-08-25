@@ -32,7 +32,7 @@ const collapseContext = (state: State) => {
       setCursor({
         thoughtsRanked: contextOf(cursor).concat(children[0]),
         editing: state.editing,
-        offset: children.length
+        offset: 0
       }),
     ]
   )(state)
