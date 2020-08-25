@@ -22,9 +22,10 @@ interface BulletProps {
 const BulletNew = ({ expanded, isActive, isDragActive, hasChildren, hide, innerRef }: BulletProps) => {
 
   // spring animation for bullet
-  const { rotation, selectionOpacity } = useSpring({
+  const { rotation, selectionOpacity, bulletOpacity } = useSpring({
     rotation: expanded ? 90 : 0,
     selectionOpacity: isActive ? TEXT_SELECTION_OPCAITY : 0,
+    bulletOpacity: hide ? 0 : 1
   })
 
   return (
@@ -32,7 +33,6 @@ const BulletNew = ({ expanded, isActive, isDragActive, hasChildren, hide, innerR
       ref={innerRef}
       style={{
         cursor: 'pointer',
-        visibility: hide ? 'hidden' : 'visible',
         height: '0.86rem',
         width: '0.86rem',
         marginTop: '0.25rem',
@@ -41,6 +41,7 @@ const BulletNew = ({ expanded, isActive, isDragActive, hasChildren, hide, innerR
         marginRight: '0.4rem',
         justifyContent: 'center',
         alignItems: 'center',
+        opacity: bulletOpacity,
         ...selectionOpacity ? {
           background: selectionOpacity.interpolate(
             o => isDragActive ? `rgb(255,192,203,${o})` : `rgba(255,255,255,${o})`

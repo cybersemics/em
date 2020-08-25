@@ -45,6 +45,7 @@ interface TreeNode {
   flatArray: FlatArrayNode[],
   flatArrayKey: FlatArrayKey,
   oldItem: FlatArrayNode,
+  xOffset: string,
   heightChangeCallback: ({ height, key }: { height: number, key: string }) => void,
 }
 
@@ -98,6 +99,7 @@ const TreeNode = ({
   flatArrayKey,
   visibleStartDepth,
   oldItem,
+  xOffset,
   heightChangeCallback
 }: TreeNode) => {
 
@@ -105,7 +107,7 @@ const TreeNode = ({
   const [measureBind, { height: measuredHeight }] = useMeasure()
   const viewHeight: number = measuredHeight
   const viewHeightRef = useRef<number>(viewHeight)
-  const innerDivRef = useRef<HTMLDivElement>(null)
+  const wrapperDivRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     viewHeightRef.current = viewHeight
@@ -150,34 +152,28 @@ const TreeNode = ({
     height: phase === 'leave' || shouldMakeHeightZero ? 0 : viewHeight,
     pseudoHeight: phase === 'leave' ? 0 : viewHeight,
     marginTop: yOffset,
+    config: { clamp: true }
   })
 
   // check if it was node was previously a first column and now isn't
   const isFirstColumnToggle = isOldItemFirstColumn && !isFirstColumn
 
-  const width = isFirstColumn ? `${TABLE_FIRST_COLUMN_WIDTH}rem` : '70%'
+  const { x, opacity } = styleProps
+
+  // @ts-ignore
+  const width = isFirstColumn ? `${TABLE_FIRST_COLUMN_WIDTH}rem` : `calc(100% - ${xOffset})`
 
   useEffect(() => {
-    // mutating width using ref because changing width using inline style breaks resize observer :(
-    if (innerDivRef.current) innerDivRef.current.style.width = width
+    if (wrapperDivRef.current) wrapperDivRef.current.style.width = width
   }, [width])
-
-  const { x, opacity } = styleProps
 
   const wrapperStyle = {
     // @ts-ignore
     ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
     position: 'relative',
-    zIndex: flatArray.length - item.index
-  }
-
-  const mainDivStyle = {
-    /**
-     * 1. Overflow should be visible when node changes from first column to normal node.
-     * 2. Overflow should be visible when height is made zero.
-     * 3. Overflow should still be visible when node previously had zero height and now it doesn't.
-     * (When first column is made table view height changes from zero to current viewHeight.That shouldn't cause animation).
-     */
+    top: 0,
+    zIndex: flatArray.length - item.index,
+    width,
     overflow: phase === 'update' || isFirstColumnToggle || shouldMakeHeightZero || (shouldMakeHeightZeroPrev && !shouldMakeHeightZero) ? 'visible' : 'hidden',
     height,
     marginTop,
@@ -198,10 +194,9 @@ const TreeNode = ({
   return (
     <ThoughtNewComponent
       innerDivStyle={innerDivStyle}
-      mainDivStyle={mainDivStyle}
       measureBind={measureBind}
       wrapperStyle={wrapperStyle}
-      innerDivRef={innerDivRef}
+      wrapperDivRef={wrapperDivRef}
       nodeItem={updatedItem}
     />
   )
@@ -282,6 +277,7 @@ const TreeAnimation = ({
     {
       key: node => node.key,
       sort: sortByPath,
+      from: { opacity: 0 },
       config: SPRING_CONFIG_GROUP,
       enter: enterAndUpdate,
       leave: () => ({ opacity: 0 }),
@@ -305,6 +301,7 @@ const TreeAnimation = ({
         // Note: react-spring has issues with accessing proper phase value inside useTransition. Also passing phase directly causes some issues
         const leave = !flatArrayKey[item.key]
         const update = !leave && oldFlatArrayKey[item.key]
+        const xOffset = calculateXOffset(item, visibleStartDepth)
 
         return (
           <TreeNode
@@ -317,6 +314,7 @@ const TreeAnimation = ({
             flatArray={flatArray}
             heightChangeCallback={nodeHeightChangeHandler}
             flatArrayKey={flatArrayKey}
+            xOffset={`${xOffset}rem`}
             visibleStartDepth={visibleStartDepth}
           />
         )

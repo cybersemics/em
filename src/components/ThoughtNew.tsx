@@ -74,8 +74,6 @@ const toggleContextViewShortcut = shortcutById('toggleContextView')
 assert(subthoughtShortcut)
 assert(toggleContextViewShortcut)
 
-const framerTransition = { duration: 0.1 }
-
 interface SpringProps {
   [key: string]: SpringValue | Interpolation | string | number,
 }
@@ -349,37 +347,33 @@ const endDrag = () => {
 
 interface ThoughtWrapperProps {
   measureBind: any,
-  innerDivRef: RefObject<HTMLDivElement>,
+  wrapperDivRef: RefObject<HTMLDivElement>,
   innerDivStyle: SpringProps,
-  mainDivStyle: SpringProps,
   wrapperStyle: SpringProps,
   nodeItem: WithDropEndArray<FlatArrayNode>,
 }
 
 /** Node Component. */
-const ThoughtWrapper = ({ measureBind, innerDivRef, mainDivStyle, innerDivStyle, wrapperStyle, nodeItem }: ThoughtWrapperProps) => {
+const ThoughtWrapper = ({ measureBind, wrapperDivRef, innerDivStyle, wrapperStyle, nodeItem }: ThoughtWrapperProps) => {
   const { expanded, viewInfo } = nodeItem
   const showContexts = viewInfo.context.active
 
   return (
-    <animated.div style={wrapperStyle}>
-      <animated.div
-        className={classNames({
-          node: true,
-          [`parent-${nodeItem.parentKey}`]: true
-        })}
-        style={mainDivStyle}
-        id={nodeItem.key}
-      >
-        <animated.div
-          ref={innerDivRef}
-          style={innerDivStyle}>
-          <div {...measureBind}>
+    <animated.div style={wrapperStyle} ref={wrapperDivRef}>
+      <animated.div style={innerDivStyle}>
+        <div {...measureBind}>
+          <animated.div
+            className={classNames({
+              node: true,
+              [`parent-${nodeItem.parentKey}`]: true
+            })}
+            id={nodeItem.key}
+          >
             <Thought nodeItem={nodeItem} childrenForced={[]}/>
-          </div>
-        </animated.div>
+          </animated.div>
+          <DropEndGroup expanded={expanded} thoughtsRanked={nodeItem.thoughtsRanked} showContexts={showContexts} dropEndObject={nodeItem.dropEndArray}/>
+        </div>
       </animated.div>
-      <DropEndGroup expanded={expanded} thoughtsRanked={nodeItem.thoughtsRanked} showContexts={showContexts} dropEndObject={nodeItem.dropEndArray}/>
     </animated.div>
   )
 }
@@ -401,9 +395,11 @@ const ThoughtContainer = ({
   const showContextsParent = viewInfo.context.showContextsParent
   const hasContext = viewInfo.context.hasContext
 
-  const homeContext = showContexts && isRoot([head(contextOf(thoughtsRanked))])
+  const isTableFirstColumn = viewInfo.table.column === 1
 
-  const showContextBreadcrumbs = showContexts &&
+  const homeContext = showContextsParent && isRoot([head(contextOf(thoughtsRanked))])
+
+  const showContextBreadcrumbs = showContextsParent &&
     (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
     thoughtsRanked.length > 2
 
@@ -419,26 +415,25 @@ const ThoughtContainer = ({
         return (
           <motion.div
             ref={drop}
-            layout
             style={{
               padding: '0.3rem',
               paddingBottom: expanded && showContexts && hasContext ? '0' : '0.3rem',
+              position: 'relative'
             }}
             className='thought-new'>
             <AnimatePresence>{
               isOver &&
                 <motion.div
-                  layout
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  style={{ transform: 'translateX(0.1rem)', width: 'calc(100% - 0.1rem)' }}
+                  style={{ transform: 'translateX(0.1rem)', width: 'calc(100%  - 0.1rem)' }}
                   className='drop-hover-new'>
                 </motion.div>
             }
             </AnimatePresence>
-            <motion.div layout style={{
+            <motion.div style={{
               display: 'flex'
             }}>
               <DragWrapper
@@ -447,7 +442,7 @@ const ThoughtContainer = ({
                 endDrag={endDrag}
               >
                 {
-                  ({ isDragging, drag }) => <Bullet innerRef={drag} expanded={expanded} isActive={isCursor} isDragActive={isDragging} hasChildren={hasChildren} hide={isThoughtDivider}/>
+                  ({ isDragging, drag }) => <Bullet hide={isTableFirstColumn && !isCursor} innerRef={drag} expanded={expanded && !isTableFirstColumn} isActive={isCursor} isDragActive={isDragging} hasChildren={hasChildren} />
                 }
               </DragWrapper>
               <div style={{ flex: 1, display: 'flex' }}>
@@ -494,13 +489,12 @@ const ThoughtContainer = ({
           (
             hasContext ?
               <motion.div
-                layout
+                transition={{ ease: 'easeInOut', duration: 0.3 }}
                 className='children-subheading text-note text-small'
                 style={{ margin: '0', marginLeft: '1.5rem', marginTop: '0.35rem', padding: 0 }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={framerTransition}
               >
                 <em>Contexts:</em>
               </motion.div> : <NoChildren thoughtsRanked={thoughtsResolved} childrenLength={childrenLength} allowSingleContext={false}/>

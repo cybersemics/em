@@ -20,7 +20,6 @@ import {
 } from '../util'
 
 // components
-import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
@@ -79,7 +78,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumbs, homeContext, isEditing, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }: Connected<ThoughtAnnotationProps>) => {
+const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumbs, isEditing, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }: Connected<ThoughtAnnotationProps>) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -123,37 +122,35 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
     <UrlIcon />
   </a>
 
-  return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
+  return <div className='thought-annotation'>
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
 
-    {homeContext
-      ? <HomeLink/>
-      : subthoughts.map((subthought, i) => {
+    {subthoughts.map((subthought, i) => {
 
-        const numContexts = subthought.contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
+      const numContexts = subthought.contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
 
-        return <div key={i}>
-          {i > 0 ? ' ' : null}
-          <div className={classNames({
-            subthought: true,
-            // disable intrathought linking until add, edit, delete, and expansion can be implemented
-            // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
-          })}>
-            <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, !!isEditing, subthought, thoughts)} />
-            { // do not render url icon on root thoughts in publish mode
-              url && !(publishMode() && thoughtsRanked.length === 1) && <UrlIconLink url={url} />}
-            {REGEXP_PUNCTUATIONS.test(subthought.text)
-              ? null
-              // with the default minContexts of 2, do not count the whole thought
-              // with real time context update we increase context length by 1
-              : minContexts === 0 || numContexts > (subthought.text === value ? 1 : 0)
-                ? <StaticSuperscript n={numContexts} />
-                : null
-            }
-          </div>
+      return <div key={i}>
+        {i > 0 ? ' ' : null}
+        <div className={classNames({
+          subthought: true,
+          // disable intrathought linking until add, edit, delete, and expansion can be implemented
+          // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+        })}>
+          <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, !!isEditing, subthought, thoughts)} />
+          { // do not render url icon on root thoughts in publish mode
+            url && !(publishMode() && thoughtsRanked.length === 1) && <UrlIconLink url={url} />}
+          {REGEXP_PUNCTUATIONS.test(subthought.text)
+            ? null
+          // with the default minContexts of 2, do not count the whole thought
+          // with real time context update we increase context length by 1
+            : minContexts === 0 || numContexts > (subthought.text === value ? 1 : 0)
+              ? <StaticSuperscript n={numContexts} />
+              : null
+          }
         </div>
-      })
+      </div>
+    })
     }
   </div>
 }
