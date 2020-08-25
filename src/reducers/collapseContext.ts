@@ -16,12 +16,13 @@ const collapseContext = (state: State) => {
   const { cursor } = state
 
   if (!cursor) {
-    return
+    return state
   }
 
   const children = getChildren(state, pathToContext(cursor))
+
   return reducerFlow(
-    [
+    children.length > 0 ? [
       ...children.map(child =>
         (state: State) => existingThoughtMove(state, {
           oldPath: cursor.concat(child),
@@ -34,7 +35,7 @@ const collapseContext = (state: State) => {
         editing: state.editing,
         offset: 0
       }),
-    ]
+    ] : []
   )(state)
 }
 
