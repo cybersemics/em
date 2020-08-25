@@ -4,8 +4,10 @@ import { mount } from 'enzyme'
 import { wrapInTestContext } from 'react-dnd-test-utils'
 
 import { initialize } from '../initialize'
+import { cleanup as cleanupEventHandlers } from '../util/initEvents'
 import { Provider } from 'react-redux'
 import { store } from '../store'
+import * as db from '../db'
 
 // components
 import AppComponent from '../components/AppComponent'
@@ -30,6 +32,7 @@ export const App = React.forwardRef(() =>
 const createTestApp = async () => {
   await act(async () => {
 
+    // calls initEvents, which must be manually cleaned up
     await initialize()
 
     jest.useFakeTimers()
@@ -58,6 +61,14 @@ const createTestApp = async () => {
     // make wrapper available to tests
     document.wrapper = wrapper
   })
+}
+
+/** Clear store and local db, and remove window event handlers. */
+export const cleanupTestApp = async () => {
+  store.dispatch({ type: 'clear' })
+  cleanupEventHandlers() // cleanup initEvents which is called in initialize
+  await db.clearAll()
+  document.body.innerHTML = ''
 }
 
 export default createTestApp
