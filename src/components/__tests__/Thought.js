@@ -1,8 +1,7 @@
 import { store } from '../../store'
-import * as db from '../../db'
 import { getThoughtsRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
-import createTestApp from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { act } from 'react-dom/test-utils'
 
 beforeEach(async () => {
@@ -10,8 +9,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  store.dispatch({ type: 'clear' })
-  await db.clearAll()
+  await cleanupTestApp()
 })
 
 // test basic thought operations using fully mounted app
