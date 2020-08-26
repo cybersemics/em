@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import createTestApp from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { importText } from '../../action-creators'
@@ -18,13 +18,16 @@ const whereContext = context => node => equalArrays(pathToContext(node.props().t
 //   html: node.html(),
 // }))
 
+let wrapper = null // eslint-disable-line fp/no-let
+
 // cannot figure out how to unmount and reset after each test so that we can use beforeEach
-beforeAll(async () => {
-  await createTestApp()
+beforeEach(async () => {
+  wrapper = await createTestApp()
 })
 
 afterEach(async () => {
-  store.dispatch({ type: 'clear' })
+  await cleanupTestApp()
+  wrapper = null
 })
 
 it('normal view', async () => {
@@ -38,10 +41,10 @@ it('normal view', async () => {
   store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] })
 
   // update DOM
-  document.wrapper.update()
+  wrapper.update()
 
   // select elements
-  const subthoughtsWrapper = document.wrapper.find('.children .children')
+  const subthoughtsWrapper = wrapper.find('.children .children')
   const thoughtsWrapper = subthoughtsWrapper.find(Thought)
 
   // assert
@@ -69,10 +72,10 @@ describe('context view', () => {
     store.dispatch({ type: 'toggleContextView' })
 
     // update DOM
-    document.wrapper.update()
+    wrapper.update()
 
     // assert context view container
-    const subthoughtsWrapper = document.wrapper
+    const subthoughtsWrapper = wrapper
       .find(Subthoughts)
       .filterWhere(whereContext(['a', 'm']))
       .first() // have to select first node, as second node is empty-children with contextChain (?)
@@ -108,10 +111,10 @@ describe('context view', () => {
     store.dispatch({ type: 'toggleContextView' })
 
     // update DOM
-    document.wrapper.update()
+    wrapper.update()
 
     /** Select /a/one Subthoughts component. Call function after re-render to use new DOM. */
-    const subthoughtsAOne = () => document.wrapper
+    const subthoughtsAOne = () => wrapper
       .find(Subthoughts)
       .filterWhere(whereContext(['a', 'one']))
     const subthoughtsAOne1 = subthoughtsAOne()
@@ -124,7 +127,7 @@ describe('context view', () => {
 
     // focus on a/one~/a to get it to expand
     editableAOneA.simulate('focus')
-    document.wrapper.update()
+    wrapper.update()
 
     // select a/one~/a Subthoughts component
     const subthoughtsAOneA = subthoughtsAOne()
@@ -146,7 +149,7 @@ describe('context view', () => {
     const editableAOneB = subthoughtsAOne1.find(Editable).at(1).childAt(0)
     expect(editableAOneB).toHaveLength(1)
     editableAOneB.simulate('focus')
-    document.wrapper.update()
+    wrapper.update()
 
     // select a/one~/b Subthoughts component
     const subthoughtsAOneB = subthoughtsAOne()

@@ -30,6 +30,10 @@ export const App = React.forwardRef(() =>
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
+
+  // store wrapper using closure since act cannot return
+  let wrapper // eslint-disable-line fp/no-let
+
   await act(async () => {
 
     // calls initEvents, which must be manually cleaned up
@@ -43,7 +47,7 @@ const createTestApp = async () => {
     const TestApp = wrapInTestContext(App)
     const dndRef = createRef()
 
-    const wrapper = await mount(<TestApp ref={dndRef}/>, { attachTo: root })
+    wrapper = await mount(<TestApp ref={dndRef}/>, { attachTo: root })
     wrapper.update()
 
     // dismiss the tutorial
@@ -55,10 +59,9 @@ const createTestApp = async () => {
 
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
-
-    // make wrapper available to tests
-    document.wrapper = wrapper
   })
+
+  return wrapper
 }
 
 /** Clear store, localStorage, local db, and window event handlers. */
@@ -76,8 +79,6 @@ export const cleanupTestApp = async () => {
     document.body.innerHTML = ''
 
     jest.runAllTimers()
-    document.wrapper = null
-
   })
 }
 

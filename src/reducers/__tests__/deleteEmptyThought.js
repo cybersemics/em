@@ -3,7 +3,6 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import * as db from '../../db'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { importText } from '../../action-creators'
 
