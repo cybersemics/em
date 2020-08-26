@@ -95,12 +95,13 @@ const duplicateAlertToggler = () => {
         dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
         timeoutId = undefined
       }, 2000)
+      return
     }
-    else if (timeoutId) {
+    if (timeoutId) {
       window.clearTimeout(timeoutId)
       timeoutId = undefined
     }
-    else if (alert && alert.alertType === 'duplicateThoughts') {
+    if (alert && alert.alertType === 'duplicateThoughts') {
       setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }))
     }
   }
