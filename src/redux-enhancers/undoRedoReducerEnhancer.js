@@ -2,7 +2,20 @@ import { applyPatch, compare, deepClone } from 'fast-json-patch'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import _ from 'lodash'
 
+const deadActionChecks = {
+  dataNonce: patch => patch.length === 1 && patch[0].path === '/dataNonce'
+}
 const stateSectionsToOmit = ['alert']
+
+/**
+ * Checks if the patch only includes the opearations that don't impact the UI, and can be dispensed.
+ */
+const isDispensable = patch => Object.values(deadActionChecks).reduce((acc, curr) => acc || curr(patch), false)
+
+/**
+ * Combines two patches by appending operations from the latter to the former.
+ */
+const appendPatch = (patch, toAppend) => [...patch, ...toAppend]
 
 /**
  * Returns the diff between two state values after omitting certain parts of them.
@@ -145,6 +158,21 @@ const undoRedoReducerEnhancer = createStore => (
 
     // add a new inverse patch
     const inversePatch = compareWithOmit(newState, state)
+
+    // if the patch is dispensable, combine it with the last patch
+    // Note: we can't simply ignore a dispensable patch because that would result in
+    // inconsistencies between the original state, and the one built using patches
+    if (isDispensable(inversePatch)) {
+      const lastPatch = nthLast(inversePatches, 1)
+      console.log(lastPatch, inversePatch)
+      return {
+        ...newState,
+        inversePatches: [
+          ...newState.inversePatches.slice(0, -1),
+          addActionsToPatch(appendPatch(lastPatch, inversePatch), [...lastPatch[0].actions, actionType])
+        ]
+      }
+    }
 
     return inversePatch.length ?
       {
