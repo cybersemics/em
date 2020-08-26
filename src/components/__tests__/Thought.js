@@ -4,13 +4,8 @@ import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { act } from 'react-dom/test-utils'
 
-beforeEach(async () => {
-  await createTestApp()
-})
-
-afterEach(async () => {
-  await cleanupTestApp()
-})
+beforeEach(createTestApp)
+afterEach(cleanupTestApp)
 
 it('create, navigate, and edit thoughts', async () => {
 
