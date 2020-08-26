@@ -3,7 +3,7 @@ import { store } from '../../store'
 import * as db from '../../db'
 import { getThoughtsRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
-import createTestApp from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { act } from 'react-dom/test-utils'
 import { ReactWrapper } from 'enzyme'
 import { importText } from '../'
@@ -14,14 +14,8 @@ type TestDocument = Document & {
   wrapper: ReactWrapper,
 }
 
-beforeEach(async () => {
-  await createTestApp()
-})
-
-afterEach(async () => {
-  store.dispatch({ type: 'clear' })
-  await db.clearAll()
-})
+beforeEach(createTestApp)
+afterEach(cleanupTestApp)
 
 it('re-render thought after importing text', async () => {
 

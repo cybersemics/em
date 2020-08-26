@@ -3,7 +3,7 @@ import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
-import createTestApp from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import * as db from '../../db'
 
 // reducers
@@ -157,14 +157,8 @@ it('cursor should be removed if the last thought is deleted', () => {
 /** Mount tests required for caret. */
 describe('mount', () => {
 
-  beforeEach(async () => {
-    await createTestApp()
-  })
-
-  afterEach(async () => {
-    store.dispatch({ type: 'clear' })
-    await db.clearAll()
-  })
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
 
   it('after deleting first child, caret should move to beginning of next sibling', async () => {
     store.dispatch([

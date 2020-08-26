@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import * as db from '../../db'
-import createTestApp from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
@@ -13,14 +13,8 @@ import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
 const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
 
-beforeEach(async () => {
-  await createTestApp()
-})
-
-afterEach(async () => {
-  store.dispatch({ type: 'clear' })
-  await db.clearAll()
-})
+beforeEach(createTestApp)
+afterEach(cleanupTestApp)
 
 /** Find DragSource inside Thoughts component. */
 const findThoughtSource = context => document.wrapper.find(Thought).filterWhere(whereContext(context)).at(0).childAt(0)
