@@ -21,6 +21,15 @@ export interface ModalProps {
   top?: number,
 }
 
+/** Retrieves the { x, y } coordinates of the selection range. */
+const getSelectionCoordinates = () => {
+  const sel = document.getSelection()
+  // JSDOM implementation of Range does not support getClientRects
+  return sel && sel.type !== 'None' && sel.getRangeAt(0).getClientRects
+    ? sel.getRangeAt(0).getClientRects()[0] || {}
+    : { x: 0, y: 0 }
+}
+
 /** A generic modal component. */
 class ModalComponent extends React.Component<Connected<ModalProps>> {
 
@@ -76,10 +85,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   render() {
     const { show, id, title, arrow, center, opaque, onSubmit, className, style, positionAtCursor, top, children, dispatch } = this.props
 
-    const sel = document.getSelection()
-    const cursorCoords = sel && sel.type !== 'None'
-      ? sel.getRangeAt(0).getClientRects()[0] || {}
-      : { x: 0, y: 0 }
+    const cursorCoords = getSelectionCoordinates()
 
     if (!show) return null
 
@@ -129,7 +135,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
               { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
               }
             </span>}
-          {id === 'welcome' ? <div style={{ marginTop: 10, opacity: 0.5 }}><a onClick={() => {
+          {id === 'welcome' ? <div style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => {
             dispatch(modalComplete(id))
             dispatch({ type: 'tutorial', value: false })
           }}>Skip tutorial</a></div> : null}

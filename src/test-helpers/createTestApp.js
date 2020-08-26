@@ -43,32 +43,42 @@ const createTestApp = async () => {
     const TestApp = wrapInTestContext(App)
     const dndRef = createRef()
 
-    const wrapper = await mount(<TestApp ref={dndRef}/>,
-      { attachTo: root })
+    const wrapper = await mount(<TestApp ref={dndRef}/>, { attachTo: root })
+    wrapper.update()
+
+    // dismiss the tutorial
+    const skipTutorial = wrapper.find('#skip-tutorial')
+    skipTutorial.simulate('click')
+
+    jest.runAllTimers()
     wrapper.update()
 
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
-
-    // dismiss the tutorial
-    // make sure it has not already been dismissed
-    // i.e. the DOM will be reused when there are multiple tests within the same file
-    const skipTutorial = wrapper.find('div.modal-actions div a')
-    if (skipTutorial.length > 0) {
-      skipTutorial.simulate('click')
-    }
 
     // make wrapper available to tests
     document.wrapper = wrapper
   })
 }
 
-/** Clear store and local db, and remove window event handlers. */
+/** Clear store, localStorage, local db, and window event handlers. */
 export const cleanupTestApp = async () => {
-  store.dispatch({ type: 'clear' })
-  cleanupEventHandlers() // cleanup initEvents which is called in initialize
-  await db.clearAll()
-  document.body.innerHTML = ''
+  await act(async () => {
+
+    // clear localStorage before dispatching clear action, since initialState reads from localStorage
+    localStorage.clear()
+
+    // cleanup initEvents which is called in initialize
+    cleanupEventHandlers()
+
+    store.dispatch({ type: 'clear', full: true })
+    await db.clearAll()
+    document.body.innerHTML = ''
+
+    jest.runAllTimers()
+    document.wrapper = null
+
+  })
 }
 
 export default createTestApp
