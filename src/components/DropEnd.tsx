@@ -16,6 +16,7 @@ const DropEnd = ({ innerRef, dropStyle, indicatorStyle, showIndicator, color }: 
   return (
     <div
       ref={innerRef}
+      className='drop-wrapper'
       style={{
         position: 'absolute',
         transform: 'translateX(0.4rem)',
@@ -28,7 +29,6 @@ const DropEnd = ({ innerRef, dropStyle, indicatorStyle, showIndicator, color }: 
         showIndicator &&
           <div
             style={{
-              position: 'initial',
               background: color,
               ...indicatorStyle,
             }}

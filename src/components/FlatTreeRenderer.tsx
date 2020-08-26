@@ -152,7 +152,11 @@ const TreeNode = ({
     height: phase === 'leave' || shouldMakeHeightZero ? 0 : viewHeight,
     pseudoHeight: phase === 'leave' ? 0 : viewHeight,
     marginTop: yOffset,
-    config: { clamp: true }
+    config: { clamp: true },
+    onRest: () => {
+      // after height animation is complete make the wrapper overflow visible to allow drag end component to be clickable
+      if (wrapperDivRef.current) wrapperDivRef.current.style.overflow = 'visible'
+    }
   })
 
   // check if it was node was previously a first column and now isn't
@@ -162,10 +166,6 @@ const TreeNode = ({
 
   // @ts-ignore
   const width = isFirstColumn ? `${TABLE_FIRST_COLUMN_WIDTH}rem` : `calc(100% - ${xOffset})`
-
-  useEffect(() => {
-    if (wrapperDivRef.current) wrapperDivRef.current.style.width = width
-  }, [width])
 
   const wrapperStyle = {
     // @ts-ignore
