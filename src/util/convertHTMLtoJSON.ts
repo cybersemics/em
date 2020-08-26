@@ -3,8 +3,7 @@ import { Element, HimalayaNode, Text, parse } from 'himalaya'
 import { Block } from '../action-creators/importText'
 
 interface PreBlock extends Block {
-  wasSpan?: boolean,
-  hasSpaces?: boolean,
+  partOfThought?: boolean,
 }
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
@@ -12,11 +11,8 @@ export const convertHTMLtoJSON = (html: string) => {
 
   /** Check if string contains only characters from given 'includes' array. */
   const isStringIncludesOnly = (str: string, includes: string[]) => {
-    const matched =
-      includes
-        .map(char => str.replace(new RegExp(`[^${char}]`, 'g'), '').length)
-        .reduce((acc, cur) => acc + cur, 0)
-    return matched === str.length
+    const regExp = new RegExp(`^[${includes.join('')}]+$`, 'g')
+    return regExp.test(str)
   }
 
   /** Retrieve attribute from Element node by key. */
@@ -27,24 +23,24 @@ export const convertHTMLtoJSON = (html: string) => {
   }
 
   /** Removes empty nodes and comments from himalaya's JSON output. */
-  const removeEmptyNodesAndComments = (nodes: HimalayaNode[]) => {
-    return nodes.filter(node => {
+  const removeEmptyNodesAndComments = (nodes: HimalayaNode[]): (Element | Text)[] => {
+    const filteredNodes = nodes.filter(node => {
       if (node.type === 'element') {
         if (node.tagName === 'br') return false
-        node.children = removeEmptyNodesAndComments(node.children)
         return true
       }
       if (node.type === 'comment') return false
       // remove text nodes containing only empty space and new line characters, such nodes could be created by himalaya in case of multi-line html input
       if (node.type === 'text' && isStringIncludesOnly(node.content, ['\n', ' '])) return false
       return node.content.length
-    }) as (Element | Text)[]
+    })
+    return filteredNodes.map(node => node.type === 'element' && node.children.length > 0 ? { ...node, children: removeEmptyNodesAndComments(node.children) } : node) as (Element | Text)[]
   }
 
   /** Append children to parent as children property if it's necessary. */
   const joinChildren = (nodes: (PreBlock[] | PreBlock)[]): PreBlock[] | PreBlock => {
     // in case of element with span tag around text (e.g. one <span>and</span> two)
-    if (nodes.some(node => !Array.isArray(node) ? node.wasSpan || node.hasSpaces : false)) {
+    if (nodes.some(node => !Array.isArray(node) ? node.partOfThought : false)) {
       // take all text elements
       const splittedText = _.takeWhile(nodes, node => !Array.isArray(node))
       // join their content in a single line
@@ -59,18 +55,18 @@ export const convertHTMLtoJSON = (html: string) => {
     if (nodes.some(node => node && !Array.isArray(node) && node.scope === '=note')) {
       const parent = _.first(nodes)
       const children = _.tail(nodes)
-      return Object.assign({}, parent, { children: children.flat() }) as PreBlock
+      return { ...parent, children: children.flat() } as PreBlock
     }
-    if (nodes.every(node => Array.isArray(node))) return nodes.flat()
     if (nodes.some(node => Array.isArray(node))) {
       // split by chunk with size of 2, first element in chunk is PreBlock - parent, the second is PreBlock[] - children
       const chunks = _.chunk(nodes, 2)
       const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
         if (index === 0) return node as PreBlock
-        else return Object.assign({}, acc, { children: node }) as PreBlock
+        else return { ...acc, children: node } as PreBlock
       }) as PreBlock)
       return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
     }
+    if (nodes.every(node => Array.isArray(node))) return nodes.flat()
     return nodes as PreBlock[]
   }
 
@@ -79,8 +75,7 @@ export const convertHTMLtoJSON = (html: string) => {
     const content = node.content.includes('\n') ? node.content.trim() : node.content
     return {
       scope: wrappedTag ? `<${wrappedTag}>${content}</${wrappedTag}>` : content,
-      children: [],
-      hasSpaces: content.includes(' ')
+      children: []
     } as PreBlock
   }
 
@@ -88,7 +83,7 @@ export const convertHTMLtoJSON = (html: string) => {
   const convertFormattingTags = (node: Element) => {
     if (node.tagName === 'i' || node.tagName === 'b') {
       const [child] = node.children as Text[]
-      return convertText(child, node.tagName)
+      return { ...convertText(child, node.tagName), partOfThought: true }
     }
     else if (node.tagName === 'span') {
       const attribute = getAttribute('class', node)
@@ -104,13 +99,13 @@ export const convertHTMLtoJSON = (html: string) => {
         }
       }
       const [child] = node.children as Text[]
-      return Object.assign({}, convertText(child), { wasSpan: true })
+      return { ...convertText(child), partOfThought: true }
     }
   }
 
   /** Convert PreBlock array to Block array. */
   const convertToBlock = (nodes: PreBlock[]): Block[] => nodes.map(node => {
-    if (node.children.length > 0) return Object.assign({}, node, { children: convertToBlock(node.children) }) as Block
+    if (node.children.length > 0) return { ...node, children: convertToBlock(node.children) } as Block
     else return node as Block
   })
 
