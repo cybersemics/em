@@ -96,10 +96,10 @@ const canExecuteOutdent = (state: State) => {
 
 /** A selector that returns true if merged thought value is duplicate. */
 const isMergedThoughtDuplicate = (state: State) => {
-  const { cursor } = state
+  const { cursor, editingValue } = state
   if (!cursor) return false
   // If we are going to delete empty thought
-  if (headValue(cursor) === '') return false
+  if (headValue(cursor) === '' || editingValue === '') return false
 
   const prevThought = getThoughtBefore(state, cursor)
   if (!prevThought) return false
