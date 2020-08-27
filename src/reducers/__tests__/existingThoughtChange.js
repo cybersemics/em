@@ -184,3 +184,39 @@ it('edit a thought that exists in another context', () => {
     .toMatchObject([{ value: 'ab', rank: 0 }])
 
 })
+
+it('edit a child with the same value as its parent', () => {
+
+  const steps = [
+    newThought({ value: 'a' }),
+    newThought({ value: 'a', insertNewSubthought: true }),
+    existingThoughtChange({
+      newValue: 'ab',
+      oldValue: 'a',
+      context: ['a'],
+      thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a', rank: 0 }]
+    })
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - ab`)
+
+  // ab should exist in context a
+  expect(getContexts(stateNew, 'ab'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: 0,
+    }])
+  expect(getThoughts(stateNew, ['a']))
+    .toMatchObject([{ value: 'ab', rank: 0 }])
+
+  // cursor should be /a/ab
+  expect(stateNew.cursor)
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'ab', rank: 0 }])
+
+})
