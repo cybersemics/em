@@ -27,6 +27,11 @@ interface ImportHtmlOptions {
   skipRoot? : boolean,
 }
 
+interface RankInfo {
+  rank: number,
+  deepLevel: number,
+}
+
 /** Recursively calculate rank offset for a given position based on thoughts before and their children. Increment offset each time we pop out of context. */
 const getRankOffset = (thoughts: Block[], position?: number): number => {
   const before = !position ? [...thoughts] : thoughts.slice(0, position)
@@ -51,13 +56,59 @@ const calculateLastThoughtFirstLevel = (rankStart: number, rankIncrement: number
   return { value: lastThoughtFirstLevel.scope, rank: rankStart + rankOffset * rankIncrement }
 }
 
+/** Return map of thought ranks. */
+const createRankMap = (blocks: Block[], rankStart: number, rankIncrement: number) => {
+  /** Recursively return last child in tree with maximum depth. Return undefined if block has no children. */
+  const getLastChildDeep = (block: Block): Block | undefined => {
+    const { children } = block
+    const lastChild = _.last(children)
+    if (!lastChild) return
+    return lastChild.children.length > 0 ? getLastChildDeep(lastChild) : lastChild
+  }
+
+  /** Recursively calculate rank for each thought. */
+  const calculateRanks = (blocks: Block[], rankMap: Map<Block, RankInfo>, rankStart: number, deepLevel = 0) => {
+    blocks.forEach((block, index, blocks) => {
+      if (index === 0) {
+        rankMap.set(block, {
+          rank: rankStart,
+          deepLevel
+        })
+        calculateRanks(block.children, rankMap, rankStart + 1 * rankIncrement, deepLevel + 1)
+        return
+      }
+      const prevSibling = blocks[index - 1]
+      const prevRankedBlock = getLastChildDeep(prevSibling)
+      if (!prevRankedBlock) {
+        const prevSiblingRankInfo = rankMap.get(prevSibling)!
+        rankMap.set(block, {
+          rank: prevSiblingRankInfo.rank + 1 * rankIncrement,
+          deepLevel
+        })
+        calculateRanks(block.children, rankMap, prevSiblingRankInfo.rank + 2 * rankIncrement, deepLevel + 1)
+        return
+      }
+      const prevRankInfo = rankMap.get(prevRankedBlock)!
+      rankMap.set(block, {
+        rank: prevRankInfo.rank + (1 + prevRankInfo.deepLevel) * rankIncrement,
+        deepLevel
+      })
+      calculateRanks(block.children, rankMap, prevRankInfo.rank + (2 + prevRankInfo.deepLevel) * rankIncrement, deepLevel + 1)
+    })
+  }
+
+  const rankMap = new Map<Block, RankInfo>()
+  calculateRanks(blocks, rankMap, rankStart)
+  return rankMap
+}
+
 /** Recursively iterate through thoughtsJSON and call insertThought for each thought individually to save it. */
-const saveThoughts = (context: Context, rank: number, rankIncrement: number, thoughtsJSON: Block[], insertThought: (value: string, context: Context, rank: number) => void) => {
-  thoughtsJSON.forEach((thought, index) => {
-    const rankOffset = index === 0 ? 0 : getRankOffset(thoughtsJSON, index)
-    insertThought(thought.scope, context, rank + rankOffset * rankIncrement)
+const saveThoughts = (context: Context, rankMap: Map<Block, RankInfo>, thoughtsJSON: Block[], insertThought: (value: string, context: Context, rank: number) => void) => {
+  thoughtsJSON.forEach(thought => {
+    const { rank } = rankMap.get(thought)!
+    insertThought(thought.scope, context, rank)
     if (thought.children.length > 0) {
-      saveThoughts([...context, thought.scope], rank + (rankOffset + 1) * rankIncrement, rankIncrement, thought.children, insertThought)
+      saveThoughts([...context, thought.scope], rankMap, thought.children, insertThought)
     }
   })
 }
@@ -151,7 +202,8 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Blo
 
   const startContext = getStartContext(thoughtsRanked)
   const thoughts = prepare(skipRoot, thoughtsJSON)
-  saveThoughts(startContext, rankStart, rankIncrement, thoughts, insertThought)
+  const rankMap = createRankMap(thoughts, rankStart, rankIncrement)
+  saveThoughts(startContext, rankMap, thoughts, insertThought)
   return {
     contextIndexUpdates,
     lastThoughtFirstLevel,
