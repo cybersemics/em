@@ -32,28 +32,21 @@ interface RankInfo {
   deepLevel: number,
 }
 
-/** Recursively calculate rank offset for a given position based on thoughts before and their children. Increment offset each time we pop out of context. */
-const getRankOffset = (thoughts: Block[], position?: number): number => {
-  const before = !position ? [...thoughts] : thoughts.slice(0, position)
-  const result = before.map(thought => thought.children.length > 0 ? 1 + getRankOffset(thought.children) : 1).reduce((acc, val) => acc + val, 0)
-  return position ? result : result + 1
-}
-
-/** Prepare thoughts for saving, skip root if necessary. */
-const prepare = (skipRoot: boolean | undefined, thoughts: Block[]) => {
-  if (!skipRoot) return thoughts
-  const head = _.head(thoughts)
-  if (!head) return thoughts
-  const tail = _.tail(thoughts)
+/** If skipRoot is true, replace head block with its children, or drop it, if head has no children. */
+const skipRootThought = (skipRoot: boolean, blocks: Block[]) => {
+  if (!skipRoot) return blocks
+  const head = _.head(blocks)
+  if (!head) return blocks
+  const tail = _.tail(blocks)
   return head.children.length > 0 ? [...head.children, ...tail] : tail
 }
 
 /** Calculate last thought of the first level, as this is where the selection will be restored to. */
-const calculateLastThoughtFirstLevel = (rankStart: number, rankIncrement: number, thoughtsJSON: Block[]) => {
-  const lastThoughtFirstLevelIndex = thoughtsJSON.length - 1
-  const lastThoughtFirstLevel = thoughtsJSON[lastThoughtFirstLevelIndex]
-  const rankOffset = lastThoughtFirstLevelIndex === 0 ? 0 : getRankOffset(thoughtsJSON, lastThoughtFirstLevelIndex)
-  return { value: lastThoughtFirstLevel.scope, rank: rankStart + rankOffset * rankIncrement }
+const calculateLastThoughtFirstLevel = (rankMap: Map<Block, RankInfo>, blocks: Block[]) => {
+  const lastThoughtFirstLevelIndex = blocks.length - 1
+  const lastThoughtFirstLevel = blocks[lastThoughtFirstLevelIndex]
+  const { rank } = rankMap.get(lastThoughtFirstLevel)!
+  return { value: lastThoughtFirstLevel.scope, rank }
 }
 
 /** Return map of thought ranks. */
@@ -102,29 +95,33 @@ const createRankMap = (blocks: Block[], rankStart: number, rankIncrement: number
   return rankMap
 }
 
-/** Recursively iterate through thoughtsJSON and call insertThought for each thought individually to save it. */
-const saveThoughts = (context: Context, rankMap: Map<Block, RankInfo>, thoughtsJSON: Block[], insertThought: (value: string, context: Context, rank: number) => void) => {
-  thoughtsJSON.forEach(thought => {
-    const { rank } = rankMap.get(thought)!
-    insertThought(thought.scope, context, rank)
-    if (thought.children.length > 0) {
-      saveThoughts([...context, thought.scope], rankMap, thought.children, insertThought)
+/** Recursively iterate through blocks and call insertThought for each block individually to save it. */
+const saveThoughts = (context: Context, rankMap: Map<Block, RankInfo>, blocks: Block[], insertThought: (value: string, context: Context, rank: number) => void) => {
+  blocks.forEach(block => {
+    const { rank } = rankMap.get(block)!
+    insertThought(block.scope, context, rank)
+    if (block.children.length > 0) {
+      saveThoughts([...context, block.scope], rankMap, block.children, insertThought)
     }
   })
 }
 
-/** Return number of contexts in ThoughtJSON array. */
-const getContextsNum = (thoughts: Block[]): number => {
-  return thoughts.map(thought => thought.children.length > 0 ? 1 + getContextsNum(thought.children) : 1).reduce((acc, val) => acc + val, 0)
+/** Return number of contexts in blocks array. */
+const getContextsNum = (blocks: Block[]): number => {
+  return blocks
+    .map(thought => thought.children.length > 0
+      ? 1 + getContextsNum(thought.children)
+      : 1
+    )
+    .reduce((acc, val) => acc + val, 0)
 }
 
 /** Calculate rankIncrement value based on rank of next sibling or its absence. */
-const getRankIncrement = (thoughtsJSON: Block[], state: State, context: Context, destThought: Child, rankStart: number) => {
-  const numContexts = getContextsNum(thoughtsJSON)
+const getRankIncrement = (state: State, blocks: Block[], context: Context, destThought: Child, rankStart: number) => {
   const destValue = destThought.value
   const destRank = destThought.rank
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
-  const rankIncrement = next ? (next.rank - rankStart) / (numContexts || 1) : 1 // prevent divide by zero
+  const rankIncrement = next ? (next.rank - rankStart) / (getContextsNum(blocks) || 1) : 1 // prevent divide by zero
   return rankIncrement
 }
 
@@ -136,8 +133,8 @@ const getStartContext = (thoughtsRanked: Path) => {
   return pathToContext(importCursor)
 }
 
-/** Convert JSON to thoughts update. */
-export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Block[], { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
+/** Convert JSON blocks to thoughts update. */
+export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], { skipRoot = false }: ImportHtmlOptions) => {
   const thoughtIndexUpdates: GenericObject<Lexeme> = {}
   const contextIndexUpdates: GenericObject<ParentEntry> = {}
   const context = pathToContext(contextOf(thoughtsRanked))
@@ -145,7 +142,7 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Blo
   const destEmpty = destThought.value === '' && getThoughts(state, pathToContext(thoughtsRanked)).length === 0
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const rankStart = getRankAfter(state, thoughtsRanked)
-  const rankIncrement = getRankIncrement(thoughtsJSON, state, context, destThought, rankStart)
+  const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
@@ -162,8 +159,6 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Blo
       }
     }
   }
-
-  const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankStart, rankIncrement, thoughtsJSON)
 
   /** Insert the given value at the context. Modifies contextIndex and thoughtIndex. */
   const insertThought = (value: string, context: Context, rank: number) => {
@@ -182,8 +177,9 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Blo
       rootContext
     )
 
-    thoughtIndex[hashThought(value)] = thoughtNew
-    thoughtIndexUpdates[hashThought(value)] = thoughtNew
+    const hash = hashThought(value)
+    thoughtIndex[hash] = thoughtNew
+    thoughtIndexUpdates[hash] = thoughtNew
 
     // update contextIndexUpdates
     const contextEncoded = hashContext(rootContext)
@@ -201,8 +197,9 @@ export const importJSON = (state: State, thoughtsRanked: Path, thoughtsJSON: Blo
   }
 
   const startContext = getStartContext(thoughtsRanked)
-  const thoughts = prepare(skipRoot, thoughtsJSON)
+  const thoughts = skipRootThought(skipRoot, blocks)
   const rankMap = createRankMap(thoughts, rankStart, rankIncrement)
+  const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankMap, thoughts)
   saveThoughts(startContext, rankMap, thoughts, insertThought)
   return {
     contextIndexUpdates,
