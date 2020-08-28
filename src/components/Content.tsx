@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { isMobile } from '../browser'
 import expandContextThought from '../action-creators/expandContextThought'
 import { EM_TOKEN, MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { getSetting, getThoughts, hasChild } from '../selectors'
+import { getSetting, getThoughts, hasChild, isChildVisible } from '../selectors'
 import { publishMode } from '../util'
 import { Child } from '../types'
 import { State } from '../util/initialState'
@@ -34,7 +34,7 @@ const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { focus, isLoading, noteFocus, search, showModal } = state
+  const { focus, isLoading, noteFocus, search, showModal, showHiddenThoughts } = state
   const isTutorial = isLoading ? tutorialLocal : hasChild(state, [EM_TOKEN, 'Settings', 'Tutorial'], 'On')
 
   // @typescript-eslint/eslint-plugin does not yet support no-extra-parens with nullish coallescing operator
@@ -43,7 +43,7 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   // do no sort here as the new object reference would cause a re-render even when the children have not changed
-  const rootThoughts = getThoughts(state, [ROOT_TOKEN])
+  const rootThoughts = getThoughts(state, [ROOT_TOKEN]).filter(({ value, rank }) => showHiddenThoughts || isChildVisible(state, [value], { value, rank }))
 
   return {
     focus,
