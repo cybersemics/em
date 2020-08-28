@@ -46,7 +46,7 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
 
   wrapper.update()
 
-  // Threre are no visible thoughts
+  // There are no visible thoughts
   expect(wrapper.find(NewThoughtInstructions)).toHaveLength(1)
 
 })
