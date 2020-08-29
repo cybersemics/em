@@ -6,7 +6,6 @@ import expandContextThought from '../action-creators/expandContextThought'
 import { EM_TOKEN, MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, getThoughts, hasChild, isChildVisible } from '../selectors'
 import { publishMode } from '../util'
-import { Child } from '../types'
 import { State } from '../util/initialState'
 
 // components
@@ -23,7 +22,7 @@ interface ContentDispatchToProps {
 interface ContentProps {
   isTutorial?: boolean,
   noteFocus?: boolean,
-  rootThoughts: Child[],
+  rootThoughtsLength: number,
   search?: string | null,
   showModal?: string | null,
   tutorialStep?: number,
@@ -43,7 +42,7 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   // do no sort here as the new object reference would cause a re-render even when the children have not changed
-  const rootThoughts = getThoughts(state, [ROOT_TOKEN]).filter(({ value, rank }) => showHiddenThoughts || isChildVisible(state, [value], { value, rank }))
+  const rootThoughtsLength = (showHiddenThoughts ? getThoughts(state, [ROOT_TOKEN]) : getThoughts(state, [ROOT_TOKEN]).filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
 
   return {
     focus,
@@ -51,7 +50,7 @@ const mapStateToProps = (state: State) => {
     showModal,
     isTutorial,
     tutorialStep,
-    rootThoughts,
+    rootThoughtsLength,
     noteFocus
   }
 }
@@ -81,7 +80,7 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 
 /** The main content section of em. */
 const Content = (props: ContentProps & ContentDispatchToProps) => {
-  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughts, noteFocus } = props
+  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus } = props
   const contentRef = useRef()
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
@@ -124,7 +123,7 @@ const Content = (props: ContentProps & ContentDispatchToProps) => {
       {search != null
         ? <Search />
         : <React.Fragment>
-          {rootThoughts.length === 0 ? <NewThoughtInstructions children={rootThoughts} /> : <Subthoughts
+          {rootThoughtsLength === 0 ? <NewThoughtInstructions childrenLength={rootThoughtsLength} /> : <Subthoughts
             thoughtsRanked={RANKED_ROOT}
             expandable={true}
           />}

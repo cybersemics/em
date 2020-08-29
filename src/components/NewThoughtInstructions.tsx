@@ -9,10 +9,10 @@ import { getSetting, isTutorial } from '../selectors'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
 import { State } from '../util/initialState'
-import { Child, GesturePath } from '../types'
+import { GesturePath } from '../types'
 
 interface NewThoughtInstructionsProps {
-  children: Child[],
+  childrenLength: number,
   isLoading?: boolean,
   status: string,
   tutorialStep: number,
@@ -33,18 +33,18 @@ const mapStateToProps = (state: State) => {
 }
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
-const NewThoughtInstructions: FC<NewThoughtInstructionsProps> = ({ children, isLoading: localLoading, status, tutorialStep }) =>
+const NewThoughtInstructions: FC<NewThoughtInstructionsProps> = ({ childrenLength, isLoading: localLoading, status, tutorialStep }) =>
 
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
-  localLoading || ((status === 'connecting' || status === 'loading') && children.length === 0) ? <div className='absolute-center'>
+  localLoading || ((status === 'connecting' || status === 'loading') && childrenLength === 0) ? <div className='absolute-center'>
     <i className='text-note'><LoadingEllipsis /></i>
   </div>
 
   // tutorial no children
   // show special message when there are no children in tutorial
   : isTutorial(store.getState())
-    ? children.length === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile)
+    ? childrenLength === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile)
       ? <div className='center-in-content'>
         <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
       </div>
