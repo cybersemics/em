@@ -13,7 +13,7 @@ it('empty thought should outdent when hit enter', async () => {
   const store = createTestStore()
 
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
     - b
       - c
@@ -21,7 +21,7 @@ it('empty thought should outdent when hit enter', async () => {
           - e
             - f`))
 
-  await store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '1' },
     { value: 'c', rank: '2' },

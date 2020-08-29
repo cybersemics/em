@@ -33,12 +33,12 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
   const store = createTestStore()
 
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
     - b
       - c`))
 
-  await store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: 0 },
     { value: 'b', rank: 1 },
     { value: 'c', rank: 2 },
@@ -61,14 +61,14 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
   const store = createTestStore()
 
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
     - b
       - c
       - d`
   ))
 
-  await store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: 0 },
     { value: 'b', rank: 1 },
     { value: 'd', rank: 3 },
