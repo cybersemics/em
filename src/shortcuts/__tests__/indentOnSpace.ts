@@ -1,30 +1,30 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { importText } from '../../action-creators'
 import { exportContext } from '../../selectors'
-import { inputHandlers } from '../../shortcuts'
-import { noop } from 'lodash'
 import { createTestStore } from '../../test-helpers/createTestStore'
+import indentOnSpace from '../indentOnSpace'
+import executeShortcut from '../../test-helpers/executeShortcut'
+
+const event = { preventDefault: NOOP } as Event
 
 it('indent on adding space at the beginning of the thought', async () => {
 
   const store = createTestStore()
 
-  const { keyDown } = inputHandlers(store)
-
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
     - a
       - b
         - c
         - d`))
 
-  await store.dispatch({
+  store.dispatch({
     type: 'setCursor',
     thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }],
   })
 
-  keyDown({ preventDefault: noop, key: ' ' })
+  executeShortcut(indentOnSpace, { store, type: 'keyboard', event })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
   const expectedOutput = `- ${ROOT_TOKEN}
   - a
@@ -39,23 +39,21 @@ it('prevent indent on adding space at the beginning of the immovable thought', a
 
   const store = createTestStore()
 
-  const { keyDown } = inputHandlers(store)
-
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
     - a
       - b
         - c
         - d
           - =immovable`))
 
-  await store.dispatch({
+  store.dispatch({
     type: 'setCursor',
     thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }]
   })
 
-  keyDown({ preventDefault: noop, key: ' ' })
+  executeShortcut(indentOnSpace, { store, type: 'keyboard', event })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
   // indent shouldn't happen and output should remain the same
   const expectedOutput = `- ${ROOT_TOKEN}

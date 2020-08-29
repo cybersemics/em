@@ -1,18 +1,18 @@
-import { inputHandlers } from '../../shortcuts'
 import { importText } from '../../action-creators'
-import { RANKED_ROOT } from '../../constants'
-import { noop } from 'lodash'
+import { NOOP, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attributeEquals } from '../../selectors'
+import toggleTableViewShortcut from '../toggleTableView'
+import executeShortcut from '../../test-helpers/executeShortcut'
 
-it('toggle table view of parent of cursor', async () => {
+const event = { preventDefault: NOOP } as Event
+
+it('toggle on table view of parent of cursor (initial state without =view attribute)', async () => {
 
   const store = createTestStore()
 
-  const { keyDown } = inputHandlers(store)
-
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
     - b
       - c
@@ -20,20 +20,65 @@ it('toggle table view of parent of cursor', async () => {
       - e
 `))
 
-  await store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '1' },
   ] })
 
-  // set =view attribute to Table
-  keyDown({ preventDefault: noop, key: 't', altKey: true } as KeyboardEvent)
+  executeShortcut(toggleTableViewShortcut, { store, type: 'keyboard', event })
 
-  // parent of cursor should have =view set to Table
+  // parent of cursor should have =view attribute set to Table
   expect(attributeEquals(store.getState(), ['a'], '=view', 'Table')).toBeTruthy()
+})
 
-  // remove value of Table from =view attribute
-  keyDown({ preventDefault: noop, key: 't', altKey: true } as KeyboardEvent)
+it('toggle on table view of parent of cursor (initial state =view attribute set to Prose)', async () => {
 
-  // parent of cursor should not have =view attribute set to Prose
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch(importText(RANKED_ROOT, `
+  - a
+    - =view
+      - Prose
+    - b
+      - c
+    - d
+      - e
+`))
+
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+    { value: 'a', rank: '0' },
+    { value: 'b', rank: '2' },
+  ] })
+
+  executeShortcut(toggleTableViewShortcut, { store, type: 'keyboard', event })
+
+  // parent of cursor should have =view attribute set to Table
+  expect(attributeEquals(store.getState(), ['a'], '=view', 'Table')).toBeTruthy()
+})
+
+it('toggle on table view of parent of cursor (initial state without =view attribute)', async () => {
+
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch(importText(RANKED_ROOT, `
+  - a
+    - =view
+      - Table
+    - b
+      - c
+    - d
+      - e
+`))
+
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+    { value: 'a', rank: '0' },
+    { value: 'b', rank: '2' },
+  ] })
+
+  executeShortcut(toggleTableViewShortcut, { store, type: 'keyboard', event })
+
+  // parent of cursor should not have =view attribute set to Table
   expect(attributeEquals(store.getState(), ['a'], '=view', 'Table')).toBeFalsy()
 })

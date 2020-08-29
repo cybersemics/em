@@ -1,18 +1,18 @@
-import { inputHandlers } from '../../shortcuts'
 import { importText } from '../../action-creators'
-import { RANKED_ROOT } from '../../constants'
-import { noop } from 'lodash'
+import { NOOP, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attributeEquals } from '../../selectors'
+import pinSubthoughtsShortcut from '../pinSubthoughts'
+import executeShortcut from '../../test-helpers/executeShortcut'
 
-it('toggle =pinChildren attribute of parent of cursor', async () => {
+const event = { preventDefault: NOOP } as Event
+
+it('toggle on =pinChildren attribute of parent of cursor (initial state without =pinChildren)', async () => {
 
   const store = createTestStore()
 
-  const { keyDown } = inputHandlers(store)
-
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
     - b
       - c
@@ -22,20 +22,69 @@ it('toggle =pinChildren attribute of parent of cursor', async () => {
       - g
 `))
 
-  await store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '1' },
   ] })
 
-  // toggle =pinChildren attribute
-  keyDown({ preventDefault: noop, key: 'p', altKey: true, shiftKey: true } as KeyboardEvent)
+  executeShortcut(pinSubthoughtsShortcut, { store, type: 'keyboard', event })
 
   // parent of cursor should have =pinChildren set to true
   expect(attributeEquals(store.getState(), ['a'], '=pinChildren', 'true')).toBeTruthy()
+})
 
-  // toggle =pinSubthoughts attribute
-  keyDown({ preventDefault: noop, key: 'p', altKey: true, shiftKey: true } as KeyboardEvent)
+it('toggle on =pinChildren attribute of parent of cursor (initial state =pinChildren set to false)', async () => {
 
-  // parent of cursor should not have =pinChildren attribute
-  expect(attributeEquals(store.getState(), ['a'], '=pinChildren', 'false')).toBeFalsy()
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch(importText(RANKED_ROOT, `
+  - a
+    - =pinChildren
+      - false
+    - b
+      - c
+      - d
+    - e
+      - f
+      - g
+`))
+
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+    { value: 'a', rank: '0' },
+    { value: 'b', rank: '2' },
+  ] })
+
+  executeShortcut(pinSubthoughtsShortcut, { store, type: 'keyboard', event })
+
+  // parent of cursor should have =pinChildren set to true
+  expect(attributeEquals(store.getState(), ['a'], '=pinChildren', 'true')).toBeTruthy()
+})
+
+it('toggle off =pinChildren attribute from parent of cursor', async () => {
+
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch(importText(RANKED_ROOT, `
+  - a
+    - =pinChildren
+      - true
+    - b
+      - c
+      - d
+    - e
+      - f
+      - g
+`))
+
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+    { value: 'a', rank: '0' },
+    { value: 'b', rank: '2' },
+  ] })
+
+  executeShortcut(pinSubthoughtsShortcut, { store, type: 'keyboard', event })
+
+  // parent of cursor should not have =pinChildren set to true
+  expect(attributeEquals(store.getState(), ['a'], '=pinChildren', 'true')).toBeFalsy()
 })
