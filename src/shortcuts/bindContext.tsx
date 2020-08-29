@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
+import { Context, Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable, pathToContext, rootedContextOf } from '../util'
 import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
 import { State } from '../util/initialState'
@@ -18,7 +18,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const bindContextShortcut = {
+const bindContextShortcut: Shortcut = {
   id: 'bindContext',
   name: 'Bind Context',
   svg: Icon,

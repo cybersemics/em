@@ -1,6 +1,5 @@
 import { store } from '../../store'
-import * as db from '../../data-providers/dexie'
-import createTestApp from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
@@ -13,23 +12,25 @@ import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
 const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
 
+let wrapper = null // eslint-disable-line fp/no-let
+
 beforeEach(async () => {
-  await createTestApp()
+  wrapper = await createTestApp()
 })
 
 afterEach(async () => {
-  store.dispatch({ type: 'clear' })
-  await db.clearAll()
+  await cleanupTestApp()
+  wrapper = null
 })
 
 /** Find DragSource inside Thoughts component. */
-const findThoughtSource = context => document.wrapper.find(Thought).filterWhere(whereContext(context)).at(0).childAt(0)
+const findThoughtSource = context => wrapper.find(Thought).filterWhere(whereContext(context)).at(0).childAt(0)
 
 /** Find DropTarget inside Thoughts component. */
 const findThoughtSiblingTarget = context => findThoughtSource(context).childAt(0)
 
 /** Find DropTarget used for child drop inside Subthoughts. */
-const findDropEndTarget = context => document.wrapper.find(Subthoughts).filterWhere(whereContext(context)).at(0).childAt(0)
+const findDropEndTarget = context => wrapper.find(Subthoughts).filterWhere(whereContext(context)).at(0).childAt(0)
 
 /** Simulate Drag And Drop.
  *
@@ -42,7 +43,7 @@ const simulateDragAndDrop = ({ source, drop, type }) => {
   const backend = document.DND.getManager().getBackend()
   const sourceId = findThoughtSource(source).instance().getHandlerId()
   backend.simulateBeginDrag([sourceId])
-  document.wrapper.update()
+  wrapper.update()
 
   const targetFunction = {
     child: findDropEndTarget,
@@ -52,7 +53,7 @@ const simulateDragAndDrop = ({ source, drop, type }) => {
   const targetId = targetFunction[type](drop).instance().getHandlerId()
   backend.simulateHover([targetId])
 
-  document.wrapper.update()
+  wrapper.update()
 
   backend.simulateDrop()
   backend.simulateEndDrag([sourceId])
@@ -66,7 +67,7 @@ it('drop as sibling', async () => {
   - d
  `))
 
-  document.wrapper.update()
+  wrapper.update()
 
   simulateDragAndDrop({
     source: ['a'],
@@ -93,7 +94,7 @@ it('drop as child (Drop end)', async () => {
   - d
  `))
 
-  document.wrapper.update()
+  wrapper.update()
 
   simulateDragAndDrop({
     source: ['b'],
@@ -128,7 +129,7 @@ it('prevent drop into descendants', async () => {
     ]
   })
 
-  document.wrapper.update()
+  wrapper.update()
 
   simulateDragAndDrop({
     source: ['a'],

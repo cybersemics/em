@@ -1,3 +1,4 @@
+import { Dispatch, ReactNode } from 'react'
 import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
 import { State, ThoughtsInterface } from './util/initialState'
@@ -84,7 +85,42 @@ export interface Icon {
   dark?: boolean,
   fill?: string,
   height?: number,
-  size?: number,
+  size: number,
   style?: GenericObject<string>,
   width?: number,
 }
+
+export interface Key {
+  alt?: boolean,
+  control?: boolean,
+  key: string,
+  meta?: boolean,
+  option?: boolean,
+  shift?: boolean,
+}
+
+export interface Shortcut {
+  id: string,
+  name: string,
+  description?: string,
+  gesture?: GesturePath | GesturePath[],
+  hideFromInstructions?: boolean,
+  keyboard?: Key | string,
+  overlay?: {
+    gesture?: GesturePath,
+    keyboard?: Key | string,
+  },
+  svg?: (icon: Icon) => ReactNode,
+  canExecute?: (getState: () => State, e: Event) => boolean,
+  exec: (dispatch: Dispatch<Action | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => void,
+}
+
+export type Direction = 'u' | 'd' | 'l' | 'r'
+
+export type DirectionMap<T> = (dir: Direction) => T
+
+// allow string explicitly since Typescript will not allow Direction[] to be specified as a string
+export type GesturePath = string | (Direction[] & {
+  map: DirectionMap<Direction>,
+  split: (s: string) => Direction[],
+})

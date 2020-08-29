@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
+import { Context, Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
 import { contextOf, pathToContext } from '../util'
 import { State } from '../util/initialState'
@@ -22,7 +22,7 @@ const Icon = ({ size = 20, style }: IconType) => <svg xmlns='http://www.w3.org/2
   </g>
 </svg>
 
-const pinSubthoughtsShortcut = {
+const pinSubthoughtsShortcut: Shortcut = {
   id: 'pinSubthoughts',
   name: 'Pin Subthoughts',
   description: 'Pin open the current thought\'s subthoughts.',
@@ -33,11 +33,11 @@ const pinSubthoughtsShortcut = {
     const { cursor } = state
     if (!cursor) return
     const context = contextOf(cursor)
-    const isPinned = attributeEquals(state, pathToContext(context), '=pinChildren', 'true')
+    const isPinned = attributeEquals(state, pathToContext(contextOf(context)), '=pinChildren', 'true')
     if (cursor) {
       dispatch({
         type: 'toggleAttribute',
-        context: pathToContext(cursor),
+        context: pathToContext(contextOf(cursor)),
         key: '=pinChildren',
         value: isPinned ? 'false' : 'true'
       })
