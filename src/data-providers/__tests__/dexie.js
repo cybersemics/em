@@ -1,8 +1,8 @@
-import { store } from './store'
-import { ROOT_TOKEN } from './constants'
-import * as db from './data-providers/dexie'
-import { initialize } from './initialize'
-import { getChildren, getThought } from './selectors'
+import { store } from '../../store'
+import { ROOT_TOKEN } from '../../constants'
+import { initialize } from '../../initialize'
+import { getChildren, getThought } from '../../selectors'
+import * as db from '../dexie'
 
 jest.useFakeTimers()
 
