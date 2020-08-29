@@ -167,8 +167,10 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     const user = getState().user
     if (user) {
       // do not await
+      console.log('pendingThoughts', pendingThoughts)
       firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
         .then(thoughtsRemote => {
+          console.log('thoughtsRemote', thoughtsRemote)
 
           dispatch({
             type: 'reconcile',
@@ -188,8 +190,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     })
 
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending wil properly check visibleContexts and fetch any pending thoughts that are visible.
-    const hasPending = Object.keys(thoughtsLocal.contextIndex)
-      .some(key => thoughtsLocal.contextIndex[key].pending)
+    const hasPending = Object.keys(thoughtsLocal.contextIndex || {})
+      .some(key => (thoughtsLocal.contextIndex || {})[key].pending)
     if (!user && hasPending) {
       updatePending({ force: true })
     }
