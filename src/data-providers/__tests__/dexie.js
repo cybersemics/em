@@ -262,7 +262,7 @@ describe('dexie only', () => {
         lastUpdated: timestamp()
       }
 
-      const parentLeaf = {
+      const parentEntryLeaf = {
         children: [],
         lastUpdated: timestamp()
       }
@@ -278,9 +278,9 @@ describe('dexie only', () => {
       await db.updateContextIndex({
         [hashContext(['x'])]: parentEntry1,
         [hashContext(['x', 'y'])]: parentEntry2,
-        [hashContext(['x', 'y', 'z'])]: parentLeaf,
+        [hashContext(['x', 'y', 'z'])]: parentEntryLeaf,
         [hashContext(['x', 'a'])]: parentEntry2a,
-        [hashContext(['x', 'a', 'b'])]: parentLeaf,
+        [hashContext(['x', 'a', 'b'])]: parentEntryLeaf,
       })
 
       const thoughts = await db.getDescendantThoughts(['x'])
@@ -297,7 +297,7 @@ describe('dexie only', () => {
           id: hashContext(['x', 'y']),
         },
         [hashContext(['x', 'y', 'z'])]: {
-          ...parentLeaf,
+          ...parentEntryLeaf,
           id: hashContext(['x', 'y', 'z']),
         },
         [hashContext(['x', 'a'])]: {
@@ -305,7 +305,7 @@ describe('dexie only', () => {
           id: hashContext(['x', 'a']),
         },
         [hashContext(['x', 'a', 'b'])]: {
-          ...parentLeaf,
+          ...parentEntryLeaf,
           id: hashContext(['x', 'a', 'b']),
         },
       })
@@ -406,7 +406,7 @@ describe('dexie only', () => {
 
     })
 
-    test('maxDepth', async () => {
+    test('maxDepth: 1', async () => {
 
       const thought1 = {
         id: hashThought('x'),
@@ -485,6 +485,111 @@ describe('dexie only', () => {
 
       expect(thoughts.thoughtIndex).toEqual({
         [hashThought('y')]: thought2,
+      })
+
+    })
+
+    test('maxDepth: 2', async () => {
+
+      const thoughtX = {
+        id: hashThought('x'),
+        value: 'x',
+        contexts: [[]],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thoughtY = {
+        id: hashThought('y'),
+        value: 'y',
+        contexts: [['x']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thoughtZ = {
+        id: hashThought('z'),
+        value: 'z',
+        contexts: [['x', 'y']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thoughtM = {
+        id: hashThought('m'),
+        value: 'm',
+        contexts: [['x', 'y', 'z']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const parentEntryX = {
+        children: [
+          { value: 'y', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntryY = {
+        children: [
+          { value: 'z', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntryZ = {
+        children: [
+          { value: 'm', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntryLeaf = {
+        children: [],
+        lastUpdated: timestamp()
+      }
+
+      await db.updateThoughtIndex({
+        [hashThought('x')]: thoughtX,
+        [hashThought('y')]: thoughtY,
+        [hashThought('z')]: thoughtZ,
+        [hashThought('m')]: thoughtM,
+      })
+
+      await db.updateContextIndex({
+        [hashContext(['x'])]: parentEntryX,
+        [hashContext(['x', 'y'])]: parentEntryY,
+        [hashContext(['x', 'y', 'z'])]: parentEntryZ,
+        [hashContext(['x', 'y', 'z', 'm'])]: parentEntryLeaf,
+      })
+
+      // only fetch 2 levels of descendants
+      const thoughts = await db.getDescendantThoughts(['x'], { maxDepth: 2 })
+
+      expect(thoughts).toHaveProperty('contextIndex')
+
+      expect(thoughts.contextIndex).toEqual({
+        [hashContext(['x'])]: {
+          ...parentEntryX,
+          id: hashContext(['x']),
+        },
+        [hashContext(['x', 'y'])]: {
+          ...parentEntryY,
+          id: hashContext(['x', 'y']),
+        },
+        // grandchildren are pending
+        [hashContext(['x', 'y', 'z'])]: {
+          children: [],
+          lastUpdated: '',
+          pending: true,
+        },
+      })
+
+      expect(thoughts).toHaveProperty('thoughtIndex')
+
+      expect(thoughts.thoughtIndex).toEqual({
+        [hashThought('y')]: thoughtY,
+        [hashThought('z')]: thoughtZ,
       })
 
     })
