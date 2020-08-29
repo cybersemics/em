@@ -3,13 +3,7 @@ import { connect } from 'react-redux'
 import { theme } from '../selectors'
 import { State } from '../util/initialState'
 import { GenericObject } from '../utilTypes'
-
-type DirectionMap<T> = (dir: Direction) => T
-
-type GesturePath = Direction[] & {
-  map: DirectionMap<any>,
-  split: (s: string) => Direction[],
-}
+import { Direction, GesturePath } from '../types'
 
 interface GestureDiagramProps {
   arrowSize?: number,
@@ -18,12 +12,10 @@ interface GestureDiagramProps {
   flexibleSize?: number,
   path: GesturePath,
   reversalOffset?: number,
-  size: number,
+  size?: number,
   strokeWidth?: number,
   style?: GenericObject<string>,
 }
-
-type Direction = 'u' | 'd' | 'l' | 'r'
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
 const rotateClockwise = (dir: Direction) => ({
@@ -59,12 +51,12 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
   /** Calculates the change in x,y position of each segment of the gesture diagram. */
-  const pathSegmentDelta = (dir: Direction, i: number, dirs: Direction[]) => {
+  const pathSegmentDelta = (dir: Direction, i: number, pathDirs: Direction[]) => {
 
-    const beforePrev = dirs[i - 2]
-    const prev = dirs[i - 1]
-    const next = dirs[i + 1]
-    const afterNext = dirs[i + 2]
+    const beforePrev = pathDirs[i - 2]
+    const prev = pathDirs[i - 1]
+    const next = pathDirs[i + 1]
+    const afterNext = pathDirs[i + 2]
     const horizontal = dir === 'l' || dir === 'r'
     const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
 
@@ -92,7 +84,8 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
     return { dx, dy }
   }
 
-  const pathSegments = path.split('').map(pathSegmentDelta)
+  // eslint-disable-next-line no-extra-parens
+  const pathSegments = (path.split('') as Direction[]).map(pathSegmentDelta)
   const pathString = pathSegments.map(segment => `l ${segment.dx} ${segment.dy}`).join(' ')
   const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))

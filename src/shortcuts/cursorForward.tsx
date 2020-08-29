@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { Action } from 'redux'
 import { scrollCursorIntoView } from '../util'
 
@@ -10,7 +10,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const cursorForwardShortcut = {
+const cursorForwardShortcut: Shortcut = {
   id: 'cursorForward',
   name: 'Forward',
   gesture: 'l',

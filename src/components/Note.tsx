@@ -1,9 +1,9 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store.js'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
-import { asyncFocus, clearSelection, selectNextEditable, setSelection } from '../util'
+import { asyncFocus, clearSelection, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { Child, Context, Path } from '../types'
 
@@ -21,7 +21,8 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
   if (!hasNote || isContextViewActive(state, context)) return null
 
   const dispatch = useDispatch()
-  const noteRef = useRef(null)
+  const noteRef: { current: HTMLElement | null } = useRef(null)
+  const [justPasted, setJustPasted] = useState(false)
   const note = attribute(state, context, '=note')
 
   /** Handles note keyboard shortcuts. */
@@ -60,13 +61,18 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
 
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
-    // Mobile Safari inserts <br> when all text is deleted
-    // Strip <br> from beginning and end of text
+    const value = justPasted
+      // if just pasted, strip all HTML from value
+      ? (setJustPasted(false), strip(e.target.value))
+      // Mobile Safari inserts <br> when all text is deleted
+      // Strip <br> from beginning and end of text
+      : e.target.value.replace(/^<br>|<br>$/gi, '')
+
     dispatch({
       type: 'setAttribute',
       context,
       key: '=note',
-      value: e.target.value.replace(/^<br>|<br>$/gi, '')
+      value
     })
   }
 
@@ -82,6 +88,11 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
       placeholder='Enter a note'
       onKeyDown={onKeyDown}
       onChange={onChange}
+      onPaste={() => {
+        // set justPasted so onChange can strip HTML from the new value
+        // the default onPaste behavior is maintained for easier caret and selection management
+        setJustPasted(true)
+      }}
       onFocus={onFocus}
       onBlur={clearSelection}
     />

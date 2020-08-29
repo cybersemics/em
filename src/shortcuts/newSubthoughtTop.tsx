@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
 
 interface NewThought {
@@ -15,7 +15,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const newSubthoughtTopShortcut = {
+const newSubthoughtTopShortcut: Shortcut = {
   id: 'newSubthoughtTop',
   name: 'New Subthought (top)',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',

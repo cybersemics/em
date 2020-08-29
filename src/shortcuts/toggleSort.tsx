@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType, Path } from '../types'
+import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
-import { pathToContext } from '../util'
+import { contextOf, pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { Nullable } from '../utilTypes'
 
@@ -29,7 +29,7 @@ const Icon = ({ size = 20, style }: IconType) => <svg version='1.1' className='i
   </g>
 </svg>
 
-const toggleSortShortcut = {
+const toggleSortShortcut: Shortcut = {
   id: 'toggleSort',
   name: 'Toggle Sort',
   description: 'Sort the current context alphabetically.',
@@ -40,10 +40,15 @@ const toggleSortShortcut = {
     const { cursor } = state
     const globalSort = getSetting(state, ['Global Sort'])
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
+
     if (cursor) {
+
+      const path = contextOf(cursor)
+      if (path.length === 0) return
+
       dispatch({
         type: 'toggleAttribute',
-        context: pathToContext(cursor),
+        context: pathToContext(path),
         key: '=sort',
         value: sortPreference
       })

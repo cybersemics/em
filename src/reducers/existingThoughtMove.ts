@@ -130,7 +130,6 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         // merge current thought update
         [hashedKey]: {
           value: child.value,
-          // eslint-disable-next-line no-extra-parens
           rank: ((childNewThought.contexts || [])
             .find(context => equalArrays(context.context, contextNew)) as any
           ).rank,

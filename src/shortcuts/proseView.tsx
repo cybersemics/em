@@ -1,6 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
-import { getThoughtsRanked } from '../selectors'
+import { Context, Icon as IconType, Shortcut } from '../types'
 import { contextOf, isDocumentEditable, pathToContext } from '../util'
 import { State } from '../util/initialState'
 
@@ -22,7 +21,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const proseViewShortcut = {
+const proseViewShortcut: Shortcut = {
   id: 'proseView',
   name: 'Prose View',
   description: 'Display the current context as indented paragraphs.',
@@ -34,10 +33,9 @@ const proseViewShortcut = {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
-    // if the cursor is on a leaf, activate prose view for the parent
-    const path = cursor.length > 1 && getThoughtsRanked(state, cursor).length === 0
-      ? contextOf(cursor)
-      : cursor
+
+    // if the cursor context is ROOT, then activate prose view for the provided cursor node
+    const path = contextOf(cursor).length !== 0 ? contextOf(cursor) : cursor
 
     dispatch({
       type: 'toggleAttribute',

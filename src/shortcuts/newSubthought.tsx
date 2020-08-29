@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
 
 interface NewThought {
@@ -17,7 +17,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec = (dispatch: Dispatch<NewThought>) => dispatch({ type: 'newThought', insertNewSubthought: true })
 
-const newSubthoughtShortcut = {
+const newSubthoughtShortcut: Shortcut = {
   id: 'newSubthought',
   name: 'New Subthought',
   description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',

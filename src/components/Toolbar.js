@@ -18,11 +18,12 @@ import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
 import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { attribute, attributeEquals, getSetting, subtree, theme } from '../selectors'
-import { pathToContext } from '../util'
+import { contextOf, pathToContext } from '../util'
 
 // components
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
+import Shortcut from './Shortcut'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
@@ -32,14 +33,15 @@ const mapStateToProps = state => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
+  const contextOfCursor = context && contextOf(context)
 
   return {
-    cursorOnTableView: cursor && attributeEquals(state, context, '=view', 'Table'),
-    cursorOnAlphabeticalSort: cursor && attributeEquals(state, context, '=sort', 'Alphabetical'),
+    cursorOnTableView: cursor && attributeEquals(state, contextOfCursor, '=view', 'Table'),
+    cursorOnAlphabeticalSort: cursor && attributeEquals(state, contextOf(context), '=sort', 'Alphabetical'),
     cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
-    cursorPinSubthoughts: cursor && attributeEquals(state, context, '=pinChildren', 'true'),
+    cursorPinSubthoughts: cursor && attributeEquals(state, contextOfCursor, '=pinChildren', 'true'),
     cursorOnNote: cursor && attribute(state, context, '=note') != null,
-    cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
+    cursorOnProseView: cursor && attributeEquals(state, contextOfCursor, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
     fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
@@ -59,19 +61,11 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   const [lastScrollLeft, setLastScrollLeft] = useState()
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
-  const [overlayName, setOverlayName] = useState()
-  const [overlayDescription, setOverlayDescription] = useState()
 
   const fg = dark ? 'white' : 'black'
   const arrowWidth = fontSize / 3
 
-  useEffect(() => {
-    if (toolbarOverlay) {
-      const { name, description } = shortcutById(toolbarOverlay)
-      setOverlayName(name)
-      setOverlayDescription(description)
-    }
-  })
+  const shortcut = shortcutById(toolbarOverlay)
 
   useEffect(() => {
     window.addEventListener('mouseup', clearHoldTimer)
@@ -241,8 +235,12 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
             {toolbarOverlay ?
               <CSSTransition timeout={800} classNames='fade'>
                 <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                  <div className={'overlay-name'}>{overlayName}</div>
-                  <div className={'overlay-body'}>{overlayDescription}</div>
+                  <div className='overlay-name'>{shortcut.name}</div>
+                  {shortcut.gesture || shortcut.keyboard || shortcut.overlay
+                    ? <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>
+                    : null
+                  }
+                  <div className='overlay-body'>{shortcut.description}</div>
                 </div>
               </CSSTransition> : null}
           </TransitionGroup>

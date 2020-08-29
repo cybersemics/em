@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { Action } from 'redux'
 import { State } from '../util/initialState'
 import { clearSelection, scrollCursorIntoView } from '../util'
@@ -14,12 +14,12 @@ const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xm
 /** Removes the browser selection. */
 const blur = () => {
   if (document.activeElement) {
-    (document.activeElement as HTMLInputElement).blur() // eslint-disable-line no-extra-parens
+    (document.activeElement as HTMLInputElement).blur()
     clearSelection()
   }
 }
 
-const cursorBackShortcut = {
+const cursorBackShortcut: Shortcut = {
   id: 'cursorBack',
   name: 'Back',
   gesture: 'r',

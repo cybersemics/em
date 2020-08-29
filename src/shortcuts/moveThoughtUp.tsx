@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
 import { Action } from 'redux'
 
@@ -10,7 +10,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const moveThoughtUpShortcut = {
+const moveThoughtUpShortcut: Shortcut = {
   id: 'moveThoughtUp',
   name: 'Move Thought Up',
   description: 'Move the current thought up.',

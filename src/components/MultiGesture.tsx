@@ -1,6 +1,7 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import { noop } from 'lodash'
+import { Direction, GesturePath } from '../types'
 
 // requires peer dependencies react-dom and react-native-web
 // @ts-ignore
@@ -11,10 +12,6 @@ interface Point {
   y: number,
 }
 
-type Direction = 'u' | 'd' | 'l' | 'r'
-
-type Sequence = Direction[] | ''
-
 interface GestureState {
   dx: number,
   dy: number,
@@ -23,8 +20,8 @@ interface GestureState {
 }
 
 interface MultiGestureProps {
-  onGesture?: (g: Direction | null, sequence: Sequence, evt: any) => void,
-  onEnd?: (sequence: Sequence | null, evt: string) => void,
+  onGesture?: (g: Direction | null, sequence: GesturePath, e: Event) => void,
+  onEnd?: (sequence: GesturePath | null, e: Event) => void,
   onStart?: () => void,
   scrollThreshold?: number,
   threshold?: number,
@@ -49,7 +46,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   disableScroll = false;
   panResponder: { panHandlers: any };
   scrolling = false;
-  sequence: Sequence = '';
+  sequence: GesturePath = '';
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -82,9 +79,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       onMoveShouldSetPanResponderCapture: noTextSelected,
 
       // does not report moveX and moveY
-      // onPanResponderGrant: (evt, gestureState) => {},
+      // onPanResponderGrant: (e, gestureState) => {},
 
-      onPanResponderMove: (evt: string, gestureState: GestureState) => {
+      onPanResponderMove: (e: Event, gestureState: GestureState) => {
 
         if (this.abandon) {
           return
@@ -126,25 +123,25 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           if (g !== this.sequence[this.sequence.length - 1]) {
             this.sequence += g
             if (this.props.onGesture) {
-              this.props.onGesture(g, this.sequence as Sequence, evt)
+              this.props.onGesture(g, this.sequence, e)
             }
           }
         }
       },
 
-      onPanResponderRelease: (evt: string) => {
+      onPanResponderRelease: (e: Event) => {
         if (this.props.onEnd) {
-          this.props.onEnd(this.sequence, evt)
+          this.props.onEnd(this.sequence, e)
         }
         this.reset()
       },
 
       onPanResponderTerminationRequest: () => true,
-      onPanResponderTerminate: (evt: string) => {
+      onPanResponderTerminate: (e: Event) => {
         // Another component has become the responder, so this gesture
         // should be cancelled
         if (this.props.onEnd) {
-          this.props.onEnd(null, evt)
+          this.props.onEnd(null, e)
         }
       }
     })

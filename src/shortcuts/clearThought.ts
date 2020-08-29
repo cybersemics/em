@@ -1,7 +1,8 @@
 import { isDocumentEditable, setSelection } from '../util'
 import { REGEXP_TAGS } from '../constants'
+import { Shortcut } from '../types'
 
-const clearThoughtShortcut = {
+const clearThoughtShortcut: Shortcut = {
   id: 'clearThought',
   name: 'Clear Thought',
   description: 'Clear the text of the current thought.',
