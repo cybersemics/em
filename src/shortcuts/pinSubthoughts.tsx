@@ -33,11 +33,11 @@ const pinSubthoughtsShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
     const context = contextOf(cursor)
-    const isPinned = attributeEquals(state, pathToContext(context), '=pinChildren', 'true')
+    const isPinned = attributeEquals(state, pathToContext(contextOf(context)), '=pinChildren', 'true')
     if (cursor) {
       dispatch({
         type: 'toggleAttribute',
-        context: pathToContext(cursor),
+        context: pathToContext(contextOf(cursor)),
         key: '=pinChildren',
         value: isPinned ? 'false' : 'true'
       })

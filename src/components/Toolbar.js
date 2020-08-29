@@ -32,7 +32,7 @@ import {
 
 // util
 import {
-  pathToContext,
+  contextOf, pathToContext,
 } from '../util'
 
 // selectors
@@ -57,14 +57,15 @@ const mapStateToProps = state => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
+  const contextOfCursor = context && contextOf(context)
 
   return {
-    cursorOnTableView: cursor && attributeEquals(state, context, '=view', 'Table'),
-    cursorOnAlphabeticalSort: cursor && attributeEquals(state, context, '=sort', 'Alphabetical'),
+    cursorOnTableView: cursor && attributeEquals(state, contextOfCursor, '=view', 'Table'),
+    cursorOnAlphabeticalSort: cursor && attributeEquals(state, contextOf(context), '=sort', 'Alphabetical'),
     cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
-    cursorPinSubthoughts: cursor && attributeEquals(state, context, '=pinChildren', 'true'),
+    cursorPinSubthoughts: cursor && attributeEquals(state, contextOfCursor, '=pinChildren', 'true'),
     cursorOnNote: cursor && attribute(state, context, '=note') != null,
-    cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
+    cursorOnProseView: cursor && attributeEquals(state, contextOfCursor, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
     fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
