@@ -57,7 +57,7 @@ const mapStateToProps = state => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
-  const contextOfCursor = context && context(context)
+  const contextOfCursor = context && contextOf(context)
 
   return {
     cursorOnTableView: cursor && attributeEquals(state, contextOfCursor, '=view', 'Table'),
