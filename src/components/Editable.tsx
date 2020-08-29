@@ -60,6 +60,7 @@ import {
   hasChild,
   isContextViewActive,
 } from '../selectors'
+import { AnimationContext } from './FlatTreeRenderer'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -87,6 +88,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
+
+  // consuming latest animation state
+  const { phase } = React.useContext(AnimationContext)
 
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
@@ -223,13 +227,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   useEffect(() => {
-
     const { editing, noteFocus, dragHold } = state
 
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
     // NOTE: asyncFocus() also needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold) {
+    // Note: Prevent selection if the node is in leaving.
+    if (phase !== 'leave' && isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold) {
 
       /*
         Mobile Safari: Auto-Capitalization broken if selection is set synchronously.

@@ -369,7 +369,7 @@ const ThoughtWrapper = ({ measureBind, wrapperDivRef, innerDivStyle, wrapperStyl
             })}
             id={nodeItem.key}
           >
-            <Thought nodeItem={nodeItem} childrenForced={[]}/>
+            <Thought nodeItem={nodeItem}/>
           </animated.div>
           <DropEndGroup expanded={expanded} thoughtsRanked={nodeItem.thoughtsRanked} showContexts={showContexts} dropEndObject={nodeItem.dropEndArray}/>
         </div>

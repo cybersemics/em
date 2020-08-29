@@ -27,6 +27,26 @@ interface SpringProps {
   [key: string]: SpringValue | Interpolation | string | number,
 }
 
+interface AnimationContextValue {
+  phase: string,
+}
+
+export const AnimationContext = React.createContext<AnimationContextValue>({ phase: '' })
+
+interface AnimationProviderProps {
+  phase: string,
+  children: React.ReactNode,
+}
+
+/**
+ * Animation State Provider.
+ */
+const AnimationStateProvider: React.FC<AnimationProviderProps> = ({ children, phase }) => {
+  return <AnimationContext.Provider value={{ phase }}>
+    {children}
+  </AnimationContext.Provider>
+}
+
 export interface DropEndObject {
   key: string,
   xOffset: number,
@@ -111,7 +131,7 @@ const TreeNode = ({
 
   useEffect(() => {
     viewHeightRef.current = viewHeight
-    heightChangeCallback({ key: item.key, height: viewHeight })
+    if (viewHeight === 0) heightChangeCallback({ key: item.key, height: viewHeight })
   }, [viewHeight])
 
   const isFirstColumn = item.viewInfo.table.column === 1
@@ -282,6 +302,7 @@ const TreeAnimation = ({
       enter: enterAndUpdate,
       leave: () => ({ opacity: 0 }),
       update: enterAndUpdate,
+      unique: true
     }
   )
 
@@ -302,21 +323,25 @@ const TreeAnimation = ({
         const leave = !flatArrayKey[item.key]
         const update = !leave && oldFlatArrayKey[item.key]
         const xOffset = calculateXOffset(item, visibleStartDepth)
+        const phase = leave ? 'leave' : update ? 'update' : 'enter'
 
+        // passing latest animation state using context
         return (
-          <TreeNode
-            key={item.key}
-            item={flatArrayKey[item.key] || item}
-            oldItem={oldFlatArrayKey[item.key]}
-            styleProps={props}
-            phase={leave ? 'leave' : update ? 'update' : ''}
-            heightObject={heightObject}
-            flatArray={flatArray}
-            heightChangeCallback={nodeHeightChangeHandler}
-            flatArrayKey={flatArrayKey}
-            xOffset={`${xOffset}rem`}
-            visibleStartDepth={visibleStartDepth}
-          />
+          <AnimationStateProvider phase={phase}>
+            <TreeNode
+              key={item.key}
+              item={flatArrayKey[item.key] || item}
+              oldItem={oldFlatArrayKey[item.key]}
+              styleProps={props}
+              phase={phase}
+              heightObject={heightObject}
+              flatArray={flatArray}
+              heightChangeCallback={nodeHeightChangeHandler}
+              flatArrayKey={flatArrayKey}
+              xOffset={`${xOffset}rem`}
+              visibleStartDepth={visibleStartDepth}
+            />
+          </AnimationStateProvider>
         )
       })}
     </div>
