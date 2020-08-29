@@ -83,6 +83,31 @@ describe('dexie', () => {
 
   })
 
+  test('getThoughtsByIds', async () => {
+
+    const thought1 = {
+      id: hashThought('x'),
+      value: 'x',
+      contexts: [['a']],
+      created: timestamp(),
+      lastUpdated: timestamp()
+    }
+
+    const thought2 = {
+      id: hashThought('y'),
+      value: 'y',
+      contexts: [['b']],
+      created: timestamp(),
+      lastUpdated: timestamp()
+    }
+
+    await db.updateThought(hashThought('x'), thought1)
+    await db.updateThought(hashThought('y'), thought2)
+
+    const dbThoughts = await db.getThoughtsByIds([hashThought('x'), hashThought('y')])
+    expect(dbThoughts).toEqual([thought2, thought1])
+  })
+
   test('getThought', async () => {
 
     const nothought = await db.getThought('x')
@@ -96,7 +121,7 @@ describe('dexie', () => {
       lastUpdated: timestamp()
     }
 
-    await db.updateThought(12345, thought)
+    await db.updateThought(hashThought('x'), thought)
 
     const dbThought = await db.getThought('x')
     expect(dbThought).toEqual(thought)
@@ -195,7 +220,7 @@ describe('dexie', () => {
 
   describe('getDescendantThoughts', () => {
 
-    test('default', async () => {
+    test.only('default', async () => {
 
       const thoughtX = {
         id: hashThought('x'),
@@ -280,7 +305,8 @@ describe('dexie', () => {
         [hashContext(['x', 'a', 'b'])]: parentEntryLeaf,
       })
 
-      const thoughts = await db.getDescendantThoughts(['x'])
+      const parentEntry = await db.getContext(['x'])
+      const thoughts = await db.getDescendantThoughts(['x'], parentEntry)
 
       expect(thoughts).toHaveProperty('contextIndex')
 

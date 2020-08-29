@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
-import { hashContext, hashThought, mergeThoughts, never, pathToContext, timestamp, unroot } from '../util'
+import { hashContext, hashThought, mergeThoughts, pathToContext, timestamp, unroot } from '../util'
 import { EM_TOKEN } from '../constants'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
@@ -66,6 +66,10 @@ export const deleteThought = async id => db.thoughtIndex.delete(id)
 /** Gets a single thought from the thoughtIndex by its id. */
 export const getThoughtById = async id => db.thoughtIndex.get(id)
 
+/** Gets multiple thoughts from the thoughtIndex by ids. */
+export const getThoughtsByIds = async ids =>
+  db.thoughtIndex.where('id').anyOf(ids).toArray()
+
 /** Gets a single thought from the thoughtIndex by its value. */
 export const getThought = async value => db.thoughtIndex.get({ id: hashThought(value) })
 
@@ -90,65 +94,115 @@ export const deleteContext = async id => db.contextIndex.delete(id)
 /** Gets the Parent for a context. */
 export const getContext = async context => db.contextIndex.get({ id: hashContext(context) })
 
+/** Gets multiple contexts from the contextIndex by ids. */
+export const getContextsByIds = async ids =>
+  db.contextIndex.where('id').anyOf(ids).toArray()
+
 /**
- * Builds a thoughtIndex and contextIndex for all descendants of a context.
+ * Builds a thoughtIndex and contextIndex for all descendants.
  *
  * @param context
+ * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned ParentEntry. Ignored for EM context. Default: 100.
  */
-export const getDescendantThoughts = async (context, { maxDepth = 100 } = {}) => {
+export const getDescendantThoughts = async (context, parentEntry, { maxDepth = 100 } = {}) => {
 
+  console.log('getDescendantThoughts', context, parentEntry)
   const contextEncoded = hashContext(context)
 
-  const parentEntry = maxDepth > 0
-    ? await getContext(context) || {
-      children: [],
-      lastUpdated: never(),
-    }
-    : {
-      children: [],
-      lastUpdated: never(),
-      pending: true,
-    }
+  // const parentEntry = maxDepth > 0
+  //   ? await getContext(context) || {
+  //     children: [],
+  //     lastUpdated: never(),
+  //   }
+  //   : {
+  //     children: [],
+  //     lastUpdated: never(),
+  //     pending: true,
+  //   }
 
   // initially set the contextIndex for the given context
   // if there are no children, still set this so that pending is overwritten
-  const initialThoughts = {
+  // const initialThoughts = {
+  //   contextIndex: {
+  //     [contextEncoded]: parentEntry
+  //   },
+  //   thoughtIndex: {}
+  // }
+
+  // console.log('parentEntry.children', parentEntry.children)
+
+  // generate lists of encoded thoughts and contexts for all children
+  const { thoughtIds, contextMap } = (parentEntry.children || []).reduce((accum, child) => ({
+    thoughtIds: [
+      ...accum.thoughtIds || [],
+      hashThought(child.value),
+    ],
+    contextMap: {
+      ...accum.contextMap,
+      [hashContext(unroot([...context, child.value]))]: unroot([...context, child.value]),
+    }
+  }), { thoughtIds: [], contextMap: {} })
+
+  // console.log('thoughtIds', thoughtIds)
+  console.log('contextMap', contextMap)
+
+  const thoughtList = await getThoughtsByIds(thoughtIds)
+  const parentEntries = await getContextsByIds(Object.keys(contextMap))
+  // console.log('thoughtList', thoughtList)
+  console.log('parentEntries', parentEntries)
+
+  const thoughts = {
     contextIndex: {
-      [contextEncoded]: parentEntry
+      [contextEncoded]: parentEntry,
+      ..._.keyBy(parentEntries, 'id')
     },
-    thoughtIndex: {}
+    thoughtIndex: _.keyBy(thoughtList, 'id')
   }
 
+  // console.log('thoughts', thoughts)
+
+  const descendantThoughts = await Promise.all(parentEntries.map((parentEntry, i) =>
+    getDescendantThoughts(contextMap[parentEntry.id], parentEntry, { maxDepth: maxDepth - 1 })
+  ))
+
+  console.log('descendantThoughts', descendantThoughts)
+
   // recursively iterate over each child
-  return (parentEntry.children || []).reduce(async (thoughtsPromise, child) => {
+  // return (parentEntry.children || []).reduce(async (thoughtsPromise, child) => {
 
-    const thoughts = await thoughtsPromise
-    const thoughtEncoded = hashThought(child.value)
-    const thought = await getThought(child.value) // TODO: Cache thoughts that have already been loaded
-    const contextChild = unroot([...context, child.value])
+  //   const thoughts = await thoughtsPromise
+  //   const thoughtEncoded = hashThought(child.value)
+  //   const thought = await getThought(child.value) // TODO: Cache thoughts that have already been loaded
+  //   const contextChild = unroot([...context, child.value])
 
-    // RECURSION
-    const nextDescendantThoughts = await getDescendantThoughts(contextChild, { maxDepth: maxDepth - 1 })
+  //   // RECURSION
+  //   const nextDescendantThoughts = await getDescendantThoughts(contextChild, { maxDepth: maxDepth - 1 })
 
-    // merge descendant thoughtIndex and add child thought
-    return mergeThoughts(thoughts, nextDescendantThoughts, {
-      thoughtIndex: {
-        [thoughtEncoded]: thought,
-      }
-    })
-  }, initialThoughts)
+  //   // merge descendant thoughtIndex and add child thought
+  //   return mergeThoughts(thoughts, nextDescendantThoughts, {
+  //     thoughtIndex: {
+  //       [thoughtEncoded]: thought,
+  //     }
+  //   })
+  // }, initialThoughts)
+
+  const descendantThoughtsMerged = mergeThoughts(thoughts, ...descendantThoughts)
+  console.log('descendantThoughtsMerged', descendantThoughtsMerged)
+
+  return descendantThoughtsMerged
 }
 
 /** Gets descendants of many contexts, returning them in a single ThoughtsInterface. Does not limit the depth of the em context.
  *
- * @param maxDepth    Maximum number of levels to fetch. See getManyDescendants.
+ * @param maxDepth    Maximum number of levels to fetch.
  */
 export const getManyDescendants = async (contextMap, { maxDepth = 100 } = {}) => {
+  console.log('getManyDescendants')
 
   // fetch descendant thoughts for each context in contextMap
   const descendantsArray = await Promise.all(Object.keys(contextMap).map(key =>
-    getDescendantThoughts(pathToContext(contextMap[key]), {
+    getDescendantThoughts(pathToContext(contextMap[key]), {}, {
       // do not limit the depth of the em context
       maxDepth: key === emContextEncoded ? Infinity : maxDepth
     })
