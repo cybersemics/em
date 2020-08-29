@@ -1,42 +1,62 @@
-import { inputHandlers } from '../../shortcuts'
 import { importText } from '../../action-creators'
-import { RANKED_ROOT } from '../../constants'
-import { noop } from 'lodash'
+import { NOOP, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attributeEquals, getSetting } from '../../selectors'
+import toggleSortShortcut from '../toggleSort'
+import executeShortcut from '../../test-helpers/executeShortcut'
 
-it('toggle sort preference of parent of cursor', async () => {
+const event = { preventDefault: NOOP } as Event
+
+it('toggle on sort preference of parent of cursor (initial state without =sort attribute)', async () => {
 
   const store = createTestStore()
 
-  const { keyDown } = inputHandlers(store)
-
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
+    - d
     - b
     - c
-    - d
     - e
 `))
 
   const globalSort = getSetting(store.getState(), ['Global Sort'])
   const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
 
-  await store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: '0' },
-    { value: 'b', rank: '1' },
+    { value: 'b', rank: '2' },
   ] })
 
-  // set =sort attribute to sortPreference
-  keyDown({ preventDefault: noop, key: 's', altKey: true } as KeyboardEvent)
+  executeShortcut(toggleSortShortcut, { store, type: 'keyboard', event })
 
-  // parent of cursor should have =sort set to sortPreference
   expect(attributeEquals(store.getState(), ['a'], '=sort', sortPreference)).toBeTruthy()
+})
 
-  // remove value of sortPreference from =sort attribute
-  keyDown({ preventDefault: noop, key: 's', altKey: true } as KeyboardEvent)
+it('toggle off sort preference of parent of cursor', async () => {
 
-  // parent of cursor should not have =sort attribute set to sortPreference
+  const store = createTestStore()
+
+  const globalSort = getSetting(store.getState(), ['Global Sort'])
+  const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
+
+  // import thoughts
+  store.dispatch(importText(RANKED_ROOT, `
+  - a
+    - =sort
+      -${sortPreference}
+    - d
+    - b
+    - c
+    - e
+`))
+
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+    { value: 'a', rank: '0' },
+    { value: 'b', rank: '2' },
+  ] })
+
+  executeShortcut(toggleSortShortcut, { store, type: 'keyboard', event })
+
   expect(attributeEquals(store.getState(), ['a'], '=sort', sortPreference)).toBeFalsy()
 })

@@ -28,14 +28,10 @@ const toggleTableViewShortcut: Shortcut = {
   svg: Icon,
   exec: (dispatch: Dispatch<ToggleAttribute>, getState: () => State) => {
     const { cursor } = getState()
-    if (cursor) {
-
-      const path = contextOf(cursor)
-      if (path.length === 0) return
-
+    if (cursor && cursor.length > 1) {
       dispatch({
         type: 'toggleAttribute',
-        context: pathToContext(path),
+        context: pathToContext(contextOf(cursor)),
         key: '=view',
         value: 'Table'
       })

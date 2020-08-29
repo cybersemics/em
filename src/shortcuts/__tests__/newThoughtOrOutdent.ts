@@ -1,15 +1,16 @@
-import { inputHandlers } from '../../shortcuts'
 import { importText } from '../../action-creators'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
-import { noop } from 'lodash'
 import { createTestStore } from '../../test-helpers/createTestStore'
+import newSubthought from '../newSubthought'
+import newThoughtOrOutdent from '../newThoughtOrOutdent'
+import executeShortcut from '../../test-helpers/executeShortcut'
+
+const event = { preventDefault: NOOP } as Event
 
 it('empty thought should outdent when hit enter', async () => {
 
   const store = createTestStore()
-
-  const { keyDown } = inputHandlers(store)
 
   // import thoughts
   await store.dispatch(importText(RANKED_ROOT, `
@@ -30,14 +31,18 @@ it('empty thought should outdent when hit enter', async () => {
   ] })
 
   // create a new empty subthought
-  keyDown({ preventDefault: noop, key: 'Enter', ctrlKey: true })
+  executeShortcut(newSubthought, { store, type: 'keyboard', event })
 
   // this should cause outdent instead of creating new thought
-  keyDown({ preventDefault: noop, key: 'Enter' })
-  keyDown({ preventDefault: noop, key: 'Enter' })
-  keyDown({ preventDefault: noop, key: 'Enter' })
+  executeShortcut(newThoughtOrOutdent, { store, type: 'keyboard', event })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
+  // this should cause outdent instead of creating new thought
+  executeShortcut(newThoughtOrOutdent, { store, type: 'keyboard', event })
+
+  // this should cause outdent instead of creating new thought
+  executeShortcut(newThoughtOrOutdent, { store, type: 'keyboard', event })
+
+  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
   const expectedOutput = `- ${ROOT_TOKEN}
   - a
