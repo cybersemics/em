@@ -1,9 +1,9 @@
 import { store } from '../../store'
-import { ROOT_TOKEN } from '../../constants'
+import { EM_TOKEN, ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { getChildren, getThought } from '../../selectors'
 import initDB, * as db from '../dexie'
-import { hashContext, hashThought, timestamp } from '../../util'
+import { hashContext, hashThought, never, timestamp } from '../../util'
 
 jest.useFakeTimers()
 
@@ -476,7 +476,7 @@ describe('dexie only', () => {
         // children are pending
         [hashContext(['x', 'y'])]: {
           children: [],
-          lastUpdated: '',
+          lastUpdated: never(),
           pending: true,
         },
       })
@@ -595,132 +595,265 @@ describe('dexie only', () => {
     })
   })
 
+  describe('getManyDescendants', () => {
 
-  test('getManyDescendants', async () => {
+    test('default', async () => {
 
-    const thought1 = {
-      id: hashThought('x'),
-      value: 'x',
-      contexts: [[]],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
+      const thought1 = {
+        id: hashThought('x'),
+        value: 'x',
+        contexts: [[]],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    const thought2 = {
-      id: hashThought('y'),
-      value: 'y',
-      contexts: [['x']],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
+      const thought2 = {
+        id: hashThought('y'),
+        value: 'y',
+        contexts: [['x']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    const thought3 = {
-      id: hashThought('z'),
-      value: 'z',
-      contexts: [['x', 'y']],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
+      const thought3 = {
+        id: hashThought('z'),
+        value: 'z',
+        contexts: [['x', 'y']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    const thought4 = {
-      id: hashThought('m'),
-      value: 'm',
-      contexts: [['t', 'u', 'v']],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
+      const thought4 = {
+        id: hashThought('m'),
+        value: 'm',
+        contexts: [['t', 'u', 'v']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    const thought5 = {
-      id: hashThought('n'),
-      value: 'n',
-      contexts: [['t', 'u', 'v', 'm']],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
+      const thought5 = {
+        id: hashThought('n'),
+        value: 'n',
+        contexts: [['t', 'u', 'v', 'm']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    const parentEntry1 = {
-      children:[
-        { value: 'y', rank: 0 },
-      ],
-      lastUpdated: timestamp()
-    }
+      const parentEntry1 = {
+        children:[
+          { value: 'y', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
 
-    const parentEntry2 = {
-      children: [
-        { value: 'z', rank: 0 },
-      ],
-      lastUpdated: timestamp()
-    }
+      const parentEntry2 = {
+        children: [
+          { value: 'z', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
 
-    const parentEntry3 = {
-      children: [],
-      lastUpdated: timestamp()
-    }
+      const parentEntry3 = {
+        children: [],
+        lastUpdated: timestamp()
+      }
 
-    const parentEntry4 = {
-      children: [
-        { value: 'n', rank: 0 },
-      ],
-      lastUpdated: timestamp()
-    }
+      const parentEntry4 = {
+        children: [
+          { value: 'n', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
 
-    const parentEntry5 = {
-      children: [],
-      lastUpdated: timestamp()
-    }
+      const parentEntry5 = {
+        children: [],
+        lastUpdated: timestamp()
+      }
 
-    await db.updateThoughtIndex({
-      [hashThought('x')]: thought1,
-      [hashThought('y')]: thought2,
-      [hashThought('z')]: thought3,
-      [hashThought('m')]: thought4,
-      [hashThought('n')]: thought5,
+      await db.updateThoughtIndex({
+        [hashThought('x')]: thought1,
+        [hashThought('y')]: thought2,
+        [hashThought('z')]: thought3,
+        [hashThought('m')]: thought4,
+        [hashThought('n')]: thought5,
+      })
+
+      await db.updateContextIndex({
+        [hashContext(['x'])]: parentEntry1,
+        [hashContext(['x', 'y'])]: parentEntry2,
+        [hashContext(['x', 'y', 'z'])]: parentEntry3,
+        [hashContext(['t', 'u', 'v', 'm'])]: parentEntry4,
+        [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntry5,
+      })
+
+      const thoughts = await db.getManyDescendants({
+        [hashContext(['x'])]: ['x'],
+        [hashContext(['t', 'u', 'v', 'm'])]: ['t', 'u', 'v', 'm'],
+      })
+
+      expect(thoughts).toHaveProperty('contextIndex')
+
+      expect(thoughts.contextIndex).toEqual({
+        [hashContext(['x'])]: {
+          ...parentEntry1,
+          id: hashContext(['x']),
+        },
+        [hashContext(['x', 'y'])]: {
+          ...parentEntry2,
+          id: hashContext(['x', 'y']),
+        },
+        [hashContext(['x', 'y', 'z'])]: {
+          ...parentEntry3,
+          id: hashContext(['x', 'y', 'z']),
+        },
+        [hashContext(['t', 'u', 'v', 'm'])]: {
+          ...parentEntry4,
+          id: hashContext(['t', 'u', 'v', 'm']),
+        },
+        [hashContext(['t', 'u', 'v', 'm', 'n'])]: {
+          ...parentEntry5,
+          id: hashContext(['t', 'u', 'v', 'm', 'n']),
+        },
+      })
+
+      expect(thoughts).toHaveProperty('thoughtIndex')
+
+      expect(thoughts.thoughtIndex).toEqual({
+        [hashThought('y')]: thought2,
+        [hashThought('z')]: thought3,
+        [hashThought('n')]: thought5,
+      })
+
     })
 
-    await db.updateContextIndex({
-      [hashContext(['x'])]: parentEntry1,
-      [hashContext(['x', 'y'])]: parentEntry2,
-      [hashContext(['x', 'y', 'z'])]: parentEntry3,
-      [hashContext(['t', 'u', 'v', 'm'])]: parentEntry4,
-      [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntry5,
-    })
+    test('maxDepth', async () => {
 
-    const thoughts = await db.getManyDescendants({
-      [hashContext(['x'])]: ['x'],
-      [hashContext(['t', 'u', 'v', 'm'])]: ['t', 'u', 'v', 'm'],
-    })
+      const thought1 = {
+        id: hashThought('x'),
+        value: 'x',
+        contexts: [[]],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    expect(thoughts).toHaveProperty('contextIndex')
+      const thought2 = {
+        id: hashThought('y'),
+        value: 'y',
+        contexts: [['x']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    expect(thoughts.contextIndex).toEqual({
-      [hashContext(['x'])]: {
-        ...parentEntry1,
-        id: hashContext(['x']),
-      },
-      [hashContext(['x', 'y'])]: {
-        ...parentEntry2,
-        id: hashContext(['x', 'y']),
-      },
-      [hashContext(['x', 'y', 'z'])]: {
-        ...parentEntry3,
-        id: hashContext(['x', 'y', 'z']),
-      },
-      [hashContext(['t', 'u', 'v', 'm'])]: {
-        ...parentEntry4,
-        id: hashContext(['t', 'u', 'v', 'm']),
-      },
-      [hashContext(['t', 'u', 'v', 'm', 'n'])]: {
-        ...parentEntry5,
-        id: hashContext(['t', 'u', 'v', 'm', 'n']),
-      },
-    })
+      const thought3 = {
+        id: hashThought('z'),
+        value: 'z',
+        contexts: [['x', 'y']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    expect(thoughts).toHaveProperty('thoughtIndex')
+      const thought4 = {
+        id: hashThought('m'),
+        value: 'm',
+        contexts: [['t', 'u', 'v']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
 
-    expect(thoughts.thoughtIndex).toEqual({
-      [hashThought('y')]: thought2,
-      [hashThought('z')]: thought3,
-      [hashThought('n')]: thought5,
+      const thought5 = {
+        id: hashThought('n'),
+        value: 'n',
+        contexts: [['t', 'u', 'v', 'm']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry1 = {
+        children:[
+          { value: 'y', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry2 = {
+        children: [
+          { value: 'z', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry3 = {
+        children: [],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry4 = {
+        children: [
+          { value: 'n', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry5 = {
+        children: [],
+        lastUpdated: timestamp()
+      }
+
+      await db.updateThoughtIndex({
+        [hashThought('x')]: thought1,
+        [hashThought('y')]: thought2,
+        [hashThought('z')]: thought3,
+        [hashThought('m')]: thought4,
+        [hashThought('n')]: thought5,
+      })
+
+      await db.updateContextIndex({
+        [hashContext(['x'])]: parentEntry1,
+        [hashContext(['x', 'y'])]: parentEntry2,
+        [hashContext(['x', 'y', 'z'])]: parentEntry3,
+        [hashContext(['t', 'u', 'v', 'm'])]: parentEntry4,
+        [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntry5,
+      })
+
+      const thoughts = await db.getManyDescendants({
+        [hashContext(['x'])]: ['x'],
+        [hashContext(['t', 'u', 'v', 'm'])]: ['t', 'u', 'v', 'm'],
+      }, { maxDepth: 2 })
+
+      expect(thoughts).toHaveProperty('contextIndex')
+
+      expect(thoughts.contextIndex).toEqual({
+        [hashContext(['x'])]: {
+          ...parentEntry1,
+          id: hashContext(['x']),
+        },
+        [hashContext(['x', 'y'])]: {
+          ...parentEntry2,
+          id: hashContext(['x', 'y']),
+        },
+        [hashContext(['x', 'y', 'z'])]: {
+          children: [],
+          lastUpdated: never(),
+          pending: true,
+        },
+        [hashContext(['t', 'u', 'v', 'm'])]: {
+          ...parentEntry4,
+          id: hashContext(['t', 'u', 'v', 'm']),
+        },
+        [hashContext(['t', 'u', 'v', 'm', 'n'])]: {
+          ...parentEntry5,
+          id: hashContext(['t', 'u', 'v', 'm', 'n']),
+        },
+      })
+
+      expect(thoughts).toHaveProperty('thoughtIndex')
+
+      expect(thoughts.thoughtIndex).toEqual({
+        [hashThought('y')]: thought2,
+        [hashThought('z')]: thought3,
+        [hashThought('n')]: thought5,
+      })
+
     })
 
   })
