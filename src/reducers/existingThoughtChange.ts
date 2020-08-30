@@ -37,9 +37,9 @@ interface Payload {
 
 /** Changes the text of an existing thought. */
 const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }: Payload) => {
-
   if (oldValue === newValue || isDivider(oldValue)) return state
 
+  const { cursor } = state
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const value = headValue(thoughtsRanked)
@@ -60,7 +60,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
   const id = headId(thoughtsRanked) || exactThought!.id as string
   const archived = exactThought ? exactThought.archived : null
-  const cursorNew = state.cursor && [...state.cursor.slice(0, -1), { ...head(state.cursor), value: newValue }]
+  const cursorNew = cursor && contextOf(cursor).concat({ ...head(cursor), value: newValue })
   const newPath = thoughtsRanked.slice(0, thoughtsRanked.length - 1).concat({ value: newValue, rank: rankInContext || rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
