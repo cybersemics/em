@@ -32,9 +32,8 @@ interface RankInfo {
   deepLevel: number,
 }
 
-/** If skipRoot is true, replace head block with its children, or drop it, if head has no children. */
-const skipRootThought = (skipRoot: boolean, blocks: Block[]) => {
-  if (!skipRoot) return blocks
+/** Replace head block with its children, or drop it, if head has no children. */
+const skipRootThought = (blocks: Block[]) => {
   const head = _.head(blocks)
   if (!head) return blocks
   const tail = _.tail(blocks)
@@ -197,7 +196,7 @@ export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], 
   }
 
   const startContext = getStartContext(thoughtsRanked)
-  const thoughts = skipRootThought(skipRoot, blocks)
+  const thoughts = skipRoot ? skipRootThought(blocks) : blocks
   const rankMap = createRankMap(thoughts, rankStart, rankIncrement)
   const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankMap, thoughts)
   saveThoughts(startContext, rankMap, thoughts, insertThought)

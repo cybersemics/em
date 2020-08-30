@@ -25,14 +25,9 @@ export const convertHTMLtoJSON = (html: string) => {
   /** Removes empty nodes and comments from himalaya's JSON output. */
   const removeEmptyNodesAndComments = (nodes: HimalayaNode[]): (Element | Text)[] => {
     const filteredNodes = nodes.filter(node => {
-      if (node.type === 'element') {
-        if (node.tagName === 'br') return false
-        return true
-      }
-      if (node.type === 'comment') return false
-      // remove text nodes containing only empty space and new line characters, such nodes could be created by himalaya in case of multi-line html input
-      if (node.type === 'text' && isStringIncludesOnly(node.content, ['\n', ' '])) return false
-      return node.content.length
+      return node.type === 'element'
+        ? node.tagName !== 'br'
+        : node.type === 'comment' || (node.type === 'text' && isStringIncludesOnly(node.content, ['\n', ' '])) ? false : node.content.length
     })
     return filteredNodes.map(node => node.type === 'element' && node.children.length > 0 ? { ...node, children: removeEmptyNodesAndComments(node.children) } : node) as (Element | Text)[]
   }
@@ -101,6 +96,7 @@ export const convertHTMLtoJSON = (html: string) => {
       const [child] = node.children as Text[]
       return { ...convertText(child), partOfThought: true }
     }
+    return null
   }
 
   /** Convert PreBlock array to Block array. */
@@ -118,7 +114,7 @@ export const convertHTMLtoJSON = (html: string) => {
       }
       // convert formatting tag
       if (node.tagName === 'i' || node.tagName === 'b' || node.tagName === 'span') {
-        return convertFormattingTags(node)
+        return convertFormattingTags(node)!
       }
       // convert children of ul
       if (node.tagName === 'ul') {
@@ -142,7 +138,7 @@ export const convertHTMLtoJSON = (html: string) => {
         }
       }
       else return convert(node.children as (Element | Text)[])
-    }).filter(node => node !== undefined) as (PreBlock | PreBlock[])[]
+    }) as (PreBlock | PreBlock[])[]
     return blocks.length > 1 ? joinChildren(blocks) : blocks.flat()
   }
 
