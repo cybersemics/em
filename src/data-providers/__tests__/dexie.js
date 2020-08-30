@@ -856,6 +856,137 @@ describe('dexie only', () => {
 
     })
 
+    test('Ignore maxDepth on EM context', async () => {
+
+      const thought1 = {
+        id: hashThought(EM_TOKEN),
+        value: EM_TOKEN,
+        contexts: [[]],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thought2 = {
+        id: hashThought('y'),
+        value: 'y',
+        contexts: [[EM_TOKEN]],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thought3 = {
+        id: hashThought('z'),
+        value: 'z',
+        contexts: [[EM_TOKEN, 'y']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thought4 = {
+        id: hashThought('m'),
+        value: 'm',
+        contexts: [['t', 'u', 'v']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thought5 = {
+        id: hashThought('n'),
+        value: 'n',
+        contexts: [['t', 'u', 'v', 'm']],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry1 = {
+        children:[
+          { value: 'y', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry2 = {
+        children: [
+          { value: 'z', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry3 = {
+        children: [],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry4 = {
+        children: [
+          { value: 'n', rank: 0 },
+        ],
+        lastUpdated: timestamp()
+      }
+
+      const parentEntry5 = {
+        children: [],
+        lastUpdated: timestamp()
+      }
+
+      await db.updateThoughtIndex({
+        [hashThought(EM_TOKEN)]: thought1,
+        [hashThought('y')]: thought2,
+        [hashThought('z')]: thought3,
+        [hashThought('m')]: thought4,
+        [hashThought('n')]: thought5,
+      })
+
+      await db.updateContextIndex({
+        [hashContext([EM_TOKEN])]: parentEntry1,
+        [hashContext([EM_TOKEN, 'y'])]: parentEntry2,
+        [hashContext([EM_TOKEN, 'y', 'z'])]: parentEntry3,
+        [hashContext(['t', 'u', 'v', 'm'])]: parentEntry4,
+        [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntry5,
+      })
+
+      const thoughts = await db.getManyDescendants({
+        [hashContext([EM_TOKEN])]: [EM_TOKEN],
+        [hashContext(['t', 'u', 'v', 'm'])]: ['t', 'u', 'v', 'm'],
+      }, { maxDepth: 1 })
+
+      expect(thoughts).toHaveProperty('contextIndex')
+
+      expect(thoughts.contextIndex).toEqual({
+        [hashContext([EM_TOKEN])]: {
+          ...parentEntry1,
+          id: hashContext([EM_TOKEN]),
+        },
+        [hashContext([EM_TOKEN, 'y'])]: {
+          ...parentEntry2,
+          id: hashContext([EM_TOKEN, 'y']),
+        },
+        [hashContext([EM_TOKEN, 'y', 'z'])]: {
+          ...parentEntry3,
+          id: hashContext([EM_TOKEN, 'y', 'z']),
+        },
+        [hashContext(['t', 'u', 'v', 'm'])]: {
+          ...parentEntry4,
+          id: hashContext(['t', 'u', 'v', 'm']),
+        },
+        // still uses maxDepth on non-EM contexts
+        [hashContext(['t', 'u', 'v', 'm', 'n'])]: {
+          children: [],
+          lastUpdated: never(),
+          pending: true,
+        },
+      })
+
+      expect(thoughts).toHaveProperty('thoughtIndex')
+
+      expect(thoughts.thoughtIndex).toEqual({
+        [hashThought('y')]: thought2,
+        [hashThought('z')]: thought3,
+        [hashThought('n')]: thought5,
+      })
+
+    })
+
   })
 
 })
