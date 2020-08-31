@@ -37,9 +37,9 @@ interface Payload {
 
 /** Changes the text of an existing thought. */
 const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }: Payload) => {
-
   if (oldValue === newValue || isDivider(oldValue)) return state
 
+  const { cursor } = state
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const value = headValue(thoughtsRanked)
@@ -56,18 +56,12 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const thoughtsRankedLiveOld = showContexts
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
     : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
-
   // find exact thought from thoughtIndex
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
   const id = headId(thoughtsRanked) || exactThought!.id as string
   const archived = exactThought ? exactThought.archived : null
-
-  const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === (rankInContext || rank)
-    ? { value: newValue, rank: thought.rank }
-    : thought
-  )
-
-  const newPath = thoughtsRanked.slice(0, thoughtsRanked.length - 1).concat({ value: newValue, rank: thoughtsRanked.slice(thoughtsRanked.length - 1)[0].rank })
+  const cursorNew = cursor && contextOf(cursor).concat({ ...head(cursor), value: newValue })
+  const newPath = thoughtsRanked.slice(0, thoughtsRanked.length - 1).concat({ value: newValue, rank: rankInContext || rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
