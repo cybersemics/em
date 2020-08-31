@@ -208,6 +208,9 @@ export const MODIFIER_KEYS = {
   Shift: 1,
 }
 
+// actions representing any cursor movements.
+// These need to be differentiated from the other actions because
+// any two or more such consecutive actions are merged together
 export const NAVIGATION_ACTIONS = {
   cursorBack: 'cursorBack',
   cursorBeforeSearch: 'cursorBeforeSearch',
@@ -218,6 +221,7 @@ export const NAVIGATION_ACTIONS = {
   setCursor: 'setCursor'
 }
 
+// a list of all undoable/reversible actions (stored as object for indexing)
 export const UNDOABLE_ACTIONS = {
   archiveThought: 'archiveThought',
   bumpThoughtDown: 'bumpThoughtDown',
