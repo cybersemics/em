@@ -164,7 +164,6 @@ const undoRedoReducerEnhancer = createStore => (
     // inconsistencies between the original state, and the one built using patches
     if (isDispensable(inversePatch)) {
       const lastPatch = nthLast(inversePatches, 1)
-      console.log(lastPatch, inversePatch)
       return {
         ...newState,
         inversePatches: [
