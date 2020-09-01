@@ -1,8 +1,8 @@
-import { Dispatch } from 'redux'
 import { ActionCreator, Context } from '../types'
 import { isMobile, isSafari } from '../browser'
 import { ROOT_TOKEN, TUTORIAL_STEP_START } from '../constants'
 import { getSetting, getThoughts, hasChild, isContextViewActive } from '../selectors'
+import { alert } from '../action-creators'
 
 // util
 import {
@@ -26,29 +26,6 @@ const isDuplicateOnSplit = (offset: number, context: Context | null, state: Stat
   const siblings = context && getThoughts(state, context)
   return siblings && editingValue && siblings.some(sibling => sibling.value === editingValue.substring(0, offset) || sibling.value === editingValue.substring(offset))
 }
-
-/** Returns closure, which prevents dispatching new alerts before clearing previus. */
-const createAlertEmitter = (message: string, alertType: string) => {
-  let clearAlertTimeoutId: number | undefined // eslint-disable-line fp/no-let
-  return (state: State, dispatch: Dispatch<Alert>) => {
-    const { alert } = state
-    if (alert && alert.alertType === alertType) {
-      window.clearTimeout(clearAlertTimeoutId)
-      clearAlertTimeoutId = window.setTimeout(() => {
-        dispatch({ type: 'alert', value: null, alertType })
-        clearAlertTimeoutId = undefined
-      }, 2000)
-      return
-    }
-    dispatch({ type: 'alert', value: message, alertType })
-    clearAlertTimeoutId = window.setTimeout(() => {
-      dispatch({ type: 'alert', value: null, alertType })
-      clearAlertTimeoutId = undefined
-    }, 2000)
-  }
-}
-
-const showAlert = createAlertEmitter('Duplicate thoughts are not allowed within the same context.', 'duplicateThoughts')
 
 /**
  * Creates a new thought.
@@ -86,7 +63,7 @@ const newThought = ({ offset, preventSplit, value = '' }: { offset: number, prev
   }
   if (split) {
     if (isDuplicateOnSplit(offset, context, state)) {
-      showAlert(state, dispatch)
+      dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts', clearTimeout: 2000 }))
       return
     }
     dispatch(uneditable && cursor
