@@ -13,6 +13,7 @@ import {
 } from '../selectors'
 import { State } from '../util/initialState'
 import { RANKED_ROOT } from '../constants'
+import { alert } from '../action-creators'
 
 interface Error {
   type: 'error',
@@ -128,8 +129,7 @@ const exec = (dispatch: Dispatch<Outdent | Alert | ActionCreator>, getState: () 
   }
   // additional check for duplicates
   else if (isMergedThoughtDuplicate(getState())) {
-    dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
-    setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }), 2000)
+    dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts', clearTimeout: 2000 }))
   }
   else {
     dispatch(deleteEmptyThought)
