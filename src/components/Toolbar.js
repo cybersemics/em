@@ -191,22 +191,6 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     }, SCROLL_PRIORITIZATION_TIMEOUT))
   }
 
-  document.addEventListener('scroll', () => {
-    const active = document.activeElement
-    if (active.className.includes('editable')) {
-      const { top: activeTop } = active.getBoundingClientRect()
-      const toolbar = document.getElementsByClassName('toolbar-container')[0]
-      const { y: toolbarY, height: toolbarHeight } = toolbar.getBoundingClientRect()
-      active.innerHTML = `${window.getComputedStyle(active, null).getPropertyValue('caret-color')}`
-      if (activeTop < toolbarY + toolbarHeight) {
-        !active.classList.contains('caret-transparent') && active.classList.add('caret-transparent')
-      }
-      else {
-        active.classList.contains('caret-transparent') && active.classList.remove('caret-transparent')
-      }
-    }
-  })
-
   /**********************************************************************
    * Render
    **********************************************************************/

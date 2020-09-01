@@ -4,7 +4,7 @@ import { throttle } from 'lodash'
 import he from 'he'
 import classNames from 'classnames'
 import { importText, setEditingValue, setInvalidState } from '../action-creators'
-import { isMobile } from '../browser'
+import { isMobile, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
@@ -385,8 +385,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
-    resetToolbarPosition()
-    document.removeEventListener('scroll', updateToolbarPositionOnScroll)
+    if (isMobile && isSafari()) {
+      resetToolbarPosition()
+      document.removeEventListener('scroll', updateToolbarPositionOnScroll)
+    }
 
     const { invalidState } = state
     throttledChangeRef.current.flush()
@@ -413,8 +415,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = () => {
-    makeToolbarPositionFixed()
-    document.addEventListener('scroll', updateToolbarPositionOnScroll)
+    if (isMobile && isSafari()) {
+      makeToolbarPositionFixed()
+      document.addEventListener('scroll', updateToolbarPositionOnScroll)
+    }
 
     // must get new state
     const state = store.getState()
