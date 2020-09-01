@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store.js'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
-import { asyncFocus, clearSelection, selectNextEditable, setSelection, strip } from '../util'
+import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { Child, Context, Path } from '../types'
 
@@ -94,7 +94,6 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
         setJustPasted(true)
       }}
       onFocus={onFocus}
-      onBlur={clearSelection}
     />
   </div>
 }
