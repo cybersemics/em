@@ -60,7 +60,9 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
   const id = headId(thoughtsRanked) || exactThought!.id as string
   const archived = exactThought ? exactThought.archived : null
-  const cursorNew = cursor && contextOf(cursor).concat({ ...head(cursor), value: newValue })
+  const cursorNew = cursor && contextOf(cursor).concat(head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
+    ? { ...head(cursor), value: newValue }
+    : head(cursor))
   const newPath = thoughtsRanked.slice(0, thoughtsRanked.length - 1).concat({ value: newValue, rank: rankInContext || rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
