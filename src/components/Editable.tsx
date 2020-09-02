@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react'
+import React, { Dispatch, useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
 import { throttle } from 'lodash'
 import he from 'he'
 import classNames from 'classnames'
 import { importText, setEditingValue, setInvalidState } from '../action-creators'
-import { isMobile } from '../browser'
+import { isMobile, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
@@ -67,6 +67,41 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 // eslint-disable-next-line jsdoc/require-jsdoc
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
+/** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
+const makeToolbarPositionFixed = () => {
+  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
+  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  const rightArrow = document.getElementById('right-arrow') as HTMLElement
+  const leftArrow = document.getElementById('left-arrow') as HTMLElement
+  Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
+    el.style.position = 'absolute'
+    el.style.overflowX = 'hidden'
+    if (el !== rightArrow && el !== leftArrow) {
+      el.style.top = `${window.scrollY}px`
+    }
+  })
+}
+/** Reset position:absolute of toolbar elements. */
+const resetToolbarPosition = () => {
+  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
+  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  const rightArrow = document.getElementById('right-arrow') as HTMLElement
+  const leftArrow = document.getElementById('left-arrow') as HTMLElement
+  Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
+    el.style.position = 'fixed'
+    el.style.overflowX = ''
+    el.style.top = ''
+  })
+}
+/** Update position of toolbar elements while scrolling in order to show them always on top. */
+const updateToolbarPositionOnScroll = () => {
+  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
+  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  Array.from([hamburgerMenu, toolbar]).forEach(el => {
+    el.style.top = `${window.scrollY}px`
+  })
+}
+
 interface EditableProps {
   contextChain: Child[][],
   cursorOffset?: number,
@@ -78,6 +113,36 @@ interface EditableProps {
   thoughtsRanked: Path,
   onKeyDownAction?: () => void,
 }
+
+interface Alert {
+  type: 'alert',
+  value: string | null,
+  alertType: string,
+}
+
+/** Toggle duplication alert. Use closure for storing timeoutId in order to cancel dispatching alert if it's necessary. */
+const duplicateAlertToggler = () => {
+  let timeoutId: number | undefined // eslint-disable-line fp/no-let
+  return (show: boolean, dispatch: Dispatch<Alert>) => {
+    const { alert } = store.getState()
+    if (show) {
+      timeoutId = window.setTimeout(() => {
+        dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+        timeoutId = undefined
+      }, 2000)
+      return
+    }
+    if (timeoutId) {
+      window.clearTimeout(timeoutId)
+      timeoutId = undefined
+    }
+    if (alert && alert.alertType === 'duplicateThoughts') {
+      setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }))
+    }
+  }
+}
+
+const showDuplicationAlert = duplicateAlertToggler()
 
 /**
  * An editable thought with throttled editing.
@@ -107,6 +172,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef<HTMLInputElement>(null)
+  if (contentRef.current) {
+    contentRef.current.style.opacity = '1.0'
+  }
 
   // =style attribute on the thought itself
   const styleAttr = getStyle(state, thoughtsRanked)
@@ -133,7 +201,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
-
     const { cursorBeforeEdit, cursor } = store.getState() // use fresh state
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
@@ -173,7 +240,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
 
     const thought = getThought(state, oldValue)
-
     if (thought) {
       dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
 
@@ -254,6 +320,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
+      showDuplicationAlert(false, dispatch)
     }
   }, [isEditing, cursorOffset])
 
@@ -273,8 +340,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // disabled={readonly} removes contenteditable property
 
     dispatch(setEditingValue(newValue))
-
     if (newValue === oldValue) {
+      if (contentRef.current) {
+        contentRef.current.style.opacity = '1.0'
+      }
+      showDuplicationAlert(false, dispatch)
 
       if (readonly || uneditable || options) invalidStateError(null)
 
@@ -286,6 +356,24 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     }
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+
+    const thoughtsInContext = getThoughts(state, context)
+    const hasDuplicate = thoughtsInContext.some(thought => thought.value === newValue)
+    if (hasDuplicate) {
+      showDuplicationAlert(true, dispatch)
+      throttledChangeRef.current.cancel() // see above
+      if (contentRef.current) {
+        contentRef.current.style.opacity = '0.5'
+      }
+      return
+    }
+    else {
+      if (contentRef.current) {
+        contentRef.current.style.opacity = '1.0'
+      }
+      showDuplicationAlert(false, dispatch)
+    }
+
     if (readonly) {
       dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` })
       throttledChangeRef.current.cancel() // see above
@@ -352,8 +440,21 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
+    if (isMobile && isSafari()) {
+      resetToolbarPosition()
+      document.removeEventListener('scroll', updateToolbarPositionOnScroll)
+    }
+
     const { invalidState } = state
     throttledChangeRef.current.flush()
+    // set editingValue in order to position superscript correctly if edited thought is duplicate
+    oldValueRef.current && dispatch(setEditingValue(oldValueRef.current))
+    // reset rendered value to previous non-duplicate
+    if (contentRef.current) {
+      contentRef.current.innerHTML = oldValueRef.current
+      contentRef.current.style.opacity = '1.0'
+      showDuplicationAlert(false, dispatch)
+    }
 
     // on blur remove error, remove invalid-option class, and reset editable html
     if (invalidState) {
@@ -377,10 +478,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = () => {
+    if (isMobile && isSafari()) {
+      makeToolbarPositionFixed()
+      document.addEventListener('scroll', updateToolbarPositionOnScroll)
+    }
 
     // must get new state
     const state = store.getState()
-
     // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
     if (!state.dragInProgress) {
 
@@ -402,6 +506,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
           document.activeElement.blur()
         }
         clearSelection()
+      }
+      else {
+        dispatch(setEditingValue(value))
       }
     }
   }

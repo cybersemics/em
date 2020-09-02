@@ -4,6 +4,7 @@ import { contextOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToC
 import {
   getChildren,
   getThoughtBefore,
+  getThoughts,
   getThoughtsRanked,
   hasChild,
   isContextViewActive,
@@ -11,6 +12,8 @@ import {
   splitChain,
 } from '../selectors'
 import { State } from '../util/initialState'
+import { RANKED_ROOT } from '../constants'
+import { alert } from '../action-creators'
 
 interface Error {
   type: 'error',
@@ -23,6 +26,12 @@ interface DeleteEmptyThought {
 
 interface Outdent {
   type: 'outdent',
+}
+
+interface Alert {
+  type: 'alert',
+  value: string | null,
+  alertType: string,
 }
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
@@ -86,6 +95,27 @@ const canExecuteOutdent = (state: State) => {
     getChildren(state, contextOf(pathToContext(cursor))).length === 1
 }
 
+/** A selector that returns true if merged thought value is duplicate. */
+const isMergedThoughtDuplicate = (state: State) => {
+  const { cursor, editingValue } = state
+  if (!cursor) return false
+  // If we are going to delete empty thought
+  if (headValue(cursor) === '' || editingValue === '') return false
+
+  const prevThought = getThoughtBefore(state, cursor)
+  if (!prevThought) return false
+  const contextChain = splitChain(state, cursor)
+  const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
+  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+  const mergedThoughtValue = prevThought.value + headValue(cursor)
+  const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
+    : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
+    RANKED_ROOT)
+  const siblings = getThoughts(state, context)
+  const isDuplicate = !siblings.every(thought => thought.value !== mergedThoughtValue)
+  return isDuplicate
+}
+
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
 const canExecute = (getState: () => State) => {
   const state = getState()
@@ -93,11 +123,14 @@ const canExecute = (getState: () => State) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<Outdent | ActionCreator>, getState: () => State) => {
+const exec = (dispatch: Dispatch<Outdent | Alert | ActionCreator>, getState: () => State) => {
   if (canExecuteOutdent(getState())) {
     dispatch({ type: 'outdent' })
   }
-  // since canExecute has already evaluated to true, we know that canExecuteDeleteEmptyThought is true
+  // additional check for duplicates
+  else if (isMergedThoughtDuplicate(getState())) {
+    dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts', clearTimeout: 2000 }))
+  }
   else {
     dispatch(deleteEmptyThought)
   }
