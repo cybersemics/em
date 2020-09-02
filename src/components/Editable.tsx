@@ -75,6 +75,7 @@ const makeToolbarPositionFixed = () => {
   const leftArrow = document.getElementById('left-arrow') as HTMLElement
   Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
     el.style.position = 'absolute'
+    el.style.overflowX = 'hidden'
     if (el !== rightArrow && el !== leftArrow) {
       el.style.top = `${window.scrollY}px`
     }
@@ -88,6 +89,7 @@ const resetToolbarPosition = () => {
   const leftArrow = document.getElementById('left-arrow') as HTMLElement
   Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
     el.style.position = 'fixed'
+    el.style.overflowX = ''
     el.style.top = ''
   })
 }
