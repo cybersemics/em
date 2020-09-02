@@ -41,66 +41,20 @@ const skipRootThought = (blocks: Block[]) => {
 }
 
 /** Calculate last thought of the first level, as this is where the selection will be restored to. */
-const calculateLastThoughtFirstLevel = (rankMap: Map<Block, RankInfo>, blocks: Block[]) => {
+const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number, blocks: Block[]) => {
   const lastThoughtFirstLevelIndex = blocks.length - 1
   const lastThoughtFirstLevel = blocks[lastThoughtFirstLevelIndex]
-  const { rank } = rankMap.get(lastThoughtFirstLevel)!
+  const rank = lastThoughtFirstLevelIndex * rankIncrement + rankStart
   return { value: lastThoughtFirstLevel.scope, rank }
 }
 
-/** Return map of thought ranks. */
-const createRankMap = (blocks: Block[], rankStart: number, rankIncrement: number) => {
-  /** Recursively return last child in tree with maximum depth. Return undefined if block has no children. */
-  const getLastChildDeep = (block: Block): Block | undefined => {
-    const { children } = block
-    const lastChild = _.last(children)
-    if (!lastChild) return
-    return lastChild.children.length > 0 ? getLastChildDeep(lastChild) : lastChild
-  }
-
-  /** Recursively calculate rank for each thought. */
-  const calculateRanks = (blocks: Block[], rankMap: Map<Block, RankInfo>, rankStart: number, deepLevel = 0) => {
-    blocks.forEach((block, index, blocks) => {
-      if (index === 0) {
-        rankMap.set(block, {
-          rank: rankStart,
-          deepLevel
-        })
-        calculateRanks(block.children, rankMap, rankStart + 1 * rankIncrement, deepLevel + 1)
-        return
-      }
-      const prevSibling = blocks[index - 1]
-      const prevRankedBlock = getLastChildDeep(prevSibling)
-      if (!prevRankedBlock) {
-        const prevSiblingRankInfo = rankMap.get(prevSibling)!
-        rankMap.set(block, {
-          rank: prevSiblingRankInfo.rank + 1 * rankIncrement,
-          deepLevel
-        })
-        calculateRanks(block.children, rankMap, prevSiblingRankInfo.rank + 2 * rankIncrement, deepLevel + 1)
-        return
-      }
-      const prevRankInfo = rankMap.get(prevRankedBlock)!
-      rankMap.set(block, {
-        rank: prevRankInfo.rank + (1 + prevRankInfo.deepLevel) * rankIncrement,
-        deepLevel
-      })
-      calculateRanks(block.children, rankMap, prevRankInfo.rank + (2 + prevRankInfo.deepLevel) * rankIncrement, deepLevel + 1)
-    })
-  }
-
-  const rankMap = new Map<Block, RankInfo>()
-  calculateRanks(blocks, rankMap, rankStart)
-  return rankMap
-}
-
 /** Recursively iterate through blocks and call insertThought for each block individually to save it. */
-const saveThoughts = (context: Context, rankMap: Map<Block, RankInfo>, blocks: Block[], insertThought: (value: string, context: Context, rank: number) => void) => {
-  blocks.forEach(block => {
-    const { rank } = rankMap.get(block)!
+const saveThoughts = (context: Context, blocks: Block[], insertThought: (value: string, context: Context, rank: number) => void, rankIncrement: number, startRank = 0) => {
+  blocks.forEach((block, index) => {
+    const rank = startRank + index * rankIncrement
     insertThought(block.scope, context, rank)
     if (block.children.length > 0) {
-      saveThoughts([...context, block.scope], rankMap, block.children, insertThought)
+      saveThoughts([...context, block.scope], block.children, insertThought, rankIncrement)
     }
   })
 }
@@ -197,9 +151,8 @@ export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], 
 
   const startContext = getStartContext(thoughtsRanked)
   const thoughts = skipRoot ? skipRootThought(blocks) : blocks
-  const rankMap = createRankMap(thoughts, rankStart, rankIncrement)
-  const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankMap, thoughts)
-  saveThoughts(startContext, rankMap, thoughts, insertThought)
+  const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, thoughts)
+  saveThoughts(startContext, thoughts, insertThought, rankIncrement, rankStart)
   return {
     contextIndexUpdates,
     lastThoughtFirstLevel,
