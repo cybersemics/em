@@ -19,26 +19,10 @@ let clearAlertTimeoutId: number | null = null// eslint-disable-line fp/no-let
  */
 const alert = (value: string | FunctionComponent | null, { alertType, showCloseLink, clearTimeout }: Options = {}): ActionCreator => (dispatch, getState) => {
   const { alert } = getState()
-  if (alert && alert.value === value) {
-    if (clearTimeout && clearAlertTimeoutId) {
-      window.clearTimeout(clearAlertTimeoutId)
-      clearAlertTimeoutId = window.setTimeout(() => dispatch({
-        type: 'alert',
-        alertType,
-        showCloseLink,
-        value: null,
-      }), clearTimeout)
-    }
-    return
-  }
 
-  dispatch({
-    type: 'alert',
-    alertType,
-    showCloseLink,
-    value,
-  })
   if (clearTimeout) {
+    // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
+    clearAlertTimeoutId && window.clearTimeout(clearAlertTimeoutId)
     clearAlertTimeoutId = window.setTimeout(() => {
       dispatch({
         type: 'alert',
@@ -50,6 +34,14 @@ const alert = (value: string | FunctionComponent | null, { alertType, showCloseL
     }, clearTimeout)
   }
 
+  if (alert && alert.value === value) return
+
+  dispatch({
+    type: 'alert',
+    alertType,
+    showCloseLink,
+    value,
+  })
 }
 
 export default alert
