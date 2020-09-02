@@ -4,7 +4,7 @@ import { throttle } from 'lodash'
 import he from 'he'
 import classNames from 'classnames'
 import { importText, setEditingValue, setInvalidState } from '../action-creators'
-import { isMobile } from '../browser'
+import { isMobile, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
@@ -66,6 +66,41 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
+
+/** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
+const makeToolbarPositionFixed = () => {
+  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
+  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  const rightArrow = document.getElementById('right-arrow') as HTMLElement
+  const leftArrow = document.getElementById('left-arrow') as HTMLElement
+  Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
+    el.style.position = 'absolute'
+    el.style.overflowX = 'hidden'
+    if (el !== rightArrow && el !== leftArrow) {
+      el.style.top = `${window.scrollY}px`
+    }
+  })
+}
+/** Reset position:absolute of toolbar elements. */
+const resetToolbarPosition = () => {
+  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
+  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  const rightArrow = document.getElementById('right-arrow') as HTMLElement
+  const leftArrow = document.getElementById('left-arrow') as HTMLElement
+  Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
+    el.style.position = 'fixed'
+    el.style.overflowX = ''
+    el.style.top = ''
+  })
+}
+/** Update position of toolbar elements while scrolling in order to show them always on top. */
+const updateToolbarPositionOnScroll = () => {
+  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
+  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
+  Array.from([hamburgerMenu, toolbar]).forEach(el => {
+    el.style.top = `${window.scrollY}px`
+  })
+}
 
 interface EditableProps {
   contextChain: Child[][],
@@ -352,6 +387,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
+    if (isMobile && isSafari()) {
+      resetToolbarPosition()
+      document.removeEventListener('scroll', updateToolbarPositionOnScroll)
+    }
+
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
@@ -377,6 +417,10 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = () => {
+    if (isMobile && isSafari()) {
+      makeToolbarPositionFixed()
+      document.addEventListener('scroll', updateToolbarPositionOnScroll)
+    }
 
     // must get new state
     const state = store.getState()
