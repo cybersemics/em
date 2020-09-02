@@ -1,6 +1,6 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThought, getThoughts } from '../../selectors'
+import { exportContext, getContexts, getThought, getThoughts, rankThoughtsFirstMatch } from '../../selectors'
 import { importText } from '../../action-creators'
 import { existingThoughtMove, newSubthought, newThought, setCursor, updateThoughts } from '../../reducers'
 
