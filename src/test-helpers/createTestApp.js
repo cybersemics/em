@@ -2,6 +2,7 @@ import React, { createRef } from 'react'
 import { act } from 'react-dom/test-utils'
 import { mount } from 'enzyme'
 import { wrapInTestContext } from 'react-dnd-test-utils'
+import ResizeObserver from 'resize-observer-polyfill'
 
 import { initialize } from '../initialize'
 import { cleanup as cleanupEventHandlers } from '../util/initEvents'
@@ -38,6 +39,7 @@ const createTestApp = async () => {
 
     // calls initEvents, which must be manually cleaned up
     await initialize()
+    window.ResizeObserver = ResizeObserver
 
     jest.useFakeTimers()
 

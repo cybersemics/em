@@ -141,7 +141,7 @@ const mapStateToProps = (state: State, props: ThoughtProps) => {
     thoughtsRanked,
     viewInfo,
     depth,
-    thoughtsResolved
+    thoughtsResolved,
   } = props.nodeItem
 
   const { childrenForced } = props
@@ -361,7 +361,7 @@ const ThoughtWrapper = ({ measureBind, wrapperDivRef, innerDivStyle, wrapperStyl
   return (
     <animated.div style={wrapperStyle} ref={wrapperDivRef}>
       <animated.div style={innerDivStyle}>
-        <div {...measureBind}>
+        <div ref={measureBind}>
           <animated.div
             className={classNames({
               node: true,
@@ -378,6 +378,8 @@ const ThoughtWrapper = ({ measureBind, wrapperDivRef, innerDivStyle, wrapperStyl
   )
 }
 
+ThoughtWrapper.displayName = 'ThoughtWrapper'
+
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
  *
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
@@ -388,6 +390,7 @@ const ThoughtContainer = ({
   isEditing,
   thoughtsRankedLive,
   isCursorParent,
+  cursorOffset,
   nodeItem
 }: ThoughtContainerProps & ThoughtProps) => {
   const { thoughtsResolved, thoughtsRanked, contextChain, expanded, isCursor, viewInfo, childrenLength, hasChildren, parentKey } = nodeItem
@@ -464,7 +467,7 @@ const ThoughtContainer = ({
                     : isThoughtDivider ? <DividerNew thoughtsRanked={thoughtsRanked} isActive={isCursor} parentKey={parentKey!}/>
                     : <Editable
                       contextChain={contextChain}
-                      cursorOffset={0}
+                      cursorOffset={cursorOffset}
                       disabled={!isDocumentEditable()}
                       isEditing={isEditing}
                       rank={rank}

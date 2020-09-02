@@ -17,16 +17,17 @@ afterEach(async () => {
 
 it('create, navigate, and edit thoughts', async () => {
 
-  // create thought
+  // // create thought
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
-  const editable = wrapper.find('div.editable')
+  const editable = wrapper.find('.node div.editable')
   await editable.simulate('change', { target: { value: 'a' } })
 
   // create subthought
   windowEvent('keydown', { key: 'Enter', ctrlKey: true })
   wrapper.update()
-  const editableSubthought = wrapper.find('.children .children div.editable')
+  const editableSubthought = wrapper.find('.node div.editable').at(1)
+
   await editableSubthought.simulate('change', { target: { value: 'a1' } })
 
   // cursor back
@@ -45,10 +46,12 @@ it('create, navigate, and edit thoughts', async () => {
 
   // DOM
   wrapper.update()
-  const editableSubthoughts2 = wrapper.find('.children .children div.editable')
-  expect(editableSubthoughts2).toHaveLength(2)
-  expect(editableSubthoughts2.at(0).text()).toBe('')
-  expect(editableSubthoughts2.at(1).text()).toBe('a1')
+  const editableSubthoughts2 = wrapper.find('.node div.editable')
+  expect(editableSubthoughts2).toHaveLength(3)
+
+  expect(editableSubthoughts2.at(0).text()).toBe('a')
+  expect(editableSubthoughts2.at(1).text()).toBe('')
+  expect(editableSubthoughts2.at(2).text()).toBe('a1')
 
 })
 
@@ -68,13 +71,13 @@ it('caret is set on new subthought', async () => {
   // create thought
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
-  const editable = wrapper.find('div.editable')
+  const editable = wrapper.find('.node div.editable')
   await editable.simulate('change', { target: { value: 'a' } })
 
   // create subthought
   windowEvent('keydown', { key: 'Enter', ctrlKey: true })
   wrapper.update()
-  const editableSubthought = wrapper.find('.children .children div.editable')
+  const editableSubthought = wrapper.find('.node div.editable').at(1)
   await editableSubthought.simulate('change', { target: { value: 'a1' } })
   act(jest.runOnlyPendingTimers)
 
@@ -85,5 +88,4 @@ it('caret is set on new subthought', async () => {
   const { focusNode, focusOffset } = window.getSelection() || {}
   expect(focusNode.textContent).toEqual('a1')
   expect(focusOffset).toEqual(0)
-
 })

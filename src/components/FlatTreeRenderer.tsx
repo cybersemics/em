@@ -1,8 +1,9 @@
+/* eslint-disable */
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
 import { Interpolation, SpringValue, useSpring, useTransition } from 'react-spring'
-import useMeasure from '../hooks/useMeasure.js'
+import useMeasure from 'react-use-measure'
 import { store } from '../store.js'
 
 // util
@@ -124,7 +125,8 @@ const TreeNode = ({
 }: TreeNode) => {
 
   // @ts-ignore
-  const [measureBind, { height: measuredHeight }] = useMeasure()
+  const [measureBind, bounds] = useMeasure()
+  const { height: measuredHeight } = bounds
   const viewHeight: number = measuredHeight
   const viewHeightRef = useRef<number>(viewHeight)
   const wrapperDivRef = useRef<HTMLDivElement>(null)
@@ -222,6 +224,8 @@ const TreeNode = ({
   )
 }
 
+TreeNode.displayName = 'TreeNode'
+
 /**
  * Calculate x offset.
  */
@@ -291,6 +295,10 @@ const TreeAnimation = ({
       return !itemA || !itemB ? 1 : itemA.index > itemB.index ? 1 : -1
     }
   }
+
+  React.useEffect(() => {
+    return () => debouncedHeightUpdate && debouncedHeightUpdate.cancel()
+  }, [])
 
   const transitions = useTransition(
     flatArray,

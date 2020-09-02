@@ -1,14 +1,10 @@
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
-import { equalArrays, pathToContext } from '../../util'
+import { pathToContext } from '../../util'
 import { importText } from '../../action-creators'
 import Editable from '../Editable'
-import Thought from '../Thought'
-import Subthoughts from '../Subthoughts'
-
-/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
+import { findNodeByContext, findNodeByResolvedContext, findSubthoughtsByKey } from '../../test-helpers/flatRenderHelper'
 
 // const debugThoughtWrapper = wrapper => wrapper.map(node => ({
 //   name: node.name(),
@@ -33,9 +29,10 @@ afterEach(async () => {
 it('normal view', async () => {
 
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `- a
-  - b
-  - c`))
+  await store.dispatch(importText(RANKED_ROOT, `
+  - a
+    - b
+    - c`))
 
   // set the cursor to expand the subthoughts
   store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] })
@@ -43,15 +40,18 @@ it('normal view', async () => {
   // update DOM
   wrapper.update()
 
-  // select elements
-  const subthoughtsWrapper = wrapper.find('.children .children')
-  const thoughtsWrapper = subthoughtsWrapper.find(Thought)
+  // select parent node
+  const parentNode = findNodeByContext(wrapper, ['a']).at(0)
+
+  // find subthoughts by parent's node key.
+  const subthoughtNodes = findSubthoughtsByKey(wrapper, parentNode.props().item.key)
 
   // assert
-  expect(thoughtsWrapper).toHaveLength(2)
-  expect(pathToContext(thoughtsWrapper.first().props().thoughtsRanked))
+  expect(subthoughtNodes).toHaveLength(2)
+
+  expect(pathToContext(subthoughtNodes.first().props().item.thoughtsRanked))
     .toMatchObject(['a', 'b'])
-  expect(pathToContext(thoughtsWrapper.at(1).props().thoughtsRanked))
+  expect(pathToContext(subthoughtNodes.at(1).props().item.thoughtsRanked))
     .toMatchObject(['a', 'c'])
 
 })
@@ -75,22 +75,28 @@ describe('context view', () => {
     wrapper.update()
 
     // assert context view container
-    const subthoughtsWrapper = wrapper
-      .find(Subthoughts)
-      .filterWhere(whereContext(['a', 'm']))
-      .first() // have to select first node, as second node is empty-children with contextChain (?)
+    const parentNode = findNodeByContext(wrapper, ['a', 'm']).at(0) // have to select first node, as second node is empty-children with contextChain (?)
 
     // assert contexts
-    const contextsWrapper = subthoughtsWrapper.find(Thought)
-    expect(contextsWrapper).toHaveLength(2)
-    expect(contextsWrapper.at(0).props())
+    const subthoughtNodes = findSubthoughtsByKey(wrapper, parentNode.props().item.key)
+    expect(subthoughtNodes).toHaveLength(2)
+
+    expect(subthoughtNodes.at(0).props().item)
       .toMatchObject({
-        showContexts: true,
+        viewInfo: {
+          context: {
+            showContextsParent: true
+          }
+        },
         thoughtsRanked: [{ value: 'a' }, { value: 'm' }],
       })
-    expect(contextsWrapper.at(1).props())
+    expect(subthoughtNodes.at(1).props().item)
       .toMatchObject({
-        showContexts: true,
+        viewInfo: {
+          context: {
+            showContextsParent: true
+          }
+        },
         thoughtsRanked: [{ value: 'b' }, { value: 'm' }],
       })
 
@@ -99,12 +105,13 @@ describe('context view', () => {
   it('render context children of contexts that have different lexeme instances', async () => {
 
     // import thoughts
-    await store.dispatch(importText(RANKED_ROOT, `- a
-  - one
-    - x
-- b
-  - ones
-    - y`))
+    await store.dispatch(importText(RANKED_ROOT, `
+    - a
+      - one
+        - x
+    - b
+      - one
+        - y`))
 
     // enable Context View on /a/one
     store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })
@@ -113,58 +120,39 @@ describe('context view', () => {
     // update DOM
     wrapper.update()
 
-    /** Select /a/one Subthoughts component. Call function after re-render to use new DOM. */
-    const subthoughtsAOne = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(whereContext(['a', 'one']))
-    const subthoughtsAOne1 = subthoughtsAOne()
-    expect(subthoughtsAOne1).toHaveLength(2)
+    // select /a/one node.
+    const nodeAOne1 = findNodeByContext(wrapper, ['a', 'one'])
+    expect(nodeAOne1).toHaveLength(2)
 
-    // select first context (a)
+    // check if the context first subthought has been rendered
+    const nodeAOneA = findNodeByResolvedContext(wrapper, ['a', 'one', 'a'])
+    expect(nodeAOneA).toHaveLength(1)
+
+    // select editable of node a/one~/a to get it to expand
     // use childAt to get passed Connected HOC
-    const editableAOneA = subthoughtsAOne1.find(Editable).at(0).childAt(0)
+    const editableAOneA = nodeAOneA.find(Editable).at(0).childAt(0)
     expect(editableAOneA).toHaveLength(1)
-
-    // focus on a/one~/a to get it to expand
     editableAOneA.simulate('focus')
     wrapper.update()
 
-    // select a/one~/a Subthoughts component
-    const subthoughtsAOneA = subthoughtsAOne()
-      .find(Subthoughts)
-      .filterWhere(whereContext(['a', 'one']))
-      .filterWhere(node => node.props().contextChain.length > 0)
-    expect(subthoughtsAOneA).toHaveLength(1)
+    /// assert that child of a/one~/a is rendered
+    const nodeAOneAX = findNodeByResolvedContext(wrapper, ['a', 'one', 'a', 'x'])
+    expect(nodeAOneAX).toHaveLength(1)
 
-    // assert that child of context is rendered
-    const thoughtsAOneA = subthoughtsAOneA.find(Thought)
-    expect(thoughtsAOneA).toHaveLength(1)
-    expect(thoughtsAOneA.first().props())
-      .toMatchObject({
-        thoughtsRanked: [{ value: 'a' }, { value: 'one' }, { value: 'x' }],
-      })
+    // check if the context first subthought has been rendered
+    const nodeAOneB = findNodeByResolvedContext(wrapper, ['a', 'one', 'b'])
+    expect(nodeAOneB).toHaveLength(1)
 
-    // select second context (b)
+    // select editable of node a/one~/a to get it to expand
     // focus on a/one~/b to get it to expand
-    const editableAOneB = subthoughtsAOne1.find(Editable).at(1).childAt(0)
+    const editableAOneB = nodeAOneB.find(Editable).at(0).childAt(0)
     expect(editableAOneB).toHaveLength(1)
     editableAOneB.simulate('focus')
     wrapper.update()
 
-    // select a/one~/b Subthoughts component
-    const subthoughtsAOneB = subthoughtsAOne()
-      .find(Subthoughts)
-      .filterWhere(whereContext(['b', 'ones']))
-      .filterWhere(node => node.props().contextChain.length > 0)
-    expect(subthoughtsAOneB).toHaveLength(1)
+    /// assert that child of a/one~/a is rendered
+    const nodeAOneAY = findNodeByResolvedContext(wrapper, ['a', 'one', 'b', 'y'])
+    expect(nodeAOneAY).toHaveLength(1)
 
-    // assert that child of context is rendered
-    const thoughtsAOneB = subthoughtsAOneB.find(Thought)
-    expect(thoughtsAOneB).toHaveLength(1)
-    expect(thoughtsAOneB.first().props())
-      .toMatchObject({
-        thoughtsRanked: [{ value: 'b' }, { value: 'ones' }, { value: 'y' }],
-      })
   })
-
 })
