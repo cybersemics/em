@@ -1,7 +1,7 @@
 import React, { RefObject } from 'react'
 
 import { connect } from 'react-redux'
-// import { store } from '../store'
+import { store } from '../store'
 import globals from '../globals'
 import assert from 'assert'
 
@@ -22,6 +22,7 @@ import {
   equalArrays,
   equalPath,
   head,
+  headId,
   headRank,
   headValue,
   isDivider,
@@ -58,7 +59,6 @@ import HomeLink from './HomeLink'
 import Note from './Note'
 import { DragWrapper, DropWrapper } from './DragAndDrop'
 
-import { store } from '../store'
 import classNames from 'classnames'
 import Bullet from './BulletNew'
 import NoChildren from './NoChildren'
@@ -393,7 +393,7 @@ const ThoughtContainer = ({
   cursorOffset,
   nodeItem
 }: ThoughtContainerProps & ThoughtProps) => {
-  const { thoughtsResolved, thoughtsRanked, contextChain, expanded, isCursor, viewInfo, childrenLength, hasChildren, parentKey } = nodeItem
+  const { thoughtsResolved, thoughtsRanked, contextChain, expanded, isCursor, viewInfo, childrenLength, hasChildren, parentKey, key } = nodeItem
   const showContexts = viewInfo.context.active
   const showContextsParent = viewInfo.context.showContextsParent
   const hasContext = viewInfo.context.hasContext
@@ -411,6 +411,10 @@ const ThoughtContainer = ({
   const isThoughtDivider = isDivider(headValue(thoughtsRanked))
 
   const thoughtsLive = pathToContext(thoughtsRankedLive!)
+
+  const state = store.getState()
+
+  const shouldNoteFocus = state.noteFocusThoughtId ? state.noteFocusThoughtId === headId(thoughtsResolved) : false
 
   return (
     <DropWrapper canDrop={(item, monitor) => canDropAsSibling({ thoughtsRankedLive: thoughtsRankedLive! }, monitor)} onDrop={(item, monitor) => dropAsSibling({ thoughtsRankedLive: thoughtsRankedLive!, showContexts }, monitor)}>{
@@ -485,7 +489,8 @@ const ThoughtContainer = ({
               </div>
             </motion.div>
             <div style={{ marginLeft: '1.36rem' }}>
-              <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
+              {/* nodeKey is a unique key for each node in the flat rendered tree */}
+              <Note nodeKey={key} focusOnMount={shouldNoteFocus} context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
             </div>
             {expanded && <AnimatePresence>
               {showContexts &&

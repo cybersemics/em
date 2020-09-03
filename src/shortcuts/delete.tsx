@@ -31,9 +31,10 @@ let undoArchiveTimer: number // eslint-disable-line fp/no-let
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = (noteEl: HTMLElement) => {
-  const closest = noteEl.closest('.thought-container')
+  const closest = noteEl.closest('.node')
   return closest ? closest.querySelector('.editable') as HTMLElement : null
 }
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec = (dispatch: Dispatch<Error | DeleteAttribute | Alert | ArchiveThought>, getState: () => State, e: Event) => {
   const state = getState()

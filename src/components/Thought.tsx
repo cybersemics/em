@@ -634,6 +634,7 @@ const ThoughtContainer = ({
         toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
       />
 
+      {/* @ts-ignore */}
       <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
 
     </div>

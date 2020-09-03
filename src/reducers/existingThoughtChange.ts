@@ -63,7 +63,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const archived = exactThought ? exactThought.archived : null
 
   const cursorNew = state.cursor && state.cursor.map(thought => thought.value === oldValue && thought.rank === (rankInContext || rank)
-    ? { value: newValue, rank: thought.rank }
+    ? { value: newValue, rank: thought.rank, id: thought.id }
     : thought
   )
 

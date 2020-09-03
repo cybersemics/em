@@ -49,6 +49,7 @@ export interface State {
   isLoading: boolean,
   modals: GenericObject<ModalProperties>,
   noteFocus: boolean,
+  noteFocusThoughtId: string | null,
   recentlyEdited: GenericObject<any>,
   resourceCache: any,
   schemaVersion: any,
@@ -104,6 +105,7 @@ export const initialState = () => {
     isLoading: true,
     modals: {},
     noteFocus: false, // true if a note has the browser selection
+    noteFocusThoughtId: null, // id of the thought needs to set focus on note component when it mounts
     recentlyEdited: {},
     resourceCache: {},
     schemaVersion: SCHEMA_LATEST,

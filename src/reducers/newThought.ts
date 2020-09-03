@@ -5,6 +5,7 @@ import { Path } from '../types'
 // constants
 import {
   RANKED_ROOT,
+  ROOT_TOKEN,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
@@ -37,6 +38,7 @@ import {
   getRankAfter,
   getRankBefore,
   getSetting,
+  getThoughts,
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
@@ -144,12 +146,22 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
     // setCursor
     !preventSetCursor
-      ? (state: State) => setCursor(state, {
-        editing: true,
-        // @ts-ignore
-        thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank }),
-        offset: offset != null ? offset : value.length,
-      })
+      ? (state: State) => {
+
+        const pathWithoutId = (insertNewSubthought ? unroot(path) : contextOf(path)).concat({ value, rank: newRank })
+        const context = pathToContext(contextOf(pathWithoutId))
+        const thoughts = getThoughts(state, context.length > 0 ? context : [ROOT_TOKEN])
+
+        const exactThought = thoughts.find(({ value: thoughtValue, rank: thoughtRank }) => thoughtValue === value && thoughtRank === newRank)
+
+        if (!exactThought) console.warn('[Set cursor after new thought]: exact thought is not found after new thought creation.')
+        return setCursor(state, {
+          editing: true,
+          // @ts-ignore
+          thoughtsRanked: contextOf(pathWithoutId).concat(exactThought),
+          offset: offset != null ? offset : value.length,
+        })
+      }
       : null,
 
     // tutorial step 1

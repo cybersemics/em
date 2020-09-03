@@ -1,7 +1,7 @@
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
-import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { asyncFocus, headId, isDocumentEditable, pathToContext } from '../util'
 import { Context, Shortcut } from '../types'
 import { Dispatch } from 'react'
 import { State } from '../util/initialState'
@@ -13,6 +13,11 @@ interface SetAttribute {
   value: string,
 }
 
+interface SetNoteFocusId {
+  type: 'setNoteFocusThoughtId',
+  value: string | null,
+}
+
 const noteShortcut: Shortcut = {
   id: 'note',
   name: 'Note',
@@ -21,9 +26,9 @@ const noteShortcut: Shortcut = {
   gesture: 'rdlr',
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<SetAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<SetAttribute|SetNoteFocusId>, getState: () => State) => {
     const state = getState()
-    const { cursor, cursorBeforeEdit, noteFocus } = state
+    const { cursor } = state
 
     // check cursor in exec so that the default browser behavior is always prevented
     if (!cursor) return
@@ -42,30 +47,12 @@ const noteShortcut: Shortcut = {
         key: '=note',
         value: ''
       })
-    }
 
-    // focus selection on note
-    setTimeout(() => {
-      try {
-        const thoughtEl = editableNode(cursorBeforeEdit!)
-        if (!thoughtEl) return
-        if (noteFocus) {
-          thoughtEl.focus()
-          setSelection(thoughtEl, { end: true })
-        }
-        else {
-          const closest = thoughtEl.closest('.thought-container')
-          if (!closest) return
-          const noteEl = closest.querySelector('.note [contenteditable]') as HTMLElement
-          if (!noteEl) return
-          noteEl.focus()
-          setSelection(noteEl, { end: true })
-        }
-      }
-      catch (e) {
-        console.warn('Note element not found in DOM.', context)
-      }
-    }, 0)
+      dispatch({
+        type: 'setNoteFocusThoughtId',
+        value: headId(cursor) ?? null
+      })
+    }
   }
 }
 

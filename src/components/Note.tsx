@@ -1,19 +1,20 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store.js'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
-import { asyncFocus, clearSelection, selectNextEditable, setSelection, strip } from '../util'
+import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { Child, Context, Path } from '../types'
 
-/** Gets the editable node for the given note element. */
-const editableOfNote = (noteEl: HTMLElement) =>
+/** Returns editable of the given node. */
+const editableOfNode = (nodeKey: string) => {
   // @ts-ignore
-  noteEl.parentNode.previousSibling.querySelector('.editable')
+  return document.getElementById(nodeKey).querySelector('.editable') as HTMLElement
+}
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, thoughtsRanked: Path, contextChain: Child[][] }) => {
+const Note = ({ nodeKey, focusOnMount, context, thoughtsRanked, contextChain }: { nodeKey: string, focusOnMount?: boolean, context: Context, thoughtsRanked: Path, contextChain: Child[][] }) => {
 
   const state = store.getState()
   const hasNote = hasChild(state, context, '=note')
@@ -25,6 +26,18 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
   const [justPasted, setJustPasted] = useState(false)
   const note = attribute(state, context, '=note')
 
+  // side effect to handle first mount focus
+  useEffect(() => {
+    if (noteRef.current && focusOnMount) {
+      setSelection(noteRef.current, { end: true })
+      // set focus id back to null
+      dispatch({
+        type: 'setNoteFocusThoughtId',
+        value: null
+      })
+    }
+  }, [])
+
   /** Handles note keyboard shortcuts. */
   const onKeyDown = (e: React.KeyboardEvent) => {
     // delete empty note
@@ -34,8 +47,8 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || (e.metaKey && e.altKey && e.keyCode === 'N'.charCodeAt(0))) {
       e.stopPropagation()
-      editableOfNote(e.target as HTMLElement).focus()
-      setSelection(editableOfNote(e.target as HTMLElement), { end: true })
+      editableOfNode(nodeKey).focus()
+      setSelection(editableOfNode(nodeKey), { end: true })
     }
     // delete empty note
     // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
@@ -47,15 +60,15 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
       if (isMobile) {
         asyncFocus()
       }
-      editableOfNote(e.target as HTMLElement).focus()
-      setSelection(editableOfNote(e.target as HTMLElement), { end: true })
+      editableOfNode(nodeKey).focus()
+      setSelection(editableOfNode(nodeKey), { end: true })
 
       dispatch({ type: 'deleteAttribute', context, key: '=note' })
     }
     else if (e.key === 'ArrowDown') {
       e.stopPropagation()
       e.preventDefault()
-      selectNextEditable(editableOfNote(e.target as HTMLElement))
+      selectNextEditable(editableOfNode(nodeKey))
     }
   }
 
@@ -94,7 +107,6 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
         setJustPasted(true)
       }}
       onFocus={onFocus}
-      onBlur={clearSelection}
     />
   </div>
 }
