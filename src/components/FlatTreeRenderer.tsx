@@ -359,10 +359,9 @@ const TreeAnimation = ({
 /**
  * Map state to props.
  */
-const mapStateToProps = ({ cursor, thoughts, contextViews, showHiddenThoughts }: State) => ({
-  cursor,
+const mapStateToProps = ({ cursorBeforeEdit, thoughts, showHiddenThoughts }: State) => ({
+  cursor: cursorBeforeEdit,
   thoughts,
-  contextViews,
   showHiddenThoughts
 })
 

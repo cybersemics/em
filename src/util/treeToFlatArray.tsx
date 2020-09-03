@@ -21,7 +21,7 @@ import {
 } from '../selectors'
 
 import { store } from '../store'
-import { RANKED_ROOT } from '../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { headValue } from './headValue'
 import { head } from './head'
 import { headId } from './headId'
@@ -133,7 +133,7 @@ const getFlatArray = ({
   cursor,
   children: subThoughts,
   contextChain = [],
-  isLeaf,
+  isLeaf, // is cursor a leaf node
   depth,
   showHiddenThoughts,
   isParentCursorAncestor = true,
@@ -222,17 +222,15 @@ const getFlatArray = ({
 
     const distanceFromCursor = cursor.length - childPath.length
 
+    const isCursorRootOrNull = cursor === null || headValue(cursor) === ROOT_TOKEN
+
     // if true the node will have reduced opacity on render
     const isDistantThought =
       (!isLeaf
         ? distanceFromCursor >= 0
-        : distanceFromCursor >= (isCursorAncestor ? 2 : 1)) && !isCursor
+        : distanceFromCursor >= (isCursorAncestor ? 2 : 1)) && !isCursor && !isCursorRootOrNull
 
     const tableInfo = viewInfo.table
-
-    // const thoughtsResolved = contextChain && contextChain.length > 0
-    //   ? chain(state, contextChain, thoughtsRanked)
-    //   : unroot(thoughtsRanked)
 
     const key = (showContextsParent ?
       (headId(startingPath) ?? '') + (headId(thoughtsResolved) ?? '') : child.id) ?? ''
@@ -337,8 +335,11 @@ const getFlatArray = ({
  * Calculate starting path based on cursor and initiate recursive getFlatArrayWith necessary params.
  */
 export const treeToFlatArray = (state: State, cursor: Nullable<Path>): FlatArrayNode[] => {
-  const isLeaf = cursor !== null && getThoughts(state, pathToContext(cursor)).length === 0
   const showHiddenThoughts = state.showHiddenThoughts
+
+  const isLeaf = cursor !== null && getThoughts(state, pathToContext(cursor)).filter(child => {
+    return !isFunction(child.value) || showHiddenThoughts
+  }).length === 0
 
   // determine path of the first thought that would be visible
   const startingPath = cursor && cursor.length - (isLeaf ? 3 : 2) > 0

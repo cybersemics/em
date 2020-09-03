@@ -44,7 +44,7 @@ const BulletNew = ({ expanded, isActive, isDragActive, hasChildren, hide, innerR
         opacity: bulletOpacity,
         ...selectionOpacity ? {
           background: selectionOpacity.interpolate(
-            o => isDragActive ? `rgb(255,192,203,${o})` : `rgba(255,255,255,${o})`
+            o => isDragActive ? `rgba(173, 216, 230, 0.8)` : `rgba(255,255,255,${o})`
           ) } : {}
       }}
     >
