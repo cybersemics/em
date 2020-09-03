@@ -40,8 +40,8 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
 
   store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: 0 },
-    { value: 'b', rank: 1 },
-    { value: 'c', rank: 2 },
+    { value: 'b', rank: 0 },
+    { value: 'c', rank: 0 },
   ] })
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
@@ -70,8 +70,8 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
 
   store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: 0 },
-    { value: 'b', rank: 1 },
-    { value: 'd', rank: 3 },
+    { value: 'b', rank: 0 },
+    { value: 'd', rank: 1 },
   ] })
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
