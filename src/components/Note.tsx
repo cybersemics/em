@@ -78,7 +78,7 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
 
   /** Sets the cursor on the note's thought when then note is focused. */
   const onFocus = () => {
-    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
+    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: true, noteFocus: true })
   }
 
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
