@@ -7,6 +7,7 @@ import {
 } from '../../action-creators'
 
 import { createTestStore } from '../../test-helpers/createTestStore'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
 
@@ -14,14 +15,13 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([
-      importText(RANKED_ROOT, `
+    store.dispatch(importText(RANKED_ROOT, `
       - a
         - a1
-      - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
-      cursorPrev()
-    ])
+      - b`))
+
+    setCursorFirstMatch(['b'])(store.getState())
+    store.dispatch(cursorPrev())
 
     expect(store.getState().cursor)
       .toMatchObject([{ value: 'a' }])
@@ -106,14 +106,12 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([
-      importText(RANKED_ROOT, `
+    store.dispatch(importText(RANKED_ROOT, `
       - a
         - a1
-      - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
-      cursorPrev()
-    ])
+      - b`))
+    setCursorFirstMatch(['b'])(store.getState())
+    store.dispatch(cursorPrev())
 
     expect(store.getState().cursor)
       .toMatchObject([{ value: 'a' }])

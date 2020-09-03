@@ -6,6 +6,7 @@ import { exportContext } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 const event = { preventDefault: NOOP } as Event
 
@@ -38,11 +39,7 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
     - b
       - c`))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 0 },
-    { value: 'c', rank: 0 },
-  ] })
+  setCursorFirstMatch(['a', 'b', 'c'])(store.getState())
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
 
@@ -68,11 +65,7 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
       - d`
   ))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 0 },
-    { value: 'd', rank: 1 },
-  ] })
+  setCursorFirstMatch(['a', 'b', 'd'])(store.getState())
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
 
