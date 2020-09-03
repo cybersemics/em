@@ -174,6 +174,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'toggleContextView',
   'proseView',
   'toggleSplitView',
+  'splitSentences',
   'subcategorizeOne',
   'subcategorizeAll',
   'toggleHiddenThoughts',
