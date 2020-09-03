@@ -168,6 +168,7 @@ const undoRedoReducerEnhancer = createStore => (
       const lastPatch = nthLast(inversePatches, 1)
       return {
         ...newState,
+        patches: [],
         inversePatches: [
           ...newState.inversePatches.slice(0, -1),
           addActionsToPatch(appendPatch(lastPatch, inversePatch), [...lastPatch[0].actions, actionType])
@@ -178,6 +179,7 @@ const undoRedoReducerEnhancer = createStore => (
     return inversePatch.length ?
       {
         ...newState,
+        patches: [],
         inversePatches: [...newState.inversePatches, addActionsToPatch(inversePatch, [action.type])]
       }
       : newState
