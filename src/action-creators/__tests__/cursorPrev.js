@@ -19,7 +19,7 @@ describe('normal view', () => {
       - a
         - a1
       - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 3 }] },
+      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
       cursorPrev()
     ])
 
@@ -111,7 +111,7 @@ describe('normal view', () => {
       - a
         - a1
       - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 3 }] },
+      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
       cursorPrev()
     ])
 

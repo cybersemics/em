@@ -19,7 +19,7 @@ it('indent on adding space at the beginning of the thought', async () => {
 
   store.dispatch({
     type: 'setCursor',
-    thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }],
+    thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'd', rank: 1 }],
   })
 
   executeShortcut(indentOnSpace, { store, type: 'keyboard', event })
