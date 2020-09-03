@@ -240,6 +240,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
                       : id === 'toggleContextView' ? fg
                       : id === 'proseView' && cursorOnProseView ? fg
                       : id === 'toggleSplitView' && showSplitView ? fg
+                      : id === 'splitSentences' ? fg
                       : id === 'subcategorizeOne' ? fg
                       : id === 'subcategorizeAll' ? fg
                       : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
