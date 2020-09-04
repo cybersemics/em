@@ -124,7 +124,6 @@ interface Alert {
 const duplicateAlertToggler = () => {
   let timeoutId: number | undefined // eslint-disable-line fp/no-let
   return (show: boolean, dispatch: Dispatch<Alert>) => {
-    const { alert } = store.getState()
     if (show) {
       timeoutId = window.setTimeout(() => {
         dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
@@ -136,9 +135,13 @@ const duplicateAlertToggler = () => {
       window.clearTimeout(timeoutId)
       timeoutId = undefined
     }
-    if (alert && alert.alertType === 'duplicateThoughts') {
-      setTimeout(() => dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' }))
-    }
+
+    setTimeout(() => {
+      const { alert } = store.getState()
+      if (alert && alert.alertType === 'duplicateThoughts') {
+        dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+      }
+    })
   }
 }
 
