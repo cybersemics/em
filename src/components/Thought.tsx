@@ -249,7 +249,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
   // disable hold-and-select on mobile
   if (isMobile) {
-    setTimeout(clearSelection)
+    setTimeout(() => store.dispatch({ type: 'editing', value: false }))
   }
   store.dispatch({
     type: 'dragInProgress',
