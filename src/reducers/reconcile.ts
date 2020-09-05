@@ -1,9 +1,24 @@
 import _ from 'lodash'
-import { ParentEntry } from '../types'
+import { Lexeme, ParentEntry } from '../types'
 import { GenericObject } from '../utilTypes'
 import { updateThoughts } from '../reducers'
-import { reducerFlow } from '../util'
+import { hashContext, reducerFlow } from '../util'
+import { EM_TOKEN } from '../constants'
 import { State, ThoughtsInterface } from '../util/initialState'
+
+const emContextEncoded = hashContext([EM_TOKEN])
+
+/** Returns true if the given ParentEntry or Lexeme has children. */
+const hasChildren = (src: ParentEntry | Lexeme) =>
+  (src as ParentEntry).children || (src as Lexeme).contexts.length > 0
+
+/** Returns true if the source object is has been updated more recently than the destination object. */
+const isNewer = (src: ParentEntry|Lexeme, dest: ParentEntry|Lexeme) =>
+  src.lastUpdated > dest.lastUpdated
+
+/** Returns true if the em context should be updated. */
+const shouldUpdateEm = (src: ParentEntry, dest: ParentEntry, key: string) =>
+  key === emContextEncoded && src.children.length > dest.children.length
 
 /** Compares local and remote and updates missing thoughts or those with older timestamps. */
 const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: ThoughtsInterface[] }) => {
@@ -11,11 +26,18 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
   const [thoughtsLocal, thoughtsRemote] = thoughtsResults
 
   /** Returns a predicate that returns true if a key is missing from the given destination object or it was updated more recently than the value in the destination object. The value's children or context properties must not empty. */
-  const shouldUpdate = (dest: GenericObject<any> = {}) =>
-    (value: any, key: string) =>
-      value &&
-      (value.children || value.contexts).length > 0 &&
-      (!(key in dest) || value.lastUpdated > dest[key].lastUpdated)
+  const shouldUpdate = (destObj: GenericObject<ParentEntry | Lexeme> = {}) =>
+    (src: ParentEntry | Lexeme, key: string) => {
+      const dest = destObj[key]
+      return src && hasChildren(src) && (
+        !(key in destObj) ||
+        isNewer(src, dest) ||
+        // allow EM context to be updated if source
+        shouldUpdateEm(src as ParentEntry, dest as ParentEntry, key)
+      )
+    }
+
+  // console.log('thoughtsResults', thoughtsResults)
 
   // get the thoughts that are missing from either local or remote
   const contextIndexLocalOnly = _.pickBy(thoughtsLocal.contextIndex, shouldUpdate(thoughtsRemote.contextIndex))
@@ -38,6 +60,8 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
       pending: false,
     })
   )
+
+  // console.log('contextIndexLocalOnly', contextIndexLocalOnly)
 
   return reducerFlow([
 

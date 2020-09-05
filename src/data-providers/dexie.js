@@ -107,7 +107,6 @@ export const getContextsByIds = async ids =>
  */
 export const getDescendantThoughts = async (context, { maxDepth = 100, parentEntry } = {}) => {
 
-  // console.log('getDescendantThoughts', context, maxDepth, parentEntry)
   const contextEncoded = hashContext(context)
 
   // fetch individual parentEntry in initial call
@@ -116,8 +115,6 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
     children: [],
     lastUpdated: never(),
   }
-  // console.log('parentEntry', parentEntry)
-
   if (maxDepth === 0) {
     return {
       contextIndex: {
@@ -146,14 +143,8 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
     }
   }), { thoughtIds: [], contextMap: {} })
 
-  // console.log('thoughtIds', thoughtIds)
-  // console.log('contextMap', contextMap)
-
   const thoughtList = await getThoughtsByIds(thoughtIds)
   const parentEntries = await getContextsByIds(Object.keys(contextMap))
-
-  // console.log('thoughtList', thoughtList)
-  // console.log('parentEntries', parentEntries)
 
   const thoughts = {
     contextIndex: {
@@ -163,16 +154,11 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
     thoughtIndex: _.keyBy(thoughtList, 'id')
   }
 
-  // console.log('thoughts', thoughts)
-
   const descendantThoughts = await Promise.all(parentEntries.map((parentEntry, i) =>
     getDescendantThoughts(contextMap[parentEntry.id], { maxDepth: maxDepth - 1, parentEntry })
   ))
 
-  // console.log('descendantThoughts', descendantThoughts)
-
   const descendantThoughtsMerged = mergeThoughts(thoughts, ...descendantThoughts)
-  // console.log('descendantThoughtsMerged', descendantThoughtsMerged)
 
   return descendantThoughtsMerged
 }
@@ -182,7 +168,6 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
  * @param maxDepth    Maximum number of levels to fetch.
  */
 export const getManyDescendants = async (contextMap, { maxDepth = 100 } = {}) => {
-  // console.log('getManyDescendants', contextMap)
 
   // fetch descendant thoughts for each context in contextMap
   const descendantsArray = await Promise.all(Object.keys(contextMap).map(key =>
