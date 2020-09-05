@@ -7,7 +7,7 @@ import { initialize } from '../initialize'
 import { cleanup as cleanupEventHandlers } from '../util/initEvents'
 import { Provider } from 'react-redux'
 import { store } from '../store'
-import * as db from '../db'
+import * as db from '../data-providers/dexie'
 
 // components
 import AppComponent from '../components/AppComponent'
@@ -54,7 +54,7 @@ const createTestApp = async () => {
     const skipTutorial = wrapper.find('#skip-tutorial')
     skipTutorial.simulate('click')
 
-    jest.runAllTimers()
+    jest.runOnlyPendingTimers()
     wrapper.update()
 
     // make DND ref available for drag and drop tests.
@@ -78,7 +78,7 @@ export const cleanupTestApp = async () => {
     await db.clearAll()
     document.body.innerHTML = ''
 
-    jest.runAllTimers()
+    jest.runOnlyPendingTimers()
   })
 }
 

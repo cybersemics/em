@@ -78,7 +78,14 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
 
   /** Sets the cursor on the note's thought when then note is focused. */
   const onFocus = () => {
-    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
+    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: true, noteFocus: true })
+  }
+
+  /** Set editing to false onBlur, if keyboard is closed. */
+  const onBlur = () => {
+    if (isMobile && !window.getSelection()?.focusNode) {
+      setTimeout(() => dispatch({ type: 'editing', value: false }))
+    }
   }
 
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
@@ -93,6 +100,7 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
         // the default onPaste behavior is maintained for easier caret and selection management
         setJustPasted(true)
       }}
+      onBlur={onBlur}
       onFocus={onFocus}
     />
   </div>
