@@ -85,7 +85,7 @@ describe('dexie', () => {
 
   test('getThoughtsByIds', async () => {
 
-    const thought1 = {
+    const thoughtX = {
       id: hashThought('x'),
       value: 'x',
       contexts: [['a']],
@@ -93,7 +93,7 @@ describe('dexie', () => {
       lastUpdated: timestamp()
     }
 
-    const thought2 = {
+    const thoughtY = {
       id: hashThought('y'),
       value: 'y',
       contexts: [['b']],
@@ -101,11 +101,15 @@ describe('dexie', () => {
       lastUpdated: timestamp()
     }
 
-    await db.updateThought(hashThought('x'), thought1)
-    await db.updateThought(hashThought('y'), thought2)
+    await db.updateThought(hashThought('x'), thoughtX)
+    await db.updateThought(hashThought('y'), thoughtY)
 
     const dbThoughts = await db.getThoughtsByIds([hashThought('x'), hashThought('y')])
-    expect(dbThoughts).toEqual([thought2, thought1])
+
+    // does not preserve order
+    expect(dbThoughts).toEqual(
+      expect.arrayContaining([thoughtX, thoughtY])
+    )
   })
 
   test('getThought', async () => {
@@ -220,7 +224,7 @@ describe('dexie', () => {
 
   describe('getDescendantThoughts', () => {
 
-    test.only('default', async () => {
+    test('default', async () => {
 
       const thoughtX = {
         id: hashThought('x'),
@@ -305,8 +309,7 @@ describe('dexie', () => {
         [hashContext(['x', 'a', 'b'])]: parentEntryLeaf,
       })
 
-      const parentEntry = await db.getContext(['x'])
-      const thoughts = await db.getDescendantThoughts(['x'], parentEntry)
+      const thoughts = await db.getDescendantThoughts(['x'])
 
       expect(thoughts).toHaveProperty('contextIndex')
 
@@ -370,24 +373,9 @@ describe('dexie', () => {
         lastUpdated: timestamp()
       }
 
-      const parentEntryX = {
-        children: [
-          { value: 'y', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryY = {
-        children: [
-          { value: 'z', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryLeaf = {
-        children: [],
-        lastUpdated: timestamp()
-      }
+      const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
+      const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
+      const parentEntryLeaf = { children: [] }
 
       await db.updateThoughtIndex({
         [hashThought(ROOT_TOKEN)]: thought1,
@@ -431,7 +419,7 @@ describe('dexie', () => {
 
     test('maxDepth: 1', async () => {
 
-      const thought1 = {
+      const thoughtX = {
         id: hashThought('x'),
         value: 'x',
         contexts: [[]],
@@ -455,27 +443,12 @@ describe('dexie', () => {
         lastUpdated: timestamp()
       }
 
-      const parentEntryX = {
-        children: [
-          { value: 'y', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryY = {
-        children: [
-          { value: 'z', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryLeaf = {
-        children: [],
-        lastUpdated: timestamp()
-      }
+      const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
+      const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
+      const parentEntryLeaf = { children: [] }
 
       await db.updateThoughtIndex({
-        [hashThought('x')]: thought1,
+        [hashThought('x')]: thoughtX,
         [hashThought('y')]: thoughtY,
         [hashThought('z')]: thoughtZ,
       })
@@ -546,31 +519,10 @@ describe('dexie', () => {
         lastUpdated: timestamp()
       }
 
-      const parentEntryX = {
-        children: [
-          { value: 'y', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryY = {
-        children: [
-          { value: 'z', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryZ = {
-        children: [
-          { value: 'm', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryLeaf = {
-        children: [],
-        lastUpdated: timestamp()
-      }
+      const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
+      const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
+      const parentEntryZ = { children: [{ value: 'm', rank: 0 }] }
+      const parentEntryLeaf = { children: [] }
 
       await db.updateThoughtIndex({
         [hashThought('x')]: thoughtX,
@@ -626,72 +578,36 @@ describe('dexie', () => {
         id: hashThought('x'),
         value: 'x',
         contexts: [[]],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
       const thoughtY = {
         id: hashThought('y'),
         value: 'y',
         contexts: [['x']],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
       const thoughtZ = {
         id: hashThought('z'),
         value: 'z',
         contexts: [['x', 'y']],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
       const thoughtM = {
         id: hashThought('m'),
         value: 'm',
         contexts: [['t', 'u', 'v']],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
       const thoughtN = {
         id: hashThought('n'),
         value: 'n',
         contexts: [['t', 'u', 'v', 'm']],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
-      const parentEntryX = {
-        children:[
-          { value: 'y', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryY = {
-        children: [
-          { value: 'z', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryZ = {
-        children: [],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryM = {
-        children: [
-          { value: 'n', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryLeaf = {
-        children: [],
-        lastUpdated: timestamp()
-      }
+      const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
+      const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
+      const parentEntryM = { children: [{ value: 'n', rank: 0 }] }
+      const parentEntryLeaf = { children: [] }
 
       await db.updateThoughtIndex({
         [hashThought('x')]: thoughtX,
@@ -704,7 +620,7 @@ describe('dexie', () => {
       await db.updateContextIndex({
         [hashContext(['x'])]: parentEntryX,
         [hashContext(['x', 'y'])]: parentEntryY,
-        [hashContext(['x', 'y', 'z'])]: parentEntryZ,
+        [hashContext(['x', 'y', 'z'])]: parentEntryLeaf,
         [hashContext(['t', 'u', 'v', 'm'])]: parentEntryM,
         [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryLeaf,
       })
@@ -726,7 +642,7 @@ describe('dexie', () => {
           id: hashContext(['x', 'y']),
         },
         [hashContext(['x', 'y', 'z'])]: {
-          ...parentEntryZ,
+          ...parentEntryLeaf,
           id: hashContext(['x', 'y', 'z']),
         },
         [hashContext(['t', 'u', 'v', 'm'])]: {
@@ -791,31 +707,10 @@ describe('dexie', () => {
         lastUpdated: timestamp()
       }
 
-      const parentEntryX = {
-        children:[
-          { value: 'y', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryY = {
-        children: [
-          { value: 'z', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryM = {
-        children: [
-          { value: 'n', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryLeaf = {
-        children: [],
-        lastUpdated: timestamp()
-      }
+      const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
+      const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
+      const parentEntryM = { children: [{ value: 'n', rank: 0 }] }
+      const parentEntryLeaf = { children: [] }
 
       await db.updateThoughtIndex({
         [hashThought('x')]: thoughtX,
@@ -874,73 +769,42 @@ describe('dexie', () => {
 
     })
 
-    test('Ignore maxDepth on EM context', async () => {
+    test('ignore maxDepth on EM context', async () => {
 
       const thought1 = {
         id: hashThought(EM_TOKEN),
         value: EM_TOKEN,
         contexts: [[]],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
       const thoughtY = {
         id: hashThought('y'),
         value: 'y',
         contexts: [[EM_TOKEN]],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
       const thoughtZ = {
         id: hashThought('z'),
         value: 'z',
         contexts: [[EM_TOKEN, 'y']],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
       const thoughtM = {
         id: hashThought('m'),
         value: 'm',
         contexts: [['t', 'u', 'v']],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
       const thoughtN = {
         id: hashThought('n'),
         value: 'n',
         contexts: [['t', 'u', 'v', 'm']],
-        created: timestamp(),
-        lastUpdated: timestamp()
       }
 
-      const parentEntryEM = {
-        children:[
-          { value: 'y', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryY = {
-        children: [
-          { value: 'z', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryM = {
-        children: [
-          { value: 'n', rank: 0 },
-        ],
-        lastUpdated: timestamp()
-      }
-
-      const parentEntryLeaf = {
-        children: [],
-        lastUpdated: timestamp()
-      }
+      const parentEntryEM = { children: [{ value: 'y', rank: 0 }] }
+      const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
+      const parentEntryM = { children: [{ value: 'n', rank: 0 }] }
+      const parentEntryLeaf = { children: [] }
 
       await db.updateThoughtIndex({
         [hashThought(EM_TOKEN)]: thought1,
