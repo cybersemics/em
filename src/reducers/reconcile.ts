@@ -13,8 +13,11 @@ const hasChildren = (src: ParentEntry | Lexeme) =>
   (src as ParentEntry).children || (src as Lexeme).contexts.length > 0
 
 /** Returns true if the source object is has been updated more recently than the destination object. */
-const isNewer = (src: ParentEntry|Lexeme, dest: ParentEntry|Lexeme) =>
+const isNewer = (src: ParentEntry | Lexeme, dest: ParentEntry|Lexeme) =>
   src.lastUpdated > dest.lastUpdated
+
+/** Returns true if the source object is pending. */
+const isPending = (src: ParentEntry | Lexeme) => (src as ParentEntry).pending
 
 /** Returns true if the em context should be updated. */
 const shouldUpdateEm = (src: ParentEntry, dest: ParentEntry, key: string) =>
@@ -25,11 +28,11 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
 
   const [thoughtsLocal, thoughtsRemote] = thoughtsResults
 
-  /** Returns a predicate that returns true if a key is missing from the given destination object or it was updated more recently than the value in the destination object. The value's children or context properties must not empty. */
-  const shouldUpdate = (destObj: GenericObject<ParentEntry | Lexeme> = {}) =>
+  /** Returns a predicate that returns true if a key is missing from the given destination object or it was updated more recently than the value in the destination object. */
+  const shouldUpdateDest = (destObj: GenericObject<ParentEntry | Lexeme> = {}) =>
     (src: ParentEntry | Lexeme, key: string) => {
       const dest = destObj[key]
-      return src && hasChildren(src) && (
+      return src && !isPending(src) && hasChildren(src) && (
         !(key in destObj) ||
         isNewer(src, dest) ||
         // allow EM context to be updated if source
@@ -37,13 +40,11 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
       )
     }
 
-  // console.log('thoughtsResults', thoughtsResults)
-
   // get the thoughts that are missing from either local or remote
-  const contextIndexLocalOnly = _.pickBy(thoughtsLocal.contextIndex, shouldUpdate(thoughtsRemote.contextIndex))
-  const contextIndexRemoteOnly = _.pickBy(thoughtsRemote.contextIndex, shouldUpdate(thoughtsLocal.contextIndex))
-  const thoughtIndexLocalOnly = _.pickBy(thoughtsLocal.thoughtIndex, shouldUpdate(thoughtsRemote.thoughtIndex))
-  const thoughtIndexRemoteOnly = _.pickBy(thoughtsRemote.thoughtIndex, shouldUpdate(thoughtsLocal.thoughtIndex))
+  const contextIndexLocalOnly = _.pickBy(thoughtsLocal.contextIndex, shouldUpdateDest(thoughtsRemote.contextIndex))
+  const contextIndexRemoteOnly = _.pickBy(thoughtsRemote.contextIndex, shouldUpdateDest(thoughtsLocal.contextIndex))
+  const thoughtIndexLocalOnly = _.pickBy(thoughtsLocal.thoughtIndex, shouldUpdateDest(thoughtsRemote.thoughtIndex))
+  const thoughtIndexRemoteOnly = _.pickBy(thoughtsRemote.thoughtIndex, shouldUpdateDest(thoughtsLocal.thoughtIndex))
 
   // get local pending thoughts that are returned by the remote but are not updateable
   // so that we can clear pending
@@ -60,8 +61,6 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
       pending: false,
     })
   )
-
-  // console.log('contextIndexLocalOnly', contextIndexLocalOnly)
 
   return reducerFlow([
 
