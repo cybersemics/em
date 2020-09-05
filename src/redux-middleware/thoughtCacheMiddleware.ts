@@ -163,14 +163,22 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     // get local thoughts
     const thoughtsLocal = await db.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
 
+    // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
+    // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
+    dispatch({
+      type: 'updateThoughts',
+      contextIndexUpdates: thoughtsLocal.contextIndex,
+      thoughtIndexUpdates: thoughtsLocal.thoughtIndex,
+      local: false,
+      remote: false,
+    })
+
     // get remote thoughts and reconcile with local
     const user = getState().user
     if (user) {
       // do not await
-      // console.log('pendingThoughts', pendingThoughts)
       firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
         .then(thoughtsRemote => {
-          // console.log('thoughtsRemote', thoughtsRemote)
 
           dispatch({
             type: 'reconcile',
@@ -179,15 +187,6 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
         })
     }
-
-    // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
-    dispatch({
-      type: 'updateThoughts',
-      contextIndexUpdates: thoughtsLocal.contextIndex,
-      thoughtIndexUpdates: thoughtsLocal.thoughtIndex,
-      local: false,
-      remote: false,
-    })
 
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending wil properly check visibleContexts and fetch any pending thoughts that are visible.
     const hasPending = Object.keys(thoughtsLocal.contextIndex || {})
