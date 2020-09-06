@@ -49,6 +49,7 @@ export type Context = string[]
 
 /** An object that contains a list of children within a context. */
 export interface ParentEntry {
+  id?: string,
   children: Child[],
   lastUpdated: Timestamp,
   pending?: boolean,

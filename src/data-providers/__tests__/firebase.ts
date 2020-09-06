@@ -4,13 +4,10 @@ import { getChildren, getThought } from '../../selectors'
 import * as firebase from '../firebase'
 import _ from 'lodash'
 import { hashContext, hashThought, never, timestamp } from '../../util'
+import { Snapshot } from '../../types'
 import { GenericObject } from '../../utilTypes'
 
 jest.useFakeTimers()
-
-interface Snapshot {
-  val: () => any,
-}
 
 // mock firebase object store
 declare global {
@@ -420,11 +417,94 @@ describe('getDescendantThoughts', () => {
       lastUpdated: timestamp()
     }
 
+    const thoughtX = {
+      id: hashThought('x'),
+      value: 'x',
+      contexts: [{
+        context: [ROOT_TOKEN],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
+      created: timestamp(),
+      lastUpdated: timestamp()
+    }
+
     const thoughtY = {
       id: hashThought('y'),
       value: 'y',
       contexts: [{
-        context: [ROOT_TOKEN],
+        context: ['x'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
+      created: timestamp(),
+      lastUpdated: timestamp()
+    }
+
+    const parentEntryRoot = {
+      id: hashContext([ROOT_TOKEN]),
+      children: [{ value: 'x', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryX = {
+      id: hashContext(['x']),
+      children: [{ value: 'y', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryY = {
+      id: hashContext(['x', 'y']),
+      children: [],
+      lastUpdated: timestamp(),
+    }
+
+    await firebase.updateThoughtIndex({
+      [hashThought(ROOT_TOKEN)]: thoughtRoot,
+      [hashThought('x')]: thoughtX,
+      [hashThought('y')]: thoughtY,
+    })
+
+    await firebase.updateContextIndex({
+      [hashContext([ROOT_TOKEN])]: parentEntryRoot,
+      [hashContext(['x'])]: parentEntryX,
+      [hashContext(['x', 'y'])]: parentEntryY,
+    })
+
+    const thoughts = await firebase.getDescendantThoughts([ROOT_TOKEN])
+
+    expect(thoughts).toHaveProperty('contextIndex')
+
+    expect(thoughts.contextIndex).toEqual({
+      [hashContext([ROOT_TOKEN])]: parentEntryRoot,
+      [hashContext(['x'])]: parentEntryX,
+      [hashContext(['x', 'y'])]: parentEntryY,
+    })
+
+    expect(thoughts).toHaveProperty('thoughtIndex')
+
+    expect(thoughts.thoughtIndex).toEqual({
+      [hashThought('x')]: thoughtX,
+      [hashThought('y')]: thoughtY,
+    })
+
+  })
+
+  test('maxDepth: 1', async () => {
+
+    const thoughtX = {
+      id: hashThought('x'),
+      value: 'x',
+      contexts: [],
+      created: timestamp(),
+      lastUpdated: timestamp()
+    }
+
+    const thoughtY = {
+      id: hashThought('y'),
+      value: 'y',
+      contexts: [{
+        context: ['x'],
         rank: 0,
         lastUpdated: timestamp(),
       }],
@@ -463,67 +543,6 @@ describe('getDescendantThoughts', () => {
     }
 
     await firebase.updateThoughtIndex({
-      [hashThought(ROOT_TOKEN)]: thoughtRoot,
-      [hashThought('y')]: thoughtY,
-      [hashThought('z')]: thoughtZ,
-    })
-
-    await firebase.updateContextIndex({
-      [hashContext([ROOT_TOKEN])]: parentEntryX,
-      [hashContext(['y'])]: parentEntryY,
-      [hashContext(['y', 'z'])]: parentEntryZ,
-    })
-
-    const thoughts = await firebase.getDescendantThoughts([ROOT_TOKEN])
-
-    expect(thoughts).toHaveProperty('contextIndex')
-
-    expect(thoughts.contextIndex).toEqual({
-      [hashContext([ROOT_TOKEN])]: parentEntryX,
-      [hashContext(['y'])]: parentEntryY,
-      [hashContext(['y', 'z'])]: parentEntryZ,
-    })
-
-    expect(thoughts).toHaveProperty('thoughtIndex')
-
-    expect(thoughts.thoughtIndex).toEqual({
-      [hashThought('y')]: thoughtY,
-      [hashThought('z')]: thoughtZ,
-    })
-
-  })
-
-  test.skip('maxDepth: 1', async () => {
-
-    const thoughtX = {
-      id: hashThought('x'),
-      value: 'x',
-      contexts: [[]],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
-
-    const thoughtY = {
-      id: hashThought('y'),
-      value: 'y',
-      contexts: [['x']],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
-
-    const thoughtZ = {
-      id: hashThought('z'),
-      value: 'z',
-      contexts: [['x', 'y']],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
-
-    const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
-    const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
-    const parentEntryLeaf = { children: [] }
-
-    await firebase.updateThoughtIndex({
       [hashThought('x')]: thoughtX,
       [hashThought('y')]: thoughtY,
       [hashThought('z')]: thoughtZ,
@@ -532,7 +551,7 @@ describe('getDescendantThoughts', () => {
     await firebase.updateContextIndex({
       [hashContext(['x'])]: parentEntryX,
       [hashContext(['x', 'y'])]: parentEntryY,
-      [hashContext(['x', 'y', 'z'])]: parentEntryLeaf,
+      [hashContext(['x', 'y', 'z'])]: parentEntryZ,
     })
 
     // only fetch 1 level of descendants
@@ -540,17 +559,13 @@ describe('getDescendantThoughts', () => {
 
     expect(thoughts).toHaveProperty('contextIndex')
 
-    expect(thoughts.contextIndex).toEqual({
-      [hashContext(['x'])]: {
-        ...parentEntryX,
-        id: hashContext(['x']),
-      },
-      // children are pending
-      [hashContext(['x', 'y'])]: {
-        children: [],
-        lastUpdated: never(),
-        pending: true,
-      },
+    expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
+
+    // children are pending
+    expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual({
+      children: [],
+      lastUpdated: never(),
+      pending: true,
     })
 
     expect(thoughts).toHaveProperty('thoughtIndex')
@@ -561,12 +576,12 @@ describe('getDescendantThoughts', () => {
 
   })
 
-  test.skip('maxDepth: 2', async () => {
+  test('maxDepth: 2', async () => {
 
     const thoughtX = {
       id: hashThought('x'),
       value: 'x',
-      contexts: [[]],
+      contexts: [],
       created: timestamp(),
       lastUpdated: timestamp()
     }
@@ -574,7 +589,11 @@ describe('getDescendantThoughts', () => {
     const thoughtY = {
       id: hashThought('y'),
       value: 'y',
-      contexts: [['x']],
+      contexts: [{
+        context: ['x'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
       created: timestamp(),
       lastUpdated: timestamp()
     }
@@ -582,7 +601,11 @@ describe('getDescendantThoughts', () => {
     const thoughtZ = {
       id: hashThought('z'),
       value: 'z',
-      contexts: [['x', 'y']],
+      contexts: [{
+        context: ['x', 'y'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
       created: timestamp(),
       lastUpdated: timestamp()
     }
@@ -590,15 +613,39 @@ describe('getDescendantThoughts', () => {
     const thoughtM = {
       id: hashThought('m'),
       value: 'm',
-      contexts: [['x', 'y', 'z']],
+      contexts: [{
+        context: ['x', 'y', 'z'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
       created: timestamp(),
       lastUpdated: timestamp()
     }
 
-    const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
-    const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
-    const parentEntryZ = { children: [{ value: 'm', rank: 0 }] }
-    const parentEntryLeaf = { children: [] }
+    const parentEntryX = {
+      id: hashContext(['x']),
+      children: [{ value: 'y', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryY = {
+      id: hashContext(['x', 'y']),
+      children: [{ value: 'z', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryZ = {
+      id: hashContext(['x', 'y', 'z']),
+      children: [{ value: 'm', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryM = {
+      id: hashContext(['x', 'y', 'z', 'm']),
+      children: [],
+      lastUpdated: timestamp(),
+    }
+
 
     await firebase.updateThoughtIndex({
       [hashThought('x')]: thoughtX,
@@ -611,7 +658,7 @@ describe('getDescendantThoughts', () => {
       [hashContext(['x'])]: parentEntryX,
       [hashContext(['x', 'y'])]: parentEntryY,
       [hashContext(['x', 'y', 'z'])]: parentEntryZ,
-      [hashContext(['x', 'y', 'z', 'm'])]: parentEntryLeaf,
+      [hashContext(['x', 'y', 'z', 'm'])]: parentEntryM,
     })
 
     // only fetch 2 levels of descendants
@@ -619,21 +666,14 @@ describe('getDescendantThoughts', () => {
 
     expect(thoughts).toHaveProperty('contextIndex')
 
-    expect(thoughts.contextIndex).toEqual({
-      [hashContext(['x'])]: {
-        ...parentEntryX,
-        id: hashContext(['x']),
-      },
-      [hashContext(['x', 'y'])]: {
-        ...parentEntryY,
-        id: hashContext(['x', 'y']),
-      },
-      // grandchildren are pending
-      [hashContext(['x', 'y', 'z'])]: {
-        children: [],
-        lastUpdated: '',
-        pending: true,
-      },
+    expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
+    expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual(parentEntryY)
+
+    // grandchildren are pending
+    expect(thoughts.contextIndex[hashContext(['x', 'y', 'z'])]).toEqual({
+      children: [],
+      lastUpdated: '',
+      pending: true,
     })
 
     expect(thoughts).toHaveProperty('thoughtIndex')
@@ -648,42 +688,83 @@ describe('getDescendantThoughts', () => {
 
 describe('getManyDescendants', () => {
 
-  test.skip('default', async () => {
+  test('default', async () => {
 
     const thoughtX = {
       id: hashThought('x'),
       value: 'x',
-      contexts: [[]],
+      contexts: [],
     }
 
     const thoughtY = {
       id: hashThought('y'),
       value: 'y',
-      contexts: [['x']],
+      contexts: [{
+        context: ['x'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtZ = {
       id: hashThought('z'),
       value: 'z',
-      contexts: [['x', 'y']],
+      contexts: [{
+        context: ['x', 'y'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtM = {
       id: hashThought('m'),
       value: 'm',
-      contexts: [['t', 'u', 'v']],
+      contexts: [{
+        context: ['t', 'u', 'v'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtN = {
       id: hashThought('n'),
       value: 'n',
-      contexts: [['t', 'u', 'v', 'm']],
+      contexts: [{
+        context: ['t', 'u', 'v', 'm'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
-    const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
-    const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
-    const parentEntryM = { children: [{ value: 'n', rank: 0 }] }
-    const parentEntryLeaf = { children: [] }
+    const parentEntryX = {
+      id: hashContext(['x']),
+      children: [{ value: 'y', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryY = {
+      id: hashContext(['x', 'y']),
+      children: [{ value: 'z', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryZ = {
+      id: hashContext(['x', 'y', 'z']),
+      children: [],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryM = {
+      id: hashContext(['t', 'u', 'v', 'm']),
+      children: [{ value: 'n', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryN = {
+      id: hashContext(['t', 'u', 'v', 'm', 'n']),
+      children: [],
+      lastUpdated: timestamp(),
+    }
 
     await firebase.updateThoughtIndex({
       [hashThought('x')]: thoughtX,
@@ -696,9 +777,9 @@ describe('getManyDescendants', () => {
     await firebase.updateContextIndex({
       [hashContext(['x'])]: parentEntryX,
       [hashContext(['x', 'y'])]: parentEntryY,
-      [hashContext(['x', 'y', 'z'])]: parentEntryLeaf,
+      [hashContext(['x', 'y', 'z'])]: parentEntryZ,
       [hashContext(['t', 'u', 'v', 'm'])]: parentEntryM,
-      [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryLeaf,
+      [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryN,
     })
 
     const thoughts = await firebase.getManyDescendants({
@@ -708,28 +789,11 @@ describe('getManyDescendants', () => {
 
     expect(thoughts).toHaveProperty('contextIndex')
 
-    expect(thoughts.contextIndex).toEqual({
-      [hashContext(['x'])]: {
-        ...parentEntryX,
-        id: hashContext(['x']),
-      },
-      [hashContext(['x', 'y'])]: {
-        ...parentEntryY,
-        id: hashContext(['x', 'y']),
-      },
-      [hashContext(['x', 'y', 'z'])]: {
-        ...parentEntryLeaf,
-        id: hashContext(['x', 'y', 'z']),
-      },
-      [hashContext(['t', 'u', 'v', 'm'])]: {
-        ...parentEntryM,
-        id: hashContext(['t', 'u', 'v', 'm']),
-      },
-      [hashContext(['t', 'u', 'v', 'm', 'n'])]: {
-        ...parentEntryLeaf,
-        id: hashContext(['t', 'u', 'v', 'm', 'n']),
-      },
-    })
+    expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
+    expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual(parentEntryY)
+    expect(thoughts.contextIndex[hashContext(['x', 'y', 'z'])]).toEqual(parentEntryZ)
+    expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
+    expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual(parentEntryN)
 
     expect(thoughts).toHaveProperty('thoughtIndex')
 
@@ -741,52 +805,83 @@ describe('getManyDescendants', () => {
 
   })
 
-  test.skip('maxDepth', async () => {
+  test('maxDepth', async () => {
 
     const thoughtX = {
       id: hashThought('x'),
       value: 'x',
-      contexts: [[]],
-      created: timestamp(),
-      lastUpdated: timestamp()
+      contexts: [],
     }
 
     const thoughtY = {
       id: hashThought('y'),
       value: 'y',
-      contexts: [['x']],
-      created: timestamp(),
-      lastUpdated: timestamp()
+      contexts: [{
+        context: ['x'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtZ = {
       id: hashThought('z'),
       value: 'z',
-      contexts: [['x', 'y']],
-      created: timestamp(),
-      lastUpdated: timestamp()
+      contexts: [{
+        context: ['x', 'y'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtM = {
       id: hashThought('m'),
       value: 'm',
-      contexts: [['t', 'u', 'v']],
-      created: timestamp(),
-      lastUpdated: timestamp()
+      contexts: [{
+        context: ['t', 'u', 'v'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtN = {
       id: hashThought('n'),
       value: 'n',
-      contexts: [['t', 'u', 'v', 'm']],
-      created: timestamp(),
-      lastUpdated: timestamp()
+      contexts: [{
+        context: ['t', 'u', 'v', 'm'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
-    const parentEntryX = { children: [{ value: 'y', rank: 0 }] }
-    const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
-    const parentEntryM = { children: [{ value: 'n', rank: 0 }] }
-    const parentEntryLeaf = { children: [] }
+    const parentEntryX = {
+      id: hashContext(['x']),
+      children: [{ value: 'y', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryY = {
+      id: hashContext(['x', 'y']),
+      children: [{ value: 'z', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryZ = {
+      id: hashContext(['x', 'y', 'z']),
+      children: [],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryM = {
+      id: hashContext(['t', 'u', 'v', 'm']),
+      children: [{ value: 'n', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryN = {
+      id: hashContext(['t', 'u', 'v', 'm', 'n']),
+      children: [],
+      lastUpdated: timestamp(),
+    }
 
     await firebase.updateThoughtIndex({
       [hashThought('x')]: thoughtX,
@@ -799,9 +894,9 @@ describe('getManyDescendants', () => {
     await firebase.updateContextIndex({
       [hashContext(['x'])]: parentEntryX,
       [hashContext(['x', 'y'])]: parentEntryY,
-      [hashContext(['x', 'y', 'z'])]: parentEntryLeaf,
+      [hashContext(['x', 'y', 'z'])]: parentEntryZ,
       [hashContext(['t', 'u', 'v', 'm'])]: parentEntryM,
-      [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryLeaf,
+      [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryN,
     })
 
     const thoughts = await firebase.getManyDescendants({
@@ -811,29 +906,15 @@ describe('getManyDescendants', () => {
 
     expect(thoughts).toHaveProperty('contextIndex')
 
-    expect(thoughts.contextIndex).toEqual({
-      [hashContext(['x'])]: {
-        ...parentEntryX,
-        id: hashContext(['x']),
-      },
-      [hashContext(['x', 'y'])]: {
-        ...parentEntryY,
-        id: hashContext(['x', 'y']),
-      },
-      [hashContext(['x', 'y', 'z'])]: {
-        children: [],
-        lastUpdated: never(),
-        pending: true,
-      },
-      [hashContext(['t', 'u', 'v', 'm'])]: {
-        ...parentEntryM,
-        id: hashContext(['t', 'u', 'v', 'm']),
-      },
-      [hashContext(['t', 'u', 'v', 'm', 'n'])]: {
-        ...parentEntryLeaf,
-        id: hashContext(['t', 'u', 'v', 'm', 'n']),
-      },
+    expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
+    expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual(parentEntryY)
+    expect(thoughts.contextIndex[hashContext(['x', 'y', 'z'])]).toEqual({
+      children: [],
+      lastUpdated: never(),
+      pending: true,
     })
+    expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
+    expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual(parentEntryN)
 
     expect(thoughts).toHaveProperty('thoughtIndex')
 
@@ -845,42 +926,84 @@ describe('getManyDescendants', () => {
 
   })
 
-  test.skip('ignore maxDepth on EM context', async () => {
+  test('ignore maxDepth on EM context', async () => {
 
     const thought1 = {
       id: hashThought(EM_TOKEN),
       value: EM_TOKEN,
-      contexts: [[]],
+      contexts: [],
     }
 
     const thoughtY = {
       id: hashThought('y'),
       value: 'y',
-      contexts: [[EM_TOKEN]],
+      contexts: [{
+        context: [EM_TOKEN],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtZ = {
       id: hashThought('z'),
       value: 'z',
-      contexts: [[EM_TOKEN, 'y']],
+      contexts: [{
+        context: [EM_TOKEN, 'y'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtM = {
       id: hashThought('m'),
       value: 'm',
-      contexts: [['t', 'u', 'v']],
+      contexts: [{
+        context: ['t', 'u', 'v'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
     const thoughtN = {
       id: hashThought('n'),
       value: 'n',
-      contexts: [['t', 'u', 'v', 'm']],
+      contexts: [{
+        context: ['t', 'u', 'v', 'm'],
+        rank: 0,
+        lastUpdated: timestamp(),
+      }],
     }
 
-    const parentEntryEM = { children: [{ value: 'y', rank: 0 }] }
-    const parentEntryY = { children: [{ value: 'z', rank: 0 }] }
-    const parentEntryM = { children: [{ value: 'n', rank: 0 }] }
-    const parentEntryLeaf = { children: [] }
+    const parentEntryEM = {
+      id: hashContext([EM_TOKEN]),
+      children: [{ value: 'y', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryY = {
+      id: hashContext([EM_TOKEN, 'y']),
+      children: [{ value: 'z', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryZ = {
+      id: hashContext([EM_TOKEN, 'y', 'z']),
+      children: [],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryM = {
+      id: hashContext(['t', 'u', 'v', 'm']),
+      children: [{ value: 'n', rank: 0 }],
+      lastUpdated: timestamp(),
+    }
+
+    const parentEntryN = {
+      id: hashContext(['t', 'u', 'v', 'm', 'n']),
+      children: [],
+      lastUpdated: timestamp(),
+    }
+
 
     await firebase.updateThoughtIndex({
       [hashThought(EM_TOKEN)]: thought1,
@@ -893,9 +1016,9 @@ describe('getManyDescendants', () => {
     await firebase.updateContextIndex({
       [hashContext([EM_TOKEN])]: parentEntryEM,
       [hashContext([EM_TOKEN, 'y'])]: parentEntryY,
-      [hashContext([EM_TOKEN, 'y', 'z'])]: parentEntryLeaf,
+      [hashContext([EM_TOKEN, 'y', 'z'])]: parentEntryZ,
       [hashContext(['t', 'u', 'v', 'm'])]: parentEntryM,
-      [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryLeaf,
+      [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryN,
     })
 
     const thoughts = await firebase.getManyDescendants({
@@ -905,29 +1028,15 @@ describe('getManyDescendants', () => {
 
     expect(thoughts).toHaveProperty('contextIndex')
 
-    expect(thoughts.contextIndex).toEqual({
-      [hashContext([EM_TOKEN])]: {
-        ...parentEntryEM,
-        id: hashContext([EM_TOKEN]),
-      },
-      [hashContext([EM_TOKEN, 'y'])]: {
-        ...parentEntryY,
-        id: hashContext([EM_TOKEN, 'y']),
-      },
-      [hashContext([EM_TOKEN, 'y', 'z'])]: {
-        ...parentEntryLeaf,
-        id: hashContext([EM_TOKEN, 'y', 'z']),
-      },
-      [hashContext(['t', 'u', 'v', 'm'])]: {
-        ...parentEntryM,
-        id: hashContext(['t', 'u', 'v', 'm']),
-      },
-      // still uses maxDepth on non-EM contexts
-      [hashContext(['t', 'u', 'v', 'm', 'n'])]: {
-        children: [],
-        lastUpdated: never(),
-        pending: true,
-      },
+    expect(thoughts.contextIndex[hashContext([EM_TOKEN])]).toEqual(parentEntryEM)
+    expect(thoughts.contextIndex[hashContext([EM_TOKEN, 'y'])]).toEqual(parentEntryY)
+    expect(thoughts.contextIndex[hashContext([EM_TOKEN, 'y', 'z'])]).toEqual(parentEntryZ)
+    expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
+    // still uses maxDepth on non-EM contexts
+    expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual({
+      children: [],
+      lastUpdated: never(),
+      pending: true,
     })
 
     expect(thoughts).toHaveProperty('thoughtIndex')
