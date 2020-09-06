@@ -1,7 +1,8 @@
+import _ from 'lodash'
 import { EM_TOKEN } from '../constants'
 import { store } from '../store'
-import { Context, Lexeme, ParentEntry, Snapshot } from '../types'
-import { GenericObject, Nullable } from '../utilTypes'
+import { Child, Context, Lexeme, ParentEntry, Snapshot } from '../types'
+import { GenericObject } from '../utilTypes'
 import { hashContext, hashThought, mergeThoughts, never, pathToContext, unroot } from '../util'
 import { ThoughtsInterface } from '../util/initialState'
 
@@ -22,11 +23,11 @@ export const getThoughtById = async (id: string): Promise<Lexeme> => {
 }
 
 /** Gets multiple Lexeme objects by ids. */
-export const getThoughtsByIds = async (ids: string[]): Promise<Lexeme> => {
+export const getThoughtsByIds = async (ids: string[]): Promise<Lexeme[]> => {
   const userId = store.getState().user.uid
   const ref = window.firebase.database().ref(`users/${userId}/thoughtIndex`)
     .children(ids)
-  return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Lexeme>) => {
+  return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Lexeme[]>) => {
     resolve(snapshot.val())
   }))
 }
@@ -40,10 +41,20 @@ export const getThought = async (value: string): Promise<Lexeme> =>
  *
  * @param context
  */
-export const getContext = async (context: Context): Promise<Nullable<ParentEntry>> => {
+export const getContext = async (context: Context): Promise<ParentEntry | null> => {
   const userId = store.getState().user.uid
   const ref = window.firebase.database().ref(`users/${userId}/contextIndex/${hashContext(context)}`)
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<ParentEntry>) => {
+    resolve(snapshot.val())
+  }))
+}
+
+/** Gets multiple PrentEntry objects by ids. */
+export const getContextsByIds = async (ids: string[]): Promise<ParentEntry[]> => {
+  const userId = store.getState().user.uid
+  const ref = window.firebase.database().ref(`users/${userId}/contextIndex`)
+    .children(ids)
+  return new Promise(resolve => ref.once('value', (snapshot: Snapshot<ParentEntry[]>) => {
     resolve(snapshot.val())
   }))
 }
@@ -97,51 +108,62 @@ export const updateThoughtIndex = async (thoughtIndex: GenericObject<Lexeme>) =>
  * @param context
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned ParentEntry. Ignored for EM context. Default: 100.Default: 100.
  */
-export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }: Options = {}): Promise<ThoughtsInterface> => {
+export const getDescendantThoughts = async (context: Context, { maxDepth = 100, parentEntry }: { maxDepth?: number, parentEntry?: ParentEntry } = {}) => {
 
   const contextEncoded = hashContext(context)
 
-  if (maxDepth === 0) return { contextIndex: {}, thoughtIndex: {} }
-
-  const parentEntryFirebase = await getContext(context)
-
-  const parentEntry = {
+  // fetch individual parentEntry in initial call
+  // recursive calls on children will pass the parentEntry fetched in batch by getContextsByIds
+  parentEntry = parentEntry || await getContext(context) || {
     children: [],
     lastUpdated: never(),
-    ...parentEntryFirebase,
-    // if this is the last level in the buffer, sent it as pending so that if it becomes visible (expanded) then it will be fetched
-    ...maxDepth === 1 && parentEntryFirebase && parentEntryFirebase.children.length > 0
-      ? { pending: true }
-      : null
+  }
+  if (maxDepth === 0) {
+    return {
+      contextIndex: {
+        [contextEncoded]: {
+          children: [],
+          // TODO: Why not return the children if we already have them?
+          // ...parentEntry,
+          lastUpdated: never(),
+          pending: true,
+        }
+      },
+      thoughtIndex: {}
+    }
   }
 
-  // initially set the contextIndex for the given context
-  // if there are no children, still set this so that pending is overwritten
-  const initialThoughts = {
+  // generate a list of hashed thoughts and a map of contexts { [hash]: context } for all children
+  // must save context map instead of just list of hashes for the recursive call
+  const { thoughtIds, contextMap } = (parentEntry.children || []).reduce((accum: { thoughtIds: string[], contextMap: GenericObject<Context> }, child: Child) => ({
+    thoughtIds: [
+      ...accum.thoughtIds || [],
+      hashThought(child.value),
+    ],
+    contextMap: {
+      ...accum.contextMap,
+      [hashContext(unroot([...context, child.value]))]: unroot([...context, child.value]),
+    }
+  }), { thoughtIds: [], contextMap: {} })
+
+  const thoughtList = await getThoughtsByIds(thoughtIds)
+  const parentEntries = await getContextsByIds(Object.keys(contextMap))
+
+  const thoughts = {
     contextIndex: {
-      [contextEncoded]: parentEntry
+      [contextEncoded]: parentEntry,
+      ..._.keyBy(parentEntries, 'id')
     },
-    thoughtIndex: {},
+    thoughtIndex: _.keyBy(thoughtList, 'id')
   }
 
-  // recursively iterate over each child
-  // @ts-ignore
-  return (parentEntry.children || []).reduce(async (thoughtsPromise: Promise<ThoughtsInterface>, child: Child) => {
-    const thoughts = await thoughtsPromise
-    const thoughtEncoded = hashThought(child.value)
-    const thought = await getThought(child.value) // TODO: Cache thoughts that have already been loaded
-    const contextChild = unroot([...context, child.value])
+  const descendantThoughts = await Promise.all(parentEntries.map((parentEntry: ParentEntry) =>
+    getDescendantThoughts(contextMap[parentEntry.id!], { maxDepth: maxDepth - 1, parentEntry })
+  ))
 
-    // RECURSION
-    const nextDescendantThoughts = await getDescendantThoughts(contextChild, { maxDepth: maxDepth - 1 })
+  const descendantThoughtsMerged = mergeThoughts(thoughts, ...descendantThoughts)
 
-    // merge descendant thoughtIndex and add child thought
-    return mergeThoughts(thoughts, nextDescendantThoughts, {
-      thoughtIndex: {
-        [thoughtEncoded]: thought,
-      }
-    })
-  }, initialThoughts)
+  return descendantThoughtsMerged
 }
 
 /** Gets descendants of many contexts, returning them a single ThoughtsInterface. */
