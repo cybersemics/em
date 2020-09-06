@@ -1,10 +1,9 @@
 import { store } from '../../store'
-import { EM_TOKEN, ROOT_TOKEN } from '../../constants'
+import { ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { getChildren, getThought } from '../../selectors'
 import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
-import { hashContext, hashThought, never, timestamp } from '../../util'
 
 jest.useFakeTimers()
 

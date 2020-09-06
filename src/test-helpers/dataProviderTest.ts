@@ -1,8 +1,6 @@
-import _ from 'lodash'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { hashContext, hashThought, never, timestamp } from '../util'
-import { DataProvider, Snapshot } from '../types'
-import { GenericObject } from '../utilTypes'
+import { DataProvider } from '../types'
 
 /** Runs tests for a module that conforms to the data-provider API. */
 const dataProviderTest = (provider: DataProvider) => {
