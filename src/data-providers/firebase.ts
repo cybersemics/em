@@ -12,14 +12,28 @@ interface Options {
 // hash the EM context once on load
 const emContextEncoded = hashContext([EM_TOKEN])
 
-/** Gets the Lexeme object of a value. */
-export const getThought = async (value: string): Promise<Lexeme> => {
+/** Gets the Lexeme object by id. */
+export const getThoughtById = async (id: string): Promise<Lexeme> => {
   const userId = store.getState().user.uid
-  const ref = window.firebase.database().ref(`users/${userId}/thoughtIndex/${hashThought(value)}`)
+  const ref = window.firebase.database().ref(`users/${userId}/thoughtIndex/${id}`)
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Lexeme>) => {
     resolve(snapshot.val())
   }))
 }
+
+/** Gets multiple Lexeme objects by ids. */
+export const getThoughtsByIds = async (ids: string[]): Promise<Lexeme> => {
+  const userId = store.getState().user.uid
+  const ref = window.firebase.database().ref(`users/${userId}/thoughtIndex`)
+    .children(ids)
+  return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Lexeme>) => {
+    resolve(snapshot.val())
+  }))
+}
+
+/** Gets the Lexeme object of a value. */
+export const getThought = async (value: string): Promise<Lexeme> =>
+  getThoughtById(hashThought(value))
 
 /**
  * Fetches a ParentEntry of a context.
@@ -38,7 +52,7 @@ export const getContext = async (context: Context): Promise<Nullable<ParentEntry
 export const update = async (updates: GenericObject<any>) => {
   const { userRef } = store.getState()
   return new Promise((resolve, reject) => {
-    userRef.update(updates, (err: Error, ...args: any[]) => {
+    userRef.update(updates, (err: Error | null, ...args: any[]) => {
       if (err) {
         store.dispatch({ type: 'error', value: err })
         console.error(err, updates)
@@ -50,6 +64,32 @@ export const update = async (updates: GenericObject<any>) => {
     })
   })
 }
+
+/** Updates a context in the contextIndex. */
+export const updateContext = async (id: string, parentEntry: ParentEntry) =>
+  update({
+    ['contextIndex/' + id]: parentEntry
+  })
+
+/** Updates a thought in the thoughtIndex. */
+export const updateThought = async (id: string, thought: Lexeme) =>
+  update({
+    ['thoughtIndex/' + id]: thought
+  })
+
+/** Updates the contextIndex. */
+export const updateContextIndex = async (contextIndex: GenericObject<ParentEntry>) =>
+  update(Object.entries(contextIndex).reduce((accum, [key, value]) => ({
+    ...accum,
+    ['contextIndex/' + key]: value,
+  }), {}))
+
+/** Updates the thoughtIndex. */
+export const updateThoughtIndex = async (thoughtIndex: GenericObject<Lexeme>) =>
+  update(Object.entries(thoughtIndex).reduce((accum, [key, value]) => ({
+    ...accum,
+    ['thoughtIndex/' + key]: value,
+  }), {}))
 
 /**
  * Fetches all descendants of a context and returns them within a ThoughtsInterface.
@@ -70,7 +110,9 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100 }
     lastUpdated: never(),
     ...parentEntryFirebase,
     // if this is the last level in the buffer, sent it as pending so that if it becomes visible (expanded) then it will be fetched
-    pending: maxDepth === 1 && parentEntryFirebase && parentEntryFirebase.children.length > 0
+    ...maxDepth === 1 && parentEntryFirebase && parentEntryFirebase.children.length > 0
+      ? { pending: true }
+      : null
   }
 
   // initially set the contextIndex for the given context
