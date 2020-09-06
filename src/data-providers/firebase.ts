@@ -77,26 +77,26 @@ export const update = async (updates: GenericObject<any>) => {
 }
 
 /** Updates a context in the contextIndex. */
-export const updateContext = async (id: string, parentEntry: ParentEntry) =>
+export const updateContext = async (id: string, parentEntry: ParentEntry): Promise<any> =>
   update({
     ['contextIndex/' + id]: parentEntry
   })
 
 /** Updates a thought in the thoughtIndex. */
-export const updateThought = async (id: string, thought: Lexeme) =>
+export const updateThought = async (id: string, thought: Lexeme): Promise<any> =>
   update({
     ['thoughtIndex/' + id]: thought
   })
 
 /** Updates the contextIndex. */
-export const updateContextIndex = async (contextIndex: GenericObject<ParentEntry>) =>
+export const updateContextIndex = async (contextIndex: GenericObject<ParentEntry>): Promise<any> =>
   update(Object.entries(contextIndex).reduce((accum, [key, value]) => ({
     ...accum,
     ['contextIndex/' + key]: value,
   }), {}))
 
 /** Updates the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndex: GenericObject<Lexeme>) =>
+export const updateThoughtIndex = async (thoughtIndex: GenericObject<Lexeme>): Promise<any> =>
   update(Object.entries(thoughtIndex).reduce((accum, [key, value]) => ({
     ...accum,
     ['thoughtIndex/' + key]: value,
@@ -108,7 +108,7 @@ export const updateThoughtIndex = async (thoughtIndex: GenericObject<Lexeme>) =>
  * @param context
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned ParentEntry. Ignored for EM context. Default: 100.Default: 100.
  */
-export const getDescendantThoughts = async (context: Context, { maxDepth = 100, parentEntry }: { maxDepth?: number, parentEntry?: ParentEntry } = {}) => {
+export const getDescendantThoughts = async (context: Context, { maxDepth = 100, parentEntry }: { maxDepth?: number, parentEntry?: ParentEntry } = {}): Promise<ThoughtsInterface> => {
 
   const contextEncoded = hashContext(context)
 
@@ -167,7 +167,7 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
 }
 
 /** Gets descendants of many contexts, returning them a single ThoughtsInterface. */
-export const getManyDescendants = async (contextMap: any, { maxDepth = 100 }: Options = {}): Promise<ThoughtsInterface> => {
+export const getManyDescendants = async (contextMap: GenericObject<Context>, { maxDepth = 100 }: Options = {}): Promise<ThoughtsInterface> => {
 
   // fetch descendant thoughts for each context in contextMap
   const descendantsArray = await Promise.all(Object.keys(contextMap).map(key =>

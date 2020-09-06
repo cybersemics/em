@@ -65,7 +65,17 @@ export type Snapshot<T = any> = {
 
 /** A standard interface for data providers that can sync thoughts. See data-providers/README.md. */
 export interface DataProvider {
-  getManyDescendants: (contextMap: GenericObject<Path>, options: { maxDepth?: number }) => Promise<ThoughtsInterface>,
+  getThoughtById: (id: string) => Promise<Lexeme>,
+  getThoughtsByIds: (ids: string[]) => Promise<Lexeme[]>,
+  getThought: (value: string) => Promise<Lexeme>,
+  getContext: (context: Context) => Promise<ParentEntry | null>,
+  getContextsByIds: (ids: string[]) => Promise<ParentEntry[]>,
+  updateThought: (id: string, thought: Lexeme) => Promise<any>,
+  updateContext: (id: string, parentEntry: ParentEntry) => Promise<any>,
+  updateContextIndex: (contextIndex: GenericObject<ParentEntry>) => Promise<any>,
+  updateThoughtIndex: (thoughtIndex: GenericObject<Lexeme>) => Promise<any>,
+  getDescendantThoughts: (context: Context, options?: { maxDepth?: number, parentEntry?: ParentEntry }) => Promise<ThoughtsInterface>,
+  getManyDescendants: (contextMap: GenericObject<Context>, options?: { maxDepth?: number, parentEntry?: ParentEntry }) => Promise<ThoughtsInterface>,
 }
 
 /** The three options the user can choose for the context tutorial. */
