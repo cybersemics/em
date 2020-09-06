@@ -1,7 +1,7 @@
 import { EM_TOKEN } from '../constants'
 import { store } from '../store'
 import { Context, Lexeme, ParentEntry, Snapshot } from '../types'
-import { Nullable } from '../utilTypes'
+import { GenericObject, Nullable } from '../utilTypes'
 import { hashContext, hashThought, mergeThoughts, never, pathToContext, unroot } from '../util'
 import { ThoughtsInterface } from '../util/initialState'
 
@@ -32,6 +32,23 @@ export const getContext = async (context: Context): Promise<Nullable<ParentEntry
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<ParentEntry>) => {
     resolve(snapshot.val())
   }))
+}
+
+/** Updates Firebase data. */
+export const update = async (updates: GenericObject<any>) => {
+  const { userRef } = store.getState()
+  return new Promise((resolve, reject) => {
+    userRef.update(updates, (err: Error, ...args: any[]) => {
+      if (err) {
+        store.dispatch({ type: 'error', value: err })
+        console.error(err, updates)
+        reject(err)
+      }
+      else {
+        resolve(args)
+      }
+    })
+  })
 }
 
 /**
