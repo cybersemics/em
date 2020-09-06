@@ -1,8 +1,5 @@
-import { EM_TOKEN, ROOT_TOKEN } from '../../constants'
 import * as firebase from '../firebase'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
-import _ from 'lodash'
-import { hashContext, hashThought, never, timestamp } from '../../util'
 import { Snapshot } from '../../types'
 import { GenericObject } from '../../utilTypes'
 
@@ -13,11 +10,10 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace NodeJS {
     interface Global {
-      firebaseStore: GenericObject<any>,
+      clearMockFirebaseStore: () => void,
     }
   }
 }
-global.firebaseStore = {}
 
 // mock user authentication
 jest.mock('../../store', () => {
@@ -25,56 +21,52 @@ jest.mock('../../store', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const _ = require('lodash')
 
+  // eslint-disable-next-line fp/no-let
+  let firebaseStore = {}
+
+  /** Returns a snapshot that returns the given value. */
+  const wrapSnapshot = (val: any): Snapshot => ({
+    val: () => val
+  })
+
+  /** Expose a function to clear the mock firebase store. */
+  global.clearMockFirebaseStore = () => {
+    firebaseStore = {}
+  }
+
+  /** Mock ref that uses the mock firebase store. */
+  const ref = path => ({
+    child: (key: string) => ref(`${path}/${key}`),
+    once: (name: string, cb: (snapshot: Snapshot) => void) => {
+      const result = wrapSnapshot(_.get(firebaseStore, path))
+      if (cb) {
+        cb(result)
+      }
+      else {
+        return Promise.resolve(result)
+      }
+    },
+    update: (updates: GenericObject<any>, cb: (err: Error | null, ...args: any[]) => void) => {
+      Object.entries(updates).forEach(([key, value]) => {
+        _.set(firebaseStore, `${path}/${key}`, value)
+      })
+      cb(null)
+    }
+  })
+
   return {
     store: {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       dispatch: () => {},
       getState: () => ({
-        user: {
-          uid: 12345
-        },
-        // mock userRef with update function that sets arbitrary data on the mock firebase store
-        userRef: {
-          update: (updates: GenericObject<any>, cb: (err: Error | null, ...args: any[]) => void) => {
-            Object.entries(updates).forEach(([key, value]) => {
-              _.set(global.firebaseStore, 'users/12345/' + key, value)
-            })
-            cb(null)
-          }
-        }
+        userRef: ref('users/12345')
       })
     }
   }
 })
 
-/** Returns a snapshot that returns the given value. */
-const wrapSnapshot = (val: any): Snapshot => ({
-  val: () => val
-})
-
-// mock window.firebase
-window.firebase = {
-  database: () => ({
-    ref: (path: string) => ({
-
-      children: (keys: string[]) => {
-        return {
-          once: (name: string, cb: (snapshot: Snapshot) => void) => {
-            cb(wrapSnapshot(keys.map(key => _.get(global.firebaseStore, `${path}/${key}`))))
-          }
-        }
-      },
-
-      once: (name: string, cb: (snapshot: Snapshot) => void) => {
-        cb(wrapSnapshot(_.get(global.firebaseStore, path)))
-      }
-
-    })
-  })
-}
-
 afterEach(() => {
-  global.firebaseStore = {}
+  global.clearMockFirebaseStore()
 })
 
 dataProviderTest(firebase)

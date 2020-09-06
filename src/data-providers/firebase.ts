@@ -15,8 +15,8 @@ const emContextEncoded = hashContext([EM_TOKEN])
 
 /** Gets the Lexeme object by id. */
 export const getThoughtById = async (id: string): Promise<Lexeme> => {
-  const userId = store.getState().user.uid
-  const ref = window.firebase.database().ref(`users/${userId}/thoughtIndex/${id}`)
+  const { userRef } = store.getState()
+  const ref = userRef.child('thoughtIndex').child(id)
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Lexeme>) => {
     resolve(snapshot.val())
   }))
@@ -24,12 +24,11 @@ export const getThoughtById = async (id: string): Promise<Lexeme> => {
 
 /** Gets multiple Lexeme objects by ids. */
 export const getThoughtsByIds = async (ids: string[]): Promise<Lexeme[]> => {
-  const userId = store.getState().user.uid
-  const ref = window.firebase.database().ref(`users/${userId}/thoughtIndex`)
-    .children(ids)
-  return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Lexeme[]>) => {
-    resolve(snapshot.val())
-  }))
+  const { userRef } = store.getState()
+  const snapshots = await Promise.all(
+    ids.map(id => userRef.child('thoughtIndex').child(id).once('value'))
+  )
+  return snapshots.map(snapshot => snapshot.val())
 }
 
 /** Gets the Lexeme object of a value. */
@@ -42,8 +41,8 @@ export const getThought = async (value: string): Promise<Lexeme> =>
  * @param context
  */
 export const getContext = async (context: Context): Promise<ParentEntry | null> => {
-  const userId = store.getState().user.uid
-  const ref = window.firebase.database().ref(`users/${userId}/contextIndex/${hashContext(context)}`)
+  const { userRef } = store.getState()
+  const ref = userRef.child('contextIndex').child(hashContext(context))
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<ParentEntry>) => {
     resolve(snapshot.val())
   }))
@@ -51,12 +50,11 @@ export const getContext = async (context: Context): Promise<ParentEntry | null> 
 
 /** Gets multiple PrentEntry objects by ids. */
 export const getContextsByIds = async (ids: string[]): Promise<ParentEntry[]> => {
-  const userId = store.getState().user.uid
-  const ref = window.firebase.database().ref(`users/${userId}/contextIndex`)
-    .children(ids)
-  return new Promise(resolve => ref.once('value', (snapshot: Snapshot<ParentEntry[]>) => {
-    resolve(snapshot.val())
-  }))
+  const { userRef } = store.getState()
+  const snapshots = await Promise.all(
+    ids.map(id => userRef.child('contextIndex').child(id).once('value'))
+  )
+  return snapshots.map(snapshot => snapshot.val())
 }
 
 /** Updates Firebase data. */
@@ -146,8 +144,10 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
     }
   }), { thoughtIds: [], contextMap: {} })
 
+  const contextIds = Object.keys(contextMap)
+
   const thoughtList = await getThoughtsByIds(thoughtIds)
-  const parentEntries = await getContextsByIds(Object.keys(contextMap))
+  const parentEntries = await getContextsByIds(contextIds)
 
   const thoughts = {
     contextIndex: {
@@ -157,8 +157,8 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
     thoughtIndex: _.keyBy(thoughtList, 'id')
   }
 
-  const descendantThoughts = await Promise.all(parentEntries.map((parentEntry: ParentEntry) =>
-    getDescendantThoughts(contextMap[parentEntry.id!], { maxDepth: maxDepth - 1, parentEntry })
+  const descendantThoughts = await Promise.all(parentEntries.map((parentEntry: ParentEntry, i: number) =>
+    getDescendantThoughts(contextMap[contextIds[i]], { maxDepth: maxDepth - 1, parentEntry })
   ))
 
   const descendantThoughtsMerged = mergeThoughts(thoughts, ...descendantThoughts)
