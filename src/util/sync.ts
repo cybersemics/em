@@ -3,6 +3,7 @@
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
 import * as db from '../data-providers/dexie'
+import * as firebase from '../data-providers/firebase'
 import { store } from '../store'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
@@ -165,28 +166,12 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
   logWithTime('syncRemote: allUpdates')
 
   if (Object.keys(allUpdates).length > 0) {
-
-    return new Promise((resolve, reject) => {
-
-      // update may throw if updates do not validate
-      try {
-        state.userRef.update(allUpdates, (err, ...args) => {
-          if (err) {
-            store.dispatch({ type: 'error', value: err })
-            console.error(err, allUpdates)
-            reject(err)
-          }
-          else {
-            resolve(args)
-          }
-        })
-      }
-      catch (e) {
+    return firebase.update(allUpdates)
+      .catch((e: Error) => {
         store.dispatch({ type: 'error', value: e.message })
         console.error(e.message, allUpdates)
-        reject(e)
-      }
-    })
+        throw e
+      })
   }
 }
 
