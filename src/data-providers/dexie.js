@@ -49,7 +49,11 @@ const initDB = async () => {
 }
 
 /** Clears all thoughts and contexts from the indices. */
-export const clearAll = async () => Promise.all([db.thoughtIndex.clear(), db.contextIndex.clear(), db.helpers.clear()])
+export const clearAll = () => Promise.all([
+  db.thoughtIndex.clear(),
+  db.contextIndex.clear(),
+  db.helpers.clear()
+])
 
 /** Updates a single thought in the thoughtIndex. */
 export const updateThought = async (id, thought) => db.thoughtIndex.put({ id, ...thought })
