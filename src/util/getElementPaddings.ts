@@ -3,5 +3,6 @@ export const getElementPaddings = (element: HTMLElement): number[] =>
   window
     .getComputedStyle(element, null)
     .getPropertyValue('padding')
-    .split('px ')
+    .replace(/\s/g, '')
+    .split('px')
     .map(Number)

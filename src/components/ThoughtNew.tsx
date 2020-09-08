@@ -17,7 +17,6 @@ import { shortcutById } from '../shortcuts'
 
 // util
 import {
-  clearSelection,
   contextOf,
   equalArrays,
   equalPath,
@@ -46,18 +45,15 @@ import {
   getSortPreference,
   getThought,
   getThoughtsRanked,
-  hasChild,
   isBefore,
 } from '../selectors'
 
 import { Interpolation, SpringValue, animated } from 'react-spring'
 import { AnimatePresence, motion } from 'framer-motion'
-import { isMobile } from '../browser'
 import Editable from './Editable'
 import DividerNew from './DividerNew'
 import HomeLink from './HomeLink'
 import Note from './Note'
-import { DragWrapper, DropWrapper } from './DragAndDrop'
 
 import classNames from 'classnames'
 import Bullet from './BulletNew'
@@ -66,7 +62,7 @@ import DropEndGroup from './DropEndGroup'
 import { Child, Path } from '../types'
 import { FlatArrayNode } from '../util/treeToFlatArray'
 import { State } from '../util/initialState'
-import { DropTargetMonitor } from 'react-dnd'
+import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
@@ -83,6 +79,9 @@ type WithDropEndArray<T> = T & { dropEndArray: DropEndObject[] }
 interface ThoughtProps {
   nodeItem: WithDropEndArray<FlatArrayNode>,
   childrenForced?: Child[],
+  isDragging?: boolean,
+  isOver?: boolean,
+  connectDropTarget: (el: JSX.Element) => any,
 }
 
 interface ThoughtContainerProps {
@@ -98,7 +97,7 @@ interface ThoughtContainerProps {
   isPublishChild?: boolean,
   isCodeView?: boolean | null,
   isCursorGrandparent?: boolean,
-  isCursorParent?: boolean,
+  isCursorParent: boolean,
   isDragging?: boolean,
   isEditing?: boolean,
   isEditingPath?: boolean,
@@ -106,7 +105,7 @@ interface ThoughtContainerProps {
   publish?: boolean,
   showContexts?: boolean,
   thought?: Child,
-  thoughtsRankedLive?: Path,
+  thoughtsRankedLive: Path,
   url?: string | null,
   view?: string | null,
 }
@@ -206,6 +205,7 @@ const mapStateToProps = (state: State, props: ThoughtProps) => {
     publish: !search && publishMode(),
     showHiddenThoughts,
     thought,
+    showContexts: showContextsParent,
     thoughtsRankedLive,
     view: attribute(state, thoughtsRankedLive, '=view'),
     url,
@@ -298,49 +298,6 @@ const dropAsSibling = (props: { thoughtsRankedLive: Path, showContexts: boolean 
   }
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const canDrag = ({ thoughtsRankedLive, isCursorParent, isDraggable }: { thoughtsRankedLive: Path, isCursorParent: boolean, isDraggable: boolean }) => {
-  const state = store.getState()
-  const thoughts = pathToContext(thoughtsRankedLive)
-  const context = contextOf(pathToContext(thoughtsRankedLive))
-  const isDraggableFinal = isDraggable || isCursorParent
-
-  return isDocumentEditable() &&
-    isDraggableFinal &&
-    (!isMobile || globals.touched) &&
-    !hasChild(state, thoughts, '=immovable') &&
-    !hasChild(state, thoughts, '=readonly') &&
-    !hasChild(state, context, '=immovable') &&
-    !hasChild(state, context, '=readonly')
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
-  // disable hold-and-select on mobile
-  if (isMobile) {
-    setTimeout(clearSelection)
-  }
-  store.dispatch({
-    type: 'dragInProgress',
-    value: true,
-    draggingThought: thoughtsRankedLive,
-  })
-
-  return { thoughtsRanked: thoughtsRankedLive }
-}
-// eslint-disable-next-line jsdoc/require-jsdoc
-const endDrag = () => {
-  setTimeout(() => {
-    // re-enable hold-and-select on mobile
-    if (isMobile) {
-      clearSelection()
-    }
-    // reset dragInProgress after a delay to prevent cursor from moving
-    store.dispatch({ type: 'dragInProgress', value: false })
-    store.dispatch({ type: 'dragHold', value: false })
-  })
-}
-
 /**********************************************************************
  * Components
  **********************************************************************/
@@ -369,6 +326,7 @@ const ThoughtWrapper = ({ measureBind, wrapperDivRef, innerDivStyle, wrapperStyl
             })}
             id={nodeItem.key}
           >
+            {/* @ts-ignore */}
             <Thought nodeItem={nodeItem}/>
           </animated.div>
           <DropEndGroup expanded={expanded} thoughtsRanked={nodeItem.thoughtsRanked} showContexts={showContexts} dropEndObject={nodeItem.dropEndArray}/>
@@ -391,6 +349,8 @@ const ThoughtContainer = ({
   thoughtsRankedLive,
   isCursorParent,
   cursorOffset,
+  connectDropTarget,
+  isOver,
   nodeItem
 }: ThoughtContainerProps & ThoughtProps) => {
   const { thoughtsResolved, thoughtsRanked, contextChain, expanded, isCursor, viewInfo, childrenLength, hasChildren, parentKey, key } = nodeItem
@@ -417,19 +377,17 @@ const ThoughtContainer = ({
   const shouldNoteFocus = state.noteFocusThoughtId ? state.noteFocusThoughtId === headId(thoughtsResolved) : false
 
   return (
-    <DropWrapper canDrop={(item, monitor) => canDropAsSibling({ thoughtsRankedLive: thoughtsRankedLive! }, monitor)} onDrop={(item, monitor) => dropAsSibling({ thoughtsRankedLive: thoughtsRankedLive!, showContexts }, monitor)}>{
-      ({ isOver, drop }) => {
-        return (
-          <motion.div
-            ref={drop}
-            style={{
-              padding: '0.3rem',
-              paddingBottom: expanded && showContexts && hasContext ? '0' : '0.3rem',
-              position: 'relative'
-            }}
-            className='thought-new'>
-            <AnimatePresence>{
-              isOver &&
+    connectDropTarget(<div>
+      <motion.div
+        style={{
+          padding: '0.3rem',
+          paddingBottom: expanded && showContexts && hasContext ? '0' : '0.3rem',
+          position: 'relative'
+        }}
+        className='thought-new'>
+        {/* To-do: find a way to cancel animation for tests to prevent state update on unmounted component error. */}
+        <AnimatePresence>{
+          isOver &&
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -438,62 +396,56 @@ const ThoughtContainer = ({
                   style={{ transform: 'translateX(0.1rem)', width: 'calc(100%  - 0.1rem)' }}
                   className='drop-hover-new'>
                 </motion.div>
-            }
-            </AnimatePresence>
-            <motion.div style={{
-              display: 'flex'
+        }
+        </AnimatePresence>
+        <motion.div style={{
+          display: 'flex'
+        }}
+        id='ola'
+        >
+          <Bullet hide={isTableFirstColumn && !isCursor} thoughtsRankedLive={thoughtsRankedLive} isCursorParent={isCursorParent} isDraggable={true} expanded={expanded && !isTableFirstColumn} isActive={isCursor} hasChildren={hasChildren} />
+          <div style={{ flex: 1, display: 'flex' }}>
+            <ThoughtAnnotation
+              contextChain={contextChain}
+              homeContext={homeContext}
+              minContexts={2}
+              showContextBreadcrumbs={showContextBreadcrumbs}
+              showContexts={showContextsParent}
+              style={{}}
+              thoughtsRanked={thoughtsRanked}
+              url={url}
+            />
+            <div style={{
+              flex: 1
             }}>
-              <DragWrapper
-                canDrag={() => canDrag({ thoughtsRankedLive: thoughtsRankedLive!, isCursorParent: isCursorParent!, isDraggable: true })} // TO-DO: add isDraggable logic here
-                beginDrag={() => beginDrag({ thoughtsRankedLive: thoughtsRankedLive! })}
-                endDrag={endDrag}
-              >
-                {
-                  ({ isDragging, drag }) => <Bullet hide={isTableFirstColumn && !isCursor} innerRef={drag} expanded={expanded && !isTableFirstColumn} isActive={isCursor} isDragActive={isDragging} hasChildren={hasChildren} />
-                }
-              </DragWrapper>
-              <div style={{ flex: 1, display: 'flex' }}>
-                <ThoughtAnnotation
+              {
+                homeContext ? <HomeLink />
+                : isThoughtDivider ? <DividerNew thoughtsRanked={thoughtsRanked} isActive={isCursor} parentKey={parentKey!}/>
+                : <Editable
                   contextChain={contextChain}
-                  homeContext={homeContext}
-                  minContexts={2}
-                  showContextBreadcrumbs={showContextBreadcrumbs}
+                  cursorOffset={cursorOffset}
+                  disabled={!isDocumentEditable()}
+                  isEditing={isEditing}
+                  rank={rank}
                   showContexts={showContextsParent}
-                  style={{}}
+                  style={{
+                    width: '100%',
+                    wordWrap: 'break-word',
+                    wordBreak: 'break-all',
+                  }}
                   thoughtsRanked={thoughtsRanked}
-                  url={url}
-                />
-                <div style={{
-                  flex: 1
-                }}>
-                  {
-                    homeContext ? <HomeLink />
-                    : isThoughtDivider ? <DividerNew thoughtsRanked={thoughtsRanked} isActive={isCursor} parentKey={parentKey!}/>
-                    : <Editable
-                      contextChain={contextChain}
-                      cursorOffset={cursorOffset}
-                      disabled={!isDocumentEditable()}
-                      isEditing={isEditing}
-                      rank={rank}
-                      showContexts={showContextsParent}
-                      style={{
-                        width: '100%',
-                        wordWrap: 'break-word',
-                        wordBreak: 'break-all',
-                      }}
-                      thoughtsRanked={thoughtsRanked}
-                      // eslint-disable-next-line
+                  // eslint-disable-next-line
                       onKeyDownAction={() => {}}/>
-                  }
-                </div>
-              </div>
-            </motion.div>
-            <div style={{ marginLeft: '1.36rem' }}>
-              {/* nodeKey is a unique key for each node in the flat rendered tree */}
-              <Note nodeKey={key} focusOnMount={shouldNoteFocus} context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
+              }
             </div>
-            {expanded && <AnimatePresence>
-              {showContexts &&
+          </div>
+        </motion.div>
+        <div style={{ marginLeft: '1.36rem' }}>
+          {/* nodeKey is a unique key for each node in the flat rendered tree */}
+          <Note nodeKey={key} focusOnMount={shouldNoteFocus} context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
+        </div>
+        {expanded && <AnimatePresence>
+          {showContexts &&
           (
             hasContext ?
               <motion.div
@@ -507,17 +459,33 @@ const ThoughtContainer = ({
                 <em>Contexts:</em>
               </motion.div> : <NoChildren thoughtsRanked={thoughtsResolved} childrenLength={childrenLength} allowSingleContext={false}/>
           )
-              }
-            </AnimatePresence>
-            }
-          </motion.div>
-        )
-      }
-    }
-    </DropWrapper>
+          }
+        </AnimatePresence>
+        }
+      </motion.div>
+    </div>
+    )
   )
 }
 
-const Thought = connect(mapStateToProps)(ThoughtContainer)
+ThoughtContainer.displayName = 'ThoughtContainer'
+
+/** Drop specification. */
+const spec = {
+  canDrop: canDropAsSibling,
+  drop: dropAsSibling,
+}
+
+/** Collect. */
+const collect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
+  connectDropTarget: connect.dropTarget(),
+  isOver: monitor.isOver({ shallow: true }) && monitor.canDrop(),
+  isDragging: monitor.getItem(),
+})
+
+const DroppableNode = DropTarget('move', spec, collect)(ThoughtContainer)
+DroppableNode.displayName = 'SiblingDrop'
+
+const Thought = connect(mapStateToProps)(DroppableNode)
 
 export default ThoughtWrapper

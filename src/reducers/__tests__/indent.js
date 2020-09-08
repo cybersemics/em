@@ -98,6 +98,5 @@ it('indent on cursor thought should update cursor', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
-    .toEqual([{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }, { value: 'a2', rank: 0 }])
-
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }, { value: 'a2', rank: 0 }])
 })

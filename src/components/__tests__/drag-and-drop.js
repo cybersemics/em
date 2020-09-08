@@ -1,16 +1,9 @@
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-
-import Thought from '../Thought'
-import Subthoughts from '../Subthoughts'
-
 import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-
-/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
 
 let wrapper = null // eslint-disable-line fp/no-let
 
@@ -24,13 +17,13 @@ afterEach(async () => {
 })
 
 /** Find DragSource inside Thoughts component. */
-const findThoughtSource = context => wrapper.find(Thought).filterWhere(whereContext(context)).at(0).childAt(0)
+const findThoughtSource = context => wrapper.find('ThoughtDragSource').filterWhere(node => equalArrays(pathToContext(node.props().thoughtsRankedLive), context)).at(0)
 
 /** Find DropTarget inside Thoughts component. */
-const findThoughtSiblingTarget = context => findThoughtSource(context).childAt(0)
+const findThoughtSiblingTarget = context => wrapper.find('SiblingDrop').filterWhere(node => equalArrays(pathToContext(node.props().thoughtsRankedLive), context)).at(0)
 
 /** Find DropTarget used for child drop inside Subthoughts. */
-const findDropEndTarget = context => wrapper.find(Subthoughts).filterWhere(whereContext(context)).at(0).childAt(0)
+const findDropEndTarget = context => wrapper.find('DropEnd').filterWhere(node => equalArrays(pathToContext(node.props().thoughtsRanked), context)).at(0)
 
 /** Simulate Drag And Drop.
  *
@@ -42,6 +35,7 @@ const simulateDragAndDrop = ({ source, drop, type }) => {
 
   const backend = document.DND.getManager().getBackend()
   const sourceId = findThoughtSource(source).instance().getHandlerId()
+
   backend.simulateBeginDrag([sourceId])
   wrapper.update()
 
@@ -116,8 +110,7 @@ it('drop as child (Drop end)', async () => {
 it('prevent drop into descendants', async () => {
   await store.dispatch(importText(RANKED_ROOT, `
   - a
-    - b
-  - c`))
+    - b`))
 
   store.dispatch({
     type: 'setCursor',
@@ -130,7 +123,6 @@ it('prevent drop into descendants', async () => {
   })
 
   wrapper.update()
-
   simulateDragAndDrop({
     source: ['a'],
     drop: ['a', 'b'],
@@ -141,8 +133,7 @@ it('prevent drop into descendants', async () => {
 
   const expectedExport = `- ${ROOT_TOKEN}
   - a
-    - b
-  - c`
+    - b`
 
   expect(exported).toEqual(expectedExport)
 })

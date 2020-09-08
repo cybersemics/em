@@ -88,7 +88,7 @@ it('update cursor to first new thought', () => {
   const stateNew = newThought(initialState(), { value: 'a' })
 
   expect(stateNew.cursor)
-    .toEqual([{ value: 'a', rank: 0 }])
+    .toMatchObject([{ value: 'a', rank: 0 }])
 
 })
 
@@ -103,6 +103,6 @@ it('update cursor to new thought', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
-    .toEqual([{ value: 'b', rank: 1 }])
+    .toMatchObject([{ value: 'b', rank: 1 }])
 
 })

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import _ from 'lodash'
 import { connect } from 'react-redux'
@@ -191,7 +190,7 @@ const TreeNode = ({
 
   const wrapperStyle = {
     // @ts-ignore
-    ...x ? { transform: x.interpolate(_x => `translateX(${_x})`) } : {},
+    ...x ? { transform: x.to(_x => `translateX(${_x})`) } : {},
     position: 'relative',
     top: 0,
     zIndex: flatArray.length - item.index,
@@ -359,9 +358,10 @@ const TreeAnimation = ({
 /**
  * Map state to props.
  */
-const mapStateToProps = ({ cursorBeforeEdit, thoughts, showHiddenThoughts }: State) => ({
-  cursor: cursorBeforeEdit,
+const mapStateToProps = ({ cursor, thoughts, showHiddenThoughts, contextViews }: State) => ({
+  cursor,
   thoughts,
+  contextViews,
   showHiddenThoughts
 })
 
