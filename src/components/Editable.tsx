@@ -467,7 +467,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
     if (isMobile) {
       setTimeout(() => {
-        if (!window.getSelection()?.focusNode) {
+        // Check for "•" equality in order to set editing value to false if user exit editing mode by tapping on bullet on left space of thought.
+        if (!window.getSelection()?.focusNode || (window.getSelection()?.focusNode?.textContent === '•')) {
           dispatch({ type: 'editing', value: false })
         }
       })
@@ -483,6 +484,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       makeToolbarPositionFixed()
       document.addEventListener('scroll', updateToolbarPositionOnScroll)
     }
+    console.log('onFocus')
 
     // must get new state
     const state = store.getState()
