@@ -1,4 +1,5 @@
 import { clearAll } from '../data-providers/dexie'
+import { never } from '../util'
 
 // constants
 import {
@@ -23,11 +24,14 @@ const logout = () => (dispatch, getState) => {
   // clear autologin
   localStorage.autologin = false
 
-  // clear initial settings
-  dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
-
   // clear state variables
   dispatch({ type: 'clear' })
+
+  // reset initial settings
+  dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, {
+    lastUpdated: never(),
+    preventSetCursor: true
+  }))
 
   // scroll to top
   window.scrollTo(0, 0)
