@@ -51,6 +51,7 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
   const contextIndexPending = _.mapValues(
     // get pending, non-updated thoughts
     _.pickBy(thoughtsLocal.contextIndex, (parentEntry: ParentEntry, key: string) =>
+      !state.thoughts.contextIndex![key] &&
       !contextIndexLocalOnly[key] &&
       (thoughtsRemote.contextIndex || {})[key] &&
       parentEntry.pending
