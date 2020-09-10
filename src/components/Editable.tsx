@@ -166,7 +166,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     childrenOptions.map(child => child.value.toLowerCase())
     : null
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
-
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
 
@@ -291,7 +290,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   useEffect(() => {
-
     const { editing, noteFocus, dragHold } = state
 
     // focus on the ContentEditable element if editing
@@ -489,6 +487,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // must get new state
     const state = store.getState()
     // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
+
     if (!state.dragInProgress) {
 
       // it is possible that the focus event fires with no onTouchEnd.
@@ -501,7 +500,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
 
       setCursorOnThought({ editing: !falseFocus })
-
       // remove the selection caused by the falseFocus
       if (falseFocus) {
         if (document.activeElement) {

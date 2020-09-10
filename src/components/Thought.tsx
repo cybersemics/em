@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import { isMobile } from '../browser'
+import { isMobile, isSafari } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
@@ -247,9 +247,9 @@ const canDrag = (props: ThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
-  // disable hold-and-select on mobile
-  if (isMobile) {
-    setTimeout(() => store.dispatch({ type: 'editing', value: false }))
+  // disable hold-and-select on mobile Safari
+  if (isMobile && isSafari()) {
+    setTimeout(clearSelection)
   }
   store.dispatch({
     type: 'dragInProgress',
@@ -261,11 +261,11 @@ const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const endDrag = () => {
+  // disable hold-and-select on mobile Safari
+  if (isMobile && isSafari()) {
+    clearSelection()
+  }
   setTimeout(() => {
-    // re-enable hold-and-select on mobile
-    if (isMobile) {
-      clearSelection()
-    }
     // reset dragInProgress after a delay to prevent cursor from moving
     store.dispatch({ type: 'dragInProgress', value: false })
     store.dispatch({ type: 'dragHold', value: false })
