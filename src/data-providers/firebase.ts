@@ -154,7 +154,11 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
       [contextEncoded]: parentEntry,
       ..._.keyBy(parentEntries, 'id')
     },
-    thoughtIndex: _.keyBy(thoughtList, 'id')
+    // not all lexemes have ids
+    thoughtIndex: thoughtIds.reduce((accum, key, i) => ({
+      ...accum,
+      [key]: thoughtList[i]
+    }), {})
   }
 
   const descendantThoughts = await Promise.all(parentEntries.map((parentEntry: ParentEntry, i: number) =>
