@@ -18,8 +18,10 @@ interface ModalProperties {
 }
 
 export interface ThoughtsInterface {
-  thoughtIndex: GenericObject<Lexeme>,
   contextIndex: GenericObject<ParentEntry>,
+  contextCache: string[],
+  thoughtIndex: GenericObject<Lexeme>,
+  thoughtCache: string[],
 }
 
 /** Defines a single batch of updates added to the sync queue. */
@@ -88,9 +90,9 @@ export type PartialStateWithThoughts =
   Partial<State> & Pick<State, 'thoughts'>
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
-export const initialThoughts = () => ({
-  // store children indexed by the encoded context for O(1) lookup of children
-  contextIndex: {
+export const initialThoughts = () => {
+
+  const contextIndex = {
     [hashContext([ROOT_TOKEN])]: {
       children: [],
       // start pending to trigger thoughtCacheMiddleware fetch
@@ -103,8 +105,9 @@ export const initialThoughts = () => ({
       pending: true,
       lastUpdated: never()
     },
-  },
-  thoughtIndex: {
+  }
+
+  const thoughtIndex = {
     [hashThought(ROOT_TOKEN)]: {
       value: ROOT_TOKEN,
       rank: 0,
@@ -122,8 +125,15 @@ export const initialThoughts = () => ({
       created: timestamp(),
       lastUpdated: never()
     },
-  },
-})
+  }
+
+  return {
+    contextCache: Object.keys(contextIndex),
+    contextIndex,
+    thoughtCache: Object.keys(thoughtIndex),
+    thoughtIndex,
+  }
+}
 
 /** Generates the initial state of the application. */
 export const initialState = () => {

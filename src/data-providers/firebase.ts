@@ -118,6 +118,7 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
   }
   if (maxDepth === 0) {
     return {
+      contextCache: [],
       contextIndex: {
         [contextEncoded]: {
           children: [],
@@ -127,7 +128,8 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
           pending: true,
         }
       },
-      thoughtIndex: {}
+      thoughtCache: [],
+      thoughtIndex: {},
     }
   }
 
@@ -150,11 +152,13 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
   const parentEntries = await getContextsByIds(contextIds)
 
   const thoughts = {
+    contextCache: contextIds,
     contextIndex: {
       [contextEncoded]: parentEntry,
       ..._.keyBy(parentEntries, 'id')
     },
     // not all lexemes have ids
+    thoughtCache: thoughtIds,
     thoughtIndex: thoughtIds.reduce((accum, key, i) => ({
       ...accum,
       [key]: thoughtList[i]
@@ -182,7 +186,12 @@ export const getManyDescendants = async (contextMap: GenericObject<Context>, { m
   ))
 
   // aggregate thoughts from all descendants
-  const thoughts = descendantsArray.reduce((accum, thoughts) => mergeThoughts(accum, thoughts), { contextIndex: {}, thoughtIndex: {} })
+  const thoughts = descendantsArray.reduce((accum, thoughts) => mergeThoughts(accum, thoughts), {
+    contextCache: [],
+    contextIndex: {},
+    thoughtCache: [],
+    thoughtIndex: {},
+  })
 
   return thoughts
 }

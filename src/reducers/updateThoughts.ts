@@ -52,7 +52,9 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
       recentlyEdited: recentlyEditedNew,
       syncQueue: [...state.syncQueue || [], batch],
       thoughts: {
+        contextCache: [...state.thoughts.contextCache, ...Object.keys(contextIndexUpdates)],
         contextIndex,
+        thoughtCache: [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)],
         thoughtIndex,
       },
     }),
