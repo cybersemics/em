@@ -28,9 +28,11 @@ const loadPublicThoughts = (): ActionCreator => dispatch => {
 
     const remoteState: PartialStateWithThoughts = {
       thoughts: {
+        contextCache: [hashContext([ROOT_TOKEN])],
         contextIndex: {
           [hashContext([ROOT_TOKEN])]: parentEntry
         },
+        thoughtCache: parentEntry.children.map(child => hashThought(child.value)),
         thoughtIndex: parentEntry.children.reduce((accum, child) => ({
           ...accum,
           [hashThought(child.value)]: {
