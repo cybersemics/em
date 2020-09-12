@@ -19,7 +19,7 @@ interface ModalProperties {
 
 export interface ThoughtsInterface {
   thoughtIndex: GenericObject<Lexeme>,
-  contextIndex?: GenericObject<ParentEntry>,
+  contextIndex: GenericObject<ParentEntry>,
 }
 
 /** Defines a single batch of updates added to the sync queue. */

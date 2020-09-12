@@ -82,12 +82,13 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
     // modify the state to use the thoughtIndex with newOldThought
     // this ensures that contexts are calculated correctly for descendants with duplicate values
     const stateNew = {
+      ...state,
       thoughts: {
-        contextIndex: state.thoughts.contextIndex,
+        ...state.thoughts,
         thoughtIndex: thoughtIndexNew
       }
     }
-    return getThoughtsRanked(stateNew as State, thoughts).reduce((accum, child) => {
+    return getThoughtsRanked(stateNew, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(stateNew, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
