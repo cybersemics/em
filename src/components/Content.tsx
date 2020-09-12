@@ -1,10 +1,10 @@
-import React, { Dispatch, MouseEvent, useMemo, useRef } from 'react'
+import React, { Dispatch, FC, MouseEvent, useMemo, useRef } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
 import expandContextThought from '../action-creators/expandContextThought'
-import { EM_TOKEN, MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { getSetting, getThoughts, hasChild, isChildVisible } from '../selectors'
+import { MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { getSetting, getThoughts, isChildVisible, isTutorial } from '../selectors'
 import { publishMode } from '../util'
 import { State } from '../util/initialState'
 
@@ -13,20 +13,7 @@ import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
 
-interface ContentDispatchToProps {
-  cursorBack: () => void,
-  showRemindMeLaterModal: () => void,
-  toggleSidebar: () => void,
-}
-
-interface ContentProps {
-  isTutorial?: boolean,
-  noteFocus?: boolean,
-  rootThoughtsLength: number,
-  search?: string | null,
-  showModal?: string | null,
-  tutorialStep?: number,
-}
+type ContentComponent = FC<ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>>
 
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
@@ -34,7 +21,8 @@ const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
   const { focus, isLoading, noteFocus, search, showModal, showHiddenThoughts } = state
-  const isTutorial = isLoading ? tutorialLocal : hasChild(state, [EM_TOKEN, 'Settings', 'Tutorial'], 'On')
+
+  const isTutorialLocal = isLoading ? tutorialLocal : isTutorial(state)
 
   // @typescript-eslint/eslint-plugin does not yet support no-extra-parens with nullish coallescing operator
   // See: https://github.com/typescript-eslint/typescript-eslint/issues/1052
@@ -48,7 +36,7 @@ const mapStateToProps = (state: State) => {
     focus,
     search,
     showModal,
-    isTutorial,
+    isTutorialLocal,
     tutorialStep,
     rootThoughtsLength,
     noteFocus
@@ -56,7 +44,7 @@ const mapStateToProps = (state: State) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: Dispatch<any>): ContentDispatchToProps => ({
+const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', duration: MODAL_CLOSE_DURATION }),
   cursorBack: () => dispatch({ type: 'cursorBack' }),
   toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
@@ -79,8 +67,8 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 }
 
 /** The main content section of em. */
-const Content = (props: ContentProps & ContentDispatchToProps) => {
-  const { search, isTutorial, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus } = props
+const Content: ContentComponent = props => {
+  const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus } = props
   const contentRef = useRef()
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
@@ -104,9 +92,9 @@ const Content = (props: ContentProps & ContentDispatchToProps) => {
   /** Generate class names. */
   const contentClassNames = useMemo(() => classNames({
     content: true,
-    'content-tutorial': isMobile && isTutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
+    'content-tutorial': isMobile && isTutorialLocal && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
     publish: publishMode(),
-  }), [tutorialStep, isTutorial])
+  }), [tutorialStep, isTutorialLocal])
 
   return <div id='content-wrapper' onClick={e => {
     if (!showModal && isLeftSpaceClick(e, contentRef.current)) {
@@ -123,7 +111,7 @@ const Content = (props: ContentProps & ContentDispatchToProps) => {
       {search != null
         ? <Search />
         : <React.Fragment>
-          {rootThoughtsLength === 0 ? <NewThoughtInstructions childrenLength={rootThoughtsLength} /> : <Subthoughts
+          {rootThoughtsLength === 0 ? <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} /> : <Subthoughts
             thoughtsRanked={RANKED_ROOT}
             expandable={true}
           />}
