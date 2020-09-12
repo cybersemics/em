@@ -156,6 +156,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { l
     const thoughtNew = addThought(
       {
         thoughts: {
+          contextIndex: state.thoughts.contextIndex,
           thoughtIndex
         }
       },
