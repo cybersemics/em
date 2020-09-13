@@ -205,3 +205,6 @@ export const MODIFIER_KEYS = {
   Meta: 1,
   Shift: 1,
 }
+
+export const CONTEXT_CACHE_SIZE = 10000
+export const THOUGHT_CACHE_SIZE = 10000

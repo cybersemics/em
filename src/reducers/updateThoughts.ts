@@ -1,9 +1,10 @@
 import _ from 'lodash'
 import { Lexeme, ParentEntry } from '../types'
 import { GenericObject } from '../utilTypes'
-import { State } from '../util/initialState'
+import { State, initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
-import { isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
+import { importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
+import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, THOUGHT_CACHE_SIZE } from '../constants'
 
 interface Options {
   thoughtIndexUpdates: GenericObject<Lexeme>,
@@ -15,6 +16,37 @@ interface Options {
   remote?: boolean,
 }
 
+// we should not delete ROOT, EM, or EM descendants from state
+// whitelist them until we have a better solution
+// eslint-disable-next-line fp/no-let
+let whitelistedThoughts: {
+  contextIndex: GenericObject<ParentEntry>,
+  thoughtIndex: GenericObject<Lexeme>,
+}
+
+// delay so util is fully loaded, otherwise importHtml will error out with "pathToContext is not a function"
+setTimeout(() => {
+
+  const state = initialState()
+
+  const {
+    contextIndexUpdates: contextIndex,
+    thoughtIndexUpdates: thoughtIndex,
+  } = importHtml(state, [{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
+
+  whitelistedThoughts = {
+    contextIndex: {
+      ...state.thoughts.contextIndex,
+      ...contextIndex,
+    },
+    thoughtIndex: {
+      ...state.thoughts.thoughtIndex,
+      ...thoughtIndex,
+    },
+  }
+
+})
+
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
  *
@@ -23,11 +55,35 @@ interface Options {
  */
 const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Options) => {
 
-  const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
-  logWithTime('updateThoughts: merge thoughtIndexUpdates')
+  const contextIndexOld = { ...state.thoughts.contextIndex }
+  const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
-  const contextIndex = mergeUpdates(state.thoughts.contextIndex || {}, contextIndexUpdates)
-  logWithTime('updateThoughts: merge contextIndexUpdates')
+  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and thoughtIndex
+  const contextCacheAppended = [...state.thoughts.contextCache, ...Object.keys(contextIndexUpdates)]
+  const thoughtCacheAppended = [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)]
+  const contextCacheNumInvalid = Math.max(0, contextCacheAppended.length - CONTEXT_CACHE_SIZE)
+  const thoughtCacheNumInvalid = Math.max(0, thoughtCacheAppended.length - THOUGHT_CACHE_SIZE)
+  const contextCacheUnique = contextCacheNumInvalid === 0 ? null : _.uniq(contextCacheAppended)
+  const thoughtCacheUnique = thoughtCacheNumInvalid === 0 ? null : _.uniq(contextCacheUnique)
+  const contextCache = contextCacheNumInvalid === 0 ? contextCacheAppended : contextCacheUnique!.slice(contextCacheNumInvalid)
+  const thoughtCache = thoughtCacheNumInvalid === 0 ? thoughtCacheAppended : thoughtCacheUnique!.slice(thoughtCacheNumInvalid)
+  const contextCacheInvalidated = contextCacheNumInvalid === 0 ? [] : contextCacheUnique!.slice(0, contextCacheNumInvalid)
+  const thoughtCacheInvalidated = thoughtCacheNumInvalid === 0 ? [] : thoughtCacheUnique!.slice(0, thoughtCacheNumInvalid)
+
+  contextCacheInvalidated.forEach(key => {
+    if (!whitelistedThoughts.contextIndex[key]) {
+      delete contextIndexOld[key] // eslint-disable-line fp/no-delete
+    }
+  })
+
+  thoughtCacheInvalidated.forEach(key => {
+    if (!whitelistedThoughts.thoughtIndex[key]) {
+      delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
+    }
+  })
+
+  const contextIndex = mergeUpdates(contextIndexOld, contextIndexUpdates)
+  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates)
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
@@ -52,9 +108,9 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
       recentlyEdited: recentlyEditedNew,
       syncQueue: [...state.syncQueue || [], batch],
       thoughts: {
-        contextCache: [...state.thoughts.contextCache, ...Object.keys(contextIndexUpdates)],
+        contextCache,
         contextIndex,
-        thoughtCache: [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)],
+        thoughtCache,
         thoughtIndex,
       },
     }),

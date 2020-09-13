@@ -28,7 +28,7 @@ const loadPublicThoughts = (): ActionCreator => dispatch => {
 
     const remoteState: PartialStateWithThoughts = {
       thoughts: {
-        contextCache: [hashContext([ROOT_TOKEN])],
+        contextCache: [],
         contextIndex: {
           [hashContext([ROOT_TOKEN])]: parentEntry
         },
