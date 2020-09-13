@@ -128,9 +128,9 @@ export const initialThoughts = () => {
   }
 
   return {
-    contextCache: Object.keys(contextIndex),
+    contextCache: [],
     contextIndex,
-    thoughtCache: Object.keys(thoughtIndex),
+    thoughtCache: [],
     thoughtIndex,
   }
 }
