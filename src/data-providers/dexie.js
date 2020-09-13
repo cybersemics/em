@@ -32,11 +32,7 @@ const initHelpers = async () => {
 /** Initializes the database tables. */
 const initDB = async () => {
 
-  // clear database if already open
-  if (db.isOpen()) {
-    await clearAll()
-  }
-  else {
+  if (!db.isOpen()) {
     await db.version(1).stores({
       thoughtIndex: 'id, value, *contexts, created, lastUpdated',
       contextIndex: 'id, *children, lastUpdated',
