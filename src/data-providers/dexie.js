@@ -8,14 +8,6 @@ import { EM_TOKEN } from '../constants'
 // NOTE: Could not get this to work in setupTests.js
 // See: https://github.com/cybersemics/em/issues/664#issuecomment-629691193
 
-/** Returns true if the app is running as a test. */
-const isTest = () => process.env.NODE_ENV === 'test'
-
-if (isTest()) {
-  Dexie.dependencies.indexedDB = require('fake-indexeddb')
-  Dexie.dependencies.IDBKeyRange = require('fake-indexeddb/lib/FDBKeyRange')
-}
-
 const db = new Dexie('EM')
 
 // hash the EM context once on load
