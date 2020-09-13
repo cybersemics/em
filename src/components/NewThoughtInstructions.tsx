@@ -15,8 +15,6 @@ interface NewThoughtInstructionsProps {
   isTutorial: boolean,
 }
 
-type NewThoughtInstructionsComponent = FC<NewThoughtInstructionsProps & ReturnType<typeof mapStateToProps>>
-
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
 assert(newThoughtShortcut)
@@ -31,6 +29,8 @@ const mapStateToProps = (state: State) => {
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 0)
   }
 }
+
+type NewThoughtInstructionsComponent = FC<NewThoughtInstructionsProps & ReturnType<typeof mapStateToProps>>
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
 const NewThoughtInstructions: NewThoughtInstructionsComponent = ({ childrenLength, localLoading, isTutorial, status, tutorialStep }) => {

@@ -13,8 +13,6 @@ import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
 
-type ContentComponent = FC<ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>>
-
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
@@ -49,6 +47,8 @@ const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
   cursorBack: () => dispatch({ type: 'cursorBack' }),
   toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
 })
+
+type ContentComponent = FC<ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>>
 
 /**
  * Calculates whether there was a click on the left margin or padding zone of content element.
