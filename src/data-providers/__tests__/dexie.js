@@ -1,7 +1,8 @@
 import { store } from '../../store'
-import { ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { getChildren, getThought } from '../../selectors'
+import { importText } from '../../action-creators'
 import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 
@@ -37,12 +38,8 @@ jest.mock('lodash', () => ({
     // eslint-disable-next-line jsdoc/require-jsdoc
     const wrapped = (...args) => {
       cancel()
-
       pendingArgs = args
-
-      // TODO: why doesn't jest.runOnlyPendingTimers work here?
-      // use 0 instead of given delay as a workaround
-      timer = setTimeout(flush, 0)
+      timer = setTimeout(flush, delay)
     }
 
     wrapped.cancel = cancel
@@ -52,6 +49,13 @@ jest.mock('lodash', () => ({
     return wrapped
   }),
 }))
+
+/** Switch to real timers to set a real delay, then set back to fake timers. This was the only thing that worked to force the test to wait for flushPending (or getManyDescendants?) to complete. */
+const delay = async n => {
+  jest.useRealTimers()
+  await new Promise(r => setTimeout(r, n))
+  jest.useFakeTimers()
+}
 
 describe('dexie', () => {
 
@@ -160,49 +164,99 @@ describe('integration', () => {
     const parentEntryRootAfterReload = await db.getContext([ROOT_TOKEN])
     jest.runOnlyPendingTimers()
     expect(parentEntryRootAfterReload).toMatchObject({
-      children: [{ value: 'a', rank: 0 }]
+      children: [{ value: 'a' }]
     })
 
-    // call initialize again to reload from db (simulating page refresh)
-    await initialize()
+    // clear and call initialize again to reload from db (simulating page refresh)
+    store.dispatch({ type: 'clear' })
     jest.runOnlyPendingTimers()
+    await initialize()
+    await delay(100)
 
     const childrenAfterInitialize = getChildren(store.getState(), [ROOT_TOKEN])
     expect(childrenAfterInitialize).toMatchObject([
-      { value: 'a', rank: 0 }
+      { value: 'a' }
     ])
   })
 
-  // TODO: Not passing as expected. Unknown timing issues.
-  it.skip('load buffered thoughts', async () => {
+  it.skip('delete thought with buffered descendants', async () => {
 
-    // a, b, c, d, e, ...
-    // create a number of descendants equal to double the buffer depth to test loading multiple levels
-    // const values = new Array(THOUGHT_BUFFER_DEPTH * 2 + 1).fill(null).map((_, i) => String.fromCharCode(i + 97))
-    const values = 'abcde'.split('')
-    store.dispatch(values.map(value => ({ type: 'newSubthought', value })))
+    store.dispatch([
+      importText(RANKED_ROOT, `
+      - x
+      - a
+        - b
+          - c
+            - d
+              - e`),
+      { type: 'setCursor', thoughtsRanked: [{ value: 'x', rank: 0 }] },
+    ])
+
     jest.runOnlyPendingTimers()
 
-    expect(await db.getContext([ROOT_TOKEN])).toMatchObject({ children: [{ value: 'a', rank: 0 }] })
-    expect(await db.getContext(['a'])).toMatchObject({ children: [{ value: 'b', rank: 0 }] })
-    expect(await db.getContext(['a', 'b'])).toMatchObject({ children: [{ value: 'c', rank: 0 }] })
-    expect(await db.getContext(['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd', rank: 0 }] })
-    expect(await db.getContext(['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e', rank: 0 }] })
+    expect(await db.getContext([ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
+    expect(await db.getContext(['a'])).toMatchObject({ children: [{ value: 'b' }] })
+    expect(await db.getContext(['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
+    expect(await db.getContext(['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
+    expect(await db.getContext(['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
 
-    // clear state
+    // clear and call initialize again to reload from db (simulating page refresh)
     store.dispatch({ type: 'clear' })
     jest.runOnlyPendingTimers()
-
-    // call initialize again to reload from db (simulating page refresh)
     await initialize()
+    await delay(100)
+
+    // delete thought with buffered descendants
+    store.dispatch({
+      type: 'existingThoughtDelete',
+      context: [ROOT_TOKEN],
+      thoughtRanked: { value: 'a', rank: 1 }
+    })
     jest.runOnlyPendingTimers()
 
+    expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
+
+    expect(await db.getContext([ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
+    expect(await db.getContext(['a'])).toBeFalsy()
+
+    // TODO: Load buffered thoughts into state to delete them
+    expect(await db.getContext(['a', 'b'])).toBeFalsy()
+    expect(await db.getContext(['a', 'b', 'c'])).toBeFalsy()
+    expect(await db.getContext(['a', 'b', 'c', 'd'])).toBeFalsy()
+  })
+
+  it('load buffered thoughts', async () => {
+
+    store.dispatch([
+      importText(RANKED_ROOT, `
+      - a
+        - b
+          - c
+            - d
+              - e`),
+    ])
+
+    jest.runOnlyPendingTimers()
+
+    expect(await db.getContext([ROOT_TOKEN])).toMatchObject({ children: [{ value: 'a' }] })
+    expect(await db.getContext(['a'])).toMatchObject({ children: [{ value: 'b' }] })
+    expect(await db.getContext(['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
+    expect(await db.getContext(['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
+    expect(await db.getContext(['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
+
+    // clear state
+    // call initialize again to reload from db (simulating page refresh)
+    store.dispatch({ type: 'clear' })
+    jest.runOnlyPendingTimers()
+    await initialize()
+    await delay(100)
+
     const state = store.getState()
-    expect(getChildren(state, [ROOT_TOKEN])).toMatchObject([{ value: 'a', rank: 0 }])
-    expect(getChildren(state, ['a'])).toMatchObject([{ value: 'b', rank: 0 }])
-    expect(getChildren(state, ['a', 'b'])).toMatchObject([{ value: 'c', rank: 0 }])
-    expect(getChildren(state, ['a', 'b', 'c'])).toMatchObject([{ value: 'd', rank: 0 }])
-    expect(getChildren(state, ['a', 'b', 'c', 'd'])).toMatchObject([{ value: 'e', rank: 0 }])
+    expect(getChildren(state, [ROOT_TOKEN])).toMatchObject([{ value: 'a' }])
+    expect(getChildren(state, ['a'])).toMatchObject([{ value: 'b' }])
+    expect(getChildren(state, ['a', 'b'])).toMatchObject([{ value: 'c' }])
+    expect(getChildren(state, ['a', 'b', 'c'])).toMatchObject([{ value: 'd' }])
+    expect(getChildren(state, ['a', 'b', 'c', 'd'])).toMatchObject([{ value: 'e' }])
   })
 
 })

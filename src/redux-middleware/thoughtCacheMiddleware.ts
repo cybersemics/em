@@ -14,7 +14,8 @@ import { State } from '../util/initialState'
 const debounceUpdatePending = 10
 
 /** Limit frequency of fetching pending contexts. Ignored on first flush. */
-const throttleFlushPending = 500
+// detect tests and lower throttle time since mock throttle is not working
+const throttleFlushPending = process.env.NODE_ENV === 'test' ? 10 : 500
 
 /* Number of levels of descendants of each pending contexts to fetch. */
 const bufferDepth = 2
