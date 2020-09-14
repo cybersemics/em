@@ -9,12 +9,6 @@ interface PreBlock extends Block {
 /** Parses input HTML and saves in JSON array using Himalaya. */
 export const convertHTMLtoJSON = (html: string) => {
 
-  /** Check if string contains only characters from given 'includes' array. */
-  const isStringIncludesOnly = (str: string, includes: string[]) => {
-    const regExp = new RegExp(`^[${includes.join('')}]+$`, 'g')
-    return regExp.test(str)
-  }
-
   /** Retrieve attribute from Element node by key. */
   const getAttribute = (key: string, node: Element) => {
     const { attributes } = node
@@ -27,41 +21,48 @@ export const convertHTMLtoJSON = (html: string) => {
     const filteredNodes = nodes.filter(node => {
       return node.type === 'element'
         ? node.tagName !== 'br'
-        : node.type === 'comment' || (node.type === 'text' && isStringIncludesOnly(node.content, ['\n', ' '])) ? false : node.content.length
+        : node.type === 'comment' || (node.type === 'text' && /^[\n ]+$/g.test(node.content)) ? false : node.content.length
     })
     return filteredNodes.map(node => node.type === 'element' && node.children.length > 0 ? { ...node, children: removeEmptyNodesAndComments(node.children) } : node) as (Element | Text)[]
   }
 
   /** Append children to parent as children property if it's necessary. */
   const joinChildren = (nodes: (PreBlock[] | PreBlock)[]): PreBlock[] | PreBlock => {
-    // in case of element with span tag around text (e.g. one <span>and</span> two)
-    if (nodes.some(node => !Array.isArray(node) ? node.partOfThought : false)) {
-      // take all text elements
-      const splittedText = _.takeWhile(nodes, node => !Array.isArray(node))
-      // join their content in a single line
-      const fullScope = splittedText.map(node => node && !Array.isArray(node) ? node.scope : '').join('')
-      const children = _.dropWhile(nodes, node => !Array.isArray(node)).flat()
-      return {
-        scope: fullScope,
-        children,
-      } as PreBlock
+    for (const node of nodes) { // eslint-disable-line fp/no-loops
+      if (!Array.isArray(node)) {
+        // in case of element with span tag around text (e.g. one <span>and</span> two)
+        if (node.partOfThought) {
+          // take all text elements
+          const splittedText = _.takeWhile(nodes, node => !Array.isArray(node))
+          // join their content in a single line
+          const fullScope = splittedText.map(node => node && !Array.isArray(node) ? node.scope : '').join('')
+          const children = _.dropWhile(nodes, node => !Array.isArray(node)).flat()
+          return {
+            scope: fullScope,
+            children,
+          } as PreBlock
+        }
+        // WorkFlowy import with notes
+        if (node.scope === '=note') {
+          const parent = _.first(nodes)
+          const children = _.tail(nodes)
+          return { ...parent, children: children.flat() } as PreBlock
+        }
+      }
+      if (Array.isArray(node)) {
+        // split by chunk with size of 2, first element in chunk is PreBlock - parent, the second is PreBlock[] - children
+        const chunks = _.chunk(nodes, 2)
+        const [firstChunk] = chunks
+        // check if both items in chunk are Arrays
+        if (firstChunk.every(item => Array.isArray(item))) return nodes.flat()
+
+        const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
+          if (index === 0) return node as PreBlock
+          else return { ...acc, children: node } as PreBlock
+        }) as PreBlock)
+        return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
+      }
     }
-    // WorkFlowy import with notes
-    if (nodes.some(node => node && !Array.isArray(node) && node.scope === '=note')) {
-      const parent = _.first(nodes)
-      const children = _.tail(nodes)
-      return { ...parent, children: children.flat() } as PreBlock
-    }
-    if (nodes.some(node => Array.isArray(node))) {
-      // split by chunk with size of 2, first element in chunk is PreBlock - parent, the second is PreBlock[] - children
-      const chunks = _.chunk(nodes, 2)
-      const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
-        if (index === 0) return node as PreBlock
-        else return { ...acc, children: node } as PreBlock
-      }) as PreBlock)
-      return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
-    }
-    if (nodes.every(node => Array.isArray(node))) return nodes.flat()
     return nodes as PreBlock[]
   }
 
