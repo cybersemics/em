@@ -26,12 +26,6 @@ import { GenericObject } from '../utilTypes'
 interface ImportHtmlOptions {
   skipRoot? : boolean,
 }
-
-interface RankInfo {
-  rank: number,
-  deepLevel: number,
-}
-
 /** Replace head block with its children, or drop it, if head has no children. */
 const skipRootThought = (blocks: Block[]) => {
   const head = _.head(blocks)
