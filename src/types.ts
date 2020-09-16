@@ -47,8 +47,9 @@ export type Path = Child[]
 /** A sequence of values. */
 export type Context = string[]
 
-/** A parent context with a list of childrenen. */
+/** A parent context with a list of children. */
 export interface Parent {
+  context: Context,
   children: Child[],
   lastUpdated: Timestamp,
 }

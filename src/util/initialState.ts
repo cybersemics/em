@@ -127,6 +127,7 @@ export const initialState = () => {
       // store children indexed by the encoded context for O(1) lookup of children
       contextIndex: {
         [hashContext([ROOT_TOKEN])]: {
+          context: [ROOT_TOKEN],
           children: [],
           lastUpdated: timestamp()
         },
