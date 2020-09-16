@@ -171,7 +171,7 @@ const undoRedoReducerEnhancer = createStore => (
         patches: [],
         inversePatches: [
           ...newState.inversePatches.slice(0, -1),
-          addActionsToPatch(appendPatch(lastPatch, inversePatch), [...lastPatch[0].actions, actionType])
+          addActionsToPatch(lastPatch ? appendPatch(lastPatch, inversePatch) : inversePatch, [...lastPatch ? lastPatch[0].actions : [], actionType])
         ]
       }
     }
