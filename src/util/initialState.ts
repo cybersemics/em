@@ -1,6 +1,6 @@
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Context, Lexeme, ParentEntry, Path } from '../types'
+import { Context, Lexeme, Parent, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
 
@@ -18,7 +18,7 @@ interface ModalProperties {
 
 export interface ThoughtsInterface {
   thoughtIndex: GenericObject<Lexeme>,
-  contextIndex?: GenericObject<ParentEntry>,
+  contextIndex?: GenericObject<Parent>,
 }
 
 export interface State {
@@ -65,7 +65,7 @@ export interface State {
   splitPosition: any,
   status: any,
   syncQueue?: {
-    contextIndexUpdates?: GenericObject<ParentEntry | null>,
+    contextIndexUpdates?: GenericObject<Parent | null>,
     thoughtIndexUpdates?: GenericObject<Lexeme | null>,
     recentlyEdited?: GenericObject<any>,
     updates?: GenericObject<string>,

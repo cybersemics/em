@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
-import { ActionCreator, ParentEntry } from '../types'
+import { ActionCreator, Parent } from '../types'
 import { PartialStateWithThoughts } from '../util/initialState'
 import { loadRemoteState } from '../action-creators'
 
@@ -24,7 +24,7 @@ const loadPublicThoughts = (): ActionCreator => dispatch => {
 
   // fetch children
   publicContextRef.once('value', (snapshot: any) => {
-    const parentEntry: ParentEntry = snapshot.val()
+    const parentEntry: Parent = snapshot.val()
 
     const remoteState: PartialStateWithThoughts = {
       thoughts: {

@@ -32,12 +32,6 @@ export interface Lexeme {
   lastUpdated: Timestamp,
 }
 
-/** A parent with a list of children. */
-export interface Parent {
-  children: Child[],
-  lastUpdated: Timestamp,
-}
-
 /** A thought with a specific rank. */
 export interface Child {
   rank: number,
@@ -53,8 +47,8 @@ export type Path = Child[]
 /** A sequence of values. */
 export type Context = string[]
 
-/** An object that contains a list of children within a context. */
-export interface ParentEntry {
+/** A parent context with a list of childrenen. */
+export interface Parent {
   children: Child[],
   lastUpdated: Timestamp,
 }
