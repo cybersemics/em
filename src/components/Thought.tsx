@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import { isMobile, isSafari } from '../browser'
+import { isMobile } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
@@ -247,8 +247,9 @@ const canDrag = (props: ThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
+  store.dispatch({ type: 'restoreSelection', value: false, offset: document.getSelection()?.focusOffset })
   // disable hold-and-select on mobile Safari
-  if (isMobile && isSafari()) {
+  if (isMobile) {
     setTimeout(clearSelection)
   }
   store.dispatch({
@@ -262,7 +263,7 @@ const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const endDrag = () => {
   // disable hold-and-select on mobile Safari
-  if (isMobile && isSafari()) {
+  if (isMobile) {
     clearSelection()
   }
   setTimeout(() => {
@@ -271,6 +272,7 @@ const endDrag = () => {
     store.dispatch({ type: 'dragHold', value: false })
     store.dispatch(alert(null))
   })
+  store.dispatch({ type: 'restoreSelection', value: true })
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -392,7 +394,6 @@ const Thought = ({
   thoughtsRanked,
   toggleTopControlsAndBreadcrumbs
 }: ThoughtProps) => {
-
   const isRoot = thoughtsRanked.length === 1
   const isRootChildLeaf = thoughtsRanked.length === 2 && isLeaf
 

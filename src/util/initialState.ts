@@ -51,6 +51,7 @@ export interface State {
   noteFocus: boolean,
   recentlyEdited: GenericObject<any>,
   resourceCache: any,
+  restoreSelection: boolean,
   schemaVersion: any,
   scrollPrioritized: boolean,
   search: Nullable<string>,
@@ -106,6 +107,7 @@ export const initialState = () => {
     noteFocus: false, // true if a note has the browser selection
     recentlyEdited: {},
     resourceCache: {},
+    restoreSelection: false,
     schemaVersion: SCHEMA_LATEST,
     scrollPrioritized: false,
     search: null,
