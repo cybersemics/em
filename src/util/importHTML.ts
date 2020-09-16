@@ -84,6 +84,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     const contextEncoded = hashContext(rootedContext)
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
+      context: rootedContext,
       children: getThoughts(state, rootedContext)
         .filter(child => !equalThoughtRanked(child, destThought)),
       lastUpdated: timestamp(),
@@ -177,6 +178,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { s
     const childrenUpdates = contextIndexUpdates[contextEncoded] ? contextIndexUpdates[contextEncoded].children : []
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
+      context,
       children: [...childrenUpdates, {
         value,
         rank,
