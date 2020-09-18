@@ -1,12 +1,7 @@
 import { importText } from '../../action-creators'
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import executeShortcut from '../../test-helpers/executeShortcut'
-import redoShortcut from '../redo'
-import undoShortcut from '../undo'
-
-const event = { preventDefault: NOOP } as Event
 
 it('Redo thought change', async () => {
 
@@ -17,40 +12,35 @@ it('Redo thought change', async () => {
   - a
   - b`))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
-    { value: 'a', rank: '0' },
-    { value: 'b', rank: '1' }
-  ] })
-
-  store.dispatch({ type: 'existingThoughtChange',
+  store.dispatch([{
+    type: 'setCursor', thoughtsRanked: [
+      { value: 'a', rank: '0' }
+    ] }, { type: 'existingThoughtChange',
     newValue: 'aa',
     oldValue: 'a',
     context: [ROOT_TOKEN],
     thoughtsRanked: [{ value: 'a', rank: 0 }]
-  })
+  }, {
+    type: 'undoAction'
+  }])
 
-  // undo thought change
-  executeShortcut(undoShortcut, { store, type: 'keyboard', event })
+  const exportedBeforeRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
-  // eslint-disable-next-line fp/no-let
-  let exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
-
-  // eslint-disable-next-line fp/no-let
-  let expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutputAfterUndo = `- ${ROOT_TOKEN}
   - a
   - b`
 
-  expect(exported).toEqual(expectedOutput)
+  expect(exportedBeforeRedo).toEqual(expectedOutputAfterUndo)
 
-  // undo thought change
-  executeShortcut(redoShortcut, { store, type: 'keyboard', event })
+  // redo thought change
+  store.dispatch({ type: 'redoAction' })
 
-  exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exportedAfterRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
-  expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutputAfterRedo = `- ${ROOT_TOKEN}
   - aa
   - b`
 
-  expect(exported).toEqual(expectedOutput)
+  expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
 
 })
