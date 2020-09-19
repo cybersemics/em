@@ -29,7 +29,6 @@ import { GenericObject } from '../utilTypes'
 
 // util
 import {
-  clearSelection,
   contextOf,
   ellipsize,
   equalArrays,
@@ -247,32 +246,20 @@ const canDrag = (props: ThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
-  store.dispatch({ type: 'restoreSelection', value: false, offset: document.getSelection()?.focusOffset })
-  // disable hold-and-select on mobile Safari
-  if (isMobile) {
-    setTimeout(clearSelection)
-  }
   store.dispatch({
     type: 'dragInProgress',
     value: true,
     draggingThought: thoughtsRankedLive,
+    offset: document.getSelection()?.focusOffset,
   })
   return { thoughtsRanked: thoughtsRankedLive }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const endDrag = () => {
-  // disable hold-and-select on mobile Safari
-  if (isMobile) {
-    clearSelection()
-  }
-  setTimeout(() => {
-    // reset dragInProgress after a delay to prevent cursor from moving
-    store.dispatch({ type: 'dragInProgress', value: false })
-    store.dispatch({ type: 'dragHold', value: false })
-    store.dispatch(alert(null))
-  })
-  store.dispatch({ type: 'restoreSelection', value: true })
+  store.dispatch({ type: 'dragInProgress', value: false })
+  store.dispatch({ type: 'dragHold', value: false })
+  store.dispatch(alert(null))
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

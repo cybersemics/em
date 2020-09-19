@@ -290,11 +290,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   useEffect(() => {
-    const { cursor, editing, noteFocus, dragHold, restoreSelection } = state
+    const { editing, noteFocus, dragHold } = state
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
     // NOTE: asyncFocus() also needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && ((!noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold) || (restoreSelection && equalPath(cursor, thoughtsRanked)))) {
+    if (isEditing && contentRef.current && (!isMobile || editing) && ((!noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold))) {
       /*
         Mobile Safari: Auto-Capitalization broken if selection is set synchronously.
         When a new thought is created, the Shift key should be on for Auto-Capitalization.
@@ -321,7 +321,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       shortcutEmitter.off('shortcut', flush)
       showDuplicationAlert(false, dispatch)
     }
-  }, [isEditing, cursorOffset, state.restoreSelection])
+  }, [isEditing, cursorOffset, state.dragInProgress])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = (e: ContentEditableEvent) => {
