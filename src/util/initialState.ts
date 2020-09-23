@@ -32,6 +32,13 @@ export interface ThoughtsInterface {
 // export interface RecentlyEditedTree extends GenericObject<RecentlyEditedTree> {}
 type RecentlyEditedTree = GenericObject<any>
 
+interface User {
+  uid: string,
+  displayName: string,
+  email: string,
+  // see Firebase user for more properties
+}
+
 export interface State {
   alert?: Alert,
   archived?: boolean,
@@ -86,7 +93,7 @@ export interface State {
   thoughts: ThoughtsInterface,
   toolbarOverlay: string | null,
   tutorialStep?: number,
-  user?: any,
+  user?: User,
 }
 
 export type PartialStateWithThoughts =
