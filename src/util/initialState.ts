@@ -31,7 +31,7 @@ export interface State {
   cursor: Nullable<Path>,
   cursorBeforeEdit: Nullable<Path>,
   cursorBeforeSearch: Nullable<Path>,
-  cursorHistory: any[],
+  cursorHistory: Path[],
   cursorOffset: number,
   dataNonce: number,
   draggedThoughtsRanked?: Path,
