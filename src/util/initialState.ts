@@ -61,7 +61,7 @@ export interface State {
   modals: GenericObject<ModalProperties>,
   noteFocus: boolean,
   recentlyEdited: RecentlyEditedTree,
-  resourceCache: any,
+  resourceCache: GenericObject<string>,
   schemaVersion: any,
   scrollPrioritized: boolean,
   search: Nullable<string>,
