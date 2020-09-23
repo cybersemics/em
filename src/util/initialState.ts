@@ -73,7 +73,7 @@ export interface State {
   showSplitView: boolean,
   showTopControls: boolean,
   showBreadcrumbs: boolean,
-  splitPosition: any,
+  splitPosition: number,
   status: any,
   syncQueue?: {
     contextIndexUpdates?: GenericObject<Parent | null>,
