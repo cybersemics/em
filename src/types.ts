@@ -114,3 +114,9 @@ export type GesturePath = string | (Direction[] & {
   map: DirectionMap<Direction>,
   split: (s: string) => Direction[],
 })
+
+export type Alert = {
+  alertType?: string,
+  showCloseLink?: boolean,
+  value: string | null,
+} | null

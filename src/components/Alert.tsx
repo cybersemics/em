@@ -2,11 +2,7 @@ import React, { Dispatch } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { State } from '../util/initialState'
-
-interface Alert {
-  showCloseLink?: boolean,
-  value: string | null,
-}
+import { Alert } from '../types'
 
 interface AlertDispatchToProps {
   createAlert: (text: string | null) => void,
@@ -21,7 +17,7 @@ const mapDispatchToProps = (dispatch: Dispatch<any>): AlertDispatchToProps => ({
 })
 
 /** An alert component with an optional closeLink. */
-const Alert = ({ alert, createAlert }: { alert: Alert, createAlert: (text: string | null) => void }) =>
+const AlertComponent = ({ alert, createAlert }: { alert?: Alert, createAlert: (text: string | null) => void }) =>
   <TransitionGroup>
     {alert
       ? <CSSTransition key={0} timeout={200} classNames='fade'>
@@ -33,4 +29,4 @@ const Alert = ({ alert, createAlert }: { alert: Alert, createAlert: (text: strin
       : null}
   </TransitionGroup>
 
-export default connect(mapStateToProps, mapDispatchToProps)(Alert)
+export default connect(mapStateToProps, mapDispatchToProps)(AlertComponent)
