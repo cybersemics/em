@@ -62,7 +62,7 @@ export interface State {
   noteFocus: boolean,
   recentlyEdited: RecentlyEditedTree,
   resourceCache: GenericObject<string>,
-  schemaVersion: any,
+  schemaVersion: number,
   scrollPrioritized: boolean,
   search: Nullable<string>,
   searchLimit?: number,
