@@ -40,7 +40,7 @@ export interface State {
   dragInProgress: boolean,
   editing: Nullable<boolean>,
   editingValue: Nullable<string>,
-  error?: any,
+  error?: string | null,
   expanded: GenericObject<boolean>,
   expandedContextThought?: Path,
   focus: Path,
