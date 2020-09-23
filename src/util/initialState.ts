@@ -1,6 +1,6 @@
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Context, Lexeme, Parent, Path } from '../types'
+import { Alert, Context, Lexeme, Parent, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
 
@@ -22,7 +22,7 @@ export interface ThoughtsInterface {
 }
 
 export interface State {
-  alert: any,
+  alert?: Alert,
   archived?: boolean,
   authenticated: boolean,
   autologin: boolean,
@@ -85,7 +85,6 @@ export type PartialStateWithThoughts =
 export const initialState = () => {
 
   const state: State = {
-    alert: null,
     authenticated: false,
     autologin: localStorage.autologin === 'true',
     contextViews: {},
