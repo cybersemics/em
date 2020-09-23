@@ -166,7 +166,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     childrenOptions.map(child => child.value.toLowerCase())
     : null
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
-
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
 
@@ -291,14 +290,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   useEffect(() => {
-
     const { editing, noteFocus, dragHold } = state
-
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
     // NOTE: asyncFocus() also needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold) {
-
+    if (isEditing && contentRef.current && (!isMobile || editing) && ((!noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold))) {
       /*
         Mobile Safari: Auto-Capitalization broken if selection is set synchronously.
         When a new thought is created, the Shift key should be on for Auto-Capitalization.
@@ -325,7 +321,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       shortcutEmitter.off('shortcut', flush)
       showDuplicationAlert(false, dispatch)
     }
-  }, [isEditing, cursorOffset])
+  }, [isEditing, cursorOffset, state.dragInProgress])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = (e: ContentEditableEvent) => {
@@ -469,7 +465,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
     if (isMobile) {
       setTimeout(() => {
-        if (!window.getSelection()?.focusNode) {
+        // Check for "•" equality in order to set editing value to false if user exit editing mode by tapping on bullet on left space of thought.
+        if (!window.getSelection()?.focusNode || (window.getSelection()?.focusNode?.textContent === '•')) {
           dispatch({ type: 'editing', value: false })
         }
       })
@@ -489,6 +486,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // must get new state
     const state = store.getState()
     // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
+
     if (!state.dragInProgress) {
 
       // it is possible that the focus event fires with no onTouchEnd.
@@ -501,7 +499,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
 
       setCursorOnThought({ editing: !falseFocus })
-
       // remove the selection caused by the falseFocus
       if (falseFocus) {
         if (document.activeElement) {
