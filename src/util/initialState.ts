@@ -74,7 +74,7 @@ export interface State {
   showTopControls: boolean,
   showBreadcrumbs: boolean,
   splitPosition: number,
-  status: any,
+  status: string,
   syncQueue?: {
     contextIndexUpdates?: GenericObject<Parent | null>,
     thoughtIndexUpdates?: GenericObject<Lexeme | null>,
