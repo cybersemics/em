@@ -21,6 +21,17 @@ export interface ThoughtsInterface {
   contextIndex?: GenericObject<Parent>,
 }
 
+// Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed
+// interface RecentlyEditedLeaf {
+//   leaf: true,
+//   lastUpdated: Timestamp,
+//   path: Path,
+// }
+// type RecentlyEditedTree = GenericObject<RecentlyEditedTree> causes circular reference error
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// export interface RecentlyEditedTree extends GenericObject<RecentlyEditedTree> {}
+type RecentlyEditedTree = GenericObject<any>
+
 export interface State {
   alert?: Alert,
   archived?: boolean,
@@ -49,7 +60,7 @@ export interface State {
   isLoading: boolean,
   modals: GenericObject<ModalProperties>,
   noteFocus: boolean,
-  recentlyEdited: GenericObject<any>,
+  recentlyEdited: RecentlyEditedTree,
   resourceCache: any,
   schemaVersion: any,
   scrollPrioritized: boolean,
@@ -67,7 +78,7 @@ export interface State {
   syncQueue?: {
     contextIndexUpdates?: GenericObject<Parent | null>,
     thoughtIndexUpdates?: GenericObject<Lexeme | null>,
-    recentlyEdited?: GenericObject<any>,
+    recentlyEdited?: RecentlyEditedTree,
     updates?: GenericObject<string>,
     local?: boolean,
     remote?: boolean,
