@@ -145,7 +145,7 @@ const setCursor = (state: State, {
       cursorBeforeEdit: thoughtsResolved,
       codeView: null,
       cursorHistory: cursorHistoryClear ? [] :
-      cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
+      cursorHistoryPop ? state.cursorHistory.slice(0, -1)
       : state.cursorHistory,
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,
