@@ -1,4 +1,4 @@
-import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
+import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { Alert, Context, Lexeme, Parent, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
@@ -175,13 +175,11 @@ export const initialState = () => {
     patches: [],
     inversePatches: []
   }
-
-  // initial modal states
-  const modals = ['welcome', 'help', 'home', 'export']
-  modals.forEach(value => {
-    state.modals[value] = {
-      complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + value] || 'false'),
-      hideuntil: JSON.parse(localStorage['modal-hideuntil-' + value] || '0')
+  Object.keys(MODALS).forEach(key => {
+    // initial modal states
+    state.modals[MODALS[key]] = {
+      complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + MODALS[key]] || 'false'),
+      hideuntil: JSON.parse(localStorage['modal-hideuntil-' + MODALS[key]] || '0')
     }
   })
 
