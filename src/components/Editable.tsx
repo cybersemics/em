@@ -500,9 +500,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         // clicking a different thought (when not editing)
         (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
 
-<<<<<<< c0ae329e04ca6e3612a11ecc40b33d0dfc9ad01c
-      setCursorOnThought({ editing: !falseFocus })
-=======
       const thoughtChanged = !state.cursor || thoughtsResolved.length !== state.cursor.length || thoughtsResolved.some((thought, index) => {
         const child = state.cursor![index]
         // eslint-disable-next-line no-extra-parens
@@ -510,7 +507,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       })
       if ((isMobile && state.editing) || thoughtChanged) setCursorOnThought({ editing: !falseFocus })
 
->>>>>>> refactors undo/redo enhancer | removes setCursor on newthought
       // remove the selection caused by the falseFocus
       if (falseFocus) {
         if (document.activeElement) {

@@ -1,5 +1,5 @@
 import { importText } from '../../action-creators'
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { MODALS, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
@@ -67,7 +67,7 @@ it('Undo thought change', async () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('Group all navigation actions preceding a thought change and undo them together', async () => {
+it('Group all navigation actions following a thought change and undo them together', async () => {
 
   const store = createTestStore()
 
@@ -84,26 +84,16 @@ it('Group all navigation actions preceding a thought change and undo them togeth
     context: [ROOT_TOKEN],
     thoughtsRanked: [{ value: 'a', rank: 0 }]
   }, {
-    type: 'cursorDown'
+    type: 'cursorUp'
   }, {
-    type: 'cursorDown'
+    type: 'moveThoughtDown'
   }, {
-    type: 'setCursor'
+    type: 'setCursor',
+    thoughtsRanked: null
   }, {
     type: 'cursorBack'
-  }, {
-    type: 'existingThoughtChange',
-    context: [ROOT_TOKEN],
-    oldValue: 'c',
-    newValue: 'cc',
-    thoughtsRanked: [
-      {
-        value: 'c',
-        rank: 2,
-      }
-    ]
   },
-  // undo thought change and preceding navigation actions
+  // undo all actions following a thoughtchange as a single operation
   {
     type: 'undoAction'
   }])
@@ -217,5 +207,101 @@ it('NewThought action should be merged with the succeeding patch', () => {
   - c`
 
   expect(exported).toEqual(expectedOutput)
+
+})
+
+it('Undo contiguous changes', () => {
+  const store = createTestStore()
+
+  store.dispatch([importText(RANKED_ROOT, `
+  - A
+  - B`), {
+    type: 'existingThoughtChange',
+    newValue: 'Atlantic',
+    oldValue: 'A',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'A', rank: 0 }]
+  }, {
+    type: 'existingThoughtChange',
+    newValue: 'Atlantic ',
+    oldValue: 'Atlantic',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
+  }, {
+    type: 'existingThoughtChange',
+    newValue: 'Atlantic City',
+    oldValue: 'Atlantic ',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'Atlantic ', rank: 0 }]
+  }, {
+    type: 'undoAction',
+  }])
+
+  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+
+  const expectedOutput = `- ${ROOT_TOKEN}
+  - A
+  - B`
+
+  expect(exported).toEqual(expectedOutput)
+
+})
+
+it('state.alert is omitted from the inversepatches', () => {
+  const store = createTestStore()
+
+  store.dispatch([importText(RANKED_ROOT, `
+  - A
+  - B`), {
+    type: 'alert',
+    value: 'test alert'
+  }
+  ])
+
+  expect(store.getState().inversePatches.length).toEqual(0)
+
+})
+
+it('Clear patches when any undoable action is dispatched', () => {
+  const store = createTestStore()
+
+  store.dispatch([importText(RANKED_ROOT, `
+  - A
+  - B`), {
+    type: 'existingThoughtChange',
+    newValue: 'Atlantic',
+    oldValue: 'A',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'A', rank: 0 }]
+  }, {
+    type: 'newThought', value: 'New Jersey'
+  }, {
+    type: 'undoAction'
+  }, {
+    type: 'undoAction'
+  }])
+
+  expect(store.getState().patches.length).toEqual(2)
+
+  // dispatch an undoable action
+  store.dispatch({
+    type: 'newThought', value: 'Atlantic City'
+  })
+
+  expect(store.getState().patches.length).toEqual(0)
+
+})
+
+it('Non-undoable actions are ignored', () => {
+  const store = createTestStore()
+  store.dispatch([{
+    type: 'search', value: 'New'
+  }, {
+    type: 'showModal', id: MODALS.welcome
+  }, {
+    type: 'toggleSidebar'
+  }])
+
+  expect(store.getState().inversePatches.length).toEqual(0)
 
 })

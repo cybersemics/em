@@ -1,6 +1,7 @@
 /** Defines app-wide constants. */
 
 import raw from 'raw.macro'
+import { GenericObject } from './utilTypes'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -259,4 +260,12 @@ export const UNDOABLE_ACTIONS = {
   toggleHiddenThoughts: 'toggleHiddenThoughts',
   toggleSplitView: 'toggleSplitView',
   toolbarOverlay: 'toolbarOverlay'
+}
+
+// modal states
+export const MODALS: GenericObject = {
+  welcome: 'welcome',
+  help: 'help',
+  home: 'home',
+  export: 'export'
 }
