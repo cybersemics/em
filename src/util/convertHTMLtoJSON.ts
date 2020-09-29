@@ -12,58 +12,35 @@ export const convertHTMLtoJSON = (html: string) => {
   /** Retrieve attribute from Element node by key. */
   const getAttribute = (key: string, node: Element) => {
     const { attributes } = node
+    if (!attributes) return
     const attribute = attributes.find(attr => attr.key === key)
     return attribute ? attribute.value : undefined
+  }
+
+  /** */
+  const isFormattingTag = (node: Element | Text) => node.type === 'element'
+    && (node.tagName === 'i' || node.tagName === 'b' || (node.tagName === 'span' && getAttribute('class', node) !== 'note'))
+
+  /** */
+  const hasFormattingsTags = (nodes: (Element | Text)[]) =>
+    nodes.some(node => isFormattingTag(node))
+
+  /** */
+  const retrieveContentFromFormattingTag = (node: Element) => {
+    const content = (_.head(node.children) as Text).content
+    if (node.tagName === 'span') return content
+
+    return `<${node.tagName}>${content}</${node.tagName}>`
   }
 
   /** Removes empty nodes and comments from himalaya's JSON output. */
   const removeEmptyNodesAndComments = (nodes: HimalayaNode[]): (Element | Text)[] => {
     const filteredNodes = nodes.filter(node => {
       return node.type === 'element'
-        ? node.tagName !== 'br'
+        ? true
         : node.type === 'comment' || (node.type === 'text' && /^[\n ]+$/g.test(node.content)) ? false : node.content.length
     })
     return filteredNodes.map(node => node.type === 'element' && node.children.length > 0 ? { ...node, children: removeEmptyNodesAndComments(node.children) } : node) as (Element | Text)[]
-  }
-
-  /** Append children to parent as children property if it's necessary. */
-  const joinChildren = (nodes: (PreBlock[] | PreBlock)[]): PreBlock[] | PreBlock => {
-    for (const node of nodes) { // eslint-disable-line fp/no-loops
-      if (!Array.isArray(node)) {
-        // in case of element with span tag around text (e.g. one <span>and</span> two)
-        if (node.partOfThought) {
-          // take all text elements
-          const splittedText = _.takeWhile(nodes, node => !Array.isArray(node))
-          // join their content in a single line
-          const fullScope = splittedText.map(node => node && !Array.isArray(node) ? node.scope : '').join('')
-          const children = _.dropWhile(nodes, node => !Array.isArray(node)).flat()
-          return {
-            scope: fullScope,
-            children,
-          } as PreBlock
-        }
-        // WorkFlowy import with notes
-        if (node.scope === '=note') {
-          const parent = _.first(nodes)
-          const children = _.tail(nodes)
-          return { ...parent, children: children.flat() } as PreBlock
-        }
-      }
-      if (Array.isArray(node)) {
-        // split by chunk with size of 2, first element in chunk is PreBlock - parent, the second is PreBlock[] - children
-        const chunks = _.chunk(nodes, 2)
-        const [firstChunk] = chunks
-        // check if both items in chunk are Arrays
-        if (firstChunk.every(item => Array.isArray(item))) return nodes.flat()
-
-        const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
-          if (index === 0) return node as PreBlock
-          else return { ...acc, children: node } as PreBlock
-        }) as PreBlock)
-        return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
-      }
-    }
-    return nodes as PreBlock[]
   }
 
   /** Retrive content of Text element and return PreBlock. */
@@ -75,47 +52,80 @@ export const convertHTMLtoJSON = (html: string) => {
     } as PreBlock
   }
 
-  /** Convert to PreBlock based on foramtting tag. */
-  const convertFormattingTags = (node: Element) => {
-    if (node.tagName === 'i' || node.tagName === 'b') {
-      const [child] = node.children as Text[]
-      return { ...convertText(child, node.tagName), partOfThought: true }
-    }
-    else if (node.tagName === 'span') {
-      const attribute = getAttribute('class', node)
-      // WorkFlowy import with notes
-      if (attribute === 'note') {
-        const [note] = node.children
-        return {
-          scope: '=note',
-          children: [{
-            scope: note.type === 'text' ? note.content : '',
-            children: [],
-          }]
+  /** */
+  const convertWorkflowy = (node: Element) => {
+    const workflowyContent = (_.head(node.children) as Text).content
+    return {
+      scope: '=note',
+      children: [
+        {
+          scope: workflowyContent,
+          children: []
         }
-      }
-      const [child] = node.children as Text[]
-      return { ...convertText(child), partOfThought: true }
+      ]
     }
-    return null
+
   }
 
-  /** Convert PreBlock array to Block array. */
-  const convertToBlock = (nodes: PreBlock[]): Block[] => nodes.map(node => {
-    if (node.children.length > 0) return { ...node, children: convertToBlock(node.children) } as Block
-    else return node as Block
-  })
+  /** */
+  const handleFormattingTags = (nodes: (Element | Text)[]): (Element | Text)[] => {
+    if (nodes.length === 0) return []
+    const beforeFormattingTags = _.takeWhile(nodes, node => !(isFormattingTag(node) || node.type === 'text'))
+    if (beforeFormattingTags.length !== 0) return [...beforeFormattingTags, ...handleFormattingTags(nodes.slice(beforeFormattingTags.length))]
+
+    const tagsToMerge = _.takeWhile(nodes, node => isFormattingTag(node) || node.type === 'text')
+    const merged = tagsToMerge.reduce((acc: Text, current: Element | Text) => {
+      const accContent = acc.content
+      const appendContent = current.type === 'text'
+        ? (current as Text).content
+        : retrieveContentFromFormattingTag(current)
+      return {
+        type: 'text',
+        content: accContent + appendContent
+      }
+    }, {
+      type: 'text',
+      content: ''
+    })
+    const afterFormattingTags = nodes.slice(tagsToMerge.length)
+    return afterFormattingTags.length === 0 ? [merged] : [merged, ...handleFormattingTags(afterFormattingTags)]
+  }
+
+  /** Append children to parent as children property if it's necessary. */
+  const joinChildren = (nodes: (PreBlock[] | PreBlock)[]): PreBlock[] | PreBlock => {
+    for (const node of nodes) { // eslint-disable-line fp/no-loops
+      if (Array.isArray(node)) {
+        // split by chunk with size of 2, first element in chunk is PreBlock - parent, the second is PreBlock[] - children
+        const chunks = _.chunk(nodes, 2)
+        const [firstChunk] = chunks
+        // check if both items in chunk are Arrays
+        if (firstChunk.every(item => Array.isArray(item))) return nodes.flat()
+
+        const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
+          if (index === 0) return node as PreBlock
+          else return { ...acc, children: [...(acc as PreBlock).children, ...Array.isArray(node) ? node : [node]] } as PreBlock
+        }) as PreBlock)
+        return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
+      }
+    }
+    return nodes as PreBlock[]
+  }
 
   /** Converts each Array of HimalayaNodes to PreBlock. */
   const convert = (nodes: (Element | Text)[]): PreBlock[] | PreBlock => {
+    if (hasFormattingsTags(nodes)) {
+      const merged = handleFormattingTags(nodes)
+      if (merged.length === 1) return convertText(_.head(merged) as Text)
+      return convert(merged)
+    }
     const blocks = nodes.map(node => {
       // convert Text directly to PreBlock
       if (node.type === 'text') {
         return convertText(node)
       }
-      // convert formatting tag
-      if (node.tagName === 'i' || node.tagName === 'b' || node.tagName === 'span') {
-        return convertFormattingTags(node)!
+      if (getAttribute('class', node) === 'note') {
+        const workFlowy = convertWorkflowy(node)
+        return workFlowy
       }
       // convert children of ul
       if (node.tagName === 'ul') {
@@ -142,6 +152,12 @@ export const convertHTMLtoJSON = (html: string) => {
     }) as (PreBlock | PreBlock[])[]
     return blocks.length > 1 ? joinChildren(blocks) : blocks.flat()
   }
+
+  /** Convert PreBlock array to Block array. */
+  const convertToBlock = (nodes: PreBlock[]): Block[] => nodes.map(node => {
+    if (node.children.length > 0) return { ...node, children: convertToBlock(node.children) } as Block
+    else return node as Block
+  })
 
   /** Clear himalaya's output and converts to Block. */
   const convertHimalayaToBlock = (nodes: HimalayaNode[]) => {
