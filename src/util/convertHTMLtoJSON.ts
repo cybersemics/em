@@ -64,7 +64,6 @@ export const convertHTMLtoJSON = (html: string) => {
         }
       ]
     }
-
   }
 
   /** */
@@ -91,24 +90,31 @@ export const convertHTMLtoJSON = (html: string) => {
     return afterFormattingTags.length === 0 ? [merged] : [merged, ...handleFormattingTags(afterFormattingTags)]
   }
 
+  /** */
+  const handleBr = (nodes: (Element | Text)[], brIndex: number) : (Element | Text)[] => {
+    const beforeBr = nodes.slice(0, brIndex)
+    const afterBr = nodes.slice(brIndex + 1)
+    const ul = {
+      type: 'element',
+      tagName: 'ul',
+      children: Array.isArray(afterBr) ? afterBr : [afterBr]
+    } as Element
+    return [...beforeBr, ul]
+  }
+
   /** Append children to parent as children property if it's necessary. */
   const joinChildren = (nodes: (PreBlock[] | PreBlock)[]): PreBlock[] | PreBlock => {
-    for (const node of nodes) { // eslint-disable-line fp/no-loops
-      if (Array.isArray(node)) {
-        // split by chunk with size of 2, first element in chunk is PreBlock - parent, the second is PreBlock[] - children
-        const chunks = _.chunk(nodes, 2)
-        const [firstChunk] = chunks
-        // check if both items in chunk are Arrays
-        if (firstChunk.every(item => Array.isArray(item))) return nodes.flat()
+    // split by chunk with size of 2, first element in chunk is PreBlock - parent, the second is PreBlock[] - children
+    const chunks = _.chunk(nodes, 2)
+    const [firstChunk] = chunks
+    // check if both items in chunk are Arrays
+    if (firstChunk.every(item => Array.isArray(item))) return nodes.flat()
 
-        const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
-          if (index === 0) return node as PreBlock
-          else return { ...acc, children: [...(acc as PreBlock).children, ...Array.isArray(node) ? node : [node]] } as PreBlock
-        }) as PreBlock)
-        return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
-      }
-    }
-    return nodes as PreBlock[]
+    const parentsWithChildren = chunks.map(chunk => chunk.reduce((acc, node, index) => {
+      if (index === 0) return node as PreBlock
+      else return { ...acc, children: [...(acc as PreBlock).children, ...Array.isArray(node) ? node : [node]] } as PreBlock
+    }) as PreBlock)
+    return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
   }
 
   /** Converts each Array of HimalayaNodes to PreBlock. */
@@ -118,7 +124,11 @@ export const convertHTMLtoJSON = (html: string) => {
       if (merged.length === 1) return convertText(_.head(merged) as Text)
       return convert(merged)
     }
-    const blocks = nodes.map(node => {
+    const brIndex = nodes.findIndex(node => node.type === 'element' && node.tagName === 'br')
+    if (brIndex !== -1) {
+      return convert(handleBr(nodes, brIndex))
+    }
+    const blocks = nodes.map((node, index) => {
       // convert Text directly to PreBlock
       if (node.type === 'text') {
         return convertText(node)
@@ -129,7 +139,9 @@ export const convertHTMLtoJSON = (html: string) => {
       }
       // convert children of ul
       if (node.tagName === 'ul') {
-        return convert(node.children as (Element | Text)[])
+        const converted = convert(node.children as (Element | Text)[]) as PreBlock[]
+        const prevNode = nodes[index - 1]
+        return prevNode && prevNode.type === 'element' && getAttribute('class', prevNode) === 'note' ? converted[0] : converted
       }
       // convert li
       const { children } = node
@@ -150,7 +162,11 @@ export const convertHTMLtoJSON = (html: string) => {
       }
       else return convert(node.children as (Element | Text)[])
     }) as (PreBlock | PreBlock[])[]
-    return blocks.length > 1 ? joinChildren(blocks) : blocks.flat()
+    return blocks.every(block => !Array.isArray(block))
+      ? blocks as PreBlock[]
+      : blocks.every(block => Array.isArray(block))
+        ? blocks.flat()
+        : joinChildren(blocks)
   }
 
   /** Convert PreBlock array to Block array. */
