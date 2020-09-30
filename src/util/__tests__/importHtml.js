@@ -139,8 +139,7 @@ it('<span> with nested li\'s', () => {
 `)
 })
 
-// conflicts with "simple ul" test in current implementation
-it.skip('empty thought with nested li\'s', () => {
+it('empty thought with nested li\'s', () => {
   expect(importExport(`
 <li>
   <ul>
