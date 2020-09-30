@@ -28,6 +28,7 @@ interface Payload {
 const existingThoughtDelete = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
 
   const { value, rank } = thoughtRanked
+  console.log('existingThoughtDelete', context, thoughtRanked, showContexts, exists(state, value))
   if (!exists(state, value)) return state
 
   const thoughts = unroot(context.concat(value))

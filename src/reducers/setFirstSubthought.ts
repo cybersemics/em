@@ -7,7 +7,10 @@ import { Context } from '../types'
 /** Sets the value of the first subthought in the given context. */
 const setFirstSubthoughts = (state: State, { context, value }: { context: Context, value: string }) => {
 
+  console.log('context, value', context, value)
+
   const oldFirstThoughtRanked = getThoughts(state, context)[0]
+  console.log('oldFirstThoughtRanked', oldFirstThoughtRanked)
   return oldFirstThoughtRanked
 
     // context has a first and must be changed
