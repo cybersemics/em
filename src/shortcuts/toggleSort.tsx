@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
-import { pathToContext } from '../util'
+import { contextOf, pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { Nullable } from '../utilTypes'
 import { ROOT_TOKEN } from '../constants'
@@ -44,7 +44,7 @@ const toggleSortShortcut: Shortcut = {
 
     if (cursor) {
 
-      const path = cursor
+      const path = contextOf(cursor)
       if (path.length === 0) return
 
       dispatch({
@@ -56,7 +56,6 @@ const toggleSortShortcut: Shortcut = {
       dispatch({ type: 'setCursor', thoughtsRanked: state.cursor })
     }
     else {
-      console.log('No Cursor')
       dispatch({
         type: 'toggleAttribute',
         context: [ROOT_TOKEN],
