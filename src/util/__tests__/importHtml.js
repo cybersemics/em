@@ -93,6 +93,39 @@ it('multiple li\'s', () => {
 `)
 })
 
+it('lines separated by <br>', () => {
+  expect(importExport(`
+a<br>
+b<br>
+c<br>
+`))
+    .toBe(`
+- a
+- b
+- c
+`)
+})
+
+it('nested lines separated by <br>', () => {
+  expect(importExport(`
+<li>x
+  <ul>
+    <li>
+      a<br>
+      b<br>
+      c<br>
+    </li>
+  </ul>
+</li>
+`))
+    .toBe(`
+- x
+  - a
+  - b
+  - c
+`)
+})
+
 it('nested li\'s', () => {
   expect(importExport(`
 <li>a<ul>
