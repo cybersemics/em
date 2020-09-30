@@ -13,8 +13,6 @@ import { GenericObject } from '../utilTypes'
  */
 const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: { context: Context, value: string, rank: number, addAsContext?: boolean }) => {
 
-  console.log('context, value, rank, addAsContext', context, value, rank, addAsContext)
-
   // create thought if non-existent
   const thought = Object.assign({}, getThought(state, value) || {
     value,
@@ -30,7 +28,6 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
   const contextIndexUpdates: GenericObject<Parent> = {}
 
   if (context.length > 0) {
-    console.log('if')
     const newContextSubthought = {
       value: addAsContext ? head(context) : value,
       rank: addAsContext ? getNextRank(state, [value]) : rank,
@@ -75,8 +72,6 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
       })
     }
   }
-
-  console.log('thought', thought)
 
   const thoughtIndexUpdates = {
     [hashThought(thought.value)]: thought,
