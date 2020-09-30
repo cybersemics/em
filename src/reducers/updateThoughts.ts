@@ -25,6 +25,8 @@ interface Payload {
  */
 const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Payload) => {
 
+  console.log('updateThoughts', thoughtIndexUpdates, contextIndexUpdates)
+
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
 
