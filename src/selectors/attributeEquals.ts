@@ -3,6 +3,7 @@ import { Context } from '../types'
 // util
 import {
   equalThoughtValue,
+  isRoot,
 } from '../util'
 
 // selectors
@@ -12,7 +13,7 @@ import {
 
 /** Returns true if the given attribute equals the given value. O(1). Use over attribute when possible for performance. */
 const attributeEquals = (state: any, context: Context, attr: string, value: string) => {
-  const children = getThoughts(state, context.concat(attr))
+  const children = getThoughts(state, isRoot(context) ? [attr] : context.concat(attr))
   return children.find(equalThoughtValue(value))
 }
 
