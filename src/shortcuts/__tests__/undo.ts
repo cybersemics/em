@@ -88,7 +88,7 @@ it('group all navigation actions following a thought change and undo them togeth
     },
     { type: 'cursorUp' },
     { type: 'moveThoughtDown' },
-    { type: 'setCursor',  thoughtsRanked: null },
+    { type: 'setCursor', thoughtsRanked: null },
     { type: 'cursorBack' },
     { type: 'undoAction' }
   ])
@@ -178,7 +178,7 @@ it('newThought action should be merged with the succeeding patch', () => {
         }
       ]
     },
-      // undo thought change and preceding navigation actions
+    // undo thought change and preceding navigation actions
     { type: 'undoAction' }
   ])
 
@@ -285,7 +285,7 @@ it('non-undoable actions are ignored', () => {
   const store = createTestStore()
   store.dispatch([
     { type: 'search', value: 'New' },
-    { type: 'showModal', id: MODALS.welcome  },
+    { type: 'showModal', id: MODALS.welcome },
     { type: 'toggleSidebar' }
   ])
 

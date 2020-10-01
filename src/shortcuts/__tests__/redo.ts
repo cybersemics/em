@@ -51,30 +51,30 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
   store.dispatch([importText(RANKED_ROOT, `
       - a
       - b`
-    ),
-    { type: 'cursorDown' },
-    {
-      type: 'existingThoughtChange',
-      newValue: 'ar',
-      oldValue: 'a',
-      context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
-    },
-    { type: 'cursorUp' },
-    { type: 'setCursor', thoughtsRanked: [{ value: 'ar', rank: 0 }] },
-    { type: 'cursorBack' },
-    {
-      type: 'existingThoughtChange',
-      newValue: 'arizona',
-      oldValue: 'ar',
-      context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'ar', rank: 0 }]
-    },
-    { type: 'undoAction' },
-    { type: 'undoAction' },
-    // redo all actions preceding a thoughtchange as a single operation
-    { type: 'redoAction' },
-    { type: 'redoAction' },
+  ),
+  { type: 'cursorDown' },
+  {
+    type: 'existingThoughtChange',
+    newValue: 'ar',
+    oldValue: 'a',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'a', rank: 0 }]
+  },
+  { type: 'cursorUp' },
+  { type: 'setCursor', thoughtsRanked: [{ value: 'ar', rank: 0 }] },
+  { type: 'cursorBack' },
+  {
+    type: 'existingThoughtChange',
+    newValue: 'arizona',
+    oldValue: 'ar',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'ar', rank: 0 }]
+  },
+  { type: 'undoAction' },
+  { type: 'undoAction' },
+  // redo all actions preceding a thoughtchange as a single operation
+  { type: 'redoAction' },
+  { type: 'redoAction' },
   ])
 
   const exportedAfterRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
@@ -92,29 +92,29 @@ it('redo contiguous changes', () => {
   store.dispatch([importText(RANKED_ROOT, `
       - A
       - B`
-    ),
-    {
-      type: 'existingThoughtChange',
-      newValue: 'Atlantic',
-      oldValue: 'A',
-      context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'A', rank: 0 }]
-    },
-    {
-      type: 'existingThoughtChange',
-      newValue: 'Atlantic ',
-      oldValue: 'Atlantic',
-      context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
-    },
-    {
-      type: 'existingThoughtChange',
-      newValue: 'Atlantic City',
-      oldValue: 'Atlantic ',
-      context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'Atlantic ', rank: 0 }]
-    },
-    { type: 'undoAction',  }
+  ),
+  {
+    type: 'existingThoughtChange',
+    newValue: 'Atlantic',
+    oldValue: 'A',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'A', rank: 0 }]
+  },
+  {
+    type: 'existingThoughtChange',
+    newValue: 'Atlantic ',
+    oldValue: 'Atlantic',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
+  },
+  {
+    type: 'existingThoughtChange',
+    newValue: 'Atlantic City',
+    oldValue: 'Atlantic ',
+    context: [ROOT_TOKEN],
+    thoughtsRanked: [{ value: 'Atlantic ', rank: 0 }]
+  },
+  { type: 'undoAction' }
   ])
 
   const exportedBeforeRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
