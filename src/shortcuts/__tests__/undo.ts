@@ -8,7 +8,7 @@ import undoShortcut from '../undo'
 import { initialState } from '../../util'
 import * as undoUtils from '../../util/isUndoEnabled'
 
-describe('Undo Shortcut', () => {
+describe('undo shortcut', () => {
   const event = { preventDefault: NOOP } as Event
   const isUndoEnabled = jest.spyOn(undoUtils, 'isUndoEnabled')
 
@@ -38,25 +38,25 @@ describe('Undo Shortcut', () => {
 
 })
 
-it('Undo thought change', async () => {
+it('undo thought change', async () => {
 
   const store = createTestStore()
 
-  store.dispatch([importText(RANKED_ROOT, `
-- a
-- b`), {
-    type: 'setCursor', thoughtsRanked: [
-      { value: 'a', rank: '0' }
-    ]
-  }, {
-    type: 'existingThoughtChange',
-    newValue: 'aa',
-    oldValue: 'a',
-    context: [ROOT_TOKEN],
-    thoughtsRanked: [{ value: 'a', rank: 0 }]
-  }, {
-    type: 'undoAction'
-  }])
+  store.dispatch([
+    importText(RANKED_ROOT, `
+      - a
+      - b`
+    ),
+    { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: '0' }] },
+    {
+      type: 'existingThoughtChange',
+      newValue: 'aa',
+      oldValue: 'a',
+      context: [ROOT_TOKEN],
+      thoughtsRanked: [{ value: 'a', rank: 0 }]
+    },
+    { type: 'undoAction' }
+  ])
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
@@ -67,78 +67,63 @@ it('Undo thought change', async () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('Group all navigation actions following a thought change and undo them together', async () => {
+it('group all navigation actions following a thought change and undo them together', async () => {
 
   const store = createTestStore()
 
-  store.dispatch([importText(RANKED_ROOT, `
-  - a
-  - b
-  - c
-  - d`), {
-    type: 'cursorDown'
-  }, {
-    type: 'existingThoughtChange',
-    newValue: 'aa',
-    oldValue: 'a',
-    context: [ROOT_TOKEN],
-    thoughtsRanked: [{ value: 'a', rank: 0 }]
-  }, {
-    type: 'cursorUp'
-  }, {
-    type: 'moveThoughtDown'
-  }, {
-    type: 'setCursor',
-    thoughtsRanked: null
-  }, {
-    type: 'cursorBack'
-  },
-  // undo all actions following a thoughtchange as a single operation
-  {
-    type: 'undoAction'
-  }])
+  store.dispatch([
+    importText(RANKED_ROOT, `
+      - a
+      - b
+      - c
+      - d`
+    ),
+    { type: 'cursorDown' },
+    {
+      type: 'existingThoughtChange',
+      newValue: 'aa',
+      oldValue: 'a',
+      context: [ROOT_TOKEN],
+      thoughtsRanked: [{ value: 'a', rank: 0 }]
+    },
+    { type: 'cursorUp' },
+    { type: 'moveThoughtDown' },
+    { type: 'setCursor',  thoughtsRanked: null },
+    { type: 'cursorBack' },
+    { type: 'undoAction' }
+  ])
 
   // restore the cursor to it's state before navigation actions
   const { cursor } = store.getState()
 
-  expect(cursor).toMatchObject([{ value: 'aa' }])
+  expect(cursor).toMatchObject([
+    { value: 'aa' }])
 
 })
 
-it('Ignore dead actions/Combine dispensible actions with the preceding patch', () => {
+it('ignore dead actions/Combine dispensible actions with the preceding patch', () => {
   const store = createTestStore()
 
-  store.dispatch([importText(RANKED_ROOT, `
-  - a
-   - b
-   - c
-   - d`), {
-    type: 'setCursor',
-    thoughtsRanked: null
-  }, {
-    type: 'existingThoughtChange',
-    context: [
-      'a'
-    ],
-    oldValue: 'b',
-    newValue: 'bd',
-    rankInContext: 1,
-    thoughtsRanked: [
-      {
-        value: 'b',
-        rank: 1,
-      }
-    ]
-  },
-  // dispensible set cursor (which only updates datanonce)
-  {
-    type: 'setCursor',
-    thoughtsRanked: null
-  },
-  // undo setCursor and thoughtChange in a sinle action
-  {
-    type: 'undoAction'
-  }
+  store.dispatch([
+    importText(RANKED_ROOT, `
+      - a
+        - b
+        - c
+        - d`
+    ),
+    { type: 'setCursor', thoughtsRanked: null },
+    {
+      type: 'existingThoughtChange',
+      context: ['a'],
+      oldValue: 'b',
+      newValue: 'bd',
+      rankInContext: 1,
+      thoughtsRanked: [{ value: 'b', rank: 1 }]
+    },
+    // dispensible set cursor (which only updates datanonce)
+    { type: 'setCursor', thoughtsRanked: null },
+    // undo setCursor and thoughtChange in a sinle action
+    { type: 'undoAction' }
   ])
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
@@ -152,15 +137,15 @@ it('Ignore dead actions/Combine dispensible actions with the preceding patch', (
   expect(exported).toEqual(expectedOutput)
 })
 
-it('State remains unchanged if there are no inverse patches', () => {
+it('state remains unchanged if there are no inverse patches', () => {
   const store = createTestStore()
 
-  store.dispatch([importText(RANKED_ROOT, `
-  - a
-   - b
-   - c
-   - d`)
-  ])
+  store.dispatch(importText(RANKED_ROOT, `
+    - a
+     - b
+     - c
+     - d`)
+  )
 
   const prevState = store.getState()
   expect(prevState.inversePatches.length).toEqual(0)
@@ -170,34 +155,32 @@ it('State remains unchanged if there are no inverse patches', () => {
   expect(store.getState()).toEqual(prevState)
 })
 
-it('NewThought action should be merged with the succeeding patch', () => {
+it('newThought action should be merged with the succeeding patch', () => {
   const store = createTestStore()
 
-  store.dispatch([importText(RANKED_ROOT, `
-  - a
-  - b`), {
-    type: 'newThought', value: 'c'
-  }, {
-    type: 'newThought', value: 'd'
-  }, {
-    type: 'existingThoughtChange',
-    context: [
-      ROOT_TOKEN
-    ],
-    oldValue: 'd',
-    newValue: 'd1',
-    rankInContext: 3,
-    thoughtsRanked: [
-      {
-        value: 'd',
-        rank: 3,
-      }
-    ]
-  },
-  // undo thought change and preceding navigation actions
-  {
-    type: 'undoAction'
-  }])
+  store.dispatch([
+    importText(RANKED_ROOT, `
+      - a
+      - b`
+    ),
+    { type: 'newThought', value: 'c' },
+    { type: 'newThought', value: 'd' },
+    {
+      type: 'existingThoughtChange',
+      context: [ROOT_TOKEN],
+      oldValue: 'd',
+      newValue: 'd1',
+      rankInContext: 3,
+      thoughtsRanked: [
+        {
+          value: 'd',
+          rank: 3,
+        }
+      ]
+    },
+      // undo thought change and preceding navigation actions
+    { type: 'undoAction' }
+  ])
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
@@ -210,32 +193,37 @@ it('NewThought action should be merged with the succeeding patch', () => {
 
 })
 
-it('Undo contiguous changes', () => {
+it('undo contiguous changes', () => {
   const store = createTestStore()
 
-  store.dispatch([importText(RANKED_ROOT, `
-  - A
-  - B`), {
-    type: 'existingThoughtChange',
-    newValue: 'Atlantic',
-    oldValue: 'A',
-    context: [ROOT_TOKEN],
-    thoughtsRanked: [{ value: 'A', rank: 0 }]
-  }, {
-    type: 'existingThoughtChange',
-    newValue: 'Atlantic ',
-    oldValue: 'Atlantic',
-    context: [ROOT_TOKEN],
-    thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
-  }, {
-    type: 'existingThoughtChange',
-    newValue: 'Atlantic City',
-    oldValue: 'Atlantic ',
-    context: [ROOT_TOKEN],
-    thoughtsRanked: [{ value: 'Atlantic ', rank: 0 }]
-  }, {
-    type: 'undoAction',
-  }])
+  store.dispatch([
+    importText(RANKED_ROOT, `
+      - A
+      - B`
+    ),
+    {
+      type: 'existingThoughtChange',
+      newValue: 'Atlantic',
+      oldValue: 'A',
+      context: [ROOT_TOKEN],
+      thoughtsRanked: [{ value: 'A', rank: 0 }]
+    },
+    {
+      type: 'existingThoughtChange',
+      newValue: 'Atlantic ',
+      oldValue: 'Atlantic',
+      context: [ROOT_TOKEN],
+      thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
+    },
+    {
+      type: 'existingThoughtChange',
+      newValue: 'Atlantic City',
+      oldValue: 'Atlantic ',
+      context: [ROOT_TOKEN],
+      thoughtsRanked: [{ value: 'Atlantic ', rank: 0 }]
+    },
+    { type: 'undoAction' }
+  ])
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
@@ -247,39 +235,40 @@ it('Undo contiguous changes', () => {
 
 })
 
-it('state.alert is omitted from the inversepatches', () => {
+it('state.alert is omitted from the undo patch', () => {
   const store = createTestStore()
 
-  store.dispatch([importText(RANKED_ROOT, `
-  - A
-  - B`), {
-    type: 'alert',
-    value: 'test alert'
-  }
+  store.dispatch([
+    importText(RANKED_ROOT, `
+      - A
+      - B`
+    ),
+    { type: 'alert', value: 'test' }
   ])
 
   expect(store.getState().inversePatches.length).toEqual(0)
 
 })
 
-it('Clear patches when any undoable action is dispatched', () => {
+it('clear patches when any undoable action is dispatched', () => {
   const store = createTestStore()
 
-  store.dispatch([importText(RANKED_ROOT, `
-  - A
-  - B`), {
-    type: 'existingThoughtChange',
-    newValue: 'Atlantic',
-    oldValue: 'A',
-    context: [ROOT_TOKEN],
-    thoughtsRanked: [{ value: 'A', rank: 0 }]
-  }, {
-    type: 'newThought', value: 'New Jersey'
-  }, {
-    type: 'undoAction'
-  }, {
-    type: 'undoAction'
-  }])
+  store.dispatch([
+    importText(RANKED_ROOT, `
+      - A
+      - B`
+    ),
+    {
+      type: 'existingThoughtChange',
+      newValue: 'Atlantic',
+      oldValue: 'A',
+      context: [ROOT_TOKEN],
+      thoughtsRanked: [{ value: 'A', rank: 0 }]
+    },
+    { type: 'newThought', value: 'New Jersey' },
+    { type: 'undoAction' },
+    { type: 'undoAction' }
+  ])
 
   expect(store.getState().patches.length).toEqual(2)
 
@@ -292,15 +281,13 @@ it('Clear patches when any undoable action is dispatched', () => {
 
 })
 
-it('Non-undoable actions are ignored', () => {
+it('non-undoable actions are ignored', () => {
   const store = createTestStore()
-  store.dispatch([{
-    type: 'search', value: 'New'
-  }, {
-    type: 'showModal', id: MODALS.welcome
-  }, {
-    type: 'toggleSidebar'
-  }])
+  store.dispatch([
+    { type: 'search', value: 'New' },
+    { type: 'showModal', id: MODALS.welcome  },
+    { type: 'toggleSidebar' }
+  ])
 
   expect(store.getState().inversePatches.length).toEqual(0)
 
