@@ -43,7 +43,7 @@ const ShortcutRows = (): any => sort(globalShortcuts, makeCompareByProp('name'))
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
 const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialStep: number, showQueue?: boolean | null }>) => {
 
-  const [logs, setLogs] = useState(null)
+  const [logs, setLogs] = useState<db.Log[] | null>(null)
 
   /** Toggles the logs. Loads the logs if they have not been loaded yet. */
   const toggleLogs = async () =>
