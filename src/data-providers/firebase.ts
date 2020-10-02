@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { EM_TOKEN } from '../constants'
 import { store } from '../store'
-import { Child, Context, Lexeme, ParentEntry, Snapshot } from '../types'
+import { Child, Context, Lexeme, Parent, Snapshot } from '../types'
 import { GenericObject } from '../utilTypes'
 import { hashContext, hashThought, mergeThoughts, never, pathToContext, unroot } from '../util'
 import { ThoughtsInterface } from '../util/initialState'
@@ -36,20 +36,20 @@ export const getThought = async (value: string): Promise<Lexeme> =>
   getThoughtById(hashThought(value))
 
 /**
- * Fetches a ParentEntry of a context.
+ * Fetches a Parent of a context.
  *
  * @param context
  */
-export const getContext = async (context: Context): Promise<ParentEntry | null> => {
+export const getContext = async (context: Context): Promise<Parent | null> => {
   const { userRef } = store.getState()
   const ref = userRef.child('contextIndex').child(hashContext(context))
-  return new Promise(resolve => ref.once('value', (snapshot: Snapshot<ParentEntry>) => {
+  return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Parent>) => {
     resolve(snapshot.val())
   }))
 }
 
 /** Gets multiple PrentEntry objects by ids. */
-export const getContextsByIds = async (ids: string[]): Promise<ParentEntry[]> => {
+export const getContextsByIds = async (ids: string[]): Promise<Parent[]> => {
   const { userRef } = store.getState()
   const snapshots = await Promise.all(
     ids.map(id => userRef.child('contextIndex').child(id).once('value'))
@@ -75,7 +75,7 @@ export const update = async (updates: GenericObject<any>) => {
 }
 
 /** Updates a context in the contextIndex. */
-export const updateContext = async (id: string, parentEntry: ParentEntry): Promise<any> =>
+export const updateContext = async (id: string, parentEntry: Parent): Promise<any> =>
   update({
     ['contextIndex/' + id]: parentEntry
   })
@@ -87,7 +87,7 @@ export const updateThought = async (id: string, thought: Lexeme): Promise<any> =
   })
 
 /** Updates the contextIndex. */
-export const updateContextIndex = async (contextIndex: GenericObject<ParentEntry>): Promise<any> =>
+export const updateContextIndex = async (contextIndex: GenericObject<Parent>): Promise<any> =>
   update(Object.entries(contextIndex).reduce((accum, [key, value]) => ({
     ...accum,
     ['contextIndex/' + key]: value,
@@ -104,15 +104,16 @@ export const updateThoughtIndex = async (thoughtIndex: GenericObject<Lexeme>): P
  * Fetches all descendants of a context and returns them within a ThoughtsInterface.
  *
  * @param context
- * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned ParentEntry. Ignored for EM context. Default: 100.Default: 100.
+ * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.Default: 100.
  */
-export const getDescendantThoughts = async (context: Context, { maxDepth = 100, parentEntry }: { maxDepth?: number, parentEntry?: ParentEntry } = {}): Promise<ThoughtsInterface> => {
+export const getDescendantThoughts = async (context: Context, { maxDepth = 100, parentEntry }: { maxDepth?: number, parentEntry?: Parent } = {}): Promise<ThoughtsInterface> => {
 
   const contextEncoded = hashContext(context)
 
   // fetch individual parentEntry in initial call
   // recursive calls on children will pass the parentEntry fetched in batch by getContextsByIds
   parentEntry = parentEntry || await getContext(context) || {
+    context,
     children: [],
     lastUpdated: never(),
   }
@@ -121,6 +122,7 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
       contextCache: [],
       contextIndex: {
         [contextEncoded]: {
+          context,
           children: [],
           // TODO: Why not return the children if we already have them?
           // ...parentEntry,
@@ -165,7 +167,7 @@ export const getDescendantThoughts = async (context: Context, { maxDepth = 100, 
     }), {})
   }
 
-  const descendantThoughts = await Promise.all(parentEntries.map((parentEntry: ParentEntry, i: number) =>
+  const descendantThoughts = await Promise.all(parentEntries.map((parentEntry: Parent, i: number) =>
     getDescendantThoughts(contextMap[contextIds[i]], { maxDepth: maxDepth - 1, parentEntry })
   ))
 

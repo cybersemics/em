@@ -245,6 +245,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
         [contextOldEncoded]: null,
         [contextNewEncoded]: {
           ...(state.thoughts.contextIndex || {})[contextOldEncoded],
+          context: contextNew,
           children: [...thoughtsOld, ...thoughtsNew],
           lastUpdated: timestamp()
         }
@@ -263,15 +264,18 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
   const contextIndexUpdates = {
     [contextNewEncoded]: {
+      context: contextNew,
       children: thoughtNewSubthoughts,
       lastUpdated: timestamp(),
     },
     ...showContexts ? {
       [contextOldEncoded]: {
+        context: contextOld,
         children: thoughtOldSubthoughts,
         lastUpdated: timestamp(),
       },
       [contextParentEncoded]: {
+        context: contextParent,
         children: thoughtParentSubthoughts,
         lastUpdated: timestamp(),
       }

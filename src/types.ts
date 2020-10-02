@@ -48,8 +48,9 @@ export type Path = Child[]
 export type Context = string[]
 
 /** An object that contains a list of children within a context. */
-export interface ParentEntry {
+export interface Parent {
   id?: string,
+  context: Context,
   children: Child[],
   lastUpdated: Timestamp,
   pending?: boolean,
@@ -68,14 +69,14 @@ export interface DataProvider {
   getThoughtById: (id: string) => Promise<Lexeme>,
   getThoughtsByIds: (ids: string[]) => Promise<Lexeme[]>,
   getThought: (value: string) => Promise<Lexeme>,
-  getContext: (context: Context) => Promise<ParentEntry | null>,
-  getContextsByIds: (ids: string[]) => Promise<ParentEntry[]>,
+  getContext: (context: Context) => Promise<Parent | null>,
+  getContextsByIds: (ids: string[]) => Promise<Parent[]>,
   updateThought: (id: string, thought: Lexeme) => Promise<any>,
-  updateContext: (id: string, parentEntry: ParentEntry) => Promise<any>,
-  updateContextIndex: (contextIndex: GenericObject<ParentEntry>) => Promise<any>,
+  updateContext: (id: string, Parent: Parent) => Promise<any>,
+  updateContextIndex: (contextIndex: GenericObject<Parent>) => Promise<any>,
   updateThoughtIndex: (thoughtIndex: GenericObject<Lexeme>) => Promise<any>,
-  getDescendantThoughts: (context: Context, options?: { maxDepth?: number, parentEntry?: ParentEntry }) => Promise<ThoughtsInterface>,
-  getManyDescendants: (contextMap: GenericObject<Context>, options?: { maxDepth?: number, parentEntry?: ParentEntry }) => Promise<ThoughtsInterface>,
+  getDescendantThoughts: (context: Context, options?: { maxDepth?: number, Parent?: Parent }) => Promise<ThoughtsInterface>,
+  getManyDescendants: (contextMap: GenericObject<Context>, options?: { maxDepth?: number, Parent?: Parent }) => Promise<ThoughtsInterface>,
 }
 
 /** The three options the user can choose for the context tutorial. */
@@ -135,3 +136,9 @@ export type GesturePath = string | (Direction[] & {
   map: DirectionMap<Direction>,
   split: (s: string) => Direction[],
 })
+
+export type Alert = {
+  alertType?: string,
+  showCloseLink?: boolean,
+  value: string | null,
+} | null

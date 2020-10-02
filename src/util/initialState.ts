@@ -1,6 +1,6 @@
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Context, Lexeme, ParentEntry, Path } from '../types'
+import { Alert, Context, Lexeme, Parent, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
 
@@ -18,24 +18,42 @@ interface ModalProperties {
 }
 
 export interface ThoughtsInterface {
-  contextIndex: GenericObject<ParentEntry>,
+  contextIndex: GenericObject<Parent>,
   contextCache: string[],
   thoughtIndex: GenericObject<Lexeme>,
   thoughtCache: string[],
 }
 
+// Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed
+// interface RecentlyEditedLeaf {
+//   leaf: true,
+//   lastUpdated: Timestamp,
+//   path: Path,
+// }
+// type RecentlyEditedTree = GenericObject<RecentlyEditedTree> causes circular reference error
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// export interface RecentlyEditedTree extends GenericObject<RecentlyEditedTree> {}
+type RecentlyEditedTree = GenericObject<any>
+
+interface User {
+  uid: string,
+  displayName: string,
+  email: string,
+  // see Firebase user for more properties
+}
+
 /** Defines a single batch of updates added to the sync queue. */
 export interface SyncBatch {
   thoughtIndexUpdates: GenericObject<Lexeme | null>,
-  contextIndexUpdates: GenericObject<ParentEntry | null>,
+  contextIndexUpdates: GenericObject<Parent | null>,
   local?: boolean,
   remote?: boolean,
-  recentlyEdited: GenericObject<any>,
+  recentlyEdited: RecentlyEditedTree,
   updates?: GenericObject<string>,
 }
 
 export interface State {
-  alert: any,
+  alert?: Alert,
   archived?: boolean,
   authenticated: boolean,
   autologin: boolean,
@@ -43,16 +61,16 @@ export interface State {
   cursor: Nullable<Path>,
   cursorBeforeEdit: Nullable<Path>,
   cursorBeforeSearch: Nullable<Path>,
-  cursorHistory: any[],
+  cursorHistory: Path[],
   cursorOffset: number,
   dataNonce: number,
   draggedThoughtsRanked?: Path,
-  draggingThought?: any,
+  draggingThought?: Path,
   dragHold?: boolean,
   dragInProgress: boolean,
   editing: Nullable<boolean>,
   editingValue: Nullable<string>,
-  error?: any,
+  error?: string | null,
   expanded: GenericObject<Path>,
   expandedContextThought?: Path,
   focus: Path,
@@ -63,9 +81,9 @@ export interface State {
   lastUpdated?: string,
   modals: GenericObject<ModalProperties>,
   noteFocus: boolean,
-  recentlyEdited: GenericObject<any>,
-  resourceCache: any,
-  schemaVersion: any,
+  recentlyEdited: RecentlyEditedTree,
+  resourceCache: GenericObject<string>,
+  schemaVersion: number,
   scrollPrioritized: boolean,
   search: Nullable<string>,
   searchLimit?: number,
@@ -76,30 +94,29 @@ export interface State {
   showSplitView: boolean,
   showTopControls: boolean,
   showBreadcrumbs: boolean,
-  splitPosition: any,
-  status: any,
   syncQueue: SyncBatch[],
+  splitPosition: number,
+  status: string,
   thoughts: ThoughtsInterface,
-  toolbarOverlay: string | null,
+  toolbarOverlay?: string | null,
   tutorialStep?: number,
-  user?: any,
+  user?: User,
   userRef?: any,
 }
-
-export type PartialStateWithThoughts =
-  Partial<State> & Pick<State, 'thoughts'>
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
 export const initialThoughts = () => {
 
   const contextIndex = {
     [hashContext([ROOT_TOKEN])]: {
+      context: [ROOT_TOKEN],
       children: [],
       // start pending to trigger thoughtCacheMiddleware fetch
       pending: true,
       lastUpdated: never()
     },
     [hashContext([EM_TOKEN])]: {
+      context: [EM_TOKEN],
       children: [],
       // start pending to trigger thoughtCacheMiddleware fetch
       pending: true,
@@ -139,7 +156,6 @@ export const initialThoughts = () => {
 export const initialState = () => {
 
   const state: State = {
-    alert: null,
     authenticated: false,
     autologin: localStorage.autologin === 'true',
     contextViews: {},
@@ -180,9 +196,6 @@ export const initialState = () => {
     status: 'disconnected',
     syncQueue: [],
     thoughts: initialThoughts(),
-    toolbarOverlay: null,
-    user: null,
-    userRef: null,
   }
 
   // initial modal states

@@ -124,11 +124,12 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
   logWithTime('syncRemote: prepend thoughtIndex key')
 
   const dataIntegrityCheck = getSetting(state, 'Data Integrity Check') === 'On'
-  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum, contextIndexEntry, key) => {
+  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum, parentContext, key) => {
     // fix undefined/NaN rank
-    const children = contextIndexEntry && contextIndexEntry.children
+    const children = parentContext && parentContext.children
     accum['contextIndex/' + key] = children && children.length > 0
       ? {
+        context: parentContext.context,
         children: dataIntegrityCheck
           ? children.map(subthought => ({
             value: subthought.value || '', // guard against NaN or undefined,
@@ -138,7 +139,7 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
             } : null
           }))
           : children,
-        lastUpdated: contextIndexEntry.lastUpdated || timestamp(),
+        lastUpdated: parentContext.lastUpdated || timestamp(),
       }
       : null
   }, {})

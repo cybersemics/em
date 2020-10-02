@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Lexeme, ParentEntry } from '../types'
+import { Child, Lexeme, Parent } from '../types'
 import { GenericObject } from '../utilTypes'
 import { State, initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
@@ -7,11 +7,11 @@ import { importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../u
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, THOUGHT_CACHE_SIZE } from '../constants'
 
 interface Options {
-  thoughtIndexUpdates: GenericObject<Lexeme>,
-  contextIndexUpdates: GenericObject<ParentEntry>,
-  recentlyEdited?: any,
-  contextChain?: any,
-  updates?: GenericObject<any>,
+  thoughtIndexUpdates: GenericObject<Lexeme | null>,
+  contextIndexUpdates: GenericObject<Parent | null>,
+  recentlyEdited?: GenericObject<any>,
+  contextChain?: Child[][],
+  updates?: GenericObject<string>,
   local?: boolean,
   remote?: boolean,
 }
@@ -20,7 +20,7 @@ interface Options {
 // whitelist them until we have a better solution
 // eslint-disable-next-line fp/no-let
 let whitelistedThoughts: {
-  contextIndex: GenericObject<ParentEntry>,
+  contextIndex: GenericObject<Parent>,
   thoughtIndex: GenericObject<Lexeme>,
 }
 
@@ -91,7 +91,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
   const batch = {
     thoughtIndexUpdates,
     contextIndexUpdates,
-    recentlyEdited,
+    recentlyEdited: recentlyEditedNew,
     updates,
     local,
     remote
@@ -106,7 +106,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
       ...state,
       isLoading: false, // disable loading screen as soon as the first thoughts are loaded
       recentlyEdited: recentlyEditedNew,
-      syncQueue: [...state.syncQueue || [], batch],
+      syncQueue: [...state.syncQueue, batch],
       thoughts: {
         contextCache,
         contextIndex,

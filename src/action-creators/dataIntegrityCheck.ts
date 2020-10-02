@@ -51,9 +51,10 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
   const thoughtRanked = head(path)
   const value = headValue(path)
   const rank = headRank(path)
-  const encoded = hashContext(path)
+  const context = pathToContext(path)
+  const encoded = hashContext(context)
   const thought = getThought(state, value)
-  const pathContext = contextOf(pathToContext(path))
+  const pathContext = contextOf(context)
 
   // delete duplicate thoughts in contextIndex
   if (deleteDuplicateContextIndex) {
@@ -66,6 +67,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
         type: 'updateThoughts',
         contextIndexUpdates: {
           [encoded]: {
+            context,
             children: childrenUnique,
             lastUpdated: parentEntry.lastUpdated,
           }
@@ -86,7 +88,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
         console.warn('Recreating missing thought in thoughtIndex:', child.value)
         dispatch({
           type: 'newThoughtSubmit',
-          context: pathToContext(path),
+          context,
           // guard against undefined
           rank: child.rank || 0,
           value: child.value || ''
@@ -127,6 +129,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
           []
         const contextIndexUpdatesNew = !otherContextHasThought ? {
           [encoded]: {
+            context: cx.context,
             children: [
               ...children,
               {

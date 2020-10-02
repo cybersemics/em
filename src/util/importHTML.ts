@@ -87,6 +87,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { l
     const contextEncoded = hashContext(rootedContext)
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
+      context: rootedContext,
       children: getThoughts(state, rootedContext)
         .filter(child => !equalThoughtRanked(child, destThought)),
       lastUpdated: lastUpdated != null ? lastUpdated : timestamp(),
@@ -155,6 +156,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { l
     // ranks will not be sequential, but they will be sorted since the parser is in order
     const thoughtNew = addThought(
       {
+        ...state,
         thoughts: {
           ...state.thoughts,
           thoughtIndex
@@ -181,6 +183,7 @@ export const importHtml = (state: State, thoughtsRanked: Path, html: string, { l
     const childrenUpdates = contextIndexUpdates[contextEncoded] ? contextIndexUpdates[contextEncoded].children : []
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
+      context,
       children: [...childrenUpdates, {
         value,
         rank,
