@@ -364,8 +364,7 @@ export const SubthoughtsComponent = ({
   const state = store.getState()
   const [page, setPage] = useState(1)
   const globalSort = getSetting(state, ['Global Sort']) || 'None'
-  const rootSort = isRoot(thoughtsRanked) ? attribute(store.getState(), thoughtsRanked!, '=sort') : null
-  const sortPreference = (contextSort || rootSort) || globalSort
+  const sortPreference = contextSort || globalSort
   const { cursor } = state
   // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
   const thought = getThought(state, headValue(thoughtsRanked))
