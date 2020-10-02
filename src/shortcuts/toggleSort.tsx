@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
-import { contextOf, pathToContext } from '../util'
+import { pathToContext, rootedContextOf } from '../util'
 import { State } from '../util/initialState'
 import { Nullable } from '../utilTypes'
 import { ROOT_TOKEN } from '../constants'
@@ -43,8 +43,7 @@ const toggleSortShortcut: Shortcut = {
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
 
     if (cursor) {
-
-      const path = contextOf(cursor)
+      const path = rootedContextOf(cursor)
       if (path.length === 0) return
 
       dispatch({
