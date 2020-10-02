@@ -49,10 +49,12 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
   const store = createTestStore()
 
   store.dispatch([importText(RANKED_ROOT, `
-      - a
-      - b`
+    - a
+    - b`
   ),
   { type: 'cursorDown' },
+  { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
+  { type: 'indent' },
   {
     type: 'existingThoughtChange',
     newValue: 'ar',
@@ -60,9 +62,10 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     context: [ROOT_TOKEN],
     thoughtsRanked: [{ value: 'a', rank: 0 }]
   },
-  { type: 'cursorUp' },
-  { type: 'setCursor', thoughtsRanked: [{ value: 'ar', rank: 0 }] },
   { type: 'cursorBack' },
+  { type: 'cursorUp' },
+  { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 0 }] },
+
   {
     type: 'existingThoughtChange',
     newValue: 'arizona',
@@ -74,15 +77,18 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
   { type: 'undoAction' },
   // redo all actions preceding a thoughtchange as a single operation
   { type: 'redoAction' },
-  { type: 'redoAction' },
+  { type: 'redoAction' }
   ])
 
-  const exportedAfterRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const state = store.getState()
+  const exportedAfterRedo = exportContext(state, [ROOT_TOKEN], 'text/plain')
 
   const expectedOutputAfterRedo = `- ${ROOT_TOKEN}
   - arizona
-  - b`
+    - b`
 
+  expect(state.cursor).toMatchObject([
+    { value: 'b' }])
   expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
 })
 

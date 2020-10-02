@@ -86,8 +86,6 @@ it('group all navigation actions following a thought change and undo them togeth
       context: [ROOT_TOKEN],
       thoughtsRanked: [{ value: 'a', rank: 0 }]
     },
-    { type: 'cursorUp' },
-    { type: 'moveThoughtDown' },
     { type: 'setCursor', thoughtsRanked: null },
     { type: 'cursorBack' },
     { type: 'undoAction' }
@@ -178,7 +176,7 @@ it('newThought action should be merged with the succeeding patch', () => {
         }
       ]
     },
-    // undo thought change and preceding navigation actions
+    // undo thought change and preceding newThought action
     { type: 'undoAction' }
   ])
 
@@ -207,13 +205,6 @@ it('undo contiguous changes', () => {
       oldValue: 'A',
       context: [ROOT_TOKEN],
       thoughtsRanked: [{ value: 'A', rank: 0 }]
-    },
-    {
-      type: 'existingThoughtChange',
-      newValue: 'Atlantic ',
-      oldValue: 'Atlantic',
-      context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
     },
     {
       type: 'existingThoughtChange',
