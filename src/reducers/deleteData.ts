@@ -36,6 +36,7 @@ const deleteData = (state: State, { value, forceRender }: { value: string, force
       else {
         contextIndex[contextEncoded] = {
           ...contextIndex[contextEncoded],
+          context: parent.context,
           children: childrenNew,
           lastUpdated: timestamp(),
         }

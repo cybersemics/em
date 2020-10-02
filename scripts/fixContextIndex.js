@@ -44,6 +44,7 @@ let fixContextIndex = (max = 100000) => {
             const rank = i === cx.context.length - 1 ? cx.rank : i + 1000
             const valueNew = value
             contextIndexUpdates[encoded] = {
+              context,
               children: [
                 ...children.filter(child => em.hashThought(child.value) !== em.hashThought(valueNew)),
                 {

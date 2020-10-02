@@ -111,7 +111,7 @@
     "docs": "typedoc --options typedoc.json",
     "deploy": "npm version major && npm run build && firebase deploy",
     "lint": "eslint \"src/**/*.{js,ts,tsx}\"",
-    "lint:fix": "npm run lint -- --fix",
+    "lintfix": "npm run lint -- --fix",
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
     "test": "react-scripts test --env=jsdom-sixteen",
     "eject": "react-scripts eject"

@@ -72,7 +72,7 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
-export const updateContext = async (id, { children, lastUpdated }) => db.contextIndex.put({ id, children, lastUpdated })
+export const updateContext = async (id, { context, children, lastUpdated }) => db.contextIndex.put({ id, context, children, lastUpdated })
 
 /** Updates multiple thoughts in the contextIndex. */
 export const updateContextIndex = async contextIndexMap => {
@@ -95,7 +95,7 @@ export const getContextsByIds = async ids =>
  *
  * @param context
  * @param children
- * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned ParentEntry. Ignored for EM context. Default: 100.
+ * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
 export const getDescendantThoughts = async (context, { maxDepth = 100, parentEntry } = {}) => {
 
@@ -104,6 +104,7 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
   // fetch individual parentEntry in initial call
   // recursive calls on children will pass the parentEntry fetched in batch by getContextsByIds
   parentEntry = parentEntry || await getContext(context) || {
+    context,
     children: [],
     lastUpdated: never(),
   }
@@ -112,6 +113,7 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
       contextCache: [],
       contextIndex: {
         [contextEncoded]: {
+          context,
           children: [],
           // TODO: Why not return the children if we already have them?
           // ...parentEntry,

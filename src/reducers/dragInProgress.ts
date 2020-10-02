@@ -5,15 +5,17 @@ import { Path } from '../types'
 interface Payload {
   value: string,
   draggingThought: Path,
-  hoveringThought: Path,
+  hoveringThought?: Path,
+  offset?: number,
 }
 
 /** Sets dragInProgress. */
-const dragInProgress = (state: State, { value, draggingThought, hoveringThought }: Payload) => ({
+const dragInProgress = (state: State, { value, draggingThought, hoveringThought, offset }: Payload) => ({
   ...state,
   dragInProgress: value,
   draggingThought,
-  hoveringThought
+  hoveringThought,
+  cursorOffset: offset || state.cursorOffset,
 })
 
 export default _.curryRight(dragInProgress)

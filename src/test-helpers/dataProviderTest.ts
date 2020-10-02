@@ -92,6 +92,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const parentEntry = {
       id: hashContext(['x']),
+      context: ['x'],
       children: [
         { value: 'a', rank: 0 },
         { value: 'b', rank: 1 },
@@ -145,6 +146,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const parentEntryX = {
       id: hashContext(['x']),
+      context: ['x'],
       children: [
         { value: 'a', rank: 0 },
         { value: 'b', rank: 1 },
@@ -155,6 +157,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const parentEntryY = {
       id: hashContext(['y']),
+      context: ['y'],
       children: [
         { value: 'd', rank: 0 },
         { value: 'e', rank: 1 },
@@ -248,6 +251,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryX = {
         id: hashContext(['x']),
+        context: ['x'],
         children: [
           { value: 'y', rank: 0 },
           { value: 'a', rank: 1 },
@@ -257,6 +261,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryY = {
         id: hashContext(['x', 'y']),
+        context: ['x', 'y'],
         children: [
           { value: 'z', rank: 0 },
         ],
@@ -265,6 +270,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryA = {
         id: hashContext(['x', 'a']),
+        context: ['x', 'a'],
         children: [
           { value: 'b', rank: 0 },
         ],
@@ -273,12 +279,14 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryZ = {
         id: hashContext(['x', 'y', 'z']),
+        context: ['x', 'y', 'z'],
         children: [],
         lastUpdated: timestamp()
       }
 
       const parentEntryB = {
         id: hashContext(['x', 'a', 'b']),
+        context: ['x', 'a', 'b'],
         children: [],
         lastUpdated: timestamp()
       }
@@ -373,18 +381,21 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryRoot = {
         id: hashContext([ROOT_TOKEN]),
+        context: [ROOT_TOKEN],
         children: [{ value: 'x', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryX = {
         id: hashContext(['x']),
+        context: ['x'],
         children: [{ value: 'y', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryY = {
         id: hashContext(['x', 'y']),
+        context: ['x', 'y'],
         children: [],
         lastUpdated: timestamp(),
       }
@@ -459,18 +470,21 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryX = {
         id: hashContext(['x']),
+        context: ['x'],
         children: [{ value: 'y', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryY = {
         id: hashContext(['x', 'y']),
+        context: ['x', 'y'],
         children: [{ value: 'z', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryZ = {
         id: hashContext(['x', 'y', 'z']),
+        context: ['x', 'y', 'z'],
         children: [],
         lastUpdated: timestamp(),
       }
@@ -492,10 +506,11 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('contextIndex')
 
-      expect(thoughts.contextIndex![hashContext(['x'])]).toEqual(parentEntryX)
+      expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
 
       // children are pending
-      expect(thoughts.contextIndex![hashContext(['x', 'y'])]).toEqual({
+      expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual({
+        context: ['x', 'y'],
         children: [],
         lastUpdated: never(),
         pending: true,
@@ -561,24 +576,28 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryX = {
         id: hashContext(['x']),
+        context: ['x'],
         children: [{ value: 'y', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryY = {
         id: hashContext(['x', 'y']),
+        context: ['x', 'y'],
         children: [{ value: 'z', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryZ = {
         id: hashContext(['x', 'y', 'z']),
+        context: ['x', 'y', 'z'],
         children: [{ value: 'm', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryM = {
         id: hashContext(['x', 'y', 'z', 'm']),
+        context: ['x', 'y', 'z', 'm'],
         children: [],
         lastUpdated: timestamp(),
       }
@@ -602,11 +621,12 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('contextIndex')
 
-      expect(thoughts.contextIndex![hashContext(['x'])]).toEqual(parentEntryX)
-      expect(thoughts.contextIndex![hashContext(['x', 'y'])]).toEqual(parentEntryY)
+      expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
+      expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual(parentEntryY)
 
       // grandchildren are pending
-      expect(thoughts.contextIndex![hashContext(['x', 'y', 'z'])]).toEqual({
+      expect(thoughts.contextIndex[hashContext(['x', 'y', 'z'])]).toEqual({
+        context: ['x', 'y', 'z'],
         children: [],
         lastUpdated: '',
         pending: true,
@@ -689,30 +709,35 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryX = {
         id: hashContext(['x']),
+        context: ['x'],
         children: [{ value: 'y', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryY = {
         id: hashContext(['x', 'y']),
+        context: ['x', 'y'],
         children: [{ value: 'z', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryZ = {
         id: hashContext(['x', 'y', 'z']),
+        context: ['x', 'y', 'z'],
         children: [],
         lastUpdated: timestamp(),
       }
 
       const parentEntryM = {
         id: hashContext(['t', 'u', 'v', 'm']),
+        context: ['t', 'u', 'v', 'm'],
         children: [{ value: 'n', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryN = {
         id: hashContext(['t', 'u', 'v', 'm', 'n']),
+        context: ['t', 'u', 'v', 'm', 'n'],
         children: [],
         lastUpdated: timestamp(),
       }
@@ -740,11 +765,11 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('contextIndex')
 
-      expect(thoughts.contextIndex![hashContext(['x'])]).toEqual(parentEntryX)
-      expect(thoughts.contextIndex![hashContext(['x', 'y'])]).toEqual(parentEntryY)
-      expect(thoughts.contextIndex![hashContext(['x', 'y', 'z'])]).toEqual(parentEntryZ)
-      expect(thoughts.contextIndex![hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
-      expect(thoughts.contextIndex![hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual(parentEntryN)
+      expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
+      expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual(parentEntryY)
+      expect(thoughts.contextIndex[hashContext(['x', 'y', 'z'])]).toEqual(parentEntryZ)
+      expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
+      expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual(parentEntryN)
 
       expect(thoughts).toHaveProperty('thoughtIndex')
 
@@ -821,30 +846,35 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryX = {
         id: hashContext(['x']),
+        context: ['x'],
         children: [{ value: 'y', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryY = {
         id: hashContext(['x', 'y']),
+        context: ['x', 'y'],
         children: [{ value: 'z', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryZ = {
         id: hashContext(['x', 'y', 'z']),
+        context: ['x', 'y', 'z'],
         children: [],
         lastUpdated: timestamp(),
       }
 
       const parentEntryM = {
         id: hashContext(['t', 'u', 'v', 'm']),
+        context: ['t', 'u', 'v', 'm'],
         children: [{ value: 'n', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryN = {
         id: hashContext(['t', 'u', 'v', 'm', 'n']),
+        context: ['t', 'u', 'v', 'm', 'n'],
         children: [],
         lastUpdated: timestamp(),
       }
@@ -872,15 +902,16 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('contextIndex')
 
-      expect(thoughts.contextIndex![hashContext(['x'])]).toEqual(parentEntryX)
-      expect(thoughts.contextIndex![hashContext(['x', 'y'])]).toEqual(parentEntryY)
-      expect(thoughts.contextIndex![hashContext(['x', 'y', 'z'])]).toEqual({
+      expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
+      expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual(parentEntryY)
+      expect(thoughts.contextIndex[hashContext(['x', 'y', 'z'])]).toEqual({
+        context: ['x', 'y', 'z'],
         children: [],
         lastUpdated: never(),
         pending: true,
       })
-      expect(thoughts.contextIndex![hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
-      expect(thoughts.contextIndex![hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual(parentEntryN)
+      expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
+      expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual(parentEntryN)
 
       expect(thoughts).toHaveProperty('thoughtIndex')
 
@@ -957,30 +988,35 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const parentEntryEM = {
         id: hashContext([EM_TOKEN]),
+        context: [EM_TOKEN],
         children: [{ value: 'y', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryY = {
         id: hashContext([EM_TOKEN, 'y']),
+        context: [EM_TOKEN, 'y'],
         children: [{ value: 'z', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryZ = {
         id: hashContext([EM_TOKEN, 'y', 'z']),
+        context: [EM_TOKEN, 'y', 'z'],
         children: [],
         lastUpdated: timestamp(),
       }
 
       const parentEntryM = {
         id: hashContext(['t', 'u', 'v', 'm']),
+        context: ['t', 'u', 'v', 'm'],
         children: [{ value: 'n', rank: 0 }],
         lastUpdated: timestamp(),
       }
 
       const parentEntryN = {
         id: hashContext(['t', 'u', 'v', 'm', 'n']),
+        context: ['t', 'u', 'v', 'm', 'n'],
         children: [],
         lastUpdated: timestamp(),
       }
@@ -1008,12 +1044,13 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('contextIndex')
 
-      expect(thoughts.contextIndex![hashContext([EM_TOKEN])]).toEqual(parentEntryEM)
-      expect(thoughts.contextIndex![hashContext([EM_TOKEN, 'y'])]).toEqual(parentEntryY)
-      expect(thoughts.contextIndex![hashContext([EM_TOKEN, 'y', 'z'])]).toEqual(parentEntryZ)
-      expect(thoughts.contextIndex![hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
+      expect(thoughts.contextIndex[hashContext([EM_TOKEN])]).toEqual(parentEntryEM)
+      expect(thoughts.contextIndex[hashContext([EM_TOKEN, 'y'])]).toEqual(parentEntryY)
+      expect(thoughts.contextIndex[hashContext([EM_TOKEN, 'y', 'z'])]).toEqual(parentEntryZ)
+      expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm'])]).toEqual(parentEntryM)
       // still uses maxDepth on non-EM contexts
-      expect(thoughts.contextIndex![hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual({
+      expect(thoughts.contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])]).toEqual({
+        context: ['t', 'u', 'v', 'm', 'n'],
         children: [],
         lastUpdated: never(),
         pending: true,
