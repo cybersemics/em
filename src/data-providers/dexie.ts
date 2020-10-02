@@ -1,14 +1,57 @@
+/* eslint-disable fp/no-this */
 import Dexie from 'dexie'
 import _ from 'lodash'
 import { hashContext, hashThought, mergeThoughts, never, pathToContext, timestamp, unroot } from '../util'
 import { EM_TOKEN } from '../constants'
+import { Context, Lexeme, Parent, Path, Timestamp } from '../types'
+import { GenericObject } from '../utilTypes'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
 // NOTE: Could not get this to work in setupTests.js
 // See: https://github.com/cybersemics/em/issues/664#issuecomment-629691193
 
-const db = new Dexie('EM')
+/** Extend Dexie class for proper typing. See https://dexie.org/docs/Typescript. */
+// eslint-disable-next-line fp/no-class
+class EM extends Dexie {
+
+  contextIndex: Dexie.Table<Parent & { id: string }, string>;
+  thoughtIndex: Dexie.Table<Lexeme & { id: string }, string>;
+  helpers: Dexie.Table<Helper, string>;
+  logs: Dexie.Table<Log, number>;
+
+  constructor () {
+    super('Database')
+
+    this.version(1).stores({
+      contextIndex: 'id, context, *children, lastUpdated',
+      thoughtIndex: 'id, value, *contexts, created, lastUpdated',
+      helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
+      logs: '++id, created, message, stack',
+    })
+
+    this.contextIndex = this.table('contextIndex')
+    this.thoughtIndex = this.table('thoughtIndex')
+    this.helpers = this.table('helpers')
+    this.logs = this.table('logs')
+  }
+}
+
+export interface Helper {
+  id: string,
+  value?: string,
+  contexts?: Context[],
+  created?: Timestamp,
+  lastUpdated?: Timestamp,
+}
+
+export interface Log {
+  created: Timestamp,
+  message: string,
+  stack?: any,
+}
+
+const db = new Dexie('EM') as EM
 
 // hash the EM context once on load
 const emContextEncoded = hashContext([EM_TOKEN])
@@ -44,26 +87,26 @@ export const clearAll = () => Promise.all([
 ])
 
 /** Updates a single thought in the thoughtIndex. */
-export const updateThought = async (id, thought) => db.thoughtIndex.put({ id, ...thought })
+export const updateThought = async (id: string, thought: Lexeme) => db.thoughtIndex.put({ id, ...thought })
 
 /** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async thoughtIndexMap => {
+export const updateThoughtIndex = async (thoughtIndexMap: GenericObject<Lexeme>) => {
   const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({ ...thoughtIndexMap[key], id: key }))
   return db.thoughtIndex.bulkPut(thoughtsArray)
 }
 
 /** Deletes a single thought from the thoughtIndex. */
-export const deleteThought = async id => db.thoughtIndex.delete(id)
+export const deleteThought = async (id: string) => db.thoughtIndex.delete(id)
 
 /** Gets a single thought from the thoughtIndex by its id. */
-export const getThoughtById = async id => db.thoughtIndex.get(id)
+export const getThoughtById = async (id: string) => db.thoughtIndex.get(id)
 
 /** Gets multiple thoughts from the thoughtIndex by ids. */
-export const getThoughtsByIds = async ids =>
+export const getThoughtsByIds = async (ids: string[]) =>
   db.thoughtIndex.where('id').anyOf(ids).toArray()
 
 /** Gets a single thought from the thoughtIndex by its value. */
-export const getThought = async value => db.thoughtIndex.get({ id: hashThought(value) })
+export const getThought = async (value: string) => db.thoughtIndex.get({ id: hashThought(value) })
 
 /** Gets the entire thoughtIndex. */
 export const getThoughtIndex = async () => {
@@ -72,22 +115,22 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
-export const updateContext = async (id, { context, children, lastUpdated }) => db.contextIndex.put({ id, context, children, lastUpdated })
+export const updateContext = async (id: string, { context, children, lastUpdated }: Parent) => db.contextIndex.put({ id, context, children, lastUpdated })
 
 /** Updates multiple thoughts in the contextIndex. */
-export const updateContextIndex = async contextIndexMap => {
+export const updateContextIndex = async (contextIndexMap: GenericObject<Parent>) => {
   const contextsArray = Object.keys(contextIndexMap).map(key => ({ id: key, ...contextIndexMap[key] }))
   return db.contextIndex.bulkPut(contextsArray)
 }
 
 /** Deletes a single thought from the contextIndex. */
-export const deleteContext = async id => db.contextIndex.delete(id)
+export const deleteContext = async (id: string) => db.contextIndex.delete(id)
 
 /** Gets the Parent for a context. */
-export const getContext = async context => db.contextIndex.get({ id: hashContext(context) })
+export const getContext = async (context: Context) => db.contextIndex.get({ id: hashContext(context) })
 
 /** Gets multiple contexts from the contextIndex by ids. */
-export const getContextsByIds = async ids =>
+export const getContextsByIds = async (ids: string[]) =>
   db.contextIndex.where('id').anyOf(ids).toArray()
 
 /**
@@ -97,7 +140,7 @@ export const getContextsByIds = async ids =>
  * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
-export const getDescendantThoughts = async (context, { maxDepth = 100, parentEntry } = {}) => {
+export const getDescendantThoughts = async (context: Context, { maxDepth = 100, parentEntry }: { maxDepth?: number, parentEntry?: Parent } = {}) => {
 
   const contextEncoded = hashContext(context)
 
@@ -128,6 +171,7 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
 
   // generate a list of hashed thoughts and a map of contexts { [hash]: context } for all children
   // must save context map instead of just list of hashes for the recursive call
+  // @ts-ignore
   const { thoughtIds, contextMap } = (parentEntry.children || []).reduce((accum, child) => ({
     thoughtIds: [
       ...accum.thoughtIds || [],
@@ -153,8 +197,8 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
     thoughtIndex: _.keyBy(thoughtList, 'id')
   }
 
-  const descendantThoughts = await Promise.all(parentEntries.map((parentEntry, i) =>
-    getDescendantThoughts(contextMap[parentEntry.id], { maxDepth: maxDepth - 1, parentEntry })
+  const descendantThoughts = await Promise.all(parentEntries.map(parentEntry =>
+    getDescendantThoughts(contextMap[parentEntry.id!], { maxDepth: maxDepth - 1, parentEntry })
   ))
 
   const descendantThoughtsMerged = mergeThoughts(thoughts, ...descendantThoughts)
@@ -166,7 +210,7 @@ export const getDescendantThoughts = async (context, { maxDepth = 100, parentEnt
  *
  * @param maxDepth    Maximum number of levels to fetch.
  */
-export const getManyDescendants = async (contextMap, { maxDepth = 100 } = {}) => {
+export const getManyDescendants = async (contextMap: GenericObject<Context>, { maxDepth = 100 } = {}) => {
 
   // fetch descendant thoughts for each context in contextMap
   const descendantsArray = await Promise.all(Object.keys(contextMap).map(key =>
@@ -195,19 +239,19 @@ export const getContextIndex = async () => {
 }
 
 /** Updates the recentlyEdited helper. */
-export const updateRecentlyEdited = async recentlyEdited => db.helpers.update('EM', { recentlyEdited })
+export const updateRecentlyEdited = async (recentlyEdited: any) => db.helpers.update('EM', { recentlyEdited })
 
 /** Updates the schema version helper. */
-export const updateSchemaVersion = async schemaVersion => db.helpers.update('EM', { schemaVersion })
+export const updateSchemaVersion = async (schemaVersion: number) => db.helpers.update('EM', { schemaVersion })
 
 /** Updates the lastUpdates helper. */
-export const updateLastUpdated = async lastUpdated => db.helpers.update('EM', { lastUpdated })
+export const updateLastUpdated = async (lastUpdated: Timestamp) => db.helpers.update('EM', { lastUpdated })
 
 /** Gets all the helper values. */
 export const getHelpers = async () => db.helpers.get({ id: 'EM' })
 
 /** Updates the cursor helper. */
-export const updateCursor = async cursor => db.helpers.update('EM', { cursor })
+export const updateCursor = async (cursor: Path | null) => db.helpers.update('EM', { cursor })
 
 /** Deletes the cursor helper. */
 export const deleteCursor = async () => db.helpers.update('EM', { cursor: null })
@@ -216,7 +260,7 @@ export const deleteCursor = async () => db.helpers.update('EM', { cursor: null }
 export const getLogs = async () => db.logs.toArray()
 
 /** Logs a message. */
-export const log = async ({ message, stack }) =>
+export const log = async ({ message, stack }: { message: string, stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
 
 export default initDB

@@ -21,7 +21,7 @@ jest.mock('lodash', () => {
 })
 
 /** Switch to real timers to set a real delay, then set back to fake timers. This was the only thing that worked to force the test to wait for flushPending (or getManyDescendants?) to complete. */
-const delay = async n => {
+const delay = async (n: number) => {
   jest.useRealTimers()
   await new Promise(r => setTimeout(r, n))
   jest.useFakeTimers()
