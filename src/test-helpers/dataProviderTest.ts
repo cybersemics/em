@@ -59,10 +59,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const dbThoughts = await provider.getThoughtsByIds([hashThought('x'), hashThought('y')])
 
-    // does not preserve order
-    expect(dbThoughts).toEqual(
-      expect.arrayContaining([thoughtX, thoughtY])
-    )
+    expect(dbThoughts).toEqual([thoughtX, thoughtY])
   })
 
   test('updateThought', async () => {
@@ -108,6 +105,33 @@ const dataProviderTest = (provider: DataProvider) => {
       ...parentEntry,
       id: hashContext(['x']),
     })
+  })
+
+  test('getContextsByIds', async () => {
+
+    const parentEntryX = {
+      id: hashContext(['x']),
+      context: ['x'],
+      children: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 1 },
+        { value: 'c', rank: 2 },
+      ],
+      lastUpdated: timestamp()
+    }
+
+    const parentEntryA = {
+      id: hashContext(['x', 'a']),
+      context: ['x', 'a'],
+      children: [],
+      lastUpdated: timestamp()
+    }
+
+    await provider.updateContext(hashContext(['x']), parentEntryX)
+    await provider.updateContext(hashContext(['x', 'a']), parentEntryA)
+
+    const dbContexts = await provider.getContextsByIds([parentEntryX.id, parentEntryA.id])
+    expect(dbContexts).toEqual([parentEntryX, parentEntryA])
   })
 
   test('updateThoughtIndex', async () => {
