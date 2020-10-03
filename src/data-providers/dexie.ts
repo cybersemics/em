@@ -102,8 +102,7 @@ export const deleteThought = async (id: string) => db.thoughtIndex.delete(id)
 export const getThoughtById = async (id: string) => db.thoughtIndex.get(id)
 
 /** Gets multiple thoughts from the thoughtIndex by ids. */
-export const getThoughtsByIds = async (ids: string[]) =>
-  db.thoughtIndex.where('id').anyOf(ids).toArray()
+export const getThoughtsByIds = async (ids: string[]) => db.thoughtIndex.bulkGet(ids)
 
 /** Gets a single thought from the thoughtIndex by its value. */
 export const getThought = async (value: string) => db.thoughtIndex.get({ id: hashThought(value) })
@@ -126,12 +125,14 @@ export const updateContextIndex = async (contextIndexMap: GenericObject<Parent>)
 /** Deletes a single thought from the contextIndex. */
 export const deleteContext = async (id: string) => db.contextIndex.delete(id)
 
-/** Gets the Parent for a context. */
-export const getContext = async (context: Context) => db.contextIndex.get({ id: hashContext(context) })
+/** Get a context by id. */
+export const getContextById = async (id: string) => db.contextIndex.get(id)
 
 /** Gets multiple contexts from the contextIndex by ids. */
-export const getContextsByIds = async (ids: string[]) =>
-  db.contextIndex.where('id').anyOf(ids).toArray()
+export const getContextsByIds = async (ids: string[]) => db.contextIndex.bulkGet(ids)
+
+/** Gets the Parent for a context. */
+export const getContext = async (context: Context) => getContextById(hashContext(context))
 
 /**
  * Builds a thoughtIndex and contextIndex for all descendants.

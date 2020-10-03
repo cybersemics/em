@@ -9,7 +9,7 @@
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.5.2",
     "classnames": "^2.2.6",
     "clipboard": "^2.0.6",
-    "dexie": "^2.0.4",
+    "dexie": "^3.0.2",
     "emitter20": "^2.0.0",
     "emoji-strip": "^1.0.1",
     "esprima": "^4.0.1",
