@@ -1,7 +1,7 @@
 import { Dispatch, ReactNode } from 'react'
 import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
-import { State, ThoughtsInterface } from './util/initialState'
+import { State } from './util/initialState'
 import { GenericObject } from './utilTypes'
 
 declare global {
@@ -25,6 +25,7 @@ export interface ThoughtContext {
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
 export interface Lexeme {
+  id?: string, // db only; not the same as Child id
   rank: number,
   value: string,
   contexts: ThoughtContext[],
@@ -34,9 +35,9 @@ export interface Lexeme {
 
 /** A thought with a specific rank. */
 export interface Child {
+  id?: string,
   rank: number,
   value: string,
-  id?: string,
   lastUpdated?: Timestamp,
   archived?: Timestamp,
 }
@@ -62,21 +63,6 @@ export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>
 /** A Firebase realtime database snapshot. */
 export type Snapshot<T = any> = {
   val: () => T,
-}
-
-/** A standard interface for data providers that can sync thoughts. See data-providers/README.md. */
-export interface DataProvider {
-  getThoughtById: (id: string) => Promise<Lexeme>,
-  getThoughtsByIds: (ids: string[]) => Promise<Lexeme[]>,
-  getThought: (value: string) => Promise<Lexeme>,
-  getContext: (context: Context) => Promise<Parent | null>,
-  getContextsByIds: (ids: string[]) => Promise<Parent[]>,
-  updateThought: (id: string, thought: Lexeme) => Promise<any>,
-  updateContext: (id: string, Parent: Parent) => Promise<any>,
-  updateContextIndex: (contextIndex: GenericObject<Parent>) => Promise<any>,
-  updateThoughtIndex: (thoughtIndex: GenericObject<Lexeme>) => Promise<any>,
-  getDescendantThoughts: (context: Context, options?: { maxDepth?: number, Parent?: Parent }) => Promise<ThoughtsInterface>,
-  getManyDescendants: (contextMap: GenericObject<Context>, options?: { maxDepth?: number, Parent?: Parent }) => Promise<ThoughtsInterface>,
 }
 
 /** The three options the user can choose for the context tutorial. */

@@ -1,6 +1,12 @@
+import _ from 'lodash'
+import all from 'it-all'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
-import { hashContext, hashThought, never, timestamp } from '../util'
-import { DataProvider } from '../types'
+import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
+import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
+import getContext from '../data-providers/data-helpers/getContext'
+import getThought from '../data-providers/data-helpers/getThought'
+import { hashContext, hashThought, mergeThoughts, never, timestamp } from '../util'
+import { DataProvider } from '../data-providers/DataProvider'
 
 /** Runs tests for a module that conforms to the data-provider API. */
 const dataProviderTest = (provider: DataProvider) => {
@@ -64,7 +70,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
   test('updateThought', async () => {
 
-    const nothought = await provider.getThought('x')
+    const nothought = await getThought(provider, 'x')
     expect(nothought).toBeUndefined()
 
     const thought = {
@@ -78,13 +84,13 @@ const dataProviderTest = (provider: DataProvider) => {
 
     await provider.updateThought(thought.id, thought)
 
-    const remoteThought = await provider.getThought('x')
+    const remoteThought = await getThought(provider, 'x')
     expect(remoteThought).toEqual(thought)
   })
 
   test('getContext', async () => {
 
-    const nocontext = await provider.getContext(['x'])
+    const nocontext = await getContext(provider, ['x'])
     expect(nocontext).toBeUndefined()
 
     const parentEntry = {
@@ -100,7 +106,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     await provider.updateContext(hashContext(['x']), parentEntry)
 
-    const dbContext = await provider.getContext(['x'])
+    const dbContext = await getContext(provider, ['x'])
     expect(dbContext).toEqual({
       ...parentEntry,
       id: hashContext(['x']),
@@ -159,10 +165,10 @@ const dataProviderTest = (provider: DataProvider) => {
       [hashThought(thoughtY.value)]: thoughtY,
     })
 
-    const dbThought1 = await provider.getThought(thoughtX.value)
+    const dbThought1 = await getThought(provider, thoughtX.value)
     expect(dbThought1).toEqual(thoughtX)
 
-    const dbThought2 = await provider.getThought(thoughtY.value)
+    const dbThought2 = await getThought(provider, thoughtY.value)
     expect(dbThought2).toEqual(thoughtY)
   })
 
@@ -195,13 +201,13 @@ const dataProviderTest = (provider: DataProvider) => {
       [hashContext(['y'])]: parentEntryY,
     })
 
-    const contextX = await provider.getContext(['x'])
+    const contextX = await getContext(provider, ['x'])
     expect(contextX).toEqual({
       ...parentEntryX,
       id: hashContext(['x']),
     })
 
-    const contextY = await provider.getContext(['y'])
+    const contextY = await getContext(provider, ['y'])
     expect(contextY).toEqual({
       ...parentEntryY,
       id: hashContext(['y']),
@@ -331,9 +337,8 @@ const dataProviderTest = (provider: DataProvider) => {
         [hashContext(['x', 'a', 'b'])]: parentEntryB,
       })
 
-      const thoughts = await provider.getDescendantThoughts(['x'])
-
-      expect(thoughts).toHaveProperty('contextIndex')
+      const thoughtChunks = await all(getDescendantThoughts(provider, ['x']))
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.contextIndex).toEqual({
         [hashContext(['x'])]: parentEntryX,
@@ -436,7 +441,8 @@ const dataProviderTest = (provider: DataProvider) => {
         [hashContext(['x', 'y'])]: parentEntryY,
       })
 
-      const thoughts = await provider.getDescendantThoughts([ROOT_TOKEN])
+      const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts).toHaveProperty('contextIndex')
 
@@ -526,7 +532,9 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // only fetch 1 level of descendants
-      const thoughts = await provider.getDescendantThoughts(['x'], { maxDepth: 1 })
+      const it = getDescendantThoughts(provider, ['x'], { maxDepth: 1 })
+      const thoughtChunks = await all(it)
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts).toHaveProperty('contextIndex')
 
@@ -641,7 +649,8 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // only fetch 2 levels of descendants
-      const thoughts = await provider.getDescendantThoughts(['x'], { maxDepth: 2 })
+      const thoughtChunks = await all(getDescendantThoughts(provider, ['x'], { maxDepth: 2 }))
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts).toHaveProperty('contextIndex')
 
@@ -782,10 +791,11 @@ const dataProviderTest = (provider: DataProvider) => {
         [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryN,
       })
 
-      const thoughts = await provider.getManyDescendants({
+      const thoughtChunks = await all(getManyDescendants(provider, {
         [hashContext(['x'])]: ['x'],
         [hashContext(['t', 'u', 'v', 'm'])]: ['t', 'u', 'v', 'm'],
-      })
+      }))
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts).toHaveProperty('contextIndex')
 
@@ -919,10 +929,11 @@ const dataProviderTest = (provider: DataProvider) => {
         [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryN,
       })
 
-      const thoughts = await provider.getManyDescendants({
+      const thoughtChunks = await all(getManyDescendants(provider, {
         [hashContext(['x'])]: ['x'],
         [hashContext(['t', 'u', 'v', 'm'])]: ['t', 'u', 'v', 'm'],
-      }, { maxDepth: 2 })
+      }, { maxDepth: 2 }))
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts).toHaveProperty('contextIndex')
 
@@ -1061,10 +1072,11 @@ const dataProviderTest = (provider: DataProvider) => {
         [hashContext(['t', 'u', 'v', 'm', 'n'])]: parentEntryN,
       })
 
-      const thoughts = await provider.getManyDescendants({
+      const thoughtChunks = await all(getManyDescendants(provider, {
         [hashContext([EM_TOKEN])]: [EM_TOKEN],
         [hashContext(['t', 'u', 'v', 'm'])]: ['t', 'u', 'v', 'm'],
-      }, { maxDepth: 1 })
+      }, { maxDepth: 1 }))
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts).toHaveProperty('contextIndex')
 

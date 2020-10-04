@@ -116,6 +116,7 @@ export const FIREBASE_CONFIG = {
 }
 
 /** An identify function that returns the value passed to it. */
+// use any time instead of generic to avoid explicit typing
 export const ID = (x: any) => x
 
 /** A void function that does nothing. NOOP means "no operation". */

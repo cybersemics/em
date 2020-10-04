@@ -115,6 +115,13 @@
         "exports": "always-multiline"
       }
     ],
+    "generator-star-spacing": [
+      2,
+      {
+        "before": false,
+        "after": true
+      }
+    ],
     "indent": [
       2,
       2,
@@ -141,6 +148,13 @@
       }
     ],
     "space-before-function-paren": 0,
+    "yield-star-spacing": [
+      2,
+      {
+        "before": false,
+        "after": true
+      }
+    ],
 
     // export-default-identifier
     "export-default-identifier/export-default-identifier": [2, {

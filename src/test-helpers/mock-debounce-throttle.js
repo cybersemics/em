@@ -36,5 +36,8 @@ export const debounce = (fn, wait, { leading } = {}) => {
 }
 
 /* Calls debounce with { leading: true }. */
+/**
+ *
+ */
 export const throttle = (fn, wait, options = {}) =>
   debounce(fn, wait, { leading: true, ...options })
