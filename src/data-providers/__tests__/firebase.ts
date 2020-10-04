@@ -5,17 +5,7 @@ import { GenericObject } from '../../utilTypes'
 
 jest.useFakeTimers()
 
-// mock firebase object store
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    interface Global {
-      clearMockFirebaseStore: () => void,
-    }
-  }
-}
-
-// mock user authentication
+// mock store with mock state.userRef
 jest.mock('../../store', () => {
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -25,7 +15,7 @@ jest.mock('../../store', () => {
   let firebaseStore = {}
 
   /** Returns a snapshot that returns the given value. */
-  const wrapSnapshot = (val: any): Snapshot => ({
+  const wrapSnapshot = <T>(val: T): Snapshot<T> => ({
     val: () => val
   })
 
@@ -35,16 +25,11 @@ jest.mock('../../store', () => {
   }
 
   /** Mock ref that uses the mock firebase store. */
-  const ref = path => ({
+  const ref = (path: string) => ({
     child: (key: string) => ref(`${path}/${key}`),
-    once: (name: string, cb: (snapshot: Snapshot) => void) => {
+    once: (name: string, cb?: (snapshot: Snapshot) => void) => {
       const result = wrapSnapshot(_.get(firebaseStore, path))
-      if (cb) {
-        cb(result)
-      }
-      else {
-        return Promise.resolve(result)
-      }
+      return Promise.resolve(cb ? cb(result) : result)
     },
     update: (updates: GenericObject<any>, cb: (err: Error | null, ...args: any[]) => void) => {
       Object.entries(updates).forEach(([key, value]) => {
@@ -64,6 +49,15 @@ jest.mock('../../store', () => {
     }
   }
 })
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface Global {
+      clearMockFirebaseStore: () => void,
+    }
+  }
+}
 
 afterEach(() => {
   global.clearMockFirebaseStore()

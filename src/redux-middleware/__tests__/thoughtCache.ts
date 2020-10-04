@@ -1,9 +1,11 @@
 import { store } from '../../store'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
-import { getChildren, getThought } from '../../selectors'
+import { getChildren } from '../../selectors'
 import { importText } from '../../action-creators'
-import initDB, * as db from '../../data-providers/dexie'
+import * as dexie from '../../data-providers/dexie'
+import getContext from '../../data-providers/data-helpers/getContext'
+import { DataProvider } from '../../data-providers/DataProvider'
 
 jest.useFakeTimers()
 
@@ -12,18 +14,21 @@ jest.useFakeTimers()
 // Jest v26 contains a 'modern' option for useFakeTimers (https://github.com/facebook/jest/pull/7776), but I am getting a "TypeError: Cannot read property 'useFakeTimers' of undefined" error when I call jest.useFakeTimers('modern'). The same error does not uccor when I use 'legacy' or omit the argument (react-scripts v4.0.0-next.64).
 // https://github.com/facebook/jest/issues/3465#issuecomment-504908570
 jest.mock('lodash', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { debounce, throttle } = require('../../test-helpers/mock-debounce-throttle')
   return {
-  ...jest.requireActual('lodash'),
+    ...jest.requireActual('lodash'),
     debounce,
     throttle,
   }
 })
 
+const db = dexie as DataProvider
+
 /** Switch to real timers to set a real delay, then set back to fake timers. This was the only thing that worked to force the test to wait for flushPending (or getManyDescendants?) to complete. */
 const delay = async (n: number) => {
   jest.useRealTimers()
-  await new Promise(r => setTimeout(r, n))
+  await new Promise(resolve => setTimeout(resolve, n))
   jest.useFakeTimers()
 }
 
@@ -42,7 +47,7 @@ describe('thoughtCache', () => {
 
   it('load thought', async () => {
 
-    const parentEntryRoot1 = await db.getContext([ROOT_TOKEN])
+    const parentEntryRoot1 = await getContext(db, [ROOT_TOKEN])
     jest.runOnlyPendingTimers()
     expect(parentEntryRoot1).toBeUndefined()
 
@@ -50,7 +55,7 @@ describe('thoughtCache', () => {
     store.dispatch({ type: 'newThought', value: 'a' })
     jest.runOnlyPendingTimers()
 
-    const parentEntryRoot = await db.getContext([ROOT_TOKEN])
+    const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
     jest.runOnlyPendingTimers()
     expect(parentEntryRoot).toMatchObject({
       children: [{ value: 'a', rank: 0 }]
@@ -64,7 +69,7 @@ describe('thoughtCache', () => {
     expect(children).toHaveLength(0)
 
     // confirm thought is still in local db after state has been cleared
-    const parentEntryRootAfterReload = await db.getContext([ROOT_TOKEN])
+    const parentEntryRootAfterReload = await getContext(db, [ROOT_TOKEN])
     jest.runOnlyPendingTimers()
     expect(parentEntryRootAfterReload).toMatchObject({
       children: [{ value: 'a' }]
@@ -97,11 +102,11 @@ describe('thoughtCache', () => {
 
     jest.runOnlyPendingTimers()
 
-    expect(await db.getContext([ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
-    expect(await db.getContext(['a'])).toMatchObject({ children: [{ value: 'b' }] })
-    expect(await db.getContext(['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-    expect(await db.getContext(['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-    expect(await db.getContext(['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
+    expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
+    expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
+    expect(await getContext(db, ['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
+    expect(await getContext(db, ['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
+    expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
 
     // clear and call initialize again to reload from db (simulating page refresh)
     store.dispatch({ type: 'clear' })
@@ -119,13 +124,13 @@ describe('thoughtCache', () => {
 
     expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
 
-    expect(await db.getContext([ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
-    expect(await db.getContext(['a'])).toBeFalsy()
+    expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
+    expect(await getContext(db, ['a'])).toBeFalsy()
 
     // TODO: Load buffered thoughts into state to delete them
-    expect(await db.getContext(['a', 'b'])).toBeFalsy()
-    expect(await db.getContext(['a', 'b', 'c'])).toBeFalsy()
-    expect(await db.getContext(['a', 'b', 'c', 'd'])).toBeFalsy()
+    expect(await getContext(db, ['a', 'b'])).toBeFalsy()
+    expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
+    expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
   })
 
   it('load buffered thoughts', async () => {
@@ -141,11 +146,11 @@ describe('thoughtCache', () => {
 
     jest.runOnlyPendingTimers()
 
-    expect(await db.getContext([ROOT_TOKEN])).toMatchObject({ children: [{ value: 'a' }] })
-    expect(await db.getContext(['a'])).toMatchObject({ children: [{ value: 'b' }] })
-    expect(await db.getContext(['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-    expect(await db.getContext(['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-    expect(await db.getContext(['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
+    expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'a' }] })
+    expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
+    expect(await getContext(db, ['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
+    expect(await getContext(db, ['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
+    expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
 
     // clear state
     // call initialize again to reload from db (simulating page refresh)

@@ -1,14 +1,16 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { GenericObject } from '../utilTypes'
-import { Context, Path } from '../types'
+import all from 'it-all'
 import * as db from '../data-providers/dexie'
+import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import * as firebaseProvider from '../data-providers/firebase'
 // import { loadRemoteState } from '../action-creators'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getThoughtsOfEncodedContext, hasSyncs } from '../selectors'
-import { equalArrays, hashContext, pathToContext, unroot } from '../util'
+import { equalArrays, hashContext, mergeThoughts, pathToContext, unroot } from '../util'
 import { State } from '../util/initialState'
+import { Context, Path } from '../types'
+import { GenericObject } from '../utilTypes'
 
 /** Debounce pending checks to avoid checking on every action. */
 const debounceUpdatePending = 10
@@ -161,7 +163,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     pending = {}
 
     // get local thoughts
-    const thoughtsLocal = await db.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
+    const thoughtChunks = await all(getManyDescendants(db, pendingThoughts, { maxDepth: bufferDepth }))
+    const thoughtsLocal = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
     // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
     // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
@@ -177,9 +180,9 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     const user = getState().user
     if (user) {
       // do not await
-      firebaseProvider.getManyDescendants(pendingThoughts, { maxDepth: bufferDepth })
-        .then(thoughtsRemote => {
-
+      all(getManyDescendants(firebaseProvider, pendingThoughts, { maxDepth: bufferDepth }))
+        .then(thoughtChunks => {
+          const thoughtsRemote = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
           dispatch({
             type: 'reconcile',
             thoughtsResults: [thoughtsLocal, thoughtsRemote]

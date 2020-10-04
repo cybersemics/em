@@ -4,6 +4,8 @@ import { initialize } from '../../initialize'
 import { getThought } from '../../selectors'
 import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
+import getContext from '../data-helpers/getContext'
+import dbGetThought from '../data-helpers/getThought'
 
 jest.useFakeTimers()
 
@@ -14,7 +16,7 @@ jest.useFakeTimers()
 jest.mock('lodash', () => {
   const { debounce, throttle } = require('../../test-helpers/mock-debounce-throttle')
   return {
-  ...jest.requireActual('lodash'),
+    ...jest.requireActual('lodash'),
     debounce,
     throttle,
   }
@@ -50,7 +52,7 @@ describe('integration', () => {
     // TODO: Tests fail without a dummy call to the database. Why?
     await db.getHelpers()
 
-    const thoughtDB = await db.getThought('Settings')
+    const thoughtDB = await dbGetThought(db, 'Settings')
 
     expect(thoughtDB).not.toBeUndefined()
     expect(thoughtDB.contexts).toHaveLength(1)
@@ -64,7 +66,7 @@ describe('integration', () => {
 
     jest.runOnlyPendingTimers()
 
-    const parentEntryRoot = await db.getContext([ROOT_TOKEN])
+    const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
       children: [{ value: 'a', rank: 0 }]
@@ -86,7 +88,7 @@ describe('integration', () => {
 
     jest.runOnlyPendingTimers()
 
-    const parentEntryRoot = await db.getContext([ROOT_TOKEN])
+    const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
       children: [{ value: 'a', rank: 0 }]

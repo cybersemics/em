@@ -1,4 +1,5 @@
 import * as db from '../data-providers/dexie'
+import getContext from '../data-providers/data-helpers/getContext'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { importText } from '../action-creators'
 import { decodeThoughtsUrl } from '../selectors'
@@ -14,7 +15,7 @@ const loadLocalState = () => async (dispatch, getState) => {
     recentlyEdited,
   }, settings] = await Promise.all([
     db.getHelpers(),
-    db.getContext([EM_TOKEN, 'Settings'])
+    getContext(db, [EM_TOKEN, 'Settings'])
   ])
 
   // restore cursor from local db if url is at root

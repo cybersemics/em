@@ -1,6 +1,6 @@
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Context, Lexeme, Parent, Path } from '../types'
+import { Alert, Context, Lexeme, Parent, Path, Snapshot } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
 
@@ -40,6 +40,12 @@ interface User {
   displayName: string,
   email: string,
   // see Firebase user for more properties
+}
+
+interface UserRef {
+  child: (name: string) => UserRef,
+  once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>,
+  update: (updates: GenericObject, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>,
 }
 
 /** Defines a single batch of updates added to the sync queue. */
@@ -101,7 +107,7 @@ export interface State {
   toolbarOverlay?: string | null,
   tutorialStep?: number,
   user?: User,
-  userRef?: any,
+  userRef?: UserRef,
 }
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
