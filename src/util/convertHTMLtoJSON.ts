@@ -42,9 +42,13 @@ const textNodeToBlock = (node: Text): Block => ({
   children: []
 })
 
-/** Retruns true if the node is a WorkFlowy note. */
-const isWorkflowyNote = (node: Element) =>
-  getAttribute('class', node) === 'note'
+/** Returns true if the node is a <br> tag. */
+const isBr = (node: HimalayaNode): boolean =>
+  node.type === 'element' && node.tagName === 'br'
+
+/** Returns true if the node is a WorkFlowy note. */
+const isWorkflowyNote = (node: HimalayaNode) =>
+  node.type === 'element' && getAttribute('class', node) === 'note'
 
 /** Convert Workflowy tag to Block. */
 const workflowyNoteToBlock = (node: Element): Block => {
@@ -89,6 +93,13 @@ const handleFormattingTags = (nodes: HimalayaNode[]): HimalayaNode[] => {
 
 /** Create new <ul> Element instead of <br> element and put all nodes after <br> as children of <ul>. */
 const handleBr = (nodes: HimalayaNode[], brIndex: number): HimalayaNode[] => {
+
+  const nextNode = nodes[brIndex + 1]
+
+  // if the child <br> is not part of a WorkFlowy note, filter out all <br>
+  if (!nextNode || !isWorkflowyNote(nextNode)) return nodes.filter(node => !isBr(node))
+
+  // otherwise add ul element with note
   const beforeBr = nodes.slice(0, brIndex)
   const afterBr = nodes.slice(brIndex + 1)
   const ul = {
@@ -96,6 +107,7 @@ const handleBr = (nodes: HimalayaNode[], brIndex: number): HimalayaNode[] => {
     tagName: 'ul',
     children: afterBr
   } as Element
+
   return [...beforeBr, ul]
 }
 
@@ -147,14 +159,10 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
       : himalayaToBlock(merged)
   }
 
-  // check if nodes include <br> tag. in this case replace <br> with <ul> and put all elements after <br> as children of <ul>
-  const brIndex = nodes.findIndex(node => node.type === 'element' && node.tagName === 'br')
+  // handle <br> tag (which may be a WorkFlowy note or a normal line break)
+  const brIndex = nodes.findIndex(isBr)
   if (brIndex !== -1) {
-    const nextNode = nodes[brIndex + 1]
-    // check next nodes is Workflowy note. If it's true use all nodes after br as children of element before br. If it's false, remove all br tags.
-    return nextNode && nextNode.type === 'element' && getAttribute('class', nextNode) === 'note'
-      ? himalayaToBlock(handleBr(nodes, brIndex))
-      : himalayaToBlock(nodes.filter(node => !(node.type === 'element' && node.tagName === 'br')))
+    return himalayaToBlock(handleBr(nodes, brIndex))
   }
 
   const blocks = nodes.map((node, index) =>
