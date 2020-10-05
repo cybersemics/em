@@ -13,6 +13,7 @@ import {
   toggleContextView,
   updateThoughts,
 } from '../../reducers'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
 
@@ -168,7 +169,7 @@ describe('context view', () => {
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
+      setCursorFirstMatch(['a', 'm']),
       toggleContextView,
       cursorDown
     ]
@@ -176,7 +177,7 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor)
-      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'n', rank: 2 }])
+      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'n', rank: 1 }])
   })
 
   it(`move cursor to context's first child, if present`, async () => {
@@ -191,9 +192,9 @@ describe('context view', () => {
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
+      setCursorFirstMatch(['a', 'm']),
       toggleContextView,
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'a', rank: 0 }] }),
+      setCursorFirstMatch(['a', 'm', 'a']),
       cursorDown
     ]
 
@@ -201,7 +202,7 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor)
-      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'a', rank: 0 }, { value: 'x', rank: 2 }])
+      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }, { value: 'a', rank: 0 }, { value: 'x', rank: 0 }])
 
   })
 
@@ -241,9 +242,9 @@ describe('context view', () => {
     const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
+      setCursorFirstMatch(['a', 'm']),
       toggleContextView,
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'a', rank: 0 }, { value: 'x', rank: 2 }] }),
+      setCursorFirstMatch(['a', 'm', 'a', 'x']),
       cursorDown
     ]
 
@@ -251,7 +252,7 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor)
-      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'b', rank: 1 }])
+      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }, { value: 'b', rank: 1 }])
 
   })
 
