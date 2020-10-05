@@ -168,6 +168,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
+  const editableNonceRef = useRef(state.editableNonce)
+
+  useEffect(() => {
+    editableNonceRef.current = state.editableNonce
+  }, [state.editableNonce])
 
   const thought = getThought(state, value)
   const childrenLabel = getThoughts(state, [...thoughts, '=label'])
@@ -573,6 +578,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       ['editable-' + hashContext(thoughtsResolved, rank)]: true,
       empty: value.length === 0
     })}
+    forceUpdate={editableNonceRef.current !== state.editableNonce}
     html={value === EM_TOKEN ? '<b>em</b>'
     : isEditing ? value
     : childrenLabel.length > 0
