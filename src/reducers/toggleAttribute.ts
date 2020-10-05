@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { existingThoughtDelete, newThoughtSubmit, setFirstSubthought } from '../reducers'
 import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '../selectors'
-import { head, isRoot, reducerFlow } from '../util'
+import { head, reducerFlow, unroot } from '../util'
 import { State } from '../util/initialState'
 import { Context } from '../types'
 
@@ -32,7 +32,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
 
       // set attribute value
       setFirstSubthought({
-        context: isRoot(context) ? [key] : context.concat(key),
+        context: [...unroot(context), key],
         value,
       })
 
