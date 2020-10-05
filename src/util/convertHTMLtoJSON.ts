@@ -96,7 +96,6 @@ const handleBr = (nodes: HimalayaNode[], brIndex: number): HimalayaNode[] => {
     tagName: 'ul',
     children: afterBr
   } as Element
-
   return [...beforeBr, ul]
 }
 
@@ -151,7 +150,11 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
   // check if nodes include <br> tag. in this case replace <br> with <ul> and put all elements after <br> as children of <ul>
   const brIndex = nodes.findIndex(node => node.type === 'element' && node.tagName === 'br')
   if (brIndex !== -1) {
-    return himalayaToBlock(handleBr(nodes, brIndex))
+    const nextNode = nodes[brIndex + 1]
+    // check next nodes is Workflowy note. If it's true use all nodes after br as children of element before br. If it's false, remove all br tags.
+    return nextNode && nextNode.type === 'element' && getAttribute('class', nextNode) === 'note'
+      ? himalayaToBlock(handleBr(nodes, brIndex))
+      : himalayaToBlock(nodes.filter(node => !(node.type === 'element' && node.tagName === 'br')))
   }
 
   const blocks = nodes.map((node, index) =>
@@ -163,7 +166,7 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
     : himalayaToBlock(node.children)
   )
 
-  if (blocks.length === 1 && Array.isArray(blocks[0])) return blocks.flat()
+  if (Array.isArray(blocks[0])) return blocks.flat()
 
   // retrieve first chunk, if the first element is Block and the second is Block[], join children (Block[]) with parent (Block), else return blocks as is.
   const [first, rest] = blocks
