@@ -3,7 +3,7 @@ import xhtmlPurifier from 'xhtml-purifier'
 import { ROOT_TOKEN } from '../constants'
 import { contextOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getThoughtsRanked, lastThoughtsFromContextChain, splitChain } from '../selectors'
-import { existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
+import { editableRender, existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -69,7 +69,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
 
     // render
     render,
-
+    editableRender
   ])(state)
 }
 

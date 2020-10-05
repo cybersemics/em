@@ -7,13 +7,14 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
     disabled?: boolean,
     innerRef?: React.RefObject<HTMLDivElement>,
     isEditing?: boolean,
+    forceUpdate: boolean,
     onChange: (originalEvt: ContentEditableEvent) => void,
 }
 
 /**
  * Content Editable Component.
  */
-const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentEditableProps) => {
+const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...props }: ContentEditableProps) => {
   const contentRef = innerRef || useRef<HTMLDivElement>(null)
   const prevHtmlRef = useRef<string>(html)
   const allowInnerHTMLChange = useRef<boolean>(true)
@@ -23,7 +24,7 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
 
   React.useEffect(() => {
     // prevent innerHTML update when editing
-    if (prevHtmlRef.current !== html && allowInnerHTMLChange.current) {
+    if (prevHtmlRef.current !== html && (forceUpdate || allowInnerHTMLChange.current)) {
       contentRef.current!.innerHTML = html
       prevHtmlRef.current = html
     }
@@ -72,9 +73,6 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
     }}
     onInput={handleInput}
     onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-
-      // allow innerHTML update when thought split is triggered
-      if (e.key === 'Enter') allowInnerHTMLChange.current = true
       if (props.onKeyDown) props.onKeyDown(e)
     }}
   />
