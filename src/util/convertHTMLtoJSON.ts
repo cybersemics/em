@@ -6,8 +6,7 @@ import { Block } from '../action-creators/importText'
 const getAttribute = (key: string, node: Element) => {
   const { attributes } = node
   if (!attributes) return
-  const attribute = attributes.find(attr => attr.key === key)
-  return attribute ? attribute.value : undefined
+  return attributes.find(attr => attr.key === key)?.value
 }
 
 /** Check whether node is formatting tag element (<i>...</i>, <b>...</b> or <span>...</span>). */
