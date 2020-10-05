@@ -25,6 +25,7 @@ import {
 // constants
 import {
   DEFAULT_FONT_SIZE,
+  ROOT_TOKEN,
   SCROLL_PRIORITIZATION_TIMEOUT,
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
   TOOLBAR_DEFAULT_SHORTCUTS,
@@ -57,15 +58,15 @@ const mapStateToProps = state => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
-  const contextOfCursor = context && contextOf(context)
+  const contextOfCursor = context ? contextOf(context) : [ROOT_TOKEN]
 
   return {
-    cursorOnTableView: cursor && attributeEquals(state, contextOfCursor, '=view', 'Table'),
-    cursorOnAlphabeticalSort: cursor && attributeEquals(state, contextOf(context), '=sort', 'Alphabetical'),
+    cursorOnTableView: attributeEquals(state, contextOfCursor, '=view', 'Table'),
+    cursorOnAlphabeticalSort: attributeEquals(state, contextOfCursor, '=sort', 'Alphabetical'),
     cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
-    cursorPinSubthoughts: cursor && attributeEquals(state, contextOfCursor, '=pinChildren', 'true'),
+    cursorPinSubthoughts: attributeEquals(state, contextOfCursor, '=pinChildren', 'true'),
     cursorOnNote: cursor && attribute(state, context, '=note') != null,
-    cursorOnProseView: cursor && attributeEquals(state, contextOfCursor, '=view', 'Prose'),
+    cursorOnProseView: attributeEquals(state, contextOfCursor, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
     fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
