@@ -182,10 +182,10 @@ it('generate proper thoughtsResolved for circular path in context view', async (
 
   store.dispatch({ type: 'setCursor', thoughtsRanked: [
     { value: 'a', rank: 0 },
-    { value: 'b', rank: 1 },
-    { value: 'c', rank: 2 },
-    { value: 'd', rank: 3 },
-    { value: 'c', rank: 4 },
+    { value: 'b', rank: 0 },
+    { value: 'c', rank: 0 },
+    { value: 'd', rank: 0 },
+    { value: 'c', rank: 0 },
   ]
   })
 
