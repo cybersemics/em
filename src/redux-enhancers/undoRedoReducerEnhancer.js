@@ -80,12 +80,14 @@ const redoReducer = state => {
  * Controls the number of undo operations based on the inversepatch history.
  */
 const undoHandler = (state, inversePatches) => {
+  const lastInversePatch = nthLast(inversePatches, 1)
+  const lastAction = lastInversePatch && getPatchAction(lastInversePatch)
   const penultimateInversePatch = nthLast(inversePatches, 2)
   const penultimateAction = penultimateInversePatch && getPatchAction(penultimateInversePatch)
-  return inversePatches.length ?
-    penultimateAction && (NAVIGATION_ACTIONS[penultimateAction] || penultimateAction === 'newThought')
-      ? undoReducer(undoReducer(state))
-      : undoReducer(state)
+  return inversePatches.length ? (lastAction && NAVIGATION_ACTIONS[lastAction]) ||
+    (penultimateAction && (NAVIGATION_ACTIONS[penultimateAction] || penultimateAction === 'newThought'))
+    ? undoReducer(undoReducer(state))
+    : undoReducer(state)
     : state
 }
 
