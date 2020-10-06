@@ -3,11 +3,7 @@ import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { State } from '../util/initialState'
 import { headValue } from '../util'
 import { alert } from '../action-creators'
-
-interface SplitSentencesAction {
-  type: 'splitSentences',
-  splittedSentences: string[],
-}
+import { Action } from 'redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' width={size} height={size} fill={fill} style={{ ...style, paddingTop: '8px' }} viewBox='0 0 110 115'>
@@ -19,26 +15,19 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const splitSentencesShortcut: Shortcut = {
   id: 'splitSentences',
   name: 'Split Sentences',
-  keyboard: { shift: true, key: 's' },
+  keyboard: { meta: true, shift: true, key: 's' },
   svg: Icon,
   canExecute: getState => getState().cursor !== null,
-  exec: (dispatch: Dispatch<SplitSentencesAction | ActionCreator>, getState: () => State) => {
+  exec: (dispatch: Dispatch<Action | ActionCreator>, getState: () => State) => {
     const { cursor } = getState()
-    const sentences = headValue(cursor!)
-    const splitSentencesRegExp = /[^.!?]+[.!?]+/g
-    if (!splitSentencesRegExp.test(sentences)) {
-      dispatch(alert('Cannot split sentences: thought has no sentences.', { alertType: 'splitSentencesErr1', clearTimeout: 3000 }))
-      return
-    }
-
-    const splittedSentences = sentences.match(splitSentencesRegExp)!.map(s => s.trim())
-
-    if (splittedSentences.length === 1) {
+    const value = headValue(cursor!)
+    const sentences = value.split(/[.!?]+/g).filter(s => s !== '').map(s => `${s.trim()}.`)
+    if (sentences.length === 1) {
       dispatch(alert('Cannot split sentences: thought has only one sentence.', { alertType: 'splitSentencesErr2', clearTimeout: 3000 }))
       return
     }
 
-    dispatch({ type: 'splitSentences', splittedSentences })
+    dispatch({ type: 'splitSentences' })
   }
 }
 

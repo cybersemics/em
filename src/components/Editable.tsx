@@ -565,7 +565,6 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     if (e.key in MODIFIER_KEYS) return
     onKeyDownAction!()
   }
-
   return <ContentEditable
     disabled={disabled}
     innerRef={contentRef}

@@ -17,7 +17,6 @@ const ContentEditable = ({ style, html, disabled, innerRef, ...props }: ContentE
   const contentRef = innerRef || useRef<HTMLDivElement>(null)
   const prevHtmlRef = useRef<string>(html)
   const allowInnerHTMLChange = useRef<boolean>(true)
-
   React.useEffect(() => {
     if (contentRef.current) contentRef.current!.innerHTML = html
   }, [])

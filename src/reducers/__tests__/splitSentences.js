@@ -5,10 +5,9 @@ import { exportContext } from '../../selectors'
 import { newThought, splitSentences } from '../../reducers'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
-it('split sentences with only one thought', () => {
+it('split single thought by sentences', () => {
   const steps = [
     newThought('One. Two. Three.'),
-    setCursorFirstMatch(['One. Two. Three.']),
     splitSentences()
   ]
 
@@ -21,7 +20,7 @@ it('split sentences with only one thought', () => {
   - Three.`)
 })
 
-it('split sentences with other thoughts nearby', () => {
+it('split thought by sentences surrounded by siblings', () => {
   const steps = [
     newThought('a'),
     newThought('One. Two. Three.'),
