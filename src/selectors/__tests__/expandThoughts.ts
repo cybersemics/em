@@ -62,7 +62,7 @@ describe('normal view', () => {
   - c
     - d`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),
@@ -82,7 +82,7 @@ describe('normal view', () => {
   - c
     - d`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),
@@ -105,7 +105,7 @@ describe('normal view', () => {
         - e2
           - f`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),
@@ -136,7 +136,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),
@@ -160,7 +160,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const stateNew = updateThoughts(initialState(), thoughts)
 
     // cursor on row 1, column 2
@@ -183,7 +183,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const stateNew = updateThoughts(initialState(), thoughts)
 
     // cursor on row 1, column 2
@@ -207,7 +207,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),
@@ -231,7 +231,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const stateNew = updateThoughts(initialState(), thoughts)
 
     // cursor on row 1, column 2
@@ -255,7 +255,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const stateNew = updateThoughts(initialState(), thoughts)
 
     // cursor on row 1, column 2 (same row)
@@ -282,7 +282,7 @@ describe('=pin', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),
@@ -308,7 +308,7 @@ describe('=pin', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),
@@ -334,7 +334,7 @@ describe('=pinChildren', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),
@@ -358,7 +358,7 @@ describe('=pinChildren', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const stateNew = updateThoughts(initialState(), thoughts)
 
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
@@ -379,7 +379,7 @@ describe('=pinChildren', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const stateNew = updateThoughts(initialState(), thoughts)
 
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b', 'c'])

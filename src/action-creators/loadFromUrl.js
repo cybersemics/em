@@ -24,7 +24,7 @@ const loadFromUrl = async (url, path = RANKED_ROOT, { skipRoot } = {}) => async 
   const text = await response.text()
 
   // prevent the default setCursor behavior of importText so that we can restore the cursor from the url
-  await dispatch(importText(path, text, { preventSetCursor: true, skipRoot }))
+  dispatch(importText(path, text, { preventSetCursor: true, skipRoot }))
 
   // decode url after importText so that we are using updated state
   const state = getState()

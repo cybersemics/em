@@ -14,6 +14,7 @@ jest.useFakeTimers()
 // Jest v26 contains a 'modern' option for useFakeTimers (https://github.com/facebook/jest/pull/7776), but I am getting a "TypeError: Cannot read property 'useFakeTimers' of undefined" error when I call jest.useFakeTimers('modern'). The same error does not uccor when I use 'legacy' or omit the argument (react-scripts v4.0.0-next.64).
 // https://github.com/facebook/jest/issues/3465#issuecomment-504908570
 jest.mock('lodash', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { debounce, throttle } = require('../../test-helpers/mock-debounce-throttle')
   return {
     ...jest.requireActual('lodash'),

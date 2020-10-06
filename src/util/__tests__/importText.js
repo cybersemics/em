@@ -40,7 +40,7 @@ const importExport = async text => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = await importText(RANKED_ROOT, text)(
+  } = importText(RANKED_ROOT, text)(
     NOOP, // dispatch
     () => initialState // getState
   )

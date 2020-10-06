@@ -60,7 +60,7 @@ const simulateDragAndDrop = ({ source, drop, type }) => {
 }
 
 it('drop as sibling', async () => {
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
   - b
   - c
@@ -87,7 +87,7 @@ it('drop as sibling', async () => {
 })
 
 it('drop as child (Drop end)', async () => {
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
   - b
   - c
@@ -114,7 +114,7 @@ it('drop as child (Drop end)', async () => {
 })
 
 it('prevent drop into descendants', async () => {
-  await store.dispatch(importText(RANKED_ROOT, `
+  store.dispatch(importText(RANKED_ROOT, `
   - a
     - b
   - c`))

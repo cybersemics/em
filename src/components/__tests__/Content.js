@@ -20,11 +20,11 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
   // NewThoughtInstructions should be visible when there are no thoughts
   expect(wrapper.find(NewThoughtInstructions)).toHaveLength(1)
 
-  await store.dispatch(importText(RANKED_ROOT, `
-  - a
-  - b
-  - =test
-`))
+  store.dispatch(importText(RANKED_ROOT, `
+    - a
+    - b
+    - =test
+  `))
 
   wrapper.update()
 
