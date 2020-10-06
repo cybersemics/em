@@ -67,7 +67,7 @@ it('undo thought change', async () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('group all navigation actions following a thought change and undo them together', async () => {
+it('group all navigation actions following an undoable action and undo them together', async () => {
 
   const store = createTestStore()
 
@@ -78,24 +78,33 @@ it('group all navigation actions following a thought change and undo them togeth
       - c
       - d`
     ),
-    { type: 'cursorDown' },
+    { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
+    { type: 'indent' },
     {
       type: 'existingThoughtChange',
-      newValue: 'aa',
-      oldValue: 'a',
-      context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      newValue: 'b1',
+      oldValue: 'b',
+      context: ['a'],
+      rankInContext: 0,
+      thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
     },
-    { type: 'setCursor', thoughtsRanked: null },
     { type: 'cursorBack' },
+    { type: 'moveThoughtDown' },
+    { type: 'cursorDown' },
+    // undo 'moveThoughtDown' and 'cursorDown'
     { type: 'undoAction' }
   ])
 
-  // restore the cursor to it's state before navigation actions
-  const { cursor } = store.getState()
+  const cursorAfterFirstUndo = store.getState().cursor
+  expect(cursorAfterFirstUndo).toMatchObject([
+    { value: 'a' }])
 
-  expect(cursor).toMatchObject([
-    { value: 'aa' }])
+  // undo 'cursorBack' and 'existingThoughtChange'
+  store.dispatch({ type: 'undoAction' })
+
+  const cursorAfterSecondUndo = store.getState().cursor
+  expect(cursorAfterSecondUndo).toMatchObject([
+    { value: 'a' }, { value: 'b' }])
 
 })
 
