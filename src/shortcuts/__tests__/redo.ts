@@ -64,8 +64,6 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
   },
   { type: 'cursorBack' },
   { type: 'cursorUp' },
-  { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 0 }] },
-
   {
     type: 'existingThoughtChange',
     newValue: 'arizona',
@@ -87,8 +85,8 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
   - arizona
     - b`
 
-  expect(state.cursor).toMatchObject([
-    { value: 'b' }])
+  expect(state.cursor).toMatchObject([{ value: 'arizona' }])
+
   expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
 })
 

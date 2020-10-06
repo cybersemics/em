@@ -67,7 +67,7 @@ it('undo thought change', async () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('group all navigation actions following an undoable action and undo them together', async () => {
+it('group all navigation actions following an undoable(non-navigation) action and undo them together', async () => {
 
   const store = createTestStore()
 
@@ -125,7 +125,7 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
       oldValue: 'b',
       newValue: 'bd',
       rankInContext: 1,
-      thoughtsRanked: [{ value: 'b', rank: 1 }]
+      thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }]
     },
     // dispensible set cursor (which only updates datanonce)
     { type: 'setCursor', thoughtsRanked: null },
@@ -218,9 +218,9 @@ it('undo contiguous changes', () => {
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic City',
-      oldValue: 'Atlantic ',
+      oldValue: 'Atlantic',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'Atlantic ', rank: 0 }]
+      thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
     },
     { type: 'undoAction' }
   ])
@@ -243,7 +243,8 @@ it('state.alert is omitted from the undo patch', () => {
       - A
       - B`
     ),
-    { type: 'alert', value: 'test' }
+    { type: 'alert', value: 'test' },
+    { type: 'archiveThought' },
   ])
 
   expect(store.getState().inversePatches.length).toEqual(0)
