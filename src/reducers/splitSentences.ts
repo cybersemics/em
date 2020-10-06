@@ -12,13 +12,13 @@ const splitSentences = (state: State) => {
   const rank = headRank(cursor)
   const value = headValue(cursor)
 
-  const splittedSentences = value.split(/[.!?]+/g).filter(s => s !== '').map(s => `${s.trim()}.`)
+  const sentences = value.split(/[.!?]+/g).filter(s => s !== '').map(s => `${s.trim()}.`)
 
-  if (splittedSentences.length === 1) {
+  if (sentences.length === 1) {
     return state
   }
 
-  const [firstSentence, ...otherSentences] = splittedSentences
+  const [firstSentence, ...otherSentences] = sentences
   const newCursor = contextOf(cursor).concat({ ...head(cursor), value: firstSentence })
 
   const reducers = [
