@@ -1,7 +1,7 @@
 
 import { importText } from '../../action-creators'
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { exportContext } from '../../selectors'
+import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 
 import { createTestStore } from '../../test-helpers/createTestStore'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
@@ -38,11 +38,7 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
     - b
       - c`))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 1 },
-    { value: 'c', rank: 2 },
-  ] })
+  store.dispatch({ type: 'setCursor', thoughtsRanked: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) })
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
 
@@ -68,11 +64,7 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
       - d`
   ))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 1 },
-    { value: 'd', rank: 3 },
-  ] })
+  store.dispatch({ type: 'setCursor', thoughtsRanked: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
 

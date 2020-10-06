@@ -1,7 +1,7 @@
 // @ts-ignore
 import { parse } from 'jex-block-parser'
 import he from 'he'
-import { contextOf, head, importHtml, pathToContext, rootedContextOf, strip } from '../util'
+import { contextOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedContextOf, strip } from '../util'
 import { ActionCreator, Path, Timestamp } from '../types'
 
 // declare types until jex-block-parser merges PR
@@ -166,9 +166,8 @@ const importText = (thoughtsRanked: Path, inputText: string, { lastUpdated, prev
     })
   }
   else {
-
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importHtml(state, thoughtsRanked, text, { lastUpdated, skipRoot })
-
+    const json = convertHTMLtoJSON(text)
+    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importJSON(state, thoughtsRanked, json, { lastUpdated, skipRoot })
     if (!preventSync) {
       dispatch({
         type: 'updateThoughts',

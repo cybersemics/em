@@ -72,30 +72,29 @@ describe('normal view', () => {
 
   })
 
-  // it('work for sorted thoughts', () => {
+  // it('sorted thoughts', () => {
 
   //   const store = createTestStore()
 
-  //   store.dispatch(importText(RANKED_ROOT, `
-  //   - SORT
-  //     - a
-  //       - a1
-  //     - c
-  //     - b`))
-
-  //   store.dispatch({
-  //     type: 'toggleAttribute',
-  //     context: ['SORT'],
-  //     key: '=sort',
-  //     value: 'Alphabetical'
-  //   })
-
-  //   store.dispatch({
-  //     type: 'setCursor',
-  //     thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
-  //   })
-
-  //   store.dispatch(cursorNext())
+  //   store.dispatch([
+  //     importText(RANKED_ROOT, `
+  //     - SORT
+  //       - a
+  //         - a1
+  //       - c
+  //       - b`),
+  //     {
+  //       type: 'toggleAttribute',
+  //       context: ['SORT'],
+  //       key: '=sort',
+  //       value: 'Alphabetical'
+  //     },
+  //     {
+  //       type: 'setCursor',
+  //       thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
+  //     },
+  //     cursorNext(),
+  //   ])
 
   //   expect(store.getState().cursor)
   //     .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 4 }])
