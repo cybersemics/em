@@ -35,7 +35,7 @@ const loadLocalState = () => async (dispatch, getState) => {
   // initialize settings if they don't exist
   if (!settings) {
     // set lastUpdated to never so that any settings from remote are used over the initial settings
-    return await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, {
+    return dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, {
       lastUpdated: never(),
       preventSetCursor: true,
     }))

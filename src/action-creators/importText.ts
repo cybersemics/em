@@ -161,9 +161,7 @@ const importText = (thoughtsRanked: Path, inputText: string, { lastUpdated, prev
       })
     }
 
-    return Promise.resolve({
-      newValue
-    })
+    return newValue
   }
   else {
     const json = convertHTMLtoJSON(text)
@@ -186,10 +184,10 @@ const importText = (thoughtsRanked: Path, inputText: string, { lastUpdated, prev
       })
     }
 
-    return Promise.resolve({
+    return {
       contextIndexUpdates,
       thoughtIndexUpdates,
-    })
+    }
   }
 }
 

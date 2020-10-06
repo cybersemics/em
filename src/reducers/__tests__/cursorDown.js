@@ -145,7 +145,7 @@ describe('context view', () => {
   - m
     - y`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
@@ -166,7 +166,7 @@ describe('context view', () => {
     - m
     - n`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
       setCursorFirstMatch(['a', 'm']),
@@ -189,7 +189,7 @@ describe('context view', () => {
   - m
     - y`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
       setCursorFirstMatch(['a', 'm']),
@@ -213,7 +213,7 @@ describe('context view', () => {
 - b
   - m`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
       setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
@@ -239,7 +239,7 @@ describe('context view', () => {
   - m
     - y`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
       setCursorFirstMatch(['a', 'm']),
@@ -266,7 +266,7 @@ describe('context view', () => {
     - y
     - z`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
       state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
@@ -292,7 +292,7 @@ describe('context view', () => {
   - m
     - y`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
       state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),

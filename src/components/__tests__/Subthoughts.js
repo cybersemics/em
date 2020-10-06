@@ -33,7 +33,7 @@ afterEach(async () => {
 it('normal view', async () => {
 
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `- a
+  store.dispatch(importText(RANKED_ROOT, `- a
   - b
   - c`))
 
@@ -61,7 +61,7 @@ describe('context view', () => {
   it('render contexts of cursor thought when context view is enabled', async () => {
 
     // import thoughts
-    await store.dispatch(importText(RANKED_ROOT, `- a
+    store.dispatch(importText(RANKED_ROOT, `- a
   - m
     - x
 - b
@@ -99,7 +99,7 @@ describe('context view', () => {
   it('render context children of contexts that have different lexeme instances', async () => {
 
     // import thoughts
-    await store.dispatch(importText(RANKED_ROOT, `- a
+    store.dispatch(importText(RANKED_ROOT, `- a
   - one
     - x
 - b

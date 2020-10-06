@@ -241,7 +241,7 @@ it('move descendants with siblings', async () => {
    - c
    - d`
 
-  const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+  const imported = importText(RANKED_ROOT, text)(NOOP, initialState)
   const steps = [
     updateThoughts(imported),
     existingThoughtMove({
@@ -289,7 +289,7 @@ it('merge duplicate with new rank', async () => {
   - m
    - y`
 
-  const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+  const imported = importText(RANKED_ROOT, text)(NOOP, initialState)
 
   const steps = [
     updateThoughts(imported),
@@ -331,7 +331,7 @@ it('merge with duplicate with duplicate rank', async () => {
   - m
     - y`
 
-  const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+  const imported = importText(RANKED_ROOT, text)(NOOP, initialState)
 
   const steps = [
     updateThoughts(imported),
