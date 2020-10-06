@@ -7,10 +7,11 @@ import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivi
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
 import { Child, Path, TutorialChoice } from '../types'
-import { GenericObject } from '../utilTypes'
+import { GenericObject, Nullable } from '../utilTypes'
 
 interface Payload {
   contextChain?: Child[][],
+  pivotIndex?: Nullable<number>,
   cursorHistoryClear?: boolean,
   cursorHistoryPop?: boolean,
   editing?: boolean | null,
@@ -32,13 +33,14 @@ const setCursor = (state: State, {
   cursorHistoryPop,
   editing,
   offset,
+  pivotIndex,
   replaceContextViews,
   thoughtsRanked,
   noteFocus = false
 }: Payload) => {
 
   const thoughtsResolved = thoughtsRanked && contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked)
+    ? chain(state, contextChain, thoughtsRanked, pivotIndex)
     : thoughtsRanked
 
   // SIDE EFFECT

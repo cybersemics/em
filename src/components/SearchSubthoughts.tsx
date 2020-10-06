@@ -80,6 +80,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, arch
     {!exists(store.getState(), search) && isDocumentEditable() ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Subthoughts
+      pivotIndex={null}
       childrenForced={children.slice(0, searchLimit)}
       thoughtsRanked={RANKED_ROOT}
       allowSingleContextParent={true}

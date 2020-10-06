@@ -25,7 +25,7 @@ import useLongPress from '../hooks/useLongPress'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
 import { Child, Path } from '../types'
-import { GenericObject } from '../utilTypes'
+import { GenericObject, Nullable } from '../utilTypes'
 
 // util
 import {
@@ -81,6 +81,7 @@ interface ThoughtProps {
   isPublishChild?: boolean,
   isEditing?: boolean,
   isLeaf?: boolean,
+  pivotIndex: Nullable<number>,
   publish?: boolean,
   rank: number,
   showContextBreadcrumbs?: boolean,
@@ -114,6 +115,7 @@ interface ThoughtContainerProps {
   isEditingPath?: boolean,
   isHovering?: boolean,
   isParentHovering?: boolean,
+  pivotIndex: Nullable<number>,
   prevChild?: any,
   publish?: boolean,
   rank: number,
@@ -148,12 +150,13 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     thoughtsRanked,
     showContexts,
     depth,
-    childrenForced
+    childrenForced,
+    pivotIndex
   } = props
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, thoughtsRanked)
+    ? chain(state, props.contextChain, thoughtsRanked, pivotIndex)
     : unroot(thoughtsRanked)
 
   // check if the cursor path includes the current thought
@@ -175,7 +178,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     // @ts-ignore
     ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked)) && getThoughtsRanked(state, cursor).length === 0
     // parent
-    : equalPath(contextOf(cursor || []), chain(state, contextChain, thoughtsRanked))
+    : equalPath(contextOf(cursor || []), chain(state, contextChain, thoughtsRanked, pivotIndex))
 
   let contextBinding // eslint-disable-line fp/no-let
   try {
@@ -186,7 +189,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   }
 
   const isCursorGrandparent =
-    equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked))
+    equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, thoughtsRanked, pivotIndex))
   const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive)
 
   const value = headValue(thoughtsRankedLive)
@@ -379,6 +382,7 @@ const Thought = ({
   showContexts,
   style,
   thoughtsRanked,
+  pivotIndex,
   toggleTopControlsAndBreadcrumbs
 }: ThoughtProps) => {
   const isRoot = thoughtsRanked.length === 1
@@ -402,6 +406,7 @@ const Thought = ({
       cursorOffset={cursorOffset}
       disabled={!isDocumentEditable()}
       isEditing={isEditing}
+      pivotIndex={pivotIndex}
       rank={rank}
       showContexts={showContexts}
       style={style}
@@ -443,6 +448,7 @@ const ThoughtContainer = ({
   isEditingPath,
   isHovering,
   isParentHovering,
+  pivotIndex,
   prevChild,
   publish,
   rank,
@@ -489,7 +495,7 @@ const ThoughtContainer = ({
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked)
+    ? chain(state, contextChain, thoughtsRanked, pivotIndex)
     : unroot(thoughtsRanked)
 
   const value = headValue(thoughtsRankedLive!)
@@ -597,6 +603,7 @@ const ThoughtContainer = ({
         homeContext={homeContext}
         minContexts={allowSingleContext ? 0 : 2}
         showContextBreadcrumbs={showContextBreadcrumbs}
+        pivotIndex={pivotIndex}
         showContexts={showContexts}
         style={style}
         thoughtsRanked={thoughtsRanked}
@@ -614,6 +621,7 @@ const ThoughtContainer = ({
         isEditing={isEditing}
         isLeaf={isLeaf}
         publish={publish}
+        pivotIndex={pivotIndex}
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
@@ -623,7 +631,7 @@ const ThoughtContainer = ({
         toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
       />
 
-      <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain}/>
+      <Note context={thoughtsLive} thoughtsRanked={thoughtsRankedLive!} contextChain={contextChain} pivotIndex={pivotIndex}/>
 
     </div>
 
@@ -637,6 +645,7 @@ const ThoughtContainer = ({
       childrenForced={childrenForced}
       count={count}
       depth={depth}
+      pivotIndex={pivotIndex}
       contextChain={contextChain}
       allowSingleContext={allowSingleContext}
       isParentHovering={isAnyChildHovering}

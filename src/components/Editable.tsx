@@ -10,7 +10,7 @@ import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import { Child, Connected, Context, Path, TutorialChoice } from '../types'
-import { GenericObject } from '../utilTypes'
+import { GenericObject, Nullable } from '../utilTypes'
 
 // constants
 import {
@@ -110,6 +110,7 @@ interface EditableProps {
   rank: number,
   showContexts?: boolean,
   style?: GenericObject<string>,
+  pivotIndex: Nullable<number>,
   thoughtsRanked: Path,
   onKeyDownAction?: () => void,
 }
@@ -151,10 +152,10 @@ const showDuplicationAlert = duplicateAlertToggler()
  * An editable thought with throttled editing.
  * Use rank instead of headRank(thoughtsRanked) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
+const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, pivotIndex, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(thoughtsRanked)
-  const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
+  const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked, pivotIndex) : thoughtsRanked
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
@@ -213,6 +214,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     dispatch({
       type: 'setCursor',
       contextChain,
+      pivotIndex,
       cursorHistoryClear: true,
       editing,
       // set offset to null to prevent setSelection on next render

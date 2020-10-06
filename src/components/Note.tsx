@@ -6,6 +6,7 @@ import { attribute, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { Child, Context, Path } from '../types'
+import { Nullable } from '../utilTypes'
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = (noteEl: HTMLElement) =>
@@ -13,7 +14,7 @@ const editableOfNote = (noteEl: HTMLElement) =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, thoughtsRanked: Path, contextChain: Child[][] }) => {
+const Note = ({ context, thoughtsRanked, contextChain, pivotIndex }: { context: Context, thoughtsRanked: Path, contextChain: Child[][], pivotIndex: Nullable<number> }) => {
 
   const state = store.getState()
   const hasNote = hasChild(state, context, '=note')
@@ -78,7 +79,7 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
 
   /** Sets the cursor on the note's thought when then note is focused. */
   const onFocus = () => {
-    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: true, noteFocus: true })
+    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, pivotIndex, cursorHistoryClear: true, editing: true, noteFocus: true })
   }
 
   /** Set editing to false onBlur, if keyboard is closed. */

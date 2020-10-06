@@ -6,6 +6,7 @@ import { importText } from '../../action-creators'
 import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
+import { chain } from '../../selectors'
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
 const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
@@ -166,5 +167,50 @@ describe('context view', () => {
         thoughtsRanked: [{ value: 'b' }, { value: 'ones' }, { value: 'y' }],
       })
   })
+
+})
+
+it('generate proper thoughtsResolved for circular path in context view', async () => {
+
+  // import thoughts
+  await store.dispatch(importText(RANKED_ROOT, `
+  - a
+    - b
+      - c
+        - d
+          - c`))
+
+  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+    { value: 'a', rank: 0 },
+    { value: 'b', rank: 1 },
+    { value: 'c', rank: 2 },
+    { value: 'd', rank: 3 },
+    { value: 'c', rank: 4 },
+  ]
+  })
+
+  store.dispatch({ type: 'toggleContextView' })
+
+  // update DOM
+  wrapper.update()
+
+  const subthoughtsNestedC = wrapper
+    .find(Subthoughts)
+    .filterWhere(whereContext(['a', 'b', 'c', 'd', 'c']))
+
+  // assert that there are two nested c rendered
+  expect(subthoughtsNestedC).toHaveLength(2)
+
+  // assert pivotIndex passed to nested `c` in context view is correct
+  expect(subthoughtsNestedC.at(1).props().pivotIndex).toEqual(4)
+
+  const thoughtsResolved = chain(store.getState(),
+    subthoughtsNestedC.at(1).props().contextChain,
+    subthoughtsNestedC.at(1).props().thoughtsRanked,
+    subthoughtsNestedC.at(1).props().pivotIndex
+  )
+
+  // assert thoughtsResolved is correct for circular path
+  expect(pathToContext(thoughtsResolved)).toEqual(['a', 'b', 'c', 'd', 'c', 'd'])
 
 })

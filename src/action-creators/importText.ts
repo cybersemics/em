@@ -3,6 +3,7 @@ import { parse } from 'jex-block-parser'
 import he from 'he'
 import { contextOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedContextOf, strip } from '../util'
 import { ActionCreator, Path } from '../types'
+import { Payload } from '../reducers/updateThoughts'
 
 // declare types until jex-block-parser merges PR
 // https://github.com/reergymerej/block-parser/pull/1
@@ -114,7 +115,7 @@ interface Options {
     @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
     @param skipRoot          See importHtml @param.
  */
-const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor, preventSync, rawDestValue, skipRoot }: Options = {}): ActionCreator => (dispatch, getState) => {
+const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor, preventSync, rawDestValue, skipRoot }: Options = {}): ActionCreator<Promise<Payload | { newValue: string }>> => (dispatch, getState) => {
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(thoughtsRanked)
@@ -185,10 +186,12 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
       })
     }
 
-    return Promise.resolve({
+    const updates = {
       contextIndexUpdates,
       thoughtIndexUpdates,
-    })
+    }
+
+    return Promise.resolve<Payload>(updates)
   }
 }
 

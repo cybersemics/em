@@ -57,6 +57,7 @@ import {
   isChildVisible,
   isContextViewActive,
 } from '../selectors'
+import { Nullable } from '../utilTypes'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -68,6 +69,7 @@ interface SubthoughtsProps {
   depth?: number,
   expandable?: boolean,
   isParentHovering?: boolean,
+  pivotIndex: Nullable<number>,
   showContexts?: boolean,
   sort?: string,
   thoughtsRanked: Path,
@@ -107,7 +109,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked, props.pivotIndex)
     : unroot(props.thoughtsRanked)
 
   // check if the cursor path includes the current thought
@@ -354,6 +356,7 @@ export const SubthoughtsComponent = ({
   isEditingAncestor,
   isHovering,
   isParentHovering,
+  pivotIndex,
   showContexts,
   showHiddenThoughts,
   sort: contextSort,
@@ -371,7 +374,7 @@ export const SubthoughtsComponent = ({
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked)
+    ? chain(state, contextChain, thoughtsRanked, pivotIndex)
     : unroot(thoughtsRanked)
 
   // @ts-ignore
@@ -549,6 +552,7 @@ export const SubthoughtsComponent = ({
             allowSingleContext={allowSingleContextParent}
             // grandchildren can be manually added in code view
             childrenForced={child.children}
+            pivotIndex={showContexts ? childPath.length - 1 : pivotIndex}
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}

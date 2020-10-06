@@ -25,6 +25,7 @@ import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
+import { Nullable } from '../utilTypes'
 
 interface ThoughtAnnotationProps {
   contextChain?: Child[][],
@@ -35,6 +36,7 @@ interface ThoughtAnnotationProps {
   invalidState?: boolean | null,
   isEditing?: boolean,
   minContexts?: number,
+  pivotIndex: Nullable<number>,
   showContextBreadcrumbs?: boolean,
   showContexts?: boolean,
   showHiddenThoughts?: boolean,
@@ -63,7 +65,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
   // reerender annotation in realtime when thought is edited
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.thoughtsRanked, props.pivotIndex)
     : unroot(props.thoughtsRanked)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing

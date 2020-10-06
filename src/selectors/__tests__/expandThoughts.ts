@@ -62,7 +62,7 @@ describe('normal view', () => {
   - c
     - d`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const thoughts = await importText(RANKED_ROOT, text, {})(NOOP, initialState)
 
     const steps = [
       updateThoughts(thoughts),

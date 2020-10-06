@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 import { Child, Lexeme, Parent } from '../types'
 import { GenericObject } from '../utilTypes'
 
-interface Payload {
+export interface Payload {
   thoughtIndexUpdates: GenericObject<Lexeme | null>,
   contextIndexUpdates: GenericObject<Parent | null>,
   recentlyEdited?: GenericObject<any>,
