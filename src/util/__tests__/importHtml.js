@@ -93,6 +93,31 @@ it('multiple li\'s', () => {
 `)
 })
 
+it('items separated by <br>', () => {
+  expect(importExport('<p>a<br>b<br>c<br></p>'))
+    .toBe(`
+- a
+- b
+- c
+`)
+})
+
+it('nested lines separated by <br>', () => {
+  expect(importExport(`
+<li>x
+  <ul>
+    <li>a<br>b<br>c<br></li>
+  </ul>
+</li>
+`))
+    .toBe(`
+- x
+  - a
+  - b
+  - c
+`)
+})
+
 it('nested li\'s', () => {
   expect(importExport(`
 <li>a<ul>
@@ -139,8 +164,7 @@ it('<span> with nested li\'s', () => {
 `)
 })
 
-// conflicts with "simple ul" test in current implementation
-it.skip('empty thought with nested li\'s', () => {
+it('empty thought with nested li\'s', () => {
   expect(importExport(`
 <li>
   <ul>

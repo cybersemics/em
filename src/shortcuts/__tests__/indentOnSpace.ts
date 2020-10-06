@@ -1,6 +1,6 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { importText } from '../../action-creators'
-import { exportContext } from '../../selectors'
+import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import indentOnSpace from '../indentOnSpace'
 import executeShortcut from '../../test-helpers/executeShortcut'
@@ -17,10 +17,7 @@ it('indent on adding space at the beginning of the thought', async () => {
         - c
         - d`))
 
-  store.dispatch({
-    type: 'setCursor',
-    thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }],
-  })
+  store.dispatch({ type: 'setCursor', thoughtsRanked: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 
   executeShortcut(indentOnSpace, { store, type: 'keyboard', event })
 

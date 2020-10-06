@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { isMobile } from '../browser'
 import expandContextThought from '../action-creators/expandContextThought'
 import { MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { getSetting, getThoughts, isChildVisible, isTutorial } from '../selectors'
+import { attribute, getSetting, getThoughts, isChildVisible, isTutorial } from '../selectors'
 import { publishMode } from '../util'
 import { State } from '../util/initialState'
 
@@ -29,6 +29,8 @@ const mapStateToProps = (state: State) => {
 
   // do no sort here as the new object reference would cause a re-render even when the children have not changed
   const rootThoughtsLength = (showHiddenThoughts ? getThoughts(state, [ROOT_TOKEN]) : getThoughts(state, [ROOT_TOKEN]).filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
+  // pass rootSort to allow root Subthoughts ro render on toggleSort
+  const rootSort = attribute(state, RANKED_ROOT, '=sort') || 'None'
 
   return {
     focus,
@@ -37,7 +39,8 @@ const mapStateToProps = (state: State) => {
     isTutorialLocal,
     tutorialStep,
     rootThoughtsLength,
-    noteFocus
+    noteFocus,
+    rootSort
   }
 }
 
@@ -68,7 +71,7 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus } = props
+  const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus, rootSort } = props
   const contentRef = useRef()
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
@@ -114,6 +117,7 @@ const Content: ContentComponent = props => {
           {rootThoughtsLength === 0 ? <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} /> : <Subthoughts
             thoughtsRanked={RANKED_ROOT}
             expandable={true}
+            sort={rootSort}
           />}
         </React.Fragment>
       }

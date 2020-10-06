@@ -7,6 +7,7 @@ import {
 } from '../../action-creators'
 
 import { createTestStore } from '../../test-helpers/createTestStore'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
 
@@ -14,14 +15,13 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([
-      importText(RANKED_ROOT, `
+    store.dispatch(importText(RANKED_ROOT, `
       - a
         - a1
-      - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 3 }] },
-      cursorPrev()
-    ])
+      - b`))
+
+    setCursorFirstMatch(['b'])(store.getState())
+    store.dispatch(cursorPrev())
 
     expect(store.getState().cursor)
       .toMatchObject([{ value: 'a' }])
@@ -72,30 +72,29 @@ describe('normal view', () => {
 
   })
 
-  // it('work for sorted thoughts', () => {
+  // it('sorted thoughts', () => {
 
   //   const store = createTestStore()
 
-  //   store.dispatch(importText(RANKED_ROOT, `
-  //   - SORT
-  //     - a
-  //     - c
-  //     - b
-  //       - b1`))
-
-  //   store.dispatch({
-  //     type: 'toggleAttribute',
-  //     context: ['SORT'],
-  //     key: '=sort',
-  //     value: 'Alphabetical'
-  //   })
-
-  //   store.dispatch({
-  //     type: 'setCursor',
-  //     thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'c', rank: 2 }],
-  //   })
-
-  //   store.dispatch(cursorPrev())
+  //   store.dispatch([
+  //     importText(RANKED_ROOT, `
+  //     - SORT
+  //       - a
+  //       - c
+  //       - b
+  //         - b1`),
+  //     {
+  //       type: 'toggleAttribute',
+  //       context: ['SORT'],
+  //       key: '=sort',
+  //       value: 'Alphabetical'
+  //     },
+  //     {
+  //       type: 'setCursor',
+  //       thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'c', rank: 2 }],
+  //     },
+  //     cursorPrev()
+  //   ])
 
   //   expect(store.getState().cursor)
   //     .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 3 }])
@@ -106,14 +105,12 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([
-      importText(RANKED_ROOT, `
+    store.dispatch(importText(RANKED_ROOT, `
       - a
         - a1
-      - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 3 }] },
-      cursorPrev()
-    ])
+      - b`))
+    setCursorFirstMatch(['b'])(store.getState())
+    store.dispatch(cursorPrev())
 
     expect(store.getState().cursor)
       .toMatchObject([{ value: 'a' }])

@@ -1,9 +1,10 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
-import { contextOf, pathToContext } from '../util'
+import { pathToContext, rootedContextOf } from '../util'
 import { State } from '../util/initialState'
 import { Nullable } from '../utilTypes'
+import { ROOT_TOKEN } from '../constants'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -41,19 +42,14 @@ const toggleSortShortcut: Shortcut = {
     const globalSort = getSetting(state, ['Global Sort'])
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
 
-    if (cursor) {
+    dispatch({
+      type: 'toggleAttribute',
+      context: pathToContext(rootedContextOf(cursor!)) || [ROOT_TOKEN],
+      key: '=sort',
+      value: sortPreference
+    })
 
-      const path = contextOf(cursor)
-      if (path.length === 0) return
-
-      dispatch({
-        type: 'toggleAttribute',
-        context: pathToContext(path),
-        key: '=sort',
-        value: sortPreference
-      })
-      dispatch({ type: 'setCursor', thoughtsRanked: state.cursor })
-    }
+    if (cursor) dispatch({ type: 'setCursor', thoughtsRanked: state.cursor })
   }
 }
 

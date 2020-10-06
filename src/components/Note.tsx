@@ -34,6 +34,7 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || (e.metaKey && e.altKey && e.keyCode === 'N'.charCodeAt(0))) {
       e.stopPropagation()
+      e.preventDefault()
       editableOfNote(e.target as HTMLElement).focus()
       setSelection(editableOfNote(e.target as HTMLElement), { end: true })
     }
