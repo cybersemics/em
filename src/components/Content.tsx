@@ -72,7 +72,7 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 /** The main content section of em. */
 const Content: ContentComponent = props => {
   const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus, rootSort } = props
-  const contentRef = useRef()
+  const contentRef = useRef<HTMLDivElement>(null)
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace = () => {
@@ -100,13 +100,12 @@ const Content: ContentComponent = props => {
   }), [tutorialStep, isTutorialLocal])
 
   return <div id='content-wrapper' onClick={e => {
-    if (!showModal && isLeftSpaceClick(e, contentRef.current)) {
+    if (!showModal && isLeftSpaceClick(e, contentRef.current!)) {
       toggleSidebar()
     }
   }}>
     <div
       id='content'
-      // @ts-ignore
       ref={contentRef}
       className={contentClassNames}
       onClick={clickOnEmptySpace}
