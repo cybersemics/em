@@ -37,7 +37,7 @@ const skipRootThought = (blocks: Block[]) => {
 }
 
 /** Calculate last thought of the first level, as this is where the selection will be restored to. */
-const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number, blocks: Block[]) => {
+const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number, blocks: Block[]): Child => {
   const lastThoughtFirstLevelIndex = blocks.length - 1
   const lastThoughtFirstLevel = blocks[lastThoughtFirstLevelIndex]
   const rank = lastThoughtFirstLevelIndex * rankIncrement + rankStart
