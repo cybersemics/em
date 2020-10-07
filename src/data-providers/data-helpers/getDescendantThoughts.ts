@@ -1,11 +1,9 @@
-import _ from 'lodash'
-import { ID } from '../../constants'
-import { Context, Lexeme, Parent } from '../../types'
-import { GenericObject } from '../../utilTypes'
+import { Context, Parent } from '../../types'
 import { DataProvider } from '../DataProvider'
 import { ThoughtsInterface } from '../../util/initialState'
-import { hashContext, hashThought, never, unroot, yieldAll } from '../../util'
+import { hashContext, hashThought, head, never, unroot, yieldAll } from '../../util'
 import getContext from './getContext'
+import getThought from './getThought'
 
 /**
  * Returns buffered thoughtIndex and contextIndex for all descendants using async iterables.
@@ -14,75 +12,70 @@ import getContext from './getContext'
  * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
-async function* getDescendantThoughts(provider: DataProvider, context: Context, { maxDepth = 100, parentEntry }: { maxDepth?: number, parentEntry?: Parent } = {}): AsyncIterable<ThoughtsInterface> {
+async function* getDescendantThoughts(provider: DataProvider, context: Context, { maxDepth = 100 }: { maxDepth?: number, parentEntry?: Parent } = {}): AsyncIterable<ThoughtsInterface> {
 
   const contextEncoded = hashContext(context)
 
-  // fetch individual parentEntry in initial call
-  // recursive calls on children will pass the parentEntry fetched in batch by getContextsByIds
-  parentEntry = parentEntry || await getContext(provider, context) || {
+  const parentEntry = await getContext(provider, context) || {
     context,
     children: [],
     lastUpdated: never(),
   }
 
+  const lexeme = await getThought(provider, head(context))
+
   if (maxDepth === 0) {
     yield {
-      contextCache: [],
+      contextCache: [contextEncoded],
       contextIndex: {
         [contextEncoded]: {
+          id: parentEntry.id,
           context,
           children: [],
           // TODO: Why not return the children if we already have them?
-          // ...parentEntry,
           lastUpdated: never(),
           pending: true,
         }
       },
-      thoughtCache: [],
-      thoughtIndex: {}
+      thoughtCache: lexeme ? [hashThought(lexeme.value)] : [],
+      thoughtIndex: {
+        ...lexeme ? { [hashThought(lexeme.value)]: lexeme } : null,
+      }
     }
     return
   }
 
-  // generate a list of hashed thoughts and a map of contexts { [hash]: context } for all children
-  // must save context map instead of just list of hashes for the recursive call
-  // @ts-ignore
-  const { thoughtIds, contextMap }: {
-    thoughtIds: string[],
-    contextMap: GenericObject<Context>,
-  } = (parentEntry.children || []).reduce((accum, child) => ({
-    thoughtIds: [
-      ...accum.thoughtIds || [],
+  // generate a list of thought and context ids for all children
+  const { childrenThoughtIds, childrenContextIds } =
+  (parentEntry.children || []).reduce((accum, child) => ({
+    childrenThoughtIds: [
+      ...accum.childrenThoughtIds || [],
       hashThought(child.value),
     ],
-    contextMap: {
-      ...accum.contextMap,
-      [hashContext(unroot([...context, child.value]))]: unroot([...context, child.value]),
-    }
+    childrenContextIds: [
+      ...accum.childrenContextIds,
+      hashContext(unroot([...context, child.value]))
+    ]
   }), {
-    thoughtIds: [] as string[],
-    contextMap: {} as GenericObject<Context>,
+    childrenThoughtIds: [] as string[],
+    childrenContextIds: [] as string[],
   })
 
-  const contextIds = Object.keys(contextMap)
-  const thoughtList = (await provider.getThoughtsByIds(thoughtIds)).filter(ID) as Lexeme[]
-  const parentEntries = (await provider.getContextsByIds(contextIds)).filter(ID) as Parent[]
-
   const thoughts = {
-    contextCache: contextIds,
+    contextCache: [contextEncoded, ...childrenContextIds],
     contextIndex: {
       [contextEncoded]: parentEntry,
-      ..._.keyBy(parentEntries, 'id')
     },
-    thoughtCache: thoughtIds,
-    thoughtIndex: _.keyBy(thoughtList, 'id')
+    thoughtCache: [...lexeme ? [hashThought(lexeme.value)] : [], ...childrenThoughtIds],
+    thoughtIndex: {
+      ...lexeme ? { [hashThought(lexeme.value)]: lexeme } : null,
+    }
   }
 
   yield thoughts
 
-  yield* yieldAll(parentEntries.map(parentEntry =>
-    getDescendantThoughts(provider, contextMap[parentEntry.id!], { maxDepth: maxDepth - 1, parentEntry })
+  yield* yieldAll(parentEntry.children.map(child =>
+    getDescendantThoughts(provider, unroot([...context, child.value]), { maxDepth: maxDepth - 1 })
   ))
 }
 

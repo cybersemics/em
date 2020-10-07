@@ -2,13 +2,12 @@ import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import all from 'it-all'
 import * as db from '../data-providers/dexie'
-import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import * as firebaseProvider from '../data-providers/firebase'
-// import { loadRemoteState } from '../action-creators'
+import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getThoughtsOfEncodedContext, hasSyncs } from '../selectors'
 import { equalArrays, hashContext, mergeThoughts, pathToContext, unroot } from '../util'
-import { State } from '../util/initialState'
+import { State, ThoughtsInterface } from '../util/initialState'
 import { Context, Path } from '../types'
 import { GenericObject } from '../utilTypes'
 
@@ -163,18 +162,29 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     pending = {}
 
     // get local thoughts
-    const thoughtChunks = await all(getManyDescendants(db, pendingThoughts, { maxDepth: bufferDepth }))
-    const thoughtsLocal = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
+    const thoughtChunks: ThoughtsInterface[] = []
 
-    // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
-    // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
-    dispatch({
-      type: 'updateThoughts',
-      contextIndexUpdates: thoughtsLocal.contextIndex,
-      thoughtIndexUpdates: thoughtsLocal.thoughtIndex,
-      local: false,
-      remote: false,
-    })
+    // eslint-disable-next-line fp/no-loops
+    for await (const thoughts of getManyDescendants(db, pendingThoughts, { maxDepth: bufferDepth })) {
+
+      // eslint-disable-next-line fp/no-mutating-methods
+      thoughtChunks.push(thoughts)
+
+      // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
+      // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
+      dispatch({
+        type: 'updateThoughts',
+        contextIndexUpdates: thoughts.contextIndex,
+        thoughtIndexUpdates: thoughts.thoughtIndex,
+        local: false,
+        remote: false,
+      })
+    }
+
+    // re-render after local thoughts are all loaded
+    dispatch({ type: 'render' })
+
+    const thoughtsLocal = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
     // get remote thoughts and reconcile with local
     const user = getState().user
@@ -191,7 +201,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
         })
     }
 
-    // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending wil properly check visibleContexts and fetch any pending thoughts that are visible.
+    // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
     const hasPending = Object.keys(thoughtsLocal.contextIndex || {})
       .some(key => (thoughtsLocal.contextIndex || {})[key].pending)
     if (!user && hasPending) {
