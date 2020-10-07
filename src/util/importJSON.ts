@@ -102,6 +102,7 @@ export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], 
       const contextEncoded = hashContext(rootedContext)
       contextIndexUpdates[contextEncoded] = {
         ...contextIndexUpdates[contextEncoded],
+        context: rootedContext,
         children: getThoughts(state, rootedContext)
           .filter(child => !equalThoughtRanked(child, destThought)),
         lastUpdated,
@@ -137,6 +138,7 @@ export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], 
     const childrenUpdates = contextIndexUpdates[contextEncoded] ? contextIndexUpdates[contextEncoded].children : []
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
+      context: rootContext,
       children: [...childrenUpdates, {
         value,
         rank,

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
 import * as db from '../data-providers/dexie'
@@ -9,12 +7,14 @@ import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 import { hashContext, isFunction, logWithTime, timestamp } from '../util'
+import { Lexeme, Parent } from '../types'
+import { GenericObject } from '../utilTypes'
 
 /** Options object for sync. */
 interface Options {
   local?: boolean,
   remote?: boolean,
-  updates?: GenericObject<string>,
+  updates?: GenericObject<any>,
   recentlyEdited: GenericObject<any>,
 }
 
@@ -30,7 +30,7 @@ const localStorageSettingsContexts = _.keyBy(
 )
 
 /** Syncs thought updates to the local database. */
-const syncLocal = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}) => {
+const syncLocal = (thoughtIndexUpdates: GenericObject<Lexeme> = {}, contextIndexUpdates: GenericObject<Parent> = {}, recentlyEdited: GenericObject<any>, updates: GenericObject<any> = {}): Promise<any> => {
 
   // thoughtIndex
   const thoughtIndexPromises = [
@@ -41,26 +41,26 @@ const syncLocal = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyE
       return db.deleteThought(key)
     }),
     db.updateLastUpdated(timestamp())
-  ]
+  ] as Promise<any>[]
 
   logWithTime('sync: thoughtIndexPromises generated')
 
   // contextIndex
   const contextIndexPromises = [
     ...Object.keys(contextIndexUpdates).map(contextEncoded => {
-      const contextIndexEntry = contextIndexUpdates[contextEncoded] || {}
+      const parentEntry = contextIndexUpdates[contextEncoded] || {}
 
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[contextEncoded]
       if (name) {
-        const firstChild = contextIndexEntry.children && contextIndexEntry.children.find(child => !isFunction(child.value))
+        const firstChild = parentEntry.children && parentEntry.children.find(child => !isFunction(child.value))
         if (firstChild) {
           localStorage.setItem(`Settings/${name}`, firstChild.value)
         }
       }
 
-      return contextIndexEntry.children && contextIndexEntry.children.length > 0
-        ? db.updateContext(contextEncoded, contextIndexEntry)
+      return parentEntry.children && parentEntry.children.length > 0
+        ? db.updateContext(contextEncoded, parentEntry)
         : db.deleteContext(contextEncoded)
     }),
     db.updateLastUpdated(timestamp())
@@ -89,7 +89,7 @@ const syncLocal = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyE
 }
 
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
-const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recentlyEdited, updates = {}) => {
+const syncRemote = async (thoughtIndexUpdates: GenericObject<Lexeme | null> = {}, contextIndexUpdates: GenericObject<Parent | null> = {}, recentlyEdited: GenericObject<any>, updates: GenericObject<any> = {}) => {
 
   const state = store.getState()
 
@@ -99,7 +99,7 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
     Object.keys(updates).length > 0
 
   // prepend thoughtIndex/ and encode key
-  const prependedDataUpdates = _.transform(thoughtIndexUpdates, (accum, thought, key) => {
+  const prependedDataUpdates = _.transform(thoughtIndexUpdates, (accum: GenericObject<Lexeme | null>, thought: Lexeme | null, key: string) => {
     if (!key) {
       console.error('Unescaped empty key', thought, new Error())
       return
@@ -108,7 +108,7 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
     // fix undefined/NaN rank
     accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = thought && getSetting(state, 'Data Integrity Check') === 'On'
       ? {
-        lastUpdated: thought.lastUpdated || timestamp(),
+        rank: 0, // TODO: Why does Lexeme have rank?
         value: thought.value,
         contexts: thought.contexts.map(cx => ({
           context: cx.context || null, // guard against NaN or undefined
@@ -116,20 +116,22 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
           ...cx.lastUpdated ? {
             lastUpdated: cx.lastUpdated
           } : null
-        }))
+        })),
+        created: thought.created || timestamp(),
+        lastUpdated: thought.lastUpdated || timestamp(),
       }
       : thought
-  }, {})
+  }, {} as GenericObject<Lexeme | null>)
 
   logWithTime('syncRemote: prepend thoughtIndex key')
 
   const dataIntegrityCheck = getSetting(state, 'Data Integrity Check') === 'On'
-  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum, parentContext, key) => {
+  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum: GenericObject<Parent | null>, parentContext: Parent | null, key) => {
     // fix undefined/NaN rank
     const children = parentContext && parentContext.children
     accum['contextIndex/' + key] = children && children.length > 0
       ? {
-        context: parentContext.context,
+        context: parentContext!.context,
         children: dataIntegrityCheck
           ? children.map(subthought => ({
             value: subthought.value || '', // guard against NaN or undefined,
@@ -139,10 +141,10 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
             } : null
           }))
           : children,
-        lastUpdated: parentContext.lastUpdated || timestamp(),
+        lastUpdated: parentContext!.lastUpdated || timestamp(),
       }
       : null
-  }, {})
+  }, {} as GenericObject<Parent | null>)
 
   logWithTime('syncRemote: prepend contextIndex key')
 
@@ -177,7 +179,7 @@ const syncRemote = async (thoughtIndexUpdates = {}, contextIndexUpdates = {}, re
 }
 
 /** Syncs updates to local database and Firebase. */
-export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates, recentlyEdited }: SyncOptions = {}) => {
+export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}) => {
 
   const { authenticated, userRef } = store.getState()
 
