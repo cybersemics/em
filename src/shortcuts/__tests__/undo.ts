@@ -124,8 +124,8 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
       context: ['a'],
       oldValue: 'b',
       newValue: 'bd',
-      rankInContext: 1,
-      thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }]
+      rankInContext: 0,
+      thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
     },
     // dispensible set cursor (which only updates datanonce)
     { type: 'setCursor', thoughtsRanked: null },
