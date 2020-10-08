@@ -1,56 +1,64 @@
-import { applyPatch, compare, deepClone } from 'fast-json-patch'
-import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import _ from 'lodash'
+import { applyPatch, compare, deepClone } from 'fast-json-patch'
+import { Action, StoreEnhancer } from 'redux'
+import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
+import { State } from '../util/initialState'
+import { GenericObject } from '../utilTypes'
+import { Patch } from '../types'
+
+const stateSectionsToOmit = ['alert']
 
 const deadActionChecks = {
-  dataNonce: patch => patch.length === 1 && patch[0].path === '/dataNonce'
+  dataNonce: (patch: Patch) => patch.length === 1 && patch[0].path === '/dataNonce'
 }
-const stateSectionsToOmit = ['alert']
 
 /**
  * Checks if the patch only includes the opearations that don't impact the UI, and can be dispensed.
  */
-const isDispensable = patch => Object.values(deadActionChecks).reduce((acc, curr) => acc || curr(patch), false)
+const isDispensable = (patch: Patch) =>
+  Object.values(deadActionChecks).reduce((acc, curr) => acc || curr(patch), false)
 
 /**
  * Combines two patches by appending operations from the latter to the former.
  */
-const appendPatch = (patch, toAppend) => [...patch, ...toAppend]
+const appendPatch = (patch: Patch, toAppend: Patch) => [...patch, ...toAppend]
 
 /**
  * Returns the diff between two state values after omitting certain parts of them.
  */
-const compareWithOmit = (newValue, value) => compare(_.omit(newValue, stateSectionsToOmit), _.omit(value, stateSectionsToOmit))
+const compareWithOmit = <T>(newValue: GenericObject<T>, value: GenericObject<T>): Patch =>
+  compare(_.omit(newValue, stateSectionsToOmit), _.omit(value, stateSectionsToOmit)) as Patch
 
 /**
  * Checks if the action type is existingThoughtChange.
  */
-const isExistingThoughtChange = actionType => actionType === 'existingThoughtChange'
+const isExistingThoughtChange = (actionType: string) => actionType === 'existingThoughtChange'
 
 /**
  * Append actions to all operations of a patch.
  */
-const addActionsToPatch = (patch, actions) => patch.map(operation => ({ ...operation, actions }))
+const addActionsToPatch = (patch: Patch, actions: string[]) =>
+  patch.map(operation => ({ ...operation, actions }))
 
 /**
  * Gets the first action from a patch.
  */
-const getPatchAction = patch => patch[0].actions[0]
+const getPatchAction = <T>(patch: Patch) => patch[0].actions[0]
 
 /**
  * Gets the nth item from the end of an array.
  */
-const nthLast = (arr, n) => arr[arr.length - n]
+const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
 
 /**
  * Applies the last inverse-patch to get the next state and adds a corresponding reverse-patch for the same.
  */
-const undoReducer = state => {
+const undoReducer = (state: State) => {
   const { patches, inversePatches } = state
   const lastInversePatch = nthLast(inversePatches, 1)
   if (!lastInversePatch) return state
-  const newState = applyPatch(deepClone(state), lastInversePatch).newDocument
-  const correspondingPatch = addActionsToPatch(compareWithOmit(newState, state), [...lastInversePatch[0].actions])
+  const newState = applyPatch(deepClone(state) as State, lastInversePatch).newDocument
+  const correspondingPatch = addActionsToPatch(compareWithOmit(newState as GenericObject<any>, state), [...lastInversePatch[0].actions])
   return {
     ...newState,
     cursorBeforeEdit: newState.cursor,
@@ -62,12 +70,12 @@ const undoReducer = state => {
 /**
  * Applies the last patch to get the next state and adds a corresponding inverse patch for the same.
  */
-const redoReducer = state => {
+const redoReducer = (state: State) => {
   const { patches, inversePatches } = state
   const lastPatch = nthLast(patches, 1)
   if (!lastPatch) return state
   const newState = applyPatch(deepClone(state), lastPatch).newDocument
-  const correspondingInversePatch = addActionsToPatch(compareWithOmit(newState, state), [...lastPatch[0].actions])
+  const correspondingInversePatch = addActionsToPatch(compareWithOmit(newState as GenericObject<any>, state), [...lastPatch[0].actions])
   return {
     ...newState,
     cursorBeforeEdit: newState.cursor,
@@ -79,7 +87,7 @@ const redoReducer = state => {
 /**
  * Controls the number of undo operations based on the inversepatch history.
  */
-const undoHandler = (state, inversePatches) => {
+const undoHandler = (state: State, inversePatches: Patch[]) => {
   const lastInversePatch = nthLast(inversePatches, 1)
   const lastAction = lastInversePatch && getPatchAction(lastInversePatch)
   const penultimateInversePatch = nthLast(inversePatches, 2)
@@ -94,7 +102,7 @@ const undoHandler = (state, inversePatches) => {
 /**
  * Controls the number of redo operations based on the patch history.
  */
-const redoHandler = (state, patches) => {
+const redoHandler = (state: State, patches: Patch[]) => {
   const lastPatch = nthLast(patches, 1)
   const lastAction = lastPatch && getPatchAction(lastPatch)
   return patches.length ?
@@ -107,20 +115,18 @@ const redoHandler = (state, patches) => {
 /**
  * Store enhancer to append the ability to undo/redo for all undoable actions.
  */
-const undoRedoReducerEnhancer = createStore => (
-  reducer,
-  initialState,
-  enhancer
-) => {
+// @ts-ignore
+const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialState: State) => {
   // eslint-disable-next-line fp/no-let
-  let lastActionType
+  let lastActionType: string
 
   /**
    * Reducer to handle undo/redo actions and add/merge inverse-patches for other actions.
    */
-  const undoAndRedoReducer = (state = initialState, action) => {
+  const undoAndRedoReducer = (state = initialState, action: Action<string>) => {
+    // @ts-ignore
     if (!state) return reducer(initialState, action)
-    const { patches, inversePatches } = state
+    const { patches, inversePatches } = state as State
     const actionType = action.type
 
     const undoOrRedoState = actionType === 'undoAction' ?
@@ -131,7 +137,8 @@ const undoRedoReducerEnhancer = createStore => (
 
     if (undoOrRedoState) return undoOrRedoState
 
-    const newState = reducer(state, action)
+    // @ts-ignore
+    const newState = reducer(state, action) as State
     if (!UNDOABLE_ACTIONS[actionType]) {
       return newState
     }
@@ -143,7 +150,7 @@ const undoRedoReducerEnhancer = createStore => (
       const lastState = lastInversePatch
         ? applyPatch(deepClone(state), lastInversePatch).newDocument
         : state
-      const combinedInversePatch = compareWithOmit(newState, lastState)
+      const combinedInversePatch = compareWithOmit(newState as GenericObject<any>, lastState)
       return {
         ...newState,
         inversePatches: [
@@ -161,7 +168,7 @@ const undoRedoReducerEnhancer = createStore => (
     lastActionType = actionType
 
     // add a new inverse patch
-    const inversePatch = compareWithOmit(newState, state)
+    const inversePatch = compareWithOmit(newState as GenericObject<any>, state)
 
     // if the patch is dispensable, combine it with the last patch
     // Note: we can't simply ignore a dispensable patch because that would result in
@@ -187,7 +194,7 @@ const undoRedoReducerEnhancer = createStore => (
       : newState
   }
 
-  return createStore(undoAndRedoReducer, initialState, enhancer)
+  return createStore(undoAndRedoReducer, initialState)
 }
 
 export default undoRedoReducerEnhancer

@@ -212,7 +212,7 @@ export const MODIFIER_KEYS = {
 // actions representing any cursor movements.
 // These need to be differentiated from the other actions because
 // any two or more such consecutive actions are merged together
-export const NAVIGATION_ACTIONS = {
+export const NAVIGATION_ACTIONS: GenericObject<string> = {
   cursorBack: 'cursorBack',
   cursorBeforeSearch: 'cursorBeforeSearch',
   cursorDown: 'cursorDown',
@@ -223,7 +223,7 @@ export const NAVIGATION_ACTIONS = {
 }
 
 // a list of all undoable/reversible actions (stored as object for indexing)
-export const UNDOABLE_ACTIONS = {
+export const UNDOABLE_ACTIONS: GenericObject<string> = {
   archiveThought: 'archiveThought',
   bumpThoughtDown: 'bumpThoughtDown',
   cursorBack: 'cursorBack',
@@ -263,7 +263,7 @@ export const UNDOABLE_ACTIONS = {
 }
 
 // modal states
-export const MODALS: GenericObject = {
+export const MODALS: GenericObject<string> = {
   welcome: 'welcome',
   help: 'help',
   home: 'home',
