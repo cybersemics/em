@@ -265,9 +265,12 @@ it('state.alert is omitted from the undo patch', () => {
   ])
   const { inversePatches } = store.getState()
   const lastPatch = inversePatches[inversePatches.length - 1]
-  const alertExists = lastPatch.find(({ path }: {path: string}) => path.includes('/alert'))
 
-  expect(alertExists).toBeFalsy()
+  const thoughtsExists = lastPatch.some(({ path }) => path.includes('/thoughts'))
+  expect(thoughtsExists).toEqual(true)
+
+  const alertExists = lastPatch.some(({ path }) => path.includes('/alert'))
+  expect(alertExists).toEqual(false)
 
 })
 
