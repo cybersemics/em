@@ -1,6 +1,6 @@
 import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Context, Lexeme, Parent, Path } from '../types'
+import { Alert, Context, Lexeme, Parent, Patch, Path } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
 
@@ -94,8 +94,8 @@ export interface State {
   toolbarOverlay: string | null,
   tutorialStep?: number,
   user?: any,
-  patches: any[],
-  inversePatches: any[],
+  patches: Patch[],
+  inversePatches: Patch[],
 }
 
 export type PartialStateWithThoughts =
