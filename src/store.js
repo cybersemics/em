@@ -11,6 +11,7 @@ import thunk from 'redux-thunk'
 import syncQueue from './redux-middleware/syncQueue'
 import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
+import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -21,5 +22,5 @@ export const store = createStore(
     thunk,
     syncQueue,
     updateUrlHistory
-  ))
+  ), undoRedoReducerEnhancer)
 )

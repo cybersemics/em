@@ -1,3 +1,4 @@
+import { GetOperation } from 'fast-json-patch'
 import { Dispatch, ReactNode } from 'react'
 import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
@@ -120,3 +121,11 @@ export type Alert = {
   showCloseLink?: boolean,
   value: string | null,
 } | null
+
+// Extend fast-json-patch Operation type to include actions list
+// See fast-json-patch types: https://github.com/Starcounter-Jack/JSON-Patch/blob/89a09e94e0e6500115789e33586a75c8dd1aea13/module/core.d.ts
+interface ExtendedOperation extends GetOperation<any> {
+  actions: string[],
+}
+
+export type Patch = ExtendedOperation[]
