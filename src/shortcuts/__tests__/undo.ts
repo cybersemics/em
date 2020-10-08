@@ -91,7 +91,8 @@ it('group all navigation actions following an undoable(non-navigation) action an
     { type: 'cursorBack' },
     { type: 'moveThoughtDown' },
     { type: 'cursorDown' },
-    // undo 'moveThoughtDown' and 'cursorDown'
+    { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b1', rank: 0 }] },
+    // undo 'moveThoughtDown', 'cursorDown' and 'setCursor'
     { type: 'undoAction' }
   ])
 
@@ -99,6 +100,14 @@ it('group all navigation actions following an undoable(non-navigation) action an
   expect(cursorAfterFirstUndo).toMatchObject([
     { value: 'a' }])
 
+  const exportedAfterFirstUndo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const expectedOutputAfterFirstUndo = `- ${ROOT_TOKEN}
+  - a
+    - b1
+  - c
+  - d`
+
+  expect(exportedAfterFirstUndo).toEqual(expectedOutputAfterFirstUndo)
   // undo 'cursorBack' and 'existingThoughtChange'
   store.dispatch({ type: 'undoAction' })
 
@@ -106,6 +115,14 @@ it('group all navigation actions following an undoable(non-navigation) action an
   expect(cursorAfterSecondUndo).toMatchObject([
     { value: 'a' }, { value: 'b' }])
 
+  const exportedAfterSecondUndo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const expectedOutputAfterSecondUndo = `- ${ROOT_TOKEN}
+  - a
+    - b
+  - c
+  - d`
+
+  expect(exportedAfterSecondUndo).toEqual(expectedOutputAfterSecondUndo)
 })
 
 it('ignore dead actions/Combine dispensible actions with the preceding patch', () => {
@@ -243,11 +260,14 @@ it('state.alert is omitted from the undo patch', () => {
       - A
       - B`
     ),
-    { type: 'alert', value: 'test' },
+    { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] },
     { type: 'archiveThought' },
   ])
+  const { inversePatches } = store.getState()
+  const lastPatch = inversePatches[inversePatches.length - 1]
+  const alertExists = lastPatch.find(({ path }: {path: string}) => path.includes('/alert'))
 
-  expect(store.getState().inversePatches.length).toEqual(0)
+  expect(alertExists).toBeFalsy()
 
 })
 
