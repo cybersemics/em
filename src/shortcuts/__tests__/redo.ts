@@ -50,42 +50,51 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
 
   store.dispatch([importText(RANKED_ROOT, `
     - a
-    - b`
+    - b
+    - c`
   ),
   { type: 'cursorDown' },
   { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
   { type: 'indent' },
-  {
-    type: 'existingThoughtChange',
-    newValue: 'ar',
-    oldValue: 'a',
-    context: [ROOT_TOKEN],
-    thoughtsRanked: [{ value: 'a', rank: 0 }]
-  },
-  { type: 'cursorBack' },
   { type: 'cursorUp' },
   {
     type: 'existingThoughtChange',
     newValue: 'arizona',
-    oldValue: 'ar',
+    oldValue: 'a',
     context: [ROOT_TOKEN],
-    thoughtsRanked: [{ value: 'ar', rank: 0 }]
+    thoughtsRanked: [{ value: 'a', rank: 0 }]
   },
+  { type: 'setCursor', thoughtsRanked: [{ value: 'arizona', rank: 0 }, { value: 'b', rank: 0 }] },
+  { type: 'cursorBack' },
+  { type: 'cursorUp' },
+  { type: 'cursorDown' },
+  {
+    type: 'existingThoughtChange',
+    newValue: 'boston',
+    oldValue: 'b',
+    context: ['arizona'],
+    thoughtsRanked: [{ value: 'arizona', rank: 0 }, { value: 'b', rank: 0 }]
+  },
+  { type: 'cursorDown' },
   { type: 'undoAction' },
   { type: 'undoAction' },
   // redo all actions preceding a thoughtchange as a single operation
-  { type: 'redoAction' },
   { type: 'redoAction' }
   ])
 
-  const state = store.getState()
-  const exportedAfterRedo = exportContext(state, [ROOT_TOKEN], 'text/plain')
+  const cursorAfterFirstRedo = store.getState().cursor
+  expect(cursorAfterFirstRedo).toMatchObject([{ value: 'arizona', rank: 0 }])
 
+  store.dispatch({ type: 'redoAction' })
+  const state = store.getState()
+  const cursorAfterSecondRedo = store.getState().cursor
+  expect(cursorAfterSecondRedo).toMatchObject([{ value: 'arizona' }, { value: 'boston' }])
+
+  const exportedAfterRedo = exportContext(state, [ROOT_TOKEN], 'text/plain')
   const expectedOutputAfterRedo = `- ${ROOT_TOKEN}
   - arizona
-    - b`
-
-  expect(state.cursor).toMatchObject([{ value: 'arizona' }])
+    - boston
+  - c`
 
   expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
 })
