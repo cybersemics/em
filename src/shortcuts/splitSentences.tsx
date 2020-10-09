@@ -1,9 +1,12 @@
 import React, { Dispatch } from 'react'
+import _ from 'lodash'
 import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { State } from '../util/initialState'
-import { headValue } from '../util'
+import { contextOf, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import { Action } from 'redux'
+import { getThoughts, isContextViewActive } from '../selectors'
+import { ROOT_TOKEN } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' width={size} height={size} fill={fill} style={{ ...style, paddingTop: '8px' }} viewBox='0 0 110 115'>
@@ -19,14 +22,25 @@ const splitSentencesShortcut: Shortcut = {
   svg: Icon,
   canExecute: getState => getState().cursor !== null,
   exec: (dispatch: Dispatch<Action | ActionCreator>, getState: () => State) => {
-    const { cursor } = getState()
+    const state = getState()
+    const { cursor } = state
     const value = headValue(cursor!)
-    const sentences = value.match(/[.!?]+/g)
+    const sentences = value.split(/[.!?]+/g).filter(s => s !== '').map(s => `${s.trim()}.`)
     if (!sentences || sentences.length === 1) {
       dispatch(alert('Cannot split sentences: thought has only one sentence.', { alertType: 'splitSentencesErr2', clearTimeout: 3000 }))
       return
     }
-
+    // check if splitSentences creates duplicates
+    const showContexts = cursor && isContextViewActive(state, contextOf(pathToContext(cursor)))
+    const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(contextOf(contextOf(cursor)))
+      : !showContexts && cursor.length > 1 ? pathToContext(contextOf(cursor))
+      : [ROOT_TOKEN])
+    const siblings = context && getThoughts(state, context).map(({ value }) => value)
+    const duplicates = _.intersection(sentences, siblings)
+    if (duplicates.length !== 0) {
+      dispatch(alert('Cannot split sentences: splitting creates duplicates.', { alertType: 'splitSentencesErr3', clearTimeout: 3000 }))
+      return
+    }
     dispatch({ type: 'splitSentences' })
   }
 }
