@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 import { GenericObject } from '../utilTypes'
 import { Patch } from '../types'
 
-const stateSectionsToOmit = ['alert']
+const stateSectionsToOmit = ['alert', 'syncQueue', 'user', 'userRef']
 
 const deadActionChecks = {
   dataNonce: (patch: Patch) => patch.length === 1 && patch[0].path === '/dataNonce'
