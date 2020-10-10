@@ -1,6 +1,7 @@
 /** Defines app-wide constants. */
 
 import raw from 'raw.macro'
+import { GenericObject } from './utilTypes'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -163,6 +164,8 @@ export const MAX_EXPAND_DEPTH = 5
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
 export const TOOLBAR_DEFAULT_SHORTCUTS = [
+  'undo',
+  'redo',
   'search',
   'outdent',
   'indent',
@@ -208,3 +211,64 @@ export const MODIFIER_KEYS = {
 
 export const CONTEXT_CACHE_SIZE = 10000
 export const THOUGHT_CACHE_SIZE = 10000
+
+// actions representing any cursor movements.
+// These need to be differentiated from the other actions because
+// any two or more such consecutive actions are merged together
+export const NAVIGATION_ACTIONS: GenericObject<string> = {
+  cursorBack: 'cursorBack',
+  cursorBeforeSearch: 'cursorBeforeSearch',
+  cursorDown: 'cursorDown',
+  cursorForward: 'cursorForward',
+  cursorHistory: 'cursorHistory',
+  cursorUp: 'cursorUp',
+  setCursor: 'setCursor'
+}
+
+// a list of all undoable/reversible actions (stored as object for indexing)
+export const UNDOABLE_ACTIONS: GenericObject<string> = {
+  archiveThought: 'archiveThought',
+  bumpThoughtDown: 'bumpThoughtDown',
+  cursorBack: 'cursorBack',
+  cursorBeforeSearch: 'cursorBeforeSearch',
+  cursorDown: 'cursorDown',
+  cursorForward: 'cursorForward',
+  cursorHistory: 'cursorHistory',
+  cursorUp: 'cursorUp',
+  deleteAttribute: 'deleteAttribute',
+  deleteData: 'deleteData',
+  deleteEmptyThought: 'deleteEmptyThought',
+  deleteThought: 'deleteThought',
+  existingThoughtChange: 'existingThoughtChange',
+  existingThoughtDelete: 'existingThoughtDelete',
+  existingThoughtMove: 'existingThoughtMove',
+  expandContextThought: 'expandContextThought',
+  indent: 'indent',
+  moveThoughtDown: 'moveThoughtDown',
+  moveThoughtUp: 'moveThoughtUp',
+  newThought: 'newThought',
+  newThoughtSubmit: 'newThoughtSubmit',
+  outdent: 'outdent',
+  searchLimit: 'searchLimit',
+  setAttribute: 'setAttribute',
+  setCursor: 'setCursor',
+  setFirstSubthought: 'setFirstSubthought',
+  settings: 'settings',
+  splitThought: 'splitThought',
+  subCategorizeAll: 'subCategorizeAll',
+  subCategorizeOne: 'subCategorizeOne',
+  toggleAttribute: 'toggleAttribute',
+  toggleCodeView: 'toggleCodeView',
+  toggleContextView: 'toggleContextView',
+  toggleHiddenThoughts: 'toggleHiddenThoughts',
+  toggleSplitView: 'toggleSplitView',
+  toolbarOverlay: 'toolbarOverlay'
+}
+
+// modal states
+export const MODALS: GenericObject<string> = {
+  welcome: 'welcome',
+  help: 'help',
+  home: 'home',
+  export: 'export'
+}

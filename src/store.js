@@ -12,6 +12,7 @@ import syncQueue from './redux-middleware/syncQueue'
 import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import thoughtCacheMiddleware from './redux-middleware/thoughtCacheMiddleware'
 import appReducer from './reducers/app'
+import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -23,5 +24,5 @@ export const store = createStore(
     syncQueue,
     thoughtCacheMiddleware,
     updateUrlHistory
-  ))
+  ), undoRedoReducerEnhancer)
 )

@@ -60,6 +60,7 @@ import {
   hasChild,
   isContextViewActive,
 } from '../selectors'
+import { State } from '../util/initialState'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -203,7 +204,8 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
-    const { cursorBeforeEdit, cursor } = store.getState() // use fresh state
+
+    const { cursorBeforeEdit, cursor }: State = store.getState() // use fresh state
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
     const thoughtsRankedLive = cursor && isEditing
@@ -498,7 +500,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
         // clicking a different thought (when not editing)
         (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
 
-      setCursorOnThought({ editing: !falseFocus })
+      const thoughtChanged = !state.cursor || thoughtsResolved.length !== state.cursor.length || thoughtsResolved.some((thought, index) => {
+        const child = state.cursor![index]
+        // eslint-disable-next-line no-extra-parens
+        return child && (Object.keys(child) as (keyof Child)[]).some(key => child[key] !== thought[key])
+      })
+      if ((isMobile && state.editing) || thoughtChanged) setCursorOnThought({ editing: !falseFocus })
+
       // remove the selection caused by the falseFocus
       if (falseFocus) {
         if (document.activeElement) {

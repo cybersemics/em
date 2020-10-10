@@ -24,6 +24,8 @@ import { contextOf, pathToContext } from '../util'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
 import Shortcut from './Shortcut'
+import { isUndoEnabled } from '../util/isUndoEnabled'
+import { isRedoEnabled } from '../util/isRedoEnabled'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
@@ -46,16 +48,18 @@ const mapStateToProps = state => {
     isLoading,
     fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
     scale: (getSetting(state, 'Font Size') || fontSizeLocal || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    redoEnabled: isRedoEnabled(state),
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,
     toolbarOverlay,
+    undoEnabled: isUndoEnabled(state),
     showTopControls
   }
 }
 
 /** Toolbar component. */
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls }) => {
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls, undoEnabled, redoEnabled }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
@@ -220,8 +224,8 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
                       : id === 'subcategorizeAll' ? fg
                       : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
                       : id === 'exportContext' ? fg
-                      : id === 'undo' ? fg
-                      : id === 'redo' ? fg
+                      : id === 'undo' && undoEnabled ? fg
+                      : id === 'redo' && redoEnabled ? fg
                       : 'gray',
                       width: fontSize + 4,
                       height: fontSize + 4,
