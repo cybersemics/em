@@ -22,9 +22,10 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
   })
 
   const id = createId()
+  const contextActual = addAsContext ? [value] : context
 
   // store children indexed by the encoded context for O(1) lookup of children
-  const contextEncoded = hashContext(addAsContext ? [value] : context)
+  const contextEncoded = hashContext(contextActual)
   const contextIndexUpdates: GenericObject<Parent> = {}
 
   if (context.length > 0) {
@@ -35,11 +36,12 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
       id,
       lastUpdated: timestamp()
     }
-    const children = getThoughts(state, addAsContext ? [value] : context)
+    const children = getThoughts(state, contextActual)
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
       .concat(newContextSubthought)
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
+      context: contextActual,
       children,
       lastUpdated: timestamp()
     }
