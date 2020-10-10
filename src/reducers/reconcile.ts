@@ -10,7 +10,7 @@ const emContextEncoded = hashContext([EM_TOKEN])
 
 /** Returns true if the given Parent or Lexeme has children. */
 const hasChildren = (src: Parent | Lexeme) =>
-  (src as Parent).children || (src as Lexeme).contexts.length > 0
+  (src as Parent).children || ((src as Lexeme).contexts && (src as Lexeme).contexts.length > 0)
 
 /** Returns true if the source object is has been updated more recently than the destination object. */
 const isNewer = (src: Parent | Lexeme, dest: Parent|Lexeme) =>
