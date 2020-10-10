@@ -74,7 +74,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
 
   yield thoughts
 
-  yield* yieldAll(parentEntry.children.map(child =>
+  yield* yieldAll((parentEntry.children || []).map(child =>
     getDescendantThoughts(provider, unroot([...context, child.value]), { maxDepth: maxDepth - 1 })
   ))
 }
