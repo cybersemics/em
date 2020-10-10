@@ -1,6 +1,6 @@
-import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
+import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Context, Lexeme, Parent, Path, Snapshot } from '../types'
+import { Alert, Context, Lexeme, Parent, Patch, Path, Snapshot } from '../types'
 import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
 
@@ -82,11 +82,13 @@ export interface State {
   focus: Path,
   hoveringThought?: Context,
   invalidState: boolean,
+  inversePatches: Patch[],
   isLoading: boolean,
   isSyncing?: boolean,
   lastUpdated?: string,
   modals: GenericObject<ModalProperties>,
   noteFocus: boolean,
+  patches: Patch[],
   recentlyEdited: RecentlyEditedTree,
   resourceCache: GenericObject<string>,
   schemaVersion: number,
@@ -177,10 +179,12 @@ export const initialState = () => {
     expanded: {},
     focus: RANKED_ROOT,
     invalidState: false,
+    inversePatches: [],
     isLoading: true,
     isSyncing: false,
     modals: {},
     noteFocus: false, // true if a note has the browser selection
+    patches: [],
     recentlyEdited: {},
     resourceCache: {},
     schemaVersion: SCHEMA_LATEST,
@@ -202,14 +206,13 @@ export const initialState = () => {
     status: 'disconnected',
     syncQueue: [],
     thoughts: initialThoughts(),
+    toolbarOverlay: null,
   }
-
-  // initial modal states
-  const modals = ['welcome', 'help', 'home', 'export']
-  modals.forEach(value => {
-    state.modals[value] = {
-      complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + value] || 'false'),
-      hideuntil: JSON.parse(localStorage['modal-hideuntil-' + value] || '0')
+  Object.keys(MODALS).forEach(key => {
+    // initial modal states
+    state.modals[MODALS[key]] = {
+      complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + MODALS[key]] || 'false'),
+      hideuntil: JSON.parse(localStorage['modal-hideuntil-' + MODALS[key]] || '0')
     }
   })
 
