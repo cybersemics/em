@@ -114,9 +114,10 @@
     "clean": "rm -rf ./node_modules/.cache/eslint-loader",
     "docs": "typedoc --options typedoc.json",
     "deploy": "npm version major && npm run build && firebase deploy",
-    "lint": "eslint \"src/**/*.{js,ts,tsx}\" --rule 'no-console: [2, { allow: [error, info, warn] }]'",
+    "lint": "npm run lint:src && npm run lint:package-lock",
     "lintfix": "npm run lint -- --fix",
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
+    "lint:src": "eslint \"src/**/*.{js,ts,tsx}\" --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "test": "react-scripts test --env=jsdom-sixteen",
     "eject": "react-scripts eject"
   },
