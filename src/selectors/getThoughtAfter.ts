@@ -1,5 +1,5 @@
-import { equalThoughtValue, headRank, headValue, rootedContextOf } from '../util'
-import { getThoughtsRanked } from '../selectors'
+import { equalThoughtValue, headRank, headValue, pathToContext, rootedContextOf } from '../util'
+import { getChildrenSorted } from '../selectors'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -8,8 +8,8 @@ const getThoughtAfter = (state: State, thoughtsRanked: Path) => {
 
   const value = headValue(thoughtsRanked)
   const rank = headRank(thoughtsRanked)
-  const context = rootedContextOf(thoughtsRanked)
-  const children = getThoughtsRanked(state, context)
+  const context = pathToContext(rootedContextOf(thoughtsRanked))
+  const children = getChildrenSorted(state, context)
 
   if (children.length === 0) {
     return null
