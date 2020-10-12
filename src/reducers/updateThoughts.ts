@@ -1,10 +1,10 @@
 import _ from 'lodash'
+import { State, ThoughtsInterface, initialState } from '../util/initialState'
+import { decodeThoughtsUrl, expandThoughts } from '../selectors'
+import { hashContext, importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
+import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
 import { Child, Lexeme, Parent } from '../types'
 import { GenericObject } from '../utilTypes'
-import { State, initialState } from '../util/initialState'
-import { decodeThoughtsUrl, expandThoughts } from '../selectors'
-import { importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
-import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, THOUGHT_CACHE_SIZE } from '../constants'
 
 interface Options {
   thoughtIndexUpdates: GenericObject<Lexeme | null>,
@@ -15,6 +15,8 @@ interface Options {
   local?: boolean,
   remote?: boolean,
 }
+
+const rootEncoded = hashContext([ROOT_TOKEN])
 
 // we should not delete ROOT, EM, or EM descendants from state
 // whitelist them until we have a better solution
@@ -46,6 +48,14 @@ setTimeout(() => {
   }
 
 })
+
+/** Returns true if the root is no longer pending or the contextIndex has at least one non-EM thought. */
+const thoughtsLoaded = (thoughts: ThoughtsInterface) => {
+  const { contextIndex } = thoughts
+  const rootParent = contextIndex[rootEncoded] as Parent | null
+  return !rootParent?.pending ||
+    Object.keys(contextIndex).some(key => key !== rootEncoded && contextIndex[key].context[0] !== EM_TOKEN)
+}
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
@@ -99,20 +109,23 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   logWithTime('updateThoughts: merge syncQueue')
 
+  const thoughts = {
+    contextCache,
+    contextIndex,
+    thoughtCache,
+    thoughtIndex,
+  }
+
   return reducerFlow([
 
     // update recentlyEdited, syncQueue, and thoughts
     state => ({
       ...state,
-      isLoading: false, // disable loading screen as soon as the first thoughts are loaded
+      // disable loading screen as soon as the root or the first non-EM thought is loaded
+      isLoading: state.isLoading ? !thoughtsLoaded(thoughts) : false,
       recentlyEdited: recentlyEditedNew,
       syncQueue: [...state.syncQueue, batch],
-      thoughts: {
-        contextCache,
-        contextIndex,
-        thoughtCache,
-        thoughtIndex,
-      },
+      thoughts,
     }),
 
     // Decode cursor from url if null. This occurs when the page first loads. The thoughtCache can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
