@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import all from 'it-all'
 import * as db from '../data-providers/dexie'
 import * as firebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
@@ -8,7 +7,7 @@ import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getThoughtsOfEncodedContext, hasSyncs } from '../selectors'
 import { equalArrays, hashContext, mergeThoughts, pathToContext, unroot } from '../util'
 import { State, ThoughtsInterface } from '../util/initialState'
-import { Context, Path } from '../types'
+import { Context, Lexeme, Parent, Path } from '../types'
 import { GenericObject } from '../utilTypes'
 
 /** Debounce pending checks to avoid checking on every action. */
@@ -19,6 +18,14 @@ const throttleFlushPending = 500
 
 /* Number of levels of descendants of each pending contexts to fetch. */
 const bufferDepth = 2
+
+/** Iterate through an async iterable and invoke a callback on each yield. */
+async function itForEach<T> (it: AsyncIterable<T>, callback: (value: T) => void) {
+  // eslint-disable-next-line fp/no-loops
+  for await (const item of it) {
+    callback(item)
+  }
+}
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
 const getVisibleContexts = (state: State): GenericObject<Context> => {
@@ -164,8 +171,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     // get local thoughts
     const thoughtChunks: ThoughtsInterface[] = []
 
-    // eslint-disable-next-line fp/no-loops
-    for await (const thoughts of getManyDescendants(db, pendingThoughts, { maxDepth: bufferDepth })) {
+    const thoughtsLocalIterable = getManyDescendants(db, pendingThoughts, { maxDepth: bufferDepth })
+    for await (const thoughts of thoughtsLocalIterable) { // eslint-disable-line fp/no-loops
 
       // eslint-disable-next-line fp/no-mutating-methods
       thoughtChunks.push(thoughts)
@@ -189,16 +196,37 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     // get remote thoughts and reconcile with local
     const user = getState().user
     if (user) {
-      // do not await
-      all(getManyDescendants(firebaseProvider, pendingThoughts, { maxDepth: bufferDepth }))
-        .then(thoughtChunks => {
-          const thoughtsRemote = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
-          dispatch({
-            type: 'reconcile',
-            thoughtsResults: [thoughtsLocal, thoughtsRemote]
-          })
 
+      const thoughtsRemoteIterable = getManyDescendants(firebaseProvider, pendingThoughts, { maxDepth: bufferDepth })
+
+      // TODO: Refactor into zipThoughts
+      await itForEach(thoughtsRemoteIterable, (thoughtsRemoteChunk: ThoughtsInterface) => {
+
+        // find the corresponding Parents from the local store (if any exist) so it can be reconciled with the remote Parents
+        const thoughtsLocalContextIndexChunk = _.transform(thoughtsRemoteChunk.contextIndex, (accum, parentEntryRemote, key) => {
+          const parentEntryLocal = thoughtsLocal.contextIndex[key]
+          if (parentEntryLocal) {
+            accum[key] = parentEntryLocal
+          }
+        }, {} as GenericObject<Parent>)
+
+        // find the corresponding Lexemes from the local store (if any exist) so it can be reconciled with the remote Lexemes
+        const thoughtsLocalThoughtIndexChunk = _.transform(thoughtsRemoteChunk.thoughtIndex, (accum, lexemeRemote, key) => {
+          const lexemeLocal = thoughtsLocal.thoughtIndex[key]
+          if (lexemeLocal) {
+            accum[key] = lexemeLocal
+          }
+        }, {} as GenericObject<Lexeme>)
+
+        dispatch({
+          type: 'reconcile',
+          thoughtsResults: [{
+            contextIndex: thoughtsLocalContextIndexChunk,
+            thoughtIndex: thoughtsLocalThoughtIndexChunk,
+          }, thoughtsRemoteChunk]
         })
+
+      })
     }
 
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
