@@ -5,14 +5,18 @@ import { GenericObject } from '../utilTypes'
  * @param mergeInto    The cloned object that will be merged into and deleted from.
  * @param mergee       The object to merge which may have falsey values.
  */
-export const mergeUpdates = (mergeInto: GenericObject, mergee: GenericObject) => {
+export const mergeUpdates = <T>(mergeInto: GenericObject<T | null>, mergee: GenericObject<T | null>): GenericObject<T> => {
+
+  // assume an optional pending property
+  type pendingType = T & { pending: boolean }
+
   const mergeResult = { ...mergeInto }
 
   for (const key in mergee) { // eslint-disable-line fp/no-loops
-    const value = mergee[key]
+    const value = mergee[key] as pendingType
     if (value) {
       // ignore pending objects that would overwrite non-pending objects
-      if (!value.pending || !mergeInto[key] || mergeInto[key].pending) {
+      if (!value.pending || !mergeInto[key] || (mergeInto[key] as pendingType).pending) {
         mergeResult[key] = value
       }
     }
@@ -21,5 +25,6 @@ export const mergeUpdates = (mergeInto: GenericObject, mergee: GenericObject) =>
     }
   }
 
-  return mergeResult
+  // falsey values have been deleted
+  return mergeResult as GenericObject<T>
 }
