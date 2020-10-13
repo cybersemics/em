@@ -74,6 +74,7 @@ export interface State {
   draggingThought?: Path,
   dragHold?: boolean,
   dragInProgress: boolean,
+  editableNonce: number,
   editing: Nullable<boolean>,
   editingValue: Nullable<string>,
   error?: string | null,
@@ -174,6 +175,7 @@ export const initialState = () => {
     cursorOffset: 0,
     dataNonce: 0, // cheap trick to re-render when thoughtIndex has been updated
     dragInProgress: false,
+    editableNonce: 0,
     editing: null,
     editingValue: null,
     expanded: {},
