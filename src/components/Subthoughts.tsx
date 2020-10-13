@@ -252,14 +252,10 @@ const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
   try {
     const env = {
       // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
-      // eslint-disable-next-line
       find: (predicate: any) => rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
-      // eslint-disable-next-line
       findOne: (predicate: any) => Object.keys(thoughts.thoughtIndex).find(predicate),
-      // eslint-disable-next-line
       home: () => getThoughtsRanked(state, RANKED_ROOT),
       thought: Object.assign({}, getThought(state, headValue(thoughtsRanked)), {
-        // eslint-disable-next-line
         children: () => getThoughtsRanked(state, thoughtsRanked)
       })
     }

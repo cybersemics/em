@@ -24,9 +24,7 @@ const bindContextShortcut = {
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, alt: true },
-  // eslint-disable-next-line
   canExecute: () => isDocumentEditable(),
-  // eslint-disable-next-line
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

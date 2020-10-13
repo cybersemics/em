@@ -173,7 +173,6 @@ const importText = (thoughtsRanked: Path, inputText: string, { preventSetCursor,
         thoughtIndexUpdates,
         contextIndexUpdates,
         forceRender: true,
-        // eslint-disable-next-line
         callback: () => {
           // restore the selection to the first imported thought
           if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {

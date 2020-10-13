@@ -84,7 +84,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // does not report moveX and moveY
       // onPanResponderGrant: (evt, gestureState) => {},
 
-      // eslint-disable-next-line
       onPanResponderMove: (evt: string, gestureState: GestureState) => {
 
         if (this.abandon) {
@@ -133,7 +132,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         }
       },
 
-      // eslint-disable-next-line
       onPanResponderRelease: (evt: string) => {
         if (this.props.onEnd) {
           this.props.onEnd(this.sequence, evt)
@@ -141,9 +139,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         this.reset()
       },
 
-      // eslint-disable-next-line
       onPanResponderTerminationRequest: () => true,
-      // eslint-disable-next-line
       onPanResponderTerminate: (evt: string) => {
         // Another component has become the responder, so this gesture
         // should be cancelled

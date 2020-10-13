@@ -51,11 +51,8 @@ const mapStateToProps = (state: State) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch<any>): ContentDispatchToProps => ({
-  // eslint-disable-next-line
   showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', duration: MODAL_CLOSE_DURATION }),
-  // eslint-disable-next-line
   cursorBack: () => dispatch({ type: 'cursorBack' }),
-  // eslint-disable-next-line
   toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
 })
 
