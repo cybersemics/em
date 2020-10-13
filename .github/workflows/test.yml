@@ -28,9 +28,6 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      - name: Validate package-lock.json
-        run: npm run "lint:package-lock"
-
       - name: Lint
         run: npm run lint
 
