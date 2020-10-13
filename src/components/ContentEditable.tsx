@@ -18,17 +18,18 @@ const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...prop
   const contentRef = innerRef || useRef<HTMLDivElement>(null)
   const prevHtmlRef = useRef<string>(html)
   const allowInnerHTMLChange = useRef<boolean>(true)
+
   React.useEffect(() => {
     if (contentRef.current) contentRef.current!.innerHTML = html
   }, [])
 
   React.useEffect(() => {
     // prevent innerHTML update when editing
-    if (prevHtmlRef.current !== html && (forceUpdate || allowInnerHTMLChange.current)) {
+    if (forceUpdate || (prevHtmlRef.current !== html && allowInnerHTMLChange.current)) {
       contentRef.current!.innerHTML = html
       prevHtmlRef.current = html
     }
-  }, [html])
+  }, [html, forceUpdate])
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {

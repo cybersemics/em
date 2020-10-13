@@ -195,6 +195,11 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     oldValueRef.current = headValue(thoughtsRanked)
   }, [headValue(thoughtsRanked)])
 
+  useEffect(() => {
+    // set value to old value
+    oldValueRef.current = value
+  }, [thoughtsRanked])
+
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
     const isInvalid = invalidValue != null
@@ -234,17 +239,13 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
   const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, thoughtsRanked, contextChain }: { context: Context, showContexts?: boolean, rank: number, thoughtsRanked: Path, contextChain: Child[][] }) => {
+    // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
 
     // make sure to get updated state
     const state = store.getState()
 
     const oldValue = oldValueRef.current
-    // safari adds <br> to empty contenteditables after editing, so strip them out
-    // make sure empty thoughts are truly empty
-    if (contentRef.current && newValue.length === 0) {
-      contentRef.current.innerHTML = newValue
-    }
 
     const thought = getThought(state, oldValue)
     if (thought) {
@@ -400,8 +401,16 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
     const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
 
+    const isEmpty = newValue.length === 0
+
+    // safari adds <br> to empty contenteditables after editing, so strip them out
+    // make sure empty thoughts are truly empty'
+    if (isEmpty && contentRef.current) {
+      contentRef!.current.innerHTML = newValue
+    }
+
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-    if (contextLengthChange || urlChange) {
+    if (contextLengthChange || urlChange || isEmpty) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
       thoughtChangeHandler(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
@@ -455,7 +464,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     oldValueRef.current && dispatch(setEditingValue(oldValueRef.current))
     // reset rendered value to previous non-duplicate
     if (contentRef.current) {
-      contentRef.current.innerHTML = oldValueRef.current
+      contentRef.current!.innerHTML = oldValueRef.current
       contentRef.current.style.opacity = '1.0'
       showDuplicationAlert(false, dispatch)
     }
