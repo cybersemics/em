@@ -88,6 +88,7 @@ export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], 
   const destThought = head(thoughtsRanked)
   const destEmpty = destThought.value === '' && getThoughts(state, pathToContext(thoughtsRanked)).length === 0
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
+  const contextIndex = { ...state.thoughts.contextIndex }
   const rankStart = getRankAfter(state, thoughtsRanked)
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
 
@@ -130,7 +131,11 @@ export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], 
 
     // update contextIndexUpdates
     const contextEncoded = hashContext(rootContext)
-    const childrenUpdates = contextIndexUpdates[contextEncoded] ? contextIndexUpdates[contextEncoded].children : []
+
+    const childrenUpdates =
+      contextIndexUpdates[contextEncoded]?.children ||
+      contextIndex[contextEncoded]?.children || []
+
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
       children: [...childrenUpdates, {
