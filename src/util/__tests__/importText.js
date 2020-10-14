@@ -24,7 +24,10 @@ const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
   thoughts: {
     contextIndex: {
-      [hashContext([ROOT_TOKEN])]: [],
+      [hashContext([ROOT_TOKEN])]: {
+        context: [ROOT_TOKEN],
+        children: [],
+      },
     },
     thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
