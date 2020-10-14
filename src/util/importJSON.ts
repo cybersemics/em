@@ -132,9 +132,9 @@ export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], 
     // update contextIndexUpdates
     const contextEncoded = hashContext(rootContext)
 
-    const childrenUpdates = contextIndexUpdates[contextEncoded]
-      ? contextIndexUpdates[contextEncoded].children
-      : [...contextIndex[contextEncoded] ? contextIndex[contextEncoded].children : []] // concat children from already available contextIndex
+    const childrenUpdates =
+      contextIndexUpdates[contextEncoded]?.children ||
+      contextIndex[contextEncoded]?.children || []
 
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
