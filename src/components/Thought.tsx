@@ -75,7 +75,7 @@ interface ThoughtProps {
   contextChain: Child[][],
   cursorOffset?: number,
   hideBullet?: boolean,
-  homeContext?: never,
+  homeContext?: boolean,
   isDraggable?: boolean,
   isDragging?: boolean,
   isPublishChild?: boolean,
