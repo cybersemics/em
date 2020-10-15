@@ -1,7 +1,7 @@
 import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Context, Index, Lexeme, Parent, Patch, Path } from '../types'
 import { canShowModal } from '../selectors'
+import { Alert, Context, Index, Lexeme, Parent, Patch, Path, User } from '../types'
 
 // import util functions directly since importing from ../util/index causes circular dependency
 import { hashContext } from '../util/hashContext'
@@ -30,13 +30,6 @@ export interface ThoughtsInterface {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 // export interface RecentlyEditedTree extends Index<RecentlyEditedTree> {}
 type RecentlyEditedTree = Index<any>
-
-interface User {
-  uid: string,
-  displayName: string,
-  email: string,
-  // see Firebase user for more properties
-}
 
 export interface State {
   alert?: Alert,
@@ -93,7 +86,7 @@ export interface State {
   thoughts: ThoughtsInterface,
   toolbarOverlay: string | null,
   tutorialStep?: number,
-  user?: any,
+  user?: User,
   patches: Patch[],
   inversePatches: Patch[],
 }
