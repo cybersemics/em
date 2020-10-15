@@ -6,8 +6,8 @@ import { State } from './util/initialState'
 
 interface Firebase {
   auth: () => {
-    currentUser: unknown,
-    onAuthStateChanged: (user: any) => void
+    currentUser: User,
+    onAuthStateChanged: (user: any) => void,
   },
   database: () => {
     ref: (s: string) => {
@@ -15,7 +15,7 @@ interface Firebase {
       once: (s: string, f: any) => void,
     },
   },
-  initializeApp: (config: Index<string>) => void
+  initializeApp: (config: Index<string>) => void,
 }
 
 declare global {
@@ -163,5 +163,13 @@ interface ExtendedOperation extends GetOperation<any> {
 export type Patch = ExtendedOperation[]
 
 export interface Snapshot<T> {
-  val: () => T
+  val: () => T,
 }
+
+export interface User {
+  uid: string,
+  displayName: string,
+  email: string,
+  // see Firebase user for more properties
+}
+

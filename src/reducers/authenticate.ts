@@ -1,9 +1,10 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
+import { User } from '../types'
 
 interface Options {
   value: string,
-  user: any,
+  user: User,
   userRef: any,
 }
 
