@@ -1,7 +1,8 @@
 import React, { Dispatch, useEffect } from 'react'
+import { Action } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { ConnectDragPreview, ConnectDragSource, ConnectDropTarget, DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
@@ -24,7 +25,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 import useLongPress from '../hooks/useLongPress'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { Child, Path, ThoughtContext } from '../types'
+import { ActionCreator, Child, Path, ThoughtContext } from '../types'
 
 // util
 import {
@@ -219,7 +220,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
+const mapDispatchToProps = (dispatch: Dispatch<Action | ActionCreator>) => ({
   toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
 })
 
@@ -453,7 +454,11 @@ const ThoughtContainer = ({
   url,
   view,
   toggleTopControlsAndBreadcrumbs
-}: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any } & ThoughtDispatchProps) => {
+}: ThoughtContainerProps & {
+  dragPreview: ConnectDragPreview,
+  dragSource: ConnectDragSource,
+  dropTarget: ConnectDropTarget,
+} & ThoughtDispatchProps) => {
 
   const state = store.getState()
   useEffect(() => {

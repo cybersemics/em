@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import assert from 'assert'
 import evaluate from 'static-eval'
-import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import * as esprima from 'esprima'
 import { store } from '../store'
 import { isMobile } from '../browser'
@@ -76,7 +76,7 @@ interface SubthoughtsProps {
 /** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
 type SubthoughtsComponentProps = SubthoughtsProps & {
   contextBinding?: Path,
-  dropTarget: (el: JSX.Element) => any,
+  dropTarget: ConnectDropTarget,
   isDragInProgress?: boolean,
   isEditingAncestor?: boolean,
   isHovering?: boolean,
@@ -310,7 +310,7 @@ const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSin
   </div>
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
-const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number, dropTarget: (el: JSX.Element) => JSX.Element, isDragInProgress?: boolean, isHovering?: boolean, isThoughtDivider?: boolean }) =>
+const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number, dropTarget: ConnectDropTarget, isDragInProgress?: boolean, isHovering?: boolean, isThoughtDivider?: boolean }) =>
   <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
     {dropTarget(
       <li className={classNames({
