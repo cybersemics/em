@@ -24,7 +24,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 import useLongPress from '../hooks/useLongPress'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { Child, Path } from '../types'
+import { Child, Path, ThoughtContext } from '../types'
 
 // util
 import {
@@ -100,7 +100,7 @@ interface ThoughtContainerProps {
   cursorOffset?: number,
   depth?: number,
   expanded?: boolean,
-  expandedContextThought?: any,
+  expandedContextThought?: Path,
   hideBullet?: boolean,
   isDeepHovering?: boolean,
   isPublishChild?: boolean,
@@ -113,7 +113,7 @@ interface ThoughtContainerProps {
   isEditingPath?: boolean,
   isHovering?: boolean,
   isParentHovering?: boolean,
-  prevChild?: any,
+  prevChild?: Child | ThoughtContext,
   publish?: boolean,
   rank: number,
   showContexts?: boolean,
@@ -506,7 +506,7 @@ const ThoughtContainer = ({
   const contextThought = showContexts && getThought(state, headValue(contextOf(thoughtsRanked)))
 
   const showContextBreadcrumbs = showContexts &&
-    (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
+    (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought as Path | null)) &&
     thoughtsRanked.length > 2
 
   const thoughts = pathToContext(thoughtsRanked)
@@ -539,7 +539,7 @@ const ThoughtContainer = ({
       // check if it's alphabetically previous to current thought
       && draggingThoughtValue <= value
       // check if it's alphabetically next to previous thought if it exists
-      && (!prevChild || draggingThoughtValue > prevChild.value)
+      && (!prevChild || draggingThoughtValue > (prevChild as Child).value)
     // if alphabetical sort is disabled just check if current thought is hovering
     : globals.simulateDropHover || isHovering
 
