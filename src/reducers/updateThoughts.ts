@@ -8,7 +8,7 @@ import { Child, Index, Lexeme, Parent } from '../types'
 interface Payload {
   thoughtIndexUpdates: Index<Lexeme | null>,
   contextIndexUpdates: Index<Parent | null>,
-  recentlyEdited?: Index<any>,
+  recentlyEdited?: Index,
   contextChain?: Child[][],
   updates?: Index<string>,
   local?: boolean,

@@ -57,7 +57,7 @@ const undoReducer = (state: State) => {
   const lastInversePatch = nthLast(inversePatches, 1)
   if (!lastInversePatch) return state
   const newState = applyPatch(deepClone(state) as State, lastInversePatch).newDocument
-  const correspondingPatch = addActionsToPatch(compareWithOmit(newState as Index<any>, state), [...lastInversePatch[0].actions])
+  const correspondingPatch = addActionsToPatch(compareWithOmit(newState as Index, state), [...lastInversePatch[0].actions])
   return {
     ...newState,
     cursorBeforeEdit: newState.cursor,
@@ -74,7 +74,7 @@ const redoReducer = (state: State) => {
   const lastPatch = nthLast(patches, 1)
   if (!lastPatch) return state
   const newState = applyPatch(deepClone(state), lastPatch).newDocument
-  const correspondingInversePatch = addActionsToPatch(compareWithOmit(newState as Index<any>, state), [...lastPatch[0].actions])
+  const correspondingInversePatch = addActionsToPatch(compareWithOmit(newState as Index, state), [...lastPatch[0].actions])
   return {
     ...newState,
     cursorBeforeEdit: newState.cursor,
@@ -149,7 +149,7 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialS
       const lastState = lastInversePatch
         ? applyPatch(deepClone(state), lastInversePatch).newDocument
         : state
-      const combinedInversePatch = compareWithOmit(newState as Index<any>, lastState)
+      const combinedInversePatch = compareWithOmit(newState as Index, lastState)
       return {
         ...newState,
         inversePatches: [
@@ -167,7 +167,7 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialS
     lastActionType = actionType
 
     // add a new inverse patch
-    const inversePatch = compareWithOmit(newState as Index<any>, state)
+    const inversePatch = compareWithOmit(newState as Index, state)
 
     // if the patch is dispensable, combine it with the last patch
     // Note: we can't simply ignore a dispensable patch because that would result in
