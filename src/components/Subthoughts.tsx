@@ -4,6 +4,7 @@ import classNames from 'classnames'
 import assert from 'assert'
 import evaluate from 'static-eval'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import * as esprima from 'esprima'
 import { store } from '../store'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
@@ -12,9 +13,8 @@ import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, RANKED_ROOT } from '../constants'
 import { alert } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import { Child, GesturePath, Path } from '../types'
 import { State } from '../util/initialState'
-import * as esprima from 'esprima'
+import { Child, GesturePath, Index, Path, ThoughtContext } from '../types'
 
 // util
 import {
@@ -387,7 +387,7 @@ export const SubthoughtsComponent = ({
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(thoughtsRanked))
     : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || thoughtsRanked))
-    : getThoughtsRanked(state, contextBinding || thoughtsRanked)
+    : getThoughtsRanked(state, contextBinding || thoughtsRanked) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -400,9 +400,9 @@ export const SubthoughtsComponent = ({
       }
       return {
         ...accum,
-        [child.rank]: (match || []).concat(child)
+        [child.rank]: [...match, child]
       }
-    }, {})
+    }, {} as Index<Child[] | ThoughtContext[]>)
   }
 
   // Ensure that editable newThought is visible.
@@ -410,13 +410,15 @@ export const SubthoughtsComponent = ({
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
   const filteredChildren = children.filter(child => {
-    const value = showContexts ? head(child.context) : child.value
+    const value = showContexts
+      ? head((child as ThoughtContext).context)
+      : (child as Child).value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
       // NOTE: child.rank is not used by isChildVisible
       isChildVisible(state, pathToContext(thoughtsRanked), { value, rank: child.rank }) ||
       // always include thoughts in cursor
-      (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
+      (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child as Child))
   })
 
   const proposedPageSize = isRoot(thoughtsRanked)
@@ -497,7 +499,7 @@ export const SubthoughtsComponent = ({
       ? children.length < (allowSingleContext ? 1 : 2) ?
 
         // No children
-        <NoChildren allowSingleContext={allowSingleContext} children={children} thoughtsRanked={thoughtsRanked} />
+        <NoChildren allowSingleContext={allowSingleContext} children={children as Child[]} thoughtsRanked={thoughtsRanked} />
 
         // "Contexts:"
         : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
@@ -547,13 +549,11 @@ export const SubthoughtsComponent = ({
 
           return child ? <Thought
             allowSingleContext={allowSingleContextParent}
-            // grandchildren can be manually added in code view
-            childrenForced={child.children}
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
             hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
-            key={`${child.id || child.rank}${child.context ? '-context' : ''}`}
+            key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
             rank={child.rank}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}
