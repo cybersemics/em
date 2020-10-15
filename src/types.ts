@@ -4,18 +4,35 @@ import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
 import { State } from './util/initialState'
 
+/********************************
+ * Firebase types
+ ********************************/
+
 interface Firebase {
   auth: () => {
     currentUser: User,
     onAuthStateChanged: (f: (user: User) => void) => void,
   },
   database: () => {
-    ref: (s: string) => {
-      on: (s: string, f: any) => void,
-      once: (s: string, f: any) => void,
-    },
+    ref: (s: string) => Ref,
   },
   initializeApp: (config: Index<string>) => void,
+}
+
+export interface User {
+  uid: string,
+  displayName: string,
+  email: string,
+  // see Firebase user for more properties
+}
+
+export interface Ref {
+  on: (s: string, f: any) => void,
+  once: (s: string, f: any) => void,
+}
+
+export interface Snapshot<T> {
+  val: () => T,
 }
 
 declare global {
@@ -24,6 +41,10 @@ declare global {
       em: unknown,
   }
 }
+
+/********************************
+ * Util types
+ ********************************/
 
 /** Possible return values of a sort's comparator function. */
 export type ComparatorValue = 1 | -1 | 0
@@ -161,15 +182,3 @@ interface ExtendedOperation extends GetOperation<any> {
 }
 
 export type Patch = ExtendedOperation[]
-
-export interface Snapshot<T> {
-  val: () => T,
-}
-
-export interface User {
-  uid: string,
-  displayName: string,
-  email: string,
-  // see Firebase user for more properties
-}
-
