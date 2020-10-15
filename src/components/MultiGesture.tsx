@@ -44,7 +44,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false;
   currentStart: Point | null = null;
   disableScroll = false;
-  panResponder: { panHandlers: any };
+  panResponder: { panHandlers: unknown };
   scrolling = false;
   sequence: GesturePath = '';
 
