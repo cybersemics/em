@@ -77,7 +77,7 @@ export interface ExportOption {
 }
 
 /** A timestamp string. */
-export type Timestamp = string
+export type Timestamp = Flavor<string, 'Timestamp'>
 
 /** An entry in thoughtIndex[].contexts. */
 export interface ThoughtContext {
