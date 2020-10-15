@@ -24,7 +24,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 import useLongPress from '../hooks/useLongPress'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { Child, GenericObject, Path } from '../types'
+import { Child, Index, Path } from '../types'
 
 // util
 import {
@@ -84,7 +84,7 @@ interface ThoughtProps {
   rank: number,
   showContextBreadcrumbs?: boolean,
   showContexts?: boolean,
-  style?: GenericObject<string>,
+  style?: Index<string>,
   thoughtsRanked: Path,
   view?: string | null,
   toggleTopControlsAndBreadcrumbs: () => void,
@@ -117,7 +117,7 @@ interface ThoughtContainerProps {
   publish?: boolean,
   rank: number,
   showContexts?: boolean,
-  style?: GenericObject<string>,
+  style?: Index<string>,
   thought?: Child,
   thoughtsRanked: Path,
   thoughtsRankedLive?: Path,

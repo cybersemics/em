@@ -1,6 +1,6 @@
 import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Context, GenericObject, Lexeme, Parent, Patch, Path } from '../types'
+import { Alert, Context, Index, Lexeme, Parent, Patch, Path } from '../types'
 import { canShowModal } from '../selectors'
 
 // import util functions directly since importing from ../util/index causes circular dependency
@@ -16,8 +16,8 @@ interface ModalProperties {
 }
 
 export interface ThoughtsInterface {
-  thoughtIndex: GenericObject<Lexeme>,
-  contextIndex?: GenericObject<Parent>,
+  thoughtIndex: Index<Lexeme>,
+  contextIndex?: Index<Parent>,
 }
 
 // Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed
@@ -26,10 +26,10 @@ export interface ThoughtsInterface {
 //   lastUpdated: Timestamp,
 //   path: Path,
 // }
-// type RecentlyEditedTree = GenericObject<RecentlyEditedTree> causes circular reference error
+// type RecentlyEditedTree = Index<RecentlyEditedTree> causes circular reference error
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-// export interface RecentlyEditedTree extends GenericObject<RecentlyEditedTree> {}
-type RecentlyEditedTree = GenericObject<any>
+// export interface RecentlyEditedTree extends Index<RecentlyEditedTree> {}
+type RecentlyEditedTree = Index<any>
 
 interface User {
   uid: string,
@@ -44,7 +44,7 @@ export interface State {
   authenticated: boolean,
   autologin: boolean,
   codeView?: Path | null,
-  contextViews: GenericObject<boolean>,
+  contextViews: Index<boolean>,
   cursor: (Path | null),
   cursorBeforeEdit: (Path | null),
   cursorBeforeSearch: (Path | null),
@@ -59,16 +59,16 @@ export interface State {
   editing: (boolean | null),
   editingValue: (string | null),
   error?: string | null,
-  expanded: GenericObject<boolean>,
+  expanded: Index<boolean>,
   expandedContextThought?: Path,
   focus: Path,
   hoveringThought?: Context,
   invalidState: boolean,
   isLoading: boolean,
-  modals: GenericObject<ModalProperties>,
+  modals: Index<ModalProperties>,
   noteFocus: boolean,
   recentlyEdited: RecentlyEditedTree,
-  resourceCache: GenericObject<string>,
+  resourceCache: Index<string>,
   schemaVersion: number,
   scrollPrioritized: boolean,
   search: (string | null),
@@ -83,10 +83,10 @@ export interface State {
   splitPosition: number,
   status: string,
   syncQueue?: {
-    contextIndexUpdates?: GenericObject<Parent | null>,
-    thoughtIndexUpdates?: GenericObject<Lexeme | null>,
+    contextIndexUpdates?: Index<Parent | null>,
+    thoughtIndexUpdates?: Index<Lexeme | null>,
     recentlyEdited?: RecentlyEditedTree,
-    updates?: GenericObject<string>,
+    updates?: Index<string>,
     local?: boolean,
     remote?: boolean,
   },

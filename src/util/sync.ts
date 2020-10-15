@@ -147,9 +147,9 @@ const syncRemote = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, recently
 interface Options {
   local?: boolean,
   remote?: boolean,
-  updates?: GenericObject<string>,
+  updates?: Index<string>,
   callback?: (err?: any) => void,
-  recentlyEdited: GenericObject<any>,
+  recentlyEdited: Index<any>,
 }
 
 /**

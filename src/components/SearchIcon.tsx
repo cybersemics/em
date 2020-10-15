@@ -2,13 +2,13 @@ import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../selectors'
 import { State } from '../util/initialState'
-import { GenericObject } from '../types'
+import { Index } from '../types'
 
 interface SearchIconProps {
   dark?: boolean,
   fill?: string,
   size: number,
-  style?: GenericObject<string>,
+  style?: Index<string>,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

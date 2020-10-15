@@ -3,14 +3,14 @@ import { clearQueue } from '../reducers'
 import { expandThoughts } from '../selectors'
 import { logWithTime, mergeUpdates } from '../util'
 import { State } from '../util/initialState'
-import { Child, GenericObject, Lexeme, Parent } from '../types'
+import { Child, Index, Lexeme, Parent } from '../types'
 
 interface Payload {
-  thoughtIndexUpdates: GenericObject<Lexeme | null>,
-  contextIndexUpdates: GenericObject<Parent | null>,
-  recentlyEdited?: GenericObject<any>,
+  thoughtIndexUpdates: Index<Lexeme | null>,
+  contextIndexUpdates: Index<Parent | null>,
+  recentlyEdited?: Index<any>,
   contextChain?: Child[][],
-  updates?: GenericObject<string>,
+  updates?: Index<string>,
   local?: boolean,
   remote?: boolean,
 }

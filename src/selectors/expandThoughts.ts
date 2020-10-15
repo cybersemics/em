@@ -1,7 +1,7 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
 import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
-import { Child, Context, GenericObject, Path } from '../types'
+import { Child, Context, Index, Path } from '../types'
 import { State } from '../util/initialState'
 
 // util
@@ -28,7 +28,7 @@ import {
  *   ...
  * }
  */
-const expandThoughts = (state: State, path: Path | null, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<boolean> => {
+const expandThoughts = (state: State, path: Path | null, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): Index<boolean> => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -98,7 +98,7 @@ const expandThoughts = (state: State, path: Path | null, contextChain: Child[][]
       return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })
   ).reduce(
-    (accum: GenericObject<boolean>, child: Child) => {
+    (accum: Index<boolean>, child: Child) => {
       const newContextChain = (contextChain || [])
         .map((path: Path) => path.concat())
         .concat(contextChain.length > 0 ? [[child]] : [])
