@@ -14,7 +14,7 @@ interface BulletProps {
   invalidOption?: boolean,
   isEditing?: boolean,
   leaf?: boolean,
-  onClick: any,
+  onClick: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void,
   showContexts?: boolean,
   thoughtsResolved: Path,
 }
