@@ -11,7 +11,7 @@ export interface ModalProps {
   center?: boolean,
   className?: string,
   id: string,
-  onSubmit?: any,
+  onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
   opaque?: boolean,
   positionAtCursor?: boolean,
   show?: boolean,
