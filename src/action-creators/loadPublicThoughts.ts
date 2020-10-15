@@ -1,8 +1,8 @@
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
-import { ActionCreator, Parent } from '../types'
 import { PartialStateWithThoughts } from '../util/initialState'
 import { loadRemoteState } from '../action-creators'
+import { ActionCreator, Parent, Snapshot } from '../types'
 
 /**
  * Loads a public context when the url contains a userId of a different user.
@@ -23,7 +23,7 @@ const loadPublicThoughts = (): ActionCreator => dispatch => {
   const publicContextRef = window.firebase.database().ref(`users/${urlOwner}/contextIndex/${contextEncoded}`)
 
   // fetch children
-  publicContextRef.once('value', (snapshot: any) => {
+  publicContextRef.once('value', (snapshot: Snapshot<Parent>) => {
     const parentEntry: Parent = snapshot.val()
 
     const remoteState: PartialStateWithThoughts = {
