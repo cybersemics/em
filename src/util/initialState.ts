@@ -1,7 +1,7 @@
 import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
-import { Alert, Context, Index, Lexeme, Parent, Patch, Path, User } from '../types'
+import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, User } from '../types'
 
 // import util functions directly since importing from ../util/index causes circular dependency
 import { hashContext } from '../util/hashContext'
@@ -87,6 +87,7 @@ export interface State {
   toolbarOverlay: string | null,
   tutorialStep?: number,
   user?: User,
+  userRef?: Ref,
   patches: Patch[],
   inversePatches: Patch[],
 }
