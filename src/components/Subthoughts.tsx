@@ -256,12 +256,15 @@ const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
   try {
     const env = {
       // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
-      find: (predicate: any) => rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
-      findOne: (predicate: any) => Object.keys(thoughts.thoughtIndex).find(predicate),
+      find: (predicate: (s: string) => boolean) =>
+        rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
+      findOne: (predicate: (s: string) => boolean) =>
+        Object.keys(thoughts.thoughtIndex).find(predicate),
       home: () => getThoughtsRanked(state, RANKED_ROOT),
-      thought: Object.assign({}, getThought(state, headValue(thoughtsRanked)), {
+      thought: {
+        ...getThought(state, headValue(thoughtsRanked)),
         children: () => getThoughtsRanked(state, thoughtsRanked)
-      })
+      }
     }
     codeResults = evaluate(ast, env)
 
@@ -307,7 +310,7 @@ const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSin
   </div>
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
-const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number, dropTarget: any, isDragInProgress?: boolean, isHovering?: boolean, isThoughtDivider?: boolean }) =>
+const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number, dropTarget: (el: JSX.Element) => JSX.Element, isDragInProgress?: boolean, isHovering?: boolean, isThoughtDivider?: boolean }) =>
   <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
     {dropTarget(
       <li className={classNames({
