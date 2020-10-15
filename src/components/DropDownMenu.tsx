@@ -6,7 +6,7 @@ import { ExportOption } from '../types'
 interface DropDownMenuProps {
   dark?: boolean,
   isOpen?: boolean,
-  onSelect?: any,
+  onSelect?: (option: ExportOption) => void,
   options: ExportOption[],
   selected?: ExportOption,
 }
@@ -22,7 +22,9 @@ const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }: DropDownMen
           style={{ cursor: 'pointer' }}
           key={index}
           onClick={() => {
-            onSelect(option)
+            if (onSelect) {
+              onSelect(option)
+            }
           }}>
           <div style={{
             display: 'flex',
