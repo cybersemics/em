@@ -193,6 +193,7 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialS
       : newState
   }
 
+  // @ts-ignore
   return createStore(undoAndRedoReducer, initialState)
 }
 
