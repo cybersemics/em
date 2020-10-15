@@ -3,8 +3,7 @@ import { updateThoughts } from '../reducers'
 import { getNextRank, getThought, getThoughts } from '../selectors'
 import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
 import { State } from '../util/initialState'
-import { Context, Parent } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Context, GenericObject, Parent } from '../types'
 
 /**
  * Creates a new thought in the given context.

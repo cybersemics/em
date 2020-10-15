@@ -1,7 +1,6 @@
 import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Context, Lexeme, Parent, Patch, Path } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Alert, Context, GenericObject, Lexeme, Parent, Patch, Path } from '../types'
 import { canShowModal } from '../selectors'
 
 // import util functions directly since importing from ../util/index causes circular dependency

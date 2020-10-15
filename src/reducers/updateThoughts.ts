@@ -3,8 +3,7 @@ import { clearQueue } from '../reducers'
 import { expandThoughts } from '../selectors'
 import { logWithTime, mergeUpdates } from '../util'
 import { State } from '../util/initialState'
-import { Child, Lexeme, Parent } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Child, GenericObject, Lexeme, Parent } from '../types'
 
 interface Payload {
   thoughtIndexUpdates: GenericObject<Lexeme | null>,

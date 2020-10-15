@@ -1,4 +1,4 @@
-import { GenericObject } from '../utilTypes'
+import { GenericObject } from '../types'
 
 /** Merge two objects together, deleting falsey values.
  *

@@ -3,13 +3,31 @@ import { Dispatch, ReactNode } from 'react'
 import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
 import { State } from './util/initialState'
-import { GenericObject } from './utilTypes'
 
 declare global {
   interface Window {
       firebase:any,
       em: any,
   }
+}
+
+/** Possible return values of a sort's comparator function. */
+export type ComparatorValue = 1 | -1 | 0
+
+/** A standard comparator function used within sort. */
+export type ComparatorFunction<T> = (a: NonNullable<T>, b: NonNullable<T>) => ComparatorValue
+
+/** Set of file types supported for exporting thoughts. */
+export type MimeType = 'text/plain' | 'text/html'
+
+/** A very generic object. */
+export type GenericObject<T = any> = {[key: string]: T}
+
+/** An option that can selected to set the export format. */
+export interface ExportOption {
+  type: MimeType,
+  label: string,
+  extension: string,
 }
 
 /** A timestamp string. */

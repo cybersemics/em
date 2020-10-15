@@ -3,8 +3,7 @@ import classNames from 'classnames'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { isMobile } from '../browser'
 import { ancestors, strip } from '../util'
-import { Child, Path } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Child, GenericObject, Path } from '../types'
 
 // components
 import Link from './Link'

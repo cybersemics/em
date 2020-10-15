@@ -24,8 +24,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 import useLongPress from '../hooks/useLongPress'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { Child, Path } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Child, GenericObject, Path } from '../types'
 
 // util
 import {

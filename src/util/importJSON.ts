@@ -1,8 +1,9 @@
 import _ from 'lodash'
-import { Child, Context, Lexeme, Parent, Path } from '../types'
+import { Child, Context, GenericObject, Lexeme, Parent, Path } from '../types'
 import { State } from './initialState'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
+import { Block } from '../action-creators/importText'
 
 // util
 import {
@@ -20,8 +21,6 @@ import {
   rootedContextOf,
   timestamp,
 } from '../util'
-import { Block } from '../action-creators/importText'
-import { GenericObject } from '../utilTypes'
 
 interface ImportHtmlOptions {
   skipRoot? : boolean,

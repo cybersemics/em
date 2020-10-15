@@ -1,7 +1,6 @@
 import { attribute, getThoughtsRanked } from '../selectors'
 import { head, isFunction, unroot } from '../util'
-import { Child, Context } from '../types'
-import { MimeType } from '../utilTypes'
+import { Child, Context, MimeType } from '../types'
 import { State } from '../util/initialState'
 
 /** Replaces the root value with a given title. */

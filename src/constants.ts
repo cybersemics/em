@@ -1,7 +1,7 @@
 /** Defines app-wide constants. */
 
 import raw from 'raw.macro'
-import { GenericObject } from './utilTypes'
+import { GenericObject } from './types'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3

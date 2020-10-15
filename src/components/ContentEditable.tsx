@@ -1,5 +1,5 @@
 import React, { useRef } from 'react'
-import { GenericObject } from '../utilTypes'
+import { GenericObject } from '../types'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
     style: GenericObject,

@@ -1,8 +1,7 @@
 import { getContextsSortedAndRanked, getSortPreference, getThoughtsRanked, getThoughtsSorted, isChildVisible, isContextViewActive, isContextVisible } from '../selectors'
 import { head } from '../util'
 import { State } from '../util/initialState'
-import { Child, Context, ThoughtContext } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Child, Context, GenericObject, ThoughtContext } from '../types'
 
 /**
  * Gets a context's previous sibling with its rank.

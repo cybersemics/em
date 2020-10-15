@@ -6,8 +6,7 @@ import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContext
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
-import { Child, Path, TutorialChoice } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Child, GenericObject, Path, TutorialChoice } from '../types'
 
 interface Payload {
   contextChain?: Child[][],
