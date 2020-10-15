@@ -13,7 +13,7 @@ export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemot
 
     // on auth change
     // this is called when the user logs in or the page refreshes when the user is already authenticated
-    firebase.auth().onAuthStateChanged(async (user: User) => {
+    firebase.auth().onAuthStateChanged((user: User) => {
       if (user) {
         store.dispatch(userAuthenticated(user, { readyToLoadRemoteState }))
       }
