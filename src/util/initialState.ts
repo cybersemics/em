@@ -29,7 +29,7 @@ export interface ThoughtsInterface {
 // type RecentlyEditedTree = Index<RecentlyEditedTree> causes circular reference error
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 // export interface RecentlyEditedTree extends Index<RecentlyEditedTree> {}
-type RecentlyEditedTree = Index<any>
+type RecentlyEditedTree = Index
 
 export interface State {
   alert?: Alert,
