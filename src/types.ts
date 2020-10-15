@@ -21,7 +21,7 @@ export type ComparatorFunction<T> = (a: NonNullable<T>, b: NonNullable<T>) => Co
 export type MimeType = 'text/plain' | 'text/html'
 
 /** A very generic object. */
-export type GenericObject<T = any> = {[key: string]: T}
+export type Index<T = any> = {[key: string]: T}
 
 /** An option that can selected to set the export format. */
 export interface ExportOption {
@@ -95,7 +95,7 @@ export interface Icon {
   fill?: string,
   height?: number,
   size: number,
-  style?: GenericObject<string>,
+  style?: Index<string>,
   width?: number,
 }
 

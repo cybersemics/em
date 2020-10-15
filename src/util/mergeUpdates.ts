@@ -1,11 +1,11 @@
-import { GenericObject } from '../types'
+import { Index } from '../types'
 
 /** Merge two objects together, deleting falsey values.
  *
  * @param mergeInto    The cloned object that will be merged into and deleted from.
  * @param mergee       The object to merge which may have falsey values.
  */
-export const mergeUpdates = (mergeInto: GenericObject, mergee: GenericObject) => {
+export const mergeUpdates = (mergeInto: Index, mergee: Index) => {
   const mergeResult = { ...mergeInto }
 
   for (const key in mergee) { // eslint-disable-line fp/no-loops

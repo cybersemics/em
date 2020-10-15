@@ -9,7 +9,7 @@ import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
-import { Child, Connected, Context, GenericObject, Path, TutorialChoice } from '../types'
+import { Child, Connected, Context, Index, Path, TutorialChoice } from '../types'
 
 // constants
 import {
@@ -109,7 +109,7 @@ interface EditableProps {
   isEditing?: boolean,
   rank: number,
   showContexts?: boolean,
-  style?: GenericObject<string>,
+  style?: Index<string>,
   thoughtsRanked: Path,
   onKeyDownAction?: () => void,
 }

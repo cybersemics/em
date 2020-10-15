@@ -6,7 +6,7 @@ import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContext
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
-import { Child, GenericObject, Path, TutorialChoice } from '../types'
+import { Child, Index, Path, TutorialChoice } from '../types'
 
 interface Payload {
   contextChain?: Child[][],
@@ -14,7 +14,7 @@ interface Payload {
   cursorHistoryPop?: boolean,
   editing?: boolean | null,
   offset?: number,
-  replaceContextViews?: GenericObject<boolean>,
+  replaceContextViews?: Index<boolean>,
   thoughtsRanked: Path | null,
   noteFocus?: boolean,
 }

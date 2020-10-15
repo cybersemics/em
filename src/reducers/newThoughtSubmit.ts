@@ -3,7 +3,7 @@ import { updateThoughts } from '../reducers'
 import { getNextRank, getThought, getThoughts } from '../selectors'
 import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
 import { State } from '../util/initialState'
-import { Context, GenericObject, Parent } from '../types'
+import { Context, Index, Parent } from '../types'
 
 /**
  * Creates a new thought in the given context.
@@ -25,7 +25,7 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
 
   // store children indexed by the encoded context for O(1) lookup of children
   const contextEncoded = hashContext(contextActual)
-  const contextIndexUpdates: GenericObject<Parent> = {}
+  const contextIndexUpdates: Index<Parent> = {}
 
   if (context.length > 0) {
     const newContextSubthought = {

@@ -1,5 +1,5 @@
 declare module 'himalaya' {
-  import { GenericObject } from '../../types'
+  import { Index } from '../../types'
 
   export interface Node {
     type: string,
@@ -8,7 +8,7 @@ declare module 'himalaya' {
   export interface Element extends Node {
     type: 'element',
     tagName: string,
-    attributes: GenericObject<string>[],
+    attributes: Index<string>[],
     children: HimalayaNode[],
   }
 
@@ -25,6 +25,6 @@ declare module 'himalaya' {
   export type HimalayaNode = Element | Comment | Text
 
   // eslint-disable-next-line
-  export function parse(str: String, options?: GenericObject<string>): HimalayaNode[]
+  export function parse(str: String, options?: Index<string>): HimalayaNode[]
 
 }

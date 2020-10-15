@@ -5,7 +5,7 @@ import { isMac, isMobile } from './browser'
 import globals from './globals'
 import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
-import { Direction, GenericObject, GesturePath, Key, Shortcut } from './types'
+import { Direction, GesturePath, Index, Key, Shortcut } from './types'
 import { State } from './util/initialState'
 
 import * as shortcutObject from './shortcuts/index'
@@ -49,7 +49,7 @@ const hashKeyDown = (e: KeyboardEvent) =>
   (letters[e.keyCode] || e.key).toUpperCase()
 
 // index shortcuts for O(1) lookup by keyboard
-const shortcutKeyIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
+const shortcutKeyIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
   ? {
     ...accum,
     [hashShortcut(shortcut)]: shortcut
@@ -59,7 +59,7 @@ const shortcutKeyIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum,
 )
 
 // index shortcuts for O(1) lookup by id
-const shortcutIdIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.id
+const shortcutIdIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.id
   ? {
     ...accum,
     [shortcut.id]: shortcut
@@ -69,7 +69,7 @@ const shortcutIdIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, 
 )
 
 // index shortcuts for O(1) lookup by gesture
-const shortcutGestureIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
+const shortcutGestureIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
   ? {
     ...accum,
     // shortcut.gesture may be a string or array of strings
@@ -205,7 +205,7 @@ const arrowTextToArrowCharacter = (s: string) => (({
   ArrowRight: '→',
   ArrowUp: '↑',
   ArrowDown: '↓'
-} as GenericObject)[s] || s)
+} as Index)[s] || s)
 
 /** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = (keyboardOrString: Key | string) => {
