@@ -11,7 +11,7 @@ export const isSmaller = <T1 extends Index, T2 extends Index, K extends keyof T1
  * Creates a function that takes two values and compares the given key.
  * Does case insensitive comparison with strings.
  */
-export const makeCompareByProp = (key: any): ComparatorFunction<Index> => (a: Index, b: Index) =>
+export const makeCompareByProp = (key: string): ComparatorFunction<Index> => (a: Index, b: Index) =>
   isGreater(a, b, key) ? 1
   : isSmaller(a, b, key) ? -1
   : 0
