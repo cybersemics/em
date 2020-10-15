@@ -161,3 +161,7 @@ interface ExtendedOperation extends GetOperation<any> {
 }
 
 export type Patch = ExtendedOperation[]
+
+export interface Snapshot<T> {
+  val: () => T
+}

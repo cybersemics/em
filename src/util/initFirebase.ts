@@ -3,6 +3,7 @@ import globals from '../globals'
 import { loadPublicThoughts, userAuthenticated } from '../action-creators'
 import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
+import { Snapshot } from '../types'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemoteState?: Promise<void>} = {}) => {
@@ -29,7 +30,7 @@ export const initFirebase = async ({ readyToLoadRemoteState }: {readyToLoadRemot
     // on connect change
     // this is called when moving from online to offline and vice versa
     const connectedRef = firebase.database().ref('.info/connected')
-    connectedRef.on('value', async (snapshot: { val: () => any }) => {
+    connectedRef.on('value', async (snapshot: Snapshot<boolean>) => {
       const connected = snapshot.val()
       const status = store.getState().status
 
