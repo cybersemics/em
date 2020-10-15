@@ -7,8 +7,7 @@ import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThought
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 import { State } from '../util/initialState'
-import { Connected, Lexeme } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Connected, GenericObject, Lexeme } from '../types'
 
 interface SearchSubthoughtsProps {
   search?: string | null,

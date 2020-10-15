@@ -1,9 +1,8 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
 import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
-import { Child, Context, Path } from '../types'
+import { Child, Context, GenericObject, Path } from '../types'
 import { State } from '../util/initialState'
-import { GenericObject } from '../utilTypes'
 
 // util
 import {

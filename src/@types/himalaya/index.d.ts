@@ -1,5 +1,5 @@
 declare module 'himalaya' {
-  import { GenericObject } from '../../utilTypes'
+  import { GenericObject } from '../../types'
 
   export interface Node {
     type: string,

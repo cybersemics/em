@@ -3,8 +3,7 @@ import { applyPatch, compare, deepClone } from 'fast-json-patch'
 import { Action, StoreEnhancer } from 'redux'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import { State } from '../util/initialState'
-import { GenericObject } from '../utilTypes'
-import { Patch } from '../types'
+import { GenericObject, Patch } from '../types'
 
 const stateSectionsToOmit = ['alert', 'syncQueue', 'user', 'userRef']
 

@@ -3,8 +3,7 @@ import { connect } from 'react-redux'
 import { exists, getContexts } from '../selectors'
 import { contextOf, equalArrays, head, headValue, pathToContext, rootedContextOf } from '../util'
 import { State } from '../util/initialState'
-import { Child, Context, Path } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Child, Context, GenericObject, Path } from '../types'
 
 interface SuperscriptProps {
   contextViews?: GenericObject<boolean>,

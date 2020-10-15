@@ -3,8 +3,7 @@ import React from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION, MODAL_REMIND_ME_LATER_DURATION } from '../constants'
 import { modalCleanup } from '../util'
-import { GenericObject } from '../utilTypes'
-import { Connected } from '../types'
+import { Connected, GenericObject } from '../types'
 import { modalComplete } from '../action-creators'
 
 export interface ModalProps {
