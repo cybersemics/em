@@ -131,7 +131,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? contextOf(props.thoughtsRanked).concat(head(cursor!))
     : thoughtsRanked
 
-  const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path
+  const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path | undefined
 
   return {
     contextBinding,
