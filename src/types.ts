@@ -7,7 +7,7 @@ import { State } from './util/initialState'
 interface Firebase {
   auth: () => {
     currentUser: User,
-    onAuthStateChanged: (user: any) => void,
+    onAuthStateChanged: (f: (user: User) => void) => void,
   },
   database: () => {
     ref: (s: string) => {
