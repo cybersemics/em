@@ -1,12 +1,13 @@
 /** Defines global keyboard shortcuts and gestures. */
 
 import Emitter from 'emitter20'
+import { Action, Store } from 'redux'
 import { isMac, isMobile } from './browser'
 import globals from './globals'
 import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
-import { Direction, GesturePath, Index, Key, Shortcut } from './types'
 import { State } from './util/initialState'
+import { Direction, GesturePath, Index, Key, Shortcut } from './types'
 
 import * as shortcutObject from './shortcuts/index'
 export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]
@@ -93,7 +94,7 @@ let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no
 /**
  * Keyboard handlers factory function.
  */
-export const inputHandlers = (store: any) => ({
+export const inputHandlers = (store: Store<State, Action<string>>) => ({
 
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: (g: Direction | null, path: GesturePath) => {
@@ -113,7 +114,7 @@ export const inputHandlers = (store: any) => ({
     handleGestureSegmentTimeout = window.setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
-        store.dispatch(alert(shortcut ? shortcut.name
+        store.dispatch<any>(alert(shortcut ? shortcut.name
           : isGestureHint(state) ? '✗ Invalid gesture'
           : null, { alertType: 'gestureHint', showCloseLink: false }))
       },
@@ -134,7 +135,7 @@ export const inputHandlers = (store: any) => ({
       const shortcut = shortcutGestureIndex[gesture as string]
       if (shortcut) {
         shortcutEmitter.trigger('shortcut', shortcut)
-        shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
+        shortcut.exec(store.dispatch as any, store.getState, e, { type: 'gesture' })
       }
     }
 
@@ -145,7 +146,7 @@ export const inputHandlers = (store: any) => ({
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       if (isGestureHint(store.getState())) {
-        store.dispatch(alert(null))
+        store.dispatch<any>(alert(null))
       }
     })
   },
@@ -155,7 +156,7 @@ export const inputHandlers = (store: any) => ({
     // track meta key for expansion algorithm
     if (e.key === (isMac ? 'Meta' : 'Control')) {
       if (globals.suppressExpansion) {
-        store.dispatch(suppressExpansion({ cancel: true }))
+        store.dispatch<any>(suppressExpansion({ cancel: true }))
       }
     }
   },
@@ -188,11 +189,11 @@ export const inputHandlers = (store: any) => ({
 
         // dispatch action to hide toolbar and breadcrumbs
         if (!isMobile) {
-          store.dispatch(toggleTopControlsAndBreadcrumbs(false))
+          store.dispatch<any>(toggleTopControlsAndBreadcrumbs(false))
         }
 
         // execute shortcut
-        shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
+        shortcut.exec(store.dispatch as any, store.getState, e, { type: 'keyboard' })
       }
     }
   }
