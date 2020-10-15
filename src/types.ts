@@ -4,10 +4,24 @@ import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
 import { State } from './util/initialState'
 
+interface Firebase {
+  auth: () => {
+    currentUser: unknown,
+    onAuthStateChanged: (user: any) => void
+  },
+  database: () => {
+    ref: (s: string) => {
+      on: (s: string, f: any) => void,
+      once: (s: string, f: any) => void,
+    },
+  },
+  initializeApp: (config: Index<string>) => void
+}
+
 declare global {
   interface Window {
-      firebase:any,
-      em: any,
+      firebase: Firebase,
+      em: unknown,
   }
 }
 
