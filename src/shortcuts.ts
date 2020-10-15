@@ -1,7 +1,7 @@
 /** Defines global keyboard shortcuts and gestures. */
 
 import Emitter from 'emitter20'
-import { Action, Store } from 'redux'
+import { Store } from 'redux'
 import { isMac, isMobile } from './browser'
 import globals from './globals'
 import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
@@ -94,7 +94,7 @@ let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no
 /**
  * Keyboard handlers factory function.
  */
-export const inputHandlers = (store: Store<State, Action<string>>) => ({
+export const inputHandlers = (store: Store<State, any>) => ({
 
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: (g: Direction | null, path: GesturePath) => {
@@ -135,7 +135,7 @@ export const inputHandlers = (store: Store<State, Action<string>>) => ({
       const shortcut = shortcutGestureIndex[gesture as string]
       if (shortcut) {
         shortcutEmitter.trigger('shortcut', shortcut)
-        shortcut.exec(store.dispatch as any, store.getState, e, { type: 'gesture' })
+        shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
       }
     }
 
@@ -193,7 +193,7 @@ export const inputHandlers = (store: Store<State, Action<string>>) => ({
         }
 
         // execute shortcut
-        shortcut.exec(store.dispatch as any, store.getState, e, { type: 'keyboard' })
+        shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
       }
     }
   }
