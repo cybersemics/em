@@ -27,8 +27,8 @@ export interface User {
 }
 
 export interface Ref {
-  on: (s: string, f: Function) => void,
-  once: (s: string, f: Function) => void,
+  on: (s: string, f: (...args: any) => any) => void,
+  once: (s: string, f: (...args: any) => any) => void,
 }
 
 export interface Snapshot<T> {
@@ -49,12 +49,9 @@ declare global {
 /**
  * Flavor type provides a version of nominal typing rather than structural typing. It allows implicit conversation of objects with the same shape. Use a Brand type for disallowing implicit conversion.
  *
- * Usage: myVar: Flavor<string, 'specialString'>
- * See: https://spin.atomicobject.com/2018/01/15/typescript-flexible-nominal-typing/
+ * See: https://spin.atomicobject.com/2018/01/15/typescript-flexible-nominal-typing/.
  */
-interface Flavoring<FlavorT> {
-  _type?: FlavorT
-}
+interface Flavoring<FlavorT> { _type?: FlavorT }
 export type Flavor<T, FlavorT> = T & Flavoring<FlavorT>
 
 /** Possible return values of a sort's comparator function. */

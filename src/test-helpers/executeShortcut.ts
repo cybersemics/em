@@ -1,5 +1,5 @@
 import { Shortcut } from '../types'
-import { Action, Dispatch, Store } from 'redux'
+import { Store } from 'redux'
 import { State } from '../util/initialState'
 
 /** Execute shortcut. */
