@@ -3,7 +3,7 @@ import React from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION, MODAL_REMIND_ME_LATER_DURATION } from '../constants'
 import { modalCleanup } from '../util'
-import { Connected, Index } from '../types'
+import { Connected } from '../types'
 import { modalComplete } from '../action-creators'
 
 export interface ModalProps {
@@ -15,7 +15,7 @@ export interface ModalProps {
   opaque?: boolean,
   positionAtCursor?: boolean,
   show?: boolean,
-  style?: Index<string | number>,
+  style?: React.CSSProperties,
   title: string,
   top?: number,
 }
