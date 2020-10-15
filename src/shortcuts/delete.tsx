@@ -4,7 +4,6 @@ import { State } from '../util/initialState'
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
-import { Nullable } from '../utilTypes'
 
 interface Error {
   type: 'error',
@@ -24,7 +23,7 @@ interface Alert {
 
 interface ArchiveThought {
   type: 'archiveThought',
-  path?: Nullable<Path>,
+  path?: Path | null,
 }
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let

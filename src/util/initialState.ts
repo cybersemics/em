@@ -1,7 +1,7 @@
 import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { Alert, Context, Lexeme, Parent, Patch, Path } from '../types'
-import { GenericObject, Nullable } from '../utilTypes'
+import { GenericObject } from '../utilTypes'
 import { canShowModal } from '../selectors'
 
 // import util functions directly since importing from ../util/index causes circular dependency
@@ -46,9 +46,9 @@ export interface State {
   autologin: boolean,
   codeView?: Path | null,
   contextViews: GenericObject<boolean>,
-  cursor: Nullable<Path>,
-  cursorBeforeEdit: Nullable<Path>,
-  cursorBeforeSearch: Nullable<Path>,
+  cursor: (Path | null),
+  cursorBeforeEdit: (Path | null),
+  cursorBeforeSearch: (Path | null),
   cursorHistory: Path[],
   cursorOffset: number,
   dataNonce: number,
@@ -57,8 +57,8 @@ export interface State {
   dragHold?: boolean,
   dragInProgress: boolean,
   editableNonce: number,
-  editing: Nullable<boolean>,
-  editingValue: Nullable<string>,
+  editing: (boolean | null),
+  editingValue: (string | null),
   error?: string | null,
   expanded: GenericObject<boolean>,
   expandedContextThought?: Path,
@@ -72,7 +72,7 @@ export interface State {
   resourceCache: GenericObject<string>,
   schemaVersion: number,
   scrollPrioritized: boolean,
-  search: Nullable<string>,
+  search: (string | null),
   searchLimit?: number,
   showHiddenThoughts: boolean,
   showModal?: string | null,
