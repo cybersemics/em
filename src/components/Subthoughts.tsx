@@ -152,7 +152,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: Path }
   const thoughtsTo = props.thoughtsRanked
   const cursor = store.getState().cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
@@ -173,7 +173,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: Path }
   const thoughtsTo = props.thoughtsRanked
 
   const newPath = unroot(thoughtsTo).concat({
@@ -200,7 +200,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
+      rank: getNextRank(state, pathToContext(thoughtsFrom))
     }
     : {
       type: 'existingThoughtMove',
@@ -230,7 +230,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
-  isDragInProgress: monitor.getItem(),
+  isDragInProgress: monitor.getItem() as boolean,
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
 })
 
