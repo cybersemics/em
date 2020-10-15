@@ -27,8 +27,8 @@ export interface User {
 }
 
 export interface Ref {
-  on: (s: string, f: any) => void,
-  once: (s: string, f: any) => void,
+  on: (s: string, f: Function) => void,
+  once: (s: string, f: Function) => void,
 }
 
 export interface Snapshot<T> {
@@ -177,7 +177,7 @@ export type Alert = {
 
 // Extend fast-json-patch Operation type to include actions list
 // See fast-json-patch types: https://github.com/Starcounter-Jack/JSON-Patch/blob/89a09e94e0e6500115789e33586a75c8dd1aea13/module/core.d.ts
-interface ExtendedOperation extends GetOperation<any> {
+interface ExtendedOperation<T = any> extends GetOperation<T> {
   actions: string[],
 }
 
