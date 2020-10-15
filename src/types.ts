@@ -15,7 +15,7 @@ declare global {
 export type ComparatorValue = 1 | -1 | 0
 
 /** A standard comparator function used within sort. */
-export type ComparatorFunction<T> = (a: NonNullable<T>, b: NonNullable<T>) => ComparatorValue
+export type ComparatorFunction<T> = (a: T, b: T) => ComparatorValue
 
 /** Set of file types supported for exporting thoughts. */
 export type MimeType = 'text/plain' | 'text/html'

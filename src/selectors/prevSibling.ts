@@ -19,15 +19,15 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   /** Gets siblings of thought. */
   const getThoughtSiblings = () => (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
 
-  const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings()
+  const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings() as (Child | ThoughtContext)[]
   let prev: Index | null = null // eslint-disable-line fp/no-let
   siblings.find(child => {
-    if (child.rank === rank && (contextViewActive || child.value === value)) {
+    if (child.rank === rank && (contextViewActive || (child as Child).value === value)) {
       return true
     }
     else if (!(contextViewActive
-      ? isContextVisible(state, child.context)
-      : showHiddenThoughts || isChildVisible(state, context, child))
+      ? isContextVisible(state, (child as ThoughtContext).context)
+      : showHiddenThoughts || isChildVisible(state, context, child as Child))
     ) {
       return false
     }
