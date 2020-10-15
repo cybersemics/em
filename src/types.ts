@@ -95,7 +95,7 @@ export interface Icon {
   fill?: string,
   height?: number,
   size: number,
-  style?: Index<string>,
+  style?: React.CSSProperties,
   width?: number,
 }
 

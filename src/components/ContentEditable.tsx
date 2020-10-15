@@ -1,8 +1,7 @@
 import React, { useRef } from 'react'
-import { Index } from '../types'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
-    style: Index,
+    style: React.CSSProperties,
     html: string,
     disabled?: boolean,
     innerRef?: React.RefObject<HTMLDivElement>,
