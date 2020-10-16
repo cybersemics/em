@@ -47,12 +47,14 @@ declare global {
  ********************************/
 
 /**
- * Flavor type provides a version of nominal typing rather than structural typing. It allows implicit conversation of objects with the same shape. Use a Brand type for disallowing implicit conversion.
- *
+ * A "Flavor" type is a nominal type that allows implicit conversation of objects with the same shape.
+ * A "Brand" type is a nominal type that disallows implicit conversion.
  * See: https://spin.atomicobject.com/2018/01/15/typescript-flexible-nominal-typing/.
  */
 interface Flavoring<FlavorT> { _type?: FlavorT }
 export type Flavor<T, FlavorT> = T & Flavoring<FlavorT>
+declare const BrandSymbol: unique symbol
+interface Brand<T> { [BrandSymbol]: T }
 
 /** Possible return values of a sort's comparator function. */
 export type ComparatorValue = 1 | -1 | 0
@@ -74,7 +76,7 @@ export interface ExportOption {
 }
 
 /** A timestamp string. */
-export type Timestamp = Flavor<string, 'Timestamp'>
+export type Timestamp = string & Brand<'Timestamp'>
 
 /** An entry in thoughtIndex[].contexts. */
 export interface ThoughtContext {
