@@ -3,7 +3,7 @@ import { updateThoughts } from '../reducers'
 import { getNextRank, getThought, getThoughts } from '../selectors'
 import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
 import { State } from '../util/initialState'
-import { Context, Index, Parent } from '../types'
+import { Context, Index, Lexeme, Parent } from '../types'
 
 /**
  * Creates a new thought in the given context.
@@ -13,12 +13,14 @@ import { Context, Index, Parent } from '../types'
 const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: { context: Context, value: string, rank: number, addAsContext?: boolean }) => {
 
   // create thought if non-existent
-  const thought = Object.assign({}, getThought(state, value) || {
-    value,
-    contexts: [],
-    created: timestamp(),
-    lastUpdated: timestamp()
-  })
+  const thought: Lexeme = {
+    ...getThought(state, value) || {
+      value,
+      contexts: [],
+      created: timestamp(),
+      lastUpdated: timestamp()
+    }
+  }
 
   const id = createId()
   const contextActual = addAsContext ? [value] : context
