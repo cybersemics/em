@@ -22,7 +22,7 @@ interface Payload {
  * @param local    If false, does not persist next flushQueue to local database. Default: true.
  * @param remote   If false, does not persist next flushQueue to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Payload) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Payload): State => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
@@ -45,7 +45,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   logWithTime('updateThoughts: merge syncQueue')
 
-  const stateNew = {
+  const stateNew: State = {
     ...state,
     recentlyEdited: recentlyEditedNew,
     syncQueue: syncQueueNew,
