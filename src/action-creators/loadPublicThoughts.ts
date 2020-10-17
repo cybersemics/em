@@ -1,7 +1,7 @@
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
-import { ActionCreator, Parent, Snapshot } from '../types'
 import { loadRemoteState } from '../action-creators'
+import { ActionCreator, Parent, Snapshot } from '../types'
 
 /**
  * Loads a public context when the url contains a userId of a different user.

@@ -1,7 +1,8 @@
 import React, { Dispatch, MouseEvent, useEffect } from 'react'
+import { Action } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { ConnectDragPreview, ConnectDragSource, ConnectDropTarget, DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
@@ -9,8 +10,7 @@ import globals from '../globals'
 import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { Child, Path } from '../types'
-import { GenericObject } from '../utilTypes'
+import { ActionCreator, Child, Path, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -74,7 +74,7 @@ interface ThoughtProps {
   contextChain: Child[][],
   cursorOffset?: number,
   hideBullet?: boolean,
-  homeContext?: never,
+  homeContext?: boolean,
   isDraggable?: boolean,
   isDragging?: boolean,
   isPublishChild?: boolean,
@@ -84,7 +84,7 @@ interface ThoughtProps {
   rank: number,
   showContextBreadcrumbs?: boolean,
   showContexts?: boolean,
-  style?: GenericObject<string>,
+  style?: React.CSSProperties,
   thoughtsRanked: Path,
   view?: string | null,
   toggleTopControlsAndBreadcrumbs: () => void,
@@ -100,7 +100,7 @@ interface ThoughtContainerProps {
   cursorOffset?: number,
   depth?: number,
   expanded?: boolean,
-  expandedContextThought?: any,
+  expandedContextThought?: Path,
   hideBullet?: boolean,
   isDeepHovering?: boolean,
   isPublishChild?: boolean,
@@ -112,11 +112,11 @@ interface ThoughtContainerProps {
   isEditingPath?: boolean,
   isHovering?: boolean,
   isParentHovering?: boolean,
-  prevChild?: any,
+  prevChild?: Child | ThoughtContext,
   publish?: boolean,
   rank: number,
   showContexts?: boolean,
-  style?: GenericObject<string>,
+  style?: React.CSSProperties,
   thought?: Child,
   thoughtsRanked: Path,
   thoughtsRankedLive?: Path,
@@ -216,7 +216,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
+const mapDispatchToProps = (dispatch: Dispatch<Action | ActionCreator>) => ({
   toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
 })
 
@@ -449,7 +449,11 @@ const ThoughtContainer = ({
   url,
   view,
   toggleTopControlsAndBreadcrumbs
-}: ThoughtContainerProps & { dragPreview: any, dragSource: any, dropTarget: any } & ThoughtDispatchProps) => {
+}: ThoughtContainerProps & {
+  dragPreview: ConnectDragPreview,
+  dragSource: ConnectDragSource,
+  dropTarget: ConnectDropTarget,
+} & ThoughtDispatchProps) => {
 
   const state = store.getState()
   useEffect(() => {
@@ -502,7 +506,7 @@ const ThoughtContainer = ({
   const contextThought = showContexts && getThought(state, headValue(contextOf(thoughtsRanked)))
 
   const showContextBreadcrumbs = showContexts &&
-    (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought)) &&
+    (!globals.ellipsizeContextThoughts || equalPath(thoughtsRanked, expandedContextThought as Path | null)) &&
     thoughtsRanked.length > 2
 
   const thoughts = pathToContext(thoughtsRanked)
@@ -535,7 +539,7 @@ const ThoughtContainer = ({
       // check if it's alphabetically previous to current thought
       && draggingThoughtValue <= value
       // check if it's alphabetically next to previous thought if it exists
-      && (!prevChild || draggingThoughtValue > prevChild.value)
+      && (!prevChild || draggingThoughtValue > (prevChild as Child).value)
     // if alphabetical sort is disabled just check if current thought is hovering
     : globals.simulateDropHover || isHovering
 
@@ -572,7 +576,7 @@ const ThoughtContainer = ({
   >
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(thoughtsRanked)} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: MouseEvent) => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(thoughtsRanked)} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: React.MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({

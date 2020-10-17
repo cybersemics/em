@@ -1,9 +1,8 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
 import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
-import { Child, Context, Path } from '../types'
+import { Child, Context, Index, Path, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
-import { GenericObject } from '../utilTypes'
 
 // util
 import {
@@ -29,7 +28,7 @@ import {
  *   ...
  * }
  */
-const expandThoughts = (state: State, path: Path | null, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): GenericObject<Path> => {
+const expandThoughts = (state: State, path: Path | null, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): Index<Path> => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -39,7 +38,9 @@ const expandThoughts = (state: State, path: Path | null, contextChain: Child[][]
   ) return {}
 
   /** Get the value of the Child | ThoughtContext. */
-  const childValue = (child: any) => showContexts ? head(child.context) : child.value
+  const childValue = (child: Child | ThoughtContext) => showContexts
+    ? head((child as ThoughtContext).context)
+    : (child as Child).value
 
   const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
     : contextChain.length > 0 ? contextChainToPath(contextChain)
@@ -48,16 +49,16 @@ const expandThoughts = (state: State, path: Path | null, contextChain: Child[][]
   const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
   const showContexts = isContextViewActive(state, context)
 
-  const childrenUnfiltered: any = showContexts
+  const childrenUnfiltered = showContexts
     ? getContexts(state, headValue(thoughtsRanked))
-    : getThoughts(state, pathToContext(thoughtsRanked))
+    : getThoughts(state, pathToContext(thoughtsRanked)) as (Child | ThoughtContext)[]
   const children = state.showHiddenThoughts
     ? childrenUnfiltered
-    : childrenUnfiltered.filter((child: Child) => !isFunction(childValue(child)))
+    : childrenUnfiltered.filter(child => !isFunction(childValue(child)))
 
   // expand if child is only child and its child is not url
   const grandchildren = children.length === 1
-    ? getThoughts(state, pathToContext((path || []).concat(children[0])))
+    ? getThoughts(state, pathToContext((path || []).concat(children[0] as Child)))
     : null
 
   /** Returns true if the context is the first column in a table view. */
@@ -91,23 +92,24 @@ const expandThoughts = (state: State, path: Path | null, contextChain: Child[][]
 
   return (isOnlyChildNoUrl || isTable() || pinChildren() || publishPinChildren()
     ? children
-    : children.filter((child: Child) => {
+    : children.filter(child => {
       /** Returns true if the child should be pinned open. */
       const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, thoughtsRanked)), '=pin', 'true')
       const value = childValue(child)
       return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })
   ).reduce(
-    (accum: GenericObject<boolean>, child: Child) => {
+    (accum: Index<Path>, child) => {
       const newContextChain = (contextChain || [])
         .map((path: Path) => path.concat())
-        .concat(contextChain.length > 0 ? [[child]] : [])
+        .concat(contextChain.length > 0 ? [[child as Child]] : [])
 
-      return Object.assign({}, accum,
+      return {
+        ...accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        expandThoughts(state, (path || []).concat(child), newContextChain, { depth: depth + 1 })
-      )
+        ...expandThoughts(state, (path || []).concat(child as Child), newContextChain, { depth: depth + 1 })
+      }
     },
     {
       // expand current thought

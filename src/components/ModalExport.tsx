@@ -12,7 +12,7 @@ import { exportContext, getDescendants, getThoughts, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import { State } from '../util/initialState'
-import { ExportOption } from '../utilTypes'
+import { ExportOption } from '../types'
 
 const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 

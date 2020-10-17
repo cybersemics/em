@@ -10,7 +10,6 @@ import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import { Child, Connected, Context, Path, TutorialChoice } from '../types'
-import { GenericObject } from '../utilTypes'
 
 // constants
 import {
@@ -110,7 +109,7 @@ interface EditableProps {
   isEditing?: boolean,
   rank: number,
   showContexts?: boolean,
-  style?: GenericObject<string>,
+  style?: React.CSSProperties,
   thoughtsRanked: Path,
   onKeyDownAction?: () => void,
 }

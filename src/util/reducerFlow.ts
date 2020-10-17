@@ -1,5 +1,4 @@
 import { State } from './initialState'
-import { Nullable } from '../utilTypes'
 
 type UnaryReducer = (state: State) => State
 
@@ -9,7 +8,7 @@ type UnaryReducer = (state: State) => State
  * @param reducers      A list of unary reducers of type `oldState => newState`. Does not accept async reducers.
  * @param initialState
  */
-export const reducerFlow = (reducers: Nullable<UnaryReducer>[]) => (initialState: State) =>
+export const reducerFlow = (reducers: (UnaryReducer | null)[]) => (initialState: State) =>
   reducers.reduce((state, reducer) => ({
     ...state,
     ...reducer ? reducer(state) : null,

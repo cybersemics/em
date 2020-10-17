@@ -3,7 +3,8 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import assert from 'assert'
 import evaluate from 'static-eval'
-import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import * as esprima from 'esprima'
 import { store } from '../store'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
@@ -12,9 +13,8 @@ import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, RANKED_ROOT } from '../constants'
 import { alert } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import { Child, GesturePath, Path } from '../types'
 import { State } from '../util/initialState'
-import * as esprima from 'esprima'
+import { Child, GesturePath, Index, Path, ThoughtContext } from '../types'
 
 // util
 import {
@@ -77,7 +77,7 @@ interface SubthoughtsProps {
 type SubthoughtsComponentProps = SubthoughtsProps & {
   contextBinding?: Path,
   dataNonce: number,
-  dropTarget: (el: JSX.Element) => any,
+  dropTarget: ConnectDropTarget,
   isDragInProgress?: boolean,
   isEditingAncestor?: boolean,
   isHovering?: boolean,
@@ -132,7 +132,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? contextOf(props.thoughtsRanked).concat(head(cursor!))
     : thoughtsRanked
 
-  const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path
+  const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path | undefined
 
   const isActiveSelection = window.getSelection()?.focusNode
 
@@ -155,7 +155,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: Path }
   const thoughtsTo = props.thoughtsRanked
   const cursor = store.getState().cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
@@ -176,7 +176,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem()
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: Path }
   const thoughtsTo = props.thoughtsRanked
 
   const newPath = unroot(thoughtsTo).concat({
@@ -203,7 +203,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
+      rank: getNextRank(state, pathToContext(thoughtsFrom))
     }
     : {
       type: 'existingThoughtMove',
@@ -233,7 +233,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
-  isDragInProgress: monitor.getItem(),
+  isDragInProgress: monitor.getItem() as boolean,
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
 })
 
@@ -259,12 +259,15 @@ const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
   try {
     const env = {
       // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
-      find: (predicate: any) => rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
-      findOne: (predicate: any) => Object.keys(thoughts.thoughtIndex).find(predicate),
+      find: (predicate: (s: string) => boolean) =>
+        rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
+      findOne: (predicate: (s: string) => boolean) =>
+        Object.keys(thoughts.thoughtIndex).find(predicate),
       home: () => getThoughtsRanked(state, RANKED_ROOT),
-      thought: Object.assign({}, getThought(state, headValue(thoughtsRanked)), {
+      thought: {
+        ...getThought(state, headValue(thoughtsRanked)),
         children: () => getThoughtsRanked(state, thoughtsRanked)
-      })
+      }
     }
     codeResults = evaluate(ast, env)
 
@@ -310,7 +313,7 @@ const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSin
   </div>
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
-const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number, dropTarget: any, isDragInProgress?: boolean, isHovering?: boolean, isThoughtDivider?: boolean }) =>
+const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number, dropTarget: ConnectDropTarget, isDragInProgress?: boolean, isHovering?: boolean, isThoughtDivider?: boolean }) =>
   <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
     {dropTarget(
       <li className={classNames({
@@ -390,7 +393,7 @@ export const SubthoughtsComponent = ({
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(thoughtsRanked))
     : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || thoughtsRanked))
-    : getThoughtsRanked(state, contextBinding || thoughtsRanked)
+    : getThoughtsRanked(state, contextBinding || thoughtsRanked) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -403,9 +406,9 @@ export const SubthoughtsComponent = ({
       }
       return {
         ...accum,
-        [child.rank]: (match || []).concat(child)
+        [child.rank]: [...match, child]
       }
-    }, {})
+    }, {} as Index<Child[] | ThoughtContext[]>)
   }
 
   // Ensure that editable newThought is visible.
@@ -413,13 +416,15 @@ export const SubthoughtsComponent = ({
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
   const filteredChildren = children.filter(child => {
-    const value = showContexts ? head(child.context) : child.value
+    const value = showContexts
+      ? head((child as ThoughtContext).context)
+      : (child as Child).value
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
       // NOTE: child.rank is not used by isChildVisible
       isChildVisible(state, pathToContext(thoughtsRanked), { value, rank: child.rank }) ||
       // always include thoughts in cursor
-      (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child))
+      (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child as Child))
   })
 
   const proposedPageSize = isRoot(thoughtsRanked)
@@ -500,7 +505,7 @@ export const SubthoughtsComponent = ({
       ? children.length < (allowSingleContext ? 1 : 2) ?
 
         // No children
-        <NoChildren allowSingleContext={allowSingleContext} children={children} thoughtsRanked={thoughtsRanked} />
+        <NoChildren allowSingleContext={allowSingleContext} children={children as Child[]} thoughtsRanked={thoughtsRanked} />
 
         // "Contexts:"
         : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
@@ -550,13 +555,11 @@ export const SubthoughtsComponent = ({
 
           return child ? <Thought
             allowSingleContext={allowSingleContextParent}
-            // grandchildren can be manually added in code view
-            childrenForced={child.children}
             contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
             hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
-            key={`${child.id || child.rank}${child.context ? '-context' : ''}`}
+            key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
             rank={child.rank}
             isDraggable={actualDistance < 2}
             showContexts={showContexts}

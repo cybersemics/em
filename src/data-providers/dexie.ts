@@ -2,8 +2,7 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
 import { timestamp } from '../util'
-import { Context, Lexeme, Parent, Path, Timestamp } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -87,7 +86,7 @@ export const updateThought = async (id: string, thought: Lexeme) =>
   db.thoughtIndex.put({ id, ...thought })
 
 /** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndexMap: GenericObject<Lexeme>) => {
+export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme>) => {
   const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({ ...thoughtIndexMap[key], id: key }))
   return db.thoughtIndex.bulkPut(thoughtsArray)
 }
@@ -113,7 +112,7 @@ export const updateContext = async (id: string, { context, children, lastUpdated
 }
 
 /** Updates multiple thoughts in the contextIndex. */
-export const updateContextIndex = async (contextIndexMap: GenericObject<Parent>) => {
+export const updateContextIndex = async (contextIndexMap: Index<Parent>) => {
   const contextsArray = Object.keys(contextIndexMap).map(key => ({ id: key, ...contextIndexMap[key] }))
   return db.contextIndex.bulkPut(contextsArray)
 }

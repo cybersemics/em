@@ -1,8 +1,7 @@
 import React, { useRef } from 'react'
-import { GenericObject } from '../utilTypes'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
-    style: GenericObject,
+    style: React.CSSProperties,
     html: string,
     disabled?: boolean,
     innerRef?: React.RefObject<HTMLDivElement>,

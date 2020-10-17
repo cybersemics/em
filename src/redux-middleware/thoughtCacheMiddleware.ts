@@ -7,8 +7,7 @@ import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getThoughtsOfEncodedContext, hasSyncs } from '../selectors'
 import { equalArrays, hashContext, mergeThoughts, pathToContext, unroot } from '../util'
 import { State, ThoughtsInterface } from '../util/initialState'
-import { Context, Lexeme, Parent, Path } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Context, Index, Lexeme, Parent, Path } from '../types'
 
 /** Debounce pending checks to avoid checking on every action. */
 const debounceUpdatePending = 10
@@ -28,7 +27,7 @@ async function itForEach<T> (it: AsyncIterable<T>, callback: (value: T) => void)
 }
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
-const getVisibleContexts = (state: State): GenericObject<Context> => {
+const getVisibleContexts = (state: State): Index<Context> => {
 
   const { cursor, expanded } = state
 
@@ -52,7 +51,7 @@ const getVisibleContexts = (state: State): GenericObject<Context> => {
 }
 
 /** Gets a map of all pending visible contexts and their children. */
-const nextPending = (state: State, pending: GenericObject<Context>, visibleContexts: GenericObject<Context>) => {
+const nextPending = (state: State, pending: Index<Context>, visibleContexts: Index<Context>) => {
 
   const { thoughts: { contextIndex } } = state
 
@@ -96,15 +95,15 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   let isLoaded = false // eslint-disable-line fp/no-let
 
   // track when expanded changes
-  let lastExpanded: GenericObject<Path> = {} // eslint-disable-line fp/no-let
+  let lastExpanded: Index<Path> = {} // eslint-disable-line fp/no-let
 
   // track when visible contexts change
-  let lastVisibleContexts: GenericObject<Context> = {} // eslint-disable-line fp/no-let
+  let lastVisibleContexts: Index<Context> = {} // eslint-disable-line fp/no-let
 
   // store pending cache entries to update
   // initialize with em and root contexts
   // eslint-disable-next-line fp/no-let
-  let pending: GenericObject<Context> = {
+  let pending: Index<Context> = {
     [hashContext([EM_TOKEN])]: [EM_TOKEN],
     [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
   }
@@ -208,7 +207,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
           if (parentEntryLocal) {
             accum[key] = parentEntryLocal
           }
-        }, {} as GenericObject<Parent>)
+        }, {} as Index<Parent>)
 
         // find the corresponding Lexemes from the local store (if any exist) so it can be reconciled with the remote Lexemes
         const thoughtsLocalThoughtIndexChunk = _.transform(thoughtsRemoteChunk.thoughtIndex, (accum, lexemeRemote, key) => {
@@ -216,7 +215,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
           if (lexemeLocal) {
             accum[key] = lexemeLocal
           }
-        }, {} as GenericObject<Lexeme>)
+        }, {} as Index<Lexeme>)
 
         dispatch({
           type: 'reconcile',

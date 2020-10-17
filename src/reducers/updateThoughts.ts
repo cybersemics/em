@@ -3,15 +3,14 @@ import { State, ThoughtsInterface, initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { hashContext, importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
-import { Child, Lexeme, Parent } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Child, Index, Lexeme, Parent } from '../types'
 
 interface Options {
-  thoughtIndexUpdates: GenericObject<Lexeme | null>,
-  contextIndexUpdates: GenericObject<Parent | null>,
-  recentlyEdited?: GenericObject<any>,
+  thoughtIndexUpdates: Index<Lexeme | null>,
+  contextIndexUpdates: Index<Parent | null>,
+  recentlyEdited?: Index<any>,
   contextChain?: Child[][],
-  updates?: GenericObject<string>,
+  updates?: Index<string>,
   local?: boolean,
   remote?: boolean,
 }
@@ -22,8 +21,8 @@ const rootEncoded = hashContext([ROOT_TOKEN])
 // whitelist them until we have a better solution
 // eslint-disable-next-line fp/no-let
 let whitelistedThoughts: {
-  contextIndex: GenericObject<Parent>,
-  thoughtIndex: GenericObject<Lexeme>,
+  contextIndex: Index<Parent>,
+  thoughtIndex: Index<Lexeme>,
 }
 
 // delay so util is fully loaded, otherwise importHtml will error out with "pathToContext is not a function"

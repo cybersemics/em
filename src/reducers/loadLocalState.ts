@@ -2,14 +2,13 @@ import _ from 'lodash'
 import { render } from '../reducers'
 import { reducerFlow } from '../util'
 import { State } from '../util/initialState'
-import { Path, Timestamp } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Index, Path, Timestamp } from '../types'
 
 interface Options {
   contextViews?: any,
   cursor?: Path,
   lastUpdated?: Timestamp,
-  recentlyEdited?: GenericObject<any>,
+  recentlyEdited?: Index<any>,
   schemaVersion?: number,
 }
 

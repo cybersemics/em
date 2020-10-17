@@ -2,7 +2,6 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../selectors'
 import { State } from '../util/initialState'
-import { GenericObject } from '../utilTypes'
 import { Direction, GesturePath } from '../types'
 
 interface GestureDiagramProps {
@@ -14,7 +13,7 @@ interface GestureDiagramProps {
   reversalOffset?: number,
   size?: number,
   strokeWidth?: number,
-  style?: GenericObject<string>,
+  style?: React.CSSProperties,
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */

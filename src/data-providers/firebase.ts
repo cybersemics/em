@@ -1,6 +1,5 @@
 import { store } from '../store'
-import { Lexeme, Parent, Snapshot } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Index, Lexeme, Parent, Snapshot } from '../types'
 
 interface Options {
   maxDepth?: number,
@@ -52,7 +51,7 @@ export const getContextsByIds = async (ids: string[]): Promise<(Parent | undefin
 }
 
 /** Updates Firebase data. */
-export const update = async (updates: GenericObject<any>) => {
+export const update = async (updates: Index<any>) => {
   const { userRef } = store.getState()
   return new Promise((resolve, reject) => {
     userRef!.update(updates, (err: Error | null, ...args: any[]) => {
@@ -81,14 +80,14 @@ export const updateThought = async (id: string, thought: Lexeme): Promise<unknow
   })
 
 /** Updates the contextIndex. */
-export const updateContextIndex = async (contextIndex: GenericObject<Parent>): Promise<any> =>
+export const updateContextIndex = async (contextIndex: Index<Parent>): Promise<any> =>
   update(Object.entries(contextIndex).reduce((accum, [key, value]) => ({
     ...accum,
     ['contextIndex/' + key]: value,
   }), {}))
 
 /** Updates the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndex: GenericObject<Lexeme>): Promise<any> =>
+export const updateThoughtIndex = async (thoughtIndex: Index<Lexeme>): Promise<any> =>
   update(Object.entries(thoughtIndex).reduce((accum, [key, value]) => ({
     ...accum,
     ['thoughtIndex/' + key]: value,
