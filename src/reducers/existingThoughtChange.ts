@@ -186,14 +186,15 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
    */
   const recursiveUpdates = (thoughtsRanked: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
 
-    return getThoughtsRanked(state, thoughtsRanked).reduce((accum, child) => {
+    const context = pathToContext(thoughtsRanked)
+    return getThoughtsRanked(state, context).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
       const childThought = getThought(state, child.value)
 
       // this should only happen if there is a thoughtIndex integrity violation
       if (!childThought) {
-        // console.error(`Missing child ${child.value} in ${pathToContext(thoughtsRanked)}`)
+        // console.error(`Missing child ${child.value} in ${context}`)
         const accumNew = {
           ...accumRecursive,
           ...accum,
@@ -205,7 +206,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
       // remove and add the new context of the child
       const contextNew = thoughtsNew.concat(showContexts ? value : []).concat(contextRecursive)
-      const childNew = addContext(removeContext(childThought, pathToContext(thoughtsRanked), child.rank), contextNew, child.rank, child.id!, child.archived!)
+      const childNew = addContext(removeContext(childThought, context, child.rank), contextNew, child.rank, child.id!, child.archived!)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = childNew
@@ -219,10 +220,10 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
         // merge current thought updates
         [hashedKey]: {
           thoughtIndex: childNew,
-          context: pathToContext(thoughtsRanked),
+          context,
           // return parallel lists so that the old contextIndex can be deleted and new contextIndex can be added
           // TODO: This could be improved by putting it directly into the form required by contextIndex to avoid later merging
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(thoughtsRanked)]),
+          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([context]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
         }
       }

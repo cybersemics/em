@@ -110,7 +110,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
     const newLastRank = getNextRank(state, pathToContext(newThoughtsRanked))
 
-    return getThoughtsRanked(state, oldThoughtsRanked).reduce((accum, child, i) => {
+    const oldThoughts = pathToContext(oldThoughtsRanked)
+    return getThoughtsRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ thoughts: { thoughtIndex: thoughtIndexNew } }, child.value)
 
@@ -125,7 +126,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         ? timestamp()
         : exactThought.archived as Timestamp
 
-      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank, child.id as string, archived as Timestamp), contextNew)
+      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, oldThoughts, child.rank), contextNew, movedRank, child.id as string, archived as Timestamp), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
@@ -147,8 +148,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
           id: child.id ?? null,
           archived,
           thoughtIndex: childNewThought,
-          context: pathToContext(oldThoughtsRanked),
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(oldThoughtsRanked)]),
+          context: oldThoughts,
+          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([oldThoughts]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
         }
       }

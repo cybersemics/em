@@ -1,5 +1,5 @@
-import { getRankAfter, hasChild } from '../selectors'
 import { alert, existingThoughtMove } from '../reducers'
+import { getRankAfter, hasChild, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -43,7 +43,7 @@ const outdent = (state: State) => {
 
   const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
     value: headValue(cursor),
-    rank: getRankAfter(state, contextOf(cursor))
+    rank: getRankAfter(state, contextOf(simplifyPath(state, cursor)))
   })) as Path
 
   return existingThoughtMove(state, {

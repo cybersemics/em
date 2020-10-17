@@ -505,7 +505,7 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive!)
+  const children = childrenForced || getThoughtsRanked(state, contextBinding ? pathToContext(contextBinding) : thoughtsRankedLive!)
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
   const contextThought = showContexts && getThought(state, headValue(contextOf(thoughtsRanked)))

@@ -7,7 +7,7 @@ import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThought
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 import { State } from '../util/initialState'
-import { Connected, Index, Lexeme } from '../types'
+import { Connected, Index, Lexeme, SimplePath } from '../types'
 
 interface SearchSubthoughtsProps {
   search?: string | null,
@@ -76,7 +76,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, arch
     // must go into DOM to modify the parent li classname since we do not want the li to re-render
     ref={onRef}
   >
-    {!exists(store.getState(), search) && isDocumentEditable() ? <NewThought path={[]} label={`Create "${search}"`} value={search} type='button' /> : null}
+    {!exists(store.getState(), search) && isDocumentEditable() ? <NewThought path={[] as unknown as SimplePath} label={`Create "${search}"`} value={search} type='button' /> : null}
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Subthoughts
       childrenForced={children.slice(0, searchLimit)}
