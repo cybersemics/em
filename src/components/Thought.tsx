@@ -86,7 +86,7 @@ interface ThoughtProps {
   showContextBreadcrumbs?: boolean,
   showContexts?: boolean,
   style?: React.CSSProperties,
-  thoughtsRanked: Path,
+  thoughtsRanked: SimplePath,
   view?: string | null,
   toggleTopControlsAndBreadcrumbs: () => void,
 }
@@ -120,8 +120,8 @@ interface ThoughtContainerProps {
   showContexts?: boolean,
   style?: React.CSSProperties,
   thought?: Child,
-  thoughtsRanked: Path,
-  thoughtsRankedLive?: Path,
+  thoughtsRanked: SimplePath,
+  thoughtsRankedLive?: SimplePath,
   url?: string | null,
   view?: string | null,
 }
@@ -245,7 +245,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
+const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: SimplePath }) => {
   store.dispatch({
     type: 'dragInProgress',
     value: true,
