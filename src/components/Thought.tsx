@@ -25,7 +25,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 import useLongPress from '../hooks/useLongPress'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { ActionCreator, Child, Path, ThoughtContext } from '../types'
+import { ActionCreator, Child, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
@@ -72,7 +72,7 @@ import {
  **********************************************************************/
 
 interface ThoughtProps {
-  contextChain: Child[][],
+  contextChain: SimplePath[],
   cursorOffset?: number,
   hideBullet?: boolean,
   homeContext?: boolean,
@@ -95,7 +95,7 @@ interface ThoughtContainerProps {
   allowSingleContext?: boolean,
   childrenForced?: Child[],
   contextBinding?: Path,
-  contextChain: Child[][],
+  contextChain: SimplePath[],
   count?: number,
   cursor?: Path | null,
   cursorOffset?: number,
