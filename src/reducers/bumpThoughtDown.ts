@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { existingThoughtChange, existingThoughtMove, newThoughtSubmit, setCursor, subCategorizeOne } from '../reducers'
-import { getPrevRank, getRankBefore, getThoughts, lastThoughtsFromContextChain, splitChain } from '../selectors'
+import { getPrevRank, getRankBefore, getThoughts, pathToThoughtsRanked } from '../selectors'
 import { contextOf, headValue, pathToContext, reducerFlow, rootedContextOf, unroot } from '../util'
 import { State } from '../util/initialState'
 import { Path } from '../types'
@@ -19,8 +19,7 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path }) => {
   // TODO: Resolve thoughtsRanked to make it work within the context view
   // Cannot do this without the contextChain
   // Need to store the full thoughtsRanked of each path segment in the path
-  const contextChain = splitChain(state, path)
-  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+  const thoughtsRanked = pathToThoughtsRanked(state, path)
   const context = pathToContext(thoughtsRanked)
   const parentRanked = unroot(contextOf(thoughtsRanked))
 
