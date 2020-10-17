@@ -3,7 +3,7 @@ import { treeChange } from '../util/recentlyEditedTree'
 import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
+import { Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
 
 // util
 import {
@@ -32,7 +32,7 @@ interface Payload {
   showContexts?: boolean,
   thoughtsRanked: Path,
   rankInContext?: number,
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
 }
 
 interface RecursiveUpdateResult {
