@@ -18,7 +18,7 @@ const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { focus, isLoading, noteFocus, search, showModal, showHiddenThoughts } = state
+  const { isLoading, noteFocus, search, showModal, showHiddenThoughts } = state
 
   const isTutorialLocal = isLoading ? tutorialLocal : isTutorial(state)
 
@@ -33,7 +33,6 @@ const mapStateToProps = (state: State) => {
   const rootSort = attribute(state, RANKED_ROOT, '=sort') || 'None'
 
   return {
-    focus,
     search,
     showModal,
     isTutorialLocal,

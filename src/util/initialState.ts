@@ -1,4 +1,4 @@
-import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
+import { EM_TOKEN, MODALS, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
 import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, User } from '../types'
@@ -38,9 +38,9 @@ export interface State {
   autologin: boolean,
   codeView?: Path | null,
   contextViews: Index<boolean>,
-  cursor: (Path | null),
-  cursorBeforeEdit: (Path | null),
-  cursorBeforeSearch: (Path | null),
+  cursor: Path | null,
+  cursorBeforeEdit: Path | null,
+  cursorBeforeSearch: Path | null,
   cursorHistory: Path[],
   cursorOffset: number,
   dataNonce: number,
@@ -54,7 +54,6 @@ export interface State {
   error?: string | null,
   expanded: Index<boolean>,
   expandedContextThought?: Path,
-  focus: Path,
   hoveringThought?: Context,
   invalidState: boolean,
   isLoading: boolean,
@@ -113,7 +112,6 @@ export const initialState = () => {
     editing: null,
     editingValue: null,
     expanded: {},
-    focus: RANKED_ROOT,
     invalidState: false,
     isLoading: true,
     modals: {},
