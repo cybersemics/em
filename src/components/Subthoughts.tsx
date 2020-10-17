@@ -529,7 +529,7 @@ export const SubthoughtsComponent = ({
           }
 
           // TODO
-          const childPath = getChildPath(state, child, thoughtsRanked, showContexts) as SimplePath
+          const childPath = getChildPath(state, child, thoughtsRanked, showContexts)
           const childContext = pathToContext(childPath)
 
           /** Returns true if the cursor in in the child path. */
