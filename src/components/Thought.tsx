@@ -163,7 +163,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsRankedLive = isEditing
-    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor!) : cursor!))
+    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor!) : cursor!)) as SimplePath
     : thoughtsRanked
 
   const distance = cursor ? Math.max(0,
