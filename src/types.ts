@@ -108,6 +108,9 @@ export interface Child {
 /** A sequence of children with ranks. */
 export type Path = Child[]
 
+/** A contiguous Path with no cycles. */
+export type SimplePath = Child[] & Brand<'SimplePath'>
+
 /** A sequence of values. */
 export type Context = string[]
 
