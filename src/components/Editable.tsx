@@ -184,7 +184,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   // =style attribute on the thought itself
-  const styleAttr = getStyle(state, thoughtsRanked)
+  const styleAttr = getStyle(state, thoughts)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
