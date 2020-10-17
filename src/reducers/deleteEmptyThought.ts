@@ -1,6 +1,7 @@
 import { isMobile } from '../browser'
 import { ROOT_TOKEN } from '../constants'
 import { State } from '../util/initialState'
+import { SimplePath } from '../types'
 
 // util
 import {
@@ -79,7 +80,7 @@ const deleteEmptyThought = (state: State) => {
           oldValue: prev.value,
           newValue: valueNew,
           context,
-          thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
+          thoughtsRanked: contextOf(thoughtsRanked).concat(prev) as SimplePath
         }),
 
         // merge children
