@@ -70,7 +70,7 @@ interface SubthoughtsProps {
   isParentHovering?: boolean,
   showContexts?: boolean,
   sort?: string,
-  thoughtsRanked: Path,
+  thoughtsRanked: SimplePath,
 }
 
 /** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
@@ -128,7 +128,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const thoughtsRankedLive = isEditing && (props.contextChain ?? []).length === 0
-    ? contextOf(props.thoughtsRanked).concat(head(cursor!))
+    ? contextOf(props.thoughtsRanked).concat(head(cursor!)) as SimplePath
     : thoughtsRanked
 
   const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path | undefined
@@ -152,7 +152,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: Path }
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: SimplePath }
   const thoughtsTo = props.thoughtsRanked
   const cursor = store.getState().cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
@@ -173,7 +173,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: Path }
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: SimplePath }
   const thoughtsTo = props.thoughtsRanked
 
   const newPath = unroot(thoughtsTo).concat({
@@ -235,7 +235,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 })
 
 /** Evals the code at this thought. */
-const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
+const evalCode = ({ thoughtsRanked }: { thoughtsRanked: SimplePath }) => {
 
   let codeResults // eslint-disable-line fp/no-let
   let ast // eslint-disable-line fp/no-let
@@ -289,7 +289,7 @@ const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
  ********************************************************************/
 
 /** A message that says there are no children in this context. */
-const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSingleContext?: boolean, children: Child[], thoughtsRanked: Path }) =>
+const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSingleContext?: boolean, children: Child[], thoughtsRanked: SimplePath }) =>
   <div className='children-subheading text-note text-small'>
 
     This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
@@ -527,7 +527,9 @@ export const SubthoughtsComponent = ({
           if (i >= proposedPageSize) {
             return null
           }
-          const childPath = getChildPath(state, child, thoughtsRanked, showContexts)
+
+          // TODO
+          const childPath = getChildPath(state, child, thoughtsRanked, showContexts) as SimplePath
           const childContext = pathToContext(childPath)
 
           /** Returns true if the cursor in in the child path. */
@@ -552,8 +554,7 @@ export const SubthoughtsComponent = ({
 
           return child ? <Thought
             allowSingleContext={allowSingleContextParent}
-            // TODO
-            contextChain={showContexts ? contextChain.concat([thoughtsRanked as SimplePath]) : contextChain}
+            contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
             hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
