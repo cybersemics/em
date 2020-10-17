@@ -1,4 +1,3 @@
-// eslint-disable-next-line no-unused-vars
 import { pathToContext, unroot } from '../util'
 import { getThoughts, isChildVisible } from '../selectors'
 import { State } from '../util/initialState'

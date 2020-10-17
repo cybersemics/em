@@ -390,7 +390,7 @@ export const SubthoughtsComponent = ({
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(thoughtsRanked))
     : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || thoughtsRanked))
-    : getThoughtsRanked(state, contextBinding || thoughtsRanked) as (Child | ThoughtContext)[]
+    : getThoughtsRanked(state, contextBinding ? pathToContext(contextBinding) : thoughtsRanked) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
