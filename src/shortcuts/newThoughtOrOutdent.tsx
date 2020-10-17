@@ -10,7 +10,7 @@ import {
 } from '../util'
 
 import { newThought } from '../action-creators'
-import { isLastVisibleChild } from '../selectors'
+import { isLastVisibleChild, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 
 interface ActionOutdent {
@@ -42,7 +42,7 @@ const exec = (dispatch: Dispatch<ActionOutdent | ActionAlert | ActionCreator>, g
   }
 
   // when Enter is pressed on a last empty thought, outdent it
-  if (type === 'keyboard' && cursor && headValue(cursor).length === 0 && isLastVisibleChild(state, cursor)) {
+  if (type === 'keyboard' && cursor && headValue(cursor).length === 0 && isLastVisibleChild(state, simplifyPath(state, cursor))) {
     dispatch({ type: 'outdent' })
   }
   // otherwise, create a new thought
