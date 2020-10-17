@@ -37,7 +37,7 @@ const setCursor = (state: State, {
 }: Payload) => {
 
   const thoughtsResolved = path && contextChain.length > 0
-    ? chain(state, contextChain, path)
+    ? chain(state, contextChain, simplifyPath(state, path))
     : path
 
   // SIDE EFFECT
