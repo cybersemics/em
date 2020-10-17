@@ -3,7 +3,7 @@ import { treeChange } from '../util/recentlyEditedTree'
 import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
-import { Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
+import { Child, Context, Index, Parent, Path, SimplePath, Timestamp } from '../types'
 
 // util
 import {
@@ -36,7 +36,7 @@ interface Payload {
 }
 
 interface RecursiveUpdateResult {
-  thoughtIndex: Index<Lexeme>,
+  newChild: Child,
   context: Context,
   contextsOld: Context[],
   contextsNew: Context[],
@@ -206,10 +206,10 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
       // remove and add the new context of the child
       const contextNew = thoughtsNew.concat(showContexts ? value : []).concat(contextRecursive)
-      const childNew = addContext(removeContext(childThought, context, child.rank), contextNew, child.rank, child.id!, child.archived!)
+      const newChild = addContext(removeContext(childThought, context, child.rank), contextNew, child.rank, child.id!, child.archived!)
 
       // update local thoughtIndex so that we do not have to wait for firebase
-      thoughtIndex[hashedKey] = childNew
+      thoughtIndex[hashedKey] = newChild
 
       const accumNew = {
         // merge ancestor updates
@@ -219,7 +219,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
         ...accum,
         // merge current thought updates
         [hashedKey]: {
-          thoughtIndex: childNew,
+          newChild,
           context,
           // return parallel lists so that the old contextIndex can be deleted and new contextIndex can be added
           // TODO: This could be improved by putting it directly into the form required by contextIndex to avoid later merging
@@ -237,9 +237,9 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   }
 
   const descendantUpdatesResult = recursiveUpdates(thoughtsRankedLiveOld)
-  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, value, key) => {
-    accum[key] = value.thoughtIndex
-  }, {} as Index<Index<Lexeme>>)
+  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newChild }, key) => {
+    accum[key] = newChild
+  }, {} as Index<Child>)
 
   const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result) => {
     const output = result.contextsOld.reduce((accumInner, contextOld, i) => {

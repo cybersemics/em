@@ -50,5 +50,5 @@ export const hashThought = _.memoize((value: string) =>
     stripEmojiWithText,
     singularize,
     murmurHash3.x64.hash128,
-  ])(value)
+  ])(value) as string
 )

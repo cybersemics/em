@@ -3,7 +3,7 @@ import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
 import { getNextRank, getThought, getThoughts, getThoughtsRanked } from '../selectors'
-import { State, ThoughtsInterface } from '../util/initialState'
+import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
 // util
@@ -29,12 +29,11 @@ import {
 } from '../util'
 
 type RecursiveMoveResult = Child & {
-  id: string,
-  thoughtIndex: Index<Lexeme>,
+  newThought: Lexeme,
   context: Context,
   contextsOld: Context[],
   contextsNew: Context[],
-  archived?: boolean,
+  archived?: Timestamp,
 }
 
 /** Moves a thought from one context to another, or within the same context. */
@@ -131,7 +130,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
 
-      const accumNew = {
+      const accumNew: Index<RecursiveMoveResult> = {
         // merge ancestor updates
         ...accumRecursive,
         // merge sibling updates
@@ -145,9 +144,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             .find(context => equalArrays(context.context, contextNew))
           )!.rank,
           // child.id is undefined sometimes. Unable to reproduce.
-          id: child.id ?? null,
+          id: child.id ?? '',
           archived,
-          thoughtIndex: childNewThought,
+          newThought: childNewThought,
           context: oldThoughts,
           contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([oldThoughts]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
@@ -162,9 +161,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   }
 
   const descendantUpdatesResult = recursiveUpdates(oldPath, newPath)
-  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, value: ThoughtsInterface, key: string) => {
-    accum[key] = value.thoughtIndex
-  }, {} as Index<Index<Lexeme>>)
+  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newThought }, key: string) => {
+    accum[key] = newThought
+  }, {} as Index<Lexeme>)
 
   const contextIndexDescendantUpdates = sameContext
     ? {}
@@ -184,7 +183,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             rank: result.rank,
             lastUpdated: timestamp(),
             // result.id is undefined sometimes. Unable to reproduce.
-            id: result.id ?? null,
+            id: result.id ?? '',
             ...result.archived ? { archived: result.archived } : null
           })
         return {
