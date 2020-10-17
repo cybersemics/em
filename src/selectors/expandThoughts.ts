@@ -1,6 +1,6 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
-import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
+import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive, simplifyPath } from '../selectors'
 import { Child, Context, Index, Path, SimplePath, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
 
@@ -95,7 +95,7 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     ? children
     : children.filter(child => {
       /** Returns true if the child should be pinned open. */
-      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, thoughtsRanked)), '=pin', 'true')
+      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, simplifyPath(state, thoughtsRanked))), '=pin', 'true')
       const value = childValue(child)
       return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })
