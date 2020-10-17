@@ -8,7 +8,7 @@ import IpfsHttpClient from 'ipfs-http-client'
 import { RANKED_ROOT, RENDER_DELAY } from '../constants'
 import { download, ellipsize, getPublishUrl, headValue, isDocumentEditable, isRoot, pathToContext, timestamp, unroot } from '../util'
 import { alert } from '../action-creators'
-import { exportContext, getDescendants, getThoughts, theme } from '../selectors'
+import { exportContext, getDescendants, getThoughts, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import { State } from '../util/initialState'
@@ -57,7 +57,7 @@ const ModalExport = () => {
   }
 
   // TODO: Remove context view jumps in Path
-  const numDescendants = getDescendants(state, cursor).length
+  const numDescendants = getDescendants(state, simplifyPath(state, cursor)).length
 
   // @ts-ignore
   const exportWord = navigator.share ? 'Share' : 'Download'
