@@ -14,7 +14,7 @@ import { alert } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
-import { Child, GesturePath, Index, Path, ThoughtContext } from '../types'
+import { Child, GesturePath, Index, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
@@ -63,7 +63,7 @@ interface SubthoughtsProps {
   allowSingleContext?: boolean,
   allowSingleContextParent?: boolean,
   childrenForced?: Child[],
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
   count?: number,
   depth?: number,
   expandable?: boolean,
@@ -552,7 +552,8 @@ export const SubthoughtsComponent = ({
 
           return child ? <Thought
             allowSingleContext={allowSingleContextParent}
-            contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
+            // TODO
+            contextChain={showContexts ? contextChain.concat([thoughtsRanked as SimplePath]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
             hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}

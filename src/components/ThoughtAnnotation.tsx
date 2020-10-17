@@ -5,7 +5,7 @@ import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { chain, decodeThoughtsUrl, getContexts, getThoughts, theme } from '../selectors'
 import { State } from '../util/initialState'
-import { Child, Connected, Context, Path, ThoughtContext } from '../types'
+import { Connected, Context, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
@@ -27,7 +27,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
   dark?: boolean,
   editingValue?: string | null,
   focusOffset?: number,

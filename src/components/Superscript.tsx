@@ -3,11 +3,11 @@ import { connect } from 'react-redux'
 import { exists, getContexts } from '../selectors'
 import { contextOf, equalArrays, head, headValue, pathToContext, rootedContextOf } from '../util'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Path } from '../types'
+import { Child, Context, Index, Path, SimplePath } from '../types'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>,
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
   empty?: boolean,
   numContexts?: number,
   showContexts?: boolean,
