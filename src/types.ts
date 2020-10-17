@@ -3,17 +3,83 @@ import { Dispatch, ReactNode } from 'react'
 import { Action } from 'redux'
 import { ThunkAction } from 'redux-thunk'
 import { State } from './util/initialState'
-import { GenericObject } from './utilTypes'
+
+/********************************
+ * Firebase types
+ ********************************/
+
+interface Firebase {
+  auth: () => {
+    currentUser: User,
+    onAuthStateChanged: (f: (user: User) => void) => void,
+  },
+  database: () => {
+    ref: (s: string) => Ref,
+  },
+  initializeApp: (config: Index<string>) => void,
+}
+
+export interface User {
+  uid: string,
+  displayName: string,
+  email: string,
+  // see Firebase user for more properties
+}
+
+export interface Ref {
+  child: (name: string) => Ref,
+  once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>,
+  on: (eventName: string, callback: (snapshot: Snapshot) => any) => void,
+  update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>,
+}
+
+
+export interface Snapshot<T = any> {
+  val: () => T,
+}
 
 declare global {
   interface Window {
-    firebase: any,
-    em: any,
+    firebase: Firebase,
+    em: unknown,
   }
 }
 
+/********************************
+ * Util types
+ ********************************/
+
+/**
+ * A "Flavor" type is a nominal type that allows implicit conversation of objects with the same shape.
+ * A "Brand" type is a nominal type that disallows implicit conversion.
+ * See: https://spin.atomicobject.com/2018/01/15/typescript-flexible-nominal-typing/.
+ */
+interface Flavoring<FlavorT> { _type?: FlavorT }
+export type Flavor<T, FlavorT> = T & Flavoring<FlavorT>
+declare const BrandSymbol: unique symbol
+interface Brand<T> { [BrandSymbol]: T }
+
+/** Possible return values of a sort's comparator function. */
+export type ComparatorValue = 1 | -1 | 0
+
+/** A standard comparator function used within sort. */
+export type ComparatorFunction<T> = (a: T, b: T) => ComparatorValue
+
+/** Set of file types supported for exporting thoughts. */
+export type MimeType = 'text/plain' | 'text/html'
+
+/** A very generic object. */
+export type Index<T = any> = {[key: string]: T}
+
+/** An option that can selected to set the export format. */
+export interface ExportOption {
+  type: MimeType,
+  label: string,
+  extension: string,
+}
+
 /** A timestamp string. */
-export type Timestamp = string
+export type Timestamp = string & Brand<'Timestamp'>
 
 /** An entry in thoughtIndex[].contexts. */
 export interface ThoughtContext {
@@ -61,11 +127,6 @@ export interface Parent {
 /** A basic Redux action creator thunk with no arguments. */
 export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>
 
-/** A Firebase realtime database snapshot. */
-export type Snapshot<T = any> = {
-  val: () => T,
-}
-
 /** The three options the user can choose for the context tutorial. */
 export type TutorialChoice = 0 | 1 | 2
 
@@ -85,7 +146,7 @@ export interface Icon {
   fill?: string,
   height?: number,
   size: number,
-  style?: GenericObject<string>,
+  style?: React.CSSProperties,
   width?: number,
 }
 
@@ -132,7 +193,7 @@ export type Alert = {
 
 // Extend fast-json-patch Operation type to include actions list
 // See fast-json-patch types: https://github.com/Starcounter-Jack/JSON-Patch/blob/89a09e94e0e6500115789e33586a75c8dd1aea13/module/core.d.ts
-interface ExtendedOperation extends GetOperation<any> {
+interface ExtendedOperation<T = any> extends GetOperation<T> {
   actions: string[],
 }
 

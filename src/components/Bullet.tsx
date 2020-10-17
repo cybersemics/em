@@ -12,7 +12,8 @@ import { Context } from '../types'
 interface BulletProps {
   glyph?: string | null,
   isEditing?: boolean,
-  onClick: (e: MouseEvent) => void,
+  leaf?: boolean,
+  onClick: (event: React.MouseEvent) => void,
   showContexts?: boolean,
   context: Context,
 }

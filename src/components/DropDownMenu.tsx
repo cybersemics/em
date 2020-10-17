@@ -1,12 +1,12 @@
 import React from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
-import { ExportOption } from '../utilTypes'
+import { ExportOption } from '../types'
 
 interface DropDownMenuProps {
   dark?: boolean,
   isOpen?: boolean,
-  onSelect?: any,
+  onSelect?: (option: ExportOption) => void,
   options: ExportOption[],
   selected?: ExportOption,
 }
@@ -22,7 +22,9 @@ const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }: DropDownMen
           style={{ cursor: 'pointer' }}
           key={index}
           onClick={() => {
-            onSelect(option)
+            if (onSelect) {
+              onSelect(option)
+            }
           }}>
           <div style={{
             display: 'flex',

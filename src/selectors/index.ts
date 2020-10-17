@@ -2,7 +2,6 @@
 
 export { default as attribute } from './attribute'
 export { default as attributeEquals } from './attributeEquals'
-export { default as autoProse } from './autoProse'
 export { default as canShowModal } from './canShowModal'
 export { default as chain } from './chain'
 export { default as decodeContextUrl } from './decodeContextUrl'

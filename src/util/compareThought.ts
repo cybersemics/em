@@ -1,6 +1,5 @@
 import { lower } from './lower'
-import { Child } from '../types'
-import { ComparatorFunction, ComparatorValue } from '../utilTypes'
+import { Child, ComparatorFunction, ComparatorValue } from '../types'
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexEmojis = /([#0-9]\u20E3)|[\xA9\xAE\u203C\u2047-\u2049\u2122\u2139\u3030\u303D\u3297\u3299][\uFE00-\uFEFF]?|[\u2190-\u21FF][\uFE00-\uFEFF]?|[\u2300-\u23FF][\uFE00-\uFEFF]?|[\u2460-\u24FF][\uFE00-\uFEFF]?|[\u25A0-\u25FF][\uFE00-\uFEFF]?|[\u2600-\u27BF][\uFE00-\uFEFF]?|[\u2900-\u297F][\uFE00-\uFEFF]?|[\u2B00-\u2BF0][\uFE00-\uFEFF]?|(?:\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDEFF])[\uFE00-\uFEFF]?|[\u20E3]|[\u26A0-\u3000]|\uD83E[\udd00-\uddff]|[\u00A0-\u269F]/
@@ -9,7 +8,7 @@ const regexEmojis = /([#0-9]\u20E3)|[\xA9\xAE\u203C\u2047-\u2049\u2122\u2139\u30
 const removeEmojisAndSpaces = (str: string) => str.replace(regexEmojis, '').trim()
 
 /** The default comparator that can be used in sort. */
-export const compare = (a: any, b: any): ComparatorValue => a > b ? 1 : a < b ? -1 : 0
+export const compare = <T>(a: T, b: T): ComparatorValue => a > b ? 1 : a < b ? -1 : 0
 
 /** A comparator that sorts emojis above non-emojis. */
 export const compareStringsWithEmoji = (a: string, b: string) => {
@@ -30,18 +29,18 @@ export const compareEmpty = (a: string, b: string): ComparatorValue => {
 }
 
 /** A comparator that sorts numbers ahead of non-numbers. */
-export const compareNumberAndOther = (a: any, b: any): ComparatorValue => {
-  const aIsNum = !isNaN(a)
-  const bIsNum = !isNaN(b)
+export const compareNumberAndOther = <T>(a: T, b: T): ComparatorValue => {
+  const aIsNum = !isNaN(+a)
+  const bIsNum = !isNaN(+b)
   return aIsNum && !bIsNum ? -1
     : bIsNum && !aIsNum ? 1
     : 0
 }
 
 /** A comparator that sorts numbers in numeric order. */
-export const compareNumbers = (a: number, b: number): ComparatorValue => {
-  const aIsNum = !isNaN(a)
-  const bIsNum = !isNaN(b)
+export const compareNumbers = <T>(a: T, b: T): ComparatorValue => {
+  const aIsNum = !isNaN(+a)
+  const bIsNum = !isNaN(+b)
   return aIsNum && bIsNum ? compare(+a, +b)
     : 0
 }
@@ -73,8 +72,8 @@ const compareDateAndOther = (a: string, b: string): ComparatorValue => {
 }
 
 /** Creates a composite comparator consisting of each of the given comparators checked in order. */
-export const makeOrderedComparator = (comparators: ComparatorFunction<any>[]): ComparatorFunction<any> =>
-  (a: any, b: any) =>
+export const makeOrderedComparator = <T>(comparators: ComparatorFunction<T>[]): ComparatorFunction<T> =>
+  (a: T, b: T) =>
     comparators.length === 0
       // base case
       ? 0
@@ -89,7 +88,7 @@ export const makeOrderedComparator = (comparators: ComparatorFunction<any>[]): C
  * 2. dates (9/1, 10/1, 11/1)
  * 3. lexicographic (default)
  */
-const compareReasonableText = makeOrderedComparator([
+const compareReasonableText = makeOrderedComparator<string>([
   compareNumberAndOther,
   compareNumbers,
   compareDateAndOther,
@@ -104,7 +103,7 @@ const compareReasonableText = makeOrderedComparator([
  * 3. emoji
  * 4. compareReasonableText on text without emoji
  */
-export const compareReasonable = makeOrderedComparator([
+export const compareReasonable = makeOrderedComparator<string>([
   compareEmpty,
   comparePunctuationAndOther,
   compareStringsWithEmoji,

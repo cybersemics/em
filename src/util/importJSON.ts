@@ -1,8 +1,7 @@
 import _ from 'lodash'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
-import { Child, Context, Lexeme, Parent, Path, Timestamp } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 import { Block } from '../action-creators/importText'
 import { State } from './initialState'
 
@@ -84,8 +83,8 @@ const getStartContext = (thoughtsRanked: Path) => {
 
 /** Convert JSON blocks to thoughts update. */
 export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], { lastUpdated = timestamp(), skipRoot = false }: ImportJSONOptions) => {
-  const thoughtIndexUpdates: GenericObject<Lexeme> = {}
-  const contextIndexUpdates: GenericObject<Parent> = {}
+  const thoughtIndexUpdates: Index<Lexeme> = {}
+  const contextIndexUpdates: Index<Parent> = {}
   const context = pathToContext(contextOf(thoughtsRanked))
   const destThought = head(thoughtsRanked)
   const destEmpty = destThought.value === '' && getThoughts(state, pathToContext(thoughtsRanked)).length === 0

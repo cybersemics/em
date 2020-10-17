@@ -3,7 +3,6 @@ import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
 import { pathToContext, rootedContextOf } from '../util'
 import { State } from '../util/initialState'
-import { Nullable } from '../utilTypes'
 import { ROOT_TOKEN } from '../constants'
 
 interface ToggleAttribute {
@@ -15,7 +14,7 @@ interface ToggleAttribute {
 
 interface SetCursor {
   type: 'setCursor',
-  thoughtsRanked: Nullable<Path>,
+  thoughtsRanked: Path | null,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

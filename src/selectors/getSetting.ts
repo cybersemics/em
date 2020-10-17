@@ -2,14 +2,13 @@ import { EM_TOKEN } from '../constants'
 import { isFunction } from '../util'
 import { getThoughtsRanked } from '../selectors'
 import { State } from '../util/initialState'
-import { Context } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Context, Index } from '../types'
 
 /** Cache localStorage settings. */
 const localStorageSettingsCache = ['Tutorial', 'Tutorial Step'].reduce((accum, value) => ({
   ...accum,
   [value]: localStorage['Settings/' + value],
-}), {} as GenericObject<string>)
+}), {} as Index<string>)
 
 /** Returns one of the localStorage Settings values that have been cached. */
 const localCached = (context: Context | string) =>

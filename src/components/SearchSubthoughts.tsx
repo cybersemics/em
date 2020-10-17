@@ -7,14 +7,13 @@ import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThought
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 import { State } from '../util/initialState'
-import { Connected, Lexeme } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Connected, Index, Lexeme } from '../types'
 
 interface SearchSubthoughtsProps {
   search?: string | null,
   archived?: boolean,
   searchLimit?: number,
-  thoughtIndex: GenericObject<Lexeme>,
+  thoughtIndex: Index<Lexeme>,
 }
 
 /** Number of thoughts to limit the search results to by default. */

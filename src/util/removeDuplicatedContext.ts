@@ -11,7 +11,7 @@ export const removeDuplicatedContext = (thought: Lexeme, context: Context) => {
     ...thought,
     contexts: (thought.contexts || [])
       .filter(parent =>
-        parent.rank === topRankContext.rank || !equalArrays(parent.context, context)
+        parent.rank === topRankContext?.rank || !equalArrays(parent.context, context)
       )
   }
 }

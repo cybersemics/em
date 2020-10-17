@@ -7,15 +7,15 @@ import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 import { hashContext, isFunction, logWithTime, timestamp } from '../util'
-import { Lexeme, Parent } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Index, Lexeme, Parent } from '../types'
 
 /** Options object for sync. */
 interface Options {
   local?: boolean,
   remote?: boolean,
-  updates?: GenericObject<any>,
-  recentlyEdited: GenericObject<any>,
+  updates?: Index<any>,
+  callback?: (err?: any) => void,
+  recentlyEdited: Index<any>,
 }
 
 // store the hashes of the localStorage Settings contexts for quick lookup
@@ -30,7 +30,7 @@ const localStorageSettingsContexts = _.keyBy(
 )
 
 /** Syncs thought updates to the local database. */
-const syncLocal = (thoughtIndexUpdates: GenericObject<Lexeme> = {}, contextIndexUpdates: GenericObject<Parent> = {}, recentlyEdited: GenericObject<any>, updates: GenericObject<any> = {}): Promise<any> => {
+const syncLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates: Index<Parent> = {}, recentlyEdited: Index<any>, updates: Index<any> = {}): Promise<any> => {
 
   // thoughtIndex
   const thoughtIndexPromises = [
@@ -89,7 +89,7 @@ const syncLocal = (thoughtIndexUpdates: GenericObject<Lexeme> = {}, contextIndex
 }
 
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
-const syncRemote = async (thoughtIndexUpdates: GenericObject<Lexeme | null> = {}, contextIndexUpdates: GenericObject<Parent | null> = {}, recentlyEdited: GenericObject<any>, updates: GenericObject<any> = {}) => {
+const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index<any>, updates: Index<any> = {}) => {
 
   const state = store.getState()
 
@@ -99,7 +99,7 @@ const syncRemote = async (thoughtIndexUpdates: GenericObject<Lexeme | null> = {}
     Object.keys(updates).length > 0
 
   // prepend thoughtIndex/ and encode key
-  const prependedDataUpdates = _.transform(thoughtIndexUpdates, (accum: GenericObject<Lexeme | null>, thought: Lexeme | null, key: string) => {
+  const prependedDataUpdates = _.transform(thoughtIndexUpdates, (accum: Index<Lexeme | null>, thought: Lexeme | null, key: string) => {
     if (!key) {
       console.error('Unescaped empty key', thought, new Error())
       return
@@ -121,12 +121,12 @@ const syncRemote = async (thoughtIndexUpdates: GenericObject<Lexeme | null> = {}
         lastUpdated: thought.lastUpdated || timestamp(),
       }
       : thought
-  }, {} as GenericObject<Lexeme | null>)
+  }, {} as Index<Lexeme | null>)
 
   logWithTime('syncRemote: prepend thoughtIndex key')
 
   const dataIntegrityCheck = getSetting(state, 'Data Integrity Check') === 'On'
-  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum: GenericObject<Parent | null>, parentContext: Parent | null, key) => {
+  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum: Index<Parent | null>, parentContext: Parent | null, key) => {
     // fix undefined/NaN rank
     const children = parentContext && parentContext.children
     accum['contextIndex/' + key] = children && children.length > 0
@@ -144,7 +144,7 @@ const syncRemote = async (thoughtIndexUpdates: GenericObject<Lexeme | null> = {}
         lastUpdated: parentContext!.lastUpdated || timestamp(),
       }
       : null
-  }, {} as GenericObject<Parent | null>)
+  }, {} as Index<Parent | null>)
 
   logWithTime('syncRemote: prepend contextIndex key')
 

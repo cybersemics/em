@@ -3,7 +3,6 @@ import React from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION, MODAL_REMIND_ME_LATER_DURATION } from '../constants'
 import { modalCleanup } from '../util'
-import { GenericObject } from '../utilTypes'
 import { Connected } from '../types'
 import { modalComplete } from '../action-creators'
 
@@ -12,11 +11,11 @@ export interface ModalProps {
   center?: boolean,
   className?: string,
   id: string,
-  onSubmit?: any,
+  onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
   opaque?: boolean,
   positionAtCursor?: boolean,
   show?: boolean,
-  style?: GenericObject<string | number>,
+  style?: React.CSSProperties,
   title: string,
   top?: number,
 }

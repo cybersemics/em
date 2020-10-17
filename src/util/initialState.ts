@@ -1,8 +1,7 @@
 import { EM_TOKEN, MODALS, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Context, Lexeme, Parent, Patch, Path, Snapshot } from '../types'
-import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
+import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, User } from '../types'
 
 // import util functions directly since importing from ../util/index causes circular dependency
 import { hashContext } from '../util/hashContext'
@@ -18,10 +17,10 @@ interface ModalProperties {
 }
 
 export interface ThoughtsInterface {
-  contextIndex: GenericObject<Parent>,
   contextCache: string[],
-  thoughtIndex: GenericObject<Lexeme>,
+  contextIndex: Index<Parent>,
   thoughtCache: string[],
+  thoughtIndex: Index<Lexeme>,
 }
 
 // Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed
@@ -30,32 +29,19 @@ export interface ThoughtsInterface {
 //   lastUpdated: Timestamp,
 //   path: Path,
 // }
-// type RecentlyEditedTree = GenericObject<RecentlyEditedTree> causes circular reference error
+// type RecentlyEditedTree = Index<RecentlyEditedTree> causes circular reference error
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-// export interface RecentlyEditedTree extends GenericObject<RecentlyEditedTree> {}
-type RecentlyEditedTree = GenericObject<any>
-
-interface User {
-  uid: string,
-  displayName: string,
-  email: string,
-  // see Firebase user for more properties
-}
-
-interface UserRef {
-  child: (name: string) => UserRef,
-  once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>,
-  update: (updates: GenericObject, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>,
-}
+// export interface RecentlyEditedTree extends Index<RecentlyEditedTree> {}
+type RecentlyEditedTree = Index
 
 /** Defines a single batch of updates added to the sync queue. */
 export interface SyncBatch {
-  thoughtIndexUpdates: GenericObject<Lexeme | null>,
-  contextIndexUpdates: GenericObject<Parent | null>,
+  thoughtIndexUpdates: Index<Lexeme | null>,
+  contextIndexUpdates: Index<Parent | null>,
   local?: boolean,
   remote?: boolean,
   recentlyEdited: RecentlyEditedTree,
-  updates?: GenericObject<string>,
+  updates?: Index<string>,
 }
 
 export interface State {
@@ -63,10 +49,10 @@ export interface State {
   archived?: boolean,
   authenticated: boolean,
   autologin: boolean,
-  contextViews: GenericObject<boolean>,
-  cursor: Nullable<Path>,
-  cursorBeforeEdit: Nullable<Path>,
-  cursorBeforeSearch: Nullable<Path>,
+  contextViews: Index<boolean>,
+  cursor: (Path | null),
+  cursorBeforeEdit: (Path | null),
+  cursorBeforeSearch: (Path | null),
   cursorHistory: Path[],
   cursorOffset: number,
   dataNonce: number,
@@ -75,10 +61,10 @@ export interface State {
   dragHold?: boolean,
   dragInProgress: boolean,
   editableNonce: number,
-  editing: Nullable<boolean>,
-  editingValue: Nullable<string>,
+  editing: (boolean | null),
+  editingValue: (string | null),
   error?: string | null,
-  expanded: GenericObject<Path>,
+  expanded: Index<Path>,
   expandedContextThought?: Path,
   focus: Path,
   hoveringThought?: Context,
@@ -87,14 +73,14 @@ export interface State {
   isLoading: boolean,
   isSyncing?: boolean,
   lastUpdated?: string,
-  modals: GenericObject<ModalProperties>,
+  modals: Index<ModalProperties>,
   noteFocus: boolean,
   patches: Patch[],
   recentlyEdited: RecentlyEditedTree,
-  resourceCache: GenericObject<string>,
+  resourceCache: Index<string>,
   schemaVersion: number,
   scrollPrioritized: boolean,
-  search: Nullable<string>,
+  search: (string | null),
   searchLimit?: number,
   showHiddenThoughts: boolean,
   showModal?: string | null,
@@ -110,7 +96,7 @@ export interface State {
   toolbarOverlay?: string | null,
   tutorialStep?: number,
   user?: User,
-  userRef?: UserRef,
+  userRef?: Ref,
 }
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */

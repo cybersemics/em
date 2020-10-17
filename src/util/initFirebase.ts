@@ -4,6 +4,7 @@ import { loadPublicThoughts, userAuthenticated } from '../action-creators'
 import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
 import { ThoughtsInterface } from '../util/initialState'
+import { Snapshot, User } from '../types'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ thoughtsLocalPromise }: { thoughtsLocalPromise: Promise<ThoughtsInterface> }) => {
@@ -13,7 +14,7 @@ export const initFirebase = async ({ thoughtsLocalPromise }: { thoughtsLocalProm
 
     // on auth change
     // this is called when the user logs in or the page refreshes when the user is already authenticated
-    firebase.auth().onAuthStateChanged(async (user: any) => {
+    firebase.auth().onAuthStateChanged((user: User) => {
       if (user) {
         store.dispatch(userAuthenticated(user, { thoughtsLocalPromise }))
       }
@@ -30,7 +31,7 @@ export const initFirebase = async ({ thoughtsLocalPromise }: { thoughtsLocalProm
     // on connect change
     // this is called when moving from online to offline and vice versa
     const connectedRef = firebase.database().ref('.info/connected')
-    connectedRef.on('value', async (snapshot: { val: () => any }) => {
+    connectedRef.on('value', async (snapshot: Snapshot<boolean>) => {
       const connected = snapshot.val()
       const status = store.getState().status
 

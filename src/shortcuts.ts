@@ -1,13 +1,13 @@
 /** Defines global keyboard shortcuts and gestures. */
 
 import Emitter from 'emitter20'
+import { Store } from 'redux'
 import { isMac, isMobile } from './browser'
 import globals from './globals'
 import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
-import { Direction, GesturePath, Key, Shortcut } from './types'
-import { GenericObject } from './utilTypes'
 import { State } from './util/initialState'
+import { Direction, GesturePath, Index, Key, Shortcut } from './types'
 
 import * as shortcutObject from './shortcuts/index'
 export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]
@@ -50,7 +50,7 @@ const hashKeyDown = (e: KeyboardEvent) =>
   (letters[e.keyCode] || e.key).toUpperCase()
 
 // index shortcuts for O(1) lookup by keyboard
-const shortcutKeyIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
+const shortcutKeyIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
   ? {
     ...accum,
     [hashShortcut(shortcut)]: shortcut
@@ -60,7 +60,7 @@ const shortcutKeyIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum,
 )
 
 // index shortcuts for O(1) lookup by id
-const shortcutIdIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.id
+const shortcutIdIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.id
   ? {
     ...accum,
     [shortcut.id]: shortcut
@@ -70,7 +70,7 @@ const shortcutIdIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, 
 )
 
 // index shortcuts for O(1) lookup by gesture
-const shortcutGestureIndex: GenericObject<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
+const shortcutGestureIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
   ? {
     ...accum,
     // shortcut.gesture may be a string or array of strings
@@ -94,7 +94,7 @@ let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no
 /**
  * Keyboard handlers factory function.
  */
-export const inputHandlers = (store: any) => ({
+export const inputHandlers = (store: Store<State, any>) => ({
 
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: (g: Direction | null, path: GesturePath) => {
@@ -114,7 +114,7 @@ export const inputHandlers = (store: any) => ({
     handleGestureSegmentTimeout = window.setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
-        store.dispatch(alert(shortcut ? shortcut.name
+        store.dispatch<any>(alert(shortcut ? shortcut.name
           : isGestureHint(state) ? '✗ Invalid gesture'
           : null, { alertType: 'gestureHint', showCloseLink: false }))
       },
@@ -146,7 +146,7 @@ export const inputHandlers = (store: any) => ({
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       if (isGestureHint(store.getState())) {
-        store.dispatch(alert(null))
+        store.dispatch<any>(alert(null))
       }
     })
   },
@@ -156,7 +156,7 @@ export const inputHandlers = (store: any) => ({
     // track meta key for expansion algorithm
     if (e.key === (isMac ? 'Meta' : 'Control')) {
       if (globals.suppressExpansion) {
-        store.dispatch(suppressExpansion({ cancel: true }))
+        store.dispatch<any>(suppressExpansion({ cancel: true }))
       }
     }
   },
@@ -189,7 +189,7 @@ export const inputHandlers = (store: any) => ({
 
         // dispatch action to hide toolbar and breadcrumbs
         if (!isMobile) {
-          store.dispatch(toggleTopControlsAndBreadcrumbs(false))
+          store.dispatch<any>(toggleTopControlsAndBreadcrumbs(false))
         }
 
         // execute shortcut
@@ -206,7 +206,7 @@ const arrowTextToArrowCharacter = (s: string) => (({
   ArrowRight: '→',
   ArrowUp: '↑',
   ArrowDown: '↓'
-} as GenericObject)[s] || s)
+} as Index)[s] || s)
 
 /** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = (keyboardOrString: Key | string) => {

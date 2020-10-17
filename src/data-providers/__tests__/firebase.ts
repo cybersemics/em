@@ -1,7 +1,6 @@
 import * as firebase from '../firebase'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
-import { Snapshot } from '../../types'
-import { GenericObject } from '../../utilTypes'
+import { Index, Snapshot } from '../../types'
 
 jest.useFakeTimers()
 
@@ -31,7 +30,7 @@ jest.mock('../../store', () => {
       const result = wrapSnapshot(_.get(firebaseStore, path))
       return Promise.resolve(cb ? cb(result) : result)
     },
-    update: (updates: GenericObject<any>, cb: (err: Error | null, ...args: any[]) => void) => {
+    update: (updates: Index<any>, cb: (err: Error | null, ...args: any[]) => void) => {
       Object.entries(updates).forEach(([key, value]) => {
         _.set(firebaseStore, `${path}/${key}`, value)
       })

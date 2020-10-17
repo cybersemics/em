@@ -7,14 +7,14 @@ import { login, logout } from '../action-creators'
 import { getSetting, isTutorial } from '../selectors'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import { State } from '../util/initialState'
-import { Connected } from '../types'
+import { Connected, User } from '../types'
 
 interface FooterProps {
   authenticated?: boolean,
   isTutorialOn?: boolean,
   status: string,
   tutorialStep: number,
-  user?: any,
+  user?: User,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

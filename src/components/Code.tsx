@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import ContentEditable from 'react-contenteditable'
+import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { getThought } from '../selectors'
 import { equalPath, headValue, strip } from '../util'
 import { State } from '../util/initialState'
@@ -38,7 +38,7 @@ const Code = ({ code, thoughtsRanked, dispatch }: Connected<CodeProps>) => {
    * Dispatch codeChange action.
    * When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop.
    */
-  const onChange = (e: any) => {
+  const onChange = (e: ContentEditableEvent) => {
     const newValue = strip(e.target.value)
     dispatch({ type: 'codeChange', thoughtsRanked, newValue })
   }

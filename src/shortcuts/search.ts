@@ -1,6 +1,5 @@
 import { restoreCursorBeforeSearch } from '../util'
 import SearchIcon from '../components/SearchIcon'
-import { Nullable } from '../utilTypes'
 import { Path, Shortcut } from '../types'
 import { Dispatch } from 'react'
 import { State } from '../util/initialState'
@@ -12,7 +11,7 @@ interface Search {
 
 interface CursorBeforeSearch {
   type: 'cursorBeforeSearch',
-  value: Nullable<Path>,
+  value: Path | null,
 }
 
 const searchShortcut: Shortcut = {

@@ -2,8 +2,8 @@ import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
 import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
-import { State, ThoughtsInterface } from '../util/initialState'
-import { Child, Context, Path, Timestamp } from '../types'
+import { State } from '../util/initialState'
+import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
 // util
 import {
@@ -33,6 +33,13 @@ interface Payload {
   thoughtsRanked: Path,
   rankInContext?: number,
   contextChain?: Child[][],
+}
+
+interface RecursiveUpdateResult {
+  thoughtIndex: Index<Lexeme>,
+  context: Context,
+  contextsOld: Context[],
+  contextsNew: Context[],
 }
 
 /** Changes the text of an existing thought. */
@@ -177,7 +184,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
    *
    * @param contextRecursive The list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context.
    */
-  const recursiveUpdates = (thoughtsRanked: Path, contextRecursive: Context = [], accumRecursive: any = {}): any => {
+  const recursiveUpdates = (thoughtsRanked: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
 
     return getThoughtsRanked(state, thoughtsRanked).reduce((accum, child) => {
 
@@ -225,16 +232,16 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
         ...accumNew,
         ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
       }
-    }, {})
+    }, {} as Index<RecursiveUpdateResult>)
   }
 
   const descendantUpdatesResult = recursiveUpdates(thoughtsRankedLiveOld)
-  const descendantUpdates = _.transform(descendantUpdatesResult, (accum: any, value: ThoughtsInterface, key: string) => {
+  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, value, key) => {
     accum[key] = value.thoughtIndex
-  }, {})
+  }, {} as Index<Index<Lexeme>>)
 
-  const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum: any, result: any) => {
-    const output = result.contextsOld.reduce((accumInner: any, contextOld: any, i: number) => {
+  const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result) => {
+    const output = result.contextsOld.reduce((accumInner, contextOld, i) => {
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = hashContext(contextOld)
       const contextNewEncoded = hashContext(contextNew)
@@ -250,10 +257,10 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
           lastUpdated: timestamp()
         }
       }
-    }, {})
+    }, {} as Index<Parent | null>)
     // eslint-disable-next-line fp/no-mutating-assign
     Object.assign(accum, output)
-  }, {})
+  }, {} as Index<Parent | null>)
 
   const thoughtIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought

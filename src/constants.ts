@@ -1,7 +1,7 @@
 /** Defines app-wide constants. */
 
 import raw from 'raw.macro'
-import { GenericObject } from './utilTypes'
+import { Index } from './types'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -216,7 +216,7 @@ export const THOUGHT_CACHE_SIZE = 10000
 // actions representing any cursor movements.
 // These need to be differentiated from the other actions because
 // any two or more such consecutive actions are merged together
-export const NAVIGATION_ACTIONS: GenericObject<string> = {
+export const NAVIGATION_ACTIONS: Index<string> = {
   cursorBack: 'cursorBack',
   cursorBeforeSearch: 'cursorBeforeSearch',
   cursorDown: 'cursorDown',
@@ -227,7 +227,7 @@ export const NAVIGATION_ACTIONS: GenericObject<string> = {
 }
 
 // a list of all undoable/reversible actions (stored as object for indexing)
-export const UNDOABLE_ACTIONS: GenericObject<string> = {
+export const UNDOABLE_ACTIONS: Index<string> = {
   archiveThought: 'archiveThought',
   bumpThoughtDown: 'bumpThoughtDown',
   cursorBack: 'cursorBack',
@@ -267,7 +267,7 @@ export const UNDOABLE_ACTIONS: GenericObject<string> = {
 }
 
 // modal states
-export const MODALS: GenericObject<string> = {
+export const MODALS: Index<string> = {
   welcome: 'welcome',
   help: 'help',
   home: 'home',

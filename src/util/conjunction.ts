@@ -1,5 +1,3 @@
-// @ts-nocheck
-
-/** Renders a list of thoughts as a sentence. */
-export const conjunction = thoughts =>
-  thoughts.slice(0, thoughts.length - 1).join(', ') + (thoughts.length !== 2 ? ',' : '') + ' and ' + thoughts[thoughts.length - 1]
+/** Renders a list of strings as a sentence. */
+export const conjunction = (ss: string[]) =>
+  ss.slice(0, ss.length - 1).join(', ') + (ss.length !== 2 ? ',' : '') + ' and ' + ss[ss.length - 1]

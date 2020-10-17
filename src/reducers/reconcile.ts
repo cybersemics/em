@@ -1,10 +1,9 @@
 import _ from 'lodash'
-import { Lexeme, Parent } from '../types'
-import { GenericObject } from '../utilTypes'
 import { updateThoughts } from '../reducers'
 import { hashContext, reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
 import { State, ThoughtsInterface } from '../util/initialState'
+import { Index, Lexeme, Parent } from '../types'
 
 const emContextEncoded = hashContext([EM_TOKEN])
 
@@ -29,7 +28,7 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
   const [thoughtsLocal, thoughtsRemote] = thoughtsResults
 
   /** Returns a predicate that returns true if a key is missing from the given destination object or it was updated more recently than the value in the destination object. */
-  const shouldUpdateDest = (destObj: GenericObject<Parent | Lexeme> = {}) =>
+  const shouldUpdateDest = (destObj: Index<Parent | Lexeme> = {}) =>
     (src: Parent | Lexeme, key: string) => {
       const dest = destObj[key]
       return src && !isPending(src) && hasChildren(src) && (
