@@ -110,7 +110,7 @@ interface EditableProps {
   rank: number,
   showContexts?: boolean,
   style?: React.CSSProperties,
-  thoughtsRanked: Path,
+  thoughtsRanked: SimplePath,
   onKeyDownAction?: () => void,
 }
 
