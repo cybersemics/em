@@ -30,7 +30,7 @@ interface Payload {
   newValue: string,
   context: Context,
   showContexts?: boolean,
-  thoughtsRanked: Path,
+  thoughtsRanked: SimplePath,
   rankInContext?: number,
   contextChain?: SimplePath[],
 }
@@ -60,9 +60,9 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const thoughtsNew = unroot(context).concat(newValue)
   const contextEncodedOld = hashContext(thoughtsOld)
   const contextEncodedNew = hashContext(thoughtsNew)
-  const thoughtsRankedLiveOld = showContexts
+  const thoughtsRankedLiveOld = (showContexts
     ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
-    : contextOf(thoughtsRanked).concat({ value: oldValue, rank })
+    : contextOf(thoughtsRanked).concat({ value: oldValue, rank })) as SimplePath
   // find exact thought from thoughtIndex
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
   const id = headId(thoughtsRanked) || exactThought!.id as string
