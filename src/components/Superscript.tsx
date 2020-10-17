@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { exists, getContexts } from '../selectors'
 import { contextOf, equalArrays, head, headValue, pathToContext, rootedContextOf } from '../util'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Path, SimplePath } from '../types'
+import { Child, Context, Index, SimplePath } from '../types'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>,
@@ -15,8 +15,8 @@ interface SuperscriptProps {
   showSingle?: boolean,
   superscript?: boolean,
   thoughts?: Context,
-  thoughtsRanked: Path,
-  thoughtsRankedLive?: Path,
+  thoughtsRanked: SimplePath,
+  thoughtsRankedLive?: SimplePath,
   thoughtRaw?: Child,
 }
 
@@ -38,7 +38,7 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
     : thoughts
 
   const thoughtsRankedLive = editing
-    ? props.showContexts ? contextOf(cursor || []) : cursor || []
+    ? contextOf(props.thoughtsRanked).concat(head(cursor!)) as SimplePath
     : thoughtsRanked
 
   /** Gets the number of contexts of the thoughtsLive signifier. */
