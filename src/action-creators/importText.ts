@@ -2,7 +2,7 @@
 import { parse } from 'jex-block-parser'
 import he from 'he'
 import { contextOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedContextOf, strip } from '../util'
-import { pathToThoughtsRanked } from '../selectors'
+import { simplifyPath } from '../selectors'
 import { ActionCreator, Path } from '../types'
 
 // declare types until jex-block-parser merges PR
@@ -119,7 +119,7 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
 
   const state = getState()
 
-  const simplePath = pathToThoughtsRanked(state, path)
+  const simplePath = simplifyPath(state, path)
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(path)
