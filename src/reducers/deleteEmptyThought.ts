@@ -20,8 +20,8 @@ import {
   getNextRank,
   getThoughtsRanked,
   isContextViewActive,
-  pathToThoughtsRanked,
   prevSibling,
+  simplifyPath,
 } from '../selectors'
 
 // reducers
@@ -42,7 +42,7 @@ const deleteEmptyThought = (state: State) => {
   if (!cursor) return
 
   const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
-  const thoughtsRanked = pathToThoughtsRanked(state, cursor)
+  const thoughtsRanked = simplifyPath(state, cursor)
   const children = getThoughtsRanked(state, thoughtsRanked)
 
   // delete an empty thought
