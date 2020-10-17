@@ -6,10 +6,10 @@ import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContext
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
-import { Child, Index, Path, TutorialChoice } from '../types'
+import { Index, Path, SimplePath, TutorialChoice } from '../types'
 
 interface Payload {
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
   cursorHistoryClear?: boolean,
   cursorHistoryPop?: boolean,
   editing?: boolean | null,
@@ -79,6 +79,8 @@ const setCursor = (state: State, {
     { ...state, contextViews: newContextViews },
     thoughtsResolved || [],
     contextChain.length > 0
+      // TODO: Should thoughtsResolved be converted to a SimplePath here?
+      // @ts-ignore
       ? contextChain.concat([thoughtsResolved!.slice(lastThoughtsFromContextChain(state, contextChain).length)])
       : []
   )

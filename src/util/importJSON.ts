@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { Child, Context, Index, Lexeme, Parent, Path } from '../types'
 import { State } from './initialState'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
 import { Block } from '../action-creators/importText'
+import { Child, Context, Index, Lexeme, Parent, Path, SimplePath } from '../types'
 
 // util
 import {
@@ -72,31 +72,31 @@ const getRankIncrement = (state: State, blocks: Block[], context: Context, destT
 }
 
 /** Return start context for saving thoughts. */
-const getStartContext = (thoughtsRanked: Path) => {
-  const importCursor = equalPath(thoughtsRanked, [{ value: EM_TOKEN, rank: 0 }])
-    ? thoughtsRanked
-    : contextOf(thoughtsRanked)
+const getStartContext = (path: Path) => {
+  const importCursor = equalPath(path, [{ value: EM_TOKEN, rank: 0 }])
+    ? path
+    : contextOf(path)
   return pathToContext(importCursor)
 }
 
 /** Convert JSON blocks to thoughts update. */
-export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], { skipRoot = false }: ImportHtmlOptions) => {
+export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[], { skipRoot = false }: ImportHtmlOptions) => {
   const thoughtIndexUpdates: Index<Lexeme> = {}
   const contextIndexUpdates: Index<Parent> = {}
-  const context = pathToContext(contextOf(thoughtsRanked))
-  const destThought = head(thoughtsRanked)
-  const destEmpty = destThought.value === '' && getThoughts(state, pathToContext(thoughtsRanked)).length === 0
+  const context = pathToContext(contextOf(simplePath))
+  const destThought = head(simplePath)
+  const destEmpty = destThought.value === '' && getThoughts(state, pathToContext(simplePath)).length === 0
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const contextIndex = { ...state.thoughts.contextIndex }
-  const rankStart = getRankAfter(state, thoughtsRanked)
+  const rankStart = getRankAfter(state, simplePath)
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
     const thought = getThought(state, '')
     if (thought && thought.contexts && thought.contexts.length > 1) {
-      thoughtIndexUpdates[hashThought('')] = removeContext(thought, context, headRank(thoughtsRanked))
-      const rootedContext = pathToContext(rootedContextOf(thoughtsRanked))
+      thoughtIndexUpdates[hashThought('')] = removeContext(thought, context, headRank(simplePath))
+      const rootedContext = pathToContext(rootedContextOf(simplePath))
       const contextEncoded = hashContext(rootedContext)
       contextIndexUpdates[contextEncoded] = {
         ...contextIndexUpdates[contextEncoded],
@@ -147,7 +147,7 @@ export const importJSON = (state: State, thoughtsRanked: Path, blocks: Block[], 
     }
   }
 
-  const startContext = getStartContext(thoughtsRanked)
+  const startContext = getStartContext(simplePath)
   const thoughts = skipRoot ? skipRootThought(blocks) : blocks
   const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, thoughts)
   saveThoughts(startContext, thoughts, insertThought, rankIncrement, rankStart)

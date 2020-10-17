@@ -1,7 +1,7 @@
-import { Path } from '../types'
-import { State } from './initialState'
 import { convertHTMLtoJSON } from './convertHTMLtoJSON'
 import { importJSON } from './importJSON'
+import { State } from './initialState'
+import { SimplePath } from '../types'
 
 interface ImportHtmlOptions {
   skipRoot? : boolean,
@@ -12,7 +12,7 @@ interface ImportHtmlOptions {
  *
  * @param skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
-export const importHtml = (state: State, thoughtsRanked: Path, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
+export const importHtml = (state: State, simplePath: SimplePath, html: string, { skipRoot }: ImportHtmlOptions = { skipRoot: false }) => {
   const thoughtsJSON = convertHTMLtoJSON(html)
-  return importJSON(state, thoughtsRanked, thoughtsJSON, { skipRoot })
+  return importJSON(state, simplePath, thoughtsJSON, { skipRoot })
 }

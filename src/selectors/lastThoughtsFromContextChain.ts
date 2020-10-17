@@ -1,10 +1,10 @@
 import { getThought, rankThoughtsFirstMatch } from '../selectors'
 import { contextOf, head, headValue, splice } from '../util'
 import { State } from '../util/initialState'
-import { Child, ThoughtContext } from '../types'
+import { SimplePath, ThoughtContext } from '../types'
 
 /** Generates thoughtsRanked from the last segment of a context chain. */
-const lastThoughtsFromContextChain = (state: State, contextChain: Child[][]) => {
+const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]): SimplePath => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
   const thought = getThought(state, headValue(penult))

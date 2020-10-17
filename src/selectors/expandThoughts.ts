@@ -1,7 +1,7 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
 import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive } from '../selectors'
-import { Child, Context, Index, Path, ThoughtContext } from '../types'
+import { Child, Context, Index, Path, SimplePath, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
 
 // util
@@ -28,7 +28,7 @@ import {
  *   ...
  * }
  */
-const expandThoughts = (state: State, path: Path | null, contextChain: Child[][] = [], { depth = 0 }: { depth?: number } = {}): Index<boolean> => {
+const expandThoughts = (state: State, path: Path | null, contextChain: SimplePath[] = [], { depth = 0 }: { depth?: number } = {}): Index<boolean> => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -102,8 +102,8 @@ const expandThoughts = (state: State, path: Path | null, contextChain: Child[][]
   ).reduce(
     (accum: Index<boolean>, child) => {
       const newContextChain = (contextChain || [])
-        .map((path: Path) => path.concat())
-        .concat(contextChain.length > 0 ? [[child as Child]] : [])
+        .map(simplePath => simplePath.concat())
+        .concat(contextChain.length > 0 ? [[child as Child]] : []) as SimplePath[]
 
       return Object.assign({}, accum,
         // RECURSIVE

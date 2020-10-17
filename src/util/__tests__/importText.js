@@ -22,6 +22,7 @@ import {
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
+  contextViews: {},
   thoughts: {
     contextIndex: {
       [hashContext([ROOT_TOKEN])]: {
