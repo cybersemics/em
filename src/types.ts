@@ -197,4 +197,5 @@ interface ExtendedOperation<T = any> extends GetOperation<T> {
 
 export type Patch = ExtendedOperation[]
 
+export type ContextHash = string & Brand<'ContextHash'>
 export type ThoughtHash = string & Brand<'ThoughtHash'>
