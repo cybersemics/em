@@ -7,7 +7,7 @@ import { hashContext, headRank } from '../util'
 import { Path } from '../types'
 
 /** A custom horizontal rule. */
-const Divider = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
+const Divider = ({ path }: { path: Path }) => {
 
   const dividerSetWidth = React.createRef<HTMLInputElement>()
   const dispatch = useDispatch()
@@ -15,7 +15,7 @@ const Divider = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent) => {
     e.stopPropagation()
-    dispatch({ type: 'setCursor', thoughtsRanked })
+    dispatch({ type: 'setCursor', path })
   }
 
   /** Get the max width of nearby for divider list child elements, add 30 px and set this width for divider. */
@@ -48,7 +48,7 @@ const Divider = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
     <div className={classNames({
       divider: true,
       // requires editable-hash className to be selected by the cursor navigation via editableNode
-      ['editable-' + hashContext(thoughtsRanked, headRank(thoughtsRanked))]: true,
+      ['editable-' + hashContext(path, headRank(path))]: true,
     })} />
   </div>
 }
