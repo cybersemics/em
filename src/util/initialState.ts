@@ -91,9 +91,6 @@ export interface State {
   inversePatches: Patch[],
 }
 
-export type PartialStateWithThoughts =
-  Partial<State> & Pick<State, 'thoughts'>
-
 /** Generates the initial state of the application. */
 export const initialState = () => {
 

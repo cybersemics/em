@@ -112,7 +112,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     const oldThoughts = pathToContext(oldThoughtsRanked)
     return getThoughtsRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought({ thoughts: { thoughtIndex: thoughtIndexNew } }, child.value)
+      const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
 
       // remove and add the new context of the child
       const contextNew = newThoughts.concat(contextRecursive)
