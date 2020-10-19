@@ -80,7 +80,7 @@ const Breadcrumbs: BreadcrumbsComponent = ({ path, simplePath, thoughtsLimit, ch
               <span>
                 {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
                 {subthoughts && <Link simplePath={subthoughts} label={thoughtRanked.label} />}
-                {subthoughts && <Superscript thoughtsRanked={subthoughts} />}
+                {subthoughts && <Superscript simplePath={subthoughts} />}
               </span>
               :
               <span>
