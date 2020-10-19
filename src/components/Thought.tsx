@@ -88,7 +88,6 @@ interface ThoughtProps {
   style?: React.CSSProperties,
   simplePath: SimplePath,
   view?: string | null,
-  toggleTopControlsAndBreadcrumbs: () => void,
 }
 
 interface ThoughtContainerProps {
@@ -123,10 +122,6 @@ interface ThoughtContainerProps {
   simplePathLive?: SimplePath,
   url?: string | null,
   view?: string | null,
-}
-
-interface ThoughtDispatchProps {
-  toggleTopControlsAndBreadcrumbs: () => void,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -219,6 +214,14 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch<Action | ActionCreator>) => ({
   toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
+  setCursorOnNote: ({ path, contextChain }: { path: Path, contextChain: SimplePath[] }) => () => dispatch({
+    type: 'setCursor',
+    path,
+    contextChain,
+    cursorHistoryClear: true,
+    editing: true,
+    noteFocus: true
+  } as Action),
 })
 
 /**********************************************************************
@@ -378,7 +381,7 @@ const Thought = ({
   style,
   simplePath,
   toggleTopControlsAndBreadcrumbs
-}: ThoughtProps) => {
+}: ThoughtProps & Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>) => {
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
@@ -443,6 +446,7 @@ const ThoughtContainer = ({
   prevChild,
   publish,
   rank,
+  setCursorOnNote,
   showContexts,
   style,
   thought,
@@ -455,7 +459,7 @@ const ThoughtContainer = ({
   dragPreview: ConnectDragPreview,
   dragSource: ConnectDragSource,
   dropTarget: ConnectDropTarget,
-} & ThoughtDispatchProps) => {
+} & ReturnType<typeof mapDispatchToProps>) => {
 
   const state = store.getState()
   useEffect(() => {
@@ -583,7 +587,7 @@ const ThoughtContainer = ({
           e.stopPropagation()
           store.dispatch({
             type: 'setCursor',
-            simplePath,
+            thoughtsRanked: simplePath,
           })
         }
       }}/>}
@@ -624,7 +628,10 @@ const ThoughtContainer = ({
         view={view}
       />
 
-      <Note context={thoughtsLive} thoughtsRanked={simplePathLive!} contextChain={contextChain}/>
+      <Note
+        context={thoughtsLive}
+        onFocus={setCursorOnNote({ path, contextChain })}
+      />
 
     </div>
 

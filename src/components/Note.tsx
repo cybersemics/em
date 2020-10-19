@@ -5,7 +5,12 @@ import { store } from '../store.js'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
-import { Context, Path, SimplePath } from '../types'
+import { Context } from '../types'
+
+interface NoteProps {
+  context: Context,
+  onFocus: (e: React.FocusEvent) => void,
+}
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = (noteEl: HTMLElement) =>
@@ -13,7 +18,7 @@ const editableOfNote = (noteEl: HTMLElement) =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, thoughtsRanked: Path, contextChain: SimplePath[] }) => {
+const Note = ({ context, onFocus }: NoteProps) => {
 
   const state = store.getState()
   const hasNote = hasChild(state, context, '=note')
@@ -75,11 +80,6 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
       key: '=note',
       value
     })
-  }
-
-  /** Sets the cursor on the note's thought when then note is focused. */
-  const onFocus = () => {
-    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: true, noteFocus: true })
   }
 
   /** Set editing to false onBlur, if keyboard is closed. */
