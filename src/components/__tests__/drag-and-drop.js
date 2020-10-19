@@ -10,7 +10,7 @@ import { importText } from '../../action-creators'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
+const whereContext = context => node => equalArrays(pathToContext(node.props().simplePath), context)
 
 let wrapper = null // eslint-disable-line fp/no-let
 
