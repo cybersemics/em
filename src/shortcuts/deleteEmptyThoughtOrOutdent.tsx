@@ -1,5 +1,4 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { contextOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
 import {
   getChildren,
@@ -9,11 +8,13 @@ import {
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
+  simplifyPath,
   splitChain,
 } from '../selectors'
 import { State } from '../util/initialState'
 import { RANKED_ROOT } from '../constants'
 import { alert } from '../action-creators'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 
 interface Error {
   type: 'error',
@@ -43,6 +44,8 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   // can't delete if there is no cursor, there is a selection range, the document is not editable, or the caret is not at the beginning of the thought
   if (!cursor || !isDocumentEditable() || sel.focusOffset > 0 || !sel.isCollapsed) return false
 
+  const simplePath = simplifyPath(state, cursor)
+
   // can delete if the current thought is a divider
   if (isDivider(headValue(cursor))) return true
 
@@ -53,7 +56,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   const contextChain = splitChain(state, cursor)
   const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
   const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
-  const prevThought = getThoughtBefore(state, cursor)
+  const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
   // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
@@ -67,7 +70,8 @@ const deleteEmptyThought = (dispatch: Dispatch<Error | DeleteEmptyThought>, getS
   const { cursor } = state
   if (!cursor) return
 
-  const prevThought = getThoughtBefore(state, cursor)
+  const simplePath = simplifyPath(state, cursor)
+  const prevThought = getThoughtBefore(state, simplePath)
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(cursor)
   const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
@@ -102,7 +106,8 @@ const isMergedThoughtDuplicate = (state: State) => {
   // If we are going to delete empty thought
   if (headValue(cursor) === '' || editingValue === '') return false
 
-  const prevThought = getThoughtBefore(state, cursor)
+  const simplePath = simplifyPath(state, cursor)
+  const prevThought = getThoughtBefore(state, simplePath)
   if (!prevThought) return false
   const contextChain = splitChain(state, cursor)
   const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))

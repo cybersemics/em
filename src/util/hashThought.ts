@@ -4,6 +4,7 @@ import * as pluralize from 'pluralize'
 import _ from 'lodash'
 import globals from '../globals'
 import { REGEXP_TAGS } from '../constants'
+import { ThoughtHash } from '../types'
 
 /** Converts a string to lowecase. */
 const lower = (s: string) => s.toLowerCase()
@@ -41,7 +42,7 @@ const singularize = (s: string) => s !== 's' ? pluralize.singular(s) : s
  * Stored keys MUST match the current hashing algorithm.
  * Use schemaVersion to manage migrations.
  */
-export const hashThought = _.memoize(
+export const hashThought: (s: string) => ThoughtHash = _.memoize(
   (value: string) => _.flow([
     // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,

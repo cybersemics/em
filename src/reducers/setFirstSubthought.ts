@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { getPrevRank, getThoughts, rankThoughtsFirstMatch } from '../selectors'
 import { existingThoughtChange, newThoughtSubmit } from '../reducers'
 import { State } from '../util/initialState'
-import { Context } from '../types'
+import { Context, SimplePath } from '../types'
 
 /** Sets the value of the first subthought in the given context. */
 const setFirstSubthoughts = (state: State, { context, value }: { context: Context, value: string }) => {
@@ -18,7 +18,7 @@ const setFirstSubthoughts = (state: State, { context, value }: { context: Contex
       thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
         value,
         rank: oldFirstThoughtRanked.rank,
-      }),
+      }) as SimplePath,
     })
 
     // context is empty and so first thought must be created

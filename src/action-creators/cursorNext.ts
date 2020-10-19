@@ -3,11 +3,8 @@ import { suppressExpansion } from '../action-creators'
 import { contextOf, scrollCursorIntoView } from '../util'
 import { ActionCreator } from '../types'
 
-// selectors
-import {
-  getChildrenSorted,
-  getThoughtAfter,
-} from '../selectors'
+// must be imported after util (???)
+import { getChildrenSorted, getThoughtAfter, simplifyPath } from '../selectors'
 
 /** Moves the cursor to the next sibling, ignoring descendants. */
 const cursorNext = (): ActionCreator => (dispatch, getState) => {
@@ -23,7 +20,7 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
     return
   }
 
-  const next = getThoughtAfter(state, cursor)
+  const next = getThoughtAfter(state, simplifyPath(state, cursor))
   if (!next) return
 
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession

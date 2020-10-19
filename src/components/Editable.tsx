@@ -9,7 +9,7 @@ import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
-import { Child, Connected, Context, Path, TutorialChoice } from '../types'
+import { Child, Connected, Context, Path, SimplePath, TutorialChoice } from '../types'
 
 // constants
 import {
@@ -103,14 +103,14 @@ const updateToolbarPositionOnScroll = () => {
 }
 
 interface EditableProps {
-  contextChain: Child[][],
+  contextChain: SimplePath[],
   cursorOffset?: number,
   disabled?: boolean,
   isEditing?: boolean,
   rank: number,
   showContexts?: boolean,
   style?: React.CSSProperties,
-  thoughtsRanked: Path,
+  thoughtsRanked: SimplePath,
   onKeyDownAction?: () => void,
 }
 
@@ -184,7 +184,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   }
 
   // =style attribute on the thought itself
-  const styleAttr = getStyle(state, thoughtsRanked)
+  const styleAttr = getStyle(state, thoughts)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
@@ -239,7 +239,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, thoughtsRanked, contextChain }: { context: Context, showContexts?: boolean, rank: number, thoughtsRanked: Path, contextChain: Child[][] }) => {
+  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, thoughtsRanked, contextChain }: { context: Context, showContexts?: boolean, rank: number, thoughtsRanked: Path, contextChain: SimplePath[] }) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
 

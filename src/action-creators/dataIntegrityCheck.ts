@@ -25,6 +25,7 @@ import {
   getThought,
   getThoughts,
   getThoughtsRanked,
+  simplifyPath,
   splitChain,
 } from '../selectors'
 
@@ -55,6 +56,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
   const encoded = hashContext(context)
   const thought = getThought(state, value)
   const pathContext = contextOf(context)
+  const simplePath = simplifyPath(state, path)
 
   // delete duplicate thoughts in contextIndex
   if (deleteDuplicateContextIndex) {
@@ -161,7 +163,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
 
     // sync divergent ranks
     if (syncDivergentRanks) {
-      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(path))
+      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(simplePath))
         .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {

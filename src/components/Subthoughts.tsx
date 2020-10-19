@@ -14,7 +14,7 @@ import { alert } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
-import { Child, GesturePath, Index, Path, ThoughtContext } from '../types'
+import { Child, GesturePath, Index, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
@@ -63,14 +63,14 @@ interface SubthoughtsProps {
   allowSingleContext?: boolean,
   allowSingleContextParent?: boolean,
   childrenForced?: Child[],
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
   count?: number,
   depth?: number,
   expandable?: boolean,
   isParentHovering?: boolean,
   showContexts?: boolean,
   sort?: string,
-  thoughtsRanked: Path,
+  thoughtsRanked: SimplePath,
 }
 
 /** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
@@ -129,7 +129,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const thoughtsRankedLive = isEditing && (props.contextChain ?? []).length === 0
-    ? contextOf(props.thoughtsRanked).concat(head(cursor!))
+    ? contextOf(props.thoughtsRanked).concat(head(cursor!)) as SimplePath
     : thoughtsRanked
 
   const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path | undefined
@@ -155,7 +155,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: Path }
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: SimplePath }
   const thoughtsTo = props.thoughtsRanked
   const cursor = store.getState().cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
@@ -176,7 +176,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: Path }
+  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: SimplePath }
   const thoughtsTo = props.thoughtsRanked
 
   const newPath = unroot(thoughtsTo).concat({
@@ -238,7 +238,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 })
 
 /** Evals the code at this thought. */
-const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
+const evalCode = ({ thoughtsRanked }: { thoughtsRanked: SimplePath }) => {
 
   let codeResults // eslint-disable-line fp/no-let
   let ast // eslint-disable-line fp/no-let
@@ -292,7 +292,7 @@ const evalCode = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
  ********************************************************************/
 
 /** A message that says there are no children in this context. */
-const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSingleContext?: boolean, children: Child[], thoughtsRanked: Path }) =>
+const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSingleContext?: boolean, children: Child[], thoughtsRanked: SimplePath }) =>
   <div className='children-subheading text-note text-small'>
 
     This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
@@ -393,7 +393,7 @@ export const SubthoughtsComponent = ({
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(thoughtsRanked))
     : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || thoughtsRanked))
-    : getThoughtsRanked(state, contextBinding || thoughtsRanked) as (Child | ThoughtContext)[]
+    : getThoughtsRanked(state, contextBinding ? pathToContext(contextBinding) : thoughtsRanked) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -530,6 +530,8 @@ export const SubthoughtsComponent = ({
           if (i >= proposedPageSize) {
             return null
           }
+
+          // TODO
           const childPath = getChildPath(state, child, thoughtsRanked, showContexts)
           const childContext = pathToContext(childPath)
 

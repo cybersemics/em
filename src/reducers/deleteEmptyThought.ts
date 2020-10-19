@@ -1,6 +1,7 @@
 import { isMobile } from '../browser'
 import { ROOT_TOKEN } from '../constants'
 import { State } from '../util/initialState'
+import { SimplePath } from '../types'
 
 // util
 import {
@@ -20,9 +21,8 @@ import {
   getNextRank,
   getThoughtsRanked,
   isContextViewActive,
-  lastThoughtsFromContextChain,
   prevSibling,
-  splitChain,
+  simplifyPath,
 } from '../selectors'
 
 // reducers
@@ -43,8 +43,7 @@ const deleteEmptyThought = (state: State) => {
   if (!cursor) return
 
   const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
-  const contextChain = splitChain(state, cursor)
-  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+  const thoughtsRanked = simplifyPath(state, cursor)
   const children = getThoughtsRanked(state, thoughtsRanked)
 
   // delete an empty thought
@@ -81,7 +80,7 @@ const deleteEmptyThought = (state: State) => {
           oldValue: prev.value,
           newValue: valueNew,
           context,
-          thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
+          thoughtsRanked: contextOf(thoughtsRanked).concat(prev) as SimplePath
         }),
 
         // merge children

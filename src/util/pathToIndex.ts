@@ -1,5 +1,6 @@
 import { pathToContext } from './pathToContext'
 import { Path } from '../types'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-export const pathToIndex = (path: Path) => pathToContext(path).reduce((acc, value) => acc + '.' + value, '')
+/** Converts a path to a '.'-delimited key that can be passed to _.get. */
+export const pathToIndex = (path: Path) =>
+  pathToContext(path).reduce((acc, value) => acc + '.' + value, '')

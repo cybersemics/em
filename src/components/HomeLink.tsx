@@ -2,20 +2,18 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../selectors'
 import { home } from '../action-creators'
-import { Connected, Path } from '../types'
+import { Connected } from '../types'
 import { State } from '../util/initialState'
 import Modal from './Modal'
 
 interface HomeLinkProps {
   dark?: boolean,
-  focus?: Path,
   showModal?: string | null,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => ({
   dark: theme(state) !== 'Light',
-  focus: state.focus,
   showModal: state.showModal,
 })
 

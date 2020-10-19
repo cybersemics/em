@@ -11,11 +11,11 @@ import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { asyncFocus, pathToContext, rankThoughtsSequential, unroot } from '../util'
 import { getNextRank, getThoughtsRanked } from '../selectors'
 import { State } from '../util/initialState'
-import { Path } from '../types'
+import { Path, SimplePath } from '../types'
 
 interface NewThoughtProps {
   show?: boolean,
-  path: Path,
+  path: SimplePath,
   cursor?: Path | null,
   showContexts?: boolean,
   label?: string,
@@ -25,7 +25,7 @@ interface NewThoughtProps {
 
 interface OnClickOptions {
   distance: number,
-  path: Path,
+  path: SimplePath,
   showContexts?: boolean,
   value: string,
 }

@@ -5,7 +5,7 @@ import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { chain, decodeThoughtsUrl, getContexts, getThoughts, theme } from '../selectors'
 import { State } from '../util/initialState'
-import { Child, Connected, Context, Path, ThoughtContext } from '../types'
+import { Connected, Context, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
@@ -27,7 +27,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
   dark?: boolean,
   editingValue?: string | null,
   focusOffset?: number,
@@ -39,7 +39,7 @@ interface ThoughtAnnotationProps {
   showContexts?: boolean,
   showHiddenThoughts?: boolean,
   style?: React.CSSProperties,
-  thoughtsRanked: Path,
+  thoughtsRanked: SimplePath,
   url?: string | null,
 }
 
@@ -67,7 +67,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     : unroot(props.thoughtsRanked)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
-    ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor!) : cursor!))
+    ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor!) : cursor!)) as SimplePath
     : props.thoughtsRanked
 
   return {

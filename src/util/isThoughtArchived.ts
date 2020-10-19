@@ -1,7 +1,4 @@
-// util
-import {
-  equalThoughtValue,
-} from '../util'
+import { equalThoughtValue } from '../util'
 import { Path } from '../types'
 
 /** Determines whether a thought is archived or not. */
