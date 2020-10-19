@@ -16,14 +16,14 @@ interface BulletProps {
   leaf?: boolean,
   onClick: (event: React.MouseEvent<HTMLElement, MouseEvent>) => void,
   showContexts?: boolean,
-  thoughtsResolved: Path,
+  path: Path,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
   return {
-    showContexts: isContextViewActive(state, pathToContext(props.thoughtsResolved)),
+    showContexts: isContextViewActive(state, pathToContext(props.path)),
     invalidOption: props.isEditing && invalidState // if being edited and meta validation error has occured
   }
 }
