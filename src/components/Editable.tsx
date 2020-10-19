@@ -110,7 +110,7 @@ interface EditableProps {
   rank: number,
   showContexts?: boolean,
   style?: React.CSSProperties,
-  thoughtsRanked: SimplePath,
+  simplePath: SimplePath,
   onKeyDownAction?: () => void,
 }
 
@@ -149,12 +149,12 @@ const showDuplicationAlert = duplicateAlertToggler()
 
 /**
  * An editable thought with throttled editing.
- * Use rank instead of headRank(thoughtsRanked) as it will be different for context view.
+ * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
+const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
   const state = store.getState()
-  const thoughts = pathToContext(thoughtsRanked)
-  const thoughtsResolved = contextChain.length ? chain(state, contextChain, thoughtsRanked) : thoughtsRanked
+  const thoughts = pathToContext(simplePath)
+  const thoughtsResolved = contextChain.length ? chain(state, contextChain, simplePath) : simplePath
   const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
@@ -190,15 +190,15 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
   const setContentInvalidState = (value: boolean) =>
     contentRef.current && contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
 
-  // side effect to set old value ref to head value from updated thoughtsRanked.
+  // side effect to set old value ref to head value from updated simplePath.
   useEffect(() => {
-    oldValueRef.current = headValue(thoughtsRanked)
-  }, [headValue(thoughtsRanked)])
+    oldValueRef.current = headValue(simplePath)
+  }, [headValue(simplePath)])
 
   useEffect(() => {
     // set value to old value
     oldValueRef.current = value
-  }, [thoughtsRanked])
+  }, [simplePath])
 
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
@@ -217,9 +217,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     const { cursorBeforeEdit, cursor }: State = store.getState() // use fresh state
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
-    const thoughtsRankedLive = cursor && isEditing
-      ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor) : cursor))
-      : thoughtsRanked
+    const simplePathLive = cursor && isEditing
+      ? contextOf(simplePath).concat(head(showContexts ? contextOf(cursor) : cursor))
+      : simplePath
 
     dispatch({
       type: 'setCursor',
@@ -230,7 +230,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // to use the existing offset after a user clicks or touches the screent
       // when cursor is changed through another method, such as cursorDown, offset will be reset
       offset: null,
-      thoughtsRanked: thoughtsRankedLive,
+      thoughtsRanked: simplePathLive,
     })
   }
 
@@ -239,7 +239,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, thoughtsRanked, contextChain }: { context: Context, showContexts?: boolean, rank: number, thoughtsRanked: Path, contextChain: SimplePath[] }) => {
+  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, simplePath, contextChain }: { context: Context, showContexts?: boolean, rank: number, simplePath: Path, contextChain: SimplePath[] }) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
 
@@ -250,7 +250,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
 
     const thought = getThought(state, oldValue)
     if (thought) {
-      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked, contextChain })
+      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked: simplePath, contextChain })
 
       // rerender so that triple dash is converted into divider
       // otherwise nothing would be rerendered because the thought is still being edited
@@ -414,9 +414,9 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     if (contextLengthChange || urlChange || isEmpty) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
+      thoughtChangeHandler(newValue, { context, showContexts, rank, simplePath, contextChain })
     }
-    else throttledChangeRef.current(newValue, { context, showContexts, rank, thoughtsRanked, contextChain })
+    else throttledChangeRef.current(newValue, { context, showContexts, rank, simplePath, contextChain })
   }
 
   /** Imports text that is pasted onto the thought. */
@@ -436,14 +436,14 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
       const { cursor, cursorBeforeEdit } = store.getState()
-      const thoughtsRankedLive = cursor && equalPath(cursorBeforeEdit, thoughtsRanked)
+      const path = cursor && equalPath(cursorBeforeEdit, simplePath)
         ? cursor
-        : thoughtsRanked
+        : simplePath
 
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
       const rawDestValue = strip(contentRef.current!.innerHTML, { preventTrim: true })
-      dispatch(importText(thoughtsRankedLive, isHTML(plainText)
+      dispatch(importText(path, isHTML(plainText)
         ? plainText
         : htmlText || plainText,
       { rawDestValue })).then(({ newValue }: { newValue: string }) => {
@@ -559,7 +559,7 @@ const Editable = ({ disabled, isEditing, thoughtsRanked, contextChain, cursorOff
     // make sure to get updated state
     const state = store.getState()
 
-    showContexts = showContexts || isContextViewActive(state, pathToContext(thoughtsRanked))
+    showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
 
     if (
       !globals.touching &&
