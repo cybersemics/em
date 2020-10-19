@@ -384,7 +384,7 @@ const Thought = ({
 
   return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
-    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay path={simplePath} isDragging={isDragging}/>}
+    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(simplePath))} showContexts={showContexts} />
     : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
@@ -472,7 +472,7 @@ const ThoughtContainer = ({
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
     if (!store.getState().dragHold) {
-      store.dispatch({ type: 'dragHold', value: true, draggedsimplePath: simplePathLive })
+      store.dispatch({ type: 'dragHold', value: true, simplePath: simplePathLive })
       store.dispatch(alert('Drag and drop to move thought', { showCloseLink: false }))
     }
   }
