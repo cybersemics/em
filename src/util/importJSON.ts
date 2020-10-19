@@ -114,7 +114,9 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
     const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
     const thoughtNew = addThought(
       {
+        ...state,
         thoughts: {
+          ...state.thoughts,
           thoughtIndex
         }
       },
