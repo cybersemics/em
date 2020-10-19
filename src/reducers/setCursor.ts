@@ -2,21 +2,21 @@ import _ from 'lodash'
 import { store } from '../store'
 import { dataIntegrityCheck, loadResource } from '../action-creators'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
-import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContextChain } from '../selectors'
+import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContextChain, simplifyPath } from '../selectors'
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
-import { Child, Index, Path, TutorialChoice } from '../types'
+import { Index, Path, SimplePath, TutorialChoice } from '../types'
 
 interface Payload {
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
   cursorHistoryClear?: boolean,
   cursorHistoryPop?: boolean,
   editing?: boolean | null,
+  noteFocus?: boolean,
   offset?: number,
   replaceContextViews?: Index<boolean>,
   thoughtsRanked: Path | null,
-  noteFocus?: boolean,
 }
 
 /**
@@ -32,13 +32,13 @@ const setCursor = (state: State, {
   editing,
   offset,
   replaceContextViews,
-  thoughtsRanked,
+  thoughtsRanked: path,
   noteFocus = false
 }: Payload) => {
 
-  const thoughtsResolved = thoughtsRanked && contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked)
-    : thoughtsRanked
+  const thoughtsResolved = path && contextChain.length > 0
+    ? chain(state, contextChain, simplifyPath(state, path))
+    : path
 
   // SIDE EFFECT
   // clear the browser selection if a divider is being selected
@@ -79,7 +79,7 @@ const setCursor = (state: State, {
     { ...state, contextViews: newContextViews },
     thoughtsResolved || [],
     contextChain.length > 0
-      ? contextChain.concat([thoughtsResolved!.slice(lastThoughtsFromContextChain(state, contextChain).length)])
+      ? contextChain.concat([simplifyPath(state, path!).slice(lastThoughtsFromContextChain(state, contextChain).length) as SimplePath])
       : []
   )
 

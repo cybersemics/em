@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { RANKED_ROOT } from '../constants'
 import { cursorBack, existingThoughtDelete, setCursor } from '../reducers'
 import { State } from '../util/initialState'
-import { Child, Path, ThoughtContext } from '../types'
+import { Child, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
@@ -51,7 +51,7 @@ const deleteThought = (state: State, { path }: { path?: Path }) => {
   const contextChain = splitChain(state, path)
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
-    : path
+    : path as SimplePath
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
     RANKED_ROOT)

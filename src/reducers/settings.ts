@@ -4,6 +4,7 @@ import { isFunction } from '../util'
 import { existingThoughtChange } from '../reducers'
 import { getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
+import { SimplePath } from '../types'
 
 /** Sets a setting thought. */
 const settings = (state: State, { key, value }: { key: string, value: string }) => {
@@ -26,7 +27,7 @@ const settings = (state: State, { key, value }: { key: string, value: string }) 
     thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
       value: newValue,
       rank: oldThoughtRanked.rank,
-    }),
+    }) as SimplePath,
   })
 }
 

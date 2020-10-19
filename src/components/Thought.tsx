@@ -10,7 +10,7 @@ import globals from '../globals'
 import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { ActionCreator, Child, Path, ThoughtContext } from '../types'
+import { ActionCreator, Child, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -71,7 +71,7 @@ import {
  **********************************************************************/
 
 interface ThoughtProps {
-  contextChain: Child[][],
+  contextChain: SimplePath[],
   cursorOffset?: number,
   hideBullet?: boolean,
   homeContext?: boolean,
@@ -85,7 +85,7 @@ interface ThoughtProps {
   showContextBreadcrumbs?: boolean,
   showContexts?: boolean,
   style?: React.CSSProperties,
-  thoughtsRanked: Path,
+  thoughtsRanked: SimplePath,
   view?: string | null,
   toggleTopControlsAndBreadcrumbs: () => void,
 }
@@ -94,7 +94,7 @@ interface ThoughtContainerProps {
   allowSingleContext?: boolean,
   childrenForced?: Child[],
   contextBinding?: Path,
-  contextChain: Child[][],
+  contextChain: SimplePath[],
   count?: number,
   cursor?: Path | null,
   cursorOffset?: number,
@@ -118,8 +118,8 @@ interface ThoughtContainerProps {
   showContexts?: boolean,
   style?: React.CSSProperties,
   thought?: Child,
-  thoughtsRanked: Path,
-  thoughtsRankedLive?: Path,
+  thoughtsRanked: SimplePath,
+  thoughtsRankedLive?: SimplePath,
   url?: string | null,
   view?: string | null,
 }
@@ -160,7 +160,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsRankedLive = isEditing
-    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor!) : cursor!))
+    ? contextOf(thoughtsRanked).concat(head(showContexts ? contextOf(cursor!) : cursor!)) as SimplePath
     : thoughtsRanked
 
   const distance = cursor ? Math.max(0,
@@ -241,7 +241,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: Path }) => {
+const beginDrag = ({ thoughtsRankedLive }: { thoughtsRankedLive: SimplePath }) => {
   store.dispatch({
     type: 'dragInProgress',
     value: true,
@@ -500,7 +500,7 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getThoughtsRanked(state, contextBinding || thoughtsRankedLive!)
+  const children = childrenForced || getThoughtsRanked(state, contextBinding ? pathToContext(contextBinding) : thoughtsRankedLive!)
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
   const contextThought = showContexts && getThought(state, headValue(contextOf(thoughtsRanked)))

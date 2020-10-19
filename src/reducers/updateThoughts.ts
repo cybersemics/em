@@ -3,13 +3,13 @@ import { State, ThoughtsInterface, initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { hashContext, importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
-import { Child, Index, Lexeme, Parent } from '../types'
+import { Index, Lexeme, Parent, SimplePath } from '../types'
 
 interface Options {
   thoughtIndexUpdates: Index<Lexeme | null>,
   contextIndexUpdates: Index<Parent | null>,
-  recentlyEdited?: Index<any>,
-  contextChain?: Child[][],
+  recentlyEdited?: Index,
+  contextChain?: SimplePath[],
   updates?: Index<string>,
   local?: boolean,
   remote?: boolean,
@@ -33,7 +33,7 @@ setTimeout(() => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importHtml(state, [{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS)
+  } = importHtml(state, [{ value: EM_TOKEN, rank: 0 }] as SimplePath, INITIAL_SETTINGS)
 
   whitelistedThoughts = {
     contextIndex: {

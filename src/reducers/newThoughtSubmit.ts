@@ -14,11 +14,12 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
 
   // create thought if non-existent
   const thought: Lexeme = {
-    ...getThought(state, value),
-    value,
-    contexts: [],
-    created: timestamp(),
-    lastUpdated: timestamp()
+    ...getThought(state, value) || {
+      value,
+      contexts: [],
+      created: timestamp(),
+      lastUpdated: timestamp()
+    }
   }
 
   const id = createId()

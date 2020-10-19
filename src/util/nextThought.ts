@@ -28,6 +28,9 @@ import {
   nextSibling as thoughtNextSibling,
 } from '../selectors'
 
+import { State } from '../util/initialState'
+import { Path } from '../types'
+
 /**
  * Adds the rank of the child thought to every thought in a context.
  *
@@ -249,7 +252,7 @@ const nextInThoughtView = (state, value, context, rank, path, contextChain, igno
 }
 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain. */
-export const nextThought = (state, path = RANKED_ROOT) => {
+export const nextThought = (state: State, path: Path = RANKED_ROOT) => {
   const { contextViews } = state
   const { value, rank } = head(path)
   const rankedContext = rootedContextOf(path)

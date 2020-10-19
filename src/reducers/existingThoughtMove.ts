@@ -3,7 +3,7 @@ import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
 import { getNextRank, getThought, getThoughts, getThoughtsRanked } from '../selectors'
-import { State, ThoughtsInterface } from '../util/initialState'
+import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
 // util
@@ -29,15 +29,11 @@ import {
 } from '../util'
 
 type RecursiveMoveResult = Child & {
-  id: string,
-  contextCache: string[],
-  contextIndex: any,
-  thoughtIndex: Index<Lexeme>,
-  thoughtCache: string[],
+  archived?: Timestamp,
   context: Context,
   contextsOld: Context[],
   contextsNew: Context[],
-  archived?: boolean,
+  newThought: Lexeme,
 }
 
 /** Moves a thought from one context to another, or within the same context. */
@@ -113,7 +109,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
     const newLastRank = getNextRank(state, pathToContext(newThoughtsRanked))
 
-    return getThoughtsRanked(state, oldThoughtsRanked).reduce((accum, child, i) => {
+    const oldThoughts = pathToContext(oldThoughtsRanked)
+    return getThoughtsRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
 
@@ -128,12 +125,12 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         ? timestamp()
         : exactThought.archived as Timestamp
 
-      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, pathToContext(oldThoughtsRanked), child.rank), contextNew, movedRank, child.id as string, archived as Timestamp), contextNew)
+      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, oldThoughts, child.rank), contextNew, movedRank, child.id as string, archived as Timestamp), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
 
-      const accumNew = {
+      const accumNew: Index<RecursiveMoveResult> = {
         // merge ancestor updates
         ...accumRecursive,
         // merge sibling updates
@@ -147,11 +144,11 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             .find(context => equalArrays(context.context, contextNew))
           )!.rank,
           // child.id is undefined sometimes. Unable to reproduce.
-          id: child.id ?? null,
+          id: child.id ?? '',
           archived,
-          thoughtIndex: childNewThought,
-          context: pathToContext(oldThoughtsRanked),
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([pathToContext(oldThoughtsRanked)]),
+          newThought: childNewThought,
+          context: oldThoughts,
+          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([oldThoughts]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
         }
       }
@@ -164,9 +161,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   }
 
   const descendantUpdatesResult = recursiveUpdates(oldPath, newPath)
-  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, value: ThoughtsInterface, key: string) => {
-    accum[key] = value.thoughtIndex
-  }, {} as Index<Index<Lexeme>>)
+  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newThought }, key: string) => {
+    accum[key] = newThought
+  }, {} as Index<Lexeme>)
 
   const contextIndexDescendantUpdates = sameContext
     ? {}
@@ -186,7 +183,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             rank: result.rank,
             lastUpdated: timestamp(),
             // result.id is undefined sometimes. Unable to reproduce.
-            id: result.id ?? null,
+            id: result.id ?? '',
             ...result.archived ? { archived: result.archived } : null
           })
         return {

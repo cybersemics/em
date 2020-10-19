@@ -2,12 +2,12 @@ import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { contextChainToPath, equalArrays, equalThoughtRanked, head, headValue, isRoot, unroot } from '../util'
 import { getContexts, getContextsSortedAndRanked, getThought, getThoughtsRanked, isContextViewActive, splitChain } from '../selectors'
 import { State } from '../util/initialState'
-import { Child } from '../types'
+import { Child, Path } from '../types'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
 // NOTE: path is pathToContexted
-const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]) => {
+const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
   let thoughtsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
@@ -58,7 +58,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]) => {
       // unfortunately this that there is no protection against a (incorrectly) missing parent
       rank: parent ? parent.rank : 0,
       // TODO: parent does not have an id
-      id: 0
+      id: ''
     }
 
     // @ts-ignore

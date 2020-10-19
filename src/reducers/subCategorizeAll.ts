@@ -19,7 +19,7 @@ import {
   getThoughtsRanked,
   hasChild,
   lastThoughtsFromContextChain,
-  pathToThoughtsRanked,
+  simplifyPath,
   splitChain,
 } from '../selectors'
 
@@ -58,13 +58,13 @@ const subCategorizeAll = (state: State) => {
       : cursor)
     : RANKED_ROOT
 
-  const children = getThoughtsRanked(state, thoughtsRanked)
+  const children = getThoughtsRanked(state, simplifyPath(state, thoughtsRanked))
   const pathParent = cursor.length > 1 ? cursorParent : RANKED_ROOT
 
   // get newly created thought
   // use fresh state
   const getThoughtNew = perma((state: State) => {
-    const parentThoughtsRanked = pathToThoughtsRanked(state, pathParent)
+    const parentThoughtsRanked = simplifyPath(state, pathParent)
     const childrenNew = getThoughtsRanked(state, pathToContext(parentThoughtsRanked))
     return childrenNew[0]
   })

@@ -1,7 +1,7 @@
 /** Defines app-wide constants. */
 
 import raw from 'raw.macro'
-import { Index } from './types'
+import { Index, SimplePath } from './types'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -103,7 +103,7 @@ export const ROOT_TOKEN = '__ROOT__'
 // token for hidden system context
 export const EM_TOKEN = '__EM__'
 
-export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
+export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }] as SimplePath
 
 export const ALLOW_SINGLE_CONTEXT = false
 
@@ -117,8 +117,7 @@ export const FIREBASE_CONFIG = {
 }
 
 /** An identify function that returns the value passed to it. */
-// use any time instead of generic to avoid explicit typing
-export const ID = (x: any) => x
+export const ID = <T = any>(x: T): T => x
 
 /** A void function that does nothing. NOOP means "no operation". */
 export const NOOP = () => { } // eslint-disable-line @typescript-eslint/no-empty-function

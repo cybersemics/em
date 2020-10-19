@@ -5,7 +5,7 @@ import { contextOf, headRank, headValue, pathToContext, reducerFlow, strip } fro
 import { getThoughtAfter, getThoughtsRanked, lastThoughtsFromContextChain, splitChain } from '../selectors'
 import { editableRender, existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
 import { State } from '../util/initialState'
-import { Path } from '../types'
+import { Path, SimplePath } from '../types'
 
 /** Splits a thought into two thoughts.
  *
@@ -33,7 +33,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
   */
   const valueLeft = strip(xhtmlPurifier.purify(value.slice(0, offset)), { preserveFormatting: true })
   const valueRight = strip(xhtmlPurifier.purify(value.slice(offset)), { preserveFormatting: true })
-  const thoughtsRankedLeft = contextOf(thoughtsRanked).concat({ value: valueLeft, rank: headRank(path) })
+  const thoughtsRankedLeft = contextOf(thoughtsRanked).concat({ value: valueLeft, rank: headRank(path) }) as SimplePath
 
   return reducerFlow([
 
@@ -57,7 +57,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
     state => {
       const thoughtNew = getThoughtAfter(state, thoughtsRankedLeft)
       const thoughtsRankedRight = contextOf(thoughtsRanked).concat({ value: valueRight, rank: thoughtNew!.rank })
-      const children = getThoughtsRanked(state, thoughtsRankedLeft)
+      const children = getThoughtsRanked(state, pathToContext(thoughtsRankedLeft))
 
       return reducerFlow(children.map(child =>
         existingThoughtMove({

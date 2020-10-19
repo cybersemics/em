@@ -1,7 +1,7 @@
 import { GetOperation } from 'fast-json-patch'
 import { Dispatch, ReactNode } from 'react'
 import { Action } from 'redux'
-import { ThunkAction } from 'redux-thunk'
+import { ThunkDispatch } from 'redux-thunk'
 import { State } from './util/initialState'
 
 /********************************
@@ -112,6 +112,9 @@ export interface Child {
 /** A sequence of children with ranks. */
 export type Path = Child[]
 
+/** A contiguous Path with no cycles. */
+export type SimplePath = Child[] & Brand<'SimplePath'>
+
 /** A sequence of values. */
 export type Context = string[]
 
@@ -125,7 +128,8 @@ export interface Parent {
 }
 
 /** A basic Redux action creator thunk with no arguments. */
-export type ActionCreator = ThunkAction<void, State, unknown, Action<string>>
+// do not use ThunkAction<void, State, any, Action<string>> to avoid extraArgument
+export type ActionCreator = ((dispatch: ThunkDispatch<State, never, Action<string>>, getState: () => State) => any)
 
 /** The three options the user can choose for the context tutorial. */
 export type TutorialChoice = 0 | 1 | 2
@@ -198,3 +202,6 @@ interface ExtendedOperation<T = any> extends GetOperation<T> {
 }
 
 export type Patch = ExtendedOperation[]
+
+export type ContextHash = string & Brand<'ContextHash'>
+export type ThoughtHash = string & Brand<'ThoughtHash'>

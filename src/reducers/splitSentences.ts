@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { State } from '../util/initialState'
 import { contextOf, head, headRank, headValue, pathToContext, reducerFlow, rootedContextOf } from '../util'
 import { editableRender, editingValue, existingThoughtChange, newThought, setCursor } from '../reducers'
+import { simplifyPath } from '../selectors'
 
 /** Split thought by sentences. Create new thought for each sentence. Thought value, on which cursor is on, replace with first sentence. */
 const splitSentences = (state: State) => {
@@ -26,7 +27,7 @@ const splitSentences = (state: State) => {
       oldValue: value,
       newValue: firstSentence,
       context: cursorContext,
-      thoughtsRanked: cursor,
+      thoughtsRanked: simplifyPath(state, cursor),
       rankInContext: rank }),
     ...otherSentences.map(sentence => newThought({ value: sentence })),
     setCursor({ thoughtsRanked: newCursor, offset: firstSentence.length }),

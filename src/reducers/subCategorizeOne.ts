@@ -1,5 +1,5 @@
 import { alert, existingThoughtMove, newThought } from '../reducers'
-import { getThoughtBefore, hasChild, pathToThoughtsRanked } from '../selectors'
+import { getThoughtBefore, hasChild, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Child } from '../types'
 
@@ -45,7 +45,7 @@ const subCategorizeOne = (state: State) => {
 
   /** Gets the last created thought insserted before the cursor. */
   const thoughtNew = (state: State) => {
-    const thoughtsRanked = pathToThoughtsRanked(state, cursor)
+    const thoughtsRanked = simplifyPath(state, cursor)
     return getThoughtBefore(state, thoughtsRanked)
   }
 

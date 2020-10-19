@@ -1,5 +1,5 @@
 import { loadFromUrl } from '../action-creators'
-import { attribute, getChildren, getThoughtsRanked, pathToThoughtsRanked } from '../selectors'
+import { attribute, getChildren, getThoughtsRanked, simplifyPath } from '../selectors'
 import { pathToContext } from '../util'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
@@ -16,7 +16,7 @@ const loadResource = path => (dispatch, getState) => {
 
     // create empty thought in which to load the source
     dispatch({ type: 'newThought', at: path, insertNewSubthought: true, preventSetCursor: true })
-    const parentThoughtsRanked = pathToThoughtsRanked(getState(), path)
+    const parentThoughtsRanked = simplifyPath(getState(), path)
     const childrenNew = getThoughtsRanked(getState(), pathToContext(parentThoughtsRanked))
     const thoughtNew = childrenNew[childrenNew.length - 1]
     const newThoughtPath = [...path, thoughtNew]

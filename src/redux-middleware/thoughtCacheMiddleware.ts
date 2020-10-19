@@ -7,7 +7,7 @@ import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getThoughtsOfEncodedContext, hasSyncs } from '../selectors'
 import { equalArrays, hashContext, mergeThoughts, pathToContext, unroot } from '../util'
 import { State, ThoughtsInterface } from '../util/initialState'
-import { Context, Index, Lexeme, Parent, Path } from '../types'
+import { Context, ContextHash, Index, Lexeme, Parent, Path } from '../types'
 
 /** Debounce pending checks to avoid checking on every action. */
 const debounceUpdatePending = 10
@@ -56,7 +56,7 @@ const nextPending = (state: State, pending: Index<Context>, visibleContexts: Ind
   const { thoughts: { contextIndex } } = state
 
   // get the encoded context keys that are not in the contextIndex
-  const expandedKeys = Object.keys(visibleContexts)
+  const expandedKeys = Object.keys(visibleContexts) as ContextHash[]
 
   return _.reduce(expandedKeys, (accum, key) => {
     const context = visibleContexts[key]

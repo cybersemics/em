@@ -3,6 +3,7 @@ import { parse } from 'jex-block-parser'
 import he from 'he'
 import { contextOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedContextOf, strip } from '../util'
 import { ActionCreator, Path, Timestamp } from '../types'
+import { simplifyPath } from '../selectors'
 
 // declare types until jex-block-parser merges PR
 // https://github.com/reergymerej/block-parser/pull/1
@@ -116,14 +117,14 @@ interface Options {
  * @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
  * @param skipRoot          See importHtml @param.
  */
-const importText = (thoughtsRanked: Path, inputText: string, { lastUpdated, preventSetCursor, preventSync, rawDestValue, skipRoot }: Options = {}): ActionCreator => (dispatch, getState) => {
+const importText = (path: Path, inputText: string, { lastUpdated, preventSetCursor, preventSync, rawDestValue, skipRoot }: Options = {}): ActionCreator => (dispatch, getState) => {
+  const state = getState()
+  const simplePath = simplifyPath(state, path)
   const text = rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
-  const destThought = head(thoughtsRanked)
+  const destThought = head(path)
   const destValue = rawDestValue || destThought.value
   const destRank = destThought.rank
-
-  const state = getState()
 
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
@@ -149,14 +150,14 @@ const importText = (thoughtsRanked: Path, inputText: string, { lastUpdated, prev
       type: 'existingThoughtChange',
       oldValue: destValue,
       newValue,
-      context: rootedContextOf(pathToContext(thoughtsRanked)),
-      thoughtsRanked
+      context: rootedContextOf(pathToContext(path)),
+      thoughtsRanked: path
     })
 
-    if (!preventSetCursor && thoughtsRanked) {
+    if (!preventSetCursor && path) {
       dispatch({
         type: 'setCursor',
-        thoughtsRanked: contextOf(thoughtsRanked).concat({ value: newValue, rank: destRank }),
+        thoughtsRanked: contextOf(path).concat({ value: newValue, rank: destRank }),
         offset: startOffset + newText.length
       })
     }
@@ -165,7 +166,7 @@ const importText = (thoughtsRanked: Path, inputText: string, { lastUpdated, prev
   }
   else {
     const json = convertHTMLtoJSON(text)
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importJSON(state, thoughtsRanked, json, { lastUpdated, skipRoot })
+    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importJSON(state, simplePath, json, { lastUpdated, skipRoot })
     if (!preventSync) {
       dispatch({
         type: 'updateThoughts',
@@ -179,7 +180,7 @@ const importText = (thoughtsRanked: Path, inputText: string, { lastUpdated, prev
     if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
       dispatch({
         type: 'setCursor',
-        thoughtsRanked: contextOf(thoughtsRanked).concat(lastThoughtFirstLevel),
+        thoughtsRanked: contextOf(path).concat(lastThoughtFirstLevel),
         offset: lastThoughtFirstLevel.value.length
       })
     }

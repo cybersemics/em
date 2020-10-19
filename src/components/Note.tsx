@@ -5,7 +5,7 @@ import { store } from '../store.js'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
-import { Child, Context, Path } from '../types'
+import { Context, Path, SimplePath } from '../types'
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = (noteEl: HTMLElement) =>
@@ -13,7 +13,7 @@ const editableOfNote = (noteEl: HTMLElement) =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, thoughtsRanked: Path, contextChain: Child[][] }) => {
+const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, thoughtsRanked: Path, contextChain: SimplePath[] }) => {
 
   const state = store.getState()
   const hasNote = hasChild(state, context, '=note')
