@@ -7,21 +7,15 @@ import { Path } from '../types'
 
 interface BulletCursorOverlayProps {
   isDragging?: boolean,
-  thoughtsRanked: Path,
+  path: Path,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletCursorOverlayProps) => {
-  const {
-    draggedThoughtsRanked,
-    dragHold
-  } = state
-  const {
-    thoughtsRanked,
-    isDragging
-  } = props
+  const { draggedThoughtsRanked, dragHold } = state
+  const { path, isDragging } = props
   return {
-    isDragging: isDragging || (dragHold && equalPath(draggedThoughtsRanked!, thoughtsRanked))
+    isDragging: isDragging || (dragHold && equalPath(draggedThoughtsRanked!, path))
   }
 }
 
