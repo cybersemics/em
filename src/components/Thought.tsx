@@ -403,7 +403,7 @@ const Thought = ({
       rank={rank}
       showContexts={showContexts}
       style={style}
-      thoughtsRanked={simplePath}
+      simplePath={simplePath}
       onKeyDownAction={isMobile ? undefined : toggleTopControlsAndBreadcrumbs}
     />}
 
