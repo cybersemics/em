@@ -5,7 +5,7 @@ import { Context } from '../types'
 /** Return true if the context view is active for the given key, including selected subthoughts. */
 const isContextViewActive = (state: State, context: Context) => {
 
-  if (!context || context.length === 0) return false
+  if (context.length === 0) return false
 
   return state.contextViews[hashContext(context)]
 
