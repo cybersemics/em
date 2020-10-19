@@ -9,11 +9,11 @@ import { Path } from '../types'
 import { State } from '../util/initialState'
 
 /** A single path within the sidebar. */
-const ThoughtsTab = ({ thoughtsRanked }: { thoughtsRanked: Path }) => {
+const ThoughtsTab = ({ path }: { path: Path }) => {
   return (
     <div className='thoughts-tab'>
       {/* Here charLimit and thoughtsLimit is provided based on mobile and desktop */}
-      <Breadcrumbs path={thoughtsRanked} charLimit={32} thoughtsLimit={10} />
+      <Breadcrumbs path={path} charLimit={32} thoughtsLimit={10} />
     </div>
   )
 }
@@ -27,7 +27,7 @@ const RecentEdited = () => {
       <div className='header'>Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
         {
-          recentlyEdited.map((recentlyEditedThought, i) => <ThoughtsTab thoughtsRanked={recentlyEditedThought.path} key={i} />)
+          recentlyEdited.map((recentlyEditedThought, i) => <ThoughtsTab path={recentlyEditedThought.path} key={i} />)
         }
       </div>
     </div>
