@@ -407,7 +407,7 @@ const Thought = ({
       onKeyDownAction={isMobile ? undefined : toggleTopControlsAndBreadcrumbs}
     />}
 
-    <Superscript thoughtsRanked={simplePath} showContexts={showContexts} contextChain={contextChain} superscript={false} />
+    <Superscript simplePath={simplePath} showContexts={showContexts} contextChain={contextChain} superscript={false} />
   </div>
 }
 

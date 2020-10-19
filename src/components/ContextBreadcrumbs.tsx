@@ -26,7 +26,7 @@ const ContextBreadcrumbs = ({ simplePath, showContexts }: ContextBreadcrumbProps
       const subthoughts = ancestors(simplePath, thoughtRanked) as SimplePath
       return <React.Fragment key={i}>
         <Link simplePath={subthoughts} />
-        <Superscript thoughtsRanked={subthoughts} />
+        <Superscript simplePath={subthoughts} />
         {i < simplePath.length - 1 || showContexts ? <span className='breadcrumb-divider'> • </span> : null}
       </React.Fragment>
     })}
