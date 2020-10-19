@@ -393,7 +393,7 @@ const Thought = ({
     : null}
 
     {homeContext ? <HomeLink />
-    : isDivider(headValue(simplePath)) ? <Divider thoughtsRanked={simplePath} />
+    : isDivider(headValue(simplePath)) ? <Divider path={simplePath} />
     // cannot use simplePathLive here else Editable gets re-rendered during editing
     : <Editable
       contextChain={contextChain}
