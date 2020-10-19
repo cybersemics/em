@@ -56,7 +56,6 @@ const ModalExport = () => {
     backgroundColor: 'black',
   }
 
-  // TODO: Remove context view jumps in Path
   const numDescendants = getDescendants(state, simplifyPath(state, cursor)).length
 
   // @ts-ignore
