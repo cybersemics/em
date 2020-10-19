@@ -80,6 +80,7 @@ interface ThoughtProps {
   isPublishChild?: boolean,
   isEditing?: boolean,
   isLeaf?: boolean,
+  path: Path,
   publish?: boolean,
   rank: number,
   showContextBreadcrumbs?: boolean,
@@ -149,15 +150,15 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   } = props
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
-  const thoughtsResolved = props.contextChain && props.contextChain.length > 0
+  const path = props.contextChain && props.contextChain.length > 0
     ? chain(state, props.contextChain, simplePath)
     : unroot(simplePath)
 
   // check if the cursor path includes the current thought
-  const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
+  const isEditingPath = subsetThoughts(cursorBeforeEdit, path)
 
   // check if the cursor is editing a thought directly
-  const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+  const isEditing = equalPath(cursorBeforeEdit, path)
 
   const simplePathLive = isEditing
     ? contextOf(simplePath).concat(head(showContexts ? contextOf(cursor!) : cursor!)) as SimplePath
@@ -203,7 +204,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isPublishChild: !search && publishMode() && simplePath.length === 2,
     isCursorParent,
     isCursorGrandparent,
-    expanded: expanded[hashContext(thoughtsResolved)],
+    expanded: expanded[hashContext(path)],
     expandedContextThought,
     isEditing,
     isEditingPath,
@@ -369,6 +370,7 @@ const Thought = ({
   isEditing,
   isLeaf,
   hideBullet,
+  path,
   publish,
   rank,
   showContextBreadcrumbs,
@@ -386,7 +388,7 @@ const Thought = ({
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(simplePath))} showContexts={showContexts} />
     : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-      store.dispatch(expandContextThought(simplePath))
+      store.dispatch(expandContextThought(path))
     }}>... </a></span>
     : null}
 
@@ -487,7 +489,7 @@ const ThoughtContainer = ({
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
-  const thoughtsResolved = contextChain && contextChain.length > 0
+  const path = contextChain && contextChain.length > 0
     ? chain(state, contextChain, simplePath)
     : unroot(simplePath)
 
@@ -506,7 +508,7 @@ const ThoughtContainer = ({
   const contextThought = showContexts && getThought(state, headValue(contextOf(simplePath)))
 
   const showContextBreadcrumbs = showContexts &&
-    (!globals.ellipsizeContextThoughts || equalPath(simplePath, expandedContextThought as Path | null)) &&
+    (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null)) &&
     simplePath.length > 2
 
   const thoughts = pathToContext(simplePath)
@@ -565,7 +567,7 @@ const ThoughtContainer = ({
     prose: view === 'Prose',
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
-    'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(thoughtsResolved)),
+    'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(path)),
   })} ref={el => {
     if (el) {
       dragPreview(getEmptyImage())
@@ -576,7 +578,7 @@ const ThoughtContainer = ({
   >
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: React.MouseEvent) => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} thoughtsResolved={path} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: React.MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({
@@ -611,6 +613,7 @@ const ThoughtContainer = ({
         isPublishChild={isPublishChild}
         isEditing={isEditing}
         isLeaf={isLeaf}
+        path={path}
         publish={publish}
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
