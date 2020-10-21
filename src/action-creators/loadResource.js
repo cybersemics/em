@@ -7,10 +7,11 @@ const loadResource = path => (dispatch, getState) => {
 
   const state = getState()
   const { resourceCache } = state
-  const src = attribute(state, path, '=src')
+  const context = pathToContext(path)
+  const src = attribute(state, context, '=src')
 
   /** Returns true if the path has any children. */
-  const hasVisibleChildren = () => getChildren(state, pathToContext(path)).length > 0
+  const hasVisibleChildren = () => getChildren(state, context).length > 0
 
   if (src && !resourceCache[src] && !hasVisibleChildren()) {
 
