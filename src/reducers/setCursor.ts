@@ -34,7 +34,7 @@ const setCursor = (state: State, {
   replaceContextViews,
   thoughtsRanked: path,
   noteFocus = false
-}: Payload) => {
+}: Payload): State => {
 
   const thoughtsResolved = path && contextChain.length > 0
     ? chain(state, contextChain, simplifyPath(state, path))
