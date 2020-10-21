@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { RANKED_ROOT } from '../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { equalPath, hashContext, isRoot, pathToContext } from '../util'
 import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 import { deleteCursor, updateCursor } from '../db'
@@ -44,9 +44,9 @@ const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contex
   // update browser history
   try {
     window.history[replace ? 'replaceState' : 'pushState'](
-      pathToContext(thoughtsRanked),
+      thoughtsRanked ? pathToContext(thoughtsRanked) : [ROOT_TOKEN],
       '',
-      hashContextUrl(stateWithNewContextViews, pathToContext(thoughtsRanked))
+      hashContextUrl(stateWithNewContextViews, thoughtsRanked ? pathToContext(thoughtsRanked) : [ROOT_TOKEN])
     )
   }
   catch (e) {
