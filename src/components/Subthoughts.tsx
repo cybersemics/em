@@ -380,7 +380,7 @@ export const SubthoughtsComponent = ({
   // @ts-ignore
   const codeResults = thought && thought.code ? evalCode({ thought, simplePath }) : null
 
-  const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
+  const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(pathToContext(thoughtsResolved))])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(headValue(simplePath), 3))

@@ -591,7 +591,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
     innerRef={contentRef}
     className={classNames({
       editable: true,
-      ['editable-' + hashContext(thoughtsResolved, rank)]: true,
+      ['editable-' + hashContext(pathToContext(thoughtsResolved), rank)]: true,
       empty: value.length === 0
     })}
     forceUpdate={editableNonceRef.current !== state.editableNonce}

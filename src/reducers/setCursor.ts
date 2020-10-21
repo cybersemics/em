@@ -94,7 +94,7 @@ const setCursor = (state: State, {
    *
    * @todo Abstract tutorial logic away from setCursor and call only when tutorial is on.
    */
-  const hasThoughtCollapsed = () => !expanded[hashContext(oldCursor)] &&
+  const hasThoughtCollapsed = () => !expanded[hashContext(pathToContext(oldCursor))] &&
     (getThoughts(state, pathToContext(oldCursor)).length > 0 ||
       (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(pathToContext(thoughtsResolved || []), pathToContext(oldCursor)))
     )
