@@ -6,34 +6,36 @@ import { State } from '../util/initialState'
 import { Path, SimplePath } from '../types'
 
 /** Clears a thought's text, moving it to its first child. */
-const bumpThoughtDown = (state: State, { path }: { path?: Path }) => {
-  path = path || state.cursor as Path
-  const value = path && headValue(path)
+const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath }) => {
 
-  // const rank = headRank(path)
-  const children = getThoughts(state, pathToContext(path))
+  if (!simplePath && !state.cursor) return
+
+  simplePath = simplePath || simplifyPath(state, state.cursor!)
+  const value = headValue(simplePath)
+
+  // const rank = headRank(simplePath)
+  const context = pathToContext(simplePath)
+  const children = getThoughts(state, context)
 
   // if there are no children
   if (children.length === 0) return subCategorizeOne(state)
 
-  // TODO: Resolve thoughtsRanked to make it work within the context view
+  // TODO: Resolve simplePath to make it work within the context view
   // Cannot do this without the contextChain
-  // Need to store the full thoughtsRanked of each path segment in the path
-  const thoughtsRanked = simplifyPath(state, path)
-  const context = pathToContext(thoughtsRanked)
-  const parentRanked = unroot(contextOf(thoughtsRanked))
+  // Need to store the full simplePath of each simplePath segment in the simplePath
+  const parentPath = unroot(contextOf(simplePath))
 
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
-  const thoughtsRankedWithNewRank = [...parentRanked, { value, rank: getRankBefore(state, thoughtsRanked) }] as SimplePath
-  const thoughtsRankedWithNewRankAndValue = [...parentRanked, { value: '', rank: getRankBefore(state, thoughtsRanked) }] as Path
+  const simplePathWithNewRank: SimplePath = [...parentPath, { value, rank: getRankBefore(state, simplePath) }] as SimplePath
+  const simplePathWithNewRankAndValue: Path = [...parentPath, { value: '', rank: getRankBefore(state, simplePath) }]
 
   return reducerFlow([
 
     // modify the rank to get the thought to re-render (via the Subthoughts child key)
     existingThoughtMove({
-      oldPath: thoughtsRanked,
-      newPath: thoughtsRankedWithNewRank,
+      oldPath: simplePath,
+      newPath: simplePathWithNewRank,
     }),
 
     // clear text
@@ -41,13 +43,13 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path }) => {
       oldValue: value,
       newValue: '',
       context: rootedContextOf(context),
-      thoughtsRanked: thoughtsRankedWithNewRank
+      thoughtsRanked: simplePathWithNewRank
     }),
 
     // new thought
     state => {
       // the context of the new empty thought
-      const contextEmpty = pathToContext(thoughtsRankedWithNewRankAndValue as Path)
+      const contextEmpty = pathToContext(simplePathWithNewRankAndValue as Path)
       return newThoughtSubmit(state, {
         context: contextEmpty,
         rank: getPrevRank(state, contextEmpty),
@@ -57,7 +59,7 @@ const bumpThoughtDown = (state: State, { path }: { path?: Path }) => {
 
     // set cursor
     setCursor({
-      thoughtsRanked: thoughtsRankedWithNewRankAndValue,
+      thoughtsRanked: simplePathWithNewRankAndValue,
     }),
 
   ])(state)
