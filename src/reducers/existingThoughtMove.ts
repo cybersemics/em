@@ -105,11 +105,11 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     })
 
   /** Updates descendants. */
-  const recursiveUpdates = (oldThoughtsRanked: Path, newThoughtsRanked: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveMoveResult> = {}): Index<RecursiveMoveResult> => {
+  const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveMoveResult> = {}): Index<RecursiveMoveResult> => {
 
-    const newLastRank = getNextRank(state, pathToContext(newThoughtsRanked))
+    const newLastRank = getNextRank(state, pathToContext(pathNew))
 
-    const oldThoughts = pathToContext(oldThoughtsRanked)
+    const oldThoughts = pathToContext(pathOld)
     return getThoughtsRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
@@ -155,7 +155,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
       return {
         ...accumNew,
-        ...recursiveUpdates(oldThoughtsRanked.concat(child), newThoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
+        ...recursiveUpdates(pathOld.concat(child), pathNew.concat(child), contextRecursive.concat(child.value), accumNew)
       }
     }, {} as Index<RecursiveMoveResult>)
   }
@@ -236,7 +236,11 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     (child: Child) => {
       const updatedThought = descendantUpdatesResult[hashThought(child.value)]
       // child.id is undefined sometimes. Unable to reproduce.
-      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank, id: child.id ?? null }
+      return {
+        ...child,
+        rank: updatedThought ? updatedThought.rank : child.rank,
+        id: child.id ?? '',
+      } as Child
     }
   )
 
