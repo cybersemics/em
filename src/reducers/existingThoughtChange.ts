@@ -3,7 +3,7 @@ import { treeChange } from '../util/recentlyEditedTree'
 import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Parent, Path, SimplePath, Timestamp } from '../types'
+import { Child, Context, Index, Parent, SimplePath, Timestamp } from '../types'
 
 // util
 import {
@@ -184,9 +184,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
    *
    * @param contextRecursive The list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context.
    */
-  const recursiveUpdates = (thoughtsRanked: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
+  const recursiveUpdates = (context: Context, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
 
-    const context = pathToContext(thoughtsRanked)
     return getThoughtsRanked(state, context).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
@@ -200,7 +199,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
           ...accum,
         }
         return {
-          ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
+          ...recursiveUpdates(context.concat(child.value), contextRecursive.concat(child.value), accumNew)
         }
       }
 
@@ -231,12 +230,12 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       // merge all updates and pass them on to the recursive call
       return {
         ...accumNew,
-        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
+        ...recursiveUpdates(context.concat(child.value), contextRecursive.concat(child.value), accumNew)
       }
     }, {} as Index<RecursiveUpdateResult>)
   }
 
-  const descendantUpdatesResult = recursiveUpdates(thoughtsRankedLiveOld)
+  const descendantUpdatesResult = recursiveUpdates(pathToContext(thoughtsRankedLiveOld))
   const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newChild }, key) => {
     accum[key] = newChild
   }, {} as Index<Child>)
