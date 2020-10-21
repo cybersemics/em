@@ -131,7 +131,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? contextOf(props.simplePath).concat(head(cursor!)) as SimplePath
     : simplePath
 
-  const contextBinding = parseJsonSafe(attribute(state, simplePathLive, '=bindContext') ?? '', undefined) as Path | undefined
+  const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '', undefined) as Path | undefined
 
   return {
     contextBinding,

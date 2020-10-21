@@ -41,6 +41,7 @@ import {
   isFunction,
   isRoot,
   isURL,
+  parseJsonSafe,
   pathToContext,
   publishMode,
   rootedContextOf,
@@ -170,13 +171,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     // parent
     : equalPath(contextOf(cursor || []), chain(state, contextChain, simplePath))
 
-  let contextBinding // eslint-disable-line fp/no-let
-  try {
-    contextBinding = JSON.parse(attribute(state, simplePathLive, '=bindContext') || '')
-  }
-  catch (err) {
-    // eslint-disable-line no-empty
-  }
+  const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '', undefined) as SimplePath | undefined
 
   const isCursorGrandparent =
     equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, simplePath))
@@ -206,7 +201,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     publish: !search && publishMode(),
     thought,
     simplePathLive,
-    view: attribute(state, simplePathLive, '=view'),
+    view: attribute(state, pathToContext(simplePathLive), '=view'),
     url,
   }
 }
@@ -647,7 +642,7 @@ const ThoughtContainer = ({
       isParentHovering={isAnyChildHovering}
       showContexts={allowSingleContext}
       simplePath={simplePath}
-      sort={attribute(store.getState(), simplePathLive!, '=sort') || 'None'}
+      sort={attribute(store.getState(), pathToContext(simplePathLive!), '=sort') || 'None'}
     />
   </li>)) : null
 }
