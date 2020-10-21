@@ -15,8 +15,8 @@ interface SuperscriptProps {
   showSingle?: boolean,
   superscript?: boolean,
   thoughts?: Context,
-  thoughtsRanked: SimplePath,
-  thoughtsRankedLive?: SimplePath,
+  simplePath: SimplePath,
+  simplePathLive?: SimplePath,
   thoughtRaw?: Child,
 }
 
@@ -25,21 +25,21 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
 
   const { contextViews, cursor, cursorBeforeEdit, showHiddenThoughts, showModal } = state
   // track the transcendental identifier if editing
-  const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.thoughtsRanked || [])) && exists(state, headValue(cursor || []))
+  const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.simplePath || [])) && exists(state, headValue(cursor || []))
 
-  const thoughtsRanked = props.showContexts && props.thoughtsRanked
-    ? rootedContextOf(props.thoughtsRanked)
-    : props.thoughtsRanked
+  const simplePath = props.showContexts && props.simplePath
+    ? rootedContextOf(props.simplePath)
+    : props.simplePath
 
-  const thoughts = props.thoughts || pathToContext(thoughtsRanked)
+  const thoughts = props.thoughts || pathToContext(simplePath)
 
   const thoughtsLive = editing
     ? props.showContexts ? contextOf(pathToContext(cursor || [])) : pathToContext(cursor || [])
     : thoughts
 
-  const thoughtsRankedLive = editing
-    ? contextOf(props.thoughtsRanked).concat(head(cursor!)) as SimplePath
-    : thoughtsRanked
+  const simplePathLive = editing
+    ? contextOf(props.simplePath).concat(head(cursor!)) as SimplePath
+    : simplePath
 
   /** Gets the number of contexts of the thoughtsLive signifier. */
   const numContexts = () => {
@@ -54,21 +54,21 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
   return {
     contextViews,
     thoughts,
-    thoughtsRankedLive,
-    thoughtsRanked,
+    simplePathLive,
+    simplePath,
     // thoughtRaw is the head that is removed when showContexts is true
-    thoughtRaw: props.showContexts ? head(props.thoughtsRanked) : head(thoughtsRankedLive),
+    thoughtRaw: props.showContexts ? head(props.simplePath) : head(simplePathLive),
     empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
     numContexts: exists(state, head(thoughtsLive)) ? numContexts() : 0,
     showModal,
   }
 }
 
-/** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or thoughtsRanked (used by Subthought). */
+/** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
 const Superscript: FC<SuperscriptProps> = ({ empty, numContexts, showSingle, superscript = true }) => {
 
-  // showContexts = showContexts || isContextViewActive(store.getState(), thoughtsRanked)
-  // const numDescendantCharacters = getDescendants(showContexts ? thoughtsRankedLive.concat(thoughtRaw) : thoughtsRankedLive )
+  // showContexts = showContexts || isContextViewActive(store.getState(), simplePath)
+  // const numDescendantCharacters = getDescendants(showContexts ? simplePathLive.concat(thoughtRaw) : simplePathLive )
   //   .reduce((charCount, child) => charCount + child.length, 0)
 
   return <span className='superscript-container'>{!empty && superscript && numContexts! > (showSingle ? 0 : 1)

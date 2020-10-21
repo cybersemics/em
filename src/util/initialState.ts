@@ -1,7 +1,7 @@
 import { EM_TOKEN, MODALS, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
-import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, User } from '../types'
+import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, SimplePath, User } from '../types'
 
 // import util functions directly since importing from ../util/index causes circular dependency
 import { hashContext } from '../util/hashContext'
@@ -56,7 +56,7 @@ export interface State {
   cursorHistory: Path[],
   cursorOffset: number,
   dataNonce: number,
-  draggedThoughtsRanked?: Path,
+  draggedSimplePath?: SimplePath,
   draggingThought?: Path,
   dragHold?: boolean,
   dragInProgress: boolean,

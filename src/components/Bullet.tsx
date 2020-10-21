@@ -29,11 +29,12 @@ interface MapStateToProps {
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
   return {
+    // if being edited and meta validation error has occured
+    invalidOption: !!props.isEditing && invalidState,
     // re-render when leaf status changes
     isLeaf: !hasChildren(state, props.context),
     // only show as pending if expanded
     pending: isPending(state, props.context) && !!state.expanded[hashContext(props.context)],
-    invalidOption: !!props.isEditing && invalidState, // if being edited and meta validation error has occured
     showContexts: isContextViewActive(state, props.context),
   }
 }

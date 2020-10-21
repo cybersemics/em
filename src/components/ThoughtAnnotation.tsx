@@ -126,7 +126,7 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
   </a>
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs thoughtsRanked={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
+    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
 
     {homeContext
       ? <HomeLink/>

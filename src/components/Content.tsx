@@ -113,7 +113,7 @@ const Content: ContentComponent = props => {
         ? <Search />
         : <React.Fragment>
           {rootThoughtsLength === 0 ? <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} /> : <Subthoughts
-            thoughtsRanked={RANKED_ROOT}
+            simplePath={RANKED_ROOT}
             expandable={true}
             sort={rootSort}
           />}
