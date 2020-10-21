@@ -44,7 +44,7 @@ const deleteEmptyThought = (state: State) => {
 
   const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
   const thoughtsRanked = simplifyPath(state, cursor)
-  const children = getThoughtsRanked(state, thoughtsRanked)
+  const children = getThoughtsRanked(state, pathToContext(thoughtsRanked))
 
   // delete an empty thought
   if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
