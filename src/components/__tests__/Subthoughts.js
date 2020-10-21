@@ -8,11 +8,11 @@ import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
+const whereContext = context => node => equalArrays(pathToContext(node.props().simplePath), context)
 
 // const debugThoughtWrapper = wrapper => wrapper.map(node => ({
 //   name: node.name(),
-//   context: node.props().thoughtsRanked.map(child => child.value),
+//   context: node.props().simplePath.map(child => child.value),
 //   contextChain: JSON.stringify(node.props().contextChain),
 //   props: node.props(),
 //   html: node.html(),
@@ -49,9 +49,9 @@ it('normal view', async () => {
 
   // assert
   expect(thoughtsWrapper).toHaveLength(2)
-  expect(pathToContext(thoughtsWrapper.first().props().thoughtsRanked))
+  expect(pathToContext(thoughtsWrapper.first().props().simplePath))
     .toMatchObject(['a', 'b'])
-  expect(pathToContext(thoughtsWrapper.at(1).props().thoughtsRanked))
+  expect(pathToContext(thoughtsWrapper.at(1).props().simplePath))
     .toMatchObject(['a', 'c'])
 
 })
@@ -86,12 +86,12 @@ describe('context view', () => {
     expect(contextsWrapper.at(0).props())
       .toMatchObject({
         showContexts: true,
-        thoughtsRanked: [{ value: 'a' }, { value: 'm' }],
+        simplePath: [{ value: 'a' }, { value: 'm' }],
       })
     expect(contextsWrapper.at(1).props())
       .toMatchObject({
         showContexts: true,
-        thoughtsRanked: [{ value: 'b' }, { value: 'm' }],
+        simplePath: [{ value: 'b' }, { value: 'm' }],
       })
 
   })
@@ -141,7 +141,7 @@ describe('context view', () => {
     expect(thoughtsAOneA).toHaveLength(1)
     expect(thoughtsAOneA.first().props())
       .toMatchObject({
-        thoughtsRanked: [{ value: 'a' }, { value: 'one' }, { value: 'x' }],
+        simplePath: [{ value: 'a' }, { value: 'one' }, { value: 'x' }],
       })
 
     // select second context (b)
@@ -163,7 +163,7 @@ describe('context view', () => {
     expect(thoughtsAOneB).toHaveLength(1)
     expect(thoughtsAOneB.first().props())
       .toMatchObject({
-        thoughtsRanked: [{ value: 'b' }, { value: 'ones' }, { value: 'y' }],
+        simplePath: [{ value: 'b' }, { value: 'ones' }, { value: 'y' }],
       })
   })
 

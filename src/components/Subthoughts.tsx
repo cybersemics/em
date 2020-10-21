@@ -70,7 +70,7 @@ interface SubthoughtsProps {
   isParentHovering?: boolean,
   showContexts?: boolean,
   sort?: string,
-  thoughtsRanked: SimplePath,
+  simplePath: SimplePath,
 }
 
 /** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
@@ -108,12 +108,12 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.thoughtsRanked)
-    : unroot(props.thoughtsRanked)
+    ? chain(state, props.contextChain, props.simplePath)
+    : unroot(props.simplePath)
 
   // check if the cursor path includes the current thought
   // include ROOT to prevent re-render when ROOT subthought changes
-  const isEditingPath = isRoot(props.thoughtsRanked) || subsetThoughts(cursorBeforeEdit, thoughtsResolved)
+  const isEditingPath = isRoot(props.simplePath) || subsetThoughts(cursorBeforeEdit, thoughtsResolved)
 
   // check if the cursor is editing an thought directly
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
@@ -122,17 +122,17 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const thoughtsLive = pathToContext(thoughtsResolvedLive)
   const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
   const showContextsParent = isContextViewActive(state, contextOf(thoughtsLive))
-  const thoughtsRanked = showContexts && showContextsParent
-    ? contextOf(props.thoughtsRanked)
-    : props.thoughtsRanked
+  const simplePath = showContexts && showContextsParent
+    ? contextOf(props.simplePath)
+    : props.simplePath
 
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
-  const thoughtsRankedLive = isEditing && (props.contextChain ?? []).length === 0
-    ? contextOf(props.thoughtsRanked).concat(head(cursor!)) as SimplePath
-    : thoughtsRanked
+  const simplePathLive = isEditing && (props.contextChain ?? []).length === 0
+    ? contextOf(props.simplePath).concat(head(cursor!)) as SimplePath
+    : simplePath
 
-  const contextBinding = parseJsonSafe(attribute(state, thoughtsRankedLive, '=bindContext') ?? '', undefined) as Path | undefined
+  const contextBinding = parseJsonSafe(attribute(state, simplePathLive, '=bindContext') ?? '', undefined) as Path | undefined
 
   const isActiveSelection = window.getSelection()?.focusNode
 
@@ -142,9 +142,9 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     isEditingAncestor: isEditingPath && !isEditing,
     showContexts,
     showHiddenThoughts,
-    thoughtsRanked: thoughtsRankedLive,
+    simplePath: simplePathLive,
     // re-render if children change (unless editing with active selection)
-    __render: (!isActiveSelection || !(isEditing || isEditingPath)) && getThoughts(state, pathToContext(thoughtsRankedLive))
+    __render: (!isActiveSelection || !(isEditing || isEditingPath)) && getThoughts(state, pathToContext(simplePathLive))
   }
 }
 
@@ -155,8 +155,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: SimplePath }
-  const thoughtsTo = props.thoughtsRanked
+  const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
+  const thoughtsTo = props.simplePath
   const cursor = store.getState().cursor
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
@@ -176,8 +176,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { thoughtsRanked: thoughtsFrom } = monitor.getItem() as { thoughtsRanked: SimplePath }
-  const thoughtsTo = props.thoughtsRanked
+  const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
+  const thoughtsTo = props.simplePath
 
   const newPath = unroot(thoughtsTo).concat({
     value: headValue(thoughtsFrom),
@@ -238,14 +238,14 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 })
 
 /** Evals the code at this thought. */
-const evalCode = ({ thoughtsRanked }: { thoughtsRanked: SimplePath }) => {
+const evalCode = ({ simplePath }: { simplePath: SimplePath }) => {
 
   let codeResults // eslint-disable-line fp/no-let
   let ast // eslint-disable-line fp/no-let
 
   const state = store.getState()
   const { thoughts } = state
-  const thought = getThought(state, headValue(thoughtsRanked))
+  const thought = getThought(state, headValue(simplePath))
 
   // ignore parse errors
   try {
@@ -265,8 +265,8 @@ const evalCode = ({ thoughtsRanked }: { thoughtsRanked: SimplePath }) => {
         Object.keys(thoughts.thoughtIndex).find(predicate),
       home: () => getThoughtsRanked(state, RANKED_ROOT),
       thought: {
-        ...getThought(state, headValue(thoughtsRanked)),
-        children: () => getThoughtsRanked(state, thoughtsRanked)
+        ...getThought(state, headValue(simplePath)),
+        children: () => getThoughtsRanked(state, simplePath)
       }
     }
     codeResults = evaluate(ast, env)
@@ -292,7 +292,7 @@ const evalCode = ({ thoughtsRanked }: { thoughtsRanked: SimplePath }) => {
  ********************************************************************/
 
 /** A message that says there are no children in this context. */
-const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSingleContext?: boolean, children: Child[], thoughtsRanked: SimplePath }) =>
+const NoChildren = ({ allowSingleContext, children, simplePath }: { allowSingleContext?: boolean, children: Child[], simplePath: SimplePath }) =>
   <div className='children-subheading text-note text-small'>
 
     This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
@@ -300,7 +300,7 @@ const NoChildren = ({ allowSingleContext, children, thoughtsRanked }: { allowSin
     <span>{isMobile
       ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' /></span>
       : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
-    } to add "{headValue(thoughtsRanked)}" to a new context.
+    } to add "{headValue(simplePath)}" to a new context.
     </span>
 
     <br />{allowSingleContext
@@ -345,7 +345,7 @@ EmptyChildrenDropTarget.displayName = 'EmptyChildrenDropTarget'
  * @param showContexts               Optional.
  * @param showHiddenThoughts         Optional.
  * @param sort                       Optional. Default: contextSort.
- * @param thoughtsRanked             Renders the children of the given thoughtsRanked.
+ * @param simplePath             Renders the children of the given simplePath.
  */
 export const SubthoughtsComponent = ({
   allowSingleContext,
@@ -363,7 +363,7 @@ export const SubthoughtsComponent = ({
   showContexts,
   showHiddenThoughts,
   sort: contextSort,
-  thoughtsRanked,
+  simplePath,
 }: SubthoughtsComponentProps) => {
 
   // <Subthoughts> render
@@ -373,27 +373,27 @@ export const SubthoughtsComponent = ({
   const sortPreference = contextSort || globalSort
   const { cursor } = state
   // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
-  const thought = getThought(state, headValue(thoughtsRanked))
+  const thought = getThought(state, headValue(simplePath))
 
   // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
   const thoughtsResolved = contextChain && contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked)
-    : unroot(thoughtsRanked)
+    ? chain(state, contextChain, simplePath)
+    : unroot(simplePath)
 
   // @ts-ignore
-  const codeResults = thought && thought.code ? evalCode({ thought, thoughtsRanked }) : null
+  const codeResults = thought && thought.code ? evalCode({ thought, simplePath }) : null
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(thoughtsResolved)])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // const subthought = perma(() => getSubthoughtUnderSelection(headValue(thoughtsRanked), 3))
+  // const subthought = perma(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     // @ts-ignore
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
-    : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(thoughtsRanked))
-    : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || thoughtsRanked))
-    : getThoughtsRanked(state, contextBinding ? pathToContext(contextBinding) : thoughtsRanked) as (Child | ThoughtContext)[]
+    : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))
+    : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || simplePath))
+    : getThoughtsRanked(state, contextBinding ? pathToContext(contextBinding) : simplePath) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -402,7 +402,7 @@ export const SubthoughtsComponent = ({
       const match = accum[child.rank]
       if (match) {
         console.warn('Duplicate child rank', match[0], child)
-        console.warn('thoughtsRanked', thoughtsRanked)
+        console.warn('simplePath', simplePath)
       }
       return {
         ...accum,
@@ -422,12 +422,12 @@ export const SubthoughtsComponent = ({
     return showHiddenThoughts ||
       // exclude meta thoughts when showHiddenThoughts is off
       // NOTE: child.rank is not used by isChildVisible
-      isChildVisible(state, pathToContext(thoughtsRanked), { value, rank: child.rank }) ||
+      isChildVisible(state, pathToContext(simplePath), { value, rank: child.rank }) ||
       // always include thoughts in cursor
-      (cursor && equalThoughtRanked(cursor[thoughtsRanked.length], child as Child))
+      (cursor && equalThoughtRanked(cursor[simplePath.length], child as Child))
   })
 
-  const proposedPageSize = isRoot(thoughtsRanked)
+  const proposedPageSize = isRoot(simplePath)
     ? Infinity
     : PAGINATION_SIZE * page
   if (editIndex > proposedPageSize - 1) {
@@ -447,7 +447,7 @@ export const SubthoughtsComponent = ({
   // If the cursor is a leaf, use cursor.length - 1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
-  // TODO: Resolve cursor to a ThoughtsRanked
+  // TODO: Resolve cursor to a simplePath
   const isCursorLeaf = cursor && !getThoughts(state, pathToContext(cursor))
     .some((child: Child) => !isFunction(child.value))
   const cursorDepth = cursor
@@ -488,7 +488,7 @@ export const SubthoughtsComponent = ({
     : shouldDim ? 1
     : distance
 
-  const context = pathToContext(thoughtsRanked)
+  const context = pathToContext(simplePath)
   const contextChildren = context.concat('=children') // children of parent with =children
   const contextGrandchildren = contextOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
   const styleChildren = getStyle(state, contextChildren)
@@ -501,11 +501,11 @@ export const SubthoughtsComponent = ({
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding!).join('/')})</div> : null}
 
-    {show && showContexts && !(children.length === 0 && isRoot(thoughtsRanked))
+    {show && showContexts && !(children.length === 0 && isRoot(simplePath))
       ? children.length < (allowSingleContext ? 1 : 2) ?
 
         // No children
-        <NoChildren allowSingleContext={allowSingleContext} children={children as Child[]} thoughtsRanked={thoughtsRanked} />
+        <NoChildren allowSingleContext={allowSingleContext} children={children as Child[]} simplePath={simplePath} />
 
         // "Contexts:"
         : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
@@ -516,7 +516,7 @@ export const SubthoughtsComponent = ({
       : null}
 
     {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
-      // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(thoughtsRanked))) : null}
+      // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(simplePath))) : null}
       className={classNames({
         children: true,
         'context-chain': showContexts,
@@ -532,7 +532,7 @@ export const SubthoughtsComponent = ({
           }
 
           // TODO
-          const childPath = getChildPath(state, child, thoughtsRanked, showContexts)
+          const childPath = getChildPath(state, child, simplePath, showContexts)
           const childContext = pathToContext(childPath)
 
           /** Returns true if the cursor in in the child path. */
@@ -557,7 +557,7 @@ export const SubthoughtsComponent = ({
 
           return child ? <Thought
             allowSingleContext={allowSingleContextParent}
-            contextChain={showContexts ? contextChain.concat([thoughtsRanked]) : contextChain}
+            contextChain={showContexts ? contextChain.concat([simplePath]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
             hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
@@ -572,7 +572,7 @@ export const SubthoughtsComponent = ({
               ...styleChildren,
               ...isEditingChildPath() ? styleZoom : null,
             }}
-            thoughtsRanked={childPath}
+            simplePath={childPath}
           /> : null
         })}
       {dropTarget(<li className={classNames({
@@ -583,7 +583,7 @@ export const SubthoughtsComponent = ({
         <span className='drop-hover' style={{ display: (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none' }}></span>
       </li>)}
     </ul> : <EmptyChildrenDropTarget
-      isThoughtDivider={isDivider(headValue(thoughtsRanked))}
+      isThoughtDivider={isDivider(headValue(simplePath))}
       depth={depth}
       dropTarget={dropTarget}
       isDragInProgress={isDragInProgress}
