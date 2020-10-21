@@ -1,6 +1,8 @@
 import _ from 'lodash'
 import { isMobile } from '../browser'
 import { RANKED_ROOT } from '../constants'
+import { State } from '../util/initialState'
+import { Child, Path, ThoughtContext } from '../types'
 
 // util
 import {
@@ -44,7 +46,7 @@ import {
  *
  * @param path     Defaults to cursor.
  */
-const archiveThought = (state, { path }) => {
+const archiveThought = (state: State, { path }: { path: Path }): State => {
 
   path = path || state.cursor
 
@@ -56,9 +58,10 @@ const archiveThought = (state, { path }) => {
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
     : path
-  const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 1]
+  const pathParent = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 1]
     : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
-    RANKED_ROOT)
+    RANKED_ROOT
+  const context = pathToContext(pathParent)
   const { value, rank } = head(thoughtsRanked)
   const thoughts = pathToContext(thoughtsRanked)
 
@@ -71,7 +74,7 @@ const archiveThought = (state, { path }) => {
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
+    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(thoughtsContextView)) : []
     const contextsFiltered = contexts.filter(({ context }) => head(context) !== '=archive')
     const removedContextIndex = contextsFiltered.findIndex(({ context }) => head(context) === headValue(path))
     const prevContext = contextsFiltered[removedContextIndex - 1]
@@ -82,13 +85,16 @@ const archiveThought = (state, { path }) => {
   }
 
   /** Gets the next sibling context in the context view. */
-  const nextContext = () => {
+  const nextContext = (): ThoughtContext => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const contexts = showContexts && getContextsSortedAndRanked(state, headValue(thoughtsContextView))
+    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(thoughtsContextView)) : []
     const contextsFiltered = contexts.filter(({ context }) => head(context) !== '=archive')
     const removedContextIndex = contextsFiltered.findIndex(({ context }) => head(context) === headValue(path))
     const nextContext = contextsFiltered[removedContextIndex + 1]
-    return nextContext && Object.assign({}, contextsFiltered[removedContextIndex + 1], { rank: removedContextIndex + 1 })
+    return nextContext && {
+      ...contextsFiltered[removedContextIndex + 1],
+      rank: removedContextIndex + 1
+    }
   }
 
   // prev must be calculated before dispatching existingThoughtDelete
@@ -100,17 +106,17 @@ const archiveThought = (state, { path }) => {
     ? nextContext()
     // get first visible thought
     : nextSibling(state, value, context, rank)
-  const [cursorNew, offset] =
+  const [cursorNew, offset]: [Path | null, number | undefined] =
     // Case I: set cursor on prev thought
     prev ? [contextOf(path).concat(prev), prev.value.length] :
     // Case II: set cursor on next thought
     next ? [unroot(showContexts
-      ? contextOf(path).concat({ value: head(next.context), rank: next.rank })
-      : contextOf(path).concat(next)), 0] :
+      ? contextOf(path).concat({ value: head((next as ThoughtContext).context), rank: next.rank })
+      : contextOf(path).concat(next as Child)), 0] :
     // Case III: delete last thought in context; set cursor on context
     thoughts.length > 1 ? [rootedContextOf(path), head(context).length]
     // Case IV: delete very last thought; remove cursor
-    : [null]
+    : [null, undefined]
 
   if (isMobile && state.editing) {
     asyncFocus()
@@ -135,7 +141,7 @@ const archiveThought = (state, { path }) => {
         // create =archive if it does not exist
         state => !hasChild(state, context, '=archive')
           ? newThought(state, {
-            at: context,
+            at: pathParent,
             insertNewSubthought: true,
             insertBefore: true,
             value: '=archive',
@@ -152,11 +158,14 @@ const archiveThought = (state, { path }) => {
         }),
 
         // execute existingThoughtMove after newThought has updated the state
-        state => existingThoughtMove(state, {
-          oldPath: showContexts ? thoughtsRanked : path,
-          newPath: pathToArchive(state, showContexts ? thoughtsRanked : path, context),
-          offset
-        })
+        state => {
+          return existingThoughtMove(state, {
+            oldPath: showContexts ? thoughtsRanked : path,
+            // TODO: Are we sure pathToArchive cannot return null?
+            newPath: pathToArchive(state, showContexts ? thoughtsRanked : path, context)!,
+            offset
+          })
+        }
       ])
   ])(state)
 }
