@@ -1,4 +1,4 @@
-import { Path } from '../types'
+import { SimplePath } from '../types'
 import { State } from './initialState'
 import { importJSON } from './importJSON'
 import { Block } from '../action-creators/importText'
@@ -28,7 +28,7 @@ const convertROAMJSONToBlocks = (ROAM: RoamNode[]) => {
 /**
  * Parses ROAM JSON and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
  */
-export const importROAM = (state: State, thoughtsRanked: Path, ROAM: RoamNode[]) => {
+export const importROAM = (state: State, thoughtsRanked: SimplePath, ROAM: RoamNode[]) => {
   const thoughtsJSON = convertROAMJSONToBlocks(ROAM)
   return importJSON(state, thoughtsRanked, thoughtsJSON, { skipRoot: false })
 }
