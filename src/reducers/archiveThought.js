@@ -1,8 +1,6 @@
 import _ from 'lodash'
 import { isMobile } from '../browser'
-import {
-  RANKED_ROOT,
-} from '../constants'
+import { RANKED_ROOT } from '../constants'
 
 // util
 import {
@@ -53,7 +51,7 @@ const archiveThought = (state, { path }) => {
   if (!path) return state
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, contextOf(path))
+  const showContexts = isContextViewActive(state, contextOf(pathToContext(path)))
   const contextChain = splitChain(state, path)
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
@@ -67,7 +65,7 @@ const archiveThought = (state, { path }) => {
   const isEmpty = value === ''
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(path)
-  const hasDescendants = getThoughts(state, path).length !== 0
+  const hasDescendants = getThoughts(state, pathToContext(path)).length !== 0
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
 
   /** Gets the previous sibling context in the context view. */

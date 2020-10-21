@@ -199,7 +199,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isPublishChild: !search && publishMode() && simplePath.length === 2,
     isCursorParent,
     isCursorGrandparent,
-    expanded: expanded[hashContext(path)],
+    expanded: expanded[hashContext(pathToContext(path))],
     expandedContextThought,
     isEditing,
     isEditingPath,

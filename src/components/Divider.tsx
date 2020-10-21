@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import _ from 'lodash'
 import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
-import { hashContext, headRank } from '../util'
+import { hashContext, headRank, pathToContext } from '../util'
 import { Path } from '../types'
 
 /** A custom horizontal rule. */
@@ -48,7 +48,7 @@ const Divider = ({ path }: { path: Path }) => {
     <div className={classNames({
       divider: true,
       // requires editable-hash className to be selected by the cursor navigation via editableNode
-      ['editable-' + hashContext(path, headRank(path))]: true,
+      ['editable-' + hashContext(pathToContext(path), headRank(path))]: true,
     })} />
   </div>
 }

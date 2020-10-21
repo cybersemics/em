@@ -1,29 +1,8 @@
 import _ from 'lodash'
-
-// constants
-import {
-  RANKED_ROOT,
-} from '../constants'
-
-// util
-import {
-  equalPath,
-  hashContext,
-  isRoot,
-  pathToContext,
-} from '../util'
-
-// selectors
-import {
-  decodeThoughtsUrl,
-  hashContextUrl,
-} from '../selectors'
-
-// db
-import {
-  deleteCursor,
-  updateCursor,
-} from '../db'
+import { RANKED_ROOT } from '../constants'
+import { equalPath, hashContext, isRoot, pathToContext } from '../util'
+import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
+import { deleteCursor, updateCursor } from '../db'
 
 /** Delay with which to debounce browser history update. */
 const delay = 100
@@ -37,7 +16,7 @@ const delay = 100
 const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contextViews } = {}) => {
 
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
-  const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
+  const encoded = thoughtsRanked ? hashContext(pathToContext(thoughtsRanked)) : null
 
   // convert decoded root thought to null cursor
   const thoughtsRankedDecoded = isRoot(decoded.thoughtsRanked) ? null : decoded.thoughtsRanked

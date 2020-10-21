@@ -1,5 +1,5 @@
 import globals from '../globals'
-import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
+import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive, simplifyPath } from '../selectors'
 import { Child, Context, Index, Path, SimplePath, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
@@ -41,8 +41,8 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
 
-  const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
   const context = pathToContext(thoughtsRanked)
+  const rootedContext = path && path.length > 0 ? pathToContext(path) : [ROOT_TOKEN]
   const showContexts = isContextViewActive(state, context)
 
   /** Get the value of the Child | ThoughtContext. */
@@ -113,7 +113,7 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     },
     {
       // expand current thought
-      [hashContext(rootedPath)]: true,
+      [hashContext(rootedContext)]: true,
 
       // expand context
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
