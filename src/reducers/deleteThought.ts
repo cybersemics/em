@@ -53,9 +53,9 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
   const { value, rank } = head(simplePath)
 
   /** Calculates the previous context within a context view. */
-  const prevContext = (): Child | null => {
+  const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, simplePath)
-    const prevContext: () => ThoughtContext = perma(() => {
+    const prevContext = perma(() => {
       const contexts = getContextsSortedAndRanked(state, headValue(thoughtsContextView))
       const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
       return contexts[removedContextIndex - 1]
@@ -64,7 +64,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
     return context ? {
       value: head(context.context),
       rank: prevContext().rank
-    } : null
+    } as Child : null
   }
 
   // prev must be calculated before dispatching existingThoughtDelete
@@ -93,7 +93,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
     // move cursor
     state => {
 
-      const next: () => Child | ThoughtContext = perma(() => showContexts
+      const next = perma(() => showContexts
         ? getContextsSortedAndRanked(state, headValue(contextOf(simplePath)))[0]
         : firstVisibleChild(state, context)
       )
