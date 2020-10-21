@@ -1,6 +1,6 @@
 import { State } from './initialState'
 
-type UnaryReducer = (state: State) => State
+type UnaryReducer = (state: State) => State | null
 
 /**
  * Composes a list of reducers in order and merges the results.

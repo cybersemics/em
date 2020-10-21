@@ -4,9 +4,10 @@ import { State } from './initialState'
 import { Context, Path } from '../types'
 
 /** Returns path to the archive of the given context. */
-export const pathToArchive = (state: State, path: Path, context: Context) => {
+export const pathToArchive = (state: State, path: Path, context: Context): Path | null => {
   const rankedArchive = getThoughtsRanked(state, context)
     .find(equalThoughtValue('=archive'))
+  if (!rankedArchive) return null
   const archivePath = rankedArchive
     ? [...contextOf(path), rankedArchive]
     : contextOf(path)
