@@ -163,7 +163,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
 
     // sync divergent ranks
     if (syncDivergentRanks) {
-      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(simplePath))
+      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(pathToContext(simplePath)))
         .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {

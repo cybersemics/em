@@ -55,7 +55,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
 
   const contextChain = splitChain(state, cursor)
   const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
-  const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
+  const hasChildren = getThoughtsRanked(state, pathToContext(thoughtsRanked)).length > 0
   const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 

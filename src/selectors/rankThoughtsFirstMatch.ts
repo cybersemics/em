@@ -1,5 +1,5 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
-import { contextChainToPath, equalArrays, equalThoughtRanked, head, headValue, isRoot, unroot } from '../util'
+import { contextChainToPath, equalArrays, equalThoughtRanked, head, headValue, isRoot, pathToContext, unroot } from '../util'
 import { getContexts, getContextsSortedAndRanked, getThought, getThoughtsRanked, isContextViewActive, splitChain } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Path } from '../types'
@@ -10,7 +10,7 @@ import { Child, Path } from '../types'
 const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
-  let thoughtsRankedResult = RANKED_ROOT // eslint-disable-line fp/no-let
+  let thoughtsRankedResult: Path = RANKED_ROOT // eslint-disable-line fp/no-let
   let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((value, i) => {
@@ -33,7 +33,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
       : ((thought && thought.contexts) || []).filter(p => equalArrays(p.context, context))
 
     const contextThoughts = parents.length > 1
-      ? getThoughtsRanked(state, thoughtsRankedResult)
+      ? getThoughtsRanked(state, pathToContext(thoughtsRanked))
       : []
 
     // there may be duplicate parents that are missing from contextIndex
@@ -61,7 +61,6 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
       id: ''
     }
 
-    // @ts-ignore
     thoughtsRankedResult = unroot(thoughtsRankedResult.concat(thoughtRanked))
 
     return thoughtRanked
