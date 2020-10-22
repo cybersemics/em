@@ -7,7 +7,7 @@ import { Child, Context } from '../types'
 const getThoughtsRanked = (state: State, context: Context): Child[] => {
   return sort(
     getThoughts(state, context)
-      .filter(child => child.value != null && getThought(state, child.value)),
+      .filter(child => getThought(state, child.value)),
     compareByRank
   )
 }
