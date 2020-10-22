@@ -37,7 +37,7 @@ interface NewThoughtDispatchProps {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: NewThoughtProps) => {
   const { cursor } = state
-  const children = getThoughtsRanked(state, props.path)
+  const children = getThoughtsRanked(state, pathToContext(props.path))
   return {
     cursor,
     show: !children.length || children[children.length - 1].value !== ''

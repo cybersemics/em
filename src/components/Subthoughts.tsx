@@ -9,7 +9,7 @@ import { store } from '../store'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
-import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, RANKED_ROOT } from '../constants'
+import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, ROOT_TOKEN } from '../constants'
 import { alert } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
@@ -260,10 +260,10 @@ const evalCode = ({ simplePath }: { simplePath: SimplePath }) => {
         rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
       findOne: (predicate: (s: string) => boolean) =>
         Object.keys(thoughts.thoughtIndex).find(predicate),
-      home: () => getThoughtsRanked(state, RANKED_ROOT),
+      home: () => getThoughtsRanked(state, [ROOT_TOKEN]),
       thought: {
         ...getThought(state, headValue(simplePath)),
-        children: () => getThoughtsRanked(state, simplePath)
+        children: () => getThoughtsRanked(state, pathToContext(simplePath))
       }
     }
     codeResults = evaluate(ast, env)
@@ -390,7 +390,7 @@ export const SubthoughtsComponent = ({
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))
     : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || simplePath))
-    : getThoughtsRanked(state, contextBinding ? pathToContext(contextBinding) : simplePath) as (Child | ThoughtContext)[]
+    : getThoughtsRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
