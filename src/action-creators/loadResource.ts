@@ -1,9 +1,10 @@
 import { loadFromUrl } from '../action-creators'
 import { attribute, getChildren, getThoughtsRanked, simplifyPath } from '../selectors'
 import { pathToContext } from '../util'
+import { ActionCreator, Path, SimplePath } from '../types'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
-const loadResource = path => (dispatch, getState) => {
+const loadResource = (path: Path): ActionCreator => (dispatch, getState) => {
 
   const state = getState()
   const { resourceCache } = state
@@ -17,13 +18,14 @@ const loadResource = path => (dispatch, getState) => {
 
     // create empty thought in which to load the source
     dispatch({ type: 'newThought', at: path, insertNewSubthought: true, preventSetCursor: true })
-    const parentThoughtsRanked = simplifyPath(getState(), path)
-    const childrenNew = getThoughtsRanked(getState(), pathToContext(parentThoughtsRanked))
+
+    const simplePath = simplifyPath(state, path)
+    const childrenNew = getThoughtsRanked(state, pathToContext(simplePath))
     const thoughtNew = childrenNew[childrenNew.length - 1]
-    const newThoughtPath = [...path, thoughtNew]
+    const newThoughtPath = [...path, thoughtNew] as SimplePath
 
     /** An ad hoc action-creator to dispatch setResourceCache with the given value. */
-    const setResourceCache = value =>
+    const setResourceCache = (value: boolean) =>
       dispatch({
         type: 'setResourceCache',
         key: src,
