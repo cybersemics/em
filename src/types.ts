@@ -40,7 +40,12 @@ declare global {
       firebase: Firebase,
       em: unknown,
   }
+
+  interface Navigator {
+    standalone: boolean,
+  }
 }
+
 
 /********************************
  * Util types

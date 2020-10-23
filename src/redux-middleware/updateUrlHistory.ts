@@ -1,11 +1,19 @@
 import _ from 'lodash'
+import { ThunkMiddleware } from 'redux-thunk'
 import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { equalPath, hashContext, isRoot, pathToContext } from '../util'
 import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 import { deleteCursor, updateCursor } from '../db'
+import { State } from '../util/initialState'
+import { Index } from '../types'
 
 /** Delay with which to debounce browser history update. */
 const delay = 100
+
+interface Options {
+  replace?: unknown,
+  contextViews?: Index<boolean>,
+}
 
 /**
  * Sets the url and history to the given thoughts.
@@ -13,7 +21,7 @@ const delay = 100
  *
  * @param contextViews   Optional argument can be used during toggleContextViews when the state has not yet been updated. Defaults to URL contextViews.
  */
-const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contextViews } = {}) => {
+const updateUrlHistory = (state: State, thoughtsRanked = RANKED_ROOT, { replace, contextViews }: Options = {}) => {
 
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
   const encoded = thoughtsRanked ? hashContext(pathToContext(thoughtsRanked)) : null
@@ -22,7 +30,7 @@ const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contex
   const thoughtsRankedDecoded = isRoot(decoded.thoughtsRanked) ? null : decoded.thoughtsRanked
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalPath(thoughtsRankedDecoded, thoughtsRanked) && decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded]) return
+  if (equalPath(thoughtsRankedDecoded, thoughtsRanked) && decoded.contextViews[encoded!] === (contextViews || state.contextViews)[encoded!]) return
 
   const stateWithNewContextViews = { ...state, contextViews: contextViews || state.contextViews || decoded.contextViews }
 
@@ -62,7 +70,7 @@ const updateUrlHistoryDebounced = _.throttle(getState => {
 }, delay)
 
 /** Updates the url history after the cursor has changed. The call to updateUrlHistory will short circuit if the cursor has not deviated from the current url. */
-const updateUrlHistoryMiddleware = ({ getState, dispatch }) => {
+const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
     next(action)
 
