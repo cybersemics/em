@@ -151,13 +151,13 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
       oldValue: destValue,
       newValue,
       context: rootedParentOf(pathToContext(path)),
-      thoughtsRanked: path
+      path: path
     })
 
     if (!preventSetCursor && path) {
       dispatch({
         type: 'setCursor',
-        thoughtsRanked: parentOf(path).concat({ value: newValue, rank: destRank }),
+        path: parentOf(path).concat({ value: newValue, rank: destRank }),
         offset: startOffset + newText.length
       })
     }
@@ -180,7 +180,7 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
           if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
             dispatch({
               type: 'setCursor',
-              thoughtsRanked: parentOf(path).concat(lastThoughtFirstLevel),
+              path: parentOf(path).concat(lastThoughtFirstLevel),
               offset: lastThoughtFirstLevel.value.length
             })
           }

@@ -37,11 +37,11 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     globals.suppressExpansion
   ) return {}
 
-  const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
+  const simplePath = !path || path.length === 0 ? RANKED_ROOT
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
 
-  const context = pathToContext(thoughtsRanked)
+  const context = pathToContext(simplePath)
   const rootedContext = path && path.length > 0 ? pathToContext(path) : [ROOT_TOKEN]
   const showContexts = isContextViewActive(state, context)
 
@@ -51,8 +51,8 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     : (child as Child).value
 
   const childrenUnfiltered = showContexts
-    ? getContexts(state, headValue(thoughtsRanked))
-    : getThoughts(state, pathToContext(thoughtsRanked)) as (Child | ThoughtContext)[]
+    ? getContexts(state, headValue(simplePath))
+    : getThoughts(state, pathToContext(simplePath)) as (Child | ThoughtContext)[]
   const children = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => !isFunction(childValue(child)))
@@ -95,7 +95,7 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     ? children
     : children.filter(child => {
       /** Returns true if the child should be pinned open. */
-      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, simplifyPath(state, thoughtsRanked))), '=pin', 'true')
+      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, simplifyPath(state, simplePath))), '=pin', 'true')
       const value = childValue(child)
       return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })

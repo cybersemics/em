@@ -230,7 +230,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
       // to use the existing offset after a user clicks or touches the screent
       // when cursor is changed through another method, such as cursorDown, offset will be reset
       offset: null,
-      thoughtsRanked: simplePathLive,
+      path: simplePathLive,
     })
   }
 
@@ -250,7 +250,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
 
     const thought = getThought(state, oldValue)
     if (thought) {
-      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked: simplePath, contextChain })
+      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, path: simplePath, contextChain })
 
       // rerender so that triple dash is converted into divider
       // otherwise nothing would be rerendered because the thought is still being edited

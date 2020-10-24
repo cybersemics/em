@@ -28,15 +28,15 @@ const loadFromUrl = async (url, path = RANKED_ROOT, { skipRoot } = {}) => async 
 
   // decode url after importText so that we are using updated state
   const state = getState()
-  const { thoughtsRanked } = decodeThoughtsUrl(state, window.location.pathname)
+  const { path: decodedPath } = decodeThoughtsUrl(state, window.location.pathname)
 
   // set cursor to first child if cursor is not provided via url
-  const firstChild = getThoughts(state, thoughtsRanked)[0]
+  const firstChild = getThoughts(state, decodedPath)[0]
   dispatch({
     type: 'setCursor',
-    thoughtsRanked: isRoot(thoughtsRanked)
+    path: isRoot(decodedPath)
       ? [firstChild]
-      : thoughtsRanked
+      : decodedPath
   })
 }
 

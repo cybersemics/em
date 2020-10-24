@@ -8,12 +8,12 @@ it('edit a thought', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     existingThoughtChange({
       newValue: 'aa',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     })
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -48,7 +48,7 @@ it('edit a descendant', () => {
       newValue: 'aa1',
       oldValue: 'a1',
       context: ['a'],
-      thoughtsRanked: [{ value: 'a', rank: 1 }, { value: 'a1', rank: 0 }]
+      path: [{ value: 'a', rank: 1 }, { value: 'a1', rank: 0 }]
     })
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -81,7 +81,7 @@ it('edit a thought with descendants', () => {
       newValue: 'aa',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     })
   ]
 
@@ -115,7 +115,7 @@ it('edit a thought existing in mutliple contexts', () => {
       newValue: 'abc',
       oldValue: 'ab',
       context: ['a'],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     })
   ]
 
@@ -150,7 +150,7 @@ it('edit a thought that exists in another context', () => {
       newValue: 'ab',
       oldValue: 'a',
       context: ['b'],
-      thoughtsRanked: [{ value: 'b', rank: 1 }, { value: 'a', rank: 0 }]
+      path: [{ value: 'b', rank: 1 }, { value: 'a', rank: 0 }]
     })
   ]
 
@@ -194,7 +194,7 @@ it('edit a child with the same value as its parent', () => {
       newValue: 'ab',
       oldValue: 'a',
       context: ['a'],
-      thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }, { value: 'a', rank: 0 }]
     })
   ]
 

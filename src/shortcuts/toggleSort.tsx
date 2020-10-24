@@ -14,7 +14,7 @@ interface ToggleAttribute {
 
 interface SetCursor {
   type: 'setCursor',
-  thoughtsRanked: Path | null,
+  path: Path | null,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -48,7 +48,7 @@ const toggleSortShortcut: Shortcut = {
       value: sortPreference
     })
 
-    if (cursor) dispatch({ type: 'setCursor', thoughtsRanked: state.cursor })
+    if (cursor) dispatch({ type: 'setCursor', path: state.cursor })
   }
 }
 

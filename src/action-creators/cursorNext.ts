@@ -14,7 +14,7 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
   if (!cursor) {
     const children = getChildrenSorted(state, [ROOT_TOKEN])
     if (children.length > 0) {
-      dispatch({ type: 'setCursor', thoughtsRanked: [children[0]] })
+      dispatch({ type: 'setCursor', path: [children[0]] })
       setTimeout(scrollCursorIntoView)
     }
     return
@@ -27,7 +27,7 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
   dispatch(suppressExpansion({ duration: 100 }))
 
   const nextThoughtsRanked = parentOf(cursor).concat(next)
-  dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
+  dispatch({ type: 'setCursor', path: nextThoughtsRanked })
   setTimeout(scrollCursorIntoView)
 }
 

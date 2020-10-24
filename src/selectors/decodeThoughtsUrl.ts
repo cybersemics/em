@@ -28,7 +28,7 @@ const decodeThoughtsUrl = (state: State, pathname: string) => {
 
   return {
     contextViews,
-    thoughtsRanked: path,
+    path: path,
     owner: urlOwner,
   }
 }

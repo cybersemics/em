@@ -51,7 +51,7 @@ it('do nothing if there is no cursor', () => {
 
   const steps = [
     newThought('a'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     archiveThought({}),
   ]
 
@@ -151,7 +151,7 @@ it('permanently delete archive with descendants', () => {
   const steps = [
     newThought('a'),
     newSubthought('b'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     archiveThought({}),
     setCursorFirstMatch(['=archive']),
     archiveThought({}),
@@ -249,7 +249,7 @@ it('empty thought should be archived if it has descendants', () => {
     newThought(''),
     newSubthought('b'),
     setCursor({
-      thoughtsRanked: [{ value: '', rank: 1 }]
+      path: [{ value: '', rank: 1 }]
     }),
     archiveThought({}),
   ]

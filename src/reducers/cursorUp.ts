@@ -7,13 +7,13 @@ import { State } from '../util/initialState'
 /** Moves the cursor to the previous sibling. */
 const cursorUp = (state: State) => {
   const { cursor } = state
-  const thoughtsRanked = cursor || RANKED_ROOT
-  const { value, rank } = head(thoughtsRanked)
-  const contextRanked = rootedParentOf(thoughtsRanked)
+  const path = cursor || RANKED_ROOT
+  const { value, rank } = head(path)
+  const contextRanked = rootedParentOf(path)
   const context = pathToContext(contextRanked)
 
   const thoughtBefore = prevSibling(state, value, context, rank)
-  const thoughtsRankedBefore = thoughtBefore && unroot(parentOf(thoughtsRanked).concat(thoughtBefore))
+  const thoughtsRankedBefore = thoughtBefore && unroot(parentOf(path).concat(thoughtBefore))
   // const prevNieces = thoughtBefore && getThoughtsRanked(thoughtsRankedBefore)
   // const prevNiece = prevNieces && prevNieces[prevNieces.length - 1]
 
@@ -29,7 +29,7 @@ const cursorUp = (state: State) => {
     : null // see TODO
 
   return prevThoughtsRanked
-    ? setCursor(state, { thoughtsRanked: prevThoughtsRanked })
+    ? setCursor(state, { path: prevThoughtsRanked })
     : state
 }
 

@@ -23,7 +23,7 @@ const collapseContext = (state: State) => {
       ),
       archiveThought({ path: cursor }),
       setCursor({
-        thoughtsRanked: parentOf(cursor).concat(children[0]),
+        path: parentOf(cursor).concat(children[0]),
         editing: state.editing,
         offset: 0
       }),

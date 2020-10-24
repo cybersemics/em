@@ -54,8 +54,8 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   if (showContexts) return false
 
   const contextChain = splitChain(state, cursor)
-  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
-  const hasChildren = getThoughtsRanked(state, pathToContext(thoughtsRanked)).length > 0
+  const path = lastThoughtsFromContextChain(state, contextChain)
+  const hasChildren = getThoughtsRanked(state, pathToContext(path)).length > 0
   const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
@@ -111,10 +111,10 @@ const isMergedThoughtDuplicate = (state: State) => {
   if (!prevThought) return false
   const contextChain = splitChain(state, cursor)
   const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
-  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+  const path = lastThoughtsFromContextChain(state, contextChain)
   const mergedThoughtValue = prevThought.value + headValue(cursor)
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
-    : !showContexts && thoughtsRanked.length > 1 ? parentOf(thoughtsRanked) :
+    : !showContexts && path.length > 1 ? parentOf(path) :
     RANKED_ROOT)
   const siblings = getThoughts(state, context)
   const isDuplicate = !siblings.every(thought => thought.value !== mergedThoughtValue)

@@ -45,8 +45,8 @@ const subCategorizeOne = (state: State) => {
 
   /** Gets the last created thought insserted before the cursor. */
   const thoughtNew = (state: State) => {
-    const thoughtsRanked = simplifyPath(state, cursor)
-    return getThoughtBefore(state, thoughtsRanked)
+    const path = simplifyPath(state, cursor)
+    return getThoughtBefore(state, path)
   }
 
   return reducerFlow([

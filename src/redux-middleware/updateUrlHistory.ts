@@ -21,23 +21,23 @@ interface Options {
  *
  * @param contextViews   Optional argument can be used during toggleContextViews when the state has not yet been updated. Defaults to URL contextViews.
  */
-const updateUrlHistory = (state: State, thoughtsRanked = RANKED_ROOT, { replace, contextViews }: Options = {}) => {
+const updateUrlHistory = (state: State, path = RANKED_ROOT, { replace, contextViews }: Options = {}) => {
 
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
-  const encoded = thoughtsRanked ? hashContext(pathToContext(thoughtsRanked)) : null
+  const encoded = path ? hashContext(pathToContext(path)) : null
 
   // convert decoded root thought to null cursor
-  const thoughtsRankedDecoded = isRoot(decoded.thoughtsRanked) ? null : decoded.thoughtsRanked
+  const thoughtsRankedDecoded = isRoot(decoded.path) ? null : decoded.path
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalPath(thoughtsRankedDecoded, thoughtsRanked) && decoded.contextViews[encoded!] === (contextViews || state.contextViews)[encoded!]) return
+  if (equalPath(thoughtsRankedDecoded, path) && decoded.contextViews[encoded!] === (contextViews || state.contextViews)[encoded!]) return
 
   const stateWithNewContextViews = { ...state, contextViews: contextViews || state.contextViews || decoded.contextViews }
 
   // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
   // ensure the location does not change through refreshes in standalone PWA mode
-  const updateCursorPromise = thoughtsRanked
-    ? updateCursor(hashContextUrl(stateWithNewContextViews, pathToContext(thoughtsRanked)))
+  const updateCursorPromise = path
+    ? updateCursor(hashContextUrl(stateWithNewContextViews, pathToContext(path)))
     : deleteCursor()
   updateCursorPromise
     .catch(err => {
@@ -52,9 +52,9 @@ const updateUrlHistory = (state: State, thoughtsRanked = RANKED_ROOT, { replace,
   // update browser history
   try {
     window.history[replace ? 'replaceState' : 'pushState'](
-      thoughtsRanked ? pathToContext(thoughtsRanked) : [ROOT_TOKEN],
+      path ? pathToContext(path) : [ROOT_TOKEN],
       '',
-      hashContextUrl(stateWithNewContextViews, thoughtsRanked ? pathToContext(thoughtsRanked) : [ROOT_TOKEN])
+      hashContextUrl(stateWithNewContextViews, path ? pathToContext(path) : [ROOT_TOKEN])
     )
   }
   catch (e) {

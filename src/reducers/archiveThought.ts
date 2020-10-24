@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { isMobile } from '../browser'
 import { RANKED_ROOT } from '../constants'
 import { State } from '../util/initialState'
-import { Child, Path, ThoughtContext } from '../types'
+import { Child, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
@@ -55,15 +55,15 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
   // same as in newThought
   const showContexts = isContextViewActive(state, parentOf(pathToContext(path)))
   const contextChain = splitChain(state, path)
-  const thoughtsRanked = contextChain.length > 1
+  const simplePath = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
-    : path
+    : path as SimplePath
   const pathParent = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 1]
-    : !showContexts && thoughtsRanked.length > 1 ? parentOf(thoughtsRanked) :
+    : !showContexts && simplePath.length > 1 ? parentOf(simplePath) :
     RANKED_ROOT
   const context = pathToContext(pathParent)
-  const { value, rank } = head(thoughtsRanked)
-  const thoughts = pathToContext(thoughtsRanked)
+  const { value, rank } = head(simplePath)
+  const thoughts = pathToContext(simplePath)
 
   const isEmpty = value === ''
   const isArchive = value === '=archive'
@@ -125,16 +125,16 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
 
     // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it
     setCursor({
-      thoughtsRanked: cursorNew,
+      path: cursorNew,
       editing: state.editing,
       offset,
     }),
 
     isDeletable
       ? existingThoughtDelete({
-        context: showContexts ? context : parentOf(pathToContext(thoughtsRanked)),
+        context: showContexts ? context : parentOf(pathToContext(simplePath)),
         showContexts,
-        thoughtRanked: head(thoughtsRanked),
+        thoughtRanked: head(simplePath),
       })
       : reducerFlow([
 
@@ -151,7 +151,7 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
 
         // undo alert
         alert({
-          value: `Deleted ${ellipsize(headValue(showContexts ? thoughtsRanked : path))}`,
+          value: `Deleted ${ellipsize(headValue(showContexts ? simplePath : path))}`,
           // provide an alertType so the delete shortcut can null the alert after a delay
           alertType: 'undoArchive',
           showCloseLink: true,
@@ -160,9 +160,9 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
         // execute existingThoughtMove after newThought has updated the state
         state => {
           return existingThoughtMove(state, {
-            oldPath: showContexts ? thoughtsRanked : path,
+            oldPath: showContexts ? simplePath : path,
             // TODO: Are we sure pathToArchive cannot return null?
-            newPath: pathToArchive(state, showContexts ? thoughtsRanked : path, context)!,
+            newPath: pathToArchive(state, showContexts ? simplePath : path, context)!,
             offset
           })
         }

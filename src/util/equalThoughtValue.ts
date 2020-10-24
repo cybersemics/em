@@ -4,7 +4,7 @@ import { Child } from '../types'
  *
     Usage
       // finds the thought with value 'test'
-      thoughtsRanked.map(equalThoughtValue('test')).
+      path.map(equalThoughtValue('test')).
  */
 export const equalThoughtValue = (value: string) => (thought: Child) =>
   thought && thought.value === value

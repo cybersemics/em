@@ -27,10 +27,10 @@ const splitSentences = (state: State) => {
       oldValue: value,
       newValue: firstSentence,
       context: cursorContext,
-      thoughtsRanked: simplifyPath(state, cursor),
+      path: simplifyPath(state, cursor),
       rankInContext: rank }),
     ...otherSentences.map(sentence => newThought({ value: sentence })),
-    setCursor({ thoughtsRanked: newCursor, offset: firstSentence.length }),
+    setCursor({ path: newCursor, offset: firstSentence.length }),
     editingValue({ value: firstSentence }),
     editableRender
   ]

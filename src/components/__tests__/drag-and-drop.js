@@ -121,7 +121,7 @@ it('prevent drop into descendants', async () => {
 
   store.dispatch({
     type: 'setCursor',
-    thoughtsRanked: [
+    path: [
       {
         value: 'a',
         rank: 0

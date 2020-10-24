@@ -72,7 +72,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
     asyncFocus()
     dispatch({
       type: 'setCursor',
-      thoughtsRanked: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
+      path: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
       offset: value.length
     })
   }
