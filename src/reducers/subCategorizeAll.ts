@@ -64,8 +64,8 @@ const subCategorizeAll = (state: State) => {
   // get newly created thought
   // use fresh state
   const getThoughtNew = perma((state: State) => {
-    const parentThoughtsRanked = simplifyPath(state, pathParent)
-    const childrenNew = getChildrenRanked(state, pathToContext(parentThoughtsRanked))
+    const parentPath = simplifyPath(state, pathParent)
+    const childrenNew = getChildrenRanked(state, pathToContext(parentPath))
     return childrenNew[0]
   })
 
