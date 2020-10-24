@@ -10,13 +10,13 @@ import { Child, Context, Path } from '../types'
 const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
   if (isRoot(pathUnranked)) return RANKED_ROOT
 
-  let thoughtsRankedResult: Path = RANKED_ROOT // eslint-disable-line fp/no-let
+  let pathResult: Path = RANKED_ROOT // eslint-disable-line fp/no-let
   let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((value, i) => {
     const thought = getThought(state, value)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
-    const contextChain = splitChain(state, thoughtsRankedResult)
+    const contextChain = splitChain(state, pathResult)
     const path = contextChainToPath(contextChain)
     const context = unroot(prevParentContext).concat(headValue(path)) as Context
     const inContextView = i > 0 && isContextViewActive(state, contextPathUnranked)
@@ -60,7 +60,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
       id: ''
     }
 
-    thoughtsRankedResult = unroot(thoughtsRankedResult.concat(thoughtRanked))
+    pathResult = unroot(pathResult.concat(thoughtRanked))
 
     return thoughtRanked
   })
