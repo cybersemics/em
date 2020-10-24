@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { getSortPreference, getThought, getThoughts, hasChild } from '../selectors'
-import { compareByRank, compareThought, head, isFunction, sort, unroot } from '../util'
-import { Child, ComparatorFunction, Context } from '../types'
+import { getSortPreference, getThought, hasChild } from '../selectors'
+import { compareByRank, compareThought, hashContext, head, isFunction, sort, unroot } from '../util'
+import { Child, ComparatorFunction, Context, ContextHash } from '../types'
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
@@ -18,6 +18,14 @@ export const isContextVisible = (state: State, context: Context) =>
 export const isChildVisible = _.curry((state: State, context: Context, child: Child) =>
   !isFunction(child.value) &&
   !hasChild(state, unroot([...context, child.value]), '=hidden'))
+
+/** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
+export const getThoughtsOfEncodedContext = ({ thoughts: { contextIndex } }: State, contextEncoded: ContextHash): Child[] =>
+  ((contextIndex || {})[contextEncoded] || {}).children || []
+
+/** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
+export const getThoughts = (state: State, context: Context) =>
+  getThoughtsOfEncodedContext(state, hashContext(context))
 
 /** Makes a getThoughts function that only returns visible thoughts. */
 const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: State, context: Context) => {
