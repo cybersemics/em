@@ -20,12 +20,12 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Ch
   !hasChild(state, unroot([...context, child.value]), '=hidden'))
 
 /** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
-export const getThoughtsOfEncodedContext = ({ thoughts: { contextIndex } }: State, contextEncoded: ContextHash): Child[] =>
+export const getAllChildrenByContextHash = ({ thoughts: { contextIndex } }: State, contextEncoded: ContextHash): Child[] =>
   ((contextIndex || {})[contextEncoded] || {}).children || []
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) =>
-  getThoughtsOfEncodedContext(state, hashContext(context))
+  getAllChildrenByContextHash(state, hashContext(context))
 
 /** Makes a getAllChildren function that only returns visible thoughts. */
 const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: State, context: Context) => {
