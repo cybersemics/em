@@ -51,7 +51,7 @@ import {
   getSetting,
   getStyle,
   getThought,
-  getThoughts,
+  getAllChildren,
   getChildrenRanked,
   getChildrenSorted,
   isChildVisible,
@@ -141,7 +141,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showHiddenThoughts,
     simplePath: simplePathLive,
     // re-render if children change (unless editing)
-    __render: !isEditing && !isEditingPath && getThoughts(state, pathToContext(simplePathLive))
+    __render: !isEditing && !isEditingPath && getAllChildren(state, pathToContext(simplePathLive))
   }
 }
 
@@ -445,7 +445,7 @@ export const SubthoughtsComponent = ({
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
   // TODO: Resolve cursor to a simplePath
-  const isCursorLeaf = cursor && !getThoughts(state, pathToContext(cursor))
+  const isCursorLeaf = cursor && !getAllChildren(state, pathToContext(cursor))
     .some((child: Child) => !isFunction(child.value))
   const cursorDepth = cursor
     ? cursor.length - (isCursorLeaf ? 1 : 0)

@@ -8,7 +8,7 @@ import IpfsHttpClient from 'ipfs-http-client'
 import { RANKED_ROOT, RENDER_DELAY } from '../constants'
 import { download, ellipsize, getPublishUrl, headValue, isDocumentEditable, isRoot, pathToContext, timestamp, unroot } from '../util'
 import { alert } from '../action-creators'
-import { exportContext, getDescendants, getThoughts, simplifyPath, theme } from '../selectors'
+import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import { State } from '../util/initialState'
@@ -32,7 +32,7 @@ const ModalExport = () => {
   const cursor = useSelector((state: State) => state.cursor || RANKED_ROOT)
   const context = pathToContext(cursor)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getThoughts(state, contextTitle)[0]
+  const titleChild = getAllChildren(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home'
     : titleChild ? titleChild.value
     : headValue(cursor)

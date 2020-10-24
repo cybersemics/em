@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThoughts } from '../../selectors'
+import { exportContext, getContexts, getAllChildren } from '../../selectors'
 import { existingThoughtChange, newThought, setCursor } from '../../reducers'
 
 it('edit a thought', () => {
@@ -29,7 +29,7 @@ it('edit a thought', () => {
     .toMatchObject([{
       context: [ROOT_TOKEN]
     }])
-  expect(getThoughts(stateNew, [ROOT_TOKEN]))
+  expect(getAllChildren(stateNew, [ROOT_TOKEN]))
     .toMatchObject([{ value: 'b', rank: 1 }, { value: 'aa', rank: 0 }])
 
   // cursor should be at /aa
@@ -66,7 +66,7 @@ it('edit a descendant', () => {
       context: ['a'],
       rank: 0,
     }])
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'aa1', rank: 0 }])
 
 })
@@ -99,7 +99,7 @@ it('edit a thought with descendants', () => {
     .toMatchObject([{
       context: [ROOT_TOKEN]
     }])
-  expect(getThoughts(stateNew, ['aa']))
+  expect(getAllChildren(stateNew, ['aa']))
     .toMatchObject([{ value: 'a1', rank: 0 }, { value: 'a2', rank: 1 }])
 
 })
@@ -134,7 +134,7 @@ it('edit a thought existing in mutliple contexts', () => {
     .toMatchObject([{
       context: ['a']
     }])
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'abc', rank: 0 }])
 
 })
@@ -177,10 +177,10 @@ it('edit a thought that exists in another context', () => {
       }
     ])
 
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'ab', rank: 0 }])
 
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'ab', rank: 0 }])
 
 })
@@ -212,7 +212,7 @@ it('edit a child with the same value as its parent', () => {
       context: ['a'],
       rank: 0,
     }])
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'ab', rank: 0 }])
 
   // cursor should be /a/ab

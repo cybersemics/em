@@ -3,7 +3,7 @@ import { parentOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToCo
 import {
   getChildren,
   getThoughtBefore,
-  getThoughts,
+  getAllChildren,
   getChildrenRanked,
   hasChild,
   isContextViewActive,
@@ -116,7 +116,7 @@ const isMergedThoughtDuplicate = (state: State) => {
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && path.length > 1 ? parentOf(path) :
     RANKED_ROOT)
-  const siblings = getThoughts(state, context)
+  const siblings = getAllChildren(state, context)
   const isDuplicate = !siblings.every(thought => thought.value !== mergedThoughtValue)
   return isDuplicate
 }

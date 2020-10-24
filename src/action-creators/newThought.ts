@@ -1,7 +1,7 @@
 import { ActionCreator, Context } from '../types'
 import { isMobile, isSafari } from '../browser'
 import { ROOT_TOKEN, TUTORIAL_STEP_START } from '../constants'
-import { getSetting, getThoughts, hasChild, isContextViewActive } from '../selectors'
+import { getSetting, getAllChildren, hasChild, isContextViewActive } from '../selectors'
 import { alert } from '../action-creators'
 
 // util
@@ -23,7 +23,7 @@ interface Alert {
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (offset: number, context: Context | null, state: State) => {
   const { editingValue } = state
-  const siblings = context && getThoughts(state, context)
+  const siblings = context && getAllChildren(state, context)
   return siblings && editingValue && siblings.some(sibling => sibling.value === editingValue.substring(0, offset) || sibling.value === editingValue.substring(offset))
 }
 

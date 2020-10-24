@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
-import { exists, getThought, getThoughts, getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
+import { exists, getThought, getAllChildren, getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent } from '../types'
 
@@ -79,7 +79,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getThoughts(state, context)
+  const subthoughts = getAllChildren(state, context)
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */

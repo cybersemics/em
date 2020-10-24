@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { getPrevRank, getThoughts, rankThoughtsFirstMatch } from '../selectors'
+import { getPrevRank, getAllChildren, rankThoughtsFirstMatch } from '../selectors'
 import { existingThoughtChange, newThoughtSubmit } from '../reducers'
 import { State } from '../util/initialState'
 import { Context, SimplePath } from '../types'
@@ -7,7 +7,7 @@ import { Context, SimplePath } from '../types'
 /** Sets the value of the first subthought in the given context. */
 const setFirstSubthoughts = (state: State, { context, value }: { context: Context, value: string }) => {
 
-  const oldFirstThoughtRanked = getThoughts(state, context)[0]
+  const oldFirstThoughtRanked = getAllChildren(state, context)[0]
   return oldFirstThoughtRanked
 
     // context has a first and must be changed

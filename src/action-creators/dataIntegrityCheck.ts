@@ -23,7 +23,7 @@ import {
   exists,
   getSetting,
   getThought,
-  getThoughts,
+  getAllChildren,
   getChildrenRanked,
   simplifyPath,
   splitChain,
@@ -120,7 +120,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
     // const contextSubthoughts = getChildrenRanked(state, pathContext)
     if (recreateMissingContextIndex) {
       const contextIndexUpdates = thought.contexts.reduce((accum: any, cx: ThoughtContext) => {
-        const otherContextChildren = getThoughts(state, cx.context)
+        const otherContextChildren = getAllChildren(state, cx.context)
         const otherContextHasThought = otherContextChildren
           .some(child => hashThought(child.value) === hashThought(thought.value) && child.rank === cx.rank)
         const encoded = hashContext(cx.context)

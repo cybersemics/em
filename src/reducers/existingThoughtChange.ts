@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
-import { getThought, getThoughts, getChildrenRanked } from '../selectors'
+import { getThought, getAllChildren, getChildrenRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent, SimplePath, Timestamp } from '../types'
@@ -86,7 +86,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   // eslint-disable-next-line jsdoc/require-jsdoc
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
   // eslint-disable-next-line jsdoc/require-jsdoc
-  const isThoughtOldSubthoughtless = () => getThoughts(state, [oldValue]).length < 2
+  const isThoughtOldSubthoughtless = () => getAllChildren(state, [oldValue]).length < 2
 
   // the old thought less the context
   const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldSubthoughtless())
@@ -139,7 +139,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   // preserve contextIndex
   const contextNew = showContexts ? thoughtsNew : context
   const contextNewEncoded = hashContext(contextNew)
-  const thoughtNewSubthoughts = getThoughts(state, contextNew)
+  const thoughtNewSubthoughts = getAllChildren(state, contextNew)
     .filter(child =>
       !equalThoughtRanked(child, { value: oldValue, rank }) &&
       !equalThoughtRanked(child, { value: newValue, rank })
@@ -155,7 +155,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   // preserve contextIndex
   const contextOld = showContexts ? thoughtsOld : context
   const contextOldEncoded = hashContext(contextOld)
-  const thoughtOldSubthoughts = getThoughts(state, contextOld)
+  const thoughtOldSubthoughts = getAllChildren(state, contextOld)
     .filter(child => !equalThoughtRanked(child, head(thoughtsRankedLiveOld)))
 
   const contextParent = rootedParentOf(showContexts
@@ -164,7 +164,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   )
   const contextParentEncoded = hashContext(contextParent)
 
-  const thoughtParentSubthoughts = showContexts ? getThoughts(state, contextParent)
+  const thoughtParentSubthoughts = showContexts ? getAllChildren(state, contextParent)
     .filter(child =>
       (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedParentOf(thoughtsRankedLiveOld)) })) &&
       !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedParentOf(thoughtsRankedLiveOld)) })
@@ -245,8 +245,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = hashContext(contextOld)
       const contextNewEncoded = hashContext(contextNew)
-      const thoughtsOld = getThoughts(state, contextOld)
-      const thoughtsNew = getThoughts(state, contextNew)
+      const thoughtsOld = getAllChildren(state, contextOld)
+      const thoughtsNew = getAllChildren(state, contextNew)
       return {
         ...accumInner,
         [contextOldEncoded]: null,

@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getThoughts, getChildrenRanked } from '../selectors'
+import { getNextRank, getThought, getAllChildren, getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
@@ -86,7 +86,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const contextEncodedNew = hashContext(newContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
-  const subthoughtsOld = getThoughts(state, oldContext)
+  const subthoughtsOld = getAllChildren(state, oldContext)
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
   const duplicateSubthought = getChildrenRanked(state, newContext)
@@ -94,7 +94,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
   const isDuplicateMerge = duplicateSubthought && !sameContext
 
-  const subthoughtsNew = getThoughts(state, newContext)
+  const subthoughtsNew = getAllChildren(state, newContext)
     .filter(child => child.value !== value)
     .concat({
       value,
@@ -174,9 +174,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         const contextEncodedNew = hashContext(contextNew)
         const accumChildrenOld = accum[contextEncodedOld]?.children
         const accumChildrenNew = accum[contextEncodedNew]?.children
-        const childrenOld = (accumChildrenOld || getThoughts(state, contextOld))
+        const childrenOld = (accumChildrenOld || getAllChildren(state, contextOld))
           .filter((child: Child) => child.value !== result.value)
-        const childrenNew = (accumChildrenNew || getThoughts(state, contextNew))
+        const childrenNew = (accumChildrenNew || getAllChildren(state, contextNew))
           .filter((child: Child) => child.value !== result.value)
           .concat({
             value: result.value,

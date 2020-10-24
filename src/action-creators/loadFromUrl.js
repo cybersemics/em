@@ -8,7 +8,7 @@ import {
 // selectors
 import {
   decodeThoughtsUrl,
-  getThoughts,
+  getAllChildren,
 } from '../selectors'
 
 import { importText } from '../action-creators'
@@ -31,7 +31,7 @@ const loadFromUrl = async (url, path = RANKED_ROOT, { skipRoot } = {}) => async 
   const { path: decodedPath } = decodeThoughtsUrl(state, window.location.pathname)
 
   // set cursor to first child if cursor is not provided via url
-  const firstChild = getThoughts(state, decodedPath)[0]
+  const firstChild = getAllChildren(state, decodedPath)[0]
   dispatch({
     type: 'setCursor',
     path: isRoot(decodedPath)

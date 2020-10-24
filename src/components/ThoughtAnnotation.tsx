@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
-import { chain, decodeThoughtsUrl, getContexts, getThoughts, theme } from '../selectors'
+import { chain, decodeThoughtsUrl, getContexts, getAllChildren, theme } from '../selectors'
 import { State } from '../util/initialState'
 import { Connected, Context, SimplePath, ThoughtContext } from '../types'
 
@@ -45,7 +45,7 @@ interface ThoughtAnnotationProps {
 
 /** Sets the innerHTML of the subthought text. */
 const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: { text: string }, thoughts: Context) => {
-  const labelChildren = getThoughts(state, [...thoughts, '=label'])
+  const labelChildren = getAllChildren(state, [...thoughts, '=label'])
   const { editingValue } = state
   return {
     __html: isEditing
