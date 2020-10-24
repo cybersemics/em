@@ -2,7 +2,7 @@ import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { contextChainToPath, equalArrays, equalThoughtRanked, head, headValue, isRoot, pathToContext, unroot } from '../util'
 import { getContexts, getContextsSortedAndRanked, getThought, getThoughtsRanked, isContextViewActive, splitChain } from '../selectors'
 import { State } from '../util/initialState'
-import { Child, Path } from '../types'
+import { Child, Context, Path } from '../types'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
@@ -18,8 +18,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(state, thoughtsRankedResult)
     const thoughtsRanked = contextChainToPath(contextChain)
-    // @ts-ignore
-    const context = unroot(prevParentContext).concat(headValue(thoughtsRanked))
+    const context = unroot(prevParentContext).concat(headValue(thoughtsRanked)) as Context
     const inContextView = i > 0 && isContextViewActive(state, contextPathUnranked)
     const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(
       state,
