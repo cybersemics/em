@@ -1,4 +1,4 @@
-// @ts-nocheck
+import _ from 'lodash'
 
 // constants
 import {
@@ -29,7 +29,12 @@ import {
 } from '../selectors'
 
 import { State } from '../util/initialState'
-import { Path } from '../types'
+import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
+
+interface NextThoughtResult {
+  nextThoughts: Path,
+  contextChain: SimplePath[],
+}
 
 /**
  * Adds the rank of the child thought to every thought in a context.
@@ -37,7 +42,7 @@ import { Path } from '../types'
  * @param contextInfo   A { context, rank } object returned from getContexts.
  * @returns Returns rankedContext.
  */
-const contextWithThoughtRank = (state, contextInfo) => {
+const contextWithThoughtRank = (state: State, contextInfo: ThoughtContext | null): SimplePath | null => {
   return contextInfo && contextInfo.context.map((value, index) => {
     const thought = getThought(state, value)
 
@@ -45,11 +50,11 @@ const contextWithThoughtRank = (state, contextInfo) => {
     const matchedContext = () => {
       const contextToMatch = contextInfo.context.slice(0, index + 1)
       // const filterRoot = context => context.filter(item => item !== ROOT_TOKEN)
-      return thought.contexts.find(thoughtContext => equalArrays([...unroot(thoughtContext.context), thought.value], contextToMatch))
+      return thought.contexts.find(thoughtContext => equalArrays([...unroot(thoughtContext.context), thought.value], contextToMatch))!
     }
     // the root thought doesn't have a rank
     return value === ROOT_TOKEN ? RANKED_ROOT[0] : { value, rank: matchedContext().rank }
-  })
+  }) as SimplePath
 }
 
 /**
@@ -57,14 +62,14 @@ const contextWithThoughtRank = (state, contextInfo) => {
  *
  * @returns Returns rankedContext.
  */
-const nextSiblingContext = (state, rank, context, thoughtIndex) => {
+const nextSiblingContext = (state: State, rank: number, context: Context) => {
   const contextSiblings = getContextsSortedAndRanked(state, head(context))
   const currentContextIndex = contextSiblings.findIndex(context => context.rank === rank)
   // const currentIndex = contextSiblings.findIndex(thoughts => thoughts.find(thought => thought.value === value))
   const nextSibling = contextSiblings[currentContextIndex + 1]
     ? contextSiblings[currentContextIndex + 1]
     : null
-  return contextWithThoughtRank(state, nextSibling, thoughtIndex)
+  return contextWithThoughtRank(state, nextSibling)
 }
 
 /**
@@ -72,7 +77,7 @@ const nextSiblingContext = (state, rank, context, thoughtIndex) => {
  *
  * @returns Returns rankedContext.
  */
-const firstChildOfContextView = (state, path) => {
+const firstChildOfContextView = (state: State, path: Path) => {
   const context = pathToContext(path)
   const contextChildren = getContextsSortedAndRanked(state, head(context))
   const firstChild = contextChildren[0]
@@ -84,7 +89,7 @@ const firstChildOfContextView = (state, path) => {
  *
  * @returns Returns context.
  */
-const getMatchedContext = (state, context, contextChain) => {
+const getMatchedContext = (state: State, context: Child, contextChain: SimplePath[]) => {
   const contexts = getContextsSortedAndRanked(state, context.value)
   const currentContextTop = head(contextChain)[0].value
   return contexts.find(c => c.context.includes(currentContextTop))
@@ -95,11 +100,12 @@ const getMatchedContext = (state, context, contextChain) => {
  *
  * @returns Returns path.
  */
-const getPathFromContextChain = (state, contextChain) => {
+const getPathFromContextChain = (state: State, contextChain: SimplePath[]): Path => {
   // last of second last item in context chain gives us the current context
-  const context = head(head(contextOf(contextChain)))
-  const matchedContextWithRanks = contextWithThoughtRank(state, getMatchedContext(state, context, contextChain))
-  return [...matchedContextWithRanks, context, ...head(contextChain).slice(1)]
+  const contextPath = head(contextChain.slice(0, -1))
+  const contextChild = head(contextPath)
+  const matchedContextWithRanks = contextWithThoughtRank(state, getMatchedContext(state, contextChild, contextChain)!)
+  return [...matchedContextWithRanks || [], contextChild, ...head(contextChain).slice(1)]
 }
 
 /**
@@ -107,11 +113,12 @@ const getPathFromContextChain = (state, contextChain) => {
  *
  * @returns Returns context.
  */
-const getContextFromContextChain = (state, contextChain) => {
-  // last of second last item in context chain gives us the current context
-  const context = head(head(contextOf(contextChain)))
-  const matchedContext = getMatchedContext(state, context, contextChain)
-  return [...matchedContext.context, context.value, ...head(contextChain).slice(1).map(context => context.value)]
+const getContextFromContextChain = (state: State, contextChain: SimplePath[]) => {
+  // last of second-to-last item in context chain gives us the current context
+  const contextPath = head(contextChain.slice(0, -1))
+  const contextChild = head(contextPath)
+  const matchedContext = getMatchedContext(state, contextChild, contextChain)!
+  return [...matchedContext.context, contextChild.value, ...head(contextChain).slice(1).map(context => context.value)]
 }
 
 /**
@@ -129,8 +136,7 @@ const getContextFromContextChain = (state, contextChain) => {
  * @param contextChain      ContextChain for the focused thought.
  * @param ignoreChildren    Used to ignore the children context if they've been traversed already.
  */
-const nextInContextView = (state, value, rank, path, rankedContext, contextChain, ignoreChildren) => {
-  const { showHiddenThoughts, thoughts: { thoughtIndex } } = state
+const nextInContextView = (state: State, value: string, rank: number, path: Path, rankedContext: Path, contextChain: SimplePath[], ignoreChildren?: boolean): NextThoughtResult | null => {
 
   if (rankedContext.length === 0 || path.length === 0) return null
 
@@ -152,7 +158,7 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
     const currentThought = head(path)
     // jump out if there are no context children
     return {
-      nextThoughts: [...firstChild(), currentThought],
+      nextThoughts: [...firstChild() || [], currentThought] as SimplePath,
       contextChain
     }
   }
@@ -160,7 +166,7 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
   else if (isContextViewActive(state, pathToContext(rankedContext))) {
     const firstChild = perma(() => firstVisibleChild(state, getContextFromContextChain(state, contextChain) || [ROOT_TOKEN]))
 
-    const nextSibling = nextSiblingContext(state, rank, context, thoughtIndex, showHiddenThoughts)
+    const nextSibling = nextSiblingContext(state, rank, context)
     const rankedContextHead = head(rankedContext)
 
     return !ignoreChildren && firstChild() ? {
@@ -169,13 +175,15 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
     }
       : nextSibling ? {
         nextThoughts: [...nextSibling, rankedContextHead],
-        contextChain: contextOf(contextChain)
+        contextChain: contextChain.slice(0, -1)
       }
       // nextInContextView and nextInThoughtView call each other as part of the recursive traversal structure
       // typescript-eslint incorrectly fails no-use-before-define
       // @ts-ignore
       : nextInThoughtView(state, rankedContextHead.value, contextOf(context), rankedContextHead.rank, contextOf(path), contextOf(contextChain), true)
   }
+
+  return null
 }
 
 /**
@@ -194,10 +202,9 @@ const nextInContextView = (state, value, rank, path, rankedContext, contextChain
  * @param contextChain   ContextChain for the focused thought.
  * @param ignoreChildren Used to ignore the subthoughts if they've been traversed already.
  */
-const nextInThoughtView = (state, value, context, rank, path, contextChain, ignoreChildren) => {
-  const { showHiddenThoughts } = state
+const nextInThoughtView = (state: State, value: string, context: Context, rank: number, path: Path, contextChain: SimplePath[], ignoreChildren?: boolean): NextThoughtResult | null => {
 
-  if (contextChain.length > 1 && head(contextChain).length === 1) return
+  if (contextChain.length > 1 && _.last(contextChain)!.length === 1) return null
 
   const firstChild = !ignoreChildren && firstVisibleChild(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || [ROOT_TOKEN])
 
@@ -214,7 +221,7 @@ const nextInThoughtView = (state, value, context, rank, path, contextChain, igno
      */
     const nextUncle = () => {
       const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext())
-      const contextChainForParentThought = [...contextOf(contextChain), contextOf(head(contextChain))]
+      const contextChainForParentThought = [...contextChain.slice(0, -1), contextOf(head(contextChain))]
       const parentPath = contextOf(thoughtViewPath())
       return nextInThoughtView(state, parentThought.value, parentContext, parentThought.rank, parentPath, contextChainForParentThought, true)
     }
@@ -230,36 +237,35 @@ const nextInThoughtView = (state, value, context, rank, path, contextChain, igno
 
   /** Gets the next uncle in the Context View. */
   const nextUncleInContextView = () => {
-    const pathToFirstThoughtInContext = contextOf(contextChain.length > 1 ? contextChain.flat() : thoughtViewPath)
+    const pathToFirstThoughtInContext = contextOf(contextChain.length > 1 ? contextChain.flat() : thoughtViewPath())
     // restricts from working with multilevel context chains
-    const rankedContextOfCurrentContext = contextOf(contextChain)[0]
-    const contextChainTillFirstChildOfContext = [...contextOf(contextChain), [head(contextChain)[0]]]
+    const rankedContextOfCurrentContext = contextChain[contextChain.length - 2]
+    const contextChainTillFirstChildOfContext = [...contextChain.slice(0, -1), [head(contextChain)[0]] as SimplePath]
     const firstThoughtInContext = head(contextChain)[0]
 
     return nextInContextView(state, firstThoughtInContext.value, firstThoughtInContext.rank, pathToFirstThoughtInContext, rankedContextOfCurrentContext, contextChainTillFirstChildOfContext, true)
   }
 
-  const nextSibling = perma(() => thoughtNextSibling(state, value, thoughtViewContext(), rank, showHiddenThoughts))
+  const nextSibling = perma(() => thoughtNextSibling(state, value, thoughtViewContext(), rank))
   return firstChild ?
     {
       nextThoughts: unroot(path.concat(firstChild)),
-      contextChain: []
+      contextChain: [] as SimplePath[],
     }
     : nextSibling() ? {
       nextThoughts: unroot(contextOf(thoughtViewPath()).concat(nextSibling())),
-      contextChain: contextOf(contextChain)
+      contextChain: contextChain.slice(0, -1),
     } : nextUncleInThoughtView() || nextUncleInContextView()
 }
 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain. */
 export const nextThought = (state: State, path: Path = RANKED_ROOT) => {
-  const { contextViews } = state
   const { value, rank } = head(path)
   const rankedContext = rootedContextOf(path)
-  const contextChain = splitChain(state, path, contextViews)
+  const contextChain = splitChain(state, path)
   const context = pathToContext(rankedContext)
 
   return isContextViewActive(state, pathToContext(rankedContext)) || isContextViewActive(state, pathToContext(path))
-    ? nextInContextView(state, value, rank, path, rankedContext, contextChain)
-    : nextInThoughtView(state, value, context, rank, path, contextChain)
+    ? nextInContextView(state, value, rank, path, rankedContext, contextChain)!
+    : nextInThoughtView(state, value, context, rank, path, contextChain)!
 }
