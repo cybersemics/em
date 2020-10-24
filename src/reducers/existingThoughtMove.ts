@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getThoughts, getThoughtsRanked } from '../selectors'
+import { getNextRank, getThought, getThoughts, getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
@@ -89,7 +89,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const subthoughtsOld = getThoughts(state, oldContext)
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const duplicateSubthought = getThoughtsRanked(state, newContext)
+  const duplicateSubthought = getChildrenRanked(state, newContext)
     .find(equalThoughtValue(value))
 
   const isDuplicateMerge = duplicateSubthought && !sameContext
@@ -110,7 +110,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     const newLastRank = getNextRank(state, pathToContext(pathNew))
 
     const oldThoughts = pathToContext(pathOld)
-    return getThoughtsRanked(state, oldThoughts).reduce((accum, child, i) => {
+    return getChildrenRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
 

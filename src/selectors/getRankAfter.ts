@@ -1,5 +1,5 @@
 import { ROOT_TOKEN } from '../constants'
-import { getThoughtsRanked } from '../selectors'
+import { getChildrenRanked } from '../selectors'
 import { equalThoughtValue, headRank, headValue, pathToContext, rootedParentOf } from '../util'
 import { SimplePath } from '../types'
 import { State } from '../util/initialState'
@@ -10,7 +10,7 @@ const getRankAfter = (state: State, simplePath: SimplePath) => {
   const value = headValue(simplePath)
   const rank = headRank(simplePath)
   const parentPath = rootedParentOf(simplePath)
-  const children = getThoughtsRanked(state, pathToContext(parentPath))
+  const children = getChildrenRanked(state, pathToContext(parentPath))
 
   // if there are no children, start with rank 0
   if (children.length === 0) {

@@ -19,7 +19,7 @@ import {
 // selectors
 import {
   getNextRank,
-  getThoughtsRanked,
+  getChildrenRanked,
   isContextViewActive,
   prevSibling,
   simplifyPath,
@@ -44,7 +44,7 @@ const deleteEmptyThought = (state: State) => {
 
   const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
   const path = simplifyPath(state, cursor)
-  const children = getThoughtsRanked(state, pathToContext(path))
+  const children = getChildrenRanked(state, pathToContext(path))
 
   // delete an empty thought
   if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
-import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
+import { getThought, getThoughts, getChildrenRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent, SimplePath, Timestamp } from '../types'
@@ -186,7 +186,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
    */
   const recursiveUpdates = (context: Context, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
 
-    return getThoughtsRanked(state, context).reduce((accum, child) => {
+    return getChildrenRanked(state, context).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
       const childThought = getThought(state, child.value)

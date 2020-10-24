@@ -60,7 +60,7 @@ import {
   getStyle,
   getThought,
   getThoughts,
-  getThoughtsRanked,
+  getChildrenRanked,
   hasChild,
   hasChildren,
   isBefore,
@@ -166,7 +166,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedParentOf(parentOf(cursor || [])), chain(state, contextChain, simplePath)) && getThoughtsRanked(state, pathToContext(cursor || [])).length === 0
+    ? equalPath(rootedParentOf(parentOf(cursor || [])), chain(state, contextChain, simplePath)) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
     // parent
     : equalPath(parentOf(cursor || []), chain(state, contextChain, simplePath))
 
@@ -174,7 +174,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorGrandparent =
     equalPath(rootedParentOf(parentOf(cursor || [])), chain(state, contextChain, simplePath))
-  const children = childrenForced || getThoughtsRanked(state, pathToContext(contextBinding || simplePathLive))
+  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const value = headValue(simplePathLive)
 
@@ -500,7 +500,7 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getThoughtsRanked(state, pathToContext(contextBinding || simplePathLive!))
+  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive!))
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
   const contextThought = showContexts && getThought(state, headValue(parentOf(simplePath)))

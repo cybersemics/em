@@ -26,8 +26,8 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession
   dispatch(suppressExpansion({ duration: 100 }))
 
-  const nextThoughtsRanked = parentOf(cursor).concat(next)
-  dispatch({ type: 'setCursor', path: nextThoughtsRanked })
+  const path = parentOf(cursor).concat(next)
+  dispatch({ type: 'setCursor', path })
   setTimeout(scrollCursorIntoView)
 }
 

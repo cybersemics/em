@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../../constants'
 import { store } from '../../store'
-import { getThoughtsRanked } from '../../selectors'
+import { getChildrenRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { act } from 'react-dom/test-utils'
@@ -35,7 +35,7 @@ it('re-render thought after importing text', async () => {
   })
 
   // state
-  const subthoughts = getThoughtsRanked(store.getState(), [ROOT_TOKEN])
+  const subthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
   expect(subthoughts).toHaveLength(1)
   expect(subthoughts[0]).toMatchObject({ value: 'a' })
 

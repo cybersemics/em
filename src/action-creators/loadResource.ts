@@ -1,5 +1,5 @@
 import { loadFromUrl } from '../action-creators'
-import { attribute, getChildren, getThoughtsRanked, simplifyPath } from '../selectors'
+import { attribute, getChildren, getChildrenRanked, simplifyPath } from '../selectors'
 import { pathToContext } from '../util'
 import { ActionCreator, Path, SimplePath } from '../types'
 
@@ -20,7 +20,7 @@ const loadResource = (path: Path): ActionCreator => (dispatch, getState) => {
     dispatch({ type: 'newThought', at: path, insertNewSubthought: true, preventSetCursor: true })
 
     const simplePath = simplifyPath(state, path)
-    const childrenNew = getThoughtsRanked(state, pathToContext(simplePath))
+    const childrenNew = getChildrenRanked(state, pathToContext(simplePath))
     const thoughtNew = childrenNew[childrenNew.length - 1]
     const newThoughtPath = [...path, thoughtNew] as SimplePath
 

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
-import { exists, getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+import { exists, getThought, getThoughts, getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent } from '../types'
 
@@ -94,7 +94,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
         thoughtIndex: thoughtIndexNew
       }
     }
-    return getThoughtsRanked(stateNew as State, thoughts).reduce((accum, child) => {
+    return getChildrenRanked(stateNew as State, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(stateNew, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
