@@ -170,7 +170,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     // parent
     : equalPath(contextOf(cursor || []), chain(state, contextChain, simplePath))
 
-  const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '', undefined) as SimplePath | undefined
+  const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as SimplePath | undefined
 
   const isCursorGrandparent =
     equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, simplePath))
