@@ -114,7 +114,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   // const thoughtsLive = showContextsParent
   //   ? parentOf(parentOf(thoughts)).concat().concat(head(thoughts))
   //   : thoughts
-  // const thoughtsRankedLive = showContextsParent
+  // const pathLive = showContextsParent
   //   ? parentOf(parentOf(path).concat({ value: innerTextRef, rank })).concat(head(path))
   //   : path
 
