@@ -59,7 +59,6 @@ const syncRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
     accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = thought && getSetting(state, 'Data Integrity Check') === 'On'
       ? {
         value: thought.value,
-        rank: 0, // TODO: Why does Lexeme have rank?
         created: thought.created || timestamp(),
         lastUpdated: thought.lastUpdated || timestamp(),
         contexts: thought.contexts.map(cx => ({
