@@ -29,6 +29,7 @@ export interface User {
 export interface Ref {
   on: (s: string, f: (...args: any) => any) => void,
   once: (s: string, f: (...args: any) => any) => void,
+  update: (updates: Index<any>, callback: (err: string | null, ...args: any[]) => void) => void,
 }
 
 export interface Snapshot<T> {
