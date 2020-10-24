@@ -66,7 +66,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     ? chain(state, props.contextChain, props.path)
     : unroot(props.path)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
-  const thoughtsRankedLive = isEditing
+  const pathLive = isEditing
     ? parentOf(props.path).concat(head(props.showContexts ? parentOf(cursor!) : cursor!)) as SimplePath
     : props.path
 
@@ -76,7 +76,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     invalidState: isEditing ? invalidState : null,
     isEditing,
     showHiddenThoughts,
-    path: thoughtsRankedLive,
+    path: pathLive,
   }
 }
 
