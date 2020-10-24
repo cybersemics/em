@@ -5,7 +5,7 @@ import { Child } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   head,
   headValue,
@@ -22,7 +22,7 @@ const subCategorizeOne = (state: State) => {
 
   if (!cursor) return state
 
-  const cursorParent = contextOf(cursor)
+  const cursorParent = parentOf(cursor)
   const context = pathToContext(cursorParent)
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN

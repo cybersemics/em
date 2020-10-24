@@ -3,7 +3,7 @@ import { ActionCreator, Path, ThoughtContext } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
@@ -55,7 +55,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
   const context = pathToContext(path)
   const encoded = hashContext(context)
   const thought = getThought(state, value)
-  const pathContext = contextOf(context)
+  const pathContext = parentOf(context)
   const simplePath = simplifyPath(state, path)
 
   // delete duplicate thoughts in contextIndex

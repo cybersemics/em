@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { existingThoughtChange, existingThoughtMove, newThoughtSubmit, setCursor, subCategorizeOne } from '../reducers'
 import { getPrevRank, getRankBefore, getThoughts, simplifyPath } from '../selectors'
-import { contextOf, headValue, pathToContext, reducerFlow, rootedContextOf, unroot } from '../util'
+import { parentOf, headValue, pathToContext, reducerFlow, rootedContextOf, unroot } from '../util'
 import { State } from '../util/initialState'
 import { Path, SimplePath } from '../types'
 
@@ -23,7 +23,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   // TODO: Resolve simplePath to make it work within the context view
   // Cannot do this without the contextChain
   // Need to store the full simplePath of each simplePath segment in the simplePath
-  const parentPath = unroot(contextOf(simplePath))
+  const parentPath = unroot(parentOf(simplePath))
 
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed

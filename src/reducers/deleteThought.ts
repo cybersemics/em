@@ -5,7 +5,7 @@ import { Child, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   head,
   headValue,
   pathToContext,
@@ -35,10 +35,10 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
   let path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, pathToContext(contextOf(path)))
+  const showContexts = isContextViewActive(state, pathToContext(parentOf(path)))
   if (showContexts) {
     // Get thought in ContextView
-    const thoughtInContextView = head(contextOf(path))
+    const thoughtInContextView = head(parentOf(path))
     // Get context from which we are going to delete thought
     const context = getContexts(state, thoughtInContextView.value).map(({ context }) => context)
       .find(context => head(context) === headValue(path))
@@ -85,7 +85,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
 
     // delete thought
     existingThoughtDelete({
-      context: contextOf(pathToContext(simplePath)),
+      context: parentOf(pathToContext(simplePath)),
       showContexts,
       thoughtRanked: head(simplePath)
     }),
@@ -94,17 +94,17 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
     state => {
 
       const next = perma(() => showContexts
-        ? getContextsSortedAndRanked(state, headValue(contextOf(simplePath)))[0]
+        ? getContextsSortedAndRanked(state, headValue(parentOf(simplePath)))[0]
         : firstVisibleChild(state, context)
       )
 
       // Typescript validates with apply but not spread operator here
       // eslint-disable-next-line prefer-spread
-      return setCursorOrBack.apply(null, prev ? [unroot(contextOf(path).concat(prev) as SimplePath), { offset: prev.value.length }] :
+      return setCursorOrBack.apply(null, prev ? [unroot(parentOf(path).concat(prev) as SimplePath), { offset: prev.value.length }] :
         // Case II: set cursor on next thought
         next() ? [unroot(showContexts
-          ? contextOf(path).concat({ value: head((next() as ThoughtContext).context), rank: next().rank })
-          : contextOf(path).concat(next() as Child)
+          ? parentOf(path).concat({ value: head((next() as ThoughtContext).context), rank: next().rank })
+          : parentOf(path).concat(next() as Child)
         ), { offset: 0 }] :
         // Case III: delete last thought in context; set cursor on context
         thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]

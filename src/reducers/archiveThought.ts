@@ -7,7 +7,7 @@ import { Child, Path, ThoughtContext } from '../types'
 // util
 import {
   asyncFocus,
-  contextOf,
+  parentOf,
   ellipsize,
   head,
   headValue,
@@ -53,13 +53,13 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
   if (!path) return state
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, contextOf(pathToContext(path)))
+  const showContexts = isContextViewActive(state, parentOf(pathToContext(path)))
   const contextChain = splitChain(state, path)
   const thoughtsRanked = contextChain.length > 1
     ? lastThoughtsFromContextChain(state, contextChain)
     : path
   const pathParent = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 1]
-    : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
+    : !showContexts && thoughtsRanked.length > 1 ? parentOf(thoughtsRanked) :
     RANKED_ROOT
   const context = pathToContext(pathParent)
   const { value, rank } = head(thoughtsRanked)
@@ -108,11 +108,11 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
     : nextSibling(state, value, context, rank)
   const [cursorNew, offset]: [Path | null, number | undefined] =
     // Case I: set cursor on prev thought
-    prev ? [contextOf(path).concat(prev), prev.value.length] :
+    prev ? [parentOf(path).concat(prev), prev.value.length] :
     // Case II: set cursor on next thought
     next ? [unroot(showContexts
-      ? contextOf(path).concat({ value: head((next as ThoughtContext).context), rank: next.rank })
-      : contextOf(path).concat(next as Child)), 0] :
+      ? parentOf(path).concat({ value: head((next as ThoughtContext).context), rank: next.rank })
+      : parentOf(path).concat(next as Child)), 0] :
     // Case III: delete last thought in context; set cursor on context
     thoughts.length > 1 ? [rootedContextOf(path), head(context).length]
     // Case IV: delete very last thought; remove cursor
@@ -132,7 +132,7 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
 
     isDeletable
       ? existingThoughtDelete({
-        context: showContexts ? context : contextOf(pathToContext(thoughtsRanked)),
+        context: showContexts ? context : parentOf(pathToContext(thoughtsRanked)),
         showContexts,
         thoughtRanked: head(thoughtsRanked),
       })

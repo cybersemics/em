@@ -7,7 +7,7 @@ import { ROOT_TOKEN } from '../../constants'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   head,
   headValue,
@@ -26,7 +26,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
   const cursorContext = pathToContext(cursor || [])
   const cursorChildren = getThoughts(state, cursorContext)
   const isCursorLeaf = cursorChildren.length === 0
-  const ancestorThought = isCursorLeaf ? contextOf(contextOf(cursorContext)) : contextOf(cursorContext)
+  const ancestorThought = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
 
   const ancestorThoughtChildren = getThoughts(state, ancestorThought.length === 0 ? [ROOT_TOKEN] : ancestorThought)
   const isCursorRootChildren = (cursor || []).length === 1

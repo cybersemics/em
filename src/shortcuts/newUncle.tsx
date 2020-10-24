@@ -1,6 +1,6 @@
 import React, { Dispatch } from 'react'
 import { Icon as IconType, Path, Shortcut } from '../types'
-import { contextOf, isDocumentEditable } from '../util'
+import { parentOf, isDocumentEditable } from '../util'
 import { State } from '../util/initialState'
 
 interface NewThought {
@@ -30,7 +30,7 @@ const newUncleShortcut: Shortcut = {
   exec: (dispatch: Dispatch<NewThought>, getState: () => State) => {
     const { cursor } = getState()
     if (!cursor) return
-    dispatch({ type: 'newThought', at: contextOf(cursor) })
+    dispatch({ type: 'newThought', at: parentOf(cursor) })
   }
 }
 

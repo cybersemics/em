@@ -33,7 +33,7 @@ import {
 
 // util
 import {
-  contextOf, pathToContext,
+  parentOf, pathToContext,
 } from '../util'
 
 // selectors
@@ -60,7 +60,7 @@ const mapStateToProps = state => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
-  const contextOfCursor = context ? contextOf(context) : [ROOT_TOKEN]
+  const contextOfCursor = context ? parentOf(context) : [ROOT_TOKEN]
 
   return {
     cursorOnTableView: attributeEquals(state, contextOfCursor, '=view', 'Table'),

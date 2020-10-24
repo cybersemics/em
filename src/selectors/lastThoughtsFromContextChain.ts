@@ -1,5 +1,5 @@
 import { getThought, rankThoughtsFirstMatch } from '../selectors'
-import { contextOf, head, headValue, splice } from '../util'
+import { parentOf, head, headValue, splice } from '../util'
 import { State } from '../util/initialState'
 import { SimplePath, ThoughtContext } from '../types'
 
@@ -10,7 +10,7 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
   const thought = getThought(state, headValue(penult))
   const ult = contextChain[contextChain.length - 1]
   const parent = thought.contexts.find(parent => head(parent.context) === ult[0].value) as ThoughtContext
-  const thoughtsRankedPrepend = contextOf(rankThoughtsFirstMatch(state, parent?.context))
+  const thoughtsRankedPrepend = parentOf(rankThoughtsFirstMatch(state, parent?.context))
   // @ts-ignore
   return thoughtsRankedPrepend.concat(splice(ult, 1, 0, head(penult)))
 }

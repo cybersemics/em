@@ -19,7 +19,7 @@ import { Child, GesturePath, Index, Path, SimplePath, ThoughtContext } from '../
 // util
 import {
   checkIfPathShareSubcontext,
-  contextOf,
+  parentOf,
   ellipsize,
   equalArrays,
   equalPath,
@@ -120,15 +120,15 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const thoughtsResolvedLive = isEditing ? cursor! : thoughtsResolved
   const thoughtsLive = pathToContext(thoughtsResolvedLive)
   const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
-  const showContextsParent = isContextViewActive(state, contextOf(thoughtsLive))
+  const showContextsParent = isContextViewActive(state, parentOf(thoughtsLive))
   const simplePath = showContexts && showContextsParent
-    ? contextOf(props.simplePath)
+    ? parentOf(props.simplePath)
     : props.simplePath
 
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && (props.contextChain ?? []).length === 0
-    ? contextOf(props.simplePath).concat(head(cursor!)) as SimplePath
+    ? parentOf(props.simplePath).concat(head(cursor!)) as SimplePath
     : simplePath
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '', undefined) as Path | undefined
@@ -474,10 +474,10 @@ export const SubthoughtsComponent = ({
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
   const zoomCursor = cursor && (attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
-    || attribute(state, pathToContext(contextOf(cursor)).concat('=children'), '=focus') === 'Zoom')
-  const zoomParent = cursor && (attribute(state, pathToContext(contextOf(cursor)), '=focus') === 'Zoom'
-    || attribute(state, pathToContext(contextOf(contextOf(cursor))).concat('=children'), '=focus') === 'Zoom')
-  const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(contextOf(contextOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
+    || attribute(state, pathToContext(parentOf(cursor)).concat('=children'), '=focus') === 'Zoom')
+  const zoomParent = cursor && (attribute(state, pathToContext(parentOf(cursor)), '=focus') === 'Zoom'
+    || attribute(state, pathToContext(parentOf(parentOf(cursor))).concat('=children'), '=focus') === 'Zoom')
+  const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   const actualDistance =
@@ -487,7 +487,7 @@ export const SubthoughtsComponent = ({
 
   const context = pathToContext(simplePath)
   const contextChildren = context.concat('=children') // children of parent with =children
-  const contextGrandchildren = contextOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
+  const contextGrandchildren = parentOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
   const styleChildren = getStyle(state, contextChildren)
   const styleGrandChildren = getStyle(state, contextGrandchildren)
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'

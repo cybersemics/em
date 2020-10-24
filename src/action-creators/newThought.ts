@@ -7,7 +7,7 @@ import { alert } from '../action-creators'
 // util
 import {
   asyncFocus,
-  contextOf,
+  parentOf,
   ellipsize,
   headValue,
   pathToContext,
@@ -49,10 +49,10 @@ const newThought = ({ offset, preventSplit, value = '' }: { offset: number, prev
   const contextOfCursor = cursor && pathToContext(cursor)
   const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
 
-  const showContexts = cursor && isContextViewActive(state, contextOf(pathToContext(cursor)))
+  const showContexts = cursor && isContextViewActive(state, parentOf(pathToContext(cursor)))
 
-  const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(contextOf(contextOf(cursor)))
-    : !showContexts && cursor.length > 1 ? pathToContext(contextOf(cursor))
+  const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(parentOf(parentOf(cursor)))
+    : !showContexts && cursor.length > 1 ? pathToContext(parentOf(cursor))
     : [ROOT_TOKEN])
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near

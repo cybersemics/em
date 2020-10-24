@@ -4,7 +4,7 @@ import { State } from '../util/initialState'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   headValue,
   isEM,
@@ -30,7 +30,7 @@ const subCategorizeAll = (state: State) => {
 
   if (!cursor) return state
 
-  const cursorParent = contextOf(cursor)
+  const cursorParent = parentOf(cursor)
   const context = pathToContext(cursorParent)
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
@@ -53,7 +53,7 @@ const subCategorizeAll = (state: State) => {
 
   const contextChain = splitChain(state, cursor)
   const thoughtsRanked = cursor.length > 1
-    ? contextOf(contextChain.length > 1
+    ? parentOf(contextChain.length > 1
       ? lastThoughtsFromContextChain(state, contextChain)
       : cursor)
     : RANKED_ROOT

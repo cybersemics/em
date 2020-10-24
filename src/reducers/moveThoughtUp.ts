@@ -4,7 +4,7 @@ import { SimplePath } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   headRank,
   headValue,
@@ -31,7 +31,7 @@ const moveThoughtUp = (state: State) => {
   if (!cursor) return state
 
   const thoughts = pathToContext(cursor)
-  const pathParent = contextOf(cursor)
+  const pathParent = parentOf(cursor)
   const context = pathToContext(pathParent)
   const value = headValue(cursor)
   const rank = headRank(cursor)
@@ -40,7 +40,7 @@ const moveThoughtUp = (state: State) => {
 
   // if the cursor is the first thought or the context is sorted, move the thought to the end of its prev uncle
   const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null
-  const prevUnclePath = prevUncleThought ? contextOf(pathParent).concat(prevUncleThought) : null
+  const prevUnclePath = prevUncleThought ? parentOf(pathParent).concat(prevUncleThought) : null
 
   if (!prevThought && !prevUnclePath) return state
 
@@ -50,7 +50,7 @@ const moveThoughtUp = (state: State) => {
   // metaprogramming functions that prevent moving
   if (isSorted && !prevUnclePath) {
     return alert(state, {
-      value: `Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`
+      value: `Cannot move subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" while sort is enabled.`
     })
   }
   else if (hasChild(state, thoughts, '=readonly')) {
@@ -65,12 +65,12 @@ const moveThoughtUp = (state: State) => {
   }
   else if (hasChild(state, context, '=readonly')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`
+      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are read-only and cannot be moved.`
     })
   }
   else if (hasChild(state, context, '=immovable')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`
+      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are immovable.`
     })
   }
 

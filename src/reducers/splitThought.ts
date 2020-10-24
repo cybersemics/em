@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import xhtmlPurifier from 'xhtml-purifier'
 import { ROOT_TOKEN } from '../constants'
-import { contextOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
+import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getThoughtsRanked, simplifyPath } from '../selectors'
 import { editableRender, existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
 import { State } from '../util/initialState'
@@ -20,7 +20,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
   const simplePath = simplifyPath(state, path)
 
   const thoughts = pathToContext(simplePath)
-  const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
+  const context = thoughts.length > 1 ? parentOf(thoughts) : [ROOT_TOKEN]
 
   // split the value into left and right parts
   const value = headValue(path)
@@ -33,7 +33,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
   */
   const valueLeft = strip(xhtmlPurifier.purify(value.slice(0, offset)), { preserveFormatting: true })
   const valueRight = strip(xhtmlPurifier.purify(value.slice(offset)), { preserveFormatting: true })
-  const pathLeft = contextOf(path).concat({ value: valueLeft, rank: headRank(path) })
+  const pathLeft = parentOf(path).concat({ value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([
 
@@ -56,7 +56,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
     // move children
     state => {
       const thoughtNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
-      const pathRight = contextOf(simplePath).concat({ value: valueRight, rank: thoughtNew!.rank })
+      const pathRight = parentOf(simplePath).concat({ value: valueRight, rank: thoughtNew!.rank })
       const children = getThoughtsRanked(state, pathToContext(pathLeft))
 
       return reducerFlow(children.map(child =>

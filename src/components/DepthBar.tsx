@@ -2,7 +2,7 @@ import React from 'react'
 import classNames from 'classnames'
 import { store } from '../store'
 import { getContexts } from '../selectors'
-import { contextOf, head } from '../util'
+import { parentOf, head } from '../util'
 import { Context } from '../types'
 
 // components
@@ -28,9 +28,9 @@ const DepthBar = ({ numDescendantCharacters, showContexts, thoughtsLive }: Depth
       <p>This helps you quickly recognize contexts with greater depth as you navigate.</p>
     </Modal> : null}
 
-  {(showContexts ? contextOf(thoughtsLive) : thoughtsLive) && numDescendantCharacters > 0 ? <span className={classNames({
+  {(showContexts ? parentOf(thoughtsLive) : thoughtsLive) && numDescendantCharacters > 0 ? <span className={classNames({
     'depth-bar': true,
-    'has-other-contexts': thoughtsLive.length > 1 && (getContexts(store.getState(), head(showContexts ? contextOf(thoughtsLive) : thoughtsLive)).length > 1)
+    'has-other-contexts': thoughtsLive.length > 1 && (getContexts(store.getState(), head(showContexts ? parentOf(thoughtsLive) : thoughtsLive)).length > 1)
   })} style={{ width: Math.log(numDescendantCharacters) + 2 }} /> : null}
 </span>
 

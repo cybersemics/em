@@ -1,11 +1,11 @@
 import { cursorHistory, search as searchReducer, setCursor } from '../reducers'
-import { contextOf, reducerFlow } from '../util'
+import { parentOf, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 
 /** Moves the cursor up one level. */
 const cursorBack = (state: State) => {
   const { cursor: cursorOld, editing, search } = state
-  const cursorNew = cursorOld && contextOf(cursorOld)
+  const cursorNew = cursorOld && parentOf(cursorOld)
 
   return reducerFlow(
 

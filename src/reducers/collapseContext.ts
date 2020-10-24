@@ -1,4 +1,4 @@
-import { contextOf, pathToContext, reducerFlow } from '../util'
+import { parentOf, pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 import { getChildren } from '../selectors'
 import { archiveThought, existingThoughtMove, setCursor } from '../reducers'
@@ -18,12 +18,12 @@ const collapseContext = (state: State) => {
       ...children.map(child =>
         (state: State) => existingThoughtMove(state, {
           oldPath: cursor.concat(child),
-          newPath: contextOf(cursor).concat(child),
+          newPath: parentOf(cursor).concat(child),
         })
       ),
       archiveThought({ path: cursor }),
       setCursor({
-        thoughtsRanked: contextOf(cursor).concat(children[0]),
+        thoughtsRanked: parentOf(cursor).concat(children[0]),
         editing: state.editing,
         offset: 0
       }),

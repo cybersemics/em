@@ -2,7 +2,7 @@
 
 import _ from 'lodash'
 import { produce } from 'immer'
-import { contextOf, equalArrays, hashThought, head, pathToContext, timeDifference, timestamp } from '../util'
+import { parentOf, equalArrays, hashThought, head, pathToContext, timeDifference, timestamp } from '../util'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 
 /** Encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase). */
@@ -238,7 +238,7 @@ const nodeDelete = (tree, oldPath, timestampUpdate = true) => {
      */
     else {
       _.unset(tree, commonPath)
-      _.set(tree, contextOf(commonPath), { leaf: true, lastUpdated: timestamp(), path: oldPath.slice(0, contextOf(commonPath).length) })
+      _.set(tree, parentOf(commonPath), { leaf: true, lastUpdated: timestamp(), path: oldPath.slice(0, parentOf(commonPath).length) })
     }
   }
 }
