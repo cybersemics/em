@@ -7,7 +7,7 @@ import { State } from '../util/initialState'
 // util
 import {
   contextChainToPath,
-  contextOf,
+  parentOf,
   hashContext,
   head,
   headValue,
@@ -65,7 +65,7 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
   /** Returns true if the context is the first column in a table view. */
   const isTableColumn1 = () => attributeEquals(
     state,
-    contextOf(context),
+    parentOf(context),
     '=view',
     'Table'
   )
@@ -119,7 +119,7 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
       // RECURSION
       ...path && path.length >= 1 && depth <= 1
-        ? expandThoughts(state, contextOf(path), contextChain, { depth: depth + 1 })
+        ? expandThoughts(state, parentOf(path), contextChain, { depth: depth + 1 })
         : {}
     }
   )

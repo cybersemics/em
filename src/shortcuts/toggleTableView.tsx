@@ -1,6 +1,6 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Shortcut } from '../types'
-import { contextOf, pathToContext } from '../util'
+import { parentOf, pathToContext } from '../util'
 import { State } from '../util/initialState'
 
 interface ToggleAttribute {
@@ -31,7 +31,7 @@ const toggleTableViewShortcut: Shortcut = {
     if (cursor && cursor.length > 1) {
       dispatch({
         type: 'toggleAttribute',
-        context: pathToContext(contextOf(cursor)),
+        context: pathToContext(parentOf(cursor)),
         key: '=view',
         value: 'Table'
       })

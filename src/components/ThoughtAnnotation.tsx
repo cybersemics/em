@@ -9,7 +9,7 @@ import { Connected, Context, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsizeUrl,
   equalPath,
   // getOffsetWithinContent,
@@ -67,7 +67,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     : unroot(props.thoughtsRanked)
   const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
   const thoughtsRankedLive = isEditing
-    ? contextOf(props.thoughtsRanked).concat(head(props.showContexts ? contextOf(cursor!) : cursor!)) as SimplePath
+    ? parentOf(props.thoughtsRanked).concat(head(props.showContexts ? parentOf(cursor!) : cursor!)) as SimplePath
     : props.thoughtsRanked
 
   return {
@@ -90,7 +90,7 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
   // do not increase numContexts when in an invalid state since the thought has not been updated in state
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
-  const value = headValue(showContexts ? contextOf(thoughtsRanked) : thoughtsRanked)
+  const value = headValue(showContexts ? parentOf(thoughtsRanked) : thoughtsRanked)
   const state = store.getState()
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
@@ -126,7 +126,7 @@ const ThoughtAnnotation = ({ thoughtsRanked, showContexts, showContextBreadcrumb
   </a>
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={contextOf(contextOf(thoughtsRanked))} showContexts={showContexts} /> : null}
+    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(thoughtsRanked))} showContexts={showContexts} /> : null}
 
     {homeContext
       ? <HomeLink/>

@@ -8,7 +8,7 @@ import { Context, Index, Lexeme, Parent, SimplePath, Timestamp } from '../types'
 // util
 import {
   addContext,
-  contextOf,
+  parentOf,
   equalArrays,
   equalThoughtRanked,
   hashContext,
@@ -61,13 +61,13 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const contextEncodedOld = hashContext(thoughtsOld)
   const contextEncodedNew = hashContext(thoughtsNew)
   const thoughtsRankedLiveOld = (showContexts
-    ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
-    : contextOf(thoughtsRanked).concat({ value: oldValue, rank })) as SimplePath
+    ? parentOf(parentOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(parentOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
+    : parentOf(thoughtsRanked).concat({ value: oldValue, rank })) as SimplePath
   // find exact thought from thoughtIndex
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
   const id = headId(thoughtsRanked) || exactThought!.id as string
   const archived = exactThought ? exactThought.archived : null
-  const cursorNew = cursor && contextOf(cursor).concat(head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
+  const cursorNew = cursor && parentOf(cursor).concat(head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
     ? { ...head(cursor), value: newValue }
     : head(cursor))
   const newPath = thoughtsRanked.slice(0, thoughtsRanked.length - 1).concat({ value: newValue, rank: rankInContext || rank })
@@ -123,7 +123,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
     // eslint-disable-next-line fp/no-mutating-assign
     thoughtParentNew = Object.assign({}, thoughtParentOld, {
-      contexts: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
+      contexts: removeContext(thoughtParentOld, parentOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
         id,
         rank,

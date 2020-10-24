@@ -9,7 +9,7 @@ import {
 
 // util
 import {
-  contextOf,
+  parentOf,
   equalArrays,
   head,
   pathToContext,
@@ -180,7 +180,7 @@ const nextInContextView = (state: State, value: string, rank: number, path: Path
       // nextInContextView and nextInThoughtView call each other as part of the recursive traversal structure
       // typescript-eslint incorrectly fails no-use-before-define
       // @ts-ignore
-      : nextInThoughtView(state, rankedContextHead.value, contextOf(context), rankedContextHead.rank, contextOf(path), contextOf(contextChain), true)
+      : nextInThoughtView(state, rankedContextHead.value, parentOf(context), rankedContextHead.rank, parentOf(path), parentOf(contextChain), true)
   }
 
   return null
@@ -210,19 +210,19 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
 
   const thoughtViewPath = perma(() => !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(state, contextChain) : path)
   // pathToContext is expensive than duplicate condition check hence using the former
-  const thoughtViewContext = perma(() => !ignoreChildren && contextChain.length > 1 ? pathToContext(contextOf(thoughtViewPath())) : context)
+  const thoughtViewContext = perma(() => !ignoreChildren && contextChain.length > 1 ? pathToContext(parentOf(thoughtViewPath())) : context)
 
   /** Returns the next uncle in the thought view. */
   const nextUncleInThoughtView = () => {
-    const parentThought = head(contextOf(thoughtViewPath()))
+    const parentThought = head(parentOf(thoughtViewPath()))
 
     /** Gets the next uncle.
      * Only calculate uncle if not at root.
      */
     const nextUncle = () => {
-      const parentContext = context.length === 1 ? [ROOT_TOKEN] : contextOf(thoughtViewContext())
-      const contextChainForParentThought = [...contextChain.slice(0, -1), contextOf(head(contextChain))]
-      const parentPath = contextOf(thoughtViewPath())
+      const parentContext = context.length === 1 ? [ROOT_TOKEN] : parentOf(thoughtViewContext())
+      const contextChainForParentThought = [...contextChain.slice(0, -1), parentOf(head(contextChain))]
+      const parentPath = parentOf(thoughtViewPath())
       return nextInThoughtView(state, parentThought.value, parentContext, parentThought.rank, parentPath, contextChainForParentThought, true)
     }
 
@@ -237,7 +237,7 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
 
   /** Gets the next uncle in the Context View. */
   const nextUncleInContextView = () => {
-    const pathToFirstThoughtInContext = contextOf(contextChain.length > 1 ? contextChain.flat() : thoughtViewPath())
+    const pathToFirstThoughtInContext = parentOf(contextChain.length > 1 ? contextChain.flat() : thoughtViewPath())
     // restricts from working with multilevel context chains
     const rankedContextOfCurrentContext = contextChain[contextChain.length - 2]
     const contextChainTillFirstChildOfContext = [...contextChain.slice(0, -1), [head(contextChain)[0]] as SimplePath]
@@ -253,7 +253,7 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
       contextChain: [] as SimplePath[],
     }
     : nextSibling() ? {
-      nextThoughts: unroot(contextOf(thoughtViewPath()).concat(nextSibling())),
+      nextThoughts: unroot(parentOf(thoughtViewPath()).concat(nextSibling())),
       contextChain: contextChain.slice(0, -1),
     } : nextUncleInThoughtView() || nextUncleInContextView()
 }

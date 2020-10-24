@@ -28,7 +28,7 @@ import { ActionCreator, Child, Path, SimplePath, ThoughtContext } from '../types
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   equalArrays,
   equalPath,
@@ -157,7 +157,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isEditing = equalPath(cursorBeforeEdit, path)
 
   const simplePathLive = isEditing
-    ? contextOf(simplePath).concat(head(showContexts ? contextOf(cursor!) : cursor!)) as SimplePath
+    ? parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath
     : simplePath
 
   const distance = cursor ? Math.max(0,
@@ -166,14 +166,14 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, simplePath)) && getThoughtsRanked(state, pathToContext(cursor || [])).length === 0
+    ? equalPath(rootedContextOf(parentOf(cursor || [])), chain(state, contextChain, simplePath)) && getThoughtsRanked(state, pathToContext(cursor || [])).length === 0
     // parent
-    : equalPath(contextOf(cursor || []), chain(state, contextChain, simplePath))
+    : equalPath(parentOf(cursor || []), chain(state, contextChain, simplePath))
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as SimplePath | undefined
 
   const isCursorGrandparent =
-    equalPath(rootedContextOf(contextOf(cursor || [])), chain(state, contextChain, simplePath))
+    equalPath(rootedContextOf(parentOf(cursor || [])), chain(state, contextChain, simplePath))
   const children = childrenForced || getThoughtsRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const value = headValue(simplePathLive)
@@ -181,7 +181,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   // link URL
   const url = isURL(value) ? value :
   // if the only subthought is a url and the thought is not expanded, link the thought
-    !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(simplePathLive, contextOf(cursor))) ? children[0].value :
+    !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(simplePathLive, parentOf(cursor))) ? children[0].value :
     null
 
   const thought = getThought(state, value)
@@ -226,7 +226,7 @@ const mapDispatchToProps = (dispatch: Dispatch<Action | ActionCreator>) => ({
 const canDrag = (props: ThoughtContainerProps) => {
   const state = store.getState()
   const thoughts = pathToContext(props.simplePathLive!)
-  const context = contextOf(pathToContext(props.simplePathLive!))
+  const context = parentOf(pathToContext(props.simplePathLive!))
   const isDraggable = props.isDraggable || props.isCursorParent
 
   return isDocumentEditable() &&
@@ -271,7 +271,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
   const thoughts = pathToContext(props.simplePathLive!)
-  const context = contextOf(thoughts)
+  const context = parentOf(thoughts)
   const isSorted = getSortPreference(state, context).includes('Alphabetical')
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
@@ -310,7 +310,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // drop on itself or after itself is a noop
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
-  const newPath = unroot(contextOf(thoughtsTo)).concat({
+  const newPath = unroot(parentOf(thoughtsTo)).concat({
     value: headValue(thoughtsFrom),
     rank: getRankBefore(state, thoughtsTo)
   })
@@ -337,7 +337,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
       const alertTo = isRoot(newContext)
         ? 'home'
-        : '"' + ellipsize(headValue(contextOf(thoughtsTo))) + '"'
+        : '"' + ellipsize(headValue(parentOf(thoughtsTo))) + '"'
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
       clearTimeout(globals.errorTimer)
@@ -383,7 +383,7 @@ const Thought = ({
 
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={contextOf(contextOf(simplePath))} showContexts={showContexts} />
+    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} showContexts={showContexts} />
     : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
       store.dispatch(expandContextThought(path))
     }}>... </a></span>
@@ -494,7 +494,7 @@ const ThoughtContainer = ({
   const value = headValue(simplePathLive!)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
-  const homeContext = showContexts && isRoot([head(contextOf(simplePath))])
+  const homeContext = showContexts && isRoot([head(parentOf(simplePath))])
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
@@ -503,7 +503,7 @@ const ThoughtContainer = ({
   const children = childrenForced || getThoughtsRanked(state, pathToContext(contextBinding || simplePathLive!))
 
   // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
-  const contextThought = showContexts && getThought(state, headValue(contextOf(simplePath)))
+  const contextThought = showContexts && getThought(state, headValue(parentOf(simplePath)))
 
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null)) &&
@@ -511,7 +511,7 @@ const ThoughtContainer = ({
 
   const thoughts = pathToContext(simplePath)
   const thoughtsLive = pathToContext(simplePathLive!)
-  const context = contextOf(thoughts)
+  const context = parentOf(thoughts)
   const childrenOptions = getThoughts(state, [...context, 'Options'])
   const options = !isFunction(value) && childrenOptions.length > 0 ?
     childrenOptions.map(child => child.value.toLowerCase())

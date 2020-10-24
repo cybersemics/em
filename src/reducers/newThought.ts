@@ -22,10 +22,10 @@ import {
 
 // util
 import {
-  contextOf,
   ellipsize,
   head,
   headValue,
+  parentOf,
   pathToContext,
   reducerFlow,
   rootedContextOf,
@@ -108,14 +108,14 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   }
 
   const showContexts = isContextViewActive(state, thoughts)
-  const showContextsParent = isContextViewActive(state, pathToContext(contextOf(thoughtsRanked)))
+  const showContextsParent = isContextViewActive(state, pathToContext(parentOf(thoughtsRanked)))
 
   // use the live-edited value
   // const thoughtsLive = showContextsParent
-  //   ? contextOf(contextOf(thoughts)).concat().concat(head(thoughts))
+  //   ? parentOf(parentOf(thoughts)).concat().concat(head(thoughts))
   //   : thoughts
   // const thoughtsRankedLive = showContextsParent
-  //   ? contextOf(contextOf(path).concat({ value: innerTextRef, rank })).concat(head(path))
+  //   ? parentOf(parentOf(path).concat({ value: innerTextRef, rank })).concat(head(path))
   //   : path
 
   // if meta key is pressed, add a child instead of a sibling of the current thought
@@ -143,7 +143,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     !preventSetCursor
       ? setCursor({
         editing: true,
-        thoughtsRanked: (insertNewSubthought ? unroot(path) : contextOf(path))
+        thoughtsRanked: (insertNewSubthought ? unroot(path) : parentOf(path))
           .concat({ value, rank: newRank }),
         offset: offset != null ? offset : value.length,
       })

@@ -31,7 +31,7 @@ import {
   addEmojiSpace,
   asyncFocus,
   clearSelection,
-  contextOf,
+  parentOf,
   ellipsize,
   ellipsizeUrl,
   equalPath,
@@ -155,11 +155,11 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, simplePath) : simplePath
-  const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
+  const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
-  const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
-    : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
+  const context = showContexts && thoughts.length > 2 ? parentOf(parentOf(thoughts))
+    : !showContexts && thoughts.length > 1 ? parentOf(thoughts)
     : [ROOT_TOKEN]
   const childrenOptions = getThoughts(state, [...context, 'Options'])
   const options = childrenOptions.length > 0 ?
@@ -218,7 +218,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
     const simplePathLive = cursor && isEditing
-      ? contextOf(simplePath).concat(head(showContexts ? contextOf(cursor) : cursor))
+      ? parentOf(simplePath).concat(head(showContexts ? parentOf(cursor) : cursor))
       : simplePath
 
     dispatch({

@@ -1,6 +1,6 @@
 // util
 import {
-  contextOf,
+  parentOf,
   head,
 } from '../util'
 
@@ -21,7 +21,7 @@ const preloadSources = async () => (dispatch, getState) => {
   // get a list of all =src contexts with =preload converted to paths
   const paths = getContexts(state, '=preload')
     .filter(parent => head(parent.context) === '=src')
-    .map(parent => rankThoughtsFirstMatch(state, contextOf(parent.context)))
+    .map(parent => rankThoughtsFirstMatch(state, parentOf(parent.context)))
 
   // preload sources
   paths.forEach(path => {

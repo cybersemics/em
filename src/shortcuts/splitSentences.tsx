@@ -2,7 +2,7 @@ import React, { Dispatch } from 'react'
 import _ from 'lodash'
 import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { State } from '../util/initialState'
-import { contextOf, headValue, pathToContext } from '../util'
+import { parentOf, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import { Action } from 'redux'
 import { getThoughts, isContextViewActive } from '../selectors'
@@ -31,9 +31,9 @@ const splitSentencesShortcut: Shortcut = {
       return
     }
     // check if splitSentences creates duplicates
-    const showContexts = cursor && isContextViewActive(state, contextOf(pathToContext(cursor)))
-    const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(contextOf(contextOf(cursor)))
-      : !showContexts && cursor.length > 1 ? pathToContext(contextOf(cursor))
+    const showContexts = cursor && isContextViewActive(state, parentOf(pathToContext(cursor)))
+    const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(parentOf(parentOf(cursor)))
+      : !showContexts && cursor.length > 1 ? pathToContext(parentOf(cursor))
       : [ROOT_TOKEN])
     const siblings = context && getThoughts(state, context).map(({ value }) => value)
     const duplicates = _.intersection(sentences, siblings)

@@ -13,7 +13,7 @@ const isContextViewActive = (state: State, context: Context/* may have cycles */
   // TODO: Figure out why this causes unwanted re-rendering during editing
   // const { contextViews } = state
   // const subthought = perma(() => getSubthoughtUnderSelection(head(context), 3, { state }))
-  // return contextViews[hashContext(context)] || (subthought() && contextViews[hashContext(contextOf(context).concat(subthought()))])
+  // return contextViews[hashContext(context)] || (subthought() && contextViews[hashContext(parentOf(context).concat(subthought()))])
 }
 
 export default isContextViewActive

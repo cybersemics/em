@@ -9,7 +9,7 @@ import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types
 // util
 import {
   addContext,
-  contextOf,
+  parentOf,
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
@@ -249,7 +249,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
   // if duplicate subthoughts are merged then use rank of the duplicate thought in the new path instead of the newly calculated rank
   const updatedNewPath = isPathInCursor && isDuplicateMerge && duplicateSubthought
-    ? contextOf(newPath).concat(duplicateSubthought)
+    ? parentOf(newPath).concat(duplicateSubthought)
     : newPath
 
   const newCursorPath = isPathInCursor

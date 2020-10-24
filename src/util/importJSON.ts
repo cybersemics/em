@@ -8,7 +8,7 @@ import { Child, Context, Index, Lexeme, Parent, Path, SimplePath } from '../type
 // util
 import {
   addThought,
-  contextOf,
+  parentOf,
   createId,
   equalPath,
   equalThoughtRanked,
@@ -75,7 +75,7 @@ const getRankIncrement = (state: State, blocks: Block[], context: Context, destT
 const getStartContext = (path: Path) => {
   const importCursor = equalPath(path, [{ value: EM_TOKEN, rank: 0 }])
     ? path
-    : contextOf(path)
+    : parentOf(path)
   return pathToContext(importCursor)
 }
 
@@ -83,7 +83,7 @@ const getStartContext = (path: Path) => {
 export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[], { skipRoot = false }: ImportHtmlOptions) => {
   const thoughtIndexUpdates: Index<Lexeme> = {}
   const contextIndexUpdates: Index<Parent> = {}
-  const context = pathToContext(contextOf(simplePath))
+  const context = pathToContext(parentOf(simplePath))
   const destThought = head(simplePath)
   const destEmpty = destThought.value === '' && getThoughts(state, pathToContext(simplePath)).length === 0
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
