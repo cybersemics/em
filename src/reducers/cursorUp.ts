@@ -14,7 +14,7 @@ const cursorUp = (state: State) => {
 
   const thoughtBefore = prevSibling(state, value, context, rank)
   const thoughtsRankedBefore = thoughtBefore && unroot(parentOf(path).concat(thoughtBefore))
-  // const prevNieces = thoughtBefore && getThoughtsRanked(thoughtsRankedBefore)
+  // const prevNieces = thoughtBefore && getChildrenRanked(thoughtsRankedBefore)
   // const prevNiece = prevNieces && prevNieces[prevNieces.length - 1]
 
   // TODO: Select deepest previous sibling's descendant (not just previous niece)

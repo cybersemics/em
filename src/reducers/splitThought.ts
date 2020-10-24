@@ -2,7 +2,7 @@ import _ from 'lodash'
 import xhtmlPurifier from 'xhtml-purifier'
 import { ROOT_TOKEN } from '../constants'
 import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
-import { getThoughtAfter, getThoughtsRanked, simplifyPath } from '../selectors'
+import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { editableRender, existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'
@@ -57,7 +57,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
     state => {
       const thoughtNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
       const pathRight = parentOf(simplePath).concat({ value: valueRight, rank: thoughtNew!.rank })
-      const children = getThoughtsRanked(state, pathToContext(pathLeft))
+      const children = getChildrenRanked(state, pathToContext(pathLeft))
 
       return reducerFlow(children.map(child =>
         existingThoughtMove({

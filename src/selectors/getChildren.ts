@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { Child, Context } from '../types'
 import { State } from '../util/initialState'
-import { getSortPreference, getThoughts, getThoughtsRanked, getThoughtsSorted, hasChild } from '../selectors'
-import { head, isFunction, unroot } from '../util'
+import { getSortPreference, getThought, getThoughts, getThoughtsSorted, hasChild } from '../selectors'
+import { compareByRank, head, isFunction, sort, unroot } from '../util'
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
@@ -41,8 +41,17 @@ export const getChildren = getVisibleThoughts(getThoughts)
 /** Gets all visible children within a context sorted by rank or sort preference. */
 export const getChildrenSorted = (state: State, context: Context) => {
   const sortPreference = getSortPreference(state, context)
-  const getThoughtsFunction = sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked
+  const getThoughtsFunction = sortPreference === 'Alphabetical' ? getThoughtsSorted : getChildrenRanked
   return getVisibleThoughts(getThoughtsFunction, state, context)
+}
+
+/** Generates children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
+export const getChildrenRanked = (state: State, context: Context): Child[] => {
+  return sort(
+    getThoughts(state, context)
+      .filter(child => getThought(state, child.value)),
+    compareByRank
+  )
 }
 
 /** Returns the first visible child of a context. */

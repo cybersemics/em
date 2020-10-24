@@ -52,7 +52,7 @@ import {
   getStyle,
   getThought,
   getThoughts,
-  getThoughtsRanked,
+  getChildrenRanked,
   getThoughtsSorted,
   isChildVisible,
   isContextViewActive,
@@ -260,10 +260,10 @@ const evalCode = ({ simplePath }: { simplePath: SimplePath }) => {
         rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
       findOne: (predicate: (s: string) => boolean) =>
         Object.keys(thoughts.thoughtIndex).find(predicate),
-      home: () => getThoughtsRanked(state, [ROOT_TOKEN]),
+      home: () => getChildrenRanked(state, [ROOT_TOKEN]),
       thought: {
         ...getThought(state, headValue(simplePath)),
-        children: () => getThoughtsRanked(state, pathToContext(simplePath))
+        children: () => getChildrenRanked(state, pathToContext(simplePath))
       }
     }
     codeResults = evaluate(ast, env)
@@ -390,7 +390,7 @@ export const SubthoughtsComponent = ({
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))
     : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || simplePath))
-    : getThoughtsRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
+    : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding

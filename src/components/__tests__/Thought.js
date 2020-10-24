@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { getThoughtsRanked } from '../../selectors'
+import { getChildrenRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { act } from 'react-dom/test-utils'
@@ -38,7 +38,7 @@ it('create, navigate, and edit thoughts', async () => {
   act(jest.runOnlyPendingTimers)
 
   // state
-  const subthoughts = getThoughtsRanked(store.getState(), ['a'])
+  const subthoughts = getChildrenRanked(store.getState(), ['a'])
   expect(subthoughts).toHaveLength(2)
   expect(subthoughts[0]).toMatchObject({ value: '', rank: -1 })
   expect(subthoughts[1]).toMatchObject({ value: 'a1', rank: 0 })

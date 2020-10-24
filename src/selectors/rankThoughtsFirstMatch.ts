@@ -1,6 +1,6 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { contextChainToPath, equalArrays, equalThoughtRanked, head, headValue, isRoot, pathToContext, unroot } from '../util'
-import { getContexts, getContextsSortedAndRanked, getThought, getThoughtsRanked, isContextViewActive, splitChain } from '../selectors'
+import { getContexts, getContextsSortedAndRanked, getThought, getChildrenRanked, isContextViewActive, splitChain } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Path } from '../types'
 
@@ -32,7 +32,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
       : ((thought && thought.contexts) || []).filter(p => equalArrays(p.context, context))
 
     const contextThoughts = parents.length > 1
-      ? getThoughtsRanked(state, pathToContext(path))
+      ? getChildrenRanked(state, pathToContext(path))
       : []
 
     // there may be duplicate parents that are missing from contextIndex

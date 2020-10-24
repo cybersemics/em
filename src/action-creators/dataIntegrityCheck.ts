@@ -24,7 +24,7 @@ import {
   getSetting,
   getThought,
   getThoughts,
-  getThoughtsRanked,
+  getChildrenRanked,
   simplifyPath,
   splitChain,
 } from '../selectors'
@@ -117,7 +117,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
     }
 
     // recreate thoughts missing in contextIndex
-    // const contextSubthoughts = getThoughtsRanked(state, pathContext)
+    // const contextSubthoughts = getChildrenRanked(state, pathContext)
     if (recreateMissingContextIndex) {
       const contextIndexUpdates = thought.contexts.reduce((accum: any, cx: ThoughtContext) => {
         const otherContextChildren = getThoughts(state, cx.context)
@@ -163,7 +163,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
 
     // sync divergent ranks
     if (syncDivergentRanks) {
-      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedParentOf(pathToContext(simplePath)))
+      const contextIndexThoughtsMatchingValue = getChildrenRanked(state, rootedParentOf(pathToContext(simplePath)))
         .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {
