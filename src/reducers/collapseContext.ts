@@ -1,17 +1,9 @@
 import { contextOf, pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
+import { getChildren } from '../selectors'
+import { archiveThought, existingThoughtMove, setCursor } from '../reducers'
 
-import {
-  getChildren,
-} from '../selectors'
-
-import {
-  archiveThought,
-  existingThoughtMove,
-  setCursor,
-} from '../reducers'
-
-/** Collpases the active thought. */
+/** Collapses the active thought. */
 const collapseContext = (state: State) => {
   const { cursor } = state
 
