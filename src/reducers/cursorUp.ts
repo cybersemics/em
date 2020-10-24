@@ -19,7 +19,7 @@ const cursorUp = (state: State) => {
 
   // TODO: Select deepest previous sibling's descendant (not just previous niece)
 
-  const prevThoughtsRanked =
+  const prevPath =
     // select prev sibling
     thoughtBefore ? pathBefore
     // select parent
@@ -28,8 +28,8 @@ const cursorUp = (state: State) => {
     // prevNiece ? unroot(pathBefore.concat(prevNiece))
     : null // see TODO
 
-  return prevThoughtsRanked
-    ? setCursor(state, { path: prevThoughtsRanked })
+  return prevPath
+    ? setCursor(state, { path: prevPath })
     : state
 }
 
