@@ -27,10 +27,10 @@ const updateUrlHistory = (state: State, path = RANKED_ROOT, { replace, contextVi
   const encoded = path ? hashContext(pathToContext(path)) : null
 
   // convert decoded root thought to null cursor
-  const thoughtsRankedDecoded = isRoot(decoded.path) ? null : decoded.path
+  const pathDecoded = isRoot(decoded.path) ? null : decoded.path
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalPath(thoughtsRankedDecoded, path) && decoded.contextViews[encoded!] === (contextViews || state.contextViews)[encoded!]) return
+  if (equalPath(pathDecoded, path) && decoded.contextViews[encoded!] === (contextViews || state.contextViews)[encoded!]) return
 
   const stateWithNewContextViews = { ...state, contextViews: contextViews || state.contextViews || decoded.contextViews }
 
