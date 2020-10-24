@@ -68,7 +68,7 @@ const deleteEmptyThought = (state: State) => {
     if (prev) {
 
       const valueNew = prev.value + value
-      const thoughtsRankedPrevNew = parentOf(path).concat({
+      const pathPrevNew = parentOf(path).concat({
         value: valueNew,
         rank: prev.rank
       })
@@ -87,7 +87,7 @@ const deleteEmptyThought = (state: State) => {
         ...children.map((child, i) =>
           (state: State) => existingThoughtMove(state, {
             oldPath: path.concat(child),
-            newPath: thoughtsRankedPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(thoughtsRankedPrevNew)) + i })
+            newPath: pathPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(pathPrevNew)) + i })
           })
         ),
 
@@ -99,7 +99,7 @@ const deleteEmptyThought = (state: State) => {
 
         // move the cursor to the new thought at the correct offset
         setCursor({
-          path: thoughtsRankedPrevNew,
+          path: pathPrevNew,
           offset: prev.value.length,
           editing
         }),
