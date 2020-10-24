@@ -53,7 +53,7 @@ import {
   getThought,
   getThoughts,
   getChildrenRanked,
-  getThoughtsSorted,
+  getChildrenSorted,
   isChildVisible,
   isContextViewActive,
 } from '../selectors'
@@ -389,7 +389,7 @@ export const SubthoughtsComponent = ({
     // @ts-ignore
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))
-    : sortPreference === 'Alphabetical' ? getThoughtsSorted(state, pathToContext(contextBinding || simplePath))
+    : sortPreference === 'Alphabetical' ? getChildrenSorted(state, pathToContext(contextBinding || simplePath))
     : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
