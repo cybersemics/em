@@ -36,7 +36,6 @@ export interface State {
   archived?: boolean,
   authenticated: boolean,
   autologin: boolean,
-  codeView?: Path | null,
   contextViews: Index<boolean>,
   cursor: Path | null,
   cursorBeforeEdit: Path | null,

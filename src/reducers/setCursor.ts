@@ -142,7 +142,6 @@ const setCursor = (state: State, {
         : null,
       cursor: thoughtsResolved,
       cursorBeforeEdit: thoughtsResolved,
-      codeView: null,
       cursorHistory: cursorHistoryClear ? [] :
       cursorHistoryPop ? state.cursorHistory.slice(0, -1)
       : state.cursorHistory,
