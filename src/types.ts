@@ -33,7 +33,6 @@ export interface Ref {
   update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>,
 }
 
-
 export interface Snapshot<T = any> {
   val: () => T,
 }
@@ -42,6 +41,10 @@ declare global {
   interface Window {
     firebase: Firebase,
     em: unknown,
+  }
+
+  interface Navigator {
+    standalone: boolean,
   }
 }
 
@@ -93,7 +96,6 @@ export interface ThoughtContext {
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
 export interface Lexeme {
   id?: string, // db only; not the same as Child id
-  rank: number,
   value: string,
   contexts: ThoughtContext[],
   created: Timestamp,

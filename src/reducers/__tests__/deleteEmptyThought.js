@@ -71,7 +71,7 @@ it('do nothing if there is no cursor', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     deleteEmptyThought,
   ]
 
@@ -238,7 +238,7 @@ describe('mount', () => {
     store.dispatch([
       importText(RANKED_ROOT, `- apple
 - banana`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'banana', rank: 1 }] },
+      { type: 'setCursor', path: [{ value: 'banana', rank: 1 }] },
       { type: 'deleteEmptyThought' },
     ])
     act(jest.runOnlyPendingTimers)

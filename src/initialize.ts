@@ -1,7 +1,7 @@
 import './App.css'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
-import { getContexts, getThought, getThoughts, getThoughtsRanked } from './selectors'
+import { getContexts, getThought, getAllChildren, getChildrenRanked } from './selectors'
 import { State } from './util/initialState'
 
 // util
@@ -63,8 +63,8 @@ window.em = {
   store,
   getContexts: withState(getContexts),
   getThought: withState(getThought),
-  getThoughts: withState(getThoughts),
-  getThoughtsRanked: withState(getThoughtsRanked),
+  getAllChildren: withState(getAllChildren),
+  getChildrenRanked: withState(getChildrenRanked),
   hashContext,
   hashThought,
 }

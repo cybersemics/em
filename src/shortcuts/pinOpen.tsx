@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
-import { contextOf, pathToContext } from '../util'
+import { parentOf, pathToContext } from '../util'
 import { State } from '../util/initialState'
 
 interface ToggleAttribute {
@@ -30,7 +30,7 @@ const pinOpenShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     if (cursor) {
-      const context = pathToContext(contextOf(cursor))
+      const context = pathToContext(parentOf(cursor))
       const isPinned = attributeEquals(state, context, '=pin', 'true')
       dispatch({
         type: 'toggleAttribute',

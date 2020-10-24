@@ -18,7 +18,7 @@ import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
 import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, ROOT_TOKEN, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { attribute, attributeEquals, getSetting, subtree, theme } from '../selectors'
-import { contextOf, pathToContext } from '../util'
+import { parentOf, pathToContext } from '../util'
 
 // components
 import TriangleLeft from './TriangleLeft'
@@ -35,7 +35,7 @@ const mapStateToProps = state => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
-  const contextOfCursor = context ? contextOf(context) : [ROOT_TOKEN]
+  const contextOfCursor = context ? parentOf(context) : [ROOT_TOKEN]
 
   return {
     cursorOnTableView: attributeEquals(state, contextOfCursor, '=view', 'Table'),

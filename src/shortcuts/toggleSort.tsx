@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
-import { pathToContext, rootedContextOf } from '../util'
+import { pathToContext, rootedParentOf } from '../util'
 import { State } from '../util/initialState'
 import { ROOT_TOKEN } from '../constants'
 
@@ -14,7 +14,7 @@ interface ToggleAttribute {
 
 interface SetCursor {
   type: 'setCursor',
-  thoughtsRanked: Path | null,
+  path: Path | null,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -43,12 +43,12 @@ const toggleSortShortcut: Shortcut = {
 
     dispatch({
       type: 'toggleAttribute',
-      context: pathToContext(rootedContextOf(cursor!)) || [ROOT_TOKEN],
+      context: pathToContext(rootedParentOf(cursor!)) || [ROOT_TOKEN],
       key: '=sort',
       value: sortPreference
     })
 
-    if (cursor) dispatch({ type: 'setCursor', thoughtsRanked: state.cursor })
+    if (cursor) dispatch({ type: 'setCursor', path: state.cursor })
   }
 }
 

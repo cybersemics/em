@@ -2,6 +2,7 @@ import { ROOT_TOKEN } from '../constants'
 import { componentToThought, hashContext, owner } from '../util'
 import { rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
+import { Index } from '../types'
 
 /** Parses the thoughts from the url. */
 const decodeThoughtsUrl = (state: State, pathname: string) => {
@@ -20,14 +21,14 @@ const decodeThoughtsUrl = (state: State, pathname: string) => {
       ...accum,
       [hashContext(pathUnranked.slice(0, i + 1))]: true
     } : accum,
-  {})
+  {} as Index<boolean>)
 
   // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
-  const thoughtsRanked = rankThoughtsFirstMatch({ ...state, contextViews }, pathUnranked)
+  const path = rankThoughtsFirstMatch({ ...state, contextViews }, pathUnranked)
 
   return {
     contextViews,
-    thoughtsRanked,
+    path: path,
     owner: urlOwner,
   }
 }

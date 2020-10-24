@@ -2,14 +2,14 @@ import _ from 'lodash'
 import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getThoughts, getThoughtsRanked } from '../selectors'
+import { getNextRank, getThought, getAllChildren, getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
 // util
 import {
   addContext,
-  contextOf,
+  parentOf,
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
@@ -23,7 +23,7 @@ import {
   reducerFlow,
   removeContext,
   removeDuplicatedContext,
-  rootedContextOf,
+  rootedParentOf,
   subsetThoughts,
   timestamp,
 } from '../util'
@@ -49,8 +49,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const key = hashThought(value)
   const oldRank = headRank(oldPath)
   const newRank = headRank(newPath)
-  const oldContext = rootedContextOf(oldThoughts)
-  const newContext = rootedContextOf(newThoughts)
+  const oldContext = rootedParentOf(oldThoughts)
+  const newContext = rootedParentOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
 
@@ -86,15 +86,15 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const contextEncodedNew = hashContext(newContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
-  const subthoughtsOld = getThoughts(state, oldContext)
+  const subthoughtsOld = getAllChildren(state, oldContext)
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const duplicateSubthought = getThoughtsRanked(state, newContext)
+  const duplicateSubthought = getChildrenRanked(state, newContext)
     .find(equalThoughtValue(value))
 
   const isDuplicateMerge = duplicateSubthought && !sameContext
 
-  const subthoughtsNew = getThoughts(state, newContext)
+  const subthoughtsNew = getAllChildren(state, newContext)
     .filter(child => child.value !== value)
     .concat({
       value,
@@ -105,12 +105,12 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     })
 
   /** Updates descendants. */
-  const recursiveUpdates = (oldThoughtsRanked: Path, newThoughtsRanked: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveMoveResult> = {}): Index<RecursiveMoveResult> => {
+  const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveMoveResult> = {}): Index<RecursiveMoveResult> => {
 
-    const newLastRank = getNextRank(state, pathToContext(newThoughtsRanked))
+    const newLastRank = getNextRank(state, pathToContext(pathNew))
 
-    const oldThoughts = pathToContext(oldThoughtsRanked)
-    return getThoughtsRanked(state, oldThoughts).reduce((accum, child, i) => {
+    const oldThoughts = pathToContext(pathOld)
+    return getChildrenRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
 
@@ -155,7 +155,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
       return {
         ...accumNew,
-        ...recursiveUpdates(oldThoughtsRanked.concat(child), newThoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
+        ...recursiveUpdates(pathOld.concat(child), pathNew.concat(child), contextRecursive.concat(child.value), accumNew)
       }
     }, {} as Index<RecursiveMoveResult>)
   }
@@ -174,9 +174,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         const contextEncodedNew = hashContext(contextNew)
         const accumChildrenOld = accum[contextEncodedOld]?.children
         const accumChildrenNew = accum[contextEncodedNew]?.children
-        const childrenOld = (accumChildrenOld || getThoughts(state, contextOld))
+        const childrenOld = (accumChildrenOld || getAllChildren(state, contextOld))
           .filter((child: Child) => child.value !== result.value)
-        const childrenNew = (accumChildrenNew || getThoughts(state, contextNew))
+        const childrenNew = (accumChildrenNew || getAllChildren(state, contextNew))
           .filter((child: Child) => child.value !== result.value)
           .concat({
             value: result.value,
@@ -236,7 +236,11 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     (child: Child) => {
       const updatedThought = descendantUpdatesResult[hashThought(child.value)]
       // child.id is undefined sometimes. Unable to reproduce.
-      return { ...child, rank: updatedThought ? updatedThought.rank : child.rank, id: child.id ?? null }
+      return {
+        ...child,
+        rank: updatedThought ? updatedThought.rank : child.rank,
+        id: child.id ?? '',
+      } as Child
     }
   )
 
@@ -245,7 +249,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
   // if duplicate subthoughts are merged then use rank of the duplicate thought in the new path instead of the newly calculated rank
   const updatedNewPath = isPathInCursor && isDuplicateMerge && duplicateSubthought
-    ? contextOf(newPath).concat(duplicateSubthought)
+    ? parentOf(newPath).concat(duplicateSubthought)
     : newPath
 
   const newCursorPath = isPathInCursor

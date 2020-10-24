@@ -4,7 +4,7 @@ import * as db from '../data-providers/dexie'
 import * as firebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
-import { decodeContextUrl, getThoughtsOfEncodedContext, hasSyncs } from '../selectors'
+import { decodeContextUrl, getAllChildrenByContextHash, hasSyncs } from '../selectors'
 import { equalArrays, hashContext, mergeThoughts, pathToContext, unroot } from '../util'
 import { State, ThoughtsInterface } from '../util/initialState'
 import { Context, ContextHash, Index, Lexeme, Parent, Path } from '../types'
@@ -60,7 +60,7 @@ const nextPending = (state: State, pending: Index<Context>, visibleContexts: Ind
 
   return _.reduce(expandedKeys, (accum, key) => {
     const context = visibleContexts[key]
-    const children = getThoughtsOfEncodedContext(state, key)
+    const children = getAllChildrenByContextHash(state, key)
     return {
       ...accum,
 

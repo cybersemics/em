@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
-import { contextOf, getElementPaddings, pathToContext, scrollCursorIntoView } from '../util'
+import { parentOf, getElementPaddings, pathToContext, scrollCursorIntoView } from '../util'
 import { State } from '../util/initialState'
 import { Action } from 'redux'
 
@@ -42,7 +42,7 @@ const cursorUpShortcut: Shortcut = {
         }
       }
 
-      const contextRanked = contextOf(cursor)
+      const contextRanked = parentOf(cursor)
       const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode

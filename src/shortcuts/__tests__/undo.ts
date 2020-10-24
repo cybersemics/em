@@ -47,13 +47,13 @@ it('undo thought change', async () => {
       - a
       - b`
     ),
-    { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: '0' }] },
+    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] },
     {
       type: 'existingThoughtChange',
       newValue: 'aa',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     },
     { type: 'undoAction' }
   ])
@@ -78,7 +78,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
       - c
       - d`
     ),
-    { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
+    { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
     { type: 'indent' },
     {
       type: 'existingThoughtChange',
@@ -86,12 +86,12 @@ it('group all navigation actions following an undoable(non-navigation) action an
       oldValue: 'b',
       context: ['a'],
       rankInContext: 0,
-      thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
     },
     { type: 'cursorBack' },
     { type: 'moveThoughtDown' },
     { type: 'cursorDown' },
-    { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b1', rank: 0 }] },
+    { type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'b1', rank: 0 }] },
     // undo 'moveThoughtDown', 'cursorDown' and 'setCursor'
     { type: 'undoAction' }
   ])
@@ -135,17 +135,17 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
         - c
         - d`
     ),
-    { type: 'setCursor', thoughtsRanked: null },
+    { type: 'setCursor', path: null },
     {
       type: 'existingThoughtChange',
       context: ['a'],
       oldValue: 'b',
       newValue: 'bd',
       rankInContext: 0,
-      thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
     },
     // dispensible set cursor (which only updates datanonce)
-    { type: 'setCursor', thoughtsRanked: null },
+    { type: 'setCursor', path: null },
     // undo setCursor and thoughtChange in a sinle action
     { type: 'undoAction' }
   ])
@@ -168,7 +168,7 @@ it('state remains unchanged if there are no inverse patches', () => {
     - a
      - b
      - c
-     - d`)
+     - d`, { preventSetCursor: true })
   )
 
   const prevState = store.getState()
@@ -195,7 +195,7 @@ it('newThought action should be merged with the succeeding patch', () => {
       oldValue: 'd',
       newValue: 'd1',
       rankInContext: 3,
-      thoughtsRanked: [
+      path: [
         {
           value: 'd',
           rank: 3,
@@ -230,14 +230,14 @@ it('undo contiguous changes', () => {
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'A', rank: 0 }]
+      path: [{ value: 'A', rank: 0 }]
     },
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic City',
       oldValue: 'Atlantic',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
+      path: [{ value: 'Atlantic', rank: 0 }]
     },
     { type: 'undoAction' }
   ])
@@ -260,7 +260,7 @@ it('state.alert is omitted from the undo patch', () => {
       - A
       - B`
     ),
-    { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] },
+    { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
     { type: 'archiveThought' },
   ])
   const { inversePatches } = store.getState()
@@ -280,14 +280,14 @@ it('clear patches when any undoable action is dispatched', () => {
   store.dispatch([
     importText(RANKED_ROOT, `
       - A
-      - B`
+      - B`, { preventSetCursor: true }
     ),
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'A', rank: 0 }]
+      path: [{ value: 'A', rank: 0 }]
     },
     { type: 'newThought', value: 'New Jersey' },
     { type: 'undoAction' },

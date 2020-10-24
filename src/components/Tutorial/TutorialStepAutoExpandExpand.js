@@ -1,15 +1,8 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
 import { isMobile } from '../../browser'
-
-// util
-import {
-  ellipsize,
-  pathToContext,
-} from '../../util'
-
-// selectors
-import getThoughtsRanked from '../../selectors/getThoughtsRanked'
+import { getChildrenRanked } from '../../selectors'
+import { ellipsize, pathToContext } from '../../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpandExpand = ({ cursor, rootSubthoughts = [] }) => {
@@ -18,13 +11,13 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootSubthoughts = [] }) => {
   const rootSubthoughtNotCursorWithSubthoughts = () =>
     rootSubthoughts.find(child =>
       (!cursor || pathToContext(cursor).indexOf(child.value) === -1) &&
-      getThoughtsRanked(store.getState(), [child]).length > 0
+      getChildrenRanked(store.getState(), [child]).length > 0
     )
 
   /** Gets a child of a thought in the root that is not the cursor. */
   const rootGrandchildNotCursor = () => {
     const uncle = rootSubthoughtNotCursorWithSubthoughts()
-    return uncle ? getThoughtsRanked(store.getState(), [uncle])[0] : null
+    return uncle ? getChildrenRanked(store.getState(), [uncle])[0] : null
   }
   return <Fragment>
     {rootGrandchildNotCursor() ? <p>Notice that "{ellipsize(rootGrandchildNotCursor().value)}" is hidden now.</p> : ''}

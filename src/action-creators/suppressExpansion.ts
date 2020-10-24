@@ -15,7 +15,7 @@ const suppressExpansion = ({ cancel, duration }: Options = {}): ActionCreator =>
   const disableSuppressExpansion = () => {
     globals.suppressExpansion = false
     const { cursor, noteFocus } = getState()
-    dispatch({ type: 'setCursor', thoughtsRanked: cursor, noteFocus: noteFocus }) // preserve noteFocus
+    dispatch({ type: 'setCursor', path: cursor, noteFocus: noteFocus }) // preserve noteFocus
   }
 
   /** Enables the global suppressExpansion flag. */

@@ -1,5 +1,5 @@
-import { contextOf, headRank, headValue } from '../util'
-import { getThoughtsRanked } from '../selectors'
+import { parentOf, headRank, headValue, pathToContext } from '../util'
+import { getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
@@ -12,8 +12,8 @@ const isBefore = (state: State, simplePathA: SimplePath, simplePathB: SimplePath
   const rankA = headRank(simplePathA)
   const valueB = headValue(simplePathB)
   const rankB = headRank(simplePathB)
-  const context = contextOf(simplePathA)
-  const children = getThoughtsRanked(state, context)
+  const parentPathA = parentOf(simplePathA)
+  const children = getChildrenRanked(state, pathToContext(parentPathA))
 
   if (children.length === 0 || valueA === undefined || valueB === undefined) {
     return false

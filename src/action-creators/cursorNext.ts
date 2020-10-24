@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../constants'
 import { suppressExpansion } from '../action-creators'
-import { contextOf, scrollCursorIntoView } from '../util'
+import { parentOf, scrollCursorIntoView } from '../util'
 import { ActionCreator } from '../types'
 
 // must be imported after util (???)
@@ -14,7 +14,7 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
   if (!cursor) {
     const children = getChildrenSorted(state, [ROOT_TOKEN])
     if (children.length > 0) {
-      dispatch({ type: 'setCursor', thoughtsRanked: [children[0]] })
+      dispatch({ type: 'setCursor', path: [children[0]] })
       setTimeout(scrollCursorIntoView)
     }
     return
@@ -26,8 +26,8 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession
   dispatch(suppressExpansion({ duration: 100 }))
 
-  const nextThoughtsRanked = contextOf(cursor).concat(next)
-  dispatch({ type: 'setCursor', thoughtsRanked: nextThoughtsRanked })
+  const path = parentOf(cursor).concat(next)
+  dispatch({ type: 'setCursor', path })
   setTimeout(scrollCursorIntoView)
 }
 

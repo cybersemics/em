@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getThought, getThoughts } from '../selectors'
+import { getNextRank, getThought, getAllChildren } from '../selectors'
 import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
 import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent } from '../types'
@@ -37,7 +37,7 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
       id,
       lastUpdated: timestamp()
     }
-    const children = getThoughts(state, contextActual)
+    const children = getAllChildren(state, contextActual)
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
       .concat(newContextSubthought)
     contextIndexUpdates[contextEncoded] = {

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
-import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
+import { getRankAfter, getThought, getAllChildren, nextSibling } from '../selectors'
 import { Block } from '../action-creators/importText'
 import { State } from './initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
@@ -8,7 +8,7 @@ import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } fr
 // util
 import {
   addThought,
-  contextOf,
+  parentOf,
   createId,
   equalPath,
   equalThoughtRanked,
@@ -18,7 +18,7 @@ import {
   headRank,
   pathToContext,
   removeContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
 } from '../util'
 
@@ -77,7 +77,7 @@ const getRankIncrement = (state: State, blocks: Block[], context: Context, destT
 const getStartContext = (path: Path) => {
   const importCursor = equalPath(path, [{ value: EM_TOKEN, rank: 0 }])
     ? path
-    : contextOf(path)
+    : parentOf(path)
   return pathToContext(importCursor)
 }
 
@@ -85,9 +85,9 @@ const getStartContext = (path: Path) => {
 export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[], { lastUpdated = timestamp(), skipRoot = false }: ImportJSONOptions) => {
   const thoughtIndexUpdates: Index<Lexeme> = {}
   const contextIndexUpdates: Index<Parent> = {}
-  const context = pathToContext(contextOf(simplePath))
+  const context = pathToContext(parentOf(simplePath))
   const destThought = head(simplePath)
-  const destEmpty = destThought.value === '' && getThoughts(state, pathToContext(simplePath)).length === 0
+  const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(simplePath)).length === 0
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const contextIndex = { ...state.thoughts.contextIndex }
   const rankStart = getRankAfter(state, simplePath)
@@ -98,12 +98,12 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
     const thought = getThought(state, '')
     if (thought && thought.contexts && thought.contexts.length > 1) {
       thoughtIndexUpdates[hashThought('')] = removeContext(thought, context, headRank(simplePath))
-      const rootedContext = pathToContext(rootedContextOf(simplePath))
+      const rootedContext = pathToContext(rootedParentOf(simplePath))
       const contextEncoded = hashContext(rootedContext)
       contextIndexUpdates[contextEncoded] = {
         ...contextIndexUpdates[contextEncoded],
         context: rootedContext,
-        children: getThoughts(state, rootedContext)
+        children: getAllChildren(state, rootedContext)
           .filter(child => !equalThoughtRanked(child, destThought)),
         lastUpdated,
       }

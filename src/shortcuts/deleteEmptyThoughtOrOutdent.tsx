@@ -1,10 +1,10 @@
 import React, { Dispatch } from 'react'
-import { contextOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
+import { parentOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
 import {
   getChildren,
   getThoughtBefore,
-  getThoughts,
-  getThoughtsRanked,
+  getAllChildren,
+  getChildrenRanked,
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
@@ -50,12 +50,12 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   if (isDivider(headValue(cursor))) return true
 
   // can't delete in context view (TODO)
-  const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
+  const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
   if (showContexts) return false
 
   const contextChain = splitChain(state, cursor)
-  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
-  const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
+  const path = lastThoughtsFromContextChain(state, contextChain)
+  const hasChildren = getChildrenRanked(state, pathToContext(path)).length > 0
   const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
@@ -96,7 +96,7 @@ const canExecuteOutdent = (state: State) => {
     offset === 0 &&
     isDocumentEditable() &&
     headValue(cursor).length !== 0 &&
-    getChildren(state, contextOf(pathToContext(cursor))).length === 1
+    getChildren(state, parentOf(pathToContext(cursor))).length === 1
 }
 
 /** A selector that returns true if merged thought value is duplicate. */
@@ -110,13 +110,13 @@ const isMergedThoughtDuplicate = (state: State) => {
   const prevThought = getThoughtBefore(state, simplePath)
   if (!prevThought) return false
   const contextChain = splitChain(state, cursor)
-  const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
-  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
+  const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
+  const path = lastThoughtsFromContextChain(state, contextChain)
   const mergedThoughtValue = prevThought.value + headValue(cursor)
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
-    : !showContexts && thoughtsRanked.length > 1 ? contextOf(thoughtsRanked) :
+    : !showContexts && path.length > 1 ? parentOf(path) :
     RANKED_ROOT)
-  const siblings = getThoughts(state, context)
+  const siblings = getAllChildren(state, context)
   const isDuplicate = !siblings.every(thought => thought.value !== mergedThoughtValue)
   return isDuplicate
 }

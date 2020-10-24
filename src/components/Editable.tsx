@@ -31,7 +31,7 @@ import {
   addEmojiSpace,
   asyncFocus,
   clearSelection,
-  contextOf,
+  parentOf,
   ellipsize,
   ellipsizeUrl,
   equalPath,
@@ -55,7 +55,7 @@ import {
   getSetting,
   getStyle,
   getThought,
-  getThoughts,
+  getAllChildren,
   hasChild,
   isContextViewActive,
 } from '../selectors'
@@ -155,13 +155,13 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const thoughtsResolved = contextChain.length ? chain(state, contextChain, simplePath) : simplePath
-  const value = head(showContexts ? contextOf(thoughts) : thoughts) || ''
+  const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
-  const context = showContexts && thoughts.length > 2 ? contextOf(contextOf(thoughts))
-    : !showContexts && thoughts.length > 1 ? contextOf(thoughts)
+  const context = showContexts && thoughts.length > 2 ? parentOf(parentOf(thoughts))
+    : !showContexts && thoughts.length > 1 ? parentOf(thoughts)
     : [ROOT_TOKEN]
-  const childrenOptions = getThoughts(state, [...context, 'Options'])
+  const childrenOptions = getAllChildren(state, [...context, 'Options'])
   const options = childrenOptions.length > 0 ?
     childrenOptions.map(child => child.value.toLowerCase())
     : null
@@ -175,7 +175,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
   }, [state.editableNonce])
 
   const thought = getThought(state, value)
-  const childrenLabel = getThoughts(state, [...thoughts, '=label'])
+  const childrenLabel = getAllChildren(state, [...thoughts, '=label'])
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef<HTMLInputElement>(null)
@@ -218,7 +218,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
     const simplePathLive = cursor && isEditing
-      ? contextOf(simplePath).concat(head(showContexts ? contextOf(cursor) : cursor))
+      ? parentOf(simplePath).concat(head(showContexts ? parentOf(cursor) : cursor))
       : simplePath
 
     dispatch({
@@ -230,7 +230,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
       // to use the existing offset after a user clicks or touches the screent
       // when cursor is changed through another method, such as cursorDown, offset will be reset
       offset: null,
-      thoughtsRanked: simplePathLive,
+      path: simplePathLive,
     })
   }
 
@@ -250,7 +250,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
 
     const thought = getThought(state, oldValue)
     if (thought) {
-      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, thoughtsRanked: simplePath, contextChain })
+      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, path: simplePath, contextChain })
 
       // rerender so that triple dash is converted into divider
       // otherwise nothing would be rerendered because the thought is still being edited
@@ -363,7 +363,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
 
-    const thoughtsInContext = getThoughts(state, context)
+    const thoughtsInContext = getAllChildren(state, context)
     const hasDuplicate = thoughtsInContext.some(thought => thought.value === newValue)
     if (hasDuplicate) {
       showDuplicationAlert(true, dispatch)
@@ -591,7 +591,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
     innerRef={contentRef}
     className={classNames({
       editable: true,
-      ['editable-' + hashContext(thoughtsResolved, rank)]: true,
+      ['editable-' + hashContext(pathToContext(thoughtsResolved), rank)]: true,
       empty: value.length === 0
     })}
     forceUpdate={editableNonceRef.current !== state.editableNonce}

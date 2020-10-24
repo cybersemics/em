@@ -1,7 +1,7 @@
 // @ts-ignore
 import { parse } from 'jex-block-parser'
 import he from 'he'
-import { contextOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedContextOf, strip } from '../util'
+import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedParentOf, strip } from '../util'
 import { ActionCreator, Path, Timestamp } from '../types'
 import { simplifyPath } from '../selectors'
 
@@ -150,14 +150,14 @@ const importText = (path: Path, inputText: string, { lastUpdated, preventSetCurs
       type: 'existingThoughtChange',
       oldValue: destValue,
       newValue,
-      context: rootedContextOf(pathToContext(path)),
-      thoughtsRanked: path
+      context: rootedParentOf(pathToContext(path)),
+      path: path
     })
 
     if (!preventSetCursor && path) {
       dispatch({
         type: 'setCursor',
-        thoughtsRanked: contextOf(path).concat({ value: newValue, rank: destRank }),
+        path: parentOf(path).concat({ value: newValue, rank: destRank }),
         offset: startOffset + newText.length
       })
     }
@@ -180,7 +180,7 @@ const importText = (path: Path, inputText: string, { lastUpdated, preventSetCurs
     if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
       dispatch({
         type: 'setCursor',
-        thoughtsRanked: contextOf(path).concat(lastThoughtFirstLevel),
+        path: parentOf(path).concat(lastThoughtFirstLevel),
         offset: lastThoughtFirstLevel.value.length
       })
     }

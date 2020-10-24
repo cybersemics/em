@@ -57,7 +57,7 @@ export interface State {
   cursorOffset: number,
   dataNonce: number,
   draggedSimplePath?: SimplePath,
-  draggingThought?: Path,
+  draggingThought?: SimplePath,
   dragHold?: boolean,
   dragInProgress: boolean,
   editableNonce: number,

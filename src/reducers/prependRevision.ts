@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { newThought } from '../reducers'
-import { getThoughts } from '../selectors'
+import { getAllChildren } from '../selectors'
 import { concatMany, concatOne, getPublishUrl, pathToContext, reducerFlow, unroot } from '../util'
 import { State } from '../util/initialState'
 import { Child, Path } from '../types'
@@ -11,11 +11,11 @@ const prependRevision = (state: State, { path, cid }: { path: Path, cid: string 
   const context = pathToContext(path)
 
   /** Gets the =publish thought. */
-  const publishChild = (state: State) => getThoughts(state, context)
+  const publishChild = (state: State) => getAllChildren(state, context)
     .find(child => child.value === '=publish')
 
   /** Gets the =publish/Revisions thought. */
-  const revisionsChild = (state: State) => getThoughts(state, unroot(concatOne(context, '=publish')))
+  const revisionsChild = (state: State) => getAllChildren(state, unroot(concatOne(context, '=publish')))
     .find(child => child.value === 'Revisions')
 
   return reducerFlow([

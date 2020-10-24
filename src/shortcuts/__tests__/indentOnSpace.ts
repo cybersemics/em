@@ -17,7 +17,7 @@ it('indent on adding space at the beginning of the thought', async () => {
         - c
         - d`))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
+  store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 
   executeShortcut(indentOnSpace, { store, type: 'keyboard', event })
 
@@ -45,7 +45,7 @@ it('prevent indent on adding space at the beginning of the immovable thought', a
 
   store.dispatch({
     type: 'setCursor',
-    thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }]
+    path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }]
   })
 
   executeShortcut(indentOnSpace, { store, type: 'keyboard', event })

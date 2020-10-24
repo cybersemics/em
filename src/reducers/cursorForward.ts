@@ -10,7 +10,7 @@ const cursorForward = (state: State) => {
   // pop from cursor history
   if (state.cursorHistory.length > 0) {
     const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]
-    return setCursor(state, { thoughtsRanked: cursorNew, cursorHistoryPop: true })
+    return setCursor(state, { path: cursorNew, cursorHistoryPop: true })
   }
   // otherwise move cursor to first child
   else {
@@ -20,7 +20,7 @@ const cursorForward = (state: State) => {
     if (!firstChild) return state
 
     const cursorNew = unroot([...cursor, firstChild])
-    return setCursor(state, { thoughtsRanked: cursorNew })
+    return setCursor(state, { path: cursorNew })
   }
 }
 

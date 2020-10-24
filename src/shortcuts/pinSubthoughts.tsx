@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
-import { contextOf, pathToContext } from '../util'
+import { parentOf, pathToContext } from '../util'
 import { State } from '../util/initialState'
 
 interface ToggleAttribute {
@@ -32,12 +32,12 @@ const pinSubthoughtsShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
-    const context = contextOf(cursor)
-    const isPinned = attributeEquals(state, pathToContext(contextOf(context)), '=pinChildren', 'true')
+    const context = parentOf(cursor)
+    const isPinned = attributeEquals(state, pathToContext(parentOf(context)), '=pinChildren', 'true')
     if (cursor) {
       dispatch({
         type: 'toggleAttribute',
-        context: pathToContext(contextOf(cursor)),
+        context: pathToContext(parentOf(cursor)),
         key: '=pinChildren',
         value: isPinned ? 'false' : 'true'
       })

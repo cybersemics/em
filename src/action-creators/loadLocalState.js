@@ -20,14 +20,14 @@ const loadLocalState = () => async (dispatch, getState) => {
 
   // restore cursor from local db if url is at root
   const isHome = window.location.pathname.length <= 1
-  const { contextViews, thoughtsRanked: cursor } = isHome && localUrl
+  const { contextViews, path } = isHome && localUrl
     ? decodeThoughtsUrl(getState(), localUrl)
     : {}
 
   dispatch({
     type: 'loadLocalState',
     contextViews,
-    cursor,
+    cursor: path,
     lastUpdated,
     recentlyEdited: recentlyEdited || {},
   })

@@ -19,7 +19,7 @@ describe('normal view', () => {
       - a
         - a1
       - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] },
+      { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
       cursorNext()
     ])
 
@@ -36,7 +36,7 @@ describe('normal view', () => {
       importText(RANKED_ROOT, `
       - a
       - b`),
-      { type: 'setCursor', thoughtsRanked: null },
+      { type: 'setCursor', path: null },
       cursorNext()
     ])
 
@@ -53,7 +53,7 @@ describe('normal view', () => {
       importText(RANKED_ROOT, `
       - a
       - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
+      { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
       cursorNext()
     ])
 
@@ -91,7 +91,7 @@ describe('normal view', () => {
   //     },
   //     {
   //       type: 'setCursor',
-  //       thoughtsRanked: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
+  //       path: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
   //     },
   //     cursorNext(),
   //   ])
@@ -110,7 +110,7 @@ describe('normal view', () => {
       - a
         - a1
       - b`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] },
+      { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
       cursorNext()
     ])
 

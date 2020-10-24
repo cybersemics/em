@@ -12,13 +12,13 @@ it('redo thought change', async () => {
       - a
       - b`
     ),
-    { type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: '0' }] },
+    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] },
     {
       type: 'existingThoughtChange',
       newValue: 'aa',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     },
     { type: 'undoAction' }
   ])
@@ -55,7 +55,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
       - c`
     ),
     { type: 'cursorDown' },
-    { type: 'setCursor', thoughtsRanked: [{ value: 'b', rank: 1 }] },
+    { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
     { type: 'indent' },
     { type: 'cursorUp' },
     {
@@ -63,9 +63,9 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
       newValue: 'arizona',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     },
-    { type: 'setCursor', thoughtsRanked: [{ value: 'arizona', rank: 0 }, { value: 'b', rank: 0 }] },
+    { type: 'setCursor', path: [{ value: 'arizona', rank: 0 }, { value: 'b', rank: 0 }] },
     { type: 'cursorBack' },
     { type: 'cursorUp' },
     { type: 'cursorDown' },
@@ -74,7 +74,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
       newValue: 'boston',
       oldValue: 'b',
       context: ['arizona'],
-      thoughtsRanked: [{ value: 'arizona', rank: 0 }, { value: 'b', rank: 0 }]
+      path: [{ value: 'arizona', rank: 0 }, { value: 'b', rank: 0 }]
     },
     { type: 'cursorDown' },
     { type: 'undoAction' },
@@ -113,21 +113,21 @@ it('redo contiguous changes', () => {
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'A', rank: 0 }]
+      path: [{ value: 'A', rank: 0 }]
     },
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic ',
       oldValue: 'Atlantic',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'Atlantic', rank: 0 }]
+      path: [{ value: 'Atlantic', rank: 0 }]
     },
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic City',
       oldValue: 'Atlantic ',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'Atlantic ', rank: 0 }]
+      path: [{ value: 'Atlantic ', rank: 0 }]
     },
     { type: 'undoAction' }
   ])

@@ -22,7 +22,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ value: 'a', rank: 0 }] }),
       cursorDown,
     ]
 
@@ -39,7 +39,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newSubthought('b'),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ value: 'a', rank: 0 }] }),
       cursorDown,
     ]
 
@@ -56,7 +56,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ thoughtsRanked: null }),
+      setCursor({ path: null }),
       cursorDown,
     ]
 
@@ -81,7 +81,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ value: 'a', rank: 0 }] }),
       newSubthought('a1'),
       cursorDown,
     ]
@@ -99,7 +99,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ value: 'a', rank: 0 }] }),
       newSubthought('a1'),
       newSubthought('a1.1'),
       newSubthought('a1.1.1'),
@@ -120,7 +120,7 @@ describe('normal view', () => {
       newThought('a'),
       newSubthought('n'),
       newThought('m'),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ value: 'a', rank: 0 }] }),
       toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
       cursorDown
     ]
@@ -148,7 +148,7 @@ describe('context view', () => {
     const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
+      setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
       toggleContextView,
       cursorDown,
     ]
@@ -216,9 +216,9 @@ describe('context view', () => {
     const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
+      setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
       toggleContextView,
-      setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'a', rank: 0 }] }),
       cursorDown
     ]
 
@@ -269,9 +269,9 @@ describe('context view', () => {
     const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
-      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
-      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
+      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
       cursorDown
     ]
 
@@ -295,9 +295,9 @@ describe('context view', () => {
     const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
-      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
-      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
+      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
       cursorDown,
     ]
 

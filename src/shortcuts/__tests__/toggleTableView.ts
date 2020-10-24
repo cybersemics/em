@@ -20,7 +20,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
       - e
 `))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '1' },
   ] })
@@ -46,7 +46,7 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
       - e
 `))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '2' },
   ] })
@@ -72,7 +72,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
       - e
 `))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '2' },
   ] })

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
-import { exists, getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+import { exists, getThought, getAllChildren, getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent } from '../types'
 
@@ -13,7 +13,7 @@ import {
   hashThought,
   reducerFlow,
   removeContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -39,7 +39,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   const key = hashThought(value)
   const thought = getThought(state, value)
   // @ts-ignore
-  context = rootedContextOf(thoughts)
+  context = rootedParentOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
@@ -79,21 +79,21 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getThoughts(state, context)
+  const subthoughts = getAllChildren(state, context)
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts: Context, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
     // modify the state to use the thoughtIndex with newOldThought
     // this ensures that contexts are calculated correctly for descendants with duplicate values
-    const stateNew = {
+    const stateNew: State = {
       ...state,
       thoughts: {
         ...state.thoughts,
         thoughtIndex: thoughtIndexNew
       }
     }
-    return getThoughtsRanked(stateNew, thoughts).reduce((accum, child) => {
+    return getChildrenRanked(stateNew, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(stateNew, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1

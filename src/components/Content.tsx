@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { isMobile } from '../browser'
 import expandContextThought from '../action-creators/expandContextThought'
 import { MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { attribute, getSetting, getThoughts, isChildVisible, isTutorial } from '../selectors'
+import { attribute, getSetting, getAllChildren, isChildVisible, isTutorial } from '../selectors'
 import { publishMode } from '../util'
 import { State } from '../util/initialState'
 
@@ -28,9 +28,9 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   // do no sort here as the new object reference would cause a re-render even when the children have not changed
-  const rootThoughtsLength = (showHiddenThoughts ? getThoughts(state, [ROOT_TOKEN]) : getThoughts(state, [ROOT_TOKEN]).filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
+  const rootThoughtsLength = (showHiddenThoughts ? getAllChildren(state, [ROOT_TOKEN]) : getAllChildren(state, [ROOT_TOKEN]).filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
   // pass rootSort to allow root Subthoughts ro render on toggleSort
-  const rootSort = attribute(state, RANKED_ROOT, '=sort') || 'None'
+  const rootSort = attribute(state, [ROOT_TOKEN], '=sort') || 'None'
 
   return {
     search,

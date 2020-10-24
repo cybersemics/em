@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { contextOf, head, headRank, headValue, pathToContext, reducerFlow, rootedContextOf } from '../util'
+import { parentOf, head, headRank, headValue, pathToContext, reducerFlow, rootedParentOf } from '../util'
 import { editableRender, editingValue, existingThoughtChange, newThought, setCursor } from '../reducers'
 import { simplifyPath } from '../selectors'
 
@@ -9,7 +9,7 @@ const splitSentences = (state: State) => {
   const { cursor } = state
   if (!cursor) return state
   const thoughts = pathToContext(cursor)
-  const cursorContext = rootedContextOf(thoughts)
+  const cursorContext = rootedParentOf(thoughts)
   const rank = headRank(cursor)
   const value = headValue(cursor)
 
@@ -20,17 +20,17 @@ const splitSentences = (state: State) => {
   }
 
   const [firstSentence, ...otherSentences] = sentences
-  const newCursor = contextOf(cursor).concat({ ...head(cursor), value: firstSentence })
+  const newCursor = parentOf(cursor).concat({ ...head(cursor), value: firstSentence })
 
   const reducers = [
     existingThoughtChange({
       oldValue: value,
       newValue: firstSentence,
       context: cursorContext,
-      thoughtsRanked: simplifyPath(state, cursor),
+      path: simplifyPath(state, cursor),
       rankInContext: rank }),
     ...otherSentences.map(sentence => newThought({ value: sentence })),
-    setCursor({ thoughtsRanked: newCursor, offset: firstSentence.length }),
+    setCursor({ path: newCursor, offset: firstSentence.length }),
     editingValue({ value: firstSentence }),
     editableRender
   ]

@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { Child, Context } from '../types'
 import { State } from '../util/initialState'
-import { getSortPreference, getThoughts, getThoughtsRanked, getThoughtsSorted, hasChild } from '../selectors'
-import { head, isFunction, unroot } from '../util'
+import { getSortPreference, getThought, hasChild } from '../selectors'
+import { compareByRank, compareThought, hashContext, head, isFunction, sort, unroot } from '../util'
+import { Child, ComparatorFunction, Context, ContextHash } from '../types'
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
@@ -19,7 +19,15 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Ch
   !isFunction(child.value) &&
   !hasChild(state, unroot([...context, child.value]), '=hidden'))
 
-/** Makes a getThoughts function that only returns visible thoughts. */
+/** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
+export const getAllChildrenByContextHash = ({ thoughts: { contextIndex } }: State, contextEncoded: ContextHash): Child[] =>
+  ((contextIndex || {})[contextEncoded] || {}).children || []
+
+/** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
+export const getAllChildren = (state: State, context: Context) =>
+  getAllChildrenByContextHash(state, hashContext(context))
+
+/** Makes a getAllChildren function that only returns visible thoughts. */
 const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: State, context: Context) => {
   const children = getThoughtsFunction(state, context)
   return state.showHiddenThoughts
@@ -29,21 +37,39 @@ const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: Sta
 
 /** Returns true if the context has any visible children. */
 export const hasChildren = (state: State, context: Context) => {
-  const children = getThoughts(state, context)
+  const children = getAllChildren(state, context)
   return state.showHiddenThoughts
     ? children.length > 0
     : children.some(isChildVisible(state, context))
 }
 
 /** Gets all visible children within a context. */
-export const getChildren = getVisibleThoughts(getThoughts)
+export const getChildren = getVisibleThoughts(getAllChildren)
 
 /** Gets all visible children within a context sorted by rank or sort preference. */
 export const getChildrenSorted = (state: State, context: Context) => {
   const sortPreference = getSortPreference(state, context)
-  const getThoughtsFunction = sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked
+  const getThoughtsFunction = sortPreference === 'Alphabetical'
+    ? getChildrenSortedAlphabetical
+    : getChildrenRanked
   return getVisibleThoughts(getThoughtsFunction, state, context)
 }
+
+/** Gets a list of all children of a context sorted by the given comparator function. */
+const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
+  sort(
+    getAllChildren(state, context)
+      .filter(child => getThought(state, child.value)),
+    compare
+  )
+
+/** Generates children seorted by their values. */
+const getChildrenSortedAlphabetical = (state: State, context: Context) =>
+  getChildrenSortedBy(state, context, compareThought)
+
+/** Generates children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
+export const getChildrenRanked = (state: State, context: Context): Child[] =>
+  getChildrenSortedBy(state, context, compareByRank)
 
 /** Returns the first visible child of a context. */
 export const firstVisibleChild = (state: State, context: Context) =>
