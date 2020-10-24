@@ -10,9 +10,8 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
   const thought = getThought(state, headValue(penult))
   const ult = contextChain[contextChain.length - 1]
   const parent = thought.contexts.find(parent => head(parent.context) === ult[0].value) as ThoughtContext
-  const thoughtsRankedPrepend = parentOf(rankThoughtsFirstMatch(state, parent?.context))
-  // @ts-ignore
-  return thoughtsRankedPrepend.concat(splice(ult, 1, 0, head(penult)))
+  const pathPrepend = parentOf(rankThoughtsFirstMatch(state, parent?.context))
+  return pathPrepend.concat(splice(ult, 1, 0, head(penult))) as SimplePath
 }
 
 export default lastThoughtsFromContextChain
