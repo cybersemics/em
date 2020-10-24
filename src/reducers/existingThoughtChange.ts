@@ -20,7 +20,7 @@ import {
   isDivider,
   pathToContext,
   removeContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -101,7 +101,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     lastUpdated: timestamp(),
   }
   const thoughtNew = thoughtOld.contexts.length > 0
-    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank, id, archived as Timestamp)
+    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedParentOf(thoughtsRankedLiveOld)) : rank, id, archived as Timestamp)
     : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
@@ -158,7 +158,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const thoughtOldSubthoughts = getThoughts(state, contextOld)
     .filter(child => !equalThoughtRanked(child, head(thoughtsRankedLiveOld)))
 
-  const contextParent = rootedContextOf(showContexts
+  const contextParent = rootedParentOf(showContexts
     ? context
     : pathToContext(thoughtsRankedLiveOld)
   )
@@ -166,14 +166,14 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
   const thoughtParentSubthoughts = showContexts ? getThoughts(state, contextParent)
     .filter(child =>
-      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
-      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
+      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedParentOf(thoughtsRankedLiveOld)) })) &&
+      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedParentOf(thoughtsRankedLiveOld)) })
     )
     // do not add floating thought to context
     .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
       id,
-      rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
+      rank: headRank(rootedParentOf(thoughtsRankedLiveOld)),
       lastUpdated: timestamp(),
       ...archived ? { archived } : {}
     } : [])

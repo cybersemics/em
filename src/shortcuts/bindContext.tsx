@@ -1,6 +1,6 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Shortcut } from '../types'
-import { isDocumentEditable, pathToContext, rootedContextOf } from '../util'
+import { isDocumentEditable, pathToContext, rootedParentOf } from '../util'
 import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
 import { State } from '../util/initialState'
 
@@ -31,7 +31,7 @@ const bindContextShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const contextRanked = rootedContextOf(cursor)
+    const contextRanked = rootedParentOf(cursor)
 
     if (!cursor || !isContextViewActive(state, pathToContext(contextRanked))) return
 

@@ -28,7 +28,7 @@ import {
   parentOf,
   pathToContext,
   reducerFlow,
-  rootedContextOf,
+  rootedParentOf,
   unroot,
 } from '../util'
 
@@ -92,7 +92,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const path = at || state.cursor || RANKED_ROOT
   const thoughtsRanked = simplifyPath(state, path)
   const thoughts = pathToContext(thoughtsRanked)
-  const context = pathToContext(rootedContextOf(thoughtsRanked))
+  const context = pathToContext(rootedParentOf(thoughtsRanked))
 
   // prevent adding Subthought to readonly or unextendable Thought
   const sourceContext = insertNewSubthought ? thoughts : context

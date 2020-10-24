@@ -11,7 +11,7 @@ import {
   pathToContext,
   perma,
   reducerFlow,
-  rootedContextOf,
+  rootedParentOf,
   unroot,
 } from '../util'
 
@@ -49,7 +49,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
   }
   const simplePath = simplifyPath(state, path)
   const thoughts = pathToContext(simplePath)
-  const context = rootedContextOf(thoughts)
+  const context = rootedParentOf(thoughts)
   const { value, rank } = head(simplePath)
 
   /** Calculates the previous context within a context view. */
@@ -107,7 +107,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
           : parentOf(path).concat(next() as Child)
         ), { offset: 0 }] :
         // Case III: delete last thought in context; set cursor on context
-        thoughts.length > 1 ? [rootedContextOf(path), { offset: head(context).length }]
+        thoughts.length > 1 ? [rootedParentOf(path), { offset: head(context).length }]
         // Case IV: delete very last thought; remove cursor
         : [null]
       )(state)

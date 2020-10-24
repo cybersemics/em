@@ -34,7 +34,7 @@ import {
   parseJsonSafe,
   pathToContext,
   rankThoughtsSequential,
-  rootedContextOf,
+  rootedParentOf,
   subsetThoughts,
   sumSubthoughtsLength,
   unroot,
@@ -182,8 +182,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedContextOf(pathToContext(thoughtsFrom))
-  const newContext = rootedContextOf(pathToContext(newPath))
+  const oldContext = rootedParentOf(pathToContext(thoughtsFrom))
+  const newContext = rootedParentOf(pathToContext(newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot drop on itself

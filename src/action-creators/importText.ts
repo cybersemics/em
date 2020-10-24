@@ -1,7 +1,7 @@
 // @ts-ignore
 import { parse } from 'jex-block-parser'
 import he from 'he'
-import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedContextOf, strip } from '../util'
+import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedParentOf, strip } from '../util'
 import { simplifyPath } from '../selectors'
 import { ActionCreator, Path } from '../types'
 
@@ -150,7 +150,7 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
       type: 'existingThoughtChange',
       oldValue: destValue,
       newValue,
-      context: rootedContextOf(pathToContext(path)),
+      context: rootedParentOf(pathToContext(path)),
       thoughtsRanked: path
     })
 

@@ -11,7 +11,7 @@ import {
   isEM,
   isRoot,
   pathToContext,
-  rootedContextOf,
+  rootedParentOf,
 } from '../util'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
@@ -20,7 +20,7 @@ const indent = (state: State) => {
 
   if (!cursor) return state
 
-  const prev = prevSibling(state, headValue(cursor), pathToContext(rootedContextOf(cursor)), headRank(cursor))
+  const prev = prevSibling(state, headValue(cursor), pathToContext(rootedParentOf(cursor)), headRank(cursor))
 
   if (!prev) return state
 

@@ -23,7 +23,7 @@ import {
   reducerFlow,
   removeContext,
   removeDuplicatedContext,
-  rootedContextOf,
+  rootedParentOf,
   subsetThoughts,
   timestamp,
 } from '../util'
@@ -49,8 +49,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const key = hashThought(value)
   const oldRank = headRank(oldPath)
   const newRank = headRank(newPath)
-  const oldContext = rootedContextOf(oldThoughts)
-  const newContext = rootedContextOf(newThoughts)
+  const oldContext = rootedParentOf(oldThoughts)
+  const newContext = rootedParentOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
 

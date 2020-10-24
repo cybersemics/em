@@ -13,7 +13,7 @@ import {
   parentOf,
   pathToContext,
   reducerFlow,
-  rootedContextOf,
+  rootedParentOf,
 } from '../util'
 
 // selectors
@@ -62,7 +62,7 @@ const deleteEmptyThought = (state: State) => {
     const rank = headRank(cursor)
     const thoughts = pathToContext(thoughtsRanked)
     const context = thoughts.length > 1 ? parentOf(thoughts) : [ROOT_TOKEN]
-    const prev = prevSibling(state, value, pathToContext(rootedContextOf(cursor)), rank)
+    const prev = prevSibling(state, value, pathToContext(rootedParentOf(cursor)), rank)
 
     // only if there is a previous sibling
     if (prev) {

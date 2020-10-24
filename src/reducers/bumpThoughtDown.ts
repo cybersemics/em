@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { existingThoughtChange, existingThoughtMove, newThoughtSubmit, setCursor, subCategorizeOne } from '../reducers'
 import { getPrevRank, getRankBefore, getThoughts, simplifyPath } from '../selectors'
-import { parentOf, headValue, pathToContext, reducerFlow, rootedContextOf, unroot } from '../util'
+import { parentOf, headValue, pathToContext, reducerFlow, rootedParentOf, unroot } from '../util'
 import { State } from '../util/initialState'
 import { Path, SimplePath } from '../types'
 
@@ -42,7 +42,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     existingThoughtChange({
       oldValue: value,
       newValue: '',
-      context: rootedContextOf(context),
+      context: rootedParentOf(context),
       thoughtsRanked: simplePathWithNewRank
     }),
 
