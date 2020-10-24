@@ -38,9 +38,6 @@ interface NextThoughtResult {
 
 /**
  * Adds the rank of the child thought to every thought in a context.
- *
- * @param contextInfo   A { context, rank } object returned from getContexts.
- * @returns Returns rankedContext.
  */
 const contextWithThoughtRank = (state: State, contextInfo: ThoughtContext | null): SimplePath | null => {
   return contextInfo && contextInfo.context.map((value, index) => {
@@ -59,8 +56,6 @@ const contextWithThoughtRank = (state: State, contextInfo: ThoughtContext | null
 
 /**
  * Returns the next sibling of the focused context within a context view.
- *
- * @returns Returns rankedContext.
  */
 const nextSiblingContext = (state: State, rank: number, context: Context) => {
   const contextSiblings = getContextsSortedAndRanked(state, head(context))
@@ -74,8 +69,6 @@ const nextSiblingContext = (state: State, rank: number, context: Context) => {
 
 /**
  * Returns the first child of context at the given path.
- *
- * @returns Returns rankedContext.
  */
 const firstChildOfContextView = (state: State, path: Path) => {
   const context = pathToContext(path)
@@ -86,8 +79,6 @@ const firstChildOfContextView = (state: State, path: Path) => {
 
 /**
  * Returns the context that is currently in focus based on the context chain head.
- *
- * @returns Returns context.
  */
 const getMatchedContext = (state: State, context: Child, contextChain: SimplePath[]) => {
   const contexts = getContextsSortedAndRanked(state, context.value)
@@ -97,8 +88,6 @@ const getMatchedContext = (state: State, context: Child, contextChain: SimplePat
 
 /**
  * Returns the path to the current thought by stripping out any context views.
- *
- * @returns Returns path.
  */
 const getPathFromContextChain = (state: State, contextChain: SimplePath[]): Path => {
   // last of second last item in context chain gives us the current context
@@ -110,10 +99,8 @@ const getPathFromContextChain = (state: State, contextChain: SimplePath[]): Path
 
 /**
  * Returns the context of the current thought by stripping out any context views.
- *
- * @returns Returns context.
  */
-const getContextFromContextChain = (state: State, contextChain: SimplePath[]) => {
+const getContextFromContextChain = (state: State, contextChain: SimplePath[]): Context => {
   // last of second-to-last item in context chain gives us the current context
   const contextPath = head(contextChain.slice(0, -1))
   const contextChild = head(contextPath)
