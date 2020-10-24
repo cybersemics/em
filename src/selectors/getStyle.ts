@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import getThoughts from '../selectors/getThoughts'
+import { getThoughts } from '../selectors'
 import { State } from '../util/initialState'
 import { Context } from '../types'
 
