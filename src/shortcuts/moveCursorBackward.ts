@@ -1,7 +1,7 @@
 import { Dispatch } from 'react'
 import { Action } from 'redux'
 import { attributeEquals, simplifyPath } from '../selectors'
-import { contextOf, isDocumentEditable, pathToContext } from '../util'
+import { parentOf, isDocumentEditable, pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { Shortcut } from '../types'
 
@@ -17,9 +17,9 @@ const moveCursorBackward: Shortcut = {
 
     if (!cursor || cursor.length < 2) return
 
-    const thoughtsRanked = simplifyPath(state, cursor)
-    // contextOf twice because we are checking if this thought is in column 2 of a table
-    const contextGrandparent = contextOf(contextOf(pathToContext(thoughtsRanked)))
+    const path = simplifyPath(state, cursor)
+    // parentOf twice because we are checking if this thought is in column 2 of a table
+    const contextGrandparent = parentOf(parentOf(pathToContext(path)))
     const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
 
     dispatch({ type: isTable ? 'cursorBack' : 'outdent' })

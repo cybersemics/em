@@ -9,13 +9,15 @@ import { getSetting } from '../selectors'
 import { hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { Index, Lexeme, Parent } from '../types'
 
+type Callback = (err: string | null, ...args: any[]) => void
+
 /** Options object for sync. */
 interface Options {
   local?: boolean,
   remote?: boolean,
-  updates?: Index<any>,
-  callback?: (err?: any) => void,
-  recentlyEdited: Index<any>,
+  updates?: Index,
+  callback?: Callback,
+  recentlyEdited?: Index,
 }
 
 // store the hashes of the localStorage Settings contexts for quick lookup
@@ -30,7 +32,7 @@ const localStorageSettingsContexts = _.keyBy(
 )
 
 /** Syncs thought updates to the local database. */
-const syncLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates: Index<Parent> = {}, recentlyEdited: Index<any>, updates: Index<any> = {}): Promise<any> => {
+const syncLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates: Index<Parent> = {}, recentlyEdited: Index, updates: Index = {}): Promise<any> => {
 
   // thoughtIndex
   const thoughtIndexPromises = [
@@ -89,7 +91,7 @@ const syncLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates:
 }
 
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
-const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index<any>, updates: Index<any> = {}) => {
+const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): Promise<any> => {
 
   const state = store.getState()
 
@@ -108,7 +110,6 @@ const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contex
     // fix undefined/NaN rank
     accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = thought && getSetting(state, 'Data Integrity Check') === 'On'
       ? {
-        rank: 0, // TODO: Why does Lexeme have rank?
         value: thought.value,
         contexts: thought.contexts.map(cx => ({
           context: cx.context || null, // guard against NaN or undefined
@@ -126,7 +127,7 @@ const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contex
   logWithTime('syncRemote: prepend thoughtIndex key')
 
   const dataIntegrityCheck = getSetting(state, 'Data Integrity Check') === 'On'
-  const prependedcontextIndexUpdates = _.transform(contextIndexUpdates, (accum: Index<Parent | null>, parentContext: Parent | null, key) => {
+  const prependedContextIndexUpdates = _.transform(contextIndexUpdates, (accum, parentContext, key) => {
     // fix undefined/NaN rank
     const children = parentContext && parentContext.children
     accum['contextIndex/' + key] = children && children.length > 0
@@ -154,7 +155,7 @@ const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contex
     ...hasUpdates ? {
       ...updates,
       ...prependedDataUpdates,
-      ...prependedcontextIndexUpdates,
+      ...prependedContextIndexUpdates,
       ...recentlyEdited ? { recentlyEdited } : null,
       // do not update lastClientId and lastUpdated if there are no thoughtIndex updates (e.g. just a settings update)
       // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore thoughtIndex updates from the remote thinking it is already up-to-speed

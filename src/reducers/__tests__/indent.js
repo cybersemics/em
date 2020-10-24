@@ -33,7 +33,7 @@ it('indent with no cursor should do nothing ', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     indent,
   ]
 

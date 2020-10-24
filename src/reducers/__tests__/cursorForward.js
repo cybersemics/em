@@ -29,7 +29,7 @@ it('move to first child if there is no history', () => {
     newThought('a'),
     newSubthought('b'),
     newThought('c'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     cursorForward,
   ]
 
@@ -44,7 +44,7 @@ it('move to first child if there is no cursor', () => {
 
   const steps = [
     newThought('a'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     cursorForward,
   ]
 

@@ -1,16 +1,16 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { Path } from '../types'
+import { Context, SimplePath } from '../types'
 
 interface Payload {
-  value: string,
-  draggingThought: Path,
-  hoveringThought?: Path,
+  value: boolean,
+  draggingThought: SimplePath,
+  hoveringThought?: Context,
   offset?: number,
 }
 
 /** Sets dragInProgress. */
-const dragInProgress = (state: State, { value, draggingThought, hoveringThought, offset }: Payload) => ({
+const dragInProgress = (state: State, { value, draggingThought, hoveringThought, offset }: Payload): State => ({
   ...state,
   dragInProgress: value,
   draggingThought,

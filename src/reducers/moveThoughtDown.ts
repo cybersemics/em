@@ -4,12 +4,12 @@ import { SimplePath } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   headRank,
   headValue,
   pathToContext,
-  rootedContextOf,
+  rootedParentOf,
 } from '../util'
 
 // selectors
@@ -31,16 +31,16 @@ const moveThoughtDown = (state: State) => {
   if (!cursor) return state
 
   const thoughts = pathToContext(cursor)
-  const pathParent = contextOf(cursor)
+  const pathParent = parentOf(cursor)
   const context = pathToContext(pathParent)
   const value = headValue(cursor)
   const rank = headRank(cursor)
 
-  const nextThought = nextSibling(state, value, rootedContextOf(pathToContext(cursor)), rank)
+  const nextThought = nextSibling(state, value, rootedParentOf(pathToContext(cursor)), rank)
 
   // if the cursor is the last child or the context is sorted, move the thought to the beginning of its next uncle
   const nextUncleThought = pathParent.length > 0 ? getThoughtAfter(state, simplifyPath(state, pathParent)) : null
-  const nextUnclePath = nextUncleThought ? contextOf(pathParent).concat(nextUncleThought) : null
+  const nextUnclePath = nextUncleThought ? parentOf(pathParent).concat(nextUncleThought) : null
 
   if (!nextThought && !nextUnclePath) return state
 
@@ -49,7 +49,7 @@ const moveThoughtDown = (state: State) => {
 
   if (isSorted && !nextUnclePath) {
     return alert(state, {
-      value: `Cannot move subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" while sort is enabled.`
+      value: `Cannot move subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" while sort is enabled.`
     })
   }
   else if (hasChild(state, thoughts, '=readonly')) {
@@ -64,12 +64,12 @@ const moveThoughtDown = (state: State) => {
   }
   else if (hasChild(state, context, '=readonly')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are read-only and cannot be moved.`
+      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are read-only and cannot be moved.`
     })
   }
   else if (hasChild(state, context, '=immovable')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(contextOf(cursor)))}" are immovable.`
+      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are immovable.`
     })
   }
 

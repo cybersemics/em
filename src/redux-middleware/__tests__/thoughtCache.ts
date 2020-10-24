@@ -97,7 +97,7 @@ describe('thoughtCache', () => {
           - c
             - d
               - e`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'x', rank: 0 }] },
+      { type: 'setCursor', path: [{ value: 'x', rank: 0 }] },
     ])
 
     jest.runOnlyPendingTimers()
@@ -157,7 +157,7 @@ describe('thoughtCache', () => {
     store.dispatch({ type: 'clear' })
     jest.runOnlyPendingTimers()
     await initialize()
-    await delay(100)
+    await delay(200)
 
     const state = store.getState()
     expect(getChildren(state, [ROOT_TOKEN])).toMatchObject([{ value: 'a' }])

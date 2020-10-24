@@ -1,13 +1,13 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
-import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive, simplifyPath } from '../selectors'
+import { attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
 import { Child, Context, Index, Path, SimplePath, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
 
 // util
 import {
   contextChainToPath,
-  contextOf,
+  parentOf,
   hashContext,
   head,
   headValue,
@@ -42,29 +42,29 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     ? head((child as ThoughtContext).context)
     : (child as Child).value
 
-  const thoughtsRanked = !path || path.length === 0 ? RANKED_ROOT
+  const simplePath = !path || path.length === 0 ? RANKED_ROOT
     : contextChain.length > 0 ? contextChainToPath(contextChain)
     : path
-  const context = pathToContext(thoughtsRanked)
+  const context = pathToContext(simplePath)
   const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
   const showContexts = isContextViewActive(state, context)
 
   const childrenUnfiltered = showContexts
-    ? getContexts(state, headValue(thoughtsRanked))
-    : getThoughts(state, pathToContext(thoughtsRanked)) as (Child | ThoughtContext)[]
+    ? getContexts(state, headValue(simplePath))
+    : getAllChildren(state, pathToContext(simplePath)) as (Child | ThoughtContext)[]
   const children = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => !isFunction(childValue(child)))
 
   // expand if child is only child and its child is not url
   const grandchildren = children.length === 1
-    ? getThoughts(state, pathToContext((path || []).concat(children[0] as Child)))
+    ? getAllChildren(state, pathToContext((path || []).concat(children[0] as Child)))
     : null
 
   /** Returns true if the context is the first column in a table view. */
   const isTableColumn1 = () => attributeEquals(
     state,
-    contextOf(context),
+    parentOf(context),
     '=view',
     'Table'
   )
@@ -94,7 +94,7 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     ? children
     : children.filter(child => {
       /** Returns true if the child should be pinned open. */
-      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, simplifyPath(state, thoughtsRanked))), '=pin', 'true')
+      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, simplifyPath(state, simplePath))), '=pin', 'true')
       const value = childValue(child)
       return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })
@@ -113,13 +113,13 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     },
     {
       // expand current thought
-      [hashContext(rootedPath)]: rootedPath,
+      [hashContext(pathToContext(rootedPath))]: rootedPath,
 
       // expand context
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
       // RECURSION
       ...path && path.length >= 1 && depth <= 1
-        ? expandThoughts(state, contextOf(path), contextChain, { depth: depth + 1 })
+        ? expandThoughts(state, parentOf(path), contextChain, { depth: depth + 1 })
         : {}
     }
   )

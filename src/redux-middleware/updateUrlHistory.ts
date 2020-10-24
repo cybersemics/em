@@ -1,32 +1,19 @@
 import _ from 'lodash'
-
-// constants
-import {
-  RANKED_ROOT,
-} from '../constants'
-
-// util
-import {
-  equalPath,
-  hashContext,
-  isRoot,
-  pathToContext,
-} from '../util'
-
-// selectors
-import {
-  decodeThoughtsUrl,
-  hashContextUrl,
-} from '../selectors'
-
-// db
-import {
-  deleteCursor,
-  updateCursor,
-} from '../data-providers/dexie'
+import { ThunkMiddleware } from 'redux-thunk'
+import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { equalPath, hashContext, isRoot, pathToContext } from '../util'
+import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
+import { deleteCursor, updateCursor } from '../data-providers/dexie'
+import { State } from '../util/initialState'
+import { Index } from '../types'
 
 /** Delay with which to debounce browser history update. */
 const delay = 100
+
+interface Options {
+  replace?: boolean,
+  contextViews?: Index<boolean>,
+}
 
 /**
  * Sets the url and history to the given thoughts.
@@ -34,23 +21,23 @@ const delay = 100
  *
  * @param contextViews   Optional argument can be used during toggleContextViews when the state has not yet been updated. Defaults to URL contextViews.
  */
-const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contextViews } = {}) => {
+const updateUrlHistory = (state: State, path = RANKED_ROOT, { replace, contextViews }: Options = {}) => {
 
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
-  const encoded = thoughtsRanked ? hashContext(thoughtsRanked) : null
+  const encoded = path ? hashContext(pathToContext(path)) : null
 
   // convert decoded root thought to null cursor
-  const thoughtsRankedDecoded = isRoot(decoded.thoughtsRanked) ? null : decoded.thoughtsRanked
+  const pathDecoded = isRoot(decoded.path) ? null : decoded.path
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalPath(thoughtsRankedDecoded, thoughtsRanked) && decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded]) return
+  if (equalPath(pathDecoded, path) && decoded.contextViews[encoded!] === (contextViews || state.contextViews)[encoded!]) return
 
   const stateWithNewContextViews = { ...state, contextViews: contextViews || state.contextViews || decoded.contextViews }
 
   // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
   // ensure the location does not change through refreshes in standalone PWA mode
-  const updateCursorPromise = thoughtsRanked
-    ? updateCursor(hashContextUrl(stateWithNewContextViews, pathToContext(thoughtsRanked)))
+  const updateCursorPromise = path
+    ? updateCursor(hashContextUrl(stateWithNewContextViews, pathToContext(path)))
     : deleteCursor()
   updateCursorPromise
     .catch(err => {
@@ -65,9 +52,9 @@ const updateUrlHistory = (state, thoughtsRanked = RANKED_ROOT, { replace, contex
   // update browser history
   try {
     window.history[replace ? 'replaceState' : 'pushState'](
-      pathToContext(thoughtsRanked),
+      path ? pathToContext(path) : [ROOT_TOKEN],
       '',
-      hashContextUrl(stateWithNewContextViews, pathToContext(thoughtsRanked))
+      hashContextUrl(stateWithNewContextViews, path ? pathToContext(path) : [ROOT_TOKEN])
     )
   }
   catch (e) {
@@ -83,7 +70,7 @@ const updateUrlHistoryDebounced = _.throttle(getState => {
 }, delay)
 
 /** Updates the url history after the cursor has changed. The call to updateUrlHistory will short circuit if the cursor has not deviated from the current url. */
-const updateUrlHistoryMiddleware = ({ getState, dispatch }) => {
+const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
     next(action)
 

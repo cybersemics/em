@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { pathToContext, reducerFlow, rootedContextOf } from '../util'
-import { getThoughts, getThoughtsRanked } from '../selectors'
+import { pathToContext, reducerFlow, rootedParentOf } from '../util'
+import { getAllChildren, getChildrenRanked } from '../selectors'
 import { alert, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'
@@ -8,14 +8,14 @@ import { Path } from '../types'
 /** Moves the archived thought back to its original location. */
 const undoArchive = (state: State, { originalPath, currPath, offset }: { originalPath: Path, currPath: Path, offset?: number }) => {
 
-  const context = rootedContextOf(pathToContext(currPath))
-  const archiveContext = rootedContextOf(pathToContext(originalPath))
+  const context = rootedParentOf(pathToContext(currPath))
+  const archiveContext = rootedParentOf(pathToContext(originalPath))
 
   return reducerFlow([
 
     // set the cursor to the original path before restoring the thought
     state => setCursor(state, {
-      thoughtsRanked: originalPath,
+      path: originalPath,
       editing: state.editing,
       offset,
     }),
@@ -28,10 +28,10 @@ const undoArchive = (state: State, { originalPath, currPath, offset }: { origina
     }),
 
     // delete =archive if empty
-    state => getThoughts(state, context).length === 0
+    state => getAllChildren(state, context).length === 0
       ? existingThoughtDelete(state, {
         context: archiveContext,
-        thoughtRanked: getThoughtsRanked(state, archiveContext)[0]
+        thoughtRanked: getChildrenRanked(state, archiveContext)[0]
       })
       : state,
 

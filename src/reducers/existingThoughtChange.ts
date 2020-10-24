@@ -1,14 +1,14 @@
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
-import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
+import { getThought, getAllChildren, getChildrenRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Parent, Path, SimplePath, Timestamp } from '../types'
+import { Context, Index, Lexeme, Parent, SimplePath, Timestamp } from '../types'
 
 // util
 import {
   addContext,
-  contextOf,
+  parentOf,
   equalArrays,
   equalThoughtRanked,
   hashContext,
@@ -20,7 +20,7 @@ import {
   isDivider,
   pathToContext,
   removeContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -30,27 +30,27 @@ interface Payload {
   newValue: string,
   context: Context,
   showContexts?: boolean,
-  thoughtsRanked: SimplePath,
+  path: SimplePath,
   rankInContext?: number,
   contextChain?: SimplePath[],
 }
 
 interface RecursiveUpdateResult {
-  newChild: Child,
+  newChild: Lexeme,
   context: Context,
   contextsOld: Context[],
   contextsNew: Context[],
 }
 
 /** Changes the text of an existing thought. */
-const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }: Payload) => {
+const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, path, rankInContext, contextChain }: Payload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   const { cursor } = state
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
-  const value = headValue(thoughtsRanked)
-  const rank = headRank(thoughtsRanked)
+  const value = headValue(path)
+  const rank = headRank(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
   const thoughtOld = getThought(state, oldValue)
@@ -60,22 +60,22 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const thoughtsNew = unroot(context).concat(newValue)
   const contextEncodedOld = hashContext(thoughtsOld)
   const contextEncodedNew = hashContext(thoughtsNew)
-  const thoughtsRankedLiveOld = (showContexts
-    ? contextOf(contextOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(contextOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
-    : contextOf(thoughtsRanked).concat({ value: oldValue, rank })) as SimplePath
+  const pathLiveOld = (showContexts
+    ? parentOf(parentOf(path)).concat({ value: oldValue, rank: headRank(parentOf(path)) }).concat(head(path))
+    : parentOf(path).concat({ value: oldValue, rank })) as SimplePath
   // find exact thought from thoughtIndex
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
-  const id = headId(thoughtsRanked) || exactThought!.id as string
+  const id = headId(path) || exactThought!.id as string
   const archived = exactThought ? exactThought.archived : null
-  const cursorNew = cursor && contextOf(cursor).concat(head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
+  const cursorNew = cursor && parentOf(cursor).concat(head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
     ? { ...head(cursor), value: newValue }
     : head(cursor))
-  const newPath = thoughtsRanked.slice(0, thoughtsRanked.length - 1).concat({ value: newValue, rank: rankInContext || rank })
+  const newPath = path.slice(0, path.length - 1).concat({ value: newValue, rank: rankInContext || rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
-    recentlyEdited = treeChange(state.recentlyEdited, thoughtsRanked, newPath)
+    recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
   }
   catch (e) {
     console.error('existingThoughtChange: treeChange immer error')
@@ -86,7 +86,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   // eslint-disable-next-line jsdoc/require-jsdoc
   const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
   // eslint-disable-next-line jsdoc/require-jsdoc
-  const isThoughtOldSubthoughtless = () => getThoughts(state, [oldValue]).length < 2
+  const isThoughtOldSubthoughtless = () => getAllChildren(state, [oldValue]).length < 2
 
   // the old thought less the context
   const newOldThought = !isThoughtOldOrphan() || (showContexts && !isThoughtOldSubthoughtless())
@@ -101,7 +101,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     lastUpdated: timestamp(),
   }
   const thoughtNew = thoughtOld.contexts.length > 0
-    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedContextOf(thoughtsRankedLiveOld)) : rank, id, archived as Timestamp)
+    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedParentOf(pathLiveOld)) : rank, id, archived as Timestamp)
     : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
@@ -123,7 +123,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
     // eslint-disable-next-line fp/no-mutating-assign
     thoughtParentNew = Object.assign({}, thoughtParentOld, {
-      contexts: removeContext(thoughtParentOld, contextOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
+      contexts: removeContext(thoughtParentOld, parentOf(pathToContext(pathLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
         id,
         rank,
@@ -139,7 +139,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   // preserve contextIndex
   const contextNew = showContexts ? thoughtsNew : context
   const contextNewEncoded = hashContext(contextNew)
-  const thoughtNewSubthoughts = getThoughts(state, contextNew)
+  const thoughtNewSubthoughts = getAllChildren(state, contextNew)
     .filter(child =>
       !equalThoughtRanked(child, { value: oldValue, rank }) &&
       !equalThoughtRanked(child, { value: newValue, rank })
@@ -155,25 +155,25 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   // preserve contextIndex
   const contextOld = showContexts ? thoughtsOld : context
   const contextOldEncoded = hashContext(contextOld)
-  const thoughtOldSubthoughts = getThoughts(state, contextOld)
-    .filter(child => !equalThoughtRanked(child, head(thoughtsRankedLiveOld)))
+  const thoughtOldSubthoughts = getAllChildren(state, contextOld)
+    .filter(child => !equalThoughtRanked(child, head(pathLiveOld)))
 
-  const contextParent = rootedContextOf(showContexts
+  const contextParent = rootedParentOf(showContexts
     ? context
-    : pathToContext(thoughtsRankedLiveOld)
+    : pathToContext(pathLiveOld)
   )
   const contextParentEncoded = hashContext(contextParent)
 
-  const thoughtParentSubthoughts = showContexts ? getThoughts(state, contextParent)
+  const thoughtParentSubthoughts = showContexts ? getAllChildren(state, contextParent)
     .filter(child =>
-      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })) &&
-      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedContextOf(thoughtsRankedLiveOld)) })
+      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedParentOf(pathLiveOld)) })) &&
+      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedParentOf(pathLiveOld)) })
     )
     // do not add floating thought to context
     .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
       id,
-      rank: headRank(rootedContextOf(thoughtsRankedLiveOld)),
+      rank: headRank(rootedParentOf(pathLiveOld)),
       lastUpdated: timestamp(),
       ...archived ? { archived } : {}
     } : [])
@@ -184,10 +184,9 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
    *
    * @param contextRecursive The list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context.
    */
-  const recursiveUpdates = (thoughtsRanked: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
+  const recursiveUpdates = (context: Context, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
 
-    const context = pathToContext(thoughtsRanked)
-    return getThoughtsRanked(state, context).reduce((accum, child) => {
+    return getChildrenRanked(state, context).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
       const childThought = getThought(state, child.value)
@@ -200,7 +199,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
           ...accum,
         }
         return {
-          ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
+          ...recursiveUpdates(context.concat(child.value), contextRecursive.concat(child.value), accumNew)
         }
       }
 
@@ -231,23 +230,23 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       // merge all updates and pass them on to the recursive call
       return {
         ...accumNew,
-        ...recursiveUpdates(thoughtsRanked.concat(child), contextRecursive.concat(child.value), accumNew)
+        ...recursiveUpdates(context.concat(child.value), contextRecursive.concat(child.value), accumNew)
       }
     }, {} as Index<RecursiveUpdateResult>)
   }
 
-  const descendantUpdatesResult = recursiveUpdates(thoughtsRankedLiveOld)
+  const descendantUpdatesResult = recursiveUpdates(pathToContext(pathLiveOld))
   const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newChild }, key) => {
     accum[key] = newChild
-  }, {} as Index<Child>)
+  }, {} as Index<Lexeme>)
 
   const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result) => {
     const output = result.contextsOld.reduce((accumInner, contextOld, i) => {
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = hashContext(contextOld)
       const contextNewEncoded = hashContext(contextNew)
-      const thoughtsOld = getThoughts(state, contextOld)
-      const thoughtsNew = getThoughts(state, contextNew)
+      const thoughtsOld = getAllChildren(state, contextOld)
+      const thoughtsNew = getAllChildren(state, contextNew)
       return {
         ...accumInner,
         [contextOldEncoded]: null,

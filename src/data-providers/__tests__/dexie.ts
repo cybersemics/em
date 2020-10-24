@@ -83,7 +83,7 @@ describe('integration', () => {
         context: [ROOT_TOKEN],
         oldValue: '',
         newValue: 'a',
-        thoughtsRanked: [{ value: '', rank: 0 }]
+        path: [{ value: '', rank: 0 }],
       }
     ])
 

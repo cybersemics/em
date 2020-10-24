@@ -1,5 +1,5 @@
-import { attributeEquals, getThoughts, simplifyPath } from '../selectors'
-import { contextOf, isDocumentEditable, pathToContext } from '../util'
+import { attributeEquals, getAllChildren, simplifyPath } from '../selectors'
+import { parentOf, isDocumentEditable, pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { Dispatch } from 'react'
 import { Shortcut } from '../types'
@@ -27,11 +27,11 @@ const moveCursorForward: Shortcut = {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
-    const thoughtsRanked = simplifyPath(state, cursor)
-    const context = pathToContext(thoughtsRanked)
-    const contextParent = contextOf(context)
+    const path = simplifyPath(state, cursor)
+    const context = pathToContext(path)
+    const contextParent = parentOf(context)
     const isTable = attributeEquals(state, contextParent, '=view', 'Table')
-    const hasChildren = getThoughts(state, context).length > 0
+    const hasChildren = getAllChildren(state, context).length > 0
 
     dispatch(isTable ?
       // special case for table

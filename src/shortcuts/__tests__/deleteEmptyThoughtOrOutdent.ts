@@ -15,7 +15,7 @@ it('do nothing when there is no cursor', async () => {
 
   store.dispatch([
     { type: 'newThought', value: 'a' },
-    { type: 'setCursor', thoughtsRanked: null },
+    { type: 'setCursor', path: null },
   ])
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
@@ -38,7 +38,7 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
     - b
       - c`))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) })
+  store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) })
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
 
@@ -64,7 +64,7 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
       - d`
   ))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
+  store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
 

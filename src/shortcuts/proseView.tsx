@@ -1,6 +1,6 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Shortcut } from '../types'
-import { contextOf, isDocumentEditable, pathToContext } from '../util'
+import { parentOf, isDocumentEditable, pathToContext } from '../util'
 import { State } from '../util/initialState'
 
 interface ToggleAttribute {
@@ -35,7 +35,7 @@ const proseViewShortcut: Shortcut = {
     if (!cursor) return
 
     // if the cursor context is ROOT, then activate prose view for the provided cursor node
-    const path = contextOf(cursor).length !== 0 ? contextOf(cursor) : cursor
+    const path = parentOf(cursor).length !== 0 ? parentOf(cursor) : cursor
 
     dispatch({
       type: 'toggleAttribute',

@@ -31,7 +31,7 @@ it('outdent with no cursor should do nothing ', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     state => outdent(state)
   ]
 

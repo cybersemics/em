@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import getThoughts from '../selectors/getThoughts'
+import { getAllChildren } from '../selectors'
 import { State } from '../util/initialState'
 import { Context } from '../types'
 
@@ -7,10 +7,10 @@ import { Context } from '../types'
 const getStyle = (state: State, context: Context, { container }: { container?: boolean } = {}) => {
 
   const styleContext = [...context, container ? '=styleContainer' : '=style']
-  const children = getThoughts(state, styleContext)
+  const children = getAllChildren(state, styleContext)
 
   return children.reduce((accum, { value }) => {
-    const styleValueThought = getThoughts(state, [...styleContext, value])[0]
+    const styleValueThought = getAllChildren(state, [...styleContext, value])[0]
     return {
       ...accum,
       ...styleValueThought

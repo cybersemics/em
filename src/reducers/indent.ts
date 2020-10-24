@@ -4,14 +4,14 @@ import { State } from '../util/initialState'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   headRank,
   headValue,
   isEM,
   isRoot,
   pathToContext,
-  rootedContextOf,
+  rootedParentOf,
 } from '../util'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
@@ -20,7 +20,7 @@ const indent = (state: State) => {
 
   if (!cursor) return state
 
-  const prev = prevSibling(state, headValue(cursor), pathToContext(rootedContextOf(cursor)), headRank(cursor))
+  const prev = prevSibling(state, headValue(cursor), pathToContext(rootedParentOf(cursor)), headRank(cursor))
 
   if (!prev) return state
 
@@ -29,17 +29,17 @@ const indent = (state: State) => {
     return alert(state, { value: `The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.` })
   }
   // cancel if parent is readonly or unextendable
-  else if (hasChild(state, pathToContext(contextOf(cursor)), '=readonly')) {
-    return alert(state, { value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.` })
+  else if (hasChild(state, pathToContext(parentOf(cursor)), '=readonly')) {
+    return alert(state, { value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.` })
   }
-  else if (hasChild(state, pathToContext(contextOf(cursor)), '=uneditable')) {
-    return alert(state, { value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.` })
+  else if (hasChild(state, pathToContext(parentOf(cursor)), '=uneditable')) {
+    return alert(state, { value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.` })
   }
 
   // store selection offset before existingThoughtMove is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const cursorNew = contextOf(cursor).concat(
+  const cursorNew = parentOf(cursor).concat(
     {
       // only use value and rank
       value: prev.value,
@@ -47,7 +47,7 @@ const indent = (state: State) => {
     },
     {
       value: headValue(cursor),
-      rank: getNextRank(state, pathToContext(contextOf(cursor).concat(prev)))
+      rank: getNextRank(state, pathToContext(parentOf(cursor).concat(prev)))
     }
   )
 

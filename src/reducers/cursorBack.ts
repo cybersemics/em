@@ -1,11 +1,11 @@
 import { cursorHistory, search as searchReducer, setCursor } from '../reducers'
-import { contextOf, reducerFlow } from '../util'
+import { parentOf, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 
 /** Moves the cursor up one level. */
 const cursorBack = (state: State) => {
   const { cursor: cursorOld, editing, search } = state
-  const cursorNew = cursorOld && contextOf(cursorOld)
+  const cursorNew = cursorOld && parentOf(cursorOld)
 
   return reducerFlow(
 
@@ -14,7 +14,7 @@ const cursorBack = (state: State) => {
 
       // move cursor back
       // @ts-ignore
-      setCursor({ thoughtsRanked: cursorNew!.length > 0 ? cursorNew : null, editing }),
+      setCursor({ path: cursorNew!.length > 0 ? cursorNew : null, editing }),
 
       // append to cursor history to allow 'forward' gesture
       cursorHistory({ cursor: cursorOld }),
@@ -28,7 +28,7 @@ const cursorBack = (state: State) => {
 
       // restore the cursor
       state.cursorBeforeSearch
-        ? setCursor({ thoughtsRanked: state.cursorBeforeSearch, editing })
+        ? setCursor({ path: state.cursorBeforeSearch, editing })
         : null,
     ]
     : []

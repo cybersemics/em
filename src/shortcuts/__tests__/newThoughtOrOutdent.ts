@@ -21,7 +21,7 @@ it('empty thought should outdent when hit enter', async () => {
           - e
             - f`))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '1' },
     { value: 'c', rank: '2' },

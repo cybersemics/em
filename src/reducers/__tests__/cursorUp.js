@@ -60,7 +60,7 @@ it('move to last root child when there is no cursor', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     cursorUp,
   ]
 
@@ -94,9 +94,9 @@ describe('context view', () => {
     const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
       updateThoughts(thoughts),
-      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
-      state => setCursor(state, { thoughtsRanked: rankThoughtsFirstMatch(state, ['a', 'm', 'a']) }),
+      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a']) }),
       cursorUp,
     ]
 

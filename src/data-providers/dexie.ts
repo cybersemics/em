@@ -2,7 +2,7 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
 import { timestamp } from '../util'
-import { Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
+import { Context, Index, Lexeme, Parent, Timestamp } from '../types'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -146,7 +146,7 @@ export const updateLastUpdated = async (lastUpdated: Timestamp) => db.helpers.up
 export const getHelpers = async () => db.helpers.get({ id: 'EM' })
 
 /** Updates the cursor helper. */
-export const updateCursor = async (cursor: Path | null) => db.helpers.update('EM', { cursor })
+export const updateCursor = async (cursor: string | null) => db.helpers.update('EM', { cursor })
 
 /** Deletes the cursor helper. */
 export const deleteCursor = async () => db.helpers.update('EM', { cursor: null })
