@@ -60,7 +60,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const thoughtsNew = unroot(context).concat(newValue)
   const contextEncodedOld = hashContext(thoughtsOld)
   const contextEncodedNew = hashContext(thoughtsNew)
-  const thoughtsRankedLiveOld = (showContexts
+  const pathLiveOld = (showContexts
     ? parentOf(parentOf(path)).concat({ value: oldValue, rank: headRank(parentOf(path)) }).concat(head(path))
     : parentOf(path).concat({ value: oldValue, rank })) as SimplePath
   // find exact thought from thoughtIndex
@@ -101,7 +101,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     lastUpdated: timestamp(),
   }
   const thoughtNew = thoughtOld.contexts.length > 0
-    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedParentOf(thoughtsRankedLiveOld)) : rank, id, archived as Timestamp)
+    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedParentOf(pathLiveOld)) : rank, id, archived as Timestamp)
     : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
@@ -123,7 +123,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
     // eslint-disable-next-line fp/no-mutating-assign
     thoughtParentNew = Object.assign({}, thoughtParentOld, {
-      contexts: removeContext(thoughtParentOld, parentOf(pathToContext(thoughtsRankedLiveOld)), rank).contexts.concat({
+      contexts: removeContext(thoughtParentOld, parentOf(pathToContext(pathLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
         id,
         rank,
@@ -156,24 +156,24 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const contextOld = showContexts ? thoughtsOld : context
   const contextOldEncoded = hashContext(contextOld)
   const thoughtOldSubthoughts = getAllChildren(state, contextOld)
-    .filter(child => !equalThoughtRanked(child, head(thoughtsRankedLiveOld)))
+    .filter(child => !equalThoughtRanked(child, head(pathLiveOld)))
 
   const contextParent = rootedParentOf(showContexts
     ? context
-    : pathToContext(thoughtsRankedLiveOld)
+    : pathToContext(pathLiveOld)
   )
   const contextParentEncoded = hashContext(contextParent)
 
   const thoughtParentSubthoughts = showContexts ? getAllChildren(state, contextParent)
     .filter(child =>
-      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedParentOf(thoughtsRankedLiveOld)) })) &&
-      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedParentOf(thoughtsRankedLiveOld)) })
+      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedParentOf(pathLiveOld)) })) &&
+      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedParentOf(pathLiveOld)) })
     )
     // do not add floating thought to context
     .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
       id,
-      rank: headRank(rootedParentOf(thoughtsRankedLiveOld)),
+      rank: headRank(rootedParentOf(pathLiveOld)),
       lastUpdated: timestamp(),
       ...archived ? { archived } : {}
     } : [])
@@ -235,7 +235,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     }, {} as Index<RecursiveUpdateResult>)
   }
 
-  const descendantUpdatesResult = recursiveUpdates(pathToContext(thoughtsRankedLiveOld))
+  const descendantUpdatesResult = recursiveUpdates(pathToContext(pathLiveOld))
   const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newChild }, key) => {
     accum[key] = newChild
   }, {} as Index<Lexeme>)
