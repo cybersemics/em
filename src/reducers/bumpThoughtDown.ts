@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { existingThoughtChange, existingThoughtMove, newThoughtSubmit, setCursor, subCategorizeOne } from '../reducers'
-import { getPrevRank, getRankBefore, getThoughts, simplifyPath } from '../selectors'
+import { getPrevRank, getRankBefore, getAllChildren, simplifyPath } from '../selectors'
 import { parentOf, headValue, pathToContext, reducerFlow, rootedParentOf, unroot } from '../util'
 import { State } from '../util/initialState'
 import { Path, SimplePath } from '../types'
@@ -15,7 +15,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
 
   // const rank = headRank(simplePath)
   const context = pathToContext(simplePath)
-  const children = getThoughts(state, context)
+  const children = getAllChildren(state, context)
 
   // if there are no children
   if (children.length === 0) return subCategorizeOne(state)

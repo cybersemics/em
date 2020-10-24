@@ -1,6 +1,6 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT, ROOT_TOKEN } from '../constants'
-import { attributeEquals, getChildPath, getContexts, getThoughts, isContextViewActive, simplifyPath } from '../selectors'
+import { attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
 import { Child, Context, Index, Path, SimplePath, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
 
@@ -52,14 +52,14 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
 
   const childrenUnfiltered = showContexts
     ? getContexts(state, headValue(simplePath))
-    : getThoughts(state, pathToContext(simplePath)) as (Child | ThoughtContext)[]
+    : getAllChildren(state, pathToContext(simplePath)) as (Child | ThoughtContext)[]
   const children = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => !isFunction(childValue(child)))
 
   // expand if child is only child and its child is not url
   const grandchildren = children.length === 1
-    ? getThoughts(state, pathToContext((path || []).concat(children[0] as Child)))
+    ? getAllChildren(state, pathToContext((path || []).concat(children[0] as Child)))
     : null
 
   /** Returns true if the context is the first column in a table view. */

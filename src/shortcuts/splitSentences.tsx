@@ -5,7 +5,7 @@ import { State } from '../util/initialState'
 import { parentOf, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import { Action } from 'redux'
-import { getThoughts, isContextViewActive } from '../selectors'
+import { getAllChildren, isContextViewActive } from '../selectors'
 import { ROOT_TOKEN } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -35,7 +35,7 @@ const splitSentencesShortcut: Shortcut = {
     const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(parentOf(parentOf(cursor)))
       : !showContexts && cursor.length > 1 ? pathToContext(parentOf(cursor))
       : [ROOT_TOKEN])
-    const siblings = context && getThoughts(state, context).map(({ value }) => value)
+    const siblings = context && getAllChildren(state, context).map(({ value }) => value)
     const duplicates = _.intersection(sentences, siblings)
     if (duplicates.length !== 0) {
       dispatch(alert('Cannot split sentences: splitting creates duplicates.', { alertType: 'splitSentencesErr3', clearTimeout: 3000 }))

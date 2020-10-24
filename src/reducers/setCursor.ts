@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { store } from '../store'
 import { dataIntegrityCheck, loadResource } from '../action-creators'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
-import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContextChain, simplifyPath } from '../selectors'
+import { chain, expandThoughts, getSetting, getAllChildren, lastThoughtsFromContextChain, simplifyPath } from '../selectors'
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
@@ -95,7 +95,7 @@ const setCursor = (state: State, {
    * @todo Abstract tutorial logic away from setCursor and call only when tutorial is on.
    */
   const hasThoughtCollapsed = () => !expanded[hashContext(pathToContext(oldCursor))] &&
-    (getThoughts(state, pathToContext(oldCursor)).length > 0 ||
+    (getAllChildren(state, pathToContext(oldCursor)).length > 0 ||
       (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(pathToContext(thoughtsResolved || []), pathToContext(oldCursor)))
     )
 

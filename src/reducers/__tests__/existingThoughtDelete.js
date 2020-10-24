@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { getContexts, getThoughts } from '../../selectors'
+import { getContexts, getAllChildren } from '../../selectors'
 import { existingThoughtDelete, newSubthought, newThought } from '../../reducers'
 
 it('delete from root', () => {
@@ -18,7 +18,7 @@ it('delete from root', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex
-  expect(getThoughts(stateNew, [ROOT_TOKEN]))
+  expect(getAllChildren(stateNew, [ROOT_TOKEN]))
     .toMatchObject([
       { value: 'a', rank: 0 }
     ])
@@ -45,9 +45,9 @@ it('delete descendants of root thought', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex
-  expect(getThoughts(stateNew, [ROOT_TOKEN])).toEqual([])
-  expect(getThoughts(stateNew, ['a'])).toEqual([])
-  expect(getThoughts(stateNew, ['b', 'c'])).toEqual([])
+  expect(getAllChildren(stateNew, [ROOT_TOKEN])).toEqual([])
+  expect(getAllChildren(stateNew, ['a'])).toEqual([])
+  expect(getAllChildren(stateNew, ['b', 'c'])).toEqual([])
 
   // thoughtIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
@@ -71,8 +71,8 @@ it('delete thought with duplicate child', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex
-  expect(getThoughts(stateNew, [ROOT_TOKEN])).toEqual([])
-  expect(getThoughts(stateNew, ['a'])).toEqual([])
+  expect(getAllChildren(stateNew, [ROOT_TOKEN])).toEqual([])
+  expect(getAllChildren(stateNew, ['a'])).toEqual([])
 
   // thoughtIndex
   expect(getContexts(stateNew, 'a')).toEqual([])

@@ -3,7 +3,7 @@
 import './App.css'
 import initDB, * as db from './db'
 import { store } from './store'
-import { getContexts, getThought, getThoughts, getChildrenRanked } from './selectors'
+import { getContexts, getThought, getAllChildren, getChildrenRanked } from './selectors'
 import { State } from './util/initialState'
 
 // util
@@ -64,7 +64,7 @@ window.em = {
   store,
   getContexts: withState(getContexts),
   getThought: withState(getThought),
-  getThoughts: withState(getThoughts),
+  getAllChildren: withState(getAllChildren),
   getChildrenRanked: withState(getChildrenRanked),
   hashContext,
   hashThought,

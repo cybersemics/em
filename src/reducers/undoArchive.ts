@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { pathToContext, reducerFlow, rootedParentOf } from '../util'
-import { getThoughts, getChildrenRanked } from '../selectors'
+import { getAllChildren, getChildrenRanked } from '../selectors'
 import { alert, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'
@@ -28,7 +28,7 @@ const undoArchive = (state: State, { originalPath, currPath, offset }: { origina
     }),
 
     // delete =archive if empty
-    state => getThoughts(state, context).length === 0
+    state => getAllChildren(state, context).length === 0
       ? existingThoughtDelete(state, {
         context: archiveContext,
         thoughtRanked: getChildrenRanked(state, archiveContext)[0]

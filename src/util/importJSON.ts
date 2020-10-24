@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { State } from './initialState'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
-import { getRankAfter, getThought, getThoughts, nextSibling } from '../selectors'
+import { getRankAfter, getThought, getAllChildren, nextSibling } from '../selectors'
 import { Block } from '../action-creators/importText'
 import { Child, Context, Index, Lexeme, Parent, Path, SimplePath } from '../types'
 
@@ -85,7 +85,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const contextIndexUpdates: Index<Parent> = {}
   const context = pathToContext(parentOf(simplePath))
   const destThought = head(simplePath)
-  const destEmpty = destThought.value === '' && getThoughts(state, pathToContext(simplePath)).length === 0
+  const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(simplePath)).length === 0
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const contextIndex = { ...state.thoughts.contextIndex }
   const rankStart = getRankAfter(state, simplePath)
@@ -100,7 +100,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
       const contextEncoded = hashContext(rootedContext)
       contextIndexUpdates[contextEncoded] = {
         ...contextIndexUpdates[contextEncoded],
-        children: getThoughts(state, rootedContext)
+        children: getAllChildren(state, rootedContext)
           .filter(child => !equalThoughtRanked(child, destThought)),
         lastUpdated: timestamp(),
       }

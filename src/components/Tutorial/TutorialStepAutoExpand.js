@@ -16,7 +16,7 @@ import {
 
 // selectors
 import {
-  getThoughts,
+  getAllChildren,
 } from '../../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -24,11 +24,11 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
 
   const state = store.getState()
   const cursorContext = pathToContext(cursor || [])
-  const cursorChildren = getThoughts(state, cursorContext)
+  const cursorChildren = getAllChildren(state, cursorContext)
   const isCursorLeaf = cursorChildren.length === 0
   const ancestorThought = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
 
-  const ancestorThoughtChildren = getThoughts(state, ancestorThought.length === 0 ? [ROOT_TOKEN] : ancestorThought)
+  const ancestorThoughtChildren = getAllChildren(state, ancestorThought.length === 0 ? [ROOT_TOKEN] : ancestorThought)
   const isCursorRootChildren = (cursor || []).length === 1
 
   const isCursorCollapsePossible = ancestorThoughtChildren.length > 1 && !(isCursorRootChildren && isCursorLeaf)
@@ -51,7 +51,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
             :
             <Fragment> Oops! With current state no thoughts will hide on click away. Try expanding some thoughts or maybe add some sibling thoughts and subthoughts just like you learned in previous tutorials.</Fragment>
 
-          : getThoughts(state, [ROOT_TOKEN]).length === 0 ? ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.' : ' Oops! Please focus on one of the thoughts.'
+          : getAllChildren(state, [ROOT_TOKEN]).length === 0 ? ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.' : ' Oops! Please focus on one of the thoughts.'
       }
     </p>
   </Fragment>

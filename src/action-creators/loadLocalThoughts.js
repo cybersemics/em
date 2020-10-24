@@ -17,7 +17,7 @@ import {
 import {
   decodeThoughtsUrl,
   expandThoughts,
-  getThoughts,
+  getAllChildren,
 } from '../selectors'
 
 // action creators
@@ -62,7 +62,7 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
 
   logWithTime('loadLocalThoughts: action dispatched')
 
-  if (getThoughts({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
+  if (getAllChildren({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
     await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
   }
 }

@@ -24,10 +24,10 @@ export const getThoughtsOfEncodedContext = ({ thoughts: { contextIndex } }: Stat
   ((contextIndex || {})[contextEncoded] || {}).children || []
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getThoughts = (state: State, context: Context) =>
+export const getAllChildren = (state: State, context: Context) =>
   getThoughtsOfEncodedContext(state, hashContext(context))
 
-/** Makes a getThoughts function that only returns visible thoughts. */
+/** Makes a getAllChildren function that only returns visible thoughts. */
 const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: State, context: Context) => {
   const children = getThoughtsFunction(state, context)
   return state.showHiddenThoughts
@@ -37,14 +37,14 @@ const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: Sta
 
 /** Returns true if the context has any visible children. */
 export const hasChildren = (state: State, context: Context) => {
-  const children = getThoughts(state, context)
+  const children = getAllChildren(state, context)
   return state.showHiddenThoughts
     ? children.length > 0
     : children.some(isChildVisible(state, context))
 }
 
 /** Gets all visible children within a context. */
-export const getChildren = getVisibleThoughts(getThoughts)
+export const getChildren = getVisibleThoughts(getAllChildren)
 
 /** Gets all visible children within a context sorted by rank or sort preference. */
 export const getChildrenSorted = (state: State, context: Context) => {
@@ -58,7 +58,7 @@ export const getChildrenSorted = (state: State, context: Context) => {
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
   sort(
-    getThoughts(state, context)
+    getAllChildren(state, context)
       .filter(child => getThought(state, child.value)),
     compare
   )

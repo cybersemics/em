@@ -59,7 +59,7 @@ import {
   getSortPreference,
   getStyle,
   getThought,
-  getThoughts,
+  getAllChildren,
   getChildrenRanked,
   hasChild,
   hasChildren,
@@ -512,7 +512,7 @@ const ThoughtContainer = ({
   const thoughts = pathToContext(simplePath)
   const thoughtsLive = pathToContext(simplePathLive!)
   const context = parentOf(thoughts)
-  const childrenOptions = getThoughts(state, [...context, 'Options'])
+  const childrenOptions = getAllChildren(state, [...context, 'Options'])
   const options = !isFunction(value) && childrenOptions.length > 0 ?
     childrenOptions.map(child => child.value.toLowerCase())
     : null
