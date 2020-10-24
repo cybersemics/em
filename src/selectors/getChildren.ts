@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { Child, Context } from '../types'
 import { State } from '../util/initialState'
-import { getSortPreference, getThought, getThoughts, getThoughtsSorted, hasChild } from '../selectors'
-import { compareByRank, head, isFunction, sort, unroot } from '../util'
+import { getSortPreference, getThought, getThoughts, hasChild } from '../selectors'
+import { compareByRank, compareThought, head, isFunction, sort, unroot } from '../util'
+import { Child, ComparatorFunction, Context } from '../types'
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
@@ -41,18 +41,27 @@ export const getChildren = getVisibleThoughts(getThoughts)
 /** Gets all visible children within a context sorted by rank or sort preference. */
 export const getChildrenSorted = (state: State, context: Context) => {
   const sortPreference = getSortPreference(state, context)
-  const getThoughtsFunction = sortPreference === 'Alphabetical' ? getThoughtsSorted : getChildrenRanked
+  const getThoughtsFunction = sortPreference === 'Alphabetical'
+    ? getChildrenSortedAlphabetical
+    : getChildrenRanked
   return getVisibleThoughts(getThoughtsFunction, state, context)
 }
 
-/** Generates children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
-export const getChildrenRanked = (state: State, context: Context): Child[] => {
-  return sort(
+/** Gets a list of all children of a context sorted by the given comparator function. */
+const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
+  sort(
     getThoughts(state, context)
       .filter(child => getThought(state, child.value)),
-    compareByRank
+    compare
   )
-}
+
+/** Generates children seorted by their values. */
+const getChildrenSortedAlphabetical = (state: State, context: Context) =>
+  getChildrenSortedBy(state, context, compareThought)
+
+/** Generates children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
+export const getChildrenRanked = (state: State, context: Context): Child[] =>
+  getChildrenSortedBy(state, context, compareByRank)
 
 /** Returns the first visible child of a context. */
 export const firstVisibleChild = (state: State, context: Context) =>

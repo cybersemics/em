@@ -1,4 +1,4 @@
-import { getContextsSortedAndRanked, getSortPreference, getChildrenRanked, getThoughtsSorted, isChildVisible, isContextViewActive, isContextVisible } from '../selectors'
+import { getContextsSortedAndRanked, getSortPreference, getChildrenRanked, getChildrenSorted, isChildVisible, isContextViewActive, isContextVisible } from '../selectors'
 import { head } from '../util'
 import { State } from '../util/initialState'
 import { Child, Context, Index, ThoughtContext } from '../types'
@@ -17,7 +17,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   const getContextSiblings = () => getContextsSortedAndRanked(state, head(context))
 
   /** Gets siblings of thought. */
-  const getThoughtSiblings = () => (sortPreference === 'Alphabetical' ? getThoughtsSorted : getChildrenRanked)(state, context)
+  const getThoughtSiblings = () => (sortPreference === 'Alphabetical' ? getChildrenSorted : getChildrenRanked)(state, context)
 
   const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings() as (Child | ThoughtContext)[]
   let prev: Index | null = null // eslint-disable-line fp/no-let
