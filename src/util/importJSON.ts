@@ -18,7 +18,7 @@ import {
   headRank,
   pathToContext,
   removeContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
 } from '../util'
 
@@ -96,7 +96,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
     const thought = getThought(state, '')
     if (thought && thought.contexts && thought.contexts.length > 1) {
       thoughtIndexUpdates[hashThought('')] = removeContext(thought, context, headRank(simplePath))
-      const rootedContext = pathToContext(rootedContextOf(simplePath))
+      const rootedContext = pathToContext(rootedParentOf(simplePath))
       const contextEncoded = hashContext(rootedContext)
       contextIndexUpdates[contextEncoded] = {
         ...contextIndexUpdates[contextEncoded],

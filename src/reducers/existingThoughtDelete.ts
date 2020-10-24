@@ -13,7 +13,7 @@ import {
   hashThought,
   reducerFlow,
   removeContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -39,7 +39,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   const key = hashThought(value)
   const thought = getThought(state, value)
   // @ts-ignore
-  context = rootedContextOf(thoughts)
+  context = rootedParentOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])

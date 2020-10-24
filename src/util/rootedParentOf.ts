@@ -6,8 +6,8 @@ import { Context, Path } from '../types'
 const isPath = (o: Context | Path): o is Path =>
   o.length > 0 && Object.prototype.hasOwnProperty.call(o[0], 'value')
 
-/** Get the parentOf of thoughts or [ROOT_TOKEN] if there are none. */
-export const rootedContextOf = <T extends Context | Path>(thoughts: T): T =>
+/** Get the parentOf thoughts or the root if there are none. */
+export const rootedParentOf = <T extends Context | Path>(thoughts: T): T =>
   thoughts && thoughts.length > 1
     ? parentOf(thoughts) as T
     : isPath(thoughts)

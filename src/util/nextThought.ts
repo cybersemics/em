@@ -14,7 +14,7 @@ import {
   head,
   pathToContext,
   perma,
-  rootedContextOf,
+  rootedParentOf,
   unroot,
 } from '../util'
 
@@ -147,9 +147,6 @@ const nextInContextView = (state: State, value: string, rank: number, path: Path
     getContexts(state, head(path).value).length < (ALLOW_SINGLE_CONTEXT ? 1 : 2)
 
   if (contextWithoutChildren && contextChain.length === 1) {
-    // nextInContextView and nextInThoughtView call each other as part of the recursive traversal structure
-    // typescript-eslint incorrectly fails no-use-before-define
-    // @ts-ignore
     return nextInThoughtView(state, value, context, rank, path, contextChain, true)
   }
 
@@ -177,10 +174,7 @@ const nextInContextView = (state: State, value: string, rank: number, path: Path
         nextThoughts: [...nextSibling, rankedContextHead],
         contextChain: contextChain.slice(0, -1)
       }
-      // nextInContextView and nextInThoughtView call each other as part of the recursive traversal structure
-      // typescript-eslint incorrectly fails no-use-before-define
-      // @ts-ignore
-      : nextInThoughtView(state, rankedContextHead.value, parentOf(context), rankedContextHead.rank, parentOf(path), parentOf(contextChain), true)
+      : nextInThoughtView(state, rankedContextHead.value, parentOf(context), rankedContextHead.rank, parentOf(path), contextChain.slice(0, -1), true)
   }
 
   return null
@@ -261,11 +255,11 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain. */
 export const nextThought = (state: State, path: Path = RANKED_ROOT) => {
   const { value, rank } = head(path)
-  const rankedContext = rootedContextOf(path)
+  const parentPath = rootedParentOf(path)
   const contextChain = splitChain(state, path)
-  const context = pathToContext(rankedContext)
+  const context = pathToContext(parentPath)
 
-  return isContextViewActive(state, pathToContext(rankedContext)) || isContextViewActive(state, pathToContext(path))
-    ? nextInContextView(state, value, rank, path, rankedContext, contextChain)!
+  return isContextViewActive(state, pathToContext(parentPath)) || isContextViewActive(state, pathToContext(path))
+    ? nextInContextView(state, value, rank, path, parentPath, contextChain)!
     : nextInThoughtView(state, value, context, rank, path, contextChain)!
 }

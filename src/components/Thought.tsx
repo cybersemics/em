@@ -44,7 +44,7 @@ import {
   parseJsonSafe,
   pathToContext,
   publishMode,
-  rootedContextOf,
+  rootedParentOf,
   subsetThoughts,
   unroot,
 } from '../util'
@@ -166,14 +166,14 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedContextOf(parentOf(cursor || [])), chain(state, contextChain, simplePath)) && getThoughtsRanked(state, pathToContext(cursor || [])).length === 0
+    ? equalPath(rootedParentOf(parentOf(cursor || [])), chain(state, contextChain, simplePath)) && getThoughtsRanked(state, pathToContext(cursor || [])).length === 0
     // parent
     : equalPath(parentOf(cursor || []), chain(state, contextChain, simplePath))
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as SimplePath | undefined
 
   const isCursorGrandparent =
-    equalPath(rootedContextOf(parentOf(cursor || [])), chain(state, contextChain, simplePath))
+    equalPath(rootedParentOf(parentOf(cursor || [])), chain(state, contextChain, simplePath))
   const children = childrenForced || getThoughtsRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const value = headValue(simplePathLive)
@@ -277,8 +277,8 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
   const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
-  const oldContext = rootedContextOf(thoughtsFrom)
-  const newContext = rootedContextOf(thoughtsTo)
+  const oldContext = rootedParentOf(thoughtsFrom)
+  const newContext = rootedParentOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
@@ -297,8 +297,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedContextOf(thoughtsFrom)
-  const newContext = rootedContextOf(thoughtsTo)
+  const oldContext = rootedParentOf(thoughtsFrom)
+  const newContext = rootedParentOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot move root or em context

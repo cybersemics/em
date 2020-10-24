@@ -13,7 +13,7 @@ import {
   headRank,
   headValue,
   pathToContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -163,7 +163,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
 
     // sync divergent ranks
     if (syncDivergentRanks) {
-      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(pathToContext(simplePath)))
+      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedParentOf(pathToContext(simplePath)))
         .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {

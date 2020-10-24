@@ -9,7 +9,7 @@ import {
   headRank,
   headValue,
   pathToContext,
-  rootedContextOf,
+  rootedParentOf,
 } from '../util'
 
 // selectors
@@ -36,7 +36,7 @@ const moveThoughtDown = (state: State) => {
   const value = headValue(cursor)
   const rank = headRank(cursor)
 
-  const nextThought = nextSibling(state, value, rootedContextOf(pathToContext(cursor)), rank)
+  const nextThought = nextSibling(state, value, rootedParentOf(pathToContext(cursor)), rank)
 
   // if the cursor is the last child or the context is sorted, move the thought to the beginning of its next uncle
   const nextUncleThought = pathParent.length > 0 ? getThoughtAfter(state, simplifyPath(state, pathParent)) : null

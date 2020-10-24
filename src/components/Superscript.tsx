@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import { exists, getContexts } from '../selectors'
-import { parentOf, equalArrays, head, headValue, pathToContext, rootedContextOf } from '../util'
+import { parentOf, equalArrays, head, headValue, pathToContext, rootedParentOf } from '../util'
 import { State } from '../util/initialState'
 import { Child, Context, Index, SimplePath } from '../types'
 
@@ -28,7 +28,7 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
   const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.simplePath || [])) && exists(state, headValue(cursor || []))
 
   const simplePath = props.showContexts && props.simplePath
-    ? rootedContextOf(props.simplePath)
+    ? rootedParentOf(props.simplePath)
     : props.simplePath
 
   const thoughts = props.thoughts || pathToContext(simplePath)

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { parentOf, head, headRank, headValue, pathToContext, reducerFlow, rootedContextOf } from '../util'
+import { parentOf, head, headRank, headValue, pathToContext, reducerFlow, rootedParentOf } from '../util'
 import { editableRender, editingValue, existingThoughtChange, newThought, setCursor } from '../reducers'
 import { simplifyPath } from '../selectors'
 
@@ -9,7 +9,7 @@ const splitSentences = (state: State) => {
   const { cursor } = state
   if (!cursor) return state
   const thoughts = pathToContext(cursor)
-  const cursorContext = rootedContextOf(thoughts)
+  const cursorContext = rootedParentOf(thoughts)
   const rank = headRank(cursor)
   const value = headValue(cursor)
 

@@ -11,7 +11,7 @@ import {
   isEM,
   isRoot,
   pathToContext,
-  rootedContextOf,
+  rootedParentOf,
   unroot,
 } from '../util'
 
@@ -41,7 +41,7 @@ const outdent = (state: State) => {
   // store selection offset before existingThoughtMove is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const cursorNew = unroot(rootedContextOf(parentOf(cursor)).concat({
+  const cursorNew = unroot(rootedParentOf(parentOf(cursor)).concat({
     value: headValue(cursor),
     rank: getRankAfter(state, parentOf(simplifyPath(state, cursor)))
   })) as Path
