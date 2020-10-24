@@ -3,7 +3,7 @@ import { treeChange } from '../util/recentlyEditedTree'
 import { getThought, getThoughts, getThoughtsRanked } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Parent, SimplePath, Timestamp } from '../types'
+import { Context, Index, Lexeme, Parent, SimplePath, Timestamp } from '../types'
 
 // util
 import {
@@ -36,7 +36,7 @@ interface Payload {
 }
 
 interface RecursiveUpdateResult {
-  newChild: Child,
+  newChild: Lexeme,
   context: Context,
   contextsOld: Context[],
   contextsNew: Context[],
@@ -238,7 +238,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const descendantUpdatesResult = recursiveUpdates(pathToContext(thoughtsRankedLiveOld))
   const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newChild }, key) => {
     accum[key] = newChild
-  }, {} as Index<Child>)
+  }, {} as Index<Lexeme>)
 
   const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result) => {
     const output = result.contextsOld.reduce((accumInner, contextOld, i) => {

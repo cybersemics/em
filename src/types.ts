@@ -95,7 +95,6 @@ export interface ThoughtContext {
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
 export interface Lexeme {
-  rank: number,
   value: string,
   contexts: ThoughtContext[],
   created: Timestamp,
