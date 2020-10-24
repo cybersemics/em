@@ -2,10 +2,10 @@ import _ from 'lodash'
 import xhtmlPurifier from 'xhtml-purifier'
 import { ROOT_TOKEN } from '../constants'
 import { contextOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
-import { getThoughtAfter, getThoughtsRanked, lastThoughtsFromContextChain, splitChain } from '../selectors'
+import { getThoughtAfter, getThoughtsRanked, simplifyPath } from '../selectors'
 import { editableRender, existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
 import { State } from '../util/initialState'
-import { Path, SimplePath } from '../types'
+import { Path } from '../types'
 
 /** Splits a thought into two thoughts.
  *
@@ -17,9 +17,9 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
   path = path || state.cursor as Path
   offset = offset || window.getSelection()?.focusOffset
 
-  const thoughtsRanked = lastThoughtsFromContextChain(state, splitChain(state, path))
+  const simplePath = simplifyPath(state, path)
 
-  const thoughts = pathToContext(thoughtsRanked)
+  const thoughts = pathToContext(simplePath)
   const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
 
   // split the value into left and right parts
@@ -33,7 +33,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
   */
   const valueLeft = strip(xhtmlPurifier.purify(value.slice(0, offset)), { preserveFormatting: true })
   const valueRight = strip(xhtmlPurifier.purify(value.slice(offset)), { preserveFormatting: true })
-  const thoughtsRankedLeft = contextOf(thoughtsRanked).concat({ value: valueLeft, rank: headRank(path) }) as SimplePath
+  const pathLeft = contextOf(path).concat({ value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([
 
@@ -42,27 +42,27 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
       oldValue: value,
       newValue: valueLeft,
       context,
-      thoughtsRanked
+      thoughtsRanked: simplePath,
     }),
 
     // create a new thought with the text to the right of the selection
     newThought({
       value: valueRight,
-      at: thoughtsRankedLeft,
+      at: pathLeft,
       // selection offset
       offset: 0
     }),
 
     // move children
     state => {
-      const thoughtNew = getThoughtAfter(state, thoughtsRankedLeft)
-      const thoughtsRankedRight = contextOf(thoughtsRanked).concat({ value: valueRight, rank: thoughtNew!.rank })
-      const children = getThoughtsRanked(state, pathToContext(thoughtsRankedLeft))
+      const thoughtNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
+      const pathRight = contextOf(simplePath).concat({ value: valueRight, rank: thoughtNew!.rank })
+      const children = getThoughtsRanked(state, pathToContext(pathLeft))
 
       return reducerFlow(children.map(child =>
         existingThoughtMove({
-          oldPath: thoughtsRankedLeft.concat(child),
-          newPath: thoughtsRankedRight.concat(child)
+          oldPath: pathLeft.concat(child),
+          newPath: pathRight.concat(child)
         })
       ))(state)
     },
