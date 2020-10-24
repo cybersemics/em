@@ -17,8 +17,8 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
     const thought = getThought(state, value)
     const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(state, thoughtsRankedResult)
-    const thoughtsRanked = contextChainToPath(contextChain)
-    const context = unroot(prevParentContext).concat(headValue(thoughtsRanked)) as Context
+    const path = contextChainToPath(contextChain)
+    const context = unroot(prevParentContext).concat(headValue(path)) as Context
     const inContextView = i > 0 && isContextViewActive(state, contextPathUnranked)
     const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(
       state,
@@ -32,7 +32,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
       : ((thought && thought.contexts) || []).filter(p => equalArrays(p.context, context))
 
     const contextThoughts = parents.length > 1
-      ? getThoughtsRanked(state, pathToContext(thoughtsRanked))
+      ? getThoughtsRanked(state, pathToContext(path))
       : []
 
     // there may be duplicate parents that are missing from contextIndex

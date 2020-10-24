@@ -217,7 +217,7 @@ it('moving unrelated thought should not update cursor', () => {
     newThought('b'),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],

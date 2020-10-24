@@ -14,7 +14,7 @@ const cursorDown = (state: State) => {
     const { nextThoughts, contextChain } = nextThought(state, cursor)
     return nextThoughts.length > 0
       ? setCursor(state, {
-        thoughtsRanked: nextThoughts,
+        path: nextThoughts,
         contextChain: contextChain || [],
         cursorHistoryClear: true,
         editing: true
@@ -25,7 +25,7 @@ const cursorDown = (state: State) => {
   else {
     const children = getChildrenSorted(state, [ROOT_TOKEN])
     return children.length > 0
-      ? setCursor(state, { thoughtsRanked: [children[0]] })
+      ? setCursor(state, { path: [children[0]] })
       : state
   }
 }

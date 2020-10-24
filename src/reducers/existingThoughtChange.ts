@@ -30,7 +30,7 @@ interface Payload {
   newValue: string,
   context: Context,
   showContexts?: boolean,
-  thoughtsRanked: SimplePath,
+  path: SimplePath,
   rankInContext?: number,
   contextChain?: SimplePath[],
 }
@@ -43,14 +43,14 @@ interface RecursiveUpdateResult {
 }
 
 /** Changes the text of an existing thought. */
-const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, thoughtsRanked, rankInContext, contextChain }: Payload) => {
+const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, path, rankInContext, contextChain }: Payload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   const { cursor } = state
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
-  const value = headValue(thoughtsRanked)
-  const rank = headRank(thoughtsRanked)
+  const value = headValue(path)
+  const rank = headRank(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
   const thoughtOld = getThought(state, oldValue)
@@ -61,21 +61,21 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const contextEncodedOld = hashContext(thoughtsOld)
   const contextEncodedNew = hashContext(thoughtsNew)
   const thoughtsRankedLiveOld = (showContexts
-    ? parentOf(parentOf(thoughtsRanked)).concat({ value: oldValue, rank: headRank(parentOf(thoughtsRanked)) }).concat(head(thoughtsRanked))
-    : parentOf(thoughtsRanked).concat({ value: oldValue, rank })) as SimplePath
+    ? parentOf(parentOf(path)).concat({ value: oldValue, rank: headRank(parentOf(path)) }).concat(head(path))
+    : parentOf(path).concat({ value: oldValue, rank })) as SimplePath
   // find exact thought from thoughtIndex
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
-  const id = headId(thoughtsRanked) || exactThought!.id as string
+  const id = headId(path) || exactThought!.id as string
   const archived = exactThought ? exactThought.archived : null
   const cursorNew = cursor && parentOf(cursor).concat(head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
     ? { ...head(cursor), value: newValue }
     : head(cursor))
-  const newPath = thoughtsRanked.slice(0, thoughtsRanked.length - 1).concat({ value: newValue, rank: rankInContext || rank })
+  const newPath = path.slice(0, path.length - 1).concat({ value: newValue, rank: rankInContext || rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
-    recentlyEdited = treeChange(state.recentlyEdited, thoughtsRanked, newPath)
+    recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
   }
   catch (e) {
     console.error('existingThoughtChange: treeChange immer error')

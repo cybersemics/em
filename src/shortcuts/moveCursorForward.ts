@@ -27,8 +27,8 @@ const moveCursorForward: Shortcut = {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
-    const thoughtsRanked = simplifyPath(state, cursor)
-    const context = pathToContext(thoughtsRanked)
+    const path = simplifyPath(state, cursor)
+    const context = pathToContext(path)
     const contextParent = parentOf(context)
     const isTable = attributeEquals(state, contextParent, '=view', 'Table')
     const hasChildren = getThoughts(state, context).length > 0

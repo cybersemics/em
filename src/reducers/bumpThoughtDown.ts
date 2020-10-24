@@ -43,7 +43,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       oldValue: value,
       newValue: '',
       context: rootedParentOf(context),
-      thoughtsRanked: simplePathWithNewRank
+      path: simplePathWithNewRank
     }),
 
     // new thought
@@ -59,7 +59,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
 
     // set cursor
     setCursor({
-      thoughtsRanked: simplePathWithNewRankAndValue,
+      path: simplePathWithNewRankAndValue,
     }),
 
   ])(state)

@@ -15,7 +15,7 @@ const undoArchive = (state: State, { originalPath, currPath, offset }: { origina
 
     // set the cursor to the original path before restoring the thought
     state => setCursor(state, {
-      thoughtsRanked: originalPath,
+      path: originalPath,
       editing: state.editing,
       offset,
     }),

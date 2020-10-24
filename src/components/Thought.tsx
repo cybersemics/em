@@ -581,7 +581,7 @@ const ThoughtContainer = ({
           e.stopPropagation()
           store.dispatch({
             type: 'setCursor',
-            thoughtsRanked: simplePath,
+            path: simplePath,
           })
         }
       }}/>}
@@ -597,7 +597,7 @@ const ThoughtContainer = ({
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
         style={style}
-        thoughtsRanked={simplePath}
+        path={simplePath}
         url={url}
       />
 

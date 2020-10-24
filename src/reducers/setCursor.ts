@@ -16,7 +16,7 @@ interface Payload {
   noteFocus?: boolean,
   offset?: number,
   replaceContextViews?: Index<boolean>,
-  thoughtsRanked: Path | null,
+  path: Path | null,
 }
 
 /**
@@ -32,7 +32,7 @@ const setCursor = (state: State, {
   editing,
   offset,
   replaceContextViews,
-  thoughtsRanked: path,
+  path,
   noteFocus = false
 }: Payload): State => {
 

@@ -24,7 +24,7 @@ const settings = (state: State, { key, value }: { key: string, value: string }) 
     context,
     oldValue: oldThoughtRanked.value,
     newValue,
-    thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
+    path: rankThoughtsFirstMatch(state, context).concat({
       value: newValue,
       rank: oldThoughtRanked.rank,
     }) as SimplePath,

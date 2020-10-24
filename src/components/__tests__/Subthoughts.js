@@ -38,7 +38,7 @@ it('normal view', async () => {
   - c`))
 
   // set the cursor to expand the subthoughts
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] })
+  store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }] })
 
   // update DOM
   wrapper.update()
@@ -68,7 +68,7 @@ describe('context view', () => {
   - m
     - y`))
 
-    store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] })
+    store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] })
     store.dispatch({ type: 'toggleContextView' })
 
     // update DOM
@@ -107,7 +107,7 @@ describe('context view', () => {
     - y`))
 
     // enable Context View on /a/one
-    store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })
+    store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })
     store.dispatch({ type: 'toggleContextView' })
 
     // update DOM

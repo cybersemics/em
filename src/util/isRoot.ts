@@ -1,7 +1,7 @@
 import { ROOT_TOKEN } from '../constants'
 import { Child, ThoughtContext } from '../types'
 
-/** Returns true if the thoughts or thoughtsRanked is the root thought. */
+/** Returns true if the thoughts or path is the root thought. */
 export const isRoot = (thoughts: (string | Child | ThoughtContext)[]): boolean =>
   thoughts.length === 1 &&
   !!thoughts[0] &&

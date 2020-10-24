@@ -16,8 +16,8 @@ declare global {
 
 /** Popstate event listener; setCursor on browser history forward/backward. */
 const onPopstate = () => {
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname)
-  const toRoot = !thoughtsRanked || isRoot(thoughtsRanked)
+  const { path, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname)
+  const toRoot = !path || isRoot(path)
 
   // clear the selection if root
   if (toRoot) {
@@ -25,8 +25,8 @@ const onPopstate = () => {
   }
 
   // set the cursor
-  // check if thoughtsRanked is the root, since decodeThoughtsUrl returns a rooted path rather than null
-  store.dispatch({ type: 'setCursor', thoughtsRanked: toRoot ? null : thoughtsRanked, replaceContextViews: contextViews })
+  // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
+  store.dispatch({ type: 'setCursor', path: toRoot ? null : path, replaceContextViews: contextViews })
 
   // scroll cursor into view
   setTimeout(scrollCursorIntoView)

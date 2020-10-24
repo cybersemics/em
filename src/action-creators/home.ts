@@ -11,7 +11,7 @@ const home = (): ActionCreator => (dispatch, getState) => {
     restoreCursorBeforeSearch(state)
   }
   else {
-    dispatch({ type: 'setCursor', thoughtsRanked: null, cursorHistoryClear: true })
+    dispatch({ type: 'setCursor', path: null, cursorHistoryClear: true })
     clearSelection()
     setTimeout(scrollCursorIntoView)
   }

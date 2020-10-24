@@ -52,13 +52,13 @@ const subCategorizeAll = (state: State) => {
   }
 
   const contextChain = splitChain(state, cursor)
-  const thoughtsRanked = cursor.length > 1
+  const path = cursor.length > 1
     ? parentOf(contextChain.length > 1
       ? lastThoughtsFromContextChain(state, contextChain)
       : cursor)
     : RANKED_ROOT
 
-  const children = getThoughtsRanked(state, pathToContext(simplifyPath(state, thoughtsRanked)))
+  const children = getThoughtsRanked(state, pathToContext(simplifyPath(state, path)))
   const pathParent = cursor.length > 1 ? cursorParent : RANKED_ROOT
 
   // get newly created thought

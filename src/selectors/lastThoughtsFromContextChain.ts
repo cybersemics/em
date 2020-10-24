@@ -3,7 +3,7 @@ import { parentOf, head, headValue, splice } from '../util'
 import { State } from '../util/initialState'
 import { SimplePath, ThoughtContext } from '../types'
 
-/** Generates thoughtsRanked from the last segment of a context chain. */
+/** Generates path from the last segment of a context chain. */
 const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]): SimplePath => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]

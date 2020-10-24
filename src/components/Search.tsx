@@ -33,7 +33,7 @@ const Search = ({ dispatch }: Connected<any>) => {
 
   /** Removes the normal cursor when the search is focused. */
   const onFocus = () => {
-    dispatch({ type: 'setCursor', thoughtsRanked: null })
+    dispatch({ type: 'setCursor', path: null })
   }
 
   /** Handles when the search input has changed. */

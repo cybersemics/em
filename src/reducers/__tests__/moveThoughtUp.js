@@ -127,7 +127,7 @@ it('move descendants', () => {
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ thoughtsRanked: [{ value: 'b', rank: 1 }] }),
+    setCursor({ path: [{ value: 'b', rank: 1 }] }),
     moveThoughtUp,
   ]
 
@@ -150,7 +150,7 @@ it('trying to move last thought of root should do nothing', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     moveThoughtUp,
 
   ]
@@ -193,7 +193,7 @@ it('do nothing when there is no cursor', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     moveThoughtUp,
 
   ]

@@ -10,13 +10,13 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
 
   if (!context) return state
 
-  const thoughtsRanked = rankThoughtsFirstMatch(state, context.concat(key))
+  const path = rankThoughtsFirstMatch(state, context.concat(key))
 
   return attributeEquals(state, context, key, value)
     // delete existing attribute
     ? existingThoughtDelete(state, {
       context,
-      thoughtRanked: head(thoughtsRanked)
+      thoughtRanked: head(path)
     })
     // create new attribute
     : reducerFlow([

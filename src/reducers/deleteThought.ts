@@ -75,7 +75,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) => path
     ? (state: State) => setCursor(state, {
-      thoughtsRanked: path,
+      path: path,
       editing: state.editing,
       offset
     })

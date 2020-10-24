@@ -15,7 +15,7 @@ const setFirstSubthoughts = (state: State, { context, value }: { context: Contex
       context,
       oldValue: oldFirstThoughtRanked.value,
       newValue: value,
-      thoughtsRanked: rankThoughtsFirstMatch(state, context).concat({
+      path: rankThoughtsFirstMatch(state, context).concat({
         value,
         rank: oldFirstThoughtRanked.rank,
       }) as SimplePath,

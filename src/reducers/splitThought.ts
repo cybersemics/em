@@ -42,7 +42,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
       oldValue: value,
       newValue: valueLeft,
       context,
-      thoughtsRanked: simplePath,
+      path: simplePath,
     }),
 
     // create a new thought with the text to the right of the selection

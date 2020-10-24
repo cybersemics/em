@@ -23,7 +23,7 @@ it('toggle on sort preference of parent of cursor (initial state without =sort a
   const globalSort = getSetting(store.getState(), ['Global Sort'])
   const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '2' },
   ] })
@@ -51,7 +51,7 @@ it('toggle off sort preference of parent of cursor', async () => {
     - e
 `))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [
+  store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
     { value: 'b', rank: '2' },
   ] })
