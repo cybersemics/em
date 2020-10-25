@@ -28,7 +28,10 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   // do no sort here as the new object reference would cause a re-render even when the children have not changed
-  const rootThoughtsLength = (showHiddenThoughts ? getAllChildren(state, [ROOT_TOKEN]) : getAllChildren(state, [ROOT_TOKEN]).filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
+  const rootChildren = getAllChildren(state, [ROOT_TOKEN])
+  const rootThoughtsLength = (showHiddenThoughts
+    ? rootChildren
+    : rootChildren.filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
   // pass rootSort to allow root Subthoughts ro render on toggleSort
   const rootSort = attribute(state, [ROOT_TOKEN], '=sort') || 'None'
 
