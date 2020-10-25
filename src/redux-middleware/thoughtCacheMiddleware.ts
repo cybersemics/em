@@ -168,13 +168,13 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     pending = {}
 
     // get local thoughts
-    const thoughtChunks: ThoughtsInterface[] = []
+    const thoughtLocalChunks: ThoughtsInterface[] = []
 
     const thoughtsLocalIterable = getManyDescendants(db, pendingThoughts, { maxDepth: bufferDepth })
     for await (const thoughts of thoughtsLocalIterable) { // eslint-disable-line fp/no-loops
 
       // eslint-disable-next-line fp/no-mutating-methods
-      thoughtChunks.push(thoughts)
+      thoughtLocalChunks.push(thoughts)
 
       // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
       // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
@@ -190,7 +190,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     // re-render after local thoughts are all loaded
     dispatch({ type: 'render' })
 
-    const thoughtsLocal = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
+    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
 
     // get remote thoughts and reconcile with local
     const user = getState().user
@@ -198,8 +198,13 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
       const thoughtsRemoteIterable = getManyDescendants(firebaseProvider, pendingThoughts, { maxDepth: bufferDepth })
 
+      const thoughtRemoteChunks: ThoughtsInterface[] = []
+
       // TODO: Refactor into zipThoughts
       await itForEach(thoughtsRemoteIterable, (thoughtsRemoteChunk: ThoughtsInterface) => {
+
+        // eslint-disable-next-line fp/no-mutating-methods
+        thoughtRemoteChunks.push(thoughtsRemoteChunk)
 
         // find the corresponding Parents from the local store (if any exist) so it can be reconciled with the remote Parents
         const thoughtsLocalContextIndexChunk = _.transform(thoughtsRemoteChunk.contextIndex, (accum, parentEntryRemote, key) => {
@@ -226,6 +231,17 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
         })
 
       })
+
+      const thoughtsRemote = thoughtRemoteChunks.reduce(_.ary(mergeThoughts, 2))
+
+      // the reconcile dispatched above is based on remote keys only
+      // thoughts that exist locally and not remotely will be missed
+      // sync all thoughts here to ensure none are missed
+      // TODO: Only reconcile local-only thoughts
+      dispatch({
+        type: 'reconcile',
+        thoughtsResults: [thoughtsLocal, thoughtsRemote]
+      })
     }
 
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
@@ -241,9 +257,6 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
   return next => action => {
 
-    // check first authenticate before reducer is called
-    const isFirstAuthenticate = action.type === 'authenticate' && action.value && !getState().user
-
     next(action)
 
     // reset internal state variables when clear action is dispatched
@@ -255,9 +268,8 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
         [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
       }
     }
-    // update pending and flush on initial authenticate to force a remote fetch
-    else if (isFirstAuthenticate) {
-      // ensure ROOT and EM are fetched
+    // update pending and flush on authenticate to force a remote fetch and make remote-only updates
+    else if (action.type === 'authenticate' && action.value) {
       pending[hashContext([EM_TOKEN])] = [EM_TOKEN]
       pending[hashContext([ROOT_TOKEN])] = [ROOT_TOKEN]
       updatePending({ force: true })
