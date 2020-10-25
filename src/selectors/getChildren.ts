@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { getSortPreference, getThought, hasChild } from '../selectors'
+import { getSortPreference, hasChild } from '../selectors'
 import { compareByRank, compareThought, hashContext, head, isFunction, sort, unroot } from '../util'
 import { Child, ComparatorFunction, Context, ContextHash } from '../types'
 
@@ -57,11 +57,7 @@ export const getChildrenSorted = (state: State, context: Context) => {
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
-  sort(
-    getAllChildren(state, context)
-      .filter(child => getThought(state, child.value)),
-    compare
-  )
+  sort(getAllChildren(state, context), compare)
 
 /** Generates children seorted by their values. */
 const getChildrenSortedAlphabetical = (state: State, context: Context) =>
