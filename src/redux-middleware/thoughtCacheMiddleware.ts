@@ -187,9 +187,6 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
       })
     }
 
-    // re-render after local thoughts are all loaded
-    dispatch({ type: 'render' })
-
     const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
 
     // get remote thoughts and reconcile with local
