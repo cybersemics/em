@@ -99,7 +99,7 @@ export interface State {
 }
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
-export const initialThoughts = () => {
+export const initialThoughts = (): ThoughtsInterface => {
 
   const contextIndex = {
     [hashContext([ROOT_TOKEN])]: {

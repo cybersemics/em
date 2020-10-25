@@ -115,7 +115,7 @@ const redoHandler = (state: State, patches: Patch[]) => {
  * Store enhancer to append the ability to undo/redo for all undoable actions.
  */
 // @ts-ignore
-const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialState: State) => {
+const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer: (state: State, action: Action<string>) => State, initialState: State) => {
   // eslint-disable-next-line fp/no-let
   let lastActionType: string
 
@@ -123,7 +123,6 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialS
    * Reducer to handle undo/redo actions and add/merge inverse-patches for other actions.
    */
   const undoAndRedoReducer = (state = initialState, action: Action<string>) => {
-    // @ts-ignore
     if (!state) return reducer(initialState, action)
     const { patches, inversePatches } = state as State
     const actionType = action.type
@@ -136,8 +135,7 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialS
 
     if (undoOrRedoState) return undoOrRedoState
 
-    // @ts-ignore
-    const newState = reducer(state, action) as State
+    const newState = reducer(state, action)
     if (!UNDOABLE_ACTIONS[actionType]) {
       return newState
     }
@@ -146,7 +144,7 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialS
     if ((NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) || (isExistingThoughtChange(lastActionType) && isExistingThoughtChange(actionType)) || actionType === 'closeAlert') {
       lastActionType = actionType
       const lastInversePatch = nthLast(state.inversePatches, 1)
-      const lastState = lastInversePatch
+      const lastState = lastInversePatch && lastInversePatch.length > 0
         ? applyPatch(deepClone(state), lastInversePatch).newDocument
         : state
       const combinedInversePatch = compareWithOmit(newState as Index, lastState)
@@ -155,7 +153,7 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer, initialS
         inversePatches: [
           ...newState.inversePatches.slice(0, -1),
           addActionsToPatch(combinedInversePatch, [
-            ...lastInversePatch
+            ...lastInversePatch && lastInversePatch.length > 0
               ? lastInversePatch[0].actions
               : [],
             actionType
