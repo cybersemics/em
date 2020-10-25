@@ -124,7 +124,6 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(path)
   const destValue = rawDestValue || destThought.value
-  const destRank = destThought.rank
 
   // if we are only importing a single line of text, then simply modify the current thought
   if (numLines === 1) {
@@ -157,7 +156,7 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
     if (!preventSetCursor && path) {
       dispatch({
         type: 'setCursor',
-        path: parentOf(path).concat({ value: newValue, rank: destRank }),
+        path: parentOf(path).concat({ ...destThought, value: newValue }),
         offset: startOffset + newText.length
       })
     }
