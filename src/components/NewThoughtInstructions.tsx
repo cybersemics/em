@@ -32,6 +32,12 @@ const mapStateToProps = (state: State) => {
 
 type NewThoughtInstructionsComponent = FC<NewThoughtInstructionsProps & ReturnType<typeof mapStateToProps>>
 
+/** An absolutely centered LoadingEllipsis. */
+const CenteredLoadingEllipsis = () =>
+  <div className='absolute-center'>
+    <i className='text-note'><LoadingEllipsis /></i>
+  </div>
+
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
 const NewThoughtInstructions: NewThoughtInstructionsComponent = ({ childrenLength, localLoading, isTutorial, status, tutorialStep }) => {
 
@@ -39,9 +45,10 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({ childrenLengt
 
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
-  return (localLoading || remoteLoading) && childrenLength === 0 ? <div className='absolute-center'>
-    <i className='text-note'><LoadingEllipsis /></i>
-  </div>
+  return <div className='new-thought-instructions'>{(localLoading || remoteLoading) && childrenLength === 0
+
+    // show loading ellipsis when loading
+    ? <CenteredLoadingEllipsis />
 
     // tutorial no children
     // show special message when there are no children in tutorial
@@ -60,6 +67,7 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({ childrenLengt
           : <span>Hit the Enter key</span>
         } to add a new thought.</React.Fragment>
       </React.Fragment>
+  }</div>
 }
 
 export default connect(mapStateToProps)(NewThoughtInstructions)
