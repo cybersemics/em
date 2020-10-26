@@ -114,7 +114,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     handleGestureSegmentTimeout = window.setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
-        store.dispatch<any>(alert(shortcut ? shortcut.name
+        store.dispatch(alert(shortcut ? shortcut.name
           : isGestureHint(state) ? '✗ Invalid gesture'
           : null, { alertType: 'gestureHint', showCloseLink: false }))
       },
@@ -146,7 +146,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       if (isGestureHint(store.getState())) {
-        store.dispatch<any>(alert(null))
+        store.dispatch(alert(null))
       }
     })
   },
@@ -156,7 +156,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // track meta key for expansion algorithm
     if (e.key === (isMac ? 'Meta' : 'Control')) {
       if (globals.suppressExpansion) {
-        store.dispatch<any>(suppressExpansion({ cancel: true }))
+        store.dispatch(suppressExpansion({ cancel: true }))
       }
     }
   },
@@ -189,7 +189,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
         // dispatch action to hide toolbar and breadcrumbs
         if (!isMobile) {
-          store.dispatch<any>(toggleTopControlsAndBreadcrumbs(false))
+          store.dispatch(toggleTopControlsAndBreadcrumbs(false))
         }
 
         // execute shortcut
