@@ -1,7 +1,6 @@
 import React, { Dispatch } from 'react'
 import _ from 'lodash'
 import { ActionCreator, Icon as IconType, Shortcut } from '../types'
-import { State } from '../util/initialState'
 import { parentOf, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import { Action } from 'redux'
@@ -21,7 +20,7 @@ const splitSentencesShortcut: Shortcut = {
   keyboard: { meta: true, shift: true, key: 's' },
   svg: Icon,
   canExecute: getState => getState().cursor !== null,
-  exec: (dispatch: Dispatch<Action | ActionCreator>, getState: () => State) => {
+  exec: (dispatch: Dispatch<Action | ActionCreator>, getState) => {
     const state = getState()
     const { cursor } = state
     const value = headValue(cursor!)

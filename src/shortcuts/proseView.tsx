@@ -1,7 +1,6 @@
 import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Shortcut } from '../types'
 import { parentOf, isDocumentEditable, pathToContext } from '../util'
-import { State } from '../util/initialState'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -29,7 +28,7 @@ const proseViewShortcut: Shortcut = {
   keyboard: { key: 'p', shift: true, meta: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return

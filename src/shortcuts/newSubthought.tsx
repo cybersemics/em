@@ -15,7 +15,8 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 </svg>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<NewThought>) => dispatch({ type: 'newThought', insertNewSubthought: true })
+const exec = (dispatch: Dispatch<NewThought>) =>
+  dispatch({ type: 'newThought', insertNewSubthought: true })
 
 const newSubthoughtShortcut: Shortcut = {
   id: 'newSubthought',
