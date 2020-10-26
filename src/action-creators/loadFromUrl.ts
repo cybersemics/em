@@ -1,24 +1,19 @@
 import { RANKED_ROOT } from '../constants'
-
-// util
-import {
-  isRoot,
-} from '../util'
-
-// selectors
-import {
-  decodeThoughtsUrl,
-  getAllChildren,
-} from '../selectors'
-
+import { isRoot, pathToContext } from '../util'
+import { decodeThoughtsUrl, getAllChildren } from '../selectors'
 import { importText } from '../action-creators'
+import { ActionCreator } from '../types'
+
+interface Options {
+  skipRoot?: boolean,
+}
 
 /**
  * Imports thoughts from the given source url into the given path (default: root).
  *
  * @param skipRoot    See importHtml.
  */
-const loadFromUrl = (url, path = RANKED_ROOT, { skipRoot } = {}) => async (dispatch, getState) => {
+const loadFromUrl = (url: string, path = RANKED_ROOT, { skipRoot }: Options = {}): ActionCreator => async (dispatch, getState) => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
   const response = await fetch(urlWithProtocol)
   const text = await response.text()
@@ -31,7 +26,7 @@ const loadFromUrl = (url, path = RANKED_ROOT, { skipRoot } = {}) => async (dispa
   const { path: decodedPath } = decodeThoughtsUrl(state, window.location.pathname)
 
   // set cursor to first child if cursor is not provided via url
-  const firstChild = getAllChildren(state, decodedPath)[0]
+  const firstChild = getAllChildren(state, pathToContext(decodedPath))[0]
   dispatch({
     type: 'setCursor',
     path: isRoot(decodedPath)
