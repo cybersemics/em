@@ -18,7 +18,7 @@ import { importText } from '../action-creators'
  *
  * @param skipRoot    See importHtml.
  */
-const loadFromUrl = async (url, path = RANKED_ROOT, { skipRoot } = {}) => async (dispatch, getState) => {
+const loadFromUrl = (url, path = RANKED_ROOT, { skipRoot } = {}) => async (dispatch, getState) => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
   const response = await fetch(urlWithProtocol)
   const text = await response.text()
