@@ -1,9 +1,7 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 import { parentOf, getElementPaddings, headValue, pathToContext, scrollCursorIntoView } from '../util'
 import { attributeEquals } from '../selectors'
-import { State } from '../util/initialState'
-import { Action } from 'redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -12,45 +10,49 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
+/** Returns true if the selection is on the last line of a multi-line editable. */
+const isSelectionOnLastLine = () => {
+  const selection = window.getSelection()
+  if (!selection) return false
+
+  const { anchorNode: baseNode, rangeCount } = selection
+  if (rangeCount === 0) return false
+
+  const { y: rangeY, height: rangeHeight } = selection.getRangeAt(0).getClientRects()[0]
+  const baseNodeParentEl = baseNode?.parentElement as HTMLElement
+  if (!baseNodeParentEl) return false
+
+  const { y: baseNodeY, height: baseNodeHeight } = baseNodeParentEl.getClientRects()[0]
+  const [paddingTop, , paddingBottom] = getElementPaddings(baseNodeParentEl)
+
+  return rangeY + rangeHeight > baseNodeY + baseNodeHeight - paddingTop - paddingBottom - 5
+}
+
 const cursorDownShortcut: Shortcut = {
   id: 'cursorDown',
   name: 'Cursor Down',
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
   svg: Icon,
-  canExecute: (getState: () => State) => {
+  canExecute: getState => {
     const state = getState()
     const { cursor } = state
 
-    if (cursor) {
-      const selection = window.getSelection()
-      if (!selection) return false
-      // default browser behavior in multiline field
-      const { anchorNode: baseNode, focusOffset, rangeCount } = selection
+    if (!cursor) return true
 
-      if (rangeCount > 0) {
-        const [{ y: rangeY, height: rangeHeight } = { y: NaN, height: NaN }] = Array.from(selection.getRangeAt(0).getClientRects())
-        const baseNodeParentEl = baseNode?.parentElement as HTMLElement
-        if (!baseNodeParentEl) return false
-        const [{ y: baseNodeY, height: baseNodeHeight }] = Array.from(baseNodeParentEl.getClientRects())
-        const [paddingTop,, paddingBottom] = getElementPaddings(baseNodeParentEl)
+    // use default browser behavior in prose mode
+    const contextRanked = parentOf(cursor)
+    const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
+    const isProseMode = isProseView && window.getSelection()?.focusOffset! < headValue(cursor).length - 1
+    if (isProseMode) return false
 
-        const isNotOnTheLastLine = rangeY + rangeHeight < baseNodeY + baseNodeHeight - paddingTop - paddingBottom - 5
-        if (isNotOnTheLastLine) {
-          return false
-        }
-      }
-
-      const contextRanked = parentOf(cursor)
-      const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
-
-      // default browser behavior in prose mode
-      if (isProseView && focusOffset < headValue(cursor).length - 1) return false
-    }
+    // use default browser if selection is not on the last line of a multi-line editable
+    const isOnLastLine = isSelectionOnLastLine()
+    if (!isOnLastLine) return false
 
     return true
   },
-  exec: (dispatch: Dispatch<Action>) => {
+  exec: dispatch => {
     dispatch({ type: 'cursorDown' })
     setTimeout(scrollCursorIntoView)
   }
