@@ -34,7 +34,8 @@ const loadResource = (path: Path): ActionCreator => (dispatch, getState) => {
 
     // load and import into the empty thought
     // skip the root of the src to import the children directly into the new thought
-    loadFromUrl(src, newThoughtPath, { skipRoot: true })
+    // do not await
+    dispatch(loadFromUrl(src, newThoughtPath, { skipRoot: true }))
       .then(() => setResourceCache(true))
       .catch(() => {
         dispatch({ type: 'error', value: 'Error loading resource: ' + src })
