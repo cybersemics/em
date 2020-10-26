@@ -30,7 +30,7 @@ export const initialize = async () => {
   const thoughtsLocalPromise = owner() === '~'
     // authenticated or offline user
     ? store.dispatch(src
-      ? loadFromUrl(src)
+      ? await loadFromUrl(src)
       : loadLocalState())
     // other user context
     : Promise.resolve()

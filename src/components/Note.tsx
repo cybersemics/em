@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
-import { store } from '../store.js'
+import { store } from '../store'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'

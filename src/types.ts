@@ -9,10 +9,12 @@ import { State } from './util/initialState'
  ********************************/
 
 interface Firebase {
-  auth: () => {
+  auth: (() => {
     currentUser: User,
     onAuthStateChanged: (f: (user: User) => void) => void,
-  },
+    signInWithRedirect: (provider: any) => void,
+    signOut: () => void,
+  }) & { GoogleAuthProvider: any },
   database: () => {
     ref: (s: string) => Ref,
   },
