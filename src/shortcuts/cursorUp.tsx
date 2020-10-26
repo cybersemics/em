@@ -1,9 +1,7 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
 import { parentOf, getElementPaddings, pathToContext, scrollCursorIntoView } from '../util'
-import { State } from '../util/initialState'
-import { Action } from 'redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -12,45 +10,56 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
+/** Returns true if the selection is on the second or greater line of a multi-line editable. */
+const isSelectionOnMultiLine = () => {
+
+  const selection = window.getSelection()
+  if (!selection) return false
+
+  const { anchorNode: baseNode, rangeCount } = selection
+
+  if (rangeCount === 0) return false
+
+  const { y: rangeY } = selection.getRangeAt(0).getClientRects()[0]
+  if (!rangeY) return false
+
+  const baseNodeParentEl = baseNode?.parentElement as HTMLElement
+  if (!baseNodeParentEl) return false
+
+  const { y: baseNodeY } = baseNodeParentEl.getClientRects()[0]
+  const [paddingTop] = getElementPaddings(baseNodeParentEl)
+
+  // allow error of 5px
+  const isOnFirstLine = Math.abs(rangeY - baseNodeY - paddingTop) < 5
+  return !isOnFirstLine
+}
+
 const cursorUpShortcut: Shortcut = {
   id: 'cursorUp',
   name: 'Cursor Up',
   keyboard: { key: 'ArrowUp' },
   hideFromInstructions: true,
   svg: Icon,
-  canExecute: (getState: () => State) => {
+  canExecute: getState => {
 
     const state = getState()
     const { cursor } = state
 
-    if (cursor) {
-      const selection = window.getSelection()
-      if (!selection) return false
-      // default browser behavior in multiline field
-      const { anchorNode: baseNode, focusOffset, rangeCount } = selection
+    if (!cursor) return true
 
-      if (rangeCount > 0) {
-        const [{ y: rangeY } = { y: undefined }] = Array.from(selection.getRangeAt(0).getClientRects())
-        const baseNodeParentEl = baseNode?.parentElement as HTMLElement
-        if (!baseNodeParentEl) return false
-        const [{ y: baseNodeY }] = Array.from(baseNodeParentEl.getClientRects())
-        const [paddingTop] = getElementPaddings(baseNodeParentEl)
-        // allow error of 5px
-        const isNotOnTheFirstLine = rangeY && (rangeY - baseNodeY - paddingTop > 5)
-        if (isNotOnTheFirstLine) {
-          return false
-        }
-      }
+    // use default browser behavior in prose mode
+    const contextRanked = parentOf(cursor)
+    const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
+    const isProseMode = isProseView && window.getSelection()?.focusOffset! > 0
+    if (isProseMode) return false
 
-      const contextRanked = parentOf(cursor)
-      const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
+    // use default browser if selection is on the second or greater line of a multi-line editable
+    const isMultiLine = isSelectionOnMultiLine()
+    if (isMultiLine) return false
 
-      // default browser behavior in prose mode
-      if (isProseView && focusOffset > 0) return false
-    }
     return true
   },
-  exec: (dispatch: Dispatch<Action>) => {
+  exec: dispatch => {
     dispatch({ type: 'cursorUp' })
     setTimeout(scrollCursorIntoView)
   }
