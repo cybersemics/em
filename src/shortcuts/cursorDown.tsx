@@ -35,7 +35,7 @@ const cursorDownShortcut: Shortcut = {
         const [{ y: baseNodeY, height: baseNodeHeight }] = Array.from(baseNodeParentEl.getClientRects())
         const [paddingTop,, paddingBottom] = getElementPaddings(baseNodeParentEl)
 
-        const isNotOnTheLastLine = rangeY + rangeHeight < baseNodeY + baseNodeHeight - paddingTop - paddingBottom
+        const isNotOnTheLastLine = rangeY + rangeHeight < baseNodeY + baseNodeHeight - paddingTop - paddingBottom - 5
         if (isNotOnTheLastLine) {
           return false
         }
