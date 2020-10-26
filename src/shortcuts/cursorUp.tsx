@@ -35,8 +35,8 @@ const cursorUpShortcut: Shortcut = {
         if (!baseNodeParentEl) return false
         const [{ y: baseNodeY }] = Array.from(baseNodeParentEl.getClientRects())
         const [paddingTop] = getElementPaddings(baseNodeParentEl)
-
-        const isNotOnTheFirstLine = rangeY && (Math.trunc(rangeY - baseNodeY - paddingTop) !== 0)
+        // allow error of 5px
+        const isNotOnTheFirstLine = rangeY && (rangeY - baseNodeY - paddingTop > 5)
         if (isNotOnTheFirstLine) {
           return false
         }
