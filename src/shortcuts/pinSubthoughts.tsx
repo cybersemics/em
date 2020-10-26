@@ -2,7 +2,6 @@ import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
 import { parentOf, pathToContext } from '../util'
-import { State } from '../util/initialState'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -28,7 +27,7 @@ const pinSubthoughtsShortcut: Shortcut = {
   description: 'Pin open the current thought\'s subthoughts.',
   keyboard: { key: 'p', alt: true, shift: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return

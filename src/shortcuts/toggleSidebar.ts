@@ -1,5 +1,4 @@
 import { Dispatch } from 'react'
-import { State } from '../util/initialState'
 import { Shortcut } from '../types'
 
 interface ToggleSidebar {
@@ -12,7 +11,7 @@ const toggleSidebarShortcut: Shortcut = {
   name: 'Toggle Recently Edited',
   keyboard: { alt: true, key: 'r' },
   hideFromInstructions: true,
-  exec: (dispatch: Dispatch<ToggleSidebar>, getState: () => State) =>
+  exec: (dispatch: Dispatch<ToggleSidebar>, getState) =>
     dispatch({ type: 'toggleSidebar', value: !getState().showSidebar })
 }
 

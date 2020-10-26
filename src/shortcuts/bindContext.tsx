@@ -2,7 +2,6 @@ import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable, pathToContext, rootedParentOf } from '../util'
 import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
-import { State } from '../util/initialState'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -26,7 +25,7 @@ const bindContextShortcut: Shortcut = {
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, alt: true },
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return

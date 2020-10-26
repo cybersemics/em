@@ -1,7 +1,6 @@
 import React, { Dispatch } from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
-import { State } from '../util/initialState'
 import { Action } from 'redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -16,7 +15,7 @@ const subCategorizeAllShortcut: Shortcut = {
   gesture: 'ldr',
   keyboard: { key: 'l', alt: true },
   svg: Icon,
-  canExecute: (getState: () => State) => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'subCategorizeAll' })
 }
 

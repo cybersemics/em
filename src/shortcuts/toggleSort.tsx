@@ -2,7 +2,6 @@ import React, { Dispatch } from 'react'
 import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
 import { pathToContext, rootedParentOf } from '../util'
-import { State } from '../util/initialState'
 import { ROOT_TOKEN } from '../constants'
 
 interface ToggleAttribute {
@@ -35,7 +34,7 @@ const toggleSortShortcut: Shortcut = {
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleAttribute | SetCursor>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute | SetCursor>, getState) => {
     const state = getState()
     const { cursor } = state
     const globalSort = getSetting(state, ['Global Sort'])
