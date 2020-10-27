@@ -9,7 +9,6 @@ import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } fr
 import {
   addThought,
   parentOf,
-  createId,
   equalPath,
   equalThoughtRanked,
   hashContext,
@@ -44,12 +43,12 @@ const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number
 }
 
 /** Recursively iterate through blocks and call insertThought for each block individually to save it. */
-const saveThoughts = (context: Context, blocks: Block[], insertThought: (value: string, context: Context, rank: number) => void, rankIncrement = 1, startRank = 0) => {
+const saveThoughts = (context: Context, blocks: Block[], insertThought: (value: string, context: Context, rank: number, lastUpdated?: Timestamp) => void, rankIncrement = 1, startRank = 0, lastUpdated = timestamp()) => {
   blocks.forEach((block, index) => {
     const rank = startRank + index * rankIncrement
-    insertThought(block.scope, context, rank)
+    insertThought(block.scope, context, rank, lastUpdated)
     if (block.children.length > 0) {
-      saveThoughts([...context, block.scope], block.children, insertThought)
+      saveThoughts([...context, block.scope], block.children, insertThought, rankIncrement, startRank, lastUpdated)
     }
   })
 }
@@ -101,6 +100,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
       const rootedContext = pathToContext(rootedParentOf(simplePath))
       const contextEncoded = hashContext(rootedContext)
       contextIndexUpdates[contextEncoded] = {
+        id: contextEncoded,
         ...contextIndexUpdates[contextEncoded],
         context: rootedContext,
         children: getAllChildren(state, rootedContext)
@@ -111,9 +111,8 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   }
 
   /** Insert the given value at the context. Modifies contextIndex and thoughtIndex. */
-  const insertThought = (value: string, context: Context, rank: number) => {
+  const insertThought = (value: string, context: Context, rank: number, lastUpdated: Timestamp = timestamp()) => {
     value = value.trim()
-    const id = createId()
     const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
     const thoughtNew = addThought(
       {
@@ -125,8 +124,8 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
       },
       value,
       rank,
-      id,
-      rootContext
+      rootContext,
+      lastUpdated
     )
 
     const hash = hashThought(value)
@@ -141,12 +140,12 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
       contextIndex[contextEncoded]?.children || []
 
     contextIndexUpdates[contextEncoded] = {
+      id: contextEncoded,
       ...contextIndexUpdates[contextEncoded],
       context: rootContext,
       children: [...childrenUpdates, {
         value,
         rank,
-        id,
         lastUpdated,
       }],
       lastUpdated,
@@ -156,7 +155,8 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const startContext = getStartContext(simplePath)
   const thoughts = skipRoot ? skipRootThought(blocks) : blocks
   const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, thoughts)
-  saveThoughts(startContext, thoughts, insertThought, rankIncrement, rankStart)
+  saveThoughts(startContext, thoughts, insertThought, rankIncrement, rankStart, lastUpdated)
+
   return {
     contextIndexUpdates,
     lastThoughtFirstLevel,

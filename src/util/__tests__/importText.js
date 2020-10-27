@@ -1,27 +1,9 @@
-// constants
-import {
-  NOOP,
-  ROOT_TOKEN,
-} from '../../constants'
+import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { hashContext, hashThought, timestamp } from '../../util'
+import { exportContext } from '../../selectors'
+import { importText } from '../../action-creators'
 
-// util
-import {
-  hashContext,
-  hashThought,
-} from '../../util'
-
-// selectors
-import {
-  exportContext,
-} from '../../selectors'
-
-// action-creators
-import {
-  importText,
-} from '../../action-creators'
-
-const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
-const initialState = {
+const INITIAL_STATE = {
   contextViews: {},
   thoughts: {
     contextIndex: {
@@ -39,15 +21,15 @@ const initialState = {
   }
 }
 
-/** Imports the given html and exports it as plaintext. */
-const importExport = async text => {
+const initialState = () => INITIAL_STATE
+
+/** Helper function that imports html and exports it as plaintext. */
+const importExport = text => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importText(RANKED_ROOT, text)(
-    NOOP, // dispatch
-    () => initialState // getState
-  )
+  } = importText(RANKED_ROOT, text)(NOOP, initialState)
+
   const state = {
     thoughts: {
       contextIndex,
@@ -66,8 +48,70 @@ const importExport = async text => {
   return exportedWithoutRoot
 }
 
-it('initialSettings', async () => {
-  expect(await importExport(`
+it('basic import with proper thought structure', () => {
+
+  const text = `
+  - a
+    - b
+  `
+
+  const now = timestamp()
+
+  const {
+    contextIndexUpdates: contextIndex,
+    thoughtIndexUpdates: thoughtIndex,
+  } = importText(RANKED_ROOT, text, { lastUpdated: now })(NOOP, initialState)
+
+  expect(contextIndex).toEqual({
+    [hashContext([ROOT_TOKEN])]: {
+      id: hashContext([ROOT_TOKEN]),
+      context: [ROOT_TOKEN],
+      children: [{
+        // TODO: children don't have ids because they not have a Parent yet when they are created???
+        // id: contextIndex[hashContext(['a'])].children[0].id,
+        value: 'a',
+        rank: 0,
+        lastUpdated: now,
+      }],
+      lastUpdated: now,
+    },
+    [hashContext(['a'])]: {
+      id: hashContext(['a']),
+      context: ['a'],
+      children: [{
+        value: 'b',
+        rank: 0,
+        lastUpdated: now,
+      }],
+      lastUpdated: now,
+    }
+  })
+
+  expect(thoughtIndex).toEqual({
+    [hashThought('a')]: {
+      value: 'a',
+      contexts: [{
+        context: [ROOT_TOKEN],
+        rank: 0,
+      }],
+      created: now,
+      lastUpdated: now,
+    },
+    [hashThought('b')]: {
+      value: 'b',
+      contexts: [{
+        context: ['a'],
+        rank: 0,
+      }],
+      created: now,
+      lastUpdated: now,
+    },
+  })
+
+})
+
+it('initialSettings', () => {
+  expect(importExport(`
 <ul>
   <li>Settings
     <ul>
@@ -124,7 +168,7 @@ it('two root thoughts', async () => {
   - b
 - c
   - d`
-  const exported = await importExport(text)
+  const exported = importExport(text)
   expect(exported.trim())
     .toBe(text)
 })

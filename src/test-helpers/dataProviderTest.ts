@@ -1,12 +1,13 @@
 import _ from 'lodash'
 import all from 'it-all'
-import { EM_TOKEN, ROOT_TOKEN } from '../constants'
+import { EM_TOKEN, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
 import getThought from '../data-providers/data-helpers/getThought'
-import { hashContext, hashThought, mergeThoughts, never, timestamp } from '../util'
+import { hashContext, hashThought, initialState, mergeThoughts, never, timestamp } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
+import { importText } from '../action-creators'
 
 /** Runs tests for a module that conforms to the data-provider API. */
 const dataProviderTest = (provider: DataProvider) => {
@@ -34,38 +35,24 @@ const dataProviderTest = (provider: DataProvider) => {
 
   test('getThoughtsByIds', async () => {
 
-    const thoughtX = {
-      id: hashThought('x'),
-      value: 'x',
-      rank: 0,
-      contexts: [{
-        context: ['a'],
-        rank: 0,
-        lastUpdated: timestamp(),
-      }],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
+    const text = `
+      - x
+        - y
+    `
 
-    const thoughtY = {
-      id: hashThought('y'),
-      value: 'y',
-      rank: 0,
-      contexts: [{
-        context: ['b'],
-        rank: 0,
-        lastUpdated: timestamp(),
-      }],
-      created: timestamp(),
-      lastUpdated: timestamp()
-    }
+    const {
+      contextIndexUpdates: contextIndex,
+      thoughtIndexUpdates: thoughtIndex,
+    } = importText(RANKED_ROOT, text)(NOOP, initialState)
 
+    const thoughtX = thoughtIndex[hashThought('x')]
+    const thoughtY = thoughtIndex[hashThought('y')]
     await provider.updateThought(hashThought('x'), thoughtX)
     await provider.updateThought(hashThought('y'), thoughtY)
 
     const dbThoughts = await provider.getThoughtsByIds([hashThought('x'), hashThought('y')])
 
-    expect(dbThoughts).toEqual([thoughtX, thoughtY])
+    expect(dbThoughts).toMatchObject([thoughtX, thoughtY])
   })
 
   test('updateThought', async () => {

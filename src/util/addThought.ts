@@ -5,7 +5,7 @@ import { Context } from '../types'
 import { State } from './initialState'
 
 /** Create a new thought, merging collisions. */
-export const addThought = (state: State, value: string, rank: number, id: string, context: Context) => {
+export const addThought = (state: State, value: string, rank: number, context: Context, lastUpdated = timestamp()) => {
   const thoughtOld = getThought(state, value)
   return {
     ...thoughtOld,
@@ -16,11 +16,10 @@ export const addThought = (state: State, value: string, rank: number, id: string
     ).concat({
       context,
       rank,
-      id
     }),
     created: thoughtOld && thoughtOld.created
       ? thoughtOld.created
-      : timestamp(),
-    lastUpdated: timestamp()
+      : lastUpdated,
+    lastUpdated,
   }
 }
