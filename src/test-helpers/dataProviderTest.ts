@@ -1134,6 +1134,168 @@ const dataProviderTest = (provider: DataProvider) => {
 
     })
 
+    test('ignore maxDepth on metaprogramming attributes', async () => {
+
+      const thoughtX = {
+        id: hashThought('x'),
+        value: 'x',
+        contexts: [],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thoughtY = {
+        id: hashThought('y'),
+        value: 'y',
+        contexts: [{
+          context: ['x'],
+          rank: 0,
+          lastUpdated: timestamp(),
+        }],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thoughtNote = {
+        id: hashThought('=note'),
+        value: '=note',
+        contexts: [{
+          context: ['x', 'y'],
+          rank: 1,
+          lastUpdated: timestamp(),
+        }],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thoughtContent = {
+        id: hashThought('content'),
+        value: 'content',
+        contexts: [{
+          context: ['x', 'y', '=note'],
+          rank: 0,
+          lastUpdated: timestamp(),
+        }],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thoughtZ = {
+        id: hashThought('z'),
+        value: 'z',
+        contexts: [{
+          context: ['x', 'y'],
+          rank: 0,
+          lastUpdated: timestamp(),
+        }],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const thoughtM = {
+        id: hashThought('m'),
+        value: 'm',
+        contexts: [{
+          context: ['x', 'y', 'z'],
+          rank: 0,
+          lastUpdated: timestamp(),
+        }],
+        created: timestamp(),
+        lastUpdated: timestamp()
+      }
+
+      const parentEntryX = {
+        id: hashContext(['x']),
+        context: ['x'],
+        children: [{ value: 'y', rank: 0 }],
+        lastUpdated: timestamp(),
+      }
+
+      const parentEntryY = {
+        id: hashContext(['x', 'y']),
+        context: ['x', 'y'],
+        children: [
+          { value: 'z', rank: 0 },
+          { value: '=note', rank: 1 },
+        ],
+        lastUpdated: timestamp(),
+      }
+
+      const parentEntryNote = {
+        id: hashContext(['x', 'y', '=note']),
+        context: ['x', 'y', '=note'],
+        children: [{ value: 'content', rank: 0 }],
+        lastUpdated: timestamp(),
+      }
+
+      const parentEntryNoteContent = {
+        id: hashContext(['x', 'y', '=note', 'content']),
+        context: ['x', 'y', '=note', 'content'],
+        children: [],
+        lastUpdated: timestamp(),
+      }
+
+      const parentEntryZ = {
+        id: hashContext(['x', 'y', 'z']),
+        context: ['x', 'y', 'z'],
+        children: [{ value: 'm', rank: 0 }],
+        lastUpdated: timestamp(),
+      }
+
+      const parentEntryM = {
+        id: hashContext(['x', 'y', 'z', 'm']),
+        context: ['x', 'y', 'z', 'm'],
+        children: [],
+        lastUpdated: timestamp(),
+      }
+
+      await provider.updateThoughtIndex({
+        [hashThought('x')]: thoughtX,
+        [hashThought('y')]: thoughtY,
+        [hashThought('=note')]: thoughtNote,
+        [hashThought('content')]: thoughtContent,
+        [hashThought('z')]: thoughtZ,
+        [hashThought('m')]: thoughtM,
+      })
+
+      await provider.updateContextIndex({
+        [hashContext(['x'])]: parentEntryX,
+        [hashContext(['x', 'y'])]: parentEntryY,
+        [hashContext(['x', 'y', '=note'])]: parentEntryNote,
+        [hashContext(['x', 'y', '=note', 'content'])]: parentEntryNoteContent,
+        [hashContext(['x', 'y', 'z'])]: parentEntryZ,
+        [hashContext(['x', 'y', 'z', 'm'])]: parentEntryM,
+      })
+
+      // only fetch 1 level of descendants
+      const it = getDescendantThoughts(provider, ['x'], { maxDepth: 1 })
+      const thoughtChunks = await all(it)
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
+
+      expect(thoughts).toHaveProperty('contextIndex')
+
+      expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(parentEntryX)
+
+      expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual({
+        ...parentEntryY,
+        children: [{ value: '=note', rank: 1 }],
+        lastUpdated: never(),
+        pending: true,
+      })
+
+      expect(thoughts.contextIndex[hashContext(['x', 'y', '=note'])]).toEqual(parentEntryNote)
+
+      expect(thoughts).toHaveProperty('thoughtIndex')
+
+      expect(thoughts.thoughtIndex).toEqual({
+        [hashThought('x')]: thoughtX,
+        [hashThought('y')]: thoughtY,
+        [hashThought('=note')]: thoughtNote,
+        [hashThought('content')]: thoughtContent,
+      })
+
+    })
+
   })
 
 }
