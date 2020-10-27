@@ -16,67 +16,41 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
 
   const contextEncoded = hashContext(context)
 
-  const parentEntry = await getContext(provider, context) || {
+  const parentEntry = maxDepth === 0 ? {
+    id: hashContext(context),
+    context,
+    children: [],
+    lastUpdated: never(),
+    pending: true,
+  } : await getContext(provider, context) || {
+    id: hashContext(context),
     context,
     children: [],
     lastUpdated: never(),
   }
 
   const lexeme = await getThought(provider, head(context))
-
-  if (maxDepth === 0) {
-    yield {
-      contextCache: [contextEncoded],
-      contextIndex: {
-        [contextEncoded]: {
-          id: parentEntry.id,
-          context,
-          children: [],
-          // TODO: Why not return the children if we already have them?
-          lastUpdated: never(),
-          pending: true,
-        }
-      },
-      thoughtCache: lexeme ? [hashThought(lexeme.value)] : [],
-      thoughtIndex: {
-        ...lexeme ? { [hashThought(lexeme.value)]: lexeme } : null,
-      }
-    }
-    return
-  }
-
-  // generate a list of thought and context ids for all children
-  const { childrenThoughtIds, childrenContextIds } =
-  (parentEntry.children || []).reduce((accum, child) => ({
-    childrenThoughtIds: [
-      ...accum.childrenThoughtIds || [],
-      hashThought(child.value),
-    ],
-    childrenContextIds: [
-      ...accum.childrenContextIds,
-      hashContext(unroot([...context, child.value]))
-    ]
-  }), {
-    childrenThoughtIds: [] as string[],
-    childrenContextIds: [] as string[],
-  })
+  const lexemeEncoded = lexeme ? hashThought(lexeme.value) : null
 
   const thoughts = {
-    contextCache: [contextEncoded, ...childrenContextIds],
+    contextCache: [contextEncoded],
     contextIndex: {
       [contextEncoded]: parentEntry,
     },
-    thoughtCache: [...lexeme ? [hashThought(lexeme.value)] : [], ...childrenThoughtIds],
-    thoughtIndex: {
-      ...lexeme ? { [hashThought(lexeme.value)]: lexeme } : null,
-    }
+    thoughtCache: lexeme ? [lexemeEncoded!] : [],
+    thoughtIndex: lexeme ? {
+      [lexemeEncoded!]: lexeme
+    } : {},
   }
 
   yield thoughts
 
-  yield* yieldAll((parentEntry.children || []).map(child =>
-    getDescendantThoughts(provider, unroot([...context, child.value]), { maxDepth: maxDepth - 1 })
-  ))
+  if (maxDepth > 0) {
+    yield* yieldAll((parentEntry.children || [])
+      .map(child =>
+        getDescendantThoughts(provider, unroot([...context, child.value]), { maxDepth: maxDepth - 1 })
+      ))
+  }
 }
 
 export default getDescendantThoughts
