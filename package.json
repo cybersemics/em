@@ -101,9 +101,9 @@
     "md5": "^2.3.0",
     "raw.macro": "^0.4.2",
     "redux-mock-store": "^1.5.4",
-    "typedoc": "^0.19.2",
+    "typedoc": "^0.17.8",
     "typedoc-plugin-exclude-references": "^1.0.0",
-    "typedoc-plugin-external-module-name": "git+https://github.com/anmolarora1/typedoc-plugin-external-module-name/#customconfig",
+    "typedoc-plugin-external-module-name": "^4.0.3",
     "typedoc-plugin-module-wide-comments": "1.0.3",
     "typedoc-plugin-rename-named-parameters": "^1.0.6",
     "xml2json": "^0.12.0"
