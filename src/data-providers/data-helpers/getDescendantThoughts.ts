@@ -1,9 +1,15 @@
-import { Context, Parent } from '../../types'
+import _ from 'lodash'
 import { DataProvider } from '../DataProvider'
 import { ThoughtsInterface } from '../../util/initialState'
-import { hashContext, hashThought, head, never, unroot, yieldAll } from '../../util'
+import { hashContext, hashThought, head, isFunction, never, unroot, yieldAll } from '../../util'
 import getContext from './getContext'
 import getThought from './getThought'
+import { Context, Index, Parent } from '../../types'
+
+const MAX_DEPTH = 100
+
+/** Returns a getter function that accesses a property on an object. */
+const prop = (name: string) => <T>(x: Index<T>) => x[name]
 
 /**
  * Returns buffered thoughtIndex and contextIndex for all descendants using async iterables.
@@ -12,22 +18,28 @@ import getThought from './getThought'
  * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
-async function* getDescendantThoughts(provider: DataProvider, context: Context, { maxDepth = 100 }: { maxDepth?: number, parentEntry?: Parent } = {}): AsyncIterable<ThoughtsInterface> {
+async function* getDescendantThoughts(provider: DataProvider, context: Context, { maxDepth = MAX_DEPTH }: { maxDepth?: number, parentEntry?: Parent } = {}): AsyncIterable<ThoughtsInterface> {
 
   const contextEncoded = hashContext(context)
 
-  const parentEntry = maxDepth === 0 ? {
-    id: hashContext(context),
-    context,
-    children: [],
-    lastUpdated: never(),
-    pending: true,
-  } : await getContext(provider, context) || {
+  // get the Parent from the provider
+  const providerParent = await getContext(provider, context) || {
     id: hashContext(context),
     context,
     children: [],
     lastUpdated: never(),
   }
+
+  // if we have reached the maximum depth, set the Parent to pending and only load metaprogramming attributes
+  const parent = maxDepth > 0
+    ? providerParent
+    : {
+      ...providerParent,
+      children: (providerParent.children || [])
+        .filter(_.flow(prop('value'), isFunction)),
+      lastUpdated: never(),
+      pending: true,
+    }
 
   const lexeme = await getThought(provider, head(context))
   const lexemeEncoded = lexeme ? hashThought(lexeme.value) : null
@@ -35,7 +47,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
   const thoughts = {
     contextCache: [contextEncoded],
     contextIndex: {
-      [contextEncoded]: parentEntry,
+      [contextEncoded]: parent,
     },
     thoughtCache: lexeme ? [lexemeEncoded!] : [],
     thoughtIndex: lexeme ? {
@@ -45,12 +57,12 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
 
   yield thoughts
 
-  if (maxDepth > 0) {
-    yield* yieldAll((parentEntry.children || [])
-      .map(child =>
-        getDescendantThoughts(provider, unroot([...context, child.value]), { maxDepth: maxDepth - 1 })
-      ))
-  }
+  yield* yieldAll((parent.children || []).map(child =>
+    getDescendantThoughts(provider, unroot([...context, child.value]), {
+      // get all metaprogramming descendants
+      maxDepth: maxDepth === 0 ? MAX_DEPTH : maxDepth - 1
+    })
+  ))
 }
 
 export default getDescendantThoughts
