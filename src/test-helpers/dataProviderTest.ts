@@ -245,7 +245,12 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
+      expect(thoughts).toHaveProperty('contextIndex')
+      expect(Object.keys(thoughts.contextIndex).length).toBe(6)
       expect(thoughts.contextIndex).toMatchObject(contextIndex)
+
+      expect(thoughts).toHaveProperty('thoughtIndex')
+      expect(Object.keys(thoughts.thoughtIndex).length).toBe(5)
       expect(thoughts.thoughtIndex).toMatchObject(thoughtIndex)
 
     })
@@ -264,9 +269,12 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
+      expect(thoughts).toHaveProperty('contextIndex')
       expect(Object.keys(thoughts.contextIndex).length).toBe(4)
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(3)
       expect(thoughts.contextIndex).toMatchObject(contextIndex)
+
+      expect(thoughts).toHaveProperty('thoughtIndex')
+      expect(Object.keys(thoughts.thoughtIndex).length).toBe(3)
       expect(thoughts.thoughtIndex).toMatchObject(thoughtIndex)
 
     })
@@ -304,10 +312,9 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts).toHaveProperty('thoughtIndex')
       expect(Object.keys(thoughts.thoughtIndex).length).toBe(2)
 
-      expect(thoughts.thoughtIndex).toMatchObject({
-        [hashThought('x')]: thoughtIndex[hashThought('x')],
-        [hashThought('y')]: thoughtIndex[hashThought('y')],
-      })
+      expect(thoughts.thoughtIndex).toMatchObject(
+        _.pick(thoughtIndex, ['x', 'y'].map(hashThought))
+      )
 
     })
 
@@ -344,11 +351,9 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('thoughtIndex')
       expect(Object.keys(thoughts.thoughtIndex).length).toBe(3)
-      expect(thoughts.thoughtIndex).toMatchObject({
-        [hashThought('x')]: thoughtIndex[hashThought('x')],
-        [hashThought('y')]: thoughtIndex[hashThought('y')],
-        [hashThought('z')]: thoughtIndex[hashThought('z')],
-      })
+      expect(thoughts.thoughtIndex).toMatchObject(
+        _.pick(thoughtIndex, ['x', 'y', 'z'].map(hashThought))
+      )
 
     })
   })
@@ -380,31 +385,26 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('contextIndex')
       expect(Object.keys(thoughts.contextIndex).length).toBe(9)
-      expect(thoughts.contextIndex).toMatchObject({
-        [hashContext(['x'])]: contextIndex[hashContext(['x'])],
-        [hashContext(['x', 'y'])]: contextIndex[hashContext(['x', 'y'])],
-        [hashContext(['x', 'y', 'z'])]: contextIndex[hashContext(['x', 'y', 'z'])],
-        [hashContext(['t'])]: contextIndex[hashContext(['t'])],
-        [hashContext(['t', 'u'])]: contextIndex[hashContext(['t', 'u'])],
-        [hashContext(['t', 'u', 'v'])]: contextIndex[hashContext(['t', 'u', 'v'])],
-        [hashContext(['t', 'u', 'v', 'm'])]: contextIndex[hashContext(['t', 'u', 'v', 'm'])],
+      expect(thoughts.contextIndex).toMatchObject(
+        _.pick(contextIndex, [
+          ['x'],
+          ['x', 'y'],
+          ['x', 'y', 'z'],
+          ['t'],
+          ['t', 'u'],
+          ['t', 'u', 'v'],
+          ['t', 'u', 'v', 'm'],
+        ].map(cx => hashContext(cx)))
         // empty contexts are present in local state but not provider state
-        // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],
-        // [hashContext(['t', 'u', 'v', 'm', 'n'])]: contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
-      })
+        // ['x', 'y', 'z', 'm']
+        // ['t', 'u', 'v', 'm', 'n']
+      )
 
       expect(thoughts).toHaveProperty('thoughtIndex')
       expect(Object.keys(thoughts.thoughtIndex).length).toBe(8)
-      expect(thoughts.thoughtIndex).toMatchObject({
-        [hashThought('x')]: thoughtIndex[hashThought('x')],
-        [hashThought('y')]: thoughtIndex[hashThought('y')],
-        [hashThought('z')]: thoughtIndex[hashThought('z')],
-        [hashThought('t')]: thoughtIndex[hashThought('t')],
-        [hashThought('m')]: thoughtIndex[hashThought('m')],
-        [hashThought('u')]: thoughtIndex[hashThought('u')],
-        [hashThought('v')]: thoughtIndex[hashThought('v')],
-        [hashThought('n')]: thoughtIndex[hashThought('n')],
-      })
+      expect(thoughts.thoughtIndex).toMatchObject(
+        _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'm', 'u', 'v', 'm'].map(hashThought))
+      )
 
     })
 
@@ -434,16 +434,18 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts).toHaveProperty('contextIndex')
       expect(Object.keys(thoughts.contextIndex).length).toBe(6)
       expect(thoughts.contextIndex).toMatchObject({
-        [hashContext(['x'])]: contextIndex[hashContext(['x'])],
-        [hashContext(['x', 'y'])]: contextIndex[hashContext(['x', 'y'])],
+        ..._.pick(contextIndex, [
+          ['x'],
+          ['x', 'y'],
+          ['t'],
+          ['t', 'u'],
+        ].map(cx => hashContext(cx))),
         [hashContext(['x', 'y', 'z'])]: {
           ...contextIndex[hashContext(['x', 'y', 'z'])],
           children: [],
           pending: true,
           lastUpdated: never(),
         },
-        [hashContext(['t'])]: contextIndex[hashContext(['t'])],
-        [hashContext(['t', 'u'])]: contextIndex[hashContext(['t', 'u'])],
         [hashContext(['t', 'u', 'v'])]: {
           ...contextIndex[hashContext(['t', 'u', 'v'])],
           children: [],
@@ -457,14 +459,9 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('thoughtIndex')
       expect(Object.keys(thoughts.thoughtIndex).length).toBe(6)
-      expect(thoughts.thoughtIndex).toMatchObject({
-        [hashThought('x')]: thoughtIndex[hashThought('x')],
-        [hashThought('y')]: thoughtIndex[hashThought('y')],
-        [hashThought('z')]: thoughtIndex[hashThought('z')],
-        [hashThought('t')]: thoughtIndex[hashThought('t')],
-        [hashThought('u')]: thoughtIndex[hashThought('u')],
-        [hashThought('v')]: thoughtIndex[hashThought('v')],
-      })
+      expect(thoughts.thoughtIndex).toMatchObject(
+        _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'u', 'v'].map(hashThought))
+      )
 
     })
 
@@ -534,32 +531,28 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts).toHaveProperty('contextIndex')
       expect(Object.keys(thoughts.contextIndex).length).toBe(7)
       expect(thoughts.contextIndex).toMatchObject({
-        [hashContext(['x'])]: contextIndex[hashContext(['x'])],
-        [hashContext(['x', 'y'])]: contextIndex[hashContext(['x', 'y'])],
+        ..._.pick(contextIndex, [
+          ['x'],
+          ['x', 'y'],
+          [EM_TOKEN],
+          [EM_TOKEN, 'Settings'],
+          [EM_TOKEN, 'Settings', 'Font Size'],
+        ].map(cx => hashContext(cx))),
         [hashContext(['x', 'y', 'z'])]: {
           ...contextIndex[hashContext(['x', 'y', 'z'])],
           children: [],
           pending: true,
           lastUpdated: never(),
         },
-        [hashContext([EM_TOKEN])]: contextIndex[hashContext([EM_TOKEN])],
-        [hashContext([EM_TOKEN, 'Settings'])]: contextIndex[hashContext([EM_TOKEN, 'Settings'])],
-        [hashContext([EM_TOKEN, 'Settings', 'Font Size'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Font Size'])],
         // empty contexts are present in local state but not provider state
         // [hashContext([EM_TOKEN, 'Settings', 'Font Size', '16'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Font Size', '16'])],
       })
 
       expect(thoughts).toHaveProperty('thoughtIndex')
       expect(Object.keys(thoughts.thoughtIndex).length).toBe(6)
-      expect(thoughts.thoughtIndex).toMatchObject({
-        [hashThought('x')]: thoughtIndex[hashThought('x')],
-        [hashThought('y')]: thoughtIndex[hashThought('y')],
-        [hashThought('z')]: thoughtIndex[hashThought('z')],
-        // 'm' is not loaded since ['x', 'y', 'z'] is pending
-        [hashThought('Settings')]: thoughtIndex[hashThought('Settings')],
-        [hashThought('Font Size')]: thoughtIndex[hashThought('Font Size')],
-        [hashThought('16')]: thoughtIndex[hashThought('16')],
-      })
+      expect(thoughts.thoughtIndex).toMatchObject(
+        _.pick(thoughtIndex, ['x', 'y', 'z', 'Settings', 'Font Size', '16'].map(hashThought))
+      )
 
     })
 
@@ -591,8 +584,13 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts).toHaveProperty('contextIndex')
       expect(Object.keys(thoughts.contextIndex).length).toBe(8)
       expect(thoughts.contextIndex).toMatchObject({
-        [hashContext(['x'])]: contextIndex[hashContext(['x'])],
-        [hashContext(['x', 'y'])]: contextIndex[hashContext(['x', 'y'])],
+        ..._.pick(contextIndex, [
+          ['x'],
+          ['x', 'y'],
+          ['x', 'y', 'z', '=note'],
+          ['t'],
+          ['t', 'u'],
+        ].map(cx => hashContext(cx))),
         [hashContext(['x', 'y', 'z'])]: {
           ...contextIndex[hashContext(['x', 'y', 'z'])],
           children: [{
@@ -602,9 +600,6 @@ const dataProviderTest = (provider: DataProvider) => {
           pending: true,
           lastUpdated: never(),
         },
-        [hashContext(['x', 'y', 'z', '=note'])]: contextIndex[hashContext(['x', 'y', 'z', '=note'])],
-        [hashContext(['t'])]: contextIndex[hashContext(['t'])],
-        [hashContext(['t', 'u'])]: contextIndex[hashContext(['t', 'u'])],
         [hashContext(['t', 'u', 'v'])]: {
           ...contextIndex[hashContext(['t', 'u', 'v'])],
           children: [],
@@ -619,17 +614,10 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('thoughtIndex')
       expect(Object.keys(thoughts.thoughtIndex).length).toBe(8)
-      expect(thoughts.thoughtIndex).toMatchObject({
-        [hashThought('x')]: thoughtIndex[hashThought('x')],
-        [hashThought('y')]: thoughtIndex[hashThought('y')],
-        [hashThought('z')]: thoughtIndex[hashThought('z')],
-        [hashThought('=note')]: thoughtIndex[hashThought('=note')],
-        [hashThought('content')]: thoughtIndex[hashThought('content')],
-        [hashThought('t')]: thoughtIndex[hashThought('t')],
-        [hashThought('u')]: thoughtIndex[hashThought('u')],
-        [hashThought('v')]: thoughtIndex[hashThought('v')],
-        // 'm' is not loaded since ['x', 'y', 'z'] and ['t', 'u', 'v'] are pending
-      })
+      // 'm' is not loaded since ['x', 'y', 'z'] and ['t', 'u', 'v'] are pending
+      expect(thoughts.thoughtIndex).toMatchObject(
+        _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'u', 'v', '=note', 'content'].map(hashThought)),
+      )
 
 
     })
