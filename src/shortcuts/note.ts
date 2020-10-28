@@ -4,7 +4,6 @@ import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { Context, Shortcut } from '../types'
 import { Dispatch } from 'react'
-import { State } from '../util/initialState'
 
 interface SetAttribute {
   type: 'setAttribute',
@@ -21,7 +20,7 @@ const noteShortcut: Shortcut = {
   gesture: 'rdlr',
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<SetAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<SetAttribute>, getState) => {
     const state = getState()
     const { cursor, cursorBeforeEdit, noteFocus } = state
 

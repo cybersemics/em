@@ -1,7 +1,6 @@
 import { Dispatch } from 'react'
 import RedoIcon from '../components/RedoIcon'
 import { Shortcut } from '../types'
-import { State } from '../util/initialState'
 import { isRedoEnabled } from '../util/isRedoEnabled'
 
 interface RedoAction {
@@ -13,7 +12,7 @@ const redoShortcut: Shortcut = {
   name: 'Redo',
   description: 'Redo',
   svg: RedoIcon,
-  exec: (dispatch: Dispatch<RedoAction>, getState: () => State) => {
+  exec: (dispatch: Dispatch<RedoAction>, getState) => {
     if (!isRedoEnabled(getState())) {
       return
     }

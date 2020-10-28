@@ -1,7 +1,6 @@
 import React, { Dispatch } from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 import { Action } from 'redux'
-import { State } from '../util/initialState'
 import { clearSelection, scrollCursorIntoView } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -25,7 +24,7 @@ const cursorBackShortcut: Shortcut = {
   gesture: 'r',
   svg: Icon,
   keyboard: 'Escape',
-  exec: (dispatch: Dispatch<Action>, getState: () => State) => {
+  exec: (dispatch: Dispatch<Action>, getState) => {
     const { cursor, search } = getState()
     if (cursor || search != null) {
 
