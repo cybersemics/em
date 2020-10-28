@@ -1,5 +1,6 @@
 // constants
 import {
+  RANKED_ROOT,
   ROOT_TOKEN,
 } from '../../constants'
 
@@ -15,11 +16,11 @@ import {
 } from '../../selectors'
 import { importROAM } from '../importROAM'
 import { State, initialState } from '../initialState'
-import { RoamNode } from 'roam'
+import { RoamPage } from 'roam'
 import { exportedWithoutRoot } from '../../test-helpers/exportWithoutRoot'
-import { SimplePath, Timestamp } from '../../types'
+import { SimplePath } from '../../types'
+import { timestamp } from '../timestamp'
 
-const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const testState: State = {
   ...initialState(),
   thoughts: {
@@ -27,7 +28,7 @@ const testState: State = {
       [hashContext([ROOT_TOKEN])]: {
         context: [ROOT_TOKEN],
         children: [],
-        lastUpdated: '11-10-2020' as Timestamp
+        lastUpdated: timestamp()
       },
     },
     thoughtIndex: {
@@ -35,15 +36,15 @@ const testState: State = {
         rank: 0,
         value: ROOT_TOKEN,
         contexts: [],
-        created: '11-10-2020' as Timestamp,
-        lastUpdated: '11-10-2020' as Timestamp
+        created: timestamp(),
+        lastUpdated: timestamp()
       },
     },
   }
 }
 
 /** Imports the given ROAM's JSON format and exports it as plaintext. */
-const importExport = (ROAMJSON: RoamNode[]) => {
+const importExport = (ROAMJSON: RoamPage[]) => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
