@@ -21,6 +21,7 @@ const INITIAL_STATE = {
   }
 }
 
+/** Returns a mock initial State. */
 const initialState = () => INITIAL_STATE
 
 /** Helper function that imports html and exports it as plaintext. */

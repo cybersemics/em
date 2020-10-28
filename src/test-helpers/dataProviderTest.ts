@@ -9,12 +9,13 @@ import { equalArrays, hashContext, hashThought, mergeThoughts, never, timestamp 
 import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../action-creators'
 import { State } from '../util/initialState'
-import { Context, Index, Parent } from '../types'
+import { Context, Parent } from '../types'
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace jest {
     interface Matchers<R> {
-      toHaveOrderedContexts(context1: Context, context2: Context): CustomMatcherResult
+      toHaveOrderedContexts(context1: Context, context2: Context): CustomMatcherResult,
     }
   }
 }
@@ -39,7 +40,8 @@ expect.extend({
 
     const formattedParents = `[${stringifyVertical(parents.map(parent => parent.context))}]`
 
-    return index1 === -1 ? {
+    return (
+      index1 === -1 ? {
         pass: false,
         message: () => `expected ${JSON.stringify(context1)} to be in ${formattedParents}`
       }
@@ -55,6 +57,7 @@ expect.extend({
         pass: true,
         message: () => `expected ${JSON.stringify(context1)} to not appear before ${JSON.stringify(context2)} in ${formattedParents}`
       }
+    )
   }
 })
 
@@ -76,6 +79,7 @@ const INITIAL_STATE = {
   }
 } as unknown as State
 
+/** Returns a mock initial State. */
 const initialState = () => INITIAL_STATE
 
 /** Import text into the root of a blank initial state. */
@@ -85,7 +89,7 @@ const importThoughts = (text: string) => {
     thoughtIndexUpdates: thoughtIndex,
   } = importText(RANKED_ROOT, text)(NOOP, initialState)
 
-  return { contextIndex, thoughtIndex}
+  return { contextIndex, thoughtIndex }
 }
 
 /** Runs tests for a module that conforms to the data-provider API. */
@@ -114,7 +118,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
   test('getThoughtsByIds', async () => {
 
-    const { contextIndex, thoughtIndex } = importThoughts(`
+    const { thoughtIndex } = importThoughts(`
       - x
         - y
     `)
@@ -696,9 +700,8 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(Object.keys(thoughts.thoughtIndex).length).toBe(8)
       // 'm' is not loaded since ['x', 'y', 'z'] and ['t', 'u', 'v'] are pending
       expect(thoughts.thoughtIndex).toMatchObject(
-        _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'u', 'v', '=note', 'content'].map(hashThought)),
+        _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'u', 'v', '=note', 'content'].map(hashThought))
       )
-
 
     })
 
