@@ -5,10 +5,58 @@ import getDescendantThoughts from '../data-providers/data-helpers/getDescendantT
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
 import getThought from '../data-providers/data-helpers/getThought'
-import { hashContext, hashThought, mergeThoughts, never, timestamp } from '../util'
+import { equalArrays, hashContext, hashThought, mergeThoughts, never, timestamp } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../action-creators'
 import { State } from '../util/initialState'
+import { Context, Index, Parent } from '../types'
+
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toHaveOrderedContexts(context1: Context, context2: Context): CustomMatcherResult
+    }
+  }
+}
+
+/** Formats an array of stringified objects vertically. */
+const stringifyVertical = <T>(arr: T[]) => {
+  const lines = arr.map(item => '  ' + JSON.stringify(item)).join('\n')
+  return `\n${lines}\n`
+}
+
+expect.extend({
+
+  /** Passes if a Context appears before another Context in the Parents array. */
+  toHaveOrderedContexts: (parents: Parent[], context1: Context, context2: Context): jest.CustomMatcherResult => {
+
+    /** Finds the index of a context within the contexts array. */
+    const indexOfContext = (context: Context) =>
+      parents.findIndex(parent => equalArrays(parent.context, context))
+
+    const index1 = indexOfContext(context1)
+    const index2 = indexOfContext(context2)
+
+    const formattedParents = `[${stringifyVertical(parents.map(parent => parent.context))}]`
+
+    return index1 === -1 ? {
+        pass: false,
+        message: () => `expected ${JSON.stringify(context1)} to be in ${formattedParents}`
+      }
+      : index2 === -1 ? {
+        pass: false,
+        message: () => `expected ${JSON.stringify(context2)} to be in ${formattedParents}`
+      }
+      : index1 >= index2 ? {
+        pass: false,
+        message: () => `expected ${JSON.stringify(context1)} to appear before ${JSON.stringify(context2)} in ${formattedParents}`
+      }
+      : {
+        pass: true,
+        message: () => `expected ${JSON.stringify(context1)} to not appear before ${JSON.stringify(context2)} in ${formattedParents}`
+      }
+  }
+})
 
 const INITIAL_STATE = {
   contextViews: {},
@@ -356,6 +404,37 @@ const dataProviderTest = (provider: DataProvider) => {
       )
 
     })
+
+    test('load siblings before children', async () => {
+
+      const { contextIndex, thoughtIndex } = importThoughts(`
+        - x
+          - y
+            - z
+        - t
+          - u
+            - v
+      `)
+
+      await provider.updateContextIndex(contextIndex)
+      await provider.updateThoughtIndex(thoughtIndex)
+
+      const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
+
+      // flatten the thought chunks
+      // preserve chunk order
+      // contexts within a chunk are unordered
+      const parents = thoughtChunks.reduce((accum, thoughts) => [
+        ...accum,
+        ...Object.values(thoughts.contextIndex)
+      ], [] as Parent[])
+
+      expect(parents).toHaveOrderedContexts(['x'], ['x', 'y'])
+      expect(parents).toHaveOrderedContexts(['t'], ['x', 'y'])
+      // expect(parents).toHaveOrderedContexts(['t', 'u'], ['x', 'y', 'z'])
+
+    })
+
   })
 
   describe('getManyDescendants', () => {
