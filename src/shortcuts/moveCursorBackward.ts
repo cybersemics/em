@@ -2,7 +2,6 @@ import { Dispatch } from 'react'
 import { Action } from 'redux'
 import { attributeEquals, simplifyPath } from '../selectors'
 import { parentOf, isDocumentEditable, pathToContext } from '../util'
-import { State } from '../util/initialState'
 import { Shortcut } from '../types'
 
 const moveCursorBackward: Shortcut = {
@@ -10,8 +9,8 @@ const moveCursorBackward: Shortcut = {
   name: 'Move Cursor Backward',
   description: `Move the current thought to the next sibling of its context or to previous column in table view.`,
   keyboard: { key: 'Tab', shift: true },
-  canExecute: (getState: () => State) => isDocumentEditable() && !!getState().cursor,
-  exec: (dispatch: Dispatch<Action>, getState: () => State) => {
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  exec: (dispatch: Dispatch<Action>, getState) => {
     const state = getState()
     const { cursor } = state
 

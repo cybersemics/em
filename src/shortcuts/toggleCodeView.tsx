@@ -2,7 +2,6 @@ import React, { Dispatch } from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
 import { Action } from 'redux'
-import { State } from '../util/initialState'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -18,7 +17,7 @@ const toggleCodeViewShortcut: Shortcut = {
   keyboard: { key: 'k', alt: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<Action>, getState: () => State) => {
+  exec: (dispatch: Dispatch<Action>, getState) => {
     const state = getState()
     if (state.cursor) {
       dispatch({ type: 'toggleCodeView' })
