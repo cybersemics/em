@@ -1,7 +1,8 @@
 import _ from 'lodash'
+import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { ThoughtsInterface } from '../../util/initialState'
-import { hashContext, hashThought, head, isFunction, never, unroot, yieldAll } from '../../util'
+import { hashContext, hashThought, head, isFunction, never, unroot } from '../../util'
 import getContext from './getContext'
 import getThought from './getThought'
 import { Context, Index, Lexeme, Parent } from '../../types'
@@ -10,14 +11,13 @@ const MAX_DEPTH = 100
 
 interface Options {
   maxDepth?: number,
-  parentEntry?: Parent,
 }
 
 /** Returns a getter function that accesses a property on an object. */
 const prop = (name: string) => <T>(x: Index<T>) => x[name]
 
 /** Gets a Parent from the provider. Returns a pending Parent if maxDepth is reached. */
-const getParentBuffered = async (provider: DataProvider, context: Context, { maxDepth }: { maxDepth: number }) => {
+const getParentBuffered = async (provider: DataProvider, context: Context, { maxDepth = MAX_DEPTH }: Options) => {
 
   // get the Parent from the provider
   const parent = await getContext(provider, context) || {
@@ -66,41 +66,35 @@ const chunkThoughts = (parent: Parent, lexeme?: Lexeme): ThoughtsInterface => {
  * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
-async function* getDescendantThoughts(provider: DataProvider, context: Context, { maxDepth = MAX_DEPTH, parentEntry }: Options = {}): AsyncIterable<ThoughtsInterface> {
+async function* getDescendantThoughts(provider: DataProvider, context: Context, { maxDepth = MAX_DEPTH }: Options = {}): AsyncIterable<ThoughtsInterface> {
 
-  const parent = parentEntry || await getParentBuffered(provider, context, { maxDepth })
-  const lexeme = await getThought(provider, head(context))
-  const thoughts = chunkThoughts(parent, lexeme)
+  // use queue for breadth-first search
+  let queue = [context] // eslint-disable-line fp/no-let
+  let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
 
-  // yield thought
-  if (!parentEntry) {
-    yield thoughts
-  }
+  // eslint-disable-next-line fp/no-loops
+  while (queue.length > 0) {
 
-  // yield children before traversing descendants for breadth-first traversal
-  yield* yieldAll((parent.children || []).map(async function* (child) {
+    // eslint-disable-next-line fp/no-mutating-methods
+    const currentContext = queue.shift() as Context
 
-    const childContext = unroot([...context, child.value])
-    const parent = await getParentBuffered(provider, childContext, { maxDepth: maxDepth - 1 })
-    const lexeme = await getThought(provider, head(childContext))
+    // no buffering on em context or metaprogramming attributes
+    if (isFunction(head(currentContext)) || currentContext.includes(EM_TOKEN)) {
+      currentMaxDepth = MAX_DEPTH
+    }
+
+    const parent = await getParentBuffered(provider, currentContext, { maxDepth: currentMaxDepth })
+    const lexeme = await getThought(provider, head(currentContext))
     const thoughts = chunkThoughts(parent, lexeme)
 
+    // yield thought
     yield thoughts
 
-  }))
-
-  // yield descendants
-  yield* yieldAll((parent.children || []).map(async function* (child) {
-
-    const childContext = unroot([...context, child.value])
-    const parent = await getParentBuffered(provider, childContext, { maxDepth: maxDepth - 1 })
-
-    yield* getDescendantThoughts(provider, childContext, {
-      // get all metaprogramming descendants
-      maxDepth: maxDepth <= 1 ? MAX_DEPTH : maxDepth - 1,
-      parentEntry: parent
-    })
-  }))
+    // enqueue children
+    const childrenContexts = (parent.children || []).map(child => unroot([...currentContext, child.value]))
+    queue = [...queue, ...childrenContexts]
+    currentMaxDepth--
+  }
 }
 
 export default getDescendantThoughts

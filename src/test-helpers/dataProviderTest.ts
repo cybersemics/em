@@ -405,7 +405,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     })
 
-    test('load siblings before children', async () => {
+    test('yield thoughts breadth-first', async () => {
 
       const { contextIndex, thoughtIndex } = importThoughts(`
         - x
@@ -429,9 +429,10 @@ const dataProviderTest = (provider: DataProvider) => {
         ...Object.values(thoughts.contextIndex)
       ], [] as Parent[])
 
+      // siblings may be unordered
       expect(parents).toHaveOrderedContexts(['x'], ['x', 'y'])
       expect(parents).toHaveOrderedContexts(['t'], ['x', 'y'])
-      // expect(parents).toHaveOrderedContexts(['t', 'u'], ['x', 'y', 'z'])
+      expect(parents).toHaveOrderedContexts(['t', 'u'], ['x', 'y', 'z'])
 
     })
 
