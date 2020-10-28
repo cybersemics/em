@@ -2,25 +2,25 @@ import { SimplePath } from '../types'
 import { State } from './initialState'
 import { importJSON } from './importJSON'
 import { Block } from '../action-creators/importText'
-import { ROAMChild, RoamNode } from 'roam'
+import { RoamBlock, RoamPage } from 'roam'
 
 /**
  * Recursively converts the roam children to blocks.
  */
-const convertROAMChildrenToBlocks = (children: ROAMChild[]): Block[] => children.map(child => ({
+const convertRoamBlocksToBlocks = (children: RoamBlock[]): Block[] => children.map(child => ({
   scope: child.string,
-  children: child.children && child.children.length ? convertROAMChildrenToBlocks(child.children) : []
+  children: child.children && child.children.length ? convertRoamBlocksToBlocks(child.children) : []
 }))
 
 /**
  * Converts the ROAM JSON to an array of blocks.
  */
-const convertROAMJSONToBlocks = (ROAM: RoamNode[]) => {
+const roamJsontoBlocks = (ROAM: RoamPage[]) => {
 
-  return ROAM.map((item: RoamNode) => {
+  return ROAM.map((item: RoamPage) => {
     return {
       scope: item.title,
-      children: convertROAMChildrenToBlocks(item.children)
+      children: convertRoamBlocksToBlocks(item.children)
     }
   })
 }
@@ -28,7 +28,7 @@ const convertROAMJSONToBlocks = (ROAM: RoamNode[]) => {
 /**
  * Parses ROAM JSON and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
  */
-export const importROAM = (state: State, thoughtsRanked: SimplePath, ROAM: RoamNode[]) => {
-  const thoughtsJSON = convertROAMJSONToBlocks(ROAM)
+export const importROAM = (state: State, thoughtsRanked: SimplePath, ROAM: RoamPage[]) => {
+  const thoughtsJSON = roamJsontoBlocks(ROAM)
   return importJSON(state, thoughtsRanked, thoughtsJSON, { skipRoot: false })
 }

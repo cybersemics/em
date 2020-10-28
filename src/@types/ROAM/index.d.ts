@@ -1,19 +1,17 @@
 declare module 'roam' {
-  import { GenericObject } from '../../utilTypes'
-
-  interface ROAMChild {
+  interface RoamBlock {
     uid: string,
     string: string,
     'create-email': string,
     'create-time': number,
-    children?: ROAMChild[],
+    children?: RoamBlock[],
     'edit-time'?: number,
     'edit-email'?: string,
   }
 
-  interface RoamNode {
+  interface RoamPage {
     title: string,
-    children: ROAMChild[],
+    children: RoamBlock[],
   }
 
 }
