@@ -3,12 +3,14 @@ import { parse } from 'jex-block-parser'
 import he from 'he'
 import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedParentOf, strip } from '../util'
 import { simplifyPath } from '../selectors'
-import { ActionCreator, Path } from '../types'
+import { ActionCreator, Path, Timestamp } from '../types'
 
 // declare types until jex-block-parser merges PR
 // https://github.com/reergymerej/block-parser/pull/1
 export interface Block {
   scope: string,
+  created?: Timestamp,
+  lastUpdated?: Timestamp,
   children: Block[],
 }
 

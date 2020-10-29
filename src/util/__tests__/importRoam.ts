@@ -179,3 +179,68 @@ test('it should convert a flat ROAM JSON into a list of thoughts and subthoughts
       - [[September 4th, 2020]]
 `)
 })
+
+test('it should save create-time as created property', () => {
+  const testData = [
+    {
+      title: 'Fruits',
+      children: [
+        {
+          string: 'Apple',
+          'create-email': 'testemail@gmail.com',
+          'create-time': 1600111381583,
+          'edit-time': 1600111381580,
+          uid: 'UK11200',
+        },
+        {
+          string: 'Orange',
+          'create-email': 'testemail@gmail.com',
+          'create-time': 1600111383054,
+          'edit-time': 1600111383050,
+          uid: 'UK11233',
+        },
+        {
+          string: 'Banana',
+          'create-email': 'testemail@gmail.com',
+          'create-time': 1600111383911,
+          'edit-time': 1600111383910,
+          uid: 'HMN_YQtZZ',
+        }
+      ],
+    },
+    {
+      title: 'Veggies',
+      children: [
+        {
+          string: 'Broccoli',
+          'create-email': 'testemail@gmail.com',
+          'create-time': 1600111381600,
+          'edit-time': 1600111381599,
+          uid: 'BK11200',
+        },
+        {
+          string: 'Spinach',
+          'create-email': 'testemail@gmail.com',
+          'create-time': 1600111389054,
+          'edit-time': 1600111389050,
+          uid: 'BK11233',
+        }
+      ],
+    }
+  ]
+
+  const roamBlocks = [...testData[0].children, ...testData[1].children]
+
+  const {
+    thoughtIndexUpdates: thoughtIndex,
+  } = importROAM(testState, RANKED_ROOT as SimplePath, testData)
+
+  Object.keys(thoughtIndex)
+    // ignore root blocks of ROAM page since they won't have create/edit time
+    .filter((_, index) => index !== 0 && index !== 4)
+    .forEach((thoughtHash, index) => {
+      expect(thoughtIndex[thoughtHash].created).toEqual(new Date(roamBlocks[index]['create-time']).toISOString())
+      expect(thoughtIndex[thoughtHash].lastUpdated).toEqual(new Date(roamBlocks[index]['edit-time']).toISOString())
+    })
+
+})
