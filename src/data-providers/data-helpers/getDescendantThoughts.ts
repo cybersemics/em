@@ -16,6 +16,14 @@ interface Options {
 /** Returns a getter function that accesses a property on an object. */
 const prop = (name: string) => <T>(x: Index<T>) => x[name]
 
+/** Returns true if a context contains a non-archive metaprogramming attribute. */
+const hasNonArchiveMeta = (context: Context) =>
+  context.find(isFunction) && !context.includes('=archive')
+
+/** Returns true if a context contains the em context or has a non-archive metaprogramming attribute and thus should not be buffered. */
+const isUnbuffered = (context: Context) =>
+  context.includes(EM_TOKEN) || hasNonArchiveMeta(context)
+
 /** Gets a Parent from the provider. Returns a pending Parent if maxDepth is reached. */
 const getParentBuffered = async (provider: DataProvider, context: Context, { maxDepth = MAX_DEPTH }: Options) => {
 
@@ -78,12 +86,10 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
     // eslint-disable-next-line fp/no-mutating-methods
     const currentContext = queue.shift() as Context
 
-    // no buffering on em context or metaprogramming attributes
-    if (isFunction(head(currentContext)) || currentContext.includes(EM_TOKEN)) {
-      currentMaxDepth = MAX_DEPTH
-    }
-
-    const parent = await getParentBuffered(provider, currentContext, { maxDepth: currentMaxDepth })
+    const parent = await getParentBuffered(provider, currentContext, {
+      // no buffering on em context or metaprogramming attributes (except =archive) and descendants
+      maxDepth: isUnbuffered(currentContext) ? MAX_DEPTH : currentMaxDepth
+    })
     const lexeme = await getThought(provider, head(currentContext))
     const thoughts = chunkThoughts(parent, lexeme)
 
