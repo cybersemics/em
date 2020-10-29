@@ -18,6 +18,7 @@ import {
   head,
   headId,
   headRank,
+  keyValueBy,
   moveThought,
   pathToContext,
   reducerFlow,
@@ -168,7 +169,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const contextIndexDescendantUpdates = sameContext
     ? {}
     : _.transform(descendantUpdatesResult, (accum, result) => {
-      const output = result.contextsOld.reduce((accumInner, contextOld, i) => {
+      const output = keyValueBy(result.contextsOld, (contextOld, i) => {
         const contextNew = result.contextsNew[i]
         const contextEncodedOld = hashContext(contextOld)
         const contextEncodedNew = hashContext(contextNew)
@@ -187,7 +188,6 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             ...result.archived ? { archived: result.archived } : null
           })
         return {
-          ...accumInner,
           [contextEncodedOld]: childrenOld.length > 0 ? {
             context: contextOld,
             children: childrenOld,
@@ -199,7 +199,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             lastUpdated: timestamp(),
           }
         }
-      }, {} as Index<Parent | null>)
+      })
       Object.assign(accum, output) // eslint-disable-line fp/no-mutating-assign
     }, {} as Index<Parent | null>)
 

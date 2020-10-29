@@ -2,8 +2,8 @@ import _ from 'lodash'
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { ThoughtsInterface } from '../../util/initialState'
-import { hashContext, hashThought, head, isFunction, never, unroot } from '../../util'
-import { Context, Index, Lexeme, Parent } from '../../types'
+import { hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
+import { Context, Index } from '../../types'
 
 const MAX_DEPTH = 100
 
@@ -62,15 +62,8 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
     const thoughtIds = contexts.map(cx => hashThought(head(cx)))
     const lexemes = await provider.getThoughtsByIds(thoughtIds)
 
-    const contextIndex = contextIds.reduce((accum, id, i) => ({
-      ...accum,
-      [id]: parents[i],
-    }), {} as Index<Parent>)
-
-    const thoughtIndex = thoughtIds.reduce((accum, id, i) => ({
-      ...accum,
-      ...lexemes[i] ? { [id]: lexemes[i]! } : null,
-    }), {} as Index<Lexeme>)
+    const contextIndex = keyValueBy(contextIds, (id, i) => ({ [id]: parents[i] }))
+    const thoughtIndex = keyValueBy(thoughtIds, (id, i) => lexemes[i] ? { [id]: lexemes[i]! } : null)
 
     const thoughts = {
       contextCache: contextIds,
