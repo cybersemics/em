@@ -3,8 +3,6 @@ import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { ThoughtsInterface } from '../../util/initialState'
 import { hashContext, hashThought, head, isFunction, never, unroot } from '../../util'
-import getContext from './getContext'
-import getThought from './getThought'
 import { Context, Index, Lexeme, Parent } from '../../types'
 
 const MAX_DEPTH = 100
@@ -24,49 +22,6 @@ const hasNonArchiveMeta = (context: Context) =>
 const isUnbuffered = (context: Context) =>
   context.includes(EM_TOKEN) || hasNonArchiveMeta(context)
 
-/** Gets a Parent from the provider. Returns a pending Parent if maxDepth is reached. */
-const getParentBuffered = async (provider: DataProvider, context: Context, { maxDepth = MAX_DEPTH }: Options) => {
-
-  // get the Parent from the provider
-  const parent = await getContext(provider, context) || {
-    id: hashContext(context),
-    context,
-    children: [],
-    lastUpdated: never(),
-  }
-
-  // if we have reached the maximum depth, set the Parent to pending and only load metaprogramming attributes
-  return maxDepth > 0
-    ? parent
-    : {
-      ...parent,
-      children: (parent.children || [])
-        .filter(_.flow(prop('value'), isFunction)),
-      lastUpdated: never(),
-      pending: true,
-    }
-}
-
-/** Wraps a Parent and Lexeme in a ThoughtsInterface. */
-const chunkThoughts = (parent: Parent, lexeme?: Lexeme): ThoughtsInterface => {
-
-  const contextEncoded = hashContext(parent.context)
-  const lexemeEncoded = lexeme ? hashThought(lexeme.value) : null
-
-  const thoughts = {
-    contextCache: [contextEncoded],
-    contextIndex: {
-      [contextEncoded]: parent,
-    },
-    thoughtCache: lexeme ? [lexemeEncoded!] : [],
-    thoughtIndex: lexeme ? {
-      [lexemeEncoded!]: lexeme
-    } : {},
-  }
-
-  return thoughts
-}
-
 /**
  * Returns buffered thoughtIndex and contextIndex for all descendants using async iterables.
  *
@@ -77,28 +32,61 @@ const chunkThoughts = (parent: Parent, lexeme?: Lexeme): ThoughtsInterface => {
 async function* getDescendantThoughts(provider: DataProvider, context: Context, { maxDepth = MAX_DEPTH }: Options = {}): AsyncIterable<ThoughtsInterface> {
 
   // use queue for breadth-first search
-  let queue = [context] // eslint-disable-line fp/no-let
+  let contexts = [context] // eslint-disable-line fp/no-let
   let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
 
   // eslint-disable-next-line fp/no-loops
-  while (queue.length > 0) {
+  while (contexts.length > 0) {
 
-    // eslint-disable-next-line fp/no-mutating-methods
-    const currentContext = queue.shift() as Context
+    const contextIds = contexts.map(cx => hashContext(cx))
+    const providerParents = (await provider.getContextsByIds(contextIds))
+      .map((parent, i) => parent || {
+        id: hashContext(contexts[i]),
+        context: contexts[i],
+        children: [],
+        lastUpdated: never(),
+      })
 
-    const parent = await getParentBuffered(provider, currentContext, {
-      // no buffering on em context or metaprogramming attributes (except =archive) and descendants
-      maxDepth: isUnbuffered(currentContext) ? MAX_DEPTH : currentMaxDepth
-    })
-    const lexeme = await getThought(provider, head(currentContext))
-    const thoughts = chunkThoughts(parent, lexeme)
+    const parents = currentMaxDepth > 0
+      ? providerParents
+      : providerParents.map(parent => ({
+        ...parent,
+        ...!isUnbuffered(parent.context) ? {
+          children: (parent.children || [])
+            .filter(_.flow(prop('value'), isFunction)),
+          lastUpdated: never(),
+          pending: true,
+        } : null
+      }))
+
+    const thoughtIds = contexts.map(cx => hashThought(head(cx)))
+    const lexemes = await provider.getThoughtsByIds(thoughtIds)
+
+    const contextIndex = contextIds.reduce((accum, id, i) => ({
+      ...accum,
+      [id]: parents[i],
+    }), {} as Index<Parent>)
+
+    const thoughtIndex = thoughtIds.reduce((accum, id, i) => ({
+      ...accum,
+      ...lexemes[i] ? { [id]: lexemes[i]! } : null,
+    }), {} as Index<Lexeme>)
+
+    const thoughts = {
+      contextCache: contextIds,
+      contextIndex,
+      thoughtCache: thoughtIds,
+      thoughtIndex,
+    }
+
+    // enqueue children
+    contexts = parents.map(parent =>
+      parent.children.map(child => unroot([...parent.context, child.value]))
+    ).flat()
 
     // yield thought
     yield thoughts
 
-    // enqueue children
-    const childrenContexts = (parent.children || []).map(child => unroot([...currentContext, child.value]))
-    queue = [...queue, ...childrenContexts]
     currentMaxDepth--
   }
 }
