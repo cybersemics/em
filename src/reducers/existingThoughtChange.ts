@@ -18,6 +18,7 @@ import {
   headRank,
   headValue,
   isDivider,
+  keyValueBy,
   pathToContext,
   removeContext,
   rootedParentOf,
@@ -241,14 +242,13 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   }, {} as Index<Lexeme>)
 
   const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result) => {
-    const output = result.contextsOld.reduce((accumInner, contextOld, i) => {
+    const output = keyValueBy(result.contextsOld, (contextOld, i) => {
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = hashContext(contextOld)
       const contextNewEncoded = hashContext(contextNew)
       const thoughtsOld = getAllChildren(state, contextOld)
       const thoughtsNew = getAllChildren(state, contextNew)
       return {
-        ...accumInner,
         [contextOldEncoded]: null,
         [contextNewEncoded]: {
           ...(state.thoughts.contextIndex || {})[contextOldEncoded],
@@ -257,7 +257,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
           lastUpdated: timestamp()
         }
       }
-    }, {} as Index<Parent | null>)
+    })
     // eslint-disable-next-line fp/no-mutating-assign
     Object.assign(accum, output)
   }, {} as Index<Parent | null>)

@@ -1,14 +1,14 @@
 import { EM_TOKEN } from '../constants'
 import { isFunction } from '../util'
+import { keyValueBy } from '../util/keyValueBy'
 import { getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
-import { Context, Index } from '../types'
+import { Context } from '../types'
 
 /** Cache localStorage settings. */
-const localStorageSettingsCache = ['Tutorial', 'Tutorial Step'].reduce((accum, value) => ({
-  ...accum,
+const localStorageSettingsCache = keyValueBy(['Tutorial', 'Tutorial Step'], value => ({
   [value]: localStorage['Settings/' + value],
-}), {} as Index<string>)
+}))
 
 /** Returns one of the localStorage Settings values that have been cached. */
 const localCached = (context: Context | string) =>

@@ -1,5 +1,6 @@
 import { store } from '../store'
 import { Index, Lexeme, Parent, Snapshot } from '../types'
+import { keyValueBy } from '../util'
 
 interface Options {
   maxDepth?: number,
@@ -80,15 +81,13 @@ export const updateThought = async (id: string, thought: Lexeme): Promise<unknow
   })
 
 /** Updates the contextIndex. */
-export const updateContextIndex = async (contextIndex: Index<Parent>): Promise<any> =>
-  update(Object.entries(contextIndex).reduce((accum, [key, value]) => ({
-    ...accum,
+export const updateContextIndex = async (contextIndex: Index<Parent>): Promise<unknown> =>
+  update(keyValueBy(Object.entries(contextIndex), ([key, value]) => ({
     ['contextIndex/' + key]: value,
-  }), {}))
+  })))
 
 /** Updates the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndex: Index<Lexeme>): Promise<any> =>
-  update(Object.entries(thoughtIndex).reduce((accum, [key, value]) => ({
-    ...accum,
+export const updateThoughtIndex = async (thoughtIndex: Index<Lexeme>): Promise<unknown> =>
+  update(keyValueBy(Object.entries(thoughtIndex), ([key, value]) => ({
     ['thoughtIndex/' + key]: value,
-  }), {}))
+  })))

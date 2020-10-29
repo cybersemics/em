@@ -5,7 +5,7 @@ import * as firebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getAllChildrenByContextHash, hasSyncs } from '../selectors'
-import { equalArrays, hashContext, mergeThoughts, pathToContext, unroot } from '../util'
+import { equalArrays, hashContext, keyValueBy, mergeThoughts, pathToContext, unroot } from '../util'
 import { State, ThoughtsInterface } from '../util/initialState'
 import { Context, ContextHash, Index, Lexeme, Parent, Path } from '../types'
 
@@ -40,13 +40,10 @@ const getVisibleContexts = (state: State): Index<Context> => {
     ..._.mapValues(expanded, pathToContext),
     // generate the cursor and all its ancestors
     // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
-    ...contextCursor.reduce((accum, value, i) => {
+    ...keyValueBy(contextCursor, (value, i) => {
       const subcontext = contextCursor.slice(0, contextCursor.length - i)
-      return {
-        ...accum,
-        ...subcontext.length > 0 ? { [hashContext(subcontext)]: subcontext } : null
-      }
-    }, {}),
+      return subcontext.length > 0 ? { [hashContext(subcontext)]: subcontext } : null
+    }),
   }
 }
 
@@ -58,27 +55,19 @@ const nextPending = (state: State, pending: Index<Context>, visibleContexts: Ind
   // get the encoded context keys that are not in the contextIndex
   const expandedKeys = Object.keys(visibleContexts) as ContextHash[]
 
-  return _.reduce(expandedKeys, (accum, key) => {
+  return keyValueBy(expandedKeys, key => {
     const context = visibleContexts[key]
     const children = getAllChildrenByContextHash(state, key)
     return {
-      ...accum,
-
       // current thought
-      // @ts-ignore
       ...!contextIndex[key] || contextIndex[key].pending ? { [key]: context } : null,
 
       // because only parents are specified by visibleContexts, we need to queue the children as well
-      ...children.reduce((accumChildren, child) => {
+      ...keyValueBy(children, child => {
         const contextChild = unroot([...context, child.value])
         const keyChild = hashContext(contextChild)
-        return {
-          ...accumChildren,
-          // Typescript cannot see the truthy check for some reason (?)
-          // @ts-ignore
-          ...contextIndex[keyChild] && contextIndex[keyChild].pending ? { [keyChild]: contextChild } : null,
-        }
-      }, {})
+        return contextIndex[keyChild] && contextIndex[keyChild].pending ? { [keyChild]: contextChild } : null
+      })
     }
   }, pending)
 }

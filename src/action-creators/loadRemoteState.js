@@ -2,7 +2,7 @@ import { decode as firebaseDecode } from 'firebase-encode'
 import { migrate } from '../migrations/index'
 import * as db from '../data-providers/dexie'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
-import { isDocumentEditable, logWithTime } from '../util'
+import { isDocumentEditable, keyValueBy, logWithTime } from '../util'
 import { updateThoughts } from '../reducers'
 
 /** Save all firebase state to state and localStorage. */
@@ -23,7 +23,7 @@ export const loadState = async (dispatch, newState, oldState) => {
 
   // thoughtIndex
   // keyRaw is firebase encoded
-  const thoughtIndexUpdates = Object.keys(newState.thoughts.thoughtIndex).reduce((accum, keyRaw) => {
+  const thoughtIndexUpdates = keyValueBy(Object.keys(newState.thoughts.thoughtIndex), keyRaw => {
 
     const key = newState.schemaVersion < SCHEMA_HASHKEYS
       ? keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
@@ -32,13 +32,8 @@ export const loadState = async (dispatch, newState, oldState) => {
     const oldThought = oldState.thoughts.thoughtIndex[key]
     const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
 
-    return updated
-      ? {
-        ...accum,
-        [key]: thought
-      }
-      : accum
-  }, {})
+    return updated ? { [key]: thought } : null
+  })
 
   logWithTime('loadRemoteState: thoughtIndexUpdates generated')
 
@@ -50,7 +45,7 @@ export const loadState = async (dispatch, newState, oldState) => {
   logWithTime('loadRemoteState: updateThoughtIndex')
 
   // contextEncodedRaw is firebase encoded
-  const contextIndexUpdates = Object.keys(newState.thoughts.contextIndex || {}).reduce((accum, contextEncodedRaw) => {
+  const contextIndexUpdates = keyValueBy(Object.keys(newState.thoughts.contextIndex || {}), contextEncodedRaw => {
 
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
       ? contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
@@ -64,14 +59,8 @@ export const loadState = async (dispatch, newState, oldState) => {
       || parentEntryOld.children.length === 0
 
     // update if entry does not exist locally or is newer
-    return updated
-      ? {
-        ...accum,
-        [contextEncoded]: parentEntryNew,
-      }
-      : accum
-
-  }, {})
+    return updated ? { [contextEncoded]: parentEntryNew } : null
+  })
 
   logWithTime('loadRemoteState: contextIndexUpdates generated')
 

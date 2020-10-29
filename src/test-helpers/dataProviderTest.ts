@@ -428,10 +428,7 @@ const dataProviderTest = (provider: DataProvider) => {
       // flatten the thought chunks
       // preserve chunk order
       // contexts within a chunk are unordered
-      const parents = thoughtChunks.reduce((accum, thoughts) => [
-        ...accum,
-        ...Object.values(thoughts.contextIndex)
-      ], [] as Parent[])
+      const parents = thoughtChunks.map(({ contextIndex }) => Object.values(contextIndex)).flat()
 
       // siblings may be unordered
       expect(parents).toHaveOrderedContexts(['x'], ['x', 'y'])
