@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { store } from '../store'
 import { dataIntegrityCheck, loadResource } from '../action-creators'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
-import { chain, expandThoughts, getSetting, getAllChildren, lastThoughtsFromContextChain, simplifyPath } from '../selectors'
+import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
@@ -75,13 +75,7 @@ const setCursor = (state: State, {
     }
   })
 
-  const expanded = expandThoughts(
-    { ...state, contextViews: newContextViews },
-    thoughtsResolved || [],
-    contextChain.length > 0
-      ? contextChain.concat([simplifyPath(state, path!).slice(lastThoughtsFromContextChain(state, contextChain).length) as SimplePath])
-      : []
-  )
+  const expanded = expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved || [])
 
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)

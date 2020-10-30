@@ -22,7 +22,7 @@ interface Payload {
  * @param local    If false, does not persist next flushQueue to local database. Default: true.
  * @param remote   If false, does not persist next flushQueue to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Payload): State => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, local = true, remote = true }: Payload): State => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
@@ -56,7 +56,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
   }
 
   // use fresh state to calculate expanded
-  const expanded = expandThoughts(stateNew, stateNew.cursor, contextChain)
+  const expanded = expandThoughts(stateNew, stateNew.cursor)
 
   logWithTime('updateThoughts: expanded')
 
