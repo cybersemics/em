@@ -7,7 +7,3 @@ const isPending = ({ thoughts: { contextIndex } }: State, context: Context) =>
   !!((contextIndex || {})[hashContext(context)] || {}).pending
 
 export default isPending
-
-/** Useful for debugging. */
-// @ts-ignore
-window.isPending = context => isPending(window.em.store.getState(), context)

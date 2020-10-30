@@ -1,7 +1,7 @@
 import './App.css'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
-import { getContexts, getThought, getAllChildren, getChildrenRanked } from './selectors'
+import { getContexts, getThought, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { State } from './util/initialState'
 
 // util
@@ -55,7 +55,7 @@ export const initialize = async () => {
 
 /** Partially apply state to a function. */
 const withState = <T, R>(f: (state: State, ...args: T[]) => R) =>
-  (state: State, ...args: T[]) => f(store.getState(), ...args)
+  (...args: T[]) => f(store.getState(), ...args)
 
 // add objects to window for debugging
 window.em = {
@@ -67,4 +67,5 @@ window.em = {
   getChildrenRanked: withState(getChildrenRanked),
   hashContext,
   hashThought,
+  isPending: withState(isPending),
 }
