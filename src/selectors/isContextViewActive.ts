@@ -7,7 +7,7 @@ const isContextViewActive = (state: State, context: Context/* may have cycles */
 
   if (context.length === 0) return false
 
-  return state.contextViews[hashContext(context)]
+  return !!state.contextViews[hashContext(context)]
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // TODO: Figure out why this causes unwanted re-rendering during editing

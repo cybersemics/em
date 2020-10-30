@@ -62,7 +62,7 @@ const thoughtsLoaded = (thoughts: ThoughtsInterface) => {
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Options) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, local = true, remote = true }: Options) => {
 
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
@@ -144,7 +144,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     // calculate expanded using fresh thoughts and cursor
     state => ({
       ...state,
-      expanded: expandThoughts(state, state.cursor, contextChain),
+      expanded: expandThoughts(state, state.cursor),
     })
 
   ])(state)
