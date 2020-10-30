@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
-import { equalPath, hashContext, isRoot, pathToContext } from '../util'
+import { equalArrays, hashContext, pathToContext } from '../util'
 import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 import { deleteCursor, updateCursor } from '../data-providers/dexie'
 import { State } from '../util/initialState'
@@ -24,20 +24,21 @@ interface Options {
 const updateUrlHistory = (state: State, path = RANKED_ROOT, { replace, contextViews }: Options = {}) => {
 
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
-  const encoded = path ? hashContext(pathToContext(path)) : null
+  const context = path ? pathToContext(path) : [ROOT_TOKEN]
+  const encoded = hashContext(context)
 
   // convert decoded root thought to null cursor
-  const pathDecoded = isRoot(decoded.path) ? null : decoded.path
+  const contextDecoded = pathToContext(decoded.path)
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalPath(pathDecoded, path) && decoded.contextViews[encoded!] === (contextViews || state.contextViews)[encoded!]) return
+  if (equalArrays(contextDecoded, context) && decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded]) return
 
   const stateWithNewContextViews = { ...state, contextViews: contextViews || state.contextViews || decoded.contextViews }
 
   // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
   // ensure the location does not change through refreshes in standalone PWA mode
   const updateCursorPromise = path
-    ? updateCursor(hashContextUrl(stateWithNewContextViews, pathToContext(path)))
+    ? updateCursor(hashContextUrl(stateWithNewContextViews, context))
     : deleteCursor()
   updateCursorPromise
     .catch(err => {
@@ -52,9 +53,9 @@ const updateUrlHistory = (state: State, path = RANKED_ROOT, { replace, contextVi
   // update browser history
   try {
     window.history[replace ? 'replaceState' : 'pushState'](
-      path ? pathToContext(path) : [ROOT_TOKEN],
+      context,
       '',
-      hashContextUrl(stateWithNewContextViews, path ? pathToContext(path) : [ROOT_TOKEN])
+      hashContextUrl(stateWithNewContextViews, path ? context : [ROOT_TOKEN])
     )
   }
   catch (e) {
