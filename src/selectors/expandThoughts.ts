@@ -1,22 +1,9 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
 import { attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
-import { Child, Context, Index, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, Context, Index, Path, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
-
-// util
-import {
-  contextChainToPath,
-  parentOf,
-  hashContext,
-  head,
-  headValue,
-  isFunction,
-  isURL,
-  pathToContext,
-  publishMode,
-  unroot,
-} from '../util'
+import { hashContext, head, headValue, isFunction, isURL, parentOf, pathToContext, publishMode, rootedParentOf, unroot } from '../util'
 
 /** Returns an expansion map marking all contexts that should be expanded.
  *
@@ -28,7 +15,7 @@ import {
  *   ...
  * }
  */
-const expandThoughts = (state: State, path: Path | null, contextChain: SimplePath[] = [], { depth = 0 }: { depth?: number } = {}): Index<Path> => {
+const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?: number } = {}): Index<Path> => {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -42,9 +29,10 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     ? head((child as ThoughtContext).context)
     : (child as Child).value
 
-  const simplePath = !path || path.length === 0 ? RANKED_ROOT
-    : contextChain.length > 0 ? contextChainToPath(contextChain)
-    : path
+  const simplePath = !path || path.length === 0
+    ? RANKED_ROOT
+    : simplifyPath(state, path)
+
   const context = pathToContext(simplePath)
   const rootedPath = path && path.length > 0 ? path : RANKED_ROOT
   const showContexts = isContextViewActive(state, context)
@@ -94,21 +82,23 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
     ? children
     : children.filter(child => {
       /** Returns true if the child should be pinned open. */
-      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, simplifyPath(state, simplePath))), '=pin', 'true')
+      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, simplePath)), '=pin', 'true')
       const value = childValue(child)
       return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
     })
   ).reduce(
-    (accum: Index<Path>, child) => {
-      const newContextChain = (contextChain || [])
-        .map(simplePath => simplePath.concat())
-        .concat(contextChain.length > 0 ? [[child as Child]] : []) as SimplePath[]
-
+    (accum: Index<Path>, childOrContext) => {
+      const newPath = [
+        ...path || [],
+        (childOrContext as Child).value != null
+          ? childOrContext as Child
+          : { ...childOrContext, value: head((childOrContext as ThoughtContext).context) }
+      ]
       return {
         ...accum,
         // RECURSIVE
         // passing contextChain here creates an infinite loop
-        ...expandThoughts(state, (path || []).concat(child as Child), newContextChain, { depth: depth + 1 })
+        ...expandThoughts(state, newPath, { depth: depth + 1 })
       }
     },
     {
@@ -119,7 +109,7 @@ const expandThoughts = (state: State, path: Path | null, contextChain: SimplePat
       // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
       // RECURSION
       ...path && path.length >= 1 && depth <= 1
-        ? expandThoughts(state, parentOf(path), contextChain, { depth: depth + 1 })
+        ? expandThoughts(state, rootedParentOf(path), { depth: depth + 1 })
         : {}
     }
   )

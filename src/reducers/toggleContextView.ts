@@ -1,7 +1,7 @@
 import * as immer from 'immer'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
 import { settings } from '../reducers'
-import { expandThoughts, getContexts, getSetting, splitChain } from '../selectors'
+import { expandThoughts, getContexts, getSetting } from '../selectors'
 import { hashContext, headValue, pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 import { Context } from '../types'
@@ -44,7 +44,7 @@ const toggleContextView = (state: State) => {
     // update context views and expanded
     state => ({
       ...state,
-      expanded: expandThoughts(state, state.cursor!, splitChain(state, state.cursor!))
+      expanded: expandThoughts(state, state.cursor)
     }),
 
     // advance tutorial from context view toggle step

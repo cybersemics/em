@@ -309,4 +309,34 @@ describe('context view', () => {
 
   })
 
+  it('move cursor to circular path', async () => {
+
+    const text = `
+    - a
+      - m
+        - x
+        - y
+    - b
+      - m
+        - y
+        - z
+    `
+
+    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const steps = [
+      updateThoughts(thoughts),
+      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      toggleContextView,
+      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a', 'x']) }),
+      cursorDown,
+    ]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(pathToContext(stateNew.cursor))
+      .toMatchObject(['a', 'm', 'a', 'y'])
+
+  })
+
 })
