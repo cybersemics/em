@@ -4,9 +4,10 @@ import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { importText } from '../action-creators'
 import { decodeThoughtsUrl } from '../selectors'
 import { never } from '../util'
+import { ActionCreator } from '../types'
 
 /** Loads the local state from the IndexedDB database. */
-const loadLocalState = () => async (dispatch, getState) => {
+const loadLocalState = (): ActionCreator => async (dispatch, getState) => {
 
   // load helpers and settings from local database
   const [{
@@ -14,20 +15,20 @@ const loadLocalState = () => async (dispatch, getState) => {
     lastUpdated,
     recentlyEdited,
   }, settings] = await Promise.all([
-    db.getHelpers(),
+    db.getHelpers() as Promise<db.Helper>,
     getContext(db, [EM_TOKEN, 'Settings'])
   ])
 
   // restore cursor from local db if url is at root
   const isHome = window.location.pathname.length <= 1
-  const { contextViews, path } = isHome && localUrl
+  const decoded = isHome && localUrl
     ? decodeThoughtsUrl(getState(), localUrl)
-    : {}
+    : null
 
   dispatch({
     type: 'loadLocalState',
-    contextViews,
-    cursor: path,
+    contextViews: decoded ? decoded.contextViews : {},
+    cursor: decoded ? decoded.path : null,
     lastUpdated,
     recentlyEdited: recentlyEdited || {},
   })

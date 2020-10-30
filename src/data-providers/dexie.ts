@@ -39,8 +39,10 @@ export interface Helper {
   id: string,
   value?: string,
   contexts?: Context[],
+  cursor?: string | null,
   created?: Timestamp,
   lastUpdated?: Timestamp,
+  recentlyEdited?: Index,
 }
 
 export interface Log {
@@ -134,7 +136,7 @@ export const getContextIndex = async () => {
 }
 
 /** Updates the recentlyEdited helper. */
-export const updateRecentlyEdited = async (recentlyEdited: any) => db.helpers.update('EM', { recentlyEdited })
+export const updateRecentlyEdited = async (recentlyEdited: Index) => db.helpers.update('EM', { recentlyEdited })
 
 /** Updates the schema version helper. */
 export const updateSchemaVersion = async (schemaVersion: number) => db.helpers.update('EM', { schemaVersion })
