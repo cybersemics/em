@@ -46,7 +46,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newSubthought('b'),
-      setCursorFirstMatch(['b'])
+      setCursorFirstMatch(['a', 'b'])
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
