@@ -74,7 +74,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
 
     // enqueue children
     contexts = parents.map(parent =>
-      parent.children.map(child => unroot([...parent.context, child.value]))
+      (parent.children || []).map(child => unroot([...parent.context, child.value]))
     ).flat()
 
     // yield thought
