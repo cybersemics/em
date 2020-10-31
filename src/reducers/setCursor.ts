@@ -75,7 +75,7 @@ const setCursor = (state: State, {
     }
   })
 
-  const expanded = expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved || [])
+  const expanded = expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
 
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
