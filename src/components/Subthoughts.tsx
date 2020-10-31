@@ -115,7 +115,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const isEditingPath = isRoot(props.simplePath) || subsetThoughts(cursorBeforeEdit, thoughtsResolved)
 
   // check if the cursor is editing an thought directly
-  const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+  const isEditing = cursor && equalPath(cursorBeforeEdit, thoughtsResolved)
 
   const thoughtsResolvedLive = isEditing ? cursor! : thoughtsResolved
   const thoughtsLive = pathToContext(thoughtsResolvedLive)
@@ -127,7 +127,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
-  const simplePathLive = isEditing && (props.contextChain ?? []).length === 0
+  const simplePathLive = isEditing && !showContextsParent
     ? parentOf(props.simplePath).concat(head(cursor!)) as SimplePath
     : simplePath
 
