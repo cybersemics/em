@@ -8,7 +8,7 @@ import getThought from '../data-providers/data-helpers/getThought'
 import { equalArrays, hashContext, hashThought, mergeThoughts, never, timestamp } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../action-creators'
-import { initialState, State } from '../util/initialState'
+import { initialState } from '../util/initialState'
 import { Context, Parent } from '../types'
 
 declare global {

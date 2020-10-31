@@ -1,8 +1,8 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { hashContext, hashThought, importHtml, mergeUpdates } from '../../util'
+import { importHtml, mergeUpdates } from '../../util'
 import { exportContext } from '../../selectors'
-import { initialState, State } from'../../util/initialState'
-import { SimplePath } from'../../types'
+import { initialState, State } from '../../util/initialState'
+import { SimplePath } from '../../types'
 
 /** Imports the given html and exports it as plaintext. */
 const importExport = (html: string) => {
