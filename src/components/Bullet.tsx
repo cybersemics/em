@@ -2,7 +2,6 @@ import React, { MouseEvent } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { hasChildren, isContextViewActive, isPending } from '../selectors'
-import { hashContext } from '../util'
 import { State } from '../util/initialState'
 import { Context } from '../types'
 
@@ -33,8 +32,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     invalidOption: !!props.isEditing && invalidState,
     // re-render when leaf status changes
     isLeaf: !hasChildren(state, props.context),
-    // only show as pending if expanded
-    pending: isPending(state, props.context) && !!state.expanded[hashContext(props.context)],
+    pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
   }
 }
