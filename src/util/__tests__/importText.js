@@ -1,28 +1,8 @@
 import { EM_TOKEN, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, timestamp } from '../../util'
+import { initialState } from '../../util/initialState'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
-
-const INITIAL_STATE = {
-  contextViews: {},
-  thoughts: {
-    contextIndex: {
-      [hashContext([ROOT_TOKEN])]: {
-        context: [ROOT_TOKEN],
-        children: [],
-      },
-    },
-    thoughtIndex: {
-      [hashThought(ROOT_TOKEN)]: {
-        value: ROOT_TOKEN,
-        contexts: [],
-      },
-    },
-  }
-}
-
-/** Returns a mock initial State. */
-const initialState = () => INITIAL_STATE
 
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = text => {
