@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../constants'
 import { componentToThought, hashContext, keyValueBy, owner } from '../util'
-import { rankThoughtsFirstMatch } from '../selectors'
+import { getThought, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
 
 /** Parses the thoughts from the url. */
@@ -21,7 +21,11 @@ const decodeThoughtsUrl = (state: State, pathname: string) => {
     } : null)
 
   // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
-  const path = rankThoughtsFirstMatch({ ...state, contextViews }, pathUnranked)
+  // if the thoughts are not yet loaded into state, return null
+  const thoughtsLoaded = pathUnranked.every(value => getThought(state, value))
+  const path = thoughtsLoaded
+    ? rankThoughtsFirstMatch({ ...state, contextViews }, pathUnranked)
+    : null
 
   return {
     contextViews,

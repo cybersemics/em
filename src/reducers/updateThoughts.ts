@@ -131,7 +131,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     !state.cursor
       ? state => {
         const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
-        const cursorNew = isRoot(path) ? null : path
+        const cursorNew = !path || isRoot(path) ? null : path
         return {
           ...state,
           contextViews,
