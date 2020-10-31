@@ -173,3 +173,65 @@ it('two root thoughts', async () => {
   expect(exported.trim())
     .toBe(text)
 })
+
+it('skip root token', async () => {
+
+  const text = `- __ROOT__
+  - a
+    - b
+  - c
+    - d`
+
+  const {
+    contextIndexUpdates: contextIndex,
+    thoughtIndexUpdates: thoughtIndex,
+  } = importText(RANKED_ROOT, text)(NOOP, initialState)
+
+  const state = {
+    thoughts: {
+      contextIndex,
+      thoughtIndex,
+    }
+  }
+
+  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
+
+  // remove root, de-indent (trim), and append newline to make tests cleaner
+  expect(exported)
+    .toBe(`- __ROOT__
+  - a
+    - b
+  - c
+    - d`)
+})
+
+it('skip em token', async () => {
+
+  const text = `- __EM__
+  - a
+    - b
+  - c
+    - d`
+
+  const {
+    contextIndexUpdates: contextIndex,
+    thoughtIndexUpdates: thoughtIndex,
+  } = importText(RANKED_ROOT, text)(NOOP, initialState)
+
+  const state = {
+    thoughts: {
+      contextIndex,
+      thoughtIndex,
+    }
+  }
+
+  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
+
+  // remove root, de-indent (trim), and append newline to make tests cleaner
+  expect(exported)
+    .toBe(`- __ROOT__
+  - a
+    - b
+  - c
+    - d`)
+})

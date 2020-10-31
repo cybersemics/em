@@ -45,10 +45,14 @@ const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number
 /** Recursively iterate through blocks and call insertThought for each block individually to save it. */
 const saveThoughts = (context: Context, blocks: Block[], insertThought: (value: string, context: Context, rank: number, lastUpdated?: Timestamp) => void, rankIncrement = 1, startRank = 0, lastUpdated = timestamp()) => {
   blocks.forEach((block, index) => {
+    const skipLevel = block.scope === ROOT_TOKEN || block.scope === EM_TOKEN
     const rank = startRank + index * rankIncrement
-    insertThought(block.scope, context, rank, lastUpdated)
+    if (!skipLevel) {
+      insertThought(block.scope, context, rank, lastUpdated)
+    }
     if (block.children.length > 0) {
-      saveThoughts([...context, block.scope], block.children, insertThought, rankIncrement, startRank, lastUpdated)
+      const childContext = skipLevel ? context : [...context, block.scope]
+      saveThoughts(childContext, block.children, insertThought, rankIncrement, startRank, lastUpdated)
     }
   })
 }
