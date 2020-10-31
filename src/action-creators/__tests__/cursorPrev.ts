@@ -1,11 +1,5 @@
 import { RANKED_ROOT } from '../../constants'
-
-// action-creators
-import {
-  cursorPrev,
-  importText,
-} from '../../action-creators'
-
+import { cursorPrev, importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
@@ -72,34 +66,34 @@ describe('normal view', () => {
 
   })
 
-  // it('sorted thoughts', () => {
+  it('sorted thoughts', () => {
 
-  //   const store = createTestStore()
+    const store = createTestStore()
 
-  //   store.dispatch([
-  //     importText(RANKED_ROOT, `
-  //     - SORT
-  //       - a
-  //       - c
-  //       - b
-  //         - b1`),
-  //     {
-  //       type: 'toggleAttribute',
-  //       context: ['SORT'],
-  //       key: '=sort',
-  //       value: 'Alphabetical'
-  //     },
-  //     {
-  //       type: 'setCursor',
-  //       path: [{ value: 'SORT', rank: 0 }, { value: 'c', rank: 2 }],
-  //     },
-  //     cursorPrev()
-  //   ])
+    store.dispatch([
+      importText(RANKED_ROOT, `
+      - SORT
+        - a
+        - c
+        - b
+          - b1`),
+      {
+        type: 'toggleAttribute',
+        context: ['SORT'],
+        key: '=sort',
+        value: 'Alphabetical'
+      },
+      {
+        type: 'setCursor',
+        path: [{ value: 'SORT', rank: 0 }, { value: 'c', rank: 1 }],
+      },
+      cursorPrev()
+    ])
 
-  //   expect(store.getState().cursor)
-  //     .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 3 }])
+    expect(store.getState().cursor)
+      .toMatchObject([{ value: 'SORT' }, { value: 'b' }])
 
-  // })
+  })
 
   it('skip descendants', () => {
 

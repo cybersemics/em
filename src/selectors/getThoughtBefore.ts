@@ -1,5 +1,5 @@
 import { headRank, headValue, pathToContext, rootedParentOf } from '../util'
-import { getChildrenRanked } from '../selectors'
+import { getChildrenSorted } from '../selectors'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
@@ -9,7 +9,7 @@ const getThoughtBefore = (state: State, simplePath: SimplePath) => {
   const value = headValue(simplePath)
   const rank = headRank(simplePath)
   const parentPath = rootedParentOf(simplePath)
-  const children = getChildrenRanked(state, pathToContext(parentPath))
+  const children = getChildrenSorted(state, pathToContext(parentPath))
 
   // if there are no children, start with rank 0
   if (children.length === 0) {
