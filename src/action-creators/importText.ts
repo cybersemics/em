@@ -2,15 +2,8 @@
 import { parse } from 'jex-block-parser'
 import he from 'he'
 import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedParentOf, strip } from '../util'
-import { ActionCreator, Path, Timestamp } from '../types'
 import { simplifyPath } from '../selectors'
-
-// declare types until jex-block-parser merges PR
-// https://github.com/reergymerej/block-parser/pull/1
-export interface Block {
-  scope: string,
-  children: Block[],
-}
+import { ActionCreator, Block, Path, Timestamp } from '../types'
 
 /** Parse blocks of text based on indentation. */
 declare function parse(text: string): Block[]

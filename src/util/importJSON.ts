@@ -1,9 +1,8 @@
 import _ from 'lodash'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getAllChildren, nextSibling } from '../selectors'
-import { Block } from '../action-creators/importText'
 import { State } from './initialState'
-import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
+import { Block, Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
 
 // util
 import {

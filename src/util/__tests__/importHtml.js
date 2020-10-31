@@ -1,20 +1,7 @@
-// constants
-import {
-  ROOT_TOKEN,
-} from '../../constants'
+import { ROOT_TOKEN } from '../../constants'
+import { hashContext, hashThought, importHtml, mergeUpdates } from '../../util'
 
-// util
-import {
-  hashContext,
-  hashThought,
-  importHtml,
-  mergeUpdates,
-} from '../../util'
-
-// selectors
-import {
-  exportContext,
-} from '../../selectors'
+import { exportContext } from '../../selectors'
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
@@ -357,7 +344,7 @@ it('paste multiple thoughts after the cursor', () => {
 
   const exported = exportContext(state2, [ROOT_TOKEN], 'text/plaintext')
 
-  expect(exported).toBe(`- __ROOT__
+  expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
     - b
     - x
