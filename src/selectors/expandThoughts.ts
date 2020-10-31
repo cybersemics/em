@@ -56,6 +56,10 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
     globals.suppressExpansion
   ) return {}
 
+  if (path && path.length === 0) {
+    throw new Error('Invalid empty Path received.')
+  }
+
   const simplePath = !path || path.length === 0
     ? RANKED_ROOT
     : simplifyPath(state, path)
