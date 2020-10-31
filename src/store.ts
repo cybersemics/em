@@ -6,11 +6,11 @@
 
 import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
-import multi from 'redux-multi'
 import thunk from 'redux-thunk'
+import multi from './redux-middleware/multi'
 import syncQueue from './redux-middleware/syncQueue'
-import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import thoughtCacheMiddleware from './redux-middleware/thoughtCacheMiddleware'
+import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
 import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
 

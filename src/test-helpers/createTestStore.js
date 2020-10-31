@@ -1,6 +1,6 @@
 import { applyMiddleware, compose, createStore } from 'redux'
-import multi from 'redux-multi'
 import thunk from 'redux-thunk'
+import multi from '../redux-middleware/multi'
 import appReducer from '../reducers/app'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { importText } from '../action-creators'
