@@ -1,30 +1,24 @@
 import { RANKED_ROOT } from '../../constants'
-
-// action-creators
-import {
-  cursorPrev,
-  importText,
-} from '../../action-creators'
-
+import { cursorNext, importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
 
-  it('move cursor to previous sibling', () => {
+  it('move cursor to next sibling', () => {
 
     const store = createTestStore()
 
-    store.dispatch(importText(RANKED_ROOT, `
+    store.dispatch([
+      importText(RANKED_ROOT, `
       - a
         - a1
-      - b`))
-
-    setCursorFirstMatch(['b'])(store.getState())
-    store.dispatch(cursorPrev())
+      - b`),
+      { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
+      cursorNext()
+    ])
 
     expect(store.getState().cursor)
-      .toMatchObject([{ value: 'a' }])
+      .toMatchObject([{ value: 'b' }])
 
   })
 
@@ -37,7 +31,7 @@ describe('normal view', () => {
       - a
       - b`),
       { type: 'setCursor', path: null },
-      cursorPrev()
+      cursorNext()
     ])
 
     expect(store.getState().cursor)
@@ -45,7 +39,7 @@ describe('normal view', () => {
 
   })
 
-  it('do nothing when the cursor on the first sibling', () => {
+  it('do nothing when the cursor on the last sibling', () => {
 
     const store = createTestStore()
 
@@ -53,12 +47,12 @@ describe('normal view', () => {
       importText(RANKED_ROOT, `
       - a
       - b`),
-      { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
-      cursorPrev()
+      { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
+      cursorNext()
     ])
 
     expect(store.getState().cursor)
-      .toMatchObject([{ value: 'a' }])
+      .toMatchObject([{ value: 'b' }])
 
   })
 
@@ -66,7 +60,7 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch(cursorPrev())
+    store.dispatch(cursorNext())
 
     expect(store.getState().cursor).toBe(null)
 
@@ -80,9 +74,9 @@ describe('normal view', () => {
   //     importText(RANKED_ROOT, `
   //     - SORT
   //       - a
+  //         - a1
   //       - c
-  //       - b
-  //         - b1`),
+  //       - b`),
   //     {
   //       type: 'toggleAttribute',
   //       context: ['SORT'],
@@ -91,13 +85,13 @@ describe('normal view', () => {
   //     },
   //     {
   //       type: 'setCursor',
-  //       path: [{ value: 'SORT', rank: 0 }, { value: 'c', rank: 2 }],
+  //       path: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
   //     },
-  //     cursorPrev()
+  //     cursorNext(),
   //   ])
 
   //   expect(store.getState().cursor)
-  //     .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 3 }])
+  //     .toMatchObject([{ value: 'SORT', rank: 0 }, { value: 'b', rank: 4 }])
 
   // })
 
@@ -105,15 +99,17 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch(importText(RANKED_ROOT, `
+    store.dispatch([
+      importText(RANKED_ROOT, `
       - a
         - a1
-      - b`))
-    setCursorFirstMatch(['b'])(store.getState())
-    store.dispatch(cursorPrev())
+      - b`),
+      { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
+      cursorNext()
+    ])
 
     expect(store.getState().cursor)
-      .toMatchObject([{ value: 'a' }])
+      .toMatchObject([{ value: 'b' }])
 
   })
 
