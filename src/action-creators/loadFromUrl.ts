@@ -26,10 +26,12 @@ const loadFromUrl = (url: string, path = RANKED_ROOT, { skipRoot }: Options = {}
   const { path: decodedPath } = decodeThoughtsUrl(state, window.location.pathname)
 
   // set cursor to first child if cursor is not provided via url
-  const firstChild = getAllChildren(state, pathToContext(decodedPath))[0]
+  const firstChild = decodedPath
+    ? getAllChildren(state, pathToContext(decodedPath))[0]
+    : null
   dispatch({
     type: 'setCursor',
-    path: isRoot(decodedPath)
+    path: decodedPath && isRoot(decodedPath)
       ? [firstChild]
       : decodedPath
   })
