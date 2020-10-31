@@ -8,7 +8,7 @@ import getThought from '../data-providers/data-helpers/getThought'
 import { equalArrays, hashContext, hashThought, mergeThoughts, never, timestamp } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../action-creators'
-import { State } from '../util/initialState'
+import { initialState, State } from '../util/initialState'
 import { Context, Parent } from '../types'
 
 declare global {
@@ -60,27 +60,6 @@ expect.extend({
     )
   }
 })
-
-const INITIAL_STATE = {
-  contextViews: {},
-  thoughts: {
-    contextIndex: {
-      [hashContext([ROOT_TOKEN])]: {
-        context: [ROOT_TOKEN],
-        children: [],
-      },
-    },
-    thoughtIndex: {
-      [hashThought(ROOT_TOKEN)]: {
-        value: ROOT_TOKEN,
-        contexts: [],
-      },
-    },
-  }
-} as unknown as State
-
-/** Returns a mock initial State. */
-const initialState = () => INITIAL_STATE
 
 /** Import text into the root of a blank initial state. */
 const importThoughts = (text: string) => {
@@ -548,32 +527,6 @@ const dataProviderTest = (provider: DataProvider) => {
 
     test('ignore maxDepth on EM context', async () => {
 
-      const INITIAL_STATE_WITH_EM = {
-        contextViews: {},
-        thoughts: {
-          contextIndex: {
-            [hashContext([ROOT_TOKEN])]: {
-              context: [ROOT_TOKEN],
-              children: [],
-            },
-            [hashContext([EM_TOKEN])]: {
-              context: [EM_TOKEN],
-              children: [],
-            },
-          },
-          thoughtIndex: {
-            [hashThought(ROOT_TOKEN)]: {
-              value: ROOT_TOKEN,
-              contexts: [],
-            },
-            [hashThought(EM_TOKEN)]: {
-              value: EM_TOKEN,
-              contexts: [],
-            },
-          },
-        }
-      } as unknown as State
-
       const rootText = `
         - x
           - y
@@ -595,7 +548,7 @@ const dataProviderTest = (provider: DataProvider) => {
       const {
         contextIndexUpdates: contextIndexUpdatesEm,
         thoughtIndexUpdates: thoughtIndexUpdatesEm,
-      } = importText([{ value: EM_TOKEN, rank: 0 }], emText)(NOOP, () => INITIAL_STATE_WITH_EM)
+      } = importText([{ value: EM_TOKEN, rank: 0 }], emText)(NOOP, initialState)
 
       const contextIndex = { ...contextIndexUpdates, ...contextIndexUpdatesEm }
       const thoughtIndex = { ...thoughtIndexUpdates, ...thoughtIndexUpdatesEm }

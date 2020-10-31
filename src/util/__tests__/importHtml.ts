@@ -1,26 +1,8 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, importHtml, mergeUpdates } from '../../util'
 import { exportContext } from '../../selectors'
-import { State } from'../../util/initialState'
+import { initialState, State } from'../../util/initialState'
 import { SimplePath } from'../../types'
-
-const initialState = () => ({
-  contextViews: {},
-  thoughts: {
-    contextIndex: {
-      [hashContext([ROOT_TOKEN])]: {
-        context: [ROOT_TOKEN],
-        children: [],
-      },
-    },
-    thoughtIndex: {
-      [hashThought(ROOT_TOKEN)]: {
-        value: ROOT_TOKEN,
-        contexts: [],
-      },
-    },
-  }
-}) as unknown as State
 
 /** Imports the given html and exports it as plaintext. */
 const importExport = (html: string) => {
