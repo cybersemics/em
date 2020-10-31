@@ -209,3 +209,10 @@ export type Patch = ExtendedOperation[]
 
 export type ContextHash = string & Brand<'ContextHash'>
 export type ThoughtHash = string & Brand<'ThoughtHash'>
+
+// jex-block-parser type
+// Waiting on PR: https://github.com/reergymerej/block-parser/pull/1
+export interface Block {
+  scope: string,
+  children: Block[],
+}

@@ -1,4 +1,4 @@
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { EM_TOKEN, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, timestamp } from '../../util'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
@@ -176,7 +176,7 @@ it('two root thoughts', async () => {
 
 it('skip root token', async () => {
 
-  const text = `- __ROOT__
+  const text = `- ${ROOT_TOKEN}
   - a
     - b
   - c
@@ -198,7 +198,7 @@ it('skip root token', async () => {
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   expect(exported)
-    .toBe(`- __ROOT__
+    .toBe(`- ${ROOT_TOKEN}
   - a
     - b
   - c
@@ -207,7 +207,7 @@ it('skip root token', async () => {
 
 it('skip em token', async () => {
 
-  const text = `- __EM__
+  const text = `- ${EM_TOKEN}
   - a
     - b
   - c
@@ -229,7 +229,7 @@ it('skip em token', async () => {
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   expect(exported)
-    .toBe(`- __ROOT__
+    .toBe(`- ${ROOT_TOKEN}
   - a
     - b
   - c
