@@ -1,6 +1,6 @@
 import { store } from '../store'
 import { Index, Lexeme, Parent, Snapshot } from '../types'
-import { keyValueBy } from '../util'
+import { keyValueBy } from '../util/keyValueBy'
 
 interface Options {
   maxDepth?: number,

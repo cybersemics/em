@@ -1,6 +1,4 @@
 import _ from 'lodash'
-import { store } from '../store'
-import { dataIntegrityCheck, loadResource } from '../action-creators'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
@@ -68,12 +66,13 @@ const setCursor = (state: State, {
     })
   }
 
+  // TODO
   // load =src
-  setTimeout(() => {
-    if (thoughtsResolved) {
-      store.dispatch(loadResource(thoughtsResolved))
-    }
-  })
+  // setTimeout(() => {
+  //   if (thoughtsResolved) {
+  //     dispatch(loadResource(thoughtsResolved))
+  //   }
+  // })
 
   const expanded = expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
 
@@ -105,7 +104,7 @@ const setCursor = (state: State, {
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
-  setTimeout(() => store.dispatch(dataIntegrityCheck(thoughtsResolved!)), 100)
+  // setTimeout(() => dispatch(dataIntegrityCheck(thoughtsResolved!)), 100)
 
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   const stateNew = equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews

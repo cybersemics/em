@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { sync } from '../util'
+import { sync } from '../action-creators'
 import { hasSyncs } from '../selectors'
 
 /** Merges multiple sync batches into a single batch. Uses last value of local/remote. */
@@ -40,31 +40,31 @@ const syncBatch = batch =>
     }
   )
 
-/** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
-const flushQueue = async syncQueue => {
-
-  if (syncQueue.length === 0) return Promise.resolve()
-
-  // filter batches by data provider
-  const localBatches = syncQueue.filter(batch => batch.local)
-  const remoteBatches = syncQueue.filter(batch => batch.remote)
-
-  // merge batches
-  const localMergedBatch = localBatches.reduce(mergeBatch, {})
-  const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {})
-
-  // sync
-  await Promise.all([
-    Object.keys(localMergedBatch).length > 0 && syncBatch(localMergedBatch),
-    Object.keys(remoteMergedBatch).length > 0 && syncBatch(remoteMergedBatch),
-  ])
-}
-
 // debounce syncQueue updates to avoid syncing on every action
 const debounceDelay = 100
 
 /** Flushes the sync queue when updates are detected. */
 const syncQueueMiddleware = ({ getState, dispatch }) => {
+
+  /** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
+  const flushQueue = async syncQueue => {
+
+    if (syncQueue.length === 0) return Promise.resolve()
+
+    // filter batches by data provider
+    const localBatches = syncQueue.filter(batch => batch.local)
+    const remoteBatches = syncQueue.filter(batch => batch.remote)
+
+    // merge batches
+    const localMergedBatch = localBatches.reduce(mergeBatch, {})
+    const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {})
+
+    // sync
+    await Promise.all([
+      Object.keys(localMergedBatch).length > 0 && dispatch(syncBatch(localMergedBatch)),
+      Object.keys(remoteMergedBatch).length > 0 && dispatch(syncBatch(remoteMergedBatch)),
+    ])
+  }
 
   const flushQueueDebounced = _.debounce(
     // clear queue immediately to prevent syncing more than once

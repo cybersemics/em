@@ -30,7 +30,7 @@ export const initialize = async () => {
   const thoughtsLocalPromise = owner() === '~'
     // authenticated or offline user
     ? store.dispatch(src
-      ? await loadFromUrl(src)
+      ? loadFromUrl(src)
       : loadLocalState())
     // other user context
     : Promise.resolve()
@@ -44,12 +44,14 @@ export const initialize = async () => {
   })
 
   // allow initFirebase to start the authentication process, but pass the thoughtsLocalPromise promise so that loadRemoteState will wait, otherwise it will try to repopulate local db with data from the remote
-  initFirebase({ thoughtsLocalPromise: thoughtsLocalPromise })
+  initFirebase({ store, thoughtsLocalPromise: thoughtsLocalPromise })
 
-  // initialize window events
-  initEvents()
+  await thoughtsLocalPromise
 
-  return thoughtsLocalPromise
+  return {
+    thoughtsLocalPromise,
+    ...initEvents(store),
+  }
 
 }
 

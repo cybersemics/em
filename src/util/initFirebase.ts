@@ -1,12 +1,13 @@
-import { store } from '../store'
+import { Store } from 'redux'
 import globals from '../globals'
 import { loadPublicThoughts, userAuthenticated } from '../action-creators'
 import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
+import { State } from '../util/initialState'
 import { Snapshot, User, ThoughtsInterface } from '../types'
 
 /** Initialize firebase and event handlers. */
-export const initFirebase = async ({ thoughtsLocalPromise }: { thoughtsLocalPromise: Promise<ThoughtsInterface> }) => {
+export const initFirebase = async ({ store, thoughtsLocalPromise }: { store: Store<State, any>, thoughtsLocalPromise: Promise<ThoughtsInterface> }) => {
   if (window.firebase) {
     const firebase = window.firebase
     firebase.initializeApp(FIREBASE_CONFIG)

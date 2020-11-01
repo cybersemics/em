@@ -1,12 +1,11 @@
-import { store } from '../store'
+import _ from 'lodash'
+import { Store } from 'redux'
 import { inputHandlers } from '../shortcuts'
 import * as db from '../data-providers/dexie'
-import { clearSelection, isRoot, scrollCursorIntoView } from '../util'
-import _ from 'lodash'
-
-// util
+import { clearSelection, isRoot } from '../util'
+import { State } from '../util/initialState'
 import { decodeThoughtsUrl } from '../selectors'
-import { toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { scrollCursorIntoView, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 
 declare global {
   interface Window {
@@ -14,42 +13,53 @@ declare global {
   }
 }
 
-/** Popstate event listener; setCursor on browser history forward/backward. */
-const onPopstate = () => {
-  const { path, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname)
-  const toRoot = !path || isRoot(path)
+/** Add window event handlers. */
+export const initEvents = (store: Store<State, any>) => {
 
-  // clear the selection if root
-  if (toRoot) {
-    clearSelection()
+  /** Popstate event listener; setCursor on browser history forward/backward. */
+  const onPopstate = () => {
+    const { path, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname)
+    const toRoot = !path || isRoot(path)
+
+    // clear the selection if root
+    if (toRoot) {
+      clearSelection()
+    }
+
+    // set the cursor
+    const cursor = toRoot ? null : path
+
+    // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
+    store.dispatch({ type: 'setCursor', path: cursor, replaceContextViews: contextViews })
+
+    // scroll cursor into view
+    store.dispatch(scrollCursorIntoView())
   }
 
-  // set the cursor
-  // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
-  store.dispatch({ type: 'setCursor', path: toRoot ? null : path, replaceContextViews: contextViews })
+  /** MouseMove event listener. */
+  const onMouseMove = _.debounce(() =>
+    store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true }
+  )
 
-  // scroll cursor into view
-  setTimeout(scrollCursorIntoView)
-}
+  /** Error event listener. NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
+  const onError = (e: { message: string, error: Error }) => {
+    // ignore generic script error caused by a firebase disconnect (cross-site error)
+    // https://blog.sentry.io/2016/05/17/what-is-script-error
+    if (e.message === 'Script error.') return
 
-/** MouseMove event listener. */
-const onMouseMove = _.debounce(() =>
-  store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true }
-)
+    console.error(e.error.stack)
+    db.log({ message: e.message, stack: e.error.stack })
+    store.dispatch({ type: 'error', value: e.message })
+  }
 
-/** Error event listener. NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
-const onError = (e: { message: string, error: Error }) => {
-  // ignore generic script error caused by a firebase disconnect (cross-site error)
-  // https://blog.sentry.io/2016/05/17/what-is-script-error
-  if (e.message === 'Script error.') return
-
-  console.error(e.error.stack)
-  db.log({ message: e.message, stack: e.error.stack })
-  store.dispatch({ type: 'error', value: e.message })
-}
-
-/** Add window event handlers. */
-export const initEvents = () => {
+  /** Remove window event handlers. */
+  const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
+    window.removeEventListener('keydown', keyDown)
+    window.removeEventListener('keyup', keyUp)
+    window.removeEventListener('popstate', onPopstate)
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('error', onError)
+  }
 
   // store input handlers so they can be removed on cleanup
   const { keyDown, keyUp } = window.__inputHandlers = inputHandlers(store)
@@ -64,14 +74,5 @@ export const initEvents = () => {
   window.addEventListener('error', onError)
 
   // return input handlers as another way to remove them on cleanup
-  return { keyDown, keyUp }
-}
-
-/** Remove window event handlers. */
-export const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
-  window.removeEventListener('keydown', keyDown)
-  window.removeEventListener('keyup', keyUp)
-  window.removeEventListener('popstate', onPopstate)
-  window.removeEventListener('mousemove', onMouseMove)
-  window.removeEventListener('error', onError)
+  return { keyDown, keyUp, cleanup }
 }

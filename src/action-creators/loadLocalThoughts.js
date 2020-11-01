@@ -1,7 +1,8 @@
 import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { isRoot, logWithTime, scrollCursorIntoView } from '../util'
+import { isRoot, logWithTime } from '../util'
 import { decodeThoughtsUrl, expandThoughts, getAllChildren } from '../selectors'
+import { scrollCursorIntoView } from '../action-creators'
 
 /** Loads thoughts from the IndexedDB database. */
 const loadLocalThoughts = () => async (dispatch, getState) => {
@@ -26,7 +27,7 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
     cursorNew || []
   )
 
-  setTimeout(scrollCursorIntoView)
+  dispatch(scrollCursorIntoView())
 
   // instantiate initial Settings if it does not exist
   dispatch({

@@ -4,7 +4,6 @@ import { mount } from 'enzyme'
 import { wrapInTestContext } from 'react-dnd-test-utils'
 
 import { initialize } from '../initialize'
-import { cleanup as cleanupEventHandlers } from '../util/initEvents'
 import { Provider } from 'react-redux'
 import { store } from '../store'
 import * as db from '../data-providers/dexie'
@@ -28,6 +27,9 @@ export const App = React.forwardRef(() =>
   </Provider>
 )
 
+// eslint-disable-next-line fp/no-let
+let cleanup: any
+
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
 
@@ -37,7 +39,8 @@ const createTestApp = async () => {
   await act(async () => {
 
     // calls initEvents, which must be manually cleaned up
-    await initialize()
+    const init = await initialize()
+    cleanup = init.cleanup
 
     jest.useFakeTimers()
 
@@ -73,7 +76,9 @@ export const cleanupTestApp = async () => {
     localStorage.clear()
 
     // cleanup initEvents which is called in initialize
-    cleanupEventHandlers()
+    if (cleanup) {
+      cleanup()
+    }
 
     store.dispatch({ type: 'clear', full: true })
     await db.clearAll()
