@@ -3,8 +3,7 @@ import globals from '../globals'
 import { loadPublicThoughts, userAuthenticated } from '../action-creators'
 import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
-import { ThoughtsInterface } from '../util/initialState'
-import { Snapshot, User } from '../types'
+import { Snapshot, User, ThoughtsInterface } from '../types'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ thoughtsLocalPromise }: { thoughtsLocalPromise: Promise<ThoughtsInterface> }) => {

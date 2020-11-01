@@ -6,8 +6,8 @@ import getManyDescendants from '../data-providers/data-helpers/getManyDescendant
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getAllChildrenByContextHash, hasSyncs } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, mergeThoughts, pathToContext, unroot } from '../util'
-import { State, ThoughtsInterface } from '../util/initialState'
-import { Context, ContextHash, Index, Lexeme, Parent, Path } from '../types'
+import { State } from '../util/initialState'
+import { Context, ContextHash, Index, Lexeme, Parent, Path, ThoughtsInterface } from '../types'
 
 /** Debounce pending checks to avoid checking on every action. */
 const debounceUpdatePending = 10
