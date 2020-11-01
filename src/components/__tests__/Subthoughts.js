@@ -10,6 +10,9 @@ import Subthoughts from '../Subthoughts'
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
 const whereContext = context => node => equalArrays(pathToContext(node.props().simplePath), context)
 
+/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts resolved context. */
+const whereResolvedContext = context => node => equalArrays(pathToContext(node.props().thoughtsResolved), context)
+
 // const debugThoughtWrapper = wrapper => wrapper.map(node => ({
 //   name: node.name(),
 //   context: node.props().simplePath.map(child => child.value),
@@ -22,7 +25,14 @@ let wrapper = null // eslint-disable-line fp/no-let
 
 // cannot figure out how to unmount and reset after each test so that we can use beforeEach
 beforeEach(async () => {
+  // set url back to home
+  window.history.pushState(
+    {},
+    '',
+    '/'
+  )
   wrapper = await createTestApp()
+  // set url back to home
 })
 
 afterEach(async () => {
@@ -132,8 +142,7 @@ describe('context view', () => {
     // select a/one~/a Subthoughts component
     const subthoughtsAOneA = subthoughtsAOne()
       .find(Subthoughts)
-      .filterWhere(whereContext(['a', 'one']))
-      .filterWhere(node => node.props().contextChain.length > 0)
+      .filterWhere(whereResolvedContext(['a', 'one', 'a']))
     expect(subthoughtsAOneA).toHaveLength(1)
 
     // assert that child of context is rendered
@@ -154,8 +163,7 @@ describe('context view', () => {
     // select a/one~/b Subthoughts component
     const subthoughtsAOneB = subthoughtsAOne()
       .find(Subthoughts)
-      .filterWhere(whereContext(['b', 'ones']))
-      .filterWhere(node => node.props().contextChain.length > 0)
+      .filterWhere(whereResolvedContext(['a', 'one', 'b']))
     expect(subthoughtsAOneB).toHaveLength(1)
 
     // assert that child of context is rendered
@@ -165,6 +173,56 @@ describe('context view', () => {
       .toMatchObject({
         simplePath: [{ value: 'b' }, { value: 'ones' }, { value: 'y' }],
       })
+  })
+
+  it('calculate proper thoughtsResolved for a children inside context view with duplicate lexeme', async () => {
+
+    // Explaination: https://github.com/cybersemics/em/pull/878#issuecomment-717057916
+
+    // import thoughts
+    await store.dispatch(importText(RANKED_ROOT, `
+    - a
+      - b
+        - c
+          - d
+            - c`))
+
+    // enable Context View on /a/b/c/d/c
+    store.dispatch({ type: 'setCursor', path: [
+      { value: 'a', rank: 0 },
+      { value: 'b', rank: 0 },
+      { value: 'c', rank: 0 },
+      { value: 'd', rank: 0 },
+      { value: 'c', rank: 0 },
+    ] })
+
+    store.dispatch({ type: 'toggleContextView' })
+
+    /*
+    Expected structure after activating context view.
+    - a
+      - b
+        - c
+          - d
+            - c
+              - a.b.c (first)
+              - a.b.c.d.c (second)
+    */
+
+    // update DOM
+    wrapper.update()
+
+    const subthoughtsFirst = wrapper
+      .find(Subthoughts)
+      .filterWhere(whereResolvedContext(['a', 'b', 'c', 'd', 'c', 'b']))
+
+    expect(subthoughtsFirst).toHaveLength(1)
+
+    const subthoughtsSecond = wrapper
+      .find(Subthoughts)
+      .filterWhere(whereResolvedContext(['a', 'b', 'c', 'd', 'c', 'd']))
+
+    expect(subthoughtsSecond).toHaveLength(1)
   })
 
 })

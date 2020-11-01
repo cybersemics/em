@@ -50,7 +50,6 @@ import {
 // selectors
 import {
   attributeEquals,
-  chain,
   getContexts,
   getSetting,
   getStyle,
@@ -103,7 +102,7 @@ const updateToolbarPositionOnScroll = () => {
 }
 
 interface EditableProps {
-  contextChain: SimplePath[],
+  thoughtsResolved: Path,
   cursorOffset?: number,
   disabled?: boolean,
   isEditing?: boolean,
@@ -151,10 +150,9 @@ const showDuplicationAlert = duplicateAlertToggler()
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
+const Editable = ({ disabled, isEditing, simplePath, thoughtsResolved, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
-  const thoughtsResolved = contextChain.length ? chain(state, contextChain, simplePath) : simplePath
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
@@ -217,20 +215,20 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
     const { cursorBeforeEdit, cursor }: State = store.getState() // use fresh state
 
     const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
-    const simplePathLive = cursor && isEditing
-      ? parentOf(simplePath).concat(head(showContexts ? parentOf(cursor) : cursor))
-      : simplePath
+
+    const thoughtsResolvedLive = cursor && isEditing
+      ? parentOf(thoughtsResolved).concat(head(showContexts ? parentOf(cursor) : cursor))
+      : thoughtsResolved
 
     dispatch({
       type: 'setCursor',
-      contextChain,
       cursorHistoryClear: true,
       editing,
       // set offset to null to prevent setSelection on next render
       // to use the existing offset after a user clicks or touches the screent
       // when cursor is changed through another method, such as cursorDown, offset will be reset
       offset: null,
-      path: simplePathLive,
+      path: thoughtsResolvedLive,
     })
   }
 
@@ -239,7 +237,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, simplePath, contextChain }: { context: Context, showContexts?: boolean, rank: number, simplePath: Path, contextChain: SimplePath[] }) => {
+  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, simplePath }: { context: Context, showContexts?: boolean, rank: number, simplePath: Path }) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
 
@@ -250,7 +248,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
 
     const thought = getThought(state, oldValue)
     if (thought) {
-      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, path: simplePath, contextChain })
+      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, path: simplePath })
 
       // rerender so that triple dash is converted into divider
       // otherwise nothing would be rerendered because the thought is still being edited
@@ -414,9 +412,9 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
     if (contextLengthChange || urlChange || isEmpty) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue, { context, showContexts, rank, simplePath, contextChain })
+      thoughtChangeHandler(newValue, { context, showContexts, rank, simplePath })
     }
-    else throttledChangeRef.current(newValue, { context, showContexts, rank, simplePath, contextChain })
+    else throttledChangeRef.current(newValue, { context, showContexts, rank, simplePath })
   }
 
   /** Imports text that is pasted onto the thought. */
