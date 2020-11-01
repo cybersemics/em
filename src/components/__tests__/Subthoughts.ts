@@ -72,12 +72,13 @@ describe('context view', () => {
     store.dispatch({
       type: 'importText',
       path: RANKED_ROOT,
-      text: `- a
-        - m
-          - x
-      - b
-        - m
-          - y
+      text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
       `,
       lastUpdated: now,
     })
@@ -124,18 +125,19 @@ describe('context view', () => {
 
   })
 
-  it('render context children of contexts that have different lexeme instances', async () => {
+  it('render context children of contexts that have different lexeme instances', () => {
 
     // import thoughts
     store.dispatch({
       type: 'importText',
       path: RANKED_ROOT,
-      text: `- a
-        - one
-          - x
-      - b
-        - ones
-          - y
+      text: `
+        - a
+          - one
+            - x
+        - b
+          - ones
+            - y
     `})
 
     // enable Context View on /a/one

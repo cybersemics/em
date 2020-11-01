@@ -2,12 +2,11 @@
 import _ from 'lodash'
 import * as db from '../data-providers/dexie'
 import * as firebase from '../data-providers/firebase'
-import { store } from '../store'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 import { hashContext, isFunction, logWithTime, timestamp } from '../util'
-import { Index, Lexeme, Parent } from '../types'
+import { ActionCreator, Index, Lexeme, Parent } from '../types'
 
 type Callback = (err: string | null, ...args: any[]) => void
 
@@ -91,9 +90,9 @@ const syncLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates:
 }
 
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
-const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): Promise<any> => {
+const syncRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): ActionCreator => async (dispatch, getState) => {
 
-  const state = store.getState()
+  const state = getState()
 
   const hasUpdates =
     Object.keys(thoughtIndexUpdates).length > 0 ||
@@ -172,7 +171,7 @@ const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contex
   if (Object.keys(allUpdates).length > 0) {
     return firebase.update(allUpdates)
       .catch((e: Error) => {
-        store.dispatch({ type: 'error', value: e.message })
+        dispatch({ type: 'error', value: e.message })
         console.error(e.message, allUpdates)
         throw e
       })
@@ -180,9 +179,9 @@ const syncRemote = async (thoughtIndexUpdates: Index<Lexeme | null> = {}, contex
 }
 
 /** Syncs updates to local database and Firebase. */
-export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}) => {
+const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}): ActionCreator => (dispatch, getState) => {
 
-  const { authenticated, userRef } = store.getState()
+  const { authenticated, userRef } = getState()
 
   return Promise.all([
 
@@ -190,7 +189,9 @@ export const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local
     local && syncLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates),
 
     // sync remote
-    remote && authenticated && userRef && syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates),
+    remote && authenticated && userRef && syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates)(dispatch, getState),
   ])
 
 }
+
+export default sync

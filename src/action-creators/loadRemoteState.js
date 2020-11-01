@@ -1,9 +1,7 @@
 import { decode as firebaseDecode } from 'firebase-encode'
-import { migrate } from '../migrations/index'
 import * as db from '../data-providers/dexie'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
 import { isDocumentEditable, keyValueBy, logWithTime } from '../util'
-import { updateThoughts } from '../reducers'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = async (dispatch, newState, oldState) => {
@@ -99,47 +97,53 @@ export const loadState = async (dispatch, newState, oldState) => {
   logWithTime('loadRemoteState: updateThoughts')
 }
 
+/** Loads the new state. */
+const loadRemoteState = newState => async (dispatch, getState) =>
+  loadState(dispatch, newState, getState())
+
+// disable migrations since they do not work with iterative loading
+
 /** Migrates both the old state (local) and the new state (remote) before merging. */
-const loadRemoteState = newState => async (dispatch, getState) => {
+// const loadRemoteState = newState => async (dispatch, getState) => {
 
-  const oldState = getState()
-  const { schemaVersion: schemaVersionOriginal } = newState
+//   const oldState = getState()
+//   const { schemaVersion: schemaVersionOriginal } = newState
 
-  const [newStateUpdates/* , oldStateUpdates */] = await Promise.all([
-    migrate(newState),
-    // migrate(oldState),
-  ])
+//   const [newStateUpdates/* , oldStateUpdates */] = await Promise.all([
+//     migrate(newState),
+//     // migrate(oldState),
+//   ])
 
-  logWithTime('loadRemoteState: migrated')
+//   logWithTime('loadRemoteState: migrated')
 
-  const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
+//   const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
 
-  // eslint-disable-next-line fp/no-let
-  let output = [newState, oldState]
+//   // eslint-disable-next-line fp/no-let
+//   let output = [newState, oldState]
 
-  // if the schema version changed, sync updates and pass the migrated state to loadState
-  if (schemaVersion > schemaVersionOriginal) {
+//   // if the schema version changed, sync updates and pass the migrated state to loadState
+//   if (schemaVersion > schemaVersionOriginal) {
 
-    const updateThoughtsArgs = {
-      contextIndexUpdates,
-      thoughtIndexUpdates,
-      forceRender: true,
-      remote: false,
-      updates: { schemaVersion },
-    }
+//     const updateThoughtsArgs = {
+//       contextIndexUpdates,
+//       thoughtIndexUpdates,
+//       forceRender: true,
+//       remote: false,
+//       updates: { schemaVersion },
+//     }
 
-    const newStateMigrated = updateThoughts(newState, updateThoughtsArgs)
-    const oldStateMigrated = updateThoughts(oldState, updateThoughtsArgs)
+//     const newStateMigrated = updateThoughts(newState, updateThoughtsArgs)
+//     const oldStateMigrated = updateThoughts(oldState, updateThoughtsArgs)
 
-    dispatch({
-      type: 'updateThoughts',
-      ...updateThoughtsArgs,
-    })
+//     dispatch({
+//       type: 'updateThoughts',
+//       ...updateThoughtsArgs,
+//     })
 
-    output = [newStateMigrated, oldStateMigrated]
-  }
+//     output = [newStateMigrated, oldStateMigrated]
+//   }
 
-  return loadState(dispatch, ...output)
-}
+//   return loadState(dispatch, ...output)
+// }
 
 export default loadRemoteState

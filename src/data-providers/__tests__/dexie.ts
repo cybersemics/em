@@ -16,11 +16,13 @@ jest.useFakeTimers()
 jest.mock('lodash', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { debounce, throttle } = require('../../test-helpers/mock-debounce-throttle')
-  return {
-    ...jest.requireActual('lodash'),
-    debounce,
-    throttle,
-  }
+  return Object.assign({},
+    jest.requireActual('lodash'),
+    {
+      debounce,
+      throttle,
+    }
+  )
 })
 
 describe('dexie', () => {
