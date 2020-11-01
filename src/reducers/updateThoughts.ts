@@ -1,11 +1,11 @@
 import _ from 'lodash'
-import { State, ThoughtsInterface, initialState } from '../util/initialState'
+import { State, initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { hashContext, importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
-import { Index, Lexeme, Parent, SimplePath } from '../types'
+import { ContextHash, Index, Lexeme, Parent, SimplePath, ThoughtHash, ThoughtIndices, ThoughtsInterface } from '../types'
 
-interface Options {
+export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>,
   contextIndexUpdates: Index<Parent | null>,
   recentlyEdited?: Index,
@@ -20,10 +20,7 @@ const rootEncoded = hashContext([ROOT_TOKEN])
 // we should not delete ROOT, EM, or EM descendants from state
 // whitelist them until we have a better solution
 // eslint-disable-next-line fp/no-let
-let whitelistedThoughts: {
-  contextIndex: Index<Parent>,
-  thoughtIndex: Index<Lexeme>,
-}
+let whitelistedThoughts: ThoughtIndices
 
 // delay so util is fully loaded, otherwise importHtml will error out with "pathToContext is not a function"
 setTimeout(() => {
@@ -62,22 +59,22 @@ const thoughtsLoaded = (thoughts: ThoughtsInterface) => {
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, local = true, remote = true }: Options) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, local = true, remote = true }: UpdateThoughtsOptions) => {
 
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
   // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and thoughtIndex
-  const contextCacheAppended = [...state.thoughts.contextCache, ...Object.keys(contextIndexUpdates)]
-  const thoughtCacheAppended = [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)]
+  const contextCacheAppended = [...state.thoughts.contextCache, ...Object.keys(contextIndexUpdates)] as ContextHash[]
+  const thoughtCacheAppended = [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)] as ThoughtHash[]
   const contextCacheNumInvalid = Math.max(0, contextCacheAppended.length - CONTEXT_CACHE_SIZE)
   const thoughtCacheNumInvalid = Math.max(0, thoughtCacheAppended.length - THOUGHT_CACHE_SIZE)
-  const contextCacheUnique = contextCacheNumInvalid === 0 ? null : _.uniq(contextCacheAppended)
-  const thoughtCacheUnique = thoughtCacheNumInvalid === 0 ? null : _.uniq(contextCacheUnique)
-  const contextCache = contextCacheNumInvalid === 0 ? contextCacheAppended : contextCacheUnique!.slice(contextCacheNumInvalid)
-  const thoughtCache = thoughtCacheNumInvalid === 0 ? thoughtCacheAppended : thoughtCacheUnique!.slice(thoughtCacheNumInvalid)
-  const contextCacheInvalidated = contextCacheNumInvalid === 0 ? [] : contextCacheUnique!.slice(0, contextCacheNumInvalid)
-  const thoughtCacheInvalidated = thoughtCacheNumInvalid === 0 ? [] : thoughtCacheUnique!.slice(0, thoughtCacheNumInvalid)
+  const contextCacheUnique = contextCacheNumInvalid === 0 ? null : _.uniq(contextCacheAppended) as ContextHash[]
+  const thoughtCacheUnique = thoughtCacheNumInvalid === 0 ? null : _.uniq(thoughtCacheAppended) as ThoughtHash[]
+  const contextCache = contextCacheNumInvalid === 0 ? contextCacheAppended : contextCacheUnique!.slice(contextCacheNumInvalid) as ContextHash[]
+  const thoughtCache = thoughtCacheNumInvalid === 0 ? thoughtCacheAppended : thoughtCacheUnique!.slice(thoughtCacheNumInvalid) as ThoughtHash[]
+  const contextCacheInvalidated = contextCacheNumInvalid === 0 ? [] : contextCacheUnique!.slice(0, contextCacheNumInvalid) as ContextHash[]
+  const thoughtCacheInvalidated = thoughtCacheNumInvalid === 0 ? [] : thoughtCacheUnique!.slice(0, thoughtCacheNumInvalid) as ThoughtHash[]
 
   contextCacheInvalidated.forEach(key => {
     if (!whitelistedThoughts.contextIndex[key]) {
@@ -108,7 +105,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   logWithTime('updateThoughts: merge syncQueue')
 
-  const thoughts = {
+  const thoughts: ThoughtsInterface = {
     contextCache,
     contextIndex,
     thoughtCache,

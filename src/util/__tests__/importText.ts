@@ -1,23 +1,16 @@
 import { EM_TOKEN, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, timestamp } from '../../util'
-import { initialState } from '../../util/initialState'
+import updateThoughts, { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
+import { initialState, State } from '../../util/initialState'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 
 /** Helper function that imports html and exports it as plaintext. */
-const importExport = text => {
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importText(RANKED_ROOT, text)(NOOP, initialState)
+const importExport = (text: string) => {
 
-  const state = {
-    thoughts: {
-      contextIndex,
-      thoughtIndex,
-    }
-  }
-  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
+  const imported: UpdateThoughtsOptions = importText(RANKED_ROOT, text)(NOOP, initialState)
+  const stateNew = updateThoughts(initialState(), imported)
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))
@@ -162,19 +155,9 @@ it('skip root token', () => {
   - c
     - d`
 
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importText(RANKED_ROOT, text)(NOOP, initialState)
-
-  const state = {
-    thoughts: {
-      contextIndex,
-      thoughtIndex,
-    }
-  }
-
-  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
+  const imported: UpdateThoughtsOptions = importText(RANKED_ROOT, text)(NOOP, initialState)
+  const stateNew = updateThoughts(initialState(), imported)
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   expect(exported)
@@ -193,19 +176,9 @@ it('skip em token', () => {
   - c
     - d`
 
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importText(RANKED_ROOT, text)(NOOP, initialState)
-
-  const state = {
-    thoughts: {
-      contextIndex,
-      thoughtIndex,
-    }
-  }
-
-  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
+  const imported: UpdateThoughtsOptions = importText(RANKED_ROOT, text)(NOOP, initialState)
+  const stateNew = updateThoughts(initialState(), imported)
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   expect(exported)
@@ -226,13 +199,10 @@ it('duplicate thoughts', () => {
   `
 
   const now = timestamp()
+  const imported = importText(RANKED_ROOT, text, { lastUpdated: now })(NOOP, initialState)
+  const parent = imported.thoughtIndexUpdates[hashThought('m')]
 
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importText(RANKED_ROOT, text, { lastUpdated: now })(NOOP, initialState)
-
-  expect(thoughtIndex[hashThought('m')]).toEqual({
+  expect(parent).toEqual({
     value: 'm',
     contexts: [{
       context: ['a'],

@@ -1,7 +1,7 @@
 import { EM_TOKEN, MODALS, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
-import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, SimplePath, User } from '../types'
+import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, SimplePath, ThoughtsInterface, User } from '../types'
 
 // import util functions directly since importing from ../util/index causes circular dependency
 import { hashContext } from '../util/hashContext'
@@ -14,13 +14,6 @@ import { timestamp } from '../util/timestamp'
 interface ModalProperties {
   complete: boolean,
   hideuntil: number,
-}
-
-export interface ThoughtsInterface {
-  contextCache: string[],
-  contextIndex: Index<Parent>,
-  thoughtCache: string[],
-  thoughtIndex: Index<Lexeme>,
 }
 
 // Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed

@@ -216,3 +216,20 @@ export interface Block {
   scope: string,
   children: Block[],
 }
+
+export type ThoughtCaches = {
+  contextCache: ContextHash[],
+  thoughtCache: ThoughtHash[],
+}
+
+export interface ThoughtIndices {
+  contextIndex: Index<Parent>,
+  thoughtIndex: Index<Lexeme>,
+}
+
+export interface ThoughtUpdates {
+  contextIndex: Index<Parent | null>,
+  thoughtIndex: Index<Lexeme | null>,
+}
+
+export type ThoughtsInterface = ThoughtIndices & ThoughtCaches

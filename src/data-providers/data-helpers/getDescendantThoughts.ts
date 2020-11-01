@@ -1,9 +1,8 @@
 import _ from 'lodash'
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
-import { ThoughtsInterface } from '../../util/initialState'
 import { hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
-import { Context, Index } from '../../types'
+import { Context, Index, ThoughtsInterface } from '../../types'
 
 const MAX_DEPTH = 100
 
