@@ -44,8 +44,8 @@ import {
 import {
   attribute,
   attributeEquals,
-  chain,
   getChildPath,
+  getChildResolvedPath,
   getContextsSortedAndRanked,
   getNextRank,
   getSetting,
@@ -63,7 +63,6 @@ interface SubthoughtsProps {
   allowSingleContext?: boolean,
   allowSingleContextParent?: boolean,
   childrenForced?: Child[],
-  contextChain?: SimplePath[],
   count?: number,
   depth?: number,
   expandable?: boolean,
@@ -71,6 +70,7 @@ interface SubthoughtsProps {
   showContexts?: boolean,
   sort?: string,
   simplePath: SimplePath,
+  thoughtsResolved: Path,
 }
 
 /** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
@@ -105,22 +105,17 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showHiddenThoughts,
   } = state
 
-  // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
-  const path = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.simplePath)
-    : unroot(props.simplePath)
-
   // check if the cursor path includes the current thought
   // include ROOT to prevent re-render when ROOT subthought changes
-  const isEditingPath = isRoot(props.simplePath) || subsetThoughts(cursorBeforeEdit, path)
+  const isEditingPath = isRoot(props.simplePath) || subsetThoughts(cursorBeforeEdit, props.thoughtsResolved)
 
   // check if the cursor is editing an thought directly
-  const isEditing = cursor && equalPath(cursorBeforeEdit, path)
+  const isEditing = equalPath(cursorBeforeEdit, props.thoughtsResolved)
 
-  const pathLive = isEditing ? cursor! : path
-  const contextLive = pathToContext(pathLive)
-  const showContexts = props.showContexts || isContextViewActive(state, contextLive)
-  const showContextsParent = isContextViewActive(state, parentOf(contextLive))
+  const thoughtsResolvedLive = isEditing ? cursor! : props.thoughtsResolved
+  const thoughtsLive = pathToContext(thoughtsResolvedLive)
+  const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
+  const showContextsParent = isContextViewActive(state, parentOf(thoughtsLive))
   const simplePath = showContexts && showContextsParent
     ? parentOf(props.simplePath)
     : props.simplePath
@@ -349,7 +344,7 @@ export const SubthoughtsComponent = ({
   allowSingleContextParent,
   childrenForced,
   contextBinding,
-  contextChain = [],
+  thoughtsResolved,
   count = 0,
   depth = 0,
   dropTarget,
@@ -372,15 +367,10 @@ export const SubthoughtsComponent = ({
   // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
   const thought = getThought(state, headValue(simplePath))
 
-  // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
-  const path = contextChain && contextChain.length > 0
-    ? chain(state, contextChain, simplePath)
-    : unroot(simplePath)
-
   // @ts-ignore
   const codeResults = thought && thought.code ? evalCode({ thought, simplePath }) : null
 
-  const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(pathToContext(path))])
+  const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(pathToContext(thoughtsResolved))])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = perma(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
@@ -435,11 +425,11 @@ export const SubthoughtsComponent = ({
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
   // get shared subcontext index between cursor and path
-  const subcontextIndex = checkIfPathShareSubcontext(cursor || [], path)
+  const subcontextIndex = checkIfPathShareSubcontext(cursor || [], thoughtsResolved)
 
   // check if thoughtResolved is ancestor, descendant of cursor or is equal to cursor itself
   const isAncestorOrDescendant = (subcontextIndex + 1) === (cursor || []).length
-  || (subcontextIndex + 1) === path.length
+  || (subcontextIndex + 1) === thoughtsResolved.length
 
   // If the cursor is a leaf, use cursor.length - 1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
@@ -466,7 +456,7 @@ export const SubthoughtsComponent = ({
     If we select any grandchildren of the main table view node, all it's children will disappear but the grandchildren will still show up.
     We check that condtion and hide the node.
   */
-  const shouldHide = (distance === 1) && !isAncestorOrDescendant && path.length > 0
+  const shouldHide = (distance === 1) && !isAncestorOrDescendant && thoughtsResolved.length > 0
 
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
@@ -477,7 +467,7 @@ export const SubthoughtsComponent = ({
     || attribute(state, pathToContext(parentOf(cursor)).concat('=children'), '=focus') === 'Zoom')
   const zoomParent = cursor && (attribute(state, pathToContext(parentOf(cursor)), '=focus') === 'Zoom'
     || attribute(state, pathToContext(parentOf(parentOf(cursor))).concat('=children'), '=focus') === 'Zoom')
-  const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), path) // eslint-disable-line jsdoc/require-jsdoc
+  const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), thoughtsResolved) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   const actualDistance =
@@ -554,7 +544,6 @@ export const SubthoughtsComponent = ({
 
           return child ? <Thought
             allowSingleContext={allowSingleContextParent}
-            contextChain={showContexts ? contextChain.concat([simplePath]) : contextChain}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
             hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
@@ -569,6 +558,7 @@ export const SubthoughtsComponent = ({
               ...styleChildren,
               ...isEditingChildPath() ? styleZoom : null,
             }}
+            thoughtsResolved={getChildResolvedPath(state, thoughtsResolved, childPath)}
             simplePath={childPath}
           /> : null
         })}

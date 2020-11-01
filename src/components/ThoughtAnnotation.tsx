@@ -3,9 +3,9 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
-import { chain, decodeThoughtsUrl, getContexts, getAllChildren, theme } from '../selectors'
+import { decodeThoughtsUrl, getContexts, getAllChildren, theme } from '../selectors'
 import { State } from '../util/initialState'
-import { Connected, Context, SimplePath, ThoughtContext } from '../types'
+import { Connected, Context, SimplePath, ThoughtContext, Path } from '../types'
 
 // util
 import {
@@ -17,7 +17,6 @@ import {
   headValue,
   pathToContext,
   publishMode,
-  unroot,
 } from '../util'
 
 // components
@@ -27,7 +26,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  contextChain?: SimplePath[],
+  thoughtsResolved: Path,
   dark?: boolean,
   editingValue?: string | null,
   focusOffset?: number,
@@ -61,11 +60,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
   const { cursor, cursorBeforeEdit, invalidState, editingValue, showHiddenThoughts } = state
 
-  // reerender annotation in realtime when thought is edited
-  const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.path)
-    : unroot(props.path)
-  const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+  const isEditing = equalPath(cursorBeforeEdit, props.thoughtsResolved)
   const pathLive = isEditing
     ? parentOf(props.path).concat(head(props.showContexts ? parentOf(cursor!) : cursor!)) as SimplePath
     : props.path
