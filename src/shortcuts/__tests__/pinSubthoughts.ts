@@ -22,7 +22,7 @@ it('toggle on =pinChildren attribute of parent of cursor (initial state without 
         - e
           - f
           - g
-  `})
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -53,7 +53,7 @@ it('toggle on =pinChildren attribute of parent of cursor (initial state =pinChil
         - e
           - f
           - g
-  `})
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -84,7 +84,7 @@ it('toggle off =pinChildren attribute from parent of cursor', async () => {
         - e
           - f
           - g
-  `})
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },

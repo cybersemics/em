@@ -2,7 +2,7 @@ import { Action, AnyAction, Dispatch, Middleware } from 'redux'
 import { State } from '../util/initialState'
 
 type MultiAction<T = any> = AnyAction | T[]
-type MultiMiddleware = Middleware<{}, State, Dispatch<Action>>
+type MultiMiddleware = Middleware<any, State, Dispatch<Action>>
 
 /** Redux Middleware that adds support for arrays of action. */
 const multi: MultiMiddleware = ({ dispatch }) => next => action =>

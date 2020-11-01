@@ -1,7 +1,6 @@
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
-import { importText } from '../../reducers'
 import { RANKED_ROOT } from '../../constants'
 
 let wrapper = null // eslint-disable-line fp/no-let

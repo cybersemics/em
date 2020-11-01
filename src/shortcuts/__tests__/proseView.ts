@@ -12,13 +12,13 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
 
   // import thoughts
   store.dispatch({
-  type: 'importText',
-  path: RANKED_ROOT,
-  text: `
-    - a
-      - b
-        - c
-  `})
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - b
+          - c
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -45,7 +45,7 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
           - table
         - b
           - c
-  `})
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -72,7 +72,7 @@ it('toggle off prose view of parent of cursor', async () => {
           - Prose
         - b
           - c
-  `})
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },

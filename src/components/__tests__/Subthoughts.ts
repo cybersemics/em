@@ -2,7 +2,6 @@ import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
 import { equalArrays, pathToContext, timestamp } from '../../util'
-import { importText } from '../../reducers'
 import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
@@ -41,7 +40,7 @@ it('normal view', async () => {
     text: `- a
       - b
       - c
-  `})
+  ` })
 
   // set the cursor to expand the subthoughts
   store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }] })
@@ -114,7 +113,7 @@ describe('context view', () => {
         showContexts: true,
         simplePath: [{
           id: '',
-          value: 'b' ,
+          value: 'b',
           rank: 1,
         }, {
           value: 'm',
@@ -138,7 +137,7 @@ describe('context view', () => {
         - b
           - ones
             - y
-    `})
+    ` })
 
     // enable Context View on /a/one
     store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })

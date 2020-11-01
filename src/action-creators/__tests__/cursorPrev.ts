@@ -1,6 +1,5 @@
 import { RANKED_ROOT } from '../../constants'
 import { cursorPrev } from '../../action-creators'
-import { importText } from '../../reducers'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
@@ -17,7 +16,7 @@ describe('normal view', () => {
         - a
           - a1
         - b`
-      })
+    })
 
     setCursorFirstMatch(['b'])(store.getState())
     store.dispatch(cursorPrev())
@@ -31,12 +30,13 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([{
-      type: 'importText',
-      path: RANKED_ROOT,
-      text: `
-        - a
-        - b`
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+          - b`
       },
       { type: 'setCursor', path: null },
       cursorPrev()
@@ -51,9 +51,10 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([{
-      type: 'importText',
-      path: RANKED_ROOT,
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
         text: `
           - a
           - b`
@@ -81,15 +82,16 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([{
-      type: 'importText',
-      path: RANKED_ROOT,
-      text: `
-        - SORT
-          - a
-          - c
-          - b
-            - b1`
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - SORT
+            - a
+            - c
+            - b
+              - b1`
       },
       {
         type: 'toggleAttribute',

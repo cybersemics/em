@@ -1,8 +1,7 @@
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getThought, getAllChildren } from '../../selectors'
-import { importText } from '../../reducers'
-import { existingThoughtMove, newSubthought, newThought, setCursor, updateThoughts } from '../../reducers'
+import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
 
 it('move within root', () => {
 

@@ -6,12 +6,13 @@ it('redo thought change', async () => {
 
   const store = createTestStore()
 
-  store.dispatch([{
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-      - a
-      - b`
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+        - b`
     },
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] },
     {
@@ -49,13 +50,14 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
 
   const store = createTestStore()
 
-  store.dispatch([{
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-      - a
-      - b
-      - c`
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+        - b
+        - c`
     },
     { type: 'cursorDown' },
     { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
@@ -106,12 +108,13 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
 it('redo contiguous changes', () => {
   const store = createTestStore()
 
-  store.dispatch([{
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-      - A
-      - B`
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - A
+        - B`
     },
     {
       type: 'existingThoughtChange',
