@@ -18,7 +18,7 @@ it('outdent within root', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -37,7 +37,7 @@ it('outdent with no cursor should do nothing ', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -55,7 +55,7 @@ it('outdent root thought should do nothing ', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -74,7 +74,7 @@ it('outdent within context', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a

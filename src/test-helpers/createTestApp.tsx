@@ -45,7 +45,7 @@ const createTestApp = async () => {
 
     // using test drag and drop backend and context
     const TestApp = wrapInTestContext(App)
-    const dndRef = createRef()
+    const dndRef = createRef<HTMLElement>()
 
     wrapper = await mount(<TestApp ref={dndRef}/>, { attachTo: root })
     wrapper.update()
@@ -61,7 +61,8 @@ const createTestApp = async () => {
     document.DND = dndRef.current
   })
 
-  return wrapper
+  // TODO: Is there a better way to type this?
+  return wrapper as unknown as ReturnType<typeof mount>
 }
 
 /** Clear store, localStorage, local db, and window event handlers. */

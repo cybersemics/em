@@ -21,7 +21,7 @@ it('set', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -48,7 +48,7 @@ it('different value should override existing value', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -77,7 +77,7 @@ it('add attribute if key has already been created', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a

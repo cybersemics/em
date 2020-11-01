@@ -20,7 +20,7 @@ it('subcategorize multiple thoughts', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -41,7 +41,7 @@ it('subcategorize multiple thoughts in the root', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   -${' '}
@@ -62,7 +62,7 @@ it('should do nothing with no cursor', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a

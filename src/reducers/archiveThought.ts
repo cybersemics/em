@@ -121,6 +121,7 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
   if (isMobile && state.editing) {
     asyncFocus()
   }
+
   return reducerFlow([
 
     // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it

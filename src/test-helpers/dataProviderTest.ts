@@ -5,9 +5,9 @@ import getDescendantThoughts from '../data-providers/data-helpers/getDescendantT
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
 import getThought from '../data-providers/data-helpers/getThought'
-import { equalArrays, hashContext, hashThought, mergeThoughts, never, timestamp } from '../util'
+import { equalArrays, hashContext, hashThought, mergeThoughts, never, reducerFlow, timestamp } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
-import { importText } from '../action-creators'
+import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
 import { Context, Parent } from '../types'
 
@@ -63,12 +63,11 @@ expect.extend({
 
 /** Import text into the root of a blank initial state. */
 const importThoughts = (text: string) => {
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importText(RANKED_ROOT, text)(NOOP, initialState)
-
-  return { contextIndex, thoughtIndex }
+  const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
+  return {
+    contextIndex: stateNew.thoughts.contextIndex,
+    thoughtIndex: stateNew.thoughts.thoughtIndex,
+  }
 }
 
 /** Runs tests for a module that conforms to the data-provider API. */
@@ -278,11 +277,15 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('contextIndex')
       expect(Object.keys(thoughts.contextIndex).length).toBe(6)
-      expect(thoughts.contextIndex).toMatchObject(contextIndex)
+      expect(thoughts.contextIndex).toMatchObject(
+        _.omit(contextIndex, hashContext([EM_TOKEN]))
+      )
 
       expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(5)
-      expect(thoughts.thoughtIndex).toMatchObject(thoughtIndex)
+      expect(Object.keys(thoughts.thoughtIndex).length).toBe(6)
+      expect(thoughts.thoughtIndex).toMatchObject(
+        _.omit(thoughtIndex, hashThought(EM_TOKEN))
+      )
 
     })
 
@@ -302,11 +305,15 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts).toHaveProperty('contextIndex')
       expect(Object.keys(thoughts.contextIndex).length).toBe(4)
-      expect(thoughts.contextIndex).toMatchObject(contextIndex)
+      expect(thoughts.contextIndex).toMatchObject(
+        _.omit(contextIndex, hashContext([EM_TOKEN]))
+      )
 
       expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(3)
-      expect(thoughts.thoughtIndex).toMatchObject(thoughtIndex)
+      expect(Object.keys(thoughts.thoughtIndex).length).toBe(4)
+      expect(thoughts.thoughtIndex).toMatchObject(
+        _.omit(thoughtIndex, hashThought(EM_TOKEN))
+      )
 
     })
 
@@ -540,18 +547,14 @@ const dataProviderTest = (provider: DataProvider) => {
             - 16
       `
 
-      const {
-        contextIndexUpdates,
-        thoughtIndexUpdates,
-      } = importText(RANKED_ROOT, rootText)(NOOP, initialState)
+      const stateNew = reducerFlow([
 
-      const {
-        contextIndexUpdates: contextIndexUpdatesEm,
-        thoughtIndexUpdates: thoughtIndexUpdatesEm,
-      } = importText([{ value: EM_TOKEN, rank: 0 }], emText)(NOOP, initialState)
+        importText({ path: RANKED_ROOT, text: rootText }),
+        importText({ path: [{ value: EM_TOKEN, rank: 0 }], text: emText }),
 
-      const contextIndex = { ...contextIndexUpdates, ...contextIndexUpdatesEm }
-      const thoughtIndex = { ...thoughtIndexUpdates, ...thoughtIndexUpdatesEm }
+      ])(initialState())
+
+      const { contextIndex, thoughtIndex } = stateNew.thoughts
 
       await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
@@ -583,9 +586,9 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(6)
+      expect(Object.keys(thoughts.thoughtIndex).length).toBe(7)
       expect(thoughts.thoughtIndex).toMatchObject(
-        _.pick(thoughtIndex, ['x', 'y', 'z', 'Settings', 'Font Size', '16'].map(hashThought))
+        _.pick(thoughtIndex, [EM_TOKEN, 'x', 'y', 'z', 'Settings', 'Font Size', '16'].map(hashThought))
       )
 
     })

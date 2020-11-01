@@ -1,7 +1,7 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getThought, getAllChildren } from '../../selectors'
-import { importText } from '../../action-creators'
+import { importText } from '../../reducers'
 import { existingThoughtMove, newSubthought, newThought, setCursor, updateThoughts } from '../../reducers'
 
 it('move within root', () => {
@@ -17,7 +17,7 @@ it('move within root', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - b
@@ -72,7 +72,7 @@ it('move within context', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -103,7 +103,7 @@ it('move across contexts', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -137,7 +137,7 @@ it('move descendants', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - b
@@ -241,9 +241,8 @@ it('move descendants with siblings', async () => {
    - c
    - d`
 
-  const imported = importText(RANKED_ROOT, text)(NOOP, initialState)
   const steps = [
-    updateThoughts(imported),
+    importText({ path: RANKED_ROOT, text }),
     existingThoughtMove({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
       newPath: [{ value: 'b', rank: 1 }],
@@ -252,7 +251,7 @@ it('move descendants with siblings', async () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
   - b
@@ -289,10 +288,8 @@ it('merge duplicate with new rank', async () => {
   - m
    - y`
 
-  const imported = importText(RANKED_ROOT, text)(NOOP, initialState)
-
   const steps = [
-    updateThoughts(imported),
+    importText({ path: RANKED_ROOT, text }),
     existingThoughtMove({
       oldPath: [{ value: 'm', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
@@ -301,7 +298,7 @@ it('merge duplicate with new rank', async () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -331,10 +328,8 @@ it('merge with duplicate with duplicate rank', async () => {
   - m
     - y`
 
-  const imported = importText(RANKED_ROOT, text)(NOOP, initialState)
-
   const steps = [
-    updateThoughts(imported),
+    importText({ path: RANKED_ROOT, text }),
     existingThoughtMove({
       oldPath: [{ value: 'm', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
@@ -343,7 +338,7 @@ it('merge with duplicate with duplicate rank', async () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a

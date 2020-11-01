@@ -4,7 +4,7 @@ import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { importText } from '../../action-creators'
+import { importText } from '../../reducers'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -24,7 +24,7 @@ it('delete empty thought', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a`)
@@ -40,7 +40,7 @@ it('do not delete non-empty thought', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a`)
@@ -58,7 +58,7 @@ it('do not delete thought with children', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   -${' '}
@@ -77,7 +77,7 @@ it('do nothing if there is no cursor', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
@@ -95,7 +95,7 @@ it('merge thoughts', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - ab`)
@@ -115,7 +115,7 @@ it('insert second thought\'s children', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - ab
@@ -137,7 +137,7 @@ it('do not change first thought\'s children', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - ab
@@ -236,8 +236,13 @@ describe('mount', () => {
   // And why doesn't setCursor with { offset: 0 } reset it?
   it.skip('after merging siblings, caret should be in between', async () => {
     store.dispatch([
-      importText(RANKED_ROOT, `- apple
-- banana`),
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+        - apple
+          - banana`
+      },
       { type: 'setCursor', path: [{ value: 'banana', rank: 1 }] },
       { type: 'deleteEmptyThought' },
     ])

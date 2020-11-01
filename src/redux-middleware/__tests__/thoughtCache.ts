@@ -2,7 +2,7 @@ import { store } from '../../store'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { getChildren } from '../../selectors'
-import { importText } from '../../action-creators'
+import { importText } from '../../reducers'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
@@ -91,14 +91,17 @@ describe('thoughtCache', () => {
 
   it.skip('delete thought with buffered descendants', async () => {
 
-    store.dispatch([
-      importText(RANKED_ROOT, `
-      - x
-      - a
-        - b
-          - c
-            - d
-              - e`),
+    store.dispatch([{
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - x
+        - a
+          - b
+            - c
+              - d
+                - e
+      `},
       { type: 'setCursor', path: [{ value: 'x', rank: 0 }] },
     ])
 
@@ -137,14 +140,16 @@ describe('thoughtCache', () => {
 
   it('load buffered thoughts', async () => {
 
-    store.dispatch([
-      importText(RANKED_ROOT, `
-      - a
-        - b
-          - c
-            - d
-              - e`),
-    ])
+    store.dispatch({
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - b
+            - c
+              - d
+                - e`
+    })
 
     jest.runOnlyPendingTimers()
 
@@ -159,7 +164,7 @@ describe('thoughtCache', () => {
     store.dispatch({ type: 'clear' })
     jest.runOnlyPendingTimers()
     await initialize()
-    await delay(200)
+    await delay(300)
 
     const state = store.getState()
     expect(getChildren(state, [ROOT_TOKEN])).toMatchObject([{ value: 'a' }])

@@ -2,7 +2,6 @@ import { getContextIndex, getHelpers, getThoughtIndex } from '../db'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { isRoot, logWithTime, scrollCursorIntoView } from '../util'
 import { decodeThoughtsUrl, expandThoughts, getAllChildren } from '../selectors'
-import { importText } from '../action-creators'
 
 /** Loads thoughts from the IndexedDB database. */
 const loadLocalThoughts = () => async (dispatch, getState) => {
@@ -42,7 +41,11 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
   logWithTime('loadLocalThoughts: action dispatched')
 
   if (getAllChildren({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
-    await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
+    await dispatch({
+      type: 'importText',
+      path: [{ value: EM_TOKEN, rank: 0 }],
+      text: INITIAL_SETTINGS
+    })
   }
 }
 

@@ -1,7 +1,7 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
 import { NOOP, RANKED_ROOT } from '../../constants'
-import { importText } from '../../action-creators'
-import { cursorUp, newSubthought, newThought, setCursor, toggleContextView, toggleHiddenThoughts, updateThoughts } from '../../reducers'
+import { importText } from '../../reducers'
+import { cursorUp, newSubthought, newThought, setCursor, toggleContextView, toggleHiddenThoughts } from '../../reducers'
 import { rankThoughtsFirstMatch } from '../../selectors'
 
 it('move cursor to previous sibling', () => {
@@ -85,15 +85,14 @@ describe('context view', () => {
   it(`move cursor from context's first child to parent`, async () => {
 
     const text = `- a
-  - m
-    - x
-- b
-  - m
-    - y`
+      - m
+        - x
+    - b
+      - m
+        - y`
 
-    const thoughts = importText(RANKED_ROOT, text)(NOOP, initialState)
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
       state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a']) }),

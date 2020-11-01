@@ -1,41 +1,47 @@
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
-import { equalArrays, pathToContext } from '../../util'
-import { importText } from '../../action-creators'
+import { equalArrays, pathToContext, timestamp } from '../../util'
+import { importText } from '../../reducers'
 import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
+import { Await, Context, SimplePath } from '../../types'
+
+type ReactWrapper = Await<ReturnType<typeof createTestApp>>
+
+// type for Thoughts or Subthoughts component that has a simplePath prop
+interface ThoughtOrSubthoughtsComponent {
+  props: () => {
+    simplePath: SimplePath,
+    contextChain?: SimplePath[],
+  },
+}
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-const whereContext = context => node => equalArrays(pathToContext(node.props().simplePath), context)
+const whereContext = (context: Context) => (node: ThoughtOrSubthoughtsComponent) =>
+  equalArrays(pathToContext(node.props().simplePath), context)
 
-// const debugThoughtWrapper = wrapper => wrapper.map(node => ({
-//   name: node.name(),
-//   context: node.props().simplePath.map(child => child.value),
-//   contextChain: JSON.stringify(node.props().contextChain),
-//   props: node.props(),
-//   html: node.html(),
-// }))
+let wrapper: Await<ReturnType<typeof createTestApp>> // eslint-disable-line fp/no-let
 
-let wrapper = null // eslint-disable-line fp/no-let
-
-// cannot figure out how to unmount and reset after each test so that we can use beforeEach
 beforeEach(async () => {
   wrapper = await createTestApp()
 })
 
 afterEach(async () => {
   await cleanupTestApp()
-  wrapper = null
 })
 
 it('normal view', async () => {
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `- a
-  - b
-  - c`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `- a
+      - b
+      - c
+  `})
 
   // set the cursor to expand the subthoughts
   store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }] })
@@ -60,13 +66,21 @@ describe('context view', () => {
 
   it('render contexts of cursor thought when context view is enabled', async () => {
 
+    const now = timestamp()
+
     // import thoughts
-    store.dispatch(importText(RANKED_ROOT, `- a
-  - m
-    - x
-- b
-  - m
-    - y`))
+    store.dispatch({
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `- a
+        - m
+          - x
+      - b
+        - m
+          - y
+      `,
+      lastUpdated: now,
+    })
 
     store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] })
     store.dispatch({ type: 'toggleContextView' })
@@ -86,12 +100,26 @@ describe('context view', () => {
     expect(contextsWrapper.at(0).props())
       .toMatchObject({
         showContexts: true,
-        simplePath: [{ value: 'a' }, { value: 'm' }],
+        simplePath: [{
+          value: 'a',
+          rank: 0,
+        }, {
+          value: 'm',
+          rank: 0,
+        }],
       })
     expect(contextsWrapper.at(1).props())
       .toMatchObject({
         showContexts: true,
-        simplePath: [{ value: 'b' }, { value: 'm' }],
+        simplePath: [{
+          id: '',
+          value: 'b' ,
+          rank: 1,
+        }, {
+          value: 'm',
+          rank: 0,
+          lastUpdated: now,
+        }],
       })
 
   })
@@ -99,12 +127,16 @@ describe('context view', () => {
   it('render context children of contexts that have different lexeme instances', async () => {
 
     // import thoughts
-    store.dispatch(importText(RANKED_ROOT, `- a
-  - one
-    - x
-- b
-  - ones
-    - y`))
+    store.dispatch({
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `- a
+        - one
+          - x
+      - b
+        - ones
+          - y
+    `})
 
     // enable Context View on /a/one
     store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })
@@ -133,7 +165,7 @@ describe('context view', () => {
     const subthoughtsAOneA = subthoughtsAOne()
       .find(Subthoughts)
       .filterWhere(whereContext(['a', 'one']))
-      .filterWhere(node => node.props().contextChain.length > 0)
+      .filterWhere(node => (node.props().contextChain || []).length > 0)
     expect(subthoughtsAOneA).toHaveLength(1)
 
     // assert that child of context is rendered
@@ -155,7 +187,7 @@ describe('context view', () => {
     const subthoughtsAOneB = subthoughtsAOne()
       .find(Subthoughts)
       .filterWhere(whereContext(['b', 'ones']))
-      .filterWhere(node => node.props().contextChain.length > 0)
+      .filterWhere(node => (node.props().contextChain || []).length > 0)
     expect(subthoughtsAOneB).toHaveLength(1)
 
     // assert that child of context is rendered
