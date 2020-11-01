@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import all from 'it-all'
-import { EM_TOKEN, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'

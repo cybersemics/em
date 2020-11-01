@@ -13,16 +13,16 @@ it('empty thought should outdent when hit enter', async () => {
 
   // import thoughts
   store.dispatch({
-  type: 'importText',
-  path: RANKED_ROOT,
-  text: `
-    - a
-      - b
-        - c
-          - d
-            - e
-              - f
-  `})
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - b
+          - c
+            - d
+              - e
+                - f
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },

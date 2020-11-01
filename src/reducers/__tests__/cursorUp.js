@@ -1,7 +1,6 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
-import { NOOP, RANKED_ROOT } from '../../constants'
-import { importText } from '../../reducers'
-import { cursorUp, newSubthought, newThought, setCursor, toggleContextView, toggleHiddenThoughts } from '../../reducers'
+import { RANKED_ROOT } from '../../constants'
+import { cursorUp, importText, newSubthought, newThought, setCursor, toggleContextView, toggleHiddenThoughts } from '../../reducers'
 import { rankThoughtsFirstMatch } from '../../selectors'
 
 it('move cursor to previous sibling', () => {

@@ -1,7 +1,6 @@
-import { EM_TOKEN, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, never, timestamp } from '../../util'
-import updateThoughts, { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
-import { initialState, State } from '../../util/initialState'
+import { initialState } from '../../util/initialState'
 import { exportContext } from '../../selectors'
 import { importText } from '../../reducers'
 

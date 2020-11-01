@@ -4,7 +4,6 @@ import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { importText } from '../../reducers'
 
 // reducers
 import cursorBack from '../cursorBack'

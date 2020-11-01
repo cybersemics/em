@@ -38,7 +38,7 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
       - a
         - b
           - c
-  `})
+  ` })
 
   store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) })
 

@@ -1,6 +1,5 @@
 import { RANKED_ROOT } from '../../constants'
 import { cursorNext } from '../../action-creators'
-import { importText } from '../../reducers'
 import { createTestStore } from '../../test-helpers/createTestStore'
 
 describe('normal view', () => {
@@ -9,13 +8,14 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([{
-      type: 'importText',
-      path: RANKED_ROOT,
-      text: `
-        - a
-          - a1
-        - b`
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+            - a1
+          - b`
       },
       { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
       cursorNext()
@@ -30,12 +30,13 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([{
-      type: 'importText',
-      path: RANKED_ROOT,
-      text: `
-        - a
-        - b`
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+          - b`
       },
       { type: 'setCursor', path: null },
       cursorNext()
@@ -50,12 +51,13 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([{
-      type: 'importText',
-      path: RANKED_ROOT,
-      text: `
-        - a
-        - b`
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+          - b`
       },
       { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
       cursorNext()
@@ -80,15 +82,16 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([{
-      type: 'importText',
-      path: RANKED_ROOT,
-      text: `
-        - SORT
-          - a
-            - a1
-          - c
-          - b`
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - SORT
+            - a
+              - a1
+            - c
+            - b`
       },
       {
         type: 'toggleAttribute',
@@ -112,13 +115,14 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch([{
-      type: 'importText',
-      path: RANKED_ROOT,
-      text: `
-        - a
-          - a1
-        - b`
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+            - a1
+          - b`
       },
       { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
       cursorNext()

@@ -1,9 +1,8 @@
 import _ from 'lodash'
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
-import { newSubthought, newThought, setCursor, updateThoughts } from '../../reducers'
-import { importText } from '../../reducers'
+import { importText, newSubthought, newThought, setCursor } from '../../reducers'
 import { State } from '../../util/initialState'
 import { Context } from '../../types'
 

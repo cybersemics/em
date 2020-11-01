@@ -41,9 +41,10 @@ it('undo thought change', async () => {
 
   const store = createTestStore()
 
-  store.dispatch([{
-    type: 'importText',
-    path: RANKED_ROOT,
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
       text: `
         - a
         - b`
@@ -72,14 +73,15 @@ it('group all navigation actions following an undoable(non-navigation) action an
 
   const store = createTestStore()
 
-  store.dispatch([{
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-      - a
-      - b
-      - c
-      - d`
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+        - b
+        - c
+        - d`
     },
     { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
     { type: 'indent' },
@@ -131,14 +133,15 @@ it('group all navigation actions following an undoable(non-navigation) action an
 it('ignore dead actions/Combine dispensible actions with the preceding patch', () => {
   const store = createTestStore()
 
-  store.dispatch([{
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-      - a
-        - b
-        - c
-        - d`
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - b
+          - c
+          - d`
     },
     { type: 'setCursor', path: null },
     {
@@ -191,12 +194,13 @@ it('state remains unchanged if there are no inverse patches', () => {
 it('newThought action should be merged with the succeeding patch', () => {
   const store = createTestStore()
 
-  store.dispatch([{
+  store.dispatch([
+    {
       type: 'importText',
       path: RANKED_ROOT,
-        text: `
-            - a
-            - b`
+      text: `
+          - a
+          - b`
     },
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
@@ -269,12 +273,13 @@ it('undo contiguous changes', () => {
 it('state.alert is omitted from the undo patch', () => {
   const store = createTestStore()
 
-  store.dispatch([{
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-        - A
-        - B`
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+          - A
+          - B`
     },
     { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
     { type: 'archiveThought' },
@@ -293,9 +298,10 @@ it('state.alert is omitted from the undo patch', () => {
 it('clear patches when any undoable action is dispatched', () => {
   const store = createTestStore()
 
-  store.dispatch([{
-    type: 'importText',
-    path: RANKED_ROOT,
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
       text: `
         - A
         - B`,

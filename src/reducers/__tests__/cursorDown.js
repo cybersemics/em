@@ -1,18 +1,18 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
-import { NOOP, RANKED_ROOT } from '../../constants'
-import { importText } from '../../reducers'
+import { RANKED_ROOT } from '../../constants'
 import { rankThoughtsFirstMatch } from '../../selectors'
 
 // reducers
 import {
   cursorDown,
+  importText,
   newSubthought,
   newThought,
   setCursor,
   toggleAttribute,
   toggleContextView,
-  updateThoughts,
 } from '../../reducers'
+
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {

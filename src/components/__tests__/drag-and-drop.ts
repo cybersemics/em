@@ -8,7 +8,6 @@ import Subthoughts from '../Subthoughts'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
-import { importText } from '../../reducers'
 import { Await, Context, SimplePath } from '../../types'
 
 // type to unpack a Promise
@@ -17,7 +16,7 @@ type ReactWrapper = Await<ReturnType<typeof createTestApp>>
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {
   props: () => {
-    simplePath: SimplePath
+    simplePath: SimplePath,
   },
 }
 
@@ -88,7 +87,7 @@ it('drop as sibling', async () => {
       - b
       - c
       - d
-   `})
+   ` })
 
   wrapper.update()
 
@@ -118,7 +117,7 @@ it('drop as child (Drop end)', async () => {
       - b
       - c
       - d
-   `})
+   ` })
 
   wrapper.update()
 
@@ -147,7 +146,7 @@ it('prevent drop into descendants', async () => {
       - a
         - b
       - c
-  `})
+  ` })
 
   store.dispatch({
     type: 'setCursor',
