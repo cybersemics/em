@@ -29,7 +29,7 @@ it('basic import with proper thought structure', () => {
 
   const now = timestamp()
 
-  const stateNew = importText(initialState(), { path: RANKED_ROOT, text, lastUpdated: now })
+  const stateNew = importText(initialState(now), { path: RANKED_ROOT, text, lastUpdated: now })
   const { contextIndex, thoughtIndex } = stateNew.thoughts
 
   expect(contextIndex).toEqual({
