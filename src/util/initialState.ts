@@ -1,6 +1,6 @@
 import { EM_TOKEN, MODALS, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, SimplePath, ThoughtsInterface, User } from '../types'
+import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, SimplePath, Timestamp, ThoughtsInterface, User } from '../types'
 
 // import util/selector functions directly since importing from ../util/index causes circular dependency
 import { hashContext } from '../util/hashContext'
@@ -92,7 +92,7 @@ export interface State {
 }
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
-export const initialThoughts = (): ThoughtsInterface => {
+export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
 
   const contextIndex = {
     [hashContext([ROOT_TOKEN])]: {
@@ -116,7 +116,7 @@ export const initialThoughts = (): ThoughtsInterface => {
       value: ROOT_TOKEN,
       contexts: [],
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
-      created: timestamp(),
+      created,
       lastUpdated: never()
     },
     // this will get populated by importText in loadLocalState
@@ -124,7 +124,7 @@ export const initialThoughts = (): ThoughtsInterface => {
     [hashThought(EM_TOKEN)]: {
       value: EM_TOKEN,
       contexts: [],
-      created: timestamp(),
+      created,
       lastUpdated: never()
     },
   }
@@ -138,7 +138,7 @@ export const initialThoughts = (): ThoughtsInterface => {
 }
 
 /** Generates the initial state of the application. */
-export const initialState = () => {
+export const initialState = (created: Timestamp = timestamp()) => {
 
   const state: State = {
     authenticated: false,
@@ -182,7 +182,7 @@ export const initialState = () => {
     */
     status: 'disconnected',
     syncQueue: [],
-    thoughts: initialThoughts(),
+    thoughts: initialThoughts(created),
     toolbarOverlay: null,
   }
   Object.keys(MODALS).forEach(key => {
