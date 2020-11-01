@@ -1,4 +1,3 @@
-import { importText } from '../../action-creators'
 import { NOOP, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attributeEquals } from '../../selectors'
@@ -12,15 +11,18 @@ it('toggle on =pinChildren attribute of parent of cursor (initial state without 
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - b
+          - c
+          - d
+        - e
+          - f
+          - g
+  `})
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -38,17 +40,20 @@ it('toggle on =pinChildren attribute of parent of cursor (initial state =pinChil
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - =pinChildren
-      - false
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - =pinChildren
+          - false
+        - b
+          - c
+          - d
+        - e
+          - f
+          - g
+  `})
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -66,17 +71,20 @@ it('toggle off =pinChildren attribute from parent of cursor', async () => {
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - =pinChildren
-      - true
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - =pinChildren
+          - true
+        - b
+          - c
+          - d
+        - e
+          - f
+          - g
+  `})
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },

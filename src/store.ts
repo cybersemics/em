@@ -16,6 +16,10 @@ import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
+if (!appReducer) {
+  throw new Error('appReducer is undefined. This probably means there is a circular import.')
+}
+
 export const store = createStore(
   appReducer,
   composeEnhancers(applyMiddleware(

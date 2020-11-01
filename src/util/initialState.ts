@@ -114,7 +114,6 @@ export const initialThoughts = (): ThoughtsInterface => {
   const thoughtIndex = {
     [hashThought(ROOT_TOKEN)]: {
       value: ROOT_TOKEN,
-      rank: 0,
       contexts: [],
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created: timestamp(),
@@ -124,7 +123,6 @@ export const initialThoughts = (): ThoughtsInterface => {
     // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
     [hashThought(EM_TOKEN)]: {
       value: EM_TOKEN,
-      rank: 0,
       contexts: [],
       created: timestamp(),
       lastUpdated: never()

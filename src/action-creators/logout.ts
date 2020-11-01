@@ -1,7 +1,6 @@
 import { clearAll } from '../data-providers/dexie'
 import { never } from '../util'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { importText } from '../action-creators'
 import { ActionCreator } from '../types'
 
 /** Logs the user out of Firebase and clears the state. */
@@ -22,10 +21,13 @@ const logout = (): ActionCreator => dispatch => {
   dispatch({ type: 'clear' })
 
   // reset initial settings
-  dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, {
+  dispatch({
+    type: 'importText',
+    path: [{ value: EM_TOKEN, rank: 0 }],
+    text: INITIAL_SETTINGS,
     lastUpdated: never(),
-    preventSetCursor: true
-  }))
+    preventSetCursor: true,
+  })
 
   // scroll to top
   window.scrollTo(0, 0)

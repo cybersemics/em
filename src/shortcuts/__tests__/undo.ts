@@ -1,4 +1,3 @@
-import { importText } from '../../action-creators'
 import { MODALS, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -42,11 +41,13 @@ it('undo thought change', async () => {
 
   const store = createTestStore()
 
-  store.dispatch([
-    importText(RANKED_ROOT, `
-      - a
-      - b`
-    ),
+  store.dispatch([{
+    type: 'importText',
+    path: RANKED_ROOT,
+      text: `
+        - a
+        - b`
+    },
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] },
     {
       type: 'existingThoughtChange',
@@ -71,13 +72,15 @@ it('group all navigation actions following an undoable(non-navigation) action an
 
   const store = createTestStore()
 
-  store.dispatch([
-    importText(RANKED_ROOT, `
+  store.dispatch([{
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
       - a
       - b
       - c
       - d`
-    ),
+    },
     { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
     { type: 'indent' },
     {
@@ -128,13 +131,15 @@ it('group all navigation actions following an undoable(non-navigation) action an
 it('ignore dead actions/Combine dispensible actions with the preceding patch', () => {
   const store = createTestStore()
 
-  store.dispatch([
-    importText(RANKED_ROOT, `
+  store.dispatch([{
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
       - a
         - b
         - c
         - d`
-    ),
+    },
     { type: 'setCursor', path: null },
     {
       type: 'existingThoughtChange',
@@ -164,12 +169,16 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
 it('state remains unchanged if there are no inverse patches', () => {
   const store = createTestStore()
 
-  store.dispatch(importText(RANKED_ROOT, `
-    - a
-     - b
-     - c
-     - d`, { preventSetCursor: true })
-  )
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+       - b
+       - c
+       - d`,
+    preventSetCursor: true
+  })
 
   const prevState = store.getState()
   expect(prevState.inversePatches.length).toEqual(0)
@@ -182,11 +191,13 @@ it('state remains unchanged if there are no inverse patches', () => {
 it('newThought action should be merged with the succeeding patch', () => {
   const store = createTestStore()
 
-  store.dispatch([
-    importText(RANKED_ROOT, `
-      - a
-      - b`
-    ),
+  store.dispatch([{
+      type: 'importText',
+      path: RANKED_ROOT,
+        text: `
+            - a
+            - b`
+    },
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
     {
@@ -221,10 +232,13 @@ it('undo contiguous changes', () => {
   const store = createTestStore()
 
   store.dispatch([
-    importText(RANKED_ROOT, `
-      - A
-      - B`
-    ),
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - A
+        - B`
+    },
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',
@@ -255,11 +269,13 @@ it('undo contiguous changes', () => {
 it('state.alert is omitted from the undo patch', () => {
   const store = createTestStore()
 
-  store.dispatch([
-    importText(RANKED_ROOT, `
-      - A
-      - B`
-    ),
+  store.dispatch([{
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+        - A
+        - B`
+    },
     { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
     { type: 'archiveThought' },
   ])
@@ -277,11 +293,14 @@ it('state.alert is omitted from the undo patch', () => {
 it('clear patches when any undoable action is dispatched', () => {
   const store = createTestStore()
 
-  store.dispatch([
-    importText(RANKED_ROOT, `
-      - A
-      - B`, { preventSetCursor: true }
-    ),
+  store.dispatch([{
+    type: 'importText',
+    path: RANKED_ROOT,
+      text: `
+        - A
+        - B`,
+      preventSetCursor: true,
+    },
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',

@@ -1,9 +1,9 @@
+import _ from 'lodash'
 import React, { Dispatch, useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
-import { throttle } from 'lodash'
 import he from 'he'
 import classNames from 'classnames'
-import { importText, setEditingValue, setInvalidState } from '../action-creators'
+import { setEditingValue, setInvalidState } from '../action-creators'
 import { isMobile, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
@@ -59,6 +59,7 @@ import {
   hasChild,
   isContextViewActive,
 } from '../selectors'
+
 import { State } from '../util/initialState'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -287,7 +288,7 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
-  const throttledChangeRef = useRef(throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
+  const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
@@ -443,12 +444,16 @@ const Editable = ({ disabled, isEditing, simplePath, contextChain, cursorOffset,
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
       const rawDestValue = strip(contentRef.current!.innerHTML, { preventTrim: true })
-      dispatch(importText(path, isHTML(plainText)
-        ? plainText
-        : htmlText || plainText,
-      { rawDestValue })).then(({ newValue }: { newValue: string }) => {
-        if (newValue) oldValueRef.current = newValue
+      const newValue = dispatch({
+        type: 'importText',
+        path,
+        text: isHTML(plainText)
+          ? plainText
+          : htmlText || plainText,
+        rawDestValue,
       })
+
+      if (newValue) oldValueRef.current = newValue
     }
   }
 

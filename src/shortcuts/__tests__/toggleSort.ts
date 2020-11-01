@@ -1,4 +1,3 @@
-import { importText } from '../../action-creators'
 import { NOOP, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attributeEquals, getSetting } from '../../selectors'
@@ -12,13 +11,16 @@ it('toggle on sort preference of parent of cursor (initial state without =sort a
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - d
-    - b
-    - c
-    - e
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - d
+        - b
+        - c
+        - e
+  `})
 
   const globalSort = getSetting(store.getState(), ['Global Sort'])
   const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
@@ -41,15 +43,18 @@ it('toggle off sort preference of parent of cursor', async () => {
   const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - =sort
-      -${sortPreference}
-    - d
-    - b
-    - c
-    - e
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - =sort
+          -${sortPreference}
+        - d
+        - b
+        - c
+        - e
+  `})
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },

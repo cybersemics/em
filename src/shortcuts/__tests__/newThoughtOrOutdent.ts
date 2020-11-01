@@ -1,4 +1,3 @@
-import { importText } from '../../action-creators'
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -13,13 +12,17 @@ it('empty thought should outdent when hit enter', async () => {
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - b
-      - c
-        - d
-          - e
-            - f`))
+  store.dispatch({
+  type: 'importText',
+  path: RANKED_ROOT,
+  text: `
+    - a
+      - b
+        - c
+          - d
+            - e
+              - f
+  `})
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },

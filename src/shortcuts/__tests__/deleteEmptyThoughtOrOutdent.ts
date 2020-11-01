@@ -1,5 +1,3 @@
-
-import { importText } from '../../action-creators'
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 
@@ -33,10 +31,14 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - b
-      - c`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - b
+          - c
+  `})
 
   store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) })
 
@@ -57,12 +59,15 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - b
-      - c
-      - d`
-  ))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - b
+          - c
+          - d`
+  })
 
   store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 

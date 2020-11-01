@@ -2,9 +2,9 @@ import { applyMiddleware, compose, createStore } from 'redux'
 import thunk from 'redux-thunk'
 import multi from '../redux-middleware/multi'
 import appReducer from '../reducers/app'
+import importText from '../reducers/importText'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { importText } from '../action-creators'
-import { never } from '../util'
+import { never } from '../util/never'
 import undoRedoReducerEnhancer from '../redux-enhancers/undoRedoReducerEnhancer'
 
 /**
@@ -22,11 +22,13 @@ export const createTestStore = () => {
 
   store.dispatch([
 
-    // initialize settings
-    importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS, {
+    {
+      type: 'importText',
+      path: [{ value: EM_TOKEN, rank: 0 }],
+      text: INITIAL_SETTINGS,
       lastUpdated: never(),
       preventSetCursor: true,
-    }),
+    },
 
     // skip tutorial
     { type: 'modalComplete', id: 'welcome' },

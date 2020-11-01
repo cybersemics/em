@@ -5,7 +5,26 @@ import { ThunkDispatch } from 'redux-thunk'
 import { State } from './util/initialState'
 
 /********************************
- * Firebase types
+ * Global
+ ********************************/
+
+declare global {
+  interface Document {
+    DND: any,
+  }
+
+  interface Window {
+    firebase: Firebase,
+    em: unknown,
+  }
+
+  interface Navigator {
+    standalone: boolean,
+  }
+}
+
+/********************************
+ * Firebase
  ********************************/
 
 interface Firebase {
@@ -39,19 +58,8 @@ export interface Snapshot<T = any> {
   val: () => T,
 }
 
-declare global {
-  interface Window {
-    firebase: Firebase,
-    em: unknown,
-  }
-
-  interface Navigator {
-    standalone: boolean,
-  }
-}
-
 /********************************
- * Util types
+ * Everything else
  ********************************/
 
 /**
@@ -233,3 +241,6 @@ export interface ThoughtUpdates {
 }
 
 export type ThoughtsInterface = ThoughtIndices & ThoughtCaches
+
+// type to unpack a Promise
+export type Await<T> = T extends PromiseLike<infer U> ? U : T

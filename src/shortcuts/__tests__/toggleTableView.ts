@@ -1,4 +1,3 @@
-import { importText } from '../../action-creators'
 import { NOOP, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attributeEquals } from '../../selectors'
@@ -12,13 +11,16 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - b
-      - c
-    - d
-      - e
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - b
+          - c
+        - d
+          - e
+  `})
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -36,15 +38,18 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - =view
-      - Prose
-    - b
-      - c
-    - d
-      - e
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - =view
+          - Prose
+        - b
+          - c
+        - d
+          - e
+  `})
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -62,15 +67,18 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - =view
-      - Table
-    - b
-      - c
-    - d
-      - e
-`))
+  store.dispatch({
+  type: 'importText',
+  path: RANKED_ROOT,
+  text: `
+    - a
+      - =view
+        - Table
+      - b
+        - c
+      - d
+        - e
+  `})
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },

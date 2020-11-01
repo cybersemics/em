@@ -1,18 +1,38 @@
 import { store } from '../../store'
+import { Component } from 'react'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
-import { importText } from '../../action-creators'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { importText } from '../../reducers'
+import { Await, Context, SimplePath } from '../../types'
+
+// type to unpack a Promise
+type ReactWrapper = Await<ReturnType<typeof createTestApp>>
+
+// type for Thoughts or Subthoughts component that has a simplePath prop
+interface ComponentWithSimplePath {
+  props: () => {
+    simplePath: SimplePath
+  },
+}
+
+// react-dnd adds getHandlerId to Component
+declare module 'react' {
+  interface Component {
+    getHandlerId: () => number,
+  }
+}
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-const whereContext = context => node => equalArrays(pathToContext(node.props().simplePath), context)
+const whereContext = (context: Context) => (node: ComponentWithSimplePath) =>
+  equalArrays(pathToContext(node.props().simplePath), context)
 
-let wrapper = null // eslint-disable-line fp/no-let
+let wrapper: ReactWrapper // eslint-disable-line fp/no-let
 
 beforeEach(async () => {
   wrapper = await createTestApp()
@@ -20,17 +40,16 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await cleanupTestApp()
-  wrapper = null
 })
 
 /** Find DragSource inside Thoughts component. */
-const findThoughtSource = context => wrapper.find(Thought).filterWhere(whereContext(context)).at(0).childAt(0)
+const findThoughtSource = (context: Context) => wrapper.find(Thought).filterWhere(whereContext(context)).at(0).childAt(0)
 
 /** Find DropTarget inside Thoughts component. */
-const findThoughtSiblingTarget = context => findThoughtSource(context).childAt(0)
+const findThoughtSiblingTarget = (context: Context) => findThoughtSource(context).childAt(0)
 
 /** Find DropTarget used for child drop inside Subthoughts. */
-const findDropEndTarget = context => wrapper.find(Subthoughts).filterWhere(whereContext(context)).at(0).childAt(0)
+const findDropEndTarget = (context: Context) => wrapper.find(Subthoughts).filterWhere(whereContext(context)).at(0).childAt(0)
 
 /** Simulate Drag And Drop.
  *
@@ -38,9 +57,10 @@ const findDropEndTarget = context => wrapper.find(Subthoughts).filterWhere(where
  * @param drop - Context which will be used to select drop target.
  * @param type - Type of drop target i.e child or sibling.
  */
-const simulateDragAndDrop = ({ source, drop, type }) => {
+const simulateDragAndDrop = ({ source, drop, type }: { source: Context, drop: Context, type: 'child' | 'sibling' }) => {
 
   const backend = document.DND.getManager().getBackend()
+  // @ts-ignore
   const sourceId = findThoughtSource(source).instance().getHandlerId()
   backend.simulateBeginDrag([sourceId])
   wrapper.update()
@@ -60,12 +80,15 @@ const simulateDragAndDrop = ({ source, drop, type }) => {
 }
 
 it('drop as sibling', async () => {
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-  - b
-  - c
-  - d
- `))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+      - b
+      - c
+      - d
+   `})
 
   wrapper.update()
 
@@ -75,7 +98,7 @@ it('drop as sibling', async () => {
     type: 'sibling'
   })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
   const expectedExport = `- ${ROOT_TOKEN}
   - b
@@ -87,12 +110,15 @@ it('drop as sibling', async () => {
 })
 
 it('drop as child (Drop end)', async () => {
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-  - b
-  - c
-  - d
- `))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+      - b
+      - c
+      - d
+   `})
 
   wrapper.update()
 
@@ -102,7 +128,7 @@ it('drop as child (Drop end)', async () => {
     type: 'child'
   })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
   const expectedExport = `- ${ROOT_TOKEN}
   - a
@@ -114,10 +140,14 @@ it('drop as child (Drop end)', async () => {
 })
 
 it('prevent drop into descendants', async () => {
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - b
-  - c`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - b
+      - c
+  `})
 
   store.dispatch({
     type: 'setCursor',
@@ -137,7 +167,7 @@ it('prevent drop into descendants', async () => {
     type: 'child'
   })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
   const expectedExport = `- ${ROOT_TOKEN}
   - a
