@@ -27,7 +27,7 @@ interface ImportHtmlOptions {
 }
 
 /** Insert the given value at the context. Modifies contextIndex and thoughtIndex. */
-type insertThought = (value: string, context: Context, rank: number, created?:Timestamp, lastUpdated?: Timestamp) => void
+type insertThought = (value: string, context: Context, rank: number, created?: Timestamp, lastUpdated?: Timestamp) => void
 
 /** Replace head block with its children, or drop it, if head has no children. */
 const skipRootThought = (blocks: Block[]) => {

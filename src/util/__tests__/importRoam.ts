@@ -14,7 +14,7 @@ import {
 import {
   exportContext,
 } from '../../selectors'
-import { importROAM } from '../importROAM'
+import { importRoam } from '../importRoam'
 import { State, initialState } from '../initialState'
 import { RoamPage } from 'roam'
 import { removeRoot } from '../../test-helpers/removeRoot'
@@ -33,7 +33,6 @@ const testState: State = {
     },
     thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
-        rank: 0,
         value: ROOT_TOKEN,
         contexts: [],
         created: timestamp(),
@@ -43,12 +42,65 @@ const testState: State = {
   }
 }
 
-/** Imports the given ROAM's JSON format and exports it as plaintext. */
-const importExport = (ROAMJSON: RoamPage[]) => {
+const testData = [
+  {
+    title: 'Fruits',
+    children: [
+      {
+        string: 'Apple',
+        'create-email': 'test_create@gmail.com',
+        'edit-email': 'test_edit@gmail.com',
+        'create-time': 1600111381583,
+        'edit-time': 1600111381580,
+        uid: 'UK11200',
+      },
+      {
+        string: 'Orange',
+        'create-email': 'test_create@yahoo.com',
+        'edit-email': 'test_edit@yahoo.com',
+        'create-time': 1600111383054,
+        'edit-time': 1600111383050,
+        uid: 'UK11233',
+      },
+      {
+        string: 'Banana',
+        'create-email': 'test_create@icloud.com',
+        'edit-email': 'test_edit@icloud.com',
+        'create-time': 1600111383911,
+        'edit-time': 1600111383910,
+        uid: 'HMN_YQtZZ',
+      }
+    ],
+  },
+  {
+    title: 'Veggies',
+    children: [
+      {
+        string: 'Broccoli',
+        'create-email': 'test_create@gmail.com',
+        'edit-email': 'test_edit@gmail.com',
+        'create-time': 1600111381600,
+        'edit-time': 1600111381599,
+        uid: 'BK11200',
+      },
+      {
+        string: 'Spinach',
+        'create-email': 'test_create@icloud.com',
+        'edit-email': 'test_edit@icloud.com',
+        'create-time': 1600111389054,
+        'edit-time': 1600111389050,
+        uid: 'BK11233',
+      }
+    ],
+  }
+]
+
+/** Imports the given Roam's JSON format and exports it as plaintext. */
+const importExport = (roamJson: RoamPage[]) => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importROAM(testState, RANKED_ROOT as SimplePath, ROAMJSON)
+  } = importRoam(testState, RANKED_ROOT as SimplePath, roamJson)
   const state = {
     ...initialState(),
     thoughts: {
@@ -60,80 +112,58 @@ const importExport = (ROAMJSON: RoamPage[]) => {
   return removeRoot(exported)
 }
 
-test('it should convert a flat ROAM JSON into a list of thoughts', () => {
-  const testData = [
-    {
-      title: 'Fruits',
-      children: [
-        {
-          string: 'Apple',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111381583,
-          uid: 'UK11200',
-        },
-        {
-          string: 'Orange',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111383054,
-          uid: 'UK11233',
-        },
-        {
-          string: 'Banana',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111383911,
-          uid: 'HMN_YQtZZ',
-        }
-      ],
-    },
-    {
-      title: 'Veggies',
-      children: [
-        {
-          string: 'Broccoli',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111381583,
-          uid: 'BK11200',
-        },
-        {
-          string: 'Spinach',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111383054,
-          uid: 'BK11233',
-        }
-      ],
-    }
-  ]
+test('it should convert a flat Roam json into a list of thoughts', () => {
   const res = importExport(testData)
   expect(res)
     .toBe(`
 - Fruits
   - Apple
+    - =create-email
+      - test_create@gmail.com
+    - =edit-email
+      - test_edit@gmail.com
   - Orange
+    - =create-email
+      - test_create@yahoo.com
+    - =edit-email
+      - test_edit@yahoo.com
   - Banana
+    - =create-email
+      - test_create@icloud.com
+    - =edit-email
+      - test_edit@icloud.com
 - Veggies
   - Broccoli
+    - =create-email
+      - test_create@gmail.com
+    - =edit-email
+      - test_edit@gmail.com
   - Spinach
+    - =create-email
+      - test_create@icloud.com
+    - =edit-email
+      - test_edit@icloud.com
 `)
 })
 
-test('it should convert a flat ROAM JSON into a list of thoughts and subthoughts with correct indentation', () => {
+test('it should convert a Roam json into a list of thoughts and subthoughts with correct indentation', () => {
   const testData = [
     {
       title: 'September 4th, 2020',
       children: [
         {
           string: 'A',
-          'create-email': 'testemail@gmail.com',
+          'create-email': 'test_create@gmail.com',
           'create-time': 1600111381583,
           children: [
             {
               string: 'B',
-              'create-email': 'testemail@gmail.com',
+              'create-email': 'test_create@gmail.com',
               'create-time': 1600111383054,
               children: [
                 {
                   string: 'C',
-                  'create-email': 'testemail@gmail.com',
+                  'create-email': 'test_create@gmail.com',
                   'create-time': 1600111383911,
                   uid: 'HMN_YQtZZ',
                 }],
@@ -147,17 +177,17 @@ test('it should convert a flat ROAM JSON into a list of thoughts and subthoughts
       children: [
         {
           string: 'X',
-          'create-email': 'testemail@gmail.com',
+          'create-email': 'test_create@gmail.com',
           'create-time': 1600111456859,
           children: [
             {
               string: 'Y',
-              'create-email': 'testemail@gmail.com',
+              'create-email': 'test_create@gmail.com',
               'create-time': 1600111457621,
               children: [
                 {
                   string: '[[September 4th, 2020]]',
-                  'create-email': 'testemail@gmail.com',
+                  'create-email': 'test_create@gmail.com',
                   'create-time': 1600111458385,
                   uid: 'Wt5NR3b56',
                 }],
@@ -173,71 +203,38 @@ test('it should convert a flat ROAM JSON into a list of thoughts and subthoughts
   - A
     - B
       - C
+        - =create-email
+          - test_create@gmail.com
+      - =create-email
+        - test_create@gmail.com
+    - =create-email
+      - test_create@gmail.com
 - September 5th, 2020
   - X
     - Y
       - [[September 4th, 2020]]
+        - =create-email
+          - test_create@gmail.com
+      - =create-email
+        - test_create@gmail.com
+    - =create-email
+      - test_create@gmail.com
 `)
 })
 
 test('it should save create-time as created property', () => {
-  const testData = [
-    {
-      title: 'Fruits',
-      children: [
-        {
-          string: 'Apple',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111381583,
-          'edit-time': 1600111381580,
-          uid: 'UK11200',
-        },
-        {
-          string: 'Orange',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111383054,
-          'edit-time': 1600111383050,
-          uid: 'UK11233',
-        },
-        {
-          string: 'Banana',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111383911,
-          'edit-time': 1600111383910,
-          uid: 'HMN_YQtZZ',
-        }
-      ],
-    },
-    {
-      title: 'Veggies',
-      children: [
-        {
-          string: 'Broccoli',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111381600,
-          'edit-time': 1600111381599,
-          uid: 'BK11200',
-        },
-        {
-          string: 'Spinach',
-          'create-email': 'testemail@gmail.com',
-          'create-time': 1600111389054,
-          'edit-time': 1600111389050,
-          uid: 'BK11233',
-        }
-      ],
-    }
-  ]
-
-  const roamBlocks = [...testData[0].children, ...testData[1].children]
+  const roamBlocks = testData.map(roamBlock => roamBlock.children).flat()
 
   const {
     thoughtIndexUpdates: thoughtIndex,
-  } = importROAM(testState, RANKED_ROOT as SimplePath, testData)
+  } = importRoam(testState, RANKED_ROOT as SimplePath, testData)
 
   Object.keys(thoughtIndex)
-    // ignore root blocks of ROAM page since they won't have create/edit time
-    .filter((_, index) => index !== 0 && index !== 4)
+    // ignore root blocks (and =create-email thought)of Roam page since they won't have create/edit time
+    .filter(thoughtHash => {
+      const value = thoughtIndex[thoughtHash].value
+      return !(value.startsWith('=') || value.startsWith('test_') || value === 'Fruits' || value === 'Veggies')
+    })
     .forEach((thoughtHash, index) => {
       expect(thoughtIndex[thoughtHash].created).toEqual(new Date(roamBlocks[index]['create-time']).toISOString())
       expect(thoughtIndex[thoughtHash].lastUpdated).toEqual(new Date(roamBlocks[index]['edit-time']).toISOString())
