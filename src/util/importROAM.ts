@@ -6,32 +6,48 @@ import { RoamBlock, RoamPage } from 'roam'
 import { timestamp } from './timestamp'
 
 /**
- * Recursively converts the roam children to blocks.
+ * Creates a Block with edit-email value as child.
  */
-const convertRoamBlocksToBlocks = (children: RoamBlock[]): Block[] => children.map(({ string, children, 'edit-time': editTime, 'create-time': createTime }) => ({
+const editEmailToBlock = (email: string): Block => ({ scope: '=edit-email', children: [{ scope: email, children: [] }] })
+
+/**
+ * Creates a Block with create-email value as child.
+ */
+const createEmailToBlock = (email: string): Block => ({ scope: '=create-email', children: [{ scope: email, children: [] }] })
+
+/**
+ * Recursively converts the Roam children to blocks.
+ */
+const roamBlocksToBlocks = (children: RoamBlock[]): Block[] => children.map(({
+  string,
+  children,
+  'edit-time': editTime,
+  'create-time': createTime,
+  'create-email': createEmail,
+  'edit-email': editEmail
+}) => ({
   scope: string,
   created: new Date(createTime).toISOString() as Timestamp,
   lastUpdated: editTime ? new Date(editTime).toISOString() as Timestamp : timestamp(),
-  children: children && children.length ? convertRoamBlocksToBlocks(children) : []
+  children: [
+    ...children && children.length ? roamBlocksToBlocks(children) : [],
+    createEmailToBlock(createEmail),
+    ...editEmail ? [editEmailToBlock(editEmail)] : []
+  ]
 }))
 
 /**
- * Converts the ROAM JSON to an array of blocks.
+ * Converts the Roam to an array of blocks.
  */
-const roamJsontoBlocks = (ROAM: RoamPage[]) => {
-
-  return ROAM.map((item: RoamPage) => {
-    return {
-      scope: item.title,
-      children: convertRoamBlocksToBlocks(item.children)
-    }
-  })
-}
+const roamJsonToBlocks = (roam: RoamPage[]) => roam.map((item: RoamPage) => ({
+  scope: item.title,
+  children: roamBlocksToBlocks(item.children)
+}))
 
 /**
- * Parses ROAM JSON and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
+ * Parses Roam and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
  */
-export const importROAM = (state: State, simplePath: SimplePath, ROAM: RoamPage[]) => {
-  const thoughtsJSON = roamJsontoBlocks(ROAM)
+export const importRoam = (state: State, simplePath: SimplePath, roam: RoamPage[]) => {
+  const thoughtsJSON = roamJsonToBlocks(roam)
   return importJSON(state, simplePath, thoughtsJSON, { skipRoot: false })
 }
