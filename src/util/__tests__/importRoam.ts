@@ -17,7 +17,7 @@ import {
 import { importROAM } from '../importROAM'
 import { State, initialState } from '../initialState'
 import { RoamPage } from 'roam'
-import { exportedWithoutRoot } from '../../test-helpers/exportWithoutRoot'
+import { removeRoot } from '../../test-helpers/removeRoot'
 import { SimplePath } from '../../types'
 import { timestamp } from '../timestamp'
 
@@ -57,7 +57,7 @@ const importExport = (ROAMJSON: RoamPage[]) => {
     }
   }
   const exported = exportContext(state, [ROOT_TOKEN], 'text/plain')
-  return exportedWithoutRoot(exported)
+  return removeRoot(exported)
 }
 
 test('it should convert a flat ROAM JSON into a list of thoughts', () => {
