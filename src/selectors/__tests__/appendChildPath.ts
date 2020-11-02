@@ -1,5 +1,5 @@
 import appendChildPath from '../appendChildPath'
-import { initialState, rankThoughtsSequential, reducerFlow, pathToContext } from '../../util'
+import { initialState, reducerFlow, pathToContext } from '../../util'
 import { Path, SimplePath } from '../../types'
 import { toggleContextView, setCursor } from '../../reducers'
 
