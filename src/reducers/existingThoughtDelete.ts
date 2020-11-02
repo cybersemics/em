@@ -162,9 +162,9 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   }
 
   const contextIndexUpdates = {
-    // current thought
+    // current thought's Parent
     [contextEncoded]: subthoughts.length > 0 ? {
-      context: thoughts,
+      context,
       children: subthoughts,
       lastUpdated: timestamp()
     } : null,
