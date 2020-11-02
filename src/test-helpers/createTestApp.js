@@ -78,6 +78,13 @@ export const cleanupTestApp = async () => {
     await db.clearAll()
     document.body.innerHTML = ''
 
+    // set url back to home
+    window.history.pushState(
+      {},
+      '',
+      '/'
+    )
+
     jest.runAllTimers()
   })
 }

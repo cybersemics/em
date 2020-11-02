@@ -102,7 +102,7 @@ const updateToolbarPositionOnScroll = () => {
 }
 
 interface EditableProps {
-  thoughtsResolved: Path,
+  path: Path,
   cursorOffset?: number,
   disabled?: boolean,
   isEditing?: boolean,
@@ -150,7 +150,7 @@ const showDuplicationAlert = duplicateAlertToggler()
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, simplePath, thoughtsResolved, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
+const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
@@ -214,11 +214,11 @@ const Editable = ({ disabled, isEditing, simplePath, thoughtsResolved, cursorOff
 
     const { cursorBeforeEdit, cursor }: State = store.getState() // use fresh state
 
-    const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+    const isEditing = equalPath(cursorBeforeEdit, path)
 
-    const thoughtsResolvedLive = cursor && isEditing
-      ? parentOf(thoughtsResolved).concat(head(showContexts ? parentOf(cursor) : cursor))
-      : thoughtsResolved
+    const pathLive = cursor && isEditing
+      ? parentOf(path).concat(head(showContexts ? parentOf(cursor) : cursor))
+      : path
 
     dispatch({
       type: 'setCursor',
@@ -228,7 +228,7 @@ const Editable = ({ disabled, isEditing, simplePath, thoughtsResolved, cursorOff
       // to use the existing offset after a user clicks or touches the screent
       // when cursor is changed through another method, such as cursorDown, offset will be reset
       offset: null,
-      path: thoughtsResolvedLive,
+      path: pathLive,
     })
   }
 
@@ -509,9 +509,9 @@ const Editable = ({ disabled, isEditing, simplePath, thoughtsResolved, cursorOff
         // no cursor
         !state.cursor ||
         // clicking a different thought (when not editing)
-        (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
+        (!state.editing && !equalPath(path, state.cursorBeforeEdit))
 
-      const thoughtChanged = !state.cursor || thoughtsResolved.length !== state.cursor.length || thoughtsResolved.some((thought, index) => {
+      const thoughtChanged = !state.cursor || path.length !== state.cursor.length || path.some((thought, index) => {
         const child = state.cursor![index]
         // eslint-disable-next-line no-extra-parens
         return child && (Object.keys(child) as (keyof Child)[]).some(key => child[key] !== thought[key])
@@ -568,7 +568,7 @@ const Editable = ({ disabled, isEditing, simplePath, thoughtsResolved, cursorOff
         // no cursor
         !state.cursor ||
         // clicking a different thought (when not editing)
-        (!state.editing && !equalPath(thoughtsResolved, state.cursorBeforeEdit))
+        (!state.editing && !equalPath(path, state.cursorBeforeEdit))
       )) {
 
       // prevent focus to allow navigation with mobile keyboard down
@@ -589,7 +589,7 @@ const Editable = ({ disabled, isEditing, simplePath, thoughtsResolved, cursorOff
     innerRef={contentRef}
     className={classNames({
       editable: true,
-      ['editable-' + hashContext(pathToContext(thoughtsResolved), rank)]: true,
+      ['editable-' + hashContext(pathToContext(path), rank)]: true,
       empty: value.length === 0
     })}
     forceUpdate={editableNonceRef.current !== state.editableNonce}

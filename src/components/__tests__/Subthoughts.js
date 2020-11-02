@@ -10,8 +10,8 @@ import Subthoughts from '../Subthoughts'
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
 const whereContext = context => node => equalArrays(pathToContext(node.props().simplePath), context)
 
-/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts resolved context. */
-const whereResolvedContext = context => node => equalArrays(pathToContext(node.props().thoughtsResolved), context)
+/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts resolved path. */
+const wherePath = context => node => node.props().path && equalArrays(pathToContext(node.props().path), context)
 
 // const debugThoughtWrapper = wrapper => wrapper.map(node => ({
 //   name: node.name(),
@@ -25,12 +25,6 @@ let wrapper = null // eslint-disable-line fp/no-let
 
 // cannot figure out how to unmount and reset after each test so that we can use beforeEach
 beforeEach(async () => {
-  // set url back to home
-  window.history.pushState(
-    {},
-    '',
-    '/'
-  )
   wrapper = await createTestApp()
   // set url back to home
 })
@@ -142,7 +136,7 @@ describe('context view', () => {
     // select a/one~/a Subthoughts component
     const subthoughtsAOneA = subthoughtsAOne()
       .find(Subthoughts)
-      .filterWhere(whereResolvedContext(['a', 'one', 'a']))
+      .filterWhere(wherePath(['a', 'one', 'a']))
     expect(subthoughtsAOneA).toHaveLength(1)
 
     // assert that child of context is rendered
@@ -163,7 +157,7 @@ describe('context view', () => {
     // select a/one~/b Subthoughts component
     const subthoughtsAOneB = subthoughtsAOne()
       .find(Subthoughts)
-      .filterWhere(whereResolvedContext(['a', 'one', 'b']))
+      .filterWhere(wherePath(['a', 'one', 'b']))
     expect(subthoughtsAOneB).toHaveLength(1)
 
     // assert that child of context is rendered
@@ -175,7 +169,7 @@ describe('context view', () => {
       })
   })
 
-  it('calculate proper thoughtsResolved for a children inside context view with duplicate lexeme', async () => {
+  it('calculate proper resolved path for a children inside context view with duplicate lexeme', async () => {
 
     // Explaination: https://github.com/cybersemics/em/pull/878#issuecomment-717057916
 
@@ -188,15 +182,18 @@ describe('context view', () => {
             - c`))
 
     // enable Context View on /a/b/c/d/c
-    store.dispatch({ type: 'setCursor', path: [
-      { value: 'a', rank: 0 },
-      { value: 'b', rank: 0 },
-      { value: 'c', rank: 0 },
-      { value: 'd', rank: 0 },
-      { value: 'c', rank: 0 },
-    ] })
-
-    store.dispatch({ type: 'toggleContextView' })
+    store.dispatch([
+      {
+        type: 'setCursor', path: [
+          { value: 'a', rank: 0 },
+          { value: 'b', rank: 0 },
+          { value: 'c', rank: 0 },
+          { value: 'd', rank: 0 },
+          { value: 'c', rank: 0 },
+        ]
+      },
+      { type: 'toggleContextView' }
+    ])
 
     /*
     Expected structure after activating context view.
@@ -204,7 +201,7 @@ describe('context view', () => {
       - b
         - c
           - d
-            - c
+            - c ~
               - a.b.c (first)
               - a.b.c.d.c (second)
     */
@@ -212,17 +209,15 @@ describe('context view', () => {
     // update DOM
     wrapper.update()
 
-    const subthoughtsFirst = wrapper
-      .find(Subthoughts)
-      .filterWhere(whereResolvedContext(['a', 'b', 'c', 'd', 'c', 'b']))
+    const subthoughtsContextViewChildren = wrapper.find(Subthoughts)
+      .filterWhere(wherePath(['a', 'b', 'c', 'd', 'c'])).childAt(0).find(Subthoughts)
 
-    expect(subthoughtsFirst).toHaveLength(1)
+    expect(subthoughtsContextViewChildren).toHaveLength(2)
 
-    const subthoughtsSecond = wrapper
-      .find(Subthoughts)
-      .filterWhere(whereResolvedContext(['a', 'b', 'c', 'd', 'c', 'd']))
+    const childrenPathArray = subthoughtsContextViewChildren.map(node => pathToContext(node.props().path))
+    expect(childrenPathArray[0]).toEqual(['a', 'b', 'c', 'd', 'c', 'b'])
+    expect(childrenPathArray[1]).toEqual(['a', 'b', 'c', 'd', 'c', 'd'])
 
-    expect(subthoughtsSecond).toHaveLength(1)
   })
 
 })
