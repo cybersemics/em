@@ -71,7 +71,6 @@ import {
  **********************************************************************/
 
 interface ThoughtProps {
-  thoughtsResolved: Path,
   cursorOffset?: number,
   hideBullet?: boolean,
   homeContext?: boolean,
@@ -94,7 +93,7 @@ interface ThoughtContainerProps {
   allowSingleContext?: boolean,
   childrenForced?: Child[],
   contextBinding?: Path,
-  thoughtsResolved: Path,
+  path: Path,
   count?: number,
   cursor?: Path | null,
   cursorOffset?: number,
@@ -137,7 +136,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   } = state
 
   const {
-    thoughtsResolved,
+    path,
     simplePath,
     showContexts,
     depth,
@@ -145,10 +144,10 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   } = props
 
   // check if the cursor path includes the current thought
-  const isEditingPath = subsetThoughts(cursorBeforeEdit, thoughtsResolved)
+  const isEditingPath = subsetThoughts(cursorBeforeEdit, path)
 
   // check if the cursor is editing a thought directly
-  const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
+  const isEditing = equalPath(cursorBeforeEdit, path)
 
   const simplePathLive = isEditing
     ? parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath
@@ -160,14 +159,14 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedParentOf(parentOf(cursor || [])), thoughtsResolved) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
+    ? equalPath(rootedParentOf(parentOf(cursor || [])), path) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
     // parent
-    : equalPath(parentOf(cursor || []), thoughtsResolved)
+    : equalPath(parentOf(cursor || []), path)
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as SimplePath | undefined
 
   const isCursorGrandparent =
-    equalPath(rootedParentOf(parentOf(cursor || [])), thoughtsResolved)
+    equalPath(rootedParentOf(parentOf(cursor || [])), path)
   const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const value = headValue(simplePathLive)
@@ -187,7 +186,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isPublishChild: !search && publishMode() && simplePath.length === 2,
     isCursorParent,
     isCursorGrandparent,
-    expanded: expanded[hashContext(pathToContext(thoughtsResolved))],
+    expanded: expanded[hashContext(pathToContext(path))],
     expandedContextThought,
     isEditing,
     isEditingPath,
@@ -353,7 +352,6 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 
 /** A single thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const Thought = ({
-  thoughtsResolved,
   cursorOffset,
   homeContext,
   isDragging,
@@ -386,7 +384,7 @@ const Thought = ({
     : isDivider(headValue(simplePath)) ? <Divider path={simplePath} />
     // cannot use simplePathLive here else Editable gets re-rendered during editing
     : <Editable
-      thoughtsResolved={thoughtsResolved}
+      path={path}
       cursorOffset={cursorOffset}
       disabled={!isDocumentEditable()}
       isEditing={isEditing}
@@ -397,7 +395,7 @@ const Thought = ({
       onKeyDownAction={isMobile ? undefined : toggleTopControlsAndBreadcrumbs}
     />}
 
-    <Superscript simplePath={simplePath} showContexts={showContexts} thoughtsResolved={thoughtsResolved} superscript={false} />
+    <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />
   </div>
 }
 
@@ -409,7 +407,7 @@ const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
   contextBinding,
-  thoughtsResolved,
+  path,
   count = 0,
   cursor = [],
   cursorOffset,
@@ -494,7 +492,7 @@ const ThoughtContainer = ({
   const contextThought = showContexts && getThought(state, headValue(parentOf(simplePath)))
 
   const showContextBreadcrumbs = showContexts &&
-    (!globals.ellipsizeContextThoughts || equalPath(thoughtsResolved, expandedContextThought as Path | null)) &&
+    (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null)) &&
     simplePath.length > 2
 
   const thoughts = pathToContext(simplePath)
@@ -553,7 +551,7 @@ const ThoughtContainer = ({
     prose: view === 'Prose',
     // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
-    'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(thoughtsResolved)),
+    'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(path)),
   })} ref={el => {
     if (el) {
       dragPreview(getEmptyImage())
@@ -564,7 +562,7 @@ const ThoughtContainer = ({
   >
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} path={thoughtsResolved} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: React.MouseEvent) => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} path={path} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: React.MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({
@@ -579,18 +577,18 @@ const ThoughtContainer = ({
       }}></span>
 
       <ThoughtAnnotation
-        thoughtsResolved={thoughtsResolved}
+        path={path}
         homeContext={homeContext}
         minContexts={allowSingleContext ? 0 : 2}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
         style={style}
-        path={simplePath}
+        simplePath={simplePath}
         url={url}
       />
 
       <Thought
-        thoughtsResolved={thoughtsResolved}
+        path={path}
         cursorOffset={cursorOffset}
         hideBullet={hideBullet}
         homeContext={homeContext}
@@ -599,7 +597,6 @@ const ThoughtContainer = ({
         isPublishChild={isPublishChild}
         isEditing={isEditing}
         isLeaf={isLeaf}
-        path={thoughtsResolved}
         publish={publish}
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
@@ -612,7 +609,7 @@ const ThoughtContainer = ({
 
       <Note
         context={thoughtsLive}
-        onFocus={setCursorOnNote({ path: thoughtsResolved })}
+        onFocus={setCursorOnNote({ path: path })}
       />
 
     </div>
@@ -623,7 +620,7 @@ const ThoughtContainer = ({
     <Subthoughts
       allowSingleContext={allowSingleContext}
       childrenForced={childrenForced}
-      thoughtsResolved={thoughtsResolved}
+      path={path}
       count={count}
       depth={depth}
       isParentHovering={isAnyChildHovering}
