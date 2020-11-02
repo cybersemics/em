@@ -19,6 +19,7 @@ import {
 import {
   importText,
 } from '../../action-creators'
+import { removeRoot } from '../../test-helpers/removeRoot'
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
@@ -57,13 +58,7 @@ const importExport = async text => {
   const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
-  const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))
-    .split('\n')
-    .map(line => line.slice(2))
-    .join('\n')
-    + '\n'
-
-  return exportedWithoutRoot
+  return removeRoot(exported)
 }
 
 it('initialSettings', async () => {
