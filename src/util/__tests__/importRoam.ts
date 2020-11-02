@@ -14,12 +14,16 @@ import {
 import {
   exportContext,
 } from '../../selectors'
-import { importRoam } from '../importRoam'
+import { importRoam } from '../importROAM'
 import { State, initialState } from '../initialState'
 import { RoamPage } from 'roam'
 import { removeRoot } from '../../test-helpers/removeRoot'
 import { SimplePath } from '../../types'
 import { timestamp } from '../timestamp'
+
+jest.mock('../timestamp', () => ({
+  timestamp: () => '2020-11-02T01:11:58.869Z'
+}))
 
 const testState: State = {
   ...initialState(),
@@ -226,8 +230,14 @@ test('it should save create-time as created property', () => {
   const roamBlocks = testData.map(roamBlock => roamBlock.children).flat()
 
   const {
+    contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
   } = importRoam(testState, RANKED_ROOT as SimplePath, testData)
+
+  Object.keys(contextIndex)
+    .forEach(contextHash => {
+      expect(contextIndex[contextHash].lastUpdated).toEqual('2020-11-02T01:11:58.869Z')
+    })
 
   Object.keys(thoughtIndex)
     // ignore root blocks (and =create-email thought)of Roam page since they won't have create/edit time
@@ -238,6 +248,24 @@ test('it should save create-time as created property', () => {
     .forEach((thoughtHash, index) => {
       expect(thoughtIndex[thoughtHash].created).toEqual(new Date(roamBlocks[index]['create-time']).toISOString())
       expect(thoughtIndex[thoughtHash].lastUpdated).toEqual(new Date(roamBlocks[index]['edit-time']).toISOString())
+    })
+
+})
+
+test('it should set the created and lastUpdated properties as current timestamp for root blocks', () => {
+  const {
+    thoughtIndexUpdates: thoughtIndex,
+  } = importRoam(testState, RANKED_ROOT as SimplePath, testData)
+
+  Object.keys(thoughtIndex)
+    // ignore root blocks (and =create-email thought)of Roam page since they won't have create/edit time
+    .filter(thoughtHash => {
+      const value = thoughtIndex[thoughtHash].value
+      return value === 'Fruits' || value === 'Veggies'
+    })
+    .forEach(thoughtHash => {
+      expect(thoughtIndex[thoughtHash].created).toEqual('2020-11-02T01:11:58.869Z')
+      expect(thoughtIndex[thoughtHash].lastUpdated).toEqual('2020-11-02T01:11:58.869Z')
     })
 
 })
