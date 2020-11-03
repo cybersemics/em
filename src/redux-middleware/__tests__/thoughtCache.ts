@@ -1,7 +1,7 @@
 import { store } from '../../store'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
-import { getChildren } from '../../selectors'
+import { getChildren, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
@@ -174,12 +174,75 @@ describe('thoughtCache', () => {
 
     expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
     expect(await getContext(db, ['a'])).toBeFalsy()
-
-    // TODO: Load buffered thoughts into state to delete them
     expect(await getContext(db, ['a', 'b'])).toBeFalsy()
     expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
     expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
     expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
+  })
+
+  it('move thought with buffered descendants', async () => {
+
+    store.dispatch([
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - x
+          - a
+            - b
+              - c
+                - d
+                  - e
+      ` },
+      { type: 'setCursor', path: [{ value: 'x', rank: 0 }] },
+    ])
+
+    jest.runOnlyPendingTimers()
+
+    expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
+    expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
+    expect(await getContext(db, ['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
+    expect(await getContext(db, ['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
+    expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
+    expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
+
+    // clear and call initialize again to reload from db (simulating page refresh)
+    store.dispatch({ type: 'clear' })
+    jest.runOnlyPendingTimers()
+    await initialize()
+    await delay(100)
+
+    // delete thought with buffered descendants
+    const aPath = rankThoughtsFirstMatch(store.getState(), ['a'])
+    const xPath = rankThoughtsFirstMatch(store.getState(), ['x'])
+    store.dispatch({
+      type: 'existingThoughtMove',
+      context: [ROOT_TOKEN],
+      oldPath: aPath,
+      newPath: [...xPath, ...aPath],
+    })
+    jest.runOnlyPendingTimers()
+
+    // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
+    // existingThoughtDelete -> syncQueue -> thoughtCache -> existingThoughtDelete
+    await delay(500)
+
+    expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
+
+    expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
+    expect(await getContext(db, ['a'])).toBeFalsy()
+    expect(await getContext(db, ['a', 'b'])).toBeFalsy()
+    expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
+    expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
+    expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
+
+    expect(await getContext(db, ['x'])).toMatchObject({ children: [{ value: 'a' }] })
+    expect(await getContext(db, ['x', 'a'])).toMatchObject({ children: [{ value: 'b' }] })
+    expect(await getContext(db, ['x', 'a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
+    expect(await getContext(db, ['x', 'a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
+    expect(await getContext(db, ['x', 'a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
+    expect(await getContext(db, ['x', 'a', 'b', 'c', 'd', 'e'])).toBeUndefined()
+
   })
 
 })

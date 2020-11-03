@@ -203,8 +203,8 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
       contextViews: contextViewsNew,
     }),
     updateThoughts({
-      thoughtIndexUpdates,
       contextIndexUpdates,
+      thoughtIndexUpdates,
       recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
     }),
