@@ -1,9 +1,10 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { sync } from '../action-creators'
+import { pull, sync } from '../action-creators'
 import { hasSyncs } from '../selectors'
+import { hashContext, keyValueBy } from '../util'
 import { SyncBatch, State } from '../util/initialState'
-import { ActionCreator } from '../types'
+import { ActionCreator, Context, Index } from '../types'
 
 /** Merges multiple sync batches into a single batch. Uses last value of local/remote. */
 const mergeBatch = (accum: SyncBatch, batch: SyncBatch): SyncBatch =>
@@ -47,12 +48,40 @@ const syncBatch = (batch: SyncBatch) =>
     }
   )
 
+/** Pull all descendants of pending deletes and dispatch existingThoughtDelete to fully delete. */
+const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
+
+  const { syncQueue } = getState()
+
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  const pendingDeletes = syncQueue.map(batch => batch.pendingDeletes || []).flat()
+  if (pendingDeletes?.length) {
+
+    const pending: Index<Context> = keyValueBy(pendingDeletes, ({ context }) => ({
+      [hashContext(context)]: context
+    }))
+
+    await dispatch(pull(pending, { maxDepth: Infinity }))
+
+    pendingDeletes.forEach(({ context, child }) => {
+      dispatch({
+        type: 'existingThoughtDelete',
+        context,
+        thoughtRanked: child,
+      })
+    })
+  }
+
+}
+
 /** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
-const flushQueue: ActionCreator = async (dispatch, getState) => {
+const flushQueue = (): ActionCreator => async (dispatch, getState) => {
 
   const { syncQueue } = getState()
 
   if (syncQueue.length === 0) return Promise.resolve()
+
+  dispatch(flushDeletes())
 
   // filter batches by data provider
   const localBatches = syncQueue.filter(batch => batch.local)
@@ -61,15 +90,6 @@ const flushQueue: ActionCreator = async (dispatch, getState) => {
   // merge batches
   const localMergedBatch = localBatches.reduce(mergeBatch, {} as SyncBatch)
   const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as SyncBatch)
-
-  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
-  if (localMergedBatch.pendingDeletes?.length) {
-    dispatch({
-      type: 'deleteDescendants',
-      // these will get de-duped in thoughtCacheMiddleware
-      pendingDeletes: syncQueue.map(batch => batch.pendingDeletes).flat(),
-    })
-  }
 
   // sync
   return Promise.all([
@@ -88,7 +108,7 @@ const syncQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // clear queue immediately to prevent syncing more than once
     // then flush the queue
     () => {
-      flushQueue(dispatch, getState)
+      dispatch(flushQueue())
         .then(() => {
           dispatch({ type: 'isSyncing', value: false })
         })

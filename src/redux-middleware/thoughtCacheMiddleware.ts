@@ -1,30 +1,17 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import * as db from '../data-providers/dexie'
-import * as firebaseProvider from '../data-providers/firebase'
-import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getAllChildrenByContextHash, hasSyncs } from '../selectors'
-import { equalArrays, hashContext, keyValueBy, mergeThoughts, pathToContext, unroot } from '../util'
+import { equalArrays, hashContext, keyValueBy, pathToContext, unroot } from '../util'
+import { pull } from '../action-creators'
 import { State } from '../util/initialState'
-import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, ThoughtsInterface } from '../types'
+import { Context, ContextHash, Index, Path } from '../types'
 
 /** Debounce pending checks to avoid checking on every action. */
 const debounceUpdatePending = 10
 
 /** Limit frequency of fetching pending contexts. Ignored on first flush. */
 const throttleFlushPending = 500
-
-/* Number of levels of descendants of each pending contexts to fetch. */
-const BUFFER_DEPTH = 2
-
-/** Iterate through an async iterable and invoke a callback on each yield. */
-async function itForEach<T> (it: AsyncIterable<T>, callback: (value: T) => void) {
-  // eslint-disable-next-line fp/no-loops
-  for await (const item of it) {
-    callback(item)
-  }
-}
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
 const getVisibleContexts = (state: State): Index<Context> => {
@@ -97,6 +84,20 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
   }
 
+  /** Flush all pending thoughts, pulling them from local and remote and merge them into state. */
+  const flushPending = async () => {
+
+    const pendingThoughts = { ...pending }
+    pending = {}
+
+    const hasMorePending = await dispatch(pull({ ...pendingThoughts }))
+
+    const { user } = getState()
+    if (!user && hasMorePending) {
+      updatePending({ force: true })
+    }
+  }
+
   /**
    * Adds unloaded contexts based on cursor and state.expanded to the pending queue.
    *
@@ -142,129 +143,10 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     }
   }
 
-  /**
-   * Fetch descendants of thoughts.
-   * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
-   */
-  const flushPending = async ({ maxDepth, pendingOverride }: { maxDepth?: number, pendingOverride?: Index<Context> } = {}) => {
-
-    // shallow copy pending in case local fetch takes longer than next flush
-    const pendingThoughts = pendingOverride || { ...pending }
-
-    if (Object.keys(pendingThoughts).length === 0) return
-
-    // clear pending list immediately
-    if (!pendingOverride) {
-      pending = {}
-    }
-
-    // get local thoughts
-    const thoughtLocalChunks: ThoughtsInterface[] = []
-
-    const thoughtsLocalIterable = getManyDescendants(db, pendingThoughts, { maxDepth: maxDepth || BUFFER_DEPTH })
-    for await (const thoughts of thoughtsLocalIterable) { // eslint-disable-line fp/no-loops
-
-      // eslint-disable-next-line fp/no-mutating-methods
-      thoughtLocalChunks.push(thoughts)
-
-      // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
-      // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
-      dispatch({
-        type: 'updateThoughts',
-        contextIndexUpdates: thoughts.contextIndex,
-        thoughtIndexUpdates: thoughts.thoughtIndex,
-        local: false,
-        remote: false,
-      })
-    }
-
-    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
-
-    // get remote thoughts and reconcile with local
-    const user = getState().user
-    if (user) {
-
-      const thoughtsRemoteIterable = getManyDescendants(firebaseProvider, pendingThoughts, { maxDepth: maxDepth || BUFFER_DEPTH })
-
-      const thoughtRemoteChunks: ThoughtsInterface[] = []
-
-      // TODO: Refactor into zipThoughts
-      await itForEach(thoughtsRemoteIterable, (thoughtsRemoteChunk: ThoughtsInterface) => {
-
-        // eslint-disable-next-line fp/no-mutating-methods
-        thoughtRemoteChunks.push(thoughtsRemoteChunk)
-
-        // find the corresponding Parents from the local store (if any exist) so it can be reconciled with the remote Parents
-        const thoughtsLocalContextIndexChunk = _.transform(thoughtsRemoteChunk.contextIndex, (accum, parentEntryRemote, key) => {
-          const parentEntryLocal = thoughtsLocal.contextIndex[key]
-          if (parentEntryLocal) {
-            accum[key] = parentEntryLocal
-          }
-        }, {} as Index<Parent>)
-
-        // find the corresponding Lexemes from the local store (if any exist) so it can be reconciled with the remote Lexemes
-        const thoughtsLocalThoughtIndexChunk = _.transform(thoughtsRemoteChunk.thoughtIndex, (accum, lexemeRemote, key) => {
-          const lexemeLocal = thoughtsLocal.thoughtIndex[key]
-          if (lexemeLocal) {
-            accum[key] = lexemeLocal
-          }
-        }, {} as Index<Lexeme>)
-
-        dispatch({
-          type: 'reconcile',
-          thoughtsResults: [{
-            contextIndex: thoughtsLocalContextIndexChunk,
-            thoughtIndex: thoughtsLocalThoughtIndexChunk,
-          }, thoughtsRemoteChunk]
-        })
-
-      })
-
-      const thoughtsRemote = thoughtRemoteChunks.reduce(_.ary(mergeThoughts, 2))
-
-      // the reconcile dispatched above is based on remote keys only
-      // thoughts that exist locally and not remotely will be missed
-      // sync all thoughts here to ensure none are missed
-      // TODO: Only reconcile local-only thoughts
-      dispatch({
-        type: 'reconcile',
-        thoughtsResults: [thoughtsLocal, thoughtsRemote]
-      })
-    }
-
-    // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
-    const hasPending = Object.keys(thoughtsLocal.contextIndex || {})
-      .some(key => (thoughtsLocal.contextIndex || {})[key].pending)
-    if (!user && hasPending) {
-      updatePending({ force: true })
-    }
-  }
-
   const updatePendingDebounced = _.debounce(updatePending, debounceUpdatePending)
   const flushPendingThrottled = _.throttle(flushPending, throttleFlushPending)
 
   return next => async action => {
-
-    // load pending descendants and delete them all
-    // we have to handle this action here so that we can call flushPending directly
-    if (action.type === 'deleteDescendants') {
-      const pendingDeletes = action.pendingDeletes as { context: Context, child: Child }[]
-      await flushPending({
-        maxDepth: Infinity,
-        pendingOverride: keyValueBy(pendingDeletes, ({ context }) => ({
-          [hashContext(context)]: context
-        }))
-
-      })
-      pendingDeletes.forEach(({ context, child }) => {
-        dispatch({
-          type: 'existingThoughtDelete',
-          context,
-          thoughtRanked: child,
-        })
-      })
-      return
-    }
 
     next(action)
 
