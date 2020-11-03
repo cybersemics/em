@@ -13,13 +13,19 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 /** Returns true if the selection is on the last line of a multi-line editable. */
 const isSelectionOnLastLine = () => {
+
   const selection = window.getSelection()
   if (!selection) return false
 
   const { anchorNode: baseNode, rangeCount } = selection
   if (rangeCount === 0) return false
 
-  const { y: rangeY, height: rangeHeight } = selection.getRangeAt(0).getClientRects()[0]
+  const clientRects = selection.getRangeAt(0).getClientRects()
+  if (!clientRects) return false
+
+  const { y: rangeY, height: rangeHeight } = clientRects[0]
+  if (!rangeY) return false
+
   const baseNodeParentEl = baseNode?.parentElement as HTMLElement
   if (!baseNodeParentEl) return false
 
