@@ -21,6 +21,10 @@ const mergeBatch = (accum: SyncBatch, batch: SyncBatch): SyncBatch =>
       ...accum.recentlyEdited,
       ...batch.recentlyEdited,
     },
+    pendingDeletes: [
+      ...accum.pendingDeletes || [],
+      ...batch.pendingDeletes || [],
+    ],
     updates: {
       ...accum.updates,
       ...batch.updates,
@@ -57,6 +61,15 @@ const flushQueue: ActionCreator = async (dispatch, getState) => {
   // merge batches
   const localMergedBatch = localBatches.reduce(mergeBatch, {} as SyncBatch)
   const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as SyncBatch)
+
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  if (localMergedBatch.pendingDeletes?.length) {
+    dispatch({
+      type: 'deleteDescendants',
+      // these will get de-duped in thoughtCacheMiddleware
+      pendingDeletes: syncQueue.map(batch => batch.pendingDeletes).flat(),
+    })
+  }
 
   // sync
   return Promise.all([

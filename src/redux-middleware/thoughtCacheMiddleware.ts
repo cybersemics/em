@@ -7,7 +7,7 @@ import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { decodeContextUrl, getAllChildrenByContextHash, hasSyncs } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, mergeThoughts, pathToContext, unroot } from '../util'
 import { State } from '../util/initialState'
-import { Context, ContextHash, Index, Lexeme, Parent, Path, ThoughtsInterface } from '../types'
+import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, ThoughtsInterface } from '../types'
 
 /** Debounce pending checks to avoid checking on every action. */
 const debounceUpdatePending = 10
@@ -16,7 +16,7 @@ const debounceUpdatePending = 10
 const throttleFlushPending = 500
 
 /* Number of levels of descendants of each pending contexts to fetch. */
-const bufferDepth = 2
+const BUFFER_DEPTH = 2
 
 /** Iterate through an async iterable and invoke a callback on each yield. */
 async function itForEach<T> (it: AsyncIterable<T>, callback: (value: T) => void) {
@@ -146,20 +146,22 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
    * Fetch descendants of thoughts.
    * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
    */
-  const flushPending = async () => {
+  const flushPending = async ({ maxDepth, pendingOverride }: { maxDepth?: number, pendingOverride?: Index<Context> } = {}) => {
 
     // shallow copy pending in case local fetch takes longer than next flush
-    const pendingThoughts = { ...pending }
+    const pendingThoughts = pendingOverride || { ...pending }
 
     if (Object.keys(pendingThoughts).length === 0) return
 
     // clear pending list immediately
-    pending = {}
+    if (!pendingOverride) {
+      pending = {}
+    }
 
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    const thoughtsLocalIterable = getManyDescendants(db, pendingThoughts, { maxDepth: bufferDepth })
+    const thoughtsLocalIterable = getManyDescendants(db, pendingThoughts, { maxDepth: maxDepth || BUFFER_DEPTH })
     for await (const thoughts of thoughtsLocalIterable) { // eslint-disable-line fp/no-loops
 
       // eslint-disable-next-line fp/no-mutating-methods
@@ -182,7 +184,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     const user = getState().user
     if (user) {
 
-      const thoughtsRemoteIterable = getManyDescendants(firebaseProvider, pendingThoughts, { maxDepth: bufferDepth })
+      const thoughtsRemoteIterable = getManyDescendants(firebaseProvider, pendingThoughts, { maxDepth: maxDepth || BUFFER_DEPTH })
 
       const thoughtRemoteChunks: ThoughtsInterface[] = []
 
@@ -241,7 +243,28 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   const updatePendingDebounced = _.debounce(updatePending, debounceUpdatePending)
   const flushPendingThrottled = _.throttle(flushPending, throttleFlushPending)
 
-  return next => action => {
+  return next => async action => {
+
+    // load pending descendants and delete them all
+    // we have to handle this action here so that we can call flushPending directly
+    if (action.type === 'deleteDescendants') {
+      const pendingDeletes = action.pendingDeletes as { context: Context, child: Child }[]
+      await flushPending({
+        maxDepth: Infinity,
+        pendingOverride: keyValueBy(pendingDeletes, ({ context }) => ({
+          [hashContext(context)]: context
+        }))
+
+      })
+      pendingDeletes.forEach(({ context, child }) => {
+        dispatch({
+          type: 'existingThoughtDelete',
+          context,
+          thoughtRanked: child,
+        })
+      })
+      return
+    }
 
     next(action)
 

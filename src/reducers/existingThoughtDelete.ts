@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
-import { exists, getThought, getAllChildren, getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
+import { exists, getThought, getAllChildren, getChildrenRanked, isPending, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent } from '../types'
 
@@ -27,6 +27,7 @@ interface Payload {
 interface ThoughtUpdates {
   contextIndex: Index<Parent | null>,
   thoughtIndex: Index<Lexeme | null>,
+  pendingDeletes?: { context: Context, child: Child }[],
 }
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. */
@@ -36,10 +37,9 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   if (!exists(state, value)) return state
 
   const thoughts = unroot(context.concat(value))
+  context = rootedParentOf(thoughts)
   const key = hashThought(value)
   const thought = getThought(state, value)
-  // @ts-ignore
-  context = rootedParentOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
@@ -48,7 +48,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
 
   // if thought is not valid then just stop further execution
   if (!isValidThought) {
-    console.error(`Thought ${value} with rank ${rank} is not valid!`)
+    console.error(`Thought ${value} with rank ${rank} is not in ${JSON.stringify(context)}`)
     return state
   }
 
@@ -93,6 +93,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
         thoughtIndex: thoughtIndexNew
       }
     }
+
     return getChildrenRanked(stateNew, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(stateNew, child.value)
@@ -112,7 +113,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
 
       const contextEncoded = hashContext(thoughts)
 
-      const dataMerged = {
+      const thoughtIndexMerged = {
         ...accumRecursive.thoughtIndex,
         ...accum.thoughtIndex,
         [hashedKey]: childNew
@@ -124,15 +125,39 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
         [contextEncoded]: null
       }
 
+      const childContext = thoughts.concat(child.value)
+
+      // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
+      if (isPending(stateNew, childContext)) {
+        return {
+          ...accum,
+          ...accumRecursive,
+          // do not delete the pending thought yet since the second call to existingThoughtDelete needs a starting point
+          pendingDeletes: [...accumRecursive.pendingDeletes || [], {
+            context: thoughts,
+            child,
+          }],
+        }
+      }
+
       // RECURSION
-      const recursiveResults = recursiveDeletes(thoughts.concat(child.value), {
-        thoughtIndex: dataMerged,
-        contextIndex: contextIndexMerged
+      const recursiveResults = recursiveDeletes(childContext, {
+        ...accum,
+        ...accumRecursive,
+        contextIndex: contextIndexMerged,
+        thoughtIndex: thoughtIndexMerged,
       })
 
       return {
+        ...accum,
+        ...accumRecursive,
+        pendingDeletes: [
+          ...accum.pendingDeletes || [],
+          ...accumRecursive.pendingDeletes || [],
+          ...recursiveResults.pendingDeletes || [],
+        ],
         thoughtIndex: {
-          ...dataMerged,
+          ...thoughtIndexMerged,
           ...recursiveResults.thoughtIndex
         },
         contextIndex: {
@@ -153,7 +178,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
     : {
       thoughtIndex: {},
       contextIndex: {}
-    }
+    } as ThoughtUpdates
 
   const thoughtIndexUpdates = {
     [key]: newOldThought,
@@ -167,14 +192,22 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
       context,
       children: subthoughts,
       lastUpdated: timestamp()
-    } : null,
+    } as Parent : null,
     // descendants
     ...descendantUpdatesResult.contextIndex
   }
 
   return reducerFlow([
-    state => ({ ...state, contextViews: contextViewsNew }),
-    updateThoughts({ thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
+    state => ({
+      ...state,
+      contextViews: contextViewsNew,
+    }),
+    updateThoughts({
+      thoughtIndexUpdates,
+      contextIndexUpdates,
+      recentlyEdited,
+      pendingDeletes: descendantUpdatesResult.pendingDeletes,
+    }),
     render,
   ])(state)
 }

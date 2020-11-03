@@ -1,14 +1,15 @@
 import _ from 'lodash'
-import { State, initialState } from '../util/initialState'
+import { initialState, State, SyncBatch } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { hashContext, importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
-import { ContextHash, Index, Lexeme, Parent, SimplePath, ThoughtHash, ThoughtIndices, ThoughtsInterface } from '../types'
+import { Child, Context, ContextHash, Index, Lexeme, Parent, SimplePath, ThoughtHash, ThoughtIndices, ThoughtsInterface } from '../types'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>,
   contextIndexUpdates: Index<Parent | null>,
   recentlyEdited?: Index,
+  pendingDeletes?: { context: Context, child: Child }[],
   contextChain?: SimplePath[],
   updates?: Index<string>,
   local?: boolean,
@@ -59,7 +60,7 @@ const thoughtsLoaded = (thoughts: ThoughtsInterface) => {
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, local = true, remote = true }: UpdateThoughtsOptions) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, pendingDeletes, local = true, remote = true }: UpdateThoughtsOptions) => {
 
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
@@ -94,11 +95,12 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
   // updates are queued, detected by the syncQueue middleware, and sync'd with the local and remote stores
-  const batch = {
+  const batch: SyncBatch = {
     thoughtIndexUpdates,
     contextIndexUpdates,
     recentlyEdited: recentlyEditedNew,
     updates,
+    pendingDeletes,
     local,
     remote
   }
