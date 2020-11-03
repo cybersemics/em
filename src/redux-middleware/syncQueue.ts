@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { pull, sync } from '../action-creators'
 import { hasSyncs } from '../selectors'
-import { hashContext, keyValueBy } from '../util'
+import { hashContext, keyValueBy, pathToContext } from '../util'
 import { SyncBatch, State } from '../util/initialState'
 import { ActionCreator, Context, Index } from '../types'
 
@@ -25,6 +25,10 @@ const mergeBatch = (accum: SyncBatch, batch: SyncBatch): SyncBatch =>
     pendingDeletes: [
       ...accum.pendingDeletes || [],
       ...batch.pendingDeletes || [],
+    ],
+    pendingMoves: [
+      ...accum.pendingMoves || [],
+      ...batch.pendingMoves || [],
     ],
     updates: {
       ...accum.updates,
@@ -74,6 +78,35 @@ const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
 
 }
 
+/** Pull all descendants of pending moves and dispatch existingThoughtMove to fully move. */
+const flushMoves = (): ActionCreator => async (dispatch, getState) => {
+
+  const { syncQueue } = getState()
+
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  const pendingMoves = syncQueue.map(batch => batch.pendingMoves || []).flat()
+  if (pendingMoves?.length) {
+
+    const pending: Index<Context> = keyValueBy(pendingMoves, ({ pathOld }) => {
+      const context = pathToContext(pathOld)
+      return {
+        [hashContext(context)]: context
+      }
+    })
+
+    await dispatch(pull(pending, { maxDepth: Infinity }))
+
+    pendingMoves.forEach(({ pathOld, pathNew }) => {
+      dispatch({
+        type: 'existingThoughtMove',
+        oldPath: pathOld,
+        newPath: pathNew,
+      })
+    })
+  }
+
+}
+
 /** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
 const flushQueue = (): ActionCreator => async (dispatch, getState) => {
 
@@ -82,6 +115,7 @@ const flushQueue = (): ActionCreator => async (dispatch, getState) => {
   if (syncQueue.length === 0) return Promise.resolve()
 
   dispatch(flushDeletes())
+  dispatch(flushMoves())
 
   // filter batches by data provider
   const localBatches = syncQueue.filter(batch => batch.local)

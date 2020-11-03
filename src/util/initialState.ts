@@ -35,6 +35,7 @@ export interface SyncBatch {
   remote?: boolean,
   recentlyEdited: RecentlyEditedTree,
   pendingDeletes?: { context: Context, child: Child }[],
+  pendingMoves?: { pathOld: Path, pathNew: Path }[],
   updates?: Index<string>,
 }
 
