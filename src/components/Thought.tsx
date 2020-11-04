@@ -53,7 +53,6 @@ import {
 import {
   attribute,
   attributeEquals,
-  chain,
   getNextRank,
   getRankBefore,
   getSortPreference,
@@ -72,7 +71,6 @@ import {
  **********************************************************************/
 
 interface ThoughtProps {
-  contextChain: SimplePath[],
   cursorOffset?: number,
   hideBullet?: boolean,
   homeContext?: boolean,
@@ -95,7 +93,7 @@ interface ThoughtContainerProps {
   allowSingleContext?: boolean,
   childrenForced?: Child[],
   contextBinding?: Path,
-  contextChain: SimplePath[],
+  path: Path,
   count?: number,
   cursor?: Path | null,
   cursorOffset?: number,
@@ -138,17 +136,12 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   } = state
 
   const {
-    contextChain,
+    path,
     simplePath,
     showContexts,
     depth,
     childrenForced
   } = props
-
-  // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
-  const path = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, simplePath)
-    : unroot(simplePath)
 
   // check if the cursor path includes the current thought
   const isEditingPath = subsetThoughts(cursorBeforeEdit, path)
@@ -166,14 +159,14 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedParentOf(parentOf(cursor || [])), chain(state, contextChain, simplePath)) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
+    ? equalPath(rootedParentOf(parentOf(cursor || [])), path) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
     // parent
-    : equalPath(parentOf(cursor || []), chain(state, contextChain, simplePath))
+    : equalPath(parentOf(cursor || []), path)
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as SimplePath | undefined
 
   const isCursorGrandparent =
-    equalPath(rootedParentOf(parentOf(cursor || [])), chain(state, contextChain, simplePath))
+    equalPath(rootedParentOf(parentOf(cursor || [])), path)
   const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const value = headValue(simplePathLive)
@@ -208,10 +201,9 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch<Action | ActionCreator>) => ({
   toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
-  setCursorOnNote: ({ path, contextChain }: { path: Path, contextChain: SimplePath[] }) => () => dispatch({
+  setCursorOnNote: ({ path }: { path: Path }) => () => dispatch({
     type: 'setCursor',
     path,
-    contextChain,
     cursorHistoryClear: true,
     editing: true,
     noteFocus: true
@@ -360,7 +352,6 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 
 /** A single thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const Thought = ({
-  contextChain,
   cursorOffset,
   homeContext,
   isDragging,
@@ -393,7 +384,7 @@ const Thought = ({
     : isDivider(headValue(simplePath)) ? <Divider path={simplePath} />
     // cannot use simplePathLive here else Editable gets re-rendered during editing
     : <Editable
-      contextChain={contextChain}
+      path={path}
       cursorOffset={cursorOffset}
       disabled={!isDocumentEditable()}
       isEditing={isEditing}
@@ -404,7 +395,7 @@ const Thought = ({
       onKeyDownAction={isMobile ? undefined : toggleTopControlsAndBreadcrumbs}
     />}
 
-    <Superscript simplePath={simplePath} showContexts={showContexts} contextChain={contextChain} superscript={false} />
+    <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />
   </div>
 }
 
@@ -416,7 +407,7 @@ const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
   contextBinding,
-  contextChain,
+  path,
   count = 0,
   cursor = [],
   cursorOffset,
@@ -485,11 +476,6 @@ const ThoughtContainer = ({
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
-
-  // resolve thoughts that are part of a context chain (i.e. some parts of thoughts expanded in context view) to match against cursor subset
-  const path = contextChain && contextChain.length > 0
-    ? chain(state, contextChain, simplePath)
-    : unroot(simplePath)
 
   const value = headValue(simplePathLive!)
 
@@ -591,18 +577,18 @@ const ThoughtContainer = ({
       }}></span>
 
       <ThoughtAnnotation
-        contextChain={contextChain}
+        path={path}
         homeContext={homeContext}
         minContexts={allowSingleContext ? 0 : 2}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
         style={style}
-        path={simplePath}
+        simplePath={simplePath}
         url={url}
       />
 
       <Thought
-        contextChain={contextChain}
+        path={path}
         cursorOffset={cursorOffset}
         hideBullet={hideBullet}
         homeContext={homeContext}
@@ -611,7 +597,6 @@ const ThoughtContainer = ({
         isPublishChild={isPublishChild}
         isEditing={isEditing}
         isLeaf={isLeaf}
-        path={path}
         publish={publish}
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
@@ -624,7 +609,7 @@ const ThoughtContainer = ({
 
       <Note
         context={thoughtsLive}
-        onFocus={setCursorOnNote({ path, contextChain })}
+        onFocus={setCursorOnNote({ path: path })}
       />
 
     </div>
@@ -635,7 +620,7 @@ const ThoughtContainer = ({
     <Subthoughts
       allowSingleContext={allowSingleContext}
       childrenForced={childrenForced}
-      contextChain={contextChain}
+      path={path}
       count={count}
       depth={depth}
       isParentHovering={isAnyChildHovering}

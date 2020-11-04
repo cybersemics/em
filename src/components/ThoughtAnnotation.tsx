@@ -3,9 +3,9 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
-import { chain, decodeThoughtsUrl, getContexts, getAllChildren, theme } from '../selectors'
+import { decodeThoughtsUrl, getContexts, getAllChildren, theme } from '../selectors'
 import { State } from '../util/initialState'
-import { Connected, Context, SimplePath, ThoughtContext } from '../types'
+import { Connected, Context, SimplePath, ThoughtContext, Path } from '../types'
 
 // util
 import {
@@ -17,7 +17,6 @@ import {
   headValue,
   pathToContext,
   publishMode,
-  unroot,
 } from '../util'
 
 // components
@@ -27,7 +26,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  contextChain?: SimplePath[],
+  path: Path,
   dark?: boolean,
   editingValue?: string | null,
   focusOffset?: number,
@@ -39,7 +38,7 @@ interface ThoughtAnnotationProps {
   showContexts?: boolean,
   showHiddenThoughts?: boolean,
   style?: React.CSSProperties,
-  path: SimplePath,
+  simplePath: SimplePath,
   url?: string | null,
 }
 
@@ -61,14 +60,10 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
   const { cursor, cursorBeforeEdit, invalidState, editingValue, showHiddenThoughts } = state
 
-  // reerender annotation in realtime when thought is edited
-  const thoughtsResolved = props.contextChain && props.contextChain.length > 0
-    ? chain(state, props.contextChain, props.path)
-    : unroot(props.path)
-  const isEditing = equalPath(cursorBeforeEdit, thoughtsResolved)
-  const pathLive = isEditing
-    ? parentOf(props.path).concat(head(props.showContexts ? parentOf(cursor!) : cursor!)) as SimplePath
-    : props.path
+  const isEditing = equalPath(cursorBeforeEdit, props.path)
+  const simplePathLive = isEditing
+    ? parentOf(props.simplePath).concat(head(props.showContexts ? parentOf(cursor!) : cursor!)) as SimplePath
+    : props.simplePath
 
   return {
     dark: theme(state) !== 'Light',
@@ -76,12 +71,12 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     invalidState: isEditing ? invalidState : null,
     isEditing,
     showHiddenThoughts,
-    path: pathLive,
+    path: simplePathLive,
   }
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-const ThoughtAnnotation = ({ path, showContexts, showContextBreadcrumbs, homeContext, isEditing, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }: Connected<ThoughtAnnotationProps>) => {
+const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, homeContext, isEditing, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }: Connected<ThoughtAnnotationProps>) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -90,14 +85,14 @@ const ThoughtAnnotation = ({ path, showContexts, showContextBreadcrumbs, homeCon
   // do not increase numContexts when in an invalid state since the thought has not been updated in state
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
-  const value = headValue(showContexts ? parentOf(path) : path)
+  const value = headValue(showContexts ? parentOf(simplePath) : simplePath)
   const state = store.getState()
   const subthoughts = /* getNgrams(value, 3) */value ? [{
     text: value,
     contexts: getContexts(state, isRealTimeContextUpdate ? editingValue! : value)
   }] : []
   // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
-  const thoughts = pathToContext(path)
+  const thoughts = pathToContext(simplePath)
 
   /** Adds https to the url if it is missing. Ignores urls at localhost. */
   const addMissingProtocol = (url: string) => (
@@ -126,7 +121,7 @@ const ThoughtAnnotation = ({ path, showContexts, showContextBreadcrumbs, homeCon
   </a>
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(path))} showContexts={showContexts} /> : null}
+    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} showContexts={showContexts} /> : null}
 
     {homeContext
       ? <HomeLink/>
@@ -142,7 +137,7 @@ const ThoughtAnnotation = ({ path, showContexts, showContextBreadcrumbs, homeCon
           })}>
             <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, !!isEditing, subthought, thoughts)} />
             { // do not render url icon on root thoughts in publish mode
-              url && !(publishMode() && path.length === 1) && <UrlIconLink url={url} />}
+              url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />}
             {REGEXP_PUNCTUATIONS.test(subthought.text)
               ? null
               // with the default minContexts of 2, do not count the whole thought
