@@ -4,7 +4,7 @@ import { Path, SimplePath } from '../../types'
 import { toggleContextView, setCursor } from '../../reducers'
 
 it('get child resolved path', async () => {
-  const parentThoughtsResolved: Path = [
+  const parentPath: Path = [
     { value: 'm', rank: 0 },
     { value: 'n', rank: 0 },
     { value: 'o', rank: 0 },
@@ -19,14 +19,14 @@ it('get child resolved path', async () => {
     { value: 'q', rank: 0 },
   ] as SimplePath
 
-  const thoughtsResolved = appendChildPath(initialState(), childSimplePath, parentThoughtsResolved)
+  const path = appendChildPath(initialState(), childSimplePath, parentPath)
 
-  expect(pathToContext(thoughtsResolved)).toEqual(['m', 'n', 'o', 'p', 'q'])
+  expect(pathToContext(path)).toEqual(['m', 'n', 'o', 'p', 'q'])
 })
 
 it('get child resolved path when parent has active context view', async () => {
 
-  const parentThoughtsResolved: Path = [
+  const parentPath: Path = [
     { value: 'i', rank: 0 },
     { value: 'j', rank: 0 },
     { value: 'k', rank: 0 },
@@ -40,12 +40,12 @@ it('get child resolved path when parent has active context view', async () => {
   ] as SimplePath
 
   const steps = [
-    setCursor({ path: parentThoughtsResolved }),
+    setCursor({ path: parentPath }),
     toggleContextView
   ]
 
   const newState = reducerFlow(steps)(initialState())
 
-  const thoughtsResolved = appendChildPath(newState, childSimplePath, parentThoughtsResolved)
-  expect(pathToContext(thoughtsResolved)).toEqual(['i', 'j', 'k', 't'])
+  const path = appendChildPath(newState, childSimplePath, parentPath)
+  expect(pathToContext(path)).toEqual(['i', 'j', 'k', 't'])
 })
