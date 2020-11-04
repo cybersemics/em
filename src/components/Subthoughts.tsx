@@ -105,7 +105,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showHiddenThoughts,
   } = state
 
-  const resolvedPath = props.path ?? unroot(props.simplePath)
+  const resolvedPath = props.path ?? props.simplePath
 
   // check if the cursor path includes the current thought
   // include ROOT to prevent re-render when ROOT subthought changes
@@ -369,7 +369,7 @@ export const SubthoughtsComponent = ({
   // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
   const thought = getThought(state, headValue(simplePath))
 
-  const resolvedPath = path ?? unroot(simplePath)
+  const resolvedPath = path ?? simplePath
 
   // @ts-ignore
   const codeResults = thought && thought.code ? evalCode({ thought, simplePath }) : null
@@ -460,7 +460,7 @@ export const SubthoughtsComponent = ({
     If we select any grandchildren of the main table view node, all it's children will disappear but the grandchildren will still show up.
     We check that condtion and hide the node.
   */
-  const shouldHide = (distance === 1) && !isAncestorOrDescendant && resolvedPath.length > 0
+  const shouldHide = (distance === 1) && !isAncestorOrDescendant && unroot(resolvedPath).length > 0
 
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
