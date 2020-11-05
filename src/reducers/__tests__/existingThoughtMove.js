@@ -232,13 +232,58 @@ it('moving unrelated thought should not update cursor', () => {
 
 })
 
+it('move root thought into another root thought', async () => {
+
+  const text = `
+  - x
+  - a
+    - b
+     - c`
+
+  const steps = [
+    importText({ path: RANKED_ROOT, text }),
+    existingThoughtMove({
+      oldPath: [{ value: 'a', rank: 1 }],
+      newPath: [{ value: 'x', rank: 0 }, { value: 'a', rank: 0 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - x
+    - a
+      - b
+        - c`)
+
+  expect(getContexts(stateNew, 'a'))
+    .toMatchObject([{
+      context: ['x'],
+      rank: 0,
+    }])
+
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([{
+      context: ['x', 'a'],
+      rank: 0,
+    }])
+  expect(getContexts(stateNew, 'c'))
+    .toMatchObject([{
+      context: ['x', 'a', 'b'],
+      rank: 0,
+    }])
+
+})
+
 // ensure that siblings of descendants are properly merged into final result
 it('move descendants with siblings', async () => {
 
-  const text = `- a
-  - b
-   - c
-   - d`
+  const text = `
+  - a
+    - b
+     - c
+     - d`
 
   const steps = [
     importText({ path: RANKED_ROOT, text }),
