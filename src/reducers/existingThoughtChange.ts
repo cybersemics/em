@@ -33,7 +33,6 @@ interface Payload {
   showContexts?: boolean,
   path: SimplePath,
   rankInContext?: number,
-  contextChain?: SimplePath[],
 }
 
 interface RecursiveUpdateResult {
@@ -44,7 +43,7 @@ interface RecursiveUpdateResult {
 }
 
 /** Changes the text of an existing thought. */
-const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, path, rankInContext, contextChain }: Payload) => {
+const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, path, rankInContext }: Payload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   const { cursor } = state
@@ -178,7 +177,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       lastUpdated: timestamp(),
       ...archived ? { archived } : {}
     } : [])
-    : null
+    : []
 
   /**
    * Recursive function to change thought within the context of all descendants.
@@ -307,8 +306,11 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     contextViews: contextViewsNew,
   }
 
-  // @ts-ignore
-  return updateThoughts(stateNew, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain })
+  return updateThoughts(stateNew, {
+    thoughtIndexUpdates,
+    contextIndexUpdates,
+    recentlyEdited,
+  })
 }
 
 export default _.curryRight(existingThoughtChange)
