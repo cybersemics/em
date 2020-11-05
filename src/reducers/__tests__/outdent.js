@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import outdent from '../outdent'
 import setCursor from '../setCursor'
@@ -10,8 +11,8 @@ import setCursor from '../setCursor'
 it('outdent within root', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('a1'),
     outdent
   ]
 
@@ -28,10 +29,10 @@ it('outdent within root', () => {
 it('outdent with no cursor should do nothing ', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => setCursor(state, { thoughtsRanked: null }),
-    outdent
+    newThought('a'),
+    newSubthought('a1'),
+    setCursor({ path: null }),
+    state => outdent(state)
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -47,8 +48,8 @@ it('outdent with no cursor should do nothing ', () => {
 it('outdent root thought should do nothing ', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
+    newThought('a'),
+    newThought('b'),
     outdent
   ]
 
@@ -65,9 +66,9 @@ it('outdent root thought should do nothing ', () => {
 it('outdent within context', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('a1'),
+    newSubthought('a2'),
     outdent
   ]
 
@@ -85,9 +86,9 @@ it('outdent within context', () => {
 it('preserve cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2', insertNewSubthought: true }),
+    newThought('a'),
+    newSubthought('a1'),
+    newSubthought('a2'),
     outdent
   ]
 

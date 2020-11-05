@@ -1,26 +1,24 @@
+import { act } from 'react-dom/test-utils'
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
+import { store } from '../../store'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 // reducers
-import newThought from '../newThought'
-import deleteThought from '../deleteThought'
-import setCursor from '../setCursor'
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
+import deleteThought from '../deleteThought'
+import newSubthought from '../newSubthought'
+import newThought from '../newThought'
+import setCursor from '../setCursor'
 
 it('delete thought within root', () => {
 
   const steps = [
-
-    // new thought 1 in root
-    state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
-    state => newThought(state, { value: 'b' }),
-
-    // delete thought
-    deleteThought
+    newThought('a'),
+    newThought('b'),
+    deleteThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -35,18 +33,10 @@ it('delete thought within root', () => {
 it('delete thought with no cursor should do nothing ', () => {
 
   const steps = [
-
-    // new thought 1 in root
-    state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
-    state => newThought(state, { value: 'b' }),
-
-    // clear cursor
-    state => setCursor(state, { thoughtsRanked: null }),
-
-    // delete thought
-    deleteThought
+    newThought('a'),
+    newThought('b'),
+    setCursor({ path: null }),
+    deleteThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -62,15 +52,9 @@ it('delete thought with no cursor should do nothing ', () => {
 it('delete thought within context', () => {
 
   const steps = [
-
-    // new thought 1 in root
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // delete thought
-    deleteThought
+    newThought('a'),
+    newSubthought('a1'),
+    deleteThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -85,20 +69,11 @@ it('delete thought within context', () => {
 it('delete descendants', () => {
 
   const steps = [
-
-    // new thought 1 in root
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new subthought
-    state => newThought(state, { value: 'a1.1', insertNewSubthought: true }),
-
+    newThought('a'),
+    newSubthought('a1'),
+    newSubthought('a1.1'),
     cursorBack,
-
-    // delete thought
-    deleteThought
+    deleteThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -113,54 +88,31 @@ it('delete descendants', () => {
 it('cursor should move to prev sibling', () => {
 
   const steps = [
-
-    // new thought in root
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new subthought 2
-    state => newThought(state, { value: 'a2' }),
-
-    // new subthought 3
-    state => newThought(state, { value: 'a3' }),
-
-    cursorUp,
-
-    // delete thought
-    deleteThought,
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
+    newThought('a3'),
+    deleteThought({}),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }])
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }])
 
 })
 
 it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
-
-    // new thought in root
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new subthought 2
-    state => newThought(state, { value: 'a2' }),
-
-    // new subthought 3
-    state => newThought(state, { value: 'a3' }),
-
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
+    newThought('a3'),
     cursorUp,
     cursorUp,
-
-    // delete thought
-    deleteThought,
+    deleteThought({}),
   ]
 
   // run steps through reducer flow
@@ -174,15 +126,9 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 it('cursor should move to parent if the deleted thought has no siblings', () => {
 
   const steps = [
-
-    // new thought in root
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // delete thought
-    deleteThought,
+    newThought('a'),
+    newSubthought('a1'),
+    deleteThought({}),
   ]
 
   // run steps through reducer flow
@@ -196,17 +142,42 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 it('cursor should be removed if the last thought is deleted', () => {
 
   const steps = [
-
-    // new thought in root
-    state => newThought(state, { value: 'a' }),
-
-    // delete thought
-    deleteThought,
+    newThought('a'),
+    deleteThought({}),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
+
+})
+
+/** Mount tests required for caret. */
+describe('mount', () => {
+
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  it('after deleting first child, caret should move to beginning of next sibling', async () => {
+    store.dispatch([
+      { type: 'newThought', value: 'apple' },
+      { type: 'newThought', value: 'banana' },
+      { type: 'cursorUp' },
+      { type: 'deleteThought' },
+    ])
+    act(jest.runOnlyPendingTimers)
+    expect(window.getSelection()?.focusOffset).toBe(0)
+  })
+
+  it('after deleting last child, caret should move to end of previous sibling', async () => {
+    store.dispatch([
+      { type: 'newThought', value: 'apple' },
+      { type: 'newThought', value: 'banana' },
+      { type: 'deleteThought' },
+    ])
+    act(jest.runOnlyPendingTimers)
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+  })
 
 })

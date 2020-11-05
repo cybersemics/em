@@ -1,0 +1,32 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
+        with:
+          # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
+          persist-credentials: false
+
+      - name: Install npm dependencies 🛠
+        run: npm ci
+
+      - name: Build 🔧
+        run: npm run docs
+
+      - name: NoJekyll 🎃
+        run: touch docs/.nojekyll
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@releases/v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: docs

@@ -7,20 +7,70 @@
   },
   "extends": [
     "plugin:react/recommended",
-    "standard"
+    "standard",
+    "plugin:import/typescript"
   ],
-  "overrides": [{
-    "files": ["*.ts", "*.tsx"],
-    "rules": {
-      "semi": "off",
-      "Extra semicolon": "off",
-      "import/prefer-default-export": "off",
-      // temporary fix from 'typescript-elint' docs  https://bit.ly/2XhUE8h
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["error"]
+  "ignorePatterns": "scripts",
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "env": { "browser": true, "es6": true, "node": true },
+      "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended"
+      ],
+      "globals": { "Atomics": "readonly", "SharedArrayBuffer": "readonly" },
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "ecmaFeatures": { "jsx": true },
+        "ecmaVersion": 2018,
+        "sourceType": "module",
+        "project": "./tsconfig.json"
+      },
+      "plugins": ["@typescript-eslint"],
+      "rules": {
+        "import/prefer-default-export": 0,
+        // temporary fix from 'typescript-elint' docs
+        // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
+        "no-extra-parens": 0,
+        "no-unused-vars": 0,
+        "@typescript-eslint/member-delimiter-style": [2, {
+          "multiline": {
+            "delimiter": "comma"
+          },
+          "singleline": {
+            "delimiter": "comma"
+          }
+        }],
+        "@typescript-eslint/no-explicit-any": 0,
+        "@typescript-eslint/no-extra-parens": [
+          2,
+          "all",
+          {
+            "nestedBinaryExpressions": false
+          }
+        ],
+        "@typescript-eslint/no-non-null-assertion": 0,
+        "@typescript-eslint/no-use-before-define": 0,
+        "@typescript-eslint/no-unused-vars": 2,
+        "@typescript-eslint/explicit-function-return-type": 0,
+        "@typescript-eslint/explicit-module-boundary-types": 0,
+        "@typescript-eslint/ban-ts-ignore": 0,
+        "@typescript-eslint/ban-ts-comment": 0,
+        "@typescript-eslint/array-type": [2, {
+          "array-type": "array"
+        }],
+        // jsx
+        "jsx-quotes": [
+          "error",
+          "prefer-single"
+        ]
+      },
+      "settings": { "react": { "version": "detect" } }
     }
-  }],
- // to be removed later
+  ],
+  // to be removed later
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
@@ -31,10 +81,11 @@
     },
     "ecmaVersion": 2018,
     "sourceType": "module",
-    "project": "./tsconfig.eslint.json"
+    "project": "./tsconfig.json"
   },
   "parser": "@typescript-eslint/parser",
   "plugins": [
+    "export-default-identifier",
     "fp",
     "jsdoc",
     "react",
@@ -70,13 +121,6 @@
         "flatTernaryExpressions": true
       }
     ],
-    "no-extra-parens": [
-      2,
-      "all",
-      {
-        "nestedBinaryExpressions": false
-      }
-    ],
     "no-var": 2,
     "object-curly-newline": 0,
     "object-property-newline": 0,
@@ -89,13 +133,12 @@
         "allowTemplateLiterals": true
       }
     ],
-    "sort-imports": [
-      2,
-      {
-        "ignoreDeclarationSort": true
-      }
-    ],
     "space-before-function-paren": 0,
+
+    // export-default-identifier
+    "export-default-identifier/export-default-identifier": [2, {
+      "types": ["Identifier", "CallExpression", "FunctionDeclaration"]
+    }],
 
     // fp
     "fp/no-class": 2,
@@ -126,7 +169,12 @@
     "jsdoc/check-alignment": 2,
     "jsdoc/check-indentation": 2,
     "jsdoc/check-syntax": 2,
-    "jsdoc/check-tag-names": 2,
+    "jsdoc/check-tag-names": [
+      2,
+      {
+        "definedTags": ["packageDocumentation"]
+      }
+    ],
     "jsdoc/check-types": 2,
     "jsdoc/implements-on-classes": 2,
     "jsdoc/newline-after-description": 2,

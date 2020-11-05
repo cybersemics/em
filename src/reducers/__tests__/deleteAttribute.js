@@ -12,17 +12,17 @@ it('delete attribute', () => {
   const steps = [
 
     // new thought
-    state => newThought(state, { value: 'a' }),
+    newThought('a'),
 
     // set attribute
-    state => setAttribute(state, {
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
 
     // delete attribute
-    state => deleteAttribute(state, {
+    deleteAttribute({
       context: ['a'],
       key: '=test'
     })

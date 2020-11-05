@@ -1,19 +1,18 @@
 import { ROOT_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
 
-// reducers
-import newThought from '../newThought'
-import archiveThought from '../archiveThought'
-import setCursor from '../setCursor'
-import cursorUp from '../cursorUp'
+// TODO: Why does util have to be imported before selectors and reducers?
+import { initialState, reducerFlow } from '../../util'
+
+import { exportContext, getContexts } from '../../selectors'
+import { archiveThought, cursorUp, newSubthought, newThought, setCursor, toggleContextView } from '../../reducers'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('archive a thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    archiveThought,
+    newThought('a'),
+    newThought('b'),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -30,11 +29,11 @@ it('archive a thought', () => {
 it('deduplicate archived thoughts with the same value', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => newThought(state, { value: 'b' }),
-    archiveThought,
-    archiveThought,
+    newThought('a'),
+    newThought('b'),
+    newThought('b'),
+    archiveThought({}),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -51,9 +50,9 @@ it('deduplicate archived thoughts with the same value', () => {
 it('do nothing if there is no cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => setCursor(state, { thoughtsRanked: null }),
-    archiveThought,
+    newThought('a'),
+    setCursor({ path: null }),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -68,11 +67,11 @@ it('do nothing if there is no cursor', () => {
 it('move to top of archive', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => newThought(state, { value: 'c' }),
-    archiveThought,
-    archiveThought,
+    newThought('a'),
+    newThought('b'),
+    newThought('c'),
+    archiveThought({}),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -90,9 +89,9 @@ it('move to top of archive', () => {
 it('permanently delete empty thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: '' }),
-    archiveThought
+    newThought('a'),
+    newThought(''),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -107,15 +106,11 @@ it('permanently delete empty thought', () => {
 it('permanently delete thought from archive', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    archiveThought,
-    state => setCursor(state, {
-      thoughtsRanked: [{ value: '=archive', rank: -1 }, { value: 'b', rank: 0 }]
-    }),
-
-    // delete the archived thought
-    archiveThought,
+    newThought('a'),
+    newThought('b'),
+    archiveThought({}),
+    setCursorFirstMatch(['=archive', 'b']),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -131,15 +126,11 @@ it('permanently delete thought from archive', () => {
 it('permanently delete archive', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    archiveThought,
-    state => setCursor(state, {
-      thoughtsRanked: [{ value: '=archive', rank: -1 }]
-    }),
-
-    // delete the archive
-    archiveThought,
+    newThought('a'),
+    newThought('b'),
+    archiveThought({}),
+    setCursorFirstMatch(['=archive']),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -149,17 +140,48 @@ it('permanently delete archive', () => {
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a`)
 
+  // ensure =archive is removed from thoughtIndex
+  expect(getContexts(stateNew, '=archive'))
+    .toHaveLength(0)
+
+})
+
+it('permanently delete archive with descendants', () => {
+
+  const steps = [
+    newThought('a'),
+    newSubthought('b'),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    archiveThought({}),
+    setCursorFirstMatch(['=archive']),
+    archiveThought({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}`)
+
+  // ensure =archive is removed from thoughtIndex
+  expect(getContexts(stateNew, '=archive'))
+    .toHaveLength(0)
+
+  // ensure descendants are remvoed from thoughtIndex
+  expect(getContexts(stateNew, 'a'))
+    .toHaveLength(0)
+
 })
 
 it('cursor should move to prev sibling', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
-    state => newThought(state, { value: 'a3' }),
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
+    newThought('a3'),
     cursorUp,
-    archiveThought,
+    archiveThought({}),
   ]
 
   // run steps through reducer flow
@@ -173,13 +195,13 @@ it('cursor should move to prev sibling', () => {
 it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
-    state => newThought(state, { value: 'a3' }),
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
+    newThought('a3'),
     cursorUp,
     cursorUp,
-    archiveThought,
+    archiveThought({}),
   ]
 
   // run steps through reducer flow
@@ -193,9 +215,9 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 it('cursor should move to parent if the deleted thought has no siblings', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    archiveThought,
+    newThought('a'),
+    newSubthought('a1'),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow
@@ -209,13 +231,141 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 it('cursor should be removed if the last thought is deleted', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    archiveThought,
+    newThought('a'),
+    archiveThought({}),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
+
+})
+
+it('empty thought should be archived if it has descendants', () => {
+
+  const steps = [
+    newThought('a'),
+    newThought(''),
+    newSubthought('b'),
+    setCursor({
+      path: [{ value: '', rank: 1 }]
+    }),
+    archiveThought({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - =archive
+    -${' '}
+      - b
+  - a`)
+
+})
+
+describe('context view', () => {
+
+  it('archive thought from context view', async () => {
+    const steps = [
+      newThought({ value: 'a' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      newThought({ value: 'x', insertNewSubthought: true }),
+      cursorUp,
+      cursorUp,
+      newThought({ value: 'b' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      setCursorFirstMatch(['a', 'm']),
+      toggleContextView,
+      setCursorFirstMatch(['a', 'm', 'b']),
+      archiveThought({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+    const expected = `- ${ROOT_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - =archive
+      - m`
+    expect(exported).toBe(expected)
+  })
+
+  it('archive thought with descendants from context view', async () => {
+    const steps = [
+      newThought({ value: 'a' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      newThought({ value: 'x', insertNewSubthought: true }),
+      setCursorFirstMatch(['a']),
+      newThought({ value: 'b' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      toggleContextView,
+      setCursorFirstMatch(['b', 'm', 'a']),
+      archiveThought({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+    const expected = `- ${ROOT_TOKEN}
+  - a
+    - =archive
+      - m
+        - x
+  - b
+    - m`
+    expect(exported).toBe(expected)
+  })
+
+  it('cursor should move to prev sibling', () => {
+
+    // same steps as "archive thought from context view"
+    const steps = [
+      newThought({ value: 'a' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      newThought({ value: 'x', insertNewSubthought: true }),
+      cursorUp,
+      cursorUp,
+      newThought({ value: 'b' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      setCursorFirstMatch(['a', 'm']),
+      toggleContextView,
+      setCursorFirstMatch(['a', 'm', 'b']),
+      archiveThought({}),
+    ]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor)
+      .toMatchObject([{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }, { value: 'a', rank: 0 }])
+
+  })
+
+  it('cursor should move to next sibling if there is no prev sibling', () => {
+
+    // same steps as "archive thought with descendants from context view"
+    const steps = [
+      newThought({ value: 'a' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      newThought({ value: 'x', insertNewSubthought: true }),
+      setCursorFirstMatch(['a']),
+      newThought({ value: 'b' }),
+      newThought({ value: 'm', insertNewSubthought: true }),
+      toggleContextView,
+      setCursorFirstMatch(['b', 'm', 'a']),
+      archiveThought({}),
+    ]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor)
+      .toMatchObject([{ value: 'b', rank: 1 }, { value: 'm', rank: 0 }, { value: 'b', rank: 1 }])
+
+  })
 
 })

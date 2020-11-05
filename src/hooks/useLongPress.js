@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { NOOP } from '../constants'
 
 /** Custom hook useLongPress.js to manage long press. */
-export default function useLongPress(onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) {
+const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) => {
   const [startLongPress, setStartLongPress] = useState(false)
   const [startCallbackDispatched, setStartCallbackDispatched] = useState(false)
   const timerIdRef = useRef()
@@ -47,3 +47,5 @@ export default function useLongPress(onLongPressStart = NOOP, onLongPressEnd = N
     onTouchCancel: stop
   }
 }
+
+export default useLongPress

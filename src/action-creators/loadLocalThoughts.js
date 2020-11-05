@@ -10,13 +10,14 @@ import {
 import {
   isRoot,
   logWithTime,
+  scrollCursorIntoView,
 } from '../util'
 
 // selectors
 import {
   decodeThoughtsUrl,
   expandThoughts,
-  getThoughts,
+  getAllChildren,
 } from '../selectors'
 
 // action creators
@@ -27,28 +28,27 @@ import {
 /** Loads thoughts from the IndexedDB database. */
 const loadLocalThoughts = () => async (dispatch, getState) => {
 
-  // TODO: Fix IndexedDB during tests
-  const test = process.env.NODE_ENV === 'test'
-
-  const { cursor } = test ? {} : await getHelpers()
+  const { cursor } = await getHelpers()
 
   logWithTime('loadLocalThoughts: getHelpers')
 
-  const contextIndex = test ? {} : await getContextIndex()
+  const contextIndex = await getContextIndex()
   logWithTime('loadLocalThoughts: contextIndex loaded from IndexedDB')
 
-  const thoughtIndex = test ? {} : await getThoughtIndex()
+  const thoughtIndex = await getThoughtIndex()
   logWithTime('loadLocalThoughts: thoughtIndex loaded from IndexedDB')
 
   const thoughts = { contextIndex, thoughtIndex }
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)
-  const cursorNew = isRoot(thoughtsRanked) ? null : thoughtsRanked
+  const { path, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)
+  const cursorNew = isRoot(path) ? null : path
   const expanded = expandThoughts(
     { thoughts, contextViews },
     cursorNew || []
   )
+
+  setTimeout(scrollCursorIntoView)
 
   // instantiate initial Settings if it does not exist
   dispatch({
@@ -62,7 +62,7 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
 
   logWithTime('loadLocalThoughts: action dispatched')
 
-  if (getThoughts({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
+  if (getAllChildren({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
     await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
   }
 }

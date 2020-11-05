@@ -1,12 +1,14 @@
-import { Nullable } from '../utilTypes'
+// Most specific overload must come first
+// See: https://www.typescriptlang.org/docs/handbook/functions.html
+export function parseJsonSafe<T>(value: string | null, defaultValue: T): T
+export function parseJsonSafe(value: string | null): unknown
 
 /** Safely JSON parse an unknown value, and default to a given fallback value. */
-export const parseJsonSafe = (value: Nullable<string>, defaultValue: any) => {
-  let parsedValue = defaultValue // eslint-disable-line fp/no-let
+export function parseJsonSafe<T>(value: string | null, defaultValue?: T): any {
   try {
-    parsedValue = value && JSON.parse(value)
+    return value && JSON.parse(value)
   }
   catch (e) {
+    return defaultValue
   }
-  return parsedValue
 }

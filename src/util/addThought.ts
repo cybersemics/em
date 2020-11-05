@@ -2,10 +2,10 @@
 import { timestamp } from './timestamp'
 import { getThought } from '../selectors'
 import { Context } from '../types'
-import { PartialStateWithThoughts } from './initialState'
+import { State } from './initialState'
 
 /** Create a new thought, merging collisions. */
-export const addThought = (state: PartialStateWithThoughts, value: string, rank: number, context: Context) => {
+export const addThought = (state: State, value: string, rank: number, id: string, context: Context) => {
   const thoughtOld = getThought(state, value)
   return {
     ...thoughtOld,
@@ -15,7 +15,8 @@ export const addThought = (state: PartialStateWithThoughts, value: string, rank:
       : []
     ).concat({
       context,
-      rank
+      rank,
+      id
     }),
     created: thoughtOld && thoughtOld.created
       ? thoughtOld.created

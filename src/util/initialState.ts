@@ -1,59 +1,99 @@
-import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
+import { EM_TOKEN, MODALS, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Lexeme, ParentEntry, Path } from '../types'
-import { GenericObject, Nullable } from '../utilTypes'
 import { canShowModal } from '../selectors'
-import { hashContext, hashThought, isDocumentEditable, parseJsonSafe, timestamp } from '../util'
+import { Alert, Context, Index, Lexeme, Parent, Patch, Path, Ref, SimplePath, User } from '../types'
+
+// import util functions directly since importing from ../util/index causes circular dependency
+import { hashContext } from '../util/hashContext'
+import { hashThought } from '../util/hashThought'
+import { isDocumentEditable } from '../util/isDocumentEditable'
+import { parseJsonSafe } from '../util/parseJsonSafe'
+import { timestamp } from '../util/timestamp'
 
 interface ModalProperties {
   complete: boolean,
-  hideuntil: number
+  hideuntil: number,
 }
+
+export interface ThoughtsInterface {
+  thoughtIndex: Index<Lexeme>,
+  contextIndex?: Index<Parent>,
+}
+
+// Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed
+// interface RecentlyEditedLeaf {
+//   leaf: true,
+//   lastUpdated: Timestamp,
+//   path: Path,
+// }
+// type RecentlyEditedTree = Index<RecentlyEditedTree> causes circular reference error
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// export interface RecentlyEditedTree extends Index<RecentlyEditedTree> {}
+type RecentlyEditedTree = Index
 
 export interface State {
-  alert: any,
+  alert?: Alert,
+  archived?: boolean,
   authenticated: boolean,
   autologin: boolean,
-  thoughts: {
-    thoughtIndex: GenericObject<Lexeme>,
-    contextIndex?: GenericObject<ParentEntry>
-  },
-  modals: GenericObject<ModalProperties>,
-  contextViews: GenericObject<boolean>,
-  cursor: Nullable<Path>,
-  cursorBeforeEdit: Nullable<Path>,
-  cursorBeforeSearch: Nullable<Path>,
-  cursorHistory: any[],
+  contextViews: Index<boolean>,
+  cursor: Path | null,
+  cursorBeforeEdit: Path | null,
+  cursorBeforeSearch: Path | null,
+  cursorHistory: Path[],
   cursorOffset: number,
   dataNonce: number,
-  editing: Nullable<boolean>,
-  editingValue: Nullable<string>,
-  expanded: GenericObject<boolean>,
-  focus: Path,
+  draggedSimplePath?: SimplePath,
+  draggingThought?: SimplePath,
+  dragHold?: boolean,
+  dragInProgress: boolean,
+  editableNonce: number,
+  editing: (boolean | null),
+  editingValue: (string | null),
+  error?: string | null,
+  expanded: Index<boolean>,
+  expandedContextThought?: Path,
+  hoveringThought?: Context,
   invalidState: boolean,
   isLoading: boolean,
+  modals: Index<ModalProperties>,
   noteFocus: boolean,
-  recentlyEdited: any,
-  resourceCache: any,
-  schemaVersion: any,
+  recentlyEdited: RecentlyEditedTree,
+  resourceCache: Index<string>,
+  schemaVersion: number,
   scrollPrioritized: boolean,
+  search: (string | null),
+  searchLimit?: number,
   showHiddenThoughts: boolean,
-  showModal: any,
+  showModal?: string | null,
+  showQueue?: boolean | null,
   showSidebar: boolean,
   showSplitView: boolean,
-  splitPosition: any,
-  status: any,
-  toolbarOverlay: any
+  showTopControls: boolean,
+  showBreadcrumbs: boolean,
+  splitPosition: number,
+  status: string,
+  syncQueue?: {
+    contextIndexUpdates?: Index<Parent | null>,
+    thoughtIndexUpdates?: Index<Lexeme | null>,
+    recentlyEdited?: RecentlyEditedTree,
+    updates?: Index<string>,
+    local?: boolean,
+    remote?: boolean,
+  },
+  thoughts: ThoughtsInterface,
+  toolbarOverlay: string | null,
+  tutorialStep?: number,
+  user?: User,
+  userRef?: Ref,
+  patches: Patch[],
+  inversePatches: Patch[],
 }
-
-export type PartialStateWithThoughts =
-  Partial<State> & Pick<State, 'thoughts'>
 
 /** Generates the initial state of the application. */
 export const initialState = () => {
 
   const state: State = {
-    alert: null,
     authenticated: false,
     autologin: localStorage.autologin === 'true',
     contextViews: {},
@@ -63,10 +103,11 @@ export const initialState = () => {
     cursorHistory: [],
     cursorOffset: 0,
     dataNonce: 0, // cheap trick to re-render when thoughtIndex has been updated
+    dragInProgress: false,
+    editableNonce: 0,
     editing: null,
     editingValue: null,
     expanded: {},
-    focus: RANKED_ROOT,
     invalidState: false,
     isLoading: true,
     modals: {},
@@ -75,10 +116,12 @@ export const initialState = () => {
     resourceCache: {},
     schemaVersion: SCHEMA_LATEST,
     scrollPrioritized: false,
+    search: null,
     showHiddenThoughts: false,
-    showModal: null,
     showSidebar: false,
     showSplitView: false,
+    showTopControls: true,
+    showBreadcrumbs: true,
     splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
@@ -92,6 +135,7 @@ export const initialState = () => {
       // store children indexed by the encoded context for O(1) lookup of children
       contextIndex: {
         [hashContext([ROOT_TOKEN])]: {
+          context: [ROOT_TOKEN],
           children: [],
           lastUpdated: timestamp()
         },
@@ -99,7 +143,6 @@ export const initialState = () => {
       thoughtIndex: {
         [hashThought(ROOT_TOKEN)]: {
           value: ROOT_TOKEN,
-          rank: 0,
           contexts: [],
           // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
           created: timestamp(),
@@ -109,7 +152,6 @@ export const initialState = () => {
         // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
         [hashThought(EM_TOKEN)]: {
           value: EM_TOKEN,
-          rank: 0,
           contexts: [],
           created: timestamp(),
           lastUpdated: timestamp()
@@ -117,14 +159,14 @@ export const initialState = () => {
       },
     },
     toolbarOverlay: null,
+    patches: [],
+    inversePatches: []
   }
-
-  // initial modal states
-  const modals = ['welcome', 'help', 'home', 'export']
-  modals.forEach(value => {
-    state.modals[value] = {
-      complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + value] || 'false'),
-      hideuntil: JSON.parse(localStorage['modal-hideuntil-' + value] || '0')
+  Object.keys(MODALS).forEach(key => {
+    // initial modal states
+    state.modals[MODALS[key]] = {
+      complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + MODALS[key]] || 'false'),
+      hideuntil: JSON.parse(localStorage['modal-hideuntil-' + MODALS[key]] || '0')
     }
   })
 

@@ -1,17 +1,37 @@
 import { store } from '../../store'
-import { createTestApp } from '../../setupTests'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
-import { pathToContext } from '../../util'
+import { equalArrays, pathToContext } from '../../util'
 import { importText } from '../../action-creators'
+import Editable from '../Editable'
 import Thought from '../Thought'
+import Subthoughts from '../Subthoughts'
+
+/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
+const whereContext = context => node => equalArrays(pathToContext(node.props().simplePath), context)
+
+/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts resolved path. */
+const wherePath = context => node => node.props().path && equalArrays(pathToContext(node.props().path), context)
+
+// const debugThoughtWrapper = wrapper => wrapper.map(node => ({
+//   name: node.name(),
+//   context: node.props().simplePath.map(child => child.value),
+//   contextChain: JSON.stringify(node.props().contextChain),
+//   props: node.props(),
+//   html: node.html(),
+// }))
+
+let wrapper = null // eslint-disable-line fp/no-let
 
 // cannot figure out how to unmount and reset after each test so that we can use beforeEach
-beforeAll(async () => {
-  createTestApp()
+beforeEach(async () => {
+  wrapper = await createTestApp()
+  // set url back to home
 })
 
 afterEach(async () => {
-  store.dispatch({ type: 'clear' })
+  await cleanupTestApp()
+  wrapper = null
 })
 
 it('normal view', async () => {
@@ -22,121 +42,182 @@ it('normal view', async () => {
   - c`))
 
   // set the cursor to expand the subthoughts
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }] })
+  store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }] })
 
   // update DOM
-  document.wrapper.update()
+  wrapper.update()
 
   // select elements
-  const subthoughtsWrapper = document.wrapper.find('.children .children')
+  const subthoughtsWrapper = wrapper.find('.children .children')
   const thoughtsWrapper = subthoughtsWrapper.find(Thought)
 
   // assert
   expect(thoughtsWrapper).toHaveLength(2)
-  expect(pathToContext(thoughtsWrapper.at(0).props().thoughtsRanked))
+  expect(pathToContext(thoughtsWrapper.first().props().simplePath))
     .toMatchObject(['a', 'b'])
-  expect(pathToContext(thoughtsWrapper.at(1).props().thoughtsRanked))
+  expect(pathToContext(thoughtsWrapper.at(1).props().simplePath))
     .toMatchObject(['a', 'c'])
 
 })
 
-it('context view', async () => {
+describe('context view', () => {
 
-  // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `- a
+  it('render contexts of cursor thought when context view is enabled', async () => {
+
+    // import thoughts
+    await store.dispatch(importText(RANKED_ROOT, `- a
   - m
     - x
 - b
   - m
     - y`))
 
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] })
-  store.dispatch({ type: 'toggleContextView' })
+    store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] })
+    store.dispatch({ type: 'toggleContextView' })
 
-  // update DOM
-  document.wrapper.update()
+    // update DOM
+    wrapper.update()
 
-  // select elements
-  const subthoughtsWrapper = document.wrapper.find('.children .children')
-  const thoughtsWrapper = subthoughtsWrapper.find(Thought)
-  const contextViewSubthoughtsWrapper = thoughtsWrapper.at(0).find('.children')
+    // assert context view container
+    const subthoughtsWrapper = wrapper
+      .find(Subthoughts)
+      .filterWhere(whereContext(['a', 'm']))
+      .first() // have to select first node, as second node is empty-children with contextChain (?)
 
-  // assert context view container
-  expect(contextViewSubthoughtsWrapper).toHaveLength(1)
-  const contextsWrapper = contextViewSubthoughtsWrapper.find(Thought)
+    // assert contexts
+    const contextsWrapper = subthoughtsWrapper.find(Thought)
+    expect(contextsWrapper).toHaveLength(2)
+    expect(contextsWrapper.at(0).props())
+      .toMatchObject({
+        showContexts: true,
+        simplePath: [{ value: 'a' }, { value: 'm' }],
+      })
+    expect(contextsWrapper.at(1).props())
+      .toMatchObject({
+        showContexts: true,
+        simplePath: [{ value: 'b' }, { value: 'm' }],
+      })
 
-  // assert contexts
-  expect(contextsWrapper).toHaveLength(2)
-  expect(contextsWrapper.at(0).props())
-    .toMatchObject({
-      showContexts: true,
-      thoughtsRanked: [{ value: 'a' }, { value: 'm' }],
-    })
-  expect(contextsWrapper.at(1).props())
-    .toMatchObject({
-      showContexts: true,
-      thoughtsRanked: [{ value: 'b' }, { value: 'm' }],
-    })
+  })
 
-})
+  it('render context children of contexts that have different lexeme instances', async () => {
 
-it('context view', async () => {
-
-  // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `- a
+    // import thoughts
+    await store.dispatch(importText(RANKED_ROOT, `- a
   - one
     - x
 - b
   - ones
     - y`))
 
-  // enable Context View on /a/one and navigate to /a/one/a~
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })
-  store.dispatch({ type: 'toggleContextView' })
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }, { value: 'a', rank: 0 }] })
+    // enable Context View on /a/one
+    store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })
+    store.dispatch({ type: 'toggleContextView' })
 
-  // update DOM
-  document.wrapper.update()
+    // update DOM
+    wrapper.update()
 
-  // TODO: Can't seem to get it to work using nested Component selectors
-  /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-  // const whereContext = context => node => equalArrays(pathToContext(node.props().thoughtsRanked), context)
+    /** Select /a/one Subthoughts component. Call function after re-render to use new DOM. */
+    const subthoughtsAOne = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(whereContext(['a', 'one']))
+    const subthoughtsAOne1 = subthoughtsAOne()
+    expect(subthoughtsAOne1).toHaveLength(2)
 
-  // select elements
-  const subthoughtsWrapper = document.wrapper.find('.children .children .children')
-  const thoughtsWrapper = subthoughtsWrapper.find(Thought)
-  const contextViewSubthoughtsWrapper = thoughtsWrapper.at(0).find('.children')
+    // select first context (a)
+    // use childAt to get passed Connected HOC
+    const editableAOneA = subthoughtsAOne1.find(Editable).at(0).childAt(0)
+    expect(editableAOneA).toHaveLength(1)
 
-  // assert context view container
-  expect(contextViewSubthoughtsWrapper).toHaveLength(1)
-  const contextsWrapper = contextViewSubthoughtsWrapper.find(Thought)
+    // focus on a/one~/a to get it to expand
+    editableAOneA.simulate('focus')
+    wrapper.update()
 
-  // assert contexts
-  expect(contextsWrapper).toHaveLength(1)
-  expect(contextsWrapper.at(0).props())
-    .toMatchObject({
-      thoughtsRanked: [{ value: 'a' }, { value: 'one' }, { value: 'x', rank: 2 }],
-    })
+    // select a/one~/a Subthoughts component
+    const subthoughtsAOneA = subthoughtsAOne()
+      .find(Subthoughts)
+      .filterWhere(wherePath(['a', 'one', 'a']))
+    expect(subthoughtsAOneA).toHaveLength(1)
 
-  // navigate to /a/one/b~
-  store.dispatch({ type: 'setCursor', thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }, { value: 'b', rank: 3 }] })
+    // assert that child of context is rendered
+    const thoughtsAOneA = subthoughtsAOneA.find(Thought)
+    expect(thoughtsAOneA).toHaveLength(1)
+    expect(thoughtsAOneA.first().props())
+      .toMatchObject({
+        simplePath: [{ value: 'a' }, { value: 'one' }, { value: 'x' }],
+      })
 
-  // update DOM
-  document.wrapper.update()
+    // select second context (b)
+    // focus on a/one~/b to get it to expand
+    const editableAOneB = subthoughtsAOne1.find(Editable).at(1).childAt(0)
+    expect(editableAOneB).toHaveLength(1)
+    editableAOneB.simulate('focus')
+    wrapper.update()
 
-  // select elements
-  const subthoughtsWrapper2 = document.wrapper.find('.children .children .children')
-  const thoughtsWrapper2 = subthoughtsWrapper2.find(Thought)
-  const contextViewSubthoughtsWrapper2 = thoughtsWrapper2.at(1).find('.children')
+    // select a/one~/b Subthoughts component
+    const subthoughtsAOneB = subthoughtsAOne()
+      .find(Subthoughts)
+      .filterWhere(wherePath(['a', 'one', 'b']))
+    expect(subthoughtsAOneB).toHaveLength(1)
 
-  // assert context view container
-  expect(contextViewSubthoughtsWrapper2).toHaveLength(1)
-  const contextsWrapper2 = contextViewSubthoughtsWrapper2.find(Thought)
+    // assert that child of context is rendered
+    const thoughtsAOneB = subthoughtsAOneB.find(Thought)
+    expect(thoughtsAOneB).toHaveLength(1)
+    expect(thoughtsAOneB.first().props())
+      .toMatchObject({
+        simplePath: [{ value: 'b' }, { value: 'ones' }, { value: 'y' }],
+      })
+  })
 
-  // assert contexts
-  expect(contextsWrapper2).toHaveLength(1)
-  expect(contextsWrapper2.at(0).props())
-    .toMatchObject({
-      thoughtsRanked: [{ value: 'b' }, { value: 'ones' }, { value: 'y', rank: 7 }],
-    })
+  it('calculate proper resolved path for a children inside context view with duplicate lexeme', async () => {
+
+    // Explaination: https://github.com/cybersemics/em/pull/878#issuecomment-717057916
+
+    // import thoughts
+    await store.dispatch(importText(RANKED_ROOT, `
+    - a
+      - b
+        - c
+          - d
+            - c`))
+
+    // enable Context View on /a/b/c/d/c
+    store.dispatch([
+      {
+        type: 'setCursor', path: [
+          { value: 'a', rank: 0 },
+          { value: 'b', rank: 0 },
+          { value: 'c', rank: 0 },
+          { value: 'd', rank: 0 },
+          { value: 'c', rank: 0 },
+        ]
+      },
+      { type: 'toggleContextView' }
+    ])
+
+    /*
+    Expected structure after activating context view.
+    - a
+      - b
+        - c
+          - d
+            - c ~
+              - a.b.c (first)
+              - a.b.c.d.c (second)
+    */
+
+    // update DOM
+    wrapper.update()
+
+    const subthoughtsContextViewChildren = wrapper.find(Subthoughts)
+      .filterWhere(wherePath(['a', 'b', 'c', 'd', 'c'])).childAt(0).find(Subthoughts)
+
+    expect(subthoughtsContextViewChildren).toHaveLength(2)
+
+    const childrenPathArray = subthoughtsContextViewChildren.map(node => pathToContext(node.props().path))
+    expect(childrenPathArray[0]).toEqual(['a', 'b', 'c', 'd', 'c', 'b'])
+    expect(childrenPathArray[1]).toEqual(['a', 'b', 'c', 'd', 'c', 'd'])
+
+  })
+
 })

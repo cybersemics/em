@@ -1,25 +1,24 @@
-import { ROOT_TOKEN } from '../../constants'
+import { act } from 'react-dom/test-utils'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
+import { store } from '../../store'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { importText } from '../../action-creators'
 
 // reducers
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
 import deleteEmptyThought from '../deleteEmptyThought'
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 
 it('delete empty thought', () => {
 
   const steps = [
-
-    // new thought 1
-    state => newThought(state, { value: 'a' }),
-
-    // new thought 2
-    state => newThought(state, { value: '' }),
-
-    // delete thought
+    newThought('a'),
+    newThought(''),
     deleteEmptyThought,
   ]
 
@@ -35,11 +34,7 @@ it('delete empty thought', () => {
 it('do not delete non-empty thought', () => {
 
   const steps = [
-
-    // new thought 1
-    state => newThought(state, { value: 'a' }),
-
-    // delete thought
+    newThought('a'),
     deleteEmptyThought,
   ]
 
@@ -55,16 +50,9 @@ it('do not delete non-empty thought', () => {
 it('do not delete thought with children', () => {
 
   const steps = [
-
-    // new thought
-    state => newThought(state, { value: '' }),
-
-    // new child
-    state => newThought(state, { value: '1', insertNewSubthought: true }),
-
+    newThought(''),
+    newSubthought('1'),
     cursorBack,
-
-    // delete thought
     deleteEmptyThought,
   ]
 
@@ -81,17 +69,9 @@ it('do not delete thought with children', () => {
 it('do nothing if there is no cursor', () => {
 
   const steps = [
-
-    // new thought 1 in root
-    state => newThought(state, { value: 'a' }),
-
-    // new thought 2 in root
-    state => newThought(state, { value: 'b' }),
-
-    // clear cursor
-    state => setCursor(state, { thoughtsRanked: null }),
-
-    // delete thought
+    newThought('a'),
+    newThought('b'),
+    setCursor({ path: null }),
     deleteEmptyThought,
   ]
 
@@ -108,14 +88,8 @@ it('do nothing if there is no cursor', () => {
 it('merge thoughts', () => {
 
   const steps = [
-
-    // new thought 1
-    state => newThought(state, { value: 'a' }),
-
-    // new thought 2
-    state => newThought(state, { value: 'b' }),
-
-    // delete thought
+    newThought('a'),
+    newThought('b'),
     deleteEmptyThought,
   ]
 
@@ -131,22 +105,11 @@ it('merge thoughts', () => {
 it('insert second thought\'s children', () => {
 
   const steps = [
-
-    // new thought 1
-    state => newThought(state, { value: 'a' }),
-
-    // new thought 2
-    state => newThought(state, { value: 'b' }),
-
-    // new subthought 1
-    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-
-    // new subthought 2
-    state => newThought(state, { value: 'b2' }),
-
+    newThought('a'),
+    newThought('b'),
+    newSubthought('b1'),
+    newThought('b2'),
     cursorBack,
-
-    // delete thought
     deleteEmptyThought,
   ]
 
@@ -164,22 +127,11 @@ it('insert second thought\'s children', () => {
 it('do not change first thought\'s children', () => {
 
   const steps = [
-
-    // new thought 1
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new subthought 2
-    state => newThought(state, { value: 'a2' }),
-
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
     cursorBack,
-
-    // new thought 2
-    state => newThought(state, { value: 'b' }),
-
-    // delete thought
+    newThought('b'),
     deleteEmptyThought,
   ]
 
@@ -197,22 +149,11 @@ it('do not change first thought\'s children', () => {
 it('cursor should move to prev sibling', () => {
 
   const steps = [
-
-    // new thought in root
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-
-    // new subthought 2
-    state => newThought(state, { value: '' }),
-
-    // new subthought 3
-    state => newThought(state, { value: 'a3' }),
-
+    newThought('a'),
+    newSubthought('a1'),
+    newThought(''),
+    newThought('a3'),
     cursorUp,
-
-    // delete thought
     deleteEmptyThought,
   ]
 
@@ -227,23 +168,12 @@ it('cursor should move to prev sibling', () => {
 it('cursor should move to next sibling if there is no prev sibling', () => {
 
   const steps = [
-
-    // new thought in root
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
-    state => newThought(state, { value: '', insertNewSubthought: true }),
-
-    // new subthought 2
-    state => newThought(state, { value: 'a2' }),
-
-    // new subthought 3
-    state => newThought(state, { value: 'a3' }),
-
+    newThought('a'),
+    newSubthought(''),
+    newThought('a2'),
+    newThought('a3'),
     cursorUp,
     cursorUp,
-
-    // delete thought
     deleteEmptyThought,
   ]
 
@@ -258,14 +188,8 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 it('cursor should move to parent if the deleted thought has no siblings', () => {
 
   const steps = [
-
-    // new thought in root
-    state => newThought(state, { value: 'a' }),
-
-    // new subthought 1
-    state => newThought(state, { value: '', insertNewSubthought: true }),
-
-    // delete thought
+    newThought('a'),
+    newSubthought(''),
     deleteEmptyThought,
   ]
 
@@ -280,11 +204,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 it('cursor should be removed if the last thought is deleted', () => {
 
   const steps = [
-
-    // new thought in root
-    state => newThought(state, { value: '' }),
-
-    // delete thought
+    newThought(''),
     deleteEmptyThought,
   ]
 
@@ -292,5 +212,34 @@ it('cursor should be removed if the last thought is deleted', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
+
+})
+
+/** Mount tests required for caret. */
+describe('mount', () => {
+
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
+    store.dispatch([
+      { type: 'newThought', value: 'apple' },
+      { type: 'newThought' },
+      { type: 'deleteEmptyThought' }
+    ])
+    act(jest.runOnlyPendingTimers)
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+  })
+
+  it('after merging siblings, caret should be in between', async () => {
+    store.dispatch([
+      importText(RANKED_ROOT, `- apple
+- banana`),
+      { type: 'setCursor', path: [{ value: 'banana', rank: 1 }] },
+      { type: 'deleteEmptyThought' },
+    ])
+    act(jest.runOnlyPendingTimers)
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+  })
 
 })

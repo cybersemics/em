@@ -1,4 +1,7 @@
-type SelectionOptionsType = {offset: number, end: number}
+type SelectionOptionsType = {
+  offset?: number,
+  end?: boolean,
+}
 
 /** Set the selection to the end of the given element. Inserts empty text node when element has no children.
  * NOTE: asyncFocus() needs to be called on mobile before setSelection and before any asynchronous effects that call setSelection.
@@ -7,7 +10,7 @@ type SelectionOptionsType = {offset: number, end: number}
   @param offset    Character offset of selection.
   @param end       If true, sets the offset to the end of the text.
  */
-export const setSelection = (el: HTMLElement, { offset, end }: SelectionOptionsType = { offset: 0, end: 0 }) => {
+export const setSelection = (el: HTMLElement, { offset, end }: SelectionOptionsType = { offset: 0, end: false }) => {
   if (el.childNodes.length === 0) {
     el.appendChild(document.createTextNode(''))
   }

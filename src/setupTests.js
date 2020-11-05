@@ -1,33 +1,11 @@
-import React from 'react'
-import { act } from 'react-dom/test-utils'
 import Adapter from 'enzyme-adapter-react-16'
-import { configure, mount } from 'enzyme'
+import { configure } from 'enzyme'
+import { noop } from 'lodash'
 import 'jest-localstorage-mock'
 
-import App, { initialized } from './App'
+// TO-D0: Removing store from here causes circular dependency issue in utils. Fix it.
 
 configure({ adapter: new Adapter() })
 
-/** Dispatches an event on the window object. */
-export const windowEvent = (...args) =>
-  window.dispatchEvent(new KeyboardEvent(...args))
-
-/** Set up testing and mock document and window functions. */
-export const createTestApp = async () => {
-  await act(async () => {
-    jest.useFakeTimers()
-
-    // wait for app to be initialized
-    // specifically for initialSettings to be loaded via loadLocalState
-    await initialized
-
-    const root = document.body.appendChild(document.createElement('div'))
-    const wrapper = await mount(
-      <App />,
-      { attachTo: root }
-    )
-    const skipTutorial = wrapper.find('div.modal-actions div a')
-    skipTutorial.simulate('click')
-    document.wrapper = wrapper
-  })
-}
+// add noop function to window.scrollTo to prevent implementation error during test
+window.scrollTo = noop

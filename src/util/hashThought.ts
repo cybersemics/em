@@ -3,9 +3,8 @@ import emojiStrip from 'emoji-strip'
 import * as pluralize from 'pluralize'
 import _ from 'lodash'
 import globals from '../globals'
-
-/** Matches all HTML tags. */
-const regexpTags = /(<([^>]+)>)/ig
+import { REGEXP_TAGS } from '../constants'
+import { ThoughtHash } from '../types'
 
 /** Converts a string to lowecase. */
 const lower = (s: string) => s.toLowerCase()
@@ -23,7 +22,7 @@ const stripEmojiWithText = (s: string) => {
 }
 
 /** Strips all html tags. */
-const stripTags = (s: string) => s.replace(regexpTags, '')
+const stripTags = (s: string) => s.replace(REGEXP_TAGS, '')
 
 /**
  * Making character 's' will just become an empty value ''.
@@ -44,7 +43,7 @@ const singularize = (s: string) => s !== 's' ? pluralize.singular(s) : s
  * Use schemaVersion to manage migrations.
  */
 export const hashThought = _.memoize((value: string) =>
-  globals.disableThoughtHashing ? value : _.flow([
+  (globals.disableThoughtHashing ? value : _.flow([
     // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,
     lower,
@@ -52,5 +51,5 @@ export const hashThought = _.memoize((value: string) =>
     stripEmojiWithText,
     singularize,
     murmurHash3.x64.hash128,
-  ])(value)
+  ])(value)) as ThoughtHash
 )

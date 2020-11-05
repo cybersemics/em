@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 import setAttribute from '../setAttribute'
@@ -10,8 +11,8 @@ import setAttribute from '../setAttribute'
 it('set', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => setAttribute(state, {
+    newThought('a'),
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
@@ -32,13 +33,13 @@ it('set', () => {
 it('different value should override existing value', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => setAttribute(state, {
+    newThought('a'),
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-    state => setAttribute(state, {
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'goodbye'
@@ -59,15 +60,15 @@ it('different value should override existing value', () => {
 it('add attribute if key has already been created', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: '=test', insertNewSubthought: true }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-    state => setAttribute(state, {
+    newThought('a'),
+    newSubthought('=test'),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-    state => setAttribute(state, {
+    setAttribute({
       context: ['a'],
       key: '=test',
       value: 'goodbye'

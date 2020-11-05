@@ -4,7 +4,13 @@ import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 
 import { isAndroid, isMobile } from '../browser'
-import { handleGestureEnd, handleGestureSegment } from '../shortcuts'
+import { inputHandlers } from '../shortcuts'
+import { isDocumentEditable } from '../util'
+import { getSetting, isTutorial } from '../selectors'
+import theme from '../selectors/theme'
+import { State } from '../util/initialState'
+import { updateSplitPosition } from '../action-creators'
+import { store } from '../store'
 
 // components
 import Alert from './Alert'
@@ -22,46 +28,29 @@ import Tutorial from './Tutorial'
 import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
 
-// util
-import {
-  initialState,
-  isDocumentEditable,
-} from '../util'
-
-// selectors
-import { getSetting, isTutorial } from '../selectors'
-import theme from '../selectors/theme'
-
-// action-creators
-import updateSplitPosition from '../action-creators/updateSplitPosition'
-
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
+const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
-const initialStateResult = initialState()
 interface StateProps {
-  dark?: boolean;
-  dragInProgress: boolean;
-  isLoading: boolean;
-  showModal: string;
-  scale: number;
-  showSplitView: boolean;
-  splitPosition: number;
+  dark?: boolean,
+  dragInProgress?: boolean,
+  isLoading?: boolean,
+  showModal?: string | null,
+  scale?: number,
+  showSplitView?: boolean,
+  splitPosition?: number,
 }
 
 interface DispatchProps {
-  updateSplitPos: (splitPos: number) => void;
+  updateSplitPos: (splitPos: number) => void,
 }
 
-// ???
-// @ts-ignore
-type typeOfState = ReturnType<typeof initialStateResult>
-
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: typeOfState): StateProps => {
+const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = theme(state) !== 'Light'
-  const scale = (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || 16) / 16
+  const scale = (isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || 16)) / 16
   return {
     dark,
     dragInProgress,
@@ -126,7 +115,7 @@ const AppComponent: FC<Props> = props => {
 
       {isDocumentEditable() && <>
         <Sidebar />
-        <HamburgerMenu dark={dark} />
+        <HamburgerMenu />
       </>}
 
       <MultiGestureIfMobile>
@@ -155,13 +144,13 @@ const AppComponent: FC<Props> = props => {
               size={!splitView ? '100%' : splitPosition || '50%'}
               onDragFinished={updateSplitPos}
             >
-              <Scale amount={scale}>
+              <Scale amount={scale!}>
                 <Content />
               </Scale>
 
               {showSplitView
                 ?
-                <Scale amount={scale}>
+                <Scale amount={scale!}>
                   <Content />
                 </Scale>
 
@@ -170,14 +159,14 @@ const AppComponent: FC<Props> = props => {
             </SplitPane>
 
             <div className='nav-bottom-wrapper'>
-              <Scale amount={scale}>
+              <Scale amount={scale!} origin='bottom left'>
 
                 <NavBar position='bottom' />
 
               </Scale>
             </div>
 
-            {isDocumentEditable() && <Scale amount={scale}>
+            {isDocumentEditable() && <Scale amount={scale!}>
               <Footer />
             </Scale>}
 
@@ -189,4 +178,5 @@ const AppComponent: FC<Props> = props => {
   )
 }
 
+// @ts-ignore
 export default connect<StateProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(AppComponent)

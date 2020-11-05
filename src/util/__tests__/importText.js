@@ -22,9 +22,13 @@ import {
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
+  contextViews: {},
   thoughts: {
     contextIndex: {
-      [hashContext([ROOT_TOKEN])]: [],
+      [hashContext([ROOT_TOKEN])]: {
+        context: [ROOT_TOKEN],
+        children: [],
+      },
     },
     thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
@@ -62,7 +66,7 @@ const importExport = async text => {
   return exportedWithoutRoot
 }
 
-it('import initialSettings', async () => {
+it('initialSettings', async () => {
   expect(await importExport(`
 <ul>
   <li>Settings
@@ -113,4 +117,14 @@ it('import initialSettings', async () => {
       - Number
     - 18
 `)
+})
+
+it('two root thoughts', async () => {
+  const text = `- a
+  - b
+- c
+  - d`
+  const exported = await importExport(text)
+  expect(exported.trim())
+    .toBe(text)
 })

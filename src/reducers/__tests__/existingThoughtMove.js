@@ -1,15 +1,15 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { equalArrays, initialState, reducerFlow } from '../../util'
+import { exportContext, getContexts, getThought, getAllChildren } from '../../selectors'
 import { importText } from '../../action-creators'
-import { existingThoughtMove, newThought, setCursor, updateThoughts } from '../../reducers'
+import { existingThoughtMove, newSubthought, newThought, setCursor, updateThoughts } from '../../reducers'
 
 it('move within root', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => existingThoughtMove(state, {
+    newThought('a'),
+    newThought('b'),
+    existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
     }),
@@ -23,15 +23,48 @@ it('move within root', () => {
   - b
   - a`)
 
+  // b should exist in the ROOT context
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([{
+      context: [ROOT_TOKEN],
+      rank: -1,
+    }])
+
+})
+
+it('persist id on move', () => {
+
+  const steps1 = [
+    newThought('a'),
+    newSubthought('a1'),
+    newSubthought('a2'),
+  ]
+
+  const stateNew1 = reducerFlow(steps1)(initialState())
+  const oldExactThought = getThought(stateNew1, 'a2').contexts.find(thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0)
+  const oldId = oldExactThought.id
+
+  const steps2 = [
+    existingThoughtMove({
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }],
+      newPath: [{ value: 'a1', rank: 1 }],
+    }),
+  ]
+
+  const stateNew2 = reducerFlow(steps2)(stateNew1)
+  const newExactThought = getThought(stateNew2, 'a2').contexts.find(thought => equalArrays(thought.context, ['a1']) && thought.rank === 0)
+  const newId = newExactThought.id
+
+  expect(oldId).toEqual(newId)
 })
 
 it('move within context', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
-    state => existingThoughtMove(state, {
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
+    existingThoughtMove({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }],
     }),
@@ -46,16 +79,23 @@ it('move within context', () => {
     - a2
     - a1`)
 
+  // context of a2 should remain unchanged
+  expect(getContexts(stateNew, 'a2'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: -1,
+    }])
+
 })
 
 it('move across contexts', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-    state => existingThoughtMove(state, {
+    newThought('a'),
+    newSubthought('a1'),
+    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newSubthought('b1'),
+    existingThoughtMove({
       oldPath: [{ value: 'b', rank: 0 }, { value: 'b1', rank: 0 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'b1', rank: 1 }],
     }),
@@ -71,18 +111,25 @@ it('move across contexts', () => {
     - b1
   - b`)
 
+  // b1 should exist in context a
+  expect(getContexts(stateNew, 'b1'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: 1,
+    }])
+
 })
 
 it('move descendants', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a1.1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'b1.1', insertNewSubthought: true }),
-    state => existingThoughtMove(state, {
+    newThought('a'),
+    newSubthought('a1'),
+    newSubthought('a1.1'),
+    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newSubthought('b1'),
+    newSubthought('b1.1'),
+    existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
     }),
@@ -100,15 +147,34 @@ it('move descendants', () => {
     - a1
       - a1.1`)
 
+  // context of b should remain to be ROOT
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([{
+      context: [ROOT_TOKEN],
+      rank: -1,
+    }])
+
+  // contexts of both the descendants of b should change
+  expect(getContexts(stateNew, 'b1'))
+    .toMatchObject([{
+      context: ['b'],
+      rank: 0,
+    }])
+  expect(getContexts(stateNew, 'b1.1'))
+    .toMatchObject([{
+      context: ['b', 'b1'],
+      rank: 0,
+    }])
+
 })
 
 it('moving cursor thought should update cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'a1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'a2' }),
-    state => existingThoughtMove(state, {
+    newThought('a'),
+    newSubthought('a1'),
+    newThought('a2'),
+    existingThoughtMove({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }],
     }),
@@ -125,11 +191,11 @@ it('moving cursor thought should update cursor', () => {
 it('moving ancestor of cursor should update cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'b1.1', insertNewSubthought: true }),
-    state => existingThoughtMove(state, {
+    newThought('a'),
+    newThought('b'),
+    newSubthought('b1'),
+    newSubthought('b1.1'),
+    existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
     }),
@@ -147,12 +213,12 @@ it('moving ancestor of cursor should update cursor', () => {
 it('moving unrelated thought should not update cursor', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
-    state => newThought(state, { value: 'b1', insertNewSubthought: true }),
-    state => newThought(state, { value: 'b1.1', insertNewSubthought: true }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-    state => existingThoughtMove(state, {
+    newThought('a'),
+    newThought('b'),
+    newSubthought('b1'),
+    newSubthought('b1.1'),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
     }),
@@ -177,10 +243,59 @@ it('move descendants with siblings', async () => {
 
   const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
   const steps = [
-    state => updateThoughts(state, imported),
-    state => existingThoughtMove(state, {
-      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }],
+    updateThoughts(imported),
+    existingThoughtMove({
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
       newPath: [{ value: 'b', rank: 1 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+  - b
+    - c
+    - d`)
+
+  // b should exist in the ROOT context
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([{
+      context: [ROOT_TOKEN],
+      rank: 1,
+    }])
+
+  // context for both the descendants of b should change
+  expect(getContexts(stateNew, 'c'))
+    .toMatchObject([{
+      context: ['b'],
+      rank: 0,
+    }])
+  expect(getContexts(stateNew, 'd'))
+    .toMatchObject([{
+      context: ['b'],
+      rank: 1,
+    }])
+
+})
+
+it('merge duplicate with new rank', async () => {
+
+  const text = `
+  - a
+    - m
+      - x
+  - m
+   - y`
+
+  const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
+  const steps = [
+    updateThoughts(imported),
+    existingThoughtMove({
+      oldPath: [{ value: 'm', rank: 1 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
     }),
   ]
 
@@ -190,8 +305,61 @@ it('move descendants with siblings', async () => {
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
-  - b
-    - c
-    - d`)
+    - m
+      - x
+      - y`)
+
+  // use destinate rank of duplicate thoughts
+  expect(getAllChildren(stateNew, ['a']))
+    .toMatchObject([{ value: 'm', rank: 0 }])
+
+  // merged thought should only exist in destination context
+  expect(getContexts(stateNew, 'm'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: 0,
+    }])
+
+})
+
+it('merge with duplicate with duplicate rank', async () => {
+
+  const text = `
+  - a
+    - m
+      - x
+  - m
+    - y`
+
+  const imported = await importText(RANKED_ROOT, text)(NOOP, initialState)
+
+  const steps = [
+    updateThoughts(imported),
+    existingThoughtMove({
+      oldPath: [{ value: 'm', rank: 1 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - m
+      - x
+      - y`)
+
+  // use destinate rank of duplicate thoughts
+  expect(getAllChildren(stateNew, ['a']))
+    .toMatchObject([{ value: 'm', rank: 0 }])
+
+  // merged thought should only exist in destination context
+  expect(getContexts(stateNew, 'm'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: 0,
+    }])
 
 })

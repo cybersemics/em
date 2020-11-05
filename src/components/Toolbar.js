@@ -24,8 +24,8 @@ import {
 
 // constants
 import {
-  BASE_FONT_SIZE,
   DEFAULT_FONT_SIZE,
+  ROOT_TOKEN,
   SCROLL_PRIORITIZATION_TIMEOUT,
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
   TOOLBAR_DEFAULT_SHORTCUTS,
@@ -33,7 +33,7 @@ import {
 
 // util
 import {
-  pathToContext,
+  parentOf, pathToContext,
 } from '../util'
 
 // selectors
@@ -46,9 +46,11 @@ import {
 } from '../selectors'
 
 // components
-import Scale from './Scale'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
+import Shortcut from './Shortcut'
+import { isUndoEnabled } from '../util/isUndoEnabled'
+import { isRedoEnabled } from '../util/isRedoEnabled'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
@@ -56,46 +58,42 @@ const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
 
-  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView } = state
+  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
+  const contextOfCursor = context ? parentOf(context) : [ROOT_TOKEN]
 
   return {
-    cursorOnTableView: cursor && attributeEquals(state, context, '=view', 'Table'),
-    cursorOnAlphabeticalSort: cursor && attributeEquals(state, context, '=sort', 'Alphabetical'),
+    cursorOnTableView: attributeEquals(state, contextOfCursor, '=view', 'Table'),
+    cursorOnAlphabeticalSort: attributeEquals(state, contextOfCursor, '=sort', 'Alphabetical'),
     cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
-    cursorPinSubthoughts: cursor && attributeEquals(state, context, '=pinChildren', 'true'),
+    cursorPinSubthoughts: attributeEquals(state, contextOfCursor, '=pinChildren', 'true'),
     cursorOnNote: cursor && attribute(state, context, '=note') != null,
-    cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
+    cursorOnProseView: attributeEquals(state, contextOfCursor, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
-    scale: (isLoading ? fontSizeLocal : getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
+    redoEnabled: isRedoEnabled(state),
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,
     toolbarOverlay,
+    undoEnabled: isUndoEnabled(state),
+    showTopControls
   }
 }
 
 /** Toolbar component. */
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, scale, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView }) => {
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls, undoEnabled, redoEnabled }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
-  const [overlayName, setOverlayName] = useState()
-  const [overlayDescription, setOverlayDescription] = useState()
 
   const fg = dark ? 'white' : 'black'
-  // const bg = dark ? 'black' : 'white'
+  const arrowWidth = fontSize / 3
 
-  useEffect(() => {
-    if (toolbarOverlay) {
-      const { name, description } = shortcutById(toolbarOverlay)
-      setOverlayName(name)
-      setOverlayDescription(description)
-    }
-  })
+  const shortcut = shortcutById(toolbarOverlay)
 
   useEffect(() => {
     window.addEventListener('mouseup', clearHoldTimer)
@@ -113,8 +111,10 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
     const toolbarElement = document.getElementById('toolbar')
-    setLeftArrowElementClassName(toolbarElement.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
-    setRightArrowElementClassName(toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+    if (toolbarElement) {
+      setLeftArrowElementClassName(toolbarElement.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+      setRightArrowElementClassName(toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+    }
   }
 
   /** Clears the timer that waits for the overlay delay. */
@@ -201,72 +201,81 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
    **********************************************************************/
 
   return (
-    <div className='toolbar-container'>
-      <div className="toolbar-mask" />
-      <Scale amount={scale}>
-        <div
-          id='toolbar'
-          className='toolbar'
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          onTouchMove={onTouchMove}
-          onScroll={onScroll}
-        >
-          <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width='6' fill='gray' /></span>
-          {shortcutIds.map(id => {
-            const { name, svg: Icon, exec } = shortcutById(id)
-            return (
-              <div
-                key={name}
-                id={id}
-                className='toolbar-icon'
-                onMouseOver={() => startOverlayTimer(id)}
-                onMouseUp={clearHoldTimer}
-                onMouseOut={clearHoldTimer}
-                onTouchEnd={clearHoldTimer}
-                onTouchStart={() => startOverlayTimer(id)}
-                onClick={e => {
-                  exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-                }}
-              >
-                <Icon id={id}
-                  style={{
-                    fill: id === 'search' ? fg
-                    : id === 'outdent' ? fg
-                    : id === 'indent' ? fg
-                    : id === 'toggleTableView' && cursorOnTableView ? fg
-                    : id === 'toggleSort' && cursorOnAlphabeticalSort ? fg
-                    : id === 'pinOpen' && cursorPinOpen ? fg
-                    : id === 'pinSubthoughts' && cursorPinSubthoughts ? fg
-                    : id === 'note' && cursorOnNote ? fg
-                    : id === 'delete' ? fg
-                    : id === 'toggleContextView' ? fg
-                    : id === 'proseView' && cursorOnProseView ? fg
-                    : id === 'toggleSplitView' && showSplitView ? fg
-                    : id === 'subcategorizeOne' ? fg
-                    : id === 'subcategorizeAll' ? fg
-                    : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
-                    : id === 'exportContext' ? fg
-                    : id === 'undo' ? fg
-                    : id === 'redo' ? fg
-                    : 'gray'
-                  }} />
-              </div>
-            )
-          })}
-          <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width='6' fill='gray' /></span>
+    <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
+      <div className='toolbar-container'>
+        <div className="toolbar-mask" />
+        <div>
+          <div
+            id='toolbar'
+            className='toolbar'
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            onTouchMove={onTouchMove}
+            onScroll={onScroll}
+          >
+            <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
+            {shortcutIds.map(id => {
+              const { name, svg: Icon, exec } = shortcutById(id)
+              return (
+                <div
+                  key={name}
+                  id={id}
+                  className='toolbar-icon'
+                  onMouseOver={() => startOverlayTimer(id)}
+                  onMouseUp={clearHoldTimer}
+                  onMouseOut={clearHoldTimer}
+                  onTouchEnd={clearHoldTimer}
+                  onTouchStart={() => startOverlayTimer(id)}
+                  onClick={e => {
+                    exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+                  }}
+                >
+                  <Icon id={id}
+                    style={{
+                      fill: id === 'search' ? fg
+                      : id === 'outdent' ? fg
+                      : id === 'indent' ? fg
+                      : id === 'toggleTableView' && cursorOnTableView ? fg
+                      : id === 'toggleSort' && cursorOnAlphabeticalSort ? fg
+                      : id === 'pinOpen' && cursorPinOpen ? fg
+                      : id === 'pinSubthoughts' && cursorPinSubthoughts ? fg
+                      : id === 'note' && cursorOnNote ? fg
+                      : id === 'delete' ? fg
+                      : id === 'toggleContextView' ? fg
+                      : id === 'proseView' && cursorOnProseView ? fg
+                      : id === 'toggleSplitView' && showSplitView ? fg
+                      : id === 'splitSentences' ? fg
+                      : id === 'subcategorizeOne' ? fg
+                      : id === 'subcategorizeAll' ? fg
+                      : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
+                      : id === 'exportContext' ? fg
+                      : id === 'undo' && undoEnabled ? fg
+                      : id === 'redo' && redoEnabled ? fg
+                      : 'gray',
+                      width: fontSize + 4,
+                      height: fontSize + 4,
+                    }} />
+                </div>
+              )
+            })}
+            <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={arrowWidth} height={fontSize} fill='gray' /></span>
+          </div>
+          <TransitionGroup>
+            {toolbarOverlay ?
+              <CSSTransition timeout={800} classNames='fade'>
+                <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                  <div className='overlay-name'>{shortcut.name}</div>
+                  {shortcut.gesture || shortcut.keyboard || shortcut.overlay
+                    ? <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>
+                    : null
+                  }
+                  <div className='overlay-body'>{shortcut.description}</div>
+                </div>
+              </CSSTransition> : null}
+          </TransitionGroup>
         </div>
-        <TransitionGroup>
-          {toolbarOverlay ?
-            <CSSTransition timeout={200} classNames='fade'>
-              <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                <div className={'overlay-name'}>{overlayName}</div>
-                <div className={'overlay-body'}>{overlayDescription}</div>
-              </div>
-            </CSSTransition> : null}
-        </TransitionGroup>
-      </Scale>
-    </div>
+      </div>
+    </CSSTransition>
   )
 }
 

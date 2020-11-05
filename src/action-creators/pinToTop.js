@@ -1,16 +1,8 @@
-
-// util
-import {
-  pathToContext,
-} from '../util'
-
-// selectors
-import {
-  hasChild,
-} from '../selectors'
+import { pathToContext } from '../util'
+import { hasChild } from '../selectors'
 
 /** Pins a thought to the top of sorted context. */
-export default path => (dispatch, getState) => {
+const pinToTop = path => (dispatch, getState) => {
   const state = getState()
   const context = pathToContext(path)
   const pinnedTop = hasChild(state, path, '=pinnedTop')
@@ -26,3 +18,5 @@ export default path => (dispatch, getState) => {
     dispatch({ type: 'newThought', at: path, insertNewSubthought: true, insertBefore: true, value: '=pinnedTop', preventSetCursor: true })
   }
 }
+
+export default pinToTop

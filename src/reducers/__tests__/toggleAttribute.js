@@ -3,6 +3,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
+import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
@@ -10,8 +11,8 @@ import toggleAttribute from '../toggleAttribute'
 it('toggle on', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => toggleAttribute(state, {
+    newThought('a'),
+    toggleAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
@@ -32,13 +33,13 @@ it('toggle on', () => {
 it('toggle off', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => toggleAttribute(state, {
+    newThought('a'),
+    toggleAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-    state => toggleAttribute(state, {
+    toggleAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
@@ -57,13 +58,13 @@ it('toggle off', () => {
 it('different value should override existing value', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => toggleAttribute(state, {
+    newThought('a'),
+    toggleAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-    state => toggleAttribute(state, {
+    toggleAttribute({
       context: ['a'],
       key: '=test',
       value: 'goodbye'
@@ -84,15 +85,15 @@ it('different value should override existing value', () => {
 it('add attribute if key has already been created', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: '=test', insertNewSubthought: true }),
-    state => setCursor(state, { thoughtsRanked: [{ value: 'a', rank: 0 }] }),
-    state => toggleAttribute(state, {
+    newThought('a'),
+    newSubthought('=test'),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    toggleAttribute({
       context: ['a'],
       key: '=test',
       value: 'hello'
     }),
-    state => toggleAttribute(state, {
+    toggleAttribute({
       context: ['a'],
       key: '=test',
       value: 'goodbye'

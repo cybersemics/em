@@ -16,8 +16,8 @@ it('new thought in root', () => {
 it('new thought after', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
+    newThought('a'),
+    newThought('b'),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -33,8 +33,8 @@ it('new thought after', () => {
 it('new thought before', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertBefore: true }),
+    newThought('a'),
+    newThought({ value: 'b', insertBefore: true }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -50,8 +50,8 @@ it('new thought before', () => {
 it('new subthought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
+    newThought('a'),
+    newThought({ value: 'b', insertNewSubthought: true }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -66,10 +66,10 @@ it('new subthought', () => {
 it('new subthought top', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b', insertNewSubthought: true }),
-    state => newThought(state, { value: 'c' }),
-    state => newThought(state, { value: 'd', at: [{ value: 'a', rank: 0 }], insertNewSubthought: true, insertBefore: true }),
+    newThought('a'),
+    newThought({ value: 'b', insertNewSubthought: true }),
+    newThought('c'),
+    newThought({ value: 'd', at: [{ value: 'a', rank: 0 }], insertNewSubthought: true, insertBefore: true }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -95,8 +95,8 @@ it('update cursor to first new thought', () => {
 it('update cursor to new thought', () => {
 
   const steps = [
-    state => newThought(state, { value: 'a' }),
-    state => newThought(state, { value: 'b' }),
+    newThought('a'),
+    newThought('b'),
   ]
 
   // run steps through reducer flow

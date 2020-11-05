@@ -1,24 +1,16 @@
-// util
-import {
-  contextOf,
-  equalThoughtValue,
-  head,
-  pathToContext,
-} from '../util'
-
-// selectors
-import {
-  getPrevRank,
-  getThoughtsRanked,
-} from '../selectors'
+import { parentOf, equalThoughtValue, head, pathToContext } from '../util'
+import { getPrevRank, getChildrenRanked } from '../selectors'
 import { State } from './initialState'
 import { Context, Path } from '../types'
 
 /** Returns path to the archive of the given context. */
-export const pathToArchive = (state: State, path: Path, context: Context) => {
-  const rankedArchive = getThoughtsRanked(state, context)
+export const pathToArchive = (state: State, path: Path, context: Context): Path | null => {
+  const rankedArchive = getChildrenRanked(state, context)
     .find(equalThoughtValue('=archive'))
-  const archivePath = [...contextOf(path), rankedArchive]
+  if (!rankedArchive) return null
+  const archivePath = rankedArchive
+    ? [...parentOf(path), rankedArchive]
+    : parentOf(path)
   const newRank = getPrevRank(state, pathToContext(archivePath))
-  return [...contextOf(path), rankedArchive, { ...head(path), rank: newRank }]
+  return [...parentOf(path), rankedArchive, { ...head(path), rank: newRank }]
 }

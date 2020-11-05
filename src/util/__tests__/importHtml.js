@@ -8,6 +8,7 @@ import {
   hashContext,
   hashThought,
   importHtml,
+  mergeUpdates,
 } from '../../util'
 
 // selectors
@@ -17,9 +18,13 @@ import {
 
 const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
 const initialState = {
+  contextViews: {},
   thoughts: {
     contextIndex: {
-      [hashContext([ROOT_TOKEN])]: [],
+      [hashContext([ROOT_TOKEN])]: {
+        context: [ROOT_TOKEN],
+        children: [],
+      },
     },
     thoughtIndex: {
       [hashThought(ROOT_TOKEN)]: {
@@ -93,6 +98,31 @@ it('multiple li\'s', () => {
 `)
 })
 
+it('items separated by <br>', () => {
+  expect(importExport('<p>a<br>b<br>c<br></p>'))
+    .toBe(`
+- a
+- b
+- c
+`)
+})
+
+it('nested lines separated by <br>', () => {
+  expect(importExport(`
+<li>x
+  <ul>
+    <li>a<br>b<br>c<br></li>
+  </ul>
+</li>
+`))
+    .toBe(`
+- x
+  - a
+  - b
+  - c
+`)
+})
+
 it('nested li\'s', () => {
   expect(importExport(`
 <li>a<ul>
@@ -139,8 +169,7 @@ it('<span> with nested li\'s', () => {
 `)
 })
 
-// conflicts with "simple ul" test in current implementation
-it.skip('empty thought with nested li\'s', () => {
+it('empty thought with nested li\'s', () => {
   expect(importExport(`
 <li>
   <ul>
@@ -293,4 +322,44 @@ it('blank thoughts with subthoughts', () => {
       - 2017
       - 2016
 `)
+})
+
+it('paste multiple thoughts after the cursor', () => {
+
+  /** Import HTML and merge into state. */
+  const importHtmlReducer = (state, insertionPath, html) => {
+    const { contextIndexUpdates, thoughtIndexUpdates } = importHtml(state, insertionPath, html)
+    const contextIndex = mergeUpdates(state.thoughts.contextIndex, contextIndexUpdates)
+    const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
+
+    return {
+      ...state,
+      thoughts: {
+        contextIndex,
+        thoughtIndex,
+      }
+    }
+  }
+
+  const initialHtml = `
+<li>a<ul>
+  <li>b</li>
+</ul></li>
+`
+
+  const importedHtml = `
+<li>x</li>
+<li>y</li>
+`
+
+  const state1 = importHtmlReducer(initialState, RANKED_ROOT, initialHtml)
+  const state2 = importHtmlReducer(state1, [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }], importedHtml)
+
+  const exported = exportContext(state2, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- __ROOT__
+  - a
+    - b
+    - x
+    - y`)
 })

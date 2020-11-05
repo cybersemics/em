@@ -1,9 +1,10 @@
 const regexAllTags = /<(?:.|\n)*?>/gmi
-const regexPreserveFormattingTags = /<(?!\/?[biu](?: (?:.|\n)*)?>)(?:.|\n)*?>/gmi
+const regexPreserveFormattingTags = /<(?!\/?(b|i|u|em|strong)(?: (?:.|\n)*)?>)(?:.|\n)*?>/gmi
 const regexTagAndAttributes = /<(?![/])(?:(\w*)((?:.|\n)*?))\/?>/gmi
 const regexNbsp = /&nbsp;/gmi
 
-type StripOptions = {preserveFormatting: boolean, preventTrim: boolean}
+type StripOptions = { preserveFormatting?: boolean, preventTrim?: boolean }
+
 /** Strip HTML tags, convert nbsp to normal spaces, and trim. */
 export const strip = (html: string, { preserveFormatting, preventTrim }: StripOptions = { preserveFormatting: false, preventTrim: false }) => {
   const replacedHtml = html
