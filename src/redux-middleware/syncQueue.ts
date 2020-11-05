@@ -26,6 +26,10 @@ const mergeBatch = (accum: SyncBatch, batch: SyncBatch): SyncBatch =>
       ...accum.pendingDeletes || [],
       ...batch.pendingDeletes || [],
     ],
+    pendingEdits: [
+      ...accum.pendingEdits || [],
+      ...batch.pendingEdits || [],
+    ],
     pendingMoves: [
       ...accum.pendingMoves || [],
       ...batch.pendingMoves || [],
@@ -78,6 +82,32 @@ const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
 
 }
 
+/** Pull all descendants of pending edits and dispatch existingThoughtChange to edit descendant contexts. */
+const flushEdits = (): ActionCreator => async (dispatch, getState) => {
+
+  const { syncQueue } = getState()
+
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  const pendingEdits = syncQueue.map(batch => batch.pendingEdits || []).flat()
+
+  if (pendingEdits?.length) {
+
+    const pending: Index<Context> = keyValueBy(pendingEdits, ({ context }) => {
+      return { [hashContext(context)]: context }
+    })
+
+    await dispatch(pull(pending, { maxDepth: Infinity }))
+
+    pendingEdits.forEach(payload => {
+      dispatch({
+        type: 'existingThoughtChange',
+        ...payload,
+      })
+    })
+  }
+
+}
+
 /** Pull all descendants of pending moves and dispatch existingThoughtMove to fully move. */
 const flushMoves = (): ActionCreator => async (dispatch, getState) => {
 
@@ -115,6 +145,7 @@ const flushQueue = (): ActionCreator => async (dispatch, getState) => {
   if (syncQueue.length === 0) return Promise.resolve()
 
   dispatch(flushDeletes())
+  dispatch(flushEdits())
   dispatch(flushMoves())
 
   // filter batches by data provider
