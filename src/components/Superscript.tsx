@@ -7,7 +7,6 @@ import { Child, Context, Index, SimplePath } from '../types'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>,
-  contextChain?: SimplePath[],
   empty?: boolean,
   numContexts?: number,
   showContexts?: boolean,
