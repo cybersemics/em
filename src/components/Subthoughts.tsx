@@ -204,7 +204,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
     : {
       type: 'existingThoughtMove',
       oldPath: thoughtsFrom,
-      simplePathNew,
+      newPath: simplePathNew,
     }
   )
 

@@ -4,8 +4,12 @@ import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 import { deleteAttribute, newThought } from '../reducers'
 
+interface Options {
+  simplePath: SimplePath,
+}
+
 /** Pins a thought to the top of sorted context. */
-const pinToTop = (state: State, simplePath: SimplePath) => {
+const pinToTop = (state: State, { simplePath }: Options) => {
 
   const context = pathToContext(simplePath)
   const pinnedTop = hasChild(state, context, '=pinnedTop')

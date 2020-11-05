@@ -4,8 +4,12 @@ import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 import { deleteAttribute } from '../reducers'
 
+interface Options {
+  simplePath: SimplePath,
+}
+
 /** Removes pin attribute from an input path. */
-const removePins = (state: State, simplePath: SimplePath) => {
+const removePins = (state: State, { simplePath }: Options) => {
 
   const context = pathToContext(simplePath)
   const pinnedTop = hasChild(state, context, '=pinnedTop')
