@@ -212,7 +212,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
 
-    const { cursorBeforeEdit, cursor }: State = store.getState() // use fresh state
+    const { cursorBeforeEdit, cursor, editing: editingMode }: State = store.getState() // use fresh state
+
+    // do not set cursor if it is unchanged and we are not entering edit mode
+    if((!editing || editingMode) && equalPath(cursor, path)) return
 
     const isEditing = equalPath(cursorBeforeEdit, path)
 
