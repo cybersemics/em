@@ -2,7 +2,6 @@ import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
 import { equalArrays, pathToContext, timestamp } from '../../util'
-import { importText } from '../../reducers'
 import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
@@ -26,20 +25,8 @@ const whereSimplePath = (context: Context) => (node: ThoughtOrSubthoughtsCompone
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts path. */
 const wherePath = (context: Context) => (node: ThoughtOrSubthoughtsComponent) => {
   const path = node.props().path ?? node.props().simplePath
-  return path!! && equalArrays(pathToContext(path), context)
+  return !!path && equalArrays(pathToContext(path), context)
 }
-
-/** A filterWhere predicate that returns the showContexts value of a node. */
-const whereShowContexts = (context: Context) => (node: ThoughtOrSubthoughtsComponent) =>
-  !!node.props().showContexts
-
-// const debugThoughtWrapper = wrapper => wrapper.map(node => ({
-//   name: node.name(),
-//   context: node.props().simplePath.map(child => child.value),
-//   contextChain: JSON.stringify(node.props().contextChain),
-//   props: node.props(),
-//   html: node.html(),
-// }))
 
 let wrapper: Await<ReturnType<typeof createTestApp>> // eslint-disable-line fp/no-let
 
