@@ -7,7 +7,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, expandContextThought, pinToTop, removePins, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 
 // components
 import Bullet from './Bullet'
@@ -292,7 +292,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
 
-  const { simplePath: thoughtsFrom } = monitor.getItem()
+  const thoughtsFrom = monitor.getItem().simplePath as SimplePath
   const thoughtsTo = props.simplePathLive!
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedParentOf(thoughtsFrom)
@@ -309,22 +309,22 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // drop on itself or after itself is a noop
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
-  const newPath = unroot(parentOf(thoughtsTo)).concat({
+  const simplePathNew = unroot(parentOf(thoughtsTo)).concat({
     value: headValue(thoughtsFrom),
     rank: getRankBefore(state, thoughtsTo)
-  })
+  }) as SimplePath
 
   store.dispatch(props.showContexts
     ? {
       type: 'newThoughtSubmit',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
+      rank: getNextRank(state, pathToContext(thoughtsFrom))
     }
     : {
       type: 'existingThoughtMove',
       oldPath: thoughtsFrom,
-      newPath
+      newPath: simplePathNew
     }
   )
 
@@ -334,10 +334,10 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const isAtTop = !prev
 
   if (isAtTop && isSorted) {
-    store.dispatch(pinToTop(newPath))
+    store.dispatch({ type: 'pinToTop', simplePath: simplePathNew })
   }
   else {
-    store.dispatch(removePins(newPath))
+    store.dispatch({ type: 'removePins', simplePath: simplePathNew })
   }
 
   // alert user of move to another context

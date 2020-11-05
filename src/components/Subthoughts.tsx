@@ -8,7 +8,7 @@ import { isMobile } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
 import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import { alert, pinToBottom, removePins } from '../action-creators'
+import { alert } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
@@ -173,18 +173,18 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
   const thoughtsTo = props.simplePath
 
-  const newPath = unroot(thoughtsTo).concat({
+  const simplePathNew = [...unroot(thoughtsTo), {
     value: headValue(thoughtsFrom),
     rank: getNextRank(state, pathToContext(thoughtsTo))
-  })
+  }] as SimplePath
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedParentOf(pathToContext(thoughtsFrom))
-  const newContext = rootedParentOf(pathToContext(newPath))
+  const newContext = rootedParentOf(pathToContext(simplePathNew))
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot drop on itself
-  if (equalPath(thoughtsFrom, newPath)) return
+  if (equalPath(thoughtsFrom, simplePathNew)) return
 
   // cannot move root or em context or target is divider
   if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
@@ -204,15 +204,15 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
     : {
       type: 'existingThoughtMove',
       oldPath: thoughtsFrom,
-      newPath
+      simplePathNew,
     }
   )
 
   if (isAtBottom && sortPreference === 'Alphabetical') {
-    store.dispatch(pinToBottom(newPath))
+    store.dispatch({ type: 'pinToBottom', simplePath: simplePathNew })
   }
   else {
-    store.dispatch(removePins(newPath))
+    store.dispatch({ type: 'removePins', simplePath: simplePathNew })
   }
 
   // alert user of move to another context
