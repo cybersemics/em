@@ -10,7 +10,7 @@ import { Context } from '../../types'
 /** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
 const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) =>
   setCursor(state, {
-    thoughtsRanked: rankThoughtsFirstMatch(state, pathUnranked),
+    path: rankThoughtsFirstMatch(state, pathUnranked),
   }))
 
 /** Returns true if a context is expanded. */
@@ -46,7 +46,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newSubthought('b'),
-      setCursorFirstMatch(['b'])
+      setCursorFirstMatch(['a', 'b'])
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

@@ -25,6 +25,7 @@ import {
 // constants
 import {
   DEFAULT_FONT_SIZE,
+  ROOT_TOKEN,
   SCROLL_PRIORITIZATION_TIMEOUT,
   SHORTCUT_HINT_OVERLAY_TIMEOUT,
   TOOLBAR_DEFAULT_SHORTCUTS,
@@ -32,7 +33,7 @@ import {
 
 // util
 import {
-  pathToContext,
+  parentOf, pathToContext,
 } from '../util'
 
 // selectors
@@ -47,6 +48,9 @@ import {
 // components
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
+import Shortcut from './Shortcut'
+import { isUndoEnabled } from '../util/isUndoEnabled'
+import { isRedoEnabled } from '../util/isRedoEnabled'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
@@ -56,45 +60,40 @@ const mapStateToProps = state => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
   const context = cursor && pathToContext(cursor)
+  const contextOfCursor = context ? parentOf(context) : [ROOT_TOKEN]
 
   return {
-    cursorOnTableView: cursor && attributeEquals(state, context, '=view', 'Table'),
-    cursorOnAlphabeticalSort: cursor && attributeEquals(state, context, '=sort', 'Alphabetical'),
+    cursorOnTableView: attributeEquals(state, contextOfCursor, '=view', 'Table'),
+    cursorOnAlphabeticalSort: attributeEquals(state, contextOfCursor, '=sort', 'Alphabetical'),
     cursorPinOpen: cursor && attributeEquals(state, context, '=pin', 'true'),
-    cursorPinSubthoughts: cursor && attributeEquals(state, context, '=pinChildren', 'true'),
+    cursorPinSubthoughts: attributeEquals(state, contextOfCursor, '=pinChildren', 'true'),
     cursorOnNote: cursor && attribute(state, context, '=note') != null,
-    cursorOnProseView: cursor && attributeEquals(state, context, '=view', 'Prose'),
+    cursorOnProseView: attributeEquals(state, contextOfCursor, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
     fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
+    redoEnabled: isRedoEnabled(state),
     scrollPrioritized,
     showHiddenThoughts,
     showSplitView,
     toolbarOverlay,
+    undoEnabled: isUndoEnabled(state),
     showTopControls
   }
 }
 
 /** Toolbar component. */
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls }) => {
+const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls, undoEnabled, redoEnabled }) => {
   const [holdTimer, setHoldTimer] = useState()
   const [holdTimer2, setHoldTimer2] = useState()
   const [lastScrollLeft, setLastScrollLeft] = useState()
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState()
-  const [overlayName, setOverlayName] = useState()
-  const [overlayDescription, setOverlayDescription] = useState()
 
   const fg = dark ? 'white' : 'black'
   const arrowWidth = fontSize / 3
 
-  useEffect(() => {
-    if (toolbarOverlay) {
-      const { name, description } = shortcutById(toolbarOverlay)
-      setOverlayName(name)
-      setOverlayDescription(description)
-    }
-  })
+  const shortcut = shortcutById(toolbarOverlay)
 
   useEffect(() => {
     window.addEventListener('mouseup', clearHoldTimer)
@@ -245,12 +244,13 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
                       : id === 'toggleContextView' ? fg
                       : id === 'proseView' && cursorOnProseView ? fg
                       : id === 'toggleSplitView' && showSplitView ? fg
+                      : id === 'splitSentences' ? fg
                       : id === 'subcategorizeOne' ? fg
                       : id === 'subcategorizeAll' ? fg
                       : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
                       : id === 'exportContext' ? fg
-                      : id === 'undo' ? fg
-                      : id === 'redo' ? fg
+                      : id === 'undo' && undoEnabled ? fg
+                      : id === 'redo' && redoEnabled ? fg
                       : 'gray',
                       width: fontSize + 4,
                       height: fontSize + 4,
@@ -264,8 +264,12 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
             {toolbarOverlay ?
               <CSSTransition timeout={800} classNames='fade'>
                 <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                  <div className={'overlay-name'}>{overlayName}</div>
-                  <div className={'overlay-body'}>{overlayDescription}</div>
+                  <div className='overlay-name'>{shortcut.name}</div>
+                  {shortcut.gesture || shortcut.keyboard || shortcut.overlay
+                    ? <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>
+                    : null
+                  }
+                  <div className='overlay-body'>{shortcut.description}</div>
                 </div>
               </CSSTransition> : null}
           </TransitionGroup>

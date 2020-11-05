@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType } from '../types'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 
 // action-creators
 import home from '../action-creators/home'
@@ -11,7 +11,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const homeShortcut = {
+const homeShortcut: Shortcut = {
   id: 'home',
   name: 'Home',
   description: 'Navigate to Home.',

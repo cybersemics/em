@@ -1,6 +1,6 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThought, getThoughts } from '../../selectors'
+import { exportContext, getContexts, getThought, getAllChildren } from '../../selectors'
 import { importText } from '../../action-creators'
 import { existingThoughtMove, newSubthought, newThought, setCursor, updateThoughts } from '../../reducers'
 
@@ -217,7 +217,7 @@ it('moving unrelated thought should not update cursor', () => {
     newThought('b'),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
@@ -245,7 +245,7 @@ it('move descendants with siblings', async () => {
   const steps = [
     updateThoughts(imported),
     existingThoughtMove({
-      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }],
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
       newPath: [{ value: 'b', rank: 1 }],
     }),
   ]
@@ -270,12 +270,12 @@ it('move descendants with siblings', async () => {
   expect(getContexts(stateNew, 'c'))
     .toMatchObject([{
       context: ['b'],
-      rank: 2,
+      rank: 0,
     }])
   expect(getContexts(stateNew, 'd'))
     .toMatchObject([{
       context: ['b'],
-      rank: 3,
+      rank: 1,
     }])
 
 })
@@ -294,8 +294,8 @@ it('merge duplicate with new rank', async () => {
   const steps = [
     updateThoughts(imported),
     existingThoughtMove({
-      oldPath: [{ value: 'm', rank: 5 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 4 }],
+      oldPath: [{ value: 'm', rank: 1 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
     }),
   ]
 
@@ -310,14 +310,14 @@ it('merge duplicate with new rank', async () => {
       - y`)
 
   // use destinate rank of duplicate thoughts
-  expect(getThoughts(stateNew, ['a']))
-    .toMatchObject([{ value: 'm', rank: 1 }])
+  expect(getAllChildren(stateNew, ['a']))
+    .toMatchObject([{ value: 'm', rank: 0 }])
 
   // merged thought should only exist in destination context
   expect(getContexts(stateNew, 'm'))
     .toMatchObject([{
       context: ['a'],
-      rank: 1,
+      rank: 0,
     }])
 
 })
@@ -336,8 +336,8 @@ it('merge with duplicate with duplicate rank', async () => {
   const steps = [
     updateThoughts(imported),
     existingThoughtMove({
-      oldPath: [{ value: 'm', rank: 5 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }],
+      oldPath: [{ value: 'm', rank: 1 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
     }),
   ]
 
@@ -352,14 +352,14 @@ it('merge with duplicate with duplicate rank', async () => {
       - y`)
 
   // use destinate rank of duplicate thoughts
-  expect(getThoughts(stateNew, ['a']))
-    .toMatchObject([{ value: 'm', rank: 1 }])
+  expect(getAllChildren(stateNew, ['a']))
+    .toMatchObject([{ value: 'm', rank: 0 }])
 
   // merged thought should only exist in destination context
   expect(getContexts(stateNew, 'm'))
     .toMatchObject([{
       context: ['a'],
-      rank: 1,
+      rank: 0,
     }])
 
 })

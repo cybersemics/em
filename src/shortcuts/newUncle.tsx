@@ -1,7 +1,6 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType, Path } from '../types'
-import { contextOf, isDocumentEditable } from '../util'
-import { State } from '../util/initialState'
+import { Icon as IconType, Path, Shortcut } from '../types'
+import { parentOf, isDocumentEditable } from '../util'
 
 interface NewThought {
   type: 'newThought',
@@ -16,21 +15,21 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 </svg>
 
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
-const newUncleShortcut = {
+const newUncleShortcut: Shortcut = {
   id: 'newUncle',
   name: 'New Thought After Parent',
   description: `Add a new thought to the context that immediately follows the current thought's context. It's like creating a new thought and then de-indenting it.`,
   gesture: 'rdl',
   keyboard: { key: 'Enter', meta: true, alt: true },
   svg: Icon,
-  canExecute: (getState: () => State) => {
+  canExecute: getState => {
     const { cursor } = getState()
-    return isDocumentEditable() && cursor && cursor.length > 1
+    return isDocumentEditable() && !!cursor && cursor.length > 1
   },
-  exec: (dispatch: Dispatch<NewThought>, getState: () => State) => {
+  exec: (dispatch: Dispatch<NewThought>, getState) => {
     const { cursor } = getState()
     if (!cursor) return
-    dispatch({ type: 'newThought', at: contextOf(cursor) })
+    dispatch({ type: 'newThought', at: parentOf(cursor) })
   }
 }
 

@@ -1,8 +1,7 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
+import { Context, Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
-import { contextOf, pathToContext } from '../util'
-import { State } from '../util/initialState'
+import { parentOf, pathToContext } from '../util'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -20,17 +19,17 @@ const Icon = ({ size = 20, style }: IconType) => <svg xmlns='http://www.w3.org/2
   </g>
 </svg>
 
-const pinOpenShortcut = {
+const pinOpenShortcut: Shortcut = {
   id: 'pinOpen',
   name: 'Pin Open',
   description: 'Pin and expand the current thought.',
   keyboard: { key: 'p', alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
     const state = getState()
     const { cursor } = state
     if (cursor) {
-      const context = pathToContext(contextOf(cursor))
+      const context = pathToContext(parentOf(cursor))
       const isPinned = attributeEquals(state, context, '=pin', 'true')
       dispatch({
         type: 'toggleAttribute',

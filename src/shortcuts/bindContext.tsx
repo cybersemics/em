@@ -1,8 +1,7 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
-import { isDocumentEditable, pathToContext, rootedContextOf } from '../util'
+import { Context, Icon as IconType, Shortcut } from '../types'
+import { isDocumentEditable, pathToContext, rootedParentOf } from '../util'
 import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
-import { State } from '../util/initialState'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -18,7 +17,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const bindContextShortcut = {
+const bindContextShortcut: Shortcut = {
   id: 'bindContext',
   name: 'Bind Context',
   svg: Icon,
@@ -26,12 +25,12 @@ const bindContextShortcut = {
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, alt: true },
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
 
-    const contextRanked = rootedContextOf(cursor)
+    const contextRanked = rootedParentOf(cursor)
 
     if (!cursor || !isContextViewActive(state, pathToContext(contextRanked))) return
 

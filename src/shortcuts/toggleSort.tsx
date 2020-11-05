@@ -1,9 +1,8 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType, Path } from '../types'
+import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting } from '../selectors'
-import { pathToContext } from '../util'
-import { State } from '../util/initialState'
-import { Nullable } from '../utilTypes'
+import { pathToContext, rootedParentOf } from '../util'
+import { ROOT_TOKEN } from '../constants'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -14,7 +13,7 @@ interface ToggleAttribute {
 
 interface SetCursor {
   type: 'setCursor',
-  thoughtsRanked: Nullable<Path>,
+  path: Path | null,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -29,26 +28,26 @@ const Icon = ({ size = 20, style }: IconType) => <svg version='1.1' className='i
   </g>
 </svg>
 
-const toggleSortShortcut = {
+const toggleSortShortcut: Shortcut = {
   id: 'toggleSort',
   name: 'Toggle Sort',
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleAttribute | SetCursor>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute | SetCursor>, getState) => {
     const state = getState()
     const { cursor } = state
     const globalSort = getSetting(state, ['Global Sort'])
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
-    if (cursor) {
-      dispatch({
-        type: 'toggleAttribute',
-        context: pathToContext(cursor),
-        key: '=sort',
-        value: sortPreference
-      })
-      dispatch({ type: 'setCursor', thoughtsRanked: state.cursor })
-    }
+
+    dispatch({
+      type: 'toggleAttribute',
+      context: pathToContext(rootedParentOf(cursor!)) || [ROOT_TOKEN],
+      key: '=sort',
+      value: sortPreference
+    })
+
+    if (cursor) dispatch({ type: 'setCursor', path: state.cursor })
   }
 }
 

@@ -1,9 +1,7 @@
-import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import React from 'react'
+import { Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
-import { contextOf, getElementPaddings, pathToContext } from '../util'
-import { State } from '../util/initialState'
-import { Action } from 'redux'
+import { parentOf, getElementPaddings, pathToContext, scrollCursorIntoView } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -12,13 +10,13 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const cursorUpShortcut = {
+const cursorUpShortcut: Shortcut = {
   id: 'cursorUp',
   name: 'Cursor Up',
   keyboard: { key: 'ArrowUp' },
   hideFromInstructions: true,
   svg: Icon,
-  canExecute: (getState: () => State) => {
+  canExecute: getState => {
 
     const state = getState()
     const { cursor } = state
@@ -42,7 +40,7 @@ const cursorUpShortcut = {
         }
       }
 
-      const contextRanked = contextOf(cursor)
+      const contextRanked = parentOf(cursor)
       const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode
@@ -50,8 +48,9 @@ const cursorUpShortcut = {
     }
     return true
   },
-  exec: (dispatch: Dispatch<Action>) => {
+  exec: dispatch => {
     dispatch({ type: 'cursorUp' })
+    setTimeout(scrollCursorIntoView)
   }
 }
 

@@ -1,10 +1,10 @@
 import { RANKED_ROOT } from '../constants'
-import { error, existingThoughtMove, newThought } from '../reducers'
+import { alert, existingThoughtMove, newThought } from '../reducers'
 import { State } from '../util/initialState'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   headValue,
   isEM,
@@ -16,10 +16,10 @@ import {
 
 // selectors
 import {
-  getThoughtsRanked,
+  getChildrenRanked,
   hasChild,
   lastThoughtsFromContextChain,
-  pathToThoughtsRanked,
+  simplifyPath,
   splitChain,
 } from '../selectors'
 
@@ -30,42 +30,42 @@ const subCategorizeAll = (state: State) => {
 
   if (!cursor) return state
 
-  const cursorParent = contextOf(cursor)
+  const cursorParent = parentOf(cursor)
   const context = pathToContext(cursorParent)
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
-    return error(state, {
+    return alert(state, {
       value: `Subthought of the "${isEM(cursorParent) ? 'em' : 'home'} context" may not be de-indented.`
     })
   }
   // cancel if parent is readonly
   else if (hasChild(state, context, '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`
     })
   }
   else if (hasChild(state, context, '=unextendable')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`
     })
   }
 
   const contextChain = splitChain(state, cursor)
-  const thoughtsRanked = cursor.length > 1
-    ? contextOf(contextChain.length > 1
+  const path = cursor.length > 1
+    ? parentOf(contextChain.length > 1
       ? lastThoughtsFromContextChain(state, contextChain)
       : cursor)
     : RANKED_ROOT
 
-  const children = getThoughtsRanked(state, thoughtsRanked)
+  const children = getChildrenRanked(state, pathToContext(simplifyPath(state, path)))
   const pathParent = cursor.length > 1 ? cursorParent : RANKED_ROOT
 
   // get newly created thought
   // use fresh state
   const getThoughtNew = perma((state: State) => {
-    const parentThoughtsRanked = pathToThoughtsRanked(state, pathParent)
-    const childrenNew = getThoughtsRanked(state, pathToContext(parentThoughtsRanked))
+    const parentPath = simplifyPath(state, pathParent)
+    const childrenNew = getChildrenRanked(state, pathToContext(parentPath))
     return childrenNew[0]
   })
 

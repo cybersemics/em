@@ -3,7 +3,8 @@
 import './App.css'
 import initDB, * as db from './db'
 import { store } from './store'
-import { getContexts, getThought, getThoughts, getThoughtsRanked } from './selectors'
+import { getContexts, getThought, getAllChildren, getChildrenRanked } from './selectors'
+import { State } from './util/initialState'
 
 // util
 import {
@@ -31,7 +32,7 @@ export const initialize = async () => {
   const localStateLoaded = owner() === '~'
     // authenticated or offline user
     ? store.dispatch(src
-      ? loadFromUrl(src)
+      ? await loadFromUrl(src)
       : loadLocalState())
     // other user context
     : Promise.resolve()
@@ -54,7 +55,8 @@ export const initialize = async () => {
 }
 
 /** Partially apply state to a function. */
-const withState = (f: (...args: any []) => any) => (...args: any[]) => f(store.getState(), ...args)
+const withState = <T, R>(f: (state: State, ...args: T[]) => R) =>
+  (state: State, ...args: T[]) => f(store.getState(), ...args)
 
 // add objects to window for debugging
 window.em = {
@@ -62,8 +64,8 @@ window.em = {
   store,
   getContexts: withState(getContexts),
   getThought: withState(getThought),
-  getThoughts: withState(getThoughts),
-  getThoughtsRanked: withState(getThoughtsRanked),
+  getAllChildren: withState(getAllChildren),
+  getChildrenRanked: withState(getChildrenRanked),
   hashContext,
   hashThought,
 }

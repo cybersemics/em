@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType } from '../types'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
 
 // util
@@ -10,9 +10,18 @@ import {
 } from '../util'
 
 import { newThought } from '../action-creators'
-import { isLastVisibleChild } from '../selectors'
-import { Action } from 'redux'
+import { isLastVisibleChild, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
+
+interface ActionOutdent {
+  type: 'outdent',
+}
+
+interface ActionAlert {
+  type: 'alert',
+  value: string,
+  alertType: string,
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -22,28 +31,37 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 </svg>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<Action | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => {
+const exec = (dispatch: Dispatch<ActionOutdent | ActionAlert | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => {
   const state = getState()
-  const { cursor } = state
+  const { cursor, editingValue } = state
+
+  // if current edited thought is duplicate and user hits enter
+  if (cursor && editingValue && headValue(cursor) !== editingValue) {
+    dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+    return
+  }
 
   // when Enter is pressed on a last empty thought, outdent it
-  if (type === 'keyboard' && cursor && headValue(cursor).length === 0 && isLastVisibleChild(state, cursor)) {
+  if (type === 'keyboard' && cursor && headValue(cursor).length === 0 && isLastVisibleChild(state, simplifyPath(state, cursor))) {
     dispatch({ type: 'outdent' })
   }
   // otherwise, create a new thought
   else {
     // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
     const isTargetHTMLElement = e.target instanceof HTMLElement
+    const target = e.target as HTMLElement
 
     // Note: e.target should be a HTMLElement and a content editable node
-    const offset = isTargetHTMLElement ? getOffsetWithinContent(e.target as HTMLElement) : 0
+    const offset = cursor && isTargetHTMLElement && target.hasAttribute('contenteditable')
+      ? getOffsetWithinContent(target)
+      : 0
 
     // prevent split on gesture
     dispatch(newThought({ value: '', offset, preventSplit: type === 'gesture' }))
   }
 }
 
-const newThoughtOrOutdent = {
+const newThoughtOrOutdent: Shortcut = {
   id: 'newThoughtOrOutdent',
   name: 'newThoughtOrOutdent',
   description: 'Create a new thought or outdent if focused thought is empty.',
@@ -55,7 +73,7 @@ const newThoughtOrOutdent = {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const newThoughtAliases = {
+export const newThoughtAliases: Shortcut = {
   id: 'newThoughtAliases',
   name: 'newThought',
   hideFromInstructions: true,

@@ -1,7 +1,6 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
-import { pathToContext } from '../util'
-import { State } from '../util/initialState'
+import { Context, Icon as IconType, Shortcut } from '../types'
+import { parentOf, pathToContext } from '../util'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -18,19 +17,20 @@ const Icon = ({ size = 20, style }: IconType) => <svg version='1.1' className='i
     <path d='M 12 24 C 11.724 24 11.496 23.776 11.25 23.5 L 11.25 0.5 C 11.25 0.224 11.724 0 12 0 C 12.276 0 12.75 0.224 12.75 0.5 L 12.75 23.5 C 12.75 23.776 12.276 24 12 24 Z'></path>
   </g>
 </svg>
-const toggleTableViewShortcut = {
+
+const toggleTableViewShortcut: Shortcut = {
   id: 'toggleTableView',
   name: 'Toggle Table View',
   description: 'View the current context as a table, where each level of subthoughts is shown as a column.',
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
     const { cursor } = getState()
-    if (cursor) {
+    if (cursor && cursor.length > 1) {
       dispatch({
         type: 'toggleAttribute',
-        context: pathToContext(cursor),
+        context: pathToContext(parentOf(cursor)),
         key: '=view',
         value: 'Table'
       })

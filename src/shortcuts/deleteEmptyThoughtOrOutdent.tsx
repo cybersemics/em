@@ -1,16 +1,20 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType } from '../types'
-import { contextOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
+import { parentOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
 import {
   getChildren,
   getThoughtBefore,
-  getThoughtsRanked,
+  getAllChildren,
+  getChildrenRanked,
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
+  simplifyPath,
   splitChain,
 } from '../selectors'
 import { State } from '../util/initialState'
+import { RANKED_ROOT } from '../constants'
+import { alert } from '../action-creators'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 
 interface Error {
   type: 'error',
@@ -25,6 +29,12 @@ interface Outdent {
   type: 'outdent',
 }
 
+interface Alert {
+  type: 'alert',
+  value: string | null,
+  alertType: string,
+}
+
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = (state: State) => {
   const { cursor } = state
@@ -34,17 +44,19 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   // can't delete if there is no cursor, there is a selection range, the document is not editable, or the caret is not at the beginning of the thought
   if (!cursor || !isDocumentEditable() || sel.focusOffset > 0 || !sel.isCollapsed) return false
 
+  const simplePath = simplifyPath(state, cursor)
+
   // can delete if the current thought is a divider
   if (isDivider(headValue(cursor))) return true
 
   // can't delete in context view (TODO)
-  const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
+  const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
   if (showContexts) return false
 
   const contextChain = splitChain(state, cursor)
-  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
-  const hasChildren = getThoughtsRanked(state, thoughtsRanked).length > 0
-  const prevThought = getThoughtBefore(state, cursor)
+  const path = lastThoughtsFromContextChain(state, contextChain)
+  const hasChildren = getChildrenRanked(state, pathToContext(path)).length > 0
+  const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
   // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
@@ -58,7 +70,8 @@ const deleteEmptyThought = (dispatch: Dispatch<Error | DeleteEmptyThought>, getS
   const { cursor } = state
   if (!cursor) return
 
-  const prevThought = getThoughtBefore(state, cursor)
+  const simplePath = simplifyPath(state, cursor)
+  const prevThought = getThoughtBefore(state, simplePath)
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(cursor)
   const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
@@ -83,7 +96,29 @@ const canExecuteOutdent = (state: State) => {
     offset === 0 &&
     isDocumentEditable() &&
     headValue(cursor).length !== 0 &&
-    getChildren(state, contextOf(pathToContext(cursor))).length === 1
+    getChildren(state, parentOf(pathToContext(cursor))).length === 1
+}
+
+/** A selector that returns true if merged thought value is duplicate. */
+const isMergedThoughtDuplicate = (state: State) => {
+  const { cursor, editingValue } = state
+  if (!cursor) return false
+  // If we are going to delete empty thought
+  if (headValue(cursor) === '' || editingValue === '') return false
+
+  const simplePath = simplifyPath(state, cursor)
+  const prevThought = getThoughtBefore(state, simplePath)
+  if (!prevThought) return false
+  const contextChain = splitChain(state, cursor)
+  const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
+  const path = lastThoughtsFromContextChain(state, contextChain)
+  const mergedThoughtValue = prevThought.value + headValue(cursor)
+  const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
+    : !showContexts && path.length > 1 ? parentOf(path) :
+    RANKED_ROOT)
+  const siblings = getAllChildren(state, context)
+  const isDuplicate = !siblings.every(thought => thought.value !== mergedThoughtValue)
+  return isDuplicate
 }
 
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
@@ -93,11 +128,14 @@ const canExecute = (getState: () => State) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<Outdent | ActionCreator>, getState: () => State) => {
+const exec = (dispatch: Dispatch<Outdent | Alert | ActionCreator>, getState: () => State) => {
   if (canExecuteOutdent(getState())) {
     dispatch({ type: 'outdent' })
   }
-  // since canExecute has already evaluated to true, we know that canExecuteDeleteEmptyThought is true
+  // additional check for duplicates
+  else if (isMergedThoughtDuplicate(getState())) {
+    dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts', clearTimeout: 2000 }))
+  }
   else {
     dispatch(deleteEmptyThought)
   }
@@ -110,7 +148,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const deleteEmptyThoughtOrOutdent = {
+const deleteEmptyThoughtOrOutdent: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdent',
   name: 'Delete Empty Thought Or Outdent',
   keyboard: { key: 'Backspace' },
@@ -121,8 +159,9 @@ const deleteEmptyThoughtOrOutdent = {
 }
 
 // also match Shift + Backspace
-export const deleteEmptyThoughtOrOutdentAlias = {
+export const deleteEmptyThoughtOrOutdentAlias: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdentAlias',
+  name: 'Delete Empty Thought Or Outdent (alias)',
   keyboard: { key: 'Backspace', shift: true },
   hideFromInstructions: true,
   canExecute,

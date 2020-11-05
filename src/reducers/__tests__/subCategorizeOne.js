@@ -49,7 +49,7 @@ it('subcategorize with no cursor should do nothing', () => {
   const steps = [
     newThought('a'),
     newSubthought('b'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     subCategorizeOne,
   ]
 

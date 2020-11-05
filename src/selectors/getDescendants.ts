@@ -1,15 +1,15 @@
 import _ from 'lodash'
-import { head } from '../util'
-import { getThoughtsRanked } from '../selectors'
+import { head, pathToContext, unroot } from '../util'
+import { getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
-import { Child, Path } from '../types'
+import { Child, SimplePath } from '../types'
 
 /** Generates a flat list of all descendants. */
-const getDescendants = (state: State, thoughtsRanked: Path, recur?: boolean/* INTERNAL */): Child[] => {
-  const children = getThoughtsRanked(state, thoughtsRanked)
+const getDescendants = (state: State, path: SimplePath, recur?: boolean/* INTERNAL */): Child[] => {
+  const children = getChildrenRanked(state, pathToContext(path))
   // only append current thought in recursive calls
-  return (recur ? [head(thoughtsRanked)] : []).concat(
-    _.flatMap(children, child => getDescendants(state, thoughtsRanked.concat(child), true))
+  return (recur ? [head(path)] : []).concat(
+    _.flatMap(children, child => getDescendants(state, unroot(path.concat(child) as SimplePath), true))
   )
 }
 

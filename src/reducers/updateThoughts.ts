@@ -3,15 +3,14 @@ import { clearQueue } from '../reducers'
 import { expandThoughts } from '../selectors'
 import { logWithTime, mergeUpdates } from '../util'
 import { State } from '../util/initialState'
-import { Child, Lexeme, ParentEntry } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Index, Lexeme, Parent, SimplePath } from '../types'
 
 interface Payload {
-  thoughtIndexUpdates: GenericObject<Lexeme | null>,
-  contextIndexUpdates: GenericObject<ParentEntry | null>,
-  recentlyEdited?: GenericObject<any>,
-  contextChain?: Child[][],
-  updates?: GenericObject<string>,
+  thoughtIndexUpdates: Index<Lexeme | null>,
+  contextIndexUpdates: Index<Parent | null>,
+  recentlyEdited?: Index,
+  contextChain?: SimplePath[],
+  updates?: Index<string>,
   local?: boolean,
   remote?: boolean,
 }
@@ -23,7 +22,7 @@ interface Payload {
  * @param local    If false, does not persist next flushQueue to local database. Default: true.
  * @param remote   If false, does not persist next flushQueue to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, contextChain, updates, local = true, remote = true }: Payload) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, local = true, remote = true }: Payload): State => {
 
   const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
   logWithTime('updateThoughts: merge thoughtIndexUpdates')
@@ -46,7 +45,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   logWithTime('updateThoughts: merge syncQueue')
 
-  const stateNew = {
+  const stateNew: State = {
     ...state,
     recentlyEdited: recentlyEditedNew,
     syncQueue: syncQueueNew,
@@ -57,7 +56,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
   }
 
   // use fresh state to calculate expanded
-  const expanded = expandThoughts(stateNew, stateNew.cursor, contextChain)
+  const expanded = expandThoughts(stateNew, stateNew.cursor)
 
   logWithTime('updateThoughts: expanded')
 

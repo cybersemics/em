@@ -1,11 +1,16 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
-import { store } from '../store.js'
+import { store } from '../store'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
-import { asyncFocus, clearSelection, selectNextEditable, setSelection } from '../util'
+import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
-import { Child, Context, Path } from '../types'
+import { Context } from '../types'
+
+interface NoteProps {
+  context: Context,
+  onFocus: (e: React.FocusEvent) => void,
+}
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = (noteEl: HTMLElement) =>
@@ -13,7 +18,7 @@ const editableOfNote = (noteEl: HTMLElement) =>
   noteEl.parentNode.previousSibling.querySelector('.editable')
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, thoughtsRanked: Path, contextChain: Child[][] }) => {
+const Note = ({ context, onFocus }: NoteProps) => {
 
   const state = store.getState()
   const hasNote = hasChild(state, context, '=note')
@@ -21,7 +26,8 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
   if (!hasNote || isContextViewActive(state, context)) return null
 
   const dispatch = useDispatch()
-  const noteRef = useRef(null)
+  const noteRef: { current: HTMLElement | null } = useRef(null)
+  const [justPasted, setJustPasted] = useState(false)
   const note = attribute(state, context, '=note')
 
   /** Handles note keyboard shortcuts. */
@@ -33,6 +39,7 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || (e.metaKey && e.altKey && e.keyCode === 'N'.charCodeAt(0))) {
       e.stopPropagation()
+      e.preventDefault()
       editableOfNote(e.target as HTMLElement).focus()
       setSelection(editableOfNote(e.target as HTMLElement), { end: true })
     }
@@ -60,19 +67,26 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
 
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
-    // Mobile Safari inserts <br> when all text is deleted
-    // Strip <br> from beginning and end of text
+    const value = justPasted
+      // if just pasted, strip all HTML from value
+      ? (setJustPasted(false), strip(e.target.value))
+      // Mobile Safari inserts <br> when all text is deleted
+      // Strip <br> from beginning and end of text
+      : e.target.value.replace(/^<br>|<br>$/gi, '')
+
     dispatch({
       type: 'setAttribute',
       context,
       key: '=note',
-      value: e.target.value.replace(/^<br>|<br>$/gi, '')
+      value
     })
   }
 
-  /** Sets the cursor on the note's thought when then note is focused. */
-  const onFocus = () => {
-    dispatch({ type: 'setCursor', thoughtsRanked, contextChain, cursorHistoryClear: true, editing: false, noteFocus: true })
+  /** Set editing to false onBlur, if keyboard is closed. */
+  const onBlur = () => {
+    if (isMobile && !window.getSelection()?.focusNode) {
+      setTimeout(() => dispatch({ type: 'editing', value: false }))
+    }
   }
 
   return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
@@ -82,8 +96,13 @@ const Note = ({ context, thoughtsRanked, contextChain }: { context: Context, tho
       placeholder='Enter a note'
       onKeyDown={onKeyDown}
       onChange={onChange}
+      onPaste={() => {
+        // set justPasted so onChange can strip HTML from the new value
+        // the default onPaste behavior is maintained for easier caret and selection management
+        setJustPasted(true)
+      }}
+      onBlur={onBlur}
       onFocus={onFocus}
-      onBlur={clearSelection}
     />
   </div>
 }

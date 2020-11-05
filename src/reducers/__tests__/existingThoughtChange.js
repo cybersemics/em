@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThoughts } from '../../selectors'
+import { exportContext, getContexts, getAllChildren } from '../../selectors'
 import { existingThoughtChange, newThought, setCursor } from '../../reducers'
 
 it('edit a thought', () => {
@@ -8,12 +8,12 @@ it('edit a thought', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     existingThoughtChange({
       newValue: 'aa',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     })
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -29,7 +29,7 @@ it('edit a thought', () => {
     .toMatchObject([{
       context: [ROOT_TOKEN]
     }])
-  expect(getThoughts(stateNew, [ROOT_TOKEN]))
+  expect(getAllChildren(stateNew, [ROOT_TOKEN]))
     .toMatchObject([{ value: 'b', rank: 1 }, { value: 'aa', rank: 0 }])
 
   // cursor should be at /aa
@@ -48,7 +48,7 @@ it('edit a descendant', () => {
       newValue: 'aa1',
       oldValue: 'a1',
       context: ['a'],
-      thoughtsRanked: [{ value: 'a', rank: 1 }, { value: 'a1', rank: 0 }]
+      path: [{ value: 'a', rank: 1 }, { value: 'a1', rank: 0 }]
     })
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -66,7 +66,7 @@ it('edit a descendant', () => {
       context: ['a'],
       rank: 0,
     }])
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'aa1', rank: 0 }])
 
 })
@@ -81,7 +81,7 @@ it('edit a thought with descendants', () => {
       newValue: 'aa',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     })
   ]
 
@@ -99,7 +99,7 @@ it('edit a thought with descendants', () => {
     .toMatchObject([{
       context: [ROOT_TOKEN]
     }])
-  expect(getThoughts(stateNew, ['aa']))
+  expect(getAllChildren(stateNew, ['aa']))
     .toMatchObject([{ value: 'a1', rank: 0 }, { value: 'a2', rank: 1 }])
 
 })
@@ -115,7 +115,7 @@ it('edit a thought existing in mutliple contexts', () => {
       newValue: 'abc',
       oldValue: 'ab',
       context: ['a'],
-      thoughtsRanked: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }]
     })
   ]
 
@@ -134,7 +134,7 @@ it('edit a thought existing in mutliple contexts', () => {
     .toMatchObject([{
       context: ['a']
     }])
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'abc', rank: 0 }])
 
 })
@@ -150,7 +150,7 @@ it('edit a thought that exists in another context', () => {
       newValue: 'ab',
       oldValue: 'a',
       context: ['b'],
-      thoughtsRanked: [{ value: 'b', rank: 1 }, { value: 'a', rank: 0 }]
+      path: [{ value: 'b', rank: 1 }, { value: 'a', rank: 0 }]
     })
   ]
 
@@ -177,10 +177,46 @@ it('edit a thought that exists in another context', () => {
       }
     ])
 
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'ab', rank: 0 }])
 
-  expect(getThoughts(stateNew, ['a']))
+  expect(getAllChildren(stateNew, ['a']))
     .toMatchObject([{ value: 'ab', rank: 0 }])
+
+})
+
+it('edit a child with the same value as its parent', () => {
+
+  const steps = [
+    newThought({ value: 'a' }),
+    newThought({ value: 'a', insertNewSubthought: true }),
+    existingThoughtChange({
+      newValue: 'ab',
+      oldValue: 'a',
+      context: ['a'],
+      path: [{ value: 'a', rank: 0 }, { value: 'a', rank: 0 }]
+    })
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - ab`)
+
+  // ab should exist in context a
+  expect(getContexts(stateNew, 'ab'))
+    .toMatchObject([{
+      context: ['a'],
+      rank: 0,
+    }])
+  expect(getAllChildren(stateNew, ['a']))
+    .toMatchObject([{ value: 'ab', rank: 0 }])
+
+  // cursor should be /a/ab
+  expect(stateNew.cursor)
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'ab', rank: 0 }])
 
 })

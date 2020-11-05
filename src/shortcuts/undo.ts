@@ -1,13 +1,21 @@
+import { Dispatch } from 'react'
 import UndoIcon from '../components/UndoIcon'
-import { NOOP } from '../constants'
+import { Shortcut } from '../types'
+import { isUndoEnabled } from '../util/isUndoEnabled'
 
-const undoShortcut = {
+interface UndoAction {
+  type: 'undoAction',
+}
+
+const undoShortcut: Shortcut = {
   id: 'undo',
   name: 'Undo',
   description: 'Undo.',
   svg: UndoIcon,
-  canExecute: () => false,
-  exec: NOOP
+  exec: (dispatch: Dispatch<UndoAction>, getState) => {
+    if (!isUndoEnabled(getState())) return
+    dispatch({ type: 'undoAction' })
+  }
 }
 
 export default undoShortcut

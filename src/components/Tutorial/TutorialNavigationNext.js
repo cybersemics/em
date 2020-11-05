@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
 import { headValue } from '../../util'
-import { getSetting, getThoughts } from '../../selectors'
+import { getSetting, getAllChildren } from '../../selectors'
 
 import {
   ROOT_TOKEN,
@@ -28,7 +28,7 @@ const mapStateToProps = state => {
     contextIndex,
     cursor,
     expanded,
-    rootSubthoughts: getThoughts(state, [ROOT_TOKEN]),
+    rootSubthoughts: getAllChildren(state, [ROOT_TOKEN]),
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
     tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
   }

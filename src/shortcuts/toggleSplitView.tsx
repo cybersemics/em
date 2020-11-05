@@ -1,6 +1,5 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
-import { State } from '../util/initialState'
+import { Icon as IconType, Shortcut } from '../types'
 
 interface ToggleSplitView {
   type: 'toggleSplitView',
@@ -16,12 +15,12 @@ const Icon = ({ fill, size = 20, style }: IconType) => <svg className='icon' wid
   />
 </svg>
 
-const toggleSplitViewShortcut = {
+const toggleSplitViewShortcut: Shortcut = {
   id: 'toggleSplitView',
   name: 'Toggle Split View',
   description: 'Render two independent views for side-by-side editing.',
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleSplitView>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleSplitView>, getState) => {
     dispatch({ type: 'toggleSplitView', value: !getState().showSplitView })
   }
 }

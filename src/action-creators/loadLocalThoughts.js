@@ -17,7 +17,7 @@ import {
 import {
   decodeThoughtsUrl,
   expandThoughts,
-  getThoughts,
+  getAllChildren,
 } from '../selectors'
 
 // action creators
@@ -41,8 +41,8 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
   const thoughts = { contextIndex, thoughtIndex }
 
   const restoreCursor = window.location.pathname.length <= 1 && cursor
-  const { thoughtsRanked, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)
-  const cursorNew = isRoot(thoughtsRanked) ? null : thoughtsRanked
+  const { path, contextViews } = decodeThoughtsUrl({ thoughts }, restoreCursor ? cursor : window.location.pathname)
+  const cursorNew = isRoot(path) ? null : path
   const expanded = expandThoughts(
     { thoughts, contextViews },
     cursorNew || []
@@ -62,7 +62,7 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
 
   logWithTime('loadLocalThoughts: action dispatched')
 
-  if (getThoughts({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
+  if (getAllChildren({ thoughts }, [EM_TOKEN, 'Settings']).length === 0) {
     await dispatch(importText([{ value: EM_TOKEN, rank: 0 }], INITIAL_SETTINGS))
   }
 }

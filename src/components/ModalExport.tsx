@@ -8,11 +8,11 @@ import IpfsHttpClient from 'ipfs-http-client'
 import { RANKED_ROOT, RENDER_DELAY } from '../constants'
 import { download, ellipsize, getPublishUrl, headValue, isDocumentEditable, isRoot, pathToContext, timestamp, unroot } from '../util'
 import { alert } from '../action-creators'
-import { exportContext, getDescendants, getThoughts, theme } from '../selectors'
+import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import { State } from '../util/initialState'
-import { ExportOption } from '../utilTypes'
+import { ExportOption } from '../types'
 
 const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 
@@ -32,7 +32,7 @@ const ModalExport = () => {
   const cursor = useSelector((state: State) => state.cursor || RANKED_ROOT)
   const context = pathToContext(cursor)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getThoughts(state, contextTitle)[0]
+  const titleChild = getAllChildren(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home'
     : titleChild ? titleChild.value
     : headValue(cursor)
@@ -56,7 +56,7 @@ const ModalExport = () => {
     backgroundColor: 'black',
   }
 
-  const numDescendants = getDescendants(state, cursor).length
+  const numDescendants = getDescendants(state, simplifyPath(state, cursor)).length
 
   // @ts-ignore
   const exportWord = navigator.share ? 'Share' : 'Download'
@@ -97,17 +97,17 @@ const ModalExport = () => {
   const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
 
   clipboard.on('success', () => {
-    alert('Thoughts copied to clipboard')
+    dispatch(alert('Thoughts copied to clipboard'))
     clearTimeout(globals.errorTimer)
     // @ts-ignore
-    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
+    globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
   })
 
   clipboard.on('error', () => {
     dispatch({ type: 'error', value: 'Error copying thoughts' })
     clearTimeout(globals.errorTimer)
     // @ts-ignore
-    globals.errorTimer = window.setTimeout(() => alert(null), 10000)
+    globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
   })
 
   /** Updates the isOpen state when clicked outside modal. */
@@ -178,7 +178,7 @@ const ModalExport = () => {
 
   /** Closes the modal. */
   const closeModal = () => {
-    alert(null)
+    dispatch(alert(null))
     dispatch({ type: 'modalRemindMeLater', id: 'help' })
   }
 

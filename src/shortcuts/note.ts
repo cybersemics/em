@@ -2,9 +2,8 @@ import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
-import { Context } from '../types'
+import { Context, Shortcut } from '../types'
 import { Dispatch } from 'react'
-import { State } from '../util/initialState'
 
 interface SetAttribute {
   type: 'setAttribute',
@@ -13,7 +12,7 @@ interface SetAttribute {
   value: string,
 }
 
-const noteShortcut = {
+const noteShortcut: Shortcut = {
   id: 'note',
   name: 'Note',
   description: 'Add a small note beneath a thought.',
@@ -21,50 +20,51 @@ const noteShortcut = {
   gesture: 'rdlr',
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<SetAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<SetAttribute>, getState) => {
     const state = getState()
-    const { cursor, noteFocus } = state
+    const { cursor, cursorBeforeEdit, noteFocus } = state
 
-    if (cursor) {
-      const context = pathToContext(cursor)
-      const hasNote = hasChild(state, context, '=note')
+    // check cursor in exec so that the default browser behavior is always prevented
+    if (!cursor) return
 
-      if (isMobile) {
-        asyncFocus()
-      }
+    const context = pathToContext(cursor!)
+    const hasNote = hasChild(state, context, '=note')
 
-      if (!hasNote) {
-        dispatch({
-          type: 'setAttribute',
-          context,
-          key: '=note',
-          value: ''
-        })
-      }
-
-      // focus selection on note
-      setTimeout(() => {
-        try {
-          const thoughtEl = editableNode(cursor)
-          if (!thoughtEl) return
-          if (noteFocus) {
-            thoughtEl.focus()
-            setSelection(thoughtEl, { end: true })
-          }
-          else {
-            const closest = thoughtEl.closest('.thought-container')
-            if (!closest) return
-            const noteEl = closest.querySelector('.note [contenteditable]') as HTMLElement
-            if (!noteEl) return
-            noteEl.focus()
-            setSelection(noteEl, { end: true })
-          }
-        }
-        catch (e) {
-          console.warn('Note element not found in DOM.', context)
-        }
-      }, 0)
+    if (isMobile) {
+      asyncFocus()
     }
+
+    if (!hasNote) {
+      dispatch({
+        type: 'setAttribute',
+        context,
+        key: '=note',
+        value: ''
+      })
+    }
+
+    // focus selection on note
+    setTimeout(() => {
+      try {
+        const thoughtEl = editableNode(cursorBeforeEdit!)
+        if (!thoughtEl) return
+        if (noteFocus) {
+          thoughtEl.focus()
+          setSelection(thoughtEl, { end: true })
+        }
+        else {
+          const closest = thoughtEl.closest('.thought-container')
+          if (!closest) return
+          const noteEl = closest.querySelector('.note [contenteditable]') as HTMLElement
+          if (!noteEl) return
+          noteEl.focus()
+          setSelection(noteEl, { end: true })
+        }
+      }
+      catch (e) {
+        console.warn('Note element not found in DOM.', context)
+      }
+    }, 0)
   }
 }
 

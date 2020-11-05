@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
-import { exists, getThought, getThoughts, getThoughtsRanked, rankThoughtsFirstMatch } from '../selectors'
+import { exists, getThought, getAllChildren, getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
-import { Child, Context } from '../types'
+import { Child, Context, Index, Lexeme, Parent } from '../types'
 
 // util
 import {
@@ -13,7 +13,7 @@ import {
   hashThought,
   reducerFlow,
   removeContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -22,6 +22,11 @@ interface Payload {
   context: Context,
   thoughtRanked: Child,
   showContexts?: boolean,
+}
+
+interface ThoughtUpdates {
+  contextIndex: Index<Parent | null>,
+  thoughtIndex: Index<Lexeme | null>,
 }
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. */
@@ -34,7 +39,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   const key = hashThought(value)
   const thought = getThought(state, value)
   // @ts-ignore
-  context = rootedContextOf(thoughts)
+  context = rootedParentOf(thoughts)
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
@@ -74,20 +79,22 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getThoughts(state, context)
+  const subthoughts = getAllChildren(state, context)
     .filter(child => !equalThoughtRanked(child, { value, rank }))
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
-  const recursiveDeletes = (thoughts: Context, accumRecursive: any = {}): any => {
+  const recursiveDeletes = (thoughts: Context, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
     // modify the state to use the thoughtIndex with newOldThought
     // this ensures that contexts are calculated correctly for descendants with duplicate values
     const stateNew = {
+      ...state,
       thoughts: {
+        ...state.thoughts,
         contextIndex: state.thoughts.contextIndex,
         thoughtIndex: thoughtIndexNew
       }
     }
-    return getThoughtsRanked(stateNew as State, thoughts).reduce((accum, child) => {
+    return getChildrenRanked(stateNew as State, thoughts).reduce((accum, child) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought(stateNew, child.value)
       const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
@@ -136,8 +143,8 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
       }
     }, {
       thoughtIndex: {},
-      contextIndex: {}
-    })
+      contextIndex: {},
+    } as ThoughtUpdates)
   }
 
   // do not delete descendants when the thought has a duplicate sibling
@@ -158,6 +165,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   const contextIndexUpdates = {
     // current thought
     [contextEncoded]: subthoughts.length > 0 ? {
+      context: thoughts,
       children: subthoughts,
       lastUpdated: timestamp()
     } : null,

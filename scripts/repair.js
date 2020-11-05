@@ -71,6 +71,7 @@ let repair = (maxDepth = 100) => {
       // fix null or undefined rank in contextIndex
       if (updateContextIndex) {
         contextIndexUpdates[contextEncoded] = {
+          context,
           children: parentEntry.children.map((childInner, j) => {
             if (i === j) {
               // overwrite forEach child for later use recreating lexemes

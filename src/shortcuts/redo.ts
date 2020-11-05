@@ -1,13 +1,25 @@
+import { Dispatch } from 'react'
 import RedoIcon from '../components/RedoIcon'
-import { NOOP } from '../constants'
+import { Shortcut } from '../types'
+import { isRedoEnabled } from '../util/isRedoEnabled'
 
-const redoShortcut = {
+interface RedoAction {
+  type: 'redoAction',
+}
+
+const redoShortcut: Shortcut = {
   id: 'redo',
   name: 'Redo',
   description: 'Redo',
   svg: RedoIcon,
-  canExecute: () => false,
-  exec: NOOP
+  exec: (dispatch: Dispatch<RedoAction>, getState) => {
+    if (!isRedoEnabled(getState())) {
+      return
+    }
+    dispatch({
+      type: 'redoAction',
+    })
+  }
 }
 
 export default redoShortcut

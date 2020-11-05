@@ -1,8 +1,7 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType } from '../types'
+import { Context, Icon as IconType, Shortcut } from '../types'
 import { attributeEquals } from '../selectors'
-import { contextOf, pathToContext } from '../util'
-import { State } from '../util/initialState'
+import { parentOf, pathToContext } from '../util'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -22,22 +21,22 @@ const Icon = ({ size = 20, style }: IconType) => <svg xmlns='http://www.w3.org/2
   </g>
 </svg>
 
-const pinSubthoughtsShortcut = {
+const pinSubthoughtsShortcut: Shortcut = {
   id: 'pinSubthoughts',
   name: 'Pin Subthoughts',
   description: 'Pin open the current thought\'s subthoughts.',
   keyboard: { key: 'p', alt: true, shift: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState: () => State) => {
+  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
-    const context = contextOf(cursor)
-    const isPinned = attributeEquals(state, pathToContext(context), '=pinChildren', 'true')
+    const context = parentOf(cursor)
+    const isPinned = attributeEquals(state, pathToContext(parentOf(context)), '=pinChildren', 'true')
     if (cursor) {
       dispatch({
         type: 'toggleAttribute',
-        context: pathToContext(cursor),
+        context: pathToContext(parentOf(cursor)),
         key: '=pinChildren',
         value: isPinned ? 'false' : 'true'
       })

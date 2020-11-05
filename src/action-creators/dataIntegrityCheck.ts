@@ -3,7 +3,7 @@ import { ActionCreator, Path, ThoughtContext } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   equalArrays,
   equalThoughtRanked,
   equalThoughtValue,
@@ -13,7 +13,7 @@ import {
   headRank,
   headValue,
   pathToContext,
-  rootedContextOf,
+  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -23,8 +23,9 @@ import {
   exists,
   getSetting,
   getThought,
-  getThoughts,
-  getThoughtsRanked,
+  getAllChildren,
+  getChildrenRanked,
+  simplifyPath,
   splitChain,
 } from '../selectors'
 
@@ -51,9 +52,11 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
   const thoughtRanked = head(path)
   const value = headValue(path)
   const rank = headRank(path)
-  const encoded = hashContext(path)
+  const context = pathToContext(path)
+  const encoded = hashContext(context)
   const thought = getThought(state, value)
-  const pathContext = contextOf(pathToContext(path))
+  const pathContext = parentOf(context)
+  const simplePath = simplifyPath(state, path)
 
   // delete duplicate thoughts in contextIndex
   if (deleteDuplicateContextIndex) {
@@ -66,6 +69,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
         type: 'updateThoughts',
         contextIndexUpdates: {
           [encoded]: {
+            context,
             children: childrenUnique,
             lastUpdated: parentEntry.lastUpdated,
           }
@@ -86,7 +90,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
         console.warn('Recreating missing thought in thoughtIndex:', child.value)
         dispatch({
           type: 'newThoughtSubmit',
-          context: pathToContext(path),
+          context,
           // guard against undefined
           rank: child.rank || 0,
           value: child.value || ''
@@ -113,10 +117,10 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
     }
 
     // recreate thoughts missing in contextIndex
-    // const contextSubthoughts = getThoughtsRanked(state, pathContext)
+    // const contextSubthoughts = getChildrenRanked(state, pathContext)
     if (recreateMissingContextIndex) {
       const contextIndexUpdates = thought.contexts.reduce((accum: any, cx: ThoughtContext) => {
-        const otherContextChildren = getThoughts(state, cx.context)
+        const otherContextChildren = getAllChildren(state, cx.context)
         const otherContextHasThought = otherContextChildren
           .some(child => hashThought(child.value) === hashThought(thought.value) && child.rank === cx.rank)
         const encoded = hashContext(cx.context)
@@ -127,6 +131,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
           []
         const contextIndexUpdatesNew = !otherContextHasThought ? {
           [encoded]: {
+            context: cx.context,
             children: [
               ...children,
               {
@@ -158,7 +163,7 @@ const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) =
 
     // sync divergent ranks
     if (syncDivergentRanks) {
-      const contextIndexThoughtsMatchingValue = getThoughtsRanked(state, rootedContextOf(path))
+      const contextIndexThoughtsMatchingValue = getChildrenRanked(state, rootedParentOf(pathToContext(simplePath)))
         .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {

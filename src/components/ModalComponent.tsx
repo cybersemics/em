@@ -3,21 +3,30 @@ import React from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION, MODAL_REMIND_ME_LATER_DURATION } from '../constants'
 import { modalCleanup } from '../util'
-import { GenericObject } from '../utilTypes'
 import { Connected } from '../types'
+import { modalComplete } from '../action-creators'
 
 export interface ModalProps {
   arrow: string,
   center?: boolean,
   className?: string,
   id: string,
-  onSubmit?: any,
+  onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
   opaque?: boolean,
   positionAtCursor?: boolean,
   show?: boolean,
-  style?: GenericObject<string | number>,
+  style?: React.CSSProperties,
   title: string,
   top?: number,
+}
+
+/** Retrieves the { x, y } coordinates of the selection range. */
+const getSelectionCoordinates = () => {
+  const sel = document.getSelection()
+  // JSDOM implementation of Range does not support getClientRects
+  return sel && sel.type !== 'None' && sel.getRangeAt(0).getClientRects
+    ? sel.getRangeAt(0).getClientRects()[0] || {}
+    : { x: 0, y: 0 }
 }
 
 /** A generic modal component. */
@@ -75,10 +84,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   render() {
     const { show, id, title, arrow, center, opaque, onSubmit, className, style, positionAtCursor, top, children, dispatch } = this.props
 
-    const sel = document.getSelection()
-    const cursorCoords = sel && sel.type !== 'None'
-      ? sel.getRangeAt(0).getClientRects()[0] || {}
-      : { x: 0, y: 0 }
+    const cursorCoords = getSelectionCoordinates()
 
     if (!show) return null
 
@@ -102,7 +108,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         <div className='modal-actions'>
           {
             id === 'welcome' ? <a className='button' onClick={() => {
-              dispatch({ type: 'modalComplete', id })
+              dispatch(modalComplete(id))
             }}>START TUTORIAL</a> :
             id === 'feedback' ? <div>
               <a className='button button-small button-inactive' onClick={() => {
@@ -121,15 +127,15 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
             <span>
               {
                 id !== 'export' && <a onClick={() => {
-                  dispatch({ type: 'modalComplete', id })
+                  dispatch(modalComplete(id))
                 }}>Got it!</a>
               }
               <span> </span>{ id !== 'export' && <a onClick={() => this.close!(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a> }
               { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
               }
             </span>}
-          {id === 'welcome' ? <div style={{ marginTop: 10, opacity: 0.5 }}><a onClick={() => {
-            dispatch({ type: 'modalComplete', id })
+          {id === 'welcome' ? <div style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => {
+            dispatch(modalComplete(id))
             dispatch({ type: 'tutorial', value: false })
           }}>Skip tutorial</a></div> : null}
         </div>

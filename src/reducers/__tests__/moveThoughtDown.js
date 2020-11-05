@@ -1,19 +1,21 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import moveThoughtDown from '../moveThoughtDown'
 import setCursor from '../setCursor'
+import toggleAttribute from '../toggleAttribute'
 
 it('move within root', () => {
 
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     moveThoughtDown,
 
   ]
@@ -34,7 +36,7 @@ it('move within context', () => {
     newThought('a'),
     newSubthought('a1'),
     newThought('a2'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,
   ]
 
@@ -56,7 +58,7 @@ it('move to next uncle', () => {
     newSubthought('a1'),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
     newSubthought('b1'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,
   ]
 
@@ -72,6 +74,55 @@ it('move to next uncle', () => {
 
 })
 
+it('move to next uncle in sorted list', () => {
+
+  const steps = [
+    newThought('a'),
+    toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+    newSubthought('a1'),
+    newThought('a2'),
+    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    setCursorFirstMatch(['a', 'a1']),
+    moveThoughtDown,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - a2
+  - b
+    - a1`)
+
+})
+
+it('prevent move in sorted list when there is no next uncle', () => {
+
+  const steps = [
+    newThought('a'),
+    toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+    newSubthought('a1'),
+    newThought('a2'),
+    setCursorFirstMatch(['a', 'a1']),
+    moveThoughtDown,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plaintext')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - a1
+    - a2`)
+
+})
 it('move descendants', () => {
 
   const steps = [
@@ -81,7 +132,7 @@ it('move descendants', () => {
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     moveThoughtDown,
   ]
 
@@ -123,7 +174,7 @@ it('trying to move last thought of context with no next uncle should do nothing'
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
     newSubthought('a1'),
     newSubthought('a1.1'),
     moveThoughtDown,
@@ -147,7 +198,7 @@ it('do nothing when there is no cursor', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     moveThoughtDown,
   ]
 
@@ -167,7 +218,7 @@ it('move cursor thought should update cursor', () => {
     newThought('a'),
     newSubthought('a1'),
     newThought('a2'),
-    setCursor({ thoughtsRanked: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
+    setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }] }),
     moveThoughtDown,
   ]
 

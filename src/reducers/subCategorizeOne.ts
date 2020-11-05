@@ -1,11 +1,11 @@
-import { error, existingThoughtMove, newThought } from '../reducers'
-import { getThoughtBefore, hasChild, pathToThoughtsRanked } from '../selectors'
+import { alert, existingThoughtMove, newThought } from '../reducers'
+import { getThoughtBefore, hasChild, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Child } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   head,
   headValue,
@@ -22,31 +22,31 @@ const subCategorizeOne = (state: State) => {
 
   if (!cursor) return state
 
-  const cursorParent = contextOf(cursor)
+  const cursorParent = parentOf(cursor)
   const context = pathToContext(cursorParent)
 
   // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
-    return error(state, {
+    return alert(state, {
       value: `Subthoughts of the "${isEM(cursorParent) ? 'em' : 'home'}" contex may not be de-indented.`
     })
   }
   // cancel if parent is readonly
   else if (hasChild(state, context, '=readonly')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`
     })
   }
   else if (hasChild(state, context, '=unextendable')) {
-    return error(state, {
+    return alert(state, {
       value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(cursor)}" cannot be subcategorized.`
     })
   }
 
   /** Gets the last created thought insserted before the cursor. */
   const thoughtNew = (state: State) => {
-    const thoughtsRanked = pathToThoughtsRanked(state, cursor)
-    return getThoughtBefore(state, thoughtsRanked)
+    const path = simplifyPath(state, cursor)
+    return getThoughtBefore(state, path)
   }
 
   return reducerFlow([

@@ -1,7 +1,7 @@
 import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 import { Action } from 'redux'
-import { State } from '../util/initialState'
+import { clearSelection, scrollCursorIntoView } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -10,16 +10,32 @@ const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xm
   </g>
 </svg>
 
-const cursorBackShortcut = {
+/** Removes the browser selection. */
+const blur = () => {
+  if (document.activeElement) {
+    (document.activeElement as HTMLInputElement).blur()
+    clearSelection()
+  }
+}
+
+const cursorBackShortcut: Shortcut = {
   id: 'cursorBack',
   name: 'Back',
   gesture: 'r',
   svg: Icon,
   keyboard: 'Escape',
-  exec: (dispatch: Dispatch<Action>, getState: () => State) => {
+  exec: (dispatch: Dispatch<Action>, getState) => {
     const { cursor, search } = getState()
     if (cursor || search != null) {
+
       dispatch({ type: 'cursorBack' })
+
+      setTimeout(scrollCursorIntoView, 0)
+
+      // clear browser selection if cursor has been removed
+      if (!getState().cursor) {
+        blur()
+      }
     }
   }
 }

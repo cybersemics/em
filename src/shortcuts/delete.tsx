@@ -1,10 +1,9 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType, Path } from '../types'
+import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { State } from '../util/initialState'
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
-import { Nullable } from '../utilTypes'
 
 interface Error {
   type: 'error',
@@ -24,12 +23,7 @@ interface Alert {
 
 interface ArchiveThought {
   type: 'archiveThought',
-  path?: Nullable<Path>,
-}
-
-interface Event {
-  target: HTMLElement,
-  allowDefault?: () => void,
+  path?: Path | null,
 }
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
@@ -37,7 +31,7 @@ let undoArchiveTimer: number // eslint-disable-line fp/no-let
 /** Gets the editable node for the given note element. */
 const editableOfNote = (noteEl: HTMLElement) => {
   const closest = noteEl.closest('.thought-container')
-  return closest ? closest.querySelector('.editable') : null
+  return closest ? closest.querySelector('.editable') as HTMLElement : null
 }
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec = (dispatch: Dispatch<Error | DeleteAttribute | Alert | ArchiveThought>, getState: () => State, e: Event) => {
@@ -53,7 +47,7 @@ const exec = (dispatch: Dispatch<Error | DeleteAttribute | Alert | ArchiveThough
       dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` })
     }
     else if (noteFocus) {
-      const editable = editableOfNote(e.target) as HTMLElement
+      const editable = e.target ? editableOfNote(e.target as HTMLElement) : null
       dispatch({ type: 'deleteAttribute', context, key: '=note' })
 
       // restore selection manually since Editable is not re-rendered
@@ -83,9 +77,6 @@ const exec = (dispatch: Dispatch<Error | DeleteAttribute | Alert | ArchiveThough
       dispatch({ type: 'archiveThought', path: state.cursor })
     }
   }
-  else if (e.allowDefault) {
-    e.allowDefault()
-  }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -95,7 +86,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const deleteShortcut = {
+const deleteShortcut: Shortcut = {
   id: 'delete',
   name: 'Delete',
   description: 'Delete the current thought.',
@@ -107,7 +98,7 @@ const deleteShortcut = {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const deleteAliases = {
+export const deleteAliases: Shortcut = {
   id: 'deleteAliases',
   name: 'Delete',
   hideFromInstructions: true,

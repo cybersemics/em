@@ -2,22 +2,21 @@ import _ from 'lodash'
 import { store } from '../store'
 import { dataIntegrityCheck, loadResource } from '../action-creators'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
-import { chain, expandThoughts, getSetting, getThoughts, lastThoughtsFromContextChain } from '../selectors'
+import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
-import { Child, Path, TutorialChoice } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Index, Path, SimplePath, TutorialChoice } from '../types'
 
 interface Payload {
-  contextChain?: Child[][],
+  contextChain?: SimplePath[],
   cursorHistoryClear?: boolean,
   cursorHistoryPop?: boolean,
   editing?: boolean | null,
-  offset?: number,
-  replaceContextViews?: GenericObject<boolean>,
-  thoughtsRanked: Path,
   noteFocus?: boolean,
+  offset?: number,
+  replaceContextViews?: Index<boolean>,
+  path: Path | null,
 }
 
 /**
@@ -33,13 +32,13 @@ const setCursor = (state: State, {
   editing,
   offset,
   replaceContextViews,
-  thoughtsRanked,
+  path,
   noteFocus = false
-}: Payload) => {
+}: Payload): State => {
 
-  const thoughtsResolved = contextChain.length > 0
-    ? chain(state, contextChain, thoughtsRanked)
-    : thoughtsRanked
+  const thoughtsResolved = path && contextChain.length > 0
+    ? chain(state, contextChain, simplifyPath(state, path))
+    : path
 
   // SIDE EFFECT
   // clear the browser selection if a divider is being selected
@@ -76,13 +75,7 @@ const setCursor = (state: State, {
     }
   })
 
-  const expanded = expandThoughts(
-    { ...state, contextViews: newContextViews },
-    thoughtsResolved || [],
-    contextChain.length > 0
-      ? contextChain.concat([thoughtsResolved.slice(lastThoughtsFromContextChain(state, contextChain).length)])
-      : []
-  )
+  const expanded = expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved || [])
 
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
@@ -95,8 +88,8 @@ const setCursor = (state: State, {
    *
    * @todo Abstract tutorial logic away from setCursor and call only when tutorial is on.
    */
-  const hasThoughtCollapsed = () => !expanded[hashContext(oldCursor)] &&
-    (getThoughts(state, pathToContext(oldCursor)).length > 0 ||
+  const hasThoughtCollapsed = () => !expanded[hashContext(pathToContext(oldCursor))] &&
+    (getAllChildren(state, pathToContext(oldCursor)).length > 0 ||
       (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(pathToContext(thoughtsResolved || []), pathToContext(oldCursor)))
     )
 
@@ -112,7 +105,7 @@ const setCursor = (state: State, {
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
-  setTimeout(() => store.dispatch(dataIntegrityCheck(thoughtsResolved)), 100)
+  setTimeout(() => store.dispatch(dataIntegrityCheck(thoughtsResolved!)), 100)
 
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   const stateNew = equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
@@ -143,9 +136,8 @@ const setCursor = (state: State, {
         : null,
       cursor: thoughtsResolved,
       cursorBeforeEdit: thoughtsResolved,
-      codeView: null,
       cursorHistory: cursorHistoryClear ? [] :
-      cursorHistoryPop ? state.cursorHistory.slice(0, state.cursorHistory.length - 1)
+      cursorHistoryPop ? state.cursorHistory.slice(0, -1)
       : state.cursorHistory,
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,

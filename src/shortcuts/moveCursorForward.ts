@@ -1,7 +1,7 @@
-import { attributeEquals, getThoughts, pathToThoughtsRanked } from '../selectors'
-import { contextOf, isDocumentEditable, pathToContext } from '../util'
-import { State } from '../util/initialState'
+import { attributeEquals, getAllChildren, simplifyPath } from '../selectors'
+import { parentOf, isDocumentEditable, pathToContext } from '../util'
 import { Dispatch } from 'react'
+import { Shortcut } from '../types'
 
 interface CursorDown {
   type: 'cursorDown',
@@ -16,21 +16,21 @@ interface Indent {
   type: 'indent',
 }
 
-const moveCursorForwardShortcut = {
+const moveCursorForward: Shortcut = {
   id: 'moveCursorForward',
   name: 'Move Cursor Forward',
   description: `Move the current thought to the end of the previous thought or to next column in table view.`,
   keyboard: { key: 'Tab' },
-  canExecute: (getState: () => State) => isDocumentEditable() && getState().cursor,
-  exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState: () => State) => {
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
-    const thoughtsRanked = pathToThoughtsRanked(state, cursor)
-    const context = pathToContext(thoughtsRanked)
-    const contextParent = contextOf(context)
+    const path = simplifyPath(state, cursor)
+    const context = pathToContext(path)
+    const contextParent = parentOf(context)
     const isTable = attributeEquals(state, contextParent, '=view', 'Table')
-    const hasChildren = getThoughts(state, context).length > 0
+    const hasChildren = getAllChildren(state, context).length > 0
 
     dispatch(isTable ?
       // special case for table
@@ -46,4 +46,4 @@ const moveCursorForwardShortcut = {
   }
 }
 
-export default moveCursorForwardShortcut
+export default moveCursorForward

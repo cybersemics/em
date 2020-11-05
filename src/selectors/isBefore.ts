@@ -1,19 +1,19 @@
-import { contextOf, headRank, headValue } from '../util'
-import { getThoughtsRanked } from '../selectors'
+import { parentOf, headRank, headValue, pathToContext } from '../util'
+import { getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
-import { Path } from '../types'
+import { SimplePath } from '../types'
 
 /** Returns true if thoughtsA comes immediately before thoughtsB.
  * Assumes they have the same context.
  */
-const isBefore = (state: State, thoughtsRankedA: Path, thoughtsRankedB: Path) => {
+const isBefore = (state: State, simplePathA: SimplePath, simplePathB: SimplePath) => {
 
-  const valueA = headValue(thoughtsRankedA)
-  const rankA = headRank(thoughtsRankedA)
-  const valueB = headValue(thoughtsRankedB)
-  const rankB = headRank(thoughtsRankedB)
-  const context = contextOf(thoughtsRankedA)
-  const children = getThoughtsRanked(state, context)
+  const valueA = headValue(simplePathA)
+  const rankA = headRank(simplePathA)
+  const valueB = headValue(simplePathB)
+  const rankB = headRank(simplePathB)
+  const parentPathA = parentOf(simplePathA)
+  const children = getChildrenRanked(state, pathToContext(parentPathA))
 
   if (children.length === 0 || valueA === undefined || valueB === undefined) {
     return false

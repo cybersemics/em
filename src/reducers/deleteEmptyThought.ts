@@ -1,28 +1,28 @@
 import { isMobile } from '../browser'
 import { ROOT_TOKEN } from '../constants'
 import { State } from '../util/initialState'
+import { SimplePath } from '../types'
 
 // util
 import {
   asyncFocus,
-  contextOf,
   head,
   headRank,
   headValue,
   isDivider,
+  parentOf,
   pathToContext,
   reducerFlow,
-  rootedContextOf,
+  rootedParentOf,
 } from '../util'
 
 // selectors
 import {
   getNextRank,
-  getThoughtsRanked,
+  getChildrenRanked,
   isContextViewActive,
-  lastThoughtsFromContextChain,
   prevSibling,
-  splitChain,
+  simplifyPath,
 } from '../selectors'
 
 // reducers
@@ -42,10 +42,9 @@ const deleteEmptyThought = (state: State) => {
 
   if (!cursor) return
 
-  const showContexts = isContextViewActive(state, pathToContext(contextOf(cursor)))
-  const contextChain = splitChain(state, cursor)
-  const thoughtsRanked = lastThoughtsFromContextChain(state, contextChain)
-  const children = getThoughtsRanked(state, thoughtsRanked)
+  const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
+  const path = simplifyPath(state, cursor)
+  const children = getChildrenRanked(state, pathToContext(path))
 
   // delete an empty thought
   if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
@@ -61,15 +60,15 @@ const deleteEmptyThought = (state: State) => {
   else if (offset === 0 && sel?.isCollapsed && !showContexts) {
     const value = headValue(cursor)
     const rank = headRank(cursor)
-    const thoughts = pathToContext(thoughtsRanked)
-    const context = thoughts.length > 1 ? contextOf(thoughts) : [ROOT_TOKEN]
-    const prev = prevSibling(state, value, pathToContext(rootedContextOf(cursor)), rank)
+    const thoughts = pathToContext(path)
+    const context = thoughts.length > 1 ? parentOf(thoughts) : [ROOT_TOKEN]
+    const prev = prevSibling(state, value, pathToContext(rootedParentOf(cursor)), rank)
 
     // only if there is a previous sibling
     if (prev) {
 
       const valueNew = prev.value + value
-      const thoughtsRankedPrevNew = contextOf(thoughtsRanked).concat({
+      const pathPrevNew = parentOf(path).concat({
         value: valueNew,
         rank: prev.rank
       })
@@ -81,26 +80,26 @@ const deleteEmptyThought = (state: State) => {
           oldValue: prev.value,
           newValue: valueNew,
           context,
-          thoughtsRanked: contextOf(thoughtsRanked).concat(prev)
+          path: parentOf(path).concat(prev) as SimplePath
         }),
 
         // merge children
         ...children.map((child, i) =>
           (state: State) => existingThoughtMove(state, {
-            oldPath: thoughtsRanked.concat(child),
-            newPath: thoughtsRankedPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(thoughtsRankedPrevNew)) + i })
+            oldPath: path.concat(child),
+            newPath: pathPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(pathPrevNew)) + i })
           })
         ),
 
         // delete second thought
         existingThoughtDelete({
           context,
-          thoughtRanked: head(thoughtsRanked)
+          thoughtRanked: head(path)
         }),
 
         // move the cursor to the new thought at the correct offset
         setCursor({
-          thoughtsRanked: thoughtsRankedPrevNew,
+          path: pathPrevNew,
           offset: prev.value.length,
           editing
         }),

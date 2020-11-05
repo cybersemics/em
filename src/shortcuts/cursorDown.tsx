@@ -1,9 +1,7 @@
-import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
-import { contextOf, getElementPaddings, headValue, pathToContext } from '../util'
+import React from 'react'
+import { Icon as IconType, Shortcut } from '../types'
+import { parentOf, getElementPaddings, headValue, pathToContext, scrollCursorIntoView } from '../util'
 import { attributeEquals } from '../selectors'
-import { State } from '../util/initialState'
-import { Action } from 'redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -12,13 +10,13 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const cursorDownShortcut = {
+const cursorDownShortcut: Shortcut = {
   id: 'cursorDown',
   name: 'Cursor Down',
   keyboard: { key: 'ArrowDown' },
   hideFromInstructions: true,
   svg: Icon,
-  canExecute: (getState: () => State) => {
+  canExecute: getState => {
     const state = getState()
     const { cursor } = state
 
@@ -41,7 +39,7 @@ const cursorDownShortcut = {
         }
       }
 
-      const contextRanked = contextOf(cursor)
+      const contextRanked = parentOf(cursor)
       const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
 
       // default browser behavior in prose mode
@@ -50,7 +48,10 @@ const cursorDownShortcut = {
 
     return true
   },
-  exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'cursorDown' })
+  exec: dispatch => {
+    dispatch({ type: 'cursorDown' })
+    setTimeout(scrollCursorIntoView)
+  }
 }
 
 export default cursorDownShortcut

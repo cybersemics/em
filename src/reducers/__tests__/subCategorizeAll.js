@@ -55,7 +55,7 @@ it('should do nothing with no cursor', () => {
   const steps = [
     newThought('a'),
     newSubthought('b'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     subCategorizeAll,
 
   ]

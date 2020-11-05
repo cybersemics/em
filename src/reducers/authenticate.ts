@@ -1,10 +1,11 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
+import { Ref, User } from '../types'
 
 interface Options {
   value: string,
-  user: any,
-  userRef: any,
+  user: User,
+  userRef: Ref,
 }
 
 /** Sets the authenticated, autologin, loading, and user when the user has been authenticated. */

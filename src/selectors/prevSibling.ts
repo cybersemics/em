@@ -1,8 +1,7 @@
-import { getContextsSortedAndRanked, getSortPreference, getThoughtsRanked, getThoughtsSorted, isChildVisible, isContextViewActive, isContextVisible } from '../selectors'
+import { getContextsSortedAndRanked, getSortPreference, getChildrenRanked, getChildrenSorted, isChildVisible, isContextViewActive, isContextVisible } from '../selectors'
 import { head } from '../util'
 import { State } from '../util/initialState'
-import { Child, Context, ThoughtContext } from '../types'
-import { GenericObject, Nullable } from '../utilTypes'
+import { Child, Context, Index, ThoughtContext } from '../types'
 
 /**
  * Gets a context's previous sibling with its rank.
@@ -18,17 +17,17 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   const getContextSiblings = () => getContextsSortedAndRanked(state, head(context))
 
   /** Gets siblings of thought. */
-  const getThoughtSiblings = () => (sortPreference === 'Alphabetical' ? getThoughtsSorted : getThoughtsRanked)(state, context)
+  const getThoughtSiblings = () => (sortPreference === 'Alphabetical' ? getChildrenSorted : getChildrenRanked)(state, context)
 
-  const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings()
-  let prev: Nullable<GenericObject> = null // eslint-disable-line fp/no-let
+  const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings() as (Child | ThoughtContext)[]
+  let prev: Index | null = null // eslint-disable-line fp/no-let
   siblings.find(child => {
-    if (child.rank === rank && (contextViewActive || child.value === value)) {
+    if (child.rank === rank && (contextViewActive || (child as Child).value === value)) {
       return true
     }
     else if (!(contextViewActive
-      ? isContextVisible(state, child.context)
-      : showHiddenThoughts || isChildVisible(state, context, child))
+      ? isContextVisible(state, (child as ThoughtContext).context)
+      : showHiddenThoughts || isChildVisible(state, context, child as Child))
     ) {
       return false
     }

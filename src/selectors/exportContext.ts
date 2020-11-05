@@ -1,7 +1,6 @@
-import { attribute, getThoughtsRanked } from '../selectors'
+import { attribute, getChildrenRanked } from '../selectors'
 import { head, isFunction, unroot } from '../util'
-import { Child, Context } from '../types'
-import { MimeType } from '../utilTypes'
+import { Child, Context, MimeType } from '../types'
 import { State } from '../util/initialState'
 
 /** Replaces the root value with a given title. */
@@ -32,7 +31,7 @@ export const exportContext = (state: State, context: Context, format: MimeType =
   const tab2 = tab1 + '  '
   const childrenPrefix = format === 'text/html' ? `\n${tab2}<ul>` : ''
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
-  const children = getThoughtsRanked(state, context)
+  const children = getChildrenRanked(state, context)
 
   // if excludeSrc is true, do not export any non-function siblings of =src, i.e. loaded content
   const childrenFiltered = excludeSrc && attribute(state, context, '=src')

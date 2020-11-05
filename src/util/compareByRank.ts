@@ -1,4 +1,5 @@
 import { makeCompareByProp } from './makeCompareByProp'
-import { ComparatorFunction, GenericObject } from '../utilTypes'
+import { ComparatorFunction } from '../types'
 
-export const compareByRank: ComparatorFunction<GenericObject> = makeCompareByProp('rank')
+export const compareByRank: ComparatorFunction<{ rank: number }> =
+  makeCompareByProp('rank')

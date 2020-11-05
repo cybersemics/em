@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { isMobile } from '../browser'
-import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts.js'
+import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 import * as db from '../db'
 import { makeCompareByProp, sort } from '../util'
 import { getSetting } from '../selectors'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import { State } from '../util/initialState'
-import { Connected } from '../types'
+import { Connected, GesturePath, Shortcut } from '../types'
 
 // components
 import GestureDiagram from './GestureDiagram'
@@ -23,22 +23,34 @@ const mapStateToProps = (state: State) => {
   }
 }
 
-/** Renders all of a shortcut's details into a row. */
-const ShortcutRows = (): any => sort(globalShortcuts, makeCompareByProp('name'))
+/** Renders all of a shortcut's details as a table row. */
+const ShortcutRows = (shortcut: Shortcut, i: number) =>
+  <tr key={i}>
+    <th>
+      <b>{shortcut.name}</b>
+      <p>{shortcut.description}</p>
+    </th>
+    <td>{isMobile && shortcut.gesture
+      // GesturePath[]
+      ? <GestureDiagram path={shortcut.gesture as GesturePath} size={48} />
+      : shortcut.keyboard ? formatKeyboardShortcut(shortcut.keyboard)
+      : null
+    }</td>
+  </tr>
+
+/** Renders a table of shortcuts. */
+const ShortcutTable = () => {
+
   // filter out shortcuts that do not exist on the current platform
-  .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
-  .map((shortcut, i) =>
-    <tr key={i}>
-      <th>
-        <b>{shortcut.name}</b>
-        <p>{shortcut.description}</p>
-      </th>
-      <td>{isMobile
-        ? <GestureDiagram path={shortcut.gesture} size={48} />
-        : formatKeyboardShortcut(shortcut.keyboard)
-      }</td>
-    </tr>
-  )
+  const shortcuts = sort(globalShortcuts, makeCompareByProp('name'))
+    .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
+
+  return <table className='shortcuts'>
+    <tbody>
+      {shortcuts.map(ShortcutRows)}
+    </tbody>
+  </table>
+}
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
 const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialStep: number, showQueue?: boolean | null }>) => {
@@ -74,11 +86,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
 
     <h2 className='modal-subtitle'>{isMobile ? 'Gesture' : 'Keyboard'} Shortcuts</h2>
 
-    <table className='shortcuts'>
-      <tbody>
-        <ShortcutRows />
-      </tbody>
-    </table>
+    <ShortcutTable />
 
     <h2 className='modal-subtitle modal-subtitle-compact'>Metaprogramming</h2>
 

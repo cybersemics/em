@@ -2,8 +2,7 @@ import { act } from 'react-dom/test-utils'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
-import createTestApp from '../../test-helpers/createTestApp'
-import * as db from '../../db'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { importText } from '../../action-creators'
 
@@ -72,7 +71,7 @@ it('do nothing if there is no cursor', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ thoughtsRanked: null }),
+    setCursor({ path: null }),
     deleteEmptyThought,
   ]
 
@@ -219,14 +218,8 @@ it('cursor should be removed if the last thought is deleted', () => {
 /** Mount tests required for caret. */
 describe('mount', () => {
 
-  beforeEach(async () => {
-    await createTestApp()
-  })
-
-  afterEach(async () => {
-    store.dispatch({ type: 'clear' })
-    await db.clearAll()
-  })
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
 
   it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
     store.dispatch([
@@ -242,7 +235,7 @@ describe('mount', () => {
     store.dispatch([
       importText(RANKED_ROOT, `- apple
 - banana`),
-      { type: 'setCursor', thoughtsRanked: [{ value: 'banana', rank: 1 }] },
+      { type: 'setCursor', path: [{ value: 'banana', rank: 1 }] },
       { type: 'deleteEmptyThought' },
     ])
     act(jest.runOnlyPendingTimers)

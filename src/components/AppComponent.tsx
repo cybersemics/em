@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 
 import { isAndroid, isMobile } from '../browser'
-import { inputHandlers } from '../shortcuts.js'
+import { inputHandlers } from '../shortcuts'
 import { isDocumentEditable } from '../util'
 import { getSetting, isTutorial } from '../selectors'
 import theme from '../selectors/theme'

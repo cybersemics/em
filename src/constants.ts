@@ -1,6 +1,7 @@
 /** Defines app-wide constants. */
 
 import raw from 'raw.macro'
+import { Index, SimplePath } from './types'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -102,7 +103,7 @@ export const ROOT_TOKEN = '__ROOT__'
 // token for hidden system context
 export const EM_TOKEN = '__EM__'
 
-export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
+export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }] as SimplePath
 
 export const ALLOW_SINGLE_CONTEXT = false
 
@@ -116,7 +117,7 @@ export const FIREBASE_CONFIG = {
 }
 
 /** An identify function that returns the value passed to it. */
-export const ID = (x: any) => x
+export const ID = <T = any>(x: T): T => x
 
 /** A void function that does nothing. NOOP means "no operation". */
 export const NOOP = () => { } // eslint-disable-line @typescript-eslint/no-empty-function
@@ -162,6 +163,8 @@ export const MAX_EXPAND_DEPTH = 5
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
 export const TOOLBAR_DEFAULT_SHORTCUTS = [
+  'undo',
+  'redo',
   'search',
   'outdent',
   'indent',
@@ -174,6 +177,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'toggleContextView',
   'proseView',
   'toggleSplitView',
+  'splitSentences',
   'subcategorizeOne',
   'subcategorizeAll',
   'toggleHiddenThoughts',
@@ -204,4 +208,65 @@ export const MODIFIER_KEYS = {
   Ctrl: 1,
   Meta: 1,
   Shift: 1,
+}
+
+// actions representing any cursor movements.
+// These need to be differentiated from the other actions because
+// any two or more such consecutive actions are merged together
+export const NAVIGATION_ACTIONS: Index<string> = {
+  cursorBack: 'cursorBack',
+  cursorBeforeSearch: 'cursorBeforeSearch',
+  cursorDown: 'cursorDown',
+  cursorForward: 'cursorForward',
+  cursorHistory: 'cursorHistory',
+  cursorUp: 'cursorUp',
+  setCursor: 'setCursor'
+}
+
+// a list of all undoable/reversible actions (stored as object for indexing)
+export const UNDOABLE_ACTIONS: Index<string> = {
+  archiveThought: 'archiveThought',
+  bumpThoughtDown: 'bumpThoughtDown',
+  cursorBack: 'cursorBack',
+  cursorBeforeSearch: 'cursorBeforeSearch',
+  cursorDown: 'cursorDown',
+  cursorForward: 'cursorForward',
+  cursorHistory: 'cursorHistory',
+  cursorUp: 'cursorUp',
+  deleteAttribute: 'deleteAttribute',
+  deleteData: 'deleteData',
+  deleteEmptyThought: 'deleteEmptyThought',
+  deleteThought: 'deleteThought',
+  existingThoughtChange: 'existingThoughtChange',
+  existingThoughtDelete: 'existingThoughtDelete',
+  existingThoughtMove: 'existingThoughtMove',
+  expandContextThought: 'expandContextThought',
+  indent: 'indent',
+  moveThoughtDown: 'moveThoughtDown',
+  moveThoughtUp: 'moveThoughtUp',
+  newThought: 'newThought',
+  newThoughtSubmit: 'newThoughtSubmit',
+  outdent: 'outdent',
+  searchLimit: 'searchLimit',
+  setAttribute: 'setAttribute',
+  setCursor: 'setCursor',
+  setFirstSubthought: 'setFirstSubthought',
+  settings: 'settings',
+  splitThought: 'splitThought',
+  subCategorizeAll: 'subCategorizeAll',
+  subCategorizeOne: 'subCategorizeOne',
+  toggleAttribute: 'toggleAttribute',
+  toggleCodeView: 'toggleCodeView',
+  toggleContextView: 'toggleContextView',
+  toggleHiddenThoughts: 'toggleHiddenThoughts',
+  toggleSplitView: 'toggleSplitView',
+  toolbarOverlay: 'toolbarOverlay'
+}
+
+// modal states
+export const MODALS: Index<string> = {
+  welcome: 'welcome',
+  help: 'help',
+  home: 'home',
+  export: 'export'
 }

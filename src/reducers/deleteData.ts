@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { deleteThought, updateLastUpdated } from '../db'
 import { hashContext, hashThought, timestamp } from '../util'
-import { getThought, getThoughts } from '../selectors'
+import { getThought, getAllChildren } from '../selectors'
 import { render } from '../reducers'
 import { State } from '../util/initialState'
 
@@ -25,7 +25,7 @@ const deleteData = (state: State, { value, forceRender }: { value: string, force
       }
 
       const contextEncoded = hashContext(parent.context)
-      const childrenNew = getThoughts(state, parent.context)
+      const childrenNew = getAllChildren(state, parent.context)
         .filter(child => hashThought(child.value) !== hashThought(value))
 
       // delete the entry if there are no more children
@@ -36,6 +36,7 @@ const deleteData = (state: State, { value, forceRender }: { value: string, force
       else {
         contextIndex[contextEncoded] = {
           ...contextIndex[contextEncoded],
+          context: parent.context,
           children: childrenNew,
           lastUpdated: timestamp(),
         }

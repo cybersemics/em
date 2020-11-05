@@ -1,17 +1,17 @@
-import { getRankAfter, hasChild } from '../selectors'
-import { error, existingThoughtMove } from '../reducers'
+import { alert, existingThoughtMove } from '../reducers'
+import { getRankAfter, hasChild, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
 // util
 import {
-  contextOf,
+  parentOf,
   ellipsize,
   headValue,
   isEM,
   isRoot,
   pathToContext,
-  rootedContextOf,
+  rootedParentOf,
   unroot,
 } from '../util'
 
@@ -21,29 +21,29 @@ const outdent = (state: State) => {
   if (!cursor || cursor.length <= 1) return state
 
   // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
-  if (isEM(contextOf(cursor)) || isRoot(contextOf(cursor))) {
-    return error(state, {
-      value: `Subthought of the "${isEM(contextOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`
+  if (isEM(parentOf(cursor)) || isRoot(parentOf(cursor))) {
+    return alert(state, {
+      value: `Subthought of the "${isEM(parentOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`
     })
   }
   // cancel if parent is readonly or unextendable
-  else if (hasChild(state, pathToContext(contextOf(cursor)), '=readonly')) {
-    return error(state, {
-      value: `"${ellipsize(headValue(contextOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`
+  else if (hasChild(state, pathToContext(parentOf(cursor)), '=readonly')) {
+    return alert(state, {
+      value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`
     })
   }
-  else if (hasChild(state, pathToContext(contextOf(cursor)), '=unextendable')) {
-    return error(state, {
-      value: `"${ellipsize(headValue(contextOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`
+  else if (hasChild(state, pathToContext(parentOf(cursor)), '=unextendable')) {
+    return alert(state, {
+      value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`
     })
   }
 
   // store selection offset before existingThoughtMove is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const cursorNew = unroot(rootedContextOf(contextOf(cursor)).concat({
+  const cursorNew = unroot(rootedParentOf(parentOf(cursor)).concat({
     value: headValue(cursor),
-    rank: getRankAfter(state, contextOf(cursor))
+    rank: getRankAfter(state, parentOf(simplifyPath(state, cursor)))
   })) as Path
 
   return existingThoughtMove(state, {

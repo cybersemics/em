@@ -1,10 +1,9 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getThought, getThoughts } from '../selectors'
+import { getNextRank, getThought, getAllChildren } from '../selectors'
 import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
 import { State } from '../util/initialState'
-import { Context, ParentEntry } from '../types'
-import { GenericObject } from '../utilTypes'
+import { Context, Index, Lexeme, Parent } from '../types'
 
 /**
  * Creates a new thought in the given context.
@@ -14,18 +13,21 @@ import { GenericObject } from '../utilTypes'
 const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: { context: Context, value: string, rank: number, addAsContext?: boolean }) => {
 
   // create thought if non-existent
-  const thought = Object.assign({}, getThought(state, value) || {
-    value,
-    contexts: [],
-    created: timestamp(),
-    lastUpdated: timestamp()
-  })
+  const thought: Lexeme = {
+    ...getThought(state, value) || {
+      value,
+      contexts: [],
+      created: timestamp(),
+      lastUpdated: timestamp()
+    }
+  }
 
   const id = createId()
+  const contextActual = addAsContext ? [value] : context
 
   // store children indexed by the encoded context for O(1) lookup of children
-  const contextEncoded = hashContext(addAsContext ? [value] : context)
-  const contextIndexUpdates: GenericObject<ParentEntry> = {}
+  const contextEncoded = hashContext(contextActual)
+  const contextIndexUpdates: Index<Parent> = {}
 
   if (context.length > 0) {
     const newContextSubthought = {
@@ -35,11 +37,12 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
       id,
       lastUpdated: timestamp()
     }
-    const children = getThoughts(state, addAsContext ? [value] : context)
+    const children = getAllChildren(state, contextActual)
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
       .concat(newContextSubthought)
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
+      context: contextActual,
       children,
       lastUpdated: timestamp()
     }

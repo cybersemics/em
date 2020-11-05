@@ -1,16 +1,16 @@
 import { ROOT_TOKEN } from '../constants'
-import { getThoughtsRanked } from '../selectors'
-import { equalThoughtValue, headRank, headValue, rootedContextOf } from '../util'
-import { Path } from '../types'
+import { getChildrenRanked } from '../selectors'
+import { equalThoughtValue, headRank, headValue, pathToContext, rootedParentOf } from '../util'
+import { SimplePath } from '../types'
 import { State } from '../util/initialState'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
-const getRankAfter = (state: State, thoughtsRanked: Path) => {
+const getRankAfter = (state: State, simplePath: SimplePath) => {
 
-  const value = headValue(thoughtsRanked)
-  const rank = headRank(thoughtsRanked)
-  const context = rootedContextOf(thoughtsRanked)
-  const children = getThoughtsRanked(state, context)
+  const value = headValue(simplePath)
+  const rank = headRank(simplePath)
+  const parentPath = rootedParentOf(simplePath)
+  const children = getChildrenRanked(state, pathToContext(parentPath))
 
   // if there are no children, start with rank 0
   if (children.length === 0) {
