@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
-import { getThought, getAllChildren, getChildrenRanked } from '../selectors'
+import { getThought, getAllChildren, getChildrenRanked, isPending } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
-import { Context, Index, Lexeme, Parent, SimplePath, Timestamp } from '../types'
+import { Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
 
 // util
 import {
@@ -26,7 +26,7 @@ import {
   unroot,
 } from '../util'
 
-interface Payload {
+export interface ExistingThoughtChangePayload {
   oldValue: string,
   newValue: string,
   context: Context,
@@ -36,14 +36,17 @@ interface Payload {
 }
 
 interface RecursiveUpdateResult {
-  newChild: Lexeme,
+  lexemeNew: Lexeme,
   context: Context,
   contextsOld: Context[],
   contextsNew: Context[],
+  pathOld: Path,
+  pathNew: Path,
+  pending?: boolean,
 }
 
 /** Changes the text of an existing thought. */
-const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, path, rankInContext }: Payload) => {
+const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, path, rankInContext }: ExistingThoughtChangePayload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   const { cursor } = state
@@ -63,6 +66,9 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const pathLiveOld = (showContexts
     ? parentOf(parentOf(path)).concat({ value: oldValue, rank: headRank(parentOf(path)) }).concat(head(path))
     : parentOf(path).concat({ value: oldValue, rank })) as SimplePath
+  const pathLiveNew = (showContexts
+    ? parentOf(parentOf(path)).concat({ value: newValue, rank: headRank(parentOf(path)) }).concat(head(path))
+    : parentOf(path).concat({ value: newValue, rank })) as SimplePath
   // find exact thought from thoughtIndex
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
   const id = headId(path) || exactThought!.id as string
@@ -121,8 +127,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   let thoughtParentNew // eslint-disable-line fp/no-let
   if (showContexts) {
 
-    // eslint-disable-next-line fp/no-mutating-assign
-    thoughtParentNew = Object.assign({}, thoughtParentOld, {
+    thoughtParentNew = {
+      ...thoughtParentOld,
       contexts: removeContext(thoughtParentOld, parentOf(pathToContext(pathLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
         id,
@@ -131,7 +137,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       }),
       created: thoughtParentOld.created,
       lastUpdated: timestamp(),
-    })
+    }
 
     thoughtIndex[hashThought(value)] = thoughtParentNew
   }
@@ -184,31 +190,36 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
    *
    * @param contextRecursive The list of additional ancestors built up in recursive calls that must be concatenated to thoughtsNew to get the proper context.
    */
-  const recursiveUpdates = (context: Context, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
+  const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveUpdateResult> = {}): Index<RecursiveUpdateResult> => {
+
+    const context = pathToContext(pathOld)
 
     return getChildrenRanked(state, context).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
-      const childThought = getThought(state, child.value)
+      const childLexeme = getThought(state, child.value)
+      const childOldPath = [...pathOld, child]
+      const childNewPath = [...pathNew || pathOld, child]
+      const childContext = [...context, child.value]
 
       // this should only happen if there is a thoughtIndex integrity violation
-      if (!childThought) {
+      if (!childLexeme) {
         // console.error(`Missing child ${child.value} in ${context}`)
         const accumNew = {
           ...accumRecursive,
           ...accum,
         }
         return {
-          ...recursiveUpdates(context.concat(child.value), contextRecursive.concat(child.value), accumNew)
+          ...recursiveUpdates(childOldPath, childNewPath, contextRecursive.concat(child.value), accumNew)
         }
       }
 
       // remove and add the new context of the child
       const contextNew = thoughtsNew.concat(showContexts ? value : []).concat(contextRecursive)
-      const newChild = addContext(removeContext(childThought, context, child.rank), contextNew, child.rank, child.id!, child.archived!)
+      const lexemeNew = addContext(removeContext(childLexeme, context, child.rank), contextNew, child.rank, child.id ?? '', child.archived || timestamp())
 
       // update local thoughtIndex so that we do not have to wait for firebase
-      thoughtIndex[hashedKey] = newChild
+      thoughtIndex[hashedKey] = lexemeNew
 
       const accumNew = {
         // merge ancestor updates
@@ -218,29 +229,38 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
         ...accum,
         // merge current thought updates
         [hashedKey]: {
-          newChild,
+          lexemeNew,
           context,
+          pathOld: childOldPath,
+          pathNew: childNewPath,
+          pending: isPending(state, childContext),
           // return parallel lists so that the old contextIndex can be deleted and new contextIndex can be added
           // TODO: This could be improved by putting it directly into the form required by contextIndex to avoid later merging
           contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([context]),
           contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
-        }
+        } as RecursiveUpdateResult
       }
 
       // merge all updates and pass them on to the recursive call
       return {
         ...accumNew,
-        ...recursiveUpdates(context.concat(child.value), contextRecursive.concat(child.value), accumNew)
+        ...recursiveUpdates(childOldPath, childNewPath, contextRecursive.concat(child.value), accumNew)
       }
     }, {} as Index<RecursiveUpdateResult>)
   }
 
-  const descendantUpdatesResult = recursiveUpdates(pathToContext(pathLiveOld))
-  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newChild }, key) => {
-    accum[key] = newChild
+  const descendantUpdatesResult = recursiveUpdates(pathLiveOld, pathLiveNew)
+  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { lexemeNew }, key) => {
+    accum[key] = lexemeNew
   }, {} as Index<Lexeme>)
 
+  /* Unlike delete and move where we can resume on the pending thought, existingThoughtChange should bail immediately if a pending thought is encountered and re-sync from the beginning after the pending descendants are loaded. This is because the existingThoughtChange logic only works when starting on the edited thought itself; it won't work if it starts on a pending thought whose ancestor was edited. */
+  let hitPending = false // eslint-disable-line fp/no-let
+
   const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result) => {
+
+    if (hitPending) return accum
+
     const output = keyValueBy(result.contextsOld, (contextOld, i) => {
       const contextNew = result.contextsNew[i]
       const contextOldEncoded = hashContext(contextOld)
@@ -257,9 +277,31 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
         }
       }
     })
+
+    if (result.pending) {
+      hitPending = true
+      return
+    }
+
     // eslint-disable-next-line fp/no-mutating-assign
     Object.assign(accum, output)
   }, {} as Index<Parent | null>)
+
+  if (hitPending) {
+    return updateThoughts(state, {
+      thoughtIndexUpdates: {},
+      contextIndexUpdates: {},
+      recentlyEdited: state.recentlyEdited,
+      pendingEdits: [{
+        context,
+        oldValue,
+        newValue,
+        path,
+        showContexts,
+        rankInContext,
+      }]
+    })
+  }
 
   const thoughtIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
@@ -286,7 +328,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
         lastUpdated: timestamp(),
       }
     } : null,
-    ...contextIndexDescendantUpdates
+    ...contextIndexDescendantUpdates,
   }
 
   // preserve contextViews
@@ -298,7 +340,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
   // new state
   // do not bump data nonce, otherwise editable will be re-rendered
-  const stateNew = {
+  const stateNew: State = {
     ...state,
     // update cursor so that the other contexts superscript and depth-bar will re-render
     // do not update cursorBeforeEdit by default as that serves as the transcendental head to identify the thought being edited
