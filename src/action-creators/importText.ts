@@ -3,12 +3,16 @@ import { parse } from 'jex-block-parser'
 import he from 'he'
 import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedParentOf, strip } from '../util'
 import { simplifyPath } from '../selectors'
-import { ActionCreator, Path } from '../types'
+import { ActionCreator, Path, Timestamp } from '../types'
+import { validateRoam } from '../util/validateRoam'
+import { roamJsonToBlocks } from '../util/roamJsonToBlocks'
 
 // declare types until jex-block-parser merges PR
 // https://github.com/reergymerej/block-parser/pull/1
 export interface Block {
   scope: string,
+  created?: Timestamp,
+  lastUpdated?: Timestamp,
   children: Block[],
 }
 
@@ -119,8 +123,10 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
 
   const state = getState()
 
+  const isRoam = validateRoam(inputText)
+
   const simplePath = simplifyPath(state, path)
-  const text = rawTextToHtml(inputText)
+  const text = isRoam ? inputText : rawTextToHtml(inputText)
   const numLines = (text.match(regexpListItem) || []).length
   const destThought = head(path)
   const destValue = rawDestValue || destThought.value
@@ -166,7 +172,7 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
     })
   }
   else {
-    const json = convertHTMLtoJSON(text)
+    const json = isRoam ? roamJsonToBlocks(JSON.parse(text)) : convertHTMLtoJSON(text)
     const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importJSON(state, simplePath, json, { skipRoot })
     if (!preventSync) {
       dispatch({
