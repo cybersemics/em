@@ -60,7 +60,6 @@ const undoReducer = (state: State) => {
   const correspondingPatch = addActionsToPatch(compareWithOmit(newState as Index, state), [...lastInversePatch[0].actions])
   return {
     ...newState,
-    cursorBeforeEdit: newState.cursor,
     patches: [...patches, correspondingPatch],
     inversePatches: inversePatches.slice(0, -1)
   }
@@ -77,7 +76,6 @@ const redoReducer = (state: State) => {
   const correspondingInversePatch = addActionsToPatch(compareWithOmit(newState as Index, state), [...lastPatch[0].actions])
   return {
     ...newState,
-    cursorBeforeEdit: newState.cursor,
     patches: patches.slice(0, -1),
     inversePatches: [...inversePatches, correspondingInversePatch]
   }

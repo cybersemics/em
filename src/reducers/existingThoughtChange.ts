@@ -301,8 +301,6 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   // do not bump data nonce, otherwise editable will be re-rendered
   const stateNew = {
     ...state,
-    // update cursor so that the other contexts superscript and depth-bar will re-render
-    // do not update cursorBeforeEdit by default as that serves as the transcendental head to identify the thought being edited
     cursor: cursorNew,
     contextViews: contextViewsNew,
   }

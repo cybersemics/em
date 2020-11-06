@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import { exists, getContexts } from '../selectors'
+import { ROOT_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext, rootedParentOf } from '../util'
 import { State } from '../util/initialState'
 import { Child, Context, Index, SimplePath } from '../types'
@@ -22,9 +23,10 @@ interface SuperscriptProps {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: SuperscriptProps) => {
 
-  const { contextViews, cursor, cursorBeforeEdit, showHiddenThoughts, showModal } = state
-  // track the transcendental identifier if editing
-  const editing = equalArrays(pathToContext(cursorBeforeEdit || []), pathToContext(props.simplePath || [])) && exists(state, headValue(cursor || []))
+  const { contextViews, cursor, showHiddenThoughts, showModal } = state
+  const cursorContext = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+
+  const editing = equalArrays(cursorContext, pathToContext(props.simplePath || [])) && exists(state, headValue(cursor || []))
 
   const simplePath = props.showContexts && props.simplePath
     ? rootedParentOf(props.simplePath)
@@ -33,7 +35,7 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
   const thoughts = props.thoughts || pathToContext(simplePath)
 
   const thoughtsLive = editing
-    ? props.showContexts ? parentOf(pathToContext(cursor || [])) : pathToContext(cursor || [])
+    ? props.showContexts ? parentOf(cursorContext) : cursorContext
     : thoughts
 
   const simplePathLive = editing
