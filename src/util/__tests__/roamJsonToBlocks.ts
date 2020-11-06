@@ -14,12 +14,13 @@ import {
 import {
   exportContext,
 } from '../../selectors'
-import { importRoam } from '../roamJsonToBlocks'
+import { roamJsonToBlocks } from '../roamJsonToBlocks'
 import { State, initialState } from '../initialState'
 import { RoamPage } from 'roam'
 import { removeRoot } from '../../test-helpers/removeRoot'
 import { SimplePath } from '../../types'
 import { timestamp } from '../timestamp'
+import { importJSON } from '../importJSON'
 
 jest.mock('../timestamp', () => ({
   timestamp: () => '2020-11-02T01:11:58.869Z'
@@ -101,10 +102,13 @@ const testData = [
 
 /** Imports the given Roam's JSON format and exports it as plaintext. */
 const importExport = (roamJson: RoamPage[]) => {
+
+  const thoughtsJSON = roamJsonToBlocks(roamJson)
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importRoam(testState, RANKED_ROOT as SimplePath, roamJson)
+  } = importJSON(testState, RANKED_ROOT as SimplePath, thoughtsJSON, { skipRoot: false })
+
   const state = {
     ...initialState(),
     thoughts: {
@@ -229,17 +233,22 @@ test('it should convert a Roam json into a list of thoughts and subthoughts with
 test('it should save create-time as created property', () => {
   const roamBlocks = testData.map(roamBlock => roamBlock.children).flat()
 
+  const thoughtsJSON = roamJsonToBlocks(testData)
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importRoam(testState, RANKED_ROOT as SimplePath, testData)
+  } = importJSON(testState, RANKED_ROOT as SimplePath, thoughtsJSON, { skipRoot: false })
 
+  const contextIndexKeys = Object.keys(contextIndex)
+  expect(contextIndexKeys).toHaveLength(18)
   Object.keys(contextIndex)
     .forEach(contextHash => {
       expect(contextIndex[contextHash].lastUpdated).toEqual('2020-11-02T01:11:58.869Z')
     })
 
-  Object.keys(thoughtIndex)
+  const thoughtIndexKeys = Object.keys(thoughtIndex)
+  expect(thoughtIndexKeys).toHaveLength(15)
+  thoughtIndexKeys
     // ignore root blocks (and =create-email thought)of Roam page since they won't have create/edit time
     .filter(thoughtHash => {
       const value = thoughtIndex[thoughtHash].value
@@ -253,11 +262,15 @@ test('it should save create-time as created property', () => {
 })
 
 test('it should set the created and lastUpdated properties as current timestamp for root blocks', () => {
+
+  const thoughtsJSON = roamJsonToBlocks(testData)
   const {
     thoughtIndexUpdates: thoughtIndex,
-  } = importRoam(testState, RANKED_ROOT as SimplePath, testData)
+  } = importJSON(testState, RANKED_ROOT as SimplePath, thoughtsJSON, { skipRoot: false })
 
-  Object.keys(thoughtIndex)
+  const thoughtIndexKeys = Object.keys(thoughtIndex)
+  expect(thoughtIndexKeys).toHaveLength(15)
+  thoughtIndexKeys
     // ignore root blocks (and =create-email thought)of Roam page since they won't have create/edit time
     .filter(thoughtHash => {
       const value = thoughtIndex[thoughtHash].value
