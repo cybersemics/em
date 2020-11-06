@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
+import { RANKED_ROOT, TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
@@ -34,8 +34,10 @@ const setCursor = (state: State, {
   noteFocus = false
 }: Payload): State => {
 
+  const simplePath = path ? simplifyPath(state, path) : RANKED_ROOT
+  const context = pathToContext(simplePath)
   const thoughtsResolved = path && contextChain.length > 0
-    ? chain(state, contextChain, simplifyPath(state, path))
+    ? chain(state, contextChain, simplePath!)
     : path
 
   // SIDE EFFECT
@@ -88,8 +90,8 @@ const setCursor = (state: State, {
    * @todo Abstract tutorial logic away from setCursor and call only when tutorial is on.
    */
   const hasThoughtCollapsed = () => !expanded[hashContext(pathToContext(oldCursor))] &&
-    (getAllChildren(state, pathToContext(oldCursor)).length > 0 ||
-      (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(pathToContext(thoughtsResolved || []), pathToContext(oldCursor)))
+    (getAllChildren(state, context).length > 0 ||
+      (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(pathToContext(thoughtsResolved || []), context))
     )
 
   const tutorialNext = (
