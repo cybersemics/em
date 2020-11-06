@@ -55,7 +55,6 @@ const loadLocalThoughts = () => async (dispatch, getState) => {
     type: 'loadLocalThoughts',
     contextViews,
     cursor: cursorNew,
-    cursorBeforeEdit: cursorNew,
     expanded,
     thoughts,
   })
