@@ -14,7 +14,7 @@ import {
 import {
   exportContext,
 } from '../../selectors'
-import { importRoam } from '../importROAM'
+import { importRoam } from '../roamJsonToBlocks'
 import { State, initialState } from '../initialState'
 import { RoamPage } from 'roam'
 import { removeRoot } from '../../test-helpers/removeRoot'
