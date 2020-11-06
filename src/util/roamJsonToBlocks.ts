@@ -1,6 +1,4 @@
-import { SimplePath, Timestamp } from '../types'
-import { State } from './initialState'
-import { importJSON } from './importJSON'
+import { Timestamp } from '../types'
 import { Block } from '../action-creators/importText'
 import { RoamBlock, RoamPage } from 'roam'
 import { timestamp } from './timestamp'
@@ -39,15 +37,7 @@ const roamBlocksToBlocks = (children: RoamBlock[]): Block[] => children.map(({
 /**
  * Converts the Roam to an array of blocks.
  */
-const roamJsonToBlocks = (roam: RoamPage[]) => roam.map((item: RoamPage) => ({
+export const roamJsonToBlocks = (roam: RoamPage[]) => roam.map((item: RoamPage) => ({
   scope: item.title,
   children: roamBlocksToBlocks(item.children)
 }))
-
-/**
- * Parses Roam and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
- */
-export const importRoam = (state: State, simplePath: SimplePath, roam: RoamPage[]) => {
-  const thoughtsJSON = roamJsonToBlocks(roam)
-  return importJSON(state, simplePath, thoughtsJSON, { skipRoot: false })
-}
