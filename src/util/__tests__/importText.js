@@ -123,3 +123,97 @@ it('two root thoughts', async () => {
   expect(exported.trim())
     .toBe(text)
 })
+
+it('imports Roam json', async () => {
+  const roamString = JSON.stringify([
+    {
+      title: 'Fruits',
+      children: [
+        {
+          string: 'Apple',
+          'create-email': 'test_create@gmail.com',
+          'edit-email': 'test_edit@gmail.com',
+          'create-time': 1600111381583,
+          'edit-time': 1600111381580,
+          uid: 'UK11200',
+        },
+        {
+          string: 'Orange',
+          'create-email': 'test_create@yahoo.com',
+          'edit-email': 'test_edit@yahoo.com',
+          'create-time': 1600111383054,
+          'edit-time': 1600111383050,
+          uid: 'UK11233',
+        },
+        {
+          string: 'Banana',
+          'create-email': 'test_create@icloud.com',
+          'edit-email': 'test_edit@icloud.com',
+          'create-time': 1600111383911,
+          'edit-time': 1600111383910,
+          uid: 'HMN_YQtZZ',
+        }
+      ],
+    },
+    {
+      title: 'Veggies',
+      children: [
+        {
+          string: 'Broccoli',
+          'create-email': 'test_create@gmail.com',
+          'edit-email': 'test_edit@gmail.com',
+          'create-time': 1600111381600,
+          'edit-time': 1600111381599,
+          uid: 'BK11200',
+        },
+        {
+          string: 'Spinach',
+          'create-email': 'test_create@icloud.com',
+          'edit-email': 'test_edit@icloud.com',
+          'create-time': 1600111389054,
+          'edit-time': 1600111389050,
+          uid: 'BK11233',
+        }
+      ],
+    }
+  ])
+  //   /**
+  //  * Parses Roam and generates { contextIndexUpdates, thoughtIndexUpdates } that can be sync'd to state.
+  //  */
+  // export const importRoam = (state: State, simplePath: SimplePath, roam: RoamPage[]) => {
+  //   const thoughtsJSON = roamJsonToBlocks(roam)
+  //   return importJSON(state, simplePath, thoughtsJSON, { skipRoot: false })
+  // }
+
+  const exported = await importExport(roamString)
+  expect(exported)
+    .toBe(`
+- Fruits
+  - Apple
+    - =create-email
+      - test_create@gmail.com
+    - =edit-email
+      - test_edit@gmail.com
+  - Orange
+    - =create-email
+      - test_create@yahoo.com
+    - =edit-email
+      - test_edit@yahoo.com
+  - Banana
+    - =create-email
+      - test_create@icloud.com
+    - =edit-email
+      - test_edit@icloud.com
+- Veggies
+  - Broccoli
+    - =create-email
+      - test_create@gmail.com
+    - =edit-email
+      - test_edit@gmail.com
+  - Spinach
+    - =create-email
+      - test_create@icloud.com
+    - =edit-email
+      - test_edit@icloud.com
+`)
+})
