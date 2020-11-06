@@ -1,4 +1,4 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT } from '../../constants'
 
 // TODO: Why does util have to be imported before selectors and reducers?
 import { initialState, reducerFlow } from '../../util'

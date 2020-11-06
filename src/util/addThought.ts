@@ -1,4 +1,3 @@
-// util
 import { timestamp } from './timestamp'
 import { getThought } from '../selectors'
 import { Context } from '../types'

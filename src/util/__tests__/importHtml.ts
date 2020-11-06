@@ -3,6 +3,7 @@ import { importHtml, mergeUpdates } from '../../util'
 import { exportContext } from '../../selectors'
 import { initialState, State } from '../../util/initialState'
 import { SimplePath } from '../../types'
+import { removeRoot } from '../../test-helpers/removeRoot'
 
 /** Imports the given html and exports it as plaintext. */
 const importExport = (html: string) => {
@@ -22,13 +23,7 @@ const importExport = (html: string) => {
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
-  const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))
-    .split('\n')
-    .map(line => line.slice(2))
-    .join('\n')
-    + '\n'
-
-  return exportedWithoutRoot
+  return removeRoot(exported)
 }
 
 it('simple', () => {

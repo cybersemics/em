@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getAllChildren, nextSibling } from '../selectors'
-import { State } from './initialState'
 import { Block, Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp, ThoughtIndices } from '../types'
+import { State } from '../util/initialState'
 
 // util
 import {
@@ -46,7 +46,7 @@ const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number
 }
 
 /** Generates a Parent and Lexeme for inserting a new thought into a context. */
-const insertThought = (state: State, parentOld: Parent, value: string, context: Context, rank: number, lastUpdated: Timestamp = timestamp()): ThoughtPair => {
+const insertThought = (state: State, parentOld: Parent, value: string, context: Context, rank: number, created: Timestamp = timestamp(), lastUpdated: Timestamp = timestamp()): ThoughtPair => {
   const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
 
   const lexemeOld = getThought(state, value)
@@ -57,7 +57,7 @@ const insertThought = (state: State, parentOld: Parent, value: string, context: 
       context: rootContext,
       rank,
     }],
-    created: lexemeOld?.created ?? lastUpdated,
+    created: lexemeOld?.created ?? created,
     lastUpdated,
   }
 
@@ -110,11 +110,20 @@ const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtI
         contextIndexUpdates[contextEncoded]?.children ||
         state.thoughts.contextIndex[contextEncoded]?.children || []
       const existingParent = {
-        ...contextIndexUpdates[contextEncoded] || state.thoughts.contextIndex[contextEncoded],
+        ...accum.contextIndex[contextEncoded] || contextIndexUpdates[contextEncoded] || state.thoughts.contextIndex[contextEncoded],
         children: existingChildren,
       }
 
-      const { lexeme, parent } = insertThought(stateNew, existingParent, value, context, rank, lastUpdated)
+      const childLastUpdated = block.children[0]?.lastUpdated
+      const childCreated = block.children[0]?.created
+      const lastUpdatedInherited = block.lastUpdated ||
+        childLastUpdated ||
+        existingParent.lastUpdated ||
+        lastUpdated
+      const createdInherited = block.created ||
+        childCreated ||
+        lastUpdated
+      const { lexeme, parent } = insertThought(stateNew, existingParent, value, context, rank, createdInherited, lastUpdatedInherited)
 
       // TODO: remove mutations
       contextIndexUpdates[contextEncoded] = parent
@@ -192,10 +201,10 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   }
 
   const startContext = getStartContext(simplePath)
-  const thoughts = skipRoot ? skipRootThought(blocks) : blocks
-  const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, thoughts)
+  const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
+  const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, blocksNormalized)
 
-  const { contextIndex, thoughtIndex } = saveThoughts(state, initialContextIndex, initialThoughtIndex, startContext, thoughts, rankIncrement, rankStart, lastUpdated)
+  const { contextIndex, thoughtIndex } = saveThoughts(state, initialContextIndex, initialThoughtIndex, startContext, blocksNormalized, rankIncrement, rankStart, lastUpdated)
 
   return {
     contextIndexUpdates: contextIndex,
