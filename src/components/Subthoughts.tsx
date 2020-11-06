@@ -101,7 +101,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const {
     cursor,
-    cursorBeforeEdit,
     dataNonce,
     showHiddenThoughts,
   } = state
@@ -110,10 +109,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   // check if the cursor path includes the current thought
   // include ROOT to prevent re-render when ROOT subthought changes
-  const isEditingPath = isRoot(props.simplePath) || subsetThoughts(cursorBeforeEdit, resolvedPath)
+  const isEditingPath = isRoot(props.simplePath) || subsetThoughts(cursor, resolvedPath)
 
   // check if the cursor is editing an thought directly
-  const isEditing = equalPath(cursorBeforeEdit, resolvedPath)
+  const isEditing = equalPath(cursor, resolvedPath)
 
   const pathLive = isEditing ? cursor! : resolvedPath
   const thoughtsLive = pathToContext(pathLive)
@@ -131,8 +130,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '', undefined) as Path | undefined
 
-  const isActiveSelection = window.getSelection()?.focusNode
-
   return {
     contextBinding,
     dataNonce,
@@ -140,8 +137,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showContexts,
     showHiddenThoughts,
     simplePath: simplePathLive,
-    // re-render if children change (unless editing with active selection)
-    __render: (!isActiveSelection || !(isEditing || isEditingPath)) && getAllChildren(state, pathToContext(simplePathLive))
+    // re-render if children change
+    __render: getAllChildren(state, pathToContext(simplePathLive))
   }
 }
 
@@ -530,7 +527,7 @@ export const SubthoughtsComponent = ({
           const childContext = pathToContext(childPath)
 
           /** Returns true if the cursor in in the child path. */
-          const isEditingChildPath = () => subsetThoughts(state.cursorBeforeEdit, childPath)
+          const isEditingChildPath = () => subsetThoughts(state.cursor, childPath)
           const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
 
           /** Returns true if the bullet should be hidden. */

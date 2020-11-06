@@ -19,8 +19,6 @@ interface Payload {
 
 /**
  * Sets the cursor on a thought.
- * Set both cursorBeforeEdit (the transcendental head) and cursor (the live value during editing).
- * The other contexts superscript uses cursor when it is available.
  * Side Effects: clearSelection.
  */
 const setCursor = (state: State, {
@@ -117,9 +115,7 @@ const setCursor = (state: State, {
     // However this does create a lot of extra re-renders.
     ? render({
       ...state,
-      // sync cursor and cursorBeforeEdit
       // this is needed in particular for creating a new note, otherwise the cursor will disappear
-      cursorBeforeEdit: state.cursor,
       editing: editing != null ? editing : state.editing,
       expanded,
       noteFocus,
@@ -136,7 +132,6 @@ const setCursor = (state: State, {
         })
         : null,
       cursor: thoughtsResolved,
-      cursorBeforeEdit: thoughtsResolved,
       cursorHistory: cursorHistoryClear ? [] :
       cursorHistoryPop ? state.cursorHistory.slice(0, -1)
       : state.cursorHistory,

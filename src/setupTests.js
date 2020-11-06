@@ -6,5 +6,6 @@ import 'fake-indexeddb/auto'
 
 configure({ adapter: new Adapter() })
 
-// add noop function to window.scrollTo to prevent implementation error during test
+// add noop functions to prevent implementation error during test
+window.blur = noop
 window.scrollTo = noop

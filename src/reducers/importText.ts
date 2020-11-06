@@ -2,7 +2,7 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import he from 'he'
-import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, rootedParentOf, strip } from '../util'
+import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { simplifyPath } from '../selectors'
 import { Block, Path, Timestamp } from '../types'
@@ -115,16 +115,18 @@ interface Options {
  */
 const importText = (state: State, { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot }: Options): State => {
 
+  const isRoam = validateRoam(text)
+
   const simplePath = simplifyPath(state, path)
-  const html = rawTextToHtml(text)
-  const numLines = (html.match(regexpListItem) || []).length
+  const convertedText = isRoam ? text : rawTextToHtml(text)
+  const numLines = (convertedText.match(regexpListItem) || []).length
   const destThought = head(path)
   const destValue = rawDestValue || destThought.value
 
   // if we are only importing a single line of html, then simply modify the current thought
   if (numLines === 1) {
 
-    const newText = strip(html, { preserveFormatting: true })
+    const textNormalized = strip(convertedText, { preserveFormatting: true })
 
     // get the range if there is one so that we can import over the selected html
     const selection = window.getSelection()
@@ -137,9 +139,9 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
       })()
       : [0, 0]
 
-    // insert the newText into the destValue in the correct place
+    // insert the textNormalized into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
-    const newValue = (destValue.slice(0, startOffset) + newText + destValue.slice(endOffset)).trim()
+    const newValue = (destValue.slice(0, startOffset) + textNormalized + destValue.slice(endOffset)).trim()
 
     return reducerFlow([
 
@@ -152,14 +154,14 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
       !preventSetCursor && path ? setCursor({
         path: [...parentOf(path), { ...destThought, value: newValue }],
-        offset: startOffset + newText.length,
+        offset: startOffset + textNormalized.length,
       }) : null,
 
     ])(state)
 
   }
   else {
-    const json = convertHTMLtoJSON(html)
+    const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText)) : convertHTMLtoJSON(convertedText)
     const imported = importJSON(state, simplePath, json, { lastUpdated, skipRoot })
     const lastChild = imported.lastThoughtFirstLevel
 

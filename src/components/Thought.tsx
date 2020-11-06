@@ -129,7 +129,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const {
     cursor,
     cursorOffset,
-    cursorBeforeEdit,
     expanded,
     expandedContextThought,
     search,
@@ -144,10 +143,10 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   } = props
 
   // check if the cursor path includes the current thought
-  const isEditingPath = subsetThoughts(cursorBeforeEdit, path)
+  const isEditingPath = subsetThoughts(cursor, path)
 
   // check if the cursor is editing a thought directly
-  const isEditing = equalPath(cursorBeforeEdit, path)
+  const isEditing = equalPath(cursor, path)
 
   const simplePathLive = isEditing
     ? parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath

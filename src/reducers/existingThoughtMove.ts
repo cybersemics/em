@@ -295,7 +295,6 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       ...state,
       contextViews: contextViewsNew,
       cursor: newCursorPath,
-      cursorBeforeEdit: newCursorPath,
       ...offset != null ? { cursorOffset: offset } : null,
     }),
 

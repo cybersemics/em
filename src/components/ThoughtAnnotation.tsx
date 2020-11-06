@@ -58,9 +58,9 @@ const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
-  const { cursor, cursorBeforeEdit, invalidState, editingValue, showHiddenThoughts } = state
+  const { cursor, invalidState, editingValue, showHiddenThoughts } = state
 
-  const isEditing = equalPath(cursorBeforeEdit, props.path)
+  const isEditing = equalPath(cursor, props.path)
   const simplePathLive = isEditing
     ? parentOf(props.simplePath).concat(head(props.showContexts ? parentOf(cursor!) : cursor!)) as SimplePath
     : props.simplePath
