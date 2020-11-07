@@ -2,7 +2,7 @@ import React, { Dispatch, MouseEvent, useEffect } from 'react'
 import { Action } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { ConnectDragPreview, ConnectDragSource, ConnectDropTarget, DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
@@ -89,6 +89,9 @@ interface ThoughtProps {
   view?: string | null,
 }
 
+type ConnectedThoughtProps = ThoughtProps &
+  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
+
 interface ThoughtContainerProps {
   allowSingleContext?: boolean,
   childrenForced?: Child[],
@@ -122,6 +125,11 @@ interface ThoughtContainerProps {
   url?: string | null,
   view?: string | null,
 }
+
+type ConnectedDraggableThoughtContainerProps = ThoughtContainerProps &
+  ReturnType<typeof dragCollect> &
+  ReturnType<typeof dropCollect> &
+  ReturnType<typeof mapDispatchToProps>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
@@ -365,7 +373,7 @@ const Thought = ({
   style,
   simplePath,
   toggleTopControlsAndBreadcrumbs
-}: ThoughtProps & Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>) => {
+}: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
@@ -439,11 +447,7 @@ const ThoughtContainer = ({
   url,
   view,
   toggleTopControlsAndBreadcrumbs
-}: ThoughtContainerProps & {
-  dragPreview: ConnectDragPreview,
-  dragSource: ConnectDragSource,
-  dropTarget: ConnectDropTarget,
-} & ReturnType<typeof mapDispatchToProps>) => {
+}: ConnectedDraggableThoughtContainerProps) => {
 
   const state = store.getState()
   useEffect(() => {
