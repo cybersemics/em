@@ -9,7 +9,7 @@ import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
-import { Child, Connected, Context, Path, SimplePath, TutorialChoice } from '../types'
+import { Connected, Context, Path, SimplePath, TutorialChoice } from '../types'
 
 // constants
 import {
@@ -511,44 +511,18 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = () => {
+
     if (isMobile && isSafari()) {
       makeToolbarPositionFixed()
       document.addEventListener('scroll', updateToolbarPositionOnScroll)
     }
 
-    // must get new state
-    const state = store.getState()
-    // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be. safe
+    // get new state
+    const { dragInProgress } = store.getState()
 
-    if (!state.dragInProgress) {
-
-      // it is possible that the focus event fires with no onTouchEnd.
-      // in this case, make sure it is not a valid attempt to enter edit mode.
-      // we cannot assume all focus events without touchEnd events are false positives, because the user may have simply pressed tab/next field
-      const falseFocus =
-        // no cursor
-        !state.cursor ||
-        // clicking a different thought (when not editing)
-        (!state.editing && !equalPath(path, state.cursor))
-
-      const thoughtChanged = !state.cursor || path.length !== state.cursor.length || path.some((thought, index) => {
-        const child = state.cursor![index]
-        // eslint-disable-next-line no-extra-parens
-        return child && (Object.keys(child) as (keyof Child)[]).some(key => child[key] !== thought[key])
-      })
-      if ((isMobile && state.editing) || thoughtChanged) setCursorOnThought({ editing: !falseFocus })
-
-      // remove the selection caused by the falseFocus
-      if (falseFocus) {
-        const activeElement = document.activeElement as HTMLElement | null
-        if (activeElement) {
-          blur()
-        }
-        clearSelection()
-      }
-      else {
-        dispatch(setEditingValue(value))
-      }
+    if (!dragInProgress) {
+      setCursorOnThought({ editing: true })
+      dispatch(setEditingValue(value))
     }
   }
 
