@@ -297,10 +297,25 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   useEffect(() => {
     const { editing, noteFocus, dragHold } = state
+    const editMode = !isMobile || editing
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
-    // NOTE: asyncFocus() also needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
-    if (isEditing && contentRef.current && (!isMobile || editing) && ((!noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold))) {
+
+    // console.info({
+    //   thoughts,
+    //   isEditing,
+    //   contentRef: !!contentRef.current,
+    //   editMode: !isMobile || editing,
+    //   noFocusNode: !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold,
+    // })
+
+    if (isEditing &&
+      contentRef.current &&
+      editMode &&
+      !noteFocus &&
+      (cursorOffset !== null || !window.getSelection()?.focusNode) &&
+      !dragHold
+    ) {
       /*
         Mobile Safari: Auto-Capitalization broken if selection is set synchronously.
         When a new thought is created, the Shift key should be on for Auto-Capitalization.
@@ -309,6 +324,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         For some reason, setTimeout fixes it.
       */
       if (isMobile) {
+        // NOTE: asyncFocus() needs to be called on mobile BEFORE the action that triggers the re-render is dispatched
         asyncFocus()
         setTimeout(setSelectionToCursorOffset)
       }
