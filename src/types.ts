@@ -2,6 +2,7 @@ import { GetOperation } from 'fast-json-patch'
 import { Dispatch, ReactNode } from 'react'
 import { AnyAction } from 'redux'
 import { ThunkDispatch } from 'redux-thunk'
+import { ConnectDragPreview, ConnectDragSource, ConnectDropTarget, DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { State } from './util/initialState'
 
 /********************************

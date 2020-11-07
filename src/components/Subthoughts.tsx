@@ -130,9 +130,23 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '', undefined) as Path | undefined
 
+  // If the cursor is a leaf, use cursorDepth of cursor.length - 1 so that the autofocus stays one level zoomed out.
+  // This feels more intuitive and stable for moving the cursor in and out of leaves.
+  // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
+  // TODO: Resolve cursor to a simplePath
+  const isCursorLeaf = cursor && !getAllChildren(state, pathToContext(cursor))
+    .some((child: Child) => !isFunction(child.value))
+  const cursorDepth = cursor
+    ? cursor.length - (isCursorLeaf ? 1 : 0)
+    : 0
+  const distance = cursor ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - (props.depth ?? 0))
+  ) : 0
+
   return {
     contextBinding,
     dataNonce,
+    distance,
     isEditingAncestor: isEditingPath && !isEditing,
     showContexts,
     showHiddenThoughts,
@@ -349,6 +363,7 @@ export const SubthoughtsComponent = ({
   path,
   count = 0,
   depth = 0,
+  distance,
   dropTarget,
   isDragInProgress,
   isEditingAncestor,
@@ -358,7 +373,7 @@ export const SubthoughtsComponent = ({
   showHiddenThoughts,
   sort: contextSort,
   simplePath,
-}: SubthoughtsComponentProps) => {
+}: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
 
   // <Subthoughts> render
   const state = store.getState()
@@ -435,19 +450,6 @@ export const SubthoughtsComponent = ({
   const isAncestorOrDescendant = (subcontextIndex + 1) === (cursor || []).length
   || (subcontextIndex + 1) === resolvedPath.length
 
-  // If the cursor is a leaf, use cursor.length - 1 so that the autofocus stays one level zoomed out.
-  // This feels more intuitive and stable for moving the cursor in and out of leaves.
-  // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
-  // TODO: Resolve cursor to a simplePath
-  const isCursorLeaf = cursor && !getAllChildren(state, pathToContext(cursor))
-    .some((child: Child) => !isFunction(child.value))
-  const cursorDepth = cursor
-    ? cursor.length - (isCursorLeaf ? 1 : 0)
-    : 0
-  const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - depth)
-  ) : 0
-
   /*
     Check if the chilren are distant relatives and their depth equals to or greater than cursor.
     With current implementation we don't cosider the condition where a node which is neither ancestor or descendant
@@ -480,6 +482,7 @@ export const SubthoughtsComponent = ({
     : distance
 
   const context = pathToContext(simplePath)
+
   const contextChildren = context.concat('=children') // children of parent with =children
   const contextGrandchildren = parentOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
   const styleChildren = getStyle(state, contextChildren)
