@@ -139,7 +139,6 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
         return {
           ...state,
           contextViews,
-          cursorBeforeEdit: cursorNew,
           cursor: cursorNew,
         }
       }
