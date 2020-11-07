@@ -21,7 +21,7 @@ const isSelectionOnMultiLine = () => {
   if (rangeCount === 0) return false
 
   const clientRects = selection.getRangeAt(0).getClientRects()
-  if (!clientRects) return false
+  if (!clientRects?.length) return false
 
   const { y: rangeY } = clientRects[0]
   if (!rangeY) return false
