@@ -21,7 +21,6 @@ const loadLocalState = (state: State, { contextViews, cursor, lastUpdated, recen
       ...state,
       contextViews: contextViews || state.contextViews,
       cursor: cursor || state.cursor,
-      cursorBeforeEdit: cursor || state.cursor,
       lastUpdated: lastUpdated || state.lastUpdated,
       recentlyEdited: {
         ...state.recentlyEdited,
