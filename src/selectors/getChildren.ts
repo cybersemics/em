@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { getSortPreference, getThought, hasChild } from '../selectors'
-import { compareByRank, compareThought, hashContext, head, isFunction, sort, unroot } from '../util'
-import { Child, ComparatorFunction, Context, ContextHash } from '../types'
+import { appendChildPath, getChildPath, getSortPreference, getThought, hasChild } from '../selectors'
+import { compareByRank, compareThought, hashContext, isFunction, sort, unroot, pathToContext, equalThoughtRanked, head } from '../util'
+import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, SimplePath, Path } from '../types'
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
@@ -74,3 +74,31 @@ export const getChildrenRanked = (state: State, context: Context): Child[] =>
 /** Returns the first visible child of a context. */
 export const firstVisibleChild = (state: State, context: Context) =>
   getChildrenSorted(state, context)[0]
+
+/**
+ * Returns visible children.
+ *
+ * @param state - Redux state.
+ * @param path - Parent's path.
+ * @param simplePath - Parent's simple path.
+ * @param children - Child or ThoughtContext array.
+ * @param showContexts - Parent's context view status.
+ */
+export const filterChildren = (state: State, path: Path, simplePath: SimplePath, children: (Child | ThoughtContext)[], showContexts?: boolean) => {
+  return children.filter(child => {
+
+    const childSimplePath = getChildPath(state, child, simplePath, showContexts)
+    const childPath = appendChildPath(state, childSimplePath, path)
+
+    const value = showContexts
+      ? head((child as ThoughtContext).context)
+      : (child as Child).value
+
+    return state.showHiddenThoughts ||
+      // exclude meta thoughts when showHiddenThoughts is off
+      // NOTE: child.rank is not used by isChildVisible
+      isChildVisible(state, pathToContext(simplePath), { value, rank: child.rank }) ||
+      // always include thoughts in cursor
+      (state.cursor && equalThoughtRanked(state.cursor[childPath.length - 1], head(childPath)))
+  })
+}
