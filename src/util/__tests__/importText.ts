@@ -1,3 +1,4 @@
+import { validate as uuidValidate } from 'uuid'
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, never, timestamp } from '../../util'
 import { initialState } from '../../util/initialState'
@@ -32,6 +33,9 @@ it('basic import with proper thought structure', () => {
   const stateNew = importText(initialState(now), { path: RANKED_ROOT, text, lastUpdated: now })
   const { contextIndex, thoughtIndex } = stateNew.thoughts
 
+  const childAId = contextIndex[hashContext([ROOT_TOKEN])].children[0]?.id
+  const childBId = contextIndex[hashContext(['a'])].children[0]?.id
+
   expect(contextIndex).toEqual({
     [hashContext([EM_TOKEN])]: {
       context: [EM_TOKEN],
@@ -44,8 +48,8 @@ it('basic import with proper thought structure', () => {
       id: hashContext([ROOT_TOKEN]),
       context: [ROOT_TOKEN],
       children: [{
-        // TODO: children don't have ids because they not have a Parent yet when they are created???
-        // id: contextIndex[hashContext(['a'])].children[0].id,
+        // tautological; full assertion below
+        id: childAId,
         value: 'a',
         rank: 0,
         lastUpdated: now,
@@ -56,6 +60,8 @@ it('basic import with proper thought structure', () => {
       id: hashContext(['a']),
       context: ['a'],
       children: [{
+        // tautological; full assertion below
+        id: childBId,
         value: 'b',
         rank: 0,
         lastUpdated: now,
@@ -63,6 +69,9 @@ it('basic import with proper thought structure', () => {
       lastUpdated: now,
     }
   })
+
+  expect(uuidValidate(childAId!)).toBe(true)
+  expect(uuidValidate(childBId!)).toBe(true)
 
   expect(thoughtIndex).toEqual({
     [hashThought(ROOT_TOKEN)]: {
@@ -80,6 +89,7 @@ it('basic import with proper thought structure', () => {
     [hashThought('a')]: {
       value: 'a',
       contexts: [{
+        id: childAId,
         context: [ROOT_TOKEN],
         rank: 0,
       }],
@@ -89,6 +99,7 @@ it('basic import with proper thought structure', () => {
     [hashThought('b')]: {
       value: 'b',
       contexts: [{
+        id: childBId,
         context: ['a'],
         rank: 0,
       }],
@@ -213,14 +224,22 @@ it('duplicate thoughts', () => {
 
   const now = timestamp()
   const imported = importText(initialState(), { path: RANKED_ROOT, text, lastUpdated: now })
-  const parent = imported.thoughts.thoughtIndex[hashThought('m')]
+  const lexeme = imported.thoughts.thoughtIndex[hashThought('m')]
 
-  expect(parent).toEqual({
+  const childAId = lexeme.contexts[0]?.id
+  const childBId = lexeme.contexts[1]?.id
+
+  expect(uuidValidate(childAId!)).toBe(true)
+  expect(uuidValidate(childBId!)).toBe(true)
+
+  expect(lexeme).toEqual({
     value: 'm',
     contexts: [{
+      id: childAId,
       context: ['a'],
       rank: 0,
     }, {
+      id: childBId,
       context: ['b'],
       rank: 0,
     }],
