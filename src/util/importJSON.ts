@@ -6,13 +6,14 @@ import { State } from '../util/initialState'
 
 // util
 import {
-  parentOf,
+  createId,
   equalPath,
   equalThoughtRanked,
   hashContext,
   hashThought,
   head,
   headRank,
+  parentOf,
   pathToContext,
   removeContext,
   rootedParentOf,
@@ -48,12 +49,14 @@ const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number
 /** Generates a Parent and Lexeme for inserting a new thought into a context. */
 const insertThought = (state: State, parentOld: Parent, value: string, context: Context, rank: number, created: Timestamp = timestamp(), lastUpdated: Timestamp = timestamp()): ThoughtPair => {
   const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
+  const id = createId()
 
   const lexemeOld = getThought(state, value)
   const lexemeNew = {
     ...lexemeOld,
     value,
     contexts: [...lexemeOld?.contexts || [], {
+      id,
       context: rootContext,
       rank,
     }],
@@ -66,6 +69,7 @@ const insertThought = (state: State, parentOld: Parent, value: string, context: 
     id: hashContext(rootContext),
     context: rootContext,
     children: [...parentOld.children, {
+      id,
       value,
       rank,
       lastUpdated,
