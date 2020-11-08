@@ -24,9 +24,9 @@ export const getThoughtById = async (id: string): Promise<Lexeme | undefined> =>
 export const getThoughtsByIds = async (ids: string[]): Promise<(Lexeme | undefined)[]> => {
   const { userRef } = store.getState()
   const snapshots = await Promise.all(
-    ids.map(id => userRef!.child('thoughtIndex').child(id).once('value'))
+    ids.map(id => userRef?.child('thoughtIndex').child(id).once('value'))
   )
-  return snapshots.map(snapshot => snapshot.val())
+  return snapshots.map(snapshot => snapshot?.val())
 }
 
 /**
@@ -46,9 +46,9 @@ export const getContextById = async (id: string): Promise<Parent | undefined> =>
 export const getContextsByIds = async (ids: string[]): Promise<(Parent | undefined)[]> => {
   const { userRef } = store.getState()
   const snapshots = await Promise.all(
-    ids.map(id => userRef!.child('contextIndex').child(id).once('value'))
+    ids.map(id => userRef?.child('contextIndex').child(id).once('value'))
   )
-  return snapshots.map(snapshot => snapshot.val())
+  return snapshots.map(snapshot => snapshot?.val())
 }
 
 /** Updates Firebase data. */
