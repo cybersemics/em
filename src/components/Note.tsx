@@ -14,8 +14,7 @@ interface NoteProps {
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = (noteEl: HTMLElement) =>
-  // @ts-ignore
-  noteEl.parentNode.previousSibling.querySelector('.editable')
+  (noteEl.parentNode?.previousSibling as HTMLElement)?.querySelector('.editable') as (HTMLElement | null)
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ context, onFocus }: NoteProps) => {
@@ -35,13 +34,14 @@ const Note = ({ context, onFocus }: NoteProps) => {
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
     const note = attribute(store.getState(), context, '=note')
+    const editable = editableOfNote(e.target as HTMLElement)!
 
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || (e.metaKey && e.altKey && e.keyCode === 'N'.charCodeAt(0))) {
       e.stopPropagation()
       e.preventDefault()
-      editableOfNote(e.target as HTMLElement).focus()
-      setSelection(editableOfNote(e.target as HTMLElement), { end: true })
+      editable.focus()
+      setSelection(editable, { end: true })
     }
     // delete empty note
     // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
@@ -53,15 +53,15 @@ const Note = ({ context, onFocus }: NoteProps) => {
       if (isMobile) {
         asyncFocus()
       }
-      editableOfNote(e.target as HTMLElement).focus()
-      setSelection(editableOfNote(e.target as HTMLElement), { end: true })
+      editable.focus()
+      setSelection(editable, { end: true })
 
       dispatch({ type: 'deleteAttribute', context, key: '=note' })
     }
     else if (e.key === 'ArrowDown') {
       e.stopPropagation()
       e.preventDefault()
-      selectNextEditable(editableOfNote(e.target as HTMLElement))
+      selectNextEditable(editable)
     }
   }
 

@@ -3,7 +3,7 @@ import { State } from './initialState'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getAllChildren, nextSibling } from '../selectors'
 import { Block } from '../action-creators/importText'
-import { Child, Context, Index, Lexeme, Parent, Path, SimplePath } from '../types'
+import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
 
 // util
 import {
@@ -25,6 +25,10 @@ import {
 interface ImportHtmlOptions {
   skipRoot? : boolean,
 }
+
+/** Insert the given value at the context. Modifies contextIndex and thoughtIndex. */
+type insertThought = (value: string, context: Context, rank: number, created?: Timestamp, lastUpdated?: Timestamp) => void
+
 /** Replace head block with its children, or drop it, if head has no children. */
 const skipRootThought = (blocks: Block[]) => {
   const head = _.head(blocks)
@@ -42,10 +46,10 @@ const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number
 }
 
 /** Recursively iterate through blocks and call insertThought for each block individually to save it. */
-const saveThoughts = (context: Context, blocks: Block[], insertThought: (value: string, context: Context, rank: number) => void, rankIncrement = 1, startRank = 0) => {
+const saveThoughts = (context: Context, blocks: Block[], insertThought: insertThought, rankIncrement = 1, startRank = 0) => {
   blocks.forEach((block, index) => {
     const rank = startRank + index * rankIncrement
-    insertThought(block.scope, context, rank)
+    insertThought(block.scope, context, rank, block.created, block.lastUpdated)
     if (block.children.length > 0) {
       saveThoughts([...context, block.scope], block.children, insertThought)
     }
@@ -108,7 +112,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   }
 
   /** Insert the given value at the context. Modifies contextIndex and thoughtIndex. */
-  const insertThought = (value: string, context: Context, rank: number) => {
+  const insertThought: insertThought = (value, context, rank, created, lastUpdated) => {
     value = value.trim()
     const id = createId()
     const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
@@ -123,7 +127,9 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
       value,
       rank,
       id,
-      rootContext
+      rootContext,
+      created,
+      lastUpdated
     )
 
     const hash = hashThought(value)
@@ -153,6 +159,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const thoughts = skipRoot ? skipRootThought(blocks) : blocks
   const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, thoughts)
   saveThoughts(startContext, thoughts, insertThought, rankIncrement, rankStart)
+
   return {
     contextIndexUpdates,
     lastThoughtFirstLevel,

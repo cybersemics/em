@@ -211,12 +211,12 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
 
-    const { cursorBeforeEdit, cursor, editing: editingMode } = store.getState() // use fresh state
+    const { cursor, editing: editingMode } = store.getState() // use fresh state
 
     // do not set cursor if it is unchanged and we are not entering edit mode
     if ((!editing || editingMode) && equalPath(cursor, path)) return
 
-    const isEditing = equalPath(cursorBeforeEdit, path)
+    const isEditing = equalPath(cursor, path)
 
     const pathLive = cursor && isEditing
       ? parentOf(path).concat(head(showContexts ? parentOf(cursor) : cursor))
@@ -337,7 +337,6 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const state = store.getState()
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-    // @ts-ignore
     const oldValue = oldValueRef.current
     const newValue = e.target ? addEmojiSpace(he.decode(strip(e.target.value, { preserveFormatting: true }))) : oldValue
 
@@ -435,8 +434,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // import into the live thoughts
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-      const { cursor, cursorBeforeEdit } = store.getState()
-      const path = cursor && equalPath(cursorBeforeEdit, simplePath)
+      const { cursor } = store.getState()
+      const path = cursor && equalPath(cursor, simplePath)
         ? cursor
         : simplePath
 
@@ -511,7 +510,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         // no cursor
         !state.cursor ||
         // clicking a different thought (when not editing)
-        (!state.editing && !equalPath(path, state.cursorBeforeEdit))
+        (!state.editing && !equalPath(path, state.cursor))
 
       const thoughtChanged = !state.cursor || path.length !== state.cursor.length || path.some((thought, index) => {
         const child = state.cursor![index]
@@ -522,9 +521,9 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
       // remove the selection caused by the falseFocus
       if (falseFocus) {
-        if (document.activeElement) {
-          // @ts-ignore
-          document.activeElement.blur()
+        const activeElement = document.activeElement as HTMLElement | null
+        if (activeElement) {
+          blur()
         }
         clearSelection()
       }
@@ -544,8 +543,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       setCursorOnThought()
     }
     // disable focus on hidden thoughts
-    // @ts-ignore
-    else if (isElementHiddenByAutoFocus(e.target)) {
+    else if (isElementHiddenByAutoFocus(e.target as HTMLElement)) {
       e.preventDefault()
       dispatch({ type: 'cursorBack' })
     }
@@ -570,7 +568,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         // no cursor
         !state.cursor ||
         // clicking a different thought (when not editing)
-        (!state.editing && !equalPath(path, state.cursorBeforeEdit))
+        (!state.editing && !equalPath(path, state.cursor))
       )) {
 
       // prevent focus to allow navigation with mobile keyboard down

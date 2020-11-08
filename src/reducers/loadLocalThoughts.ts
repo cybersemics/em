@@ -8,7 +8,6 @@ const loadLocalThoughts = (state: State, newState: State) =>
     ...state,
     isLoading: false,
     cursor: newState.cursor,
-    cursorBeforeEdit: newState.cursorBeforeEdit,
     contextViews: {
       ...state.contextViews,
       ...newState.contextViews

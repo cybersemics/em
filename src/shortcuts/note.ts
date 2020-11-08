@@ -22,7 +22,7 @@ const noteShortcut: Shortcut = {
   canExecute: () => isDocumentEditable(),
   exec: (dispatch: Dispatch<SetAttribute>, getState) => {
     const state = getState()
-    const { cursor, cursorBeforeEdit, noteFocus } = state
+    const { cursor, noteFocus } = state
 
     // check cursor in exec so that the default browser behavior is always prevented
     if (!cursor) return
@@ -46,12 +46,15 @@ const noteShortcut: Shortcut = {
     // focus selection on note
     setTimeout(() => {
       try {
-        const thoughtEl = editableNode(cursorBeforeEdit!)
+        const thoughtEl = editableNode(cursor!)
         if (!thoughtEl) return
+
+        // select thought
         if (noteFocus) {
           thoughtEl.focus()
           setSelection(thoughtEl, { end: true })
         }
+        // select note
         else {
           const closest = thoughtEl.closest('.thought-container')
           if (!closest) return
