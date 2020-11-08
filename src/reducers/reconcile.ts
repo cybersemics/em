@@ -7,23 +7,16 @@ import { Index, Lexeme, Parent, ThoughtsInterface } from '../types'
 
 const emContextEncoded = hashContext([EM_TOKEN])
 
-/** Returns true if the given Parent or Lexeme has children. */
-const hasChildren = (src: Parent | Lexeme) =>
-  (src as Parent).children || ((src as Lexeme).contexts && (src as Lexeme).contexts.length > 0)
-
 /** Returns true if the source object is has been updated more recently than the destination object. */
 const isNewer = (src: Parent | Lexeme, dest: Parent|Lexeme) =>
   src.lastUpdated > dest.lastUpdated
-
-/** Returns true if the source object is pending. */
-const isPending = (src: Parent | Lexeme) => (src as Parent).pending
 
 /** Returns true if the em context should be updated. */
 const shouldUpdateEm = (src: Parent, dest: Parent, key: string) =>
   key === emContextEncoded && src.children.length > dest.children.length
 
 /** Compares local and remote and updates missing thoughts or those with older timestamps. */
-const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: ThoughtsInterface[] }) => {
+const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: [ThoughtsInterface, ThoughtsInterface] }) => {
 
   const [thoughtsLocal, thoughtsRemote] = thoughtsResults
 
@@ -31,7 +24,7 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: Thought
   const shouldUpdateDest = (destObj: Index<Parent | Lexeme> = {}) =>
     (src: Parent | Lexeme, key: string) => {
       const dest = destObj[key]
-      return src && !isPending(src) && hasChildren(src) && (
+      return src && (
         !(key in destObj) ||
         isNewer(src, dest) ||
         // allow EM context to be updated if source
