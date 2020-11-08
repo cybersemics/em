@@ -89,9 +89,6 @@ interface ThoughtProps {
   view?: string | null,
 }
 
-type ConnectedThoughtProps = ThoughtProps &
-  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
-
 interface ThoughtContainerProps {
   allowSingleContext?: boolean,
   childrenForced?: Child[],
@@ -125,11 +122,6 @@ interface ThoughtContainerProps {
   url?: string | null,
   view?: string | null,
 }
-
-type ConnectedDraggableThoughtContainerProps = ThoughtContainerProps &
-  ReturnType<typeof dragCollect> &
-  ReturnType<typeof dropCollect> &
-  ReturnType<typeof mapDispatchToProps>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
@@ -352,6 +344,14 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
   isDeepHovering: monitor.isOver()
 })
+
+type ConnectedThoughtProps = ThoughtProps &
+  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
+
+type ConnectedDraggableThoughtContainerProps = ThoughtContainerProps &
+  ReturnType<typeof dragCollect> &
+  ReturnType<typeof dropCollect> &
+  ReturnType<typeof mapDispatchToProps>
 
 /**********************************************************************
  * Components
