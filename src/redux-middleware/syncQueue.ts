@@ -175,7 +175,9 @@ const syncQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     () => {
       dispatch(flushQueue())
         .then(() => {
-          dispatch({ type: 'isSyncing', value: false })
+          if (getState().isSyncing) {
+            dispatch({ type: 'isSyncing', value: false })
+          }
         })
         .catch((e: Error) => {
           console.error('flushQueue error', e)
