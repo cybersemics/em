@@ -221,3 +221,199 @@ describe('context view', () => {
   })
 
 })
+
+describe('hidden thoughts', () => {
+
+  it('do not hide invisible thought if it lies within cursor path', async () => {
+
+    // import thoughts
+    await store.dispatch(
+      importText(RANKED_ROOT, `
+      - a
+        - d
+          =meta2
+            - e
+      - b
+      - =meta1
+        - c`))
+
+    // update DOM
+    wrapper.update()
+
+    /* eslint-disable jsdoc/require-jsdoc */
+    const metaThought1 = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['=meta1']))
+
+    /* eslint-disable jsdoc/require-jsdoc */
+    const metaThought1Child = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['=meta1', 'c']))
+
+    // meta thoughts should not be visible when it doesn't lie in cursor path and showHiddenThoughts is false
+    expect(metaThought1()).toHaveLength(0)
+    expect(metaThought1Child()).toHaveLength(0)
+
+    store.dispatch([
+      {
+        type: 'setCursor',
+        path: [{ value: '=meta1', rank: 2 }],
+      },
+    ])
+
+    // update DOM
+    wrapper.update()
+
+    // for root context
+    // meta thoughts should be visible when it lies in cursor path
+    expect(metaThought1()).toHaveLength(1)
+    expect(metaThought1Child()).toHaveLength(1)
+
+    store.dispatch([
+      {
+        type: 'setCursor',
+        path: [
+          { value: 'a', rank: 0 },
+          { value: 'd', rank: 0 },
+        ],
+      },
+    ])
+
+    // update DOM
+    wrapper.update()
+
+    const metaThought2 = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['a', 'd', '=meta2']))
+
+    const metaThought2Child = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['a', 'd', '=meta2', 'e']))
+
+    // meta thoughts should not be visible when it doesn't lie in cursor path and showHiddenThoughts is false
+    expect(metaThought2()).toHaveLength(0)
+    expect(metaThought2Child()).toHaveLength(0)
+
+    store.dispatch([
+      {
+        type: 'setCursor',
+        path: [
+          { value: 'a', rank: 0 },
+          { value: 'd', rank: 0 },
+          { value: '=meta2', rank: 0 },
+          { value: 'e', rank: 0 },
+        ],
+      },
+    ])
+
+    // update DOM
+    wrapper.update()
+
+    // meta thoughts should be visible when it lies in cursor path
+    expect(metaThought2()).toHaveLength(1)
+    expect(metaThought2Child()).toHaveLength(1)
+  })
+
+  it('do not hide invisible thought if it lies within cursor path (Context View)', async () => {
+
+    // import thoughts
+    await store.dispatch(
+      importText(RANKED_ROOT, `
+      - a
+        - d
+          =meta2
+            - e
+      - b
+        - d`))
+
+    // update DOM
+    wrapper.update()
+
+    // set cursor at b.d, toggle context view and then set cursor to context child
+    store.dispatch([
+      {
+        type: 'setCursor',
+        path: [
+          { value: 'b', rank: 1 },
+          { value: 'd', rank: 0 },
+        ],
+      },
+      {
+        type: 'toggleContextView'
+      },
+      {
+        type: 'setCursor',
+        path: [
+          { value: 'b', rank: 1 },
+          { value: 'd', rank: 0 },
+          { value: 'a', rank: 0 },
+        ],
+      },
+    ])
+
+    // update DOM
+    wrapper.update()
+
+    /*
+    Expected structure after activating context view.
+
+    - a
+      - d
+        =meta2
+          - e
+    - b
+      - d (~)
+       - b.d
+       - a.d (cursor)
+        - =meta2 (expecting =meta2 and e to be hidden)
+         - e
+    */
+
+    const nestedMetaThought2 = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['b', 'd', 'a', '=meta2']))
+
+    const nestedMetaThought2Child = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['b', 'd', 'a', '=meta2', 'e']))
+
+    // meta thoughts should not be visible when it doesn't lie in cursor path and showHiddenThoughts is false
+    expect(nestedMetaThought2()).toHaveLength(0)
+    expect(nestedMetaThought2Child()).toHaveLength(0)
+
+    // set cursor at a.d.a.=meta2.e
+    store.dispatch([
+      {
+        type: 'setCursor',
+        path: [
+          { value: 'b', rank: 1 },
+          { value: 'd', rank: 0 },
+          { value: 'a', rank: 0 },
+          { value: '=meta2', rank: 0 },
+          { value: 'e', rank: 0 },
+        ],
+      },
+    ])
+
+    /*
+    Expected structure
+    - a
+      - d
+        =meta2
+          - e
+    - b
+      - d (~)
+       - b.d
+       - a.d
+        - =meta2 (cursor) (expecting =meta2 and e to be visible)
+         - e
+    */
+
+    // update DOM
+    wrapper.update()
+
+    // meta thoughts should be visible when it lies in cursor path
+    expect(nestedMetaThought2()).toHaveLength(1)
+    expect(nestedMetaThought2Child()).toHaveLength(1)
+  })
+})

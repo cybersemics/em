@@ -23,7 +23,6 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  equalThoughtRanked,
   hashContext,
   head,
   headValue,
@@ -54,8 +53,8 @@ import {
   getAllChildren,
   getChildrenRanked,
   getChildrenSorted,
-  isChildVisible,
   isContextViewActive,
+  filterChildren,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -354,7 +353,6 @@ export const SubthoughtsComponent = ({
   isHovering,
   isParentHovering,
   showContexts,
-  showHiddenThoughts,
   sort: contextSort,
   simplePath,
 }: SubthoughtsComponentProps) => {
@@ -405,17 +403,7 @@ export const SubthoughtsComponent = ({
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
-  const filteredChildren = children.filter(child => {
-    const value = showContexts
-      ? head((child as ThoughtContext).context)
-      : (child as Child).value
-    return showHiddenThoughts ||
-      // exclude meta thoughts when showHiddenThoughts is off
-      // NOTE: child.rank is not used by isChildVisible
-      isChildVisible(state, pathToContext(simplePath), { value, rank: child.rank }) ||
-      // always include thoughts in cursor
-      (cursor && equalThoughtRanked(cursor[simplePath.length], child as Child))
-  })
+  const filteredChildren = filterChildren(state, resolvedPath, simplePath, children, showContexts)
 
   const proposedPageSize = isRoot(simplePath)
     ? Infinity
@@ -490,7 +478,6 @@ export const SubthoughtsComponent = ({
   return <React.Fragment>
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding!).join('/')})</div> : null}
-
     {show && showContexts && !(children.length === 0 && isRoot(simplePath))
       ? children.length < (allowSingleContext ? 1 : 2) ?
 
