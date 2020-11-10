@@ -101,14 +101,14 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
     [hashContext([ROOT_TOKEN])]: {
       context: [ROOT_TOKEN],
       children: [],
-      // start pending to trigger thoughtCacheMiddleware fetch
+      // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never()
     },
     [hashContext([EM_TOKEN])]: {
       context: [EM_TOKEN],
       children: [],
-      // start pending to trigger thoughtCacheMiddleware fetch
+      // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never()
     },

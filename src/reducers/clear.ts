@@ -4,7 +4,7 @@ interface Options {
   full?: boolean,
 }
 
-/** Resets to initial state. By default excludes a few startup settings including login, loading, modal, and tutorial. Also triggers thoughtCache internal state reset in thoughtCacheMiddleware. Use { full: true } to do a full clear to the initialState. */
+/** Resets to initial state. By default excludes a few startup settings including login, loading, modal, and tutorial. Also triggers thoughtCache internal state reset in pullQueue. Use { full: true } to do a full clear to the initialState. */
 const clear = (state: State, { full }: Options = {}) => ({
   ...initialState(),
   ...full ? null : {

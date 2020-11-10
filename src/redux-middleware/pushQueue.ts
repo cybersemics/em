@@ -61,7 +61,7 @@ const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
-  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtDelete
   const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
   if (pendingDeletes?.length) {
 
@@ -87,7 +87,7 @@ const flushEdits = (): ActionCreator => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
-  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtDelete
   const pendingEdits = pushQueue.map(batch => batch.pendingEdits || []).flat()
 
   if (pendingEdits?.length) {
@@ -113,7 +113,7 @@ const flushMoves = (): ActionCreator => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
-  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtDelete
   const pendingMoves = pushQueue.map(batch => batch.pendingMoves || []).flat()
   if (pendingMoves?.length) {
 
