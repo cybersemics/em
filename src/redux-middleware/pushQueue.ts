@@ -1,12 +1,12 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { pull, sync } from '../action-creators'
+import { pull, push } from '../action-creators'
 import { hasSyncs } from '../selectors'
 import { hashContext, keyValueBy, pathToContext } from '../util'
 import { PushBatch, State } from '../util/initialState'
 import { ActionCreator, Context, Index } from '../types'
 
-/** Merges multiple sync batches into a single batch. Uses last value of local/remote. */
+/** Merges multiple push batches into a single batch. Uses last value of local/remote. */
 const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>
   accum ? {
     ...accum,
@@ -43,9 +43,9 @@ const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>
   }
   : batch
 
-/** Sync a batch to the local/remote. */
-const syncBatch = (batch: PushBatch) =>
-  sync(
+/** Push a batch to the local/remote. */
+const pushBatch = (batch: PushBatch) =>
+  push(
     batch.thoughtIndexUpdates,
     batch.contextIndexUpdates,
     {
@@ -156,21 +156,21 @@ const flushPushQueue = (): ActionCreator => async (dispatch, getState) => {
   const localMergedBatch = localBatches.reduce(mergeBatch, {} as PushBatch)
   const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as PushBatch)
 
-  // sync
+  // push
   return Promise.all([
-    Object.keys(localMergedBatch).length > 0 && dispatch(syncBatch(localMergedBatch)),
-    Object.keys(remoteMergedBatch).length > 0 && dispatch(syncBatch(remoteMergedBatch)),
+    Object.keys(localMergedBatch).length > 0 && dispatch(pushBatch(localMergedBatch)),
+    Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(remoteMergedBatch)),
   ])
 }
 
-// debounce pushQueue updates to avoid syncing on every action
+// debounce pushQueue updates to avoid pushing on every action
 const debounceDelay = 100
 
-/** Flushes the sync queue when updates are detected. */
+/** Flushes the push queue when updates are detected. */
 const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
 
   const flushQueueDebounced = _.debounce(
-    // clear queue immediately to prevent syncing more than once
+    // clear queue immediately to prevent pushing more than once
     // then flush the queue
     () => {
       dispatch(flushPushQueue())

@@ -28,7 +28,7 @@ interface ModalProperties {
 // export interface RecentlyEditedTree extends Index<RecentlyEditedTree> {}
 type RecentlyEditedTree = Index
 
-/** Defines a single batch of updates added to the sync queue. */
+/** Defines a single batch of updates added to the push queue. */
 export interface PushBatch {
   thoughtIndexUpdates: Index<Lexeme | null>,
   contextIndexUpdates: Index<Parent | null>,

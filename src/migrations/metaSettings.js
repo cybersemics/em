@@ -1,6 +1,6 @@
 import { EM_TOKEN, INITIAL_SETTINGS, SCHEMA_HASHKEYS as SCHEMA_FROM, SCHEMA_META_SETTINGS as SCHEMA_TO } from '../constants'
 import { store } from '../store'
-import { sync } from '../util'
+import { push } from '../util'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO
@@ -16,7 +16,7 @@ export const migrate = async state => {
   })
 
   // remove old settings from state, local, and remote
-  sync({}, {}, {
+  push({}, {}, {
     updates: {
       settings: null
     }
