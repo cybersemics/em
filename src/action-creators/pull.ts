@@ -23,14 +23,14 @@ async function itForEach<T> (it: AsyncIterable<T>, callback: (value: T) => void)
  * Fetch descendants of thoughts.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
-const pull = (pending: Index<Context>, { maxDepth }: PullOptions = {}): ActionCreator => async (dispatch, getState) => {
+const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): ActionCreator => async (dispatch, getState) => {
 
-  if (Object.keys(pending).length === 0) return
+  if (Object.keys(contextMap).length === 0) return
 
   // get local thoughts
   const thoughtLocalChunks: ThoughtsInterface[] = []
 
-  const thoughtsLocalIterable = getManyDescendants(db, pending, { maxDepth: maxDepth || BUFFER_DEPTH })
+  const thoughtsLocalIterable = getManyDescendants(db, contextMap, { maxDepth: maxDepth || BUFFER_DEPTH })
   for await (const thoughts of thoughtsLocalIterable) { // eslint-disable-line fp/no-loops
 
     // eslint-disable-next-line fp/no-mutating-methods
@@ -53,7 +53,7 @@ const pull = (pending: Index<Context>, { maxDepth }: PullOptions = {}): ActionCr
   const user = getState().user
   if (user) {
 
-    const thoughtsRemoteIterable = getManyDescendants(firebaseProvider, pending, { maxDepth: maxDepth || BUFFER_DEPTH })
+    const thoughtsRemoteIterable = getManyDescendants(firebaseProvider, contextMap, { maxDepth: maxDepth || BUFFER_DEPTH })
 
     const thoughtRemoteChunks: ThoughtsInterface[] = []
 
