@@ -5,7 +5,7 @@ import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import { State } from '../util/initialState'
 import { Index, Patch } from '../types'
 
-const stateSectionsToOmit = ['alert', 'syncQueue', 'user', 'userRef']
+const stateSectionsToOmit = ['alert', 'pushQueue', 'user', 'userRef']
 
 const deadActionChecks = {
   dataNonce: (patch: Patch) => patch.length === 1 && patch[0].path === '/dataNonce'

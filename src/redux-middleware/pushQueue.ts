@@ -3,11 +3,11 @@ import { ThunkMiddleware } from 'redux-thunk'
 import { pull, sync } from '../action-creators'
 import { hasSyncs } from '../selectors'
 import { hashContext, keyValueBy, pathToContext } from '../util'
-import { SyncBatch, State } from '../util/initialState'
+import { PushBatch, State } from '../util/initialState'
 import { ActionCreator, Context, Index } from '../types'
 
 /** Merges multiple sync batches into a single batch. Uses last value of local/remote. */
-const mergeBatch = (accum: SyncBatch, batch: SyncBatch): SyncBatch =>
+const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>
   accum ? {
     ...accum,
     contextIndexUpdates: {
@@ -44,7 +44,7 @@ const mergeBatch = (accum: SyncBatch, batch: SyncBatch): SyncBatch =>
   : batch
 
 /** Sync a batch to the local/remote. */
-const syncBatch = (batch: SyncBatch) =>
+const syncBatch = (batch: PushBatch) =>
   sync(
     batch.thoughtIndexUpdates,
     batch.contextIndexUpdates,
@@ -59,10 +59,10 @@ const syncBatch = (batch: SyncBatch) =>
 /** Pull all descendants of pending deletes and dispatch existingThoughtDelete to fully delete. */
 const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
 
-  const { syncQueue } = getState()
+  const { pushQueue } = getState()
 
   // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
-  const pendingDeletes = syncQueue.map(batch => batch.pendingDeletes || []).flat()
+  const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
   if (pendingDeletes?.length) {
 
     const pending: Index<Context> = keyValueBy(pendingDeletes, ({ context }) => ({
@@ -85,10 +85,10 @@ const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
 /** Pull all descendants of pending edits and dispatch existingThoughtChange to edit descendant contexts. */
 const flushEdits = (): ActionCreator => async (dispatch, getState) => {
 
-  const { syncQueue } = getState()
+  const { pushQueue } = getState()
 
   // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
-  const pendingEdits = syncQueue.map(batch => batch.pendingEdits || []).flat()
+  const pendingEdits = pushQueue.map(batch => batch.pendingEdits || []).flat()
 
   if (pendingEdits?.length) {
 
@@ -111,10 +111,10 @@ const flushEdits = (): ActionCreator => async (dispatch, getState) => {
 /** Pull all descendants of pending moves and dispatch existingThoughtMove to fully move. */
 const flushMoves = (): ActionCreator => async (dispatch, getState) => {
 
-  const { syncQueue } = getState()
+  const { pushQueue } = getState()
 
   // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the thought cache middleware which can load pending thoughts before dispatching another existingThoughtDelete
-  const pendingMoves = syncQueue.map(batch => batch.pendingMoves || []).flat()
+  const pendingMoves = pushQueue.map(batch => batch.pendingMoves || []).flat()
   if (pendingMoves?.length) {
 
     const pending: Index<Context> = keyValueBy(pendingMoves, ({ pathOld }) => {
@@ -138,23 +138,23 @@ const flushMoves = (): ActionCreator => async (dispatch, getState) => {
 }
 
 /** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
-const flushQueue = (): ActionCreator => async (dispatch, getState) => {
+const flushPushQueue = (): ActionCreator => async (dispatch, getState) => {
 
-  const { syncQueue } = getState()
+  const { pushQueue } = getState()
 
-  if (syncQueue.length === 0) return Promise.resolve()
+  if (pushQueue.length === 0) return Promise.resolve()
 
   dispatch(flushDeletes())
   dispatch(flushEdits())
   dispatch(flushMoves())
 
   // filter batches by data provider
-  const localBatches = syncQueue.filter(batch => batch.local)
-  const remoteBatches = syncQueue.filter(batch => batch.remote)
+  const localBatches = pushQueue.filter(batch => batch.local)
+  const remoteBatches = pushQueue.filter(batch => batch.remote)
 
   // merge batches
-  const localMergedBatch = localBatches.reduce(mergeBatch, {} as SyncBatch)
-  const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as SyncBatch)
+  const localMergedBatch = localBatches.reduce(mergeBatch, {} as PushBatch)
+  const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as PushBatch)
 
   // sync
   return Promise.all([
@@ -163,26 +163,26 @@ const flushQueue = (): ActionCreator => async (dispatch, getState) => {
   ])
 }
 
-// debounce syncQueue updates to avoid syncing on every action
+// debounce pushQueue updates to avoid syncing on every action
 const debounceDelay = 100
 
 /** Flushes the sync queue when updates are detected. */
-const syncQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
+const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
 
   const flushQueueDebounced = _.debounce(
     // clear queue immediately to prevent syncing more than once
     // then flush the queue
     () => {
-      dispatch(flushQueue())
+      dispatch(flushPushQueue())
         .then(() => {
           if (getState().isSyncing) {
             dispatch({ type: 'isSyncing', value: false })
           }
         })
         .catch((e: Error) => {
-          console.error('flushQueue error', e)
+          console.error('flushPushQueue error', e)
         })
-      dispatch({ type: 'clearQueue' })
+      dispatch({ type: 'clearPushQueue' })
     },
     debounceDelay
   )
@@ -200,4 +200,4 @@ const syncQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   }
 }
 
-export default syncQueueMiddleware
+export default pushQueueMiddleware

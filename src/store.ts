@@ -8,7 +8,7 @@ import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
 import multi from './redux-middleware/multi'
-import syncQueue from './redux-middleware/syncQueue'
+import pushQueue from './redux-middleware/pushQueue'
 import thoughtCacheMiddleware from './redux-middleware/thoughtCacheMiddleware'
 import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
@@ -25,7 +25,7 @@ export const store = createStore(
   composeEnhancers(applyMiddleware(
     multi,
     thunk,
-    syncQueue,
+    pushQueue,
     thoughtCacheMiddleware,
     updateUrlHistory
   ), undoRedoReducerEnhancer)

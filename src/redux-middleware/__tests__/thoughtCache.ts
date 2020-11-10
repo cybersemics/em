@@ -167,7 +167,7 @@ describe('thoughtCache', () => {
     jest.runOnlyPendingTimers()
 
     // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
-    // existingThoughtDelete -> syncQueue -> thoughtCache -> existingThoughtDelete
+    // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
     await delay(500)
 
     expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
@@ -226,7 +226,7 @@ describe('thoughtCache', () => {
     jest.runOnlyPendingTimers()
 
     // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
-    // existingThoughtDelete -> syncQueue -> thoughtCache -> existingThoughtDelete
+    // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
     await delay(500)
 
     expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
@@ -292,7 +292,7 @@ describe('thoughtCache', () => {
     jest.runOnlyPendingTimers()
 
     // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
-    // existingThoughtDelete -> syncQueue -> thoughtCache -> existingThoughtDelete
+    // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
     await delay(500)
 
     expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }, { value: 'a!' }])
