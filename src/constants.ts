@@ -125,11 +125,11 @@ export const NOOP = () => { } // eslint-disable-line @typescript-eslint/no-empty
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 
-// the initial user font size
-export const DEFAULT_FONT_SIZE = 18
-
 // the base font of the browser used to calculate the scaling ratio
 export const BASE_FONT_SIZE = 16
+
+// the initial user font size
+export const DEFAULT_FONT_SIZE = 18
 
 export const MIN_FONT_SIZE = 8
 export const MAX_FONT_SIZE = 40
@@ -186,8 +186,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'exportContext',
 ]
 
-// throttle time in ms for onChange handler for thought edit
-export const EDIT_THROTTLE = process.env.NODE_ENV === 'test' ? 0 : 1000
+export const EDIT_THROTTLE = 1000
 
 export const INITIAL_SETTINGS = raw('./initialSettings.html')
 
@@ -209,6 +208,9 @@ export const MODIFIER_KEYS = {
   Meta: 1,
   Shift: 1,
 }
+
+export const CONTEXT_CACHE_SIZE = 10000
+export const THOUGHT_CACHE_SIZE = 10000
 
 // actions representing any cursor movements.
 // These need to be differentiated from the other actions because

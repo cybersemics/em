@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
-import * as db from '../db'
+import * as db from '../data-providers/dexie'
 import { makeCompareByProp, sort } from '../util'
 import { getSetting } from '../selectors'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
@@ -55,7 +55,7 @@ const ShortcutTable = () => {
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
 const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialStep: number, showQueue?: boolean | null }>) => {
 
-  const [logs, setLogs] = useState(null)
+  const [logs, setLogs] = useState<db.Log[] | null>(null)
 
   /** Toggles the logs. Loads the logs if they have not been loaded yet. */
   const toggleLogs = async () =>

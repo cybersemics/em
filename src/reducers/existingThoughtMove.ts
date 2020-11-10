@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getAllChildren, getChildrenRanked } from '../selectors'
+import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
@@ -29,11 +29,14 @@ import {
 } from '../util'
 
 type RecursiveMoveResult = Child & {
-  newThought: Lexeme,
+  archived?: Timestamp,
+  pending?: boolean,
   context: Context,
   contextsOld: Context[],
   contextsNew: Context[],
-  archived?: Timestamp,
+  pathOld: Path,
+  pathNew: Path,
+  newThought: Lexeme,
 }
 
 /** Moves a thought from one context to another, or within the same context. */
@@ -105,17 +108,19 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     })
 
   /** Updates descendants. */
-  const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = [], accumRecursive: Index<RecursiveMoveResult> = {}): Index<RecursiveMoveResult> => {
+  const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = []): Index<RecursiveMoveResult> => {
 
     const newLastRank = getNextRank(state, pathToContext(pathNew))
-
     const oldThoughts = pathToContext(pathOld)
+
     return getChildrenRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
       const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
-
-      // remove and add the new context of the child
-      const contextNew = newThoughts.concat(contextRecursive)
+      const childContext: Context = [...oldThoughts, child.value]
+      const childPathOld: Path = [...pathOld, child]
+      const childPathNew: Path = [...pathNew, child]
+      const contextRecursiveNew: Context = [...contextRecursive, child.value]
+      const contextNew: Context = [...newThoughts, ...contextRecursive]
 
       // update rank of first depth of childs except when a thought has been moved within the same context
       const movedRank = !sameContext && newLastRank ? newLastRank + i : child.rank
@@ -130,32 +135,31 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
 
-      const accumNew: Index<RecursiveMoveResult> = {
-        // merge ancestor updates
-        ...accumRecursive,
+      const innerResult = {
         // merge sibling updates
         // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
-        ...accum,
         // merge current thought update
-        [hashedKey]: {
-          value: child.value,
-          // TODO: Confirm that find will always succeed
-          rank: ((childNewThought.contexts || [])
-            .find(context => equalArrays(context.context, contextNew))
-          )!.rank,
-          // child.id is undefined sometimes. Unable to reproduce.
-          id: child.id ?? '',
-          archived,
-          newThought: childNewThought,
-          context: oldThoughts,
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([oldThoughts]),
-          contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
-        }
+        value: child.value,
+        // TODO: Confirm that find will always succeed
+        rank: ((childNewThought.contexts || [])
+          .find(context => equalArrays(context.context, contextNew))
+        )!.rank,
+        // child.id is undefined sometimes. Unable to reproduce.
+        id: child.id ?? '',
+        pending: isPending(state, childContext),
+        archived,
+        newThought: childNewThought,
+        context: oldThoughts,
+        pathOld: childPathOld,
+        pathNew: childPathNew,
+        contextsOld: ((accum[hashedKey] || {}).contextsOld || []).concat([oldThoughts]),
+        contextsNew: ((accum[hashedKey] || {}).contextsNew || []).concat([contextNew]),
       }
 
       return {
-        ...accumNew,
-        ...recursiveUpdates(pathOld.concat(child), pathNew.concat(child), contextRecursive.concat(child.value), accumNew)
+        ...accum,
+        [hashedKey]: innerResult,
+        ...recursiveUpdates(childPathOld, childPathNew, contextRecursiveNew)
       }
     }, {} as Index<RecursiveMoveResult>)
   }
@@ -166,17 +170,20 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   }, {} as Index<Lexeme>)
 
   const contextIndexDescendantUpdates = sameContext
-    ? {}
-    : _.transform(descendantUpdatesResult, (accum, result) => {
-      const output = result.contextsOld.reduce((accumInner, contextOld, i) => {
+    ? {} as {
+      contextIndex: Index<Parent | null>,
+      pendingMoves: { pathOld: Path, pathNew: Path }[],
+    }
+    : Object.values(descendantUpdatesResult).reduce((accum, result) =>
+      result.contextsOld.reduce((accumInner, contextOld, i) => {
         const contextNew = result.contextsNew[i]
         const contextEncodedOld = hashContext(contextOld)
         const contextEncodedNew = hashContext(contextNew)
-        const accumChildrenOld = accum[contextEncodedOld]?.children
-        const accumChildrenNew = accum[contextEncodedNew]?.children
-        const childrenOld = (accumChildrenOld || getAllChildren(state, contextOld))
+        const accumInnerChildrenOld = accumInner.contextIndex[contextEncodedOld]?.children
+        const accumInnerChildrenNew = accumInner.contextIndex[contextEncodedNew]?.children
+        const childrenOld = (accumInnerChildrenOld || getAllChildren(state, contextOld))
           .filter((child: Child) => child.value !== result.value)
-        const childrenNew = (accumChildrenNew || getAllChildren(state, contextNew))
+        const childrenNew = (accumInnerChildrenNew || getAllChildren(state, contextNew))
           .filter((child: Child) => child.value !== result.value)
           .concat({
             value: result.value,
@@ -186,24 +193,50 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
             id: result.id ?? '',
             ...result.archived ? { archived: result.archived } : null
           })
-        return {
-          ...accumInner,
-          [contextEncodedOld]: childrenOld.length > 0 ? {
-            context: contextOld,
-            children: childrenOld,
-            lastUpdated: timestamp(),
-          } : null,
-          [contextEncodedNew]: {
-            context: contextNew,
-            children: childrenNew,
-            lastUpdated: timestamp(),
-          }
-        }
-      }, {} as Index<Parent | null>)
-      Object.assign(accum, output) // eslint-disable-line fp/no-mutating-assign
-    }, {} as Index<Parent | null>)
 
-  const contextIndexUpdates = {
+        // if (result.pending) {
+        //   return {
+        //     contextIndex: {},
+        //     pendingMoves: [...accum.pendingMoves, ...result.pending ? [{
+        //       pathOld: result.pathOld,
+        //       pathNew: result.pathNew,
+        //     }] : []]
+        //   }
+        // }
+
+        const accumNew = {
+          contextIndex: {
+            ...accumInner.contextIndex,
+            [contextEncodedOld]: childrenOld.length > 0 ? {
+              context: contextOld,
+              children: childrenOld,
+              lastUpdated: timestamp(),
+              ...result.pending ? { pending: true } : null,
+            } : null,
+            [contextEncodedNew]: {
+              context: contextNew,
+              children: childrenNew,
+              lastUpdated: timestamp(),
+              ...result.pending ? { pending: true } : null,
+            },
+          },
+          pendingMoves: [...accum.pendingMoves, ...result.pending ? [{
+            pathOld: result.pathOld,
+            pathNew: result.pathNew,
+          }] : []]
+        }
+
+        return accumNew
+      }, accum)
+    , {
+      contextIndex: {},
+      pendingMoves: [] as { pathOld: Path, pathNew: Path }[]
+    } as {
+      contextIndex: Index<Parent | null>,
+      pendingMoves: { pathOld: Path, pathNew: Path }[],
+    })
+
+  const contextIndexUpdates: Index<Parent | null> = {
     [contextEncodedOld]: subthoughtsOld.length > 0 ? {
       context: oldContext,
       children: subthoughtsOld,
@@ -214,7 +247,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       children: subthoughtsNew,
       lastUpdated: timestamp(),
     },
-    ...contextIndexDescendantUpdates
+    ...contextIndexDescendantUpdates.contextIndex,
   }
 
   const thoughtIndexUpdates = {
@@ -266,7 +299,12 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     }),
 
     // update thoughts
-    updateThoughts({ thoughtIndexUpdates, contextIndexUpdates, recentlyEdited }),
+    updateThoughts({
+      contextIndexUpdates,
+      thoughtIndexUpdates,
+      recentlyEdited,
+      pendingMoves: contextIndexDescendantUpdates.pendingMoves,
+    }),
 
     // render
     render,

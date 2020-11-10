@@ -1,5 +1,4 @@
 import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { importText } from '../../action-creators'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import indentOnSpace from '../indentOnSpace'
@@ -11,11 +10,15 @@ it('indent on adding space at the beginning of the thought', async () => {
 
   const store = createTestStore()
 
-  store.dispatch(importText(RANKED_ROOT, `
-    - a
-      - b
-        - c
-        - d`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+        - a
+          - b
+            - c
+            - d
+  ` })
 
   store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 
@@ -36,12 +39,16 @@ it('prevent indent on adding space at the beginning of the immovable thought', a
 
   const store = createTestStore()
 
-  store.dispatch(importText(RANKED_ROOT, `
-    - a
-      - b
-        - c
-        - d
-          - =immovable`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+        - a
+          - b
+            - c
+            - d
+              - =immovable
+  ` })
 
   store.dispatch({
     type: 'setCursor',

@@ -1,9 +1,7 @@
 /** Here's documentation for migrations. */
 
-// constants
-import {
-  SCHEMA_LATEST,
-} from '../constants'
+import { SCHEMA_LATEST } from '../constants'
+import { keyValueBy } from '../util/keyValueBy'
 
 // migrations
 import * as hashKeys from './hashKeys'
@@ -15,15 +13,14 @@ const migrations = [
 ]
 
 // index migrations by schemaVersionFrom
-const migrationIndex = migrations.reduce((accum, cur) => {
+const migrationIndex = keyValueBy(migrations, (cur, i, accum) => {
   if (accum[cur.schemaVersionFrom]) {
     throw new Error('Duplicate schemaVersion migration: ' + cur.schemaVersionFrom)
   }
   return {
-    ...accum,
     [cur.schemaVersionFrom]: cur.migrate
   }
-}, {})
+})
 
 /** Migrates the given state based on its schemaVersion.
  * Continue migrating until schemaVersion === SCHEMA_LATEST.

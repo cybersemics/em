@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { Element, HimalayaNode, Text, parse } from 'himalaya'
-import { Block } from '../action-creators/importText'
+import { Block } from '../types'
 
 /** Retrieve attribute from Element node by key. */
 const getAttribute = (key: string, node: Element) => {

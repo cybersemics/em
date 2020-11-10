@@ -1,11 +1,30 @@
 import { GetOperation } from 'fast-json-patch'
 import { Dispatch, ReactNode } from 'react'
-import { Action } from 'redux'
+import { AnyAction } from 'redux'
 import { ThunkDispatch } from 'redux-thunk'
 import { State } from './util/initialState'
 
 /********************************
- * Firebase types
+ * Global
+ ********************************/
+
+declare global {
+  interface Document {
+    DND: any,
+  }
+
+  interface Window {
+    firebase: Firebase,
+    em: unknown,
+  }
+
+  interface Navigator {
+    standalone: boolean,
+  }
+}
+
+/********************************
+ * Firebase
  ********************************/
 
 interface Firebase {
@@ -29,28 +48,18 @@ export interface User {
 }
 
 export interface Ref {
-  on: (s: string, f: (...args: any) => any) => void,
-  once: (s: string, f: (...args: any) => any) => void,
-  update: (updates: Index<any>, callback: (err: string | null, ...args: any[]) => void) => void,
+  child: (name: string) => Ref,
+  once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>,
+  on: (eventName: string, callback: (snapshot: Snapshot) => any) => void,
+  update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>,
 }
 
-export interface Snapshot<T> {
+export interface Snapshot<T = any> {
   val: () => T,
 }
 
-declare global {
-  interface Window {
-      firebase: Firebase,
-      em: unknown,
-  }
-
-  interface Navigator {
-    standalone: boolean,
-  }
-}
-
 /********************************
- * Util types
+ * Everything else
  ********************************/
 
 /**
@@ -96,6 +105,7 @@ export interface ThoughtContext {
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
 export interface Lexeme {
+  id?: string, // db only; not the same as Child id
   value: string,
   contexts: ThoughtContext[],
   created: Timestamp,
@@ -104,9 +114,9 @@ export interface Lexeme {
 
 /** A thought with a specific rank. */
 export interface Child {
+  id?: string,
   rank: number,
   value: string,
-  id?: string,
   lastUpdated?: Timestamp,
   archived?: Timestamp,
 }
@@ -120,16 +130,18 @@ export type SimplePath = Child[] & Brand<'SimplePath'>
 /** A sequence of values. */
 export type Context = string[]
 
-/** A parent context with a list of children. */
+/** An object that contains a list of children within a context. */
 export interface Parent {
+  id?: string,
   context: Context,
   children: Child[],
   lastUpdated: Timestamp,
+  pending?: boolean,
 }
 
 /** A basic Redux action creator thunk with no arguments. */
 // do not use ThunkAction<void, State, any, Action<string>> to avoid extraArgument
-export type ActionCreator = ((dispatch: ThunkDispatch<State, never, Action<string>>, getState: () => State) => any)
+export type ActionCreator = ((dispatch: ThunkDispatch<State, never, AnyAction>, getState: () => State) => any)
 
 /** The three options the user can choose for the context tutorial. */
 export type TutorialChoice = 0 | 1 | 2
@@ -176,7 +188,7 @@ export interface Shortcut {
   },
   svg?: (icon: Icon) => ReactNode,
   canExecute?: (getState: () => State, e: Event) => boolean,
-  exec: (dispatch: Dispatch<Action | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => void,
+  exec: (dispatch: Dispatch<AnyAction | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => void,
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'
@@ -205,3 +217,32 @@ export type Patch = ExtendedOperation[]
 
 export type ContextHash = string & Brand<'ContextHash'>
 export type ThoughtHash = string & Brand<'ThoughtHash'>
+
+// jex-block-parser type
+// Waiting on PR: https://github.com/reergymerej/block-parser/pull/1
+export interface Block {
+  scope: string,
+  created?: Timestamp,
+  lastUpdated?: Timestamp,
+  children: Block[],
+}
+
+export type ThoughtCaches = {
+  contextCache: ContextHash[],
+  thoughtCache: ThoughtHash[],
+}
+
+export interface ThoughtIndices {
+  contextIndex: Index<Parent>,
+  thoughtIndex: Index<Lexeme>,
+}
+
+export interface ThoughtUpdates {
+  contextIndex: Index<Parent | null>,
+  thoughtIndex: Index<Lexeme | null>,
+}
+
+export type ThoughtsInterface = ThoughtIndices & ThoughtCaches
+
+// type to unpack a Promise
+export type Await<T> = T extends PromiseLike<infer U> ? U : T
