@@ -10,7 +10,7 @@ import { SimplePath } from '../types'
 const settings = (state: State, { key, value }: { key: string, value: string }) => {
 
   const newValue = value.toString()
-  const context = [EM_TOKEN, 'Settings'].concat(key)
+  const context = [EM_TOKEN, 'Settings', key]
 
   const oldThoughtRanked = getChildrenRanked(state, context)
     .find(child => !isFunction(child.value))
@@ -20,14 +20,19 @@ const settings = (state: State, { key, value }: { key: string, value: string }) 
     return state
   }
 
+  const simplePath = [
+    ...rankThoughtsFirstMatch(state, context),
+    {
+      ...oldThoughtRanked,
+      value: newValue,
+    }
+  ] as SimplePath
+
   return existingThoughtChange(state, {
     context,
     oldValue: oldThoughtRanked.value,
     newValue,
-    path: rankThoughtsFirstMatch(state, context).concat({
-      value: newValue,
-      rank: oldThoughtRanked.rank,
-    }) as SimplePath,
+    path: simplePath,
   })
 }
 

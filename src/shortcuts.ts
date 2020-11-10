@@ -7,6 +7,7 @@ import globals from './globals'
 import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
 import { State } from './util/initialState'
+import { keyValueBy } from './util/keyValueBy'
 import { Direction, GesturePath, Index, Key, Shortcut } from './types'
 
 import * as shortcutObject from './shortcuts/index'
@@ -22,11 +23,9 @@ export const shortcutEmitter = new Emitter()
  *   ...
  * }
  */
-const letters = Array(26).fill(0)
-  .reduce((accum, n, i) => ({
-    ...accum,
-    [65 + i]: String.fromCharCode(65 + i).toUpperCase()
-  }), {})
+const letters = keyValueBy(Array(26).fill(0), (n, i) => ({
+  [65 + i]: String.fromCharCode(65 + i).toUpperCase()
+}))
 
 /** Hash all the properties of a shortcut into a string. */
 const hashShortcut = (shortcut: Shortcut) => {
@@ -50,39 +49,25 @@ const hashKeyDown = (e: KeyboardEvent) =>
   (letters[e.keyCode] || e.key).toUpperCase()
 
 // index shortcuts for O(1) lookup by keyboard
-const shortcutKeyIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.keyboard
-  ? {
-    ...accum,
-    [hashShortcut(shortcut)]: shortcut
-  }
-  : accum,
-{}
+const shortcutKeyIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
+  shortcut.keyboard ? { [hashShortcut(shortcut)]: shortcut } : null
 )
 
 // index shortcuts for O(1) lookup by id
-const shortcutIdIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.id
-  ? {
-    ...accum,
-    [shortcut.id]: shortcut
-  }
-  : accum,
-{}
+const shortcutIdIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
+  shortcut.id ? { [shortcut.id]: shortcut } : null
 )
 
 // index shortcuts for O(1) lookup by gesture
-const shortcutGestureIndex: Index<Shortcut> = globalShortcuts.reduce((accum, shortcut) => shortcut.gesture
+const shortcutGestureIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut => shortcut.gesture
   ? {
-    ...accum,
     // shortcut.gesture may be a string or array of strings
     // normalize intro array of strings
-    ...Array.prototype.concat([], shortcut.gesture)
-      .reduce((accumInner, gesture) => ({
-        ...accumInner,
-        [gesture]: shortcut
-      }), {})
+    ...keyValueBy(Array.prototype.concat([], shortcut.gesture), gesture => ({
+      [gesture]: shortcut
+    }))
   }
-  : accum,
-{}
+  : null
 )
 
 /** Returns true if the current alert is a gestureHint. */
@@ -114,7 +99,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     handleGestureSegmentTimeout = window.setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
-        store.dispatch<any>(alert(shortcut ? shortcut.name
+        store.dispatch(alert(shortcut ? shortcut.name
           : isGestureHint(state) ? '✗ Invalid gesture'
           : null, { alertType: 'gestureHint', showCloseLink: false }))
       },
@@ -146,7 +131,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       if (isGestureHint(store.getState())) {
-        store.dispatch<any>(alert(null))
+        store.dispatch(alert(null))
       }
     })
   },
@@ -156,7 +141,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // track meta key for expansion algorithm
     if (e.key === (isMac ? 'Meta' : 'Control')) {
       if (globals.suppressExpansion) {
-        store.dispatch<any>(suppressExpansion({ cancel: true }))
+        store.dispatch(suppressExpansion({ cancel: true }))
       }
     }
   },
@@ -189,7 +174,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
         // dispatch action to hide toolbar and breadcrumbs
         if (!isMobile) {
-          store.dispatch<any>(toggleTopControlsAndBreadcrumbs(false))
+          store.dispatch(toggleTopControlsAndBreadcrumbs(false))
         }
 
         // execute shortcut

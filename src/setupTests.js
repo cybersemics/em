@@ -2,10 +2,10 @@ import Adapter from 'enzyme-adapter-react-16'
 import { configure } from 'enzyme'
 import { noop } from 'lodash'
 import 'jest-localstorage-mock'
-
-// TO-D0: Removing store from here causes circular dependency issue in utils. Fix it.
+import 'fake-indexeddb/auto'
 
 configure({ adapter: new Adapter() })
 
-// add noop function to window.scrollTo to prevent implementation error during test
+// add noop functions to prevent implementation error during test
+window.blur = noop
 window.scrollTo = noop

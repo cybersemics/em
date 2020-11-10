@@ -4,10 +4,9 @@ import { mount } from 'enzyme'
 import { wrapInTestContext } from 'react-dnd-test-utils'
 
 import { initialize } from '../initialize'
-import { cleanup as cleanupEventHandlers } from '../util/initEvents'
 import { Provider } from 'react-redux'
 import { store } from '../store'
-import * as db from '../db'
+import * as db from '../data-providers/dexie'
 
 // components
 import AppComponent from '../components/AppComponent'
@@ -28,6 +27,9 @@ export const App = React.forwardRef(() =>
   </Provider>
 )
 
+// eslint-disable-next-line fp/no-let
+let cleanup: any
+
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
 
@@ -37,7 +39,8 @@ const createTestApp = async () => {
   await act(async () => {
 
     // calls initEvents, which must be manually cleaned up
-    await initialize()
+    const init = await initialize()
+    cleanup = init.cleanup
 
     jest.useFakeTimers()
 
@@ -45,7 +48,7 @@ const createTestApp = async () => {
 
     // using test drag and drop backend and context
     const TestApp = wrapInTestContext(App)
-    const dndRef = createRef()
+    const dndRef = createRef<HTMLElement>()
 
     wrapper = await mount(<TestApp ref={dndRef}/>, { attachTo: root })
     wrapper.update()
@@ -54,14 +57,15 @@ const createTestApp = async () => {
     const skipTutorial = wrapper.find('#skip-tutorial')
     skipTutorial.simulate('click')
 
-    jest.runAllTimers()
+    jest.runOnlyPendingTimers()
     wrapper.update()
 
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
   })
 
-  return wrapper
+  // TODO: Is there a better way to type this?
+  return wrapper as unknown as ReturnType<typeof mount>
 }
 
 /** Clear store, localStorage, local db, and window event handlers. */
@@ -72,7 +76,9 @@ export const cleanupTestApp = async () => {
     localStorage.clear()
 
     // cleanup initEvents which is called in initialize
-    cleanupEventHandlers()
+    if (cleanup) {
+      cleanup()
+    }
 
     store.dispatch({ type: 'clear', full: true })
     await db.clearAll()
@@ -85,7 +91,7 @@ export const cleanupTestApp = async () => {
       '/'
     )
 
-    jest.runAllTimers()
+    jest.runOnlyPendingTimers()
   })
 }
 

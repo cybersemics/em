@@ -28,7 +28,10 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   // do no sort here as the new object reference would cause a re-render even when the children have not changed
-  const rootThoughtsLength = (showHiddenThoughts ? getAllChildren(state, [ROOT_TOKEN]) : getAllChildren(state, [ROOT_TOKEN]).filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
+  const rootChildren = getAllChildren(state, [ROOT_TOKEN])
+  const rootThoughtsLength = (showHiddenThoughts
+    ? rootChildren
+    : rootChildren.filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
   // pass rootSort to allow root Subthoughts ro render on toggleSort
   const rootSort = attribute(state, [ROOT_TOKEN], '=sort') || 'None'
 
@@ -71,7 +74,7 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 /** The main content section of em. */
 const Content: ContentComponent = props => {
   const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus, rootSort } = props
-  const contentRef = useRef()
+  const contentRef = useRef<HTMLDivElement>(null)
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace = () => {
@@ -99,13 +102,12 @@ const Content: ContentComponent = props => {
   }), [tutorialStep, isTutorialLocal])
 
   return <div id='content-wrapper' onClick={e => {
-    if (!showModal && isLeftSpaceClick(e, contentRef.current)) {
+    if (!showModal && isLeftSpaceClick(e, contentRef.current!)) {
       toggleSidebar()
     }
   }}>
     <div
       id='content'
-      // @ts-ignore
       ref={contentRef}
       className={contentClassNames}
       onClick={clickOnEmptySpace}

@@ -1,4 +1,3 @@
-import { importText } from '../../action-creators'
 import { NOOP, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attributeEquals } from '../../selectors'
@@ -7,18 +6,20 @@ import executeShortcut from '../../test-helpers/executeShortcut'
 
 const event = { preventDefault: NOOP } as Event
 
-it('toggle on table view of parent of cursor (initial state without =view attribute)', async () => {
+it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
 
   const store = createTestStore()
 
-  // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - b
-      - c
-    - d
-      - e
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - b
+          - c
+        - d
+          - e
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -31,20 +32,22 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
   expect(attributeEquals(store.getState(), ['a'], '=view', 'Table')).toBeTruthy()
 })
 
-it('toggle on table view of parent of cursor (initial state =view attribute set to Prose)', async () => {
+it('toggle on table view of parent of cursor (initial state =view attribute set to Prose)', () => {
 
   const store = createTestStore()
 
-  // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - =view
-      - Prose
-    - b
-      - c
-    - d
-      - e
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - =view
+          - Prose
+        - b
+          - c
+        - d
+          - e
+  ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
@@ -57,20 +60,23 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
   expect(attributeEquals(store.getState(), ['a'], '=view', 'Table')).toBeTruthy()
 })
 
-it('toggle on table view of parent of cursor (initial state without =view attribute)', async () => {
+it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
 
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText(RANKED_ROOT, `
-  - a
-    - =view
-      - Table
-    - b
-      - c
-    - d
-      - e
-`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+        - =view
+          - Table
+        - b
+          - c
+        - d
+          - e
+    ` })
 
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },

@@ -1,13 +1,16 @@
-import React, { Dispatch, useEffect } from 'react'
+import React, { Dispatch, MouseEvent, useEffect } from 'react'
 import { Action } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { ConnectDragPreview, ConnectDragSource, ConnectDropTarget, DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { State } from '../util/initialState'
+import { ActionCreator, Child, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -22,9 +25,6 @@ import Subthoughts from './Subthoughts'
 import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import useLongPress from '../hooks/useLongPress'
-import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
-import { State } from '../util/initialState'
-import { ActionCreator, Child, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
@@ -345,6 +345,14 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
   isDeepHovering: monitor.isOver()
 })
 
+type ConnectedThoughtProps = ThoughtProps &
+  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
+
+type ConnectedDraggableThoughtContainerProps = ThoughtContainerProps &
+  ReturnType<typeof dragCollect> &
+  ReturnType<typeof dropCollect> &
+  ReturnType<typeof mapDispatchToProps>
+
 /**********************************************************************
  * Components
  **********************************************************************/
@@ -365,7 +373,7 @@ const Thought = ({
   style,
   simplePath,
   toggleTopControlsAndBreadcrumbs
-}: ThoughtProps & Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>) => {
+}: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
@@ -439,11 +447,7 @@ const ThoughtContainer = ({
   url,
   view,
   toggleTopControlsAndBreadcrumbs
-}: ThoughtContainerProps & {
-  dragPreview: ConnectDragPreview,
-  dragSource: ConnectDragSource,
-  dropTarget: ConnectDropTarget,
-} & ReturnType<typeof mapDispatchToProps>) => {
+}: ConnectedDraggableThoughtContainerProps) => {
 
   const state = store.getState()
   useEffect(() => {
@@ -561,7 +565,7 @@ const ThoughtContainer = ({
   >
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} path={path} leaf={isLeaf} glyph={showContexts && !contextThought ? '✕' : null} onClick={(e: React.MouseEvent) => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(simplePath)} glyph={showContexts && !contextThought ? '✕' : null} leaf={isLeaf} onClick={(e: React.MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch({

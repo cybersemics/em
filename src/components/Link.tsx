@@ -3,8 +3,9 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import { EM_TOKEN } from '../constants'
 import { hashContextUrl } from '../selectors'
-import { clearSelection, decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToContext, scrollCursorIntoView, strip } from '../util'
+import { clearSelection, decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToContext, strip } from '../util'
 import { Connected, SimplePath } from '../types'
+import { scrollCursorIntoView } from '../action-creators'
 
 interface LinkProps {
   charLimit?: number,
@@ -24,7 +25,7 @@ const Link = ({ simplePath, label, charLimit = 32, dispatch }: Connected<LinkPro
     dispatch({ type: 'search', value: null })
     dispatch({ type: 'setCursor', simplePath })
     dispatch({ type: 'toggleSidebar', value: false })
-    setTimeout(scrollCursorIntoView)
+    dispatch(scrollCursorIntoView())
   }} dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : undefined}>{!emContext ? ellipsize(decodeCharacterEntities(value), charLimit!) : null}</a>
 }
 

@@ -1,45 +1,53 @@
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
-import { equalArrays, pathToContext } from '../../util'
-import { importText } from '../../action-creators'
+import { equalArrays, pathToContext, timestamp } from '../../util'
 import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
+import { Await, Context, Path, SimplePath } from '../../types'
 
-/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-const whereContext = context => node => equalArrays(pathToContext(node.props().simplePath), context)
+type ReactWrapper = Await<ReturnType<typeof createTestApp>>
 
-/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts resolved path. */
-const wherePath = context => node => node.props().path && equalArrays(pathToContext(node.props().path), context)
+// type for Thoughts or Subthoughts component that has a simplePath prop
+interface ThoughtOrSubthoughtsComponent {
+  props: () => {
+    path?: Path,
+    simplePath: SimplePath,
+    showContexts?: boolean,
+  },
+}
 
-// const debugThoughtWrapper = wrapper => wrapper.map(node => ({
-//   name: node.name(),
-//   context: node.props().simplePath.map(child => child.value),
-//   contextChain: JSON.stringify(node.props().contextChain),
-//   props: node.props(),
-//   html: node.html(),
-// }))
+/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts path. */
+const whereSimplePath = (context: Context) => (node: ThoughtOrSubthoughtsComponent) =>
+  !!node.props().simplePath && equalArrays(pathToContext(node.props().simplePath), context)
 
-let wrapper = null // eslint-disable-line fp/no-let
+/** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts path. */
+const wherePath = (context: Context) => (node: ThoughtOrSubthoughtsComponent) => {
+  const path = node.props().path ?? node.props().simplePath
+  return !!path && equalArrays(pathToContext(path), context)
+}
 
-// cannot figure out how to unmount and reset after each test so that we can use beforeEach
+let wrapper: Await<ReturnType<typeof createTestApp>> // eslint-disable-line fp/no-let
+
 beforeEach(async () => {
   wrapper = await createTestApp()
-  // set url back to home
 })
 
 afterEach(async () => {
   await cleanupTestApp()
-  wrapper = null
 })
 
-it('normal view', async () => {
+it('normal view', () => {
 
   // import thoughts
-  await store.dispatch(importText(RANKED_ROOT, `- a
-  - b
-  - c`))
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `- a
+      - b
+      - c
+  ` })
 
   // set the cursor to expand the subthoughts
   store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }] })
@@ -62,15 +70,24 @@ it('normal view', async () => {
 
 describe('context view', () => {
 
-  it('render contexts of cursor thought when context view is enabled', async () => {
+  it('render contexts of cursor thought when context view is enabled', () => {
+
+    const now = timestamp()
 
     // import thoughts
-    await store.dispatch(importText(RANKED_ROOT, `- a
-  - m
-    - x
-- b
-  - m
-    - y`))
+    store.dispatch({
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+      `,
+      lastUpdated: now,
+    })
 
     store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] })
     store.dispatch({ type: 'toggleContextView' })
@@ -81,7 +98,7 @@ describe('context view', () => {
     // assert context view container
     const subthoughtsWrapper = wrapper
       .find(Subthoughts)
-      .filterWhere(whereContext(['a', 'm']))
+      .filterWhere(whereSimplePath(['a', 'm']))
       .first() // have to select first node, as second node is empty-children with contextChain (?)
 
     // assert contexts
@@ -90,25 +107,44 @@ describe('context view', () => {
     expect(contextsWrapper.at(0).props())
       .toMatchObject({
         showContexts: true,
-        simplePath: [{ value: 'a' }, { value: 'm' }],
+        simplePath: [{
+          value: 'a',
+          rank: 0,
+        }, {
+          value: 'm',
+          rank: 0,
+        }],
       })
     expect(contextsWrapper.at(1).props())
       .toMatchObject({
         showContexts: true,
-        simplePath: [{ value: 'b' }, { value: 'm' }],
+        simplePath: [{
+          id: '',
+          value: 'b',
+          rank: 1,
+        }, {
+          value: 'm',
+          rank: 0,
+          lastUpdated: now,
+        }],
       })
 
   })
 
-  it('render context children of contexts that have different lexeme instances', async () => {
+  it('render context children of contexts that have different lexeme instances', () => {
 
     // import thoughts
-    await store.dispatch(importText(RANKED_ROOT, `- a
-  - one
-    - x
-- b
-  - ones
-    - y`))
+    store.dispatch({
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - one
+            - x
+        - b
+          - ones
+            - y
+    ` })
 
     // enable Context View on /a/one
     store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] })
@@ -120,7 +156,7 @@ describe('context view', () => {
     /** Select /a/one Subthoughts component. Call function after re-render to use new DOM. */
     const subthoughtsAOne = () => wrapper
       .find(Subthoughts)
-      .filterWhere(whereContext(['a', 'one']))
+      .filterWhere(whereSimplePath(['a', 'one']))
     const subthoughtsAOne1 = subthoughtsAOne()
     expect(subthoughtsAOne1).toHaveLength(2)
 
@@ -169,17 +205,21 @@ describe('context view', () => {
       })
   })
 
-  it('calculate proper resolved path for a children inside context view with duplicate lexeme', async () => {
+  it('calculate proper resolved path for a children inside context view with duplicate lexeme', () => {
 
     // Explaination: https://github.com/cybersemics/em/pull/878#issuecomment-717057916
 
     // import thoughts
-    await store.dispatch(importText(RANKED_ROOT, `
-    - a
-      - b
-        - c
-          - d
-            - c`))
+    store.dispatch({
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - b
+            - c
+              - d
+                - c`
+    })
 
     // enable Context View on /a/b/c/d/c
     store.dispatch([
@@ -214,7 +254,7 @@ describe('context view', () => {
 
     expect(subthoughtsContextViewChildren).toHaveLength(2)
 
-    const childrenPathArray = subthoughtsContextViewChildren.map(node => pathToContext(node.props().path))
+    const childrenPathArray = subthoughtsContextViewChildren.map(node => pathToContext(node.props().path!))
     expect(childrenPathArray[0]).toEqual(['a', 'b', 'c', 'd', 'c', 'b'])
     expect(childrenPathArray[1]).toEqual(['a', 'b', 'c', 'd', 'c', 'd'])
 

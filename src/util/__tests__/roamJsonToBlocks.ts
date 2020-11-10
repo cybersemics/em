@@ -1,51 +1,16 @@
-// constants
-import {
-  RANKED_ROOT,
-  ROOT_TOKEN,
-} from '../../constants'
-
-// util
-import {
-  hashContext,
-  hashThought,
-} from '../../util'
-
-// selectors
-import {
-  exportContext,
-} from '../../selectors'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { hashContext, hashThought } from '../../util'
+import { exportContext } from '../../selectors'
 import { roamJsonToBlocks } from '../roamJsonToBlocks'
 import { State, initialState } from '../initialState'
-import { RoamPage } from 'roam'
+import { RoamBlock, RoamPage } from 'roam'
 import { removeRoot } from '../../test-helpers/removeRoot'
-import { SimplePath } from '../../types'
-import { timestamp } from '../timestamp'
 import { importJSON } from '../importJSON'
+import { SimplePath } from '../../types'
 
 jest.mock('../timestamp', () => ({
   timestamp: () => '2020-11-02T01:11:58.869Z'
 }))
-
-const testState: State = {
-  ...initialState(),
-  thoughts: {
-    contextIndex: {
-      [hashContext([ROOT_TOKEN])]: {
-        context: [ROOT_TOKEN],
-        children: [],
-        lastUpdated: timestamp()
-      },
-    },
-    thoughtIndex: {
-      [hashThought(ROOT_TOKEN)]: {
-        value: ROOT_TOKEN,
-        contexts: [],
-        created: timestamp(),
-        lastUpdated: timestamp()
-      },
-    },
-  }
-}
 
 const testData = [
   {
@@ -104,19 +69,21 @@ const testData = [
 const importExport = (roamJson: RoamPage[]) => {
 
   const thoughtsJSON = roamJsonToBlocks(roamJson)
+  const state = initialState()
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importJSON(testState, RANKED_ROOT as SimplePath, thoughtsJSON, { skipRoot: false })
+  } = importJSON(state, RANKED_ROOT as SimplePath, thoughtsJSON, { skipRoot: false })
 
-  const state = {
+  const stateNew: State = {
     ...initialState(),
     thoughts: {
+      ...state.thoughts,
       contextIndex,
       thoughtIndex,
     }
   }
-  const exported = exportContext(state, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
   return removeRoot(exported)
 }
 
@@ -230,55 +197,57 @@ test('it should convert a Roam json into a list of thoughts and subthoughts with
 `)
 })
 
-test('it should save create-time as created property', () => {
-  const roamBlocks = testData.map(roamBlock => roamBlock.children).flat()
+test('it should save create-time as created and edit-time as lastUpdated', () => {
+  const roamBlocks = testData.map(roamBlock => roamBlock.children).flat() as RoamBlock[]
 
-  const thoughtsJSON = roamJsonToBlocks(testData)
+  const blocks = roamJsonToBlocks(testData)
+
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importJSON(testState, RANKED_ROOT as SimplePath, thoughtsJSON, { skipRoot: false })
+  } = importJSON(initialState(), RANKED_ROOT as SimplePath, blocks, { skipRoot: false })
 
-  const contextIndexKeys = Object.keys(contextIndex)
-  expect(contextIndexKeys).toHaveLength(18)
-  Object.keys(contextIndex)
-    .forEach(contextHash => {
-      expect(contextIndex[contextHash].lastUpdated).toEqual('2020-11-02T01:11:58.869Z')
-    })
+  /** Gets the edit-time of a RoamBlock. */
+  const editTimeOf = (value: string) => {
+    const roamBlock = roamBlocks.find(roamBlock => roamBlock.string === value)
+    if (!roamBlock) return null
+    const editTimeOf = new Date(roamBlock['edit-time']!)
+    return editTimeOf?.toISOString()
+  }
 
-  const thoughtIndexKeys = Object.keys(thoughtIndex)
-  expect(thoughtIndexKeys).toHaveLength(15)
-  thoughtIndexKeys
-    // ignore root blocks (and =create-email thought)of Roam page since they won't have create/edit time
-    .filter(thoughtHash => {
-      const value = thoughtIndex[thoughtHash].value
-      return !(value.startsWith('=') || value.startsWith('test_') || value === 'Fruits' || value === 'Veggies')
-    })
-    .forEach((thoughtHash, index) => {
-      expect(thoughtIndex[thoughtHash].created).toEqual(new Date(roamBlocks[index]['create-time']).toISOString())
-      expect(thoughtIndex[thoughtHash].lastUpdated).toEqual(new Date(roamBlocks[index]['edit-time']).toISOString())
-    })
+  /** Gets the create-time of a RoamBlock. */
+  const createTime = (value: string) => {
+    const roamBlock = roamBlocks.find(roamBlock => roamBlock.string === value)
+    if (!roamBlock) return null
+    const editTimeOf = new Date(roamBlock['create-time']!)
+    return editTimeOf?.toISOString()
+  }
 
-})
+  expect(contextIndex).toMatchObject({
+    // RoamPages acquire the edit time of their last child
+    [hashContext(['Fruits'])]: { lastUpdated: editTimeOf('Banana') },
+    [hashContext(['Veggies'])]: { lastUpdated: editTimeOf('Spinach') },
 
-test('it should set the created and lastUpdated properties as current timestamp for root blocks', () => {
+    // RoamBlocks use specified edit time
+    [hashContext(['Fruits', 'Apple'])]: { lastUpdated: editTimeOf('Apple') },
+    [hashContext(['Fruits', 'Orange'])]: { lastUpdated: editTimeOf('Orange') },
+    [hashContext(['Fruits', 'Banana'])]: { lastUpdated: editTimeOf('Banana') },
+    [hashContext(['Veggies', 'Broccoli'])]: { lastUpdated: editTimeOf('Broccoli') },
+    [hashContext(['Veggies', 'Spinach'])]: { lastUpdated: editTimeOf('Spinach') },
+  })
 
-  const thoughtsJSON = roamJsonToBlocks(testData)
-  const {
-    thoughtIndexUpdates: thoughtIndex,
-  } = importJSON(testState, RANKED_ROOT as SimplePath, thoughtsJSON, { skipRoot: false })
+  expect(thoughtIndex).toMatchObject({
+    // RoamPages acquire the edit time of their first child for thoughts
+    // TODO: This differs from contextIndex incidentally. Should normalize the edit times used for contextIndex and thoughtIndex.
+    [hashThought('Fruits')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
+    [hashThought('Veggies')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
 
-  const thoughtIndexKeys = Object.keys(thoughtIndex)
-  expect(thoughtIndexKeys).toHaveLength(15)
-  thoughtIndexKeys
-    // ignore root blocks (and =create-email thought)of Roam page since they won't have create/edit time
-    .filter(thoughtHash => {
-      const value = thoughtIndex[thoughtHash].value
-      return value === 'Fruits' || value === 'Veggies'
-    })
-    .forEach(thoughtHash => {
-      expect(thoughtIndex[thoughtHash].created).toEqual('2020-11-02T01:11:58.869Z')
-      expect(thoughtIndex[thoughtHash].lastUpdated).toEqual('2020-11-02T01:11:58.869Z')
-    })
+    // RoamBlocks use specified edit time
+    [hashThought('Apple')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
+    [hashThought('Orange')]: { created: createTime('Orange'), lastUpdated: editTimeOf('Orange') },
+    [hashThought('Banana')]: { created: createTime('Banana'), lastUpdated: editTimeOf('Banana') },
+    [hashThought('Broccoli')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
+    [hashThought('Spinach')]: { created: createTime('Spinach'), lastUpdated: editTimeOf('Spinach') },
+  })
 
 })
