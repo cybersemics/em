@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { pull, push } from '../action-creators'
-import { hasSyncs } from '../selectors'
+import { hasPushes } from '../selectors'
 import { hashContext, keyValueBy, pathToContext } from '../util'
 import { PushBatch, State } from '../util/initialState'
 import { ActionCreator, Context, Index } from '../types'
@@ -192,7 +192,7 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // if state has queued updates, flush the queue
     // do not trigger on isPushing to prevent infinite loop
-    if (hasSyncs(getState()) && action.type !== 'isPushing') {
+    if (hasPushes(getState()) && action.type !== 'isPushing') {
       dispatch({ type: 'isPushing', value: true })
       flushQueueDebounced()
     }
