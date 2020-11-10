@@ -175,8 +175,8 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     () => {
       dispatch(flushPushQueue())
         .then(() => {
-          if (getState().isSyncing) {
-            dispatch({ type: 'isSyncing', value: false })
+          if (getState().isPushing) {
+            dispatch({ type: 'isPushing', value: false })
           }
         })
         .catch((e: Error) => {
@@ -191,9 +191,9 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     next(action)
 
     // if state has queued updates, flush the queue
-    // do not trigger on isSyncing to prevent infinite loop
-    if (hasSyncs(getState()) && action.type !== 'isSyncing') {
-      dispatch({ type: 'isSyncing', value: true })
+    // do not trigger on isPushing to prevent infinite loop
+    if (hasSyncs(getState()) && action.type !== 'isPushing') {
+      dispatch({ type: 'isPushing', value: true })
       flushQueueDebounced()
     }
 

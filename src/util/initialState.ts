@@ -66,7 +66,7 @@ export interface State {
   invalidState: boolean,
   inversePatches: Patch[],
   isLoading: boolean,
-  isSyncing?: boolean,
+  isPushing?: boolean,
   lastUpdated?: string,
   modals: Index<ModalProperties>,
   noteFocus: boolean,
@@ -160,7 +160,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     invalidState: false,
     inversePatches: [],
     isLoading: true,
-    isSyncing: false,
+    isPushing: false,
     modals: {},
     noteFocus: false, // true if a note has the browser selection
     patches: [],
