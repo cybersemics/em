@@ -116,7 +116,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     const state = getState()
 
     // do nothing if there are pending syncs
-    // must do this within this (debounced) function, otherwise state.syncQueue will still be empty
+    // must do this within this (debounced) function, otherwise state.pushQueue will still be empty
     if (hasSyncs(state)) return
 
     // return if expanded is the same, unless force is specified or expanded is empty

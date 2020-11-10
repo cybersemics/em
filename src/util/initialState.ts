@@ -29,7 +29,7 @@ interface ModalProperties {
 type RecentlyEditedTree = Index
 
 /** Defines a single batch of updates added to the sync queue. */
-export interface SyncBatch {
+export interface PushBatch {
   thoughtIndexUpdates: Index<Lexeme | null>,
   contextIndexUpdates: Index<Parent | null>,
   local?: boolean,
@@ -71,6 +71,7 @@ export interface State {
   modals: Index<ModalProperties>,
   noteFocus: boolean,
   patches: Patch[],
+  pushQueue: PushBatch[],
   recentlyEdited: RecentlyEditedTree,
   resourceCache: Index<string>,
   schemaVersion: number,
@@ -84,7 +85,6 @@ export interface State {
   showSplitView: boolean,
   showTopControls: boolean,
   showBreadcrumbs: boolean,
-  syncQueue: SyncBatch[],
   splitPosition: number,
   status: string,
   thoughts: ThoughtsInterface,
@@ -183,7 +183,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
       'offline'        Disconnected and working in offline mode.
     */
     status: 'disconnected',
-    syncQueue: [],
+    pushQueue: [],
     thoughts: initialThoughts(created),
     toolbarOverlay: null,
   }

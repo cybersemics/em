@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { initialState, State, SyncBatch } from '../util/initialState'
+import { initialState, State, PushBatch } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
 import { hashContext, importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
@@ -97,8 +97,8 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
-  // updates are queued, detected by the syncQueue middleware, and sync'd with the local and remote stores
-  const batch: SyncBatch = {
+  // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
+  const batch: PushBatch = {
     thoughtIndexUpdates,
     contextIndexUpdates,
     recentlyEdited: recentlyEditedNew,
@@ -110,7 +110,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     remote
   }
 
-  logWithTime('updateThoughts: merge syncQueue')
+  logWithTime('updateThoughts: merge pushQueue')
 
   const thoughts: ThoughtsInterface = {
     contextCache,
@@ -121,13 +121,13 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   return reducerFlow([
 
-    // update recentlyEdited, syncQueue, and thoughts
+    // update recentlyEdited, pushQueue, and thoughts
     state => ({
       ...state,
       // disable loading screen as soon as the root or the first non-EM thought is loaded
       isLoading: state.isLoading ? !thoughtsLoaded(thoughts) : false,
       recentlyEdited: recentlyEditedNew,
-      syncQueue: [...state.syncQueue, batch],
+      pushQueue: [...state.pushQueue, batch],
       thoughts,
     }),
 
