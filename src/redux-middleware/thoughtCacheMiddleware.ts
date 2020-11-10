@@ -7,11 +7,17 @@ import { pull } from '../action-creators'
 import { State } from '../util/initialState'
 import { Context, ContextHash, Index, Path } from '../types'
 
-/** Debounce pending checks to avoid checking on every action. */
-const debounceUpdatePending = 10
+/** Debounce visible thought checks to avoid checking on every action. */
+const updatePullQueueDelay = 10
 
-/** Limit frequency of fetching pending contexts. Ignored on first flush. */
-const throttleFlushPending = 500
+/** Limit frequency of fetching pull queue contexts. Ignored on first flush. */
+const flushPullQueueDelay = 500
+
+/** Creates the initial pullQueue with only the em and root contexts. */
+const initialPullQueue = (): Index<Context> => ({
+  [hashContext([EM_TOKEN])]: [EM_TOKEN],
+  [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
+})
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
 const getVisibleContexts = (state: State): Index<Context> => {
@@ -34,8 +40,8 @@ const getVisibleContexts = (state: State): Index<Context> => {
   }
 }
 
-/** Gets a map of all pending visible contexts and their children. */
-const nextPending = (state: State, pending: Index<Context>, visibleContexts: Index<Context>) => {
+/** Appends all visible contexts and their children to the pullQueue. */
+const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleContexts: Index<Context>) => {
 
   const { thoughts: { contextIndex } } = state
 
@@ -56,14 +62,14 @@ const nextPending = (state: State, pending: Index<Context>, visibleContexts: Ind
         return contextIndex[keyChild] && contextIndex[keyChild].pending ? { [keyChild]: contextChild } : null
       })
     }
-  }, pending)
+  }, pullQueue)
 }
 
 /** Middleware that manages the in-memory thought cache (state.thoughts). Marks contexts to be loaded based on cursor and expanded contexts. Queues missing contexts every (debounced) action so that they may be fetched from the data providers and flushes the queue at a throttled interval.
  *
  * There are two main functions that are called after every action, albeit debounced and throttled, respectively:
- * - updatePendingDebounced.
- * - flushPendingThrottled.
+ * - updatePullQueueDebounced.
+ * - flushPullQueueThrottled.
  */
 const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
 
@@ -76,41 +82,40 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
   // track when visible contexts change
   let lastVisibleContexts: Index<Context> = {} // eslint-disable-line fp/no-let
 
-  // store pending cache entries to update
+  // queque contexts entries to be pulled from the data source
   // initialize with em and root contexts
   // eslint-disable-next-line fp/no-let
-  let pending: Index<Context> = {
-    [hashContext([EM_TOKEN])]: [EM_TOKEN],
-    [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
-  }
+  let pullQueue = initialPullQueue()
 
-  /** Flush all pending thoughts, pulling them from local and remote and merge them into state. */
-  const flushPending = async () => {
+  /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
+  const flushPullQueue = async () => {
 
-    const pendingThoughts = { ...pending }
-    pending = {}
+    // expand pull queue to include its children
+    const extendedPullQueue = appendVisibleContexts(getState(), pullQueue, lastVisibleContexts)
 
-    const hasMorePending = await dispatch(pull({ ...pendingThoughts }))
+    pullQueue = {}
+
+    const hasMorePending = await dispatch(pull(extendedPullQueue))
 
     const { user } = getState()
     if (!user && hasMorePending) {
-      updatePending({ force: true })
+      updatePullQueue({ force: true })
     }
   }
 
   /**
-   * Adds unloaded contexts based on cursor and state.expanded to the pending queue.
+   * Adds unloaded contexts based on cursor and state.expanded to the pull queue.
    *
-   * @param force   Calculates a new pending and forces flushPending.
+   * @param force   Calculates a new pending and forces flushPullQueue.
    */
-  const updatePending = ({ force }: { force?: boolean } = {}) => {
+  const updatePullQueue = ({ force }: { force?: boolean } = {}) => {
 
-    // if updatePending is called directly, do not allow updatePendingDebounced to call it again
-    updatePendingDebounced.cancel()
+    // if updatePullQueue is called directly, do not allow updatePullQueueDebounced to call it again
+    updatePullQueueDebounced.cancel()
 
     const state = getState()
 
-    // return if there are pending syncs
+    // do nothing if there are pending syncs
     // must do this within this (debounced) function, otherwise state.syncQueue will still be empty
     if (hasSyncs(state)) return
 
@@ -124,27 +129,23 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     const visibleContexts = getVisibleContexts(state)
 
-    // it is possible the expanded
     if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
-
-    // expand pending to include its children
-    pending = nextPending(state, pending, visibleContexts)
 
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
 
     // do not throttle initial flush
     if (isLoaded) {
-      flushPendingThrottled()
+      flushPullQueueThrottled()
     }
     else {
-      flushPending()
+      flushPullQueue()
       isLoaded = true
     }
   }
 
-  const updatePendingDebounced = _.debounce(updatePending, debounceUpdatePending)
-  const flushPendingThrottled = _.throttle(flushPending, throttleFlushPending)
+  const updatePullQueueDebounced = _.debounce(updatePullQueue, updatePullQueueDelay)
+  const flushPullQueueThrottled = _.throttle(flushPullQueue, flushPullQueueDelay)
 
   return next => async action => {
 
@@ -154,21 +155,17 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     if (action.type === 'clear') {
       lastExpanded = {}
       lastVisibleContexts = {}
-      pending = {
-        [hashContext([EM_TOKEN])]: [EM_TOKEN],
-        [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
-      }
+      pullQueue = initialPullQueue()
     }
-    // update pending and flush on authenticate to force a remote fetch and make remote-only updates
+    // update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates
     else if (action.type === 'authenticate' && action.value) {
-      pending[hashContext([EM_TOKEN])] = [EM_TOKEN]
-      pending[hashContext([ROOT_TOKEN])] = [ROOT_TOKEN]
-      updatePending({ force: true })
+      pullQueue = { ...pullQueue, ...initialPullQueue() }
+      updatePullQueue({ force: true })
     }
-    // do not updatePending if there are syncs queued or in progress
-    // this gets checked again in updatePending, but short circuit here if possible
+    // do not updatePullQueue if there are syncs queued or in progress
+    // this gets checked again in updatePullQueue, but short circuit here if possible
     else if (!hasSyncs(getState())) {
-      updatePendingDebounced()
+      updatePullQueueDebounced()
     }
   }
 }
