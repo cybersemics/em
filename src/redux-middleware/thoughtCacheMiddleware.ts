@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { EM_TOKEN, ROOT_TOKEN } from '../constants'
-import { decodeContextUrl, getAllChildrenByContextHash, hasSyncs } from '../selectors'
+import { decodeContextUrl, getAllChildrenByContextHash, hasPushes } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, pathToContext, unroot } from '../util'
 import { pull } from '../action-creators'
 import { State } from '../util/initialState'
@@ -117,7 +117,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
 
     // do nothing if there are pending syncs
     // must do this within this (debounced) function, otherwise state.pushQueue will still be empty
-    if (hasSyncs(state)) return
+    if (hasPushes(state)) return
 
     // return if expanded is the same, unless force is specified or expanded is empty
     if (!force && Object.keys(state.expanded).length > 0 && (state.expanded === lastExpanded || equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded)))) return
@@ -164,7 +164,7 @@ const thoughtCacheMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) 
     }
     // do not updatePullQueue if there are syncs queued or in progress
     // this gets checked again in updatePullQueue, but short circuit here if possible
-    else if (!hasSyncs(getState())) {
+    else if (!hasPushes(getState())) {
       updatePullQueueDebounced()
     }
   }
