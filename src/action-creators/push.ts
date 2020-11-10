@@ -10,7 +10,7 @@ import { ActionCreator, Index, Lexeme, Parent } from '../types'
 
 type Callback = (err: string | null, ...args: any[]) => void
 
-/** Options object for sync. */
+/** Options object for push. */
 interface Options {
   local?: boolean,
   remote?: boolean,
@@ -31,7 +31,7 @@ const localStorageSettingsContexts = _.keyBy(
 )
 
 /** Syncs thought updates to the local database. */
-const syncLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates: Index<Parent> = {}, recentlyEdited: Index, updates: Index = {}): Promise<any> => {
+const pushLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates: Index<Parent> = {}, recentlyEdited: Index, updates: Index = {}): Promise<any> => {
 
   // thoughtIndex
   const thoughtIndexPromises = [
@@ -90,7 +90,7 @@ const syncLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates:
 }
 
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
-const syncRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): ActionCreator => async (dispatch, getState) => {
+const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): ActionCreator => async (dispatch, getState) => {
 
   const state = getState()
 
@@ -123,7 +123,7 @@ const syncRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
       : thought
   }, {} as Index<Lexeme | null>)
 
-  logWithTime('syncRemote: prepend thoughtIndex key')
+  logWithTime('pushRemote: prepend thoughtIndex key')
 
   const dataIntegrityCheck = getSetting(state, 'Data Integrity Check') === 'On'
   const prependedContextIndexUpdates = _.transform(contextIndexUpdates, (accum, parentContext, key) => {
@@ -146,7 +146,7 @@ const syncRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
       : null
   }, {} as Index<Parent | null>)
 
-  logWithTime('syncRemote: prepend contextIndex key')
+  logWithTime('pushRemote: prepend contextIndex key')
 
   // add updates to queue appending clientId and timestamp
   const allUpdates = {
@@ -166,7 +166,7 @@ const syncRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
     } : {}
   }
 
-  logWithTime('syncRemote: allUpdates')
+  logWithTime('pushRemote: allUpdates')
 
   if (Object.keys(allUpdates).length > 0) {
     return firebase.update(allUpdates)
@@ -179,19 +179,19 @@ const syncRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
 }
 
 /** Syncs updates to local database and Firebase. */
-const sync = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}): ActionCreator => (dispatch, getState) => {
+const push = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}): ActionCreator => (dispatch, getState) => {
 
   const { authenticated, userRef } = getState()
 
   return Promise.all([
 
-    // sync local
-    local && syncLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates),
+    // push local
+    local && pushLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates),
 
-    // sync remote
-    remote && authenticated && userRef && syncRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates)(dispatch, getState),
+    // push remote
+    remote && authenticated && userRef && pushRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates)(dispatch, getState),
   ])
 
 }
 
-export default sync
+export default push
