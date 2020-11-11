@@ -1,5 +1,5 @@
 import { equalThoughtValue, headRank, headValue, pathToContext, rootedParentOf } from '../util'
-import { getChildrenSorted } from '../selectors'
+import { getVisibleChildrenSorted } from '../selectors'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
@@ -9,7 +9,7 @@ const getThoughtAfter = (state: State, simplePath: SimplePath) => {
   const value = headValue(simplePath)
   const rank = headRank(simplePath)
   const parentPath = rootedParentOf(simplePath)
-  const children = getChildrenSorted(state, pathToContext(parentPath))
+  const children = getVisibleChildrenSorted(state, pathToContext(parentPath))
 
   if (children.length === 0) {
     return null
