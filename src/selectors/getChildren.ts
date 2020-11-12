@@ -94,20 +94,8 @@ const getResolvedValue = (state: State, path: Path, child: Child | ThoughtContex
 }
 
 /** Checks if the child is visible and also checks if the child lies within the cursor. */
-const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+export const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
   return state.showHiddenThoughts ||
   isChildVisible(state, pathToContext(simplePath), { value: getResolvedValue(state, path, child), rank: child.rank }) ||
   isChildInCursor(state, path, simplePath, child)
 })
-
-/**
- * Returns only visible thoughts from the children array. It checks if a thought lies within the cursor path.
- *
- * @param state - Redux state.
- * @param path - Parent's path.
- * @param simplePath - Parent's simple path.
- * @param children - Children of the given simplePath's context.
- */
-export const getChildrenWithCursorCheck = (state: State, path: Path, simplePath: SimplePath, children: (Child | ThoughtContext)[]) => {
-  return children.filter(isChildVisibleWithCursorCheck(state, path, simplePath))
-}
