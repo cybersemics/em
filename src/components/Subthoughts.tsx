@@ -23,7 +23,6 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  equalThoughtRanked,
   hashContext,
   head,
   headValue,
@@ -53,8 +52,8 @@ import {
   getThought,
   getAllChildren,
   getChildrenRanked,
-  getChildrenSorted,
-  isChildVisible,
+  getAllChildrenSorted,
+  isChildVisibleWithCursorCheck,
   isContextViewActive,
 } from '../selectors'
 
@@ -370,7 +369,6 @@ export const SubthoughtsComponent = ({
   isHovering,
   isParentHovering,
   showContexts,
-  showHiddenThoughts,
   sort: contextSort,
   simplePath,
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
@@ -398,7 +396,7 @@ export const SubthoughtsComponent = ({
     // @ts-ignore
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))
-    : sortPreference === 'Alphabetical' ? getChildrenSorted(state, pathToContext(contextBinding || simplePath))
+    : sortPreference === 'Alphabetical' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
     : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
@@ -421,17 +419,7 @@ export const SubthoughtsComponent = ({
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
-  const filteredChildren = children.filter(child => {
-    const value = showContexts
-      ? head((child as ThoughtContext).context)
-      : (child as Child).value
-    return showHiddenThoughts ||
-      // exclude meta thoughts when showHiddenThoughts is off
-      // NOTE: child.rank is not used by isChildVisible
-      isChildVisible(state, pathToContext(simplePath), { value, rank: child.rank }) ||
-      // always include thoughts in cursor
-      (cursor && equalThoughtRanked(cursor[simplePath.length], child as Child))
-  })
+  const filteredChildren = children.filter(isChildVisibleWithCursorCheck(state, resolvedPath, simplePath))
 
   const proposedPageSize = isRoot(simplePath)
     ? Infinity
@@ -494,7 +482,6 @@ export const SubthoughtsComponent = ({
   return <React.Fragment>
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding!).join('/')})</div> : null}
-
     {show && showContexts && !(children.length === 0 && isRoot(simplePath))
       ? children.length < (allowSingleContext ? 1 : 2) ?
 

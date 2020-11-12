@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { getSortPreference, hasChild } from '../selectors'
-import { compareByRank, compareThought, hashContext, head, isFunction, sort, unroot } from '../util'
-import { Child, ComparatorFunction, Context, ContextHash } from '../types'
+import { appendChildPath, getChildPath, getSortPreference, hasChild } from '../selectors'
+import { compareByRank, compareThought, hashContext, isFunction, sort, unroot, pathToContext, equalThoughtRanked, head } from '../util'
+import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, SimplePath, Path } from '../types'
+import isContextViewActive from './isContextViewActive'
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
@@ -46,14 +47,19 @@ export const hasChildren = (state: State, context: Context) => {
 /** Gets all visible children within a context. */
 export const getChildren = getVisibleThoughts(getAllChildren)
 
-/** Gets all visible children within a context sorted by rank or sort preference. */
-export const getChildrenSorted = (state: State, context: Context) => {
+/** Gets all children within a context sorted by rank or sort preference. */
+export const getAllChildrenSorted = (state: State, context: Context) => {
   const sortPreference = getSortPreference(state, context)
   const getThoughtsFunction = sortPreference === 'Alphabetical'
     ? getChildrenSortedAlphabetical
     : getChildrenRanked
-  return getVisibleThoughts(getThoughtsFunction, state, context)
+  return getThoughtsFunction(state, context)
 }
+
+/** Gets all visible children within a context sorted by rank or sort preference.
+ * Note: It doesn't check if thought lies within the cursor path.
+ */
+export const getChildrenSorted = getVisibleThoughts(getAllChildrenSorted)
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
@@ -70,3 +76,26 @@ export const getChildrenRanked = (state: State, context: Context): Child[] =>
 /** Returns the first visible child of a context. */
 export const firstVisibleChild = (state: State, context: Context) =>
   getChildrenSorted(state, context)[0]
+
+/** Checks if a child lies within the cursor path. */
+const isChildInCursor = (state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+  const showContexts = isContextViewActive(state, pathToContext(path))
+  const childSimplePath = getChildPath(state, child, simplePath, showContexts)
+  const childPath = appendChildPath(state, childSimplePath, path)
+  return state.cursor && equalThoughtRanked(state.cursor[childPath.length - 1], head(childPath))
+}
+
+/** Returns head of context if parent has active context view. */
+const pathHeadValue = (state: State, path: Path, child: Child | ThoughtContext) => {
+  const showContexts = isContextViewActive(state, pathToContext(path))
+  return showContexts
+    ? head((child as ThoughtContext).context)
+    : (child as Child).value
+}
+
+/** Checks if the child is visible and also checks if the child lies within the cursor. */
+export const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+  return state.showHiddenThoughts ||
+  isChildVisible(state, pathToContext(simplePath), { value: pathHeadValue(state, path, child), rank: child.rank }) ||
+  isChildInCursor(state, path, simplePath, child)
+})

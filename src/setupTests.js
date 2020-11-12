@@ -9,3 +9,6 @@ configure({ adapter: new Adapter() })
 // add noop functions to prevent implementation error during test
 window.blur = noop
 window.scrollTo = noop
+
+// add noop function to window.blur to prevent implementation error during test
+window.blur = noop
