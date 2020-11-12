@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../constants'
 import { scrollCursorIntoView, suppressExpansion } from '../action-creators'
-import { getChildrenSorted, getThoughtBefore, simplifyPath } from '../selectors'
+import { getThoughtBefore, simplifyPath, getChildrenSorted } from '../selectors'
 import { parentOf } from '../util'
 import { ActionCreator } from '../types'
 

@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { isMobile } from '../browser'
 import expandContextThought from '../action-creators/expandContextThought'
 import { MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { attribute, getSetting, getAllChildren, isChildVisible, isTutorial } from '../selectors'
+import { attribute, getSetting, getAllChildren, isChildVisibleWithCursorCheck, isTutorial } from '../selectors'
 import { publishMode } from '../util'
 import { State } from '../util/initialState'
 
@@ -18,7 +18,7 @@ const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { isLoading, noteFocus, search, showModal, showHiddenThoughts } = state
+  const { isLoading, noteFocus, search, showModal } = state
 
   const isTutorialLocal = isLoading ? tutorialLocal : isTutorial(state)
 
@@ -27,11 +27,9 @@ const mapStateToProps = (state: State) => {
   // eslint-disable-next-line @typescript-eslint/no-extra-parens
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
-  // do no sort here as the new object reference would cause a re-render even when the children have not changed
-  const rootChildren = getAllChildren(state, [ROOT_TOKEN])
-  const rootThoughtsLength = (showHiddenThoughts
-    ? rootChildren
-    : rootChildren.filter(({ value, rank }) => isChildVisible(state, [value], { value, rank }))).length
+  const children = getAllChildren(state, [ROOT_TOKEN])
+  const rootThoughtsLength = children.filter(isChildVisibleWithCursorCheck(state, RANKED_ROOT, RANKED_ROOT)).length
+
   // pass rootSort to allow root Subthoughts ro render on toggleSort
   const rootSort = attribute(state, [ROOT_TOKEN], '=sort') || 'None'
 
