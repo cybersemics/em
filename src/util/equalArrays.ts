@@ -1,5 +1,5 @@
 /** Equality for lists of lists. */
-export const equalArrays = (a: unknown[], b: unknown[]): boolean =>
+export const equalArrays = <T>(a: T[], b: T[]): boolean =>
   a === b ||
   (a && b &&
   a.length === b.length &&

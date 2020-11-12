@@ -1,5 +1,5 @@
 import { ROOT_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
+import { hashContext, initialState, reducerFlow } from '../../util'
 import { getContexts, getAllChildren } from '../../selectors'
 import { existingThoughtDelete, newSubthought, newThought } from '../../reducers'
 
@@ -15,13 +15,21 @@ it('delete from root', () => {
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
-  const stateNew = reducerFlow(steps)(initialState())
+  const state = initialState()
+  const stateNew = reducerFlow(steps)(state)
 
-  // cnntextIndex
-  expect(getAllChildren(stateNew, [ROOT_TOKEN]))
-    .toMatchObject([
-      { value: 'a', rank: 0 }
-    ])
+  /** Gets the root Parent from a state's contextIndex. */
+  const rootParent = stateNew.thoughts.contextIndex[hashContext([ROOT_TOKEN])]
+
+  // contextIndex
+  expect(rootParent)
+    .toMatchObject({
+      context: [ROOT_TOKEN],
+      children: [{
+        value: 'a',
+        rank: 0,
+      }],
+    })
 
   // thoughtIndex
   expect(getContexts(stateNew, 'b'))

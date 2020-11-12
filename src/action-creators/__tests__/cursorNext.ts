@@ -1,5 +1,5 @@
 import { RANKED_ROOT } from '../../constants'
-import { cursorNext, importText } from '../../action-creators'
+import { cursorNext } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 
 describe('normal view', () => {
@@ -9,10 +9,14 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      importText(RANKED_ROOT, `
-      - a
-        - a1
-      - b`),
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+            - a1
+          - b`
+      },
       { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
       cursorNext()
     ])
@@ -27,9 +31,13 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      importText(RANKED_ROOT, `
-      - a
-      - b`),
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+          - b`
+      },
       { type: 'setCursor', path: null },
       cursorNext()
     ])
@@ -44,9 +52,13 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      importText(RANKED_ROOT, `
-      - a
-      - b`),
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+          - b`
+      },
       { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
       cursorNext()
     ])
@@ -71,12 +83,16 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      importText(RANKED_ROOT, `
-      - SORT
-        - a
-          - a1
-        - c
-        - b`),
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - SORT
+            - a
+              - a1
+            - c
+            - b`
+      },
       {
         type: 'toggleAttribute',
         context: ['SORT'],
@@ -100,10 +116,14 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      importText(RANKED_ROOT, `
-      - a
-        - a1
-      - b`),
+      {
+        type: 'importText',
+        path: RANKED_ROOT,
+        text: `
+          - a
+            - a1
+          - b`
+      },
       { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
       cursorNext()
     ])

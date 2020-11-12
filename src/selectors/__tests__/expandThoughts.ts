@@ -1,9 +1,8 @@
 import _ from 'lodash'
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
-import { newSubthought, newThought, setCursor, updateThoughts } from '../../reducers'
-import { importText } from '../../action-creators'
+import { importText, newSubthought, newThought, setCursor } from '../../reducers'
 import { State } from '../../util/initialState'
 import { Context } from '../../types'
 
@@ -57,15 +56,14 @@ describe('normal view', () => {
 
   it('grandchildren are not expanded', async () => {
 
-    const text = `- a
-  - b
-  - c
-    - d`
-
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
+    const text = `
+    - a
+      - b
+      - c
+        - d`
 
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -82,10 +80,8 @@ describe('normal view', () => {
   - c
     - d`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       setCursorFirstMatch(['a', 'b'])
     ]
 
@@ -105,10 +101,8 @@ describe('normal view', () => {
         - e2
           - f`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -136,10 +130,8 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -160,8 +152,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-    const stateNew = updateThoughts(initialState(), thoughts)
+    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
 
     // cursor on row 1, column 2
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
@@ -183,8 +174,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-    const stateNew = updateThoughts(initialState(), thoughts)
+    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
 
     // cursor on row 1, column 2
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b', 'c'])
@@ -207,10 +197,8 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -231,8 +219,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-    const stateNew = updateThoughts(initialState(), thoughts)
+    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
 
     // cursor on row 1, column 2
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
@@ -255,8 +242,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-    const stateNew = updateThoughts(initialState(), thoughts)
+    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
 
     // cursor on row 1, column 2 (same row)
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b', 'c'])
@@ -282,10 +268,8 @@ describe('=pin', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -308,10 +292,8 @@ describe('=pin', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       setCursorFirstMatch(['a', 'd'])
     ]
 
@@ -334,10 +316,8 @@ describe('=pinChildren', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-
     const steps = [
-      updateThoughts(thoughts),
+      importText({ path: RANKED_ROOT, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -358,8 +338,7 @@ describe('=pinChildren', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-    const stateNew = updateThoughts(initialState(), thoughts)
+    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
 
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
@@ -379,8 +358,7 @@ describe('=pinChildren', () => {
   - d
     - e`
 
-    const thoughts = await importText(RANKED_ROOT, text)(NOOP, initialState)
-    const stateNew = updateThoughts(initialState(), thoughts)
+    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
 
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b', 'c'])
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()

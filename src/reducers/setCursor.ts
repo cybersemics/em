@@ -1,7 +1,5 @@
 import _ from 'lodash'
-import { store } from '../store'
-import { dataIntegrityCheck, loadResource } from '../action-creators'
-import { TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
+import { RANKED_ROOT, TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
@@ -34,8 +32,10 @@ const setCursor = (state: State, {
   noteFocus = false
 }: Payload): State => {
 
+  const simplePath = path ? simplifyPath(state, path) : RANKED_ROOT
+  const context = pathToContext(simplePath)
   const thoughtsResolved = path && contextChain.length > 0
-    ? chain(state, contextChain, simplifyPath(state, path))
+    ? chain(state, contextChain, simplePath!)
     : path
 
   // SIDE EFFECT
@@ -66,14 +66,15 @@ const setCursor = (state: State, {
     })
   }
 
+  // TODO
   // load =src
-  setTimeout(() => {
-    if (thoughtsResolved) {
-      store.dispatch(loadResource(thoughtsResolved))
-    }
-  })
+  // setTimeout(() => {
+  //   if (thoughtsResolved) {
+  //     dispatch(loadResource(thoughtsResolved))
+  //   }
+  // })
 
-  const expanded = expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved || [])
+  const expanded = expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
 
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
@@ -87,8 +88,8 @@ const setCursor = (state: State, {
    * @todo Abstract tutorial logic away from setCursor and call only when tutorial is on.
    */
   const hasThoughtCollapsed = () => !expanded[hashContext(pathToContext(oldCursor))] &&
-    (getAllChildren(state, pathToContext(oldCursor)).length > 0 ||
-      (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(pathToContext(thoughtsResolved || []), pathToContext(oldCursor)))
+    (getAllChildren(state, context).length > 0 ||
+      (oldCursor.length > (thoughtsResolved || []).length && !isDescendant(pathToContext(thoughtsResolved || []), context))
     )
 
   const tutorialNext = (
@@ -103,7 +104,7 @@ const setCursor = (state: State, {
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
-  setTimeout(() => store.dispatch(dataIntegrityCheck(thoughtsResolved!)), 100)
+  // setTimeout(() => dispatch(dataIntegrityCheck(thoughtsResolved!)), 100)
 
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   const stateNew = equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
