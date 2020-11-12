@@ -51,7 +51,7 @@ it('normal view', () => {
     },
     // set the cursor to expand the subthoughts
     { type: 'setCursor', path: [{ value: 'a', rank: 0 }] }
-    ]),
+  ])
 
   // update DOM
   wrapper.update()
