@@ -53,8 +53,8 @@ import {
   getAllChildren,
   getChildrenRanked,
   getAllChildrenSorted,
+  isChildVisibleWithCursorCheck,
   isContextViewActive,
-  getChildrenWithCursorCheck,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -419,7 +419,7 @@ export const SubthoughtsComponent = ({
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
-  const filteredChildren = getChildrenWithCursorCheck(state, resolvedPath, simplePath, children)
+  const filteredChildren = children.filter(isChildVisibleWithCursorCheck(state, resolvedPath, simplePath))
 
   const proposedPageSize = isRoot(simplePath)
     ? Infinity
