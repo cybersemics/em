@@ -52,9 +52,9 @@ import {
   getThought,
   getAllChildren,
   getChildrenRanked,
-  getChildrenSorted,
+  getAllChildrenSorted,
   isContextViewActive,
-  getVisibleChildrenWithCursorCheck,
+  getChildrenWithCursorCheck,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -380,7 +380,7 @@ export const SubthoughtsComponent = ({
     // @ts-ignore
     : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))
-    : sortPreference === 'Alphabetical' ? getChildrenSorted(state, pathToContext(contextBinding || simplePath))
+    : sortPreference === 'Alphabetical' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
     : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
@@ -403,7 +403,7 @@ export const SubthoughtsComponent = ({
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
-  const filteredChildren = getVisibleChildrenWithCursorCheck(state, resolvedPath, simplePath, children)
+  const filteredChildren = getChildrenWithCursorCheck(state, resolvedPath, simplePath, children)
 
   const proposedPageSize = isRoot(simplePath)
     ? Infinity

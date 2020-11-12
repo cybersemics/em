@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../constants'
 import { suppressExpansion } from '../action-creators'
-import { getThoughtBefore, simplifyPath, getVisibleChildrenSorted } from '../selectors'
+import { getThoughtBefore, simplifyPath, getChildrenSorted } from '../selectors'
 import { parentOf, scrollCursorIntoView } from '../util'
 import { ActionCreator } from '../types'
 
@@ -10,7 +10,7 @@ const cursorPrev = (): ActionCreator => (dispatch, getState) => {
   const { cursor } = state
 
   if (!cursor) {
-    const children = getVisibleChildrenSorted(state, [ROOT_TOKEN])
+    const children = getChildrenSorted(state, [ROOT_TOKEN])
     if (children.length > 0) {
       dispatch({ type: 'setCursor', path: [children[0]] })
       setTimeout(scrollCursorIntoView)

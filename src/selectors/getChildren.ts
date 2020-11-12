@@ -48,7 +48,7 @@ export const hasChildren = (state: State, context: Context) => {
 export const getChildren = getVisibleThoughts(getAllChildren)
 
 /** Gets all children within a context sorted by rank or sort preference. */
-export const getChildrenSorted = (state: State, context: Context) => {
+export const getAllChildrenSorted = (state: State, context: Context) => {
   const sortPreference = getSortPreference(state, context)
   const getThoughtsFunction = sortPreference === 'Alphabetical'
     ? getChildrenSortedAlphabetical
@@ -59,9 +59,7 @@ export const getChildrenSorted = (state: State, context: Context) => {
 /** Gets all visible children within a context sorted by rank or sort preference.
  * Note: It doesn't check if thought lies within the cursor path.
  */
-export const getVisibleChildrenSorted = (state: State, context: Context) => {
-  return getVisibleThoughts(getChildrenSorted, state, context)
-}
+export const getChildrenSorted = getVisibleThoughts(getAllChildrenSorted)
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
@@ -81,7 +79,30 @@ export const getChildrenRanked = (state: State, context: Context): Child[] =>
 
 /** Returns the first visible child of a context. */
 export const firstVisibleChild = (state: State, context: Context) =>
-  getVisibleChildrenSorted(state, context)[0]
+  getChildrenSorted(state, context)[0]
+
+/** Checks if a child lies within the cursor path. */
+const isChildInCursor = (state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+  const showContexts = isContextViewActive(state, pathToContext(path))
+  const childSimplePath = getChildPath(state, child, simplePath, showContexts)
+  const childPath = appendChildPath(state, childSimplePath, path)
+  return state.cursor && equalThoughtRanked(state.cursor[childPath.length - 1], head(childPath))
+}
+
+/** Returns head of context if parent has active context view. */
+const getResolvedValue = (state: State, path: Path, child: Child | ThoughtContext) => {
+  const showContexts = isContextViewActive(state, pathToContext(path))
+  return showContexts
+    ? head((child as ThoughtContext).context)
+    : (child as Child).value
+}
+
+/** Checks if the child is visible and also checks if the child lies within the cursor. */
+const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+  return state.showHiddenThoughts ||
+  isChildVisible(state, pathToContext(simplePath), { value: getResolvedValue(state, path, child), rank: child.rank }) ||
+  isChildInCursor(state, path, simplePath, child)
+})
 
 /**
  * Returns only visible thoughts from the children array. It checks if a thought lies within the cursor path.
@@ -91,22 +112,6 @@ export const firstVisibleChild = (state: State, context: Context) =>
  * @param simplePath - Parent's simple path.
  * @param children - Children of the given simplePath's context.
  */
-export const getVisibleChildrenWithCursorCheck = (state: State, path: Path, simplePath: SimplePath, children: (Child | ThoughtContext)[]) => {
-
-  const showContexts = isContextViewActive(state, pathToContext(path))
-
-  return children.filter(child => {
-
-    const childSimplePath = getChildPath(state, child, simplePath, showContexts)
-    const childPath = appendChildPath(state, childSimplePath, path)
-
-    const value = showContexts
-      ? head((child as ThoughtContext).context)
-      : (child as Child).value
-
-    return state.showHiddenThoughts ||
-      isChildVisible(state, pathToContext(simplePath), { value, rank: child.rank }) ||
-      // always include thoughts in cursor
-      (state.cursor && equalThoughtRanked(state.cursor[childPath.length - 1], head(childPath)))
-  })
+export const getChildrenWithCursorCheck = (state: State, path: Path, simplePath: SimplePath, children: (Child | ThoughtContext)[]) => {
+  return children.filter(isChildVisibleWithCursorCheck(state, path, simplePath))
 }

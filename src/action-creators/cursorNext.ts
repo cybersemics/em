@@ -4,7 +4,7 @@ import { parentOf, scrollCursorIntoView } from '../util'
 import { ActionCreator } from '../types'
 
 // must be imported after util (???)
-import { getVisibleChildrenSorted, getThoughtAfter, simplifyPath } from '../selectors'
+import { getChildrenSorted, getThoughtAfter, simplifyPath } from '../selectors'
 
 /** Moves the cursor to the next sibling, ignoring descendants. */
 const cursorNext = (): ActionCreator => (dispatch, getState) => {
@@ -12,7 +12,7 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
   const { cursor } = state
 
   if (!cursor) {
-    const children = getVisibleChildrenSorted(state, [ROOT_TOKEN])
+    const children = getChildrenSorted(state, [ROOT_TOKEN])
     if (children.length > 0) {
       dispatch({ type: 'setCursor', path: [children[0]] })
       setTimeout(scrollCursorIntoView)
