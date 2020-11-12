@@ -426,7 +426,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     }
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-    if (contextLengthChange || urlChange || isEmpty) {
+    if (contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
       thoughtChangeHandler(newValue, { context, showContexts, rank, simplePath })
