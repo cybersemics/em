@@ -1,7 +1,6 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
-import { Action } from 'redux'
-import { scrollCursorIntoView } from '../util'
+import { scrollCursorIntoView } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -16,9 +15,9 @@ const cursorForwardShortcut: Shortcut = {
   gesture: 'l',
   svg: Icon,
   // must wrap in anonymous function since exit is defined at run time
-  exec: (dispatch: Dispatch<Action>) => {
+  exec: dispatch => {
     dispatch({ type: 'cursorForward' })
-    setTimeout(scrollCursorIntoView)
+    dispatch(scrollCursorIntoView())
   }
 }
 

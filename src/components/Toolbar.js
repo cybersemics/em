@@ -15,35 +15,10 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
 import { isTouchEnabled } from '../browser'
 import { store } from '../store'
-
-import {
-  overlayHide,
-  overlayReveal,
-  scrollPrioritize,
-} from '../action-creators/toolbar'
-
-// constants
-import {
-  DEFAULT_FONT_SIZE,
-  ROOT_TOKEN,
-  SCROLL_PRIORITIZATION_TIMEOUT,
-  SHORTCUT_HINT_OVERLAY_TIMEOUT,
-  TOOLBAR_DEFAULT_SHORTCUTS,
-} from '../constants'
-
-// util
-import {
-  parentOf, pathToContext,
-} from '../util'
-
-// selectors
-import {
-  attribute,
-  attributeEquals,
-  getSetting,
-  subtree,
-  theme,
-} from '../selectors'
+import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
+import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, ROOT_TOKEN, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { attribute, attributeEquals, getSetting, subtree, theme } from '../selectors'
+import { parentOf, pathToContext } from '../util'
 
 // components
 import TriangleLeft from './TriangleLeft'
@@ -72,6 +47,7 @@ const mapStateToProps = state => {
     dark: theme(state) !== 'Light',
     isLoading,
     fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
+    scale: (getSetting(state, 'Font Size') || fontSizeLocal || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
     redoEnabled: isRedoEnabled(state),
     scrollPrioritized,
     showHiddenThoughts,

@@ -1,20 +1,12 @@
 // @ts-ignore
 import { parse } from 'jex-block-parser'
+import _ from 'lodash'
 import he from 'he'
-import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, rootedParentOf, strip } from '../util'
+import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam } from '../util'
+import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { simplifyPath } from '../selectors'
-import { ActionCreator, Path, Timestamp } from '../types'
-import { validateRoam } from '../util/validateRoam'
-import { roamJsonToBlocks } from '../util/roamJsonToBlocks'
-
-// declare types until jex-block-parser merges PR
-// https://github.com/reergymerej/block-parser/pull/1
-export interface Block {
-  scope: string,
-  created?: Timestamp,
-  lastUpdated?: Timestamp,
-  children: Block[],
-}
+import { Block, Path, Timestamp } from '../types'
+import { State } from '../util/initialState'
 
 /** Parse blocks of text based on indentation. */
 declare function parse(text: string): Block[]
@@ -82,12 +74,12 @@ const bodyContent = (html: string) => {
     : html.slice(startTag + bodyTagLength, endTag !== -1 ? endTag : html.length)
 }
 
-/** Parser plaintext, indentend text, or HTML into HTML that htmlparser can understand. */
-const rawTextToHtml = (inputText: string) => {
+/** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
+const rawTextToHtml = (text: string) => {
 
   // if the input text has any <li> elements at all, treat it as HTML
-  const isHTML = regexpHasListItems.test(inputText)
-  const decodedInputText = he.decode(inputText)
+  const isHTML = regexpHasListItems.test(text)
+  const decodedInputText = he.decode(text)
 
   // use jex-block-parser to convert indentent plaintext into nested HTML lists
   const parsedInputText = !isHTML
@@ -102,41 +94,41 @@ const rawTextToHtml = (inputText: string) => {
       .map(line => `${line.replace(regexpPlaintextBullet, '').trim()}`)
       .join('')
     // if it's an entire HTML page, ignore everything outside the body tags
-    : bodyContent(inputText)
+    : bodyContent(text)
 }
 
 interface Options {
+  path: Path,
+  text: string,
+  lastUpdated?: Timestamp,
   preventSetCursor?: boolean,
-  preventSync?: boolean,
   rawDestValue?: string,
   skipRoot?: boolean,
 }
 
-/** Imports the given text or html into the given thoughts.
+/** Imports thoughts from html or raw text.
  *
-    @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level.
-    @param preventSync       Prevent syncing state, turning this into a pure function.
-    @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
-    @param skipRoot          See importHtml @param.
+ * @param lastUpdated       Set the lastUpdated timestamp on the imported thoughts. Default: now.
+ * @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level.
+ * @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
+ * @param skipRoot          See importHtml @param.
  */
-const importText = (path: Path, inputText: string, { preventSetCursor, preventSync, rawDestValue, skipRoot }: Options = {}): ActionCreator => (dispatch, getState) => {
+const importText = (state: State, { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot }: Options): State => {
 
-  const state = getState()
-
-  const isRoam = validateRoam(inputText)
+  const isRoam = validateRoam(text)
 
   const simplePath = simplifyPath(state, path)
-  const text = isRoam ? inputText : rawTextToHtml(inputText)
-  const numLines = (text.match(regexpListItem) || []).length
+  const convertedText = isRoam ? text : rawTextToHtml(text)
+  const numLines = (convertedText.match(regexpListItem) || []).length
   const destThought = head(path)
   const destValue = rawDestValue || destThought.value
 
-  // if we are only importing a single line of text, then simply modify the current thought
+  // if we are only importing a single line of html, then simply modify the current thought
   if (numLines === 1) {
 
-    const newText = strip(text, { preserveFormatting: true })
+    const textNormalized = strip(convertedText, { preserveFormatting: true })
 
-    // get the range if there is one so that we can import over the selected text
+    // get the range if there is one so that we can import over the selected html
     const selection = window.getSelection()
     const [startOffset, endOffset] = selection && selection.rangeCount > 0
       ? (() => {
@@ -147,57 +139,44 @@ const importText = (path: Path, inputText: string, { preventSetCursor, preventSy
       })()
       : [0, 0]
 
-    // insert the newText into the destValue in the correct place
+    // insert the textNormalized into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
-    const newValue = (destValue.slice(0, startOffset) + newText + destValue.slice(endOffset)).trim()
+    const newValue = (destValue.slice(0, startOffset) + textNormalized + destValue.slice(endOffset)).trim()
 
-    dispatch({
-      type: 'existingThoughtChange',
-      oldValue: destValue,
-      newValue,
-      context: rootedParentOf(pathToContext(path)),
-      path: path
-    })
+    return reducerFlow([
 
-    if (!preventSetCursor && path) {
-      dispatch({
-        type: 'setCursor',
-        path: parentOf(path).concat({ ...destThought, value: newValue }),
-        offset: startOffset + newText.length
-      })
-    }
+      existingThoughtChange({
+        oldValue: destValue,
+        newValue,
+        context: rootedParentOf(pathToContext(path)),
+        path: simplePath,
+      }),
 
-    return Promise.resolve({
-      newValue
-    })
+      !preventSetCursor && path ? setCursor({
+        path: [...parentOf(path), { ...destThought, value: newValue }],
+        offset: startOffset + textNormalized.length,
+      }) : null,
+
+    ])(state)
+
   }
   else {
-    const json = isRoam ? roamJsonToBlocks(JSON.parse(text)) : convertHTMLtoJSON(text)
-    const { lastThoughtFirstLevel, thoughtIndexUpdates, contextIndexUpdates } = importJSON(state, simplePath, json, { skipRoot })
-    if (!preventSync) {
-      dispatch({
-        type: 'updateThoughts',
-        thoughtIndexUpdates,
-        contextIndexUpdates,
-        forceRender: true,
-        callback: () => {
-          // restore the selection to the first imported thought
-          if (!preventSetCursor && lastThoughtFirstLevel && lastThoughtFirstLevel.value) {
-            dispatch({
-              type: 'setCursor',
-              path: parentOf(path).concat(lastThoughtFirstLevel),
-              offset: lastThoughtFirstLevel.value.length
-            })
-          }
-        }
-      })
-    }
+    const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText)) : convertHTMLtoJSON(convertedText)
+    const imported = importJSON(state, simplePath, json, { lastUpdated, skipRoot })
+    const lastChild = imported.lastThoughtFirstLevel
 
-    return Promise.resolve({
-      contextIndexUpdates,
-      thoughtIndexUpdates,
-    })
+    return reducerFlow([
+
+      updateThoughts(imported),
+
+      // restore the selection to the first imported thought
+      !preventSetCursor && lastChild ? setCursor({
+        path: [...parentOf(path), lastChild],
+        offset: lastChild.value.length,
+      }) : null,
+
+    ])(state)
   }
 }
 
-export default importText
+export default _.curryRight(importText)

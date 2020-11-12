@@ -1,54 +1,26 @@
-// constants
-import {
-  ROOT_TOKEN,
-} from '../../constants'
-
-// util
-import {
-  hashContext,
-  hashThought,
-  importHtml,
-  mergeUpdates,
-} from '../../util'
-
-// selectors
-import {
-  exportContext,
-} from '../../selectors'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { importHtml, mergeUpdates } from '../../util'
+import { exportContext } from '../../selectors'
+import { initialState, State } from '../../util/initialState'
+import { SimplePath } from '../../types'
 import { removeRoot } from '../../test-helpers/removeRoot'
 
-const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }]
-const initialState = {
-  contextViews: {},
-  thoughts: {
-    contextIndex: {
-      [hashContext([ROOT_TOKEN])]: {
-        context: [ROOT_TOKEN],
-        children: [],
-      },
-    },
-    thoughtIndex: {
-      [hashThought(ROOT_TOKEN)]: {
-        value: ROOT_TOKEN,
-        contexts: [],
-      },
-    },
-  }
-}
-
 /** Imports the given html and exports it as plaintext. */
-const importExport = html => {
+const importExport = (html: string) => {
+  const state = initialState()
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importHtml(initialState, RANKED_ROOT, html)
-  const state = {
+  } = importHtml(state, RANKED_ROOT, html)
+  const stateNew = {
+    ...state,
     thoughts: {
+      ...state.thoughts,
       contextIndex,
       thoughtIndex,
     }
   }
-  const exported = exportContext(state, [ROOT_TOKEN], 'text/plaintext')
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   return removeRoot(exported)
@@ -322,7 +294,7 @@ it('blank thoughts with subthoughts', () => {
 it('paste multiple thoughts after the cursor', () => {
 
   /** Import HTML and merge into state. */
-  const importHtmlReducer = (state, insertionPath, html) => {
+  const importHtmlReducer = (state: State, insertionPath: SimplePath, html: string): State => {
     const { contextIndexUpdates, thoughtIndexUpdates } = importHtml(state, insertionPath, html)
     const contextIndex = mergeUpdates(state.thoughts.contextIndex, contextIndexUpdates)
     const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
@@ -330,6 +302,7 @@ it('paste multiple thoughts after the cursor', () => {
     return {
       ...state,
       thoughts: {
+        ...state.thoughts,
         contextIndex,
         thoughtIndex,
       }
@@ -347,12 +320,14 @@ it('paste multiple thoughts after the cursor', () => {
 <li>y</li>
 `
 
-  const state1 = importHtmlReducer(initialState, RANKED_ROOT, initialHtml)
-  const state2 = importHtmlReducer(state1, [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }], importedHtml)
+  const state1 = importHtmlReducer(initialState(), RANKED_ROOT, initialHtml)
 
-  const exported = exportContext(state2, [ROOT_TOKEN], 'text/plaintext')
+  const simplePath = [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }] as SimplePath
+  const state2 = importHtmlReducer(state1, simplePath, importedHtml)
 
-  expect(exported).toBe(`- __ROOT__
+  const exported = exportContext(state2, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
     - b
     - x

@@ -42,14 +42,17 @@ const singularize = (s: string) => s !== 's' ? pluralize.singular(s) : s
  * Stored keys MUST match the current hashing algorithm.
  * Use schemaVersion to manage migrations.
  */
-export const hashThought = _.memoize((value: string) =>
-  (globals.disableThoughtHashing ? value : _.flow([
+export const hashThought: (s: string) => ThoughtHash = _.memoize(
+  (value: string) => _.flow([
     // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,
     lower,
     trim,
     stripEmojiWithText,
     singularize,
-    murmurHash3.x64.hash128,
-  ])(value)) as ThoughtHash
+    ...globals.disableThoughtHashing ? [] : [murmurHash3.x64.hash128],
+  ])(value)
 )
+
+// @ts-ignore
+window.hashThought = hashThought

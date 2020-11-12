@@ -1,6 +1,6 @@
 import { ROOT_TOKEN } from '../constants'
-import { suppressExpansion } from '../action-creators'
-import { parentOf, scrollCursorIntoView } from '../util'
+import { scrollCursorIntoView, suppressExpansion } from '../action-creators'
+import { parentOf } from '../util'
 import { ActionCreator } from '../types'
 
 // must be imported after util (???)
@@ -15,7 +15,7 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
     const children = getChildrenSorted(state, [ROOT_TOKEN])
     if (children.length > 0) {
       dispatch({ type: 'setCursor', path: [children[0]] })
-      setTimeout(scrollCursorIntoView)
+      dispatch(scrollCursorIntoView())
     }
     return
   }
@@ -28,7 +28,7 @@ const cursorNext = (): ActionCreator => (dispatch, getState) => {
 
   const path = parentOf(cursor).concat(next)
   dispatch({ type: 'setCursor', path })
-  setTimeout(scrollCursorIntoView)
+  dispatch(scrollCursorIntoView())
 }
 
 export default cursorNext

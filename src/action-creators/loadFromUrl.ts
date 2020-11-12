@@ -1,7 +1,6 @@
 import { RANKED_ROOT } from '../constants'
 import { isRoot, pathToContext } from '../util'
 import { decodeThoughtsUrl, getAllChildren } from '../selectors'
-import { importText } from '../action-creators'
 import { ActionCreator } from '../types'
 
 interface Options {
@@ -19,17 +18,19 @@ const loadFromUrl = (url: string, path = RANKED_ROOT, { skipRoot }: Options = {}
   const text = await response.text()
 
   // prevent the default setCursor behavior of importText so that we can restore the cursor from the url
-  await dispatch(importText(path, text, { preventSetCursor: true, skipRoot }))
+  dispatch({ type: 'importText', path, text, preventSetCursor: true, skipRoot })
 
   // decode url after importText so that we are using updated state
   const state = getState()
   const { path: decodedPath } = decodeThoughtsUrl(state, window.location.pathname)
 
   // set cursor to first child if cursor is not provided via url
-  const firstChild = getAllChildren(state, pathToContext(decodedPath))[0]
+  const firstChild = decodedPath
+    ? getAllChildren(state, pathToContext(decodedPath))[0]
+    : null
   dispatch({
     type: 'setCursor',
-    path: isRoot(decodedPath)
+    path: decodedPath && isRoot(decodedPath)
       ? [firstChild]
       : decodedPath
   })

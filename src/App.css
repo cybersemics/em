@@ -2868,26 +2868,54 @@ code, .code {
   left: 19px;
 }
 
+@keyframes ellipsis {
+  to { width: 1.25em; }
+}
+
 .loading-ellipsis:after {
   overflow: hidden;
   position: absolute;
   display: inline-block;
   vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4,end) 3000ms infinite;
-  animation: ellipsis steps(4,end) 3000ms infinite;
+  -webkit-animation: ellipsis steps(4,end) 1000ms infinite;
+  animation: ellipsis steps(4,end) 1000ms infinite;
   content: '\2026'; /* ascii code for the ellipsis character */
   width: 0;
   margin-left: 0.1em;
 }
 
-@keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
+@keyframes toblack {
+  to { color: black; }
 }
 
-@-webkit-keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
+@keyframes towhite {
+  to { color: white; }
+}
+
+.graypulse {
+  color: #666;
+  -webkit-animation: toblack 400ms infinite alternate ease-in-out;
+}
+
+.dark .graypulse {
+  -webkit-animation: towhite 400ms infinite alternate ease-in-out;
+}
+
+.no-select {
+  -webkit-user-select: none; /* Chrome/Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+ */
+  -o-user-select: none;
+  user-select: none;
+}
+
+@keyframes delayed-fadein {
+  0% { opacity: 0; }
+  72% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/** Delay the onset of the fade-in so the instructions and loading ellipsis do not appear at lal if the thoughts are loaded in under 1s. */
+.new-thought-instructions {
+  animation: 1.4s ease-out 0s normal forwards 1 delayed-fadein;
 }

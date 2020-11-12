@@ -1,7 +1,7 @@
 import { ROOT_TOKEN } from '../constants'
-import { suppressExpansion } from '../action-creators'
+import { scrollCursorIntoView, suppressExpansion } from '../action-creators'
 import { getThoughtBefore, simplifyPath, getChildrenSorted } from '../selectors'
-import { parentOf, scrollCursorIntoView } from '../util'
+import { parentOf } from '../util'
 import { ActionCreator } from '../types'
 
 /** Moves the cursor to the previous sibling, ignoring descendants. */
@@ -13,7 +13,7 @@ const cursorPrev = (): ActionCreator => (dispatch, getState) => {
     const children = getChildrenSorted(state, [ROOT_TOKEN])
     if (children.length > 0) {
       dispatch({ type: 'setCursor', path: [children[0]] })
-      setTimeout(scrollCursorIntoView)
+      dispatch(scrollCursorIntoView())
     }
     return
   }
@@ -26,7 +26,7 @@ const cursorPrev = (): ActionCreator => (dispatch, getState) => {
 
   const path = parentOf(cursor).concat(prev)
   dispatch({ type: 'setCursor', path })
-  setTimeout(scrollCursorIntoView)
+  dispatch(scrollCursorIntoView())
 }
 
 export default cursorPrev
