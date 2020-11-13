@@ -114,12 +114,12 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
   }
 
   return keyValueBy(childrenPinned, childOrContext => {
-    const newPath = [
+    const newPath = unroot([
       ...path || [],
       (childOrContext as Child).value != null
         ? childOrContext as Child
         : { ...childOrContext, value: head((childOrContext as ThoughtContext).context) }
-    ]
+    ])
     // RECURSIVE
     // passing contextChain here creates an infinite loop
     return expandThoughts(state, newPath, { depth: depth + 1 })
