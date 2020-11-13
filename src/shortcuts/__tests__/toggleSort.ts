@@ -1,12 +1,12 @@
 import { NOOP, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { attributeEquals, getSetting } from '../../selectors'
+import { attribute } from '../../selectors'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
 
 const event = { preventDefault: NOOP } as Event
 
-it('toggle on sort preference of parent of cursor (initial state without =sort attribute)', async () => {
+it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
 
   const store = createTestStore()
 
@@ -22,25 +22,18 @@ it('toggle on sort preference of parent of cursor (initial state without =sort a
         - e
   ` })
 
-  const globalSort = getSetting(store.getState(), ['Global Sort'])
-  const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
-
   store.dispatch({ type: 'setCursor', path: [
     { value: 'a', rank: '0' },
-    { value: 'b', rank: '2' },
   ] })
 
   executeShortcut(toggleSortShortcut, { store, type: 'keyboard', event })
 
-  expect(attributeEquals(store.getState(), ['a'], '=sort', sortPreference)).toBeTruthy()
+  expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
 })
 
-it('toggle off sort preference of parent of cursor', async () => {
+it('toggle off sort preference of cursor (initial state with =sort/Alphabetical)', () => {
 
   const store = createTestStore()
-
-  const globalSort = getSetting(store.getState(), ['Global Sort'])
-  const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
 
   // import thoughts
   store.dispatch({
@@ -49,19 +42,42 @@ it('toggle off sort preference of parent of cursor', async () => {
     text: `
       - a
         - =sort
-          -${sortPreference}
+          - Alphabetical
         - d
         - b
         - c
         - e
   ` })
 
-  store.dispatch({ type: 'setCursor', path: [
-    { value: 'a', rank: '0' },
-    { value: 'b', rank: '2' },
-  ] })
+  store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: '0' }] })
 
   executeShortcut(toggleSortShortcut, { store, type: 'keyboard', event })
 
-  expect(attributeEquals(store.getState(), ['a'], '=sort', sortPreference)).toBeFalsy()
+  expect(attribute(store.getState(), ['a'], '=sort')).toBe(null)
+})
+
+it.skip('override global sort', () => {
+
+  const store = createTestStore()
+
+  // TODO: Set global sort
+
+  // import thoughts
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - d
+          - b
+          - c
+          - e
+    ` },
+    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+  ])
+
+  executeShortcut(toggleSortShortcut, { store, type: 'keyboard', event })
+
+  expect(attribute(store.getState(), ['a'], '=sort')).toBe('None')
 })
