@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { RANKED_ROOT, TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
+import { RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
-import { clearSelection, equalPath, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
+import { clearSelection, equalPath, equalThoughtRanked, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
 import { Index, Path, SimplePath, TutorialChoice } from '../types'
@@ -31,6 +31,12 @@ const setCursor = (state: State, {
   path,
   noteFocus = false
 }: Payload): State => {
+
+  if (path && path.length > 1 && equalThoughtRanked(path[0], RANKED_ROOT[0])) {
+    // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
+    console.error(new Error('setCursor: Invalid Path; Non-root Paths should omit ' + ROOT_TOKEN))
+    return state
+  }
 
   const simplePath = path ? simplifyPath(state, path) : RANKED_ROOT
   const context = pathToContext(simplePath)
