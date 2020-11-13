@@ -34,6 +34,7 @@ interface ThoughtUpdates {
 const existingThoughtDelete = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
 
   const { value, rank } = thoughtRanked
+
   if (!exists(state, value)) return state
 
   const thoughts = unroot(context.concat(value))
@@ -111,8 +112,6 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
         delete thoughtIndexNew[hashedKey] // eslint-disable-line fp/no-delete
       }
 
-      const contextEncoded = hashContext(thoughts)
-
       const thoughtIndexMerged = {
         ...accumRecursive.thoughtIndex,
         ...accum.thoughtIndex,
@@ -122,10 +121,9 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
       const contextIndexMerged = {
         ...accumRecursive.contextIndex,
         ...accum.contextIndex,
-        [contextEncoded]: null
       }
 
-      const childContext = thoughts.concat(child.value)
+      const childContext = [...thoughts, child.value]
 
       // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
       if (isPending(stateNew, childContext)) {
@@ -167,7 +165,9 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
       }
     }, {
       thoughtIndex: {},
-      contextIndex: {},
+      contextIndex: {
+        [hashContext(thoughts)]: null
+      },
     } as ThoughtUpdates)
   }
 
