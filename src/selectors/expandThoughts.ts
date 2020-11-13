@@ -1,9 +1,9 @@
 import globals from '../globals'
-import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT } from '../constants'
+import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
 import { Child, Context, Index, Path, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
-import { hashContext, head, headValue, isFunction, isURL, keyValueBy, parentOf, pathToContext, publishMode, rootedParentOf, unroot } from '../util'
+import { equalThoughtRanked, hashContext, head, headValue, isFunction, isURL, keyValueBy, parentOf, pathToContext, publishMode, rootedParentOf, unroot } from '../util'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (child: Child | ThoughtContext, showContexts: boolean) => showContexts
@@ -32,7 +32,7 @@ const isTableColumn1 = (state: State, context: Context) => attributeEquals(
  */
 const publishPinChildren = (state: State, context: Context) => publishMode() && attributeEquals(
   state,
-  unroot(context.concat(['=publish', '=attributes'])) as Context,
+  unroot([...context, '=publish', '=attributes']) as Context,
   'pinChildren',
   'true'
 )
@@ -41,9 +41,9 @@ const publishPinChildren = (state: State, context: Context) => publishMode() && 
  *
  * @example {
  *   [hashContext(context)]: true,
- *   [hashContext(context.concat(childA))]: true,
- *   [hashContext(context.concat(childB))]: true,
- *   [hashContext(context.concat(childC))]: true,
+ *   [hashContext([...context, childA])]: true,
+ *   [hashContext([...context, childB])]: true,
+ *   [hashContext([...context, childC])]: true,
  *   ...
  * }
  */
@@ -57,7 +57,14 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
   ) return {}
 
   if (path && path.length === 0) {
-    throw new Error('Invalid empty Path received.')
+    // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
+    console.error(new Error('expandThoughts: Invalid empty Path received.'))
+    return {}
+  }
+  else if (path && path.length > 1 && equalThoughtRanked(path[0], RANKED_ROOT[0])) {
+    // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
+    console.error(new Error('expandThoughts: Invalid Path; Non-root Paths should omit ' + ROOT_TOKEN))
+    return {}
   }
 
   const simplePath = !path || path.length === 0
