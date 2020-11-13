@@ -131,7 +131,10 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer: (state: 
         ? redoHandler(state, patches)
         : null
 
-    if (undoOrRedoState) return undoOrRedoState
+    if (undoOrRedoState) {
+      const omitted = _.pick(state, stateSectionsToOmit)
+      return { ...undoOrRedoState, ...omitted }
+    }
 
     const newState = reducer(state, action)
     if (!UNDOABLE_ACTIONS[actionType]) {
