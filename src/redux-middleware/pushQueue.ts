@@ -192,8 +192,11 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // if state has queued updates, flush the queue
     // do not trigger on isPushing to prevent infinite loop
-    if (hasPushes(getState()) && action.type !== 'isPushing') {
-      dispatch({ type: 'isPushing', value: true })
+    const state = getState()
+    if (hasPushes(state) && action.type !== 'isPushing') {
+      if (!state.isPushing) {
+        dispatch({ type: 'isPushing', value: true })
+      }
       flushQueueDebounced()
     }
 
