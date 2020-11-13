@@ -254,6 +254,7 @@ export const UNDOABLE_ACTIONS: Index<string> = {
   setCursor: 'setCursor',
   setFirstSubthought: 'setFirstSubthought',
   settings: 'settings',
+  splitSentences: 'splitSentences',
   splitThought: 'splitThought',
   subCategorizeAll: 'subCategorizeAll',
   subCategorizeOne: 'subCategorizeOne',
