@@ -2,10 +2,12 @@ import _ from 'lodash'
 import * as db from '../data-providers/dexie'
 import * as firebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
-import { mergeThoughts } from '../util'
+import { ROOT_TOKEN } from '../constants'
+import { hashContext, mergeThoughts } from '../util'
 import { ActionCreator, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../types'
 
 const BUFFER_DEPTH = 2
+const ROOT_ENCODED = hashContext([ROOT_TOKEN])
 
 export interface PullOptions {
   maxDepth?: number,
@@ -44,6 +46,9 @@ const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Actio
       thoughtIndexUpdates: thoughts.thoughtIndex,
       local: false,
       remote: false,
+      // if the root is in the contextMap, force isLoading: false
+      // otherwise isLoading will not be automatically unset by updateThoughts if the root context is empty
+      ...ROOT_ENCODED in contextMap ? { isLoading: false } : null
     })
   }
 

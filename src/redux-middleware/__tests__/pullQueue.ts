@@ -46,6 +46,11 @@ describe('thoughtCache', () => {
     jest.runOnlyPendingTimers()
   })
 
+  it('disable isLoading after initialize', async () => {
+    await delay(100)
+    expect(store.getState().isLoading).toBe(false)
+  })
+
   it('load thought', async () => {
 
     const parentEntryRoot1 = await getContext(db, [ROOT_TOKEN])

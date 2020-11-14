@@ -17,6 +17,7 @@ export interface UpdateThoughtsOptions {
   updates?: Index<string>,
   local?: boolean,
   remote?: boolean,
+  isLoading?: boolean,
 }
 
 const rootEncoded = hashContext([ROOT_TOKEN])
@@ -63,7 +64,7 @@ const thoughtsLoaded = (thoughts: ThoughtsInterface) => {
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, pendingDeletes, pendingEdits, pendingMoves, local = true, remote = true }: UpdateThoughtsOptions) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, pendingDeletes, pendingEdits, pendingMoves, local = true, remote = true, isLoading }: UpdateThoughtsOptions) => {
 
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
@@ -125,7 +126,8 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     state => ({
       ...state,
       // disable loading screen as soon as the root or the first non-EM thought is loaded
-      isLoading: state.isLoading ? !thoughtsLoaded(thoughts) : false,
+      // or isLoading can be forced by passing it directly to updateThoughts
+      isLoading: state.isLoading ? isLoading ?? !thoughtsLoaded(thoughts) : false,
       recentlyEdited: recentlyEditedNew,
       pushQueue: [...state.pushQueue, batch],
       thoughts,
