@@ -4,6 +4,9 @@ import { connect } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { isMobile } from '../../browser'
 import WithCSSTransition from './WithCSSTransition'
+import { shortcutById } from '../../shortcuts'
+import { headValue } from '../../util'
+import { getParent, getSetting } from '../../selectors'
 
 // constants
 import {
@@ -25,21 +28,8 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
 
-import {
-  shortcutById,
-} from '../../shortcuts'
-
-import {
-  hashContext,
-  headValue,
-} from '../../util'
-
-// selectors
-import { getSetting } from '../../selectors'
-
-import TutorialStepComponentMap from './TutorialStepComponentMap'
-
 // components
+import TutorialStepComponentMap from './TutorialStepComponentMap'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 
@@ -49,25 +39,22 @@ assert(newThoughtShortcut)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
-  const { thoughts: { contextIndex, thoughtIndex }, contextViews, cursor } = state
+  const { contextViews, cursor } = state
   return {
-    thoughts: {
-      contextIndex,
-      thoughtIndex,
-    },
     contextViews,
     cursor,
+    rootChildren: getParent(state, [ROOT_TOKEN])?.children,
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
     tutorialStep: +getSetting(state, 'Tutorial Step') || 1
   }
 }
 
 /** Tutorial component. */
-const Tutorial = ({ thoughts: { contextIndex }, contextViews, cursor, tutorialChoice, tutorialStep, dispatch }) => {
+const Tutorial = ({ contextViews, cursor, rootChildren, tutorialChoice, tutorialStep, dispatch }) => {
 
-  const rootSubthoughts = contextIndex[hashContext([ROOT_TOKEN])] || []
+  rootChildren = rootChildren || []
 
-  const tutorialStepProps = { cursor, tutorialChoice, rootSubthoughts, contextViews, dispatch, key: Math.floor(tutorialStep) }
+  const tutorialStepProps = { cursor, tutorialChoice, rootChildren, contextViews, dispatch, key: Math.floor(tutorialStep) }
 
   const tutorialStepComponent = TutorialStepComponentMap[Math.floor(tutorialStep)]
   return <div className='tutorial'><div className='tutorial-inner'>

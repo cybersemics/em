@@ -2,7 +2,7 @@ import { validate as uuidValidate } from 'uuid'
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, never, timestamp } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext } from '../../selectors'
+import { exportContext, getParent } from '../../selectors'
 import { importText } from '../../reducers'
 
 /** Helper function that imports html and exports it as plaintext. */
@@ -33,8 +33,8 @@ it('basic import with proper thought structure', () => {
   const stateNew = importText(initialState(now), { path: RANKED_ROOT, text, lastUpdated: now })
   const { contextIndex, thoughtIndex } = stateNew.thoughts
 
-  const childAId = contextIndex[hashContext([ROOT_TOKEN])].children[0]?.id
-  const childBId = contextIndex[hashContext(['a'])].children[0]?.id
+  const childAId = getParent(stateNew, [ROOT_TOKEN])?.children[0]?.id
+  const childBId = getParent(stateNew, ['a'])?.children[0]?.id
 
   expect(contextIndex).toEqual({
     [hashContext([EM_TOKEN])]: {

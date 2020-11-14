@@ -1,11 +1,10 @@
 import './App.css'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
-import { getContexts, getThought, getAllChildren, getChildrenRanked, isPending } from './selectors'
+import { getContexts, getParent, getThought, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
-import { Context } from './types'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
@@ -45,17 +44,13 @@ export const initialize = async () => {
 const withState = <T, R>(f: (state: State, ...args: T[]) => R) =>
   (...args: T[]) => f(store.getState(), ...args)
 
-/** Get an entry from the contextIndex. */
-const getParentEntry = (state: State, context: Context) =>
-  store.getState().thoughts.contextIndex[hashContext(context)]
-
 // add em object to window for debugging
 window.em = {
   db,
   store,
   getContexts: withState(getContexts),
   getThought: withState(getThought),
-  getParent: withState(getParentEntry),
+  getParent: withState(getParent),
   getAllChildren: withState(getAllChildren),
   getChildrenRanked: withState(getChildrenRanked),
   hashContext,
