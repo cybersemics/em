@@ -21,16 +21,15 @@ export const loadState = async (dispatch, newState, oldState) => {
 
   // thoughtIndex
   // keyRaw is firebase encoded
-  const thoughtIndexUpdates = keyValueBy(Object.keys(newState.thoughts.thoughtIndex), keyRaw => {
+  const thoughtIndexUpdates = keyValueBy(newState.thoughts.thoughtIndex, (keyRaw, lexemeNew) => {
 
     const key = newState.schemaVersion < SCHEMA_HASHKEYS
       ? keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
       : keyRaw
-    const thought = newState.thoughts.thoughtIndex[keyRaw]
-    const oldThought = oldState.thoughts.thoughtIndex[key]
-    const updated = thought && (!oldThought || thought.lastUpdated > oldThought.lastUpdated)
+    const lexemeOld = oldState.thoughts.thoughtIndex[key]
+    const updated = lexemeNew && (!lexemeOld || lexemeNew.lastUpdated > lexemeOld.lastUpdated)
 
-    return updated ? { [key]: thought } : null
+    return updated ? { [key]: lexemeNew } : null
   })
 
   logWithTime('loadRemoteState: thoughtIndexUpdates generated')
@@ -43,13 +42,12 @@ export const loadState = async (dispatch, newState, oldState) => {
   logWithTime('loadRemoteState: updateThoughtIndex')
 
   // contextEncodedRaw is firebase encoded
-  const contextIndexUpdates = keyValueBy(Object.keys(newState.thoughts.contextIndex || {}), contextEncodedRaw => {
+  const contextIndexUpdates = keyValueBy(newState.thoughts.contextIndex || {}, (contextEncodedRaw, parentEntryNew) => {
 
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
       ? contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
       : contextEncodedRaw
     const parentEntryOld = oldState.thoughts.contextIndex[contextEncoded]
-    const parentEntryNew = newState.thoughts.contextIndex[contextEncoded]
     const updated = !parentEntryOld
       || parentEntryNew.lastUpdated > parentEntryOld.lastUpdated
       // root will be empty but have a newer lastUpdated on a fresh start

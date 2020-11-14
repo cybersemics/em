@@ -285,9 +285,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
@@ -319,9 +319,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
@@ -360,9 +360,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
@@ -406,9 +406,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
@@ -440,9 +440,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
@@ -527,9 +527,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
@@ -589,9 +589,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
@@ -655,9 +655,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
@@ -724,9 +724,9 @@ const dataProviderTest = (provider: DataProvider) => {
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
-        Object.keys(thoughts.thoughtIndex),
-        key => ({
-          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        thoughts.thoughtIndex,
+        (key, value) => ({
+          [key]: _.omit(value, 'id')
         })
       )
 
