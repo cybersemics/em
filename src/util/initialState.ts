@@ -1,6 +1,6 @@
 import { EM_TOKEN, MODALS, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
-import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, Ref, SimplePath, Timestamp, ThoughtsInterface, User } from '../types'
+import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User } from '../types'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
 
 // import util/selector functions directly since importing from ../util/index causes circular dependency
@@ -91,7 +91,6 @@ export interface State {
   toolbarOverlay?: string | null,
   tutorialStep?: number,
   user?: User,
-  userRef?: Ref,
 }
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */

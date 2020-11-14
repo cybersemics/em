@@ -8,7 +8,6 @@ import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getThought'
 
 jest.useFakeTimers()
-
 // mock debounce and throttle
 // fake timers cause an infinite loop on _.debounce
 // Jest v26 contains a 'modern' option for useFakeTimers (https://github.com/facebook/jest/pull/7776), but I am getting a "TypeError: Cannot read property 'useFakeTimers' of undefined" error when I call jest.useFakeTimers('modern'). The same error does not uccor when I use 'legacy' or omit the argument (react-scripts v4.0.0-next.64).
@@ -24,6 +23,9 @@ jest.mock('lodash', () => {
     }
   )
 })
+
+// mock getUserRef (firebase's database.ref)
+jest.mock('../../util/getUserRef')
 
 describe('dexie', () => {
 
