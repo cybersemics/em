@@ -1,9 +1,9 @@
+import { getParent } from '../selectors'
 import { Context } from '../types'
 import { State } from '../util/initialState'
-import { hashContext } from '../util'
 
 /** Returns true if the context has not been loaded form the remote yet. */
-const isPending = ({ thoughts: { contextIndex } }: State, context: Context) =>
-  !!(contextIndex[hashContext(context)] || {}).pending
+const isPending = (state: State, context: Context) =>
+  !!getParent(state, context)?.pending
 
 export default isPending

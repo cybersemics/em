@@ -1,9 +1,8 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { appendChildPath, getChildPath, getSortPreference, hasChild } from '../selectors'
+import { appendChildPath, getChildPath, getSortPreference, hasChild, isContextViewActive } from '../selectors'
 import { compareByRank, compareThought, hashContext, isFunction, sort, unroot, pathToContext, equalThoughtRanked, head } from '../util'
-import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, SimplePath, Path } from '../types'
-import isContextViewActive from './isContextViewActive'
+import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, SimplePath, Parent, Path } from '../types'
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
@@ -20,9 +19,13 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Ch
   !isFunction(child.value) &&
   !hasChild(state, unroot([...context, child.value]), '=hidden'))
 
+/** Gets a Parent from the contextIndex. */
+export const getParent = ({ thoughts: { contextIndex } }: State, context: Context): Parent | null =>
+  contextIndex[hashContext(context)]
+
 /** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
 export const getAllChildrenByContextHash = ({ thoughts: { contextIndex } }: State, contextEncoded: ContextHash): Child[] =>
-  ((contextIndex || {})[contextEncoded] || {}).children || []
+  contextIndex[contextEncoded]?.children || []
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) =>
