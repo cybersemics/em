@@ -1,10 +1,24 @@
 import { Index } from '../types'
 
-type KeyValueGenerator<T, V> = (item: T, i: number, accum: Index<V>, arr: T[]) => Index<V> | null
+type KeyValueGenerator<K, V, R> = (key: K, value: V) => Index<R> | null
 
-/** Generates an object from an array. Simpler than reduce or _.transform. */
-export const keyValueBy = <T, V>(arr: T[], keyValue: KeyValueGenerator<T, V>, initialValue: Index<V> = {}) =>
-  arr.reduce((accum, item, i) => ({
-    ...accum,
-    ...keyValue(item, i, accum, arr),
-  }), initialValue)
+export function keyValueBy<T, R>(arr: T[], keyValue: KeyValueGenerator<T, number, R>, initialValue?: Index<R>): Index<R>
+export function keyValueBy<T, R>(obj: Index<T>, keyValue: KeyValueGenerator<string, T, R>, initialValue?: Index<R>): Index<R>
+
+/** Generates an object from an array or object. Simpler than reduce or _.transform. */
+export function keyValueBy<T, R>(input: T[] | Index<T>, keyValue: KeyValueGenerator<T | string, number | T, R>, initialValue: Index<R> = {}): Index<R> {
+
+  const arr: (T | string)[] = Array.isArray(input)
+    ? input
+    : Object.keys(input)
+
+  return arr.reduce((accum: Index<R>, item: T | string, i: number) => {
+    const key = Array.isArray(input) ? item : item
+    const value = Array.isArray(input) ? i : input[item as string]
+    return {
+      ...accum,
+      ...keyValue(key, value),
+    }
+  }, initialValue)
+
+}
