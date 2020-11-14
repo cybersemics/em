@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
-import { Context, Index, ThoughtsInterface } from '../../types'
+import { Context, Index, Parent, ThoughtsInterface } from '../../types'
 
 const MAX_DEPTH = 100
 
@@ -13,13 +13,17 @@ interface Options {
 /** Returns a getter function that accesses a property on an object. */
 const prop = (name: string) => <T>(x: Index<T>) => x[name]
 
-/** Returns true if a context contains a non-archive metaprogramming attribute. */
-const hasNonArchiveMeta = (context: Context) =>
-  context.find(isFunction) && !context.includes('=archive')
-
-/** Returns true if a context contains the em context or has a non-archive metaprogramming attribute and thus should not be buffered. */
-const isUnbuffered = (context: Context) =>
-  context.includes(EM_TOKEN) || hasNonArchiveMeta(context)
+/**
+ * Returns true if the Parent should not be buffered for any of the following reasons:
+ *
+ * - Parent has no children.
+ * - Context contains the em context.
+ * - Context has a non-archive metaprogramming attribute.
+ */
+const isUnbuffered = (parent: Parent) =>
+  parent.children.length === 0 ||
+  parent.context.includes(EM_TOKEN) ||
+  (parent.context.find(isFunction) && !parent.context.includes('=archive'))
 
 /**
  * Returns buffered thoughtIndex and contextIndex for all descendants using async iterables.
@@ -50,7 +54,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
       ? providerParents
       : providerParents.map(parent => ({
         ...parent,
-        ...!isUnbuffered(parent.context) ? {
+        ...!isUnbuffered(parent) ? {
           children: (parent.children || [])
             .filter(_.flow(prop('value'), isFunction)),
           lastUpdated: never(),
@@ -62,7 +66,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
     const lexemes = await provider.getThoughtsByIds(thoughtIds)
 
     const contextIndex = keyValueBy(contextIds, (id, i) =>
-      // exclude non-pending Parents with no children
+      // exclude non-pending leaves
       parents[i].children.length > 0 || parents[i].pending
         ? { [id]: parents[i] }
         : null
