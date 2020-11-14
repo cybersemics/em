@@ -71,7 +71,7 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
  * - updatePullQueueDebounced.
  * - flushPullQueueThrottled.
  */
-const pullQueue: ThunkMiddleware<State> = ({ getState, dispatch }) => {
+const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
 
   // use isLoaded to ignore throttling on first load
   let isLoaded = false // eslint-disable-line fp/no-let
@@ -170,4 +170,4 @@ const pullQueue: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   }
 }
 
-export default pullQueue
+export default pullQueueMiddleware

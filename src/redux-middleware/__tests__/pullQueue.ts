@@ -1,7 +1,7 @@
 import { store } from '../../store'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
-import { getChildren, rankThoughtsFirstMatch } from '../../selectors'
+import { getChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
@@ -86,6 +86,33 @@ describe('thoughtCache', () => {
     expect(childrenAfterInitialize).toMatchObject([
       { value: 'a' }
     ])
+  })
+
+  it('do not repopulate deleted thought', async () => {
+
+    jest.runOnlyPendingTimers()
+
+    store.dispatch([
+      { type: 'newThought', value: '' },
+      {
+        type: 'existingThoughtDelete',
+        context: [ROOT_TOKEN],
+        thoughtRanked: { value: '', rank: 0 },
+      },
+      // Need to setCursor to trigger the pullQueue
+      // Must set cursor manually since existingThoughtDelete does not.
+      // (The cursor is normally set after deleting via the deleteThought reducer).
+      { type: 'setCursor', path: null }
+    ])
+
+    jest.runOnlyPendingTimers()
+    await delay(500)
+
+    const parentEntryRoot = getParent(store.getState(), [ROOT_TOKEN])
+    expect(parentEntryRoot).toBe(undefined)
+
+    const parentEntryChild = getParent(store.getState(), [''])
+    expect(parentEntryChild).toBe(undefined)
   })
 
   it('load buffered thoughts', async () => {

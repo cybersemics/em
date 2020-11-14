@@ -61,8 +61,17 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
     const thoughtIds = contexts.map(cx => hashThought(head(cx)))
     const lexemes = await provider.getThoughtsByIds(thoughtIds)
 
-    const contextIndex = keyValueBy(contextIds, (id, i) => ({ [id]: parents[i] }))
-    const thoughtIndex = keyValueBy(thoughtIds, (id, i) => lexemes[i] ? { [id]: lexemes[i]! } : null)
+    const contextIndex = keyValueBy(contextIds, (id, i) =>
+      // exclude non-pending Parents with no children
+      parents[i].children.length > 0 || parents[i].pending
+        ? { [id]: parents[i] }
+        : null
+    )
+    const thoughtIndex = keyValueBy(thoughtIds, (id, i) =>
+      lexemes[i]
+        ? { [id]: lexemes[i]! }
+        : null
+    )
 
     const thoughts = {
       contextCache: contextIds,

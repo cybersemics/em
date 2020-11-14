@@ -5,7 +5,7 @@ import getDescendantThoughts from '../data-providers/data-helpers/getDescendantT
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
 import getThought from '../data-providers/data-helpers/getThought'
-import { equalArrays, hashContext, hashThought, mergeThoughts, never, reducerFlow, timestamp } from '../util'
+import { equalArrays, hashContext, hashThought, isFunction, keyValueBy, mergeThoughts, never, reducerFlow, timestamp } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
@@ -275,17 +275,23 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts).toHaveProperty('contextIndex')
-      expect(Object.keys(thoughts.contextIndex).length).toBe(6)
-      expect(thoughts.contextIndex).toMatchObject(
+      expect(thoughts.contextIndex).toEqual(
         _.omit(contextIndex, hashContext([EM_TOKEN]))
       )
 
-      expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(6)
-      expect(thoughts.thoughtIndex).toMatchObject(
-        _.omit(thoughtIndex, hashThought(EM_TOKEN))
+      // do not match em context, since we are just asserting the imported thoughts
+      const thoughtIndexWithoutEm = _.omit(thoughtIndex, hashThought(EM_TOKEN))
+
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const thoughtIndexLocalWithoutIds = keyValueBy(
+        Object.keys(thoughts.thoughtIndex),
+        key => ({
+          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        })
       )
+
+      expect(thoughtIndexLocalWithoutIds).toEqual(thoughtIndexWithoutEm)
 
     })
 
@@ -303,17 +309,23 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts).toHaveProperty('contextIndex')
-      expect(Object.keys(thoughts.contextIndex).length).toBe(4)
-      expect(thoughts.contextIndex).toMatchObject(
+      expect(thoughts.contextIndex).toEqual(
         _.omit(contextIndex, hashContext([EM_TOKEN]))
       )
 
-      expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(4)
-      expect(thoughts.thoughtIndex).toMatchObject(
-        _.omit(thoughtIndex, hashThought(EM_TOKEN))
+      // do not match em context, since we are just asserting the imported thoughts
+      const thoughtIndexWithoutEm = _.omit(thoughtIndex, hashThought(EM_TOKEN))
+
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const thoughtIndexLocalWithoutIds = keyValueBy(
+        Object.keys(thoughts.thoughtIndex),
+        key => ({
+          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        })
       )
+
+      expect(thoughtIndexLocalWithoutIds).toEqual(thoughtIndexLocalWithoutIds)
 
     })
 
@@ -334,10 +346,16 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(it)
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts).toHaveProperty('contextIndex')
-      expect(Object.keys(thoughts.contextIndex).length).toBe(2)
-
-      expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(contextIndex[hashContext(['x'])])
+      expect(thoughts.contextIndex).toEqual({
+        [hashContext(['x'])]: contextIndex[hashContext(['x'])],
+        [hashContext(['x', 'y'])]: {
+          id: hashContext(['x', 'y']),
+          context: ['x', 'y'],
+          children: [],
+          lastUpdated: never(),
+          pending: true,
+        }
+      })
 
       expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual({
         id: hashContext(['x', 'y']),
@@ -347,10 +365,16 @@ const dataProviderTest = (provider: DataProvider) => {
         pending: true,
       })
 
-      expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(2)
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const thoughtIndexLocalWithoutIds = keyValueBy(
+        Object.keys(thoughts.thoughtIndex),
+        key => ({
+          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        })
+      )
 
-      expect(thoughts.thoughtIndex).toMatchObject(
+      expect(thoughtIndexLocalWithoutIds).toEqual(
         _.pick(thoughtIndex, ['x', 'y'].map(hashThought))
       )
 
@@ -372,24 +396,31 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(getDescendantThoughts(provider, ['x'], { maxDepth: 2 }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts).toHaveProperty('contextIndex')
-      expect(Object.keys(thoughts.contextIndex).length).toBe(3)
-
-      expect(thoughts.contextIndex[hashContext(['x'])]).toEqual(contextIndex[hashContext(['x'])])
-      expect(thoughts.contextIndex[hashContext(['x', 'y'])]).toEqual(contextIndex[hashContext(['x', 'y'])])
-
-      // grandchildren are pending
-      expect(thoughts.contextIndex[hashContext(['x', 'y', 'z'])]).toEqual({
-        id: hashContext(['x', 'y', 'z']),
-        context: ['x', 'y', 'z'],
-        children: [],
-        lastUpdated: never(),
-        pending: true,
+      expect(thoughts.contextIndex).toEqual({
+        ..._.pick(contextIndex, [
+          ['x'],
+          ['x', 'y']
+        ].map(cx => hashContext(cx))),
+        // grandchildren are pending
+        [hashContext(['x', 'y', 'z'])]: {
+          id: hashContext(['x', 'y', 'z']),
+          context: ['x', 'y', 'z'],
+          children: [],
+          lastUpdated: never(),
+          pending: true,
+        }
       })
 
-      expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(3)
-      expect(thoughts.thoughtIndex).toMatchObject(
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const thoughtIndexLocalWithoutIds = keyValueBy(
+        Object.keys(thoughts.thoughtIndex),
+        key => ({
+          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        })
+      )
+
+      expect(thoughtIndexLocalWithoutIds).toEqual(
         _.pick(thoughtIndex, ['x', 'y', 'z'].map(hashThought))
       )
 
@@ -401,9 +432,11 @@ const dataProviderTest = (provider: DataProvider) => {
         - x
           - y
             - z
+              - 0
         - t
           - u
             - v
+              - w
       `)
 
       await provider.updateContextIndex(contextIndex)
@@ -450,9 +483,7 @@ const dataProviderTest = (provider: DataProvider) => {
       }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts).toHaveProperty('contextIndex')
-      expect(Object.keys(thoughts.contextIndex).length).toBe(9)
-      expect(thoughts.contextIndex).toMatchObject(
+      expect(thoughts.contextIndex).toEqual(
         _.pick(contextIndex, [
           ['x'],
           ['x', 'y'],
@@ -467,10 +498,17 @@ const dataProviderTest = (provider: DataProvider) => {
         // ['t', 'u', 'v', 'm', 'n']
       )
 
-      expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(8)
-      expect(thoughts.thoughtIndex).toMatchObject(
-        _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'm', 'u', 'v', 'm'].map(hashThought))
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const thoughtIndexLocalWithoutIds = keyValueBy(
+        Object.keys(thoughts.thoughtIndex),
+        key => ({
+          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        })
+      )
+
+      expect(thoughtIndexLocalWithoutIds).toEqual(
+        _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'm', 'u', 'v', 'm', 'n'].map(hashThought))
       )
 
     })
@@ -498,9 +536,7 @@ const dataProviderTest = (provider: DataProvider) => {
       }, { maxDepth: 2 }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts).toHaveProperty('contextIndex')
-      expect(Object.keys(thoughts.contextIndex).length).toBe(6)
-      expect(thoughts.contextIndex).toMatchObject({
+      expect(thoughts.contextIndex).toEqual({
         ..._.pick(contextIndex, [
           ['x'],
           ['x', 'y'],
@@ -524,9 +560,16 @@ const dataProviderTest = (provider: DataProvider) => {
         // [hashContext(['t', 'u', 'v', 'm', 'n'])]: contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
       })
 
-      expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(6)
-      expect(thoughts.thoughtIndex).toMatchObject(
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const thoughtIndexLocalWithoutIds = keyValueBy(
+        Object.keys(thoughts.thoughtIndex),
+        key => ({
+          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        })
+      )
+
+      expect(thoughtIndexLocalWithoutIds).toEqual(
         _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'u', 'v'].map(hashThought))
       )
 
@@ -565,9 +608,7 @@ const dataProviderTest = (provider: DataProvider) => {
       }, { maxDepth: 2 }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts).toHaveProperty('contextIndex')
-      expect(Object.keys(thoughts.contextIndex).length).toBe(7)
-      expect(thoughts.contextIndex).toMatchObject({
+      expect(thoughts.contextIndex).toEqual({
         ..._.pick(contextIndex, [
           ['x'],
           ['x', 'y'],
@@ -585,9 +626,16 @@ const dataProviderTest = (provider: DataProvider) => {
         // [hashContext([EM_TOKEN, 'Settings', 'Font Size', '16'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Font Size', '16'])],
       })
 
-      expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(7)
-      expect(thoughts.thoughtIndex).toMatchObject(
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const thoughtIndexLocalWithoutIds = keyValueBy(
+        Object.keys(thoughts.thoughtIndex),
+        key => ({
+          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        })
+      )
+
+      expect(thoughtIndexLocalWithoutIds).toEqual(
         _.pick(thoughtIndex, [EM_TOKEN, 'x', 'y', 'z', 'Settings', 'Font Size', '16'].map(hashThought))
       )
 
@@ -618,9 +666,7 @@ const dataProviderTest = (provider: DataProvider) => {
       }, { maxDepth: 2 }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts).toHaveProperty('contextIndex')
-      expect(Object.keys(thoughts.contextIndex).length).toBe(8)
-      expect(thoughts.contextIndex).toMatchObject({
+      expect(thoughts.contextIndex).toEqual({
         ..._.pick(contextIndex, [
           ['x'],
           ['x', 'y'],
@@ -630,10 +676,10 @@ const dataProviderTest = (provider: DataProvider) => {
         ].map(cx => hashContext(cx))),
         [hashContext(['x', 'y', 'z'])]: {
           ...contextIndex[hashContext(['x', 'y', 'z'])],
-          children: [{
-            value: '=note',
-            rank: 0,
-          }],
+          children: [
+            // take the =note Child from contextIndex so that ids match
+            contextIndex[hashContext(['x', 'y', 'z'])].children.find(child => isFunction(child.value))
+          ],
           pending: true,
           lastUpdated: never(),
         },
@@ -649,10 +695,17 @@ const dataProviderTest = (provider: DataProvider) => {
         // [hashContext(['t', 'u', 'v', 'm', 'n'])]: contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
       })
 
-      expect(thoughts).toHaveProperty('thoughtIndex')
-      expect(Object.keys(thoughts.thoughtIndex).length).toBe(8)
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const thoughtIndexLocalWithoutIds = keyValueBy(
+        Object.keys(thoughts.thoughtIndex),
+        key => ({
+          [key]: _.omit(thoughts.thoughtIndex[key], 'id')
+        })
+      )
+
       // 'm' is not loaded since ['x', 'y', 'z'] and ['t', 'u', 'v'] are pending
-      expect(thoughts.thoughtIndex).toMatchObject(
+      expect(thoughtIndexLocalWithoutIds).toEqual(
         _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'u', 'v', '=note', 'content'].map(hashThought))
       )
 
