@@ -1,10 +1,11 @@
 import { store } from '../../store'
+import { ROOT_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { act } from 'react-dom/test-utils'
+import { Await } from '../../types'
 
-let wrapper = null // eslint-disable-line fp/no-let
+let wrapper: Await<ReturnType<typeof createTestApp>> // eslint-disable-line fp/no-let
 
 beforeEach(async () => {
   wrapper = await createTestApp()
@@ -12,7 +13,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await cleanupTestApp()
-  wrapper = null
+  wrapper = null as any
 })
 
 it('create, navigate, and edit thoughts', async () => {
@@ -35,9 +36,13 @@ it('create, navigate, and edit thoughts', async () => {
   // create top subthought
   windowEvent('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
 
-  act(jest.runOnlyPendingTimers)
+  jest.runOnlyPendingTimers()
 
   // state
+  const rootSubthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
+  expect(rootSubthoughts).toHaveLength(1)
+  expect(rootSubthoughts[0]).toMatchObject({ value: 'a', rank: 0 })
+
   const subthoughts = getChildrenRanked(store.getState(), ['a'])
   expect(subthoughts).toHaveLength(2)
   expect(subthoughts[0]).toMatchObject({ value: '', rank: -1 })
@@ -45,10 +50,13 @@ it('create, navigate, and edit thoughts', async () => {
 
   // DOM
   wrapper.update()
-  const editableSubthoughts2 = wrapper.find('.children .children div.editable')
-  expect(editableSubthoughts2).toHaveLength(2)
-  expect(editableSubthoughts2.at(0).text()).toBe('')
-  expect(editableSubthoughts2.at(1).text()).toBe('a1')
+  const aEditable = wrapper.find('div.editable')
+  expect(aEditable.at(0).text()).toBe('a')
+
+  const aSubthoughts = wrapper.find('.children .children div.editable')
+  expect(aSubthoughts).toHaveLength(2)
+  expect(aSubthoughts.at(0).text()).toBe('')
+  expect(aSubthoughts.at(1).text()).toBe('a1')
 
 })
 
@@ -58,10 +66,10 @@ it('create, navigate, and edit thoughts', async () => {
 it.skip('caret is set on new thought', async () => {
 
   windowEvent('keydown', { key: 'Enter' })
-  act(jest.runOnlyPendingTimers)
+  jest.runOnlyPendingTimers()
   wrapper.update()
   const { focusNode, focusOffset } = window.getSelection() || {}
-  expect(focusNode.textContent).toEqual('')
+  expect(focusNode?.textContent).toEqual('')
   expect(focusOffset).toEqual(0)
 
 })
@@ -80,14 +88,14 @@ it.skip('caret is set on new subthought', async () => {
   wrapper.update()
   const editableSubthought = wrapper.find('.children .children div.editable')
   await editableSubthought.simulate('change', { target: { value: 'a1' } })
-  act(jest.runOnlyPendingTimers)
+  jest.runOnlyPendingTimers()
 
   store.dispatch({ type: 'render' })
-  act(jest.runOnlyPendingTimers)
+  jest.runOnlyPendingTimers()
   wrapper.update()
 
   const { focusNode, focusOffset } = window.getSelection() || {}
-  expect(focusNode.textContent).toEqual('a1')
+  expect(focusNode?.textContent).toEqual('a1')
   expect(focusOffset).toEqual(0)
 
 })
