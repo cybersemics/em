@@ -31,6 +31,6 @@ const ref = (path: string) => ({
 })
 
 /**
- *
+ * Mock getUserRef.
  */
 export const getUserRef = () => ref('users/12345')

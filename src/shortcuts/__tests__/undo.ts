@@ -341,37 +341,3 @@ it('non-undoable actions are ignored', () => {
   expect(store.getState().inversePatches.length).toEqual(0)
 
 })
-
-it('undo splitSentences', () => {
-  const store = createTestStore()
-
-  store.dispatch([
-    {
-      type: 'importText',
-      path: RANKED_ROOT,
-      text: `
-        - First Sentence. Second Sentence
-        - t`
-    },
-    { type: 'setCursor', path: [{ value: 'First Sentence. Second Sentence', rank: 0 }] },
-    { type: 'splitSentences' }
-  ])
-
-  const exportedSplitSentences = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
-  const expectedOutputAfterSplit = `- ${ROOT_TOKEN}
-  - First Sentence.
-  - Second Sentence.
-  - t`
-
-  expect(exportedSplitSentences).toEqual(expectedOutputAfterSplit)
-
-  store.dispatch({ type: 'undoAction' })
-
-  const exportedAfterUndo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
-  const expectedOutputAfterUndo = `- ${ROOT_TOKEN}
-  - First Sentence. Second Sentence
-  - t`
-
-  expect(exportedAfterUndo).toEqual(expectedOutputAfterUndo)
-
-})
