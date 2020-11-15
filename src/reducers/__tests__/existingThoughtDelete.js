@@ -1,5 +1,5 @@
 import { ROOT_TOKEN } from '../../constants'
-import { hashContext, initialState, reducerFlow } from '../../util'
+import { initialState, reducerFlow } from '../../util'
 import { getContexts, getAllChildren, getParent } from '../../selectors'
 import { existingThoughtDelete, newSubthought, newThought } from '../../reducers'
 

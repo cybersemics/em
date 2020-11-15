@@ -313,9 +313,6 @@ const dataProviderTest = (provider: DataProvider) => {
         _.omit(contextIndex, hashContext([EM_TOKEN]))
       )
 
-      // do not match em context, since we are just asserting the imported thoughts
-      const thoughtIndexWithoutEm = _.omit(thoughtIndex, hashThought(EM_TOKEN))
-
       // support optional id property
       // dexie returns an id while firebase does not
       const thoughtIndexLocalWithoutIds = keyValueBy(
