@@ -24,9 +24,6 @@ jest.mock('lodash', () => {
   )
 })
 
-// mock getUserRef (firebase's database.ref)
-jest.mock('../../util/getUserRef')
-
 describe('dexie', () => {
 
   beforeEach(initDB)

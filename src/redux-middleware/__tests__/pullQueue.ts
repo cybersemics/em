@@ -6,8 +6,6 @@ import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
 
-// mock getUserRef (firebase's database.ref)
-jest.mock('../../util/getUserRef')
 jest.useFakeTimers()
 
 // mock debounce and throttle
