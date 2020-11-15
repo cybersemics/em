@@ -1,7 +1,7 @@
 import { store } from '../../store'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
-import { getChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
+import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
@@ -71,7 +71,7 @@ describe('thoughtCache', () => {
     store.dispatch({ type: 'clear' })
     jest.runOnlyPendingTimers()
 
-    const children = getChildren(store.getState(), [ROOT_TOKEN])
+    const children = getAllChildren(store.getState(), [ROOT_TOKEN])
     expect(children).toHaveLength(0)
 
     // confirm thought is still in local db after state has been cleared
@@ -87,7 +87,7 @@ describe('thoughtCache', () => {
     await initialize()
     await delay(100)
 
-    const childrenAfterInitialize = getChildren(store.getState(), [ROOT_TOKEN])
+    const childrenAfterInitialize = getAllChildren(store.getState(), [ROOT_TOKEN])
     expect(childrenAfterInitialize).toMatchObject([
       { value: 'a' }
     ])
@@ -150,12 +150,12 @@ describe('thoughtCache', () => {
     await delay(500)
 
     const state = store.getState()
-    expect(getChildren(state, [ROOT_TOKEN])).toMatchObject([{ value: 'a' }])
-    expect(getChildren(state, ['a'])).toMatchObject([{ value: 'b' }])
-    expect(getChildren(state, ['a', 'b'])).toMatchObject([{ value: 'c' }])
-    expect(getChildren(state, ['a', 'b', 'c'])).toMatchObject([{ value: 'd' }])
-    expect(getChildren(state, ['a', 'b', 'c', 'd'])).toMatchObject([{ value: 'e' }])
-    expect(getChildren(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
+    expect(getAllChildren(state, [ROOT_TOKEN])).toMatchObject([{ value: 'a' }])
+    expect(getAllChildren(state, ['a'])).toMatchObject([{ value: 'b' }])
+    expect(getAllChildren(state, ['a', 'b'])).toMatchObject([{ value: 'c' }])
+    expect(getAllChildren(state, ['a', 'b', 'c'])).toMatchObject([{ value: 'd' }])
+    expect(getAllChildren(state, ['a', 'b', 'c', 'd'])).toMatchObject([{ value: 'e' }])
+    expect(getAllChildren(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
   })
 
   it('delete thought with buffered descendants', async () => {
@@ -202,7 +202,7 @@ describe('thoughtCache', () => {
     // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
     await delay(500)
 
-    expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
+    expect(getAllChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
 
     expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
     expect(await getContext(db, ['a'])).toBeFalsy()
@@ -261,7 +261,7 @@ describe('thoughtCache', () => {
     // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
     await delay(500)
 
-    expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
+    expect(getAllChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
 
     expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
     expect(await getContext(db, ['a'])).toBeFalsy()
@@ -327,7 +327,7 @@ describe('thoughtCache', () => {
     // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
     await delay(500)
 
-    expect(getChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }, { value: 'a!' }])
+    expect(getAllChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }, { value: 'a!' }])
 
     expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a!' }] })
     expect(await getContext(db, ['a'])).toBeFalsy()
