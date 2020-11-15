@@ -1,5 +1,6 @@
-import { store } from '../../store'
+import { ReactWrapper } from 'enzyme'
 import { Component } from 'react'
+import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 import Thought from '../Thought'
@@ -8,10 +9,7 @@ import Subthoughts from '../Subthoughts'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
-import { Await, Context, SimplePath } from '../../types'
-
-// type to unpack a Promise
-type ReactWrapper = Await<ReturnType<typeof createTestApp>>
+import { Context, SimplePath } from '../../types'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {
@@ -31,7 +29,7 @@ declare module 'react' {
 const whereContext = (context: Context) => (node: ComponentWithSimplePath) =>
   equalArrays(pathToContext(node.props().simplePath), context)
 
-let wrapper: ReactWrapper // eslint-disable-line fp/no-let
+let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
 beforeEach(async () => {
   wrapper = await createTestApp()

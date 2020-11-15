@@ -1,11 +1,11 @@
+import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import { ROOT_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { Await } from '../../types'
 
-let wrapper: Await<ReturnType<typeof createTestApp>> // eslint-disable-line fp/no-let
+let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
 beforeEach(async () => {
   wrapper = await createTestApp()
