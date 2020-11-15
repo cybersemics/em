@@ -1,9 +1,10 @@
+import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
 import { RANKED_ROOT } from '../../constants'
 
-let wrapper = null // eslint-disable-line fp/no-let
+let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
 beforeEach(async () => {
   wrapper = await createTestApp()
@@ -11,6 +12,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await cleanupTestApp()
+  wrapper = null as any
 })
 
 it('show NewThoughtInstructions when there are no visible thoughts in the root context', async () => {
