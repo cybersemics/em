@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { parentOf, ellipsize, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
+import { asyncFocus, ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
 import {
   getChildren,
   getThoughtBefore,
@@ -13,6 +13,7 @@ import {
 } from '../selectors'
 import { State } from '../util/initialState'
 import { RANKED_ROOT } from '../constants'
+import { isMobile } from '../browser'
 import { alert } from '../action-creators'
 import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 
@@ -67,7 +68,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
 /** An action-creator thunk that dispatches deleteEmptyThought. */
 const deleteEmptyThought = (dispatch: Dispatch<Error | DeleteEmptyThought>, getState: () => State) => {
   const state = getState()
-  const { cursor } = state
+  const { cursor, editing } = state
   if (!cursor) return
 
   const simplePath = simplifyPath(state, cursor)
@@ -75,10 +76,16 @@ const deleteEmptyThought = (dispatch: Dispatch<Error | DeleteEmptyThought>, getS
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(cursor)
   const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
+  const children = getChildren(state, contextOfCursor)
 
   if (prevThought && uneditable) {
     dispatch({ type: 'error', value: `'${ellipsize(headValue(cursor))}' is uneditable and cannot be merged.` })
     return
+  }
+
+  // empty thought on mobile
+  if (isMobile && editing && ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor)))) {
+    asyncFocus()
   }
 
   dispatch({ type: 'deleteEmptyThought' })
