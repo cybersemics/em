@@ -1,11 +1,9 @@
-import { isMobile } from '../browser'
 import { ROOT_TOKEN } from '../constants'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
 // util
 import {
-  asyncFocus,
   head,
   headRank,
   headValue,
@@ -48,12 +46,6 @@ const deleteEmptyThought = (state: State) => {
 
   // delete an empty thought
   if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
-
-    // SIDE EFFECT
-    if (isMobile && state.editing) {
-      asyncFocus()
-    }
-
     return deleteThought(state, {})
   }
   // delete from beginning and merge
