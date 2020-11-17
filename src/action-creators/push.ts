@@ -5,7 +5,7 @@ import * as firebase from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
-import { hashContext, isFunction, logWithTime, timestamp } from '../util'
+import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { ActionCreator, Index, Lexeme, Parent } from '../types'
 
 type Callback = (err: string | null, ...args: any[]) => void
@@ -181,7 +181,9 @@ const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
 /** Syncs updates to local database and Firebase. */
 const push = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}): ActionCreator => (dispatch, getState) => {
 
-  const { authenticated, userRef } = getState()
+  const state = getState()
+  const authenticated = { state }
+  const userRef = getUserRef(state)
 
   return Promise.all([
 

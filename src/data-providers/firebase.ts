@@ -1,6 +1,6 @@
 import { store } from '../store'
 import { Index, Lexeme, Parent, Snapshot } from '../types'
-import { keyValueBy } from '../util/keyValueBy'
+import { keyValueBy, getUserRef } from '../util'
 
 interface Options {
   maxDepth?: number,
@@ -13,7 +13,7 @@ export const clearAll = () => {
 
 /** Gets the Lexeme object by id. */
 export const getThoughtById = async (id: string): Promise<Lexeme | undefined> => {
-  const { userRef } = store.getState()
+  const userRef = getUserRef(store.getState())
   const ref = userRef!.child('thoughtIndex').child(id)
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Lexeme>) => {
     resolve(snapshot.val())
@@ -22,7 +22,7 @@ export const getThoughtById = async (id: string): Promise<Lexeme | undefined> =>
 
 /** Gets multiple Lexeme objects by ids. */
 export const getThoughtsByIds = async (ids: string[]): Promise<(Lexeme | undefined)[]> => {
-  const { userRef } = store.getState()
+  const userRef = getUserRef(store.getState())
   const snapshots = await Promise.all(
     ids.map(id => userRef?.child('thoughtIndex').child(id).once('value'))
   )
@@ -35,7 +35,7 @@ export const getThoughtsByIds = async (ids: string[]): Promise<(Lexeme | undefin
  * @param context
  */
 export const getContextById = async (id: string): Promise<Parent | undefined> => {
-  const { userRef } = store.getState()
+  const userRef = getUserRef(store.getState())
   const ref = userRef!.child('contextIndex').child(id)
   return new Promise(resolve => ref.once('value', (snapshot: Snapshot<Parent>) => {
     resolve(snapshot.val())
@@ -44,7 +44,7 @@ export const getContextById = async (id: string): Promise<Parent | undefined> =>
 
 /** Gets multiple PrentEntry objects by ids. */
 export const getContextsByIds = async (ids: string[]): Promise<(Parent | undefined)[]> => {
-  const { userRef } = store.getState()
+  const userRef = getUserRef(store.getState())
   const snapshots = await Promise.all(
     ids.map(id => userRef?.child('contextIndex').child(id).once('value'))
   )
@@ -53,7 +53,7 @@ export const getContextsByIds = async (ids: string[]): Promise<(Parent | undefin
 
 /** Updates Firebase data. */
 export const update = async (updates: Index<any>) => {
-  const { userRef } = store.getState()
+  const userRef = getUserRef(store.getState())
   return new Promise((resolve, reject) => {
     userRef!.update(updates, (err: Error | null, ...args: any[]) => {
       if (err) {
