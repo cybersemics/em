@@ -473,6 +473,9 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
+
+    dispatch(setEditingValue(null))
+
     if (isMobile && isSafari()) {
       resetToolbarPosition()
       document.removeEventListener('scroll', updateToolbarPositionOnScroll)
@@ -480,8 +483,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     const { invalidState } = state
     throttledChangeRef.current.flush()
-    // set editingValue in order to position superscript correctly if edited thought is duplicate
-    oldValueRef.current && dispatch(setEditingValue(oldValueRef.current))
+
     // reset rendered value to previous non-duplicate
     if (contentRef.current) {
       contentRef.current!.innerHTML = oldValueRef.current
