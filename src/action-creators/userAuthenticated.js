@@ -1,12 +1,12 @@
-/** Updates local state with newly authenticated user. */
-const userAuthenticated = (user, { thoughtsLocalPromise } = {}) => async (dispatch, getState) => {
+import { getUserRef } from '../util'
 
-  const firebase = window.firebase
+/** Updates local state with newly authenticated user. */
+const userAuthenticated = (user, { thoughtsLocalPromise } = {}) => async dispatch => {
 
   // save the user ref and uid into state
-  const userRef = firebase.database().ref('users/' + user.uid)
+  const userRef = getUserRef({ user })
 
-  dispatch({ type: 'authenticate', value: true, userRef, user })
+  dispatch({ type: 'authenticate', value: true, user })
 
   // login automatically on page load
   setTimeout(() => {
