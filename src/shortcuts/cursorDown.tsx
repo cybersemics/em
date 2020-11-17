@@ -43,7 +43,6 @@ const getSelectionAttributes = (): SelectionAttributes | null => {
   const { y: baseNodeY, height: baseNodeHeight } = baseNodeParentEl.getClientRects()[0]
   const [paddingTop, , paddingBottom] = getElementPaddings(baseNodeParentEl)
 
-  // allow error of 5px
   const isMultiline = Math.abs(rangeY - baseNodeY - paddingTop) > 0
   return isMultiline ? { rangeY, rangeHeight, baseNodeY, baseNodeHeight, paddingTop, paddingBottom } : null
 }
@@ -73,7 +72,7 @@ const cursorDownShortcut: Shortcut = {
 
     const selectionAttributes = getSelectionAttributes()
     // use default browser if there is a valid selection and it's not on the last line of a multi-line editable
-    return selectionAttributes ? isSelectionOnLastLine(selectionAttributes) : true
+    return !selectionAttributes || isSelectionOnLastLine(selectionAttributes)
   },
   exec: dispatch => {
     dispatch({ type: 'cursorDown' })
