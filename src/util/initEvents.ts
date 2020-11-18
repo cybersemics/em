@@ -18,7 +18,7 @@ export const initEvents = (store: Store<State, any>) => {
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = () => {
-    const { path, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname)
+    const { path, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname, { exists: true })
     const toRoot = !path || isRoot(path)
 
     // clear the selection if root

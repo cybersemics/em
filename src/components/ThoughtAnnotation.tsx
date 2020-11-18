@@ -111,7 +111,7 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
   /** A Url icon that links to the url. */
   const UrlIconLink = ({ url }: { url: string }) => <a href={addMissingProtocol(url)} rel='noopener noreferrer' target='_blank' className='external-link' onClick={e => {
     if (url.startsWith(window.location.origin)) {
-      const { path, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length))
+      const { path, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length), { exists: true })
       dispatch({ type: 'setCursor', path, replaceContextViews: contextViews })
       e.preventDefault()
     }
