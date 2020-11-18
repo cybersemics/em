@@ -1,12 +1,16 @@
 import { ROOT_TOKEN } from '../constants'
 import { componentToThought, hashContext, keyValueBy, owner } from '../util'
-import { getThought, rankThoughtsFirstMatch } from '../selectors'
+import { hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
 
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null
   exists?: boolean,
 }
+
+/** Returns true if every child in the path exists. */
+const pathExists = (state: State, pathUnranked: string[]) =>
+  pathUnranked.every((value, i) => hasChild(state, i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i), value))
 
 /** Parses the thoughts from the url. */
 const decodeThoughtsUrl = (state: State, pathname: string, { exists }: Options = {}) => {
@@ -27,7 +31,7 @@ const decodeThoughtsUrl = (state: State, pathname: string, { exists }: Options =
 
   // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
   // if exists is specified and the thoughts are not yet loaded into state, return null
-  const path = !exists || pathUnranked.every(value => getThought(state, value))
+  const path = !exists || pathExists(state, urlPath)
     ? rankThoughtsFirstMatch({ ...state, contextViews }, pathUnranked)
     : null
 
