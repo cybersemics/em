@@ -136,7 +136,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     // Decode cursor from url if null. This occurs when the page first loads. The thoughtCache can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
     !state.cursor
       ? state => {
-        const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
+        const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname, { exists: true })
         const cursorNew = !path || isRoot(path) ? null : path
         return {
           ...state,

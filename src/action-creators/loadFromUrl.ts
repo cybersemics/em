@@ -22,7 +22,7 @@ const loadFromUrl = (url: string, path = RANKED_ROOT, { skipRoot }: Options = {}
 
   // decode url after importText so that we are using updated state
   const state = getState()
-  const { path: decodedPath } = decodeThoughtsUrl(state, window.location.pathname)
+  const { path: decodedPath } = decodeThoughtsUrl(state, window.location.pathname, { exists: true })
 
   // set cursor to first child if cursor is not provided via url
   const firstChild = decodedPath
