@@ -379,7 +379,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
 
     const thoughtsInContext = getAllChildren(state, context)
-    const hasDuplicate = thoughtsInContext.some(thought => thought.value === newValue)
+    const hasDuplicate = newValue !== '' && thoughtsInContext.some(thought => thought.value === newValue)
     if (hasDuplicate) {
       showDuplicationAlert(true, dispatch)
       throttledChangeRef.current.cancel() // see above

@@ -1,6 +1,6 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
-import { ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -97,5 +97,69 @@ it.skip('caret is set on new subthought', async () => {
   const { focusNode, focusOffset } = window.getSelection() || {}
   expect(focusNode?.textContent).toEqual('a1')
   expect(focusOffset).toEqual(0)
+
+})
+
+it('do not allow edit to duplicate thought', async () => {
+
+  store.dispatch({
+    type: 'importText',
+    path: RANKED_ROOT,
+    text: `
+      - a
+      - b
+      - c`
+  })
+
+  jest.runOnlyPendingTimers()
+  wrapper.update()
+
+  // try to change `c` to `a`
+  const editableSubthought = wrapper.find('div.editable').at(2)
+  await editableSubthought.simulate('change', { target: { value: 'a' } })
+
+  // trigger throttled change event
+  windowEvent('keydown', { key: 'Escape' })
+
+  // state
+  const rootSubthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
+  expect(rootSubthoughts).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: 'b', rank: 1 },
+    { value: 'c', rank: 2 },
+  ])
+  expect(rootSubthoughts).toHaveLength(3)
+
+})
+
+it('allow duplicate empty thoughts', async () => {
+
+  // create empty thought
+  windowEvent('keydown', { key: 'Enter' })
+
+  // create `a`
+  windowEvent('keydown', { key: 'Enter' })
+  wrapper.update()
+  const editable = wrapper.find('div.editable').at(1)
+  await editable.simulate('change', { target: { value: 'a' } })
+
+  // create `b` and edit to empty thought
+  windowEvent('keydown', { key: 'Enter' })
+  wrapper.update()
+  const editableSubthought = wrapper.find('div.editable').at(2)
+  await editableSubthought.simulate('change', { target: { value: 'b' } })
+  await editableSubthought.simulate('change', { target: { value: '' } })
+
+  // trigger throttled change event
+  windowEvent('keydown', { key: 'Escape' })
+
+  // state
+  const rootSubthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
+  expect(rootSubthoughts).toMatchObject([
+    { value: '', rank: 0 },
+    { value: 'a', rank: 1 },
+    { value: '', rank: 2 },
+  ])
+  expect(rootSubthoughts).toHaveLength(3)
 
 })
