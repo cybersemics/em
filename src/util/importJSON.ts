@@ -1,13 +1,12 @@
 import _ from 'lodash'
-import { EM_TOKEN, ROOT_TOKEN } from '../constants'
+import { EM_TOKEN, ID, ROOT_TOKEN } from '../constants'
 import { getRankAfter, getThought, getAllChildren, nextSibling } from '../selectors'
-import { Block, Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp, ThoughtIndices } from '../types'
+import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, Timestamp, ThoughtIndices } from '../types'
 import { State } from '../util/initialState'
 
 // util
 import {
   createId,
-  equalPath,
   equalThoughtRanked,
   hashContext,
   hashThought,
@@ -18,6 +17,7 @@ import {
   removeContext,
   rootedParentOf,
   timestamp,
+  unroot,
 } from '../util'
 
 export interface ImportJSONOptions {
@@ -86,6 +86,8 @@ const insertThought = (state: State, parentOld: Parent, value: string, context: 
 /** Recursively iterate through blocks and call insertThought for each block individually to save it. */
 const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtIndexUpdates: Index<Lexeme>, context: Context, blocks: Block[], rankIncrement = 1, startRank = 0, lastUpdated = timestamp()): ThoughtIndices => {
 
+  const contextEncoded = hashContext(context)
+
   const stateNew: State = {
     ...state,
     thoughts: {
@@ -106,9 +108,6 @@ const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtI
     const rank = startRank + index * rankIncrement
     if (!skipLevel) {
       const value = block.scope.trim()
-
-      const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
-      const contextEncoded = hashContext(rootContext)
 
       const existingChildren =
         contextIndexUpdates[contextEncoded]?.children ||
@@ -135,7 +134,7 @@ const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtI
     }
 
     if (block.children.length > 0) {
-      const childContext = skipLevel ? context : [...context, block.scope]
+      const childContext = skipLevel ? context : unroot([...context, block.scope])
       return saveThoughts(state, contextIndexUpdates, thoughtIndexUpdates, childContext, block.children, rankIncrement, startRank, lastUpdated)
     }
     else {
@@ -168,14 +167,6 @@ const getRankIncrement = (state: State, blocks: Block[], context: Context, destT
   return rankIncrement
 }
 
-/** Return start context for saving thoughts. */
-const getStartContext = (path: Path) => {
-  const importCursor = equalPath(path, [{ value: EM_TOKEN, rank: 0 }])
-    ? path
-    : parentOf(path)
-  return pathToContext(importCursor)
-}
-
 /** Convert JSON blocks to thoughts update. */
 export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[], { lastUpdated = timestamp(), skipRoot = false }: ImportJSONOptions) => {
   const initialThoughtIndex: Index<Lexeme> = {}
@@ -204,15 +195,16 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
     }
   }
 
-  const startContext = getStartContext(simplePath)
+  const importPath = (destEmpty ? rootedParentOf : ID)(simplePath)
+  const importContext = pathToContext(importPath)
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
-  const lastThoughtFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, blocksNormalized)
+  const lastChildFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, blocksNormalized)
 
-  const { contextIndex, thoughtIndex } = saveThoughts(state, initialContextIndex, initialThoughtIndex, startContext, blocksNormalized, rankIncrement, rankStart, lastUpdated)
+  const { contextIndex, thoughtIndex } = saveThoughts(state, initialContextIndex, initialThoughtIndex, importContext, blocksNormalized, rankIncrement, rankStart, lastUpdated)
 
   return {
     contextIndexUpdates: contextIndex,
-    lastThoughtFirstLevel,
     thoughtIndexUpdates: thoughtIndex,
+    lastImported: unroot([...importPath, lastChildFirstLevel]),
   }
 }

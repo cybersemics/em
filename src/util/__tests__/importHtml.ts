@@ -291,7 +291,7 @@ it('blank thoughts with subthoughts', () => {
 `)
 })
 
-it('paste multiple thoughts after the cursor', () => {
+it('paste multiple thoughts in non-empty cursor', () => {
 
   /** Import HTML and merge into state. */
   const importHtmlReducer = (state: State, insertionPath: SimplePath, html: string): State => {
@@ -330,6 +330,49 @@ it('paste multiple thoughts after the cursor', () => {
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
     - b
-    - x
-    - y`)
+      - x
+      - y`)
+})
+
+it('set cursor on last thought after importing multiple thoughts in non-empty cursor', () => {
+
+  /** Import HTML and merge into state. */
+  const importHtmlReducer = (state: State, insertionPath: SimplePath, html: string): State => {
+    const { contextIndexUpdates, thoughtIndexUpdates } = importHtml(state, insertionPath, html)
+    const contextIndex = mergeUpdates(state.thoughts.contextIndex, contextIndexUpdates)
+    const thoughtIndex = mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates)
+
+    return {
+      ...state,
+      thoughts: {
+        ...state.thoughts,
+        contextIndex,
+        thoughtIndex,
+      }
+    }
+  }
+
+  const initialHtml = `
+<li>a<ul>
+  <li>b</li>
+</ul></li>
+`
+
+  const importedHtml = `
+<li>x</li>
+<li>y</li>
+`
+
+  const state1 = importHtmlReducer(initialState(), RANKED_ROOT, initialHtml)
+
+  const simplePath = [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }] as SimplePath
+  const state2 = importHtmlReducer(state1, simplePath, importedHtml)
+
+  const exported = exportContext(state2, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - b
+      - x
+      - y`)
 })

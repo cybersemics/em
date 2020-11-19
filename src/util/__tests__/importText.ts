@@ -3,7 +3,7 @@ import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, never, reducerFlow, timestamp } from '../../util'
 import { initialState } from '../../util/initialState'
 import { exportContext, getParent } from '../../selectors'
-import { importText, existingThoughtChange } from '../../reducers'
+import { importText, existingThoughtChange, newThought } from '../../reducers'
 import { SimplePath } from '../../types'
 
 /** Helper function that imports html and exports it as plaintext. */
@@ -185,7 +185,6 @@ it('skip root token', () => {
   const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
-  // remove root, de-indent (trim), and append newline to make tests cleaner
   expect(exported)
     .toBe(`- ${ROOT_TOKEN}
   - a
@@ -205,7 +204,6 @@ it('skip em token', () => {
   const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
-  // remove root, de-indent (trim), and append newline to make tests cleaner
   expect(exported)
     .toBe(`- ${ROOT_TOKEN}
   - a
@@ -337,7 +335,7 @@ it('imports Roam json', () => {
 `)
 })
 
-it('replace empty thought', () => {
+it('replace empty cursor', () => {
 
   const text = `- ${ROOT_TOKEN}
   - a
@@ -369,10 +367,81 @@ it('replace empty thought', () => {
 
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
-  // remove root, de-indent (trim), and append newline to make tests cleaner
   expect(exported)
     .toBe(`- ${ROOT_TOKEN}
   - a
     - x
     - y`)
+})
+
+it('replace empty cursor without affecting siblings', () => {
+
+  const text = `- ${ROOT_TOKEN}
+  - a
+    - b
+    - c
+    - d`
+
+  const paste = `
+  - x
+  - y
+  `
+
+  const stateNew = reducerFlow([
+
+    importText({ path: RANKED_ROOT, text }),
+
+    // manually change `c` to empty thought since importText skips empty thoughts
+    existingThoughtChange({
+      newValue: '',
+      oldValue: 'c',
+      context: ['a'],
+      path: [{ value: 'a', rank: 0 }, { value: 'c', rank: 1 }] as SimplePath
+    }),
+
+    importText({
+      path: [{ value: 'a', rank: 0 }, { value: '', rank: 1 }],
+      text: paste,
+    }),
+
+  ])(initialState())
+
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported)
+    .toBe(`- ${ROOT_TOKEN}
+  - a
+    - b
+    - x
+    - y
+    - d`)
+
+  expect(stateNew.cursor).toMatchObject([{ value: 'a' }, { value: 'y' }])
+})
+
+it('import as subthoughts of non-empty cursor', () => {
+
+  const paste = `
+  - x
+  - y
+  `
+
+  const stateNew = reducerFlow([
+    newThought('a'),
+    importText({
+      path: [{ value: 'a', rank: 0 }],
+      text: paste,
+    }),
+
+  ])(initialState())
+
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported)
+    .toBe(`- ${ROOT_TOKEN}
+  - a
+    - x
+    - y`)
+
+  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }, { value: 'y', rank: 2 }])
 })

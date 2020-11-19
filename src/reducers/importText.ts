@@ -2,7 +2,7 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import he from 'he'
-import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam } from '../util'
+import { parentOf, convertHTMLtoJSON, head, headValue, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { simplifyPath } from '../selectors'
 import { Block, Path, Timestamp } from '../types'
@@ -163,17 +163,18 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
   else {
     const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText)) : convertHTMLtoJSON(convertedText)
     const imported = importJSON(state, simplePath, json, { lastUpdated, skipRoot })
-    const lastChild = imported.lastThoughtFirstLevel
 
     return reducerFlow([
 
       updateThoughts(imported),
 
-      // restore the selection to the first imported thought
-      !preventSetCursor && lastChild ? setCursor({
-        path: [...parentOf(path), lastChild],
-        offset: lastChild.value.length,
-      }) : null,
+      // restore the selection to the last imported thought on the first level
+      !preventSetCursor
+        ? setCursor({
+          path: imported.lastImported,
+          offset: headValue(imported.lastImported).length
+        })
+        : null,
 
     ])(state)
   }
