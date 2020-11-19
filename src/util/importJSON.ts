@@ -189,7 +189,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
     const thought = getThought(state, '')
-    if (thought && thought.contexts && thought.contexts.length > 1) {
+    if (thought) {
       initialThoughtIndex[hashThought('')] = removeContext(thought, context, headRank(simplePath))
       const rootedContext = pathToContext(rootedParentOf(simplePath))
       const contextEncoded = hashContext(rootedContext)

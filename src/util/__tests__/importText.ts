@@ -1,9 +1,10 @@
 import { validate as uuidValidate } from 'uuid'
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { hashContext, hashThought, never, timestamp } from '../../util'
+import { hashContext, hashThought, never, reducerFlow, timestamp } from '../../util'
 import { initialState } from '../../util/initialState'
 import { exportContext, getParent } from '../../selectors'
-import { importText } from '../../reducers'
+import { importText, existingThoughtChange } from '../../reducers'
+import { SimplePath } from '../../types'
 
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = (text: string) => {
@@ -334,4 +335,44 @@ it('imports Roam json', () => {
     - =edit-email
       - test_edit@icloud.com
 `)
+})
+
+it('replace empty thought', () => {
+
+  const text = `- ${ROOT_TOKEN}
+  - a
+    - b`
+
+  const paste = `
+  - x
+  - y
+  `
+
+  const stateNew = reducerFlow([
+
+    importText({ path: RANKED_ROOT, text }),
+
+    // manually change `b` to empty thought since importText skips empty thoughts
+    existingThoughtChange({
+      newValue: '',
+      oldValue: 'b',
+      context: ['a'],
+      path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }] as SimplePath
+    }),
+
+    importText({
+      path: [{ value: 'a', rank: 0 }, { value: '', rank: 0 }],
+      text: paste,
+    }),
+
+  ])(initialState())
+
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  // remove root, de-indent (trim), and append newline to make tests cleaner
+  expect(exported)
+    .toBe(`- ${ROOT_TOKEN}
+  - a
+    - x
+    - y`)
 })
