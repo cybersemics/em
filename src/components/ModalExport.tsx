@@ -41,7 +41,7 @@ const ModalExport = () => {
 
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
-  const [wrapperRef, setWrapper] = useState()
+  const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
   const [exportContent, setExportContent] = useState('')
 
   const dark = theme(state) !== 'Light'
@@ -99,21 +99,18 @@ const ModalExport = () => {
   clipboard.on('success', () => {
     dispatch(alert('Thoughts copied to clipboard'))
     clearTimeout(globals.errorTimer)
-    // @ts-ignore
     globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
   })
 
   clipboard.on('error', () => {
     dispatch({ type: 'error', value: 'Error copying thoughts' })
     clearTimeout(globals.errorTimer)
-    // @ts-ignore
     globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
   })
 
   /** Updates the isOpen state when clicked outside modal. */
   const onClickOutside = (e: MouseEvent) => {
-    // @ts-ignore
-    if (isOpen && wrapperRef && !wrapperRef.contains(e.target)) {
+    if (isOpen && wrapperRef && !wrapperRef.contains(e.target as Node)) {
       setIsOpen(false)
       e.stopPropagation()
     }
@@ -197,7 +194,7 @@ const ModalExport = () => {
             style={{ cursor: 'pointer' }}
             onClick={() => setIsOpen(!isOpen)}
           />
-          <div ref={setWrapper as any}>
+          <div ref={setWrapper}>
             <DropDownMenu
               isOpen={isOpen}
               selected={selected}

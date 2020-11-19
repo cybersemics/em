@@ -1,4 +1,3 @@
-// @ts-ignore
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import he from 'he'
@@ -7,9 +6,6 @@ import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { simplifyPath } from '../selectors'
 import { Block, Path, Timestamp } from '../types'
 import { State } from '../util/initialState'
-
-/** Parse blocks of text based on indentation. */
-declare function parse(text: string): Block[]
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
