@@ -10,7 +10,7 @@ import globals from '../globals'
 import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { ActionCreator, Child, Path, SimplePath, ThoughtContext } from '../types'
+import { ActionCreator, Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -98,7 +98,6 @@ interface ThoughtContainerProps {
   cursor?: Path | null,
   cursorOffset?: number,
   depth?: number,
-  expanded?: boolean,
   expandedContextThought?: Path,
   hideBullet?: boolean,
   isDeepHovering?: boolean,
@@ -109,6 +108,7 @@ interface ThoughtContainerProps {
   isDragging?: boolean,
   isEditing?: boolean,
   isEditingPath?: boolean,
+  isExpanded?: boolean,
   isHovering?: boolean,
   isParentHovering?: boolean,
   prevChild?: Child | ThoughtContext,
@@ -116,7 +116,7 @@ interface ThoughtContainerProps {
   rank: number,
   showContexts?: boolean,
   style?: React.CSSProperties,
-  thought?: Child,
+  thought?: Lexeme,
   simplePath: SimplePath,
   simplePathLive?: SimplePath,
   url?: string | null,
@@ -171,9 +171,10 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const value = headValue(simplePathLive)
 
   // link URL
+  const isExpanded = !!expanded[hashContext(pathToContext(path))]
   const url = isURL(value) ? value :
   // if the only subthought is a url and the thought is not expanded, link the thought
-    !expanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(simplePathLive, parentOf(cursor))) ? children[0].value :
+    !isExpanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(simplePathLive, parentOf(cursor))) ? children[0].value :
     null
 
   const thought = getThought(state, value)
@@ -185,10 +186,10 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isPublishChild: !search && publishMode() && simplePath.length === 2,
     isCursorParent,
     isCursorGrandparent,
-    expanded: expanded[hashContext(pathToContext(path))],
     expandedContextThought,
     isEditing,
     isEditingPath,
+    isExpanded,
     publish: !search && publishMode(),
     thought,
     simplePathLive,
@@ -214,14 +215,14 @@ const mapDispatchToProps = (dispatch: Dispatch<Action | ActionCreator>) => ({
  **********************************************************************/
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const canDrag = (props: ThoughtContainerProps) => {
+const canDrag = (props: ConnectedThoughtContainerProps) => {
   const state = store.getState()
   const thoughts = pathToContext(props.simplePathLive!)
   const context = parentOf(pathToContext(props.simplePathLive!))
   const isDraggable = props.isDraggable || props.isCursorParent
 
   return isDocumentEditable() &&
-    isDraggable &&
+    !!isDraggable &&
     (!isMobile || globals.touched) &&
     !hasChild(state, thoughts, '=immovable') &&
     !hasChild(state, thoughts, '=readonly') &&
@@ -230,7 +231,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = ({ simplePathLive }: { simplePathLive: SimplePath }) => {
+const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
   store.dispatch({
     type: 'dragInProgress',
     value: true,
@@ -255,7 +256,7 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 })
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
+const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
   const { cursor } = state
@@ -332,7 +333,6 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
       clearTimeout(globals.errorTimer)
-      // @ts-ignore
       globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
     }, 100)
   }
@@ -348,7 +348,12 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 type ConnectedThoughtProps = ThoughtProps &
   Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
 
-type ConnectedDraggableThoughtContainerProps = ThoughtContainerProps &
+type ConnectedThoughtContainerProps =
+  ThoughtContainerProps &
+  ReturnType<typeof mapStateToProps>
+
+type ConnectedDraggableThoughtContainerProps =
+  ConnectedThoughtContainerProps &
   ReturnType<typeof dragCollect> &
   ReturnType<typeof dropCollect> &
   ReturnType<typeof mapDispatchToProps>
@@ -422,7 +427,6 @@ const ThoughtContainer = ({
   dragPreview,
   dragSource,
   dropTarget,
-  expanded,
   expandedContextThought,
   hideBullet,
   isDeepHovering,
@@ -433,6 +437,7 @@ const ThoughtContainer = ({
   isDragging,
   isEditing,
   isEditingPath,
+  isExpanded,
   isHovering,
   isParentHovering,
   prevChild,
@@ -542,7 +547,7 @@ const ThoughtContainer = ({
     'cursor-grandparent': isCursorGrandparent,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
-    expanded,
+    expanded: isExpanded,
     'function': isFunction(value), // eslint-disable-line quote-props
     'has-only-child': children.length === 1,
     'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
@@ -637,7 +642,6 @@ const ThoughtContainer = ({
 ThoughtContainer.displayName = 'ThoughtContainer'
 
 // export connected, drag and drop higher order thought component
-// @ts-ignore
 const ThoughtComponent = connect(mapStateToProps, mapDispatchToProps)(DragSource('thought', { canDrag, beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(ThoughtContainer)))
 
 export default ThoughtComponent

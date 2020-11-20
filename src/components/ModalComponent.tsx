@@ -7,8 +7,9 @@ import { Connected } from '../types'
 import { modalComplete } from '../action-creators'
 
 export interface ModalProps {
-  arrow: string,
+  arrow?: string,
   center?: boolean,
+  children?: React.ReactNode,
   className?: string,
   id: string,
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
@@ -101,7 +102,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
       {id !== 'welcome' ? <a className='upper-right popup-close-x text-small' onClick={() => dispatch({ type: 'modalRemindMeLater', id: 'help' })}>✕</a> : null}
       <div className={classNames({
         'modal-content': true,
-        [arrow]: arrow
+        ...arrow ? { [arrow]: arrow } : null
       })}>
         {title ? <h1 className='modal-title'>{title}</h1> : null}
         <div className='modal-text'>{children}</div>

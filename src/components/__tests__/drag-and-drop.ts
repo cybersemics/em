@@ -57,7 +57,6 @@ const findDropEndTarget = (context: Context) => wrapper.find(Subthoughts).filter
 const simulateDragAndDrop = ({ source, drop, type }: { source: Context, drop: Context, type: 'child' | 'sibling' }) => {
 
   const backend = document.DND.getManager().getBackend()
-  // @ts-ignore
   const sourceId = findThoughtSource(source).instance().getHandlerId()
   backend.simulateBeginDrag([sourceId])
   wrapper.update()

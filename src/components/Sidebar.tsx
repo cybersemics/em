@@ -1,5 +1,5 @@
 import React from 'react'
-import SwipeableDrawer from '@bit/mui-org.material-ui.swipeable-drawer'
+import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useDispatch, useSelector } from 'react-redux'
 import { isMobile } from '../browser'
 import _ from 'lodash'
@@ -7,6 +7,9 @@ import Breadcrumbs from './Breadcrumbs'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 import { Path } from '../types'
 import { State } from '../util/initialState'
+
+// extend SwipeableDrawer with classes prop
+const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<SwipeableDrawerProps & { classes: any }>
 
 /** A single path within the sidebar. */
 const ThoughtsTab = ({ path }: { path: Path }) => {
@@ -53,14 +56,13 @@ const Sidebar = () => {
      * Therefore instead of using recommended partern of .mobile .drawer-container
      * we are providing different classname to drawer based on isMobile property.
      */
-    // @ts-ignore
-    <SwipeableDrawer classes={{ paper: isMobile ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={8} anchor='left' onOpen={() => {
+    <SwipeableDrawerWithClasses classes={{ paper: isMobile ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={8} anchor='left' onOpen={() => {
       onToggleSidebar(true)
     }} onClose={() => {
       onToggleSidebar(false)
     }} open={showSidebar} >
       <RecentEdited />
-    </SwipeableDrawer>
+    </SwipeableDrawerWithClasses>
   )
 }
 

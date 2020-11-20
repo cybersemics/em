@@ -1,13 +1,12 @@
-import React from 'react'
+import React, { Dispatch } from 'react'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
-import { store } from '../store'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { login, logout } from '../action-creators'
 import { getSetting, isTutorial } from '../selectors'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import { State } from '../util/initialState'
-import { Connected, User } from '../types'
+import { User } from '../types'
 
 interface FooterProps {
   authenticated?: boolean,
@@ -29,8 +28,22 @@ const mapStateToProps = (state: State) => {
   }
 }
 
+// eslint-disable-next-line jsdoc/require-jsdoc
+const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
+  login: () => dispatch(login()),
+  logout: () => dispatch(logout()),
+  scaleFontUp: () => dispatch(scaleFontUp()),
+  scaleFontDown: () => dispatch(scaleFontDown()),
+  showHelp: () => {
+    window.scrollTo(0, 0)
+    dispatch({ type: 'showModal', id: 'help' })
+  }
+})
+
+type ConnectedFooterProps = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>
+
 /** A footer component with some useful links. */
-const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status, dispatch }: Connected<FooterProps>) => {
+const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, login, logout, status, scaleFontUp, scaleFontDown, showHelp }: ConnectedFooterProps) => {
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
@@ -40,21 +53,18 @@ const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status, dispa
   return <ul className='footer list-none'>
     <li>
       <span className='floatLeft'>
-        <a className='increase-font expand-click-area-left no-select' onClick={() => store.dispatch(scaleFontUp())}>A</a>
+        <a className='increase-font expand-click-area-left no-select' onClick={scaleFontUp}>A</a>
         <span>  </span>
-        <a className='decrease-font expand-click-area-right no-select' onClick={() => store.dispatch(scaleFontDown())}>A</a>
+        <a className='decrease-font expand-click-area-right no-select' onClick={scaleFontDown}>A</a>
       </span>
       <a tabIndex={-1} href='https://forms.gle/ooLVTDNCSwmtdvfA8' target='_blank' rel='noopener noreferrer'>Feedback</a>
       <span className='footer-divider'> | </span>
-      <a tabIndex={-1} onClick={() => {
-        window.scrollTo(0, 0)
-        dispatch({ type: 'showModal', id: 'help' })
-      }}>Help</a>
+      <a tabIndex={-1} onClick={showHelp}>Help</a>
       {window.firebase ? <span>
         <span className='footer-divider'> | </span>
         {authenticated
-          ? <a tabIndex={-1} onClick={() => store.dispatch(logout())}>Log Out</a>
-          : <a tabIndex={-1} onClick={() => store.dispatch(login())}>Log In</a>
+          ? <a tabIndex={-1} onClick={logout}>Log Out</a>
+          : <a tabIndex={-1} onClick={login}>Log In</a>
         }
       </span> : null}
     </li><br />
@@ -70,4 +80,4 @@ const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status, dispa
   </ul>
 }
 
-export default connect(mapStateToProps)(Footer)
+export default connect(mapStateToProps, mapDispatchToProps)(Footer)

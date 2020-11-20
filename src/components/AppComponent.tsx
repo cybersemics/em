@@ -177,5 +177,4 @@ const AppComponent: FC<Props> = props => {
   )
 }
 
-// @ts-ignore
-export default connect<StateProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(AppComponent)
+export default connect(mapStateToProps, mapDispatchToProps)(AppComponent)

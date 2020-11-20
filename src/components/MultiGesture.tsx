@@ -4,8 +4,7 @@ import { noop } from 'lodash'
 import { Direction, GesturePath } from '../types'
 
 // requires peer dependencies react-dom and react-native-web
-// @ts-ignore
-import { PanResponder, View } from 'react-native'
+import { GestureResponderEvent, PanResponder, View } from 'react-native'
 
 interface Point {
   x: number,
@@ -20,8 +19,8 @@ interface GestureState {
 }
 
 interface MultiGestureProps {
-  onGesture?: (g: Direction | null, sequence: GesturePath, e: Event) => void,
-  onEnd?: (sequence: GesturePath | null, e: Event) => void,
+  onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void,
+  onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void,
   onStart?: () => void,
   scrollThreshold?: number,
   threshold?: number,
@@ -81,7 +80,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // does not report moveX and moveY
       // onPanResponderGrant: (e, gestureState) => {},
 
-      onPanResponderMove: (e: Event, gestureState: GestureState) => {
+      onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
 
         if (this.abandon) {
           return
@@ -129,7 +128,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         }
       },
 
-      onPanResponderRelease: (e: Event) => {
+      onPanResponderRelease: (e: GestureResponderEvent) => {
         if (this.props.onEnd) {
           this.props.onEnd(this.sequence, e)
         }
@@ -137,7 +136,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       },
 
       onPanResponderTerminationRequest: () => true,
-      onPanResponderTerminate: (e: Event) => {
+      onPanResponderTerminate: (e: GestureResponderEvent) => {
         // Another component has become the responder, so this gesture
         // should be cancelled
         if (this.props.onEnd) {
@@ -158,26 +157,25 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   render() {
     return <View {...this.panResponder.panHandlers}>{this.props.children}</View>
   }
-}
 
-// @ts-ignore
-MultiGesture.defaultProps = {
+  static defaultProps: MultiGestureProps = {
 
-  // the distance threshold for a single gesture
-  threshold: 12,
+    // the distance threshold for a single gesture
+    threshold: 12,
 
-  // the distance to allow scrolling before abandoning the gesture
-  scrollThreshold: 12,
+    // the distance to allow scrolling before abandoning the gesture
+    scrollThreshold: 12,
 
-  // fired at the start of a gesture
-  // includes false starts
-  onStart: noop,
+    // fired at the start of a gesture
+    // includes false starts
+    onStart: noop,
 
-  // fired when a new gesture is added to the sequence
-  onGesture: noop,
+    // fired when a new gesture is added to the sequence
+    onGesture: noop,
 
-  // fired when all gestures have completed
-  onEnd: noop
+    // fired when all gestures have completed
+    onEnd: noop
+  }
 }
 
 export default MultiGesture

@@ -56,7 +56,6 @@ export const initFirebase = async ({ store, thoughtsLocalPromise }: { store: Sto
   }
 
   // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
-  // @ts-ignore
   globals.offlineTimer = window.setTimeout(() => {
     store.dispatch({ type: 'status', value: 'offline' })
   }, OFFLINE_TIMEOUT)

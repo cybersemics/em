@@ -1,20 +1,9 @@
-// util
-import {
-  parentOf,
-  head,
-} from '../util'
-
-// action-creators
-import loadResource from './loadResource'
-
-// selectors
-import {
-  getContexts,
-  rankThoughtsFirstMatch,
-} from '../selectors'
+import { parentOf, head } from '../util'
+import { loadResource } from '../action-creators'
+import { getContexts, rankThoughtsFirstMatch } from '../selectors'
 
 /** Fetch and import all =src attributes with =preload. */
-const preloadSources = async () => (dispatch, getState) => {
+const preloadSources = () => (dispatch, getState) => {
 
   const state = getState()
 

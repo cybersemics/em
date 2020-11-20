@@ -1,9 +1,10 @@
 import React, { Dispatch } from 'react'
-import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { State } from '../util/initialState'
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
+import { GestureResponderEvent } from 'react-native'
+import { Context, Icon as IconType, Path, Shortcut } from '../types'
 
 interface Error {
   type: 'error',
@@ -34,7 +35,7 @@ const editableOfNote = (noteEl: HTMLElement) => {
   return closest ? closest.querySelector('.editable') as HTMLElement : null
 }
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<Error | DeleteAttribute | Alert | ArchiveThought>, getState: () => State, e: Event) => {
+const exec = (dispatch: Dispatch<Error | DeleteAttribute | Alert | ArchiveThought>, getState: () => State, e: Event | GestureResponderEvent) => {
   const state = getState()
   const { cursor, noteFocus } = state
 

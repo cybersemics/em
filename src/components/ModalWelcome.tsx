@@ -40,7 +40,6 @@ const onRef = (el: HTMLDivElement) => {
 /** A modal that welcomes the user to em. */
 const ModalWelcome = () =>
   <div ref={onRef}>
-    {/* @ts-ignore */}
     <Modal id='welcome' title='Welcome to em' className='popup' center>
       <p><b>em</b> is a writing tool that reflects the structure of your thoughts.</p>
     </Modal>

@@ -58,8 +58,7 @@ const ModalExport = () => {
 
   const numDescendants = getDescendants(state, simplifyPath(state, cursor)).length
 
-  // @ts-ignore
-  const exportWord = navigator.share ? 'Share' : 'Download'
+  const exportWord = 'share' in navigator ? 'Share' : 'Download'
 
   const exportThoughtsPhrase = isRoot(cursor)
     ? ` all ${numDescendants} thoughts`
@@ -180,7 +179,6 @@ const ModalExport = () => {
   }
 
   return (
-    // @ts-ignore
     <Modal id='export' title='Export' className='popup'>
 
       <div className='modal-export-wrapper'>

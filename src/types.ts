@@ -3,6 +3,7 @@ import { Dispatch, ReactNode } from 'react'
 import { AnyAction } from 'redux'
 import { ThunkDispatch } from 'redux-thunk'
 import { State } from './util/initialState'
+import { GestureResponderEvent } from 'react-native'
 
 /********************************
  * Global
@@ -141,7 +142,7 @@ export interface Parent {
 
 /** A basic Redux action creator thunk with no arguments. */
 // do not use ThunkAction<void, State, any, Action<string>> to avoid extraArgument
-export type ActionCreator = ((dispatch: ThunkDispatch<State, never, AnyAction>, getState: () => State) => any)
+export type ActionCreator<R = any> = (dispatch: ThunkDispatch<State, never, AnyAction>, getState: () => State) => R
 
 /** The three options the user can choose for the context tutorial. */
 export type TutorialChoice = 0 | 1 | 2
@@ -188,7 +189,7 @@ export interface Shortcut {
   },
   svg?: (icon: Icon) => ReactNode,
   canExecute?: (getState: () => State, e: Event) => boolean,
-  exec: (dispatch: Dispatch<AnyAction | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => void,
+  exec: (dispatch: Dispatch<AnyAction | ActionCreator>, getState: () => State, e: Event | GestureResponderEvent, { type }: { type: string }) => void,
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'

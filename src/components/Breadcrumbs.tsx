@@ -20,9 +20,10 @@ interface BreadcrumbProps {
 }
 
 type OverflowChild = Child & {
-  isOverflow?: boolean,
   label?: string,
+  isOverflow?: boolean,
 }
+type OverflowPath = OverflowChild[]
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BreadcrumbProps) => ({
@@ -48,20 +49,19 @@ const Breadcrumbs: BreadcrumbsComponent = ({ path, simplePath, thoughtsLimit, ch
     : 0
 
   // if charLimit is exceeded then replace the remaining characters by ellipsis
-  const charLimitedArray = ellipsize ? path.map(thought =>
+  const charLimitedArray = ellipsize ? path.map(child =>
     ({
-      ...thought,
+      ...child,
       // subtract 2 so that additional '...' is still within the char limit
-      label: strip(thought.value.length > charLimit! - 2 ?
-        thought.value.substr(0, charLimit! - 2) + '...'
-        : thought.value)
+      label: strip(child.value.length > charLimit! - 2 ?
+        child.value.substr(0, charLimit! - 2) + '...'
+        : child.value)
     }))
     : path
 
   // after character limit is applied we need to remove the overflow thoughts if any and add isOverflow flag to render ellipsis at that position
-  const overflowArray = ellipsize && overflow ?
-    // @ts-ignore
-    charLimitedArray.slice(0, charLimitedArray.length - 1 - overflow).concat({ isOverflow: true }, charLimitedArray.slice(charLimitedArray.length - 1))
+  const overflowArray: OverflowPath = ellipsize && overflow ?
+    charLimitedArray.slice(0, charLimitedArray.length - 1 - overflow).concat({ isOverflow: true } as OverflowChild, charLimitedArray.slice(charLimitedArray.length - 1))
     : charLimitedArray
 
   return (

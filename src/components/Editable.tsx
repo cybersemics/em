@@ -596,8 +596,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       : ellipsizeUrl(value)
     }
     placeholder={isTableColumn1 ? ''
-    // @ts-ignore
-    : thought && new Date() - new Date(thought.lastUpdated) > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
+    : thought && Date.now() - new Date(thought.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
     onClick={stopPropagation}

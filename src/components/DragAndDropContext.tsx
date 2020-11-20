@@ -4,9 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { TouchBackend } from 'react-dnd-touch-backend'
 import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 
-// @ts-ignore
 const options = {
-  // @ts-ignore
   backends: [
     {
       backend: HTML5Backend
@@ -21,5 +19,4 @@ const options = {
 }
 
 /** Drag and Drop Provider HOC. */
-// @ts-ignore
-export const DragAndDropContext: React.FC = ({ children }) => <DndProvider backend={MultiBackend} options={options}>{ children }</DndProvider>
+export const DragAndDropContext: React.FC = ({ children }) => <DndProvider backend={MultiBackend as any} options={options}>{ children }</DndProvider>

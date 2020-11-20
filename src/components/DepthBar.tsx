@@ -17,7 +17,6 @@ interface DepthBarProps {
 /** A small horizontal bar that indicates how many descendants a thought has. */
 const DepthBar = ({ numDescendantCharacters, showContexts, thoughtsLive }: DepthBarProps) => <span>
   {
-  // @ts-ignore
     numDescendantCharacters >= 16 ? <Modal
       id='depthBar'
       title='The length of this bar indicates the number of thoughts in this context.'

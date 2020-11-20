@@ -1,17 +1,11 @@
 import React, { Dispatch } from 'react'
 import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
-
-// util
-import {
-  getOffsetWithinContent,
-  headValue,
-  isDocumentEditable,
-} from '../util'
-
+import { getOffsetWithinContent, headValue, isDocumentEditable } from '../util'
 import { newThought } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
+import { GestureResponderEvent } from 'react-native'
 
 interface ActionOutdent {
   type: 'outdent',
@@ -31,7 +25,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 </svg>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<ActionOutdent | ActionAlert | ActionCreator>, getState: () => State, e: Event, { type }: { type: string }) => {
+const exec = (dispatch: Dispatch<ActionOutdent | ActionAlert | ActionCreator>, getState: () => State, e: Event| GestureResponderEvent, { type }: { type: string }) => {
   const state = getState()
   const { cursor, editingValue } = state
 

@@ -227,7 +227,6 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
       clearTimeout(globals.errorTimer)
-      // @ts-ignore
       globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
     }, 100)
   }

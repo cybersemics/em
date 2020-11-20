@@ -1,12 +1,22 @@
-// @ts-nocheck
-
 import _ from 'lodash'
 import { produce } from 'immer'
 import { parentOf, equalArrays, hashThought, head, pathToContext, timeDifference, timestamp } from '../util'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
+import { Context, Index, Path, Timestamp } from '../types'
+
+interface Leaf {
+  leaf: true,
+  lastUpdated: Timestamp,
+  path: Path,
+}
+
+type Tree = {
+  [index: string]: Tree | Leaf,
+}
 
 /** Encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase). */
-const contextEncode = context => context.map(value => value.length === 0 ? EMPTY_TOKEN : hashThought(value))
+const contextEncode = (context: Context) =>
+  context.map(value => value.length === 0 ? EMPTY_TOKEN : hashThought(value))
 
 const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendants by ancestor
 
@@ -17,9 +27,9 @@ const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendant
  * @param context Array of string representing path (encoded).
  * @returns Common Subcontext.
  */
-const findTreeDeepestSubcontext = (tree, context, index = 0) => {
+const findTreeDeepestSubcontext = (tree: Tree, context: Context, index = 0): { node: Tree, path: Context } => {
   if (context.length === 0 && index === 0) return { node: tree, path: [] }
-  const node = tree[context[index]]
+  const node = (tree as Index<Tree>)[context[index]]
   return node
     ? findTreeDeepestSubcontext(node, context, index + 1)
     : { node: tree, path: context.slice(0, index) }
@@ -32,7 +42,7 @@ const findTreeDeepestSubcontext = (tree, context, index = 0) => {
  * @param startingPath Context of the node whose descendants needs to be returned (encoded).
  * @returns Array of descendant object.
  */
-export const findTreeDescendants = (tree, startingPath) => {
+export const findTreeDescendants = (tree: Tree, startingPath?: Context): Leaf[] => {
   const node = startingPath && startingPath.length > 0
     ? _.get(tree, startingPath)
     : tree
@@ -52,8 +62,8 @@ export const findTreeDescendants = (tree, startingPath) => {
  * @param [minChildren=2] Mininum no of children.
  * @returns Closest ancestor node with multiple children.
  */
-const findClosestSharedAncestor = (tree, context, minChildren = 2, index = 0, closestAncestor = { node: null, path: [] }) => {
-  const node = tree[context[index]]
+const findClosestSharedAncestor = (tree: Tree, context: Context, minChildren = 2, index = 0, closestAncestor: { node: Tree | null, path: Context } = { node: null, path: [] }): { node: Tree | null, path: Context } => {
+  const node = (tree as Index<Tree>)[context[index]]
   return node
     ? findClosestSharedAncestor(
       node,
@@ -84,14 +94,14 @@ const findClosestSharedAncestor = (tree, context, minChildren = 2, index = 0, cl
  * nodeAdd will just pass ['A','B','C','K','L']  as both second (oldPath) and third parameter (newPath) for nodeChange because
  * commonPath derived from oldPath inside nodeChange will be ['A','B','C'] anyways. (This will eliminate use of DUMMY_TOKEN too)
  */
-const nodeAdd = (tree, newPath) => nodeChange(tree, newPath, newPath)
+const nodeAdd = (tree: Tree, newPath: Path) => nodeChange(tree, newPath, newPath)
 
 /**
  * Adds or updates node to the existing tree object by mutating.
  *
  * @param tree Nested object representing tree.
  */
-const nodeChange = (tree, oldPath, newPath) => {
+const nodeChange = (tree: Tree, oldPath: Path, newPath: Path) => {
   const oldContext = contextEncode(pathToContext(oldPath))
   const newContext = contextEncode(pathToContext(newPath))
   const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldContext)
@@ -188,7 +198,7 @@ const nodeChange = (tree, oldPath, newPath) => {
  * @param tree Nested object representing tree.
  * @param [timestampUpdate=true] If false it doesn't update lastUpdated property of all affected leaf nodes (used by nodeMove).
  */
-const nodeDelete = (tree, oldPath, timestampUpdate = true) => {
+const nodeDelete = (tree: Tree, oldPath: Path, timestampUpdate = true) => {
   const oldContext = contextEncode(pathToContext(oldPath))
   const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldContext)
   if (commonNode) {
@@ -250,7 +260,7 @@ const nodeDelete = (tree, oldPath, timestampUpdate = true) => {
  * @param oldPath
  * @param newPath
  */
-const nodeMove = (tree, oldPath, newPath) => {
+const nodeMove = (tree: Tree, oldPath: Path, newPath: Path) => {
   const oldContext = contextEncode(pathToContext(oldPath))
   const newContext = contextEncode(pathToContext(newPath))
 
@@ -280,7 +290,10 @@ const nodeMove = (tree, oldPath, newPath) => {
 }
 
 /** Using immer to pass a draft object as the first argument to the given destructive function to avoid mutation. */
-const immerfy = f => (obj, ...rest) => produce(obj, draft => f(draft, ...rest))
+const immerfy = <T = any>(f: (draft: T, ...rest: any[]) => void) =>
+  (obj: T, ...rest: any[]) =>
+    produce(obj, (draft: T) =>
+      f(draft, ...rest))
 
 /**
  * Adds or updates node to the existing tree object.

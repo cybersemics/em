@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { connect } from 'react-redux'
 import _ from 'lodash'
 import { store } from '../store'
@@ -28,7 +28,7 @@ const onKeyDown = (e: React.KeyboardEvent) => {
 /** Searches all thoughts. */
 const Search = ({ dispatch }: Connected<any>) => {
 
-  const ref = React.createRef<HTMLElement>()
+  const ref = useRef<HTMLElement>()
   const state = store.getState()
 
   /** Removes the normal cursor when the search is focused. */
@@ -57,7 +57,6 @@ const Search = ({ dispatch }: Connected<any>) => {
 
   /** Focuses the search input when the element is first rendered. */
   const focusOnRef = (el: HTMLElement) => {
-    // @ts-ignore
     ref.current = el
     if (el) {
       el.focus()

@@ -53,6 +53,3 @@ export const hashThought: (s: string) => ThoughtHash = _.memoize(
     ...globals.disableThoughtHashing ? [] : [murmurHash3.x64.hash128],
   ])(value)
 )
-
-// @ts-ignore
-window.hashThought = hashThought

@@ -1,7 +1,7 @@
 import globals from '../globals'
 import { ActionCreator } from '../types'
 
-let timer: NodeJS.Timeout // eslint-disable-line fp/no-let
+let timer: ReturnType<typeof setTimeout> // eslint-disable-line fp/no-let
 
 interface Options {
   cancel?: boolean,

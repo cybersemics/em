@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { applyPatch, compare, deepClone } from 'fast-json-patch'
-import { Action, StoreEnhancer } from 'redux'
+import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import { State } from '../util/initialState'
 import { Index, Patch } from '../types'
@@ -112,15 +112,14 @@ const redoHandler = (state: State, patches: Patch[]) => {
 /**
  * Store enhancer to append the ability to undo/redo for all undoable actions.
  */
-// @ts-ignore
-const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer: (state: State, action: Action<string>) => State, initialState: State) => {
+const undoRedoReducerEnhancer: StoreEnhancer<any> = <S>(createStore: StoreEnhancerStoreCreator) => <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
   // eslint-disable-next-line fp/no-let
   let lastActionType: string
 
   /**
    * Reducer to handle undo/redo actions and add/merge inverse-patches for other actions.
    */
-  const undoAndRedoReducer = (state = initialState, action: Action<string>) => {
+  const undoAndRedoReducer = (state: State | undefined = initialState, action: A): State => {
     if (!state) return reducer(initialState, action)
     const { patches, inversePatches } = state as State
     const actionType = action.type
@@ -192,7 +191,6 @@ const undoRedoReducerEnhancer: StoreEnhancer = createStore => (reducer: (state: 
       : newState
   }
 
-  // @ts-ignore
   return createStore(undoAndRedoReducer, initialState)
 }
 

@@ -61,7 +61,6 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
   const toggleLogs = async () =>
     setLogs(logs ? null : await db.getLogs())
 
-  // @ts-ignore
   return <Modal id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
