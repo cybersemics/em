@@ -2,14 +2,12 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import assert from 'assert'
-import evaluate from 'static-eval'
 import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
-import * as esprima from 'esprima'
 import { store } from '../store'
 import { isMobile } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
-import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, ROOT_TOKEN } from '../constants'
+import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
@@ -32,7 +30,6 @@ import {
   isRoot,
   parseJsonSafe,
   pathToContext,
-  rankThoughtsSequential,
   rootedParentOf,
   subsetThoughts,
   sumSubthoughtsLength,
@@ -49,7 +46,6 @@ import {
   getNextRank,
   getSetting,
   getStyle,
-  getThought,
   getAllChildren,
   getChildrenRanked,
   getAllChildrenSorted,
@@ -244,56 +240,6 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop()
 })
 
-/** Evals the code at this thought. */
-const evalCode = ({ simplePath }: { simplePath: SimplePath }) => {
-
-  let codeResults // eslint-disable-line fp/no-let
-  let ast // eslint-disable-line fp/no-let
-
-  const state = store.getState()
-  const { thoughts } = state
-  const thought = getThought(state, headValue(simplePath))
-
-  // ignore parse errors
-  try {
-    // @ts-ignore
-    ast = esprima.parse(thought.code).body[0].expression
-  }
-  catch (e) {
-    // ts-ignore-line no-empty
-  }
-
-  try {
-    const env = {
-      // find: predicate => Object.keys(thoughtIndex).find(key => predicate(getThought(key, thoughtIndex))),
-      find: (predicate: (s: string) => boolean) =>
-        rankThoughtsSequential(Object.keys(thoughts.thoughtIndex).filter(predicate)),
-      findOne: (predicate: (s: string) => boolean) =>
-        Object.keys(thoughts.thoughtIndex).find(predicate),
-      home: () => getChildrenRanked(state, [ROOT_TOKEN]),
-      thought: {
-        ...getThought(state, headValue(simplePath)),
-        children: () => getChildrenRanked(state, pathToContext(simplePath))
-      }
-    }
-    codeResults = evaluate(ast, env)
-
-    // validate that each thought is ranked
-    if (codeResults && codeResults.length > 0) {
-      // @ts-ignore
-      codeResults.forEach(thought => {
-        assert(thought)
-        assert.notStrictEqual(thought.value, undefined)
-      })
-    }
-  }
-  catch (e) {
-    store.dispatch({ type: 'error', value: e.message })
-    console.error('Dynamic Context Execution Error', e.message)
-    codeResults = null
-  }
-}
-
 /********************************************************************
  * Component
  ********************************************************************/
@@ -379,13 +325,8 @@ export const SubthoughtsComponent = ({
   const globalSort = getSetting(state, ['Global Sort']) || 'None'
   const sortPreference = contextSort || globalSort
   const { cursor } = state
-  // TODO: This getThought call looking bit ambitious to me I am commenting the previous statement please check this.
-  const thought = getThought(state, headValue(simplePath))
 
   const resolvedPath = path ?? simplePath
-
-  // @ts-ignore
-  const codeResults = thought && thought.code ? evalCode({ thought, simplePath }) : null
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(pathToContext(resolvedPath))])
 
@@ -393,8 +334,6 @@ export const SubthoughtsComponent = ({
   // const subthought = perma(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
-    // @ts-ignore
-    : codeResults && codeResults.length && codeResults[0] && codeResults[0].value ? codeResults
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))
     : sortPreference === 'Alphabetical' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
     : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
