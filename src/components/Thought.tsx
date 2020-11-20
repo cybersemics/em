@@ -71,7 +71,7 @@ import {
  **********************************************************************/
 
 interface ThoughtProps {
-  cursorOffset?: number,
+  cursorOffset?: number | null,
   hideBullet?: boolean,
   homeContext?: boolean,
   isDraggable?: boolean,
@@ -96,7 +96,6 @@ interface ThoughtContainerProps {
   path: Path,
   count?: number,
   cursor?: Path | null,
-  cursorOffset?: number,
   depth?: number,
   expandedContextThought?: Path,
   hideBullet?: boolean,

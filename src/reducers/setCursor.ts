@@ -110,8 +110,6 @@ const setCursor = (state: State, {
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
-  // setTimeout(() => dispatch(dataIntegrityCheck(thoughtsResolved!)), 100)
-
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   const stateNew = equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
     // must re-render even if cursor has not moved
@@ -128,7 +126,6 @@ const setCursor = (state: State, {
     })
     : render({
       ...state,
-      ...offset != null ? { cursorOffset: offset } : null,
       // re-render so that <Subthoughts> are re-rendered
       // otherwise the cursor gets lost when changing focus from an edited thought
       ...tutorialNext
@@ -141,6 +138,9 @@ const setCursor = (state: State, {
       cursorHistory: cursorHistoryClear ? [] :
       cursorHistoryPop ? state.cursorHistory.slice(0, -1)
       : state.cursorHistory,
+      // set cursorOffset to null if editingValue is null
+      // (prevents Editable from calling setSelection on click since we want the default cursor placement in that case)
+      cursorOffset: offset ?? (state.editingValue ? 0 : null),
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,
       expanded,

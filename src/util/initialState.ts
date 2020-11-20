@@ -50,7 +50,7 @@ export interface State {
   cursor: Path | null,
   cursorBeforeSearch: Path | null,
   cursorHistory: Path[],
-  cursorOffset: number,
+  cursorOffset: number | null,
   dataNonce: number,
   draggedSimplePath?: SimplePath,
   draggingThought?: SimplePath,

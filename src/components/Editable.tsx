@@ -101,7 +101,7 @@ const updateToolbarPositionOnScroll = () => {
 
 interface EditableProps {
   path: Path,
-  cursorOffset?: number,
+  cursorOffset?: number | null,
   disabled?: boolean,
   isEditing?: boolean,
   rank: number,
@@ -306,10 +306,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       contentRef.current &&
       editMode &&
       !noteFocus &&
-      (cursorOffset !== null || !window.getSelection()?.focusNode) &&
+      (state.cursorOffset !== null || !window.getSelection()?.focusNode) &&
       !dragHold
     ) {
-      setSelection(contentRef.current, { offset: cursorOffset })
+      setSelection(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
     }
 
     /** Flushes pending edits. */
@@ -339,6 +339,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     // disabled={readonly} removes contenteditable property
 
     dispatch(setEditingValue(newValue))
+
     if (newValue === oldValue) {
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
