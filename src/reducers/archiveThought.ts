@@ -124,23 +124,18 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
 
   return reducerFlow([
 
-    // set the cursor away from the current cursor before archiving so that existingThoughtMove does not move it
-    setCursor({
-      path: cursorNew,
-      editing: state.editing,
-      offset,
-    }),
+    ...isDeletable
 
-    isDeletable
-      ? existingThoughtDelete({
-        context: showContexts ? context : parentOf(pathToContext(simplePath)),
-        showContexts,
-        thoughtRanked: head(simplePath),
-      })
-      : reducerFlow([
+      ? [
+        existingThoughtDelete({
+          context: showContexts ? context : parentOf(pathToContext(simplePath)),
+          showContexts,
+          thoughtRanked: head(simplePath),
+        })]
 
+      : [
         // create =archive if it does not exist
-        state => !hasChild(state, context, '=archive')
+        (state: State) => !hasChild(state, context, '=archive')
           ? newThought(state, {
             at: pathParent,
             insertNewSubthought: true,
@@ -159,15 +154,21 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
         }),
 
         // execute existingThoughtMove after newThought has updated the state
-        state => {
-          return existingThoughtMove(state, {
-            oldPath: showContexts ? simplePath : path,
-            // TODO: Are we sure pathToArchive cannot return null?
-            newPath: pathToArchive(state, showContexts ? simplePath : path, context)!,
-            offset
-          })
-        }
-      ])
+        (state: State) => existingThoughtMove(state, {
+          oldPath: path,
+          // TODO: Are we sure pathToArchive cannot return null?
+          newPath: pathToArchive(state, showContexts ? simplePath : path, context)!,
+          offset
+        })
+
+      ],
+
+    setCursor({
+      path: cursorNew,
+      editing: state.editing,
+      offset,
+    }),
+
   ])(state)
 }
 

@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending } from '../selectors'
+import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
 
@@ -45,13 +45,15 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   newPath: Path,
   offset?: number,
 }) => {
+  const oldSimplePath = simplifyPath(state, oldPath)
+  const newSimplePath = simplifyPath(state, newPath)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
-  const oldThoughts = pathToContext(oldPath)
-  const newThoughts = pathToContext(newPath)
+  const oldThoughts = pathToContext(oldSimplePath)
+  const newThoughts = pathToContext(newSimplePath)
   const value = head(oldThoughts)
   const key = hashThought(value)
-  const oldRank = headRank(oldPath)
-  const newRank = headRank(newPath)
+  const oldRank = headRank(oldSimplePath)
+  const newRank = headRank(newSimplePath)
   const oldContext = rootedParentOf(oldThoughts)
   const newContext = rootedParentOf(newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
@@ -62,7 +64,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const exactThought = oldThought.contexts.find(thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank)
 
   // find id of head thought from exact thought if not available in oldPath
-  const id = headId(oldPath) || exactThought?.id
+  const id = headId(oldSimplePath) || exactThought?.id
 
   // if move is used for archive then update the archived field to latest timestamp
   const archived = isArchived || !exactThought
@@ -111,7 +113,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = []): Index<RecursiveMoveResult> => {
 
     const newLastRank = getNextRank(state, pathToContext(pathNew))
-    const oldThoughts = pathToContext(pathOld)
+    const simplePathOld = simplifyPath(state, pathOld)
+    const oldThoughts = pathToContext(simplePathOld)
 
     return getChildrenRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
