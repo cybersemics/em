@@ -1,12 +1,10 @@
 import _ from 'lodash'
-import { isMobile } from '../browser'
 import { RANKED_ROOT } from '../constants'
 import { State } from '../util/initialState'
 import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
-  asyncFocus,
   ellipsize,
   equalThoughtValue,
   head,
@@ -130,10 +128,6 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
     thoughts.length > 1 ? [rootedParentOf(path), head(context).length]
     // Case IV: delete very last thought; remove cursor
     : [null, undefined]
-
-  if (isMobile && state.editing) {
-    asyncFocus()
-  }
 
   return reducerFlow([
 
