@@ -2,18 +2,18 @@ import _ from 'lodash'
 import { isMobile } from '../browser'
 import { RANKED_ROOT } from '../constants'
 import { State } from '../util/initialState'
-import { Child, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
 import {
   asyncFocus,
-  parentOf,
   ellipsize,
+  equalThoughtValue,
   head,
   headValue,
   isDivider,
   isThoughtArchived,
-  pathToArchive,
+  parentOf,
   pathToContext,
   reducerFlow,
   rootedParentOf,
@@ -22,8 +22,9 @@ import {
 
 // selectors
 import {
-  getContextsSortedAndRanked,
   getAllChildren,
+  getContextsSortedAndRanked,
+  getPrevRank,
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
@@ -41,6 +42,18 @@ import {
   newThought,
   setCursor,
 } from '../reducers'
+
+/** Returns path to the archive of the given context. */
+export const pathToArchive = (state: State, path: Path, context: Context): Path | null => {
+  const rankedArchive = getAllChildren(state, context)
+    .find(equalThoughtValue('=archive'))
+  if (!rankedArchive) return null
+  const archivePath = rankedArchive
+    ? [...parentOf(path), rankedArchive]
+    : parentOf(path)
+  const newRank = getPrevRank(state, pathToContext(archivePath))
+  return [...parentOf(path), rankedArchive, { ...head(path), rank: newRank }]
+}
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
  *
