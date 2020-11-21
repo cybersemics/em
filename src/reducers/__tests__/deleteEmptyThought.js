@@ -1,4 +1,3 @@
-import { act } from 'react-dom/test-utils'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
@@ -220,20 +219,17 @@ describe('mount', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
-  it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
+  it('after deleteEmptyThought, caret should move to end of previous thought', () => {
     store.dispatch([
       { type: 'newThought', value: 'apple' },
       { type: 'newThought' },
       { type: 'deleteEmptyThought' }
     ])
-    act(jest.runOnlyPendingTimers)
+    jest.runOnlyPendingTimers()
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 
-  // TODO: This broke on iterative loading for some reason
-  // Why is offset set to 6 (end of "banana") after importing?
-  // And why doesn't setCursor with { offset: 0 } reset it?
-  it.skip('after merging siblings, caret should be in between', async () => {
+  it('after merging siblings, caret should be in between', () => {
     store.dispatch([
       {
         type: 'importText',
@@ -245,7 +241,7 @@ describe('mount', () => {
       { type: 'setCursor', path: [{ value: 'banana', rank: 1 }] },
       { type: 'deleteEmptyThought' },
     ])
-    act(jest.runOnlyPendingTimers)
+    jest.runOnlyPendingTimers()
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 
