@@ -1,5 +1,6 @@
 {
   "reject": [
+    "ipfs-http-client",
     "react-dnd",
     "react-dnd-html5-backend",
     "react-dnd-multi-backend",
