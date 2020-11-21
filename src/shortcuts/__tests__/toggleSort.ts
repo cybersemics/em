@@ -1,10 +1,8 @@
-import { NOOP, RANKED_ROOT } from '../../constants'
+import { RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
-
-const event = { preventDefault: NOOP } as Event
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
 
@@ -26,7 +24,7 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
     { value: 'a', rank: '0' },
   ] })
 
-  executeShortcut(toggleSortShortcut, { store, type: 'keyboard', event })
+  executeShortcut(toggleSortShortcut, { store })
 
   expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
 })
@@ -51,7 +49,7 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical)
 
   store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: '0' }] })
 
-  executeShortcut(toggleSortShortcut, { store, type: 'keyboard', event })
+  executeShortcut(toggleSortShortcut, { store })
 
   expect(attribute(store.getState(), ['a'], '=sort')).toBe(null)
 })
@@ -77,7 +75,7 @@ it.skip('override global sort', () => {
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
   ])
 
-  executeShortcut(toggleSortShortcut, { store, type: 'keyboard', event })
+  executeShortcut(toggleSortShortcut, { store })
 
   expect(attribute(store.getState(), ['a'], '=sort')).toBe('None')
 })

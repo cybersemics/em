@@ -1,10 +1,8 @@
-import { NOOP, RANKED_ROOT } from '../../constants'
+import { RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
 import proseViewShortcut from '../proseView'
 import executeShortcut from '../../test-helpers/executeShortcut'
-
-const event = { preventDefault: NOOP } as Event
 
 it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {
 
@@ -23,7 +21,7 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
   ])
 
-  executeShortcut(proseViewShortcut, { store, type: 'keyboard', event })
+  executeShortcut(proseViewShortcut, { store })
 
   // parent of cursor should have =view attribute set to Prose
   expect(attribute(store.getState(), ['a'], '=view')).toBe('Prose')
@@ -48,7 +46,7 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
   ])
 
-  executeShortcut(proseViewShortcut, { store, type: 'keyboard', event })
+  executeShortcut(proseViewShortcut, { store })
 
   // parent of cursor should have =view attribute set to Prose
   expect(attribute(store.getState(), ['a'], '=view')).toBe('Prose')
@@ -73,7 +71,7 @@ it('toggle off prose view of parent of cursor', () => {
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
   ])
 
-  executeShortcut(proseViewShortcut, { store, type: 'keyboard', event })
+  executeShortcut(proseViewShortcut, { store })
 
   // parent of cursor should not have =view attribute set to Prose
   expect(attribute(store.getState(), ['a'], '=view')).toBe(null)

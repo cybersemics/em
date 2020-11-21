@@ -1,11 +1,9 @@
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 
 import { createTestStore } from '../../test-helpers/createTestStore'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 import executeShortcut from '../../test-helpers/executeShortcut'
-
-const event = { preventDefault: NOOP } as Event
 
 it('do nothing when there is no cursor', async () => {
 
@@ -16,7 +14,7 @@ it('do nothing when there is no cursor', async () => {
     { type: 'setCursor', path: null },
   ])
 
-  executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
+  executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
@@ -42,7 +40,7 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
 
   store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) })
 
-  executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
+  executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
@@ -71,7 +69,7 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
 
   store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 
-  executeShortcut(deleteEmptyThoughtOrOutdent, { store, type: 'keyboard', event })
+  executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 

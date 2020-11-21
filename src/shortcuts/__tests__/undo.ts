@@ -1,4 +1,4 @@
-import { MODALS, NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { MODALS, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
@@ -8,7 +8,6 @@ import { initialState } from '../../util'
 import * as undoUtils from '../../util/isUndoEnabled'
 
 describe('undo shortcut', () => {
-  const event = { preventDefault: NOOP } as Event
   const isUndoEnabled = jest.spyOn(undoUtils, 'isUndoEnabled')
 
   it('dispatches undo action on shortcut if undo is enabled', () => {
@@ -18,7 +17,7 @@ describe('undo shortcut', () => {
     const mockStore = createMockStore()
     const store = mockStore(initialState())
 
-    executeShortcut(undoShortcut, { store, type: 'keyboard', event })
+    executeShortcut(undoShortcut, { store })
 
     expect(store.getActions()).toEqual([{ type: 'undoAction' }])
   })
@@ -30,7 +29,7 @@ describe('undo shortcut', () => {
     const mockStore = createMockStore()
     const store = mockStore(initialState())
 
-    executeShortcut(undoShortcut, { store, type: 'keyboard', event })
+    executeShortcut(undoShortcut, { store })
 
     expect(store.getActions()).toEqual([])
   })

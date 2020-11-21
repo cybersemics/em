@@ -1,10 +1,8 @@
-import { NOOP, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import indentOnSpace from '../indentOnSpace'
 import executeShortcut from '../../test-helpers/executeShortcut'
-
-const event = { preventDefault: NOOP } as Event
 
 it('indent on adding space at the beginning of the thought', async () => {
 
@@ -22,7 +20,7 @@ it('indent on adding space at the beginning of the thought', async () => {
 
   store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 
-  executeShortcut(indentOnSpace, { store, type: 'keyboard', event })
+  executeShortcut(indentOnSpace, { store })
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 
@@ -55,7 +53,7 @@ it('prevent indent on adding space at the beginning of the immovable thought', a
     path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }]
   })
 
-  executeShortcut(indentOnSpace, { store, type: 'keyboard', event })
+  executeShortcut(indentOnSpace, { store })
 
   const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
 

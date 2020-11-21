@@ -1,10 +1,8 @@
-import { NOOP, RANKED_ROOT } from '../../constants'
+import { RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
 import pinSubthoughtsShortcut from '../pinSubthoughts'
 import executeShortcut from '../../test-helpers/executeShortcut'
-
-const event = { preventDefault: NOOP } as Event
 
 it('toggle on =pinChildren attribute of cursor (initial state without =pinChildren)', async () => {
 
@@ -27,7 +25,7 @@ it('toggle on =pinChildren attribute of cursor (initial state without =pinChildr
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
   ])
 
-  executeShortcut(pinSubthoughtsShortcut, { store, type: 'keyboard', event })
+  executeShortcut(pinSubthoughtsShortcut, { store })
 
   // parent of cursor should have =pinChildren set to true
   expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('true')
@@ -56,7 +54,7 @@ it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set t
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
   ])
 
-  executeShortcut(pinSubthoughtsShortcut, { store, type: 'keyboard', event })
+  executeShortcut(pinSubthoughtsShortcut, { store })
 
   // parent of cursor should have =pinChildren set to true
   expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('true')
@@ -85,7 +83,7 @@ it('toggle off =pinChildren attribute of cursor', async () => {
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
   ])
 
-  executeShortcut(pinSubthoughtsShortcut, { store, type: 'keyboard', event })
+  executeShortcut(pinSubthoughtsShortcut, { store })
 
   // parent of cursor should not have =pinChildren set to true
   expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('false')
