@@ -33,9 +33,7 @@ beforeEach(async () => {
   wrapper = await createTestApp()
 })
 
-afterEach(async () => {
-  await cleanupTestApp()
-})
+afterEach(cleanupTestApp)
 
 it('normal view', () => {
 

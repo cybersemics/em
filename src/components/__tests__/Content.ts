@@ -10,10 +10,7 @@ beforeEach(async () => {
   wrapper = await createTestApp()
 })
 
-afterEach(async () => {
-  await cleanupTestApp()
-  wrapper = null as any
-})
+afterEach(cleanupTestApp)
 
 it('show NewThoughtInstructions when there are no visible thoughts in the root context', async () => {
 

@@ -35,9 +35,7 @@ beforeEach(async () => {
   wrapper = await createTestApp()
 })
 
-afterEach(async () => {
-  await cleanupTestApp()
-})
+afterEach(cleanupTestApp)
 
 /** Find DragSource inside Thoughts component. */
 const findThoughtSource = (context: Context) => wrapper.find(Thought).filterWhere(whereContext(context)).at(0).childAt(0)

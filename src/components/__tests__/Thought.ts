@@ -11,10 +11,7 @@ beforeEach(async () => {
   wrapper = await createTestApp()
 })
 
-afterEach(async () => {
-  await cleanupTestApp()
-  wrapper = null as any
-})
+afterEach(cleanupTestApp)
 
 it('create, navigate, and edit thoughts', async () => {
 
