@@ -126,6 +126,7 @@
         "flatTernaryExpressions": true
       }
     ],
+    "multiline-ternary": 0,
     "no-var": 2,
     "object-curly-newline": 0,
     "object-property-newline": 0,

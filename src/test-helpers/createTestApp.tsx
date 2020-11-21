@@ -1,4 +1,4 @@
-import React, { createRef} from 'react'
+import React, { createRef } from 'react'
 import { act } from 'react-dom/test-utils'
 import { mount, ReactWrapper } from 'enzyme'
 import { wrapInTestContext } from 'react-dnd-test-utils'
