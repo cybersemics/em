@@ -150,7 +150,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       : null,
 
     // tutorial step 1
-    tutorialStepNewThoughtCompleted ? tutorialNext({})
+    tutorialStepNewThoughtCompleted ? (state: State) => tutorialNext(state)
     // some hints are rolled back when a new thought is created
     : tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT1_PARENT })
     : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT1 })
