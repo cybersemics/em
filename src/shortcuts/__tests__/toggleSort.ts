@@ -1,8 +1,9 @@
-import { RANKED_ROOT } from '../../constants'
+import { EM_TOKEN, RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { attribute } from '../../selectors'
+import { attribute, rankThoughtsFirstMatch } from '../../selectors'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import { ActionCreator } from '../../types'
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
 
@@ -54,14 +55,12 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical)
   expect(attribute(store.getState(), ['a'], '=sort')).toBe(null)
 })
 
-it.skip('override global sort', () => {
+it('override global Alphabetical with local None', () => {
 
   const store = createTestStore()
 
-  // TODO: Set global sort
-
-  // import thoughts
   store.dispatch([
+
     {
       type: 'importText',
       path: RANKED_ROOT,
@@ -72,7 +71,17 @@ it.skip('override global sort', () => {
           - c
           - e
     ` },
+
+    ((dispatch, getState) => dispatch({
+      type: 'existingThoughtChange',
+      context: [EM_TOKEN, 'Settings', 'Global Sort'],
+      oldValue: 'None',
+      newValue: 'Alphabetical',
+      path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None'])
+    })) as ActionCreator,
+
     { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+
   ])
 
   executeShortcut(toggleSortShortcut, { store })
