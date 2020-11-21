@@ -1,12 +1,13 @@
-import React, { createRef } from 'react'
+import React, { createRef} from 'react'
 import { act } from 'react-dom/test-utils'
-import { mount } from 'enzyme'
+import { mount, ReactWrapper } from 'enzyme'
 import { wrapInTestContext } from 'react-dnd-test-utils'
 
 import { initialize } from '../initialize'
 import { Provider } from 'react-redux'
 import { store } from '../store'
 import * as db from '../data-providers/dexie'
+import { Await } from '../types'
 
 // components
 import AppComponent from '../components/AppComponent'
@@ -28,7 +29,7 @@ export const App = React.forwardRef(() =>
 )
 
 // eslint-disable-next-line fp/no-let
-let cleanup: any
+let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
@@ -38,11 +39,11 @@ const createTestApp = async () => {
 
   await act(async () => {
 
+    jest.useFakeTimers()
+
     // calls initEvents, which must be manually cleaned up
     const init = await initialize()
     cleanup = init.cleanup
-
-    jest.useFakeTimers()
 
     const root = document.body.appendChild(document.createElement('div'))
 
@@ -64,8 +65,8 @@ const createTestApp = async () => {
     document.DND = dndRef.current
   })
 
-  // TODO: Is there a better way to type this?
-  return wrapper as unknown as ReturnType<typeof mount>
+  // since act cannot return anything, we have to wait for wrapper to be set and then convince Typescript that it is not being used before it is assigned
+  return wrapper as unknown as ReactWrapper<unknown, unknown>
 }
 
 /** Clear store, localStorage, local db, and window event handlers. */
