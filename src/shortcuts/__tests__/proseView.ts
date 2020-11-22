@@ -1,8 +1,11 @@
 import { RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
-import proseViewShortcut from '../proseView'
 import executeShortcut from '../../test-helpers/executeShortcut'
+
+// must be imported after selectors to avoid circular import
+import proseViewShortcut from '../proseView'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {
 
@@ -18,7 +21,7 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
           - b
             - c
     ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(proseViewShortcut, { store })
@@ -43,7 +46,7 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
           - b
             - c
     ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(proseViewShortcut, { store })
@@ -68,7 +71,7 @@ it('toggle off prose view of parent of cursor', () => {
           - b
             - c
     ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(proseViewShortcut, { store })
