@@ -183,7 +183,7 @@ it('moving cursor thought should update cursor', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
-    .toEqual([{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }])
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }])
 
 })
 
@@ -205,7 +205,7 @@ it('moving ancestor of cursor should update cursor', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
-    .toEqual([{ value: 'b', rank: -1 }, { value: 'b1', rank: 0 }, { value: 'b1.1', rank: 0 }])
+    .toMatchObject([{ value: 'b', rank: -1 }, { value: 'b1', rank: 0 }, { value: 'b1.1', rank: 0 }])
 
 })
 
@@ -228,7 +228,7 @@ it('moving unrelated thought should not update cursor', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
-    .toEqual([{ value: 'a', rank: 0 }])
+    .toMatchObject([{ value: 'a', rank: 0 }])
 
 })
 

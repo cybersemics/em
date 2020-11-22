@@ -22,6 +22,7 @@ import {
 
 // util
 import {
+  createId,
   ellipsize,
   head,
   headValue,
@@ -126,6 +127,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       ? insertNewSubthought || !simplePath ? getPrevRank(state, thoughts) : getRankBefore(state, simplePath)
       : insertNewSubthought || !simplePath ? getNextRank(state, thoughts) : getRankAfter(state, simplePath)
 
+  const id = createId()
+
   const reducers = [
 
     // newThoughtSubmit
@@ -136,15 +139,18 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       // inserting a new child into a context functions the same as in the normal thought view
       addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
       rank: newRank,
-      value
+      value,
+      id,
     }),
 
     // setCursor
     !preventSetCursor
       ? setCursor({
         editing: true,
-        path: (insertNewSubthought ? unroot(path) : parentOf(path))
-          .concat({ value, rank: newRank }),
+        path: unroot([
+          ...insertNewSubthought ? path : parentOf(path),
+          { value, rank: newRank, id }
+        ]),
         offset: offset != null ? offset : value.length,
       })
       : null,

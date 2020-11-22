@@ -5,12 +5,21 @@ import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp
 import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent } from '../types'
 
+interface Payload {
+  context: Context,
+  value: string,
+  rank: number,
+  id?: string,
+  addAsContext?: boolean,
+}
 /**
  * Creates a new thought in the given context.
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: { context: Context, value: string, rank: number, addAsContext?: boolean }) => {
+const newThoughtSubmit = (state: State, { context, value, rank, id, addAsContext }: Payload) => {
+
+  id = id || createId()
 
   // create thought if non-existent
   const thought: Lexeme = {
@@ -22,7 +31,6 @@ const newThoughtSubmit = (state: State, { context, value, rank, addAsContext }: 
     }
   }
 
-  const id = createId()
   const contextActual = addAsContext ? [value] : context
 
   // store children indexed by the encoded context for O(1) lookup of children

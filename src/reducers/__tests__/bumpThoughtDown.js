@@ -34,7 +34,7 @@ it('cursor should stay in empty thought', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor)
-    .toEqual([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
+    .toMatchObject([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
 
 })
 
