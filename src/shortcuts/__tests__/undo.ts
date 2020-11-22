@@ -6,6 +6,8 @@ import executeShortcut from '../../test-helpers/executeShortcut'
 import undoShortcut from '../undo'
 import { initialState } from '../../util'
 import * as undoUtils from '../../util/isUndoEnabled'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { ActionCreator } from '../../types'
 
 describe('undo shortcut', () => {
   const isUndoEnabled = jest.spyOn(undoUtils, 'isUndoEnabled')
@@ -48,7 +50,7 @@ it('undo thought change', async () => {
         - a
         - b`
     },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] },
+    setCursorFirstMatchActionCreator(['a']),
     {
       type: 'existingThoughtChange',
       newValue: 'aa',
@@ -82,7 +84,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
         - c
         - d`
     },
-    { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
+    setCursorFirstMatchActionCreator(['b']),
     { type: 'indent' },
     {
       type: 'existingThoughtChange',
@@ -95,7 +97,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
     { type: 'cursorBack' },
     { type: 'moveThoughtDown' },
     { type: 'cursorDown' },
-    { type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'b1', rank: 0 }] },
+    setCursorFirstMatchActionCreator(['a', 'b1']),
     // undo 'moveThoughtDown', 'cursorDown' and 'setCursor'
     { type: 'undoAction' }
   ])
@@ -280,7 +282,7 @@ it('state.alert is omitted from the undo patch', () => {
           - A
           - B`
     },
-    { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
+    setCursorFirstMatchActionCreator(['a']),
     { type: 'archiveThought' },
   ])
   const { inversePatches } = store.getState()
