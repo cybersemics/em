@@ -21,8 +21,6 @@ const exportOptions: ExportOption[] = [
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
-const clipboard = new ClipboardJS('.copy-clipboard-btn')
-
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport = () => {
 
@@ -62,7 +60,7 @@ const ModalExport = () => {
 
   const exportThoughtsPhrase = isRoot(cursor)
     ? ` all ${numDescendants} thoughts`
-    : <span>"{titleShort}"{numDescendants > 0 ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}</span>
+    : `"${titleShort}"${numDescendants > 0 ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}`
   const exportMessage = <span>
     {exportWord} {exportThoughtsPhrase}
     <span> as <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a></span>
@@ -86,26 +84,36 @@ const ModalExport = () => {
     }, RENDER_DELAY)
 
     document.addEventListener('click', onClickOutside)
+
+    const clipboard = new ClipboardJS('.copy-clipboard-btn')
+
+    clipboard.on('success', () => {
+
+      dispatch({ type: 'modalRemindMeLater', id: 'help' })
+      dispatch(alert(`Copied ${exportThoughtsPhrase} to the clipboard`))
+
+      clearTimeout(globals.errorTimer)
+      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
+    })
+
+    clipboard.on('error', e => {
+
+      console.error(e)
+      dispatch({ type: 'error', value: 'Error copying thoughts' })
+
+      clearTimeout(globals.errorTimer)
+      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
+    })
+
     return () => {
       document.removeEventListener('click', onClickOutside)
       clearTimeout(exportContentTimer)
+      clipboard.destroy()
     }
   })
 
   const [publishing, setPublishing] = useState(false)
   const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
-
-  clipboard.on('success', () => {
-    dispatch(alert('Thoughts copied to clipboard'))
-    clearTimeout(globals.errorTimer)
-    globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
-  })
-
-  clipboard.on('error', () => {
-    dispatch({ type: 'error', value: 'Error copying thoughts' })
-    clearTimeout(globals.errorTimer)
-    globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
-  })
 
   /** Updates the isOpen state when clicked outside modal. */
   const onClickOutside = (e: MouseEvent) => {
@@ -170,12 +178,6 @@ const ModalExport = () => {
     }
 
     setPublishing(false)
-  }
-
-  /** Closes the modal. */
-  const closeModal = () => {
-    dispatch(alert(null))
-    dispatch({ type: 'modalRemindMeLater', id: 'help' })
   }
 
   return (
@@ -254,7 +256,10 @@ const ModalExport = () => {
 
           {(publishing || publishedCIDs.length > 0) && <button
             className='modal-btn-cancel'
-            onClick={closeModal}
+            onClick={() => {
+              dispatch(alert(null))
+              dispatch({ type: 'modalRemindMeLater', id: 'help' })
+            }}
             style={{
               fontSize: '14px',
               ...themeColor
