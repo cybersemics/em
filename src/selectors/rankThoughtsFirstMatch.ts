@@ -55,9 +55,8 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
       value,
       // NOTE: we cannot throw an error if there is no parent, as it may be a floating context
       // unfortunately this that there is no protection against a (incorrectly) missing parent
-      rank: parent ? parent.rank : 0,
-      // TODO: parent does not have an id
-      id: ''
+      rank: parent?.rank ?? 0,
+      id: parent?.id || ''
     }
 
     pathResult = unroot(pathResult.concat(thoughtRanked))

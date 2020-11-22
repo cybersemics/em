@@ -118,7 +118,6 @@ describe('context view', () => {
       .toMatchObject({
         showContexts: true,
         simplePath: [{
-          id: '',
           value: 'b',
           rank: 1,
         }, {
