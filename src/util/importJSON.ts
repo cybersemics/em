@@ -38,14 +38,6 @@ const skipRootThought = (blocks: Block[]) => {
   return head.children.length > 0 ? [...head.children, ...tail] : tail
 }
 
-/** Calculate last thought of the first level, as this is where the selection will be restored to. */
-const calculateLastThoughtFirstLevel = (rankIncrement: number, rankStart: number, blocks: Block[]): Child => {
-  const lastThoughtFirstLevelIndex = blocks.length - 1
-  const lastThoughtFirstLevel = blocks[lastThoughtFirstLevelIndex]
-  const rank = lastThoughtFirstLevelIndex * rankIncrement + rankStart
-  return { value: lastThoughtFirstLevel.scope, rank }
-}
-
 /** Generates a Parent and Lexeme for inserting a new thought into a context. */
 const insertThought = (state: State, parentOld: Parent, value: string, context: Context, rank: number, created: Timestamp = timestamp(), lastUpdated: Timestamp = timestamp()): ThoughtPair => {
   const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
@@ -176,14 +168,14 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(simplePath)).length === 0
   const rankStart = getRankAfter(state, simplePath)
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
+  const rootedContext = pathToContext(rootedParentOf(simplePath))
+  const contextEncoded = hashContext(rootedContext)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
     const thought = getThought(state, '')
     if (thought) {
       initialThoughtIndex[hashThought('')] = removeContext(thought, context, headRank(simplePath))
-      const rootedContext = pathToContext(rootedParentOf(simplePath))
-      const contextEncoded = hashContext(rootedContext)
       initialContextIndex[contextEncoded] = {
         id: contextEncoded,
         ...initialContextIndex[contextEncoded],
@@ -198,13 +190,19 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const importPath = (destEmpty ? rootedParentOf : ID)(simplePath)
   const importContext = pathToContext(importPath)
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
-  const lastChildFirstLevel = calculateLastThoughtFirstLevel(rankIncrement, rankStart, blocksNormalized)
 
-  const { contextIndex, thoughtIndex } = saveThoughts(state, initialContextIndex, initialThoughtIndex, importContext, blocksNormalized, rankIncrement, rankStart, lastUpdated)
+  const { contextIndex, thoughtIndex } = saveThoughts(state, { ...initialContextIndex }, { ...initialThoughtIndex }, importContext, blocksNormalized, rankIncrement, rankStart, lastUpdated)
+
+  // get the last child imported in the first level so the cursor can be set
+  const parent = initialContextIndex[contextEncoded]
+  const lastChildIndex = (parent?.children.length || 0) + blocksNormalized.length - 1
+  const importContextEncoded = hashContext(pathToContext(importPath))
+  const lastChildFirstLevel = contextIndex[importContextEncoded].children[lastChildIndex]
+  const lastImported = unroot([...importPath, lastChildFirstLevel])
 
   return {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-    lastImported: unroot([...importPath, lastChildFirstLevel]),
+    lastImported,
   }
 }
