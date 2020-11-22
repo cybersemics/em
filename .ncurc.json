@@ -1,11 +1,32 @@
 {
   "reject": [
-    "ipfs-http-client",
+
+    "typedoc",
     "react-dnd",
     "react-dnd-html5-backend",
     "react-dnd-multi-backend",
     "react-dnd-touch-backend",
-    "typedoc",
-    "typescript"
+
+    // TypeError: TextDecoder is not a constructor
+    // TextDecoder is not exposed by jsdom v16
+    // https://github.com/jsdom/jsdom/pull/2928
+    // https://github.com/jsdom/whatwg-encoding/pull/11
+    "ipfs-http-client",
+
+    // wait for react-scripts v4 and upgrade together
+    "typescript",
+    "react",
+    "react-dom",
+    "react-scripts",
+    "@typescript-eslint/eslint-plugin",
+    "@typescript-eslint/parser",
+
+    // uses rules added in eslint v7, but react-scripts uses v6.8.0
+    "eslint-config-standard",
+
+    // Nested ArrowFunctionExpression false negatives after v30
+    // https://github.com/gajus/eslint-plugin-jsdoc/issues/656
+    "eslint-plugin-jsdoc",
+
   ]
 }
