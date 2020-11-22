@@ -4,12 +4,13 @@ import { State } from '../util/initialState'
 
 // util
 import {
-  parentOf,
   ellipsize,
+  head,
   headRank,
   headValue,
   isEM,
   isRoot,
+  parentOf,
   pathToContext,
   rootedParentOf,
 } from '../util'
@@ -39,17 +40,14 @@ const indent = (state: State) => {
   // store selection offset before existingThoughtMove is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const cursorNew = parentOf(cursor).concat(
+  const cursorNew = [
+    ...parentOf(cursor),
+    prev,
     {
-      // only use value and rank
-      value: prev.value,
-      rank: prev.rank
-    },
-    {
-      value: headValue(cursor),
+      ...head(cursor),
       rank: getNextRank(state, pathToContext(parentOf(cursor).concat(prev)))
     }
-  )
+  ]
 
   return existingThoughtMove(state, {
     oldPath: cursor,
