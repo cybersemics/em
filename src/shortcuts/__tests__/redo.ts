@@ -1,6 +1,8 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { ActionCreator } from '../../types'
 
 it('redo thought change', async () => {
 
@@ -14,7 +16,7 @@ it('redo thought change', async () => {
         - a
         - b`
     },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] },
+    { type: 'cursorUp' },
     {
       type: 'existingThoughtChange',
       newValue: 'aa',
@@ -60,7 +62,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
         - c`
     },
     { type: 'cursorDown' },
-    { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
+    { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },
     {
@@ -70,7 +72,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
       context: [ROOT_TOKEN],
       path: [{ value: 'a', rank: 0 }]
     },
-    { type: 'setCursor', path: [{ value: 'arizona', rank: 0 }, { value: 'b', rank: 0 }] },
+    setCursorFirstMatchActionCreator(['arizona', 'b']),
     { type: 'cursorBack' },
     { type: 'cursorUp' },
     { type: 'cursorDown' },
