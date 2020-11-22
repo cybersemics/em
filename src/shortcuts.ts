@@ -199,7 +199,7 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string) => {
   const keyboard = typeof keyboardOrString === 'string'
     ? { key: keyboardOrString as string }
     : keyboardOrString
-  return (keyboard?.alt ? 'Alt' + ' + ' : '') +
+  return (keyboard?.alt ? 'Alt + ' : '') +
     (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.control ? 'Control + ' : '') +
     (keyboard.option ? 'Option + ' : '') +

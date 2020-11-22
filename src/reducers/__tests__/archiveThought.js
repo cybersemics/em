@@ -260,7 +260,7 @@ it('empty thought should be archived if it has descendants', () => {
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - =archive
-    -${' '}
+    - ${''/* prevent trim_trailing_whitespace */}
       - b
   - a`)
 

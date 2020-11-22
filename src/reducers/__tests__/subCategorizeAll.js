@@ -24,7 +24,7 @@ it('subcategorize multiple thoughts', () => {
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
-    -${' '}
+    - ${''/* prevent trim_trailing_whitespace */}
       - b
       - c`)
 
@@ -44,7 +44,7 @@ it('subcategorize multiple thoughts in the root', () => {
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
-  -${' '}
+  - ${''/* prevent trim_trailing_whitespace */}
     - a
     - b`)
 

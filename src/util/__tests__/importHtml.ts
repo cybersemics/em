@@ -146,7 +146,7 @@ it('empty thought with nested li\'s', () => {
 </li>
 `))
     .toBe(`
-- ` + `
+- ${''/* prevent trim_trailing_whitespace */}
   - x
   - y
 `)
@@ -280,7 +280,7 @@ it('blank thoughts with subthoughts', () => {
       - 7/27
       - 7/21
       - 7/17
-    - ` /* prevent trim_trailing_whitespace */ + `
+    - ${''/* prevent trim_trailing_whitespace */}
       - Integral Living Room
       - Maitri 5
       - DevCon

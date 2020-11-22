@@ -6,6 +6,8 @@
     "jest": true
   },
   "extends": [
+    // extend from react-scripts config
+    "react-app",
     "plugin:react/recommended",
     "standard",
     "plugin:import/typescript"
@@ -165,19 +167,6 @@
     "fp/no-this": 2,
     "fp/no-valueof-field": 2,
 
-    // react
-    "react/jsx-curly-spacing": 2,
-    "react/jsx-equals-spacing": 2,
-    "react/jsx-tag-spacing": [
-      2,
-      {
-        "beforeSelfClosing": "allow"
-      }
-    ],
-    "react/no-children-prop": 0,
-    "react/no-unescaped-entities": 0,
-    "react/prop-types": 0,
-
     // jsdoc
     "jsdoc/check-alignment": 2,
     "jsdoc/check-indentation": 2,
@@ -208,6 +197,25 @@
           "ClassExpression": true
         }
       }
-    ]
+    ],
+
+    // jrx-a11y
+    "jsx-a11y/anchor-is-valid": 0,
+
+    // react
+    "react/jsx-curly-spacing": 2,
+    "react/jsx-equals-spacing": 2,
+    "react/jsx-tag-spacing": [
+      2,
+      {
+        "beforeSelfClosing": "allow"
+      }
+    ],
+    "react/no-children-prop": 0,
+    "react/no-unescaped-entities": 0,
+    "react/prop-types": 0,
+
+    // react-hooks
+    "react-hooks/exhaustive-deps": 0
   }
 }

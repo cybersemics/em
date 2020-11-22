@@ -59,7 +59,7 @@ it('do not delete thought with children', () => {
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${ROOT_TOKEN}
-  -${' '}
+  - ${''/* prevent trim_trailing_whitespace */}
     - 1`)
 
 })

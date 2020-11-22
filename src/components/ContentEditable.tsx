@@ -14,7 +14,8 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
  * Content Editable Component.
  */
 const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...props }: ContentEditableProps) => {
-  const contentRef = innerRef || useRef<HTMLDivElement>(null)
+  const newContentRef = useRef<HTMLDivElement>(null)
+  const contentRef = innerRef || newContentRef
   const prevHtmlRef = useRef<string>(html)
   const allowInnerHTMLChange = useRef<boolean>(true)
 

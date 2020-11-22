@@ -20,13 +20,13 @@ const editableOfNote = (noteEl: HTMLElement) =>
 const Note = ({ context, onFocus }: NoteProps) => {
 
   const state = store.getState()
-  const hasNote = hasChild(state, context, '=note')
-
-  if (!hasNote || isContextViewActive(state, context)) return null
-
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
   const [justPasted, setJustPasted] = useState(false)
+
+  const hasNote = hasChild(state, context, '=note')
+  if (!hasNote || isContextViewActive(state, context)) return null
+
   const note = attribute(state, context, '=note')
 
   /** Handles note keyboard shortcuts. */

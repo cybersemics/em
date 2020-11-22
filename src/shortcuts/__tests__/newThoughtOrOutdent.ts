@@ -52,7 +52,7 @@ it('empty thought should outdent when hit enter', async () => {
         - d
           - e
             - f
-        -${' '}`
+        - `
 
   expect(exported).toEqual(expectedOutput)
 })
