@@ -1,4 +1,5 @@
 import React, { Dispatch } from 'react'
+import { Key } from 'ts-key-enum'
 import { State } from '../util/initialState'
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
@@ -93,7 +94,7 @@ const deleteShortcut: Shortcut = {
   description: 'Delete the current thought.',
   gesture: 'ldl',
   svg: Icon,
-  keyboard: { key: 'Backspace', shift: true, meta: true },
+  keyboard: { key: Key.Backspace, shift: true, meta: true },
   canExecute: () => isDocumentEditable(),
   exec
 }

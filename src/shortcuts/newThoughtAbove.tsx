@@ -1,4 +1,5 @@
 import React, { Dispatch } from 'react'
+import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
 import { isDocumentEditable } from '../util'
@@ -20,7 +21,7 @@ const newThoughtAboveShortcut: Shortcut = {
   name: 'New Thought Above',
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
-  ...!isMobile ? { keyboard: { key: 'Enter', shift: true } } : null,
+  ...!isMobile ? { keyboard: { key: Key.Enter, shift: true } } : null,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: (dispatch: Dispatch<NewThought>) => dispatch({ type: 'newThought', insertBefore: true })

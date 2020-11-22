@@ -1,4 +1,5 @@
 import React, { Dispatch } from 'react'
+import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
 import { Action } from 'redux'
@@ -14,7 +15,7 @@ const moveThoughtUpShortcut: Shortcut = {
   id: 'moveThoughtUp',
   name: 'Move Thought Up',
   description: 'Move the current thought up.',
-  keyboard: { key: 'ArrowUp', meta: true, shift: true },
+  keyboard: { key: Key.ArrowUp, meta: true, shift: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'moveThoughtUp' })

@@ -1,16 +1,7 @@
 import React, { Dispatch } from 'react'
+import { Key } from 'ts-key-enum'
 import { asyncFocus, ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
-import {
-  getChildren,
-  getThoughtBefore,
-  getAllChildren,
-  getChildrenRanked,
-  hasChild,
-  isContextViewActive,
-  lastThoughtsFromContextChain,
-  simplifyPath,
-  splitChain,
-} from '../selectors'
+import { getChildren, getThoughtBefore, getAllChildren, getChildrenRanked, hasChild, isContextViewActive, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 import { State } from '../util/initialState'
 import { RANKED_ROOT } from '../constants'
 import { isMobile } from '../browser'
@@ -158,7 +149,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const deleteEmptyThoughtOrOutdent: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdent',
   name: 'Delete Empty Thought Or Outdent',
-  keyboard: { key: 'Backspace' },
+  keyboard: { key: Key.Backspace },
   hideFromInstructions: true,
   svg: Icon,
   canExecute,
@@ -169,7 +160,7 @@ const deleteEmptyThoughtOrOutdent: Shortcut = {
 export const deleteEmptyThoughtOrOutdentAlias: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdentAlias',
   name: 'Delete Empty Thought Or Outdent (alias)',
-  keyboard: { key: 'Backspace', shift: true },
+  keyboard: { key: Key.Backspace, shift: true },
   hideFromInstructions: true,
   canExecute,
   exec

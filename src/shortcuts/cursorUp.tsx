@@ -1,8 +1,9 @@
 import React from 'react'
-import { Icon as IconType, Shortcut } from '../types'
+import { Key } from 'ts-key-enum'
 import { attributeEquals } from '../selectors'
 import { parentOf, getElementPaddings, pathToContext } from '../util'
 import { scrollCursorIntoView } from '../action-creators'
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -40,7 +41,7 @@ const isSelectionOnMultiLine = () => {
 const cursorUpShortcut: Shortcut = {
   id: 'cursorUp',
   name: 'Cursor Up',
-  keyboard: { key: 'ArrowUp' },
+  keyboard: { key: Key.ArrowUp },
   hideFromInstructions: true,
   svg: Icon,
   canExecute: getState => {

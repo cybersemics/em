@@ -28,5 +28,16 @@
     // https://github.com/gajus/eslint-plugin-jsdoc/issues/656
     "eslint-plugin-jsdoc",
 
+    // ts-key-enum v3 does not work with @babel/plugin-transform-typescript which is a subdependency of react-scripts
+    //
+    // em@163.0.0
+    // └─┬ react-scripts@3.4.4
+    //   └─┬ babel-preset-react-app@9.1.2
+    //     └─┬ @babel/preset-typescript@7.9.0
+    //       └── @babel/plugin-transform-typescript@7.12.1
+    //
+    // https://gitlab.com/nfriend/ts-key-enum#which-version-should-i-use
+    "ts-key-enum",
+
   ]
 }

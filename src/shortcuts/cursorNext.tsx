@@ -1,6 +1,7 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType, Shortcut } from '../types'
+import { Key } from 'ts-key-enum'
 import { cursorNext } from '../action-creators'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -13,7 +14,7 @@ const cursorNextShortcut: Shortcut = {
   id: 'cursorNext',
   name: 'Cursor Next Thought',
   description: 'Move the cursor to the next thought, skipping expanded children.',
-  keyboard: { key: 'ArrowDown', meta: true },
+  keyboard: { key: Key.ArrowDown, meta: true },
   svg: Icon,
   exec: (dispatch: Dispatch<ActionCreator>) => dispatch(cursorNext())
 }

@@ -1,4 +1,5 @@
 import React, { Dispatch } from 'react'
+import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
 
@@ -23,7 +24,7 @@ const newSubthoughtShortcut: Shortcut = {
   name: 'New Subthought',
   description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
-  keyboard: { key: 'Enter', meta: true },
+  keyboard: { key: Key.Enter, meta: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec

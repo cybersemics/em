@@ -1,4 +1,5 @@
 import React, { Dispatch } from 'react'
+import { Key } from 'ts-key-enum'
 import { Icon as IconType, Path, Shortcut } from '../types'
 import { parentOf, isDocumentEditable } from '../util'
 
@@ -20,7 +21,7 @@ const newUncleShortcut: Shortcut = {
   name: 'New Thought After Parent',
   description: `Add a new thought to the context that immediately follows the current thought's context. It's like creating a new thought and then de-indenting it.`,
   gesture: 'rdl',
-  keyboard: { key: 'Enter', meta: true, alt: true },
+  keyboard: { key: Key.Enter, meta: true, alt: true },
   svg: Icon,
   canExecute: getState => {
     const { cursor } = getState()

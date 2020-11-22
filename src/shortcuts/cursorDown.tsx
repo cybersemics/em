@@ -1,8 +1,9 @@
 import React from 'react'
-import { Icon as IconType, Shortcut } from '../types'
+import { Key } from 'ts-key-enum'
 import { parentOf, getElementPaddings, headValue, pathToContext } from '../util'
 import { attributeEquals } from '../selectors'
 import { scrollCursorIntoView } from '../action-creators'
+import { Icon as IconType, Shortcut } from '../types'
 
 interface SelectionAttributes {
    rangeY: number,
@@ -55,7 +56,7 @@ const isSelectionOnLastLine = ({ rangeY, rangeHeight, baseNodeY, baseNodeHeight,
 const cursorDownShortcut: Shortcut = {
   id: 'cursorDown',
   name: 'Cursor Down',
-  keyboard: { key: 'ArrowDown' },
+  keyboard: { key: Key.ArrowDown },
   hideFromInstructions: true,
   svg: Icon,
   canExecute: getState => {

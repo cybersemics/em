@@ -9,7 +9,7 @@ interface ToggleSidebar {
 const toggleSidebarShortcut: Shortcut = {
   id: 'toggleSidebar',
   name: 'Toggle Recently Edited',
-  keyboard: { alt: true, key: 'r' },
+  keyboard: { key: 'r', alt: true },
   hideFromInstructions: true,
   exec: (dispatch: Dispatch<ToggleSidebar>, getState) =>
     dispatch({ type: 'toggleSidebar', value: !getState().showSidebar })

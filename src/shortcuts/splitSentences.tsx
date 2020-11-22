@@ -17,7 +17,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const splitSentencesShortcut: Shortcut = {
   id: 'splitSentences',
   name: 'Split Sentences',
-  keyboard: { meta: true, shift: true, key: 's' },
+  keyboard: { key: 's', meta: true, shift: true },
   svg: Icon,
   canExecute: getState => getState().cursor !== null,
   exec: (dispatch: Dispatch<Action | ActionCreator>, getState) => {

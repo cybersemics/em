@@ -16,7 +16,7 @@ const noteShortcut: Shortcut = {
   id: 'note',
   name: 'Note',
   description: 'Add a small note beneath a thought.',
-  keyboard: { alt: true, meta: true, key: 'n' },
+  keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),

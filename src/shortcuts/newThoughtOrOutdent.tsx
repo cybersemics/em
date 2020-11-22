@@ -1,4 +1,5 @@
 import React, { Dispatch } from 'react'
+import { Key } from 'ts-key-enum'
 import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
 import { getOffsetWithinContent, headValue, isDocumentEditable } from '../util'
@@ -59,7 +60,7 @@ const newThoughtOrOutdent: Shortcut = {
   id: 'newThoughtOrOutdent',
   name: 'newThoughtOrOutdent',
   description: 'Create a new thought or outdent if focused thought is empty.',
-  keyboard: { key: 'Enter' },
+  keyboard: { key: Key.Enter },
   gesture: 'rd',
   svg: Icon,
   canExecute: () => isDocumentEditable(),
@@ -74,7 +75,7 @@ export const newThoughtAliases: Shortcut = {
   gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
-  ...isMobile ? { keyboard: { key: 'Enter', shift: true } } : null,
+  ...isMobile ? { keyboard: { key: Key.Enter, shift: true } } : null,
   canExecute: () => isDocumentEditable(),
   exec
 }
