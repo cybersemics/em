@@ -14,10 +14,11 @@
     "ipfs-http-client",
 
     // wait for react-scripts v4 and upgrade together
-    "typescript",
+    "eslint",
     "react",
     "react-dom",
     "react-scripts",
+    "typescript",
     "@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser",
 
