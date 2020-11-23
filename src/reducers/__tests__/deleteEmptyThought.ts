@@ -2,6 +2,7 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import setCursorFirstMatchActionCreator from '../../test-helpers/setCursorFirstMatch'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 
 // reducers
@@ -238,7 +239,7 @@ describe('mount', () => {
         - apple
           - banana`
       },
-      { type: 'setCursor', path: [{ value: 'banana', rank: 1 }] },
+      setCursorFirstMatchActionCreator(['apple', 'banana']),
       { type: 'deleteEmptyThought' },
     ])
     jest.runOnlyPendingTimers()
