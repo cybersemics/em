@@ -88,8 +88,11 @@ export const updateThought = async (id: string, thought: Lexeme) =>
   db.thoughtIndex.put({ id, ...thought })
 
 /** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme>) => {
-  const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({ ...thoughtIndexMap[key], id: key }))
+export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) => {
+  const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
+    ...thoughtIndexMap[key] as Lexeme,
+    id: key,
+  }))
   return db.thoughtIndex.bulkPut(thoughtsArray)
 }
 
@@ -114,8 +117,11 @@ export const updateContext = async (id: string, { context, children, lastUpdated
 }
 
 /** Updates multiple thoughts in the contextIndex. */
-export const updateContextIndex = async (contextIndexMap: Index<Parent>) => {
-  const contextsArray = Object.keys(contextIndexMap).map(key => ({ id: key, ...contextIndexMap[key] }))
+export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) => {
+  const contextsArray = Object.keys(contextIndexMap).map(key => ({
+    ...contextIndexMap[key] as Parent,
+    id: key,
+  }))
   return db.contextIndex.bulkPut(contextsArray)
 }
 

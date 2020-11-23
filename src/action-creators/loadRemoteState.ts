@@ -1,14 +1,17 @@
+import { Dispatch } from 'redux'
 import { decode as firebaseDecode } from 'firebase-encode'
 import * as db from '../data-providers/dexie'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
 import { isDocumentEditable, keyValueBy, logWithTime } from '../util'
+import { State } from '../util/initialState'
+import { ActionCreator, Index, Parent } from '../types'
 
 /** Save all firebase state to state and localStorage. */
-export const loadState = async (dispatch, newState, oldState) => {
+export const loadState = async (dispatch: Dispatch, newState: State, oldState: State) => {
 
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
-  if (oldState.lastUpdated <= newState.lastUpdated) {
+  if (oldState.lastUpdated! <= newState.lastUpdated!) {
     Object.keys(oldState.thoughts.thoughtIndex).forEach(key => {
       if (!(key in newState.thoughts.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
@@ -42,7 +45,7 @@ export const loadState = async (dispatch, newState, oldState) => {
   logWithTime('loadRemoteState: updateThoughtIndex')
 
   // contextEncodedRaw is firebase encoded
-  const contextIndexUpdates = keyValueBy(newState.thoughts.contextIndex || {}, (contextEncodedRaw, parentEntryNew) => {
+  const contextIndexUpdates: Index<Parent | null> = keyValueBy(newState.thoughts.contextIndex || {}, (contextEncodedRaw, parentEntryNew) => {
 
     const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
       ? contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
@@ -69,7 +72,7 @@ export const loadState = async (dispatch, newState, oldState) => {
 
   // delete local contextIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
-  if (oldState.lastUpdated <= newState.lastUpdated) {
+  if (oldState.lastUpdated! <= newState.lastUpdated!) {
     Object.keys(oldState.thoughts.contextIndex).forEach(contextEncoded => {
       if (!(contextEncoded in (newState.thoughts.contextIndex || {}))) {
         contextIndexUpdates[contextEncoded] = null
@@ -96,7 +99,7 @@ export const loadState = async (dispatch, newState, oldState) => {
 }
 
 /** Loads the new state. */
-const loadRemoteState = newState => async (dispatch, getState) =>
+const loadRemoteState = (newState: State): ActionCreator => async (dispatch, getState) =>
   loadState(dispatch, newState, getState())
 
 // disable migrations since they do not work with iterative loading
