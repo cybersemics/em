@@ -1,6 +1,4 @@
-import {
-  equalArrays,
-} from '../../util'
+import { equalArrays } from '../../util'
 
 it('equalArrays', () => {
   expect(equalArrays([], [])).toBe(true)
