@@ -1,10 +1,15 @@
 import { getUserRef } from '../util'
+import { ActionCreator, User } from '../types'
 
 /** Updates local state with newly authenticated user. */
-const userAuthenticated = (user, { thoughtsLocalPromise } = {}) => async dispatch => {
+const userAuthenticated = (user: User): ActionCreator => async (dispatch, getState) => {
 
   // save the user ref and uid into state
-  const userRef = getUserRef({ user })
+  const userRef = getUserRef({ ...getState(), user })
+
+  if (!userRef) {
+    throw new Error('Could not get userRef')
+  }
 
   dispatch({ type: 'authenticate', value: true, user })
 
