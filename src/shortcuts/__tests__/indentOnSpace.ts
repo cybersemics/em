@@ -5,7 +5,7 @@ import indentOnSpace from '../indentOnSpace'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
-it('indent on adding space at the beginning of the thought', async () => {
+it('indent on adding space at the beginning of the thought', () => {
 
   const store = createTestStore()
 
@@ -34,7 +34,7 @@ it('indent on adding space at the beginning of the thought', async () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('prevent indent on adding space at the beginning of the immovable thought', async () => {
+it('prevent indent on adding space at the beginning of the immovable thought', () => {
 
   const store = createTestStore()
 

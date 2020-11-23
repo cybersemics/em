@@ -4,7 +4,7 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { ActionCreator } from '../../types'
 
-it('redo thought change', async () => {
+it('redo thought change', () => {
 
   const store = createTestStore()
 

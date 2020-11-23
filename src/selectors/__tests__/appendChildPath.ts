@@ -3,7 +3,7 @@ import { initialState, reducerFlow, pathToContext } from '../../util'
 import { Path, SimplePath } from '../../types'
 import { toggleContextView, setCursor } from '../../reducers'
 
-it('get child resolved path', async () => {
+it('get child resolved path', () => {
   const parentPath: Path = [
     { value: 'm', rank: 0 },
     { value: 'n', rank: 0 },
@@ -24,7 +24,7 @@ it('get child resolved path', async () => {
   expect(pathToContext(path)).toEqual(['m', 'n', 'o', 'p', 'q'])
 })
 
-it('get child resolved path when parent has active context view', async () => {
+it('get child resolved path when parent has active context view', () => {
 
   const parentPath: Path = [
     { value: 'i', rank: 0 },

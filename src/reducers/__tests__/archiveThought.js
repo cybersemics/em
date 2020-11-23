@@ -268,7 +268,7 @@ it('empty thought should be archived if it has descendants', () => {
 
 describe('context view', () => {
 
-  it('archive thought from context view', async () => {
+  it('archive thought from context view', () => {
     const steps = [
       newThought({ value: 'a' }),
       newThought({ value: 'm', insertNewSubthought: true }),
@@ -295,7 +295,7 @@ describe('context view', () => {
     expect(exported).toBe(expected)
   })
 
-  it('archive thought with descendants from context view', async () => {
+  it('archive thought with descendants from context view', () => {
     const steps = [
       newThought({ value: 'a' }),
       newThought({ value: 'm', insertNewSubthought: true }),

@@ -81,7 +81,7 @@ it('do nothing when there are no thoughts', () => {
 
 describe('context view', () => {
 
-  it(`move cursor from context's first child to parent`, async () => {
+  it(`move cursor from context's first child to parent`, () => {
 
     const text = `- a
       - m

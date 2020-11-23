@@ -159,7 +159,7 @@ describe('mount', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
-  it('after deleting first child, caret should move to beginning of next sibling', async () => {
+  it('after deleting first child, caret should move to beginning of next sibling', () => {
     store.dispatch([
       { type: 'newThought', value: 'apple' },
       { type: 'newThought', value: 'banana' },
@@ -170,7 +170,7 @@ describe('mount', () => {
     expect(window.getSelection()?.focusOffset).toBe(0)
   })
 
-  it('after deleting last child, caret should move to end of previous sibling', async () => {
+  it('after deleting last child, caret should move to end of previous sibling', () => {
     store.dispatch([
       { type: 'newThought', value: 'apple' },
       { type: 'newThought', value: 'banana' },

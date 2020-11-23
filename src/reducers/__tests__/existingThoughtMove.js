@@ -232,7 +232,7 @@ it('moving unrelated thought should not update cursor', () => {
 
 })
 
-it('move root thought into another root thought', async () => {
+it('move root thought into another root thought', () => {
 
   const text = `
   - x
@@ -277,7 +277,7 @@ it('move root thought into another root thought', async () => {
 })
 
 // ensure that siblings of descendants are properly merged into final result
-it('move descendants with siblings', async () => {
+it('move descendants with siblings', () => {
 
   const text = `
   - a
@@ -323,7 +323,7 @@ it('move descendants with siblings', async () => {
 
 })
 
-it('merge duplicate with new rank', async () => {
+it('merge duplicate with new rank', () => {
 
   const text = `
   - a
@@ -363,7 +363,7 @@ it('merge duplicate with new rank', async () => {
 
 })
 
-it('merge with duplicate with duplicate rank', async () => {
+it('merge with duplicate with duplicate rank', () => {
 
   const text = `
   - a

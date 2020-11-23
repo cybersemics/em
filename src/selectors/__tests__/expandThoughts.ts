@@ -54,7 +54,7 @@ describe('normal view', () => {
 
   })
 
-  it('grandchildren are not expanded', async () => {
+  it('grandchildren are not expanded', () => {
 
     const text = `
     - a
@@ -73,7 +73,7 @@ describe('normal view', () => {
 
   })
 
-  it('nieces are not expanded', async () => {
+  it('nieces are not expanded', () => {
 
     const text = `- a
   - b
@@ -91,7 +91,7 @@ describe('normal view', () => {
 
   })
 
-  it('only-child descendants are expanded', async () => {
+  it('only-child descendants are expanded', () => {
 
     const text = `- a
   - b
@@ -120,7 +120,7 @@ describe('normal view', () => {
 
 describe('table view', () => {
 
-  it('column 1 is expanded when cursor is on table context', async () => {
+  it('column 1 is expanded when cursor is on table context', () => {
 
     const text = `- a
   - =view
@@ -142,7 +142,7 @@ describe('table view', () => {
 
   })
 
-  it('nieces are expanded when cursor is in column 1', async () => {
+  it('nieces are expanded when cursor is in column 1', () => {
 
     const text = `- a
   - =view
@@ -164,7 +164,7 @@ describe('table view', () => {
 
   })
 
-  it('cousins are expanded when cursor is in column 2', async () => {
+  it('cousins are expanded when cursor is in column 2', () => {
 
     const text = `- a
   - =view
@@ -186,7 +186,7 @@ describe('table view', () => {
 
   })
 
-  it('children of column 2 are not expanded when cursor is on table context', async () => {
+  it('children of column 2 are not expanded when cursor is on table context', () => {
 
     const text = `- a
   - =view
@@ -208,7 +208,7 @@ describe('table view', () => {
 
   })
 
-  it('children of column 2 are not expanded when cursor is in column 1', async () => {
+  it('children of column 2 are not expanded when cursor is in column 1', () => {
 
     const text = `- a
   - =view
@@ -231,7 +231,7 @@ describe('table view', () => {
 
   })
 
-  it('children of column 2 are expanded when cursor is in column 2 in the same row', async () => {
+  it('children of column 2 are expanded when cursor is in column 2 in the same row', () => {
 
     const text = `- a
   - =view
@@ -258,7 +258,7 @@ describe('table view', () => {
 
 describe('=pin', () => {
 
-  it('pinned thoughts are expanded when cursor is on parent', async () => {
+  it('pinned thoughts are expanded when cursor is on parent', () => {
 
     const text = `- a
   - b
@@ -282,7 +282,7 @@ describe('=pin', () => {
 
   })
 
-  it('pinned thoughts are expanded when cursor is on sibling', async () => {
+  it('pinned thoughts are expanded when cursor is on sibling', () => {
 
     const text = `- a
   - b
@@ -306,7 +306,7 @@ describe('=pin', () => {
 
 describe('=pinChildren', () => {
 
-  it('pinned children are expanded when cursor is on parent', async () => {
+  it('pinned children are expanded when cursor is on parent', () => {
 
     const text = `- a
   - =pinChildren
@@ -328,7 +328,7 @@ describe('=pinChildren', () => {
 
   })
 
-  it('pinned children are expanded when cursor is on sibling', async () => {
+  it('pinned children are expanded when cursor is on sibling', () => {
 
     const text = `- a
   - =pinChildren
@@ -348,7 +348,7 @@ describe('=pinChildren', () => {
 
   })
 
-  it('pinned children are expanded when cursor is on niece', async () => {
+  it('pinned children are expanded when cursor is on niece', () => {
 
     const text = `- a
   - =pinChildren

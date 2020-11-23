@@ -38,7 +38,7 @@ describe('undo shortcut', () => {
 
 })
 
-it('undo thought change', async () => {
+it('undo thought change', () => {
 
   const store = createTestStore()
 
@@ -70,7 +70,7 @@ it('undo thought change', async () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('group all navigation actions following an undoable(non-navigation) action and undo them together', async () => {
+it('group all navigation actions following an undoable(non-navigation) action and undo them together', () => {
 
   const store = createTestStore()
 

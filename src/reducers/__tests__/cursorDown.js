@@ -136,7 +136,7 @@ describe('normal view', () => {
 
 describe('context view', () => {
 
-  it('move cursor from context view to first context', async () => {
+  it('move cursor from context view to first context', () => {
 
     const text = `- a
   - m
@@ -160,7 +160,7 @@ describe('context view', () => {
 
   })
 
-  it('move cursor from context view to next thought if there are no children', async () => {
+  it('move cursor from context view to next thought if there are no children', () => {
     const text = `- a
     - m
     - n`
@@ -178,7 +178,7 @@ describe('context view', () => {
       .toMatchObject([{ value: 'a', rank: 0 }, { value: 'n', rank: 1 }])
   })
 
-  it(`move cursor to context's first child, if present`, async () => {
+  it(`move cursor to context's first child, if present`, () => {
 
     const text = `- a
   - m
@@ -203,7 +203,7 @@ describe('context view', () => {
 
   })
 
-  it(`move cursor from a context to its sibling, if there aren't any children`, async () => {
+  it(`move cursor from a context to its sibling, if there aren't any children`, () => {
 
     const text = `- a
   - m
@@ -226,7 +226,7 @@ describe('context view', () => {
 
   })
 
-  it(`move cursor from context's last child to next uncle thought`, async () => {
+  it(`move cursor from context's last child to next uncle thought`, () => {
 
     const text = `- a
   - m
@@ -251,7 +251,7 @@ describe('context view', () => {
 
   })
 
-  it(`move cursor from context's one child to its sibling`, async () => {
+  it(`move cursor from context's one child to its sibling`, () => {
 
     const text = `- a
   - m
@@ -277,7 +277,7 @@ describe('context view', () => {
 
   })
 
-  it(`move cursor from context's last descendant to next sibling if there aren't any further contexts`, async () => {
+  it(`move cursor from context's last descendant to next sibling if there aren't any further contexts`, () => {
 
     const text = `- a
   - m
@@ -302,7 +302,7 @@ describe('context view', () => {
 
   })
 
-  it('move cursor to circular path', async () => {
+  it('move cursor to circular path', () => {
 
     const text = `
     - a

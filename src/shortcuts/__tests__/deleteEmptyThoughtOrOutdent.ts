@@ -5,7 +5,7 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 import executeShortcut from '../../test-helpers/executeShortcut'
 
-it('do nothing when there is no cursor', async () => {
+it('do nothing when there is no cursor', () => {
 
   const store = createTestStore()
 
@@ -24,7 +24,7 @@ it('do nothing when there is no cursor', async () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('outdent on pressing backspace at the beginning of the thought', async () => {
+it('outdent on pressing backspace at the beginning of the thought', () => {
 
   const store = createTestStore()
 
@@ -52,7 +52,7 @@ it('outdent on pressing backspace at the beginning of the thought', async () => 
   expect(exported).toEqual(expectedOutput)
 })
 
-it('prevent outdent on pressing backspace at the beginning of a thought that is not the only visible child in the context', async () => {
+it('prevent outdent on pressing backspace at the beginning of a thought that is not the only visible child in the context', () => {
 
   const store = createTestStore()
 

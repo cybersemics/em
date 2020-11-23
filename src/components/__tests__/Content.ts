@@ -12,7 +12,7 @@ beforeEach(async () => {
 
 afterEach(cleanupTestApp)
 
-it('show NewThoughtInstructions when there are no visible thoughts in the root context', async () => {
+it('show NewThoughtInstructions when there are no visible thoughts in the root context', () => {
 
   // NewThoughtInstructions should be visible when there are no thoughts
   expect(wrapper.find(NewThoughtInstructions)).toHaveLength(1)
