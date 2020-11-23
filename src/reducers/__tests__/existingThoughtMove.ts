@@ -41,7 +41,7 @@ it('persist id on move', () => {
 
   const stateNew1 = reducerFlow(steps1)(initialState())
   const oldExactThought = getThought(stateNew1, 'a2').contexts.find(thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0)
-  const oldId = oldExactThought.id
+  const oldId = oldExactThought?.id
 
   const steps2 = [
     existingThoughtMove({
@@ -52,7 +52,7 @@ it('persist id on move', () => {
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
   const newExactThought = getThought(stateNew2, 'a2').contexts.find(thought => equalArrays(thought.context, ['a1']) && thought.rank === 0)
-  const newId = newExactThought.id
+  const newId = newExactThought?.id
 
   expect(oldId).toEqual(newId)
 })
