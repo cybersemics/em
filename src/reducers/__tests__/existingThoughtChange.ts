@@ -2,6 +2,7 @@ import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getAllChildren } from '../../selectors'
 import { existingThoughtChange, newThought, setCursor } from '../../reducers'
+import { SimplePath } from '../../types'
 
 it('edit a thought', () => {
 
@@ -13,7 +14,7 @@ it('edit a thought', () => {
       newValue: 'aa',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      path: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }] as SimplePath
     })
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -48,7 +49,7 @@ it('edit a descendant', () => {
       newValue: 'aa1',
       oldValue: 'a1',
       context: ['a'],
-      path: [{ value: 'a', rank: 1 }, { value: 'a1', rank: 0 }]
+      path: [{ value: 'a', rank: 1 }, { value: 'a1', rank: 0 }] as SimplePath
     })
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -81,7 +82,7 @@ it('edit a thought with descendants', () => {
       newValue: 'aa',
       oldValue: 'a',
       context: [ROOT_TOKEN],
-      path: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }] as SimplePath
     })
   ]
 
@@ -115,7 +116,7 @@ it('edit a thought existing in mutliple contexts', () => {
       newValue: 'abc',
       oldValue: 'ab',
       context: ['a'],
-      path: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }] as SimplePath
     })
   ]
 
@@ -150,7 +151,7 @@ it('edit a thought that exists in another context', () => {
       newValue: 'ab',
       oldValue: 'a',
       context: ['b'],
-      path: [{ value: 'b', rank: 1 }, { value: 'a', rank: 0 }]
+      path: [{ value: 'b', rank: 1 }, { value: 'a', rank: 0 }] as SimplePath
     })
   ]
 
@@ -194,7 +195,7 @@ it('edit a child with the same value as its parent', () => {
       newValue: 'ab',
       oldValue: 'a',
       context: ['a'],
-      path: [{ value: 'a', rank: 0 }, { value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }, { value: 'a', rank: 0 }] as SimplePath
     })
   ]
 
