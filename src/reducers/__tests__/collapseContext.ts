@@ -1,21 +1,7 @@
 import { ROOT_TOKEN } from '../../constants'
-
-// util
 import { initialState, reducerFlow } from '../../util'
-
-// reducers
-import {
-  collapseContext,
-  cursorBack,
-  cursorUp,
-  newSubthought,
-  newThought,
-} from '../../reducers'
-
-// selectors
-import {
-  exportContext,
-} from '../../selectors'
+import { collapseContext, cursorBack, cursorUp, newSubthought, newThought } from '../../reducers'
+import { exportContext } from '../../selectors'
 
 it('do nothing on leaf', () => {
 
