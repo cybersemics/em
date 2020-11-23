@@ -3,6 +3,7 @@ import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import indentOnSpace from '../indentOnSpace'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('indent on adding space at the beginning of the thought', async () => {
 
@@ -48,10 +49,7 @@ it('prevent indent on adding space at the beginning of the immovable thought', a
               - =immovable
   ` })
 
-  store.dispatch({
-    type: 'setCursor',
-    path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }, { value: 'd', rank: 3 }]
-  })
+  store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
 
   executeShortcut(indentOnSpace, { store })
 
