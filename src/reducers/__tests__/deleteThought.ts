@@ -166,7 +166,7 @@ describe('mount', () => {
       { type: 'cursorUp' },
       { type: 'deleteThought' },
     ])
-    act(jest.runOnlyPendingTimers)
+    jest.runOnlyPendingTimers()
     expect(window.getSelection()?.focusOffset).toBe(0)
   })
 
@@ -176,7 +176,7 @@ describe('mount', () => {
       { type: 'newThought', value: 'banana' },
       { type: 'deleteThought' },
     ])
-    act(jest.runOnlyPendingTimers)
+    jest.runOnlyPendingTimers()
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 
