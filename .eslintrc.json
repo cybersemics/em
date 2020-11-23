@@ -191,8 +191,10 @@
     "jsdoc/require-jsdoc": [
       2,
       {
+        "contexts": [
+          "VariableDeclarator > ArrowFunctionExpression"
+        ],
         "require": {
-          "ArrowFunctionExpression": true,
           "ClassDeclaration": true,
           "ClassExpression": true
         }
