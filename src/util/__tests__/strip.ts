@@ -1,6 +1,4 @@
-import {
-  strip,
-} from '../../util'
+import { strip } from '../../util'
 
 it('self-closing tags', () => {
   expect(strip('a<br/>')).toBe('a')
