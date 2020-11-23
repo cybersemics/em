@@ -1,6 +1,6 @@
 import { State } from './initialState'
 
-type UnaryReducer = (state: State) => State | null
+type UnaryReducer<S> = (state: S) => S | null
 
 /**
  * Composes a list of reducers in order and merges the results.
@@ -8,8 +8,8 @@ type UnaryReducer = (state: State) => State | null
  * @param reducers      A list of unary reducers of type `oldState => newState`. Does not accept async reducers.
  * @param initialState
  */
-export const reducerFlow = (reducers: (UnaryReducer | null)[]) => (initialState: State) =>
+export const reducerFlow = <S = State>(reducers: (UnaryReducer<S> | null)[]) => (initialState?: S) =>
   reducers.reduce((state, reducer) => ({
     ...state,
-    ...reducer ? reducer(state) : null,
-  }), initialState)
+    ...reducer ? reducer(state as any) : null,
+  }), initialState as S)
