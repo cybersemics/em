@@ -33,12 +33,12 @@ import {
 } from '../reducers'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
-const deleteEmptyThought = (state: State) => {
+const deleteEmptyThought = (state: State): State => {
   const { cursor, editing } = state
   const sel = window.getSelection()
   const offset = sel ? sel.focusOffset : 0
 
-  if (!cursor) return
+  if (!cursor) return state
 
   const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
   const path = simplifyPath(state, cursor)
@@ -60,10 +60,13 @@ const deleteEmptyThought = (state: State) => {
     if (prev) {
 
       const valueNew = prev.value + value
-      const pathPrevNew = parentOf(path).concat({
-        value: valueNew,
-        rank: prev.rank
-      })
+      const pathPrevNew = [
+        ...parentOf(path),
+        {
+          ...prev,
+          value: valueNew,
+        }
+      ]
 
       return reducerFlow([
 
