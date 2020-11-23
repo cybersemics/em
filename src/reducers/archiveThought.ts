@@ -57,7 +57,7 @@ export const pathToArchive = (state: State, path: Path, context: Context): Path 
  *
  * @param path     Defaults to cursor.
  */
-const archiveThought = (state: State, options: { path?: Path } = {}): State => {
+const archiveThought = (state: State, options: { path?: Path }): State => {
 
   const path = options.path || state.cursor
 
