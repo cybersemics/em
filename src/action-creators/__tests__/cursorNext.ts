@@ -1,6 +1,7 @@
 import { RANKED_ROOT } from '../../constants'
 import { cursorNext } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
 
@@ -17,7 +18,7 @@ describe('normal view', () => {
             - a1
           - b`
       },
-      { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
+    setCursorFirstMatchActionCreator(['a']),
       cursorNext()
     ])
 
@@ -59,7 +60,7 @@ describe('normal view', () => {
           - a
           - b`
       },
-      { type: 'setCursor', path: [{ value: 'b', rank: 1 }] },
+      setCursorFirstMatchActionCreator(['b']),
       cursorNext()
     ])
 
@@ -99,10 +100,7 @@ describe('normal view', () => {
         key: '=sort',
         value: 'Alphabetical'
       },
-      {
-        type: 'setCursor',
-        path: [{ value: 'SORT', rank: 0 }, { value: 'a', rank: 1 }],
-      },
+      setCursorFirstMatchActionCreator(['SORT', 'a']),
       cursorNext(),
     ])
 
@@ -124,7 +122,7 @@ describe('normal view', () => {
             - a1
           - b`
       },
-      { type: 'setCursor', path: [{ value: 'a', rank: 0 }] },
+      setCursorFirstMatchActionCreator(['a']),
       cursorNext()
     ])
 
