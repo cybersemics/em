@@ -3,8 +3,9 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
 import pinSubthoughtsShortcut from '../pinSubthoughts'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
-it('toggle on =pinChildren attribute of cursor (initial state without =pinChildren)', async () => {
+it('toggle on =pinChildren attribute of cursor (initial state without =pinChildren)', () => {
 
   const store = createTestStore()
 
@@ -22,7 +23,7 @@ it('toggle on =pinChildren attribute of cursor (initial state without =pinChildr
             - f
             - g
     ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(pinSubthoughtsShortcut, { store })
@@ -31,7 +32,7 @@ it('toggle on =pinChildren attribute of cursor (initial state without =pinChildr
   expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('true')
 })
 
-it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set to false)', async () => {
+it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set to false)', () => {
 
   const store = createTestStore()
 
@@ -51,7 +52,7 @@ it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set t
             - f
             - g
     ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(pinSubthoughtsShortcut, { store })
@@ -60,7 +61,7 @@ it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set t
   expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('true')
 })
 
-it('toggle off =pinChildren attribute of cursor', async () => {
+it('toggle off =pinChildren attribute of cursor', () => {
 
   const store = createTestStore()
 
@@ -80,7 +81,7 @@ it('toggle off =pinChildren attribute of cursor', async () => {
             - f
             - g
     ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(pinSubthoughtsShortcut, { store })
