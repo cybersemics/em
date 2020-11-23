@@ -1,4 +1,3 @@
-import { act } from 'react-dom/test-utils'
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'

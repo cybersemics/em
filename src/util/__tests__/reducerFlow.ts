@@ -40,4 +40,3 @@ it('no initialState', () => {
   ])())
     .toEqual({ a: 101, b: 102, z: 100 })
 })
-
