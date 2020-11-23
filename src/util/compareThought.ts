@@ -29,7 +29,7 @@ export const compareEmpty = (a: string, b: string): ComparatorValue => {
 }
 
 /** A comparator that sorts numbers ahead of non-numbers. */
-export const compareNumberAndOther = <T>(a: T, b: T): ComparatorValue => {
+export const compareNumberAndOther = <T, U>(a: T, b: U): ComparatorValue => {
   const aIsNum = !isNaN(+a)
   const bIsNum = !isNaN(+b)
   return aIsNum && !bIsNum ? -1
@@ -38,7 +38,7 @@ export const compareNumberAndOther = <T>(a: T, b: T): ComparatorValue => {
 }
 
 /** A comparator that sorts numbers in numeric order. */
-export const compareNumbers = <T>(a: T, b: T): ComparatorValue => {
+export const compareNumbers = <T, U>(a: T, b: U): ComparatorValue => {
   const aIsNum = !isNaN(+a)
   const bIsNum = !isNaN(+b)
   return aIsNum && bIsNum ? compare(+a, +b)
@@ -49,9 +49,9 @@ export const compareNumbers = <T>(a: T, b: T): ComparatorValue => {
 export const compareLowercase = (a: string, b: string): ComparatorValue => compare(lower(a), lower(b))
 
 /** A comparator function that sorts strings that start with punctuation above others. */
-export const comparePunctuationAndOther = (a: string, b: string): ComparatorValue => {
-  const aIsPunctuation = regexPunctuation.test(a)
-  const bIsPunctuation = regexPunctuation.test(b)
+export const comparePunctuationAndOther = <T, U>(a: T, b: U): ComparatorValue => {
+  const aIsPunctuation = typeof a === 'string' && regexPunctuation.test(a)
+  const bIsPunctuation = typeof b === 'string' && regexPunctuation.test(b)
   return aIsPunctuation && !bIsPunctuation ? -1
     : bIsPunctuation && !aIsPunctuation ? 1
     : 0
