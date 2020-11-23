@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { setCursor } from '../reducers'
 import { rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
-import { ActionCreator, Context } from '../types'
+import { ActionCreator } from '../types'
 
 /** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
 const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>

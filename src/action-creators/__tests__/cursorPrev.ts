@@ -1,8 +1,7 @@
 import { RANKED_ROOT } from '../../constants'
 import { cursorPrev } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
 

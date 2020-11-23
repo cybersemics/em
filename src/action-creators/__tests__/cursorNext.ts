@@ -18,7 +18,7 @@ describe('normal view', () => {
             - a1
           - b`
       },
-    setCursorFirstMatchActionCreator(['a']),
+      setCursorFirstMatchActionCreator(['a']),
       cursorNext()
     ])
 

@@ -23,7 +23,7 @@ it('empty thought should outdent when hit enter', () => {
                 - e
                   - f`
     },
-    setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd', 'e', 'f' ]),
+    setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd', 'e', 'f']),
   ])
 
   // create a new empty subthought

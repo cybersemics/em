@@ -7,7 +7,6 @@ import undoShortcut from '../undo'
 import { initialState } from '../../util'
 import * as undoUtils from '../../util/isUndoEnabled'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { ActionCreator } from '../../types'
 
 describe('undo shortcut', () => {
   const isUndoEnabled = jest.spyOn(undoUtils, 'isUndoEnabled')
