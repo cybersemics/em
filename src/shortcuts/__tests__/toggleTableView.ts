@@ -3,6 +3,7 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
 import toggleTableViewShortcut from '../toggleTableView'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
 
@@ -19,7 +20,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
           - d
             - e
     ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(toggleTableViewShortcut, { store })
@@ -45,7 +46,7 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
           - d
             - e
     ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(toggleTableViewShortcut, { store })
@@ -72,7 +73,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
           - d
             - e
       ` },
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
   ])
 
   executeShortcut(toggleTableViewShortcut, { store })
