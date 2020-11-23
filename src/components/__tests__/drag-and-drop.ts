@@ -9,6 +9,7 @@ import Subthoughts from '../Subthoughts'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { Context, SimplePath } from '../../types'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
@@ -73,7 +74,7 @@ const simulateDragAndDrop = ({ source, drop, type }: { source: Context, drop: Co
   backend.simulateEndDrag([sourceId])
 }
 
-it('drop as sibling', async () => {
+it('drop as sibling', () => {
   store.dispatch({
     type: 'importText',
     path: RANKED_ROOT,
@@ -103,7 +104,7 @@ it('drop as sibling', async () => {
   expect(exported).toEqual(expectedExport)
 })
 
-it('drop as child (Drop end)', async () => {
+it('drop as child (Drop end)', () => {
   store.dispatch({
     type: 'importText',
     path: RANKED_ROOT,
@@ -133,25 +134,19 @@ it('drop as child (Drop end)', async () => {
   expect(exported).toEqual(expectedExport)
 })
 
-it('prevent drop into descendants', async () => {
-  store.dispatch({
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-      - a
-        - b
-      - c
-  ` })
+it('prevent drop into descendants', () => {
 
-  store.dispatch({
-    type: 'setCursor',
-    path: [
-      {
-        value: 'a',
-        rank: 0
-      }
-    ]
-  })
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - b
+        - c`
+    },
+    setCursorFirstMatchActionCreator(['a']),
+  ])
 
   wrapper.update()
 
