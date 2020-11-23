@@ -1,14 +1,7 @@
 import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-
-// reducers
-import {
-  indent,
-  newSubthought,
-  newThought,
-  setCursor,
-} from '../../reducers'
+import { indent, newSubthought, newThought, setCursor } from '../../reducers'
 
 it('indent within root', () => {
 
