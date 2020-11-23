@@ -57,9 +57,9 @@ export const pathToArchive = (state: State, path: Path, context: Context): Path 
  *
  * @param path     Defaults to cursor.
  */
-const archiveThought = (state: State, { path }: { path: Path }): State => {
+const archiveThought = (state: State, options: { path?: Path } = {}): State => {
 
-  path = path || state.cursor
+  const path = options.path || state.cursor
 
   if (!path) return state
 
@@ -164,7 +164,7 @@ const archiveThought = (state: State, { path }: { path: Path }): State => {
         (state: State) => existingThoughtMove(state, {
           oldPath: path,
           // TODO: Are we sure pathToArchive cannot return null?
-          newPath: pathToArchive(state, showContexts ? simplePath : path, context)!,
+          newPath: pathToArchive(state, showContexts ? simplePath : path!, context)!,
           offset
         })
 
