@@ -4,26 +4,26 @@ import { attribute, rankThoughtsFirstMatch } from '../../selectors'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { ActionCreator } from '../../types'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
 
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch({
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-      - a
-        - d
-        - b
-        - c
-        - e
-  ` })
-
-  store.dispatch({ type: 'setCursor', path: [
-    { value: 'a', rank: '0' },
-  ] })
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - d
+          - b
+          - c
+          - e`
+    },
+    setCursorFirstMatchActionCreator(['a']),
+  ])
 
   executeShortcut(toggleSortShortcut, { store })
 
@@ -35,20 +35,21 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical)
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch({
-    type: 'importText',
-    path: RANKED_ROOT,
-    text: `
-      - a
-        - =sort
-          - Alphabetical
-        - d
-        - b
-        - c
-        - e
-  ` })
-
-  store.dispatch({ type: 'setCursor', path: [{ value: 'a', rank: '0' }] })
+  store.dispatch([
+    {
+      type: 'importText',
+      path: RANKED_ROOT,
+      text: `
+        - a
+          - =sort
+            - Alphabetical
+          - d
+          - b
+          - c
+          - e`
+    },
+    setCursorFirstMatchActionCreator(['a']),
+  ])
 
   executeShortcut(toggleSortShortcut, { store })
 
@@ -80,7 +81,7 @@ it('override global Alphabetical with local None', () => {
       path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None'])
     })) as ActionCreator,
 
-    { type: 'setCursor', path: [{ value: 'a', rank: '0' }] }
+    setCursorFirstMatchActionCreator(['a']),
 
   ])
 
