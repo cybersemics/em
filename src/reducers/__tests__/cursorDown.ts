@@ -1,6 +1,7 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
 import { RANKED_ROOT } from '../../constants'
 import { rankThoughtsFirstMatch } from '../../selectors'
+import { State } from '../../util/initialState'
 
 // reducers
 import {
@@ -263,16 +264,16 @@ describe('context view', () => {
 
     const steps = [
       importText({ path: RANKED_ROOT, text }),
-      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
-      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
+      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
       cursorDown
     ]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor))
+    expect(pathToContext(stateNew.cursor || []))
       .toMatchObject(['a', 'm', 'b', 'z'])
 
   })
@@ -288,16 +289,16 @@ describe('context view', () => {
 
     const steps = [
       importText({ path: RANKED_ROOT, text }),
-      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
-      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
+      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
       cursorDown,
     ]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor))
+    expect(pathToContext(stateNew.cursor || []))
       .toMatchObject(['b'])
 
   })
@@ -317,16 +318,16 @@ describe('context view', () => {
 
     const steps = [
       importText({ path: RANKED_ROOT, text }),
-      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
-      state => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a', 'x']) }),
+      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a', 'x']) }),
       cursorDown,
     ]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor))
+    expect(pathToContext(stateNew.cursor || []))
       .toMatchObject(['a', 'm', 'a', 'y'])
 
   })
