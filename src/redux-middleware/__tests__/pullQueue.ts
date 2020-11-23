@@ -5,6 +5,7 @@ import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selecto
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 // mock getUserRef (firebase's database.ref)
 jest.mock('../../util/getUserRef')
@@ -172,7 +173,7 @@ it('delete thought with buffered descendants', async () => {
               - d
                 - e
     ` },
-    { type: 'setCursor', path: [{ value: 'x', rank: 0 }] },
+    setCursorFirstMatchActionCreator(['x']),
   ])
 
   jest.runOnlyPendingTimers()
@@ -227,7 +228,7 @@ it('move thought with buffered descendants', async () => {
               - d
                 - e
     ` },
-    { type: 'setCursor', path: [{ value: 'x', rank: 0 }] },
+    setCursorFirstMatchActionCreator(['x']),
   ])
 
   jest.runOnlyPendingTimers()
@@ -294,7 +295,7 @@ it('edit thought with buffered descendants', async () => {
               - d
                 - e
     ` },
-    { type: 'setCursor', path: [{ value: 'x', rank: 0 }] },
+    setCursorFirstMatchActionCreator(['x']),
   ])
 
   jest.runOnlyPendingTimers()
