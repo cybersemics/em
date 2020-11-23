@@ -12,8 +12,8 @@ const getContextsSortedAndRanked = (state: State, value: string): ThoughtContext
   )
     // generate dynamic ranks
     .map((thought, i) => ({
-      context: thought.context,
-      rank: i
+      ...thought,
+      rank: i,
     }))
 
 export default getContextsSortedAndRanked

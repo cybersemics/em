@@ -7,6 +7,7 @@ import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 import { Context, Path, SimplePath } from '../../types'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ThoughtOrSubthoughtsComponent {
@@ -87,8 +88,8 @@ describe('context view', () => {
         `,
         lastUpdated: now,
       },
-      { type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] },
-      { type: 'toggleContextView' }
+      setCursorFirstMatchActionCreator(['a', 'm']),
+      { type: 'toggleContextView' },
     ])
 
     // update DOM
@@ -145,7 +146,7 @@ describe('context view', () => {
               - y`
       },
       // enable Context View on /a/one
-      { type: 'setCursor', path: [{ value: 'a', rank: 0 }, { value: 'one', rank: 1 }] },
+      setCursorFirstMatchActionCreator(['a', 'one']),
       { type: 'toggleContextView' }
     ])
 
@@ -221,16 +222,8 @@ describe('context view', () => {
                   - c`
       },
       // enable Context View on /a/b/c/d/c
-      {
-        type: 'setCursor', path: [
-          { value: 'a', rank: 0 },
-          { value: 'b', rank: 0 },
-          { value: 'c', rank: 0 },
-          { value: 'd', rank: 0 },
-          { value: 'c', rank: 0 },
-        ]
-      },
-      { type: 'toggleContextView' }
+      setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd', 'c']),
+      { type: 'toggleContextView' },
     ])
 
     /*
@@ -296,10 +289,7 @@ describe('hidden thoughts', () => {
     // expect(metaThought1()).toHaveLength(0)
     expect(metaThought1Child()).toHaveLength(0)
 
-    store.dispatch({
-      type: 'setCursor',
-      path: [{ value: '=meta1', rank: 2 }],
-    })
+    store.dispatch(setCursorFirstMatchActionCreator(['=meta1']))
 
     // update DOM
     wrapper.update()
@@ -309,13 +299,7 @@ describe('hidden thoughts', () => {
     expect(metaThought1()).toHaveLength(1)
     expect(metaThought1Child()).toHaveLength(1)
 
-    store.dispatch({
-      type: 'setCursor',
-      path: [
-        { value: 'a', rank: 0 },
-        { value: 'd', rank: 0 },
-      ],
-    })
+    store.dispatch(setCursorFirstMatchActionCreator(['a', 'd']))
 
     // update DOM
     wrapper.update()
@@ -332,17 +316,7 @@ describe('hidden thoughts', () => {
     expect(metaThought2()).toHaveLength(0)
     expect(metaThought2Child()).toHaveLength(0)
 
-    store.dispatch([
-      {
-        type: 'setCursor',
-        path: [
-          { value: 'a', rank: 0 },
-          { value: 'd', rank: 0 },
-          { value: '=meta2', rank: 0 },
-          { value: 'e', rank: 0 },
-        ],
-      },
-    ])
+    store.dispatch(setCursorFirstMatchActionCreator(['a', 'd', '=meta2', 'e']))
 
     // update DOM
     wrapper.update()
@@ -367,22 +341,9 @@ describe('hidden thoughts', () => {
           - b
             - d`
       },
-      {
-        type: 'setCursor',
-        path: [
-          { value: 'b', rank: 1 },
-          { value: 'd', rank: 0 },
-        ],
-      },
+      setCursorFirstMatchActionCreator(['b', 'd']),
       { type: 'toggleContextView' },
-      {
-        type: 'setCursor',
-        path: [
-          { value: 'b', rank: 1 },
-          { value: 'd', rank: 0 },
-          { value: 'a', rank: 0 },
-        ],
-      }
+      setCursorFirstMatchActionCreator(['b', 'd', 'a']),
     ])
 
     // update DOM
@@ -416,18 +377,7 @@ describe('hidden thoughts', () => {
     expect(nestedMetaThought2Child()).toHaveLength(0)
 
     // set cursor at a.d.a.=meta2.e
-    store.dispatch([
-      {
-        type: 'setCursor',
-        path: [
-          { value: 'b', rank: 1 },
-          { value: 'd', rank: 0 },
-          { value: 'a', rank: 0 },
-          { value: '=meta2', rank: 0 },
-          { value: 'e', rank: 0 },
-        ],
-      },
-    ])
+    store.dispatch(setCursorFirstMatchActionCreator(['b', 'd', 'a', '=meta2', 'e']))
 
     /*
     Expected structure
