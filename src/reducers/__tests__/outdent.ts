@@ -32,7 +32,7 @@ it('outdent with no cursor should do nothing ', () => {
     newThought('a'),
     newSubthought('a1'),
     setCursor({ path: null }),
-    state => outdent(state)
+    outdent,
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
