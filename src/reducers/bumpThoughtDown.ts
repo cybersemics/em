@@ -6,9 +6,9 @@ import { State } from '../util/initialState'
 import { Path, SimplePath } from '../types'
 
 /** Clears a thought's text, moving it to its first child. */
-const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath }) => {
+const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath }): State => {
 
-  if (!simplePath && !state.cursor) return
+  if (!simplePath && !state.cursor) return state
 
   simplePath = simplePath || simplifyPath(state, state.cursor!)
   const value = headValue(simplePath)
