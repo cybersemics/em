@@ -1,6 +1,4 @@
-import {
-  subsetThoughts,
-} from '../../util'
+import { subsetThoughts } from '../../util'
 
 it('equal returns true', () => {
   expect(subsetThoughts([{ value: 'a', rank: 0 }], [{ value: 'a', rank: 0 }])).toBe(true)
