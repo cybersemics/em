@@ -1,13 +1,8 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
-import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
-
-interface NewThought {
-  type: 'newThought',
-  insertNewSubthought: boolean,
-  insertBefore: boolean,
-}
+import newThought from '../action-creators/newThought'
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -24,7 +19,7 @@ const newSubthoughtTopShortcut: Shortcut = {
   keyboard: { key: Key.Enter, shift: true, meta: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<NewThought>) => dispatch({ type: 'newThought', insertNewSubthought: true, insertBefore: true })
+  exec: newThought({ insertNewSubthought: true, insertBefore: true })
 }
 
 export default newSubthoughtTopShortcut

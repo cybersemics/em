@@ -1,5 +1,6 @@
 import { MODALS, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
+import { importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
@@ -42,13 +43,12 @@ it('undo thought change', () => {
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
         - b`
-    },
+    }),
     setCursorFirstMatchActionCreator(['a']),
     {
       type: 'existingThoughtChange',
@@ -74,15 +74,14 @@ it('group all navigation actions following an undoable(non-navigation) action an
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
         - b
         - c
         - d`
-    },
+    }),
     setCursorFirstMatchActionCreator(['b']),
     { type: 'indent' },
     {
@@ -134,16 +133,15 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
           - b
           - c
           - d`
-    },
-    { type: 'setCursor', path: null },
+    }),
+    setCursor({ path: null }),
     {
       type: 'existingThoughtChange',
       context: ['a'],
@@ -153,7 +151,7 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
       path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
     },
     // dispensible set cursor (which only updates datanonce)
-    { type: 'setCursor', path: null },
+    setCursor({ path: null }),
     // undo setCursor and thoughtChange in a sinle action
     { type: 'undoAction' }
   ])
@@ -172,8 +170,7 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
 it('state remains unchanged if there are no inverse patches', () => {
   const store = createTestStore()
 
-  store.dispatch({
-    type: 'importText',
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
       - a
@@ -181,7 +178,7 @@ it('state remains unchanged if there are no inverse patches', () => {
        - c
        - d`,
     preventSetCursor: true
-  })
+  }))
 
   const prevState = store.getState()
   expect(prevState.inversePatches.length).toEqual(0)
@@ -195,13 +192,12 @@ it('newThought action should be merged with the succeeding patch', () => {
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
           - a
           - b`
-    },
+    }),
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
     {
@@ -236,13 +232,12 @@ it('undo contiguous changes', () => {
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - A
         - B`
-    },
+    }),
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',
@@ -274,13 +269,12 @@ it('state.alert is omitted from the undo patch', () => {
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
           - A
           - B`
-    },
+    }),
     setCursorFirstMatchActionCreator(['a']),
     { type: 'archiveThought' },
   ])
@@ -299,14 +293,13 @@ it('clear patches when any undoable action is dispatched', () => {
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - A
         - B`,
       preventSetCursor: true,
-    },
+    }),
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',
@@ -322,9 +315,7 @@ it('clear patches when any undoable action is dispatched', () => {
   expect(store.getState().patches.length).toEqual(2)
 
   // dispatch an undoable action
-  store.dispatch({
-    type: 'newThought', value: 'Atlantic City'
-  })
+  store.dispatch(newThought({ value: 'Atlantic City' }))
 
   expect(store.getState().patches.length).toEqual(0)
 

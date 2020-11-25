@@ -1,5 +1,5 @@
 import { ROOT_TOKEN } from '../constants'
-import { scrollCursorIntoView, suppressExpansion } from '../action-creators'
+import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
 import { getThoughtBefore, simplifyPath, getChildrenSorted } from '../selectors'
 import { parentOf } from '../util'
 import { ActionCreator } from '../types'
@@ -12,7 +12,7 @@ const cursorPrev = (): ActionCreator => (dispatch, getState) => {
   if (!cursor) {
     const children = getChildrenSorted(state, [ROOT_TOKEN])
     if (children.length > 0) {
-      dispatch({ type: 'setCursor', path: [children[0]] })
+      dispatch(setCursor({ path: [children[0]] }))
       dispatch(scrollCursorIntoView())
     }
     return
@@ -24,8 +24,8 @@ const cursorPrev = (): ActionCreator => (dispatch, getState) => {
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession
   dispatch(suppressExpansion({ duration: 100 }))
 
-  const path = parentOf(cursor).concat(prev)
-  dispatch({ type: 'setCursor', path })
+  const path = [...parentOf(cursor), prev]
+  dispatch(setCursor({ path }))
   dispatch(scrollCursorIntoView())
 }
 

@@ -7,7 +7,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, expandContextThought, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { alert, expandContextThought, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
 import { ActionCreator, Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
@@ -200,13 +200,12 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch<Action | ActionCreator>) => ({
   toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
-  setCursorOnNote: ({ path }: { path: Path }) => () => dispatch({
-    type: 'setCursor',
+  setCursorOnNote: ({ path }: { path: Path }) => () => dispatch(setCursor({
     path,
     cursorHistoryClear: true,
     editing: true,
     noteFocus: true
-  } as Action),
+  })),
 })
 
 /**********************************************************************
@@ -572,10 +571,7 @@ const ThoughtContainer = ({
       {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(simplePath)} glyph={showContexts && !contextThought ? '✕' : null} leaf={isLeaf} onClick={(e: React.MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
-          store.dispatch({
-            type: 'setCursor',
-            path: simplePath,
-          })
+          store.dispatch<any>(setCursor({ path: simplePath }))
         }
       }}/>}
 

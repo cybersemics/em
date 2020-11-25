@@ -3,7 +3,7 @@ import React, { Dispatch, useEffect, useRef } from 'react'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
-import { setEditingValue, setInvalidState } from '../action-creators'
+import { importText, setCursor, setEditingValue, setInvalidState } from '../action-creators'
 import { isMobile, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
@@ -221,8 +221,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       ? parentOf(path).concat(head(showContexts ? parentOf(cursor) : cursor))
       : path
 
-    dispatch({
-      type: 'setCursor',
+    dispatch(setCursor({
       cursorHistoryClear: true,
       editing,
       // set offset to null to prevent setSelection on next render
@@ -230,7 +229,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // when cursor is changed through another method, such as cursorDown, offset will be reset
       offset: null,
       path: pathLive,
-    })
+    }))
   }
 
   /**
@@ -437,14 +436,13 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
       const rawDestValue = strip(contentRef.current!.innerHTML, { preventTrim: true })
-      const newValue = dispatch({
-        type: 'importText',
+      const newValue = dispatch(importText({
         path,
         text: isHTML(plainText)
           ? plainText
           : htmlText || plainText,
         rawDestValue,
-      })
+      }))
 
       if (newValue) oldValueRef.current = newValue
     }

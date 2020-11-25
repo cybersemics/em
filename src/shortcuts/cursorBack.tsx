@@ -1,7 +1,7 @@
 import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 import { clearSelection } from '../util'
-import { scrollCursorIntoView } from '../action-creators'
+import { cursorBack, scrollCursorIntoView } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -28,7 +28,7 @@ const cursorBackShortcut: Shortcut = {
     const { cursor, search } = getState()
     if (cursor || search != null) {
 
-      dispatch({ type: 'cursorBack' })
+      dispatch(cursorBack())
       dispatch(scrollCursorIntoView())
 
       // clear browser selection if cursor has been removed

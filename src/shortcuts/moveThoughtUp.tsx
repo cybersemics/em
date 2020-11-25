@@ -1,8 +1,8 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
-import { Action } from 'redux'
+import { moveThoughtUp } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -18,7 +18,7 @@ const moveThoughtUpShortcut: Shortcut = {
   keyboard: { key: Key.ArrowUp, meta: true, shift: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'moveThoughtUp' })
+  exec: dispatch => dispatch(moveThoughtUp()),
 }
 
 export default moveThoughtUpShortcut

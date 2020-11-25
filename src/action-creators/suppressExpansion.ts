@@ -1,4 +1,5 @@
 import globals from '../globals'
+import { setCursor } from '../action-creators'
 import { ActionCreator } from '../types'
 
 let timer: ReturnType<typeof setTimeout> // eslint-disable-line fp/no-let
@@ -15,7 +16,7 @@ const suppressExpansion = ({ cancel, duration }: Options = {}): ActionCreator =>
   const disableSuppressExpansion = () => {
     globals.suppressExpansion = false
     const { cursor, noteFocus } = getState()
-    dispatch({ type: 'setCursor', path: cursor, noteFocus: noteFocus }) // preserve noteFocus
+    dispatch(setCursor({ path: cursor, noteFocus: noteFocus })) // preserve noteFocus
   }
 
   /** Enables the global suppressExpansion flag. */

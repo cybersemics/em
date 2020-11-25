@@ -1,20 +1,9 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { RANKED_ROOT } from '../constants'
-import { Context, Icon as IconType, Path, Shortcut } from '../types'
 import { getSetting, simplifyPath } from '../selectors'
+import { setCursor, toggleAttribute } from '../action-creators'
 import { pathToContext } from '../util'
-
-interface ToggleAttribute {
-  type: 'toggleAttribute',
-  context: Context,
-  key: string,
-  value: string,
-}
-
-interface SetCursor {
-  type: 'setCursor',
-  path: Path | null,
-}
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} style={style} viewBox='0 0 24 24' enableBackground='new 0 0 24 24'>
@@ -34,7 +23,7 @@ const toggleSortShortcut: Shortcut = {
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleAttribute | SetCursor>, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
 
@@ -43,14 +32,15 @@ const toggleSortShortcut: Shortcut = {
     const simplePath = simplifyPath(state, cursor || RANKED_ROOT)
     const context = pathToContext(simplePath)
 
-    dispatch({
-      type: 'toggleAttribute',
+    dispatch(toggleAttribute({
       context,
       key: '=sort',
       value: sortPreference
-    })
+    }))
 
-    if (cursor) dispatch({ type: 'setCursor', path: state.cursor })
+    if (cursor) {
+      dispatch(setCursor({ path: state.cursor }))
+    }
   }
 }
 

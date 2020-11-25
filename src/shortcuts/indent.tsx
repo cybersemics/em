@@ -1,7 +1,7 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
-import { Action } from 'redux'
+import { indent } from '../action-creators'
 import moveCursorForward from './moveCursorForward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -23,7 +23,7 @@ const indentShortcut: Shortcut = {
   },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'indent' })
+  exec: dispatch => dispatch(indent()),
 }
 
 export default indentShortcut

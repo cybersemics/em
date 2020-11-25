@@ -1,6 +1,6 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
+import { toggleHiddenThoughts } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
-import { Action } from 'redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 100 100'>
@@ -17,7 +17,7 @@ const toggleHiddenThoughtsShortcut: Shortcut = {
   description: 'Show or hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'toggleHiddenThoughts' })
+  exec: dispatch => dispatch(toggleHiddenThoughts())
 }
 
 export default toggleHiddenThoughtsShortcut

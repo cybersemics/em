@@ -1,4 +1,5 @@
 import { getUserRef } from '../util'
+import { authenticate, error, status } from '../action-creators'
 import { ActionCreator, User } from '../types'
 
 /** Updates local state with newly authenticated user. */
@@ -11,7 +12,7 @@ const userAuthenticated = (user: User): ActionCreator => async (dispatch, getSta
     throw new Error('Could not get userRef')
   }
 
-  dispatch({ type: 'authenticate', value: true, user })
+  dispatch(authenticate({ value: true, user }))
 
   // login automatically on page load
   setTimeout(() => {
@@ -24,12 +25,12 @@ const userAuthenticated = (user: User): ActionCreator => async (dispatch, getSta
     email: user.email
   }, err => {
     if (err) {
-      dispatch({ type: 'error', value: err })
+      dispatch(error({ value: err.message }))
       console.error(err)
     }
   })
 
-  dispatch({ type: 'status', value: 'loaded' })
+  dispatch(status({ value: 'loaded' }))
 }
 
 export default userAuthenticated

@@ -1,6 +1,7 @@
 import { RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
+import { importText } from '../../action-creators'
 import executeShortcut from '../../test-helpers/executeShortcut'
 
 // must be imported after selectors to avoid circular import
@@ -13,14 +14,13 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
           - b
             - c
-    ` },
+    ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -36,8 +36,7 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -45,7 +44,7 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
             - table
           - b
             - c
-    ` },
+    ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -61,8 +60,7 @@ it('toggle off prose view of parent of cursor', () => {
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -70,7 +68,7 @@ it('toggle off prose view of parent of cursor', () => {
             - Prose
           - b
             - c
-    ` },
+    ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 

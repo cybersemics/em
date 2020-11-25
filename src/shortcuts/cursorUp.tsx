@@ -2,7 +2,7 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { attributeEquals } from '../selectors'
 import { parentOf, getElementPaddings, pathToContext } from '../util'
-import { scrollCursorIntoView } from '../action-creators'
+import { cursorUp, scrollCursorIntoView } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -64,7 +64,7 @@ const cursorUpShortcut: Shortcut = {
     return true
   },
   exec: dispatch => {
-    dispatch({ type: 'cursorUp' })
+    dispatch(cursorUp())
     dispatch(scrollCursorIntoView())
   }
 }

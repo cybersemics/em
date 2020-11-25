@@ -2,6 +2,7 @@ import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
+import { importText } from '../../action-creators'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
@@ -99,14 +100,13 @@ it.skip('caret is set on new subthought', async () => {
 
 it('do not allow edit to duplicate thought', async () => {
 
-  store.dispatch({
-    type: 'importText',
+  store.dispatch<any>(importText({
     path: RANKED_ROOT,
     text: `
       - a
       - b
       - c`
-  })
+  }))
 
   jest.runOnlyPendingTimers()
   wrapper.update()

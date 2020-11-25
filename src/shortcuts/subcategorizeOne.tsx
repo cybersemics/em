@@ -1,7 +1,7 @@
-import React, { Dispatch } from 'react'
-import { Icon as IconType, Shortcut } from '../types'
+import React from 'react'
 import { isDocumentEditable } from '../util'
-import { Action } from 'redux'
+import subCategorizeOne from '../action-creators/subCategorizeOne'
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 24 24'>
@@ -17,7 +17,7 @@ const subCategorizeOneShortcut: Shortcut = {
   keyboard: { key: 'o', alt: true },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'subCategorizeOne' })
+  exec: dispatch => dispatch(subCategorizeOne())
 }
 
 export default subCategorizeOneShortcut

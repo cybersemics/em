@@ -1,7 +1,8 @@
-import React, { Dispatch } from 'react'
-import { Context, Icon as IconType, Shortcut } from '../types'
+import React from 'react'
 import { isDocumentEditable, pathToContext, rootedParentOf } from '../util'
 import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
+import { toggleAttribute } from '../action-creators'
+import { Context, Icon as IconType, Shortcut } from '../types'
 
 interface ToggleAttribute {
   type: 'toggleAttribute',
@@ -25,7 +26,7 @@ const bindContextShortcut: Shortcut = {
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, alt: true },
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
@@ -37,12 +38,11 @@ const bindContextShortcut: Shortcut = {
     const contextChain = splitChain(state, cursor)
     const contextBound = pathToContext(lastThoughtsFromContextChain(state, contextChain))
 
-    dispatch({
-      type: 'toggleAttribute',
+    dispatch(toggleAttribute({
       context: pathToContext(contextRanked),
       key: '=bindContextShortcut',
       value: JSON.stringify(contextBound),
-    })
+    }))
   }
 }
 

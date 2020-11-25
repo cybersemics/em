@@ -1,4 +1,4 @@
-import { loadFromUrl } from '../action-creators'
+import { error, loadFromUrl, newThought, setResourceCache as setResourceCacheActionCreator } from '../action-creators'
 import { attribute, getChildren, getChildrenRanked, simplifyPath } from '../selectors'
 import { pathToContext } from '../util'
 import { ActionCreator, Path, SimplePath } from '../types'
@@ -17,20 +17,19 @@ const loadResource = (path: Path): ActionCreator => (dispatch, getState) => {
   if (src && !resourceCache[src] && !hasVisibleChildren()) {
 
     // create empty thought in which to load the source
-    dispatch({ type: 'newThought', at: path, insertNewSubthought: true, preventSetCursor: true })
+    dispatch(newThought({ at: path, insertNewSubthought: true, preventSetCursor: true }))
 
     const simplePath = simplifyPath(state, path)
     const childrenNew = getChildrenRanked(state, pathToContext(simplePath))
     const thoughtNew = childrenNew[childrenNew.length - 1]
     const newThoughtPath = [...path, thoughtNew] as SimplePath
 
-    /** An ad hoc action-creator to dispatch setResourceCache with the given value. */
+    /** An ad hoc action-creator to dispatch setResourceCacheActionCreator with the given value. */
     const setResourceCache = (value: boolean) =>
-      dispatch({
-        type: 'setResourceCache',
+      dispatch(setResourceCacheActionCreator({
         key: src,
         value
-      })
+      }))
 
     // load and import into the empty thought
     // skip the root of the src to import the children directly into the new thought
@@ -38,7 +37,7 @@ const loadResource = (path: Path): ActionCreator => (dispatch, getState) => {
     dispatch(loadFromUrl(src, newThoughtPath, { skipRoot: true }))
       .then(() => setResourceCache(true))
       .catch(() => {
-        dispatch({ type: 'error', value: 'Error loading resource: ' + src })
+        dispatch(error({ value: 'Error loading resource: ' + src }))
         setResourceCache(false)
       })
 

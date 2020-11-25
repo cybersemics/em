@@ -4,29 +4,9 @@ import { State } from '../util/initialState'
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
+import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 import { GestureResponderEvent } from 'react-native'
-import { Context, Icon as IconType, Path, Shortcut } from '../types'
-
-interface Error {
-  type: 'error',
-  value: string,
-}
-
-interface DeleteAttribute {
-  type: 'deleteAttribute',
-  context: Context,
-  key: string,
-}
-
-interface Alert {
-  type: 'alert',
-  value?: string | null,
-}
-
-interface ArchiveThought {
-  type: 'archiveThought',
-  path?: Path | null,
-}
+import { Icon as IconType, Shortcut } from '../types'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
 
@@ -36,21 +16,21 @@ const editableOfNote = (noteEl: HTMLElement) => {
   return closest ? closest.querySelector('.editable') as HTMLElement : null
 }
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<Error | DeleteAttribute | Alert | ArchiveThought>, getState: () => State, e: Event | GestureResponderEvent) => {
+const exec = (dispatch: Dispatch<any>, getState: () => State, e: Event | GestureResponderEvent) => {
   const state = getState()
   const { cursor, noteFocus } = state
 
   if (cursor) {
     const context = pathToContext(cursor)
     if (isEM(cursor) || isRoot(cursor)) {
-      dispatch({ type: 'error', value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` })
+      dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))
     }
     else if (hasChild(state, context, '=readonly')) {
-      dispatch({ type: 'error', value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` })
+      dispatch(error({ value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` }))
     }
     else if (noteFocus) {
       const editable = e.target ? editableOfNote(e.target as HTMLElement) : null
-      dispatch({ type: 'deleteAttribute', context, key: '=note' })
+      dispatch(deleteAttribute({ context, key: '=note' }))
 
       // restore selection manually since Editable is not re-rendered
       if (isMobile) {
@@ -71,12 +51,12 @@ const exec = (dispatch: Dispatch<Error | DeleteAttribute | Alert | ArchiveThough
       undoArchiveTimer = window.setTimeout(() => {
         const state = getState()
         if (state.alert && state.alert.alertType === 'undoArchive') {
-          dispatch({ type: 'alert', value: null })
+          dispatch(alert(null))
         }
       }, 10000)
 
       // archive the thought
-      dispatch({ type: 'archiveThought', path: state.cursor })
+      dispatch(archiveThought({ path: state.cursor ?? undefined }))
     }
   }
 }

@@ -2,15 +2,8 @@ import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
-import { Context, Shortcut } from '../types'
-import { Dispatch } from 'react'
-
-interface SetAttribute {
-  type: 'setAttribute',
-  context: Context,
-  key: string,
-  value: string,
-}
+import { setAttribute } from '../action-creators'
+import { Shortcut } from '../types'
 
 const noteShortcut: Shortcut = {
   id: 'note',
@@ -20,7 +13,7 @@ const noteShortcut: Shortcut = {
   gesture: 'rdlr',
   svg: PencilIcon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<SetAttribute>, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor, noteFocus } = state
 
@@ -35,12 +28,11 @@ const noteShortcut: Shortcut = {
     }
 
     if (!hasNote) {
-      dispatch({
-        type: 'setAttribute',
+      dispatch(setAttribute({
         context,
         key: '=note',
         value: ''
-      })
+      }))
     }
 
     // focus selection on note

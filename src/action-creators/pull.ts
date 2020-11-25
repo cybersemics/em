@@ -4,6 +4,7 @@ import * as firebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, mergeThoughts } from '../util'
+import { reconcile, updateThoughts } from '../action-creators'
 import { ActionCreator, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../types'
 
 const BUFFER_DEPTH = 2
@@ -40,8 +41,7 @@ const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Actio
 
     // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
     // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
-    dispatch({
-      type: 'updateThoughts',
+    dispatch(updateThoughts({
       contextIndexUpdates: thoughts.contextIndex,
       thoughtIndexUpdates: thoughts.thoughtIndex,
       local: false,
@@ -49,7 +49,7 @@ const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Actio
       // if the root is in the contextMap, force isLoading: false
       // otherwise isLoading will not be automatically unset by updateThoughts if the root context is empty
       ...ROOT_ENCODED in contextMap ? { isLoading: false } : null
-    })
+    }))
   }
 
   const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
@@ -84,13 +84,14 @@ const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Actio
         }
       }, {} as Index<Lexeme>)
 
-      dispatch({
-        type: 'reconcile',
+      dispatch(reconcile({
         thoughtsResults: [{
+          contextCache: [],
           contextIndex: thoughtsLocalContextIndexChunk,
           thoughtIndex: thoughtsLocalThoughtIndexChunk,
+          thoughtCache: [],
         }, thoughtsRemoteChunk]
-      })
+      }))
 
     })
 
@@ -100,10 +101,9 @@ const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Actio
     // thoughts that exist locally and not remotely will be missed
     // sync all thoughts here to ensure none are missed
     // TODO: Only reconcile local-only thoughts
-    dispatch({
-      type: 'reconcile',
+    dispatch(reconcile({
       thoughtsResults: [thoughtsLocal, thoughtsRemote]
-    })
+    }))
   }
 
   // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.

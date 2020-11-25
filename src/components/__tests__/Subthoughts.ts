@@ -3,6 +3,7 @@ import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { RANKED_ROOT } from '../../constants'
 import { equalArrays, pathToContext, timestamp } from '../../util'
+import { importText, setCursor } from '../../action-creators'
 import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
@@ -40,15 +41,14 @@ it('normal view', () => {
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `- a
         - b
         - c`
-    },
+    }),
     // set the cursor to expand the subthoughts
-    { type: 'setCursor', path: [{ value: 'a', rank: 0 }] }
+    setCursor({ path: [{ value: 'a', rank: 0 }] }),
   ])
 
   // update DOM
@@ -75,8 +75,7 @@ describe('context view', () => {
 
     // import thoughts
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
@@ -87,7 +86,7 @@ describe('context view', () => {
               - y
         `,
         lastUpdated: now,
-      },
+      }),
       setCursorFirstMatchActionCreator(['a', 'm']),
       { type: 'toggleContextView' },
     ])
@@ -134,8 +133,7 @@ describe('context view', () => {
 
     // import thoughts
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
@@ -144,7 +142,7 @@ describe('context view', () => {
           - b
             - ones
               - y`
-      },
+      }),
       // enable Context View on /a/one
       setCursorFirstMatchActionCreator(['a', 'one']),
       { type: 'toggleContextView' }
@@ -211,8 +209,7 @@ describe('context view', () => {
 
     // import thoughts
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
@@ -220,7 +217,7 @@ describe('context view', () => {
               - c
                 - d
                   - c`
-      },
+      }),
       // enable Context View on /a/b/c/d/c
       setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd', 'c']),
       { type: 'toggleContextView' },
@@ -258,8 +255,7 @@ describe('hidden thoughts', () => {
   it('do not hide invisible thought if it lies within cursor path', () => {
 
     // import thoughts
-    store.dispatch({
-      type: 'importText',
+    store.dispatch<any>(importText({
       path: RANKED_ROOT,
       preventSetCursor: true,
       text: `
@@ -270,7 +266,7 @@ describe('hidden thoughts', () => {
         - b
         - =meta1
           - c`,
-    })
+    }))
 
     // update DOM
     wrapper.update()
@@ -330,8 +326,7 @@ describe('hidden thoughts', () => {
 
     // import thoughts
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
@@ -340,7 +335,7 @@ describe('hidden thoughts', () => {
                 - e
           - b
             - d`
-      },
+      }),
       setCursorFirstMatchActionCreator(['b', 'd']),
       { type: 'toggleContextView' },
       setCursorFirstMatchActionCreator(['b', 'd', 'a']),

@@ -1,4 +1,5 @@
 import { store } from '../../store'
+import { cursorBack, deleteThought, newThought } from '../../action-creators'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { Index } from '../../types'
 
@@ -21,26 +22,26 @@ afterEach(cleanupTestApp)
 
 it('set url to cursor', () => {
 
-  store.dispatch({ type: 'newThought', value: 'a' })
+  store.dispatch(newThought({ value: 'a' }))
   expect(window.location.pathname).toBe('/~/a')
 
-  store.dispatch({ type: 'newThought', value: 'b', insertNewSubthought: true })
+  store.dispatch(newThought({ value: 'b', insertNewSubthought: true }))
   expect(window.location.pathname).toBe('/~/a/b')
 
-  store.dispatch({ type: 'cursorBack' })
+  store.dispatch<any>(cursorBack())
   expect(window.location.pathname).toBe('/~/a')
 
-  store.dispatch({ type: 'cursorBack' })
+  store.dispatch<any>(cursorBack())
   expect(window.location.pathname).toBe('/')
 
 })
 
 it('set url to home after deleting last empty thought', () => {
 
-  store.dispatch({ type: 'newThought' })
+  store.dispatch<any>(newThought({}))
   expect(window.location.pathname).toBe('/~/')
 
-  store.dispatch({ type: 'deleteThought' })
+  store.dispatch<any>(deleteThought())
   expect(window.location.pathname).toBe('/')
 
 })

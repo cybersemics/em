@@ -1,6 +1,6 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
+import { toggleContextView } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
-import { Action } from 'redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 24 24' enableBackground='new 0 0 24 24'>
@@ -14,7 +14,7 @@ const toggleContextViewShortcut: Shortcut = {
   gesture: 'ru',
   keyboard: { key: 's', shift: true, alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<Action>) => dispatch({ type: 'toggleContextView' })
+  exec: dispatch => dispatch(toggleContextView())
 }
 
 export default toggleContextViewShortcut

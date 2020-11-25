@@ -1,5 +1,6 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
+import { importText } from '../../action-creators'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
 import { RANKED_ROOT } from '../../constants'
@@ -17,15 +18,14 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
   // NewThoughtInstructions should be visible when there are no thoughts
   expect(wrapper.find(NewThoughtInstructions)).toHaveLength(1)
 
-  store.dispatch({
-    type: 'importText',
+  store.dispatch<any>(importText({
     path: RANKED_ROOT,
     text: `
       - a
       - b
       - =test
     `
-  })
+  }))
 
   wrapper.update()
 

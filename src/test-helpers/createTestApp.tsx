@@ -7,6 +7,7 @@ import { initialize } from '../initialize'
 import { Provider } from 'react-redux'
 import { store } from '../store'
 import * as db from '../data-providers/dexie'
+import { clear } from '../action-creators'
 import { Await } from '../types'
 
 // components
@@ -81,7 +82,8 @@ export const cleanupTestApp = async () => {
       cleanup()
     }
 
-    store.dispatch({ type: 'clear', full: true })
+    store.dispatch<any>(clear({ full: true }))
+
     await db.clearAll()
     document.body.innerHTML = ''
 

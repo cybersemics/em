@@ -1,5 +1,5 @@
 import { RANKED_ROOT } from '../../constants'
-import { cursorNext } from '../../action-creators'
+import { cursorNext, importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
@@ -10,14 +10,13 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
             - a1
           - b`
-      },
+      }),
       setCursorFirstMatchActionCreator(['a']),
       cursorNext()
     ])
@@ -32,14 +31,13 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
           - b`
-      },
-      { type: 'setCursor', path: null },
+      }),
+      setCursor({ path: null }),
       cursorNext()
     ])
 
@@ -53,13 +51,12 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
           - b`
-      },
+      }),
       setCursorFirstMatchActionCreator(['b']),
       cursorNext()
     ])
@@ -84,8 +81,7 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - SORT
@@ -93,7 +89,7 @@ describe('normal view', () => {
               - a1
             - c
             - b`
-      },
+      }),
       {
         type: 'toggleAttribute',
         context: ['SORT'],
@@ -114,14 +110,13 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
             - a1
           - b`
-      },
+      }),
       setCursorFirstMatchActionCreator(['a']),
       cursorNext()
     ])

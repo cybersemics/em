@@ -1,6 +1,6 @@
 import { Store } from 'redux'
 import globals from '../globals'
-import { loadPublicThoughts, userAuthenticated } from '../action-creators'
+import { authenticate, loadPublicThoughts, status as statusActionCreator, userAuthenticated } from '../action-creators'
 import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
 import { State } from '../util/initialState'
@@ -19,7 +19,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any>, though
         store.dispatch(userAuthenticated(user))
       }
       else {
-        store.dispatch({ type: 'authenticate', value: false })
+        store.dispatch(authenticate({ value: false }))
       }
     })
 
@@ -50,13 +50,13 @@ export const initFirebase = async ({ store }: { store: Store<State, any>, though
 
       // if thoughtIndex was already loaded and we go offline, enter offline mode immediately
       else if (status === 'loaded') {
-        store.dispatch({ type: 'status', value: 'offline' })
+        store.dispatch(statusActionCreator({ value: 'offline' }))
       }
     })
   }
 
   // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
   globals.offlineTimer = window.setTimeout(() => {
-    store.dispatch({ type: 'status', value: 'offline' })
+    store.dispatch(statusActionCreator({ value: 'offline' }))
   }, OFFLINE_TIMEOUT)
 }

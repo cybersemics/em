@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { store } from '../store'
 import { selectNextEditable, strip } from '../util'
 import { Connected } from '../types'
+import { setCursor } from '../action-creators'
 
 // components
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
@@ -33,7 +34,7 @@ const Search = ({ dispatch }: Connected<any>) => {
 
   /** Removes the normal cursor when the search is focused. */
   const onFocus = () => {
-    dispatch({ type: 'setCursor', path: null })
+    dispatch(setCursor({ path: null }))
   }
 
   /** Handles when the search input has changed. */

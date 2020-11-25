@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
+import { setCursor } from '../action-creators'
 import { decodeThoughtsUrl, getContexts, getAllChildren, theme } from '../selectors'
 import { State } from '../util/initialState'
 import { Connected, Context, SimplePath, ThoughtContext, Path } from '../types'
@@ -112,7 +113,7 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
   const UrlIconLink = ({ url }: { url: string }) => <a href={addMissingProtocol(url)} rel='noopener noreferrer' target='_blank' className='external-link' onClick={e => {
     if (url.startsWith(window.location.origin)) {
       const { path, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length), { exists: true })
-      dispatch({ type: 'setCursor', path, replaceContextViews: contextViews })
+      dispatch(setCursor({ path, replaceContextViews: contextViews }))
       e.preventDefault()
     }
   }}

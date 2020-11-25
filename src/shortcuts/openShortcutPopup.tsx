@@ -1,11 +1,7 @@
-import React, { Dispatch } from 'react'
-import { Icon as IconType, Shortcut } from '../types'
+import React from 'react'
 import { isMobile } from '../browser'
-
-interface ShowModal {
-  type: 'showModal',
-  id: string,
-}
+import { showModal } from '../action-creators'
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -20,9 +16,9 @@ const openShortcutPopupShortcut: Shortcut = {
   description: `Open the help screen which contains the tutorials and a list of all ${isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
   keyboard: { key: '/', meta: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ShowModal>) => {
+  exec: dispatch => {
     window.scrollTo(0, 0)
-    dispatch({ type: 'showModal', id: 'help' })
+    dispatch(showModal({ id: 'help' }))
   }
 }
 

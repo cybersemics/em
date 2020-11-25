@@ -9,6 +9,7 @@ import Subthoughts from '../Subthoughts'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
+import { importText } from '../../action-creators'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { Context, SimplePath } from '../../types'
 
@@ -75,15 +76,14 @@ const simulateDragAndDrop = ({ source, drop, type }: { source: Context, drop: Co
 }
 
 it('drop as sibling', () => {
-  store.dispatch({
-    type: 'importText',
+  store.dispatch<any>(importText({
     path: RANKED_ROOT,
     text: `
       - a
       - b
       - c
       - d
-   ` })
+   ` }))
 
   wrapper.update()
 
@@ -105,15 +105,14 @@ it('drop as sibling', () => {
 })
 
 it('drop as child (Drop end)', () => {
-  store.dispatch({
-    type: 'importText',
+  store.dispatch<any>(importText({
     path: RANKED_ROOT,
     text: `
       - a
       - b
       - c
       - d
-   ` })
+   ` }))
 
   wrapper.update()
 
@@ -137,14 +136,13 @@ it('drop as child (Drop end)', () => {
 it('prevent drop into descendants', () => {
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
           - b
         - c`
-    },
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 

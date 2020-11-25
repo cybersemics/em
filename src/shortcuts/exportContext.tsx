@@ -1,10 +1,6 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
+import { showModal } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
-
-interface ShowModal {
-  type: 'showModal',
-  id: string,
-}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 400 400'>
@@ -19,7 +15,7 @@ const exportContextShortcut: Shortcut = {
   name: 'Export Context',
   description: 'Export the current context as plaintext or html',
   svg: Icon,
-  exec: (dispatch: Dispatch<ShowModal>) => dispatch({ type: 'showModal', id: 'export' })
+  exec: dispatch => dispatch(showModal({ id: 'export' }))
 }
 
 export default exportContextShortcut

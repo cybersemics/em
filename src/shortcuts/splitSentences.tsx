@@ -1,11 +1,11 @@
 import React, { Dispatch } from 'react'
 import _ from 'lodash'
-import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 import { parentOf, headValue, pathToContext } from '../util'
-import { alert } from '../action-creators'
+import { alert, splitSentences } from '../action-creators'
 import { Action } from 'redux'
 import { getAllChildren, isContextViewActive } from '../selectors'
 import { ROOT_TOKEN } from '../constants'
+import { ActionCreator, Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' width={size} height={size} fill={fill} style={{ ...style, paddingTop: '8px' }} viewBox='0 0 110 115'>
@@ -40,7 +40,7 @@ const splitSentencesShortcut: Shortcut = {
       dispatch(alert('Cannot split sentences: splitting creates duplicates.', { alertType: 'splitSentencesErr3', clearTimeout: 3000 }))
       return
     }
-    dispatch({ type: 'splitSentences' })
+    dispatch(splitSentences())
   }
 }
 

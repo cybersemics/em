@@ -1,7 +1,6 @@
-
-import React, { Dispatch } from 'react'
-import { Icon as IconType } from '../types'
-import { Action } from 'redux'
+import React from 'react'
+import { Icon as IconType, Shortcut } from '../types'
+import { collapseContext } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -10,14 +9,14 @@ const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xm
   </g>
 </svg>
 
-const collapseContextShortcut = {
+const collapseContextShortcut: Shortcut = {
   id: 'collapseContext',
   name: 'Collapse',
   gesture: 'ldu',
   svg: Icon,
   keyboard: { key: 'p', meta: true },
-  exec: (dispatch: Dispatch<Action>) => {
-    dispatch({ type: 'collapseContext' })
+  exec: dispatch => {
+    dispatch(collapseContext())
   }
 }
 

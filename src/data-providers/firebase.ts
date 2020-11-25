@@ -1,6 +1,7 @@
 import { store } from '../store'
 import { Index, Lexeme, Parent, Snapshot } from '../types'
 import { keyValueBy, getUserRef } from '../util'
+import { error } from '../action-creators'
 
 interface Options {
   maxDepth?: number,
@@ -57,7 +58,7 @@ export const update = async (updates: Index<any>) => {
   return new Promise((resolve, reject) => {
     userRef!.update(updates, (err: Error | null, ...args: any[]) => {
       if (err) {
-        store.dispatch({ type: 'error', value: err })
+        store.dispatch<any>(error({ value: err.message }))
         console.error(err, updates)
         reject(err)
       }

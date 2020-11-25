@@ -2,6 +2,7 @@ import { store } from '../../store'
 import { ROOT_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { getThought } from '../../selectors'
+import { clear, newThought } from '../../action-creators'
 import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
@@ -40,7 +41,7 @@ describe('integration', () => {
   })
 
   afterEach(async () => {
-    store.dispatch({ type: 'clear' })
+    store.dispatch<any>(clear())
     await db.clearAll()
     jest.runOnlyPendingTimers()
   })
@@ -64,7 +65,7 @@ describe('integration', () => {
 
   it('persist newThought', async () => {
 
-    store.dispatch({ type: 'newThought', value: 'a' })
+    store.dispatch(newThought({ value: 'a' }))
 
     jest.runOnlyPendingTimers()
 

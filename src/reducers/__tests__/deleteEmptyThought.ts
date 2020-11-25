@@ -1,5 +1,6 @@
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
+import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
@@ -232,13 +233,12 @@ describe('mount', () => {
 
   it('after merging siblings, caret should be in between', () => {
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
         - apple
           - banana`
-      },
+      }),
       setCursorFirstMatchActionCreator(['apple', 'banana']),
       { type: 'deleteEmptyThought' },
     ])

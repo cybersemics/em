@@ -1,8 +1,7 @@
-import { Dispatch } from 'react'
-import { Action } from 'redux'
 import { Key } from 'ts-key-enum'
 import { attributeEquals, simplifyPath } from '../selectors'
 import { parentOf, isDocumentEditable, pathToContext } from '../util'
+import { cursorBack, outdent } from '../action-creators'
 import { Shortcut } from '../types'
 
 const moveCursorBackward: Shortcut = {
@@ -11,7 +10,7 @@ const moveCursorBackward: Shortcut = {
   description: `Move the current thought to the next sibling of its context or to previous column in table view.`,
   keyboard: { key: Key.Tab, shift: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  exec: (dispatch: Dispatch<Action>, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
 
@@ -22,7 +21,7 @@ const moveCursorBackward: Shortcut = {
     const contextGrandparent = parentOf(parentOf(pathToContext(path)))
     const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
 
-    dispatch({ type: isTable ? 'cursorBack' : 'outdent' })
+    dispatch(isTable ? cursorBack() : outdent())
   }
 }
 

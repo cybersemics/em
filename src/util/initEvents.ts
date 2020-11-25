@@ -5,7 +5,7 @@ import * as db from '../data-providers/dexie'
 import { clearSelection, isRoot } from '../util'
 import { State } from '../util/initialState'
 import { decodeThoughtsUrl } from '../selectors'
-import { scrollCursorIntoView, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 
 declare global {
   interface Window {
@@ -30,7 +30,7 @@ export const initEvents = (store: Store<State, any>) => {
     const cursor = toRoot ? null : path
 
     // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
-    store.dispatch({ type: 'setCursor', path: cursor, replaceContextViews: contextViews })
+    store.dispatch(setCursor({ path: cursor, replaceContextViews: contextViews }))
 
     // scroll cursor into view
     store.dispatch(scrollCursorIntoView())
@@ -49,7 +49,7 @@ export const initEvents = (store: Store<State, any>) => {
 
     console.error(e.error.stack)
     db.log({ message: e.message, stack: e.error.stack })
-    store.dispatch({ type: 'error', value: e.message })
+    store.dispatch(error({ value: e.message }))
   }
 
   /** Remove window event handlers. */

@@ -5,27 +5,8 @@ import { getChildren, getThoughtBefore, getAllChildren, getChildrenRanked, hasCh
 import { State } from '../util/initialState'
 import { RANKED_ROOT } from '../constants'
 import { isMobile } from '../browser'
-import { alert } from '../action-creators'
-import { ActionCreator, Icon as IconType, Shortcut } from '../types'
-
-interface Error {
-  type: 'error',
-  value: string,
-}
-
-interface DeleteEmptyThought {
-  type: 'deleteEmptyThought',
-}
-
-interface Outdent {
-  type: 'outdent',
-}
-
-interface Alert {
-  type: 'alert',
-  value: string | null,
-  alertType: string,
-}
+import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
+import { Icon as IconType, Shortcut } from '../types'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = (state: State) => {
@@ -57,7 +38,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
 }
 
 /** An action-creator thunk that dispatches deleteEmptyThought. */
-const deleteEmptyThought = (dispatch: Dispatch<Error | DeleteEmptyThought>, getState: () => State) => {
+const deleteEmptyThought = (dispatch: Dispatch<any>, getState: () => State) => {
   const state = getState()
   const { cursor, editing } = state
   if (!cursor) return
@@ -70,7 +51,7 @@ const deleteEmptyThought = (dispatch: Dispatch<Error | DeleteEmptyThought>, getS
   const children = getChildren(state, contextOfCursor)
 
   if (prevThought && uneditable) {
-    dispatch({ type: 'error', value: `'${ellipsize(headValue(cursor))}' is uneditable and cannot be merged.` })
+    dispatch(error({ value: `'${ellipsize(headValue(cursor))}' is uneditable and cannot be merged.` }))
     return
   }
 
@@ -79,7 +60,7 @@ const deleteEmptyThought = (dispatch: Dispatch<Error | DeleteEmptyThought>, getS
     asyncFocus()
   }
 
-  dispatch({ type: 'deleteEmptyThought' })
+  dispatch(deleteEmptyThoughtActionCreator())
 }
 
 /** A selector that returns true if the cursor is on an only child that can be outdented by the delete command. */
@@ -126,9 +107,9 @@ const canExecute = (getState: () => State) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<Outdent | Alert | ActionCreator>, getState: () => State) => {
+const exec = (dispatch: Dispatch<any>, getState: () => State) => {
   if (canExecuteOutdent(getState())) {
-    dispatch({ type: 'outdent' })
+    dispatch(outdent())
   }
   // additional check for duplicates
   else if (isMergedThoughtDuplicate(getState())) {

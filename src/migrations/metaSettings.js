@@ -1,6 +1,7 @@
 import { EM_TOKEN, INITIAL_SETTINGS, SCHEMA_HASHKEYS as SCHEMA_FROM, SCHEMA_META_SETTINGS as SCHEMA_TO } from '../constants'
 import { store } from '../store'
 import { push } from '../util'
+import { importText } from '../action-creators'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO
@@ -8,12 +9,11 @@ export const schemaVersionTo = SCHEMA_TO
 /** Migrates the settings to metaprogramming attributes. */
 export const migrate = async state => {
 
-  const { thoughtIndexUpdates, contextIndexUpdates } = store.dispatch({
-    type: 'importText',
+  const { thoughtIndexUpdates, contextIndexUpdates } = store.dispatch(importText({
     path: [{ value: EM_TOKEN, rank: 0 }],
     text: INITIAL_SETTINGS,
     preventSync: true
-  })
+  }))
 
   // remove old settings from state, local, and remote
   push({}, {}, {

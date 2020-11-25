@@ -6,6 +6,9 @@ import { never } from '../util/never'
 import undoRedoReducerEnhancer from '../redux-enhancers/undoRedoReducerEnhancer'
 import { State } from '../util/initialState'
 
+// import directly to avoid circular import
+import importText from '../action-creators/importText'
+
 /**
  * Returns new store for test.
  */
@@ -25,13 +28,12 @@ export const createTestStore = () => {
 
   store.dispatch([
 
-    {
-      type: 'importText',
+    importText({
       path: [{ value: EM_TOKEN, rank: 0 }],
       text: INITIAL_SETTINGS,
       lastUpdated: never(),
       preventSetCursor: true,
-    },
+    }),
 
     // skip tutorial
     { type: 'modalComplete', id: 'welcome' },

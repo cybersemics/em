@@ -13,12 +13,8 @@ const redoShortcut: Shortcut = {
   description: 'Redo',
   svg: RedoIcon,
   exec: (dispatch: Dispatch<RedoAction>, getState) => {
-    if (!isRedoEnabled(getState())) {
-      return
-    }
-    dispatch({
-      type: 'redoAction',
-    })
+    if (!isRedoEnabled(getState())) return
+    dispatch({ type: 'redoAction' })
   }
 }
 

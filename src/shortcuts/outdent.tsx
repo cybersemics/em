@@ -1,7 +1,8 @@
-import React, { Dispatch } from 'react'
-import { Icon as IconType, Shortcut } from '../types'
+import React from 'react'
 import { isDocumentEditable } from '../util'
-import { Action } from 'redux'
+import { outdent } from '../action-creators'
+import { Icon as IconType, Shortcut } from '../types'
+
 import moveCursorBackward from './moveCursorBackward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -23,13 +24,13 @@ const outdentShortcut: Shortcut = {
   },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  exec: (dispatch: Dispatch<Action>, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
 
     if (!cursor || cursor.length < 2) return
 
-    dispatch({ type: 'outdent' })
+    dispatch(outdent())
   }
 }
 

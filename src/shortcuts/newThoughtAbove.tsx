@@ -1,8 +1,9 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
-import { Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
 import { isDocumentEditable } from '../util'
+import newThought from '../action-creators/newThought'
+import { Icon as IconType, Shortcut } from '../types'
 
 interface NewThought {
   type: 'newThought',
@@ -24,7 +25,7 @@ const newThoughtAboveShortcut: Shortcut = {
   ...!isMobile ? { keyboard: { key: Key.Enter, shift: true } } : null,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<NewThought>) => dispatch({ type: 'newThought', insertBefore: true })
+  exec: newThought({ insertBefore: true })
 }
 
 export default newThoughtAboveShortcut

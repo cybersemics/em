@@ -3,11 +3,12 @@ import { decode as firebaseDecode } from 'firebase-encode'
 import * as db from '../data-providers/dexie'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
 import { isDocumentEditable, keyValueBy, logWithTime } from '../util'
+import { deleteData, updateThoughts } from '../action-creators'
 import { State } from '../util/initialState'
 import { ActionCreator, Index, Parent } from '../types'
 
 /** Save all firebase state to state and localStorage. */
-export const loadState = async (dispatch: Dispatch, newState: State, oldState: State) => {
+export const loadState = async (dispatch: Dispatch<any>, newState: State, oldState: State) => {
 
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
@@ -15,7 +16,7 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
     Object.keys(oldState.thoughts.thoughtIndex).forEach(key => {
       if (!(key in newState.thoughts.thoughtIndex)) {
         // do not force render here, but after all values have been deleted
-        dispatch({ type: 'deleteData', value: oldState.thoughts.thoughtIndex[key].value })
+        dispatch(deleteData({ value: oldState.thoughts.thoughtIndex[key].value }))
       }
     })
   }
@@ -84,15 +85,12 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
 
   if (Object.keys(thoughtIndexUpdates).length > 0) {
     logWithTime('updateThoughts')
-    dispatch({
-      type: 'updateThoughts',
+    dispatch(updateThoughts({
       thoughtIndexUpdates,
       contextIndexUpdates,
-      // do not persist to remote database since that is where the data is originating
-      forceRender: true,
       recentlyEdited: newState.recentlyEdited,
       remote: false,
-    })
+    }))
   }
 
   logWithTime('loadRemoteState: updateThoughts')

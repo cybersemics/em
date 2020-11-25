@@ -1,5 +1,5 @@
 import { RANKED_ROOT } from '../../constants'
-import { cursorPrev } from '../../action-creators'
+import { cursorPrev, importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
@@ -9,14 +9,13 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch({
-      type: 'importText',
+    store.dispatch(importText({
       path: RANKED_ROOT,
       text: `
         - a
           - a1
         - b`
-    })
+    }))
 
     setCursorFirstMatch(['b'])(store.getState())
     store.dispatch(cursorPrev())
@@ -31,14 +30,13 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
           - b`
-      },
-      { type: 'setCursor', path: null },
+      }),
+      setCursor({ path: null }),
       cursorPrev()
     ])
 
@@ -52,13 +50,12 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - a
           - b`
-      },
+      }),
       setCursorFirstMatchActionCreator(['a']),
       cursorPrev()
     ])
@@ -83,8 +80,7 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch([
-      {
-        type: 'importText',
+      importText({
         path: RANKED_ROOT,
         text: `
           - SORT
@@ -92,7 +88,7 @@ describe('normal view', () => {
             - c
             - b
               - b1`
-      },
+      }),
       {
         type: 'toggleAttribute',
         context: ['SORT'],
@@ -112,14 +108,13 @@ describe('normal view', () => {
 
     const store = createTestStore()
 
-    store.dispatch({
-      type: 'importText',
+    store.dispatch(importText({
       path: RANKED_ROOT,
       text: `
           - a
             - a1
           - b`
-    })
+    }))
     setCursorFirstMatch(['b'])(store.getState())
     store.dispatch(cursorPrev())
 

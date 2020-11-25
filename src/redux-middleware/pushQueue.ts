@@ -1,10 +1,12 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { pull, push } from '../action-creators'
 import { hasPushes } from '../selectors'
 import { hashContext, keyValueBy, pathToContext } from '../util'
 import { PushBatch, State } from '../util/initialState'
 import { ActionCreator, Context, Index } from '../types'
+
+// import at end to avoid circular import
+import { clearPushQueue, existingThoughtChange, existingThoughtDelete, existingThoughtMove, isPushing, pull, push } from '../action-creators'
 
 /** Merges multiple push batches into a single batch. Uses last value of local/remote. */
 const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>
@@ -72,11 +74,10 @@ const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
     await dispatch(pull(pending, { maxDepth: Infinity }))
 
     pendingDeletes.forEach(({ context, child }) => {
-      dispatch({
-        type: 'existingThoughtDelete',
+      dispatch(existingThoughtDelete({
         context,
         thoughtRanked: child,
-      })
+      }))
     })
   }
 
@@ -99,10 +100,7 @@ const flushEdits = (): ActionCreator => async (dispatch, getState) => {
     await dispatch(pull(pending, { maxDepth: Infinity }))
 
     pendingEdits.forEach(payload => {
-      dispatch({
-        type: 'existingThoughtChange',
-        ...payload,
-      })
+      dispatch(existingThoughtChange(payload))
     })
   }
 
@@ -127,11 +125,10 @@ const flushMoves = (): ActionCreator => async (dispatch, getState) => {
     await dispatch(pull(pending, { maxDepth: Infinity }))
 
     pendingMoves.forEach(({ pathOld, pathNew }) => {
-      dispatch({
-        type: 'existingThoughtMove',
+      dispatch(existingThoughtMove({
         oldPath: pathOld,
         newPath: pathNew,
-      })
+      }))
     })
   }
 
@@ -176,13 +173,13 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       dispatch(flushPushQueue())
         .then(() => {
           if (getState().isPushing) {
-            dispatch({ type: 'isPushing', value: false })
+            dispatch(isPushing({ value: false }))
           }
         })
         .catch((e: Error) => {
           console.error('flushPushQueue error', e)
         })
-      dispatch({ type: 'clearPushQueue' })
+      dispatch(clearPushQueue())
     },
     debounceDelay
   )
@@ -195,7 +192,7 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     const state = getState()
     if (hasPushes(state) && action.type !== 'isPushing') {
       if (!state.isPushing) {
-        dispatch({ type: 'isPushing', value: true })
+        dispatch(isPushing({ value: true }))
       }
       flushQueueDebounced()
     }

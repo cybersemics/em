@@ -1,4 +1,4 @@
-import { restoreCursorBeforeSearch, scrollCursorIntoView } from '../action-creators'
+import { restoreCursorBeforeSearch, scrollCursorIntoView, search, setCursor } from '../action-creators'
 import { clearSelection } from '../util'
 import { ActionCreator } from '../types'
 
@@ -8,11 +8,11 @@ const home = (): ActionCreator => (dispatch, getState) => {
   const state = getState()
 
   if (state.search != null) {
-    dispatch({ type: 'search', value: null })
+    dispatch(search({ value: null }))
     dispatch(restoreCursorBeforeSearch)
   }
   else {
-    dispatch({ type: 'setCursor', path: null, cursorHistoryClear: true })
+    dispatch(setCursor({ path: null, cursorHistoryClear: true }))
     clearSelection()
     dispatch(scrollCursorIntoView())
   }

@@ -1,5 +1,6 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
+import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import newSubthought from '../newSubthought'
 import newThoughtOrOutdent from '../newThoughtOrOutdent'
@@ -12,8 +13,7 @@ it('empty thought should outdent when hit enter', () => {
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -22,7 +22,7 @@ it('empty thought should outdent when hit enter', () => {
               - d
                 - e
                   - f`
-    },
+    }),
     setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd', 'e', 'f']),
   ])
 

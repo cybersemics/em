@@ -1,5 +1,6 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import indentOnSpace from '../indentOnSpace'
 import executeShortcut from '../../test-helpers/executeShortcut'
@@ -8,17 +9,16 @@ it('indent on adding space at the beginning of the thought', () => {
 
   const store = createTestStore()
 
-  store.dispatch({
-    type: 'importText',
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
         - a
           - b
             - c
             - d
-  ` })
+  ` }))
 
-  store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
+  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
 
   executeShortcut(indentOnSpace, { store })
 
@@ -37,8 +37,7 @@ it('prevent indent on adding space at the beginning of the immovable thought', (
 
   const store = createTestStore()
 
-  store.dispatch({
-    type: 'importText',
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
         - a
@@ -46,9 +45,9 @@ it('prevent indent on adding space at the beginning of the immovable thought', (
             - c
             - d
               - =immovable
-  ` })
+  ` }))
 
-  store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
+  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
 
   executeShortcut(indentOnSpace, { store })
 

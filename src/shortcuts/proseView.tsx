@@ -1,14 +1,8 @@
-import React, { Dispatch } from 'react'
-import { Context, Icon as IconType, Shortcut } from '../types'
+import React from 'react'
 import { simplifyPath } from '../selectors'
 import { isDocumentEditable, pathToContext } from '../util'
-
-interface ToggleAttribute {
-  type: 'toggleAttribute',
-  context: Context,
-  key: string,
-  value: string,
-}
+import { toggleAttribute } from '../action-creators'
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 100 100'>
@@ -29,7 +23,7 @@ const proseViewShortcut: Shortcut = {
   keyboard: { key: 'p', shift: true, meta: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
@@ -37,12 +31,11 @@ const proseViewShortcut: Shortcut = {
     const simplePath = simplifyPath(state, cursor)
     const context = pathToContext(simplePath)
 
-    dispatch({
-      type: 'toggleAttribute',
+    dispatch(toggleAttribute({
       context,
       key: '=view',
       value: 'Prose'
-    })
+    }))
   }
 }
 

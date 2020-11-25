@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { setCursor } from '../reducers'
 import { rankThoughtsFirstMatch } from '../selectors'
+import { setCursor as setCursorThunk } from '../action-creators'
 import { State } from '../util/initialState'
 import { ActionCreator } from '../types'
 
@@ -12,9 +13,8 @@ const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
 
 /** An ActionCreator that sets the cursor to the given unranked path. */
 export const setCursorFirstMatchActionCreator = (pathUnranked: string[]): ActionCreator =>
-  (dispatch, getState) => dispatch({
-    type: 'setCursor',
+  (dispatch, getState) => dispatch(setCursorThunk({
     path: rankThoughtsFirstMatch(getState(), pathUnranked)
-  })
+  }))
 
 export default _.curryRight(setCursorFirstMatch)

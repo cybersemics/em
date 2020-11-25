@@ -1,6 +1,7 @@
 import { RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
+import { importText } from '../../action-creators'
 import pinSubthoughtsShortcut from '../pinSubthoughts'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
@@ -11,8 +12,7 @@ it('toggle on =pinChildren attribute of cursor (initial state without =pinChildr
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -22,7 +22,7 @@ it('toggle on =pinChildren attribute of cursor (initial state without =pinChildr
           - e
             - f
             - g
-    ` },
+    ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -38,8 +38,7 @@ it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set t
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -51,7 +50,7 @@ it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set t
           - e
             - f
             - g
-    ` },
+    ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -67,8 +66,7 @@ it('toggle off =pinChildren attribute of cursor', () => {
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -80,7 +78,7 @@ it('toggle off =pinChildren attribute of cursor', () => {
           - e
             - f
             - g
-    ` },
+    ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 

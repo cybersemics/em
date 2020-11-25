@@ -1,5 +1,6 @@
 import { clearAll } from '../data-providers/dexie'
 import { never } from '../util'
+import { clear, importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { ActionCreator } from '../types'
 
@@ -18,16 +19,15 @@ const logout = (): ActionCreator => dispatch => {
   localStorage.autologin = false
 
   // clear state variables
-  dispatch({ type: 'clear' })
+  dispatch(clear())
 
   // reset initial settings
-  dispatch({
-    type: 'importText',
+  dispatch(importText({
     path: [{ value: EM_TOKEN, rank: 0 }],
     text: INITIAL_SETTINGS,
     lastUpdated: never(),
     preventSetCursor: true,
-  })
+  }))
 
   // scroll to top
   window.scrollTo(0, 0)

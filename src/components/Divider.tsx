@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
+import { setCursor } from '../action-creators'
 import { hashContext, headRank, pathToContext } from '../util'
 import { Path } from '../types'
 
@@ -14,7 +15,7 @@ const Divider = ({ path }: { path: Path }) => {
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent) => {
     e.stopPropagation()
-    dispatch({ type: 'setCursor', path })
+    dispatch(setCursor({ path }))
   }
 
   /** Get the max width of nearby for divider list child elements, add 30 px and set this width for divider. */

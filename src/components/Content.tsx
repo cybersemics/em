@@ -6,6 +6,7 @@ import expandContextThought from '../action-creators/expandContextThought'
 import { MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { attribute, getSetting, getAllChildren, isChildVisibleWithCursorCheck, isTutorial } from '../selectors'
 import { publishMode } from '../util'
+import { modalRemindMeLater } from '../action-creators'
 import { State } from '../util/initialState'
 
 // components
@@ -46,7 +47,7 @@ const mapStateToProps = (state: State) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-  showRemindMeLaterModal: () => dispatch({ type: 'modalRemindMeLater', duration: MODAL_CLOSE_DURATION }),
+  showRemindMeLaterModal: () => dispatch(modalRemindMeLater({ duration: MODAL_CLOSE_DURATION })),
   cursorBack: () => dispatch({ type: 'cursorBack' }),
   toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
 })

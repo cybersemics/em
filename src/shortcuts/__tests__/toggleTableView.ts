@@ -1,6 +1,7 @@
 import { RANKED_ROOT } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
+import { importText } from '../../action-creators'
 import toggleTableViewShortcut from '../toggleTableView'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
@@ -10,8 +11,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -19,7 +19,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
             - c
           - d
             - e
-    ` },
+    ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -34,8 +34,7 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -45,7 +44,7 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
             - c
           - d
             - e
-    ` },
+    ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -61,8 +60,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
 
   // import thoughts
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
@@ -72,7 +70,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
             - c
           - d
             - e
-      ` },
+      ` }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 

@@ -1,5 +1,6 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { importText, setCursor } from '../../action-creators'
 
 import { createTestStore } from '../../test-helpers/createTestStore'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
@@ -11,7 +12,7 @@ it('do nothing when there is no cursor', () => {
 
   store.dispatch([
     { type: 'newThought', value: 'a' },
-    { type: 'setCursor', path: null },
+    setCursor({ path: null }),
   ])
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
@@ -29,16 +30,15 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch({
-    type: 'importText',
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
       - a
         - b
           - c
-  ` })
+  ` }))
 
-  store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) })
+  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) }))
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
@@ -57,17 +57,16 @@ it('prevent outdent on pressing backspace at the beginning of a thought that is 
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch({
-    type: 'importText',
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
       - a
         - b
           - c
           - d`
-  })
+  }))
 
-  store.dispatch({ type: 'setCursor', path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) })
+  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 

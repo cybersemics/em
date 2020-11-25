@@ -2,7 +2,7 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { parentOf, getElementPaddings, headValue, pathToContext } from '../util'
 import { attributeEquals } from '../selectors'
-import { scrollCursorIntoView } from '../action-creators'
+import { cursorDown, scrollCursorIntoView } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 
 interface SelectionAttributes {
@@ -76,7 +76,7 @@ const cursorDownShortcut: Shortcut = {
     return !selectionAttributes || isSelectionOnLastLine(selectionAttributes)
   },
   exec: dispatch => {
-    dispatch({ type: 'cursorDown' })
+    dispatch(cursorDown())
     dispatch(scrollCursorIntoView())
   }
 }

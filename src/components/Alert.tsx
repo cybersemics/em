@@ -2,6 +2,7 @@ import React, { Dispatch } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { State } from '../util/initialState'
+import { alert } from '../action-creators'
 import { Alert } from '../types'
 
 interface AlertDispatchToProps {
@@ -13,7 +14,7 @@ const mapStateToProps = ({ alert }: State) => ({ alert })
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch<any>): AlertDispatchToProps => ({
-  createAlert: (text: string | null) => dispatch({ type: 'alert', value: text }),
+  createAlert: (text: string | null) => dispatch(alert(text)),
 })
 
 /** An alert component with an optional closeLink. */

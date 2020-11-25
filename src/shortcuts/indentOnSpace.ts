@@ -1,8 +1,8 @@
+import { Dispatch } from 'react'
 import { isDocumentEditable, pathToContext } from '../util'
 import { hasChild } from '../selectors'
+import { indent } from '../action-creators'
 import { State } from '../util/initialState'
-import { Dispatch } from 'react'
-import { Action } from 'redux'
 import { Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -26,8 +26,8 @@ const canExecute = (getState: () => State) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<Action>) => {
-  dispatch({ type: 'indent' })
+const exec = (dispatch: Dispatch<any>) => {
+  dispatch(indent())
 }
 
 const indentOnSpace: Shortcut = {

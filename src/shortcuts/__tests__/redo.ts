@@ -1,5 +1,6 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
+import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
@@ -8,13 +9,12 @@ it('redo thought change', () => {
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
         - b`
-    },
+    }),
     { type: 'cursorUp' },
     {
       type: 'existingThoughtChange',
@@ -52,14 +52,13 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - a
         - b
         - c`
-    },
+    }),
     { type: 'cursorDown' },
     { type: 'cursorUp' },
     { type: 'indent' },
@@ -110,13 +109,12 @@ it('redo contiguous changes', () => {
   const store = createTestStore()
 
   store.dispatch([
-    {
-      type: 'importText',
+    importText({
       path: RANKED_ROOT,
       text: `
         - A
         - B`
-    },
+    }),
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',

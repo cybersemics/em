@@ -1,6 +1,5 @@
 import { asyncFocus, isDocumentEditable } from '../util'
-import { Dispatch } from 'react'
-import { Action } from 'redux'
+import { bumpThoughtDown } from '../action-creators'
 import { Shortcut } from '../types'
 
 const bumpThoughtDownShortcut: Shortcut = {
@@ -10,9 +9,9 @@ const bumpThoughtDownShortcut: Shortcut = {
   gesture: 'rld',
   keyboard: { key: 'b', alt: true },
   canExecute: getState => !!getState().cursor && isDocumentEditable(),
-  exec: (dispatch: Dispatch<Action>) => {
+  exec: dispatch => {
     asyncFocus()
-    dispatch({ type: 'bumpThoughtDown' })
+    dispatch(bumpThoughtDown())
   }
 }
 

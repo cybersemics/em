@@ -1,7 +1,8 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
-import { Icon as IconType, Shortcut } from '../types'
 import { isDocumentEditable } from '../util'
+import newThought from '../action-creators/newThought'
+import { Icon as IconType, Shortcut } from '../types'
 
 interface NewThought {
   type: 'newThought',
@@ -16,8 +17,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 </svg>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<NewThought>) =>
-  dispatch({ type: 'newThought', insertNewSubthought: true })
+const exec = newThought({ insertNewSubthought: true })
 
 const newSubthoughtShortcut: Shortcut = {
   id: 'newSubthought',

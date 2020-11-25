@@ -1,14 +1,8 @@
-import React, { Dispatch } from 'react'
-import { Context, Icon as IconType, Shortcut } from '../types'
+import React from 'react'
 import { attributeEquals } from '../selectors'
 import { parentOf, pathToContext } from '../util'
-
-interface ToggleAttribute {
-  type: 'toggleAttribute',
-  context: Context,
-  key: string,
-  value: string,
-}
+import { toggleAttribute } from '../action-creators'
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }: IconType) => <svg xmlns='http://www.w3.org/2000/svg' version='1.1' className='icon' viewBox='0 0 20 20' width={size} height={size} style={style}>
@@ -25,19 +19,18 @@ const pinOpenShortcut: Shortcut = {
   description: 'Pin and expand the current thought.',
   keyboard: { key: 'p', alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ToggleAttribute>, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
-    if (cursor) {
-      const context = pathToContext(parentOf(cursor))
-      const isPinned = attributeEquals(state, context, '=pin', 'true')
-      dispatch({
-        type: 'toggleAttribute',
-        context: pathToContext(cursor),
-        key: '=pin',
-        value: isPinned ? 'false' : 'true'
-      })
-    }
+    if (!cursor) return
+
+    const context = pathToContext(parentOf(cursor))
+    const isPinned = attributeEquals(state, context, '=pin', 'true')
+    dispatch(toggleAttribute({
+      context: pathToContext(cursor),
+      key: '=pin',
+      value: isPinned ? 'false' : 'true'
+    }))
   }
 }
 

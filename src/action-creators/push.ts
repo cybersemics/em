@@ -6,6 +6,7 @@ import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
+import { error } from '../action-creators'
 import { ActionCreator, Index, Lexeme, Parent } from '../types'
 
 type Callback = (err: string | null, ...args: any[]) => void
@@ -171,7 +172,7 @@ const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
   if (Object.keys(allUpdates).length > 0) {
     return firebase.update(allUpdates)
       .catch((e: Error) => {
-        dispatch({ type: 'error', value: e.message })
+        dispatch(error({ value: e.message }))
         console.error(e.message, allUpdates)
         throw e
       })

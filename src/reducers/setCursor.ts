@@ -6,17 +6,6 @@ import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
 import { Index, Path, SimplePath, TutorialChoice } from '../types'
 
-interface Payload {
-  contextChain?: SimplePath[],
-  cursorHistoryClear?: boolean,
-  cursorHistoryPop?: boolean,
-  editing?: boolean | null,
-  noteFocus?: boolean,
-  offset?: number,
-  replaceContextViews?: Index<boolean>,
-  path: Path | null,
-}
-
 /**
  * Sets the cursor on a thought.
  * Side Effects: clearSelection.
@@ -30,7 +19,16 @@ const setCursor = (state: State, {
   replaceContextViews,
   path,
   noteFocus = false
-}: Payload): State => {
+}: {
+  contextChain?: SimplePath[],
+  cursorHistoryClear?: boolean,
+  cursorHistoryPop?: boolean,
+  editing?: boolean | null,
+  noteFocus?: boolean,
+  offset?: number | null,
+  replaceContextViews?: Index<boolean>,
+  path: Path | null,
+}): State => {
 
   if (path && path.length > 1 && equalThoughtRanked(path[0], RANKED_ROOT[0])) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop

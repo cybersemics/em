@@ -1,12 +1,8 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
-import { Icon as IconType, Path, Shortcut } from '../types'
 import { parentOf, isDocumentEditable } from '../util'
-
-interface NewThought {
-  type: 'newThought',
-  at: Path,
-}
+import { newThought } from '../action-creators'
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -27,10 +23,10 @@ const newUncleShortcut: Shortcut = {
     const { cursor } = getState()
     return isDocumentEditable() && !!cursor && cursor.length > 1
   },
-  exec: (dispatch: Dispatch<NewThought>, getState) => {
+  exec: (dispatch, getState) => {
     const { cursor } = getState()
     if (!cursor) return
-    dispatch({ type: 'newThought', at: parentOf(cursor) })
+    dispatch(newThought({ at: parentOf(cursor) }))
   }
 }
 
