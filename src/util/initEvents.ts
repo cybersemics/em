@@ -2,9 +2,9 @@ import _ from 'lodash'
 import { Store } from 'redux'
 import { inputHandlers } from '../shortcuts'
 import * as db from '../data-providers/dexie'
-import { clearSelection, isRoot } from '../util'
+import { clearSelection, isRoot, pathToContext } from '../util'
 import { State } from '../util/initialState'
-import { decodeThoughtsUrl } from '../selectors'
+import { decodeThoughtsUrl, pathExists } from '../selectors'
 import { error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 
 declare global {
@@ -18,7 +18,15 @@ export const initEvents = (store: Store<State, any>) => {
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = () => {
-    const { path, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname, { exists: true })
+
+    const state = store.getState()
+
+    const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
+
+    if (path && !pathExists(state, pathToContext(path))) {
+      window.history.back()
+    }
+
     const toRoot = !path || isRoot(path)
 
     // clear the selection if root
