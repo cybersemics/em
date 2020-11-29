@@ -135,7 +135,7 @@ const flushMoves = (): Thunk => async (dispatch, getState) => {
 }
 
 /** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
-const flushPushQueue = (): Thunk => async (dispatch, getState) => {
+const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
@@ -154,7 +154,7 @@ const flushPushQueue = (): Thunk => async (dispatch, getState) => {
   const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as PushBatch)
 
   // push
-  return Promise.all([
+  await Promise.all([
     Object.keys(localMergedBatch).length > 0 && dispatch(pushBatch(localMergedBatch)),
     Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(remoteMergedBatch)),
   ])

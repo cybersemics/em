@@ -1,8 +1,7 @@
-import { Action, AnyAction, Dispatch, Middleware } from 'redux'
+import { Dispatch, Middleware } from 'redux'
 import { State } from '../util/initialState'
 
-export type MultiAction<T = any> = (AnyAction | T)[]
-type MultiMiddleware = Middleware<any, State, Dispatch<Action>>
+type MultiMiddleware = Middleware<any, State, Dispatch>
 
 /** Redux Middleware that adds support for arrays of action. */
 const multi: MultiMiddleware = ({ dispatch }) => next => action =>
@@ -11,12 +10,3 @@ const multi: MultiMiddleware = ({ dispatch }) => next => action =>
     : next(action)
 
 export default multi
-
-/*
- * Overload to add array support to Redux's dispatch function.
- */
-declare module 'redux' {
-  export interface Dispatch<A extends Action = AnyAction> {
-    <R = any>(multiAction: MultiAction<R>): R[],
-  }
-}

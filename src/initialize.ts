@@ -28,8 +28,7 @@ export const initialize = async () => {
     }, 500)
   })
 
-  // allow initFirebase to start the authentication process, but pass the thoughtsLocalPromise promise so that loadRemoteState will wait, otherwise it will try to repopulate local db with data from the remote
-  initFirebase({ store, thoughtsLocalPromise: thoughtsLocalPromise })
+  initFirebase({ store })
 
   await thoughtsLocalPromise
 

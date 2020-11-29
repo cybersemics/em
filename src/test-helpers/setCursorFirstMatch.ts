@@ -11,7 +11,7 @@ const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
     path: rankThoughtsFirstMatch(state, pathUnranked),
   })
 
-/** An Thunk that sets the cursor to the given unranked path. */
+/** A Thunk that sets the cursor to the given unranked path. */
 export const setCursorFirstMatchActionCreator = (pathUnranked: string[]): Thunk =>
   (dispatch, getState) => dispatch(setCursorThunk({
     path: rankThoughtsFirstMatch(getState(), pathUnranked)

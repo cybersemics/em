@@ -4,7 +4,7 @@
  *
  */
 
-import { applyMiddleware, createStore, Action } from 'redux'
+import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
 import multi from './redux-middleware/multi'
@@ -13,7 +13,6 @@ import pullQueue from './redux-middleware/pullQueue'
 import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
 import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
-import { Thunk } from './types'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -31,12 +30,3 @@ export const store = createStore(
     updateUrlHistory
   ), undoRedoReducerEnhancer)
 )
-
-// extend store.dispatch to allow thunk action creators
-declare module 'redux' {
-  export interface Dispatch<A extends Action = AnyAction> {
-    <T = any>(thunks: Thunk<T>[]): T[],
-    <T = any>(thunk: Thunk<T>): T,
-    (...args: any[]): void,
-  }
-}

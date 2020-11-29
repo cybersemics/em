@@ -1,7 +1,6 @@
 import { GetOperation } from 'fast-json-patch'
 import { ReactNode } from 'react'
-import { AnyAction, Dispatch } from 'redux'
-import { ThunkDispatch } from 'redux-thunk'
+import { AnyAction } from 'redux'
 import { State } from './util/initialState'
 import { GestureResponderEvent } from 'react-native'
 
@@ -140,16 +139,49 @@ export interface Parent {
   pending?: boolean,
 }
 
-/** A basic Redux action creator thunk with no arguments. */
-// do not use ThunkAction<void, State, any, Action<string>> to avoid extraArgument
-export type Thunk<R = any> = (dispatch: ThunkDispatch<State, never, AnyAction>, getState: () => State) => R
+/** Extends store.dispatch to allow arrays and thunks.
+ *
+ * @example
+  store.dispatch({ type: 'aa' }) // void
+  store.dispatch([{ type: 'aa' }, { type: 'a2' }]) // void
+  store.dispatch(dispatch => dispatch({ type: 'bb' })) // void
+  store.dispatch(dispatch => {
+    dispatch({ type: 'bb' })
+    return 1
+  }) // number
+  store.dispatch(async dispatch => {
+    dispatch({ type: 'bb' })
+    const result = await Promise.resolve(1)
+    return result
+  }) // Promise<number>
+ */
+declare module 'redux' {
+  export interface Dispatch {
+    <T = void>(thunks: Thunk<T>[]): T[],
+    <T = void>(thunk: Thunk<T>): T,
+    (actions: (AnyAction | Thunk)[]): void,
+    (action: AnyAction | Thunk): void,
+  }
+}
+
+// allow explicit import
+export interface Dispatch {
+  <T = void>(thunks: Thunk<T>[]): T[],
+  <T = void>(thunk: Thunk<T>): T,
+  (actions: (AnyAction | Thunk)[]): void,
+  (action: AnyAction | Thunk): void,
+}
+
+/** A basic Redux AnyAction creator thunk with no arguments. */
+// do not use ThunkDispatch since it has the wrong return type
+export type Thunk<R = void> = (dispatch: Dispatch, getState: () => State) => R
 
 /** The three options the user can choose for the context tutorial. */
 export type TutorialChoice = 0 | 1 | 2
 
 /** When a component is connected, the dispatch prop is added. */
 export type Connected<T> = T & {
-  dispatch: any,
+  dispatch: Dispatch,
 }
 
 export interface Log {
@@ -189,7 +221,7 @@ export interface Shortcut {
   },
   svg?: (icon: Icon) => ReactNode,
   canExecute?: (getState: () => State, e: Event) => boolean,
-  exec: (dispatch: Dispatch<any>, getState: () => State, e: Event | GestureResponderEvent, { type }: { type: string }) => void,
+  exec: (dispatch: Dispatch, getState: () => State, e: Event | GestureResponderEvent, { type }: { type: string }) => void,
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'

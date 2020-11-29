@@ -1,7 +1,7 @@
 import { importText } from '../reducers'
 import { Thunk } from '../types'
 
-/** An Thunk that dispatches an 'importText` action. */
+/** A Thunk that dispatches an 'importText` action. */
 const importTextActionCreator = (payload: Parameters<typeof importText>[1]): Thunk =>
   dispatch => dispatch({ type: 'importText', ...payload })
 

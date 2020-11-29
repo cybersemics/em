@@ -13,7 +13,7 @@ interface Options {
  *
  * @param skipRoot    See importHtml.
  */
-const loadFromUrl = (url: string, path = RANKED_ROOT, { skipRoot }: Options = {}): Thunk => async (dispatch, getState) => {
+const loadFromUrl = (url: string, path = RANKED_ROOT, { skipRoot }: Options = {}): Thunk<Promise<void>> => async (dispatch, getState) => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
   const response = await fetch(urlWithProtocol)
   const text = await response.text()

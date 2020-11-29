@@ -437,7 +437,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
       const rawDestValue = strip(contentRef.current!.innerHTML, { preventTrim: true })
-      const newValue = dispatch(importText({
+      dispatch(importText({
         path,
         text: isHTML(plainText)
           ? plainText
@@ -445,7 +445,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         rawDestValue,
       }))
 
-      if (newValue) oldValueRef.current = newValue
+      // TODO: When importText was converted to a reducer, it no longer reducers newValue
+      // if (newValue) oldValueRef.current = newValue
     }
   }
 

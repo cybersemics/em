@@ -6,7 +6,7 @@ import { never } from '../util'
 import { Thunk } from '../types'
 
 /** Loads the local state from the IndexedDB database. */
-const loadLocalState = (): Thunk => async dispatch => {
+const loadLocalState = (): Thunk<Promise<void>> => async dispatch => {
 
   // load helpers and settings from local database
   const [{
