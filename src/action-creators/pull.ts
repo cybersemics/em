@@ -23,12 +23,12 @@ async function itForEach<T> (it: AsyncIterable<T>, callback: (value: T) => void)
 }
 
 /**
- * Fetch descendants of thoughts.
+ * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
-const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Thunk => async (dispatch, getState) => {
+const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Thunk<Promise<boolean>> => async (dispatch, getState) => {
 
-  if (Object.keys(contextMap).length === 0) return
+  if (Object.keys(contextMap).length === 0) return false
 
   // get local thoughts
   const thoughtLocalChunks: ThoughtsInterface[] = []

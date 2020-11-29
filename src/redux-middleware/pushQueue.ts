@@ -59,7 +59,7 @@ const pushBatch = (batch: PushBatch) =>
   )
 
 /** Pull all descendants of pending deletes and dispatch existingThoughtDelete to fully delete. */
-const flushDeletes = (): Thunk => async (dispatch, getState) => {
+const flushDeletes = (): Thunk<Promise<void>> => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
@@ -84,7 +84,7 @@ const flushDeletes = (): Thunk => async (dispatch, getState) => {
 }
 
 /** Pull all descendants of pending edits and dispatch existingThoughtChange to edit descendant contexts. */
-const flushEdits = (): Thunk => async (dispatch, getState) => {
+const flushEdits = (): Thunk<Promise<void>> => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 

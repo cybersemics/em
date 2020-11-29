@@ -91,7 +91,7 @@ const pushLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates:
 }
 
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
-const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): Thunk => async (dispatch, getState) => {
+const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): Thunk<Promise<unknown>> => async (dispatch, getState) => {
 
   const state = getState()
 

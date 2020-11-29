@@ -96,7 +96,7 @@ export const loadState = async <Tat>(dispatch: Dispatch, newState: State, oldSta
 }
 
 /** Loads the new state. */
-const loadRemoteState = (newState: State): Thunk => async (dispatch, getState) =>
+const loadRemoteState = (newState: State): Thunk => (dispatch, getState) =>
   loadState(dispatch, newState, getState())
 
 // disable migrations since they do not work with iterative loading
