@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { ActionCreator, Path, ThoughtContext } from '../types'
+import { Thunk, Path, ThoughtContext } from '../types'
 
 // util
 import {
@@ -37,7 +37,7 @@ const recreateMissingThoughtContexts = true
 const syncDivergentRanks = true
 
 /** Performs a data integrity check and is able to fix minor problems with thoughtIndex and contextIndex being out of sync. */
-const dataIntegrityCheck = (path: Path): ActionCreator => (dispatch, getState) => {
+const dataIntegrityCheck = (path: Path): Thunk => (dispatch, getState) => {
 
   if (disableAll) return
 

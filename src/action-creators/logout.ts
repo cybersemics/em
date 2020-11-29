@@ -2,10 +2,10 @@ import { clearAll } from '../data-providers/dexie'
 import { never } from '../util'
 import { clear, importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 /** Logs the user out of Firebase and clears the state. */
-const logout = (): ActionCreator => dispatch => {
+const logout = (): Thunk => dispatch => {
 
   // sign out first to prevent updates to remote
   window.firebase.auth().signOut()

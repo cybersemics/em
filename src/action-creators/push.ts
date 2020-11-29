@@ -7,7 +7,7 @@ import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
-import { ActionCreator, Index, Lexeme, Parent } from '../types'
+import { Thunk, Index, Lexeme, Parent } from '../types'
 
 type Callback = (err: string | null, ...args: any[]) => void
 
@@ -91,7 +91,7 @@ const pushLocal = (thoughtIndexUpdates: Index<Lexeme> = {}, contextIndexUpdates:
 }
 
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
-const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): ActionCreator => async (dispatch, getState) => {
+const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndexUpdates: Index<Parent | null> = {}, recentlyEdited: Index | undefined, updates: Index = {}): Thunk => async (dispatch, getState) => {
 
   const state = getState()
 
@@ -180,7 +180,7 @@ const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
 }
 
 /** Syncs updates to local database and Firebase. */
-const push = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}): ActionCreator => (dispatch, getState) => {
+const push = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}): Thunk => (dispatch, getState) => {
 
   const state = getState()
   const authenticated = { state }

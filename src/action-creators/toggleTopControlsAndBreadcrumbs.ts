@@ -1,4 +1,4 @@
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 import _ from 'lodash'
 
 /**
@@ -19,7 +19,7 @@ const throttledAction = _.throttle((dispatch, getState, value) => {
  *
  * @param value A boolean to represent the visibility state of toolbar & breadcrumbs.
  */
-const toggleTopControlsAndBreadcrumbs = (value: boolean): ActionCreator => (dispatch, getState) => {
+const toggleTopControlsAndBreadcrumbs = (value: boolean): Thunk => (dispatch, getState) => {
   throttledAction(dispatch, getState, value)
 }
 

@@ -1,10 +1,10 @@
 import { parentOf, head } from '../util'
 import { loadResource } from '../action-creators'
 import { getContexts, rankThoughtsFirstMatch } from '../selectors'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 /** Fetch and import all =src attributes with =preload. */
-const preloadSources = (): ActionCreator => (dispatch, getState) => {
+const preloadSources = (): Thunk => (dispatch, getState) => {
 
   const state = getState()
 

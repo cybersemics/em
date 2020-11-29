@@ -1,7 +1,7 @@
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
-/** An ActionCreator that dispatches a 'subCategorizeOne` action. */
-const subCategorizeOneActionCreator = (): ActionCreator =>
+/** An Thunk that dispatches a 'subCategorizeOne` action. */
+const subCategorizeOneActionCreator = (): Thunk =>
   dispatch => dispatch({ type: 'subCategorizeOne' })
 
 export default subCategorizeOneActionCreator

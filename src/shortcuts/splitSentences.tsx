@@ -5,7 +5,7 @@ import { alert, splitSentences } from '../action-creators'
 import { Action } from 'redux'
 import { getAllChildren, isContextViewActive } from '../selectors'
 import { ROOT_TOKEN } from '../constants'
-import { ActionCreator, Icon as IconType, Shortcut } from '../types'
+import { Thunk, Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' width={size} height={size} fill={fill} style={{ ...style, paddingTop: '8px' }} viewBox='0 0 110 115'>
@@ -20,7 +20,7 @@ const splitSentencesShortcut: Shortcut = {
   keyboard: { key: 's', meta: true, shift: true },
   svg: Icon,
   canExecute: getState => getState().cursor !== null,
-  exec: (dispatch: Dispatch<Action | ActionCreator>, getState) => {
+  exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state
     const value = headValue(cursor!)

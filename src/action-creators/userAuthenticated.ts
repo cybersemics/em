@@ -1,9 +1,9 @@
 import { getUserRef } from '../util'
 import { authenticate, error, status } from '../action-creators'
-import { ActionCreator, User } from '../types'
+import { Thunk, User } from '../types'
 
 /** Updates local state with newly authenticated user. */
-const userAuthenticated = (user: User): ActionCreator => async (dispatch, getState) => {
+const userAuthenticated = (user: User): Thunk => async (dispatch, getState) => {
 
   // save the user ref and uid into state
   const userRef = getUserRef({ ...getState(), user })

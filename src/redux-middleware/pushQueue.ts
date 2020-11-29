@@ -3,7 +3,7 @@ import { ThunkMiddleware } from 'redux-thunk'
 import { hasPushes } from '../selectors'
 import { hashContext, keyValueBy, pathToContext } from '../util'
 import { PushBatch, State } from '../util/initialState'
-import { ActionCreator, Context, Index } from '../types'
+import { Thunk, Context, Index } from '../types'
 
 // import at end to avoid circular import
 import { clearPushQueue, existingThoughtChange, existingThoughtDelete, existingThoughtMove, isPushing, pull, push } from '../action-creators'
@@ -59,7 +59,7 @@ const pushBatch = (batch: PushBatch) =>
   )
 
 /** Pull all descendants of pending deletes and dispatch existingThoughtDelete to fully delete. */
-const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
+const flushDeletes = (): Thunk => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
@@ -84,7 +84,7 @@ const flushDeletes = (): ActionCreator => async (dispatch, getState) => {
 }
 
 /** Pull all descendants of pending edits and dispatch existingThoughtChange to edit descendant contexts. */
-const flushEdits = (): ActionCreator => async (dispatch, getState) => {
+const flushEdits = (): Thunk => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
@@ -107,7 +107,7 @@ const flushEdits = (): ActionCreator => async (dispatch, getState) => {
 }
 
 /** Pull all descendants of pending moves and dispatch existingThoughtMove to fully move. */
-const flushMoves = (): ActionCreator => async (dispatch, getState) => {
+const flushMoves = (): Thunk => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
@@ -135,7 +135,7 @@ const flushMoves = (): ActionCreator => async (dispatch, getState) => {
 }
 
 /** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
-const flushPushQueue = (): ActionCreator => async (dispatch, getState) => {
+const flushPushQueue = (): Thunk => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 

@@ -3,10 +3,10 @@ import getContext from '../data-providers/data-helpers/getContext'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { importText } from '../action-creators'
 import { never } from '../util'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 /** Loads the local state from the IndexedDB database. */
-const loadLocalState = (): ActionCreator => async dispatch => {
+const loadLocalState = (): Thunk => async dispatch => {
 
   // load helpers and settings from local database
   const [{

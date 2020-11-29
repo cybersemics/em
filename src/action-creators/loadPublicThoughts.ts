@@ -1,7 +1,7 @@
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
 import { loadRemoteState } from '../action-creators'
-import { ActionCreator, Parent, Snapshot } from '../types'
+import { Thunk, Parent, Snapshot } from '../types'
 import { State } from '../util/initialState'
 
 /**
@@ -9,7 +9,7 @@ import { State } from '../util/initialState'
  *
  * @example http://localhost:3000/m9S244ovF7fVrwpAoqoWxcz08s52/179771ba0a286b0d4df022cc294b67ad
  */
-const loadPublicThoughts = (): ActionCreator => (dispatch, getState) => {
+const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
 
   const urlComponents = window.location.pathname.split('/')
   const urlOwner = urlComponents[1] || '~'

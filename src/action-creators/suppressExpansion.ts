@@ -1,6 +1,6 @@
 import globals from '../globals'
 import { setCursor } from '../action-creators'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 let timer: ReturnType<typeof setTimeout> // eslint-disable-line fp/no-let
 
@@ -10,7 +10,7 @@ interface Options {
 }
 
 /** Supress context expansion for a given duration. */
-const suppressExpansion = ({ cancel, duration }: Options = {}): ActionCreator => (dispatch, getState) => {
+const suppressExpansion = ({ cancel, duration }: Options = {}): Thunk => (dispatch, getState) => {
 
   /** Cancels suppressExpansion and sets the cursor to re-trigger expandThoughts. */
   const disableSuppressExpansion = () => {

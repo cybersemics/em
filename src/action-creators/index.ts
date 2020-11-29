@@ -1,13 +1,13 @@
 /** Here's documentation for all action-creators. */
 import { State } from '../util/initialState'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 import * as reducers from '../reducers'
 
 type Reducer<T> = <T>(state: State, payload: T) => State
 
 /** Wraps a static action in a thunk. */
 const reducerToThunk = <T extends (state: State, payload: any) => Record<string, any>>(name: string) =>
-  (payload?: Parameters<T>[1]): ActionCreator<void> => dispatch => dispatch({ type: name, ...payload })
+  (payload?: Parameters<T>[1]): Thunk<void> => dispatch => dispatch({ type: name, ...payload })
 
 // export all reducers as properly typed thunks
 export const archiveThought = reducerToThunk<typeof reducers.archiveThought>('archiveThought')

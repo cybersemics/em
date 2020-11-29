@@ -1,8 +1,8 @@
 import { importText } from '../reducers'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
-/** An ActionCreator that dispatches an 'importText` action. */
-const importTextActionCreator = (payload: Parameters<typeof importText>[1]): ActionCreator =>
+/** An Thunk that dispatches an 'importText` action. */
+const importTextActionCreator = (payload: Parameters<typeof importText>[1]): Thunk =>
   dispatch => dispatch({ type: 'importText', ...payload })
 
 export default importTextActionCreator

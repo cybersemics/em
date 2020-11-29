@@ -5,7 +5,7 @@ import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
 import { isDocumentEditable, keyValueBy, logWithTime } from '../util'
 import { deleteData, updateThoughts } from '../action-creators'
 import { State } from '../util/initialState'
-import { ActionCreator, Index, Parent } from '../types'
+import { Thunk, Index, Parent } from '../types'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = async (dispatch: Dispatch<any>, newState: State, oldState: State) => {
@@ -97,7 +97,7 @@ export const loadState = async (dispatch: Dispatch<any>, newState: State, oldSta
 }
 
 /** Loads the new state. */
-const loadRemoteState = (newState: State): ActionCreator => async (dispatch, getState) =>
+const loadRemoteState = (newState: State): Thunk => async (dispatch, getState) =>
   loadState(dispatch, newState, getState())
 
 // disable migrations since they do not work with iterative loading

@@ -142,7 +142,7 @@ export interface Parent {
 
 /** A basic Redux action creator thunk with no arguments. */
 // do not use ThunkAction<void, State, any, Action<string>> to avoid extraArgument
-export type ActionCreator<R = any> = (dispatch: ThunkDispatch<State, never, AnyAction>, getState: () => State) => R
+export type Thunk<R = any> = (dispatch: ThunkDispatch<State, never, AnyAction>, getState: () => State) => R
 
 /** The three options the user can choose for the context tutorial. */
 export type TutorialChoice = 0 | 1 | 2

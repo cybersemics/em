@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { ActionCreator, Icon as IconType, Shortcut } from '../types'
+import { Thunk, Icon as IconType, Shortcut } from '../types'
 
 // action-creators
 import home from '../action-creators/home'
@@ -17,7 +17,7 @@ const homeShortcut: Shortcut = {
   description: 'Navigate to Home.',
   keyboard: { key: 'h', alt: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<ActionCreator>) => dispatch(home())
+  exec: (dispatch: Dispatch<Thunk>) => dispatch(home())
 }
 
 export default homeShortcut

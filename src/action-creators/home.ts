@@ -1,9 +1,9 @@
 import { restoreCursorBeforeSearch, scrollCursorIntoView, search, setCursor } from '../action-creators'
 import { clearSelection } from '../util'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 /** Navigates home and resets the scroll position. */
-const home = (): ActionCreator => (dispatch, getState) => {
+const home = (): Thunk => (dispatch, getState) => {
 
   const state = getState()
 

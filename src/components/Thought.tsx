@@ -10,7 +10,7 @@ import globals from '../globals'
 import { alert, expandContextThought, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { ActionCreator, Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
+import { Thunk, Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -198,7 +198,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: Dispatch<Action | ActionCreator>) => ({
+const mapDispatchToProps = (dispatch: Dispatch<Action | Thunk>) => ({
   toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
   setCursorOnNote: ({ path }: { path: Path }) => () => dispatch(setCursor({
     path,

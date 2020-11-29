@@ -3,7 +3,7 @@ import { setCursor } from '../reducers'
 import { rankThoughtsFirstMatch } from '../selectors'
 import { setCursor as setCursorThunk } from '../action-creators'
 import { State } from '../util/initialState'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 /** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
 const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
@@ -11,8 +11,8 @@ const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
     path: rankThoughtsFirstMatch(state, pathUnranked),
   })
 
-/** An ActionCreator that sets the cursor to the given unranked path. */
-export const setCursorFirstMatchActionCreator = (pathUnranked: string[]): ActionCreator =>
+/** An Thunk that sets the cursor to the given unranked path. */
+export const setCursorFirstMatchActionCreator = (pathUnranked: string[]): Thunk =>
   (dispatch, getState) => dispatch(setCursorThunk({
     path: rankThoughtsFirstMatch(getState(), pathUnranked)
   }))

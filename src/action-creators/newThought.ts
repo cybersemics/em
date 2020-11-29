@@ -4,7 +4,7 @@ import { getSetting, getAllChildren, hasChild, isContextViewActive } from '../se
 import { asyncFocus, parentOf, ellipsize, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import { State } from '../util/initialState'
-import { ActionCreator, Context, Path } from '../types'
+import { Thunk, Context, Path } from '../types'
 
 interface Alert {
   type: 'alert',
@@ -41,7 +41,7 @@ const newThought = ({
   preventSetCursor?: boolean,
   preventSplit?: boolean,
   value?: string,
-}): ActionCreator => (dispatch, getState) => {
+}): Thunk => (dispatch, getState) => {
   const state = getState()
   const { cursor, editingValue } = state
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'

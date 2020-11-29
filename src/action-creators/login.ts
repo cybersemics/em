@@ -1,8 +1,8 @@
 import { alert, status } from '../action-creators'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 /** Redirects the user to the Firebase login page. */
-const login = (): ActionCreator => dispatch => {
+const login = (): Thunk => dispatch => {
   const firebase = window.firebase
   const provider = new firebase.auth.GoogleAuthProvider()
   dispatch(status({ value: 'connecting' }))

@@ -1,5 +1,5 @@
 import { FunctionComponent } from 'react'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 interface Options {
   alertType?: string,
@@ -17,7 +17,7 @@ let clearAlertTimeoutId: number | null = null// eslint-disable-line fp/no-let
  * @param type An arbitrary alert type that can be added to the alert. This is useful if specific alerts needs to be detected later on, for example, to determine if the alert should be closed, or if it has been superceded by a different alert type.
  * @param clearTimeout Timeout after which alert will be cleared.
  */
-const alert = (value: string | FunctionComponent | null, { alertType, showCloseLink, clearTimeout }: Options = {}): ActionCreator => (dispatch, getState) => {
+const alert = (value: string | FunctionComponent | null, { alertType, showCloseLink, clearTimeout }: Options = {}): Thunk => (dispatch, getState) => {
   const { alert } = getState()
 
   if (clearTimeout) {

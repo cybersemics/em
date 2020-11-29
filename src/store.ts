@@ -13,7 +13,7 @@ import pullQueue from './redux-middleware/pullQueue'
 import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
 import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
-import { ActionCreator } from './types'
+import { Thunk } from './types'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -32,7 +32,7 @@ export const store = createStore(
   ), undoRedoReducerEnhancer)
 )
 
-type ThunkCreator<T> = (...args: any) => ActionCreator<T>
+type ThunkCreator<T> = (...args: any) => Thunk<T>
 
 // extend store.dispatch to allow thunk action creators
 declare module 'redux' {

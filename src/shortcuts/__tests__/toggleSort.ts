@@ -5,7 +5,7 @@ import { existingThoughtChange, importText } from '../../action-creators'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { ActionCreator, SimplePath } from '../../types'
+import { Thunk, SimplePath } from '../../types'
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
 
@@ -76,7 +76,7 @@ it('override global Alphabetical with local None', () => {
       oldValue: 'None',
       newValue: 'Alphabetical',
       path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
-    }))) as ActionCreator,
+    }))) as Thunk,
 
     setCursorFirstMatchActionCreator(['a']),
 

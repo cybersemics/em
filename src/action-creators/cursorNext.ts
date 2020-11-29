@@ -1,13 +1,13 @@
 import { ROOT_TOKEN } from '../constants'
 import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
 import { parentOf } from '../util'
-import { ActionCreator } from '../types'
+import { Thunk } from '../types'
 
 // must be imported after util (???)
 import { getChildrenSorted, getThoughtAfter, simplifyPath } from '../selectors'
 
 /** Moves the cursor to the next sibling, ignoring descendants. */
-const cursorNext = (): ActionCreator => (dispatch, getState) => {
+const cursorNext = (): Thunk => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 

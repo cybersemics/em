@@ -5,7 +5,7 @@ import getManyDescendants from '../data-providers/data-helpers/getManyDescendant
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
-import { ActionCreator, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../types'
+import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../types'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = hashContext([ROOT_TOKEN])
@@ -26,7 +26,7 @@ async function itForEach<T> (it: AsyncIterable<T>, callback: (value: T) => void)
  * Fetch descendants of thoughts.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
-const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): ActionCreator => async (dispatch, getState) => {
+const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Thunk => async (dispatch, getState) => {
 
   if (Object.keys(contextMap).length === 0) return
 
