@@ -37,5 +37,6 @@ declare module 'redux' {
   export interface Dispatch<A extends Action = AnyAction> {
     <T = any>(thunks: Thunk<T>[]): T[],
     <T = any>(thunk: Thunk<T>): T,
+    (...args: any[]): void,
   }
 }
