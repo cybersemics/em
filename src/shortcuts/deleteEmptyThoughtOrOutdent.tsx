@@ -1,4 +1,4 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
 import { asyncFocus, ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
 import { getChildren, getThoughtBefore, getAllChildren, getChildrenRanked, hasChild, isContextViewActive, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 import { RANKED_ROOT } from '../constants'
 import { isMobile } from '../browser'
 import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut, Thunk } from '../types'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = (state: State) => {
@@ -37,8 +37,8 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   return !hasChildrenAndPrevDivider
 }
 
-/** An action-creator thunk that dispatches deleteEmptyThought. */
-const deleteEmptyThought = (dispatch: Dispatch<any>, getState: () => State) => {
+/** A thunk that dispatches deleteEmptyThought. */
+const deleteEmptyThought: Thunk = (dispatch, getState) => {
   const state = getState()
   const { cursor, editing } = state
   if (!cursor) return
@@ -107,7 +107,7 @@ const canExecute = (getState: () => State) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<any>, getState: () => State) => {
+const exec: Shortcut['exec'] = (dispatch, getState) => {
   if (canExecuteOutdent(getState())) {
     dispatch(outdent())
   }

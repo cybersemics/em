@@ -28,20 +28,20 @@ it('set url to cursor', () => {
   store.dispatch(newThought({ value: 'b', insertNewSubthought: true }))
   expect(window.location.pathname).toBe('/~/a/b')
 
-  store.dispatch<any>(cursorBack())
+  store.dispatch(cursorBack())
   expect(window.location.pathname).toBe('/~/a')
 
-  store.dispatch<any>(cursorBack())
+  store.dispatch(cursorBack())
   expect(window.location.pathname).toBe('/')
 
 })
 
 it('set url to home after deleting last empty thought', () => {
 
-  store.dispatch<any>(newThought({}))
+  store.dispatch(newThought({}))
   expect(window.location.pathname).toBe('/~/')
 
-  store.dispatch<any>(deleteThought())
+  store.dispatch(deleteThought())
   expect(window.location.pathname).toBe('/')
 
 })

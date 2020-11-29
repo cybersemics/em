@@ -41,7 +41,7 @@ describe('integration', () => {
   })
 
   afterEach(async () => {
-    store.dispatch<any>(clear())
+    store.dispatch(clear())
     await db.clearAll()
     jest.runOnlyPendingTimers()
   })

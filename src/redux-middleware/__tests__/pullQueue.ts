@@ -44,7 +44,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  store.dispatch<any>(clear())
+  store.dispatch(clear())
   await db.clearAll()
   jest.runOnlyPendingTimers()
 })
@@ -71,7 +71,7 @@ it('load thought', async () => {
   })
 
   // clear state
-  store.dispatch<any>(clear())
+  store.dispatch(clear())
   jest.runOnlyPendingTimers()
 
   const children = getAllChildren(store.getState(), [ROOT_TOKEN])
@@ -85,7 +85,7 @@ it('load thought', async () => {
   })
 
   // clear and call initialize again to reload from db (simulating page refresh)
-  store.dispatch<any>(clear())
+  store.dispatch(clear())
   jest.runOnlyPendingTimers()
   await initialize()
   await delay(100)
@@ -125,7 +125,7 @@ it('do not repopulate deleted thought', async () => {
 
 it('load buffered thoughts', async () => {
 
-  store.dispatch<any>(importText({
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
       - a
@@ -146,7 +146,7 @@ it('load buffered thoughts', async () => {
 
   // clear state
   // call initialize again to reload from db (simulating page refresh)
-  store.dispatch<any>(clear())
+  store.dispatch(clear())
   jest.runOnlyPendingTimers()
   await initialize()
   await delay(500)
@@ -186,7 +186,7 @@ it('delete thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
   // clear and call initialize again to reload from db (simulating page refresh)
-  store.dispatch<any>(clear())
+  store.dispatch(clear())
   jest.runOnlyPendingTimers()
   await initialize()
   await delay(100)
@@ -240,7 +240,7 @@ it('move thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
   // clear and call initialize again to reload from db (simulating page refresh)
-  store.dispatch<any>(clear())
+  store.dispatch(clear())
   jest.runOnlyPendingTimers()
   await initialize()
   await delay(100)
@@ -248,7 +248,7 @@ it('move thought with buffered descendants', async () => {
   // delete thought with buffered descendants
   const aPath = rankThoughtsFirstMatch(store.getState(), ['a'])
   const xPath = rankThoughtsFirstMatch(store.getState(), ['x'])
-  store.dispatch<any>(existingThoughtMove({
+  store.dispatch(existingThoughtMove({
     oldPath: aPath,
     newPath: [...xPath, ...aPath],
   }))
@@ -304,13 +304,13 @@ it('edit thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
   // clear and call initialize again to reload from db (simulating page refresh)
-  store.dispatch<any>(clear())
+  store.dispatch(clear())
   jest.runOnlyPendingTimers()
   await initialize()
   await delay(100)
 
   // delete thought with buffered descendants
-  store.dispatch<any>(existingThoughtChange({
+  store.dispatch(existingThoughtChange({
     oldValue: 'a',
     newValue: 'a!',
     context: [ROOT_TOKEN],

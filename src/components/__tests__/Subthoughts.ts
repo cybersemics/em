@@ -255,7 +255,7 @@ describe('hidden thoughts', () => {
   it('do not hide invisible thought if it lies within cursor path', () => {
 
     // import thoughts
-    store.dispatch<any>(importText({
+    store.dispatch(importText({
       path: RANKED_ROOT,
       preventSetCursor: true,
       text: `

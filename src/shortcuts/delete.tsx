@@ -1,11 +1,9 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
-import { State } from '../util/initialState'
 import { isMobile } from '../browser'
 import { hasChild } from '../selectors'
 import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
-import { GestureResponderEvent } from 'react-native'
 import { Icon as IconType, Shortcut } from '../types'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
@@ -16,7 +14,7 @@ const editableOfNote = (noteEl: HTMLElement) => {
   return closest ? closest.querySelector('.editable') as HTMLElement : null
 }
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<any>, getState: () => State, e: Event | GestureResponderEvent) => {
+const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   const state = getState()
   const { cursor, noteFocus } = state
 

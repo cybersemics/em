@@ -100,7 +100,7 @@ it.skip('caret is set on new subthought', async () => {
 
 it('do not allow edit to duplicate thought', async () => {
 
-  store.dispatch<any>(importText({
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
       - a

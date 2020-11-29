@@ -571,7 +571,7 @@ const ThoughtContainer = ({
       {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(simplePath)} glyph={showContexts && !contextThought ? '✕' : null} leaf={isLeaf} onClick={(e: React.MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
-          store.dispatch<any>(setCursor({ path: simplePath }))
+          store.dispatch(setCursor({ path: simplePath }))
         }
       }}/>}
 

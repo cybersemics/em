@@ -82,7 +82,7 @@ export const cleanupTestApp = async () => {
       cleanup()
     }
 
-    store.dispatch<any>(clear({ full: true }))
+    store.dispatch(clear({ full: true }))
 
     await db.clearAll()
     document.body.innerHTML = ''

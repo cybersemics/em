@@ -1,12 +1,10 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../types'
 import { isMobile } from '../browser'
 import { getOffsetWithinContent, headValue, isDocumentEditable } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
-import { State } from '../util/initialState'
-import { GestureResponderEvent } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -16,7 +14,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 </svg>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec = (dispatch: Dispatch<any>, getState: () => State, e: Event| GestureResponderEvent, { type }: { type: string }) => {
+const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string }) => {
   const state = getState()
   const { cursor, editingValue } = state
 

@@ -58,7 +58,7 @@ export const update = async (updates: Index<any>) => {
   return new Promise((resolve, reject) => {
     userRef!.update(updates, (err: Error | null, ...args: any[]) => {
       if (err) {
-        store.dispatch<any>(error({ value: err.message }))
+        store.dispatch(error({ value: err.message }))
         console.error(err, updates)
         reject(err)
       }

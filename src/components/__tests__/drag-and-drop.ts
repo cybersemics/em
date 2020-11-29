@@ -76,7 +76,7 @@ const simulateDragAndDrop = ({ source, drop, type }: { source: Context, drop: Co
 }
 
 it('drop as sibling', () => {
-  store.dispatch<any>(importText({
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
       - a
@@ -105,7 +105,7 @@ it('drop as sibling', () => {
 })
 
 it('drop as child (Drop end)', () => {
-  store.dispatch<any>(importText({
+  store.dispatch(importText({
     path: RANKED_ROOT,
     text: `
       - a
