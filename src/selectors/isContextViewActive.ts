@@ -11,7 +11,7 @@ const isContextViewActive = (state: State, unrankedPath: string[]) => {
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // TODO: Figure out why this causes unwanted re-rendering during editing
   // const { contextViews } = state
-  // const subthought = perma(() => getSubthoughtUnderSelection(head(unrankedPath), 3, { state }))
+  // const subthought = once(() => getSubthoughtUnderSelection(head(unrankedPath), 3, { state }))
   // return contextViews[hashContext(unrankedPath)] || (subthought() && contextViews[hashContext(parentOf(unrankedPath).concat(subthought()))])
 }
 

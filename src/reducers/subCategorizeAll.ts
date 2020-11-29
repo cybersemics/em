@@ -1,27 +1,8 @@
 import { RANKED_ROOT } from '../constants'
 import { alert, existingThoughtMove, newThought } from '../reducers'
 import { State } from '../util/initialState'
-
-// util
-import {
-  parentOf,
-  ellipsize,
-  headValue,
-  isEM,
-  isRoot,
-  pathToContext,
-  perma,
-  reducerFlow,
-} from '../util'
-
-// selectors
-import {
-  getChildrenRanked,
-  hasChild,
-  lastThoughtsFromContextChain,
-  simplifyPath,
-  splitChain,
-} from '../selectors'
+import { parentOf, ellipsize, headValue, isEM, isRoot, pathToContext, once, reducerFlow } from '../util'
+import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 
 /** Inserts a new thought as a parent of all thoughts in the given context. */
 const subCategorizeAll = (state: State) => {
@@ -63,7 +44,7 @@ const subCategorizeAll = (state: State) => {
 
   // get newly created thought
   // use fresh state
-  const getThoughtNew = perma((state: State) => {
+  const getThoughtNew = once((state: State) => {
     const parentPath = simplifyPath(state, pathParent)
     const childrenNew = getChildrenRanked(state, pathToContext(parentPath))
     return childrenNew[0]

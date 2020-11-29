@@ -13,7 +13,7 @@ import {
   equalArrays,
   head,
   pathToContext,
-  perma,
+  once,
   rootedParentOf,
   unroot,
 } from '../util'
@@ -128,7 +128,7 @@ const nextInContextView = (state: State, value: string, rank: number, path: Path
   if (rankedContext.length === 0 || path.length === 0) return null
 
   const context = pathToContext(rankedContext)
-  const firstChild = perma(() => firstChildOfContextView(state, path))
+  const firstChild = once(() => firstChildOfContextView(state, path))
 
   const contextWithoutChildren = isContextViewActive(state, pathToContext(path)) &&
     getContexts(state, head(path).value).length < (ALLOW_SINGLE_CONTEXT ? 1 : 2)
@@ -148,7 +148,7 @@ const nextInContextView = (state: State, value: string, rank: number, path: Path
   }
   // if the focus is on or within a context
   else if (isContextViewActive(state, pathToContext(rankedContext))) {
-    const firstChild = perma(() => firstVisibleChild(state, getContextFromContextChain(state, contextChain) || [ROOT_TOKEN]))
+    const firstChild = once(() => firstVisibleChild(state, getContextFromContextChain(state, contextChain) || [ROOT_TOKEN]))
 
     const nextSibling = nextSiblingContext(state, rank, context)
     const rankedContextHead = head(rankedContext)
@@ -189,9 +189,9 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
 
   const firstChild = !ignoreChildren && firstVisibleChild(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || [ROOT_TOKEN])
 
-  const thoughtViewPath = perma(() => !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(state, contextChain) : path)
+  const thoughtViewPath = once(() => !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(state, contextChain) : path)
   // pathToContext is expensive than duplicate condition check hence using the former
-  const thoughtViewContext = perma(() => !ignoreChildren && contextChain.length > 1 ? pathToContext(parentOf(thoughtViewPath())) : context)
+  const thoughtViewContext = once(() => !ignoreChildren && contextChain.length > 1 ? pathToContext(parentOf(thoughtViewPath())) : context)
 
   /** Returns the next uncle in the thought view. */
   const nextUncleInThoughtView = () => {
@@ -227,7 +227,7 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
     return nextInContextView(state, firstThoughtInContext.value, firstThoughtInContext.rank, pathToFirstThoughtInContext, rankedContextOfCurrentContext, contextChainTillFirstChildOfContext, true)
   }
 
-  const nextSibling = perma(() => thoughtNextSibling(state, value, thoughtViewContext(), rank))
+  const nextSibling = once(() => thoughtNextSibling(state, value, thoughtViewContext(), rank))
   return firstChild ?
     {
       nextThoughts: unroot(path.concat(firstChild)),

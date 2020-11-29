@@ -330,7 +330,7 @@ export const SubthoughtsComponent = ({
   const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(pathToContext(resolvedPath))])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // const subthought = perma(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
+  // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))

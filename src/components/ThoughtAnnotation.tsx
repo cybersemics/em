@@ -92,7 +92,7 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
     text: value,
     contexts: getContexts(state, isRealTimeContextUpdate ? editingValue! : value)
   }] : []
-  // const subthoughtUnderSelection = perma(() => findSubthoughtByIndex(subthoughts, focusOffset))
+  // const subthoughtUnderSelection = once(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughts = pathToContext(simplePath)
 
   /** Adds https to the url if it is missing. Ignores urls at localhost. */

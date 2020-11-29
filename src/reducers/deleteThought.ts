@@ -9,7 +9,7 @@ import {
   head,
   headValue,
   pathToContext,
-  perma,
+  once,
   reducerFlow,
   rootedParentOf,
   unroot,
@@ -55,7 +55,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
   /** Calculates the previous context within a context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, simplePath)
-    const prevContext = perma(() => {
+    const prevContext = once(() => {
       const contexts = getContextsSortedAndRanked(state, headValue(thoughtsContextView))
       const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
       return contexts[removedContextIndex - 1]
@@ -93,7 +93,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
     // move cursor
     state => {
 
-      const next = perma(() => showContexts
+      const next = once(() => showContexts
         ? getContextsSortedAndRanked(state, headValue(parentOf(simplePath)))[0]
         : firstVisibleChild(state, context)
       )
