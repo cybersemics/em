@@ -32,12 +32,10 @@ export const store = createStore(
   ), undoRedoReducerEnhancer)
 )
 
-type ThunkCreator<T> = (...args: any) => Thunk<T>
-
 // extend store.dispatch to allow thunk action creators
 declare module 'redux' {
   export interface Dispatch<A extends Action = AnyAction> {
-    <T = any>(actionCreators: ThunkCreator<T>[]): T[],
-    <T = any>(actionCreator: ThunkCreator<T>): T,
+    <T = any>(thunks: Thunk<T>[]): T[],
+    <T = any>(thunk: Thunk<T>): T,
   }
 }
