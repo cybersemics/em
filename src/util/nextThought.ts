@@ -1,33 +1,7 @@
 import _ from 'lodash'
-
-// constants
-import {
-  ALLOW_SINGLE_CONTEXT,
-  RANKED_ROOT,
-  ROOT_TOKEN,
-} from '../constants'
-
-// util
-import {
-  parentOf,
-  equalArrays,
-  head,
-  pathToContext,
-  once,
-  rootedParentOf,
-  unroot,
-} from '../util'
-
-import {
-  firstVisibleChild,
-  getContexts,
-  getContextsSortedAndRanked,
-  getThought,
-  isContextViewActive,
-  splitChain,
-  nextSibling as thoughtNextSibling,
-} from '../selectors'
-
+import { ALLOW_SINGLE_CONTEXT, RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { parentOf, equalArrays, head, pathToContext, once, rootedParentOf, unroot } from '../util'
+import { firstVisibleChild, getContexts, getContextsSortedAndRanked, getThought, isContextViewActive, splitChain, nextSibling as thoughtNextSibling } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
 
