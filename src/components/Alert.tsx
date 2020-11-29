@@ -1,4 +1,5 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
+import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { State } from '../util/initialState'

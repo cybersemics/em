@@ -1,5 +1,5 @@
-import React, { Dispatch, MouseEvent, useEffect } from 'react'
-import { Action } from 'redux'
+import React, { MouseEvent, useEffect } from 'react'
+import { ThunkDispatch } from 'redux-thunk'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
@@ -10,7 +10,7 @@ import globals from '../globals'
 import { alert, expandContextThought, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { Thunk, Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -198,7 +198,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: Dispatch<Action | Thunk>) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>) => ({
   toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
   setCursorOnNote: ({ path }: { path: Path }) => () => dispatch(setCursor({
     path,

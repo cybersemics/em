@@ -1,5 +1,6 @@
 import _ from 'lodash'
-import React, { Dispatch, useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
+import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'

@@ -1,4 +1,5 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
+import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'

@@ -1,6 +1,6 @@
 import { GetOperation } from 'fast-json-patch'
-import { Dispatch, ReactNode } from 'react'
-import { AnyAction } from 'redux'
+import { ReactNode } from 'react'
+import { AnyAction, Dispatch } from 'redux'
 import { ThunkDispatch } from 'redux-thunk'
 import { State } from './util/initialState'
 import { GestureResponderEvent } from 'react-native'

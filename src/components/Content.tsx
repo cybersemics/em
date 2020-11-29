@@ -1,4 +1,5 @@
-import React, { Dispatch, FC, MouseEvent, useMemo, useRef } from 'react'
+import React, { FC, MouseEvent, useMemo, useRef } from 'react'
+import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
