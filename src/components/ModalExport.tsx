@@ -28,7 +28,8 @@ const ModalExport = () => {
   const dispatch = useDispatch()
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || RANKED_ROOT)
-  const context = pathToContext(cursor)
+  const simplePath = simplifyPath(state, cursor)
+  const context = pathToContext(simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getAllChildren(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home'
@@ -43,18 +44,12 @@ const ModalExport = () => {
   const [exportContent, setExportContent] = useState('')
 
   const dark = theme(state) !== 'Light'
-  const themeColor = {
-    color: dark ? 'white' : 'black'
-  }
-  const themeColorWithBackground = dark ? {
-    color: 'black',
-    backgroundColor: 'white',
-  } : {
-    color: 'white',
-    backgroundColor: 'black',
-  }
+  const themeColor = { color: dark ? 'white' : 'black' }
+  const themeColorWithBackground = dark
+    ? { color: 'black', backgroundColor: 'white' }
+    : { color: 'white', backgroundColor: 'black' }
 
-  const numDescendants = getDescendants(state, simplifyPath(state, cursor)).length
+  const numDescendants = getDescendants(state, simplePath).length
 
   const exportWord = 'share' in navigator ? 'Share' : 'Download'
 
@@ -70,7 +65,7 @@ const ModalExport = () => {
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
-    const exported = exportContext(state, pathToContext(cursor), selected.type, {
+    const exported = exportContext(state, context, selected.type, {
       title: titleChild ? titleChild.value : undefined
     })
     setExportContent(exported)
@@ -156,7 +151,7 @@ const ModalExport = () => {
     const cids = []
 
     // export without =src content
-    const exported = exportContext(state, pathToContext(cursor), selected.type, {
+    const exported = exportContext(state, context, selected.type, {
       excludeSrc: true,
       title: titleChild ? titleChild.value : undefined,
     })
