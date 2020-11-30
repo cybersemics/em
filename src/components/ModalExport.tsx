@@ -7,7 +7,7 @@ import globals from '../globals'
 import IpfsHttpClient from 'ipfs-http-client'
 import { RANKED_ROOT } from '../constants'
 import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, timestamp, unroot } from '../util'
-import { alert, pull } from '../action-creators'
+import { alert, error, modalRemindMeLater, prependRevision, pull } from '../action-creators'
 import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
@@ -99,8 +99,10 @@ const ModalExport = () => {
 
     clipboard.on('success', () => {
 
-      dispatch({ type: 'modalRemindMeLater', id: 'help' })
-      dispatch(alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 }))
+      dispatch([
+        modalRemindMeLater({ id: 'help' }),
+        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 })
+      ])
 
       clearTimeout(globals.errorTimer)
     })
@@ -108,7 +110,7 @@ const ModalExport = () => {
     clipboard.on('error', e => {
 
       console.error(e)
-      dispatch({ type: 'error', value: 'Error copying thoughts' })
+      dispatch(error({ value: 'Error copying thoughts' }))
 
       clearTimeout(globals.errorTimer)
       globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
@@ -147,12 +149,12 @@ const ModalExport = () => {
         download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       }
       catch (e) {
-        dispatch({ type: 'error', value: e.message })
+        dispatch(error({ value: e.message }))
         console.error('Download Error', e.message)
       }
     }
 
-    dispatch({ type: 'modalRemindMeLater', id: 'export' })
+    dispatch(modalRemindMeLater({ id: 'export' }))
   }
 
   /** Publishes the thoughts to IPFS. */
@@ -173,14 +175,14 @@ const ModalExport = () => {
     for await (const result of ipfs.add(exported)) {
       if (result && result.path) {
         const cid = result.path
-        dispatch({ type: 'prependRevision', path: cursor, cid })
+        dispatch(prependRevision({ path: cursor, cid }))
         cids.push(cid) // eslint-disable-line fp/no-mutating-methods
         setPublishedCIDs(cids)
       }
       else {
         setPublishing(false)
         setPublishedCIDs([])
-        dispatch({ type: 'error', value: 'Publish Error' })
+        dispatch(error({ value: 'Publish Error' }))
         console.error('Publish Error', result)
       }
     }
@@ -268,8 +270,10 @@ const ModalExport = () => {
           {(publishing || publishedCIDs.length > 0) && <button
             className='modal-btn-cancel'
             onClick={() => {
-              dispatch(alert(null))
-              dispatch({ type: 'modalRemindMeLater', id: 'help' })
+              dispatch([
+                alert(null),
+                modalRemindMeLater({ id: 'help' })
+              ])
             }}
             style={{
               fontSize: '14px',
