@@ -4,7 +4,7 @@ import _ from 'lodash'
 import { store } from '../store'
 import { selectNextEditable, strip } from '../util'
 import { Connected } from '../types'
-import { setCursor } from '../action-creators'
+import { search, setCursor } from '../action-creators'
 
 // components
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
@@ -15,7 +15,7 @@ import SearchSubthoughts from './SearchSubthoughts'
 const SEARCH_DEBOUNCE_WAIT = 180
 
 const debouncedSearch = _.debounce(
-  (newValue, archived, dispatch) => dispatch({ type: 'search', value: newValue, archived })
+  (newValue, archived, dispatch) => dispatch(search({ value: newValue, archived }))
   , SEARCH_DEBOUNCE_WAIT)
 
 /** Select next editable and prevent default keydown. */
