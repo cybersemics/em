@@ -4,6 +4,7 @@ import TutorialNavigationButton from './TutorialNavigationButton'
 import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
 import { headValue } from '../../util'
 import { getSetting, getAllChildren } from '../../selectors'
+import { tutorialNext } from '../../action-creators'
 
 import {
   ROOT_TOKEN,
@@ -61,7 +62,7 @@ const TutorialNavigationNext = connect(mapStateToProps)(
       ) && (!cursor || headValue(cursor).length > 0)) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT && context1SubthoughtCreated({ rootSubthoughts, tutorialChoice })) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT && context2SubthoughtCreated({ rootSubthoughts, tutorialChoice }))
-      ? <TutorialNavigationButton clickHandler={() => dispatch({ type: 'tutorialNext' })} value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'} />
+      ? <TutorialNavigationButton clickHandler={() => dispatch(tutorialNext())} value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'} />
       : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
   })
 
