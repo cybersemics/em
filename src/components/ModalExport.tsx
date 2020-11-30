@@ -6,7 +6,7 @@ import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import IpfsHttpClient from 'ipfs-http-client'
 import { RANKED_ROOT } from '../constants'
-import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, timestamp, unroot } from '../util'
+import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, removeRoot, timestamp, unroot } from '../util'
 import { alert, error, modalRemindMeLater, prependRevision, pull } from '../action-creators'
 import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
@@ -70,7 +70,7 @@ const ModalExport = () => {
     const exported = exportContext(store.getState(), context, selected.type, {
       title: titleChild ? titleChild.value : undefined
     })
-    setExportContent(exported)
+    setExportContent(titleChild ? exported : removeRoot(exported).trimStart())
   }
 
   // fetch all pending descendants of the cursor once before they are exported
