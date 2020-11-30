@@ -125,11 +125,11 @@ const AppComponent: FC<Props> = props => {
         {showModal
 
           // modals
-          ? <>
-            <ModalWelcome />
-            <ModalHelp />
-            <ModalExport />
-          </>
+          // eslint-disable-next-line @typescript-eslint/no-extra-parens
+          ? showModal === 'welcome' ? <ModalWelcome />
+          : showModal === 'help' ? <ModalHelp />
+          : showModal === 'export' ? <ModalExport />
+          : 'Invalid showModal'
 
           // navigation, content, and footer
           : <>
