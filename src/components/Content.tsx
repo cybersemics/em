@@ -3,11 +3,10 @@ import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isMobile } from '../browser'
-import expandContextThought from '../action-creators/expandContextThought'
+import { cursorBack as cursorBackActionCreator, expandContextThought, modalRemindMeLater, toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
 import { MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { attribute, getSetting, getAllChildren, isChildVisibleWithCursorCheck, isTutorial } from '../selectors'
 import { publishMode } from '../util'
-import { modalRemindMeLater } from '../action-creators'
 import { State } from '../util/initialState'
 
 // components
@@ -49,8 +48,8 @@ const mapStateToProps = (state: State) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
   showRemindMeLaterModal: () => dispatch(modalRemindMeLater({ duration: MODAL_CLOSE_DURATION })),
-  cursorBack: () => dispatch({ type: 'cursorBack' }),
-  toggleSidebar: () => dispatch({ type: 'toggleSidebar' })
+  cursorBack: () => dispatch(cursorBackActionCreator()),
+  toggleSidebar: () => dispatch(toggleSidebarActionCreator({})),
 })
 
 type ContentComponent = FC<ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>>
