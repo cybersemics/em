@@ -1,5 +1,6 @@
 import React from 'react'
 import classNames from 'classnames'
+import { tutorial, tutorialChoice, tutorialNext, tutorialStep as setTutorialStep } from '../../action-creators'
 
 import {
   TUTORIAL2_STEP_CHOOSE,
@@ -14,7 +15,6 @@ import {
 
 import TutorialNavigationPrev from './TutorialNavigationPrev'
 import TutorialNavigationNext from './TutorialNavigationNext'
-
 import TutorialNavigationButton from './TutorialNavigationButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -37,22 +37,24 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
             active: step === Math.floor(tutorialStep)
           })}
           key={step}
-          onClick={() => dispatch({ type: 'tutorialStep', value: step })}>•</a>
+          onClick={() => dispatch(setTutorialStep({ value: step }))}>•</a>
       }
       )}</div>
 
       {tutorialStep === TUTORIAL_STEP_SUCCESS
         ? <React.Fragment>
-          <TutorialNavigationButton clickHandler={() => dispatch({ type: 'tutorialStep', value: TUTORIAL2_STEP_START })} value="Learn more" />
-          <TutorialNavigationButton clickHandler={() => dispatch({ type: 'tutorial', value: false })} value="Play on my own" />
+          <TutorialNavigationButton clickHandler={() => dispatch(setTutorialStep({ value: TUTORIAL2_STEP_START }))} value="Learn more" />
+          <TutorialNavigationButton clickHandler={() => dispatch(tutorial({ value: false }))} value="Play on my own" />
         </React.Fragment>
         : tutorialStep === TUTORIAL2_STEP_CHOOSE
           ? <ul className='simple-list'>
             {tutorialOptions.map(({ key, value, textValue }) =>
               <li key={key}>
                 <TutorialNavigationButton clickHandler={() => {
-                  dispatch({ type: 'tutorialChoice', value })
-                  dispatch({ type: 'tutorialNext' })
+                  dispatch([
+                    tutorialChoice({ value }),
+                    tutorialNext(),
+                  ])
                 }} value={textValue} />
               </li>
             )}
