@@ -4,7 +4,7 @@ import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
-import { importText, setCursor, setEditingValue, setInvalidState } from '../action-creators'
+import { alert, cursorBack, editing, error, existingThoughtChange, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext } from '../action-creators'
 import { isMobile, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
@@ -124,7 +124,7 @@ const duplicateAlertToggler = () => {
   return (show: boolean, dispatch: Dispatch<Alert>) => {
     if (show) {
       timeoutId = window.setTimeout(() => {
-        dispatch({ type: 'alert', value: 'Duplicate thoughts are not allowed within the same context.', alertType: 'duplicateThoughts' })
+        dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }))
         timeoutId = undefined
       }, 2000)
       return
@@ -135,9 +135,8 @@ const duplicateAlertToggler = () => {
     }
 
     setTimeout(() => {
-      const { alert } = store.getState()
-      if (alert && alert.alertType === 'duplicateThoughts') {
-        dispatch({ type: 'alert', value: null, alertType: 'duplicateThoughts' })
+      if (store.getState().alert && store.getState().alert?.alertType === 'duplicateThoughts') {
+        dispatch(alert(null, { alertType: 'duplicateThoughts' }))
       }
     })
   }
@@ -200,7 +199,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
     const isInvalid = invalidValue != null
-    store.dispatch({ type: 'error', value: isInvalid ? `Invalid Value: "${invalidValue}"` : null })
+    store.dispatch(error({ value: isInvalid ? `Invalid Value: "${invalidValue}"` : null }))
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing
@@ -249,12 +248,19 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     const thought = getThought(state, oldValue)
     if (thought) {
-      dispatch({ type: 'existingThoughtChange', context, showContexts, oldValue, newValue, rankInContext: rank, path: simplePath })
+      dispatch(existingThoughtChange({
+        context,
+        showContexts,
+        oldValue,
+        newValue,
+        rankInContext: rank,
+        path: simplePath as SimplePath
+      }))
 
       // rerender so that triple dash is converted into divider
       // otherwise nothing would be rerendered because the thought is still being edited
       if (isDivider(newValue)) {
-        dispatch({ type: 'render' })
+        dispatch(render())
 
         // remove selection so that the focusOffset does not cause a split false positive in newThought
         clearSelection()
@@ -280,7 +286,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
           newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
         )
       )) {
-        dispatch({ type: 'tutorialNext' })
+        dispatch(tutorialNext())
       }
     }
   }
@@ -375,12 +381,12 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     }
 
     if (readonly) {
-      dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` })
+      dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
       throttledChangeRef.current.cancel() // see above
       return
     }
     else if (uneditable) {
-      dispatch({ type: 'error', value: `"${ellipsize(oldValueClean)}" is uneditable.` })
+      dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
       throttledChangeRef.current.cancel() // see above
       return
     }
@@ -482,7 +488,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       setTimeout(() => {
         // Check for "•" equality in order to set editing value to false if user exit editing mode by tapping on bullet on left space of thought.
         if (!window.getSelection()?.focusNode || (window.getSelection()?.focusNode?.textContent === '•')) {
-          dispatch({ type: 'editing', value: false })
+          dispatch(editing({ value: false }))
         }
       })
     }
@@ -520,7 +526,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     // disable focus on hidden thoughts
     else if (isElementHiddenByAutoFocus(e.target as HTMLElement)) {
       e.preventDefault()
-      dispatch({ type: 'cursorBack' })
+      dispatch(cursorBack())
     }
 
     // stop propagation to AppComponent which would otherwise call cursorBack
