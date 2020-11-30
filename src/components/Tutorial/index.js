@@ -7,6 +7,7 @@ import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
 import { headValue } from '../../util'
 import { getParent, getSetting } from '../../selectors'
+import { tutorial } from '../../action-creators'
 
 // constants
 import {
@@ -58,7 +59,7 @@ const Tutorial = ({ contextViews, cursor, rootChildren, tutorialChoice, tutorial
 
   const tutorialStepComponent = TutorialStepComponentMap[Math.floor(tutorialStep)]
   return <div className='tutorial'><div className='tutorial-inner'>
-    <a className='upper-right tutorial-skip text-small' style={{ visibility: tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden' }} onClick={() => dispatch({ type: 'tutorial', value: false })}>✕ close tutorial</a>
+    <a className='upper-right tutorial-skip text-small' style={{ visibility: tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden' }} onClick={() => dispatch(tutorial({ value: false }))}>✕ close tutorial</a>
     <div className='clear'>
       <div className='tutorial-text'>
         <TransitionGroup>
