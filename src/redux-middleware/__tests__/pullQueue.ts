@@ -390,4 +390,3 @@ it.only('export thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 })
-
