@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../constants'
 import { exists } from '../selectors'
+import { searchLimit as setSearchLimit } from '../action-creators'
 import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThoughtsSequential, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
@@ -85,7 +86,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, arch
       // expandable={true}
     />
     {children.length > DEFAULT_SEARCH_LIMIT ? <a className='indent text-note' onClick={
-      () => dispatch({ type: 'searchLimit', value: searchLimit + DEFAULT_SEARCH_LIMIT })
+      () => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT }))
     }>More...</a> : null}
   </div>
 }
