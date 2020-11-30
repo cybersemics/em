@@ -16,16 +16,25 @@ declare global {
 /** Add window event handlers. */
 export const initEvents = (store: Store<State, any>) => {
 
+  // eslint-disable-next-line fp/no-let
+  let lastState: number
+
   /** Popstate event listener; setCursor on browser history forward/backward. */
-  const onPopstate = () => {
+  const onPopstate = (e: PopStateEvent) => {
 
     const state = store.getState()
 
-    const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
+    const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname, { exists: true })
 
-    if (path && !pathExists(state, pathToContext(path))) {
-      window.history.back()
+    if (!path || !pathExists(state, pathToContext(path))) {
+      if (!lastState || lastState > e.state) {
+        window.history.back()
+      }
+      else if (lastState < e.state) {
+        window.history.forward()
+      }
     }
+    lastState = e.state
 
     const toRoot = !path || isRoot(path)
 

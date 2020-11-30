@@ -14,7 +14,6 @@ interface Options {
   replace?: boolean,
   contextViews?: Index<boolean>,
 }
-
 /**
  * Sets the url and history to the given thoughts.
  * SIDE EFFECTS: window.history.
@@ -53,7 +52,8 @@ const updateUrlHistory = (state: State, path = RANKED_ROOT, { replace, contextVi
   // update browser history
   try {
     window.history[replace ? 'replaceState' : 'pushState'](
-      context,
+      // an incrementing ID to track back or forward browser actions
+      (window.history.state || 0) + 1,
       '',
       hashContextUrl(stateWithNewContextViews, path ? context : [ROOT_TOKEN])
     )
