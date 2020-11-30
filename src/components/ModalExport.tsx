@@ -11,6 +11,7 @@ import { alert, pull } from '../action-creators'
 import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
+import LoadingEllipsis from './LoadingEllipsis'
 import { State } from '../util/initialState'
 import { ExportOption } from '../types'
 
@@ -99,10 +100,9 @@ const ModalExport = () => {
     clipboard.on('success', () => {
 
       dispatch({ type: 'modalRemindMeLater', id: 'help' })
-      dispatch(alert(`Copied ${exportThoughtsPhrase} to the clipboard`))
+      dispatch(alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 }))
 
       clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
     })
 
     clipboard.on('error', e => {
@@ -219,7 +219,10 @@ const ModalExport = () => {
       </div>
 
       <div className='cp-clipboard-wrapper'>
-        <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
+        {exportContent
+          ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
+          : <LoadingEllipsis />
+        }
       </div>
 
       <div className='modal-export-btns-wrapper'>
