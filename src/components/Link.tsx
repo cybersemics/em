@@ -5,7 +5,7 @@ import { EM_TOKEN } from '../constants'
 import { hashContextUrl } from '../selectors'
 import { clearSelection, decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToContext, strip } from '../util'
 import { Connected, SimplePath } from '../types'
-import { scrollCursorIntoView, setCursor } from '../action-creators'
+import { scrollCursorIntoView, search, setCursor, toggleSidebar } from '../action-creators'
 
 interface LinkProps {
   charLimit?: number,
@@ -22,9 +22,9 @@ const Link = ({ simplePath, label, charLimit = 32, dispatch }: Connected<LinkPro
   return <a tabIndex={-1} href={hashContextUrl(store.getState(), pathToContext(simplePath))} className='link' onClick={e => { // eslint-disable-line react/no-danger-with-children
     e.preventDefault()
     clearSelection()
-    dispatch({ type: 'search', value: null })
+    dispatch(search({ value: null }))
     dispatch(setCursor({ path: simplePath }))
-    dispatch({ type: 'toggleSidebar', value: false })
+    dispatch(toggleSidebar({ value: false }))
     dispatch(scrollCursorIntoView())
   }} dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : undefined}>{!emContext ? ellipsize(decodeCharacterEntities(value), charLimit!) : null}</a>
 }
