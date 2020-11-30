@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
+import { deleteAttribute, editing, setAttribute } from '../action-creators'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { Context } from '../types'
@@ -56,7 +57,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
       editable.focus()
       setSelection(editable, { end: true })
 
-      dispatch({ type: 'deleteAttribute', context, key: '=note' })
+      dispatch(deleteAttribute({ context, key: '=note' }))
     }
     else if (e.key === 'ArrowDown') {
       e.stopPropagation()
@@ -74,18 +75,17 @@ const Note = ({ context, onFocus }: NoteProps) => {
       // Strip <br> from beginning and end of text
       : e.target.value.replace(/^<br>|<br>$/gi, '')
 
-    dispatch({
-      type: 'setAttribute',
+    dispatch(setAttribute({
       context,
       key: '=note',
       value
-    })
+    }))
   }
 
   /** Set editing to false onBlur, if keyboard is closed. */
   const onBlur = () => {
     if (isMobile && !window.getSelection()?.focusNode) {
-      setTimeout(() => dispatch({ type: 'editing', value: false }))
+      setTimeout(() => dispatch(editing({ value: false })))
     }
   }
 
