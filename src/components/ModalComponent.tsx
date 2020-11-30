@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION, MODAL_REMIND_ME_LATER_DURATION } from '../constants'
 import { modalCleanup } from '../util'
 import { Connected } from '../types'
-import { modalComplete } from '../action-creators'
+import { modalComplete, modalRemindMeLater, tutorial } from '../action-creators'
 
 export interface ModalProps {
   arrow?: string,
@@ -68,7 +68,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
           this.ref.current.classList.add('animate-fadeout')
         }
         setTimeout(() => {
-          dispatch({ type: 'modalRemindMeLater', id, duration })
+          dispatch(modalRemindMeLater({ id, duration }))
         }, FADEOUT_DURATION)
       }
 
@@ -85,9 +85,18 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   render() {
     const { show, id, title, arrow, center, opaque, onSubmit, className, style, positionAtCursor, top, children, dispatch } = this.props
 
+    if (!show) return null
+
     const cursorCoords = getSelectionCoordinates()
 
-    if (!show) return null
+    /** Dispatches a modalRemindMeLater action for the modal. */
+    const remindMeLater = () => dispatch(modalRemindMeLater({ id }))
+
+    /** Dispatches a modalComplete action for the modal. */
+    const complete = () => dispatch(modalComplete(id))
+
+    /** Dispatches a tutorial action that ends the tutorial. */
+    const endTutorial = () => dispatch(tutorial({ value: false }))
 
     return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
       top: cursorCoords.y,
@@ -99,7 +108,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
       center,
       opaque
     })}>
-      {id !== 'welcome' ? <a className='upper-right popup-close-x text-small' onClick={() => dispatch({ type: 'modalRemindMeLater', id: 'help' })}>✕</a> : null}
+      {id !== 'welcome' ? <a className='upper-right popup-close-x text-small' onClick={remindMeLater}>✕</a> : null}
       <div className={classNames({
         'modal-content': true,
         ...arrow ? { [arrow]: arrow } : null
@@ -108,36 +117,26 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         <div className='modal-text'>{children}</div>
         <div className='modal-actions'>
           {
-            id === 'welcome' ? <a className='button' onClick={() => {
-              dispatch(modalComplete(id))
-            }}>START TUTORIAL</a> :
+            id === 'welcome' ? <a className='button' onClick={complete}>START TUTORIAL</a> :
             id === 'feedback' ? <div>
-              <a className='button button-small button-inactive' onClick={() => {
-                dispatch({ type: 'modalRemindMeLater', id })
-              }}>Cancel</a>
+              <a className='button button-small button-inactive' onClick={remindMeLater}>Cancel</a>
               <a className='button button-small button-active' onClick={e => {
                 if (onSubmit) {
                   onSubmit(e)
                 }
-                dispatch({ type: 'modalRemindMeLater', id })
+                remindMeLater()
               }}>Send</a>
             </div> :
-            id === 'help' ? <a className='button' onClick={() => {
-              dispatch({ type: 'modalRemindMeLater', id })
-            }}>Close</a> :
+            id === 'help' ? <a className='button' onClick={remindMeLater}>Close</a> :
             <span>
-              {
-                id !== 'export' && <a onClick={() => {
-                  dispatch(modalComplete(id))
-                }}>Got it!</a>
-              }
+              {id !== 'export' && <a onClick={complete}>Got it!</a>}
               <span> </span>{ id !== 'export' && <a onClick={() => this.close!(MODAL_REMIND_ME_LATER_DURATION)}>Remind me later</a> }
               { // <span> </span><a onClick={() => this.close(MODAL_REMIND_ME_TOMORROW_DURATION)}>Remind me tomorrow</a>
               }
             </span>}
           {id === 'welcome' ? <div style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => {
-            dispatch(modalComplete(id))
-            dispatch({ type: 'tutorial', value: false })
+            endTutorial()
+            complete()
           }}>Skip tutorial</a></div> : null}
         </div>
         <a className='modal-close' onClick={() => this.close!(MODAL_CLOSE_DURATION)}><span>✕</span></a>
