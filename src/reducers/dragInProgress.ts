@@ -4,7 +4,7 @@ import { Context, SimplePath } from '../types'
 
 interface Payload {
   value: boolean,
-  draggingThought: SimplePath,
+  draggingThought?: SimplePath,
   hoveringThought?: Context,
   offset?: number,
 }

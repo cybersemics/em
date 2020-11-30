@@ -7,7 +7,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isMobile } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, expandContextThought, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { alert, dragHold, dragInProgress, error, existingThoughtMove, expandContextThought, newThoughtSubmit, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
 import { Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
@@ -230,20 +230,21 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
-  store.dispatch({
-    type: 'dragInProgress',
+  store.dispatch(dragInProgress({
     value: true,
     draggingThought: simplePathLive,
     offset: document.getSelection()?.focusOffset,
-  })
+  }))
   return { simplePath: simplePathLive }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const endDrag = () => {
-  store.dispatch({ type: 'dragInProgress', value: false })
-  store.dispatch({ type: 'dragHold', value: false })
-  store.dispatch(alert(null))
+  store.dispatch([
+    dragInProgress({ value: false }),
+    dragHold({ value: false }),
+    alert(null)
+  ])
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -293,7 +294,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   // cannot move root or em context
   if (isRootOrEM && !sameContext) {
-    store.dispatch({ type: 'error', value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` })
+    store.dispatch(error({ value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` }))
     return
   }
 
@@ -306,17 +307,15 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   })
 
   store.dispatch(props.showContexts
-    ? {
-      type: 'newThoughtSubmit',
+    ? newThoughtSubmit({
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
       rank: getNextRank(state, thoughtsFrom)
-    }
-    : {
-      type: 'existingThoughtMove',
+    })
+    : existingThoughtMove({
       oldPath: thoughtsFrom,
       newPath
-    }
+    })
   )
 
   // alert user of move to another context
@@ -455,28 +454,31 @@ const ThoughtContainer = ({
   const state = store.getState()
   useEffect(() => {
     if (isHovering) {
-      store.dispatch({
-        type: 'dragInProgress',
+      store.dispatch(dragInProgress({
         value: true,
         draggingThought: state.draggingThought,
         hoveringThought: [...context]
-      })
+      }))
     }
   }, [isHovering])
 
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
     if (!store.getState().dragHold) {
-      store.dispatch({ type: 'dragHold', value: true, simplePath: simplePathLive })
-      store.dispatch(alert('Drag and drop to move thought', { showCloseLink: false }))
+      store.dispatch([
+        dragHold({ value: true, simplePath: simplePathLive }),
+        alert('Drag and drop to move thought', { showCloseLink: false })
+      ])
     }
   }
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
   const onLongPressEnd = () => {
     if (store.getState().dragHold) {
-      store.dispatch({ type: 'dragHold', value: false })
-      store.dispatch(alert(null))
+      store.dispatch([
+        dragHold({ value: false }),
+        alert(null),
+      ])
     }
   }
 
