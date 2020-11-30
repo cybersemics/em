@@ -3,6 +3,7 @@ import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'
 import { noop } from 'lodash'
 import { isTutorial } from '../selectors'
+import { toggleSidebar } from '../action-creators'
 import { State } from '../util/initialState'
 import { CSSTransition } from 'react-transition-group'
 
@@ -35,7 +36,7 @@ const HamburgerMenu = () => {
           zIndex: showSidebar || tutorial || error || showModal ? -1 : 10,
         }}
         onClick={() => {
-          dispatch({ type: 'toggleSidebar' })
+          dispatch(toggleSidebar())
         }}
       >
         <ReactHamburger
