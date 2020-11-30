@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import IpfsHttpClient from 'ipfs-http-client'
-import { RANKED_ROOT, RENDER_DELAY } from '../constants'
-import { download, ellipsize, getPublishUrl, headValue, isDocumentEditable, isRoot, pathToContext, timestamp, unroot } from '../util'
-import { alert } from '../action-creators'
+import { RANKED_ROOT } from '../constants'
+import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, timestamp, unroot } from '../util'
+import { alert, pull } from '../action-creators'
 import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
@@ -26,6 +26,7 @@ const ModalExport = () => {
 
   const store = useStore()
   const dispatch = useDispatch()
+  const isMounted = useRef(false)
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || RANKED_ROOT)
   const simplePath = simplifyPath(state, cursor)
@@ -41,7 +42,7 @@ const ModalExport = () => {
   const [selected, setSelected] = useState(exportOptions[0])
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
-  const [exportContent, setExportContent] = useState('')
+  const [exportContent, setExportContent] = useState<string | null>(null)
 
   const dark = theme(state) !== 'Light'
   const themeColor = { color: dark ? 'white' : 'black' }
@@ -65,18 +66,31 @@ const ModalExport = () => {
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
-    const exported = exportContext(state, context, selected.type, {
+    const exported = exportContext(store.getState(), context, selected.type, {
       title: titleChild ? titleChild.value : undefined
     })
     setExportContent(exported)
   }
 
+  // fetch all pending descendants of the cursor once before they are exported
   useEffect(() => {
-    // export context
-    // delay to avoid freezing before page is rendered
-    const exportContentTimer = setTimeout(() => {
-      setExportContentFromCursor()
-    }, RENDER_DELAY)
+
+    // track isMounted so we can cancel the call to setExportContent after unmount
+    isMounted.current = true
+
+    dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
+      .then(() => {
+        if (isMounted.current) {
+          setExportContentFromCursor()
+        }
+      })
+
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  useEffect(() => {
 
     document.addEventListener('click', onClickOutside)
 
@@ -102,10 +116,9 @@ const ModalExport = () => {
 
     return () => {
       document.removeEventListener('click', onClickOutside)
-      clearTimeout(exportContentTimer)
       clipboard.destroy()
     }
-  })
+  }, [exportThoughtsPhrase])
 
   const [publishing, setPublishing] = useState(false)
   const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
@@ -124,14 +137,14 @@ const ModalExport = () => {
     // use mobile share if it is available
     if (navigator.share) {
       navigator.share({
-        text: exportContent,
+        text: exportContent!,
         title: titleShort,
       })
     }
     // otherwise download the data with createObjectURL
     else {
       try {
-        download(exportContent, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
+        download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       }
       catch (e) {
         dispatch({ type: 'error', value: e.message })
@@ -151,7 +164,7 @@ const ModalExport = () => {
     const cids = []
 
     // export without =src content
-    const exported = exportContext(state, context, selected.type, {
+    const exported = exportContext(store.getState(), context, selected.type, {
       excludeSrc: true,
       title: titleChild ? titleChild.value : undefined,
     })
