@@ -157,7 +157,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   const context = showContexts && thoughts.length > 2 ? parentOf(parentOf(thoughts))
     : !showContexts && thoughts.length > 1 ? parentOf(thoughts)
     : [ROOT_TOKEN]
-  const childrenOptions = getAllChildren(state, [...context, 'Options'])
+  const childrenOptions = getAllChildren(state, [...context, '=options'])
   const options = childrenOptions.length > 0 ?
     childrenOptions.map(child => child.value.toLowerCase())
     : null

@@ -504,7 +504,7 @@ const ThoughtContainer = ({
   const thoughts = pathToContext(simplePath)
   const thoughtsLive = pathToContext(simplePathLive!)
   const context = parentOf(thoughts)
-  const childrenOptions = getAllChildren(state, [...context, 'Options'])
+  const childrenOptions = getAllChildren(state, [...context, '=options'])
   const options = !isFunction(value) && childrenOptions.length > 0 ?
     childrenOptions.map(child => child.value.toLowerCase())
     : null
