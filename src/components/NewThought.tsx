@@ -10,6 +10,7 @@ import { store } from '../store'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { asyncFocus, pathToContext, rankThoughtsSequential, unroot } from '../util'
 import { getNextRank, getChildrenRanked } from '../selectors'
+import { cursorBack, newThoughtSubmit, setCursor } from '../action-creators'
 import { State } from '../util/initialState'
 import { Path, SimplePath } from '../types'
 
@@ -54,27 +55,25 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 
     // do not allow clicks if hidden by autofocus
     if (distance > 0) {
-      dispatch({ type: 'cursorBack' })
+      dispatch(cursorBack())
       return
     }
 
     const context = pathToContext(path)
     const newRank = getNextRank(state, pathToContext(path))
 
-    dispatch({
-      type: 'newThoughtSubmit',
+    dispatch(newThoughtSubmit({
       context,
       addAsContext: showContexts,
       rank: newRank,
       value
-    })
+    }))
 
     asyncFocus()
-    dispatch({
-      type: 'setCursor',
-      path: rankThoughtsSequential(unroot(context)).concat({ value, rank: newRank }),
+    dispatch(setCursor({
+      path: rankThoughtsSequential([...unroot(context), value]),
       offset: value.length
-    })
+    }))
   }
 })
 
