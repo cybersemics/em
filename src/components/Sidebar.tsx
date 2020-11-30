@@ -5,8 +5,9 @@ import { isMobile } from '../browser'
 import _ from 'lodash'
 import Breadcrumbs from './Breadcrumbs'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
-import { Path } from '../types'
+import { toggleSidebar } from '../action-creators'
 import { State } from '../util/initialState'
+import { Path } from '../types'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<SwipeableDrawerProps & { classes: any }>
@@ -43,10 +44,8 @@ const Sidebar = () => {
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const dispatch = useDispatch()
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  const onToggleSidebar = (value: boolean) => {
-    dispatch({ type: 'toggleSidebar', value })
-  }
+  /** Toggle the sidebar. */
+  const onToggleSidebar = (value: boolean) => dispatch(toggleSidebar({ value }))
 
   return (
     /**
