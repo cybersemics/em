@@ -1,6 +1,6 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
-import { importText } from '../../action-creators'
+import { deleteThought, importText } from '../../action-creators'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
 import { RANKED_ROOT } from '../../constants'
@@ -32,18 +32,16 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
   // NewThoughtInstructions should not be visible when there is at least one visible thought
   expect(wrapper.find(NewThoughtInstructions)).toHaveLength(0)
 
-  store.dispatch({
-    type: 'deleteThought',
+  store.dispatch(deleteThought({
     path: [{ value: 'a', rank: 0 }]
-  })
+  }))
 
   // still has one visible thought
   expect(wrapper.find(NewThoughtInstructions)).toHaveLength(0)
 
-  store.dispatch({
-    type: 'deleteThought',
+  store.dispatch(deleteThought({
     path: [{ value: 'b', rank: 1 }]
-  })
+  }))
 
   wrapper.update()
 
