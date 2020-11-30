@@ -4,6 +4,7 @@ import { isMobile } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { makeCompareByProp, sort } from '../util'
+import { modalRemindMeLater, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
 import { getSetting } from '../selectors'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import { State } from '../util/initialState'
@@ -68,17 +69,21 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
 
       <div className='modal-actions center'>
         <p><a className='button' onClick={() => {
-          dispatch({ type: 'tutorial', value: true })
-          // allow resume
-          // TODO: Allow resume for both tutorials
-          dispatch({ type: 'tutorialStep', value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep })
-          dispatch({ type: 'modalRemindMeLater', id: 'help' })
+          dispatch([
+            tutorial({ value: true }),
+            // allow resume
+            // TODO: Allow resume for both tutorials
+            setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
+            modalRemindMeLater({ id: 'help' }),
+          ])
         }}>Part I: Intro</a></p>
         <p><a className='button' onClick={() => {
-          dispatch({ type: 'tutorial', value: true })
-          // allow resume
-          dispatch({ type: 'tutorialStep', value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep })
-          dispatch({ type: 'modalRemindMeLater', id: 'help' })
+          dispatch([
+            tutorial({ value: true }),
+            // allow resume
+            setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
+            modalRemindMeLater({ id: 'help' })
+          ])
         }}>Part II: Contexts</a></p>
       </div>
     </section>
