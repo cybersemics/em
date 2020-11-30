@@ -3,7 +3,7 @@ import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import * as pkg from '../../package.json'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { login, logout } from '../action-creators'
+import { login, logout, showModal } from '../action-creators'
 import { getSetting, isTutorial } from '../selectors'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import { State } from '../util/initialState'
@@ -37,7 +37,7 @@ const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
   scaleFontDown: () => dispatch(scaleFontDown()),
   showHelp: () => {
     window.scrollTo(0, 0)
-    dispatch({ type: 'showModal', id: 'help' })
+    dispatch(showModal({ id: 'help' }))
   }
 })
 
