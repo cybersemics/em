@@ -1,9 +1,8 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { importHtml, mergeUpdates } from '../../util'
+import { importHtml, mergeUpdates, removeRoot } from '../../util'
 import { exportContext } from '../../selectors'
 import { initialState, State } from '../../util/initialState'
 import { SimplePath } from '../../types'
-import { removeRoot } from '../../test-helpers/removeRoot'
 
 /** Imports the given html and exports it as plaintext. */
 const importExport = (html: string) => {

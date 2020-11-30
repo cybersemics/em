@@ -1,10 +1,9 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { hashContext, hashThought } from '../../util'
+import { hashContext, hashThought, removeRoot } from '../../util'
 import { exportContext } from '../../selectors'
 import { roamJsonToBlocks } from '../roamJsonToBlocks'
 import { State, initialState } from '../initialState'
 import { RoamBlock, RoamPage } from 'roam'
-import { removeRoot } from '../../test-helpers/removeRoot'
 import { importJSON } from '../importJSON'
 import { SimplePath } from '../../types'
 
