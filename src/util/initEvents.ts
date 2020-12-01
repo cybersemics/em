@@ -27,12 +27,7 @@ export const initEvents = (store: Store<State, any>) => {
     const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
 
     if (!path || !pathExists(state, pathToContext(path))) {
-      if (!lastState || lastState > e.state) {
-        window.history.back()
-      }
-      else if (lastState < e.state) {
-        window.history.forward()
-      }
+      window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
     }
     lastState = e.state
 
