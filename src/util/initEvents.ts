@@ -24,7 +24,7 @@ export const initEvents = (store: Store<State, any>) => {
 
     const state = store.getState()
 
-    const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname, { exists: true })
+    const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
 
     if (!path || !pathExists(state, pathToContext(path))) {
       if (!lastState || lastState > e.state) {
