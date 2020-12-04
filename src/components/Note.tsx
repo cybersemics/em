@@ -14,8 +14,10 @@ interface NoteProps {
 }
 
 /** Gets the editable node for the given note element. */
-const editableOfNote = (noteEl: HTMLElement) =>
-  (noteEl.parentNode?.previousSibling as HTMLElement)?.querySelector('.editable') as (HTMLElement | null)
+const editableOfNote = (noteEl: HTMLElement) => {
+  // To prevent incorrect compilation, we need an explict return statement here (https://github.com/cybersemics/em/issues/923#issuecomment-738103132)
+  return (noteEl.parentNode?.previousSibling as HTMLElement)?.querySelector('.editable') as (HTMLElement | null)
+}
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ context, onFocus }: NoteProps) => {
