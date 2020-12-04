@@ -18,10 +18,8 @@ declare global {
 /** Add window event handlers. */
 export const initEvents = (store: Store<State, any>) => {
 
-  // eslint-disable-next-line fp/no-let
-  let lastState: number
-  // eslint-disable-next-line fp/no-let
-  let lastPath: Path | null
+  let lastState: number // eslint-disable-line fp/no-let
+  let lastPath: Path | null // eslint-disable-line fp/no-let
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
@@ -33,11 +31,12 @@ export const initEvents = (store: Store<State, any>) => {
     if (!lastPath) {
       lastPath = state.cursor
     }
+
     if (!path || !pathExists(state, pathToContext(path)) || equalPath(lastPath, path)) {
       window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
     }
-    lastPath = path && pathExists(state, pathToContext(path)) ? path : lastPath
 
+    lastPath = path && pathExists(state, pathToContext(path)) ? path : lastPath
     lastState = e.state
 
     const toRoot = !path || isRoot(path)
@@ -50,11 +49,16 @@ export const initEvents = (store: Store<State, any>) => {
     // set the cursor
     const cursor = toRoot ? null : path
 
-    // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
-    store.dispatch(setCursor({ path: cursor, replaceContextViews: contextViews }))
+    store.dispatch([
 
-    // scroll cursor into view
-    store.dispatch(scrollCursorIntoView())
+      // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
+      setCursor({ path: cursor, replaceContextViews: contextViews }),
+
+      // scroll cursor into view
+      scrollCursorIntoView(),
+
+    ])
+
   }
 
   /** MouseMove event listener. */
