@@ -6,6 +6,8 @@ import { clearSelection, isRoot, pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { decodeThoughtsUrl, pathExists } from '../selectors'
 import { error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { Path } from '../types'
+import { equalPath } from './equalPath'
 
 declare global {
   interface Window {
@@ -18,6 +20,8 @@ export const initEvents = (store: Store<State, any>) => {
 
   // eslint-disable-next-line fp/no-let
   let lastState: number
+  // eslint-disable-next-line fp/no-let
+  let lastPath: Path | null
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
@@ -26,9 +30,14 @@ export const initEvents = (store: Store<State, any>) => {
 
     const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
 
-    if (!path || !pathExists(state, pathToContext(path))) {
+    if (!lastPath) {
+      lastPath = state.cursor
+    }
+    if (!path || !pathExists(state, pathToContext(path)) || equalPath(lastPath, path)) {
       window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
     }
+    lastPath = path && pathExists(state, pathToContext(path)) ? path : lastPath
+
     lastState = e.state
 
     const toRoot = !path || isRoot(path)
