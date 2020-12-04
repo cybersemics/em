@@ -1,16 +1,12 @@
 import { ROOT_TOKEN } from '../constants'
 import { componentToThought, hashContext, keyValueBy, owner } from '../util'
-import { hasChild, rankThoughtsFirstMatch } from '../selectors'
+import { pathExists, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
 
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null
   exists?: boolean,
 }
-
-/** Returns true if every child in the path exists. */
-const pathExists = (state: State, pathUnranked: string[]) =>
-  pathUnranked.every((value, i) => hasChild(state, i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i), value))
 
 /** Parses the thoughts from the url. */
 const decodeThoughtsUrl = (state: State, pathname: string, { exists }: Options = {}) => {

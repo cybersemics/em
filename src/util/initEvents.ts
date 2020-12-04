@@ -2,10 +2,12 @@ import _ from 'lodash'
 import { Store } from 'redux'
 import { inputHandlers } from '../shortcuts'
 import * as db from '../data-providers/dexie'
-import { clearSelection, isRoot } from '../util'
+import { clearSelection, isRoot, pathToContext } from '../util'
 import { State } from '../util/initialState'
-import { decodeThoughtsUrl } from '../selectors'
+import { decodeThoughtsUrl, pathExists } from '../selectors'
 import { error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { Path } from '../types'
+import { equalPath } from './equalPath'
 
 declare global {
   interface Window {
@@ -16,9 +18,27 @@ declare global {
 /** Add window event handlers. */
 export const initEvents = (store: Store<State, any>) => {
 
+  let lastState: number // eslint-disable-line fp/no-let
+  let lastPath: Path | null // eslint-disable-line fp/no-let
+
   /** Popstate event listener; setCursor on browser history forward/backward. */
-  const onPopstate = () => {
-    const { path, contextViews } = decodeThoughtsUrl(store.getState(), window.location.pathname, { exists: true })
+  const onPopstate = (e: PopStateEvent) => {
+
+    const state = store.getState()
+
+    const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
+
+    if (!lastPath) {
+      lastPath = state.cursor
+    }
+
+    if (!path || !pathExists(state, pathToContext(path)) || equalPath(lastPath, path)) {
+      window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
+    }
+
+    lastPath = path && pathExists(state, pathToContext(path)) ? path : lastPath
+    lastState = e.state
+
     const toRoot = !path || isRoot(path)
 
     // clear the selection if root
@@ -29,11 +49,16 @@ export const initEvents = (store: Store<State, any>) => {
     // set the cursor
     const cursor = toRoot ? null : path
 
-    // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
-    store.dispatch(setCursor({ path: cursor, replaceContextViews: contextViews }))
+    store.dispatch([
 
-    // scroll cursor into view
-    store.dispatch(scrollCursorIntoView())
+      // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
+      setCursor({ path: cursor, replaceContextViews: contextViews }),
+
+      // scroll cursor into view
+      scrollCursorIntoView(),
+
+    ])
+
   }
 
   /** MouseMove event listener. */
