@@ -6,12 +6,6 @@ import { alert } from '../action-creators'
 import { State } from '../util/initialState'
 import { Thunk, Context, Path } from '../types'
 
-interface Alert {
-  type: 'alert',
-  value: string | null,
-  alertType: string,
-}
-
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (offset: number, context: Context | null, state: State) => {
   const { editingValue } = state

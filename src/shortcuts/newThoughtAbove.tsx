@@ -5,11 +5,6 @@ import { isDocumentEditable } from '../util'
 import newThought from '../action-creators/newThought'
 import { Icon as IconType, Shortcut } from '../types'
 
-interface NewThought {
-  type: 'newThought',
-  insertBefore: boolean,
-}
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
   <g>

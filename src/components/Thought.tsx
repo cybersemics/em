@@ -1,4 +1,4 @@
-import React, { MouseEvent, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { ThunkDispatch } from 'redux-thunk'
 import { connect } from 'react-redux'
 import classNames from 'classnames'

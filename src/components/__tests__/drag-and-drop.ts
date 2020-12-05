@@ -1,5 +1,4 @@
 import { ReactWrapper } from 'enzyme'
-import { Component } from 'react'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 

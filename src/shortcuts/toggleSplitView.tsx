@@ -2,11 +2,6 @@ import React from 'react'
 import { toggleSplitView } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 
-interface ToggleSplitView {
-  type: 'toggleSplitView',
-  value: boolean,
-}
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => <svg className='icon' width={size} height={size} style={style} viewBox='0 0 110 110'>
   <path

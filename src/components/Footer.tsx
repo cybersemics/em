@@ -7,15 +7,6 @@ import { login, logout, showModal } from '../action-creators'
 import { getSetting, isTutorial } from '../selectors'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import { State } from '../util/initialState'
-import { User } from '../types'
-
-interface FooterProps {
-  authenticated?: boolean,
-  isTutorialOn?: boolean,
-  status: string,
-  tutorialStep: number,
-  user?: User,
-}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {

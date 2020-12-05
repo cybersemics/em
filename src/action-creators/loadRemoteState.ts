@@ -7,7 +7,7 @@ import { State } from '../util/initialState'
 import { Dispatch, Thunk, Index, Parent } from '../types'
 
 /** Save all firebase state to state and localStorage. */
-export const loadState = async <Tat>(dispatch: Dispatch, newState: State, oldState: State) => {
+export const loadState = async (dispatch: Dispatch, newState: State, oldState: State) => {
 
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)

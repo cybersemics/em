@@ -3,10 +3,6 @@ import { Index, Lexeme, Parent, Snapshot } from '../types'
 import { keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
 
-interface Options {
-  maxDepth?: number,
-}
-
 /** Deletes all data in the data provider. */
 export const clearAll = () => {
   throw new Error('NOT IMPLEMENTED')
