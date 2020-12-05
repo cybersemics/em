@@ -5,7 +5,7 @@ import { getSetting } from '../selectors'
 import { State } from '../util/initialState'
 
 /** Advances the tutorial one step (whole step by default; optional hint argument for fractional step). */
-const tutorialNext = (state: State, { hint }: { hint?: boolean } = {}) => {
+const tutorialNext = (state: State, { hint }: { hint?: boolean }) => {
 
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
 

@@ -286,7 +286,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
           newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
         )
       )) {
-        dispatch(tutorialNext())
+        dispatch(tutorialNext({}))
       }
     }
   }

@@ -53,7 +53,7 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
                 <TutorialNavigationButton clickHandler={() => {
                   dispatch([
                     tutorialChoice({ value }),
-                    tutorialNext(),
+                    tutorialNext({}),
                   ])
                 }} value={textValue} />
               </li>
