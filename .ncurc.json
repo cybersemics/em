@@ -13,13 +13,12 @@
     // https://github.com/jsdom/whatwg-encoding/pull/11
     "ipfs-http-client",
 
-    // wait for react-scripts v4 and upgrade together
+    // Enzyme v3.11.0 doesn't work with React v17
+    // https://github.com/enzymejs/enzyme/issues/2429
     "react",
     "react-dom",
-    "typescript",
 
-    // uses rules added in eslint v7, but react-scripts uses v6.8.0
-    "eslint-config-standard",
+    "typescript",
 
     // ts-key-enum v3 does not work with @babel/plugin-transform-typescript which is a subdependency of react-scripts
     //
