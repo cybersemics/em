@@ -18,8 +18,6 @@
     "react",
     "react-dom",
 
-    "typescript",
-
     // ts-key-enum v3 does not work with @babel/plugin-transform-typescript which is a subdependency of react-scripts
     //
     // em@163.0.0
