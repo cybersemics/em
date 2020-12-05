@@ -7,43 +7,34 @@ import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getThought'
+import sinonFakeTimer from '../../test-helpers/sinonFakeTimer'
 
-jest.useFakeTimers()
-// mock debounce and throttle
-// fake timers cause an infinite loop on _.debounce
-// Jest v26 contains a 'modern' option for useFakeTimers (https://github.com/facebook/jest/pull/7776), but I am getting a "TypeError: Cannot read property 'useFakeTimers' of undefined" error when I call jest.useFakeTimers('modern'). The same error does not uccor when I use 'legacy' or omit the argument (react-scripts v4.0.0-next.64).
-// https://github.com/facebook/jest/issues/3465#issuecomment-504908570
-jest.mock('lodash', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { debounce, throttle } = require('../../test-helpers/mock-debounce-throttle')
-  return Object.assign({},
-    jest.requireActual('lodash'),
-    {
-      debounce,
-      throttle,
-    }
-  )
-})
+/*
+  Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
+  For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
+*/
+
+const fakeTimer = sinonFakeTimer()
 
 describe('dexie', () => {
-
   beforeEach(initDB)
   afterEach(db.clearAll)
   dataProviderTest(db)
-
 })
 
 describe('integration', () => {
 
   beforeEach(async () => {
-    await initialize()
-    jest.runOnlyPendingTimers()
+    fakeTimer.useFakeTimer()
+    initialize()
+    await fakeTimer.runAllAsync()
+    fakeTimer.useRealTimer()
   })
 
   afterEach(async () => {
+    fakeTimer.useRealTimer()
     store.dispatch(clear())
     await db.clearAll()
-    jest.runOnlyPendingTimers()
   })
 
   it('load settings into indexedDB on initialization', async () => {
@@ -51,9 +42,6 @@ describe('integration', () => {
 
     expect(thoughtState).not.toBeUndefined()
     expect(thoughtState.contexts).toHaveLength(1)
-
-    // TODO: Tests fail without a dummy call to the database. Why?
-    await db.getHelpers()
 
     const thoughtDB = await dbGetThought(db, 'Settings')
 
@@ -65,10 +53,15 @@ describe('integration', () => {
 
   it('persist newThought', async () => {
 
+    fakeTimer.useFakeTimer()
+
     store.dispatch(newThought({ value: 'a' }))
 
-    jest.runOnlyPendingTimers()
+    await fakeTimer.runAllAsync()
 
+    fakeTimer.useRealTimer()
+
+    // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
     const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
@@ -77,6 +70,8 @@ describe('integration', () => {
   })
 
   it('persist existingThoughtChange', async () => {
+
+    fakeTimer.useFakeTimer()
 
     store.dispatch([
       { type: 'newThought', value: '' },
@@ -89,7 +84,9 @@ describe('integration', () => {
       }
     ])
 
-    jest.runOnlyPendingTimers()
+    await fakeTimer.runAllAsync()
+
+    fakeTimer.useRealTimer()
 
     const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
 
@@ -97,8 +94,5 @@ describe('integration', () => {
       children: [{ value: 'a', rank: 0 }]
     })
 
-    await initialize()
-    jest.runOnlyPendingTimers()
   })
-
 })
