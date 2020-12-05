@@ -42,7 +42,7 @@ const addActionsToPatch = (patch: Patch, actions: string[]) =>
 /**
  * Gets the first action from a patch.
  */
-const getPatchAction = <T>(patch: Patch) => patch[0].actions[0]
+const getPatchAction = (patch: Patch) => patch[0].actions[0]
 
 /**
  * Gets the nth item from the end of an array.
@@ -112,7 +112,7 @@ const redoHandler = (state: State, patches: Patch[]) => {
 /**
  * Store enhancer to append the ability to undo/redo for all undoable actions.
  */
-const undoRedoReducerEnhancer: StoreEnhancer<any> = <S>(createStore: StoreEnhancerStoreCreator) => <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
+const undoRedoReducerEnhancer: StoreEnhancer<any> = (createStore: StoreEnhancerStoreCreator) => <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
   // eslint-disable-next-line fp/no-let
   let lastActionType: string
 

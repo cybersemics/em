@@ -14,7 +14,7 @@ import { Context, Parent } from '../types'
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace jest {
-    interface Matchers<R> {
+    interface Matchers {
       toHaveOrderedContexts(context1: Context, context2: Context): CustomMatcherResult,
     }
   }

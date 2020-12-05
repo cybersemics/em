@@ -68,17 +68,6 @@ interface SubthoughtsProps {
   path?: Path,
 }
 
-/** The type of the internal SubthoughtsComponent (returned by mapStateToProps). */
-type SubthoughtsComponentProps = SubthoughtsProps & {
-  contextBinding?: Path,
-  dataNonce: number,
-  dropTarget: ConnectDropTarget,
-  isDragInProgress?: boolean,
-  isEditingAncestor?: boolean,
-  isHovering?: boolean,
-  showHiddenThoughts?: boolean,
-}
-
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
 const toggleContextViewShortcut = shortcutById('toggleContextView')

@@ -8,87 +8,76 @@ import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { SimplePath } from '../../types'
+import sinonFakeTimer from '../../test-helpers/sinonFakeTimer'
 
-// mock getUserRef (firebase's database.ref)
-jest.mock('../../util/getUserRef')
-jest.useFakeTimers()
+/*
+  Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
+  For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
+*/
 
-// mock debounce and throttle
-// fake timers cause an infinite loop on _.debounce
-// Jest v26 contains a 'modern' option for useFakeTimers (https://github.com/facebook/jest/pull/7776), but I am getting a "TypeError: Cannot read property 'useFakeTimers' of undefined" error when I call jest.useFakeTimers('modern'). The same error does not uccor when I use 'legacy' or omit the argument (react-scripts v4.0.0-next.64).
-// https://github.com/facebook/jest/issues/3465#issuecomment-504908570
-jest.mock('lodash', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { debounce, throttle } = require('../../test-helpers/mock-debounce-throttle')
-  return Object.assign({},
-    jest.requireActual('lodash'),
-    {
-      debounce,
-      throttle,
-    }
-  )
-})
+const fakeTimer = sinonFakeTimer()
 
 const db = dexie as DataProvider
 
-/** Switch to real timers to set a real delay, then set back to fake timers. This was the only thing that worked to force the test to wait for flushPending (or getManyDescendants?) to complete. */
-const delay = async (n: number) => {
-  jest.useRealTimers()
-  await new Promise(resolve => setTimeout(resolve, n))
-  jest.useFakeTimers()
-}
-
 beforeEach(async () => {
-  await initialize()
-  jest.runOnlyPendingTimers()
+  fakeTimer.useFakeTimer()
+  initialize()
+  await fakeTimer.runAllAsync()
+  fakeTimer.useRealTimer()
 })
 
 afterEach(async () => {
+  fakeTimer.useFakeTimer()
   store.dispatch(clear())
+  await fakeTimer.runAllAsync()
+  fakeTimer.useRealTimer()
   await db.clearAll()
-  jest.runOnlyPendingTimers()
 })
 
 it('disable isLoading after initialize', async () => {
-  await delay(500)
   expect(store.getState().isLoading).toBe(false)
 })
 
 it('load thought', async () => {
 
   const parentEntryRoot1 = await getContext(db, [ROOT_TOKEN])
-  jest.runOnlyPendingTimers()
   expect(parentEntryRoot1).toBeUndefined()
+
+  fakeTimer.useFakeTimer()
 
   // create a thought, which will get persisted to local db
   store.dispatch(newThought({ value: 'a' }))
-  jest.runOnlyPendingTimers()
+
+  await fakeTimer.runAllAsync()
+  fakeTimer.useRealTimer()
 
   const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
-  jest.runOnlyPendingTimers()
   expect(parentEntryRoot).toMatchObject({
     children: [{ value: 'a', rank: 0 }]
   })
 
+  fakeTimer.useFakeTimer()
   // clear state
   store.dispatch(clear())
-  jest.runOnlyPendingTimers()
+  await fakeTimer.runAllAsync()
 
   const children = getAllChildren(store.getState(), [ROOT_TOKEN])
   expect(children).toHaveLength(0)
 
+  // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
+  fakeTimer.useRealTimer()
+
   // confirm thought is still in local db after state has been cleared
   const parentEntryRootAfterReload = await getContext(db, [ROOT_TOKEN])
-  jest.runOnlyPendingTimers()
   expect(parentEntryRootAfterReload).toMatchObject({
     children: [{ value: 'a' }]
   })
 
   // clear and call initialize again to reload from db (simulating page refresh)
   store.dispatch(clear())
-  jest.runOnlyPendingTimers()
-  await initialize()
-  await delay(100)
+  fakeTimer.useFakeTimer()
+  initialize()
+  await fakeTimer.runAllAsync()
 
   const childrenAfterInitialize = getAllChildren(store.getState(), [ROOT_TOKEN])
   expect(childrenAfterInitialize).toMatchObject([
@@ -98,7 +87,7 @@ it('load thought', async () => {
 
 it('do not repopulate deleted thought', async () => {
 
-  jest.runOnlyPendingTimers()
+  fakeTimer.useFakeTimer()
 
   store.dispatch([
     { type: 'newThought', value: '' },
@@ -113,8 +102,7 @@ it('do not repopulate deleted thought', async () => {
     setCursor({ path: null })
   ])
 
-  jest.runOnlyPendingTimers()
-  await delay(500)
+  await fakeTimer.runAllAsync()
 
   const parentEntryRoot = getParent(store.getState(), [ROOT_TOKEN])
   expect(parentEntryRoot).toBe(undefined)
@@ -124,6 +112,8 @@ it('do not repopulate deleted thought', async () => {
 })
 
 it('load buffered thoughts', async () => {
+
+  fakeTimer.useFakeTimer()
 
   store.dispatch(importText({
     path: RANKED_ROOT,
@@ -135,7 +125,9 @@ it('load buffered thoughts', async () => {
               - e`
   }))
 
-  jest.runOnlyPendingTimers()
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.useRealTimer()
 
   expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'a' }] })
   expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
@@ -146,10 +138,15 @@ it('load buffered thoughts', async () => {
 
   // clear state
   // call initialize again to reload from db (simulating page refresh)
+
+  fakeTimer.useFakeTimer()
   store.dispatch(clear())
-  jest.runOnlyPendingTimers()
-  await initialize()
-  await delay(500)
+  await fakeTimer.runAllAsync()
+
+  initialize()
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.useRealTimer()
 
   const state = store.getState()
   expect(getAllChildren(state, [ROOT_TOKEN])).toMatchObject([{ value: 'a' }])
@@ -161,6 +158,8 @@ it('load buffered thoughts', async () => {
 })
 
 it('delete thought with buffered descendants', async () => {
+
+  fakeTimer.useFakeTimer()
 
   store.dispatch([
     importText({
@@ -176,7 +175,9 @@ it('delete thought with buffered descendants', async () => {
     setCursorFirstMatchActionCreator(['x']),
   ])
 
-  jest.runOnlyPendingTimers()
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.runAllAsync()
 
   expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
   expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
@@ -185,22 +186,21 @@ it('delete thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
+  fakeTimer.useFakeTimer()
   // clear and call initialize again to reload from db (simulating page refresh)
   store.dispatch(clear())
-  jest.runOnlyPendingTimers()
-  await initialize()
-  await delay(100)
+  await fakeTimer.runAllAsync()
+  initialize()
+  await fakeTimer.runAllAsync()
 
   // delete thought with buffered descendants
   store.dispatch(existingThoughtDelete({
     context: [ROOT_TOKEN],
     thoughtRanked: { value: 'a', rank: 1 }
   }))
-  jest.runOnlyPendingTimers()
+  await fakeTimer.runAllAsync()
 
-  // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
-  // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
-  await delay(500)
+  fakeTimer.useRealTimer()
 
   expect(getAllChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
 
@@ -213,6 +213,8 @@ it('delete thought with buffered descendants', async () => {
 })
 
 it('move thought with buffered descendants', async () => {
+
+  fakeTimer.useFakeTimer()
 
   store.dispatch([
     importText({
@@ -229,7 +231,9 @@ it('move thought with buffered descendants', async () => {
     setCursorFirstMatchActionCreator(['x']),
   ])
 
-  jest.runOnlyPendingTimers()
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.useRealTimer()
 
   expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
   expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'm' }, { value: 'b' }] })
@@ -240,10 +244,13 @@ it('move thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
   // clear and call initialize again to reload from db (simulating page refresh)
+  fakeTimer.useFakeTimer()
+
   store.dispatch(clear())
-  jest.runOnlyPendingTimers()
-  await initialize()
-  await delay(100)
+  await fakeTimer.runAllAsync()
+
+  initialize()
+  await fakeTimer.runAllAsync()
 
   // delete thought with buffered descendants
   const aPath = rankThoughtsFirstMatch(store.getState(), ['a'])
@@ -252,11 +259,10 @@ it('move thought with buffered descendants', async () => {
     oldPath: aPath,
     newPath: [...xPath, ...aPath],
   }))
-  jest.runOnlyPendingTimers()
 
-  // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
-  // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
-  await delay(500)
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.useRealTimer()
 
   expect(getAllChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
 
@@ -278,6 +284,8 @@ it('move thought with buffered descendants', async () => {
 
 it('edit thought with buffered descendants', async () => {
 
+  fakeTimer.useFakeTimer()
+
   store.dispatch([
     importText({
       path: RANKED_ROOT,
@@ -293,7 +301,9 @@ it('edit thought with buffered descendants', async () => {
     setCursorFirstMatchActionCreator(['x']),
   ])
 
-  jest.runOnlyPendingTimers()
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.useRealTimer()
 
   expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
   expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'm' }, { value: 'b' }] })
@@ -303,11 +313,14 @@ it('edit thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
+  fakeTimer.useFakeTimer()
+
   // clear and call initialize again to reload from db (simulating page refresh)
   store.dispatch(clear())
-  jest.runOnlyPendingTimers()
-  await initialize()
-  await delay(100)
+  await fakeTimer.runAllAsync()
+
+  initialize()
+  await fakeTimer.runAllAsync()
 
   // delete thought with buffered descendants
   store.dispatch(existingThoughtChange({
@@ -316,11 +329,10 @@ it('edit thought with buffered descendants', async () => {
     context: [ROOT_TOKEN],
     path: [{ value: 'a', rank: 1 }] as SimplePath,
   }))
-  jest.runOnlyPendingTimers()
 
-  // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
-  // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
-  await delay(500)
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.useRealTimer()
 
   expect(getAllChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }, { value: 'a!' }])
 
@@ -341,6 +353,8 @@ it('edit thought with buffered descendants', async () => {
 
 it.only('export thought with buffered descendants', async () => {
 
+  fakeTimer.useFakeTimer()
+
   store.dispatch([
     importText({
       path: RANKED_ROOT,
@@ -355,7 +369,9 @@ it.only('export thought with buffered descendants', async () => {
     setCursorFirstMatchActionCreator(['x']),
   ])
 
-  jest.runOnlyPendingTimers()
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.useRealTimer()
 
   expect(await getContext(db, [ROOT_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
   expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
@@ -365,21 +381,27 @@ it.only('export thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
   // clear and call initialize again to reload from db (simulating page refresh)
+
+  fakeTimer.useFakeTimer()
+
   store.dispatch(clear())
-  jest.runOnlyPendingTimers()
-  await initialize()
-  await delay(100)
+  await fakeTimer.runAllAsync()
+
+  initialize()
+  await fakeTimer.runAllAsync()
 
   // delete thought with buffered descendants
   store.dispatch(existingThoughtDelete({
     context: [ROOT_TOKEN],
     thoughtRanked: { value: 'a', rank: 1 }
   }))
-  jest.runOnlyPendingTimers()
+
+  await fakeTimer.runAllAsync()
 
   // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
   // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
-  await delay(500)
+
+  fakeTimer.useRealTimer()
 
   expect(getAllChildren(store.getState(), [ROOT_TOKEN])).toMatchObject([{ value: 'x' }])
 

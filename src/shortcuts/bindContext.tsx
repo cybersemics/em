@@ -2,14 +2,7 @@ import React from 'react'
 import { isDocumentEditable, pathToContext, rootedParentOf } from '../util'
 import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
 import { toggleAttribute } from '../action-creators'
-import { Context, Icon as IconType, Shortcut } from '../types'
-
-interface ToggleAttribute {
-  type: 'toggleAttribute',
-  context: Context,
-  key: string,
-  value: string,
-}
+import { Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>

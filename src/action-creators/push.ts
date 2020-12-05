@@ -9,17 +9,6 @@ import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../types'
 
-type Callback = (err: string | null, ...args: any[]) => void
-
-/** Options object for push. */
-interface Options {
-  local?: boolean,
-  remote?: boolean,
-  updates?: Index,
-  callback?: Callback,
-  recentlyEdited?: Index,
-}
-
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
 // e.g. {
