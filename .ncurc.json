@@ -14,13 +14,9 @@
     "ipfs-http-client",
 
     // wait for react-scripts v4 and upgrade together
-    "eslint",
     "react",
     "react-dom",
-    "react-scripts",
     "typescript",
-    "@typescript-eslint/eslint-plugin",
-    "@typescript-eslint/parser",
 
     // uses rules added in eslint v7, but react-scripts uses v6.8.0
     "eslint-config-standard",
