@@ -10,7 +10,7 @@
       "dom",
       "es2019"
     ],
-    "jsx": "react",
+    "jsx": "react-jsx",
     "target": "es5",
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
