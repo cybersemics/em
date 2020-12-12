@@ -13,6 +13,7 @@ import pullQueue from './redux-middleware/pullQueue'
 import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
 import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
+import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -28,5 +29,5 @@ export const store = createStore(
     pushQueue,
     pullQueue,
     updateUrlHistory
-  ), undoRedoReducerEnhancer)
+  ), undoRedoReducerEnhancer, cursorChangedEnhancer)
 )

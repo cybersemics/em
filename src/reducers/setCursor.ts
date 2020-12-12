@@ -1,14 +1,13 @@
 import _ from 'lodash'
 import { RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_CONTEXT_VIEW_SELECT, TUTORIAL_CONTEXT, TUTORIAL_STEP_AUTOEXPAND, TUTORIAL_STEP_AUTOEXPAND_EXPAND } from '../constants'
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
-import { clearSelection, equalPath, equalThoughtRanked, hashContext, headValue, isDescendant, isDivider, pathToContext } from '../util'
+import { equalPath, equalThoughtRanked, hashContext, headValue, isDescendant, pathToContext } from '../util'
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
 import { Index, Path, SimplePath, TutorialChoice } from '../types'
 
 /**
  * Sets the cursor on a thought.
- * Side Effects: clearSelection.
  */
 const setCursor = (state: State, {
   contextChain = [],
@@ -41,12 +40,6 @@ const setCursor = (state: State, {
   const thoughtsResolved = path && contextChain.length > 0
     ? chain(state, contextChain, simplePath!)
     : path
-
-  // SIDE EFFECT
-  // clear the browser selection if a divider is being selected
-  if (thoughtsResolved && isDivider(headValue(thoughtsResolved))) {
-    clearSelection()
-  }
 
   // sync replaceContextViews with state.contextViews
   // ignore thoughts that are not in the path of replaceContextViews
