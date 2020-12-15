@@ -108,7 +108,7 @@ export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }] as SimplePath
 export const ALLOW_SINGLE_CONTEXT = false
 
 export const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyDFBtegcqjPIsLvsOKqpdQdE6SCmagRhsg',
+  apiKey: 'AIzaSyBpC2KffoQNufewJ4uS-WS72sqeXVJ5T-U',
   authDomain: 'em-search-test.firebaseapp.com',
   databaseURL: 'https://em-search-test-default-rtdb.firebaseio.com/',
   projectId: 'em-search-test',
