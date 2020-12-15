@@ -108,11 +108,11 @@ export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }] as SimplePath
 export const ALLOW_SINGLE_CONTEXT = false
 
 export const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyB7sj38woH-oJ7hcSwpq0lB7hUteyZMxNo',
-  authDomain: 'em-proto.firebaseapp.com',
-  databaseURL: 'https://em-proto.firebaseio.com',
-  projectId: 'em-proto',
-  storageBucket: 'em-proto.appspot.com',
+  apiKey: 'AIzaSyDFBtegcqjPIsLvsOKqpdQdE6SCmagRhsg',
+  authDomain: 'em-search-test.firebaseapp.com',
+  databaseURL: 'https://em-search-test-default-rtdb.firebaseio.com/',
+  projectId: 'em-search-test',
+  storageBucket: 'gs://em-search-test.appspot.com/',
   messagingSenderId: '91947960488'
 }
 

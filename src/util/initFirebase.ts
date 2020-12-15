@@ -1,6 +1,6 @@
 import { Store } from 'redux'
 import globals from '../globals'
-import { authenticate, loadPublicThoughts, status as statusActionCreator, userAuthenticated } from '../action-creators'
+import { authenticate, loadPublicThoughts, status as statusActionCreator, userAuthenticated, fetchSearchApiKey } from '../action-creators'
 import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
 import { State } from '../util/initialState'
@@ -17,6 +17,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
     firebase.auth().onAuthStateChanged((user: User) => {
       if (user) {
         store.dispatch(userAuthenticated(user))
+        store.dispatch(fetchSearchApiKey(user.uid))
       }
       else {
         store.dispatch(authenticate({ value: false }))

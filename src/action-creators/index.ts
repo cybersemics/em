@@ -46,6 +46,7 @@ export const prependRevision = reducerToThunk<typeof reducers.prependRevision>('
 export const reconcile = reducerToThunk<typeof reducers.reconcile>('reconcile')
 export const render = reducerToThunk<typeof reducers.render>('render')
 export const search = reducerToThunk<typeof reducers.search>('search')
+export const searchApiKey = reducerToThunk<typeof reducers.searchApiKey>('searchApiKey')
 export const searchLimit = reducerToThunk<typeof reducers.searchLimit>('searchLimit')
 export const selectionChange = reducerToThunk<typeof reducers.selectionChange>('selectionChange')
 export const setAttribute = reducerToThunk<typeof reducers.setAttribute>('setAttribute')
@@ -93,6 +94,7 @@ export { default as pull } from './pull'
 export { default as push } from './push'
 export { default as restoreCursorBeforeSearch } from './restoreCursorBeforeSearch'
 export { default as scrollCursorIntoView } from './scrollCursorIntoView'
+export { default as fetchSearchApiKey } from './fetchSearchApiKey'
 export { default as setEditingValue } from './setEditingValue'
 export { default as setInvalidState } from './setInvalidState'
 export { default as subCategorizeAll } from './subCategorizeAll'
