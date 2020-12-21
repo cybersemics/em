@@ -110,6 +110,8 @@ const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Thunk
   const hasPending = Object.keys(thoughtsLocal.contextIndex || {})
     .some(key => (thoughtsLocal.contextIndex || {})[key].pending)
 
+  console.log(hasPending, 'hasPending')
+
   return hasPending
 }
 

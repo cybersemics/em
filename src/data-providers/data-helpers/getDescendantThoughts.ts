@@ -42,6 +42,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
   while (contexts.length > 0) {
 
     const contextIds = contexts.map(cx => hashContext(cx))
+
     const providerParents = (await provider.getContextsByIds(contextIds))
       // eslint-disable-next-line no-loop-func
       .map((parent, i) => parent || {

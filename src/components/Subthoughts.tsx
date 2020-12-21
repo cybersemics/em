@@ -66,6 +66,7 @@ interface SubthoughtsProps {
   sort?: string,
   simplePath: SimplePath,
   path?: Path,
+  log?: boolean,
 }
 
 // assert shortcuts at load time
@@ -305,6 +306,7 @@ export const SubthoughtsComponent = ({
   showContexts,
   sort: contextSort,
   simplePath,
+  log
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
 
   // <Subthoughts> render
@@ -346,7 +348,8 @@ export const SubthoughtsComponent = ({
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
-  const filteredChildren = children.filter(isChildVisibleWithCursorCheck(state, resolvedPath, simplePath))
+
+  const filteredChildren = childrenForced ? children : children.filter(isChildVisibleWithCursorCheck(state, resolvedPath, simplePath, showContexts))
 
   const proposedPageSize = isRoot(simplePath)
     ? Infinity
@@ -355,6 +358,7 @@ export const SubthoughtsComponent = ({
     setPage(page + 1)
     return null
   }
+
   const isPaginated = show && filteredChildren.length > proposedPageSize
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
@@ -405,6 +409,8 @@ export const SubthoughtsComponent = ({
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
+
+  console.log(path, 'path here')
 
   return <React.Fragment>
 

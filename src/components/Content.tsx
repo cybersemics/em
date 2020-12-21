@@ -29,7 +29,8 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   const children = getAllChildren(state, [ROOT_TOKEN])
-  const rootThoughtsLength = children.filter(isChildVisibleWithCursorCheck(state, RANKED_ROOT, RANKED_ROOT)).length
+
+  const rootThoughtsLength = children.filter(isChildVisibleWithCursorCheck(state, RANKED_ROOT, RANKED_ROOT, false)).length
 
   // pass rootSort to allow root Subthoughts ro render on toggleSort
   const rootSort = attribute(state, [ROOT_TOKEN], '=sort') || 'None'

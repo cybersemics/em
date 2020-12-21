@@ -89,16 +89,15 @@ const isChildInCursor = (state: State, path: Path, simplePath: SimplePath, child
 }
 
 /** Returns head of context if parent has active context view. */
-const pathHeadValue = (state: State, path: Path, child: Child | ThoughtContext) => {
-  const showContexts = isContextViewActive(state, pathToContext(path))
+const pathHeadValue = (state: State, path: Path, child: Child | ThoughtContext, showContexts: boolean) => {
   return showContexts
     ? head((child as ThoughtContext).context)
     : (child as Child).value
 }
 
 /** Checks if the child is visible and also checks if the child lies within the cursor. */
-export const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+export const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, showContexts: boolean, child: Child | ThoughtContext) => {
   return state.showHiddenThoughts ||
-  isChildVisible(state, pathToContext(simplePath), { value: pathHeadValue(state, path, child), rank: child.rank }) ||
+  isChildVisible(state, pathToContext(simplePath), { value: pathHeadValue(state, path, child, showContexts), rank: child.rank }) ||
   isChildInCursor(state, path, simplePath, child)
 })
