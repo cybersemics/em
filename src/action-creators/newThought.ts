@@ -78,10 +78,11 @@ const newThought = ({
 
   dispatch({
     type: 'newThought',
+    at: path,
     insertBefore,
     insertNewSubthought,
     preventSetCursor,
-    value
+    value,
   })
 
 }
