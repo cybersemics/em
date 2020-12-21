@@ -2058,9 +2058,14 @@ code, .code {
   font-weight: normal;
 }
 
+.shortcuts td {
+  min-width: 10rem;
+}
+
 /* center gesture diagrams */
 .mobile .shortcuts td {
   text-align: center;
+  min-width: auto;
 }
 
 .mobile.drag-in-progress * {
