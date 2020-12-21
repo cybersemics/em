@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import TutorialHint from './TutorialHint'
 import {
-  isMobile,
+  isTouch,
 } from '../../browser'
 
 import {
@@ -23,7 +23,7 @@ const Tutorial2StepContext1Parent = ({ cursor, tutorialChoice, rootSubthoughts }
         rootSubthoughts.length > 0 && (!cursor || cursor.length > 1)
           ? <Fragment>Select {rootSubthoughts.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootSubthoughts.map(child => `"${ellipsize(child.value)}"`), 'or')}). </Fragment>
           : null
-      }{isMobile ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought. Then type "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
+      }{isTouch ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought. Then type "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
     </TutorialHint>
   </p>
 </Fragment>

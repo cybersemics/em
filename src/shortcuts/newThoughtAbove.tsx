@@ -1,6 +1,6 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { isDocumentEditable } from '../util'
 import newThought from '../action-creators/newThought'
 import { Icon as IconType, Shortcut } from '../types'
@@ -17,7 +17,7 @@ const newThoughtAboveShortcut: Shortcut = {
   name: 'New Thought Above',
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
-  ...!isMobile ? { keyboard: { key: Key.Enter, shift: true } } : null,
+  ...!isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null,
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: newThought({ insertBefore: true })

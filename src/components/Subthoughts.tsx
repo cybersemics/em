@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import assert from 'assert'
 import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { store } from '../store'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
 import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
@@ -238,7 +238,7 @@ const NoChildren = ({ allowSingleContext, children, simplePath }: { allowSingleC
 
     This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
 
-    <span>{isMobile
+    <span>{isTouch
       ? <span className='gesture-container'>Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' /></span>
       : <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
     } to add "{headValue(simplePath)}" to a new context.
@@ -246,7 +246,7 @@ const NoChildren = ({ allowSingleContext, children, simplePath }: { allowSingleC
 
     <br />{allowSingleContext
       ? 'A floating context... how interesting.'
-      : <span>{isMobile
+      : <span>{isTouch
         ? <span className='gesture-container'>Swipe <GestureDiagram path={toggleContextViewShortcut.gesture as GesturePath} size={30} color='darkgray'/* mtach .children-subheading color */ /></span>
         : <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
       } to return to the normal view.</span>

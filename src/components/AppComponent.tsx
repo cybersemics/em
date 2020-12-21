@@ -2,7 +2,7 @@ import React, { FC, useEffect, useLayoutEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
-import { isAndroid, isMobile } from '../browser'
+import { isAndroid, isTouch } from '../browser'
 import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE } from '../constants'
 import { inputHandlers } from '../shortcuts'
 import { isDocumentEditable } from '../util'
@@ -66,14 +66,14 @@ const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
 type Props = StateProps & DispatchProps
 
 /**
- *
+ * Wrap an element in the MultiGesture componentt if the user has a touch screen.
  */
-const MultiGestureIfMobile: FC = ({ children }) => isMobile
+const MultiGestureIfTouch: FC = ({ children }) => isTouch
   ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>{children}</MultiGesture>
   : <>{children}</>
 
 /**
- *
+ * The main app component.
  */
 const AppComponent: FC<Props> = props => {
   const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos } = props
@@ -102,7 +102,7 @@ const AppComponent: FC<Props> = props => {
   const componentClassNames = classNames({
     container: true,
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
-    mobile: isMobile,
+    mobile: isTouch,
     android: isAndroid,
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
@@ -117,7 +117,7 @@ const AppComponent: FC<Props> = props => {
         <HamburgerMenu />
       </>}
 
-      <MultiGestureIfMobile>
+      <MultiGestureIfTouch>
 
         <Alert />
         <ErrorMessage />
@@ -172,7 +172,7 @@ const AppComponent: FC<Props> = props => {
           </>
         }
 
-      </MultiGestureIfMobile>
+      </MultiGestureIfTouch>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
@@ -23,7 +23,7 @@ const noteShortcut: Shortcut = {
     const context = pathToContext(cursor!)
     const hasNote = hasChild(state, context, '=note')
 
-    if (isMobile) {
+    if (isTouch) {
       asyncFocus()
     }
 

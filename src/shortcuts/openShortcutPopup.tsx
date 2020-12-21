@@ -1,5 +1,5 @@
 import React from 'react'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { showModal } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 
@@ -13,7 +13,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const openShortcutPopupShortcut: Shortcut = {
   id: 'openShortcutPopup',
   name: 'Open Shortcut Popup',
-  description: `Open the help screen which contains the tutorials and a list of all ${isMobile ? 'gestures' : 'keyboard shortcuts'}.`,
+  description: `Open the help screen which contains the tutorials and a list of all ${isTouch ? 'gestures' : 'keyboard shortcuts'}.`,
   keyboard: { key: '/', meta: true },
   svg: Icon,
   exec: dispatch => {

@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react'
-import { isMac, isMobile } from '../../browser'
+import { isMac, isTouch } from '../../browser'
 
 import {
   TUTORIAL_CONTEXT,
@@ -24,7 +24,7 @@ const Tutorial2StepContext2 = ({ tutorialChoice, rootSubthoughts, cursor }) => <
             ? `Type "${TUTORIAL_CONTEXT[tutorialChoice]}."`
             : <Fragment>
               {!cursor || headValue(cursor) !== TUTORIAL_CONTEXT2_PARENT[tutorialChoice] ? `Select "${TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". ` : null}
-              {isMobile ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
+              {isTouch ? 'Trace the line below with your finger' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`} to create a new thought <i>within</i> "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
             </Fragment>
           }
         </TutorialHint>

@@ -2,7 +2,7 @@ import React, { FC, MouseEvent, useMemo, useRef } from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { cursorBack as cursorBackActionCreator, expandContextThought, modalRemindMeLater, toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
 import { MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { attribute, getSetting, getAllChildren, isChildVisibleWithCursorCheck, isTutorial } from '../selectors'
@@ -96,7 +96,7 @@ const Content: ContentComponent = props => {
   /** Generate class names. */
   const contentClassNames = useMemo(() => classNames({
     content: true,
-    'content-tutorial': isMobile && isTutorialLocal && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
+    'content-tutorial': isTouch && isTutorialLocal && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
     publish: publishMode(),
   }), [tutorialStep, isTutorialLocal])
 

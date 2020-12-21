@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { makeCompareByProp, sort } from '../util'
@@ -31,7 +31,7 @@ const ShortcutRows = (shortcut: Shortcut, i: number) =>
       <b>{shortcut.name}</b>
       <p>{shortcut.description}</p>
     </th>
-    <td>{isMobile && shortcut.gesture
+    <td>{isTouch && shortcut.gesture
       // GesturePath[]
       ? <GestureDiagram path={shortcut.gesture as GesturePath} size={48} />
       : shortcut.keyboard ? formatKeyboardShortcut(shortcut.keyboard)
@@ -44,7 +44,7 @@ const ShortcutTable = () => {
 
   // filter out shortcuts that do not exist on the current platform
   const shortcuts = sort(globalShortcuts, makeCompareByProp('name'))
-    .filter(shortcut => !shortcut.hideFromInstructions && (isMobile ? shortcut.gesture : shortcut.keyboard))
+    .filter(shortcut => !shortcut.hideFromInstructions && (isTouch ? shortcut.gesture : shortcut.keyboard))
 
   return <table className='shortcuts'>
     <tbody>
@@ -88,7 +88,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
       </div>
     </section>
 
-    <h2 className='modal-subtitle'>{isMobile ? 'Gesture' : 'Keyboard'} Shortcuts</h2>
+    <h2 className='modal-subtitle'>{isTouch ? 'Gesture' : 'Keyboard'} Shortcuts</h2>
 
     <ShortcutTable />
 

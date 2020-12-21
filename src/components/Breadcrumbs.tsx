@@ -2,7 +2,7 @@ import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { simplifyPath } from '../selectors'
 import { ancestors, strip } from '../util'
 import { State } from '../util/initialState'
@@ -78,7 +78,7 @@ const Breadcrumbs: BreadcrumbsComponent = ({ path, simplePath, thoughtsLimit, ch
             {/* isOverflow is only applied to the object when ellipsis is true and number of thoughts exceeds thoughtsLimit. So if overflow is true we can just shrink the path by rendering "..." ellipsis to fit everything in a single line. */}
             {!thoughtRanked.isOverflow ?
               <span>
-                {!isMobile || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
+                {!isTouch || i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
                 {subthoughts && <Link simplePath={subthoughts} label={thoughtRanked.label} />}
                 {subthoughts && <Superscript simplePath={subthoughts} />}
               </span>

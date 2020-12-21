@@ -4,7 +4,7 @@ import { asyncFocus, ellipsize, headValue, isDivider, isDocumentEditable, parent
 import { getChildren, getThoughtBefore, getAllChildren, getChildrenRanked, hasChild, isContextViewActive, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 import { State } from '../util/initialState'
 import { RANKED_ROOT } from '../constants'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
 import { Icon as IconType, Shortcut, Thunk } from '../types'
 
@@ -56,7 +56,7 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
   }
 
   // empty thought on mobile
-  if (isMobile && editing && ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor)))) {
+  if (isTouch && editing && ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor)))) {
     asyncFocus()
   }
 
