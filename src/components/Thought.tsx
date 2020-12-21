@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, error, existingThoughtMove, expandContextThought, newThoughtSubmit, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
@@ -221,7 +221,7 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
 
   return isDocumentEditable() &&
     !!isDraggable &&
-    (!isMobile || globals.touched) &&
+    (!isTouch || globals.touched) &&
     !hasChild(state, thoughts, '=immovable') &&
     !hasChild(state, thoughts, '=readonly') &&
     !hasChild(state, context, '=immovable') &&
@@ -401,7 +401,7 @@ const Thought = ({
       showContexts={showContexts}
       style={style}
       simplePath={simplePath}
-      onKeyDownAction={isMobile ? undefined : toggleTopControlsAndBreadcrumbs}
+      onKeyDownAction={isTouch ? undefined : toggleTopControlsAndBreadcrumbs}
     />}
 
     <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />

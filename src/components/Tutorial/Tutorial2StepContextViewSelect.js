@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react'
-import { isMobile } from '../../browser'
+import { isTouch } from '../../browser'
 import { store } from '../../store'
 
 import {
@@ -15,7 +15,7 @@ const Tutorial2StepContextViewSelect = ({ tutorialChoice }) => {
     ? TUTORIAL_CONTEXT[tutorialChoice]
     : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
   return <Fragment>
-    <p>Now I'm going to show you the {isMobile ? 'gesture' : 'keyboard shortcut'} to view multiple contexts.</p>
+    <p>Now I'm going to show you the {isTouch ? 'gesture' : 'keyboard shortcut'} to view multiple contexts.</p>
     <p>First select "{caseSensitiveValue}".</p>
   </Fragment>
 }

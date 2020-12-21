@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react'
-import { isMobile } from '../../browser'
+import { isTouch } from '../../browser'
 import { store } from '../../store'
 
 import {
@@ -34,7 +34,7 @@ const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
       ? <p>First select "{caseSensitiveValue}".</p>
       : <Fragment>
         {isHint() ? <p>You did the right gesture, but somehow "{caseSensitiveValue}" wasn't selected. Try{!cursor || headValue(cursor) !== caseSensitiveValue ? <Fragment> selecting "{caseSensitiveValue}" and trying</Fragment> : null} again.</p> : null}
-        <p>{isMobile ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard)}`} to view the current thought's contexts.</p>
+        <p>{isTouch ? 'Trace the line below' : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard)}`} to view the current thought's contexts.</p>
       </Fragment>}
   </Fragment>
 }

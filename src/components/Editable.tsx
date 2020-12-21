@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 import he from 'he'
 import classNames from 'classnames'
 import { alert, cursorBack, editing, error, existingThoughtChange, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext } from '../action-creators'
-import { isMobile, isSafari } from '../browser'
+import { isTouch, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
@@ -296,7 +296,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   useEffect(() => {
     const { editing, noteFocus, dragHold } = state
-    const editMode = !isMobile || editing
+    const editMode = !isTouch || editing
     // focus on the ContentEditable element if editing
     // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
 
@@ -304,7 +304,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     //   thoughts,
     //   isEditing,
     //   contentRef: !!contentRef.current,
-    //   editMode: !isMobile || editing,
+    //   editMode: !isTouch || editing,
     //   noFocusNode: !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold,
     // })
 
@@ -461,7 +461,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     dispatch(setEditingValue(null))
 
-    if (isMobile && isSafari()) {
+    if (isTouch && isSafari()) {
       resetToolbarPosition()
       document.removeEventListener('scroll', updateToolbarPositionOnScroll)
     }
@@ -484,7 +484,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     // wait until the next render to determine if we have really blurred
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
-    if (isMobile) {
+    if (isTouch) {
       setTimeout(() => {
         // Check for "•" equality in order to set editing value to false if user exit editing mode by tapping on bullet on left space of thought.
         if (!window.getSelection()?.focusNode || (window.getSelection()?.focusNode?.textContent === '•')) {
@@ -500,7 +500,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
    */
   const onFocus = () => {
 
-    if (isMobile && isSafari()) {
+    if (isTouch && isSafari()) {
       makeToolbarPositionFixed()
       document.addEventListener('scroll', updateToolbarPositionOnScroll)
     }

@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import assert from 'assert'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { shortcutById } from '../shortcuts'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import { getSetting } from '../selectors'
@@ -53,7 +53,7 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({ childrenLengt
     // tutorial no children
     // show special message when there are no children in tutorial
     : isTutorial
-      ? childrenLength === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isMobile)
+      ? childrenLength === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isTouch)
         ? <div className='center-in-content'>
           <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
         </div>
@@ -62,7 +62,7 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({ childrenLengt
 
     // default
       : <React.Fragment>
-        <React.Fragment>{isMobile
+        <React.Fragment>{isTouch
           ? <span className='gesture-container'>Swipe <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color='darkgray' /></span>
           : <span>Hit the Enter key</span>
         } to add a new thought.</React.Fragment>

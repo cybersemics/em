@@ -1,7 +1,7 @@
 import React from 'react'
 import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useDispatch, useSelector } from 'react-redux'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import _ from 'lodash'
 import Breadcrumbs from './Breadcrumbs'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
@@ -53,9 +53,9 @@ const Sidebar = () => {
      * a modal just inside the <body /> regardless where we put the Sidebar component in the component tree.
      * So .mobile classname added to the main wrapper of app component wont work for drawer.
      * Therefore instead of using recommended partern of .mobile .drawer-container
-     * we are providing different classname to drawer based on isMobile property.
+     * we are providing different classname to drawer based on isTouch property.
      */
-    <SwipeableDrawerWithClasses classes={{ paper: isMobile ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={8} anchor='left' onOpen={() => {
+    <SwipeableDrawerWithClasses classes={{ paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={8} anchor='left' onOpen={() => {
       onToggleSidebar(true)
     }} onClose={() => {
       onToggleSidebar(false)

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { hasChild } from '../selectors'
 import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
@@ -31,7 +31,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       dispatch(deleteAttribute({ context, key: '=note' }))
 
       // restore selection manually since Editable is not re-rendered
-      if (isMobile) {
+      if (isTouch) {
         asyncFocus()
       }
       if (editable) {

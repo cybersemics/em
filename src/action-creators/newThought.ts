@@ -1,4 +1,4 @@
-import { isMobile, isSafari } from '../browser'
+import { isTouch, isSafari } from '../browser'
 import { ROOT_TOKEN, TUTORIAL_STEP_START } from '../constants'
 import { getSetting, getAllChildren, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, parentOf, ellipsize, headValue, pathToContext } from '../util'
@@ -62,7 +62,7 @@ const newThought = ({
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
   const split = !preventSplit && path && isFocusOnEditable && !showContexts && !value && offset! > 0 && editingValue && offset! < editingValue.length
-  if ((!split || !uneditable) && isMobile && isSafari) {
+  if ((!split || !uneditable) && isTouch && isSafari) {
     asyncFocus()
   }
   if (split) {

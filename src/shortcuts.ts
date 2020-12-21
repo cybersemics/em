@@ -2,7 +2,7 @@
 
 import Emitter from 'emitter20'
 import { Store } from 'redux'
-import { isMac, isMobile } from './browser'
+import { isMac, isTouch } from './browser'
 import globals from './globals'
 import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
@@ -202,7 +202,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         e.preventDefault()
 
         // dispatch action to hide toolbar and breadcrumbs
-        if (!isMobile) {
+        if (!isTouch) {
           store.dispatch(toggleTopControlsAndBreadcrumbs(false))
         }
 

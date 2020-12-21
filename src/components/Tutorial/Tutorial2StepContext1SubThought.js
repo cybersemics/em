@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
-import { isMac, isMobile } from '../../browser'
+import { isMac, isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_VERSION_BOOK, TUTORIAL_VERSION_JOURNAL, TUTORIAL_VERSION_TODO } from '../../constants'
 import { headValue } from '../../util'
 import { getChildrenRanked } from '../../selectors'
@@ -16,7 +16,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
   if (context1SubthoughtisCreated) {
     return <Fragment>
       <p>Nice work!</p>
-      <p>{isMobile ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
+      <p>{isTouch ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
     </Fragment>
   }
   return <Fragment>
@@ -35,7 +35,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
           <TutorialHint>
             <br /><br />
             {!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase() ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
-            {isMobile ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
+            {isTouch ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
             to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
           </TutorialHint>
         </p>

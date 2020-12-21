@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { store } from '../store'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
 import { deleteAttribute, editing, setAttribute } from '../action-creators'
@@ -53,7 +53,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
 
-      if (isMobile) {
+      if (isTouch) {
         asyncFocus()
       }
       editable.focus()
@@ -86,7 +86,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
 
   /** Set editing to false onBlur, if keyboard is closed. */
   const onBlur = () => {
-    if (isMobile && !window.getSelection()?.focusNode) {
+    if (isTouch && !window.getSelection()?.focusNode) {
       setTimeout(() => dispatch(editing({ value: false })))
     }
   }

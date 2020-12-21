@@ -2,8 +2,8 @@
 
 import { v4 as uuid } from 'uuid'
 
-/** Returns true if the userAgent contains 'Mobile'. */
-export const isMobile = /Mobile/.test(navigator.userAgent)
+/** Returns true if the user's device is touch screen. */
+export const isTouch = !!window.matchMedia('(pointer: coarse)').matches
 
 /** Returns true if the navigator platform contains 'Linux armv71'. */
 export const isAndroid = navigator.platform === 'Linux armv7l'

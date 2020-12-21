@@ -1,7 +1,7 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../types'
-import { isMobile } from '../browser'
+import { isTouch } from '../browser'
 import { getOffsetWithinContent, headValue, isDocumentEditable } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
@@ -63,7 +63,7 @@ export const newThoughtAliases: Shortcut = {
   gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
-  ...isMobile ? { keyboard: { key: Key.Enter, shift: true } } : null,
+  ...isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null,
   canExecute: () => isDocumentEditable(),
   exec
 }

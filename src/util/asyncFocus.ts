@@ -1,4 +1,4 @@
-import { isMobile } from '../browser'
+import { isTouch, isSafari } from '../browser'
 import { NOOP } from '../constants'
 
 /**
@@ -8,27 +8,24 @@ import { NOOP } from '../constants'
  *
  * See: https://stackoverflow.com/a/45703019/480608.
  */
-export const AsyncFocus = () => {
+export const AsyncFocus = (): () => void => {
+
+  if (!isTouch || !isSafari) return NOOP
 
   // create invisible dummy input to receive the focus
   const hiddenInput = document.createElement('input')
 
-  if (isMobile) {
-    hiddenInput.setAttribute('type', 'text')
-    hiddenInput.style.position = 'absolute'
-    hiddenInput.style.opacity = '0'
-    hiddenInput.style.height = '0'
+  hiddenInput.setAttribute('type', 'text')
+  hiddenInput.style.position = 'absolute'
+  hiddenInput.style.opacity = '0'
+  hiddenInput.style.height = '0'
 
-    // disable auto zoom
-    // See: https://stackoverflow.com/questions/2989263/disable-auto-zoom-in-input-text-tag-safari-on-iphone
-    hiddenInput.style.fontSize = '16px'
+  // disable auto zoom
+  // See: https://stackoverflow.com/questions/2989263/disable-auto-zoom-in-input-text-tag-safari-on-iphone
+  hiddenInput.style.fontSize = '16px'
 
-    document.body.prepend(hiddenInput)
-  }
-
-  return isMobile
-    ? () => hiddenInput.focus()
-    : NOOP
+  document.body.prepend(hiddenInput)
+  return () => hiddenInput.focus()
 }
 
 // export a singleton

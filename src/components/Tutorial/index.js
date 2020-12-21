@@ -2,7 +2,7 @@ import assert from 'assert'
 import React from 'react'
 import { connect } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
-import { isMobile } from '../../browser'
+import { isTouch } from '../../browser'
 import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
 import { headValue } from '../../util'
@@ -72,7 +72,7 @@ const Tutorial = ({ contextViews, cursor, rootChildren, tutorialChoice, tutorial
 
     </div>
 
-    {isMobile && (
+    {isTouch && (
       tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
       tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
       tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
