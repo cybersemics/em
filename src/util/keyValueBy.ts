@@ -1,6 +1,6 @@
 import { Index } from '../types'
 
-type KeyValueGenerator<K, V, R> = (key: K, value: V) => Index<R> | null
+type KeyValueGenerator<K, V, R> = (key: K, value: V, accum: Index<R>) => Index<R> | null
 
 export function keyValueBy<T, R>(arr: T[], keyValue: KeyValueGenerator<T, number, R>, initialValue?: Index<R>): Index<R>
 export function keyValueBy<T, R>(obj: Index<T>, keyValue: KeyValueGenerator<string, T, R>, initialValue?: Index<R>): Index<R>
@@ -17,7 +17,7 @@ export function keyValueBy<T, R>(input: T[] | Index<T>, keyValue: KeyValueGenera
     const value = Array.isArray(input) ? i : input[item as string]
     return {
       ...accum,
-      ...keyValue(key, value),
+      ...keyValue(key, value, accum),
     }
   }, initialValue)
 

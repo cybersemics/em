@@ -210,6 +210,7 @@ export interface Key {
 export interface Shortcut {
   id: string,
   name: string,
+  conflicts?: string[],
   description?: string,
   gesture?: GesturePath | GesturePath[],
   hideFromInstructions?: boolean,

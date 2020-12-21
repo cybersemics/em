@@ -29,7 +29,7 @@ const letters = keyValueBy(Array(26).fill(0), (n, i) => ({
 }))
 
 /** Hash all the properties of a shortcut into a string. */
-const hashShortcut = (shortcut: Shortcut) => {
+const hashShortcut = (shortcut: Shortcut): string => {
   const keyboard = typeof shortcut.keyboard === 'string'
     ? { key: shortcut.keyboard }
     : shortcut.keyboard || {} as Key
@@ -49,27 +49,55 @@ const hashKeyDown = (e: KeyboardEvent) =>
   // use e.keyCode if available instead
   (letters[e.keyCode] || e.key).toUpperCase()
 
-// index shortcuts for O(1) lookup by keyboard
-const shortcutKeyIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
-  shortcut.keyboard ? { [hashShortcut(shortcut)]: shortcut } : null
-)
+/** Initializes shortcut indices and stores conflicts. */
+const index = (): {
+  shortcutKeyIndex: Index<Shortcut>,
+  shortcutIdIndex: Index<Shortcut>,
+  shortcutGestureIndex: Index<Shortcut>,
+  } => {
 
-// index shortcuts for O(1) lookup by id
-const shortcutIdIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
-  shortcut.id ? { [shortcut.id]: shortcut } : null
-)
+  // index shortcuts for O(1) lookup by keyboard
+  const shortcutKeyIndex: Index<Shortcut> = keyValueBy(globalShortcuts, (shortcut, i, accum) => {
 
-// index shortcuts for O(1) lookup by gesture
-const shortcutGestureIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut => shortcut.gesture
-  ? {
-    // shortcut.gesture may be a string or array of strings
-    // normalize intro array of strings
-    ...keyValueBy(Array.prototype.concat([], shortcut.gesture), gesture => ({
-      [gesture]: shortcut
-    }))
-  }
-  : null
-)
+    if (!shortcut.keyboard) return null
+
+    const hash = hashShortcut(shortcut)
+    const conflict = !!accum[hash]
+
+    if (conflict) {
+      console.error(`"${shortcut.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(shortcut.keyboard)}"`)
+    }
+
+    return {
+      // if there is a conflict, append the shortcut id to the conflicts property so that the conflicts can be displayed to the user
+      [hash]: conflict
+        ? {
+          ...shortcut,
+          conflicts: [...shortcut.conflicts || [accum[hash].id], shortcut.id]
+        }
+        : shortcut
+    }
+  })
+
+  // index shortcuts for O(1) lookup by id
+  const shortcutIdIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
+    shortcut.id ? { [shortcut.id]: shortcut } : null
+  )
+
+  // index shortcuts for O(1) lookup by gesture
+  const shortcutGestureIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut => shortcut.gesture
+    ? {
+      // shortcut.gesture may be a string or array of strings
+      // normalize intro array of strings
+      ...keyValueBy(Array.prototype.concat([], shortcut.gesture), gesture => ({
+        [gesture]: shortcut
+      }))
+    }
+    : null
+  )
+
+  return { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex }
+}
 
 /** Returns true if the current alert is a gestureHint. */
 const isGestureHint = ({ alert }: State) =>
@@ -208,3 +236,5 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
 
 /** Finds a shortcut by its id. */
 export const shortcutById = (id: string): Shortcut | null => shortcutIdIndex[id]
+
+const { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex } = index()
