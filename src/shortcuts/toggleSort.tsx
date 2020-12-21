@@ -21,7 +21,7 @@ const toggleSortShortcut: Shortcut = {
   id: 'toggleSort',
   name: 'Toggle Sort',
   description: 'Sort the current context alphabetically.',
-  keyboard: { key: 's', alt: true },
+  keyboard: { key: 's', meta: true, alt: true },
   svg: Icon,
   exec: (dispatch, getState) => {
     const state = getState()

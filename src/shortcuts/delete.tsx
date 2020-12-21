@@ -68,8 +68,8 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const deleteShortcut: Shortcut = {
   id: 'delete',
-  name: 'Delete',
-  description: 'Delete the current thought.',
+  name: 'Archive',
+  description: 'Archive the current thought.',
   gesture: 'ldl',
   svg: Icon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
@@ -80,7 +80,7 @@ const deleteShortcut: Shortcut = {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const deleteAliases: Shortcut = {
   id: 'deleteAliases',
-  name: 'Delete',
+  name: 'Archive',
   hideFromInstructions: true,
   gesture: [
     'ldlr', 'ldldr', 'ldldlr', 'ldldldr', 'lrdl', 'lrdrl', 'lrdldr', 'lrdldlr', 'ldru', 'ldrlru', 'ldldlru', 'ldldrlru', 'ldllru', 'ldldrld', 'ldldldld', 'ldld', 'ldldld', 'ldlru', 'ldldru', 'ldldldru', 'lrdru', 'lrdlru', 'lrdldru', 'lrdldlru'

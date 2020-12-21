@@ -7,7 +7,7 @@ const bumpThoughtDownShortcut: Shortcut = {
   name: 'Bump Thought Down',
   description: 'Bump the current thought down to its children and replace with empty text.',
   gesture: 'rld',
-  keyboard: { key: 'b', alt: true },
+  keyboard: { key: 'd', meta: true, alt: true },
   canExecute: getState => !!getState().cursor && isDocumentEditable(),
   exec: dispatch => {
     asyncFocus()

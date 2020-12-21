@@ -17,7 +17,7 @@ const pinOpenShortcut: Shortcut = {
   id: 'pinOpen',
   name: 'Pin Open',
   description: 'Pin and expand the current thought.',
-  keyboard: { key: 'p', alt: true },
+  keyboard: { key: 'p', meta: true, alt: true },
   svg: Icon,
   exec: (dispatch, getState) => {
     const state = getState()

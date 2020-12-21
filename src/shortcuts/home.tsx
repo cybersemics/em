@@ -15,7 +15,7 @@ const homeShortcut: Shortcut = {
   id: 'home',
   name: 'Home',
   description: 'Navigate to Home.',
-  keyboard: { key: 'h', alt: true },
+  keyboard: { key: 'h', meta: true, alt: true },
   svg: Icon,
   exec: (dispatch: Dispatch<Thunk>) => dispatch(home())
 }

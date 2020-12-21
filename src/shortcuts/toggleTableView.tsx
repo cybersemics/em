@@ -18,7 +18,7 @@ const toggleTableViewShortcut: Shortcut = {
   name: 'Toggle Table View',
   description: 'View the current context as a table, where each level of subthoughts is shown as a column.',
   gesture: 'rdlu',
-  keyboard: { key: 't', alt: true },
+  keyboard: { key: 't', alt: true, shift: true },
   svg: Icon,
   exec: (dispatch, getState) => {
     const state = getState()

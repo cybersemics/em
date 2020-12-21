@@ -7,7 +7,7 @@ const searchShortcut: Shortcut = {
   name: 'Search',
   description: 'Open the Search input. Use the same shortcut to close.',
   svg: SearchIcon,
-  keyboard: { key: 'f', alt: true },
+  keyboard: { key: 'f', meta: true, alt: true },
   exec: (dispatch, getState) => {
     const state = getState()
     const selection = window.getSelection()

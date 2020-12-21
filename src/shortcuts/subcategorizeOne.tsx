@@ -14,7 +14,7 @@ const subCategorizeOneShortcut: Shortcut = {
   name: 'Subcategorize One',
   description: `Insert the current thought into a new context.`,
   gesture: 'lu',
-  keyboard: { key: 'o', alt: true },
+  keyboard: { key: 'o', meta: true, alt: true },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(subCategorizeOne())

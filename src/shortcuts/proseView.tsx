@@ -20,7 +20,7 @@ const proseViewShortcut: Shortcut = {
   name: 'Prose View',
   description: 'Display the current context as indented paragraphs.',
   gesture: 'rudr',
-  keyboard: { key: 'p', shift: true, meta: true },
+  keyboard: { key: 'p', shift: true, alt: true },
   svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec: (dispatch, getState) => {
