@@ -117,8 +117,7 @@
     "lint:no-yarn": "node ./scripts/no-files.js yarn.lock",
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
     "lint:src": "eslint \"src/**/*.{js,ts,tsx}\" --rule 'no-console: [2, { allow: [error, info, warn] }]'",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "test": "react-scripts test"
   },
   "browserslist": {
     "production": [
