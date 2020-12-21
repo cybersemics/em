@@ -195,14 +195,13 @@ const arrowTextToArrowCharacter = (s: string) => (({
 } as Index)[s] || s)
 
 /** Formats a keyboard shortcut to display to the user. */
-export const formatKeyboardShortcut = (keyboardOrString: Key | string) => {
+export const formatKeyboardShortcut = (keyboardOrString: Key | string): string => {
   const keyboard = typeof keyboardOrString === 'string'
     ? { key: keyboardOrString as string }
     : keyboardOrString
-  return (keyboard?.alt ? 'Alt + ' : '') +
-    (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
+  return (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
+    (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
     (keyboard.control ? 'Control + ' : '') +
-    (keyboard.option ? 'Option + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
     arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
 }
