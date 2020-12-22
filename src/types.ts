@@ -194,7 +194,7 @@ export interface Icon {
   dark?: boolean,
   fill?: string,
   height?: number,
-  size: number,
+  size?: number,
   style?: React.CSSProperties,
   width?: number,
 }
@@ -221,7 +221,7 @@ export interface Shortcut {
   },
   svg?: (icon: Icon) => ReactNode,
   canExecute?: (getState: () => State, e: Event) => boolean,
-  exec: (dispatch: Dispatch, getState: () => State, e: Event | GestureResponderEvent, { type }: { type: string }) => void,
+  exec: (dispatch: Dispatch, getState: () => State, e: Event | GestureResponderEvent | React.MouseEvent, { type }: { type: string }) => void,
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'
@@ -279,3 +279,5 @@ export type ThoughtsInterface = ThoughtIndices & ThoughtCaches
 
 // type to unpack a Promise
 export type Await<T> = T extends PromiseLike<infer U> ? U : T
+
+export type Timer = ReturnType<typeof setTimeout>

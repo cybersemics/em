@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 interface SearchIconProps {
   dark?: boolean,
   fill?: string,
-  size: number,
+  size?: number,
   style?: React.CSSProperties,
 }
 
