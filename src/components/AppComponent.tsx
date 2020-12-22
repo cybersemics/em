@@ -112,15 +112,17 @@ const AppComponent: FC<Props> = props => {
   return (
     <div className={componentClassNames}>
 
+      <Alert />
+      <ErrorMessage />
+
       {isDocumentEditable() && <>
         <Sidebar />
         <HamburgerMenu />
       </>}
 
-      <MultiGestureIfTouch>
+      {!showModal && <Toolbar />}
 
-        <Alert />
-        <ErrorMessage />
+      <MultiGestureIfTouch>
 
         {showModal
 
@@ -133,7 +135,6 @@ const AppComponent: FC<Props> = props => {
 
           // navigation, content, and footer
           : <>
-            <Toolbar />
             {tutorial && !isLoading ? <Tutorial /> : null}
             <SplitPane
               style={{ position: 'relative' }}
@@ -165,12 +166,12 @@ const AppComponent: FC<Props> = props => {
               </Scale>
             </div>
 
-            {isDocumentEditable() && <Scale amount={scale!}>
-              <Footer />
-            </Scale>}
-
           </>
         }
+
+        {!showModal && isDocumentEditable() && <Scale amount={scale!}>
+          <Footer />
+        </Scale>}
 
       </MultiGestureIfTouch>
     </div>
