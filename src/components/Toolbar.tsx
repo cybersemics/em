@@ -18,7 +18,7 @@ import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
 import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, ROOT_TOKEN, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { attribute, attributeEquals, getSetting, subtree, theme } from '../selectors'
-import { parentOf, pathToContext } from '../util'
+import { pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { Icon, Timer } from '../types'
 
@@ -36,16 +36,15 @@ const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 const mapStateToProps = (state: State) => {
 
   const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
-  const context = cursor && pathToContext(cursor)
-  const contextOfCursor = context ? parentOf(context) : [ROOT_TOKEN]
+  const context = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
 
   return {
-    cursorOnTableView: attributeEquals(state, contextOfCursor, '=view', 'Table'),
-    cursorOnAlphabeticalSort: attributeEquals(state, contextOfCursor, '=sort', 'Alphabetical'),
-    cursorPinOpen: !!cursor && attributeEquals(state, context!, '=pin', 'true'),
-    cursorPinSubthoughts: attributeEquals(state, contextOfCursor, '=pinChildren', 'true'),
-    cursorOnNote: !!cursor && attribute(state, context!, '=note') != null,
-    cursorOnProseView: attributeEquals(state, contextOfCursor, '=view', 'Prose'),
+    cursorOnTableView: attributeEquals(state, context, '=view', 'Table'),
+    cursorOnAlphabeticalSort: attributeEquals(state, context, '=sort', 'Alphabetical'),
+    cursorPinOpen: attributeEquals(state, context, '=pin', 'true'),
+    cursorPinSubthoughts: attributeEquals(state, context, '=pinChildren', 'true'),
+    cursorOnNote: attribute(state, context, '=note') != null,
+    cursorOnProseView: attributeEquals(state, context, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
     fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
