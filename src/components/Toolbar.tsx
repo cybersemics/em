@@ -145,12 +145,12 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   /** Set the last scroll position at the beginning of a swipe. */
   const onTouchStart = (e: React.TouchEvent) => {
     store.dispatch(scrollPrioritize(true))
-    setLastScrollLeft(e.currentTarget.scrollLeft)
+    setLastScrollLeft((e.target as HTMLElement).scrollLeft)
   }
 
   /** Sets the last scroll position and clears the overlay timer at the end of a swipe. */
   const onTouchEnd = (e: React.TouchEvent) => {
-    setLastScrollLeft(e.currentTarget.scrollLeft)
+    setLastScrollLeft((e.target as HTMLElement).scrollLeft)
     store.dispatch(scrollPrioritize(false))
     clearHoldTimer()
     clearTimeout(holdTimer2)
@@ -172,7 +172,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
   /** Handles toolbar scroll event. */
   const onScroll = (e: React.UIEvent<HTMLElement>) => {
     const scrollDifference = lastScrollLeft != null
-      ? Math.abs(lastScrollLeft! - e.currentTarget.scrollLeft)
+      ? Math.abs(lastScrollLeft! - (e.target as HTMLElement).scrollLeft)
       : 0
 
     if (scrollDifference >= 5) {
@@ -186,7 +186,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
     // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
     clearTimeout(holdTimer2)
     setHoldTimer2(setTimeout(() => {
-      setLastScrollLeft(e.currentTarget.scrollLeft)
+      setLastScrollLeft((e.target as HTMLElement).scrollLeft)
       store.dispatch(scrollPrioritize(false))
     }, SCROLL_PRIORITIZATION_TIMEOUT))
   }
