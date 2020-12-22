@@ -62,6 +62,11 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
   const toggleLogs = async () =>
     setLogs(logs ? null : await db.getLogs())
 
+  /** Refreshes the page without using cache. */
+  const refresh = () => {
+    window.location = window.location // eslint-disable-line no-self-assign
+  }
+
   return <Modal id='help' title='Help' className='popup'>
 
     <section className='popup-section'>
@@ -178,7 +183,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
     <br />
 
     <p>
-      <a tabIndex={-1} onClick={() => window.location.reload()}>Refresh</a><br />
+      <a tabIndex={-1} onClick={refresh}>Refresh</a><br />
       <a tabIndex={-1} onClick={toggleLogs}>Logs</a>
       {logs && <Logs logs={logs ?? []} />}
     </p>
