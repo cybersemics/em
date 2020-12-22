@@ -29,8 +29,8 @@
     // https://gitlab.com/nfriend/ts-key-enum#which-version-should-i-use
     "ts-key-enum",
 
-    // Breaks click event in v0.14.6
-    // https://github.com/necolas/react-native-web/issues/1852
+    // Incorrect moveX,moveY of -1,-1 on first call to onPanResponderMove
+    // https://github.com/necolas/react-native-web/issues/1853
     "react-native-web"
 
   ]
