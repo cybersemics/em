@@ -383,7 +383,7 @@ const Thought = ({
 
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} showContexts={showContexts} />
+    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} />
     : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
       store.dispatch(expandContextThought(path))
     }}>... </a></span>
@@ -500,8 +500,7 @@ const ThoughtContainer = ({
   const contextThought = showContexts && getThought(state, headValue(parentOf(simplePath)))
 
   const showContextBreadcrumbs = showContexts &&
-    (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null)) &&
-    simplePath.length > 2
+    (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
   const thoughts = pathToContext(simplePath)
   const thoughtsLive = pathToContext(simplePathLive!)
@@ -557,8 +556,9 @@ const ThoughtContainer = ({
     leaf: isLeaf || (isEditing && globals.suppressExpansion),
     // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
     prose: view === 'Prose',
-    // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'show-contexts': showContexts,
+    'show-contexts-no-breadcrumbs': simplePath.length === 2,
+    // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
     'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(path)),
   })} ref={el => {
     if (el) {

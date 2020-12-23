@@ -122,7 +122,7 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
   </a>
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} showContexts={showContexts} /> : null}
+    {showContextBreadcrumbs && <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} />}
 
     {homeContext
       ? <HomeLink/>

@@ -11,7 +11,6 @@ import Superscript from './Superscript'
 
 interface ContextBreadcrumbProps {
   simplePath: SimplePath,
-  showContexts?: boolean,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -20,14 +19,14 @@ const mapStateToProps = (state: State, props: ContextBreadcrumbProps) => ({
 })
 
 /** Breadcrumbs for contexts within the context views. */
-const ContextBreadcrumbs = ({ simplePath, showContexts }: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
+const ContextBreadcrumbs = ({ simplePath }: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
   return <div className='breadcrumbs context-breadcrumbs'>
     {simplePath.map((thoughtRanked, i) => {
       const subthoughts = ancestors(simplePath, thoughtRanked) as SimplePath
       return <React.Fragment key={i}>
         <Link simplePath={subthoughts} />
         <Superscript simplePath={subthoughts} />
-        {i < simplePath.length - 1 || showContexts ? <span className='breadcrumb-divider'> • </span> : null}
+        {i < simplePath.length - 1 ? <span className='breadcrumb-divider'> • </span> : null}
       </React.Fragment>
     })}
   </div>

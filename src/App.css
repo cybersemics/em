@@ -200,8 +200,9 @@ a.text-link {
 }
 
 .context-breadcrumbs {
-  float: left;
-  margin-bottom: -1px;
+  font-size: 13px;
+  color: gray;
+  margin-top: 8px;
 }
 
 .context-breadcrumbs .superscript-container {
@@ -1000,6 +1001,32 @@ h1 .num-contexts {
 
 .child > .thought-container > .bullet {
   transition: transform 0.1s ease-in-out;
+}
+
+/** When there are no breadcrumbs (i.e. context view on a thought in the root), do not add top margin. */
+.child.show-contexts.show-contexts-no-breadcrumbs {
+  margin-top: 4px;
+}
+
+/* In context view, make room for breadcrumbs. */
+.child.show-contexts > .thought-container .bullet {
+  position: relative;
+  top: 24px;
+}
+
+.child.show-contexts > .thought-container .bullet-cursor-overlay {
+  /** use transform to not interfere with existing margin-top calculation */
+  transform: translateY(24px);
+}
+
+/** When there are no breadcrumbs (i.e. context view on a thought in the root), do not add top margin. */
+.child.show-contexts.show-contexts-no-breadcrumbs > .thought-container > .bullet {
+  top: 9px;
+}
+
+.child.show-contexts.show-contexts-no-breadcrumbs > .thought-container .bullet-cursor-overlay {
+  /** use transform to not interfere with existing margin-top calculation */
+  transform: translateY(4px);
 }
 
 .child > .thought-container > .bullet .glyph {

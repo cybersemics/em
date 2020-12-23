@@ -415,10 +415,6 @@ export const SubthoughtsComponent = ({
         // No children
         <NoChildren allowSingleContext={allowSingleContext} children={children as Child[]} simplePath={simplePath} />
 
-        // "Contexts:"
-        : children.length > (showContexts && !allowSingleContext ? 1 : 0) ? <div className='children-subheading text-note text-small' style={{ top: '4px' }}>Context{children.length === 1 ? '' : 's'}:
-        </div>
-
         : null
 
       : null}
