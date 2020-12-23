@@ -379,7 +379,7 @@ const Thought = ({
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
-  return <div className='thought' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
+  return <div className='thought'>
 
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
