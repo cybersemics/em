@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
-import { isTouchEnabled } from '../browser'
+import { isTouch } from '../browser'
 import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
 import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, ROOT_TOKEN, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
@@ -264,7 +264,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
           <TransitionGroup>
             {shortcut && toolbarOverlay ?
               <CSSTransition timeout={800} classNames='fade'>
-                <div className={isTouchEnabled() ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
+                <div className={isTouch ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
                   <div className='overlay-name'>{shortcut.name}</div>
                   {shortcut.gesture || shortcut.keyboard || shortcut.overlay
                     ? <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>
