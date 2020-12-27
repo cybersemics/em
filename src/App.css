@@ -2,10 +2,15 @@
   gray: #838283
 */
 
-.debug {
-  font-size: 8px;
+/* fixed debug box in bottom right */
+#debug {
+  position: fixed;
+  bottom: 0;
+  right: 10px;
+  white-space: pre;
+  font-family: monospace;
+  font-size: 10px;
   color: lightblue;
-  display: none;
 }
 
 html, body, #root, #app {

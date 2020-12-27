@@ -56,3 +56,9 @@ window.em = {
   hashThought,
   isPending: withState(isPending),
 }
+
+/** Logs debugging information to a fixed position debug window. Useful for PWA debugging. */
+window.debug = (message: string) => {
+  const debugEl = document.getElementById('debug')!
+  debugEl.innerHTML = `${new Date()}: ${message}\n${debugEl.innerHTML}`
+}

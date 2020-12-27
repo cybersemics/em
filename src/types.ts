@@ -16,6 +16,7 @@ declare global {
   interface Window {
     firebase: Firebase,
     em: unknown,
+    debug: (message: string) => void,
   }
 
   interface Navigator {
