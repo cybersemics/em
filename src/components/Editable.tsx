@@ -533,8 +533,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     e.stopPropagation()
   }
 
-  /** Sets the cursor on the thought when the touch event ends without a drag. */
-  const onTouchEnd = (e: React.TouchEvent) => {
+  /** Handles a a mouse or touch event as a tap event. Intended for mobile. Sets the cursor on the thought when the tap ends without a drag. */
+  const onTap = (e: React.MouseEvent | React.TouchEvent) => {
     // make sure to get updated state
     const state = store.getState()
 
@@ -585,8 +585,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
     onClick={stopPropagation}
-    onTouchEnd={onTouchEnd}
-    onMouseDown={onMouseDown}
+    onTouchEnd={onTap}
+    onMouseDown={isTouch ? onTap : onMouseDown}
     onFocus={onFocus}
     onBlur={onBlur}
     onChange={onChangeHandler}
