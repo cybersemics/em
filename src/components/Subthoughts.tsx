@@ -136,7 +136,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showHiddenThoughts,
     simplePath: simplePathLive,
     // re-render if children change
-    __render: getAllChildren(state, pathToContext(simplePathLive))
+    __render: getAllChildren(state, pathToContext(simplePathLive)),
+    isExpanded: store.getState().expanded[hashContext(pathToContext(resolvedPath))]
   }
 }
 
@@ -305,6 +306,7 @@ export const SubthoughtsComponent = ({
   showContexts,
   sort: contextSort,
   simplePath,
+  isExpanded
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
 
   // <Subthoughts> render
@@ -316,7 +318,7 @@ export const SubthoughtsComponent = ({
 
   const resolvedPath = path ?? simplePath
 
-  const show = depth < MAX_DEPTH && (isEditingAncestor || store.getState().expanded[hashContext(pathToContext(resolvedPath))])
+  const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
