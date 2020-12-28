@@ -68,11 +68,11 @@ export const getChildrenSorted = getVisibleThoughts(getAllChildrenSorted)
 const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
   sort(getAllChildren(state, context), compare)
 
-/** Generates children seorted by their values. */
+/** Generates children sorted by their values. */
 const getChildrenSortedAlphabetical = (state: State, context: Context) =>
   getChildrenSortedBy(state, context, compareThought)
 
-/** Generates children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
+/** Gets all children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
 export const getChildrenRanked = (state: State, context: Context): Child[] =>
   getChildrenSortedBy(state, context, compareByRank)
 
