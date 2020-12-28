@@ -44,6 +44,7 @@ import {
   appendChildPath,
   getContextsSortedAndRanked,
   getNextRank,
+  getPrevRank,
   getSetting,
   getStyle,
   getAllChildren,
@@ -170,11 +171,15 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
   const thoughtsTo = props.simplePath
+  const contextTo = pathToContext(thoughtsTo)
+  const dropPlacement = attribute(state, contextTo, '=drop') === 'top' ? 'top' : 'bottom'
 
-  const newPath = unroot(thoughtsTo).concat({
-    value: headValue(thoughtsFrom),
-    rank: getNextRank(state, pathToContext(thoughtsTo))
-  })
+  const newPath = unroot([...thoughtsTo, {
+    ...head(thoughtsFrom),
+    rank: dropPlacement === 'top'
+      ? getPrevRank(state, contextTo)
+      : getNextRank(state, contextTo)
+  }])
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedParentOf(pathToContext(thoughtsFrom))
@@ -214,7 +219,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
         ? 'home'
         : '"' + ellipsize(headValue(thoughtsTo)) + '"'
 
-      store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
+      store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`))
       clearTimeout(globals.errorTimer)
       globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
     }, 100)

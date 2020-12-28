@@ -106,6 +106,10 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
     <p>Options: Bullets, None<br/>
     Hide the bullets of a context.</p>
 
+    <code>=drop</code>
+    <p>Options: top, bottom<br/>
+    Controls where in a context an item is placed after drag-and-drop.</p>
+
     <code>=focus</code>
     <p>Options: Normal, Zoom<br/>
     When the cursor is on this thought, hide parent and sibliings for additional focus.</p>
