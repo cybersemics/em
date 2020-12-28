@@ -40,12 +40,14 @@ const deleteEmptyThought = (state: State): State => {
 
   if (!cursor) return state
 
+  const innerHTML = document.querySelector('.editing .editable')?.innerHTML
   const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
   const path = simplifyPath(state, cursor)
   const children = getChildrenRanked(state, pathToContext(path))
 
   // delete an empty thought
-  if ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor))) {
+  // check innerHTML in case the user just executed clearThought, which yields an empty thought in the DOM but not in state
+  if (((headValue(cursor) === '' || innerHTML === '') && children.length === 0) || isDivider(headValue(cursor))) {
     return deleteThought(state, {})
   }
   // delete from beginning and merge
