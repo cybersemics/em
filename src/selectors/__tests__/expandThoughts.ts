@@ -108,6 +108,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd'])).toBeTruthy()
@@ -300,6 +301,29 @@ describe('=pin', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+
+  })
+
+  it('only-child descendants are not expanded with =pin/false', () => {
+
+    const text = `
+      - a
+        - b
+          - =pin
+            - false
+          - c
+    `
+
+    const steps = [
+      importText({ path: RANKED_ROOT, text }),
+      setCursorFirstMatch(['a'])
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
 
   })
 })

@@ -1,6 +1,6 @@
 import globals from '../globals'
 import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT, ROOT_TOKEN } from '../constants'
-import { attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
+import { attribute, attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
 import { Child, Context, Index, Path, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
 import { equalThoughtRanked, hashContext, head, headValue, isFunction, isURL, keyValueBy, parentOf, pathToContext, publishMode, rootedParentOf, unroot } from '../util'
@@ -71,6 +71,10 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
     ? RANKED_ROOT
     : simplifyPath(state, path)
 
+  /** Returns true if the child should be pinned open. */
+  const isPinned = (child: Child | ThoughtContext) =>
+    attribute(state, pathToContext(getChildPath(state, child, simplePath)), '=pin')
+
   const context = pathToContext(simplePath)
   const rootedPath = path || RANKED_ROOT
   const showContexts = isContextViewActive(state, context)
@@ -84,7 +88,7 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
 
   // expand if child is only child and its child is not url
   const firstChild = children[0] as Child
-  const grandchildren = children.length === 1 && firstChild.value != null
+  const grandchildren = children.length === 1 && firstChild.value != null && isPinned(firstChild) !== 'false'
     ? getAllChildren(state, unroot([...context, firstChild.value]))
     : null
 
@@ -95,10 +99,8 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
   const childrenPinned = isOnlyChildNoUrl || isTable(state, context) || pinChildren(state, context) || publishPinChildren(state, context)
     ? children
     : children.filter(child => {
-      /** Returns true if the child should be pinned open. */
-      const isPinned = () => attributeEquals(state, pathToContext(getChildPath(state, child, simplePath)), '=pin', 'true')
       const value = childValue(child, showContexts)
-      return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned()
+      return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned(child) === 'true'
     })
 
   const initialExpanded = {
