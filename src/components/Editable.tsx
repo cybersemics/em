@@ -572,6 +572,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     disabled={disabled}
     innerRef={contentRef}
     className={classNames({
+      preventAutoscroll: true,
       editable: true,
       ['editable-' + hashContext(pathToContext(path), rank)]: true,
       empty: value.length === 0

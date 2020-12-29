@@ -2941,3 +2941,12 @@ code, .code {
 .new-thought-instructions {
   animation: 1.4s ease-out 0s normal forwards 1 delayed-fadein;
 }
+
+@keyframes preventAutoscroll {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.preventAutoscroll {
+  animation: 0.01s 1 preventAutoscroll;
+}
