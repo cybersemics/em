@@ -11,6 +11,7 @@ export interface ModalProps {
   center?: boolean,
   children?: React.ReactNode,
   className?: string,
+  hideModalActions?: boolean,
   id: string,
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
   opaque?: boolean,
@@ -83,7 +84,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   }
 
   render() {
-    const { show, id, title, arrow, center, opaque, onSubmit, className, style, positionAtCursor, top, children, dispatch } = this.props
+    const { show, id, title, arrow, center, opaque, onSubmit, className, style, positionAtCursor, top, children, hideModalActions, dispatch } = this.props
 
     if (!show) return null
 
@@ -115,7 +116,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
       })}>
         {title ? <h1 className='modal-title'>{title}</h1> : null}
         <div className='modal-text'>{children}</div>
-        <div className='modal-actions'>
+        {!hideModalActions && <div className='modal-actions'>
           {
             id === 'welcome' ? <a className='button' onClick={complete}>START TUTORIAL</a> :
             id === 'feedback' ? <div>
@@ -138,7 +139,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
             endTutorial()
             complete()
           }}>This ain’t my first rodeo. Skip it.</a></div> : null}
-        </div>
+        </div>}
         <a className='modal-close' onClick={() => this.close!(MODAL_CLOSE_DURATION)}><span>✕</span></a>
       </div>
     </div>
