@@ -137,7 +137,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
           {id === 'welcome' ? <div style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => {
             endTutorial()
             complete()
-          }}>Skip tutorial</a></div> : null}
+          }}>This ain’t my first rodeo. Skip it.</a></div> : null}
         </div>
         <a className='modal-close' onClick={() => this.close!(MODAL_CLOSE_DURATION)}><span>✕</span></a>
       </div>

@@ -41,7 +41,9 @@ const onRef = (el: HTMLDivElement) => {
 const ModalWelcome = () =>
   <div ref={onRef}>
     <Modal id='welcome' title='Welcome to em' className='popup' center>
-      <p><b>em</b> is a writing tool that reflects the structure of your thoughts.</p>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <p style={{ maxWidth: 560 }}><b>em</b> is a process-oriented writing tool for personal sensemaking.</p>
+      </div>
     </Modal>
   </div>
 
