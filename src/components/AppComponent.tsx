@@ -115,12 +115,12 @@ const AppComponent: FC<Props> = props => {
       <Alert />
       <ErrorMessage />
 
-      {isDocumentEditable() && <>
+      {isDocumentEditable() && !tutorial && <>
         <Sidebar />
         <HamburgerMenu />
       </>}
 
-      {!showModal && <Toolbar />}
+      {!showModal && !tutorial && <Toolbar />}
 
       <MultiGestureIfTouch>
 

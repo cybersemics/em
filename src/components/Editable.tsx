@@ -72,6 +72,7 @@ const makeToolbarPositionFixed = () => {
   const rightArrow = document.getElementById('right-arrow') as HTMLElement
   const leftArrow = document.getElementById('left-arrow') as HTMLElement
   Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
+    if (!el) return // hamburger menu and toolbar are not rendered during tutorial
     el.style.position = 'absolute'
     el.style.overflowX = 'hidden'
     if (el !== rightArrow && el !== leftArrow) {
@@ -86,6 +87,7 @@ const resetToolbarPosition = () => {
   const rightArrow = document.getElementById('right-arrow') as HTMLElement
   const leftArrow = document.getElementById('left-arrow') as HTMLElement
   Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
+    if (!el) return // hamburger menu and toolbar are not rendered during tutorial
     el.style.position = 'fixed'
     el.style.overflowX = ''
     el.style.top = ''
@@ -96,6 +98,7 @@ const updateToolbarPositionOnScroll = () => {
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
   const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
   Array.from([hamburgerMenu, toolbar]).forEach(el => {
+    if (!el) return // hamburger menu and toolbar are not rendered during tutorial
     el.style.top = `${window.scrollY}px`
   })
 }
