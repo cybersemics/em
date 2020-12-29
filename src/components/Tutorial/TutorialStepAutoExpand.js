@@ -49,7 +49,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
             </Fragment>
 
             :
-            <Fragment> Oops! With current state no thoughts will hide on click away. Try expanding some thoughts or maybe add some sibling thoughts and subthoughts just like you learned in previous tutorials.</Fragment>
+            <Fragment> Add a subthought and I'll show you.</Fragment>
 
           : getAllChildren(state, [ROOT_TOKEN]).length === 0 ? ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.' : ' Oops! Please focus on one of the thoughts.'
       }

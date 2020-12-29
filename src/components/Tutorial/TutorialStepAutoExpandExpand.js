@@ -21,7 +21,7 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootSubthoughts = [] }) => {
   }
   return <Fragment>
     {rootGrandchildNotCursor() ? <p>Notice that "{ellipsize(rootGrandchildNotCursor().value)}" is hidden now.</p> : ''}
-    <p>There are no files to open or close in <b>em</b>. All of your thoughts are in one place. You can stay focused because only a few thoughts are visible at a time.</p>
+    <p>Well done. There are no files to open or close in <b>em</b>. All your thoughts are connected in one big thoughtspace, but kept tidy through autofocus.</p>
     <p>{isTouch ? 'Tap' : 'Click'} {rootSubthoughtNotCursorWithSubthoughts() ? `"${ellipsize(rootSubthoughtNotCursorWithSubthoughts().value)}"` : 'a thought'} to reveal its subthought{rootGrandchildNotCursor() ? ` "${ellipsize(rootGrandchildNotCursor().value)}"` : null}.</p>
   </Fragment>
 }
