@@ -165,7 +165,7 @@ export const MAX_EXPAND_DEPTH = 5
 export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'undo',
   'redo',
-  'search',
+  // 'search',
   'outdent',
   'indent',
   'toggleTableView',
@@ -176,13 +176,11 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'delete',
   'toggleContextView',
   'proseView',
-  'toggleSplitView',
+  // 'toggleSplitView',
   'splitSentences',
   'subcategorizeOne',
   'subcategorizeAll',
   'toggleHiddenThoughts',
-  // 'undo',
-  // 'redo',
   'exportContext',
 ]
 
