@@ -1,14 +1,18 @@
 # em
 
-**em** is a trans-hierarchical concept mapping app for personal sensemaking.
+**em** is a beautiful, minimalistic writing app for personal sensemaking.
 
-**em**'s user experience is designed to mirror the properties of the conceptual mind, including focal constraint, contextuality, nonlinearity, and associative connectivity.
+**em** is designed to be:
+
+- **cognitively-informed** - Supports focus, nonlinearity, and associative connectivity.
+- **process-oriented** - Facilitates flow and organic thinking.
+- **semiotic** - Mediates concept through a monistic, contextual semiotic web.
 
 https://emtheapp.com
 
 ![em screenshot](https://github.com/cybersemics/em-proto/blob/dev/screenshot.gif?raw=true)
 
-## Documentation
+## Development
 
 - [Glossary](https://github.com/cybersemics/em/wiki/Glossary) - A list of terms and definitions.
 - [Project Overview](https://github.com/cybersemics/em/wiki/Project-Overview) - A high level overview of the project, including vision and objectives.
