@@ -1,8 +1,9 @@
 import React from 'react'
-import { simplifyPath } from '../selectors'
+import { attributeEquals, simplifyPath } from '../selectors'
 import { pathToContext } from '../util'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
+import { ROOT_TOKEN } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} style={style} viewBox='-2 -2 28 28'>
@@ -33,6 +34,12 @@ const toggleTableViewShortcut: Shortcut = {
       key: '=view',
       value: 'Table'
     }))
+  },
+  isActive: getState => {
+    const state = getState()
+    const { cursor } = state
+    const context = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+    return attributeEquals(state, context, '=view', 'Table')
   }
 }
 
