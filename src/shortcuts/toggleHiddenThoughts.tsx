@@ -17,7 +17,8 @@ const toggleHiddenThoughtsShortcut: Shortcut = {
   description: 'Show or hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
   svg: Icon,
-  exec: dispatch => dispatch(toggleHiddenThoughts())
+  exec: dispatch => dispatch(toggleHiddenThoughts()),
+  isActive: getState => getState().showHiddenThoughts
 }
 
 export default toggleHiddenThoughtsShortcut

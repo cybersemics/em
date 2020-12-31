@@ -1,9 +1,10 @@
 import { isTouch } from '../browser'
-import { hasChild } from '../selectors'
+import { attribute, hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { setAttribute } from '../action-creators'
 import { Shortcut } from '../types'
+import { ROOT_TOKEN } from '../constants'
 
 const noteShortcut: Shortcut = {
   id: 'note',
@@ -60,6 +61,12 @@ const noteShortcut: Shortcut = {
         console.warn('Note element not found in DOM.', context)
       }
     }, 0)
+  },
+  isActive: getState => {
+    const state = getState()
+    const { cursor } = state
+    const context = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+    return attribute(state, context, '=note') != null
   }
 }
 

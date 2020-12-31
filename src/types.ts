@@ -216,6 +216,7 @@ export interface Shortcut {
   gesture?: GesturePath | GesturePath[],
   hideFromInstructions?: boolean,
   keyboard?: Key | string,
+  isActive?: (getState: () => State) => boolean,
   overlay?: {
     gesture?: GesturePath,
     keyboard?: Key | string,

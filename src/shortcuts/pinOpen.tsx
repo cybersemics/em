@@ -3,6 +3,7 @@ import { attributeEquals } from '../selectors'
 import { parentOf, pathToContext } from '../util'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
+import { ROOT_TOKEN } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }: IconType) => <svg xmlns='http://www.w3.org/2000/svg' version='1.1' className='icon' viewBox='0 0 20 20' width={size} height={size} style={style}>
@@ -31,6 +32,12 @@ const pinOpenShortcut: Shortcut = {
       key: '=pin',
       value: isPinned ? 'false' : 'true'
     }))
+  },
+  isActive: getState => {
+    const state = getState()
+    const { cursor } = state
+    const context = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+    return attributeEquals(state, context, '=pin', 'true')
   }
 }
 

@@ -16,9 +16,8 @@ import { shortcutById } from '../shortcuts'
 import { isTouch } from '../browser'
 import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
-import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, ROOT_TOKEN, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import { attribute, attributeEquals, getSetting, subtree, theme } from '../selectors'
-import { pathToContext } from '../util'
+import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { getSetting, subtree, theme } from '../selectors'
 import { State } from '../util/initialState'
 import { Icon, Timer } from '../types'
 
@@ -26,8 +25,6 @@ import { Icon, Timer } from '../types'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
 import Shortcut from './Shortcut'
-import { isUndoEnabled } from '../util/isUndoEnabled'
-import { isRedoEnabled } from '../util/isRedoEnabled'
 
 const ARROW_SCROLL_BUFFER = 20
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
@@ -35,48 +32,24 @@ const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
 
-  const { cursor, isLoading, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls } = state
-  const context = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+  const { cursor, thoughts, isLoading, toolbarOverlay, scrollPrioritized, showTopControls } = state
 
   return {
-    cursorOnTableView: attributeEquals(state, context, '=view', 'Table'),
-    cursorOnAlphabeticalSort: attributeEquals(state, context, '=sort', 'Alphabetical'),
-    cursorPinOpen: attributeEquals(state, context, '=pin', 'true'),
-    cursorPinSubthoughts: attributeEquals(state, context, '=pinChildren', 'true'),
-    cursorOnNote: attribute(state, context, '=note') != null,
-    cursorOnProseView: attributeEquals(state, context, '=view', 'Prose'),
     dark: theme(state) !== 'Light',
     isLoading,
     fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
     scale: (+(getSetting(state, 'Font Size') ?? 0) || fontSizeLocal || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
-    redoEnabled: isRedoEnabled(state),
     scrollPrioritized,
-    showHiddenThoughts,
-    showSplitView,
     toolbarOverlay,
-    undoEnabled: isUndoEnabled(state),
+    // We cannot know if any one the shortcut's active status,has changed, so we re-render everytime thoughts or cursor is changed
+    thoughts,
+    cursor,
     showTopControls
   }
 }
 
 /** Toolbar component. */
-const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, cursorPinSubthoughts, cursorOnNote, cursorOnProseView, dark, fontSize, toolbarOverlay, scrollPrioritized, showHiddenThoughts, showSplitView, showTopControls, undoEnabled, redoEnabled }: {
-  cursorOnAlphabeticalSort: boolean,
-  cursorOnNote: boolean,
-  cursorOnProseView: boolean,
-  cursorOnTableView: boolean,
-  cursorPinOpen: boolean,
-  cursorPinSubthoughts: boolean,
-  dark: boolean,
-  fontSize: number,
-  redoEnabled: boolean,
-  scrollPrioritized: boolean,
-  showHiddenThoughts: boolean,
-  showSplitView: boolean,
-  showTopControls: boolean,
-  toolbarOverlay: string | null | undefined,
-  undoEnabled: boolean,
-}) => {
+const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopControls }: ReturnType<typeof mapStateToProps>) => {
   const [holdTimer, setHoldTimer] = useState<Timer>(0 as unknown as Timer)
   const [holdTimer2, setHoldTimer2] = useState<Timer>(0 as unknown as Timer)
   const [lastScrollLeft, setLastScrollLeft] = useState<number | undefined>()
@@ -215,7 +188,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
           >
             <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
             {shortcutIds.map(id => {
-              const { name, svg, exec } = shortcutById(id)!
+              const { name, svg, exec, isActive } = shortcutById(id)!
               // TODO: type svg correctly
               const SVG = svg as React.FC<Icon>
               return (
@@ -233,26 +206,7 @@ const Toolbar = ({ cursorOnTableView, cursorOnAlphabeticalSort, cursorPinOpen, c
                   }}
                 >
                   <SVG style={{
-                    fill: id === 'search' ? fg
-                    : id === 'outdent' ? fg
-                    : id === 'indent' ? fg
-                    : id === 'toggleTableView' && cursorOnTableView ? fg
-                    : id === 'toggleSort' && cursorOnAlphabeticalSort ? fg
-                    : id === 'pinOpen' && cursorPinOpen ? fg
-                    : id === 'pinSubthoughts' && cursorPinSubthoughts ? fg
-                    : id === 'note' && cursorOnNote ? fg
-                    : id === 'delete' ? fg
-                    : id === 'toggleContextView' ? fg
-                    : id === 'proseView' && cursorOnProseView ? fg
-                    : id === 'toggleSplitView' && showSplitView ? fg
-                    : id === 'splitSentences' ? fg
-                    : id === 'subcategorizeOne' ? fg
-                    : id === 'subcategorizeAll' ? fg
-                    : id === 'toggleHiddenThoughts' && !showHiddenThoughts ? fg
-                    : id === 'exportContext' ? fg
-                    : id === 'undo' && undoEnabled ? fg
-                    : id === 'redo' && redoEnabled ? fg
-                    : 'gray',
+                    fill: !isActive || isActive(store.getState) ? fg : 'gray',
                     width: fontSize + 4,
                     height: fontSize + 4,
                   }} />

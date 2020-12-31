@@ -1,8 +1,9 @@
 import React from 'react'
-import { simplifyPath } from '../selectors'
+import { attributeEquals, simplifyPath } from '../selectors'
 import { isDocumentEditable, pathToContext } from '../util'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
+import { ROOT_TOKEN } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 100 100'>
@@ -36,6 +37,12 @@ const proseViewShortcut: Shortcut = {
       key: '=view',
       value: 'Prose'
     }))
+  },
+  isActive: getState => {
+    const state = getState()
+    const { cursor } = state
+    const context = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+    return attributeEquals(state, context, '=view', 'Prose')
   }
 }
 
