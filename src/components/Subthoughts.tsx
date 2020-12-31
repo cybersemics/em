@@ -52,6 +52,7 @@ import {
   getAllChildrenSorted,
   isChildVisibleWithCursorCheck,
   isContextViewActive,
+  getUnarchivedContextsSortedAndRanked,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -311,6 +312,7 @@ export const SubthoughtsComponent = ({
   showContexts,
   sort: contextSort,
   simplePath,
+  showHiddenThoughts,
   isExpanded
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
 
@@ -329,9 +331,10 @@ export const SubthoughtsComponent = ({
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
-    : showContexts ? getContextsSortedAndRanked(state, /* subthought() || */headValue(simplePath))
-    : sortPreference === 'Alphabetical' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
-    : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
+    : showContexts ?
+      (showHiddenThoughts ? getContextsSortedAndRanked : getUnarchivedContextsSortedAndRanked)(state, headValue(simplePath))
+      : sortPreference === 'Alphabetical' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
+      : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
