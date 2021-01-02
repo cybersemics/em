@@ -6,11 +6,11 @@
     "jest": true
   },
   "extends": [
-    // extend from react-scripts config
+    "standard",
     "react-app",
     "plugin:react/recommended",
-    "standard",
-    "plugin:import/typescript"
+    "plugin:import/typescript",
+    "raine"
   ],
   "ignorePatterns": "scripts",
   "overrides": [
@@ -96,91 +96,19 @@
     }
   },
   "rules": {
-    "arrow-parens": [
-      2,
-      "as-needed"
-    ],
-    "brace-style": [
-      2,
-      "stroustrup"
-    ],
-    "comma-dangle": [
-      2,
-      {
-        "arrays": "only-multiline",
-        "objects": "only-multiline",
-        "imports": "always-multiline",
-        "exports": "always-multiline"
-      }
-    ],
-    "generator-star-spacing": [
-      2,
-      {
-        "before": false,
-        "after": true
-      }
-    ],
-    "indent": [
-      2,
-      2,
-      {
-        "flatTernaryExpressions": true
-      }
-    ],
-    "multiline-ternary": 0,
-    "no-var": 2,
-    "object-curly-newline": 0,
-    "object-property-newline": 0,
-    "operator-linebreak": 0,
-    "padded-blocks": 0,
-    "quotes": [
-      2,
-      "single",
-      {
-        "allowTemplateLiterals": true
-      }
-    ],
-    "space-before-function-paren": 0,
-    "yield-star-spacing": [
-      2,
-      {
-        "before": false,
-        "after": true
-      }
-    ],
 
     // export-default-identifier
     "export-default-identifier/export-default-identifier": [2, {
       "types": ["Identifier", "CallExpression", "FunctionDeclaration"]
     }],
 
-    // fp
-    "fp/no-class": 2,
-    "fp/no-delete": 2,
-    "fp/no-events": 2,
-    "fp/no-get-set": 2,
-    "fp/no-let": 2,
-    "fp/no-loops": 2,
-    "fp/no-mutating-assign": 2,
-    "fp/no-mutating-methods": 2,
-    "fp/no-this": 2,
-    "fp/no-valueof-field": 2,
-
     // jsdoc
-    "jsdoc/check-alignment": 2,
-    "jsdoc/check-indentation": 2,
-    "jsdoc/check-syntax": 2,
     "jsdoc/check-tag-names": [
       2,
       {
         "definedTags": ["packageDocumentation"]
       }
     ],
-    "jsdoc/check-types": 2,
-    "jsdoc/implements-on-classes": 2,
-    "jsdoc/newline-after-description": 2,
-    "jsdoc/no-types": 2,
-    "jsdoc/no-undefined-types": 2,
     "jsdoc/require-description-complete-sentence": [
       2,
       {
@@ -218,5 +146,6 @@
 
     // react-hooks
     "react-hooks/exhaustive-deps": 0
+
   }
 }
