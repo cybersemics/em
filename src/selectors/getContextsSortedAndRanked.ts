@@ -1,12 +1,12 @@
-import { isContextArchived, makeCompareByProp, sort } from '../util'
-import { getContexts } from '../selectors'
+import { makeCompareByProp, sort } from '../util'
+import { getContexts, isContextVisibleForUser } from '../selectors'
 import { State } from '../util/initialState'
 import { ThoughtContext } from '../types'
 
 /** Gets all contexts that the given thought is in, sorted and ranked. */
 const getContextsSortedAndRanked = (state: State, value: string): ThoughtContext[] =>
   sort(
-    getContexts(state, value),
+    getContexts(state, value).filter(({ context }) => isContextVisibleForUser(state, context.concat(value))),
     // sort
     makeCompareByProp('context')
   )
@@ -15,8 +15,5 @@ const getContextsSortedAndRanked = (state: State, value: string): ThoughtContext
       ...thought,
       rank: i,
     }))
-
-/** Gets all unarchived context sorted and ranked. */
-export const getUnarchivedContextsSortedAndRanked = (state: State, value: string): ThoughtContext[] => getContextsSortedAndRanked(state, value).filter(({ context }) => !isContextArchived(context))
 
 export default getContextsSortedAndRanked

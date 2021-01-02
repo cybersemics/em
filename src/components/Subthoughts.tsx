@@ -52,7 +52,6 @@ import {
   getAllChildrenSorted,
   isChildVisibleWithCursorCheck,
   isContextViewActive,
-  getUnarchivedContextsSortedAndRanked,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -332,7 +331,7 @@ export const SubthoughtsComponent = ({
 
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : showContexts ?
-      (showHiddenThoughts ? getContextsSortedAndRanked : getUnarchivedContextsSortedAndRanked)(state, headValue(simplePath))
+      getContextsSortedAndRanked(state, headValue(simplePath))
       : sortPreference === 'Alphabetical' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
       : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
