@@ -14,9 +14,10 @@ const deleteEmptyThought = (state: State): State => {
   if (!cursor) return state
 
   const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
-  const path = simplifyPath(state, cursor)
-  const allChildren = getChildrenRanked(state, pathToContext(path))
-  const visibleChildren = getChildren(state, pathToContext(path))
+  const context = pathToContext(cursor)
+  const simplePath = simplifyPath(state, cursor)
+  const allChildren = getChildrenRanked(state, context)
+  const visibleChildren = getChildren(state, context)
   // check innerHTML in case the user just executed clearThought, which yields an empty thought in the DOM but not in state
   const isDomEmpty = document.querySelector('.editing .editable')?.innerHTML === ''
   const isEmpty = headValue(cursor) === '' || isDomEmpty
@@ -33,8 +34,7 @@ const deleteEmptyThought = (state: State): State => {
   else if (offset === 0 && sel?.isCollapsed && !showContexts) {
     const value = headValue(cursor)
     const rank = headRank(cursor)
-    const thoughts = pathToContext(path)
-    const context = thoughts.length > 1 ? parentOf(thoughts) : [ROOT_TOKEN]
+    const parentContext = context.length > 1 ? parentOf(context) : [ROOT_TOKEN]
     const prev = prevSibling(state, value, pathToContext(rootedParentOf(cursor)), rank)
 
     // only if there is a previous sibling
@@ -42,7 +42,7 @@ const deleteEmptyThought = (state: State): State => {
 
       const valueNew = prev.value + value
       const pathPrevNew = [
-        ...parentOf(path),
+        ...parentOf(simplePath),
         {
           ...prev,
           value: valueNew,
@@ -55,22 +55,22 @@ const deleteEmptyThought = (state: State): State => {
         existingThoughtChange({
           oldValue: prev.value,
           newValue: valueNew,
-          context,
-          path: parentOf(path).concat(prev) as SimplePath
+          context: parentContext,
+          path: parentOf(simplePath).concat(prev) as SimplePath
         }),
 
         // merge children
         ...allChildren.map((child, i) =>
           (state: State) => existingThoughtMove(state, {
-            oldPath: path.concat(child),
+            oldPath: simplePath.concat(child),
             newPath: pathPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(pathPrevNew)) + i })
           })
         ),
 
         // delete second thought
         existingThoughtDelete({
-          context,
-          thoughtRanked: head(path)
+          context: parentContext,
+          thoughtRanked: head(simplePath)
         }),
 
         // move the cursor to the new thought at the correct offset
