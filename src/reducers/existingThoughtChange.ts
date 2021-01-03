@@ -52,6 +52,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const { cursor } = state
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
+  // value is different than newValue in the context view
   const value = headValue(path)
   const rank = headRank(path)
   const oldKey = hashThought(oldValue)
@@ -62,11 +63,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
   // guard against missing lexeme (although this should never happen)
   if (!thoughtOld) {
-    console.error('Lexeme not found', oldValue)
-    return state
-  }
-  else if (!thoughtParentOld) {
-    console.error('Lexeme not found', value)
+    console.error(`Lexeme not found: "${oldValue}"`)
     return state
   }
 
@@ -140,14 +137,15 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   if (showContexts) {
 
     thoughtParentNew = {
+      value,
       ...thoughtParentOld,
-      contexts: removeContext(thoughtParentOld, parentOf(pathToContext(pathLiveOld)), rank).contexts.concat({
+      contexts: removeContext(thoughtParentOld!, parentOf(pathToContext(pathLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
         id,
         rank,
         ...archived ? { archived } : {}
       }),
-      created: thoughtParentOld.created,
+      created: thoughtParentOld?.created || timestamp(),
       lastUpdated: timestamp(),
     }
 
