@@ -61,12 +61,12 @@ const newThoughtSubmit = (state: State, { context, value, rank, id, addAsContext
   if (addAsContext) {
     const subthoughtOld = getThought(state, head(context))
     subthoughtNew = Object.assign({}, subthoughtOld, {
-      contexts: subthoughtOld.contexts.concat({
+      contexts: (subthoughtOld?.contexts || []).concat({
         context: [value],
         id,
         rank: getNextRank(state, [value])
       }),
-      created: subthoughtOld.created || timestamp(),
+      created: subthoughtOld?.created || timestamp(),
       lastUpdated: timestamp()
     })
   }

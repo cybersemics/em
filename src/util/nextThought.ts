@@ -15,7 +15,7 @@ interface NextThoughtResult {
  */
 const contextWithThoughtRank = (state: State, contextInfo: ThoughtContext | null): SimplePath | null => {
   return contextInfo && contextInfo.context.map((value, index) => {
-    const thought = getThought(state, value)
+    const thought = getThought(state, value)!
 
     /** Returns the matching context. */
     const matchedContext = () => {

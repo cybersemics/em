@@ -59,10 +59,22 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const thoughtOld = getThought(state, oldValue)
   const thoughtCollision = getThought(state, newValue)
   const thoughtParentOld = getThought(state, value)
+
+  // guard against missing lexeme (although this should never happen)
+  if (!thoughtOld) {
+    console.error('Lexeme not found', oldValue)
+    return state
+  }
+  else if (!thoughtParentOld) {
+    console.error('Lexeme not found', value)
+    return state
+  }
+
   const thoughtsOld = unroot(context).concat(oldValue)
   const thoughtsNew = unroot(context).concat(newValue)
   const contextEncodedOld = hashContext(thoughtsOld)
   const contextEncodedNew = hashContext(thoughtsNew)
+
   const pathLiveOld = (showContexts
     ? parentOf(parentOf(path)).concat({ value: oldValue, rank: headRank(parentOf(path)) }).concat(head(path))
     : parentOf(path).concat({ value: oldValue, rank })) as SimplePath

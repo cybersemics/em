@@ -41,6 +41,13 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   context = rootedParentOf(thoughts)
   const key = hashThought(value)
   const thought = getThought(state, value)
+
+  // guard against missing lexeme (although this should never happen)
+  if (!thought) {
+    console.error('Lexeme not found', value)
+    return state
+  }
+
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])

@@ -8,6 +8,13 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
   const thought = getThought(state, headValue(penult))
+
+  // guard against missing lexeme (although this should never happen)
+  if (!thought) {
+    console.error('Lexeme not found', penult)
+    return contextChain[0]
+  }
+
   const ult = contextChain[contextChain.length - 1]
   const parent = thought.contexts.find(parent => head(parent.context) === ult[0].value) as ThoughtContext
   const pathPrepend = parentOf(rankThoughtsFirstMatch(state, parent?.context))

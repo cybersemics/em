@@ -59,6 +59,12 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
 
+  // guard against missing lexeme (although this should never happen)
+  if (!oldThought) {
+    console.error('Lexeme not found', oldPath)
+    return state
+  }
+
   const isArchived = newThoughts.indexOf('=archive') !== -1
   // find exact thought from thoughtIndex
   const exactThought = oldThought.contexts.find(thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank)
@@ -118,7 +124,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
     return getChildrenRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
+      const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)!
       const childContext: Context = [...oldThoughts, child.value]
       const childPathOld: Path = [...pathOld, child]
       const childPathNew: Path = [...pathNew, child]
