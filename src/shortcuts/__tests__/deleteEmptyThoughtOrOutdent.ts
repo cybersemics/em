@@ -52,7 +52,7 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('prevent outdent on pressing backspace at the beginning of a thought that is not the only visible child in the context', () => {
+it('do not outdent thought with siblings', () => {
 
   const store = createTestStore()
 

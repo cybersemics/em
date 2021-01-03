@@ -66,6 +66,26 @@ it('do not delete thought with children', () => {
 
 })
 
+it('archive thought with hidden children', () => {
+
+  const steps = [
+    newThought(''),
+    newSubthought('=one'),
+    cursorBack,
+    deleteEmptyThought,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - =archive
+    - ${''/* prevent trim_trailing_whitespace */}
+      - =one`)
+
+})
+
 it('do nothing if there is no cursor', () => {
 
   const steps = [

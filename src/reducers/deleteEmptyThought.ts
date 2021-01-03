@@ -1,36 +1,9 @@
 import { ROOT_TOKEN } from '../constants'
+import { head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow, rootedParentOf } from '../util'
+import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath } from '../selectors'
+import { archiveThought, deleteThought, existingThoughtChange, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
-
-// util
-import {
-  head,
-  headRank,
-  headValue,
-  isDivider,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-  rootedParentOf,
-} from '../util'
-
-// selectors
-import {
-  getNextRank,
-  getChildrenRanked,
-  isContextViewActive,
-  prevSibling,
-  simplifyPath,
-} from '../selectors'
-
-// reducers
-import {
-  deleteThought,
-  existingThoughtChange,
-  existingThoughtDelete,
-  existingThoughtMove,
-  setCursor,
-} from '../reducers'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {
@@ -40,17 +13,23 @@ const deleteEmptyThought = (state: State): State => {
 
   if (!cursor) return state
 
-  const innerHTML = document.querySelector('.editing .editable')?.innerHTML
   const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
   const path = simplifyPath(state, cursor)
-  const children = getChildrenRanked(state, pathToContext(path))
-
-  // delete an empty thought
+  const allChildren = getChildrenRanked(state, pathToContext(path))
+  const visibleChildren = getChildren(state, pathToContext(path))
   // check innerHTML in case the user just executed clearThought, which yields an empty thought in the DOM but not in state
-  if (((headValue(cursor) === '' || innerHTML === '') && children.length === 0) || isDivider(headValue(cursor))) {
+  const isDomEmpty = document.querySelector('.editing .editable')?.innerHTML === ''
+  const isEmpty = headValue(cursor) === '' || isDomEmpty
+
+  // delete an empty thought with no children
+  if ((isEmpty && allChildren.length === 0) || isDivider(headValue(cursor))) {
     return deleteThought(state, {})
   }
-  // delete from beginning and merge
+  // archive an empty thought with hidden children
+  else if (isEmpty && visibleChildren.length === 0) {
+    return archiveThought(state, {})
+  }
+  // delete from beginning and merge with previous sibling
   else if (offset === 0 && sel?.isCollapsed && !showContexts) {
     const value = headValue(cursor)
     const rank = headRank(cursor)
@@ -81,7 +60,7 @@ const deleteEmptyThought = (state: State): State => {
         }),
 
         // merge children
-        ...children.map((child, i) =>
+        ...allChildren.map((child, i) =>
           (state: State) => existingThoughtMove(state, {
             oldPath: path.concat(child),
             newPath: pathPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(pathPrevNew)) + i })
