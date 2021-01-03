@@ -1,6 +1,6 @@
 # em
 
-**em** is a beautiful, minimalistic writing app for personal sensemaking.
+**em** is a beautiful, minimalistic note-taking app for personal sensemaking.
 
 **em** is designed to be:
 
