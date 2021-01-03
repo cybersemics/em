@@ -221,7 +221,7 @@ const ModalExport = () => {
       </div>
 
       <div className='cp-clipboard-wrapper'>
-        {exportContent
+        {exportContent !== null
           ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
           : <LoadingEllipsis />
         }
@@ -231,7 +231,7 @@ const ModalExport = () => {
 
         <button
           className='modal-btn-export'
-          disabled={!exportContent}
+          disabled={exportContent === null}
           onClick={onExportClick}
           style={themeColorWithBackground}
         >
@@ -260,7 +260,7 @@ const ModalExport = () => {
 
           <button
             className='modal-btn-export'
-            disabled={!exportContent || publishing || publishedCIDs.length > 0}
+            disabled={exportContent !== null || publishing || publishedCIDs.length > 0}
             onClick={onPublishClick}
             style={themeColorWithBackground}
           >
