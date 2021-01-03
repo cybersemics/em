@@ -2,9 +2,32 @@
   "name": "em",
   "version": "174.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
-  "description": "A trans-hierarchical concept mapping app for personal sensemaking.",
+  "description": "A process-oriented note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
   "private": true,
+  "browserslist": {
+    "production": [
+      "defaults"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "clean": "rm -rf ./node_modules/.cache/eslint-loader",
+    "docs": "typedoc --options typedoc.json",
+    "deploy": "npm version major && npm run build && firebase deploy",
+    "lint": "npm run lint:src && npm run lint:package-lock && npm run lint:no-yarn",
+    "lintfix": "npm run lint -- --fix",
+    "lint:no-yarn": "node ./scripts/no-files.js yarn.lock",
+    "lint:package-lock": "node ./scripts/validate-package-lock.js",
+    "lint:src": "eslint . --rule 'no-console: [2, { allow: [error, info, warn] }]'",
+    "test": "react-scripts test"
+  },
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "classnames": "^2.2.6",
@@ -106,28 +129,5 @@
     "typedoc-plugin-rename-named-parameters": "^1.0.6",
     "typescript": "^4.1.3",
     "xml2json": "^0.12.0"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "clean": "rm -rf ./node_modules/.cache/eslint-loader",
-    "docs": "typedoc --options typedoc.json",
-    "deploy": "npm version major && npm run build && firebase deploy",
-    "lint": "npm run lint:src && npm run lint:package-lock && npm run lint:no-yarn",
-    "lintfix": "npm run lint -- --fix",
-    "lint:no-yarn": "node ./scripts/no-files.js yarn.lock",
-    "lint:package-lock": "node ./scripts/validate-package-lock.js",
-    "lint:src": "eslint \"src/**/*.{js,ts,tsx}\" --rule 'no-console: [2, { allow: [error, info, warn] }]'",
-    "test": "react-scripts test"
-  },
-  "browserslist": {
-    "production": [
-      "defaults"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   }
 }

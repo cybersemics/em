@@ -54,12 +54,12 @@ module.exports = {
               delimiter: 'comma'
             }
           }
-         ],
+        ],
         '@typescript-eslint/no-explicit-any': 0,
         '@typescript-eslint/no-extra-parens': [2,
           'all',
           {
-            'nestedBinaryExpressions': false
+            nestedBinaryExpressions: false
           }
         ],
         '@typescript-eslint/no-non-null-assertion': 0,
@@ -69,7 +69,7 @@ module.exports = {
         '@typescript-eslint/explicit-module-boundary-types': 0,
         '@typescript-eslint/array-type': [2,
           {
-          'array-type': 'array'
+            'array-type': 'array'
           }
         ],
         // jsx
@@ -121,7 +121,7 @@ module.exports = {
     ],
     'jsdoc/require-description-complete-sentence': [2,
       {
-        abbreviations: ['e.g.','i.e.']
+        abbreviations: ['e.g.', 'i.e.']
       }
     ],
     'jsdoc/require-jsdoc': [2,
@@ -130,13 +130,13 @@ module.exports = {
           'VariableDeclarator > ArrowFunctionExpression'
         ],
         require: {
-          'ClassDeclaration': true,
-          'ClassExpression': true
+          ClassDeclaration: true,
+          ClassExpression: true
         }
       }
     ],
 
-    // jrx-a11y
+    // jsx-a11y
     'jsx-a11y/anchor-is-valid': 0,
 
     // react
