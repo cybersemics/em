@@ -22,14 +22,15 @@ const HamburgerMenu = () => {
   const dispatch = useDispatch()
   const fontSize = useSelector<State, number>(getFontSize)
 
-  const width = fontSize + 4
+  const width = fontSize * 1.3
+  const paddingTop = 15 + fontSize * 0.1
 
   return (
     <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
       <div
         className='hamburger-menu'
         style={{
-          padding: '17px 14px 10px 14px',
+          padding: `${paddingTop}px 15px 10px 15px`,
           position: 'fixed',
           cursor: 'pointer',
           // transisiton is used on z-index to only show up the hamburger menu after sidebar has properly closed.
@@ -46,7 +47,7 @@ const HamburgerMenu = () => {
           isOpen={showSidebar}
           width={width}
           height={width * 0.7}
-          strokeWidth={1}
+          strokeWidth={fontSize / 20}
           menuClicked={noop} // just passing an empty arrow function as it is mandatory prop to pass
           rotate={0}
           color=' ' // passing blank, non-empty string to avoid ReactHamburger to pass deault styles to the menu UI (for applying theme)
