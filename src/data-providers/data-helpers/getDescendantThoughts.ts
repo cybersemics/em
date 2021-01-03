@@ -66,12 +66,16 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
     const thoughtIds = contexts.map(cx => hashThought(head(cx)))
     const lexemes = await provider.getThoughtsByIds(thoughtIds)
 
-    const contextIndex = keyValueBy(contextIds, (id, i) =>
+    const contextIndex = keyValueBy(contextIds, (id, i) => {
+      if (!parents[i]) {
+        console.error('Missing parent. parentIds and contextIds are expected to be parallel arrays.')
+        return null
+      }
       // exclude non-pending leaves
-      parents[i].children.length > 0 || parents[i].pending
+      return parents[i].children.length > 0 || parents[i].pending
         ? { [id]: parents[i] }
         : null
-    )
+    })
     const thoughtIndex = keyValueBy(thoughtIds, (id, i) =>
       lexemes[i]
         ? { [id]: lexemes[i]! }
