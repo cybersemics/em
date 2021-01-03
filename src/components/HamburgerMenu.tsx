@@ -2,7 +2,7 @@ import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'
 import { noop } from 'lodash'
-import { isTutorial } from '../selectors'
+import { getFontSize, isTutorial } from '../selectors'
 import { toggleSidebar } from '../action-creators'
 import { State } from '../util/initialState'
 import { CSSTransition } from 'react-transition-group'
@@ -20,13 +20,17 @@ const HamburgerMenu = () => {
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const showTopControls = useSelector((state: State) => state.showTopControls)
   const dispatch = useDispatch()
+  const fontSize = useSelector<State, number>(getFontSize)
+
+  const width = fontSize * 1.3
+  const paddingTop = 15 + fontSize * 0.1
 
   return (
     <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
       <div
         className='hamburger-menu'
         style={{
-          padding: '20px 14px 10px 14px',
+          padding: `${paddingTop}px 15px 10px 15px`,
           position: 'fixed',
           cursor: 'pointer',
           // transisiton is used on z-index to only show up the hamburger menu after sidebar has properly closed.
@@ -41,9 +45,9 @@ const HamburgerMenu = () => {
       >
         <ReactHamburger
           isOpen={showSidebar}
-          width={20}
-          height={16}
-          strokeWidth={1}
+          width={width}
+          height={width * 0.7}
+          strokeWidth={fontSize / 20}
           menuClicked={noop} // just passing an empty arrow function as it is mandatory prop to pass
           rotate={0}
           color=' ' // passing blank, non-empty string to avoid ReactHamburger to pass deault styles to the menu UI (for applying theme)
