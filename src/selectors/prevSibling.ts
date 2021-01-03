@@ -1,4 +1,4 @@
-import { getContextsSortedAndRanked, getSortPreference, getChildrenRanked, getChildrenSorted, isChildVisible, isContextViewActive, isContextVisible } from '../selectors'
+import { getContextsSortedAndRanked, getSortPreference, getChildrenRanked, getChildrenSorted, isChildVisible, isContextViewActive, isAncestorsVisible } from '../selectors'
 import { head } from '../util'
 import { State } from '../util/initialState'
 import { Child, Context, Index, ThoughtContext } from '../types'
@@ -26,7 +26,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
       return true
     }
     else if (!(contextViewActive
-      ? isContextVisible(state, (child as ThoughtContext).context)
+      ? isAncestorsVisible(state, (child as ThoughtContext).context)
       : showHiddenThoughts || isChildVisible(state, context, child as Child))
     ) {
       return false

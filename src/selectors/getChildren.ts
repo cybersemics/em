@@ -7,13 +7,6 @@ import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Simple
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
 
-/** Returns true when context is not hidden due to being a function or having a =hidden attribute. */
-export const isContextVisible = (state: State, context: Context) =>
-  state.showHiddenThoughts || (
-    !isFunction(head(context)) &&
-    head(context) !== '=hidden'
-  )
-
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
 export const isChildVisible = _.curry((state: State, context: Context, child: Child) =>
   !isFunction(child.value) &&
