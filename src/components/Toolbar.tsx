@@ -17,7 +17,7 @@ import { isTouch } from '../browser'
 import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
 import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import { getSetting, subtree, theme } from '../selectors'
+import { getFontSize, getSetting, subtree, theme } from '../selectors'
 import { State } from '../util/initialState'
 import { Icon, Timer } from '../types'
 
@@ -37,7 +37,7 @@ const mapStateToProps = (state: State) => {
   return {
     dark: theme(state) !== 'Light',
     isLoading,
-    fontSize: isLoading ? fontSizeLocal : +(getSetting(state, 'Font Size') || DEFAULT_FONT_SIZE),
+    fontSize: getFontSize(state),
     scale: (+(getSetting(state, 'Font Size') ?? 0) || fontSizeLocal || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
     scrollPrioritized,
     toolbarOverlay,
