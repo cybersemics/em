@@ -55,7 +55,8 @@ const subCategorizeAll = (state: State) => {
     (state: State) => newThought(state, {
       at: pathParent,
       insertNewSubthought: true,
-      insertBefore: true
+      insertBefore: true,
+      aboveMeta: true
     }),
 
     // move children
