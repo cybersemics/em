@@ -1,7 +1,10 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
 import { Key } from 'ts-key-enum'
 import { cursorNext } from '../action-creators'
-import { Thunk, Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
+
+// import directly since util/index is not loaded yet when shortcut is initialized
+import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
@@ -16,7 +19,7 @@ const cursorNextShortcut: Shortcut = {
   description: 'Move the cursor to the next thought, skipping expanded children.',
   keyboard: { key: Key.ArrowDown, meta: true },
   svg: Icon,
-  exec: (dispatch: Dispatch<Thunk>) => dispatch(cursorNext())
+  exec: throttleByAnimationFrame(dispatch => dispatch(cursorNext()))
 }
 
 export default cursorNextShortcut

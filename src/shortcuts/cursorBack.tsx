@@ -3,6 +3,9 @@ import { Icon as IconType, Shortcut } from '../types'
 import { clearSelection } from '../util'
 import { cursorBack, scrollCursorIntoView } from '../action-creators'
 
+// import directly since util/index is not loaded yet when shortcut is initialized
+import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
   <g>
@@ -24,7 +27,7 @@ const cursorBackShortcut: Shortcut = {
   gesture: 'r',
   svg: Icon,
   keyboard: 'Escape',
-  exec: (dispatch, getState) => {
+  exec: throttleByAnimationFrame((dispatch, getState) => {
     const { cursor, search } = getState()
     if (cursor || search != null) {
 
@@ -36,7 +39,7 @@ const cursorBackShortcut: Shortcut = {
         blur()
       }
     }
-  }
+  })
 }
 
 export default cursorBackShortcut

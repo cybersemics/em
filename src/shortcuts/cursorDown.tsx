@@ -3,7 +3,10 @@ import { Key } from 'ts-key-enum'
 import { parentOf, getElementPaddings, headValue, pathToContext } from '../util'
 import { attributeEquals } from '../selectors'
 import { cursorDown, scrollCursorIntoView } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../types'
+import { Dispatch, Icon as IconType, Shortcut } from '../types'
+
+// import directly since util/index is not loaded yet when shortcut is initialized
+import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
 
 interface SelectionAttributes {
    rangeY: number,
@@ -75,10 +78,10 @@ const cursorDownShortcut: Shortcut = {
     // use default browser if there is a valid selection and it's not on the last line of a multi-line editable
     return !selectionAttributes || isSelectionOnLastLine(selectionAttributes)
   },
-  exec: dispatch => {
+  exec: throttleByAnimationFrame((dispatch: Dispatch) => {
     dispatch(cursorDown())
     dispatch(scrollCursorIntoView())
-  }
+  })
 }
 
 export default cursorDownShortcut
