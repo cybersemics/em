@@ -7,9 +7,11 @@ it('remove root thought', () => {
     - b
   - c`
 
-  const expectedResult = `- a
+  const expectedResult = `
+- a
   - b
-- c`
+- c
+`
 
   expect(removeRoot(exported)).toBe(expectedResult)
 })

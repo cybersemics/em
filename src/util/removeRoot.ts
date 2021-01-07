@@ -9,9 +9,9 @@ export const removeRoot = (exported: string) => {
 
   return isRoot([firstThought])
     ? exported
-      .slice(firstLineBreakIndex + 1)
+      .slice(firstLineBreakIndex)
       .split('\n')
       .map(line => line.slice(2))
-      .join('\n')
+      .join('\n') + '\n'
     : exported
 }
