@@ -2,7 +2,7 @@ import { isTouch } from '../browser'
 import { attribute, hasChild } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
-import { setAttribute } from '../action-creators'
+import { setAttribute, setNoteFocus } from '../action-creators'
 import { Shortcut } from '../types'
 import { ROOT_TOKEN } from '../constants'
 
@@ -46,6 +46,7 @@ const noteShortcut: Shortcut = {
         if (noteFocus) {
           thoughtEl.focus()
           setSelection(thoughtEl, { end: true })
+          dispatch(setNoteFocus({ value: false }))
         }
         // select note
         else {
