@@ -16,8 +16,11 @@ const getPrevRank = (state: State, context: Context, { aboveMeta }: { aboveMeta?
     ? 0
     : children.findIndex(child => !isFunction(child.value))
 
+  // there could be no visible thoughts in the context
+  const noVisibleChildren = i === -1
+
   // between last metaprogramming attribute and first visible child
-  if (i === 0) return children[0].rank - 1
+  if (i === 0 || noVisibleChildren) return children[0].rank - 1
 
   const nextChild = children[i]
   const prevChild = children[i - 1]
