@@ -45,7 +45,6 @@
     "jex-block-parser": "^1.0.0",
     "lodash": "^4.17.20",
     "matchmedia-polyfill": "^0.3.2",
-    "moment": "^2.29.1",
     "murmurhash3js": "^3.0.1",
     "pluralize": "^8.0.0",
     "react": "^16.14.0",
