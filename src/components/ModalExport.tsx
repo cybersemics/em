@@ -7,7 +7,7 @@ import globals from '../globals'
 import IpfsHttpClient from 'ipfs-http-client'
 import { RANKED_ROOT } from '../constants'
 import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, removeRoot, timestamp, unroot } from '../util'
-import { alert, error, modalRemindMeLater, prependRevision, pull } from '../action-creators'
+import { alert, error, modalRemindMeLater, pull } from '../action-creators'
 import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
@@ -158,7 +158,7 @@ const ModalExport = () => {
   }
 
   /** Publishes the thoughts to IPFS. */
-  const onPublishClick = async () => {
+  const publish = async () => {
 
     setPublishing(true)
     setPublishedCIDs([])
@@ -175,7 +175,8 @@ const ModalExport = () => {
     for await (const result of ipfs.add(exported)) {
       if (result && result.path) {
         const cid = result.path
-        dispatch(prependRevision({ path: cursor, cid }))
+        // TODO: prependRevision is currently broken
+        // dispatch(prependRevision({ path: cursor, cid }))
         cids.push(cid) // eslint-disable-line fp/no-mutating-methods
         setPublishedCIDs(cids)
       }
@@ -260,8 +261,8 @@ const ModalExport = () => {
 
           <button
             className='modal-btn-export'
-            disabled={exportContent !== null || publishing || publishedCIDs.length > 0}
-            onClick={onPublishClick}
+            disabled={!exportContent || publishing || publishedCIDs.length > 0}
+            onClick={publish}
             style={themeColorWithBackground}
           >
             Publish
