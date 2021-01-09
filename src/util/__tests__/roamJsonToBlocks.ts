@@ -1,11 +1,10 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, removeRoot } from '../../util'
 import { exportContext } from '../../selectors'
-import { roamJsonToBlocks } from '../roamJsonToBlocks'
 import { State, initialState } from '../initialState'
+import { RoamBlock, RoamPage, roamJsonToBlocks } from '../roamJsonToBlocks'
 import { importJSON } from '../importJSON'
 import { SimplePath } from '../../types'
-import { RoamBlock, RoamPage } from '../../util/roamJsonToBlocks'
 
 jest.mock('../timestamp', () => ({
   timestamp: () => '2020-11-02T01:11:58.869Z'
