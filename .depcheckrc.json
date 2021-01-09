@@ -1,0 +1,12 @@
+{
+  "ignores": [
+    "@types/jest",
+    "babel-eslint",
+    "em-typedoc-theme",
+    "eslint-config-react-app",
+    "eslint-plugin-flowtype",
+    "react-native",
+    "react-native-web",
+    "typedoc-*"
+  ]
+}
