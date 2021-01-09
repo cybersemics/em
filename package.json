@@ -2,7 +2,7 @@
   "name": "em",
   "version": "174.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
-  "description": "A process-oriented note-taking app for personal sensemaking.",
+  "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
   "private": true,
   "browserslist": {
