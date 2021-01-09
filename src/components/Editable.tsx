@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React, { useEffect, useRef } from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
-import he from 'he'
+import { unescape } from 'html-escaper'
 import classNames from 'classnames'
 import { alert, cursorBack, editing, error, existingThoughtChange, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext } from '../action-creators'
 import { isTouch, isSafari } from '../browser'
@@ -341,7 +341,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     const oldValue = oldValueRef.current
-    const newValue = e.target ? addEmojiSpace(he.decode(strip(e.target.value, { preserveFormatting: true }))) : oldValue
+    const newValue = e.target ? addEmojiSpace(unescape(strip(e.target.value, { preserveFormatting: true }))) : oldValue
 
     // TODO: Disable keypress
     // e.preventDefault() does not work

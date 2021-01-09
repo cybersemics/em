@@ -1,6 +1,6 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
-import he from 'he'
+import { unescape } from 'html-escaper'
 import { parentOf, convertHTMLtoJSON, head, headValue, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { simplifyPath } from '../selectors'
@@ -75,7 +75,7 @@ const rawTextToHtml = (text: string) => {
 
   // if the input text has any <li> elements at all, treat it as HTML
   const isHTML = regexpHasListItems.test(text)
-  const decodedInputText = he.decode(text)
+  const decodedInputText = unescape(text)
 
   // use jex-block-parser to convert indentent plaintext into nested HTML lists
   const parsedInputText = !isHTML

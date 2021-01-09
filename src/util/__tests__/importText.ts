@@ -445,3 +445,23 @@ it('import as subthoughts of non-empty cursor', () => {
 
   expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }, { value: 'y', rank: 2 }])
 })
+
+it('decode HTML entities', () => {
+
+  const paste = `
+  - one &amp; two
+  - three &lt; four
+  `
+
+  const stateNew = importText({
+    path: RANKED_ROOT,
+    text: paste,
+  })(initialState())
+
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported)
+    .toBe(`- ${ROOT_TOKEN}
+  - one & two
+  - three < four`)
+})
