@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../../constants'
+import { ROOT_TOKEN, RANKED_ROOT } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -7,6 +7,7 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import subCategorizeAll from '../subCategorizeAll'
 import setCursor from '../setCursor'
+import cursorBack from '../cursorBack'
 
 it('subcategorize multiple thoughts', () => {
 
@@ -87,3 +88,30 @@ it('set cursor on new empty thought', () => {
     .toMatchObject([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
 
 })
+
+it('move all visible and hidden thoughts into a new empty thought after subcategorizeAll', () => {
+
+  const steps = [
+    newThought('b'),
+    newSubthought('=archive'),
+    newThought('c'),
+    newSubthought('d'),
+    cursorBack,
+    subCategorizeAll
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  const expectedOutput = `- ${ROOT_TOKEN}
+  - b
+    -${' '}
+      - =archive
+      - c
+        - d`
+
+  expect(exported).toEqual(expectedOutput)
+})
+
