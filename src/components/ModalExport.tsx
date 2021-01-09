@@ -4,7 +4,6 @@ import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
-import IpfsHttpClient from 'ipfs-http-client'
 import { RANKED_ROOT } from '../constants'
 import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, removeRoot, timestamp, unroot } from '../util'
 import { alert, error, modalRemindMeLater, pull } from '../action-creators'
@@ -14,8 +13,6 @@ import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
 import { State } from '../util/initialState'
 import { ExportOption } from '../types'
-
-const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 
 const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
@@ -162,8 +159,10 @@ const ModalExport = () => {
 
     setPublishing(true)
     setPublishedCIDs([])
-
     const cids = []
+
+    const { default: IpfsHttpClient } = await import('ipfs-http-client')
+    const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 
     // export without =src content
     const exported = exportContext(store.getState(), context, selected.type, {
