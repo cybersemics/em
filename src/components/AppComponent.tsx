@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useLayoutEffect, useState } from 'react'
+import React, { FC, Suspense, useEffect, useLayoutEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
@@ -13,7 +13,7 @@ import { store } from '../store'
 
 // components
 import Alert from './Alert'
-import Content from './Content'
+import ContentFallback from './ContentFallback'
 import Sidebar from './Sidebar'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
@@ -26,6 +26,8 @@ import Scale from './Scale'
 import Tutorial from './Tutorial'
 import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
+
+const Content = React.lazy(() => import('./Content'))
 
 const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
@@ -145,7 +147,9 @@ const AppComponent: FC<Props> = props => {
               onDragFinished={updateSplitPos}
             >
               <Scale amount={scale!}>
-                <Content />
+                <Suspense fallback={<ContentFallback />}>
+                  <Content />
+                </Suspense>
               </Scale>
 
               {showSplitView
