@@ -50,6 +50,7 @@ export interface State {
   cursor: Path | null,
   cursorBeforeSearch: Path | null,
   cursorHistory: Path[],
+  cursorInitialized: boolean,
   cursorOffset: number | null,
   dataNonce: number,
   draggedSimplePath?: SimplePath,
@@ -149,6 +150,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     cursor: null,
     cursorBeforeSearch: null,
     cursorHistory: [],
+    cursorInitialized: false, // tracks if the cursor has been restored from the url on first load and ensures it only happens once
     cursorOffset: 0,
     dataNonce: 0, // cheap trick to re-render when thoughtIndex has been updated
     dragInProgress: false,
