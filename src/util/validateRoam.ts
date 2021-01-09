@@ -1,4 +1,4 @@
-import { RoamBlock, RoamPage } from 'roam'
+import { RoamBlock, RoamPage } from './roamJsonToBlocks'
 
 /**
  * Validates the strucutre of RoamBlocks.

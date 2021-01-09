@@ -1,6 +1,20 @@
 import { timestamp } from './timestamp'
-import { RoamBlock, RoamPage } from 'roam'
 import { Block, Timestamp } from '../types'
+
+export interface RoamBlock {
+  uid: string,
+  string: string,
+  'create-email': string,
+  'create-time': number,
+  children?: RoamBlock[],
+  'edit-time'?: number,
+  'edit-email'?: string,
+}
+
+export interface RoamPage {
+  title: string,
+  children: RoamBlock[],
+}
 
 /**
  * Creates a Block with edit-email value as child.
