@@ -59,6 +59,9 @@ const createTestApp = async () => {
     const skipTutorial = wrapper.find('#skip-tutorial')
     skipTutorial.simulate('click')
 
+    // wait for lazy components
+    await import('../components/Content')
+
     jest.runOnlyPendingTimers()
     wrapper.update()
 
