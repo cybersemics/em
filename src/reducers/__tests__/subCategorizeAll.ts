@@ -1,4 +1,4 @@
-import { ROOT_TOKEN, RANKED_ROOT } from '../../constants'
+import { ROOT_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -114,4 +114,3 @@ it('move all visible and hidden thoughts into a new empty thought after subcateg
 
   expect(exported).toEqual(expectedOutput)
 })
-
