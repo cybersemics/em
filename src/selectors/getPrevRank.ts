@@ -11,19 +11,20 @@ const getPrevRank = (state: State, context: Context, { aboveMeta }: { aboveMeta?
   // no children
   if (children.length === 0) return 0
 
-  // first child
-  const i = aboveMeta || state.showHiddenThoughts
-    ? 0
-    : children.findIndex(child => !isFunction(child.value))
+  const aboveHiddenThoughts = aboveMeta || state.showHiddenThoughts
+
+  const firstVisibleChildrenIndex = children.findIndex(child => !isFunction(child.value))
+
+  if (aboveHiddenThoughts || firstVisibleChildrenIndex === 0) return children[0].rank - 1
 
   // there could be no visible thoughts in the context
-  const noVisibleChildren = i === -1
+  const noVisibleChildren = firstVisibleChildrenIndex === -1
 
-  // between last metaprogramming attribute and first visible child
-  if (i === 0 || noVisibleChildren) return children[0].rank - 1
+  // if there are no visible chilren then get rank higher than the last hidden thoughts
+  if (noVisibleChildren) return children[children.length - 1].rank + 1
 
-  const nextChild = children[i]
-  const prevChild = children[i - 1]
+  const nextChild = children[firstVisibleChildrenIndex]
+  const prevChild = children[firstVisibleChildrenIndex - 1]
 
   return (prevChild.rank + nextChild.rank) / 2
 }
