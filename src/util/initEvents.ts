@@ -66,6 +66,15 @@ export const initEvents = (store: Store<State, any>) => {
     store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true }
   )
 
+  /** Url change and reload listener. */
+  const onBeforeUnload = (e: BeforeUnloadEvent) => {
+    e.preventDefault()
+
+    const shouldConfirmReload = store.getState().isPushing
+
+    if (shouldConfirmReload) e.returnValue = ``
+  }
+
   /** Error event listener. NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
   const onError = (e: { message: string, error: Error }) => {
     // ignore generic script error caused by a firebase disconnect (cross-site error)
@@ -84,6 +93,7 @@ export const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('error', onError)
+    window.removeEventListener('beforeunload', onBeforeUnload)
   }
 
   // store input handlers so they can be removed on cleanup
@@ -97,6 +107,7 @@ export const initEvents = (store: Store<State, any>) => {
   window.addEventListener('popstate', onPopstate)
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('error', onError)
+  window.addEventListener('beforeunload', onBeforeUnload)
 
   // return input handlers as another way to remove them on cleanup
   return { keyDown, keyUp, cleanup }

@@ -153,6 +153,7 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
   const localMergedBatch = localBatches.reduce(mergeBatch, {} as PushBatch)
   const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as PushBatch)
 
+  console.log('[PUSHING BATCHES]', localMergedBatch)
   // push
   await Promise.all([
     Object.keys(localMergedBatch).length > 0 && dispatch(pushBatch(localMergedBatch)),
@@ -174,6 +175,7 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
         .then(() => {
           if (getState().isPushing) {
             dispatch(isPushing({ value: false }))
+            console.log('[IS PUSHING FALSE]')
           }
         })
         .catch((e: Error) => {
@@ -193,6 +195,7 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     if (hasPushes(state) && action.type !== 'isPushing') {
       if (!state.isPushing) {
         dispatch(isPushing({ value: true }))
+        console.log('[IS PUSHING TRUE]')
       }
       flushQueueDebounced()
     }

@@ -160,6 +160,8 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
     const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText)) : convertHTMLtoJSON(convertedText)
     const imported = importJSON(state, simplePath, json, { lastUpdated, skipRoot })
 
+    console.log('[Import JSON Complete]', 'Hello world')
+
     return reducerFlow([
 
       updateThoughts(imported),
