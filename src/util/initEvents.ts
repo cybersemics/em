@@ -68,11 +68,15 @@ export const initEvents = (store: Store<State, any>) => {
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
-    e.preventDefault()
 
     const shouldConfirmReload = store.getState().isPushing
 
-    if (shouldConfirmReload) e.returnValue = ``
+    if (shouldConfirmReload) {
+      // Note: Showing confirmation dialog can vary between browsers. https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
+      e.preventDefault()
+      e.returnValue = ``
+      return ''
+    }
   }
 
   /** Error event listener. NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
