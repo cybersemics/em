@@ -146,13 +146,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       },
 
       onPanResponderTerminationRequest: () => true,
-      onPanResponderTerminate: (e: GestureResponderEvent) => {
-        // Another component has become the responder, so this gesture
-        // should be cancelled
-        if (this.props.onEnd) {
-          this.props.onEnd(null, e)
-        }
-      }
     })
   }
 
