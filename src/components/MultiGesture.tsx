@@ -50,6 +50,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
   abandon = false;
   currentStart: Point | null = null;
+  scrollYStart: number | null = null;
   disableScroll = false;
   panResponder: { panHandlers: unknown };
   scrolling = false;
@@ -102,6 +103,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             x: gestureState.moveX,
             y: gestureState.moveY
           }
+          this.scrollYStart = window.scrollY
           if (this.props.onStart) {
             this.props.onStart()
           }
@@ -111,7 +113,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // abandon gestures when scrolling beyond vertical threshold
         // because scrolling cannot be disabled after it has begin
         // effectively only allows sequences to start with left or right
-        if (this.scrolling && Math.abs(gestureState.dy) > this.props.scrollThreshold!) {
+        if (this.scrolling && Math.abs(this.scrollYStart! - window.scrollY) > this.props.scrollThreshold!) {
           this.sequence = ''
           this.abandon = true
           return
@@ -152,6 +154,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   reset() {
     this.abandon = false
     this.currentStart = null
+    this.scrollYStart = null
     this.disableScroll = false
     this.scrolling = false
     this.sequence = ''
