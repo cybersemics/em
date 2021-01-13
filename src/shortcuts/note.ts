@@ -37,6 +37,8 @@ const noteShortcut: Shortcut = {
     }
 
     // focus selection on note
+    // delay to allow the note to be created before setting the selection
+    // only causes a problem when using the toolbar, not from keyboard activation
     setTimeout(() => {
       try {
         const thoughtEl = editableNode(cursor!)

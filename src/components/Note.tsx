@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
 import { attribute, hasChild, isContextViewActive } from '../selectors'
-import { deleteAttribute, editing, setAttribute } from '../action-creators'
+import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { Context } from '../types'
@@ -45,6 +45,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
       e.preventDefault()
       editable.focus()
       setSelection(editable, { end: true })
+      dispatch(setNoteFocus({ value: false }))
     }
     // delete empty note
     // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
@@ -60,6 +61,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
       setSelection(editable, { end: true })
 
       dispatch(deleteAttribute({ context, key: '=note' }))
+      dispatch(setNoteFocus({ value: false }))
     }
     else if (e.key === 'ArrowDown') {
       e.stopPropagation()
