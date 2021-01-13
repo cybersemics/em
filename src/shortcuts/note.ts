@@ -2,7 +2,7 @@ import { isTouch } from '../browser'
 import { attribute, hasChild, simplifyPath } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
-import { setAttribute } from '../action-creators'
+import { setAttribute, setNoteFocus } from '../action-creators'
 import { Shortcut } from '../types'
 import { RANKED_ROOT } from '../constants'
 
@@ -37,6 +37,8 @@ const noteShortcut: Shortcut = {
     }
 
     // focus selection on note
+    // delay to allow the note to be created before setting the selection
+    // only causes a problem when using the toolbar, not from keyboard activation
     setTimeout(() => {
       try {
         const thoughtEl = editableNode(cursor!)
@@ -46,6 +48,7 @@ const noteShortcut: Shortcut = {
         if (noteFocus) {
           thoughtEl.focus()
           setSelection(thoughtEl, { end: true })
+          dispatch(setNoteFocus({ value: false }))
         }
         // select note
         else {

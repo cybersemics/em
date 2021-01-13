@@ -51,6 +51,7 @@ export const selectionChange = reducerToThunk<typeof reducers.selectionChange>('
 export const setAttribute = reducerToThunk<typeof reducers.setAttribute>('setAttribute')
 export const setCursor = reducerToThunk<typeof reducers.setCursor>('setCursor')
 export const setFirstSubthought = reducerToThunk<typeof reducers.setFirstSubthought>('setFirstSubthought')
+export const setNoteFocus = reducerToThunk<typeof reducers.setNoteFocus>('setNoteFocus')
 export const setResourceCache = reducerToThunk<typeof reducers.setResourceCache>('setResourceCache')
 export const settings = reducerToThunk<typeof reducers.settings>('settings')
 export const showModal = reducerToThunk<typeof reducers.showModal>('showModal')
