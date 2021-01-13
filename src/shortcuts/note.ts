@@ -1,10 +1,10 @@
 import { isTouch } from '../browser'
-import { attribute, hasChild } from '../selectors'
+import { attribute, hasChild, simplifyPath } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { setAttribute } from '../action-creators'
 import { Shortcut } from '../types'
-import { ROOT_TOKEN } from '../constants'
+import { RANKED_ROOT } from '../constants'
 
 const noteShortcut: Shortcut = {
   id: 'note',
@@ -65,7 +65,7 @@ const noteShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+    const context = pathToContext(cursor ? simplifyPath(state, cursor) : RANKED_ROOT)
     return attribute(state, context, '=note') != null
   }
 }
