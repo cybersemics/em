@@ -3,7 +3,7 @@ import { attributeEquals, simplifyPath } from '../selectors'
 import { isDocumentEditable, pathToContext } from '../util'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
-import { ROOT_TOKEN } from '../constants'
+import { RANKED_ROOT } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 100 100'>
@@ -41,7 +41,7 @@ const proseViewShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+    const context = pathToContext(cursor ? simplifyPath(state, cursor) : RANKED_ROOT)
     return attributeEquals(state, context, '=view', 'Prose')
   }
 }
