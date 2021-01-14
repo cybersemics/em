@@ -7,7 +7,8 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error, componentStac
   <p>Oops, there was an error.</p>
   <div style={{ fontSize: 14 }}>
     {error && <pre className='error'>{error.message}</pre>}
-    <pre>{componentStack}</pre>
+    <pre style={{ whiteSpace: 'normal' }}>{componentStack}</pre>
+    <a onClick={() => window.location.reload()} className='button' style={{ minWidth: 0 }}>Refresh</a>
   </div>
 </div>
 
