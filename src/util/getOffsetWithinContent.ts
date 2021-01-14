@@ -13,6 +13,6 @@ export const getOffsetWithinContent = (el: HTMLElement) => {
 
   // find the index of the dummy text within the inner html of the contenteditable
   const offset = el.innerHTML.indexOf('\u0001')
-  target.parentNode!.removeChild(target)
+  target.parentNode?.removeChild(target)
   return offset !== -1 ? offset : 0
 }
