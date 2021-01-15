@@ -433,13 +433,18 @@ a.text-link {
   white-space: pre-wrap;
 }
 
+.thought-container {
+  position: relative;
+}
+
+.thought {
+  position: absolute;
+}
+
 .thought-annotation {
-  position: absolute; /* cannot use position:absolute as it changes what the width is relative to */
   pointer-events: none;
-  /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
   width: auto;
-  padding-right: .5rem;
 }
 
 .thought-annotation .subthought {

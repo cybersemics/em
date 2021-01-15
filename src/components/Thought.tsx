@@ -14,7 +14,6 @@ import { Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
-import BulletCursorOverlay from './BulletCursorOverlay'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
@@ -65,6 +64,7 @@ import {
   isBefore,
   isContextViewActive,
 } from '../selectors'
+import BulletCursorOverlay from './BulletCursorOverlay'
 
 /**********************************************************************
  * Redux
@@ -376,11 +376,11 @@ const Thought = ({
   simplePath,
   toggleTopControlsAndBreadcrumbs
 }: ConnectedThoughtProps) => {
+
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
   return <div className='thought'>
-
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
     {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} />
@@ -580,18 +580,6 @@ const ThoughtContainer = ({
       <span className='drop-hover' style={{
         display: shouldDisplayHover ? 'inline' : 'none',
       }}></span>
-
-      <ThoughtAnnotation
-        path={path}
-        homeContext={homeContext}
-        minContexts={allowSingleContext ? 0 : 2}
-        showContextBreadcrumbs={showContextBreadcrumbs}
-        showContexts={showContexts}
-        style={style}
-        simplePath={simplePath}
-        url={url}
-      />
-
       <Thought
         path={path}
         cursorOffset={cursorOffset}
@@ -611,7 +599,16 @@ const ThoughtContainer = ({
         toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
         view={view}
       />
-
+      <ThoughtAnnotation
+        path={path}
+        homeContext={homeContext}
+        minContexts={allowSingleContext ? 0 : 2}
+        showContextBreadcrumbs={showContextBreadcrumbs}
+        showContexts={showContexts}
+        style={style}
+        simplePath={simplePath}
+        url={url}
+      />
       <Note
         context={thoughtsLive}
         onFocus={setCursorOnNote({ path: path })}
