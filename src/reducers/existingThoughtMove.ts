@@ -124,7 +124,11 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
     return getChildrenRanked(state, oldThoughts).reduce((accum, child, i) => {
       const hashedKey = hashThought(child.value)
-      const childThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)!
+      const childOldThought = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
+      if (!childOldThought) {
+        console.warn(`Missing lexeme "${child.value}"`)
+        console.warn('context', oldThoughts)
+      }
       const childContext: Context = [...oldThoughts, child.value]
       const childPathOld: Path = [...pathOld, child]
       const childPathNew: Path = [...pathNew, child]
@@ -139,7 +143,17 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         ? timestamp()
         : exactThought.archived as Timestamp
 
-      const childNewThought = removeDuplicatedContext(addContext(removeContext(childThought, oldThoughts, child.rank), contextNew, movedRank, child.id as string, archived as Timestamp), contextNew)
+      // childOldThought should always exist, but unfortunately there is a bug somewhere that causes there to be missing lexemes
+      // define a new lexeme if the old lexeme is missing
+      const childOldThoughtSafe = childOldThought
+        ? removeContext(childOldThought, oldThoughts, child.rank)
+        : {
+          contexts: [],
+          value: child.value,
+          created: timestamp(),
+          lastUpdated: timestamp()
+        }
+      const childNewThought = removeDuplicatedContext(addContext(childOldThoughtSafe, contextNew, movedRank, child.id as string, archived), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
