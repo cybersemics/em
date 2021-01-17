@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { State } from '../util/initialState'
 import { alert } from '../action-creators'
-import useSwipeToDismiss from 'use-swipe-to-dismiss'
+import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import { Alert } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

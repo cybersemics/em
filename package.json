@@ -67,7 +67,6 @@
     "redux-devtools-extension": "^2.13.8",
     "redux-thunk": "^2.3.0",
     "ts-key-enum": "^2.0.6",
-    "use-swipe-to-dismiss": "^0.1.1",
     "uuid": "^8.3.2",
     "xhtml-purifier": "git+https://github.com/cybersemics/node-xhtml-purifier.git#types"
   },
