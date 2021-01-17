@@ -4,9 +4,21 @@ import { EMOJI_REGEX_STRING } from '../constants'
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexEmojis = new RegExp(EMOJI_REGEX_STRING)
+const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
+const regexShortDateWithSlash = /\d{1,2}\/\d{1,2}/
 
 /** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
 const removeEmojisAndSpaces = (str: string) => str.replace(regexEmojis, '').trim()
+
+/** Parse a date string and handle M/d (e.g. "2/1") for Safari. */
+const parseDate = (s: string) =>
+  Date.parse(
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    regexShortDateWithDash.test(s) ? `${s}-${(new Date()).getFullYear()}`
+    // eslint-disable-next-line @typescript-eslint/no-extra-parens
+    : regexShortDateWithSlash.test(s) ? `${s}/${(new Date()).getFullYear()}`
+    : s
+  )
 
 /** The default comparator that can be used in sort. */
 export const compare = <T>(a: T, b: T): ComparatorValue => a > b ? 1 : a < b ? -1 : 0
@@ -60,13 +72,13 @@ export const comparePunctuationAndOther = <T, U>(a: T, b: U): ComparatorValue =>
 
 /** A comparison function that sorts date strings. */
 export const compareDateStrings = (a: string, b: string): ComparatorValue => {
-  return compare(Date.parse(a), Date.parse(b))
+  return compare(parseDate(a), parseDate(b))
 }
 
 /** A comparator function that sorts date strings above others. */
 const compareDateAndOther = (a: string, b: string): ComparatorValue => {
-  const aIsDate = !isNaN(Date.parse(a))
-  const bIsDate = !isNaN(Date.parse(b))
+  const aIsDate = !isNaN(parseDate(a))
+  const bIsDate = !isNaN(parseDate(b))
   return aIsDate && !bIsDate ? -1
     : bIsDate && !aIsDate ? 1
     : 0
