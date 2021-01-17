@@ -13,11 +13,11 @@ import {
   parentOf,
   ellipsizeUrl,
   equalPath,
-  // getOffsetWithinContent,
   head,
   headValue,
   pathToContext,
   publishMode,
+  rootedParentOf,
 } from '../util'
 
 // components
@@ -122,7 +122,7 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
   </a>
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
-    {showContextBreadcrumbs && <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} />}
+    {showContextBreadcrumbs && simplePath.length > 1 && <ContextBreadcrumbs simplePath={rootedParentOf(rootedParentOf(simplePath))} />}
 
     {homeContext
       ? <HomeLink/>

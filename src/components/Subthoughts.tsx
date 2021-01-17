@@ -444,7 +444,8 @@ export const SubthoughtsComponent = ({
             return null
           }
 
-          // TODO
+          // TODO: childPath should be unrooted, but if we change it it breaks
+          // figure out what is incorrectly depending on childPath being rooted
           const childPath = getChildPath(state, child, simplePath, showContexts)
           const childContext = pathToContext(childPath)
 

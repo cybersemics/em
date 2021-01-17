@@ -383,7 +383,7 @@ const Thought = ({
 
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
-    {showContextBreadcrumbs ? <ContextBreadcrumbs simplePath={parentOf(parentOf(simplePath))} />
+    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs simplePath={rootedParentOf(rootedParentOf(simplePath))} homeContext={homeContext} />
     : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
       store.dispatch(expandContextThought(path))
     }}>... </a></span>
@@ -488,7 +488,7 @@ const ThoughtContainer = ({
   const value = headValue(simplePathLive!)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
-  const homeContext = showContexts && isRoot([head(parentOf(simplePath))])
+  const homeContext = showContexts && isRoot([head(rootedParentOf(simplePath))])
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
