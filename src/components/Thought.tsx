@@ -496,9 +496,6 @@ const ThoughtContainer = ({
 
   const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive!))
 
-  // in the Context View, perform a data integrity check to confirm that the thought is in thoughtIndex
-  const contextThought = showContexts && getThought(state, headValue(parentOf(simplePath)))
-
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
@@ -570,7 +567,7 @@ const ThoughtContainer = ({
   >
     <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
 
-      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(simplePath)} glyph={showContexts && !contextThought ? '✕' : null} leaf={isLeaf} onClick={(e: React.MouseEvent) => {
+      {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && <Bullet isEditing={isEditing} context={pathToContext(simplePath)} leaf={isLeaf} onClick={(e: React.MouseEvent) => {
         if (!isEditing || children.length === 0) {
           e.stopPropagation()
           store.dispatch(setCursor({ path: simplePath }))
