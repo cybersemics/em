@@ -46,7 +46,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
       // eslint-disable-next-line no-loop-func
       .map((parent, i) => ({
         id: hashContext(contexts[i]),
-        children: [],
+        children: parent?.children || [],
         lastUpdated: never(),
         ...parent,
         // fill in context if not defined
@@ -58,7 +58,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
       : providerParents.map(parent => ({
         ...parent,
         ...!isUnbuffered(parent) ? {
-          children: (parent.children || [])
+          children: parent.children
             .filter(_.flow(prop('value'), isFunction)),
           lastUpdated: never(),
           pending: true,
@@ -89,7 +89,7 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
 
     // enqueue children
     contexts = parents.map(parent =>
-      (parent.children || []).map(child => unroot([...parent.context, child.value]))
+      parent.children.map(child => unroot([...parent.context, child.value]))
     ).flat()
 
     // yield thought
