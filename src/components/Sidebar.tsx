@@ -3,35 +3,28 @@ import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.
 import { useDispatch, useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 import _ from 'lodash'
-import Breadcrumbs from './Breadcrumbs'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 import { toggleSidebar } from '../action-creators'
 import { State } from '../util/initialState'
 import { Path } from '../types'
+import { RecentlyEditedBreadcrumbs } from './ContextBreadcrumbs'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<SwipeableDrawerProps & { classes: any }>
 
-/** A single path within the sidebar. */
-const ThoughtsTab = ({ path }: { path: Path }) => {
-  return (
-    <div className='thoughts-tab'>
-      {/* Here charLimit and thoughtsLimit is provided based on mobile and desktop */}
-      <Breadcrumbs path={path} charLimit={32} thoughtsLimit={10} />
-    </div>
-  )
-}
-
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {
-  const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(useSelector((state: State) => state.recentlyEdited), []), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
+
+  const recentlyEditedTree = useSelector((state: State) => state.recentlyEdited)
+  const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
+  const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(recentlyEditedTree, { startingPath: [], showHiddenThoughts }), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
 
   return (
     <div className='recently-edited-sidebar'>
       <div className='header'>Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
         {
-          recentlyEdited.map((recentlyEditedThought, i) => <ThoughtsTab path={recentlyEditedThought.path} key={i} />)
+          recentlyEdited.map((recentlyEditedThought, i) => <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path as Path} charLimit={32} thoughtsLimit={10} />)
         }
       </div>
     </div>

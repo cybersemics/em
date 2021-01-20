@@ -383,7 +383,7 @@ const Thought = ({
 
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
-    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs simplePath={rootedParentOf(rootedParentOf(simplePath))} homeContext={homeContext} />
+    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs path={rootedParentOf(rootedParentOf(simplePath))} homeContext={homeContext} />
     : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
       store.dispatch(expandContextThought(path))
     }}>... </a></span>

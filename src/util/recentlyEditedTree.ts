@@ -1,16 +1,16 @@
 import _ from 'lodash'
 import { produce } from 'immer'
-import { parentOf, equalArrays, hashThought, head, pathToContext, timeDifference, timestamp } from '../util'
+import { parentOf, equalArrays, hashThought, head, isRoot, pathToContext, timeDifference, timestamp, isFunction } from '../util'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { Context, Index, Path, Timestamp } from '../types'
 
-interface Leaf {
+export interface Leaf {
   leaf: true,
   lastUpdated: Timestamp,
   path: Path,
 }
 
-type Tree = {
+export type Tree = {
   [index: string]: Tree | Leaf,
 }
 
@@ -35,6 +35,9 @@ const findTreeDeepestSubcontext = (tree: Tree, context: Context, index = 0): { n
     : { node: tree, path: context.slice(0, index) }
 }
 
+/** Check if the context has root or meta programming thoughts. */
+const isRootOrMeta = (context: Context) => isRoot(context) || context.find(isFunction)
+
 /**
  * Finds all the desecendant for a given context of a specific node.
  *
@@ -42,15 +45,15 @@ const findTreeDeepestSubcontext = (tree: Tree, context: Context, index = 0): { n
  * @param startingPath Context of the node whose descendants needs to be returned (encoded).
  * @returns Array of descendant object.
  */
-export const findTreeDescendants = (tree: Tree, startingPath?: Context): Leaf[] => {
+export const findTreeDescendants = (tree: Tree, { startingPath, showHiddenThoughts }: {startingPath?: Context, showHiddenThoughts?: boolean}): Leaf[] => {
   const node = startingPath && startingPath.length > 0
     ? _.get(tree, startingPath)
     : tree
   return !node ? []
     // check node.path here instead of node.leaf to not break on legacy tree structure
-    : node.path ? [{ ...node }]
+    : node.path ? [].concat(!showHiddenThoughts && isRootOrMeta(pathToContext(node.path)) ? [] : { ...node })
     : _.flatMap(Object.keys(node).map(
-      child => findTreeDescendants(node[child])
+      child => findTreeDescendants(node[child], { showHiddenThoughts })
     ))
 }
 
@@ -113,7 +116,7 @@ const nodeChange = (tree: Tree, oldPath: Path, newPath: Path) => {
       _.set(tree, newContext, { leaf: true, lastUpdated: timestamp(), path: newPath })
     }
     else {
-      const leafNodes = findTreeDescendants(tree, commonPath)
+      const leafNodes = findTreeDescendants(tree, { startingPath: commonPath, showHiddenThoughts: true })
       // if oldPath is already available we just need to update its descendants
       if (equalArrays(commonPath, oldContext)) {
         // this flag is needed to know if ancestor replaces very old descentdant in the tree
@@ -226,7 +229,7 @@ const nodeDelete = (tree: Tree, oldPath: Path, timestampUpdate = true) => {
       */
       const pathBeingMerged = commonPath.slice(0, closestAncestor.path.length + 1)
       _.unset(tree, pathBeingMerged) // deleting the merged path
-      findTreeDescendants(tree, nodeToMergeIntoPath).forEach(descendant => {
+      findTreeDescendants(tree, { startingPath: nodeToMergeIntoPath, showHiddenThoughts: true }).forEach(descendant => {
         _.set(tree, contextEncode(pathToContext(descendant.path)), { leaf: true, lastUpdated: timestampUpdate ? timestamp() : descendant.lastUpdated, path: descendant.path })
       })
     }
@@ -278,7 +281,7 @@ const nodeMove = (tree: Tree, oldPath: Path, newPath: Path) => {
       nodeDelete(tree, oldPath, false)
     }
     else {
-      const descendants = findTreeDescendants(tree, oldContext)
+      const descendants = findTreeDescendants(tree, { startingPath: oldContext, showHiddenThoughts: true })
       descendants.forEach(descendant => {
         const updatedNewPath = newPath.concat(descendant.path.slice(oldPath.length))
         nodeAdd(tree, updatedNewPath)
