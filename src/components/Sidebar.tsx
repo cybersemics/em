@@ -6,8 +6,7 @@ import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 import { toggleSidebar } from '../action-creators'
 import { State } from '../util/initialState'
-import { Path } from '../types'
-import { RecentlyEditedBreadcrumbs } from './ContextBreadcrumbs'
+import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<SwipeableDrawerProps & { classes: any }>
@@ -24,7 +23,7 @@ const RecentEdited = () => {
       <div className='header'>Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
         {
-          recentlyEdited.map((recentlyEditedThought, i) => <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path as Path} charLimit={32} thoughtsLimit={10} />)
+          recentlyEdited.map((recentlyEditedThought, i) => <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path} charLimit={32} thoughtsLimit={10} />)
         }
       </div>
     </div>

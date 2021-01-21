@@ -770,7 +770,7 @@ body.dark {
   vertical-align: bottom;
 }
 
-.nav-breadcrumbs. pty {
+.nav-breadcrumbs.nonempty {
   box-shadow: 0 10px 15px 25px white;
   clip-path: inset(-30px -30px 0 -30px) /* clip box-shadow to top half to prevent covering footer on mobile Safari (z-index doesn't work) */
 }
