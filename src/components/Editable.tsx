@@ -509,8 +509,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
     if (isTouch) {
       setTimeout(() => {
-        // Check for "•" equality in order to set editing value to false if user exit editing mode by tapping on bullet on left space of thought.
-        if (!window.getSelection()?.focusNode || (window.getSelection()?.focusNode?.textContent === '•')) {
+        // Set editing value to false if user exit editing mode by tapping on other elements other than editable.
+        if (!window.getSelection()?.focusNode || !window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')) {
           dispatch(editing({ value: false }))
         }
       })
