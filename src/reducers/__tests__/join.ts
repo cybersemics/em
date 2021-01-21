@@ -3,7 +3,7 @@ import { join } from '../../reducers'
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import importText from '../importText'
-import { exportContext } from '../../selectors'
+import { exportContext, getChildrenRanked } from '../../selectors'
 
 it('joins two simple thoughts', () => {
   const text = `- a
@@ -29,11 +29,49 @@ it('joins two simple thoughts', () => {
 it('joins two thoughts and merges their children', () => {
   const text = `- a
   - m
-    - x
+    - a
+    - b
   - n
-    - y
+    - c
   - o
-    - z
+    - d
+  - p
+    - e
+    - f
+- b`
+  const steps = [
+    importText({ path: RANKED_ROOT, text }),
+    setCursorFirstMatch(['a', 'o']),
+    join()
+  ]
+
+  const newState = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(newState, [ROOT_TOKEN], 'text/plain')
+  const expectedOutput = `
+- a
+  - m n o p
+    - a
+    - b
+    - c
+    - d
+    - e
+    - f
+- b
+`
+  expect(removeRoot(exported)).toEqual(expectedOutput)
+
+})
+
+it('generates unique & non-conflicting ranks', () => {
+  const text = `- a
+  - m
+    - a
+    - b
+  - n
+    - c
+  - o
+    - d
 - b`
   const steps = [
     importText({ path: RANKED_ROOT, text }),
@@ -42,14 +80,9 @@ it('joins two thoughts and merges their children', () => {
   ]
 
   const newState = reducerFlow(steps)(initialState())
-  const exported = exportContext(newState, [ROOT_TOKEN], 'text/plain')
-  const expectedOutput = `
-- a
-  - m n o
-    - x
-    - y
-    - z
-- b
-`
-  expect(removeRoot(exported)).toEqual(expectedOutput)
+
+  const children = getChildrenRanked(newState, ['a', 'm n o'])
+
+  expect(new Set(children.map(child => child.rank)).size).toBe(4)
+
 })

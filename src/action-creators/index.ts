@@ -35,6 +35,7 @@ export const existingThoughtDelete = reducerToThunk<typeof reducers.existingThou
 export const existingThoughtMove = reducerToThunk<typeof reducers.existingThoughtMove>('existingThoughtMove')
 export const indent = reducerToThunk<typeof reducers.indent>('indent')
 export const isPushing = reducerToThunk<typeof reducers.isPushing>('isPushing')
+export const join = reducerToThunk<typeof reducers.join>('join')
 export const modalRemindMeLater = reducerToThunk<typeof reducers.modalRemindMeLater>('modalRemindMeLater')
 export const moveThoughtDown = reducerToThunk<typeof reducers.moveThoughtDown>('moveThoughtDown')
 export const moveThoughtUp = reducerToThunk<typeof reducers.moveThoughtUp>('moveThoughtUp')
