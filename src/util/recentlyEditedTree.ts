@@ -3,6 +3,7 @@ import { produce } from 'immer'
 import { parentOf, equalArrays, hashThought, head, isRoot, pathToContext, timeDifference, timestamp, isFunction } from '../util'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { Context, Index, Path, Timestamp } from '../types'
+import { isEM } from './isEM'
 
 export interface Leaf {
   leaf: true,
@@ -35,8 +36,8 @@ const findTreeDeepestSubcontext = (tree: Tree, context: Context, index = 0): { n
     : { node: tree, path: context.slice(0, index) }
 }
 
-/** Check if the context has root or meta programming thoughts. */
-const isRootOrMeta = (context: Context) => isRoot(context) || context.find(isFunction)
+/** Check if the context has root, em or meta programming thoughts. */
+const shouldHide = (context: Context) => isRoot(context) || isEM(context) || context.find(isFunction)
 
 /**
  * Finds all the desecendant for a given context of a specific node.
@@ -51,7 +52,7 @@ export const findTreeDescendants = (tree: Tree, { startingPath, showHiddenThough
     : tree
   return !node ? []
     // check node.path here instead of node.leaf to not break on legacy tree structure
-    : node.path ? [].concat(!showHiddenThoughts && isRootOrMeta(pathToContext(node.path)) ? [] : { ...node })
+    : node.path ? [].concat(!showHiddenThoughts && shouldHide(pathToContext(node.path)) ? [] : { ...node })
     : _.flatMap(Object.keys(node).map(
       child => findTreeDescendants(node[child], { showHiddenThoughts })
     ))
