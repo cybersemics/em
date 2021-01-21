@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { simplifyPath } from '../selectors'
-import { ancestors, headValue, isRoot, strip } from '../util'
+import { ancestors, isRoot, strip } from '../util'
 import { State } from '../util/initialState'
 import { Child, Index, Path, SimplePath } from '../types'
 import classNames from 'classnames'
@@ -12,7 +12,7 @@ import Link from './Link'
 import Superscript from './Superscript'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
-interface ContextBreadcrumbProps {
+export interface ContextBreadcrumbProps {
   homeContext?: boolean,
   path: Path,
   thoughtsLimit?: number,
@@ -106,20 +106,5 @@ const ContextBreadcrumbs = ({ homeContext, simplePath, thoughtsLimit, charLimit,
     }
   </div>
 }
-
-/**
- * Varaint of ContextBreadcrumbs for recently edited with collapsing overflow.
- */
-export const RecentlyEditedBreadcrumbs = connect(mapStateToProps)((props: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
-
-  const parentSimplePath = props.simplePath.slice(0, -1) as SimplePath
-  const simplePath = props.simplePath
-
-  return <div className='recently-edited-breadcrumbs'>
-    <ContextBreadcrumbs {...props} simplePath={parentSimplePath}/>
-    <Link simplePath={simplePath} label={headValue(simplePath)} />
-    <Superscript simplePath={simplePath} />
-  </div>
-})
 
 export default connect(mapStateToProps)(ContextBreadcrumbs)
