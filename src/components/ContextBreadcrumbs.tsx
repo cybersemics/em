@@ -33,7 +33,7 @@ const mapStateToProps = (state: State, props: ContextBreadcrumbProps) => ({
 })
 
 /** Breadcrumbs for contexts within the context views. */
-const ContextBreadcrumbs = ({ homeContext, simplePath, thoughtsLimit, charLimit, classNamesObject }: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
+export const UnconnectedContextBreadcrumbs = ({ homeContext, simplePath, thoughtsLimit, charLimit, classNamesObject }: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
   // if thoughtsLimit or charLimit is not passed , the default value of ellipsize will be false and component will have default behaviour
   const [ellipsize, setEllipsize] = React.useState(thoughtsLimit !== undefined && charLimit !== undefined)
 
@@ -107,4 +107,4 @@ const ContextBreadcrumbs = ({ homeContext, simplePath, thoughtsLimit, charLimit,
   </div>
 }
 
-export default connect(mapStateToProps)(ContextBreadcrumbs)
+export default connect(mapStateToProps)(UnconnectedContextBreadcrumbs)
