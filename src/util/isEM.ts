@@ -1,11 +1,11 @@
 import { EM_TOKEN } from '../constants'
-import { Child } from '../types'
+import { Context, Path } from '../types'
+import { isPath } from './isPath'
 
 /** Returns true if the Path is the EM_TOKEN. */
-export const isEM = (thoughts: (string | Child)[]): boolean =>
+export const isEM = (thoughts: Context | Path): boolean =>
   thoughts.length === 1 &&
-  !!thoughts[0] &&
-  (
-    (thoughts[0] as Child).value === EM_TOKEN ||
-    (thoughts[0] as string) === EM_TOKEN
+  (isPath(thoughts) ?
+    thoughts[0].value === EM_TOKEN :
+    thoughts[0] === EM_TOKEN
   )
