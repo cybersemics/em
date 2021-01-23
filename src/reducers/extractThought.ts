@@ -4,6 +4,7 @@ import { headRank, headValue, pathToContext, reducerFlow, rootedParentOf } from 
 import existingThoughtChange from './existingThoughtChange'
 import newThought from './newThought'
 import { simplifyPath } from '../selectors'
+import alert from './alert'
 
 /** Extract the selection as child thought. */
 const extractThought = (state: State) => {
@@ -17,6 +18,9 @@ const extractThought = (state: State) => {
 
   const selectionStart = window.getSelection()?.getRangeAt(0).startOffset || 0
   const selectionEnd = selectionStart + selection.toString().length
+  if (selectionStart === selectionEnd) {
+    return alert(state, { value: 'No text selected to extract' })
+  }
 
   const value = headValue(cursor)
   const newValue = `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim()
@@ -32,7 +36,8 @@ const extractThought = (state: State) => {
       newValue,
       context: cursorContext,
       path: simplifyPath(state, cursor),
-      rankInContext: rank }),
+      rankInContext: rank
+    }),
     newThought({ value: childValue, insertNewSubthought: true, preventSetCursor: true }),
   ]
 
