@@ -31,7 +31,7 @@ import {
   parseJsonSafe,
   pathToContext,
   rootedParentOf,
-  subsetThoughts,
+  descendantThoughts,
   sumSubthoughtsLength,
   unroot,
 } from '../util'
@@ -94,7 +94,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   // check if the cursor path includes the current thought
   // include ROOT to prevent re-render when ROOT subthought changes
-  const isEditingPath = isRoot(props.simplePath) || subsetThoughts(cursor, resolvedPath)
+  const isEditingPath = isRoot(props.simplePath) || descendantThoughts(cursor, resolvedPath)
 
   // check if the cursor is editing an thought directly
   const isEditing = equalPath(cursor, resolvedPath)
@@ -155,7 +155,7 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   // there is no self thought to check since this is <Subthoughts>
-  const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom)
+  const isDescendant = descendantThoughts(thoughtsTo, thoughtsFrom)
   const divider = isDivider(headValue(thoughtsTo))
 
   // do not drop on descendants or thoughts hidden by autofocus
@@ -450,7 +450,7 @@ export const SubthoughtsComponent = ({
           const childContext = pathToContext(childPath)
 
           /** Returns true if the cursor in in the child path. */
-          const isEditingChildPath = () => subsetThoughts(state.cursor, childPath)
+          const isEditingChildPath = () => descendantThoughts(state.cursor, childPath)
           const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
 
           /** Returns true if the bullet should be hidden. */
