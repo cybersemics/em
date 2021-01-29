@@ -100,7 +100,7 @@ const Content: ContentComponent = props => {
     publish: publishMode(),
   }), [tutorialStep, isTutorialLocal])
 
-  return <div id='content-wrapper' data-testid='content-wrapper-test' onClick={e => {
+  return <div id='content-wrapper' onClick={e => {
     if (!showModal && isLeftSpaceClick(e, contentRef.current!)) {
       toggleSidebar()
     }

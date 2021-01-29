@@ -1,7 +1,7 @@
 import React, { createRef } from 'react'
 import { act } from 'react-dom/test-utils'
-import { ReactWrapper } from 'enzyme'
 import { wrapInTestContext } from 'react-dnd-test-utils'
+import { render } from '@testing-library/react'
 
 import { initialize } from '../initialize'
 import { Provider } from 'react-redux'
@@ -14,7 +14,6 @@ import { Await } from '../types'
 import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
-import { render } from '@testing-library/react'
 
 /**
  * Test App.
@@ -36,9 +35,6 @@ let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
 
-  // store wrapper using closure since act cannot return
-  let wrapper // eslint-disable-line fp/no-let
-
   await act(async () => {
 
     jest.useFakeTimers()
@@ -53,7 +49,7 @@ const createTestApp = async () => {
     const TestApp = wrapInTestContext(App)
     const dndRef = createRef<HTMLElement>()
 
-    wrapper = render(<TestApp ref={dndRef}/>)
+    render(<TestApp ref={dndRef}/>)
 
     store.dispatch([
 
@@ -71,8 +67,6 @@ const createTestApp = async () => {
     document.DND = dndRef.current
   })
 
-  // since act cannot return anything, we have to wait for wrapper to be set and then convince Typescript that it is not being used before it is assigned
-  return wrapper as unknown as ReactWrapper<unknown, unknown>
 }
 
 /** Clear store, localStorage, local db, and window event handlers. */

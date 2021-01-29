@@ -38,8 +38,7 @@ describe('Extract thought', () => {
     const alert = await screen.findByText('No text selected to extract')
     expect(alert).toBeTruthy()
 
-    const content = screen.getByTestId('content-wrapper-test')
-    const [thought] = await findAllByText(content, 'this is a thought', { selector: 'div' })
+    const [thought] = await screen.findAllByText('this is a thought', { selector: 'div' })
     expect(thought).toBeTruthy()
   })
 
@@ -51,9 +50,7 @@ describe('Extract thought', () => {
       setCursorFirstMatchActionCreator(['this is a thought'])
     ])
 
-    const content = screen.getByTestId('content-wrapper-test')
-
-    const [thought] = await findAllByText(content, 'this is a thought', { selector: 'div' })
+    const [thought] = await screen.findAllByText('this is a thought', { selector: 'div' })
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought, 10, 17)
@@ -62,8 +59,8 @@ describe('Extract thought', () => {
     const updatedThought = await findAllByText(thought, thought.textContent!.slice(0, 9), { exact: true })
     expect(updatedThought).toHaveLength(1)
 
-    const createdThought = await findAllByText(content, selectedText, { exact: true })
-    expect(createdThought).toHaveLength(2)
+    const createdThought = await screen.findAllByText(selectedText, { exact: true, selector: 'div' })
+    expect(createdThought).toHaveLength(1)
 
     // created thought gets appended to the end
     const thoughtChildrenWrapper = thought.closest('li')?.lastElementChild as HTMLElement
@@ -79,16 +76,14 @@ describe('Extract thought', () => {
       setCursorFirstMatchActionCreator(['this is a test thought'])
     ])
 
-    const content = screen.getByTestId('content-wrapper-test')
-
-    const [thought] = await findAllByText(content, 'this is a test thought', { selector: 'div' })
+    const [thought] = await screen.findAllByText('this is a test thought', { selector: 'div' })
     expect(thought).toBeTruthy()
 
     const selectedText = setSelection(thought, 10, 22)
     store.dispatch([extractThought()])
 
-    const createdThought = await screen.findAllByText(selectedText, { exact: true })
-    expect(createdThought).toHaveLength(2)
+    const createdThought = await screen.findAllByText(selectedText, { exact: true, selector: 'div' })
+    expect(createdThought).toHaveLength(1)
 
     expect(store.getState().cursor).toMatchObject([{ value: thought.textContent!.slice(0, 9) }])
 
