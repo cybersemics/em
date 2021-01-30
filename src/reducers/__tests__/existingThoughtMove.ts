@@ -40,7 +40,7 @@ it('persist id on move', () => {
   ]
 
   const stateNew1 = reducerFlow(steps1)(initialState())
-  const oldExactThought = getThought(stateNew1, 'a2').contexts.find(thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0)
+  const oldExactThought = getThought(stateNew1, 'a2')!.contexts.find(thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0)
   const oldId = oldExactThought?.id
 
   const steps2 = [
@@ -51,7 +51,7 @@ it('persist id on move', () => {
   ]
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
-  const newExactThought = getThought(stateNew2, 'a2').contexts.find(thought => equalArrays(thought.context, ['a1']) && thought.rank === 0)
+  const newExactThought = getThought(stateNew2, 'a2')!.contexts.find(thought => equalArrays(thought.context, ['a1']) && thought.rank === 0)
   const newId = newExactThought?.id
 
   expect(oldId).toEqual(newId)
@@ -400,5 +400,81 @@ it('merge with duplicate with duplicate rank', () => {
       context: ['a'],
       rank: 0,
     }])
+
+})
+
+it('move with duplicate descendant', () => {
+
+  const text = `
+  - a
+  - b
+    - x
+    - y
+      - x`
+
+  const steps = [
+    importText({ path: RANKED_ROOT, text }),
+    existingThoughtMove({
+      oldPath: [{ value: 'b', rank: 1 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  // contextIndex
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - b
+      - x
+      - y
+        - x`)
+
+  // x should have contexts a/b and a/b/y
+  expect(getContexts(stateNew, 'x'))
+    .toMatchObject([
+      { context: ['a', 'b'], rank: 0 },
+      { context: ['a', 'b', 'y'], rank: 0 }
+    ])
+
+})
+
+it('move with duplicate descendant', () => {
+
+  const text = `
+  - a
+  - b
+    - x
+    - y
+      - x`
+
+  const steps = [
+    importText({ path: RANKED_ROOT, text }),
+    existingThoughtMove({
+      oldPath: [{ value: 'b', rank: 1 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  // contextIndex
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - b
+      - x
+      - y
+        - x`)
+
+  // x should have contexts a/b and a/b/y
+  expect(getContexts(stateNew, 'x'))
+    .toMatchObject([
+      { context: ['a', 'b'], rank: 0 },
+      { context: ['a', 'b', 'y'], rank: 0 }
+    ])
 
 })
