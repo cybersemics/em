@@ -32,6 +32,7 @@ type RecursiveMoveResult = {
   archived?: Timestamp,
   contextsNew: Context[],
   contextsOld: Context[],
+  hashedKey: string,
   id: string,
   newThought: Lexeme,
   pathNew: Path,
@@ -169,6 +170,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
         // merge current thought update
         value: child.value,
+        hashedKey: hashedKey,
         // TODO: Confirm that find will always succeed
         rank: ((childNewThought.contexts || [])
           .find(context => equalArrays(context.context, contextNew))
@@ -210,9 +212,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         const accumInnerChildrenOld = accumInner.contextIndex[contextEncodedOld]?.children
         const accumInnerChildrenNew = accumInner.contextIndex[contextEncodedNew]?.children
         const childrenOld = (accumInnerChildrenOld || getAllChildren(state, contextOld))
-          .filter((child: Child) => child.value !== result.value)
+          .filter((child: Child) => hashThought(child.value) !== result.hashedKey)
         const childrenNew = (accumInnerChildrenNew || getAllChildren(state, contextNew))
-          .filter((child: Child) => child.value !== result.value)
+          .filter((child: Child) => hashThought(child.value) !== result.hashedKey)
           .concat({
             value: result.value,
             rank: result.rank,

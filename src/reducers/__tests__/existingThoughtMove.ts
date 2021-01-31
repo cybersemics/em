@@ -478,3 +478,30 @@ it('move with duplicate descendant', () => {
     ])
 
 })
+
+it('move with hash matched descendant', () => {
+
+  const text = `
+  - a
+  - b
+    - =note
+      - note`
+
+  const steps = [
+    importText({ path: RANKED_ROOT, text }),
+    existingThoughtMove({
+      oldPath: [{ value: 'b', rank: 1 }],
+      newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - b
+      - =note
+        - note`)
+
+})
