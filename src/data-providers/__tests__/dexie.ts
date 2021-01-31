@@ -41,14 +41,14 @@ describe('integration', () => {
     const thoughtState = getThought(store.getState(), 'Settings')
 
     expect(thoughtState).not.toBeUndefined()
-    expect(thoughtState.contexts).toHaveLength(1)
+    expect(thoughtState!.contexts).toHaveLength(1)
 
     const thoughtDB = await dbGetThought(db, 'Settings')
 
     expect(thoughtDB).not.toBeUndefined()
     expect(thoughtDB!.contexts).toHaveLength(1)
 
-    expect(thoughtState.contexts[0].id).toEqual(thoughtDB!.contexts[0].id)
+    expect(thoughtState!.contexts[0].id).toEqual(thoughtDB!.contexts[0].id)
   })
 
   it('persist newThought', async () => {
