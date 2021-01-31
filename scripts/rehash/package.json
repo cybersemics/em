@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/scripts/rehash/index.js"
+  }
+}
