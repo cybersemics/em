@@ -34,7 +34,7 @@ const singularize = (s: string) => s !== 's' ? pluralize.singular(s) : s
  * - ignore emojis (when there is other text)
  * - singularize.
  */
-export const thoughtTransform = _.flow([
+export const normalizeThought = _.flow([
   // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
   stripTags,
   lower,

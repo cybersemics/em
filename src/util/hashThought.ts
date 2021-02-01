@@ -2,7 +2,7 @@ import * as murmurHash3 from 'murmurhash3js'
 import _ from 'lodash'
 import globals from '../globals'
 import { ThoughtHash } from '../types'
-import { thoughtTransform } from './thoughtTransform'
+import { normalizeThought } from './normalizeThought'
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
 /**
@@ -19,7 +19,7 @@ import { thoughtTransform } from './thoughtTransform'
  */
 export const hashThought: (s: string) => ThoughtHash = _.memoize(
   (value: string) => _.flow([
-    thoughtTransform,
+    normalizeThought,
     ...globals.disableThoughtHashing ? [] : [murmurHash3.x64.hash128],
   ])(value)
 )

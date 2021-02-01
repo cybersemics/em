@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { ID } from '../constants'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
 import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending, simplifyPath } from '../selectors'
@@ -18,6 +17,7 @@ import {
   headId,
   headRank,
   moveThought,
+  normalizeThought,
   parentOf,
   pathToContext,
   reducerFlow,
@@ -28,18 +28,26 @@ import {
   timestamp,
 } from '../util'
 
-type RecursiveMoveResult = {
-  archived?: Timestamp,
+type LexemeUpdate = {
+  value: string,
+  newThought: Lexeme,
   contextsNew: Context[],
   contextsOld: Context[],
-  hashedKey: string,
+}
+
+type ChildUpdate = {
+  archived?: Timestamp,
   id: string,
-  newThought: Lexeme,
   pathNew: Path,
   pathOld: Path,
   pending?: boolean,
   rank: number,
   value: string,
+}
+
+type RecursiveMoveResult = {
+  lexemeUpdates: Index<LexemeUpdate>,
+  childUpdates: Index<ChildUpdate>,
 }
 
 /** Moves a thought from one context to another, or within the same context. */
@@ -118,26 +126,52 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       ...archived ? { archived } : {},
     })
 
-  /** Updates descendants. */
-  const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = []): Index<RecursiveMoveResult> => {
+  const shouldUpdateRank = isPathInCursor && isDuplicateMerge
 
-    const newLastRank = getNextRank(state, pathToContext(pathNew))
-    const simplePathOld = simplifyPath(state, pathOld)
-    const oldThoughts = pathToContext(simplePathOld)
+  // if duplicate subthoughts are merged then use rank of the duplicate thought in the new path instead of the newly calculated rank
+  const updatedNewPath = shouldUpdateRank && duplicateSubthought
+    ? parentOf(newPath).concat(duplicateSubthought)
+    : newPath
+
+  const updatedNewSimplePath = shouldUpdateRank && duplicateSubthought
+    ? parentOf(newSimplePath).concat(duplicateSubthought)
+    : newSimplePath
+
+  /** Updates descendants. */
+  const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = []): RecursiveMoveResult => {
+
+    const newLastRank = getNextRank(state, pathToContext(pathNew)) // get next rank in new path
+    const simplePathOld = simplifyPath(state, pathOld)// simple old path
+    const oldThoughts = pathToContext(simplePathOld) // old context
 
     return getChildrenRanked(state, oldThoughts).reduce((accum, child, i) => {
+
       const hashedKey = hashThought(child.value)
+      // lexeme of the moved thought value
+      // NOTE: thoughtIndex is updated on the fly
+      // @thoughtIndex
       const thoughtAccum = getThought({ ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } }, child.value)
+
       if (!thoughtAccum) {
         console.warn(`Missing lexeme "${child.value}"`)
         console.warn('context', oldThoughts)
       }
+
+      // old contexts in which the thoughts reside
+      // @thoughtIndex
       const contextsOld = ((getThought(state, child.value) || {}).contexts || [])
         .map(thoughtContext => thoughtContext.context)
+
       const childContext: Context = [...oldThoughts, child.value]
       const childPathOld: Path = [...pathOld, child]
+
+      // why use previous child that doesn't have updated rank here ?
       const childPathNew: Path = [...pathNew, child]
+
+      // context without head. It reprents recursive context from which recursive update has started
       const contextRecursiveNew: Context = [...contextRecursive, child.value]
+
+      // new context of this child
       const contextNew: Context = [...newThoughts, ...contextRecursive]
 
       // update rank of first depth of childs except when a thought has been moved within the same context
@@ -148,6 +182,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         ? timestamp()
         : exactThought.archived as Timestamp
 
+      // lexeme with old context removed
       // thoughtAccum should always exist, but unfortunately there is a bug somewhere that causes there to be missing lexemes
       // define a new lexeme if the old lexeme is missing
       const childOldThoughtContextRemoved = thoughtAccum
@@ -158,44 +193,63 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
           created: timestamp(),
           lastUpdated: timestamp()
         }
+
+      // New lexeme
       const childNewThought = removeDuplicatedContext(addContext(childOldThoughtContextRemoved, contextNew, movedRank, child.id as string, archived), contextNew)
 
+      // New context after it has been removed
       const contextsNew = (childNewThought.contexts || []).map(contexts => contexts.context)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
 
-      const innerResult: RecursiveMoveResult = {
+      const childOldContextHash = hashContext(pathToContext(childPathOld))
+
+      const lexemeUpdate: LexemeUpdate = {
         // merge sibling updates
         // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
         // merge current thought update
         value: child.value,
-        hashedKey: hashedKey,
-        // TODO: Confirm that find will always succeed
-        rank: ((childNewThought.contexts || [])
-          .find(context => equalArrays(context.context, contextNew))
-        )!.rank,
-        // child.id is undefined sometimes. Unable to reproduce.
-        id: child.id ?? '',
-        pending: isPending(state, childContext),
-        archived,
         newThought: childNewThought,
-        pathOld: childPathOld,
-        pathNew: childPathNew,
         contextsOld,
         contextsNew,
       }
 
-      return {
-        ...accum,
-        [hashedKey]: innerResult,
-        ...recursiveUpdates(childPathOld, childPathNew, contextRecursiveNew)
+      const childUpdate: ChildUpdate = {
+        // child.id is undefined sometimes. Unable to reproduce.
+        id: child.id ?? '',
+        // TODO: Confirm that find will always succeed
+        rank: ((childNewThought.contexts || [])
+          .find(context => equalArrays(context.context, contextNew))
+            )!.rank,
+        pending: isPending(state, childContext),
+        archived,
+        pathOld: childPathOld,
+        pathNew: childPathNew,
+        value: child.value,
       }
-    }, {} as Index<RecursiveMoveResult>)
+
+      const { lexemeUpdates: recursiveLexemeUpdates, childUpdates: recursivechildUpdates } = recursiveUpdates(childPathOld, childPathNew, contextRecursiveNew)
+
+      return {
+        lexemeUpdates: {
+          ...accum.lexemeUpdates,
+          [hashedKey]: lexemeUpdate,
+          ...recursiveLexemeUpdates
+        },
+        childUpdates: {
+          ...accum.childUpdates,
+          [childOldContextHash]: childUpdate,
+          ...recursivechildUpdates
+        }
+      }
+
+    }, { lexemeUpdates: {}, childUpdates: {} } as RecursiveMoveResult)
   }
 
-  const descendantUpdatesResult = recursiveUpdates(oldPath, newPath)
-  const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { newThought }, key: string) => {
+  const { lexemeUpdates, childUpdates } = recursiveUpdates(oldSimplePath, updatedNewSimplePath)
+
+  const descendantUpdates = _.transform(lexemeUpdates, (accum, { newThought }, key: string) => {
     accum[key] = newThought
   }, {} as Index<Lexeme>)
 
@@ -204,24 +258,27 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       contextIndex: Index<Parent | null>,
       pendingMoves: { pathOld: Path, pathNew: Path }[],
     }
-    : Object.values(descendantUpdatesResult).reduce((accum, result) =>
+    : Object.values(lexemeUpdates).reduce((accum, result) =>
       result.contextsOld.reduce((accumInner, contextOld, i) => {
         const contextNew = result.contextsNew[i]
         const contextEncodedOld = hashContext(contextOld)
         const contextEncodedNew = hashContext(contextNew)
+
+        const childUpdate = childUpdates[hashContext(contextOld.concat(result.value))]
+
         const accumInnerChildrenOld = accumInner.contextIndex[contextEncodedOld]?.children
         const accumInnerChildrenNew = accumInner.contextIndex[contextEncodedNew]?.children
         const childrenOld = (accumInnerChildrenOld || getAllChildren(state, contextOld))
-          .filter((child: Child) => hashThought(child.value) !== result.hashedKey)
+          .filter((child: Child) => normalizeThought(child.value) !== normalizeThought(result.value))
         const childrenNew = (accumInnerChildrenNew || getAllChildren(state, contextNew))
-          .filter((child: Child) => hashThought(child.value) !== result.hashedKey)
+          .filter((child: Child) => normalizeThought(child.value) !== normalizeThought(result.value))
           .concat({
-            value: result.value,
-            rank: result.rank,
+            value: childUpdate.value,
+            rank: childUpdate.rank,
             lastUpdated: timestamp(),
             // result.id is undefined sometimes. Unable to reproduce.
-            id: result.id ?? '',
-            ...result.archived ? { archived: result.archived } : null
+            id: childUpdate.id ?? '',
+            ...childUpdate.archived ? { archived: childUpdate.archived } : null
           })
 
         // if (result.pending) {
@@ -241,18 +298,18 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
               context: contextOld,
               children: childrenOld,
               lastUpdated: timestamp(),
-              ...result.pending ? { pending: true } : null,
+              ...childUpdate.pending ? { pending: true } : null,
             } : null,
             [contextEncodedNew]: {
               context: contextNew,
               children: childrenNew,
               lastUpdated: timestamp(),
-              ...result.pending ? { pending: true } : null,
+              ...childUpdate.pending ? { pending: true } : null,
             },
           },
-          pendingMoves: [...accum.pendingMoves, ...result.pending ? [{
-            pathOld: result.pathOld,
-            pathNew: result.pathNew,
+          pendingMoves: [...accum.pendingMoves, ...childUpdate.pending ? [{
+            pathOld: childUpdate.pathOld,
+            pathNew: childUpdate.pathNew,
           }] : []]
         }
 
@@ -294,29 +351,18 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
   }
 
-  /** Updates the ranks within the given path to match those in descendantUpdatesResult. */
-  const updateMergedThoughtsRank = (path: Path) => path.map(
-    (child: Child) => {
-      const updatedThought = descendantUpdatesResult[hashThought(child.value)]
-      // child.id is undefined sometimes. Unable to reproduce.
-      return {
-        ...child,
-        rank: updatedThought ? updatedThought.rank : child.rank,
-        id: child.id ?? '',
-      } as Child
-    }
-  )
+  /** Returns new path for the given old context.
+   * Note: This uses childUpdates so it works only for updated descendants. For main ancestor oldPath that has been moved (ancestor) use updatedNewPath instead.
+   */
+  const getNewPathFromOldContext = (path: Path) => childUpdates[hashContext(pathToContext(path))].pathNew
 
-  // if duplicate subthoughts are merged then update rank of thoughts of cursor descendants
-  const cursorDescendantPath = (isPathInCursor && isDuplicateMerge ? updateMergedThoughtsRank : ID)(state.cursor || []).slice(oldPath.length)
+  // if cursor is at old path then we don't need to find getNewPathfromContext as we already have updatedNewPath
+  // Example: [a.b] (oldPath) and [a.b] (cursor) are subsets of each other
+  const isCursorAtOldPath = isPathInCursor && state.cursor?.length === oldPath.length
 
-  // if duplicate subthoughts are merged then use rank of the duplicate thought in the new path instead of the newly calculated rank
-  const updatedNewPath = isPathInCursor && isDuplicateMerge && duplicateSubthought
-    ? parentOf(newPath).concat(duplicateSubthought)
-    : newPath
-
-  const newCursorPath = isPathInCursor
-    ? updatedNewPath.concat(cursorDescendantPath)
+  const newCursorPath = isPathInCursor ?
+    isCursorAtOldPath ?
+      updatedNewPath : getNewPathFromOldContext(state.cursor || [])
     : state.cursor
 
   return reducerFlow([
