@@ -7,7 +7,7 @@ import { Context } from '../types'
 
 /** Cache localStorage settings. */
 const localStorageSettingsCache = keyValueBy(['Tutorial', 'Tutorial Step'], value => ({
-  [value]: localStorage['Settings/' + value],
+  [value]: typeof localStorage !== 'undefined' ? localStorage['Settings/' + value] : undefined,
 }))
 
 /** Returns one of the localStorage Settings values that have been cached. */

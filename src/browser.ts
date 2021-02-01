@@ -3,16 +3,16 @@
 import { v4 as uuid } from 'uuid'
 
 /** Returns true if the user's device is touch screen. */
-export const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+export const isTouch = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
 
 /** Returns true if the navigator platform contains 'Linux armv71'. */
-export const isAndroid = navigator.platform === 'Linux armv7l'
+export const isAndroid = typeof navigator !== 'undefined' && navigator.platform === 'Linux armv7l'
 
 /** Returns true if the navigator platform contains 'MacIntel'. */
-export const isMac = navigator.platform === 'MacIntel'
+export const isMac = typeof navigator !== 'undefined' && navigator.platform === 'MacIntel'
 
 /** Returns true if the navigator vendor contains 'Apple'. */
-export const isSafari = () => navigator.vendor.includes('Apple')
+export const isSafari = () => typeof navigator !== 'undefined' && navigator.vendor.includes('Apple')
 
 /**
  * Use clientId to ignore value events from firebase originating from this client in this session.

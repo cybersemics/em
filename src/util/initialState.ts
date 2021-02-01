@@ -145,7 +145,8 @@ export const initialState = (created: Timestamp = timestamp()) => {
 
   const state: State = {
     authenticated: false,
-    autologin: localStorage.autologin === 'true',
+    // eslint-disable-next-line no-mixed-operators
+    autologin: typeof localStorage !== 'undefined' && localStorage.autologin === 'true',
     contextViews: {},
     cursor: null,
     cursorBeforeSearch: null,
@@ -175,7 +176,8 @@ export const initialState = (created: Timestamp = timestamp()) => {
     showSplitView: false,
     showTopControls: true,
     showBreadcrumbs: true,
-    splitPosition: parseJsonSafe(localStorage.getItem('splitPosition'), 0),
+    // eslint-disable-next-line no-mixed-operators
+    splitPosition: parseJsonSafe(typeof localStorage !== 'undefined' ? localStorage.getItem('splitPosition') : null, 0),
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.
@@ -191,8 +193,10 @@ export const initialState = (created: Timestamp = timestamp()) => {
   Object.keys(MODALS).forEach(key => {
     // initial modal states
     state.modals[MODALS[key]] = {
-      complete: globals.disableTutorial || JSON.parse(localStorage['modal-complete-' + MODALS[key]] || 'false'),
-      hideuntil: JSON.parse(localStorage['modal-hideuntil-' + MODALS[key]] || '0')
+      // eslint-disable-next-line no-mixed-operators
+      complete: globals.disableTutorial || JSON.parse(typeof localStorage !== 'undefined' && localStorage['modal-complete-' + MODALS[key]] || 'false'),
+      // eslint-disable-next-line no-mixed-operators
+      hideuntil: JSON.parse(typeof localStorage !== 'undefined' && localStorage['modal-hideuntil-' + MODALS[key]] || '0')
     }
   })
 
