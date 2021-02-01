@@ -197,7 +197,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const parent = initialContextIndex[contextEncoded]
   const lastChildIndex = (parent?.children.length || 0) + blocksNormalized.length - 1
   const importContextEncoded = hashContext(pathToContext(importPath))
-  const lastChildFirstLevel = contextIndex[importContextEncoded].children[lastChildIndex]
+  const lastChildFirstLevel = contextIndex[importContextEncoded]?.children[lastChildIndex]
   const lastImported = unroot([...importPath, lastChildFirstLevel])
 
   return {
