@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import existingThoughtChange from './existingThoughtChange'
-import { getAllChildren, getChildPath, getNextRank, getPrevRank, simplifyPath } from '../selectors'
+import { getAllChildren, getChildPath, getNextRank, simplifyPath } from '../selectors'
 import { head, parentOf, pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 import existingThoughtMove from './existingThoughtMove'
@@ -18,15 +18,9 @@ const join = (state: State) => {
   const { value, rank } = head(cursor)
   const siblings = contextChildren.filter(child => child.value !== value && child.rank !== rank)
 
-  const cursorIndex = contextChildren.findIndex(child => child.value === value && child.rank === rank)
-  const contextChildrenCount = contextChildren.slice(0, cursorIndex).reduce((acc, sibling) => {
-    return acc + getAllChildren(state, pathToContext([...parentOf(cursor), sibling])).length
-  }, 0)
-
-  let prevRankMin = getPrevRank(state, context) - contextChildrenCount
   let nextRankMin = getNextRank(state, context)
 
-  const reducers = siblings.reduce((acc, sibling, index) => {
+  const reducers = contextChildren.reduce((acc, sibling, index) => {
 
     const pathToSibling = [...parentOf(cursor), sibling]
     const children = getAllChildren(state, pathToContext(pathToSibling))
@@ -34,10 +28,8 @@ const join = (state: State) => {
     return [...acc, ...children.map((child, i) => {
       const simplePath = simplifyPath(state, pathToSibling)
       const oldPath = getChildPath(state, child, simplePath)
-      const newPath = [...cursor, { ...child, rank: index < cursorIndex ? prevRankMin += 1 : nextRankMin += 1 }]
-
+      const newPath = [...cursor, { ...child, rank: nextRankMin += 1 }]
       return existingThoughtMove({ oldPath, newPath })
-
     })]
 
   }, [] as _.RightCurriedFunction1<State, State>[])
