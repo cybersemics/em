@@ -441,14 +441,13 @@ it('move with duplicate descendant', () => {
 
 })
 
-it('move with duplicate descendant', () => {
+it('move with hash matched descendant', () => {
 
   const text = `
   - a
   - b
-    - x
-    - y
-      - x`
+    - =note
+      - note`
 
   const steps = [
     importText({ path: RANKED_ROOT, text }),
@@ -458,23 +457,20 @@ it('move with duplicate descendant', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
 
-  // contextIndex
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
     - b
-      - x
-      - y
-        - x`)
+      - =note
+        - note`)
 
-  // x should have contexts a/b and a/b/y
-  expect(getContexts(stateNew, 'x'))
+  // note should have contexts a/b and a/b/=note
+  expect(getContexts(stateNew, 'note'))
     .toMatchObject([
       { context: ['a', 'b'], rank: 0 },
-      { context: ['a', 'b', 'y'], rank: 0 }
+      { context: ['a', 'b', '=note'], rank: 0 }
     ])
 
 })
