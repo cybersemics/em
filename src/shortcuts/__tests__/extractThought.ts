@@ -5,6 +5,14 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestA
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 /**
+ * Gets a thought by value.
+ */
+const findThoughtByText = async (value: string, container?: HTMLElement) => {
+  const thoughtNodes = await (container ? findAllByText(container!, value, { exact: true }) : screen.findAllByText(value, { exact: true }))
+  return thoughtNodes.find(t => t.hasAttribute('contenteditable'))
+}
+
+/**
  * Set range selection.
  */
 const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd: number) => {
@@ -27,10 +35,11 @@ describe('Extract thought', () => {
   afterEach(cleanupTestApp)
 
   it('an alert should be shown if there is no selection', async () => {
+    const thoughtValue = 'this is a thought'
     store.dispatch([
-      newThought({ value: 'this is a thought' }),
+      newThought({ value: thoughtValue }),
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
-      setCursorFirstMatchActionCreator(['this is a thought'])
+      setCursorFirstMatchActionCreator([thoughtValue])
     ])
 
     store.dispatch([extractThought()])
@@ -38,32 +47,32 @@ describe('Extract thought', () => {
     const alert = await screen.findByText('No text selected to extract')
     expect(alert).toBeTruthy()
 
-    const [thought] = await screen.findAllByText('this is a thought', { selector: 'div' })
+    const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
   })
 
   it('the selected part of a thought is extracted as a child thought', async () => {
 
+    const thoughtValue = 'this is a thought'
     store.dispatch([
-      newThought({ value: 'this is a thought' }),
+      newThought({ value: thoughtValue }),
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
-      setCursorFirstMatchActionCreator(['this is a thought'])
+      setCursorFirstMatchActionCreator([thoughtValue])
     ])
 
-    const [thought] = await screen.findAllByText('this is a thought', { selector: 'div' })
+    const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
 
-    const selectedText = setSelection(thought, 10, 17)
+    const selectedText = setSelection(thought!, 10, 17)
     store.dispatch([extractThought()])
 
-    const updatedThought = await findAllByText(thought, thought.textContent!.slice(0, 9), { exact: true })
-    expect(updatedThought).toHaveLength(1)
+    expect(thought?.textContent).toBe(thoughtValue.slice(0, 9))
 
-    const createdThought = await screen.findAllByText(selectedText, { exact: true, selector: 'div' })
-    expect(createdThought).toHaveLength(1)
+    const createdThought = await findThoughtByText(selectedText)
+    expect(createdThought).toBeTruthy()
 
     // created thought gets appended to the end
-    const thoughtChildrenWrapper = thought.closest('li')?.lastElementChild as HTMLElement
+    const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
     const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
 
     expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['sub-thought', 'thought'])
@@ -71,21 +80,22 @@ describe('Extract thought', () => {
   })
 
   it('the cursor does not get updated on child creation', async () => {
+    const thoughtValue = 'this is a test thought'
     store.dispatch([
-      newThought({ value: 'this is a test thought' }),
-      setCursorFirstMatchActionCreator(['this is a test thought'])
+      newThought({ value: thoughtValue }),
+      setCursorFirstMatchActionCreator([thoughtValue])
     ])
 
-    const [thought] = await screen.findAllByText('this is a test thought', { selector: 'div' })
+    const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
 
-    const selectedText = setSelection(thought, 10, 22)
+    const selectedText = setSelection(thought!, 10, 22)
     store.dispatch([extractThought()])
 
-    const createdThought = await screen.findAllByText(selectedText, { exact: true, selector: 'div' })
-    expect(createdThought).toHaveLength(1)
+    const createdThought = await findThoughtByText(selectedText)
+    expect(createdThought).toBeTruthy()
 
-    expect(store.getState().cursor).toMatchObject([{ value: thought.textContent!.slice(0, 9) }])
+    expect(store.getState().cursor).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
 
   })
 })
