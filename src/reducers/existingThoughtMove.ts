@@ -3,7 +3,7 @@ import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
 import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Lexeme, Parent, Path, Timestamp } from '../types'
+import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
 
 // util
 import {
@@ -29,7 +29,6 @@ import {
 } from '../util'
 
 type LexemeUpdate = {
-  value: string,
   newThought: Lexeme,
   contextsNew: Context[],
   contextsOld: Context[],
@@ -209,7 +208,6 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         // merge sibling updates
         // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
         // merge current thought update
-        value: child.value,
         newThought: childNewThought,
         contextsOld,
         contextsNew,
@@ -264,14 +262,17 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         const contextEncodedOld = hashContext(contextOld)
         const contextEncodedNew = hashContext(contextNew)
 
-        const childUpdate = childUpdates[hashContext(contextOld.concat(result.value))]
+        const childUpdate = childUpdates[hashContext(contextOld.concat(result.newThought.value))]
 
         const accumInnerChildrenOld = accumInner.contextIndex[contextEncodedOld]?.children
         const accumInnerChildrenNew = accumInner.contextIndex[contextEncodedNew]?.children
+
+        const normalizedValue = normalizeThought(result.newThought.value)
+
         const childrenOld = (accumInnerChildrenOld || getAllChildren(state, contextOld))
-          .filter((child: Child) => normalizeThought(child.value) !== normalizeThought(result.value))
+          .filter((child: Child) => normalizeThought(child.value) !== normalizedValue)
         const childrenNew = (accumInnerChildrenNew || getAllChildren(state, contextNew))
-          .filter((child: Child) => normalizeThought(child.value) !== normalizeThought(result.value))
+          .filter((child: Child) => normalizeThought(child.value) !== normalizedValue)
           .concat({
             value: childUpdate.value,
             rank: childUpdate.rank,
@@ -354,7 +355,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   /** Returns new path for the given old context.
    * Note: This uses childUpdates so it works only for updated descendants. For main ancestor oldPath that has been moved (ancestor) use updatedNewPath instead.
    */
-  const getNewPathFromOldContext = (path: Path) => childUpdates[hashContext(pathToContext(path))].pathNew
+  const getNewPathFromOldContext = (path: SimplePath) => childUpdates[hashContext(pathToContext(path))].pathNew
 
   // if cursor is at old path then we don't need to find getNewPathfromContext as we already have updatedNewPath
   // Example: [a.b] (oldPath) and [a.b] (cursor) are subsets of each other
@@ -362,7 +363,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
   const newCursorPath = isPathInCursor ?
     isCursorAtOldPath ?
-      updatedNewPath : getNewPathFromOldContext(state.cursor || [])
+      updatedNewPath : getNewPathFromOldContext(simplifyPath(state, state.cursor || []))
     : state.cursor
 
   return reducerFlow([

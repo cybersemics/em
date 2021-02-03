@@ -466,4 +466,11 @@ it('move with hash matched descendant', () => {
       - =note
         - note`)
 
+  // note should have contexts a/b and a/b/=note
+  expect(getContexts(stateNew, 'note'))
+    .toMatchObject([
+      { context: ['a', 'b'], rank: 0 },
+      { context: ['a', 'b', '=note'], rank: 0 }
+    ])
+
 })
