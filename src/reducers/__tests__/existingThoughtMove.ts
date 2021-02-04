@@ -1,6 +1,6 @@
 import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThought, getAllChildren } from '../../selectors'
+import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked } from '../../selectors'
 import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
 
 it('move within root', () => {
@@ -473,4 +473,90 @@ it('move with hash matched descendant', () => {
       { context: ['a', 'b', '=note'], rank: 0 }
     ])
 
+})
+
+it('move with nested duplicate thoughts', () => {
+
+  const text = `
+  - a
+    - b
+  - c
+    - a
+      - b`
+
+  const steps = [
+    importText({ path: RANKED_ROOT, text }),
+    existingThoughtMove({
+      oldPath: [{ value: 'c', rank: 0 }, { value: 'a', rank: 0 }],
+      newPath: [{ value: 'a', rank: 0 }],
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - b
+  - c`)
+
+  // b should be in in the context of a
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([
+      { context: ['a'], rank: 0 },
+    ])
+
+})
+
+it('move with nested duplicate thoughts and merge their children', () => {
+
+  const text = `
+  - a
+    - b
+     - c
+      - x
+  - p
+    - a
+      - b
+        - c
+          - y
+        -d`
+
+  const steps = [
+    importText({ path: RANKED_ROOT, text }),
+    existingThoughtMove({
+      oldPath: [{ value: 'p', rank: 0 }, { value: 'a', rank: 0 }],
+      newPath: [{ value: 'a', rank: 0 }],
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - b
+      - c
+        - x
+        - y
+      - d
+  - p`)
+
+  // b should only be in context ['a']
+  expect(getContexts(stateNew, 'b'))
+    .toMatchObject([
+      { context: ['a'], rank: 0 },
+    ])
+
+  // context ['p', 'a'] should not have any garbage children
+  expect(getChildrenRanked(stateNew, ['p', 'a'])).toHaveLength(0)
+
+  // c should only be in context ['a', 'b']
+  expect(getContexts(stateNew, 'c'))
+    .toMatchObject([
+      { context: ['a', 'b'], rank: 0 },
+    ])
+
+  // context ['p', 'a', 'b'] should not have any garbage children
+  expect(getChildrenRanked(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
 })

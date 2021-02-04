@@ -28,12 +28,6 @@ import {
   timestamp,
 } from '../util'
 
-type LexemeUpdate = {
-  newThought: Lexeme,
-  contextsNew: Context[],
-  contextsOld: Context[],
-}
-
 type ChildUpdate = {
   archived?: Timestamp,
   id: string,
@@ -45,7 +39,7 @@ type ChildUpdate = {
 }
 
 type RecursiveMoveResult = {
-  lexemeUpdates: Index<LexemeUpdate>,
+  lexemeUpdates: Index<Lexeme>,
   childUpdates: Index<ChildUpdate>,
 }
 
@@ -156,11 +150,6 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         console.warn('context', oldThoughts)
       }
 
-      // old contexts in which the thoughts reside
-      // @thoughtIndex
-      const contextsOld = ((getThought(state, child.value) || {}).contexts || [])
-        .map(thoughtContext => thoughtContext.context)
-
       const childContext: Context = [...oldThoughts, child.value]
       const childPathOld: Path = [...pathOld, child]
 
@@ -196,22 +185,10 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       // New lexeme
       const childNewThought = removeDuplicatedContext(addContext(childOldThoughtContextRemoved, contextNew, movedRank, child.id as string, archived), contextNew)
 
-      // New context after it has been removed
-      const contextsNew = (childNewThought.contexts || []).map(contexts => contexts.context)
-
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
 
       const childOldContextHash = hashContext(pathToContext(childPathOld))
-
-      const lexemeUpdate: LexemeUpdate = {
-        // merge sibling updates
-        // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
-        // merge current thought update
-        newThought: childNewThought,
-        contextsOld,
-        contextsNew,
-      }
 
       const childUpdate: ChildUpdate = {
         // child.id is undefined sometimes. Unable to reproduce.
@@ -232,7 +209,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       return {
         lexemeUpdates: {
           ...accum.lexemeUpdates,
-          [hashedKey]: lexemeUpdate,
+          [hashedKey]: childNewThought,
           ...recursiveLexemeUpdates
         },
         childUpdates: {
@@ -247,75 +224,71 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
   const { lexemeUpdates, childUpdates } = recursiveUpdates(oldSimplePath, updatedNewSimplePath)
 
-  const descendantUpdates = _.transform(lexemeUpdates, (accum, { newThought }, key: string) => {
+  const descendantUpdates = _.transform(lexemeUpdates, (accum, newThought, key: string) => {
     accum[key] = newThought
   }, {} as Index<Lexeme>)
+
+  // Thoughts: Can we calculate contextIndexUpdates inside recursive updates ?
 
   const contextIndexDescendantUpdates = sameContext
     ? {} as {
       contextIndex: Index<Parent | null>,
       pendingMoves: { pathOld: Path, pathNew: Path }[],
     }
-    : Object.values(lexemeUpdates).reduce((accum, result) =>
-      result.contextsOld.reduce((accumInner, contextOld, i) => {
-        const contextNew = result.contextsNew[i]
-        const contextEncodedOld = hashContext(contextOld)
-        const contextEncodedNew = hashContext(contextNew)
+    : Object.values(childUpdates).reduce((accum, childUpdate) => {
 
-        const childUpdate = childUpdates[hashContext(contextOld.concat(result.newThought.value))]
+      // use contextIndex from stale state and add new changes made to contextIndex with each iteartion
+      const updatedState: State = { ...state, thoughts: { ...state.thoughts, contextIndex: { ...state.thoughts.contextIndex, ...accum.contextIndex as Index<Parent> } } }
 
-        const accumInnerChildrenOld = accumInner.contextIndex[contextEncodedOld]?.children
-        const accumInnerChildrenNew = accumInner.contextIndex[contextEncodedNew]?.children
+      const contextNew = pathToContext(parentOf(childUpdate.pathNew))
+      const contextOld = pathToContext(parentOf(childUpdate.pathOld))
+      const contextEncodedOld = hashContext(contextOld)
+      const contextEncodedNew = hashContext(contextNew)
 
-        const normalizedValue = normalizeThought(result.newThought.value)
+      // use updatedState because accum.contextIndex alone doesn't have all information of the previous contextIndex
+      const accumInnerChildrenOld = updatedState.thoughts.contextIndex[contextEncodedOld]?.children
+      const accumInnerChildrenNew = updatedState.thoughts.contextIndex[contextEncodedNew]?.children
 
-        const childrenOld = (accumInnerChildrenOld || getAllChildren(state, contextOld))
-          .filter((child: Child) => normalizeThought(child.value) !== normalizedValue)
-        const childrenNew = (accumInnerChildrenNew || getAllChildren(state, contextNew))
-          .filter((child: Child) => normalizeThought(child.value) !== normalizedValue)
-          .concat({
-            value: childUpdate.value,
-            rank: childUpdate.rank,
+      const normalizedValue = normalizeThought(childUpdate.value)
+
+      const childrenOld = (accumInnerChildrenOld || getAllChildren(updatedState, contextOld))
+        .filter((child: Child) => normalizeThought(child.value) !== normalizedValue)
+
+      const childrenNew = (accumInnerChildrenNew || getAllChildren(updatedState, contextNew))
+        .filter((child: Child) => normalizeThought(child.value) !== normalizedValue)
+        .concat({
+          value: childUpdate.value,
+          rank: childUpdate.rank,
+          lastUpdated: timestamp(),
+          // childUpdate.id is undefined sometimes. Unable to reproduce.
+          id: childUpdate.id ?? '',
+          ...childUpdate.archived ? { archived: childUpdate.archived } : null
+        })
+
+      const accumNew = {
+        contextIndex: {
+          ...accum.contextIndex,
+          [contextEncodedOld]: childrenOld.length > 0 ? {
+            context: contextOld,
+            children: childrenOld,
             lastUpdated: timestamp(),
-            // result.id is undefined sometimes. Unable to reproduce.
-            id: childUpdate.id ?? '',
-            ...childUpdate.archived ? { archived: childUpdate.archived } : null
-          })
-
-        // if (result.pending) {
-        //   return {
-        //     contextIndex: {},
-        //     pendingMoves: [...accum.pendingMoves, ...result.pending ? [{
-        //       pathOld: result.pathOld,
-        //       pathNew: result.pathNew,
-        //     }] : []]
-        //   }
-        // }
-
-        const accumNew = {
-          contextIndex: {
-            ...accumInner.contextIndex,
-            [contextEncodedOld]: childrenOld.length > 0 ? {
-              context: contextOld,
-              children: childrenOld,
-              lastUpdated: timestamp(),
-              ...childUpdate.pending ? { pending: true } : null,
-            } : null,
-            [contextEncodedNew]: {
-              context: contextNew,
-              children: childrenNew,
-              lastUpdated: timestamp(),
-              ...childUpdate.pending ? { pending: true } : null,
-            },
+            ...childUpdate.pending ? { pending: true } : null,
+          } : null,
+          [contextEncodedNew]: {
+            context: contextNew,
+            children: childrenNew,
+            lastUpdated: timestamp(),
+            ...childUpdate.pending ? { pending: true } : null,
           },
-          pendingMoves: [...accum.pendingMoves, ...childUpdate.pending ? [{
-            pathOld: childUpdate.pathOld,
-            pathNew: childUpdate.pathNew,
-          }] : []]
-        }
+        },
+        pendingMoves: [...accum.pendingMoves, ...childUpdate.pending ? [{
+          pathOld: childUpdate.pathOld,
+          pathNew: childUpdate.pathNew,
+        }] : []]
+      }
 
-        return accumNew
-      }, accum)
+      return accumNew
+    }
     , {
       contextIndex: {},
       pendingMoves: [] as { pathOld: Path, pathNew: Path }[]
