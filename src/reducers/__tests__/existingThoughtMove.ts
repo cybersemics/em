@@ -487,7 +487,7 @@ it('move with nested duplicate thoughts', () => {
   const steps = [
     importText({ path: RANKED_ROOT, text }),
     existingThoughtMove({
-      oldPath: [{ value: 'c', rank: 0 }, { value: 'a', rank: 0 }],
+      oldPath: [{ value: 'c', rank: 1 }, { value: 'a', rank: 0 }],
       newPath: [{ value: 'a', rank: 0 }],
     }),
   ]
@@ -525,7 +525,7 @@ it('move with nested duplicate thoughts and merge their children', () => {
   const steps = [
     importText({ path: RANKED_ROOT, text }),
     existingThoughtMove({
-      oldPath: [{ value: 'p', rank: 0 }, { value: 'a', rank: 0 }],
+      oldPath: [{ value: 'p', rank: 1 }, { value: 'a', rank: 0 }],
       newPath: [{ value: 'a', rank: 0 }],
     }),
   ]
