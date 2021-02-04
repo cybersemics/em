@@ -62,10 +62,10 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({ childrenLengt
 
     // default
       : <React.Fragment>
-        <React.Fragment>{isTouch
+        <span style={{ userSelect: 'none' }}>{isTouch
           ? <span className='gesture-container'>Swipe <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color='darkgray' /></span>
           : <span>Hit the Enter key</span>
-        } to add a new thought.</React.Fragment>
+        } to add a new thought.</span>
       </React.Fragment>
   }</div>
 }
