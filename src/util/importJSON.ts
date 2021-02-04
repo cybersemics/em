@@ -166,7 +166,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const context = pathToContext(parentOf(simplePath))
   const destThought = head(simplePath)
   const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(simplePath)).length === 0
-  const rankStart = getRankAfter(state, simplePath)
+  const rankStart = destEmpty ? destThought.rank : getRankAfter(state, simplePath)
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
   const rootedContext = pathToContext(rootedParentOf(simplePath))
   const contextEncoded = hashContext(rootedContext)
