@@ -1,20 +1,22 @@
-Run this script to recalculate hashes.
+Run this script to recalculate contextIndex and thoughtIndex hashes.
 
 ## Setup
 
-You will need to comment out `raw.macro` in `constants.ts` to be able to compile directly.
+You will need to comment out `raw.macro` in `constants.ts` to be able to compile directly with tsc.
+
+## Build
+
+```sh
+npm run build
+```
 
 ## Usage
 
 ```sh
-npm run build
+Usage: npm run start -- [subcommand] em-proto-m93daff2.json
 
-npm run start -- thoughts # rehash thoughts
-npm run start -- contexts # rehash contexts
-```
+Subcommands: contexts, thoughts, format
 
-## Development
+Outputs to a file with a ".[subcommand]" suffix.
 
-```
-nodemon -w build/scripts/rehash/index.js -x "npm run start -- contexts data.json"
 ```
