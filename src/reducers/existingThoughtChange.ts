@@ -277,12 +277,15 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       const contextNewEncoded = hashContext(contextNew)
       const thoughtsOld = getAllChildren(state, contextOld)
       const thoughtsNew = getAllChildren(state, contextNew)
+      const isSameContext = hashContext(contextOld) === hashContext(contextNew)
+
       return {
         [contextOldEncoded]: null,
         [contextNewEncoded]: {
           ...(state.thoughts.contextIndex || {})[contextOldEncoded],
           context: contextNew,
-          children: [...thoughtsOld, ...thoughtsNew],
+          // if previous and new context is the same then do not duplicate children
+          children: [...isSameContext ? [] : thoughtsOld, ...thoughtsNew],
           lastUpdated: timestamp()
         }
       }

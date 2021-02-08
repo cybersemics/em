@@ -9,8 +9,8 @@ import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } fr
 import {
   addContext,
   equalArrays,
+  equalNormalizedValue,
   equalThoughtRanked,
-  equalThoughtValue,
   hashContext,
   hashThought,
   head,
@@ -105,12 +105,12 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
   const duplicateSubthought = getChildrenRanked(state, newContext)
-    .find(equalThoughtValue(value))
+    .find(equalNormalizedValue(value))
 
   const isDuplicateMerge = duplicateSubthought && !sameContext
 
   const subthoughtsNew = getAllChildren(state, newContext)
-    .filter(child => child.value !== value)
+    .filter(child => normalizeThought(child.value) !== normalizeThought(value))
     .concat({
       value,
       rank: isDuplicateMerge && duplicateSubthought ? duplicateSubthought.rank : newRank,
@@ -269,12 +269,14 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         contextIndex: {
           ...accum.contextIndex,
           [contextEncodedOld]: childrenOld.length > 0 ? {
+            id: contextEncodedOld,
             context: contextOld,
             children: childrenOld,
             lastUpdated: timestamp(),
             ...childUpdate.pending ? { pending: true } : null,
           } : null,
           [contextEncodedNew]: {
+            id: contextEncodedNew,
             context: contextNew,
             children: childrenNew,
             lastUpdated: timestamp(),
@@ -299,11 +301,13 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
 
   const contextIndexUpdates: Index<Parent | null> = {
     [contextEncodedOld]: subthoughtsOld.length > 0 ? {
+      id: contextEncodedOld,
       context: oldContext,
       children: subthoughtsOld,
       lastUpdated: timestamp(),
     } : null,
     [contextEncodedNew]: {
+      id: contextEncodedOld,
       context: newContext,
       children: subthoughtsNew,
       lastUpdated: timestamp(),

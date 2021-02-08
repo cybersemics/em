@@ -17,7 +17,7 @@ const collapseContextShortcut: Shortcut = {
   svg: Icon,
   keyboard: { key: 'c', meta: true, alt: true },
   exec: dispatch => {
-    dispatch(collapseContext())
+    dispatch(collapseContext({}))
   }
 }
 

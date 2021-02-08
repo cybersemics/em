@@ -1,11 +1,14 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import { unescape } from 'html-escaper'
-import { parentOf, convertHTMLtoJSON, head, headValue, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam } from '../util'
+import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam, createId, unroot } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
-import { simplifyPath } from '../selectors'
-import { Block, Path, Timestamp } from '../types'
+import { getAllChildren, rankThoughtsFirstMatch, simplifyPath } from '../selectors'
+import { Block, Path, SimplePath, Timestamp } from '../types'
 import { State } from '../util/initialState'
+import newThought from './newThought'
+import collapseContext from './collapseContext'
+// import { ROOT_TOKEN } from '../constants'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
@@ -157,22 +160,55 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
   }
   else {
+
     const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText)) : convertHTMLtoJSON(convertedText)
-    const imported = importJSON(state, simplePath, json, { lastUpdated, skipRoot })
+
+    const uuid = createId()
+
+    // Note: Create a dummy thought and then import new thoughts into its context and then collpase it . Since collapse uses existingThoughtMove it merges imported thoughts.
+    const updatedState = newThought(state, {
+      at: simplePath,
+      insertNewSubthought: true,
+      value: uuid
+    })
+
+    const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(simplePath)).length === 0
+
+    // New dummy thoughts for collapsing
+    const newDummyThought = getAllChildren(updatedState, pathToContext(simplePath)).find(child => child.value === uuid)
+
+    const newDestinationPath = unroot(newDummyThought ? simplePath.concat(newDummyThought) : simplePath)
+
+    const imported = importJSON(updatedState, newDestinationPath as SimplePath, json, { lastUpdated, skipRoot })
+
+    /** Set cursor to the last imported path. */
+    const setLastImportedCursor = (state: State) => {
+      const cursorContextHead = pathToContext(imported.lastImported).slice(0, newDestinationPath.length - (destEmpty ? 2 : 1))
+      const cursorContextTail = pathToContext(imported.lastImported).slice(newDestinationPath.length)
+      const newCursorContext = cursorContextHead.concat(cursorContextTail)
+      const newCursor = rankThoughtsFirstMatch(state, newCursorContext)
+
+      return setCursor(state, {
+        path: newCursor
+      })
+    }
 
     return reducerFlow([
-
       updateThoughts(imported),
-
+      // set cursor to the dummy thought
+      setCursor({
+        path: newDestinationPath,
+      }),
+      collapseContext({ preventCursorArchive: true }),
+      // if original destination has empty then collapse once more
+      ...destEmpty ? [setCursor({
+        path: parentOf(newDestinationPath)
+      }), collapseContext({ preventCursorArchive: true })] : [],
       // restore the selection to the last imported thought on the first level
-      !preventSetCursor
-        ? setCursor({
-          path: imported.lastImported,
-          offset: headValue(imported.lastImported).length
-        })
-        : null,
-
-    ])(state)
+      !preventSetCursor ? setLastImportedCursor : setCursor({
+        path: state.cursor
+      })
+    ])(updatedState)
   }
 }
 
