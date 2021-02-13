@@ -23,7 +23,6 @@
     "deploy": "npm version major && npm run build && firebase deploy",
     "postinstall": "husky install",
     "lint": "npm run lint:src && npm run lint:package-lock && npm run lint:no-yarn",
-    "lintfix": "npm run lint -- --fix",
     "lint:no-yarn": "node ./scripts/no-files.js yarn.lock",
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
     "lint:src": "eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
