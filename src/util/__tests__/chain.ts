@@ -27,3 +27,13 @@ it('multiple chains', () => {
     rankThoughtsSequential(['START', 'B', 'Nope', 'Butter', 'Bread']) as SimplePath
   ))).toEqual(['2', 'A', '1', 'Nope', 'B', 'Butter', 'Bread'])
 })
+
+it('match pivot value in plural form', () => {
+  expect(pathToContext(chain(
+    initialState(),
+    [
+      rankThoughtsSequential(['a', 'cats']),
+    ],
+    rankThoughtsSequential(['b', 'cat'])
+  ))).toEqual(['a', 'cats', 'b'])
+})
