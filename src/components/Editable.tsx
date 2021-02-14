@@ -30,6 +30,7 @@ import {
 // util
 import {
   addEmojiSpace,
+  asyncFocus,
   clearSelection,
   parentOf,
   ellipsize,
@@ -64,6 +65,8 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
+
+const asyncFocusThrottled = _.throttle(asyncFocus, 100)
 
 /** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
 const makeToolbarPositionFixed = () => {
@@ -326,14 +329,14 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       !dragHold
     ) {
       /*
-        Mobile Safari: Auto-Capitalization is broken if the selection is set synchronously.
-        - When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
-        - Only breaks on Enter or Backspace, not gesture.
-        - Even stranger, the issue only showed up when newThought was converted to a reducer (ecc3b3be).
-        - For some reason, setTimeout fixes it.
-        - Do not call asyncFocus as it causes an infinite loop (#908)
+        When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
+        On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).
+        Only breaks on Enter or Backspace, not gesture. Even stranger, the issue only showed up when newThought was converted to a reducer (ecc3b3be).
+        For some reason, setTimeout fixes it.
       */
       if (isTouch && isSafari()) {
+        // asyncFocus needs to be throttled otherwise it causes an infinite loop (#908).
+        asyncFocusThrottled()
         setTimeout(setSelectionToCursorOffset)
       }
       else {
