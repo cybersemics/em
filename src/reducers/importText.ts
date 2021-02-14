@@ -197,7 +197,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
     }
 
     const parentOfDestination = parentOf(newDestinationPath)
-    const canSetCursor = !preventSetCursor && !isEM(parentOfDestination) && parentOfDestination.length > 0
+    const canSetCursor = !isEM(parentOfDestination) && parentOfDestination.length > 0 && destEmpty
 
     return reducerFlow([
       updateThoughts(imported),
@@ -208,11 +208,8 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
       collapseContext({ deleteCursor: true, at: canSetCursor ? parentOfDestination : state.cursor }),
       // if original destination has empty then collapse once more.
-      ...destEmpty ? [setCursor({
-        path: parentOf(newDestinationPath)
-      }),
-      // allow collpaseContext to set new cursor only when preventSetCursor is true
-      collapseContext({ deleteCursor: true, at: preventSetCursor ? state.cursor : undefined })] : [],
+      destEmpty ?
+        collapseContext({ deleteCursor: true }) : null,
       // restore the selection to the last imported thought on the first level
       !preventSetCursor ? setLastImportedCursor : null
     ])(updatedState)
