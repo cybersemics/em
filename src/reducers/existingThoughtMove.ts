@@ -9,7 +9,6 @@ import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } fr
 import {
   addContext,
   equalArrays,
-  equalNormalizedValue,
   equalThoughtRanked,
   hashContext,
   hashThought,
@@ -105,7 +104,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
   const duplicateSubthought = getChildrenRanked(state, newContext)
-    .find(equalNormalizedValue(value))
+    .find(thought => normalizeThought(thought.value) === normalizeThought(value))
 
   const isDuplicateMerge = duplicateSubthought && !sameContext
 
@@ -307,7 +306,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       lastUpdated: timestamp(),
     } : null,
     [contextEncodedNew]: {
-      id: contextEncodedOld,
+      id: contextEncodedNew,
       context: newContext,
       children: subthoughtsNew,
       lastUpdated: timestamp(),
