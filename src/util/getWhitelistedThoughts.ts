@@ -6,7 +6,7 @@ import { initialState } from './initialState'
 let whitelistedThoughts: ThoughtIndices
 
 /**
- * Get the list of whitelisted thoughts which is initialized only once.
+ * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants for updateThoughts so they are never deleted from the thought cache when not present on the remote data source.
  */
 export const getWhitelistedThoughts = () => {
   if (whitelistedThoughts) return whitelistedThoughts

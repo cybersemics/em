@@ -15,9 +15,6 @@ import appReducer from '../reducers/app'
  */
 export const createTestStore = () => {
 
-  // import at run-time to avoid circular import
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-
   const store = createStore(
     appReducer,
     compose(applyMiddleware(
