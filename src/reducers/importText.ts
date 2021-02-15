@@ -1,7 +1,7 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import { unescape } from 'html-escaper'
-import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam, createId, unroot, isEM } from '../util'
+import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam, createId, unroot } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { getAllChildren, rankThoughtsFirstMatch, simplifyPath } from '../selectors'
 import { Block, Path, SimplePath, Timestamp } from '../types'
@@ -117,7 +117,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
   const isRoam = validateRoam(text)
 
   const simplePath = simplifyPath(state, path)
-  const simpleContext = pathToContext(simplePath)
+  const context = pathToContext(simplePath)
   const convertedText = isRoam ? text : rawTextToHtml(text)
   const numLines = (convertedText.match(regexpListItem) || []).length
   const destThought = head(path)
@@ -148,7 +148,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
       existingThoughtChange({
         oldValue: destValue,
         newValue,
-        context: rootedParentOf(simpleContext),
+        context: rootedParentOf(context),
         path: simplePath,
       }),
 
@@ -173,14 +173,14 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
       value: uuid
     })
 
-    const destEmpty = destThought.value === '' && getAllChildren(state, simpleContext).length === 0
+    const destEmpty = destThought.value === '' && getAllChildren(state, context).length === 0
 
     // New dummy thoughts for collapsing
-    const newDummyThought = getAllChildren(updatedState, simpleContext).find(child => child.value === uuid)
+    const newDummyThought = getAllChildren(updatedState, context).find(child => child.value === uuid)
 
     const newDestinationPath = unroot(newDummyThought ? [...simplePath, newDummyThought] : simplePath) as SimplePath
 
-    const imported = importJSON(updatedState, newDestinationPath as SimplePath, json, { lastUpdated, skipRoot })
+    const imported = importJSON(updatedState, newDestinationPath, json, { lastUpdated, skipRoot })
 
     /** Set cursor to the last imported path. */
     const setLastImportedCursor = (state: State) => {
@@ -197,21 +197,19 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
     }
 
     const parentOfDestination = parentOf(newDestinationPath)
-    const canSetCursor = !isEM(parentOfDestination) && parentOfDestination.length > 0 && destEmpty
 
     return reducerFlow([
       updateThoughts(imported),
-      // set cursor to the dummy thought
-      setCursor({
-        path: newDestinationPath,
-      }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
-      collapseContext({ deleteCursor: true, at: canSetCursor ? parentOfDestination : state.cursor }),
+      collapseContext({ deleteCursor: true, at: newDestinationPath }),
       // if original destination has empty then collapse once more.
       destEmpty ?
-        collapseContext({ deleteCursor: true }) : null,
+        collapseContext({ deleteCursor: true, at: parentOfDestination }) : null,
       // restore the selection to the last imported thought on the first level
-      !preventSetCursor ? setLastImportedCursor : null
+      // Note: Since collapseContext behavior sets cursor to the first children, we need to set cursor back to the old cursor if preventSetCursor is true.
+      !preventSetCursor ? setLastImportedCursor : setCursor({
+        path: state.cursor
+      })
     ])(updatedState)
   }
 }

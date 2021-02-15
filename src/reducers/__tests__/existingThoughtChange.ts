@@ -248,8 +248,4 @@ it('do not duplicate children when new and old context are same', () => {
   expect(exported).toBe(`- ${ROOT_TOKEN}
   - a
     - b`)
-
-  expect(getAllChildren(stateNew, ['a']))
-    .toMatchObject([{ value: 'b', rank: 0 }])
-
 })

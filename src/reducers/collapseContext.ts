@@ -15,29 +15,31 @@ interface Options {
 const collapseContext = (state: State, { deleteCursor, at }: Options) => {
   const { cursor } = state
 
-  if (!cursor) return state
+  const path = at || cursor
 
-  const simpleCursor = simplifyPath(state, cursor)
-  const simpleContext = pathToContext(simpleCursor)
+  if (!path) return state
 
-  const children = getAllChildren(state, simpleContext)
+  const simpleCursor = simplifyPath(state, path)
+  const context = pathToContext(simpleCursor)
+
+  const children = getAllChildren(state, context)
 
   return reducerFlow(
     children.length > 0 ? [
       ...children.map(child =>
         existingThoughtMove({
-          oldPath: unroot([...cursor, child]),
-          newPath: unroot([...parentOf(cursor), child]),
+          oldPath: unroot([...path, child]),
+          newPath: unroot([...parentOf(path), child]),
         })
       ),
       !deleteCursor
-        ? archiveThought({ path: cursor }) :
+        ? archiveThought({ path }) :
         existingThoughtDelete({
-          context: parentOf(simpleContext),
+          context: parentOf(context),
           thoughtRanked: head(simpleCursor)
         }),
       setCursor({
-        path: at !== undefined ? at : unroot([...parentOf(cursor), children[0]]),
+        path: unroot([...parentOf(path), children[0]]),
         editing: state.editing,
         offset: 0
       }),
