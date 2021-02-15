@@ -4,8 +4,29 @@ import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import { State } from '../util/initialState'
 import { Index, Patch } from '../types'
+import { updateThoughts } from '../reducers'
 
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
+
+/**
+ * Manually extract thought and context index updates along with pushQueue.
+ */
+const extractUpdates = (patch: Patch, newState: State) => {
+  const thoughtIndexPath = `/thoughts/thoughtIndex/`
+  const contextIndexPath = `/thoughts/contextIndex/`
+  const thoughtIndexChanges = patch.filter(p => p.path.indexOf(thoughtIndexPath) === 0)
+  const contextIndexChanges = patch.filter(p => p.path.indexOf(contextIndexPath) === 0)
+
+  const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
+    const [thoughtId] = path.slice(thoughtIndexPath.length).split('/')
+    return { ...acc, [thoughtId]: newState.thoughts.thoughtIndex[thoughtId] ?? null }
+  }, {})
+  const contextIndexUpdates = contextIndexChanges.reduce((acc, { path }) => {
+    const [contextId] = path.slice(contextIndexPath.length).split('/')
+    return { ...acc, [contextId]: newState.thoughts.contextIndex[contextId] ?? null }
+  }, {})
+  return updateThoughts({ thoughtIndexUpdates, contextIndexUpdates })(newState)
+}
 
 const deadActionChecks = {
   dataNonce: (patch: Patch) => patch.length === 1 && patch[0].path === '/dataNonce'
@@ -89,11 +110,17 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
   const lastAction = lastInversePatch && getPatchAction(lastInversePatch)
   const penultimateInversePatch = nthLast(inversePatches, 2)
   const penultimateAction = penultimateInversePatch && getPatchAction(penultimateInversePatch)
-  return inversePatches.length ? (lastAction && NAVIGATION_ACTIONS[lastAction]) ||
-    (penultimateAction && (NAVIGATION_ACTIONS[penultimateAction] || penultimateAction === 'newThought'))
-    ? undoReducer(undoReducer(state))
-    : undoReducer(state)
-    : state
+
+  if (!inversePatches.length) return state
+
+  const undoTwice = penultimateInversePatch && !!((lastAction && NAVIGATION_ACTIONS[lastAction]) ||
+  (penultimateAction && (NAVIGATION_ACTIONS[penultimateAction] || penultimateAction === 'newThought')))
+
+  const newState = undoTwice ? undoReducer(undoReducer(state)) : undoReducer(state)
+
+  const poppedInversePatches = undoTwice ? [penultimateInversePatch, lastInversePatch] : [lastInversePatch]
+  const asyncUpdates = extractUpdates(poppedInversePatches.flat(), newState)
+  return { ...newState, ...asyncUpdates }
 }
 
 /**
@@ -102,11 +129,16 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
 const redoHandler = (state: State, patches: Patch[]) => {
   const lastPatch = nthLast(patches, 1)
   const lastAction = lastPatch && getPatchAction(lastPatch)
-  return patches.length ?
-    lastAction && (NAVIGATION_ACTIONS[lastAction] || lastAction === 'newThought')
-      ? redoReducer(redoReducer(state))
-      : redoReducer(state)
-    : state
+
+  if (!patches.length) return state
+
+  const redoTwice = lastAction && (NAVIGATION_ACTIONS[lastAction] || lastAction === 'newThought')
+
+  const newState = redoTwice ? redoReducer(redoReducer(state)) : redoReducer(state)
+
+  const poppedPatches = redoTwice ? [nthLast(patches, 2), lastPatch] : [lastPatch]
+  const asyncUpdates = extractUpdates(poppedPatches.flat(), newState)
+  return { ...newState, ...asyncUpdates }
 }
 
 /**
@@ -131,7 +163,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> = (createStore: StoreEnhancerS
         : null
 
     if (undoOrRedoState) {
-      const omitted = _.pick(state, stateSectionsToOmit)
+      // do not omit pushQueue because that includes updates added by updateThoughts
+      const omitted = _.pick(state, stateSectionsToOmit.filter(k => k !== 'pushQueue'))
       return { ...undoOrRedoState, ...omitted }
     }
 
