@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import * as db from '../data-providers/dexie'
-import * as firebaseProvider from '../data-providers/firebase'
+import getFirebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { ROOT_TOKEN } from '../constants'
 import { hashContext, mergeThoughts } from '../util'
@@ -58,7 +58,7 @@ const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Thunk
   const user = getState().user
   if (user) {
 
-    const thoughtsRemoteIterable = getManyDescendants(firebaseProvider, contextMap, { maxDepth: maxDepth || BUFFER_DEPTH })
+    const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMap, { maxDepth: maxDepth || BUFFER_DEPTH })
 
     const thoughtRemoteChunks: ThoughtsInterface[] = []
 

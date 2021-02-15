@@ -1,7 +1,7 @@
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
 import * as db from '../data-providers/dexie'
-import * as firebase from '../data-providers/firebase'
+import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
@@ -159,7 +159,7 @@ const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
   logWithTime('pushRemote: allUpdates')
 
   if (Object.keys(allUpdates).length > 0) {
-    return firebase.update(allUpdates)
+    return getFirebaseProvider(state, dispatch).update(allUpdates)
       .catch((e: Error) => {
         dispatch(error({ value: e.message }))
         console.error(e.message, allUpdates)

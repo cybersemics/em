@@ -1,5 +1,6 @@
-import * as firebase from '../firebase'
+import getFirebaseProvider from '../firebase'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
+import { store } from '../../store'
 
 jest.useFakeTimers()
 
@@ -18,4 +19,4 @@ afterEach(() => {
   global.clearMockFirebaseStore()
 })
 
-dataProviderTest(firebase)
+dataProviderTest(getFirebaseProvider(store.getState(), store.dispatch))

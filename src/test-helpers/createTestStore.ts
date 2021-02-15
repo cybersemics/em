@@ -8,6 +8,7 @@ import { State } from '../util/initialState'
 
 // import directly to avoid circular import
 import importText from '../action-creators/importText'
+import appReducer from '../reducers/app'
 
 /**
  * Returns new store for test.
@@ -16,7 +17,6 @@ export const createTestStore = () => {
 
   // import at run-time to avoid circular import
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { default: appReducer } = require('../reducers/app')
 
   const store = createStore(
     appReducer,

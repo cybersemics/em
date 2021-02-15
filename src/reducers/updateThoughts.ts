@@ -1,10 +1,10 @@
 import _ from 'lodash'
-import { initialState, State, PushBatch } from '../util/initialState'
+import { State, PushBatch } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
-import { hashContext, importHtml, isRoot, logWithTime, mergeUpdates, reducerFlow } from '../util'
-import { CONTEXT_CACHE_SIZE, EM_TOKEN, INITIAL_SETTINGS, ROOT_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
-import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtIndices, ThoughtsInterface } from '../types'
+import { hashContext, isRoot, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts } from '../util'
+import { CONTEXT_CACHE_SIZE, EM_TOKEN, ROOT_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
+import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtsInterface } from '../types'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>,
@@ -21,34 +21,6 @@ export interface UpdateThoughtsOptions {
 }
 
 const rootEncoded = hashContext([ROOT_TOKEN])
-
-// we should not delete ROOT, EM, or EM descendants from state
-// whitelist them until we have a better solution
-// eslint-disable-next-line fp/no-let
-let whitelistedThoughts: ThoughtIndices
-
-// delay so util is fully loaded, otherwise importHtml will error out with "pathToContext is not a function"
-setTimeout(() => {
-
-  const state = initialState()
-
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importHtml(state, [{ value: EM_TOKEN, rank: 0 }] as SimplePath, INITIAL_SETTINGS)
-
-  whitelistedThoughts = {
-    contextIndex: {
-      ...state.thoughts.contextIndex,
-      ...contextIndex,
-    },
-    thoughtIndex: {
-      ...state.thoughts.thoughtIndex,
-      ...thoughtIndex,
-    },
-  }
-
-})
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
@@ -74,13 +46,13 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
   const thoughtCacheInvalidated = thoughtCacheNumInvalid === 0 ? [] : thoughtCacheUnique!.slice(0, thoughtCacheNumInvalid) as ThoughtHash[]
 
   contextCacheInvalidated.forEach(key => {
-    if (!whitelistedThoughts.contextIndex[key]) {
+    if (!getWhitelistedThoughts().contextIndex[key]) {
       delete contextIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
 
   thoughtCacheInvalidated.forEach(key => {
-    if (!whitelistedThoughts.thoughtIndex[key]) {
+    if (!getWhitelistedThoughts().thoughtIndex[key]) {
       delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
