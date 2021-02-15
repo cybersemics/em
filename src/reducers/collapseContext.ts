@@ -1,27 +1,45 @@
-import { parentOf, pathToContext, reducerFlow, unroot } from '../util'
+import { head, parentOf, pathToContext, reducerFlow, unroot } from '../util'
 import { State } from '../util/initialState'
-import { getChildren } from '../selectors'
+import { getAllChildren, simplifyPath } from '../selectors'
 import { archiveThought, existingThoughtMove, setCursor } from '../reducers'
+import _ from 'lodash'
+import existingThoughtDelete from './existingThoughtDelete'
+import { Path } from '../types'
+
+interface Options {
+  deleteCursor?: boolean,
+  at?: Path | null,
+}
 
 /** Collapses the active thought. */
-const collapseContext = (state: State) => {
+const collapseContext = (state: State, { deleteCursor, at }: Options) => {
   const { cursor } = state
 
-  if (!cursor) return state
+  const path = at || cursor
 
-  const children = getChildren(state, pathToContext(cursor))
+  if (!path) return state
+
+  const simpleCursor = simplifyPath(state, path)
+  const context = pathToContext(simpleCursor)
+
+  const children = getAllChildren(state, context)
 
   return reducerFlow(
     children.length > 0 ? [
       ...children.map(child =>
         existingThoughtMove({
-          oldPath: unroot([...cursor, child]),
-          newPath: unroot([...parentOf(cursor), child]),
+          oldPath: unroot([...path, child]),
+          newPath: unroot([...parentOf(path), child]),
         })
       ),
-      archiveThought({ path: cursor }),
+      !deleteCursor
+        ? archiveThought({ path }) :
+        existingThoughtDelete({
+          context: parentOf(context),
+          thoughtRanked: head(simpleCursor)
+        }),
       setCursor({
-        path: unroot([...parentOf(cursor), children[0]]),
+        path: unroot([...parentOf(path), children[0]]),
         editing: state.editing,
         offset: 0
       }),
@@ -29,4 +47,4 @@ const collapseContext = (state: State) => {
   )(state)
 }
 
-export default collapseContext
+export default _.curryRight(collapseContext)

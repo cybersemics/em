@@ -257,9 +257,9 @@ describe('mount', () => {
         path: RANKED_ROOT,
         text: `
         - apple
-          - banana`
+        - banana`
       }),
-      setCursorFirstMatchActionCreator(['apple', 'banana']),
+      setCursorFirstMatchActionCreator(['banana']),
       { type: 'deleteEmptyThought' },
     ])
     jest.runOnlyPendingTimers()

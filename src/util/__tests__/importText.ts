@@ -1,8 +1,8 @@
 import { validate as uuidValidate } from 'uuid'
 import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, never, reducerFlow, timestamp } from '../../util'
-import { initialState } from '../../util/initialState'
-import { exportContext, getParent } from '../../selectors'
+import { initialState, State } from '../../util/initialState'
+import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, existingThoughtChange, newThought } from '../../reducers'
 import { SimplePath } from '../../types'
 
@@ -37,8 +37,9 @@ it('basic import with proper thought structure', () => {
   const childAId = getParent(stateNew, [ROOT_TOKEN])?.children[0]?.id
   const childBId = getParent(stateNew, ['a'])?.children[0]?.id
 
-  expect(contextIndex).toEqual({
+  expect(contextIndex).toMatchObject({
     [hashContext([EM_TOKEN])]: {
+      id: hashContext([EM_TOKEN]),
       context: [EM_TOKEN],
       children: [],
       lastUpdated: never(),
@@ -53,9 +54,7 @@ it('basic import with proper thought structure', () => {
         id: childAId,
         value: 'a',
         rank: 0,
-        lastUpdated: now,
       }],
-      lastUpdated: now,
     },
     [hashContext(['a'])]: {
       id: hashContext(['a']),
@@ -65,16 +64,17 @@ it('basic import with proper thought structure', () => {
         id: childBId,
         value: 'b',
         rank: 0,
-        lastUpdated: now,
       }],
-      lastUpdated: now,
     }
   })
+
+  // Note: Jest doesn't have lexicographic string comparison yet :(
+  expect(contextIndex[hashContext(['a'])].lastUpdated >= now).toBeTruthy()
 
   expect(uuidValidate(childAId!)).toBe(true)
   expect(uuidValidate(childBId!)).toBe(true)
 
-  expect(thoughtIndex).toEqual({
+  expect(thoughtIndex).toMatchObject({
     [hashThought(ROOT_TOKEN)]: {
       value: ROOT_TOKEN,
       contexts: [],
@@ -95,7 +95,6 @@ it('basic import with proper thought structure', () => {
         rank: 0,
       }],
       created: now,
-      lastUpdated: now,
     },
     [hashThought('b')]: {
       value: 'b',
@@ -105,8 +104,102 @@ it('basic import with proper thought structure', () => {
         rank: 0,
       }],
       created: now,
-      lastUpdated: now,
     },
+  })
+
+  // Note: Jest doesn't have lexicographic string comparison yet :(
+  expect(thoughtIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
+  expect(thoughtIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
+
+})
+
+it('import and merge descendants', () => {
+
+  const initialText = `
+  - a
+    - b
+      - c
+  `
+
+  const mergeText = `
+  - a
+    - b
+      - q
+    - x
+      - y
+  - j
+  `
+
+  const now = timestamp()
+
+  const newState = reducerFlow([
+    importText({ text: initialText, path: RANKED_ROOT, lastUpdated: now }),
+    newThought({ at: RANKED_ROOT, value: '' }),
+    (state: State) => importText(state, {
+      path: rankThoughtsFirstMatch(state, ['']),
+      text: mergeText,
+      lastUpdated: now
+    })
+  ])(initialState(now))
+
+  const exported = exportContext(newState, [ROOT_TOKEN], 'text/plain')
+
+  const expectedExport = `- ${ROOT_TOKEN}
+  - a
+    - b
+      - c
+      - q
+    - x
+      - y
+  - j`
+
+  expect(exported).toBe(expectedExport)
+
+  const { contextIndex } = newState.thoughts
+
+  expect(contextIndex).toMatchObject({
+    [hashContext([ROOT_TOKEN])]: {
+      context: [ROOT_TOKEN],
+      children: [{
+        value: 'a',
+        rank: 0,
+      },
+      {
+        value: 'j',
+        rank: 1,
+      }
+      ],
+    },
+    [hashContext(['a'])]: {
+      context: ['a'],
+      children: [{
+        value: 'b',
+        rank: 0,
+      },
+      {
+        value: 'x',
+        // Note: x has rank two because exisitingThoughtMove doesn't account for duplicate merges for calualting rank. In this case b value is a duplicate merge in the context of ['a']
+        rank: 2,
+      }],
+    },
+    [hashContext(['a', 'b'])]: {
+      context: ['a', 'b'],
+      children: [{
+        value: 'c',
+        rank: 0,
+      },
+      {
+        value: 'q',
+        rank: 1,
+      }],
+    },
+    [hashContext(['a', 'x'])]: {
+      context: ['a', 'x'],
+      children: [{
+        value: 'y',
+        rank: 0,
+      }],
+    }
   })
 
 })
@@ -231,7 +324,7 @@ it('duplicate thoughts', () => {
   expect(uuidValidate(childAId!)).toBe(true)
   expect(uuidValidate(childBId!)).toBe(true)
 
-  expect(lexeme).toEqual({
+  expect(lexeme).toMatchObject({
     value: 'm',
     contexts: [{
       id: childAId,
@@ -243,8 +336,9 @@ it('duplicate thoughts', () => {
       rank: 0,
     }],
     created: now,
-    lastUpdated: now,
   })
+
+  expect(lexeme.lastUpdated >= now).toBeTruthy()
 
 })
 
@@ -443,7 +537,7 @@ it('import as subthoughts of non-empty cursor', () => {
     - x
     - y`)
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }, { value: 'y', rank: 2 }])
+  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }, { value: 'y', rank: 1 }])
 })
 
 it('decode HTML entities', () => {

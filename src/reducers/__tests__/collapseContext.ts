@@ -8,7 +8,7 @@ it('do nothing on leaf', () => {
   const steps = [
     newThought('a'),
     newSubthought('b'),
-    collapseContext,
+    collapseContext({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -29,7 +29,7 @@ it('collapse context with single child', () => {
     newSubthought('b'),
     newSubthought('c'),
     cursorBack,
-    collapseContext,
+    collapseContext({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -55,7 +55,7 @@ it('collapse context with multiple children', () => {
     newSubthought('c'),
     newThought('d'),
     cursorBack,
-    collapseContext,
+    collapseContext({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -84,7 +84,7 @@ it('merge children', () => {
     newSubthought('c'),
     newThought('d'),
     cursorBack,
-    collapseContext,
+    collapseContext({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -114,7 +114,7 @@ it('merge duplicate children', () => {
     newSubthought('c'),
     newThought('d'),
     cursorBack,
-    collapseContext,
+    collapseContext({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

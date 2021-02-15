@@ -124,7 +124,6 @@ describe('context view', () => {
         }, {
           value: 'm',
           rank: 0,
-          lastUpdated: now,
         }],
       })
 

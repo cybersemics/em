@@ -221,3 +221,31 @@ it('edit a child with the same value as its parent', () => {
     .toMatchObject([{ value: 'a', rank: 0 }, { value: 'ab', rank: 0 }])
 
 })
+
+it('do not duplicate children when new and old context are same', () => {
+
+  const steps = [
+    newThought({ value: 'a' }),
+    newThought({ value: 'b', insertNewSubthought: true }),
+    existingThoughtChange({
+      newValue: 'as',
+      oldValue: 'a',
+      context: [ROOT_TOKEN],
+      path: [{ value: 'a', rank: 0 }] as SimplePath
+    }),
+    existingThoughtChange({
+      newValue: 'a',
+      oldValue: 'as',
+      context: [ROOT_TOKEN],
+      path: [{ value: 'as', rank: 0 }] as SimplePath
+    })
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${ROOT_TOKEN}
+  - a
+    - b`)
+})

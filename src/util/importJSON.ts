@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { EM_TOKEN, ID, ROOT_TOKEN } from '../constants'
-import { getRankAfter, getThought, getAllChildren, nextSibling } from '../selectors'
+import { getThought, getAllChildren, nextSibling, getNextRank } from '../selectors'
 import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, Timestamp, ThoughtIndices } from '../types'
 import { State } from '../util/initialState'
 
@@ -166,7 +166,8 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const context = pathToContext(parentOf(simplePath))
   const destThought = head(simplePath)
   const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(simplePath)).length === 0
-  const rankStart = destEmpty ? destThought.rank : getRankAfter(state, simplePath)
+  // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
+  const rankStart = destEmpty ? destThought.rank : getNextRank(state, pathToContext(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
   const rootedContext = pathToContext(rootedParentOf(simplePath))
   const contextEncoded = hashContext(rootedContext)
