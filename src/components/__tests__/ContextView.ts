@@ -1,13 +1,11 @@
 import { cursorDown, newThought } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
-import { findThoughtsByText } from '../../test-helpers/queries'
+import { findAllThoughtsByText } from '../../test-helpers/queries'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 describe('Extract thought', () => {
-  beforeEach(async () => {
-    await createTestApp()
-  })
+  beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
   it('clicking a thought in the context view should not expand matching thoughts', async () => {
@@ -22,7 +20,7 @@ describe('Extract thought', () => {
       cursorDown()
     ])
 
-    const thoughts = await findThoughtsByText('sub-thought')
+    const thoughts = await findAllThoughtsByText('sub-thought')
     expect(thoughts.length).toBe(1)
 
   })
