@@ -1,7 +1,7 @@
 import { RANKED_ROOT } from '../constants'
 import { setCursor } from '../reducers'
-import { prevSibling } from '../selectors'
-import { parentOf, head, isRoot, pathToContext, rootedParentOf, unroot } from '../util'
+import { rootedParentOf, prevSibling } from '../selectors'
+import { parentOf, head, pathToContext, unroot, isRoot } from '../util'
 import { State } from '../util/initialState'
 
 /** Moves the cursor to the previous sibling. */
@@ -9,7 +9,7 @@ const cursorUp = (state: State) => {
   const { cursor } = state
   const path = cursor || RANKED_ROOT
   const { value, rank } = head(path)
-  const contextRanked = rootedParentOf(path)
+  const contextRanked = rootedParentOf(state, path)
   const context = pathToContext(contextRanked)
 
   const thoughtBefore = prevSibling(state, value, context, rank)

@@ -14,7 +14,6 @@ import {
   parentOf,
   pathToContext,
   reducerFlow,
-  rootedParentOf,
   unroot,
 } from '../util'
 
@@ -27,6 +26,7 @@ import {
   isContextViewActive,
   lastThoughtsFromContextChain,
   nextSibling,
+  rootedParentOf,
   prevSibling,
   splitChain,
   thoughtsEditingFromChain,
@@ -125,7 +125,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       ? parentOf(path).concat({ value: head((next as ThoughtContext).context), rank: next.rank })
       : parentOf(path).concat(next as Child)), 0] :
     // Case III: delete last thought in context; set cursor on context
-    thoughts.length > 1 ? [rootedParentOf(path), head(context).length]
+    thoughts.length > 1 ? [rootedParentOf(state, path), head(context).length]
     // Case IV: delete very last thought; remove cursor
     : [null, undefined]
 

@@ -10,9 +10,9 @@ import {
   head,
   headValue,
   isEM,
-  isRoot,
   pathToContext,
   reducerFlow,
+  isRoot,
 } from '../util'
 
 /** Inserts a new thought and adds the given thought as a subthought. */

@@ -2891,6 +2891,21 @@ code, .code {
   left: 19px;
 }
 
+.quick-add-button {
+  z-index: 100;
+  position: absolute;
+  bottom: 2rem;
+  right: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 200ms ease-in-out;
+}
+
+.quick-add-button.rotate {
+  transform: rotate(135deg);
+}
+
 @keyframes ellipsis {
   to { width: 1.25em; }
 }

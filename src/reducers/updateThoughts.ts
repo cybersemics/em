@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { State, PushBatch } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
-import { hashContext, isRoot, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts } from '../util'
+import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, ROOT_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
 import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtsInterface } from '../types'
 

@@ -1,7 +1,7 @@
 import { RANKED_ROOT } from '../constants'
 import { alert, existingThoughtMove, newThought } from '../reducers'
 import { State } from '../util/initialState'
-import { parentOf, ellipsize, headValue, isEM, isRoot, pathToContext, once, reducerFlow } from '../util'
+import { parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
 import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 
 /** Inserts a new thought as a parent of all thoughts in the given context. */

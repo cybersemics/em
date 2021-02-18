@@ -1,5 +1,5 @@
 import { validate as uuidValidate } from 'uuid'
-import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
 import { hashContext, hashThought, never, reducerFlow, timestamp } from '../../util'
 import { initialState, State } from '../../util/initialState'
 import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
@@ -56,6 +56,13 @@ it('basic import with proper thought structure', () => {
         rank: 0,
       }],
     },
+    [hashContext([ABSOLUTE_TOKEN])]: {
+      // id: hashContext([ABSOLUTE_TOKEN]),
+      context: [ABSOLUTE_TOKEN],
+      children: [],
+      lastUpdated: never(),
+      pending: true
+    },
     [hashContext(['a'])]: {
       id: hashContext(['a']),
       context: ['a'],
@@ -83,6 +90,12 @@ it('basic import with proper thought structure', () => {
     },
     [hashThought(EM_TOKEN)]: {
       value: EM_TOKEN,
+      contexts: [],
+      created: now,
+      lastUpdated: never(),
+    },
+    [hashThought(ABSOLUTE_TOKEN)]: {
+      value: ABSOLUTE_TOKEN,
       contexts: [],
       created: now,
       lastUpdated: never(),

@@ -1,13 +1,13 @@
-import { isRoot } from './isRoot'
+import { isHome } from './isHome'
 
 /**
- * Remove root, de-indent (trim), and append newline.
+ * Remove home token, de-indent (trim), and append newline.
  */
 export const removeRoot = (exported: string) => {
   const firstLineBreakIndex = exported.indexOf('\n')
   const firstThought = exported.slice(0, firstLineBreakIndex).slice(1).trim()
 
-  return isRoot([firstThought])
+  return isHome([firstThought])
     ? exported
       .slice(firstLineBreakIndex)
       .split('\n')

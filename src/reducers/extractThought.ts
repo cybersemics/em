@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { headRank, headValue, pathToContext, reducerFlow, rootedParentOf } from '../util'
+import { headRank, headValue, pathToContext, reducerFlow } from '../util'
 import existingThoughtChange from './existingThoughtChange'
 import newThought from './newThought'
-import { simplifyPath } from '../selectors'
+import { rootedParentOf, simplifyPath } from '../selectors'
 import alert from './alert'
 
 /** Extract the selection as child thought. */
@@ -27,7 +27,7 @@ const extractThought = (state: State) => {
   const childValue = value.slice(selectionStart, selectionEnd)
 
   const thoughts = pathToContext(cursor)
-  const cursorContext = rootedParentOf(thoughts)
+  const cursorContext = rootedParentOf(state, thoughts)
   const rank = headRank(cursor)
 
   const reducers = [

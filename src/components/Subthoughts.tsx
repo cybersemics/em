@@ -27,19 +27,20 @@ import {
   isDivider,
   isEM,
   isFunction,
-  isRoot,
   parseJsonSafe,
   pathToContext,
-  rootedParentOf,
   isDescendantPath,
   sumSubthoughtsLength,
+  isRoot,
   unroot,
+  isAbsolute,
 } from '../util'
 
 // selectors
 import {
   attribute,
   attributeEquals,
+  childrenFilterPredicate,
   getChildPath,
   appendChildPath,
   getContextsSortedAndRanked,
@@ -50,8 +51,8 @@ import {
   getAllChildren,
   getChildrenRanked,
   getAllChildrenSorted,
-  isChildVisibleWithCursorCheck,
   isContextViewActive,
+  rootedParentOf,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -88,7 +89,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     cursor,
     dataNonce,
     showHiddenThoughts,
+    rootContext
   } = state
+
+  const isAbsoluteContext = isAbsolute(rootContext)
 
   const resolvedPath = props.path ?? props.simplePath
 
@@ -138,7 +142,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     simplePath: simplePathLive,
     // re-render if children change
     __render: getAllChildren(state, pathToContext(simplePathLive)),
-    isExpanded: store.getState().expanded[hashContext(pathToContext(resolvedPath))]
+    isExpanded: store.getState().expanded[hashContext(pathToContext(resolvedPath))],
+    isAbsoluteContext,
   }
 }
 
@@ -183,8 +188,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   }])
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(pathToContext(thoughtsFrom))
-  const newContext = rootedParentOf(pathToContext(newPath))
+  const oldContext = rootedParentOf(state, pathToContext(thoughtsFrom))
+  const newContext = rootedParentOf(state, pathToContext(newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot drop on itself
@@ -312,7 +317,8 @@ export const SubthoughtsComponent = ({
   sort: contextSort,
   simplePath,
   showHiddenThoughts,
-  isExpanded
+  isExpanded,
+  isAbsoluteContext
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
 
   // <Subthoughts> render
@@ -355,7 +361,8 @@ export const SubthoughtsComponent = ({
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
-  const filteredChildren = children.filter(isChildVisibleWithCursorCheck(state, resolvedPath, simplePath))
+
+  const filteredChildren = children.filter(childrenFilterPredicate(state, resolvedPath, simplePath))
 
   const proposedPageSize = isRoot(simplePath)
     ? Infinity
@@ -440,6 +447,7 @@ export const SubthoughtsComponent = ({
     >
       {filteredChildren
         .map((child, i) => {
+
           if (i >= proposedPageSize) {
             return null
           }
@@ -463,7 +471,7 @@ export const SubthoughtsComponent = ({
             simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
             The main problem is that when a new Thought is added it will get key (index) of the previous thought,
             causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
-
+Path
             By using child's rank we have unique key for every new thought.
             Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
             re-renders.

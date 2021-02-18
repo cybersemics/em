@@ -4,7 +4,7 @@ import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { unescape } from 'html-escaper'
 import classNames from 'classnames'
-import { alert, cursorBack, editing, error, existingThoughtChange, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext } from '../action-creators'
+import { alert, cursorBack, editing, error, existingThoughtChange, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext, newThought } from '../action-creators'
 import { isTouch, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
@@ -17,7 +17,6 @@ import {
   EDIT_THROTTLE,
   EM_TOKEN,
   MODIFIER_KEYS,
-  ROOT_TOKEN,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -58,6 +57,7 @@ import {
   getAllChildren,
   hasChild,
   isContextViewActive,
+  rootedParentOf,
 } from '../selectors'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -115,6 +115,11 @@ interface EditableProps {
   showContexts?: boolean,
   style?: React.CSSProperties,
   simplePath: SimplePath,
+  /* If transient is true:
+    1. Instead of calling exisitingThoughtChange, it calls newThought to add the given child to the state.
+    2. It also sets focus to itself on render.
+  */
+  transient?: boolean,
   onKeyDownAction?: () => void,
 }
 
@@ -154,7 +159,7 @@ const showDuplicationAlert = duplicateAlertToggler()
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch }: Connected<EditableProps>) => {
+const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch, transient }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
@@ -162,7 +167,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   const uneditable = hasChild(state, thoughts, '=uneditable')
   const context = showContexts && thoughts.length > 2 ? parentOf(parentOf(thoughts))
     : !showContexts && thoughts.length > 1 ? parentOf(thoughts)
-    : [ROOT_TOKEN]
+    : state.rootContext
   const childrenOptions = getAllChildren(state, [...context, '=options'])
   const options = childrenOptions.length > 0 ?
     childrenOptions.map(child => child.value.toLowerCase())
@@ -253,7 +258,17 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const oldValue = oldValueRef.current
 
     const thought = getThought(state, oldValue)
+
+    if (transient) {
+      dispatch(newThought({
+        at: rootedParentOf(state, path),
+        value: newValue,
+      }))
+      return
+    }
+
     if (thought) {
+
       dispatch(existingThoughtChange({
         context,
         showContexts,
@@ -321,12 +336,12 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     //   noFocusNode: !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold,
     // })
 
-    if (isEditing &&
-      contentRef.current &&
-      editMode &&
-      !noteFocus &&
-      (state.cursorOffset !== null || !window.getSelection()?.focusNode) &&
-      !dragHold
+    // Note: Allow tranisent editable to have focus on render
+    if (transient ||
+        (
+          isEditing && editMode && !noteFocus && contentRef.current
+          && (state.cursorOffset !== null || !window.getSelection()?.focusNode)
+          && !dragHold)
     ) {
       /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
@@ -437,7 +452,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     }
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-    if (contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
+    if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
       thoughtChangeHandler(newValue, { context, showContexts, rank, simplePath })
@@ -469,6 +484,15 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
       const rawDestValue = strip(contentRef.current!.innerHTML, { preventTrim: true })
+
+      // If transient first add new thought and then import the text
+      if (transient) {
+        dispatch(newThought({
+          at: rootedParentOf(state, path),
+          value: '',
+        }))
+      }
+
       dispatch(importText({
         path,
         text: isHTML(plainText)

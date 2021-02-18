@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { ALLOW_SINGLE_CONTEXT, RANKED_ROOT, ROOT_TOKEN } from '../constants'
-import { parentOf, equalArrays, head, pathToContext, once, rootedParentOf, unroot } from '../util'
-import { firstVisibleChild, getContexts, getContextsSortedAndRanked, getThought, isContextViewActive, splitChain, nextSibling as thoughtNextSibling } from '../selectors'
+import { parentOf, equalArrays, head, pathToContext, once, unroot } from '../util'
+import { firstVisibleChild, getContexts, getContextsSortedAndRanked, getThought, isContextViewActive, splitChain, nextSibling as thoughtNextSibling, rootedParentOf } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
 
@@ -216,7 +216,7 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain. */
 export const nextThought = (state: State, path: Path = RANKED_ROOT) => {
   const { value, rank } = head(path)
-  const parentPath = rootedParentOf(path)
+  const parentPath = rootedParentOf(state, path)
   const contextChain = splitChain(state, path)
   const context = pathToContext(parentPath)
 

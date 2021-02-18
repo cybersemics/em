@@ -1,9 +1,8 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
 import { appendChildPath, getChildPath, getSortPreference, hasChild, isContextViewActive } from '../selectors'
-import { compareByRank, compareThought, hashContext, isFunction, sort, unroot, pathToContext, equalThoughtRanked, head } from '../util'
+import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot } from '../util'
 import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, SimplePath, Parent, Path } from '../types'
-
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
 
@@ -94,4 +93,19 @@ export const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, 
   return state.showHiddenThoughts ||
   isChildVisible(state, pathToContext(simplePath), { value: pathHeadValue(state, path, child), rank: child.rank }) ||
   isChildInCursor(state, path, simplePath, child)
+})
+
+/** Checks if the child is created after latest absolute context toggle. */
+const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | ThoughtContext) => child.lastUpdated && state.absoluteContextTime && child.lastUpdated > state.absoluteContextTime)
+
+/**
+ * Children filter predicate used for rendering.
+ *
+ * 1. Checks if the child is visible.
+ * 2. Checks if child is within cursor.
+ * 3. Checks if child is created after latest absolute context toggle if starting context is absolute.
+ */
+export const childrenFilterPredicate = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+  return isChildVisibleWithCursorCheck(state, path, simplePath, child) &&
+  (!isAbsolute(state.rootContext) || isCreatedAfterAbsoluteToggle(state, child))
 })

@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { pathToContext, reducerFlow, rootedParentOf } from '../util'
-import { getAllChildren, getChildrenRanked } from '../selectors'
+import { pathToContext, reducerFlow } from '../util'
+import { getAllChildren, getChildrenRanked, rootedParentOf } from '../selectors'
 import { alert, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'
@@ -8,8 +8,8 @@ import { Path } from '../types'
 /** Moves the archived thought back to its original location. */
 const undoArchive = (state: State, { originalPath, currPath, offset }: { originalPath: Path, currPath: Path, offset?: number }) => {
 
-  const context = rootedParentOf(pathToContext(currPath))
-  const archiveContext = rootedParentOf(pathToContext(originalPath))
+  const context = rootedParentOf(state, pathToContext(currPath))
+  const archiveContext = rootedParentOf(state, pathToContext(originalPath))
 
   return reducerFlow([
 

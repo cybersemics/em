@@ -13,7 +13,6 @@ import {
   headRank,
   headValue,
   pathToContext,
-  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -27,6 +26,7 @@ import {
   getChildrenRanked,
   simplifyPath,
   splitChain,
+  rootedParentOf,
 } from '../selectors'
 
 const disableAll = true
@@ -163,7 +163,7 @@ const dataIntegrityCheck = (path: Path): Thunk => (dispatch, getState) => {
 
     // sync divergent ranks
     if (syncDivergentRanks) {
-      const contextIndexThoughtsMatchingValue = getChildrenRanked(state, rootedParentOf(pathToContext(simplePath)))
+      const contextIndexThoughtsMatchingValue = getChildrenRanked(state, rootedParentOf(state, pathToContext(simplePath)))
         .filter(equalThoughtValue(value))
 
       if (contextIndexThoughtsMatchingValue.length > 0) {

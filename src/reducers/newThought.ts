@@ -4,7 +4,6 @@ import { Path } from '../types'
 
 // constants
 import {
-  RANKED_ROOT,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
@@ -29,7 +28,6 @@ import {
   parentOf,
   pathToContext,
   reducerFlow,
-  rootedParentOf,
   unroot,
 } from '../util'
 
@@ -39,9 +37,11 @@ import {
   getPrevRank,
   getRankAfter,
   getRankBefore,
+  getRoot,
   getSetting,
   hasChild,
   isContextViewActive,
+  rootedParentOf,
   simplifyPath,
 } from '../selectors'
 
@@ -91,10 +91,12 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
 
-  const path = at || state.cursor || RANKED_ROOT
+  const path = at || state.cursor || getRoot(state)
+
   const simplePath = simplifyPath(state, path)
+
   const thoughts = pathToContext(simplePath)
-  const context = pathToContext(rootedParentOf(simplePath))
+  const context = pathToContext(rootedParentOf(state, simplePath))
 
   // prevent adding Subthought to readonly or unextendable Thought
   const sourceContext = insertNewSubthought ? thoughts : context

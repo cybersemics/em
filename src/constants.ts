@@ -1,7 +1,7 @@
 /** Defines app-wide constants. */
 
 import raw from 'raw.macro'
-import { Index, SimplePath } from './types'
+import { Index, Path, SimplePath } from './types'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -103,7 +103,22 @@ export const ROOT_TOKEN = '__ROOT__'
 // token for hidden system context
 export const EM_TOKEN = '__EM__'
 
+export const ABSOLUTE_TOKEN = '__ABSOLUTE__'
+
+export const ROOT_CONTEXTS = [ROOT_TOKEN, ABSOLUTE_TOKEN]
+
 export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }] as SimplePath
+export const ABSOLUTE_PATH = [{ value: ABSOLUTE_TOKEN, rank: 0 }] as SimplePath
+
+export const ROOT_PATH_MAP: Record<string, Path> = {
+  [ROOT_TOKEN]: RANKED_ROOT,
+  [ABSOLUTE_TOKEN]: ABSOLUTE_PATH
+}
+
+export const TRANSIENT_ABSOLUTE_CHILD_PATH = [{
+  value: '',
+  rank: 0,
+}]
 
 export const ALLOW_SINGLE_CONTEXT = false
 
