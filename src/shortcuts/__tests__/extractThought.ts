@@ -1,16 +1,9 @@
-import { screen, findAllByText, findAllByPlaceholderText } from '@testing-library/react'
+import { screen, findAllByPlaceholderText } from '@testing-library/react'
 import { extractThought, newThought } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import { findThoughtByText } from '../../test-helpers/queries'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-
-/**
- * Gets a thought by value.
- */
-const findThoughtByText = async (value: string, container?: HTMLElement) => {
-  const thoughtNodes = await (container ? findAllByText(container!, value, { exact: true }) : screen.findAllByText(value, { exact: true }))
-  return thoughtNodes.find(t => t.hasAttribute('contenteditable'))
-}
 
 /**
  * Set range selection.

@@ -45,7 +45,7 @@ import {
   pathToContext,
   publishMode,
   rootedParentOf,
-  subsetThoughts,
+  isDescendantPath,
   unroot,
 } from '../util'
 
@@ -142,7 +142,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   } = props
 
   // check if the cursor path includes the current thought
-  const isEditingPath = subsetThoughts(cursor, path)
+  const isEditingPath = isDescendantPath(cursor, path)
 
   // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursor, path)
@@ -267,7 +267,7 @@ const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonit
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
-  const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
+  const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
   const oldContext = rootedParentOf(thoughtsFrom)
   const newContext = rootedParentOf(thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
