@@ -3,7 +3,7 @@ import FakeTimer, { InstalledClock } from '@sinonjs/fake-timers'
 /**
  * Wraps sinon fake clock to reuse in a test file.
  */
-const sinonFakeTimer = () => {
+const testTimer = () => {
   // eslint-disable-next-line fp/no-let
   let clock: InstalledClock | null = null
 
@@ -37,4 +37,4 @@ const sinonFakeTimer = () => {
   }
 }
 
-export default sinonFakeTimer
+export default testTimer

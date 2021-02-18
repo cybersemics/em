@@ -7,14 +7,14 @@ import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getThought'
-import sinonFakeTimer from '../../test-helpers/sinonFakeTimer'
+import testTimer from '../../test-helpers/testTimer'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
   For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
 */
 
-const fakeTimer = sinonFakeTimer()
+const fakeTimer = testTimer()
 
 describe('dexie', () => {
   beforeEach(initDB)

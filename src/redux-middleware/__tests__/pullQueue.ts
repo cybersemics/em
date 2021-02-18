@@ -8,14 +8,14 @@ import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { SimplePath } from '../../types'
-import sinonFakeTimer from '../../test-helpers/sinonFakeTimer'
+import testTimer from '../../test-helpers/testTimer'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
   For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
 */
 
-const fakeTimer = sinonFakeTimer()
+const fakeTimer = testTimer()
 
 const db = dexie as DataProvider
 
