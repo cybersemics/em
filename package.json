@@ -45,6 +45,7 @@
     "lodash": "^4.17.20",
     "matchmedia-polyfill": "^0.3.2",
     "murmurhash3js": "^3.0.1",
+    "page-lifecycle": "github:magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "react": "^16.14.0",
     "react-contenteditable": "^3.3.5",

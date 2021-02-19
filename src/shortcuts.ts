@@ -100,7 +100,7 @@ const index = (): {
 }
 
 /** Returns true if the current alert is a gestureHint. */
-const isGestureHint = ({ alert }: State) =>
+export const isGestureHint = ({ alert }: State) =>
   alert && alert.alertType === 'gestureHint'
 
 let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no-let

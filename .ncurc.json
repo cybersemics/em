@@ -2,8 +2,11 @@
 ncu config
 
 Dependency notes:
-  - html-escaper  Replace 'he' with 'html-escaper' due to bundle size.
-                  Other small HTML entity encoder/decoders: entities, html-entities"
+  - html-escaper     Replace 'he' with 'html-escaper' due to bundle size.
+                     Other small HTML entity encoder/decoders: entities, html-entities
+  - page-lifecycle   Use https://github.com/magic-akari/page-lifecycle/tree/feat/add-types
+                     to get Typescript types.
+
 */
 
 {

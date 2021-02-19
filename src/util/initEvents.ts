@@ -1,13 +1,14 @@
 import _ from 'lodash'
 import { Store } from 'redux'
-import { inputHandlers } from '../shortcuts'
+import { inputHandlers, isGestureHint } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { clearSelection, isRoot, pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { decodeThoughtsUrl, pathExists } from '../selectors'
-import { error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { alert, error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { Path } from '../types'
 import { equalPath } from './equalPath'
+import lifecycle from 'page-lifecycle'
 
 declare global {
   interface Window {
@@ -90,14 +91,15 @@ export const initEvents = (store: Store<State, any>) => {
     store.dispatch(error({ value: e.message }))
   }
 
-  /** Remove window event handlers. */
-  const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
-    window.removeEventListener('keydown', keyDown)
-    window.removeEventListener('keyup', keyUp)
-    window.removeEventListener('popstate', onPopstate)
-    window.removeEventListener('mousemove', onMouseMove)
-    window.removeEventListener('error', onError)
-    window.removeEventListener('beforeunload', onBeforeUnload)
+  /** Handle a page lifecycle state change. */
+  const onStateChange = ({ oldState, newState }: { oldState: string, newState: string }) => {
+    if (newState === 'hidden') {
+      // dismiss the gesture alert if active
+      if (isGestureHint(store.getState())) {
+        store.dispatch(alert(null))
+      }
+      // we could also persist unsaved data here
+    }
   }
 
   // store input handlers so they can be removed on cleanup
@@ -112,6 +114,20 @@ export const initEvents = (store: Store<State, any>) => {
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('error', onError)
   window.addEventListener('beforeunload', onBeforeUnload)
+  // clean up when PWA is hidden
+  // https://github.com/cybersemics/em/issues/1030
+  lifecycle.addEventListener('statechange', onStateChange)
+
+  /** Remove window event handlers. */
+  const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
+    window.removeEventListener('keydown', keyDown)
+    window.removeEventListener('keyup', keyUp)
+    window.removeEventListener('popstate', onPopstate)
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('error', onError)
+    window.removeEventListener('beforeunload', onBeforeUnload)
+    lifecycle.removeEventListener('statechange', onStateChange)
+  }
 
   // return input handlers as another way to remove them on cleanup
   return { keyDown, keyUp, cleanup }
