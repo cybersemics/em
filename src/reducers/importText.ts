@@ -8,7 +8,7 @@ import { Block, Path, SimplePath, Timestamp } from '../types'
 import { State } from '../util/initialState'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
-// import { ROOT_TOKEN } from '../constants'
+// import { HOME_TOKEN } from '../constants'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi

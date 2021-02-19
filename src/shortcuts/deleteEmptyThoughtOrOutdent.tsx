@@ -3,7 +3,7 @@ import { Key } from 'ts-key-enum'
 import { asyncFocus, ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
 import { getChildren, getThoughtBefore, getAllChildren, getChildrenRanked, hasChild, isContextViewActive, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 import { State } from '../util/initialState'
-import { RANKED_ROOT } from '../constants'
+import { HOME_PATH } from '../constants'
 import { isTouch } from '../browser'
 import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
 import { Icon as IconType, Shortcut, Thunk } from '../types'
@@ -94,7 +94,7 @@ const isMergedThoughtDuplicate = (state: State) => {
   const mergedThoughtValue = prevThought.value + headValue(cursor)
   const context = pathToContext(showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 2]
     : !showContexts && path.length > 1 ? parentOf(path) :
-    RANKED_ROOT)
+    HOME_PATH)
   const siblings = getAllChildren(state, context)
   const isDuplicate = !siblings.every(thought => thought.value !== mergedThoughtValue)
   return isDuplicate

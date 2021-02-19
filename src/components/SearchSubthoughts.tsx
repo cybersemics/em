@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store'
-import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import { exists } from '../selectors'
 import { searchLimit as setSearchLimit } from '../action-creators'
 import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThoughtsSequential, sort } from '../util'
@@ -56,7 +56,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, arch
     sort(Object.values(thoughtIndex)
       .filter(thought =>
         (archived || !isArchived(thought)) &&
-        thought.value !== ROOT_TOKEN &&
+        thought.value !== HOME_TOKEN &&
         thought.value !== EM_TOKEN &&
         searchRegexp.test(thought.value)
       )
@@ -81,7 +81,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, arch
     <span className='text-note text-small'>{formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"</span>
     <Subthoughts
       childrenForced={children.slice(0, searchLimit)}
-      simplePath={RANKED_ROOT}
+      simplePath={HOME_PATH}
       allowSingleContextParent={true}
       // expandable={true}
     />

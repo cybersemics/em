@@ -24,7 +24,7 @@ const indent = (state: State) => {
 
   if (!prev) return state
 
-  // cancel if cursor is EM_TOKEN or ROOT_TOKEN
+  // cancel if cursor is EM_TOKEN or HOME_TOKEN
   if (isEM(cursor) || isRoot(cursor)) {
     return alert(state, { value: `The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.` })
   }

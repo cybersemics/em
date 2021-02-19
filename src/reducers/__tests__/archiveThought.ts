@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 
 // TODO: Why does util have to be imported before selectors and reducers?
 import { initialState, reducerFlow } from '../../util'
@@ -17,9 +17,9 @@ it('archive a thought', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
     - b
   - a`)
@@ -38,9 +38,9 @@ it('deduplicate archived thoughts with the same value', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
     - b
   - a`)
@@ -57,9 +57,9 @@ it('do nothing if there is no cursor', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
 
 })
@@ -76,9 +76,9 @@ it('move to top of archive', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
     - b
     - c
@@ -96,9 +96,9 @@ it('permanently delete empty thought', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
 
 })
@@ -115,9 +115,9 @@ it('permanently delete thought from archive', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
   - a`)
 
@@ -135,9 +135,9 @@ it('permanently delete archive', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
 
   // ensure =archive is removed from thoughtIndex
@@ -159,9 +159,9 @@ it('permanently delete archive with descendants', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}`)
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
 
   // ensure =archive is removed from thoughtIndex
   expect(getContexts(stateNew, '=archive'))
@@ -256,9 +256,9 @@ it('empty thought should be archived if it has descendants', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
     - ${''/* prevent trim_trailing_whitespace */}
       - b
@@ -284,8 +284,8 @@ describe('context view', () => {
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
-    const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
-    const expected = `- ${ROOT_TOKEN}
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    const expected = `- ${HOME_TOKEN}
   - a
     - m
       - x
@@ -309,8 +309,8 @@ describe('context view', () => {
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
-    const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
-    const expected = `- ${ROOT_TOKEN}
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    const expected = `- ${HOME_TOKEN}
   - a
     - =archive
       - m

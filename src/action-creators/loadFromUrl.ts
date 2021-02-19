@@ -1,4 +1,4 @@
-import { RANKED_ROOT } from '../constants'
+import { HOME_PATH } from '../constants'
 import { isRoot, pathToContext } from '../util'
 import { importText, setCursor } from '../action-creators'
 import { decodeThoughtsUrl, getAllChildren } from '../selectors'
@@ -13,7 +13,7 @@ interface Options {
  *
  * @param skipRoot    See importHtml.
  */
-const loadFromUrl = (url: string, path = RANKED_ROOT, { skipRoot }: Options = {}): Thunk<Promise<void>> => async (dispatch, getState) => {
+const loadFromUrl = (url: string, path = HOME_PATH, { skipRoot }: Options = {}): Thunk<Promise<void>> => async (dispatch, getState) => {
   const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
   const response = await fetch(urlWithProtocol)
   const text = await response.text()

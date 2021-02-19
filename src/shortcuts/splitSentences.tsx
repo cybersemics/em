@@ -4,7 +4,7 @@ import { parentOf, headValue, pathToContext } from '../util'
 import { alert, splitSentences } from '../action-creators'
 import { Action } from 'redux'
 import { getAllChildren, isContextViewActive } from '../selectors'
-import { ROOT_TOKEN } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import { Thunk, Icon as IconType, Shortcut } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -34,7 +34,7 @@ const splitSentencesShortcut: Shortcut = {
     const showContexts = cursor && isContextViewActive(state, parentOf(pathToContext(cursor)))
     const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(parentOf(parentOf(cursor)))
       : !showContexts && cursor.length > 1 ? pathToContext(parentOf(cursor))
-      : [ROOT_TOKEN])
+      : [HOME_TOKEN])
     const siblings = context && getAllChildren(state, context).map(({ value }) => value)
     const duplicates = _.intersection(sentences, siblings)
     if (duplicates.length !== 0) {

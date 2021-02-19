@@ -1,4 +1,4 @@
-import { RANKED_ROOT } from '../constants'
+import { HOME_PATH } from '../constants'
 import { setCursor } from '../reducers'
 import { firstVisibleChild } from '../selectors'
 import { pathToContext, unroot } from '../util'
@@ -14,7 +14,7 @@ const cursorForward = (state: State) => {
   }
   // otherwise move cursor to first child
   else {
-    const cursor = state.cursor || RANKED_ROOT
+    const cursor = state.cursor || HOME_PATH
 
     const firstChild = firstVisibleChild(state, pathToContext(cursor))
     if (!firstChild) return state

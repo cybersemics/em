@@ -1,5 +1,5 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { hashContext, hashThought, removeRoot } from '../../util'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { hashContext, hashThought, removeHome } from '../../util'
 import { exportContext } from '../../selectors'
 import { State, initialState } from '../initialState'
 import { RoamBlock, RoamPage, roamJsonToBlocks } from '../roamJsonToBlocks'
@@ -71,7 +71,7 @@ const importExport = (roamJson: RoamPage[]) => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importJSON(state, RANKED_ROOT as SimplePath, thoughtsJSON, { skipRoot: false })
+  } = importJSON(state, HOME_PATH as SimplePath, thoughtsJSON, { skipRoot: false })
 
   const stateNew: State = {
     ...initialState(),
@@ -81,8 +81,8 @@ const importExport = (roamJson: RoamPage[]) => {
       thoughtIndex,
     }
   }
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
-  return removeRoot(exported)
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  return removeHome(exported)
 }
 
 test('it should convert a flat Roam json into a list of thoughts', () => {
@@ -203,7 +203,7 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importJSON(initialState(), RANKED_ROOT as SimplePath, blocks, { skipRoot: false })
+  } = importJSON(initialState(), HOME_PATH as SimplePath, blocks, { skipRoot: false })
 
   /** Gets the edit-time of a RoamBlock. */
   const editTimeOf = (value: string) => {

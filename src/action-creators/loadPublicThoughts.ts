@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
 import { loadRemoteState } from '../action-creators'
 import { Thunk, Parent, Snapshot } from '../types'
@@ -32,7 +32,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
       thoughts: {
         contextCache: [],
         contextIndex: {
-          [hashContext([ROOT_TOKEN])]: parentEntry
+          [hashContext([HOME_TOKEN])]: parentEntry
         },
         thoughtCache: parentEntry.children.map(child => hashThought(child.value)),
         thoughtIndex: parentEntry.children.reduce((accum, child) => ({
@@ -40,7 +40,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
           [hashThought(child.value)]: {
             value: child.value,
             contexts: [{
-              context: [ROOT_TOKEN],
+              context: [HOME_TOKEN],
               rank: child.rank
             }],
             lastUpdated: child.lastUpdated,

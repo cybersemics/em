@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import { componentToThought, hashContext, keyValueBy, owner } from '../util'
 import { pathExists, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../util/initialState'
@@ -18,7 +18,7 @@ const decodeThoughtsUrl = (state: State, pathname: string, { exists }: Options =
     console.error(`decodeThoughtsUrl: owner does not match owner(). "${urlOwner}" !== "${owner()}". This is likely a regression, as they should always match.`)
   }
 
-  const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [ROOT_TOKEN]
+  const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [HOME_TOKEN]
   const pathUnranked = urlPath.map(componentToThought)
   const contextViews = keyValueBy(urlPath, (cur, i) =>
     /~$/.test(cur) ? {

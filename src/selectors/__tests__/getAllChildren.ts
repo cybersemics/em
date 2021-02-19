@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { getAllChildren } from '../../selectors'
 import { newSubthought, newThought } from '../../reducers'
@@ -12,7 +12,7 @@ it('get root children', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(getAllChildren(stateNew, [ROOT_TOKEN]))
+  expect(getAllChildren(stateNew, [HOME_TOKEN]))
     .toMatchObject([{ value: 'a', rank: 0 }, { value: 'b', rank: 1 }])
 
 })

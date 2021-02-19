@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { EM_TOKEN, ROOT_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { decodeContextUrl, getAllChildrenByContextHash, hasPushes } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, pathToContext, unroot } from '../util'
 import { pull } from '../action-creators'
@@ -16,7 +16,7 @@ const flushPullQueueDelay = 500
 /** Creates the initial pullQueue with only the em and root contexts. */
 const initialPullQueue = (): Index<Context> => ({
   [hashContext([EM_TOKEN])]: [EM_TOKEN],
-  [hashContext([ROOT_TOKEN])]: [ROOT_TOKEN],
+  [hashContext([HOME_TOKEN])]: [HOME_TOKEN],
 })
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */

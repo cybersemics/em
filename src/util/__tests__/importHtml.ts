@@ -1,5 +1,5 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
-import { importHtml, mergeUpdates, removeRoot } from '../../util'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { importHtml, mergeUpdates, removeHome } from '../../util'
 import { exportContext } from '../../selectors'
 import { initialState, State } from '../../util/initialState'
 import { SimplePath } from '../../types'
@@ -10,7 +10,7 @@ const importExport = (html: string) => {
   const {
     contextIndexUpdates: contextIndex,
     thoughtIndexUpdates: thoughtIndex,
-  } = importHtml(state, RANKED_ROOT, html)
+  } = importHtml(state, HOME_PATH, html)
   const stateNew = {
     ...state,
     thoughts: {
@@ -19,10 +19,10 @@ const importExport = (html: string) => {
       thoughtIndex,
     }
   }
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
-  return removeRoot(exported)
+  return removeHome(exported)
 }
 
 it('simple', () => {
@@ -319,14 +319,14 @@ it('paste multiple thoughts in non-empty cursor', () => {
 <li>y</li>
 `
 
-  const state1 = importHtmlReducer(initialState(), RANKED_ROOT, initialHtml)
+  const state1 = importHtmlReducer(initialState(), HOME_PATH, initialHtml)
 
   const simplePath = [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }] as SimplePath
   const state2 = importHtmlReducer(state1, simplePath, importedHtml)
 
-  const exported = exportContext(state2, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - x
@@ -362,14 +362,14 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
 <li>y</li>
 `
 
-  const state1 = importHtmlReducer(initialState(), RANKED_ROOT, initialHtml)
+  const state1 = importHtmlReducer(initialState(), HOME_PATH, initialHtml)
 
   const simplePath = [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }] as SimplePath
   const state2 = importHtmlReducer(state1, simplePath, importedHtml)
 
-  const exported = exportContext(state2, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - x

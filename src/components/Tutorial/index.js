@@ -11,7 +11,7 @@ import { tutorial } from '../../action-creators'
 
 // constants
 import {
-  ROOT_TOKEN,
+  HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_HINT,
   TUTORIAL2_STEP_CONTEXT1_PARENT_HINT,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
@@ -44,7 +44,7 @@ const mapStateToProps = state => {
   return {
     contextViews,
     cursor,
-    rootChildren: getParent(state, [ROOT_TOKEN])?.children,
+    rootChildren: getParent(state, [HOME_TOKEN])?.children,
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
     tutorialStep: +getSetting(state, 'Tutorial Step') || 1
   }

@@ -1,4 +1,4 @@
-import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User } from '../types'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
@@ -102,8 +102,8 @@ export interface State {
 export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
 
   const contextIndex = {
-    [hashContext([ROOT_TOKEN])]: {
-      context: [ROOT_TOKEN],
+    [hashContext([HOME_TOKEN])]: {
+      context: [HOME_TOKEN],
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -127,8 +127,8 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   }
 
   const thoughtIndex = {
-    [hashThought(ROOT_TOKEN)]: {
-      value: ROOT_TOKEN,
+    [hashThought(HOME_TOKEN)]: {
+      value: HOME_TOKEN,
       contexts: [],
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created,
@@ -198,7 +198,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     showBreadcrumbs: true,
     // eslint-disable-next-line no-mixed-operators
     splitPosition: parseJsonSafe(typeof localStorage !== 'undefined' ? localStorage.getItem('splitPosition') : null, 0),
-    rootContext: [ROOT_TOKEN],
+    rootContext: [HOME_TOKEN],
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { HOME_PATH, HOME_TOKEN } from '../constants'
 import { equalArrays, hashContext, pathToContext } from '../util'
 import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 import { deleteCursor, updateCursor } from '../data-providers/dexie'
@@ -20,14 +20,14 @@ interface Options {
  *
  * @param contextViews   Optional argument can be used during toggleContextViews when the state has not yet been updated. Defaults to URL contextViews.
  */
-const updateUrlHistory = (state: State, path = RANKED_ROOT, { replace, contextViews }: Options = {}) => {
+const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextViews }: Options = {}) => {
 
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
-  const context = path ? pathToContext(path) : [ROOT_TOKEN]
+  const context = path ? pathToContext(path) : [HOME_TOKEN]
   const encoded = hashContext(context)
 
   // convert decoded root thought to null cursor
-  const contextDecoded = decoded.path ? pathToContext(decoded.path) : [ROOT_TOKEN]
+  const contextDecoded = decoded.path ? pathToContext(decoded.path) : [HOME_TOKEN]
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
   if (equalArrays(contextDecoded, context) && decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded]) return
@@ -55,7 +55,7 @@ const updateUrlHistory = (state: State, path = RANKED_ROOT, { replace, contextVi
       // an incrementing ID to track back or forward browser actions
       (window.history.state || 0) + 1,
       '',
-      hashContextUrl(stateWithNewContextViews, path ? context : [ROOT_TOKEN])
+      hashContextUrl(stateWithNewContextViews, path ? context : [HOME_TOKEN])
     )
   }
   catch (e) {

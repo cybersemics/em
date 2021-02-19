@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { ALLOW_SINGLE_CONTEXT, RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { ALLOW_SINGLE_CONTEXT, HOME_PATH, HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, pathToContext, once, unroot } from '../util'
 import { firstVisibleChild, getContexts, getContextsSortedAndRanked, getThought, isContextViewActive, splitChain, nextSibling as thoughtNextSibling, rootedParentOf } from '../selectors'
 import { State } from '../util/initialState'
@@ -20,11 +20,11 @@ const contextWithThoughtRank = (state: State, contextInfo: ThoughtContext | null
     /** Returns the matching context. */
     const matchedContext = () => {
       const contextToMatch = contextInfo.context.slice(0, index + 1)
-      // const filterRoot = context => context.filter(item => item !== ROOT_TOKEN)
+      // const filterRoot = context => context.filter(item => item !== HOME_TOKEN)
       return thought.contexts.find(thoughtContext => equalArrays([...unroot(thoughtContext.context), thought.value], contextToMatch))!
     }
     // the root thought doesn't have a rank
-    return value === ROOT_TOKEN ? RANKED_ROOT[0] : { value, rank: matchedContext().rank }
+    return value === HOME_TOKEN ? HOME_PATH[0] : { value, rank: matchedContext().rank }
   }) as SimplePath
 }
 
@@ -122,7 +122,7 @@ const nextInContextView = (state: State, value: string, rank: number, path: Path
   }
   // if the focus is on or within a context
   else if (isContextViewActive(state, pathToContext(rankedContext))) {
-    const firstChild = once(() => firstVisibleChild(state, getContextFromContextChain(state, contextChain) || [ROOT_TOKEN]))
+    const firstChild = once(() => firstVisibleChild(state, getContextFromContextChain(state, contextChain) || [HOME_TOKEN]))
 
     const nextSibling = nextSiblingContext(state, rank, context)
     const rankedContextHead = head(rankedContext)
@@ -161,7 +161,7 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
 
   if (contextChain.length > 1 && _.last(contextChain)!.length === 1) return null
 
-  const firstChild = !ignoreChildren && firstVisibleChild(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || [ROOT_TOKEN])
+  const firstChild = !ignoreChildren && firstVisibleChild(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || [HOME_TOKEN])
 
   const thoughtViewPath = once(() => !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(state, contextChain) : path)
   // pathToContext is expensive than duplicate condition check hence using the former
@@ -175,7 +175,7 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
      * Only calculate uncle if not at root.
      */
     const nextUncle = () => {
-      const parentContext = context.length === 1 ? [ROOT_TOKEN] : parentOf(thoughtViewContext())
+      const parentContext = context.length === 1 ? [HOME_TOKEN] : parentOf(thoughtViewContext())
       const contextChainForParentThought = [...contextChain.slice(0, -1), parentOf(head(contextChain))]
       const parentPath = parentOf(thoughtViewPath())
       return nextInThoughtView(state, parentThought.value, parentContext, parentThought.rank, parentPath, contextChainForParentThought, true)
@@ -214,7 +214,7 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
 }
 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain. */
-export const nextThought = (state: State, path: Path = RANKED_ROOT) => {
+export const nextThought = (state: State, path: Path = HOME_PATH) => {
   const { value, rank } = head(path)
   const parentPath = rootedParentOf(state, path)
   const contextChain = splitChain(state, path)

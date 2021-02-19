@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { indent, newSubthought, newThought, setCursor } from '../../reducers'
@@ -13,9 +13,9 @@ it('indent within root', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
 
@@ -32,9 +32,9 @@ it('indent with no cursor should do nothing ', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - b`)
 
@@ -50,9 +50,9 @@ it('indent fully indented thought should do nothing ', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
 
@@ -69,9 +69,9 @@ it('indent within context', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - a1
       - a2`)

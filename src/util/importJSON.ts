@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { EM_TOKEN, ROOT_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getNextRank, getThought, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
 import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, Timestamp, ThoughtIndices } from '../types'
 import { State } from '../util/initialState'
@@ -39,7 +39,7 @@ const skipRootThought = (blocks: Block[]) => {
 
 /** Generates a Parent and Lexeme for inserting a new thought into a context. */
 const insertThought = (state: State, parentOld: Parent, value: string, context: Context, rank: number, created: Timestamp = timestamp(), lastUpdated: Timestamp = timestamp()): ThoughtPair => {
-  const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
+  const rootContext = context.length > 0 ? context : [HOME_TOKEN]
   const id = createId()
 
   const lexemeOld = getThought(state, value)
@@ -95,7 +95,7 @@ const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtI
   }
 
   const updates = blocks.reduce((accum, block, index) => {
-    const skipLevel = block.scope === ROOT_TOKEN || block.scope === EM_TOKEN
+    const skipLevel = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
     const rank = startRank + index * rankIncrement
     if (!skipLevel) {
       const value = block.scope.trim()

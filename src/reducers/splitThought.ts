@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import xhtmlPurifier from 'xhtml-purifier'
-import { ROOT_TOKEN } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { editableRender, existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
@@ -20,7 +20,7 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
   const simplePath = simplifyPath(state, path)
 
   const thoughts = pathToContext(simplePath)
-  const context = thoughts.length > 1 ? parentOf(thoughts) : [ROOT_TOKEN]
+  const context = thoughts.length > 1 ? parentOf(thoughts) : [HOME_TOKEN]
 
   // split the value into left and right parts
   const value = headValue(path)

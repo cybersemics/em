@@ -98,20 +98,20 @@ export const SCHEMA_LATEST = SCHEMA_META_SETTINGS
 export const EMPTY_TOKEN = '__EMPTY__'
 
 // store the root string as a token that is not likely to be written by the user (bad things will happen)
-export const ROOT_TOKEN = '__ROOT__'
+export const HOME_TOKEN = '__ROOT__'
 
 // token for hidden system context
 export const EM_TOKEN = '__EM__'
 
 export const ABSOLUTE_TOKEN = '__ABSOLUTE__'
 
-export const ROOT_CONTEXTS = [ROOT_TOKEN, ABSOLUTE_TOKEN]
+export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 
-export const RANKED_ROOT = [{ value: ROOT_TOKEN, rank: 0 }] as SimplePath
+export const HOME_PATH = [{ value: HOME_TOKEN, rank: 0 }] as SimplePath
 export const ABSOLUTE_PATH = [{ value: ABSOLUTE_TOKEN, rank: 0 }] as SimplePath
 
 export const ROOT_PATH_MAP: Record<string, Path> = {
-  [ROOT_TOKEN]: RANKED_ROOT,
+  [HOME_TOKEN]: HOME_PATH,
   [ABSOLUTE_TOKEN]: ABSOLUTE_PATH
 }
 

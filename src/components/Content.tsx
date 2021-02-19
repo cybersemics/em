@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isTouch } from '../browser'
 import { cursorBack as cursorBackActionCreator, expandContextThought, modalRemindMeLater, toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
-import { MODAL_CLOSE_DURATION, ABSOLUTE_PATH, RANKED_ROOT, TRANSIENT_ABSOLUTE_CHILD_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { MODAL_CLOSE_DURATION, ABSOLUTE_PATH, HOME_PATH, TRANSIENT_ABSOLUTE_CHILD_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { attribute, getSetting, getAllChildren, isTutorial } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
 import { State } from '../util/initialState'
@@ -46,7 +46,7 @@ const mapStateToProps = (state: State) => {
   const isAbsoluteToken = isAbsolute(rootContext)
   const children = getAllChildren(state, [rootContext[0]])
 
-  const rankedRoot = isAbsoluteToken ? ABSOLUTE_PATH : RANKED_ROOT
+  const rankedRoot = isAbsoluteToken ? ABSOLUTE_PATH : HOME_PATH
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, rankedRoot)).length
 
   // pass rootSort to allow root Subthoughts ro render on toggleSort
@@ -136,7 +136,7 @@ const Content: ContentComponent = props => {
         : <React.Fragment>
           {rootThoughtsLength === 0 ?
             isAbsoluteToken ? TransientEditable : <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} /> : <Subthoughts
-              simplePath={isAbsoluteToken ? ABSOLUTE_PATH : RANKED_ROOT}
+              simplePath={isAbsoluteToken ? ABSOLUTE_PATH : HOME_PATH}
               expandable={true}
               sort={rootSort}
             />}

@@ -1,4 +1,4 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -10,7 +10,7 @@ it('redo thought change', () => {
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
         - b`
@@ -20,15 +20,15 @@ it('redo thought change', () => {
       type: 'existingThoughtChange',
       newValue: 'aa',
       oldValue: 'a',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'a', rank: 0 }]
     },
     { type: 'undoAction' }
   ])
 
-  const exportedBeforeRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutputAfterUndo = `- ${ROOT_TOKEN}
+  const expectedOutputAfterUndo = `- ${HOME_TOKEN}
   - a
   - b`
 
@@ -37,9 +37,9 @@ it('redo thought change', () => {
   // redo thought change
   store.dispatch({ type: 'redoAction' })
 
-  const exportedAfterRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exportedAfterRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutputAfterRedo = `- ${ROOT_TOKEN}
+  const expectedOutputAfterRedo = `- ${HOME_TOKEN}
   - aa
   - b`
 
@@ -53,7 +53,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
         - b
@@ -67,7 +67,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
       type: 'existingThoughtChange',
       newValue: 'arizona',
       oldValue: 'a',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'a', rank: 0 }]
     },
     setCursorFirstMatchActionCreator(['arizona', 'b']),
@@ -96,8 +96,8 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
   const cursorAfterSecondRedo = store.getState().cursor
   expect(cursorAfterSecondRedo).toMatchObject([{ value: 'arizona' }, { value: 'boston' }])
 
-  const exportedAfterRedo = exportContext(state, [ROOT_TOKEN], 'text/plain')
-  const expectedOutputAfterRedo = `- ${ROOT_TOKEN}
+  const exportedAfterRedo = exportContext(state, [HOME_TOKEN], 'text/plain')
+  const expectedOutputAfterRedo = `- ${HOME_TOKEN}
   - arizona
     - boston
   - c`
@@ -110,7 +110,7 @@ it('redo contiguous changes', () => {
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - A
         - B`
@@ -119,29 +119,29 @@ it('redo contiguous changes', () => {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',
       oldValue: 'A',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'A', rank: 0 }]
     },
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic ',
       oldValue: 'Atlantic',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'Atlantic', rank: 0 }]
     },
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic City',
       oldValue: 'Atlantic ',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'Atlantic ', rank: 0 }]
     },
     { type: 'undoAction' }
   ])
 
-  const exportedBeforeRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutputBeforeRedo = `- ${ROOT_TOKEN}
+  const expectedOutputBeforeRedo = `- ${HOME_TOKEN}
   - A
   - B`
 
@@ -151,9 +151,9 @@ it('redo contiguous changes', () => {
     type: 'redoAction',
   })
 
-  const exportedAfterRedo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exportedAfterRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutputAfterRedo = `- ${ROOT_TOKEN}
+  const expectedOutputAfterRedo = `- ${HOME_TOKEN}
   - Atlantic City
   - B`
 

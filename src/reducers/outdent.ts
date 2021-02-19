@@ -9,7 +9,7 @@ const outdent = (state: State) => {
   const { cursor } = state
   if (!cursor || cursor.length <= 1) return state
 
-  // Cancel if a direct child of EM_TOKEN or ROOT_TOKEN
+  // Cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(parentOf(cursor)) || isRoot(parentOf(cursor))) {
     return alert(state, {
       value: `Subthought of the "${isEM(parentOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`

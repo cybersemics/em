@@ -1,4 +1,4 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -14,7 +14,7 @@ it('empty thought should outdent when hit enter', () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
           - b
@@ -38,9 +38,9 @@ it('empty thought should outdent when hit enter', () => {
   // this should cause outdent instead of creating new thought
   executeShortcut(newThoughtOrOutdent, { store })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
       - c

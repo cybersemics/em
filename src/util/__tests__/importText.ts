@@ -1,5 +1,5 @@
 import { validate as uuidValidate } from 'uuid'
-import { ABSOLUTE_TOKEN, EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { hashContext, hashThought, never, reducerFlow, timestamp } from '../../util'
 import { initialState, State } from '../../util/initialState'
 import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
@@ -9,8 +9,8 @@ import { SimplePath } from '../../types'
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = (text: string) => {
 
-  const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   const exportedWithoutRoot = exported.slice(exported.indexOf('\n'))
@@ -31,10 +31,10 @@ it('basic import with proper thought structure', () => {
 
   const now = timestamp()
 
-  const stateNew = importText(initialState(now), { path: RANKED_ROOT, text, lastUpdated: now })
+  const stateNew = importText(initialState(now), { path: HOME_PATH, text, lastUpdated: now })
   const { contextIndex, thoughtIndex } = stateNew.thoughts
 
-  const childAId = getParent(stateNew, [ROOT_TOKEN])?.children[0]?.id
+  const childAId = getParent(stateNew, [HOME_TOKEN])?.children[0]?.id
   const childBId = getParent(stateNew, ['a'])?.children[0]?.id
 
   expect(contextIndex).toMatchObject({
@@ -46,9 +46,9 @@ it('basic import with proper thought structure', () => {
       // TODO: Is this expected?
       pending: true,
     },
-    [hashContext([ROOT_TOKEN])]: {
-      id: hashContext([ROOT_TOKEN]),
-      context: [ROOT_TOKEN],
+    [hashContext([HOME_TOKEN])]: {
+      id: hashContext([HOME_TOKEN]),
+      context: [HOME_TOKEN],
       children: [{
         // tautological; full assertion below
         id: childAId,
@@ -82,8 +82,8 @@ it('basic import with proper thought structure', () => {
   expect(uuidValidate(childBId!)).toBe(true)
 
   expect(thoughtIndex).toMatchObject({
-    [hashThought(ROOT_TOKEN)]: {
-      value: ROOT_TOKEN,
+    [hashThought(HOME_TOKEN)]: {
+      value: HOME_TOKEN,
       contexts: [],
       created: now,
       lastUpdated: never(),
@@ -104,7 +104,7 @@ it('basic import with proper thought structure', () => {
       value: 'a',
       contexts: [{
         id: childAId,
-        context: [ROOT_TOKEN],
+        context: [HOME_TOKEN],
         rank: 0,
       }],
       created: now,
@@ -146,8 +146,8 @@ it('import and merge descendants', () => {
   const now = timestamp()
 
   const newState = reducerFlow([
-    importText({ text: initialText, path: RANKED_ROOT, lastUpdated: now }),
-    newThought({ at: RANKED_ROOT, value: '' }),
+    importText({ text: initialText, path: HOME_PATH, lastUpdated: now }),
+    newThought({ at: HOME_PATH, value: '' }),
     (state: State) => importText(state, {
       path: rankThoughtsFirstMatch(state, ['']),
       text: mergeText,
@@ -155,9 +155,9 @@ it('import and merge descendants', () => {
     })
   ])(initialState(now))
 
-  const exported = exportContext(newState, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
 
-  const expectedExport = `- ${ROOT_TOKEN}
+  const expectedExport = `- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -171,8 +171,8 @@ it('import and merge descendants', () => {
   const { contextIndex } = newState.thoughts
 
   expect(contextIndex).toMatchObject({
-    [hashContext([ROOT_TOKEN])]: {
-      context: [ROOT_TOKEN],
+    [hashContext([HOME_TOKEN])]: {
+      context: [HOME_TOKEN],
       children: [{
         value: 'a',
         rank: 0,
@@ -282,17 +282,17 @@ it('two root thoughts', () => {
 
 it('skip root token', () => {
 
-  const text = `- ${ROOT_TOKEN}
+  const text = `- ${HOME_TOKEN}
   - a
     - b
   - c
     - d`
 
-  const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
-    .toBe(`- ${ROOT_TOKEN}
+    .toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c
@@ -307,11 +307,11 @@ it('skip em token', () => {
   - c
     - d`
 
-  const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
-    .toBe(`- ${ROOT_TOKEN}
+    .toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c
@@ -328,7 +328,7 @@ it('duplicate thoughts', () => {
   `
 
   const now = timestamp()
-  const imported = importText(initialState(), { path: RANKED_ROOT, text, lastUpdated: now })
+  const imported = importText(initialState(), { path: HOME_PATH, text, lastUpdated: now })
   const lexeme = imported.thoughts.thoughtIndex[hashThought('m')]
 
   const childAId = lexeme.contexts[0]?.id
@@ -444,7 +444,7 @@ it('imports Roam json', () => {
 
 it('replace empty cursor', () => {
 
-  const text = `- ${ROOT_TOKEN}
+  const text = `- ${HOME_TOKEN}
   - a
     - b`
 
@@ -455,7 +455,7 @@ it('replace empty cursor', () => {
 
   const stateNew = reducerFlow([
 
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
 
     // manually change `b` to empty thought since importText skips empty thoughts
     existingThoughtChange({
@@ -472,10 +472,10 @@ it('replace empty cursor', () => {
 
   ])(initialState())
 
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
-    .toBe(`- ${ROOT_TOKEN}
+    .toBe(`- ${HOME_TOKEN}
   - a
     - x
     - y`)
@@ -483,7 +483,7 @@ it('replace empty cursor', () => {
 
 it('replace empty cursor without affecting siblings', () => {
 
-  const text = `- ${ROOT_TOKEN}
+  const text = `- ${HOME_TOKEN}
   - a
     - b
     - c
@@ -496,7 +496,7 @@ it('replace empty cursor without affecting siblings', () => {
 
   const stateNew = reducerFlow([
 
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
 
     // manually change `c` to empty thought since importText skips empty thoughts
     existingThoughtChange({
@@ -513,10 +513,10 @@ it('replace empty cursor without affecting siblings', () => {
 
   ])(initialState())
 
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
-    .toBe(`- ${ROOT_TOKEN}
+    .toBe(`- ${HOME_TOKEN}
   - a
     - b
     - x
@@ -542,10 +542,10 @@ it('import as subthoughts of non-empty cursor', () => {
 
   ])(initialState())
 
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
-    .toBe(`- ${ROOT_TOKEN}
+    .toBe(`- ${HOME_TOKEN}
   - a
     - x
     - y`)
@@ -561,14 +561,14 @@ it('decode HTML entities', () => {
   `
 
   const stateNew = importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: paste,
   })(initialState())
 
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
-    .toBe(`- ${ROOT_TOKEN}
+    .toBe(`- ${HOME_TOKEN}
   - one & two
   - three < four`)
 })

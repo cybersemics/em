@@ -4,7 +4,7 @@ import PencilIcon from '../components/icons/PencilIcon'
 import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { setAttribute, setNoteFocus } from '../action-creators'
 import { Shortcut } from '../types'
-import { RANKED_ROOT } from '../constants'
+import { HOME_PATH } from '../constants'
 
 const noteShortcut: Shortcut = {
   id: 'note',
@@ -68,7 +68,7 @@ const noteShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = pathToContext(cursor ? simplifyPath(state, cursor) : RANKED_ROOT)
+    const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
     return attribute(state, context, '=note') != null
   }
 }

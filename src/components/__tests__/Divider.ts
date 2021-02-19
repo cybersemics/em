@@ -1,6 +1,6 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -65,7 +65,7 @@ it('do not convert "-" to divider', async () => {
   jest.runOnlyPendingTimers()
 
   // state
-  const rootSubthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
+  const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
   expect(rootSubthoughts).toHaveLength(1)
   expect(rootSubthoughts[0]).toMatchObject({ value: '-', rank: 0 })
 
@@ -90,7 +90,7 @@ it('do not convert "—" (emdash) to divider', async () => {
   jest.runOnlyPendingTimers()
 
   // state
-  const rootSubthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
+  const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
   expect(rootSubthoughts).toHaveLength(1)
   expect(rootSubthoughts[0]).toMatchObject({ value: '—', rank: 0 })
 
