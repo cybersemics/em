@@ -45,7 +45,7 @@
     "lodash": "^4.17.20",
     "matchmedia-polyfill": "^0.3.2",
     "murmurhash3js": "^3.0.1",
-    "page-lifecycle": "github:magic-akari/page-lifecycle#feat/add-types",
+    "page-lifecycle": "https://github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "react": "^16.14.0",
     "react-contenteditable": "^3.3.5",
@@ -67,7 +67,7 @@
     "redux-thunk": "^2.3.0",
     "ts-key-enum": "^2.0.6",
     "uuid": "^8.3.2",
-    "xhtml-purifier": "git+https://github.com/cybersemics/node-xhtml-purifier.git#types"
+    "xhtml-purifier": "^0.4.1"
   },
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
