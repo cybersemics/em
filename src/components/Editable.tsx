@@ -17,6 +17,7 @@ import {
   EDIT_THROTTLE,
   EM_TOKEN,
   MODIFIER_KEYS,
+  NOOP,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -590,11 +591,13 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
 
+    const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
+
     if (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
-      !isElementHiddenByAutoFocus(e.target as HTMLElement) &&
+      !isHiddenByAutofocus &&
       (
         // no cursor
         !state.cursor ||
@@ -605,6 +608,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // prevent focus to allow navigation with mobile keyboard down
       e.preventDefault()
       setCursorOnThought()
+    }
+    else if (isHiddenByAutofocus) {
+      e.preventDefault()
+      dispatch(cursorBack())
     }
   }
 
@@ -637,7 +644,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     // stop propagation to prevent default content onClick (which removes the cursor)
     onClick={stopPropagation}
     onTouchEnd={onTap}
-    onMouseDown={isTouch ? onTap : onMouseDown}
+    onMouseDown={isTouch ? NOOP : onMouseDown}
     onFocus={onFocus}
     onBlur={onBlur}
     onChange={onChangeHandler}
