@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { EM_TOKEN, ID, ROOT_TOKEN } from '../constants'
-import { getThought, getAllChildren, nextSibling, getNextRank } from '../selectors'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { getNextRank, getThought, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
 import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, Timestamp, ThoughtIndices } from '../types'
 import { State } from '../util/initialState'
 
@@ -15,7 +15,6 @@ import {
   parentOf,
   pathToContext,
   removeContext,
-  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -40,7 +39,7 @@ const skipRootThought = (blocks: Block[]) => {
 
 /** Generates a Parent and Lexeme for inserting a new thought into a context. */
 const insertThought = (state: State, parentOld: Parent, value: string, context: Context, rank: number, created: Timestamp = timestamp(), lastUpdated: Timestamp = timestamp()): ThoughtPair => {
-  const rootContext = context.length > 0 ? context : [ROOT_TOKEN]
+  const rootContext = context.length > 0 ? context : [HOME_TOKEN]
   const id = createId()
 
   const lexemeOld = getThought(state, value)
@@ -96,7 +95,7 @@ const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtI
   }
 
   const updates = blocks.reduce((accum, block, index) => {
-    const skipLevel = block.scope === ROOT_TOKEN || block.scope === EM_TOKEN
+    const skipLevel = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
     const rank = startRank + index * rankIncrement
     if (!skipLevel) {
       const value = block.scope.trim()
@@ -169,7 +168,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, pathToContext(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
-  const rootedContext = pathToContext(rootedParentOf(simplePath))
+  const rootedContext = pathToContext(rootedParentOf(state, simplePath))
   const contextEncoded = hashContext(rootedContext)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
@@ -188,7 +187,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
     }
   }
 
-  const importPath = (destEmpty ? rootedParentOf : ID)(simplePath)
+  const importPath = destEmpty ? rootedParentOf(state, simplePath) : simplePath
   const importContext = pathToContext(importPath)
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
 

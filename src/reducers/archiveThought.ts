@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { RANKED_ROOT } from '../constants'
+import { HOME_PATH } from '../constants'
 import { State } from '../util/initialState'
 import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
 
@@ -14,7 +14,6 @@ import {
   parentOf,
   pathToContext,
   reducerFlow,
-  rootedParentOf,
   unroot,
 } from '../util'
 
@@ -27,6 +26,7 @@ import {
   isContextViewActive,
   lastThoughtsFromContextChain,
   nextSibling,
+  rootedParentOf,
   prevSibling,
   splitChain,
   thoughtsEditingFromChain,
@@ -71,7 +71,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     : path as SimplePath
   const pathParent = showContexts && contextChain.length > 1 ? contextChain[contextChain.length - 1]
     : !showContexts && simplePath.length > 1 ? parentOf(simplePath) :
-    RANKED_ROOT
+    HOME_PATH
   const context = pathToContext(pathParent)
   const { value, rank } = head(simplePath)
   const thoughts = pathToContext(simplePath)
@@ -125,7 +125,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       ? parentOf(path).concat({ value: head((next as ThoughtContext).context), rank: next.rank })
       : parentOf(path).concat(next as Child)), 0] :
     // Case III: delete last thought in context; set cursor on context
-    thoughts.length > 1 ? [rootedParentOf(path), head(context).length]
+    thoughts.length > 1 ? [rootedParentOf(state, path), head(context).length]
     // Case IV: delete very last thought; remove cursor
     : [null, undefined]
 

@@ -1,6 +1,6 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
 import { importText, render } from '../../action-creators'
 import windowEvent from '../../test-helpers/windowEvent'
@@ -37,7 +37,7 @@ it('create, navigate, and edit thoughts', async () => {
   jest.runOnlyPendingTimers()
 
   // state
-  const rootSubthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
+  const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
   expect(rootSubthoughts).toHaveLength(1)
   expect(rootSubthoughts[0]).toMatchObject({ value: 'a', rank: 0 })
 
@@ -101,7 +101,7 @@ it.skip('caret is set on new subthought', async () => {
 it('do not allow edit to duplicate thought', async () => {
 
   store.dispatch(importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: `
       - a
       - b
@@ -119,7 +119,7 @@ it('do not allow edit to duplicate thought', async () => {
   windowEvent('keydown', { key: 'Escape' })
 
   // state
-  const rootSubthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
+  const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
   expect(rootSubthoughts).toMatchObject([
     { value: 'a', rank: 0 },
     { value: 'b', rank: 1 },
@@ -151,7 +151,7 @@ it('allow duplicate empty thoughts', async () => {
   windowEvent('keydown', { key: 'Escape' })
 
   // state
-  const rootSubthoughts = getChildrenRanked(store.getState(), [ROOT_TOKEN])
+  const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
   expect(rootSubthoughts).toMatchObject([
     { value: '', rank: 0 },
     { value: 'a', rank: 1 },

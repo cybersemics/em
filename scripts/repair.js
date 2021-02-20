@@ -24,14 +24,14 @@ let repair = (maxDepth = 100) => {
   let inconsistentRanks = 0
   let duplicateThoughtContextIds = 0
 
-  const ROOT_TOKEN = '__ROOT__'
+  const HOME_TOKEN = '__ROOT__'
 
   /** Generate a timestamp of now. */
   const timestamp = () => new Date().toISOString()
 
   /** Remove the root token. */
   const unroot = thoughts =>
-    thoughts.length > 0 && (thoughts[0] === ROOT_TOKEN || thoughts[0].value === ROOT_TOKEN)
+    thoughts.length > 0 && (thoughts[0] === HOME_TOKEN || thoughts[0].value === HOME_TOKEN)
       ? thoughts.slice(1)
       : thoughts
 

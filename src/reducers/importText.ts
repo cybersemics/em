@@ -1,14 +1,14 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import { unescape } from 'html-escaper'
-import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, rootedParentOf, strip, validateRoam, createId, unroot } from '../util'
+import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, strip, validateRoam, createId, unroot } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
-import { getAllChildren, rankThoughtsFirstMatch, simplifyPath } from '../selectors'
+import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
 import { Block, Path, SimplePath, Timestamp } from '../types'
 import { State } from '../util/initialState'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
-// import { ROOT_TOKEN } from '../constants'
+// import { HOME_TOKEN } from '../constants'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
@@ -148,7 +148,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
       existingThoughtChange({
         oldValue: destValue,
         newValue,
-        context: rootedParentOf(context),
+        context: rootedParentOf(state, pathToContext(path)),
         path: simplePath,
       }),
 

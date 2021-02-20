@@ -1,6 +1,6 @@
-import { ROOT_TOKEN } from '../constants'
-import { head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow, rootedParentOf } from '../util'
-import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath } from '../selectors'
+import { HOME_TOKEN } from '../constants'
+import { head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow } from '../util'
+import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath, rootedParentOf } from '../selectors'
 import { archiveThought, deleteThought, existingThoughtChange, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
@@ -34,8 +34,8 @@ const deleteEmptyThought = (state: State): State => {
   else if (offset === 0 && sel?.isCollapsed && !showContexts) {
     const value = headValue(cursor)
     const rank = headRank(cursor)
-    const parentContext = context.length > 1 ? parentOf(context) : [ROOT_TOKEN]
-    const prev = prevSibling(state, value, pathToContext(rootedParentOf(cursor)), rank)
+    const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
+    const prev = prevSibling(state, value, pathToContext(rootedParentOf(state, cursor)), rank)
 
     // only if there is a previous sibling
     if (prev) {

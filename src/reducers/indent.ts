@@ -1,5 +1,5 @@
 import { alert, existingThoughtMove } from '../reducers'
-import { getNextRank, hasChild, prevSibling } from '../selectors'
+import { getNextRank, hasChild, rootedParentOf, prevSibling } from '../selectors'
 import { State } from '../util/initialState'
 
 // util
@@ -12,7 +12,6 @@ import {
   isRoot,
   parentOf,
   pathToContext,
-  rootedParentOf,
 } from '../util'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
@@ -21,11 +20,11 @@ const indent = (state: State) => {
 
   if (!cursor) return state
 
-  const prev = prevSibling(state, headValue(cursor), pathToContext(rootedParentOf(cursor)), headRank(cursor))
+  const prev = prevSibling(state, headValue(cursor), pathToContext(rootedParentOf(state, cursor)), headRank(cursor))
 
   if (!prev) return state
 
-  // cancel if cursor is EM_TOKEN or ROOT_TOKEN
+  // cancel if cursor is EM_TOKEN or HOME_TOKEN
   if (isEM(cursor) || isRoot(cursor)) {
     return alert(state, { value: `The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.` })
   }

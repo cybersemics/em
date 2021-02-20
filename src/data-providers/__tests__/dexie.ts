@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { getThought } from '../../selectors'
 import { clear, newThought } from '../../action-creators'
@@ -62,7 +62,7 @@ describe('integration', () => {
     fakeTimer.useRealTimer()
 
     // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
-    const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
+    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
       children: [{ value: 'a', rank: 0 }]
@@ -77,7 +77,7 @@ describe('integration', () => {
       { type: 'newThought', value: '' },
       {
         type: 'existingThoughtChange',
-        context: [ROOT_TOKEN],
+        context: [HOME_TOKEN],
         oldValue: '',
         newValue: 'a',
         path: [{ value: '', rank: 0 }],
@@ -88,7 +88,7 @@ describe('integration', () => {
 
     fakeTimer.useRealTimer()
 
-    const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
+    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
       children: [{ value: 'a', rank: 0 }]

@@ -4,22 +4,42 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { isTouch } from '../browser'
 import { cursorBack as cursorBackActionCreator, expandContextThought, modalRemindMeLater, toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
-import { MODAL_CLOSE_DURATION, RANKED_ROOT, ROOT_TOKEN, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { attribute, getSetting, getAllChildren, isChildVisibleWithCursorCheck, isTutorial } from '../selectors'
-import { publishMode } from '../util'
+import { MODAL_CLOSE_DURATION, ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { attribute, getSetting, getAllChildren, isTutorial } from '../selectors'
+import { isAbsolute, publishMode } from '../util'
 import { State } from '../util/initialState'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
+import { childrenFilterPredicate } from '../selectors/getChildren'
+import Editable from './Editable'
+import { SimplePath } from '../types'
 
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
+const TransientChildPath = [{
+  value: '',
+  rank: 0,
+}] as SimplePath
+
+/*
+  Transient Editable represents a child that is yet not in the state.
+  But as soon as user types it adds the child to the state with the new value and vanishes.
+  However removing the transient editable should be handled by some business logic by parent components.
+*/
+const TransientEditable = <Editable
+  transient={true}
+  path={TransientChildPath}
+  simplePath={TransientChildPath}
+  rank={0}
+/>
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { isLoading, noteFocus, search, showModal } = state
+  const { isLoading, noteFocus, search, showModal, rootContext } = state
 
   const isTutorialLocal = isLoading ? tutorialLocal : isTutorial(state)
 
@@ -28,11 +48,14 @@ const mapStateToProps = (state: State) => {
   // eslint-disable-next-line @typescript-eslint/no-extra-parens
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
-  const children = getAllChildren(state, [ROOT_TOKEN])
-  const rootThoughtsLength = children.filter(isChildVisibleWithCursorCheck(state, RANKED_ROOT, RANKED_ROOT)).length
+  const isAbsoluteContext = isAbsolute(rootContext)
+  const children = getAllChildren(state, rootContext)
+
+  const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
+  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, rankedRoot)).length
 
   // pass rootSort to allow root Subthoughts ro render on toggleSort
-  const rootSort = attribute(state, [ROOT_TOKEN], '=sort') || 'None'
+  const rootSort = attribute(state, rootContext, '=sort') || 'None'
 
   return {
     search,
@@ -41,7 +64,9 @@ const mapStateToProps = (state: State) => {
     tutorialStep,
     rootThoughtsLength,
     noteFocus,
-    rootSort
+    rootSort,
+    isAbsoluteContext,
+    rootContext,
   }
 }
 
@@ -72,7 +97,7 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus, rootSort } = props
+  const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus, rootSort, isAbsoluteContext } = props
   const contentRef = useRef<HTMLDivElement>(null)
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
@@ -114,11 +139,12 @@ const Content: ContentComponent = props => {
       {search != null
         ? <Search />
         : <React.Fragment>
-          {rootThoughtsLength === 0 ? <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} /> : <Subthoughts
-            simplePath={RANKED_ROOT}
-            expandable={true}
-            sort={rootSort}
-          />}
+          {rootThoughtsLength === 0 ?
+            isAbsoluteContext ? TransientEditable : <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} /> : <Subthoughts
+              simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH}
+              expandable={true}
+              sort={rootSort}
+            />}
         </React.Fragment>
       }
     </div>

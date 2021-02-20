@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
-import { getThought, getAllChildren, getChildrenRanked, isPending } from '../selectors'
+import { getThought, getAllChildren, getChildrenRanked, isPending, rootedParentOf } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
@@ -21,7 +21,6 @@ import {
   keyValueBy,
   pathToContext,
   removeContext,
-  rootedParentOf,
   timestamp,
   unroot,
 } from '../util'
@@ -116,7 +115,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     lastUpdated: timestamp(),
   }
   const thoughtNew = thoughtOld.contexts.length > 0
-    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedParentOf(pathLiveOld)) : rank, id, archived as Timestamp)
+    ? addContext(newThoughtWithoutContext, context, showContexts ? headRank(rootedParentOf(state, pathLiveOld)) : rank, id, archived as Timestamp)
     : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
@@ -174,7 +173,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   const thoughtOldSubthoughts = getAllChildren(state, contextOld)
     .filter(child => !equalThoughtRanked(child, head(pathLiveOld)))
 
-  const contextParent = rootedParentOf(showContexts
+  const contextParent = rootedParentOf(state, showContexts
     ? context
     : pathToContext(pathLiveOld)
   )
@@ -182,14 +181,14 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
   const thoughtParentSubthoughts = showContexts ? getAllChildren(state, contextParent)
     .filter(child =>
-      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedParentOf(pathLiveOld)) })) &&
-      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedParentOf(pathLiveOld)) })
+      (newOldThought || !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedParentOf(state, pathLiveOld)) })) &&
+      !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedParentOf(state, pathLiveOld)) })
     )
     // do not add floating thought to context
     .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
       id,
-      rank: headRank(rootedParentOf(pathLiveOld)),
+      rank: headRank(rootedParentOf(state, pathLiveOld)),
       lastUpdated: timestamp(),
       ...archived ? { archived } : {}
     } : [])

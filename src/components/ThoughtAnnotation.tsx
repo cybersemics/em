@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getContexts, getAllChildren, theme } from '../selectors'
+import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
 import { State } from '../util/initialState'
 import { Connected, Context, SimplePath, ThoughtContext, Path } from '../types'
 
@@ -17,7 +17,6 @@ import {
   headValue,
   pathToContext,
   publishMode,
-  rootedParentOf,
 } from '../util'
 
 // components
@@ -122,7 +121,7 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
   </a>
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
-    {showContextBreadcrumbs && simplePath.length > 1 && <ContextBreadcrumbs path={rootedParentOf(rootedParentOf(simplePath))} />}
+    {showContextBreadcrumbs && simplePath.length > 1 && <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, simplePath))} />}
 
     {homeContext
       ? <HomeLink/>

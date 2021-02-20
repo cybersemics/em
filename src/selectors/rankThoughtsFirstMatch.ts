@@ -1,21 +1,22 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { HOME_PATH, HOME_TOKEN } from '../constants'
 import { contextChainToPath, equalArrays, equalThoughtRanked, head, headValue, isRoot, pathToContext, unroot } from '../util'
 import { getContexts, getContextsSortedAndRanked, getThought, getChildrenRanked, isContextViewActive, splitChain } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Path } from '../types'
+import getRootPath from './getRootPath'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
 // NOTE: path is pathToContexted
 const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
-  if (isRoot(pathUnranked)) return RANKED_ROOT
+  if (isRoot(pathUnranked)) return getRootPath(state)
 
-  let pathResult: Path = RANKED_ROOT // eslint-disable-line fp/no-let
-  let prevParentContext = [ROOT_TOKEN] // eslint-disable-line fp/no-let
+  let pathResult: Path = HOME_PATH // eslint-disable-line fp/no-let
+  let prevParentContext = [HOME_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((value, i) => {
     const thought = getThought(state, value)
-    const contextPathUnranked = i === 0 ? [ROOT_TOKEN] : pathUnranked.slice(0, i)
+    const contextPathUnranked = i === 0 ? [HOME_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(state, pathResult)
     const path = contextChainToPath(contextChain)
     const context = unroot(prevParentContext).concat(headValue(path)) as Context

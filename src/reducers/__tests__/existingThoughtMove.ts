@@ -1,4 +1,4 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked } from '../../selectors'
 import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
@@ -16,16 +16,16 @@ it('move within root', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - b
   - a`)
 
   // b should exist in the ROOT context
   expect(getContexts(stateNew, 'b'))
     .toMatchObject([{
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       rank: -1,
     }])
 
@@ -71,9 +71,9 @@ it('move within context', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - a2
     - a1`)
@@ -102,9 +102,9 @@ it('move across contexts', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - a1
     - b1
@@ -136,9 +136,9 @@ it('move descendants', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - b
     - b1
       - b1.1
@@ -149,7 +149,7 @@ it('move descendants', () => {
   // context of b should remain to be ROOT
   expect(getContexts(stateNew, 'b'))
     .toMatchObject([{
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       rank: -1,
     }])
 
@@ -241,7 +241,7 @@ it('move root thought into another root thought', () => {
      - c`
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     existingThoughtMove({
       oldPath: [{ value: 'a', rank: 1 }],
       newPath: [{ value: 'x', rank: 0 }, { value: 'a', rank: 0 }],
@@ -250,8 +250,8 @@ it('move root thought into another root thought', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - x
     - a
       - b
@@ -286,7 +286,7 @@ it('move descendants with siblings', () => {
      - d`
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     existingThoughtMove({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
       newPath: [{ value: 'b', rank: 1 }],
@@ -295,8 +295,8 @@ it('move descendants with siblings', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - b
     - c
@@ -305,7 +305,7 @@ it('move descendants with siblings', () => {
   // b should exist in the ROOT context
   expect(getContexts(stateNew, 'b'))
     .toMatchObject([{
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       rank: 1,
     }])
 
@@ -333,7 +333,7 @@ it('merge duplicate with new rank', () => {
    - y`
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     existingThoughtMove({
       oldPath: [{ value: 'm', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
@@ -342,9 +342,9 @@ it('merge duplicate with new rank', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - m
       - x
@@ -373,7 +373,7 @@ it('merge with duplicate with duplicate rank', () => {
     - y`
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     existingThoughtMove({
       oldPath: [{ value: 'm', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
@@ -382,9 +382,9 @@ it('merge with duplicate with duplicate rank', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - m
       - x
@@ -413,7 +413,7 @@ it('move with duplicate descendant', () => {
       - x`
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
@@ -422,10 +422,10 @@ it('move with duplicate descendant', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   // contextIndex
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - x
@@ -450,7 +450,7 @@ it('move with hash matched descendant', () => {
       - note`
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
@@ -458,9 +458,9 @@ it('move with hash matched descendant', () => {
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - =note
@@ -485,7 +485,7 @@ it('move with nested duplicate thoughts', () => {
       - b`
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     existingThoughtMove({
       oldPath: [{ value: 'c', rank: 1 }, { value: 'a', rank: 0 }],
       newPath: [{ value: 'a', rank: 0 }],
@@ -493,9 +493,9 @@ it('move with nested duplicate thoughts', () => {
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c`)
@@ -523,7 +523,7 @@ it('move with nested duplicate thoughts and merge their children', () => {
         -d`
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     existingThoughtMove({
       oldPath: [{ value: 'p', rank: 1 }, { value: 'a', rank: 0 }],
       newPath: [{ value: 'a', rank: 0 }],
@@ -531,9 +531,9 @@ it('move with nested duplicate thoughts and merge their children', () => {
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - c

@@ -39,13 +39,12 @@ import {
   isDocumentEditable,
   isEM,
   isFunction,
-  isRoot,
   isURL,
   parseJsonSafe,
   pathToContext,
   publishMode,
-  rootedParentOf,
   isDescendantPath,
+  isRoot,
   unroot,
 } from '../util'
 
@@ -64,6 +63,7 @@ import {
   hasChildren,
   isBefore,
   isContextViewActive,
+  rootedParentOf,
 } from '../selectors'
 
 /**********************************************************************
@@ -157,14 +157,14 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedParentOf(parentOf(cursor || [])), path) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
+    ? equalPath(rootedParentOf(state, parentOf(cursor || [])), path) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
     // parent
     : equalPath(parentOf(cursor || []), path)
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as SimplePath | undefined
 
   const isCursorGrandparent =
-    equalPath(rootedParentOf(parentOf(cursor || [])), path)
+    equalPath(rootedParentOf(state, parentOf(cursor || [])), path)
   const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const value = headValue(simplePathLive)
@@ -268,8 +268,8 @@ const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonit
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
   const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
-  const oldContext = rootedParentOf(thoughtsFrom)
-  const newContext = rootedParentOf(thoughtsTo)
+  const oldContext = rootedParentOf(state, thoughtsFrom)
+  const newContext = rootedParentOf(state, thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
@@ -288,8 +288,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(thoughtsFrom)
-  const newContext = rootedParentOf(thoughtsTo)
+  const oldContext = rootedParentOf(state, thoughtsFrom)
+  const newContext = rootedParentOf(state, thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot move root or em context
@@ -379,11 +379,13 @@ const Thought = ({
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
+  const state = store.getState()
+
   return <div className='thought'>
 
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
-    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs path={rootedParentOf(rootedParentOf(simplePath))} homeContext={homeContext} />
+    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, simplePath))} homeContext={homeContext} />
     : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
       store.dispatch(expandContextThought(path))
     }}>... </a></span>
@@ -488,7 +490,7 @@ const ThoughtContainer = ({
   const value = headValue(simplePathLive!)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
-  const homeContext = showContexts && isRoot([head(rootedParentOf(simplePath))])
+  const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf

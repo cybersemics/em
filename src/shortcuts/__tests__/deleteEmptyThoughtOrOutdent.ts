@@ -1,4 +1,4 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, setCursor } from '../../action-creators'
 
@@ -17,9 +17,9 @@ it('do nothing when there is no cursor', () => {
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a`
 
   expect(exported).toEqual(expectedOutput)
@@ -31,7 +31,7 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
 
   // import thoughts
   store.dispatch(importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: `
       - a
         - b
@@ -42,9 +42,9 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
     - c`
@@ -58,7 +58,7 @@ it('do not outdent thought with siblings', () => {
 
   // import thoughts
   store.dispatch(importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: `
       - a
         - b
@@ -70,9 +70,9 @@ it('do not outdent thought with siblings', () => {
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
       - cd`

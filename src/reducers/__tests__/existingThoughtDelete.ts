@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { getContexts, getAllChildren, getParent } from '../../selectors'
 import { existingThoughtDelete, newSubthought, newThought } from '../../reducers'
@@ -9,7 +9,7 @@ it('delete from root', () => {
     newThought('a'),
     newThought('b'),
     existingThoughtDelete({
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       thoughtRanked: { value: 'b', rank: 1 },
     }),
   ]
@@ -19,12 +19,12 @@ it('delete from root', () => {
   const stateNew = reducerFlow(steps)(state)
 
   /** Gets the root Parent from a state's contextIndex. */
-  const rootParent = getParent(stateNew, [ROOT_TOKEN])
+  const rootParent = getParent(stateNew, [HOME_TOKEN])
 
   // contextIndex
   expect(rootParent)
     .toMatchObject({
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       children: [{
         value: 'a',
         rank: 0,
@@ -44,7 +44,7 @@ it('delete descendants of root thought', () => {
     newSubthought('b'),
     newSubthought('c'),
     existingThoughtDelete({
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       thoughtRanked: { value: 'a', rank: 0 },
     }),
   ]
@@ -53,7 +53,7 @@ it('delete descendants of root thought', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex
-  expect(getAllChildren(stateNew, [ROOT_TOKEN])).toEqual([])
+  expect(getAllChildren(stateNew, [HOME_TOKEN])).toEqual([])
   expect(getAllChildren(stateNew, ['a'])).toEqual([])
   expect(getAllChildren(stateNew, ['b', 'c'])).toEqual([])
 
@@ -70,7 +70,7 @@ it('delete thought with duplicate child', () => {
     newThought('a'),
     newSubthought('a'),
     existingThoughtDelete({
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       thoughtRanked: { value: 'a', rank: 0 },
     }),
   ]
@@ -79,7 +79,7 @@ it('delete thought with duplicate child', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex
-  expect(getAllChildren(stateNew, [ROOT_TOKEN])).toEqual([])
+  expect(getAllChildren(stateNew, [HOME_TOKEN])).toEqual([])
   expect(getAllChildren(stateNew, ['a'])).toEqual([])
 
   // thoughtIndex

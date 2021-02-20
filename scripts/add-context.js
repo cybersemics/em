@@ -5,13 +5,13 @@ const path = require('path')
 const murmurHash3 = require('murmurhash3js')
 
 const EM_TOKEN = '__EM__'
-const ROOT_TOKEN = '__ROOT__'
+const HOME_TOKEN = '__ROOT__'
 const SEPARATOR_TOKEN = '__SEP__'
 const appendContext = (context, child) => unroot([...context, child])
 const escapeRegExp = s => s.replace(/[-[\]{}()*+?.\\^$|#\s]/g, '\\$&')
 const escapeSelector = s => '_' + s.replace(regExpEscapeSelector, s => `_${s.charCodeAt(0)}`)
 const regExpEscapeSelector = new RegExp('[' + escapeRegExp(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')
-const unroot = context => context[0] === ROOT_TOKEN ? context.slice(1) : context
+const unroot = context => context[0] === HOME_TOKEN ? context.slice(1) : context
 
 /** Encode the thoughts (and optionally rank) as a string. */
 const hashContext = (thoughts, rank) => murmurHash3.x64.hash128(thoughts
@@ -46,7 +46,7 @@ const cli = () => {
   console.info('Reading ' + inputPath)
   const input = fs.readFileSync(inputPath, 'utf-8')
   const state = JSON.parse(input)
-  traverseContext(state, [ROOT_TOKEN], setContext)
+  traverseContext(state, [HOME_TOKEN], setContext)
   traverseContext(state, [EM_TOKEN], setContext)
   const ext = path.extname(inputPath)
   const outputPath = inputPath.replace(ext, '') + '-with-contexts' + ext

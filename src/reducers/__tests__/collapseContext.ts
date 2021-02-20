@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { collapseContext, cursorBack, cursorUp, newSubthought, newThought } from '../../reducers'
 import { exportContext } from '../../selectors'
@@ -14,9 +14,9 @@ it('do nothing on leaf', () => {
   // run steps through reducer flow and export as plaintext for readable test
   const state = initialState()
   const stateNew = reducerFlow(steps)(state)
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
 
@@ -34,9 +34,9 @@ it('collapse context with single child', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =archive
       - b
@@ -60,9 +60,9 @@ it('collapse context with multiple children', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =archive
       - b
@@ -89,9 +89,9 @@ it('merge children', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =archive
       - b
@@ -119,9 +119,9 @@ it('merge duplicate children', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =archive
       - b

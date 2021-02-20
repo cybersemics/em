@@ -1,4 +1,4 @@
-import { MODALS, RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { MODALS, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -44,7 +44,7 @@ it('undo thought change', () => {
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
         - b`
@@ -54,15 +54,15 @@ it('undo thought change', () => {
       type: 'existingThoughtChange',
       newValue: 'aa',
       oldValue: 'a',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'a', rank: 0 }]
     },
     { type: 'undoAction' }
   ])
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b`
 
@@ -75,7 +75,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
         - b
@@ -104,8 +104,8 @@ it('group all navigation actions following an undoable(non-navigation) action an
   expect(cursorAfterFirstUndo).toMatchObject([
     { value: 'a' }])
 
-  const exportedAfterFirstUndo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
-  const expectedOutputAfterFirstUndo = `- ${ROOT_TOKEN}
+  const exportedAfterFirstUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  const expectedOutputAfterFirstUndo = `- ${HOME_TOKEN}
   - a
     - b1
   - c
@@ -119,8 +119,8 @@ it('group all navigation actions following an undoable(non-navigation) action an
   expect(cursorAfterSecondUndo).toMatchObject([
     { value: 'a' }, { value: 'b' }])
 
-  const exportedAfterSecondUndo = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
-  const expectedOutputAfterSecondUndo = `- ${ROOT_TOKEN}
+  const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  const expectedOutputAfterSecondUndo = `- ${HOME_TOKEN}
   - a
     - b
   - c
@@ -134,7 +134,7 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
           - b
@@ -156,9 +156,9 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
     { type: 'undoAction' }
   ])
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
     - c
@@ -171,7 +171,7 @@ it('state remains unchanged if there are no inverse patches', () => {
   const store = createTestStore()
 
   store.dispatch(importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: `
       - a
        - b
@@ -193,7 +193,7 @@ it('newThought action should be merged with the succeeding patch', () => {
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
           - a
           - b`
@@ -202,7 +202,7 @@ it('newThought action should be merged with the succeeding patch', () => {
     { type: 'newThought', value: 'd' },
     {
       type: 'existingThoughtChange',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       oldValue: 'd',
       newValue: 'd1',
       rankInContext: 3,
@@ -217,9 +217,9 @@ it('newThought action should be merged with the succeeding patch', () => {
     { type: 'undoAction' }
   ])
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b
   - c`
@@ -233,7 +233,7 @@ it('undo contiguous changes', () => {
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - A
         - B`
@@ -242,22 +242,22 @@ it('undo contiguous changes', () => {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',
       oldValue: 'A',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'A', rank: 0 }]
     },
     {
       type: 'existingThoughtChange',
       newValue: 'Atlantic City',
       oldValue: 'Atlantic',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'Atlantic', rank: 0 }]
     },
     { type: 'undoAction' }
   ])
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - A
   - B`
 
@@ -270,7 +270,7 @@ it('state.alert is omitted from the undo patch', () => {
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
           - A
           - B`
@@ -294,7 +294,7 @@ it('clear patches when any undoable action is dispatched', () => {
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - A
         - B`,
@@ -304,7 +304,7 @@ it('clear patches when any undoable action is dispatched', () => {
       type: 'existingThoughtChange',
       newValue: 'Atlantic',
       oldValue: 'A',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'A', rank: 0 }]
     },
     { type: 'newThought', value: 'New Jersey' },

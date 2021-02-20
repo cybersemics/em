@@ -26,6 +26,7 @@ import Scale from './Scale'
 import Tutorial from './Tutorial'
 import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
+import QuickAddButton from './QuickAddButton'
 
 const Content = React.lazy(() => import('./Content'))
 
@@ -166,6 +167,7 @@ const AppComponent: FC<Props> = props => {
               <Scale amount={scale!} origin='bottom left'>
 
                 <NavBar position='bottom' />
+                <QuickAddButton/>
 
               </Scale>
             </div>

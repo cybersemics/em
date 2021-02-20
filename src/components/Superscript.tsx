@@ -1,8 +1,8 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-import { exists, getContexts } from '../selectors'
-import { ROOT_TOKEN } from '../constants'
-import { parentOf, equalArrays, head, headValue, pathToContext, rootedParentOf } from '../util'
+import { exists, getContexts, rootedParentOf } from '../selectors'
+import { HOME_TOKEN } from '../constants'
+import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
 import { State } from '../util/initialState'
 import { Child, Context, Index, SimplePath } from '../types'
 
@@ -24,12 +24,12 @@ interface SuperscriptProps {
 const mapStateToProps = (state: State, props: SuperscriptProps) => {
 
   const { contextViews, cursor, showHiddenThoughts, showModal } = state
-  const cursorContext = cursor ? pathToContext(cursor) : [ROOT_TOKEN]
+  const cursorContext = cursor ? pathToContext(cursor) : [HOME_TOKEN]
 
   const editing = equalArrays(cursorContext, pathToContext(props.simplePath || [])) && exists(state, headValue(cursor || []))
 
   const simplePath = props.showContexts && props.simplePath
-    ? rootedParentOf(props.simplePath)
+    ? rootedParentOf(state, props.simplePath)
     : props.simplePath
 
   const thoughts = props.thoughts || pathToContext(simplePath)

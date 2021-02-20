@@ -1,5 +1,5 @@
 import { isTouch, isSafari } from '../browser'
-import { ROOT_TOKEN, TUTORIAL_STEP_START } from '../constants'
+import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
 import { getSetting, getAllChildren, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, parentOf, ellipsize, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
@@ -57,7 +57,7 @@ const newThought = ({
 
   const context = path && (showContexts && path.length > 2 ? pathToContext(parentOf(parentOf(path)))
     : !showContexts && path.length > 1 ? pathToContext(parentOf(path))
-    : [ROOT_TOKEN])
+    : [HOME_TOKEN])
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
   // do not split with gesture, as Enter is avialable and separate in the context of mobile

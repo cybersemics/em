@@ -1,7 +1,7 @@
-import { RANKED_ROOT } from '../constants'
+import { HOME_PATH } from '../constants'
 import { alert, existingThoughtMove, newThought } from '../reducers'
 import { State } from '../util/initialState'
-import { parentOf, ellipsize, headValue, isEM, isRoot, pathToContext, once, reducerFlow } from '../util'
+import { parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
 import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 
 /** Inserts a new thought as a parent of all thoughts in the given context. */
@@ -14,7 +14,7 @@ const subCategorizeAll = (state: State) => {
   const cursorParent = parentOf(cursor)
   const context = pathToContext(cursorParent)
 
-  // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
+  // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
     return alert(state, {
       value: `Subthought of the "${isEM(cursorParent) ? 'em' : 'home'} context" may not be de-indented.`
@@ -37,10 +37,10 @@ const subCategorizeAll = (state: State) => {
     ? parentOf(contextChain.length > 1
       ? lastThoughtsFromContextChain(state, contextChain)
       : cursor)
-    : RANKED_ROOT
+    : HOME_PATH
 
   const children = getChildrenRanked(state, pathToContext(simplifyPath(state, path)))
-  const pathParent = cursor.length > 1 ? cursorParent : RANKED_ROOT
+  const pathParent = cursor.length > 1 ? cursorParent : HOME_PATH
 
   // get newly created thought
   // use fresh state
