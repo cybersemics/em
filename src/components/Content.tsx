@@ -20,7 +20,7 @@ import { SimplePath } from '../types'
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
 
-const TransientChildPath = [{
+const transientChildPath = [{
   value: '',
   rank: 0,
 }] as SimplePath
@@ -32,8 +32,8 @@ const TransientChildPath = [{
 */
 const TransientEditable = <Editable
   transient={true}
-  path={TransientChildPath}
-  simplePath={TransientChildPath}
+  path={transientChildPath}
+  simplePath={transientChildPath}
   rank={0}
 />
 
