@@ -67,7 +67,7 @@
     "redux-thunk": "^2.3.0",
     "ts-key-enum": "^2.0.6",
     "uuid": "^8.3.2",
-    "xhtml-purifier": "https://github.com/cybersemics/node-xhtml-purifier.git#types"
+    "xhtml-purifier": "^0.4.1"
   },
   "devDependencies": {
     "@sinonjs/fake-timers": "^6.0.1",
