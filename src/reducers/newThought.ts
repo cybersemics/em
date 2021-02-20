@@ -37,7 +37,7 @@ import {
   getPrevRank,
   getRankAfter,
   getRankBefore,
-  getRoot,
+  getRootPath,
   getSetting,
   hasChild,
   isContextViewActive,
@@ -91,7 +91,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
 
-  const path = at || state.cursor || getRoot(state)
+  const path = at || state.cursor || getRootPath(state)
 
   const simplePath = simplifyPath(state, path)
 

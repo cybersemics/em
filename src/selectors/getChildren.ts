@@ -89,14 +89,16 @@ const pathHeadValue = (state: State, path: Path, child: Child | ThoughtContext) 
 }
 
 /** Checks if the child is visible and also checks if the child lies within the cursor. */
-export const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
   return state.showHiddenThoughts ||
   isChildVisible(state, pathToContext(simplePath), { value: pathHeadValue(state, path, child), rank: child.rank }) ||
   isChildInCursor(state, path, simplePath, child)
 })
 
 /** Checks if the child is created after latest absolute context toggle. */
-const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | ThoughtContext) => child.lastUpdated && state.absoluteContextTime && child.lastUpdated > state.absoluteContextTime)
+const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | ThoughtContext) =>
+  child.lastUpdated && state.absoluteContextTime
+&& child.lastUpdated > state.absoluteContextTime)
 
 /**
  * Children filter predicate used for rendering.

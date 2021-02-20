@@ -3,13 +3,13 @@ import { contextChainToPath, equalArrays, equalThoughtRanked, head, headValue, i
 import { getContexts, getContextsSortedAndRanked, getThought, getChildrenRanked, isContextViewActive, splitChain } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Path } from '../types'
-import getRoot from './getRoot'
+import getRootPath from './getRootPath'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
 // NOTE: path is pathToContexted
 const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
-  if (isRoot(pathUnranked)) return getRoot(state)
+  if (isRoot(pathUnranked)) return getRootPath(state)
 
   let pathResult: Path = HOME_PATH // eslint-disable-line fp/no-let
   let prevParentContext = [HOME_TOKEN] // eslint-disable-line fp/no-let
