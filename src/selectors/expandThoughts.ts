@@ -37,6 +37,9 @@ const publishPinChildren = (state: State, context: Context) => publishMode() && 
   'true'
 )
 
+function expandThoughts(state: State, path: Path | null, options?: { depth?: number }): Index<Path>
+function expandThoughts<B extends boolean> (state: State, path: Path | null, options?: { depth?: number, returnContexts?: B }): Index<B extends true ? Context : Context>
+
 /** Returns an expansion map marking all contexts that should be expanded.
  *
  * @example {
@@ -47,7 +50,7 @@ const publishPinChildren = (state: State, context: Context) => publishMode() && 
  *   ...
  * }
  */
-const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?: number } = {}): Index<Path> => {
+function expandThoughts (state: State, path: Path | null, { depth = 0, returnContexts = false }: { depth?: number, returnContexts?: boolean } = {}): Index<Path | Context> {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -105,13 +108,13 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
 
   const initialExpanded = {
     // expand current thought
-    [hashContext(pathToContext(rootedPath))]: rootedPath,
+    [hashContext(pathToContext(rootedPath))]: returnContexts ? pathToContext(simplePath) : rootedPath,
 
     // expand context
     // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
     // RECURSION
     ...path && path.length >= 1 && depth <= 1
-      ? expandThoughts(state, rootedParentOf(state, path), { depth: depth + 1 })
+      ? expandThoughts(state, rootedParentOf(state, path), { depth: depth + 1, returnContexts })
       : {}
   }
 
@@ -124,7 +127,7 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
     ])
     // RECURSIVE
     // passing contextChain here creates an infinite loop
-    return expandThoughts(state, newPath, { depth: depth + 1 })
+    return expandThoughts(state, newPath, { depth: depth + 1, returnContexts })
   }, initialExpanded)
 }
 

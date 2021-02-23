@@ -1,11 +1,11 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { decodeContextUrl, getAllChildrenByContextHash, hasPushes } from '../selectors'
-import { equalArrays, hashContext, keyValueBy, pathToContext, unroot } from '../util'
+import { decodeContextUrl, expandThoughts, getAllChildrenByContextHash, getContexts, hasPushes, isContextViewActive } from '../selectors'
+import { equalArrays, hashContext, head, keyValueBy, pathToContext, unroot } from '../util'
 import { pull } from '../action-creators'
 import { State } from '../util/initialState'
-import { Context, ContextHash, Index, Path } from '../types'
+import { Child, Context, ContextHash, Index, ThoughtContext } from '../types'
 
 /** Debounce visible thought checks to avoid checking on every action. */
 const updatePullQueueDelay = 10
@@ -20,9 +20,9 @@ const initialPullQueue = (): Index<Context> => ({
 })
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
-const getVisibleContexts = (state: State): Index<Context> => {
+const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Index<Context> => {
 
-  const { cursor, expanded } = state
+  const { cursor } = state
 
   // if there is no cursor, decode the url so the cursor can be loaded
   // after loading the ranks will be inferred to update the cursor
@@ -30,7 +30,7 @@ const getVisibleContexts = (state: State): Index<Context> => {
   const contextCursor = cursor ? pathToContext(cursor) : contextUrl
 
   return {
-    ..._.mapValues(expanded, pathToContext),
+    ...expandedContexts,
     // generate the cursor and all its ancestors
     // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
     ...keyValueBy(contextCursor, (value, i) => {
@@ -50,14 +50,17 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
 
   return keyValueBy(expandedKeys, key => {
     const context = visibleContexts[key]
-    const children = getAllChildrenByContextHash(state, key)
+    const showContexts = isContextViewActive(state, context)
+
+    const children = showContexts ? getContexts(state, head(context)) : getAllChildrenByContextHash(state, key) as (Child | ThoughtContext)[]
+
     return {
       // current thought
       ...!contextIndex[key] || contextIndex[key].pending ? { [key]: context } : null,
 
       // because only parents are specified by visibleContexts, we need to queue the children as well
       ...keyValueBy(children, child => {
-        const contextChild = unroot([...context, child.value])
+        const contextChild = showContexts ? (child as ThoughtContext).context : unroot([...context, (child as Child).value])
         const keyChild = hashContext(contextChild)
         return contextIndex[keyChild] && contextIndex[keyChild].pending ? { [keyChild]: contextChild } : null
       })
@@ -77,7 +80,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   let isLoaded = false // eslint-disable-line fp/no-let
 
   // track when expanded changes
-  let lastExpanded: Index<Path> = {} // eslint-disable-line fp/no-let
+  let lastExpanded: Index<Context> = {} // eslint-disable-line fp/no-let
 
   // track when visible contexts change
   let lastVisibleContexts: Index<Context> = {} // eslint-disable-line fp/no-let
@@ -91,7 +94,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   const flushPullQueue = async () => {
 
     // expand pull queue to include its children
-    const extendedPullQueue = appendVisibleContexts(getState(), pullQueue, lastVisibleContexts)
+    const extendedPullQueue = appendVisibleContexts(getState(), pullQueue, { ...lastVisibleContexts })
 
     pullQueue = {}
 
@@ -119,15 +122,20 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // must do this within this (debounced) function, otherwise state.pushQueue will still be empty
     if (hasPushes(state)) return
 
+    const expandedContexts = expandThoughts(state, state.cursor, {
+      returnContexts: true,
+    })
+
     // return if expanded is the same, unless force is specified or expanded is empty
-    if (!force && Object.keys(state.expanded).length > 0 && (state.expanded === lastExpanded || equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded)))) return
+    if (!force && Object.keys(state.expanded).length > 0
+    && equalArrays(Object.keys(expandedContexts), Object.keys(lastExpanded))) return
 
     // TODO: Can we use only lastExpanded and get rid of lastVisibleContexts?
     // if (!force && equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded))) return
 
-    lastExpanded = state.expanded
+    lastExpanded = expandedContexts
 
-    const visibleContexts = getVisibleContexts(state)
+    const visibleContexts = getVisibleContexts(state, expandedContexts)
 
     if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
 
