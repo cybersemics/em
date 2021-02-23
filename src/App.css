@@ -2892,13 +2892,7 @@ code, .code {
 }
 
 .quick-add-button {
-  z-index: 100;
-  position: absolute;
-  bottom: 2rem;
-  right: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex;
   transition: transform 200ms ease-in-out;
 }
 

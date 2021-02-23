@@ -18,7 +18,7 @@ const QuickAddButton: React.FC = () => {
       'quick-add-button': true,
       rotate: isAbsolute(rootContext)
     })} onClick={() => dispatch(toggleAbsoluteContext())}>
-      <AddIcon size={55}/>
+      <AddIcon size={20}/>
     </div>
   )
 }
