@@ -39,7 +39,6 @@ import {
   isDocumentEditable,
   isEM,
   isFunction,
-  isURL,
   parseJsonSafe,
   pathToContext,
   publishMode,
@@ -118,7 +117,6 @@ interface ThoughtContainerProps {
   thought?: Lexeme,
   simplePath: SimplePath,
   simplePathLive?: SimplePath,
-  url?: string | null,
   view?: string | null,
 }
 
@@ -138,7 +136,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     simplePath,
     showContexts,
     depth,
-    childrenForced
   } = props
 
   // check if the cursor path includes the current thought
@@ -165,16 +162,10 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorGrandparent =
     equalPath(rootedParentOf(state, parentOf(cursor || [])), path)
-  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const value = headValue(simplePathLive)
 
-  // link URL
   const isExpanded = !!expanded[hashContext(pathToContext(path))]
-  const url = isURL(value) ? value :
-  // if the only subthought is a url and the thought is not expanded, link the thought
-    !isExpanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(simplePathLive, parentOf(cursor))) ? children[0].value :
-    null
 
   const thought = getThought(state, value)
 
@@ -193,7 +184,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     thought,
     simplePathLive,
     view: attribute(state, pathToContext(simplePathLive), '=view'),
-    url,
   }
 }
 
@@ -448,7 +438,6 @@ const ThoughtContainer = ({
   thought,
   simplePath,
   simplePathLive,
-  url,
   view,
   toggleTopControlsAndBreadcrumbs
 }: ConnectedDraggableThoughtContainerProps) => {
@@ -496,7 +485,7 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive!))
+  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
@@ -588,7 +577,6 @@ const ThoughtContainer = ({
         showContexts={showContexts}
         style={style}
         simplePath={simplePath}
-        url={url}
       />
 
       <Thought
