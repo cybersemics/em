@@ -53,6 +53,22 @@ const addMissingProtocol = (url: string) => (
     : ''
 ) + url
 
+/** A Url icon that links to the url. */
+const UrlIconLink = ({ url }: { url: string }) => <a
+  href={addMissingProtocol(url)}
+  rel='noopener noreferrer'
+  target='_blank'
+  className='external-link'
+  onClick={e => {
+    e.stopPropagation() // prevent Editable onMouseDown
+    if (url.startsWith(window.location.origin)) {
+      const { path, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length), { exists: true })
+      store.dispatch(setCursor({ path, replaceContextViews: contextViews }))
+      e.preventDefault()
+    }
+  }}
+><UrlIcon /></a>
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
@@ -123,22 +139,8 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
           })}>
             <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, !!isEditing, subthought, thoughts)} />
             {
-              // Note: For some reason the UrlIconLink element cannot be defined in the module scope without breaking the toolbar buttons (???). When a toolbar button is clicked while the cursor is on a url thought or its ancestor, it blocks the toolbar button's click event. This occurs even with an empty onClick on the UrlIconLink. When it is moved inline, it works fine.
               // do not render url icon on root thoughts in publish mode
-              url && !(publishMode() && simplePath.length === 1) && <a href={addMissingProtocol(url)} rel='noopener noreferrer' target='_blank' className='external-link' onClick={e => {
-
-                // prevent Editable onMouseDown
-                e.stopPropagation()
-
-                if (url.startsWith(window.location.origin)) {
-                  const { path, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length), { exists: true })
-                  dispatch(setCursor({ path, replaceContextViews: contextViews }))
-                  e.preventDefault()
-                }
-              }}
-              >
-                <UrlIcon />
-              </a>
+              url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
             }
             {REGEXP_PUNCTUATIONS.test(subthought.text)
               ? null
