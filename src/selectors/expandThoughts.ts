@@ -38,7 +38,7 @@ const publishPinChildren = (state: State, context: Context) => publishMode() && 
 )
 
 function expandThoughts(state: State, path: Path | null, options?: { depth?: number }): Index<Path>
-function expandThoughts<B extends boolean> (state: State, path: Path | null, options?: { depth?: number, returnContexts?: B }): Index<B extends true ? Context : Context>
+function expandThoughts<B extends boolean> (state: State, path: Path | null, options?: { depth?: number, returnContexts?: B }): Index<B extends true ? Context : Path>
 
 /** Returns an expansion map marking all contexts that should be expanded.
  *
@@ -50,7 +50,7 @@ function expandThoughts<B extends boolean> (state: State, path: Path | null, opt
  *   ...
  * }
  */
-function expandThoughts (state: State, path: Path | null, { depth = 0, returnContexts = false }: { depth?: number, returnContexts?: boolean } = {}): Index<Path | Context> {
+function expandThoughts (state: State, path: Path | null, { depth = 0 }: { depth?: number, returnContexts?: boolean } = {}): Index<Path | Context> {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
