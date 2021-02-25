@@ -1,4 +1,4 @@
-import { RANKED_ROOT } from '../../constants'
+import { HOME_PATH } from '../../constants'
 
 // TODO: Why does util have to be imported before selectors and reducers?
 import { initialState, reducerFlow } from '../../util'
@@ -15,7 +15,7 @@ it('set the cursor to a SimplePath', () => {
   const cursor = [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }]
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     setCursor({ path: cursor }),
     toggleContextView,
   ]
@@ -45,7 +45,7 @@ it('set the cursor to a Path across a context view', () => {
   ]
 
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     setCursor({ path: cursor }),
     toggleContextView,
   ]

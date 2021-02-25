@@ -1,9 +1,9 @@
 import globals from '../globals'
-import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, RANKED_ROOT, ROOT_TOKEN } from '../constants'
-import { attribute, attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
+import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, HOME_PATH, HOME_TOKEN } from '../constants'
+import { attribute, attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath, rootedParentOf } from '../selectors'
 import { Child, Context, Index, Path, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
-import { equalThoughtRanked, hashContext, head, headValue, isFunction, isURL, keyValueBy, parentOf, pathToContext, publishMode, rootedParentOf, unroot } from '../util'
+import { equalThoughtRanked, hashContext, head, headValue, isFunction, isURL, keyValueBy, parentOf, pathToContext, publishMode, unroot } from '../util'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (child: Child | ThoughtContext, showContexts: boolean) => showContexts
@@ -61,14 +61,14 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
     console.error(new Error('expandThoughts: Invalid empty Path received.'))
     return {}
   }
-  else if (path && path.length > 1 && equalThoughtRanked(path[0], RANKED_ROOT[0])) {
+  else if (path && path.length > 1 && equalThoughtRanked(path[0], HOME_PATH[0])) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
-    console.error(new Error('expandThoughts: Invalid Path; Non-root Paths should omit ' + ROOT_TOKEN))
+    console.error(new Error('expandThoughts: Invalid Path; Non-root Paths should omit ' + HOME_TOKEN))
     return {}
   }
 
   const simplePath = !path || path.length === 0
-    ? RANKED_ROOT
+    ? HOME_PATH
     : simplifyPath(state, path)
 
   /** Returns true if the child should be pinned open. */
@@ -76,7 +76,7 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
     attribute(state, pathToContext(getChildPath(state, child, simplePath)), '=pin')
 
   const context = pathToContext(simplePath)
-  const rootedPath = path || RANKED_ROOT
+  const rootedPath = path || HOME_PATH
   const showContexts = isContextViewActive(state, context)
 
   const childrenUnfiltered = showContexts
@@ -111,7 +111,7 @@ const expandThoughts = (state: State, path: Path | null, { depth = 0 }: { depth?
     // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
     // RECURSION
     ...path && path.length >= 1 && depth <= 1
-      ? expandThoughts(state, rootedParentOf(path), { depth: depth + 1 })
+      ? expandThoughts(state, rootedParentOf(state, path), { depth: depth + 1 })
       : {}
   }
 

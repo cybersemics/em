@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
 import { parentOf } from '../util'
 import { Thunk } from '../types'
@@ -12,7 +12,7 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
   const { cursor } = state
 
   if (!cursor) {
-    const children = getChildrenSorted(state, [ROOT_TOKEN])
+    const children = getChildrenSorted(state, [HOME_TOKEN])
     if (children.length > 0) {
       dispatch(setCursor({ path: [children[0]] }))
       dispatch(scrollCursorIntoView())

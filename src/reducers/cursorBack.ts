@@ -1,10 +1,14 @@
 import { cursorHistory, search as searchReducer, setCursor } from '../reducers'
-import { parentOf, reducerFlow } from '../util'
+import { isAbsolute, parentOf, reducerFlow } from '../util'
 import { State } from '../util/initialState'
+import toggleAbsoluteContext from './toggleAbsoluteContext'
 
 /** Moves the cursor up one level. */
 const cursorBack = (state: State) => {
-  const { cursor: cursorOld, editing, search } = state
+  const { cursor: cursorOld, editing, search, rootContext } = state
+
+  const isAbsoluteRoot = isAbsolute(rootContext)
+
   const cursorNew = cursorOld && parentOf(cursorOld)
 
   return reducerFlow(
@@ -19,9 +23,10 @@ const cursorBack = (state: State) => {
       cursorHistory({ cursor: cursorOld }),
     ]
 
-    // if there is no cursor and search is active, close the search
-    : search === '' ? [
-
+    // if there is no cursor and isAbsoluteRoot is active, toggle the context
+    // else of search is active, close the search
+    :
+    isAbsoluteRoot ? [toggleAbsoluteContext] : search === '' ? [
       // close the search
       searchReducer({ value: null }),
 
@@ -31,6 +36,7 @@ const cursorBack = (state: State) => {
         : null,
     ]
     : []
+
   )(state)
 }
 

@@ -1,14 +1,15 @@
-import { equalThoughtValue, headRank, headValue, pathToContext, rootedParentOf } from '../util'
+import { equalThoughtValue, headRank, headValue, pathToContext } from '../util'
 import { getChildrenSorted } from '../selectors'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
+import rootedParentOf from './rootedParentOf'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 const getThoughtAfter = (state: State, simplePath: SimplePath) => {
 
   const value = headValue(simplePath)
   const rank = headRank(simplePath)
-  const parentPath = rootedParentOf(simplePath)
+  const parentPath = rootedParentOf(state, simplePath)
   const children = getChildrenSorted(state, pathToContext(parentPath))
 
   if (children.length === 0) {

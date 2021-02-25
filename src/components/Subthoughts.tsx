@@ -27,19 +27,20 @@ import {
   isDivider,
   isEM,
   isFunction,
-  isRoot,
   parseJsonSafe,
   pathToContext,
-  rootedParentOf,
-  subsetThoughts,
+  isDescendantPath,
   sumSubthoughtsLength,
+  isRoot,
   unroot,
+  isAbsolute,
 } from '../util'
 
 // selectors
 import {
   attribute,
   attributeEquals,
+  childrenFilterPredicate,
   getChildPath,
   appendChildPath,
   getContextsSortedAndRanked,
@@ -50,8 +51,8 @@ import {
   getAllChildren,
   getChildrenRanked,
   getAllChildrenSorted,
-  isChildVisibleWithCursorCheck,
   isContextViewActive,
+  rootedParentOf,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -88,13 +89,16 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     cursor,
     dataNonce,
     showHiddenThoughts,
+    rootContext
   } = state
+
+  const isAbsoluteContext = isAbsolute(rootContext)
 
   const resolvedPath = props.path ?? props.simplePath
 
   // check if the cursor path includes the current thought
   // include ROOT to prevent re-render when ROOT subthought changes
-  const isEditingPath = isRoot(props.simplePath) || subsetThoughts(cursor, resolvedPath)
+  const isEditingPath = isRoot(props.simplePath) || isDescendantPath(cursor, resolvedPath)
 
   // check if the cursor is editing an thought directly
   const isEditing = equalPath(cursor, resolvedPath)
@@ -138,7 +142,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     simplePath: simplePathLive,
     // re-render if children change
     __render: getAllChildren(state, pathToContext(simplePathLive)),
-    isExpanded: store.getState().expanded[hashContext(pathToContext(resolvedPath))]
+    isExpanded: store.getState().expanded[hashContext(pathToContext(resolvedPath))],
+    isAbsoluteContext,
   }
 }
 
@@ -155,7 +160,7 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   // there is no self thought to check since this is <Subthoughts>
-  const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom)
+  const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
   const divider = isDivider(headValue(thoughtsTo))
 
   // do not drop on descendants or thoughts hidden by autofocus
@@ -183,8 +188,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   }])
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(pathToContext(thoughtsFrom))
-  const newContext = rootedParentOf(pathToContext(newPath))
+  const oldContext = rootedParentOf(state, pathToContext(thoughtsFrom))
+  const newContext = rootedParentOf(state, pathToContext(newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot drop on itself
@@ -312,7 +317,8 @@ export const SubthoughtsComponent = ({
   sort: contextSort,
   simplePath,
   showHiddenThoughts,
-  isExpanded
+  isExpanded,
+  isAbsoluteContext
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
 
   // <Subthoughts> render
@@ -355,7 +361,8 @@ export const SubthoughtsComponent = ({
   const editIndex = cursor && children && show ? children.findIndex(child => {
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
-  const filteredChildren = children.filter(isChildVisibleWithCursorCheck(state, resolvedPath, simplePath))
+
+  const filteredChildren = children.filter(childrenFilterPredicate(state, resolvedPath, simplePath))
 
   const proposedPageSize = isRoot(simplePath)
     ? Infinity
@@ -440,6 +447,7 @@ export const SubthoughtsComponent = ({
     >
       {filteredChildren
         .map((child, i) => {
+
           if (i >= proposedPageSize) {
             return null
           }
@@ -450,7 +458,7 @@ export const SubthoughtsComponent = ({
           const childContext = pathToContext(childPath)
 
           /** Returns true if the cursor in in the child path. */
-          const isEditingChildPath = () => subsetThoughts(state.cursor, childPath)
+          const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
           const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
 
           /** Returns true if the bullet should be hidden. */

@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -18,9 +18,9 @@ it('subcategorize a thought', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - ${''/* prevent trim_trailing_whitespace */}
       - b`)
@@ -36,9 +36,9 @@ it('subcategorize a thought in the root', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - ${''/* prevent trim_trailing_whitespace */}
     - a`)
 
@@ -55,9 +55,9 @@ it('subcategorize with no cursor should do nothing', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
 
@@ -88,16 +88,16 @@ it('set cursor on new empty thought', () => {
 //       - b`
 
 //   const steps = [
-//     importText({ path: RANKED_ROOT, text }),
+//     importText({ path: HOME_PATH, text }),
 //     setCursorFirstMatch(['a']),
 //     subCategorizeOne,
 //   ]
 
 //   // run steps through reducer flow and export as plaintext for readable test
 //   const stateNew = reducerFlow(steps)(initialState())
-//   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+//   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-//   expect(exported).toBe(`- ${ROOT_TOKEN}
+//   expect(exported).toBe(`- ${HOME_TOKEN}
 //   - ${''/* prevent trim_trailing_whitespace */}
 //     - a
 //       - b
@@ -114,16 +114,16 @@ it('set cursor on new empty thought', () => {
 //       - note`
 
 //   const steps = [
-//     importText({ path: RANKED_ROOT, text }),
+//     importText({ path: HOME_PATH, text }),
 //     setCursorFirstMatch(['a']),
 //     subCategorizeOne,
 //   ]
 
 //   // run steps through reducer flow and export as plaintext for readable test
 //   const stateNew = reducerFlow(steps)(initialState())
-//   const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+//   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-//   expect(exported).toBe(`- ${ROOT_TOKEN}
+//   expect(exported).toBe(`- ${HOME_TOKEN}
 //   - ${''/* prevent trim_trailing_whitespace */}
 //     - a
 //       - =note

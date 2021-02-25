@@ -4,30 +4,18 @@ import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getContexts, getAllChildren, theme } from '../selectors'
+import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
 import { State } from '../util/initialState'
 import { Connected, Context, SimplePath, ThoughtContext, Path } from '../types'
-
-// util
-import {
-  parentOf,
-  ellipsizeUrl,
-  equalPath,
-  head,
-  headValue,
-  pathToContext,
-  publishMode,
-  rootedParentOf,
-} from '../util'
+import { ellipsizeUrl, equalPath, hashContext, head, headValue, isURL, once, parentOf, pathToContext, publishMode } from '../util'
 
 // components
 import HomeLink from './HomeLink'
-import StaticSuperscript from './StaticSuperscript'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
+import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  path: Path,
   dark?: boolean,
   editingValue?: string | null,
   focusOffset?: number,
@@ -35,12 +23,12 @@ interface ThoughtAnnotationProps {
   invalidState?: boolean | null,
   isEditing?: boolean,
   minContexts?: number,
+  path: Path,
   showContextBreadcrumbs?: boolean,
   showContexts?: boolean,
   showHiddenThoughts?: boolean,
-  style?: React.CSSProperties,
   simplePath: SimplePath,
-  url?: string | null,
+  style?: React.CSSProperties,
 }
 
 /** Sets the innerHTML of the subthought text. */
@@ -55,6 +43,31 @@ const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: {
         : ellipsizeUrl(subthought.text)
   }
 }
+
+/** Adds https to the url if it is missing. Ignores urls at localhost. */
+const addMissingProtocol = (url: string) => (
+  !url.startsWith('http:') &&
+  !url.startsWith('https:') &&
+  !url.startsWith('localhost:')
+    ? 'https://'
+    : ''
+) + url
+
+/** A Url icon that links to the url. */
+const UrlIconLink = ({ url }: { url: string }) => <a
+  href={addMissingProtocol(url)}
+  rel='noopener noreferrer'
+  target='_blank'
+  className='external-link'
+  onClick={e => {
+    e.stopPropagation() // prevent Editable onMouseDown
+    if (url.startsWith(window.location.origin)) {
+      const { path, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length), { exists: true })
+      store.dispatch(setCursor({ path, replaceContextViews: contextViews }))
+      e.preventDefault()
+    }
+  }}
+><UrlIcon /></a>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
@@ -77,7 +90,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
-const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, homeContext, isEditing, minContexts = 2, url, dispatch, invalidState, editingValue, style, showHiddenThoughts }: Connected<ThoughtAnnotationProps>) => {
+const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, homeContext, isEditing, minContexts = 2, dispatch, invalidState, editingValue, style, showHiddenThoughts }: Connected<ThoughtAnnotationProps>) => {
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // get all subthoughts and the subthought under the selection
@@ -95,34 +108,22 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
   // const subthoughtUnderSelection = once(() => findSubthoughtByIndex(subthoughts, focusOffset))
   const thoughts = pathToContext(simplePath)
 
-  /** Adds https to the url if it is missing. Ignores urls at localhost. */
-  const addMissingProtocol = (url: string) => (
-    !url.startsWith('http:') &&
-    !url.startsWith('https:') &&
-    !url.startsWith('localhost:')
-      ? 'https://'
-      : ''
-  ) + url
+  const isExpanded = !!state.expanded[hashContext(thoughts)]
+  const childrenUrls = once(() => getAllChildren(state, thoughts)
+    .filter(child => isURL(child.value)))
+  const url = isURL(value) ? value :
+  // if the only subthought is a url and the thought is not expanded, link the thought
+    !isExpanded && childrenUrls().length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor))) ? childrenUrls()[0].value :
+    null
 
   /** Returns true if the thought is not archived. */
   const isNotArchive = (thoughtContext: ThoughtContext) =>
     // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
     showHiddenThoughts || !thoughtContext.context || thoughtContext.context.indexOf('=archive') === -1
 
-  /** A Url icon that links to the url. */
-  const UrlIconLink = ({ url }: { url: string }) => <a href={addMissingProtocol(url)} rel='noopener noreferrer' target='_blank' className='external-link' onClick={e => {
-    if (url.startsWith(window.location.origin)) {
-      const { path, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length), { exists: true })
-      dispatch(setCursor({ path, replaceContextViews: contextViews }))
-      e.preventDefault()
-    }
-  }}
-  >
-    <UrlIcon />
-  </a>
   return <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
 
-    {showContextBreadcrumbs && simplePath.length > 1 && <ContextBreadcrumbs path={rootedParentOf(rootedParentOf(simplePath))} />}
+    {showContextBreadcrumbs && simplePath.length > 1 && <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, simplePath))} />}
 
     {homeContext
       ? <HomeLink/>
@@ -137,8 +138,10 @@ const ThoughtAnnotation = ({ simplePath, showContexts, showContextBreadcrumbs, h
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}>
             <span className='subthought-text' style={style} dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, !!isEditing, subthought, thoughts)} />
-            { // do not render url icon on root thoughts in publish mode
-              url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />}
+            {
+              // do not render url icon on root thoughts in publish mode
+              url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+            }
             {REGEXP_PUNCTUATIONS.test(subthought.text)
               ? null
               // with the default minContexts of 2, do not count the whole thought

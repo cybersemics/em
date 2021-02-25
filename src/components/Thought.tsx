@@ -39,13 +39,11 @@ import {
   isDocumentEditable,
   isEM,
   isFunction,
-  isRoot,
-  isURL,
   parseJsonSafe,
   pathToContext,
   publishMode,
-  rootedParentOf,
-  subsetThoughts,
+  isDescendantPath,
+  isRoot,
   unroot,
 } from '../util'
 
@@ -64,6 +62,7 @@ import {
   hasChildren,
   isBefore,
   isContextViewActive,
+  rootedParentOf,
 } from '../selectors'
 
 /**********************************************************************
@@ -118,7 +117,6 @@ interface ThoughtContainerProps {
   thought?: Lexeme,
   simplePath: SimplePath,
   simplePathLive?: SimplePath,
-  url?: string | null,
   view?: string | null,
 }
 
@@ -138,11 +136,10 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     simplePath,
     showContexts,
     depth,
-    childrenForced
   } = props
 
   // check if the cursor path includes the current thought
-  const isEditingPath = subsetThoughts(cursor, path)
+  const isEditingPath = isDescendantPath(cursor, path)
 
   // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursor, path)
@@ -157,24 +154,18 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedParentOf(parentOf(cursor || [])), path) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
+    ? equalPath(rootedParentOf(state, parentOf(cursor || [])), path) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
     // parent
     : equalPath(parentOf(cursor || []), path)
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as SimplePath | undefined
 
   const isCursorGrandparent =
-    equalPath(rootedParentOf(parentOf(cursor || [])), path)
-  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
+    equalPath(rootedParentOf(state, parentOf(cursor || [])), path)
 
   const value = headValue(simplePathLive)
 
-  // link URL
   const isExpanded = !!expanded[hashContext(pathToContext(path))]
-  const url = isURL(value) ? value :
-  // if the only subthought is a url and the thought is not expanded, link the thought
-    !isExpanded && children.length === 1 && children[0].value && isURL(children[0].value) && (!cursor || !equalPath(simplePathLive, parentOf(cursor))) ? children[0].value :
-    null
 
   const thought = getThought(state, value)
 
@@ -193,7 +184,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     thought,
     simplePathLive,
     view: attribute(state, pathToContext(simplePathLive), '=view'),
-    url,
   }
 }
 
@@ -267,9 +257,9 @@ const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonit
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
-  const isDescendant = subsetThoughts(thoughtsTo, thoughtsFrom) && !isSelf
-  const oldContext = rootedParentOf(thoughtsFrom)
-  const newContext = rootedParentOf(thoughtsTo)
+  const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
+  const oldContext = rootedParentOf(state, thoughtsFrom)
+  const newContext = rootedParentOf(state, thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
@@ -288,8 +278,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(thoughtsFrom)
-  const newContext = rootedParentOf(thoughtsTo)
+  const oldContext = rootedParentOf(state, thoughtsFrom)
+  const newContext = rootedParentOf(state, thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot move root or em context
@@ -379,11 +369,13 @@ const Thought = ({
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
+  const state = store.getState()
+
   return <div className='thought'>
 
     {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
 
-    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs path={rootedParentOf(rootedParentOf(simplePath))} homeContext={homeContext} />
+    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, simplePath))} homeContext={homeContext} />
     : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
       store.dispatch(expandContextThought(path))
     }}>... </a></span>
@@ -446,7 +438,6 @@ const ThoughtContainer = ({
   thought,
   simplePath,
   simplePathLive,
-  url,
   view,
   toggleTopControlsAndBreadcrumbs
 }: ConnectedDraggableThoughtContainerProps) => {
@@ -488,13 +479,13 @@ const ThoughtContainer = ({
   const value = headValue(simplePathLive!)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
-  const homeContext = showContexts && isRoot([head(rootedParentOf(simplePath))])
+  const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive!))
+  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
 
   const showContextBreadcrumbs = showContexts &&
     (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
@@ -586,7 +577,6 @@ const ThoughtContainer = ({
         showContexts={showContexts}
         style={style}
         simplePath={simplePath}
-        url={url}
       />
 
       <Thought

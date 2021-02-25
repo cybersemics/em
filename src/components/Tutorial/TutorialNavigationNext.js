@@ -7,7 +7,7 @@ import { getSetting, getAllChildren } from '../../selectors'
 import { tutorialNext } from '../../action-creators'
 
 import {
-  ROOT_TOKEN,
+  HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
   TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
@@ -29,7 +29,7 @@ const mapStateToProps = state => {
     contextIndex,
     cursor,
     expanded,
-    rootSubthoughts: getAllChildren(state, [ROOT_TOKEN]),
+    rootSubthoughts: getAllChildren(state, [HOME_TOKEN]),
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
     tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
   }

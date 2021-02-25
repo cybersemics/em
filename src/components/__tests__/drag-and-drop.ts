@@ -5,7 +5,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
@@ -76,7 +76,7 @@ const simulateDragAndDrop = ({ source, drop, type }: { source: Context, drop: Co
 
 it('drop as sibling', () => {
   store.dispatch(importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: `
       - a
       - b
@@ -92,9 +92,9 @@ it('drop as sibling', () => {
     type: 'sibling'
   })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedExport = `- ${ROOT_TOKEN}
+  const expectedExport = `- ${HOME_TOKEN}
   - b
   - a
   - c
@@ -105,7 +105,7 @@ it('drop as sibling', () => {
 
 it('drop as child (Drop end)', () => {
   store.dispatch(importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: `
       - a
       - b
@@ -121,9 +121,9 @@ it('drop as child (Drop end)', () => {
     type: 'child'
   })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedExport = `- ${ROOT_TOKEN}
+  const expectedExport = `- ${HOME_TOKEN}
   - a
     - b
   - c
@@ -136,7 +136,7 @@ it('prevent drop into descendants', () => {
 
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
           - b
@@ -153,9 +153,9 @@ it('prevent drop into descendants', () => {
     type: 'child'
   })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedExport = `- ${ROOT_TOKEN}
+  const expectedExport = `- ${HOME_TOKEN}
   - a
     - b
   - c`

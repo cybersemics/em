@@ -3,7 +3,7 @@ import { store } from '../../store'
 import { isTouch } from '../../browser'
 
 // constants
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 
 // util
 import {
@@ -28,7 +28,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
   const isCursorLeaf = cursorChildren.length === 0
   const ancestorThought = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
 
-  const ancestorThoughtChildren = getAllChildren(state, ancestorThought.length === 0 ? [ROOT_TOKEN] : ancestorThought)
+  const ancestorThoughtChildren = getAllChildren(state, ancestorThought.length === 0 ? [HOME_TOKEN] : ancestorThought)
   const isCursorRootChildren = (cursor || []).length === 1
 
   const isCursorCollapsePossible = ancestorThoughtChildren.length > 1 && !(isCursorRootChildren && isCursorLeaf)
@@ -51,7 +51,7 @@ const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
             :
             <Fragment> Add a subthought and I'll show you.</Fragment>
 
-          : getAllChildren(state, [ROOT_TOKEN]).length === 0 ? ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.' : ' Oops! Please focus on one of the thoughts.'
+          : getAllChildren(state, [HOME_TOKEN]).length === 0 ? ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.' : ' Oops! Please focus on one of the thoughts.'
       }
     </p>
   </Fragment>

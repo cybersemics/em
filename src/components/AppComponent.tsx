@@ -164,9 +164,7 @@ const AppComponent: FC<Props> = props => {
 
             <div className='nav-bottom-wrapper'>
               <Scale amount={scale!} origin='bottom left'>
-
                 <NavBar position='bottom' />
-
               </Scale>
             </div>
 

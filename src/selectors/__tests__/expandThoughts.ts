@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newSubthought, newThought, setCursor } from '../../reducers'
@@ -19,7 +19,7 @@ const isContextExpanded = (state: State, context: Context) =>
 describe('normal view', () => {
 
   it('ROOT is always expanded', () => {
-    expect(isContextExpanded(initialState(), [ROOT_TOKEN])).toBeTruthy()
+    expect(isContextExpanded(initialState(), [HOME_TOKEN])).toBeTruthy()
   })
 
   it('non-existent thoughts are not expanded', () => {
@@ -63,7 +63,7 @@ describe('normal view', () => {
         - d`
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -81,7 +81,7 @@ describe('normal view', () => {
     - d`
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a', 'b'])
     ]
 
@@ -102,7 +102,7 @@ describe('normal view', () => {
           - f`
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -132,7 +132,7 @@ describe('table view', () => {
     - e`
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -153,7 +153,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
+    const stateNew = importText(initialState(), { path: HOME_PATH, text })
 
     // cursor on row 1, column 2
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
@@ -175,7 +175,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
+    const stateNew = importText(initialState(), { path: HOME_PATH, text })
 
     // cursor on row 1, column 2
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b', 'c'])
@@ -199,7 +199,7 @@ describe('table view', () => {
     - e`
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -220,7 +220,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
+    const stateNew = importText(initialState(), { path: HOME_PATH, text })
 
     // cursor on row 1, column 2
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
@@ -243,7 +243,7 @@ describe('table view', () => {
   - d
     - e`
 
-    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
+    const stateNew = importText(initialState(), { path: HOME_PATH, text })
 
     // cursor on row 1, column 2 (same row)
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b', 'c'])
@@ -270,7 +270,7 @@ describe('=pin', () => {
     - e`
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -294,7 +294,7 @@ describe('=pin', () => {
     - e`
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a', 'd'])
     ]
 
@@ -315,7 +315,7 @@ describe('=pin', () => {
     `
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -341,7 +341,7 @@ describe('=pinChildren', () => {
     - e`
 
     const steps = [
-      importText({ path: RANKED_ROOT, text }),
+      importText({ path: HOME_PATH, text }),
       setCursorFirstMatch(['a'])
     ]
 
@@ -362,7 +362,7 @@ describe('=pinChildren', () => {
   - d
     - e`
 
-    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
+    const stateNew = importText(initialState(), { path: HOME_PATH, text })
 
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
@@ -382,7 +382,7 @@ describe('=pinChildren', () => {
   - d
     - e`
 
-    const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
+    const stateNew = importText(initialState(), { path: HOME_PATH, text })
 
     const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b', 'c'])
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()

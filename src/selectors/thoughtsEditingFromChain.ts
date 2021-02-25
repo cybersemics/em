@@ -1,4 +1,4 @@
-import { RANKED_ROOT } from '../constants'
+import { HOME_PATH } from '../constants'
 import { splitChain } from '../selectors'
 import { head } from '../util'
 import { Path } from '../types'
@@ -15,7 +15,7 @@ const thoughtsEditingFromChain = (state: State, path: Path) => {
   // the penultimate context in the context chain, which is the thoughts that is being edited in the context view
   const thoughtsEditing = contextChain && contextChain.length > 1
     ? contextChain[contextChain.length - 2]
-    : RANKED_ROOT
+    : HOME_PATH
 
   return contextFromChain.concat(head(thoughtsEditing))
 }

@@ -4,8 +4,8 @@ import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
-import { RANKED_ROOT } from '../constants'
-import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, removeRoot, timestamp, unroot } from '../util'
+import { HOME_PATH } from '../constants'
+import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, removeHome, timestamp, unroot } from '../util'
 import { alert, error, modalRemindMeLater, pull } from '../action-creators'
 import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
@@ -26,7 +26,7 @@ const ModalExport = () => {
   const dispatch = useDispatch()
   const isMounted = useRef(false)
   const state = store.getState()
-  const cursor = useSelector((state: State) => state.cursor || RANKED_ROOT)
+  const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
   const context = pathToContext(simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
@@ -67,7 +67,7 @@ const ModalExport = () => {
     const exported = exportContext(store.getState(), context, selected.type, {
       title: titleChild ? titleChild.value : undefined
     })
-    setExportContent(titleChild ? exported : removeRoot(exported).trimStart())
+    setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
 
   // fetch all pending descendants of the cursor once before they are exported

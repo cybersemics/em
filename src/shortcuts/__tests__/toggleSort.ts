@@ -1,4 +1,4 @@
-import { EM_TOKEN, RANKED_ROOT } from '../../constants'
+import { EM_TOKEN, HOME_PATH } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute, rankThoughtsFirstMatch } from '../../selectors'
 import { existingThoughtChange, importText } from '../../action-creators'
@@ -14,7 +14,7 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
   // import thoughts
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
           - d
@@ -37,7 +37,7 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical)
   // import thoughts
   store.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
           - =sort
@@ -62,7 +62,7 @@ it('override global Alphabetical with local None', () => {
   store.dispatch([
 
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
           - d

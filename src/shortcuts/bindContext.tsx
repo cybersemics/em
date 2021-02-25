@@ -1,6 +1,6 @@
 import React from 'react'
-import { isDocumentEditable, pathToContext, rootedParentOf } from '../util'
-import { isContextViewActive, lastThoughtsFromContextChain, splitChain } from '../selectors'
+import { isDocumentEditable, pathToContext } from '../util'
+import { isContextViewActive, lastThoughtsFromContextChain, rootedParentOf, splitChain } from '../selectors'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 
@@ -24,7 +24,7 @@ const bindContextShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const contextRanked = rootedParentOf(cursor)
+    const contextRanked = rootedParentOf(state, cursor)
 
     if (!cursor || !isContextViewActive(state, pathToContext(contextRanked))) return
 

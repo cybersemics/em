@@ -20,4 +20,15 @@ const subCategorizeOneShortcut: Shortcut = {
   exec: dispatch => dispatch(subCategorizeOne())
 }
 
+// a shortcut for Raine until we have custom user shortcuts
+export const subCategorizeOneShortcutAlias: Shortcut = {
+  id: 'subcategorizeOneAlias',
+  name: 'Subcategorize One',
+  hideFromInstructions: true,
+  keyboard: { key: ']', meta: true },
+  svg: Icon,
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  exec: dispatch => dispatch(subCategorizeOne())
+}
+
 export default subCategorizeOneShortcut

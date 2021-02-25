@@ -1,4 +1,4 @@
-import { EM_TOKEN, MODALS, ROOT_TOKEN, SCHEMA_LATEST } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User } from '../types'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
@@ -48,6 +48,7 @@ export interface State {
   autologin: boolean,
   contextViews: Index<boolean>,
   cursor: Path | null,
+  cursorBeforeQuickAdd: Path | null,
   cursorBeforeSearch: Path | null,
   cursorHistory: Path[],
   cursorInitialized: boolean,
@@ -87,6 +88,9 @@ export interface State {
   showTopControls: boolean,
   showBreadcrumbs: boolean,
   splitPosition: number,
+  rootContext: Context,
+  absoluteContextTime?: Timestamp,
+  transientFocus?: boolean,
   status: string,
   thoughts: ThoughtsInterface,
   toolbarOverlay?: string | null,
@@ -98,10 +102,15 @@ export interface State {
 export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
 
   const contextIndex = {
-    [hashContext([ROOT_TOKEN])]: {
-      // Note: Context hash is being used as id. Data provider tests are breaking because root and em context lack id. So adding it here
-      id: hashContext([ROOT_TOKEN]),
-      context: [ROOT_TOKEN],
+    [hashContext([HOME_TOKEN])]: {
+      context: [HOME_TOKEN],
+      children: [],
+      // start pending to trigger pullQueue fetch
+      pending: true,
+      lastUpdated: never()
+    },
+    [hashContext([ABSOLUTE_TOKEN])]: {
+      context: [ABSOLUTE_TOKEN],
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -118,8 +127,15 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   }
 
   const thoughtIndex = {
-    [hashThought(ROOT_TOKEN)]: {
-      value: ROOT_TOKEN,
+    [hashThought(HOME_TOKEN)]: {
+      value: HOME_TOKEN,
+      contexts: [],
+      // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
+      created,
+      lastUpdated: never()
+    },
+    [hashThought(ABSOLUTE_TOKEN)]: {
+      value: ABSOLUTE_TOKEN,
       contexts: [],
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created,
@@ -153,6 +169,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     contextViews: {},
     cursor: null,
     cursorBeforeSearch: null,
+    cursorBeforeQuickAdd: null,
     cursorHistory: [],
     cursorInitialized: false, // tracks if the cursor has been restored from the url on first load and ensures it only happens once
     cursorOffset: 0,
@@ -181,6 +198,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     showBreadcrumbs: true,
     // eslint-disable-next-line no-mixed-operators
     splitPosition: parseJsonSafe(typeof localStorage !== 'undefined' ? localStorage.getItem('splitPosition') : null, 0),
+    rootContext: [HOME_TOKEN],
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
       'connecting'     Connecting to firebase.

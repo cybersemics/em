@@ -1,4 +1,4 @@
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -10,7 +10,7 @@ it('indent on adding space at the beginning of the thought', () => {
   const store = createTestStore()
 
   store.dispatch(importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: `
         - a
           - b
@@ -22,9 +22,9 @@ it('indent on adding space at the beginning of the thought', () => {
 
   executeShortcut(indentOnSpace, { store })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -38,7 +38,7 @@ it('prevent indent on adding space at the beginning of the immovable thought', (
   const store = createTestStore()
 
   store.dispatch(importText({
-    path: RANKED_ROOT,
+    path: HOME_PATH,
     text: `
         - a
           - b
@@ -51,10 +51,10 @@ it('prevent indent on adding space at the beginning of the immovable thought', (
 
   executeShortcut(indentOnSpace, { store })
 
-  const exported = exportContext(store.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
   // indent shouldn't happen and output should remain the same
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
     - b
       - c

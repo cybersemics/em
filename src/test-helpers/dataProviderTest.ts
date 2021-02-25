@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import all from 'it-all'
-import { EM_TOKEN, RANKED_ROOT, ROOT_TOKEN } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
@@ -64,7 +64,7 @@ expect.extend({
 
 /** Import text into the root of a blank initial state. */
 const importThoughts = (text: string) => {
-  const stateNew = importText(initialState(), { path: RANKED_ROOT, text })
+  const stateNew = importText(initialState(), { path: HOME_PATH, text })
   return {
     contextIndex: stateNew.thoughts.contextIndex,
     thoughtIndex: stateNew.thoughts.thoughtIndex,
@@ -263,25 +263,25 @@ const dataProviderTest = (provider: DataProvider) => {
     test('default', async () => {
 
       const { contextIndex, thoughtIndex } = importThoughts(`
-        - x
-          - y
-            - z
-          - a
-            - b
-      `)
+          - x
+            - y
+              - z
+            - a
+              - b
+        `)
 
       await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
+      const thoughtChunks = await all(getDescendantThoughts(provider, [HOME_TOKEN]))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.contextIndex).toEqual(
-        _.omit(contextIndex, hashContext([EM_TOKEN]))
+        _.omit(contextIndex, hashContext([EM_TOKEN]), hashContext([ABSOLUTE_TOKEN]))
       )
 
       // do not match em context, since we are just asserting the imported thoughts
-      const thoughtIndexWithoutEm = _.omit(thoughtIndex, hashThought(EM_TOKEN))
+      const thoughtIndexWithoutEm = _.omit(thoughtIndex, hashThought(EM_TOKEN), hashThought(ABSOLUTE_TOKEN))
 
       // support optional id property
       // dexie returns an id while firebase does not
@@ -307,11 +307,11 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
+      const thoughtChunks = await all(getDescendantThoughts(provider, [HOME_TOKEN]))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.contextIndex).toEqual(
-        _.omit(contextIndex, hashContext([EM_TOKEN]))
+        _.omit(contextIndex, hashContext([EM_TOKEN]), hashContext([ABSOLUTE_TOKEN]))
       )
 
       // support optional id property
@@ -466,7 +466,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, [ROOT_TOKEN]))
+      const thoughtChunks = await all(getDescendantThoughts(provider, [HOME_TOKEN]))
 
       // flatten the thought chunks
       // preserve chunk order
@@ -616,7 +616,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const stateNew = reducerFlow([
 
-        importText({ path: RANKED_ROOT, text: rootText }),
+        importText({ path: HOME_PATH, text: rootText }),
         importText({ path: [{ value: EM_TOKEN, rank: 0 }], text: emText }),
 
       ])(initialState())

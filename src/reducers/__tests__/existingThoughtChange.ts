@@ -1,4 +1,4 @@
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getAllChildren } from '../../selectors'
 import { existingThoughtChange, newThought, setCursor } from '../../reducers'
@@ -13,24 +13,24 @@ it('edit a thought', () => {
     existingThoughtChange({
       newValue: 'aa',
       oldValue: 'a',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'a', rank: 0 }] as SimplePath
     })
   ]
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - aa
   - b`)
 
   // aa should exist in ROOT context
   expect(getContexts(stateNew, 'aa'))
     .toMatchObject([{
-      context: [ROOT_TOKEN]
+      context: [HOME_TOKEN]
     }])
-  expect(getAllChildren(stateNew, [ROOT_TOKEN]))
+  expect(getAllChildren(stateNew, [HOME_TOKEN]))
     .toMatchObject([{ value: 'b', rank: 1 }, { value: 'aa', rank: 0 }])
 
   // cursor should be at /aa
@@ -54,9 +54,9 @@ it('edit a descendant', () => {
   ]
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - aa1
   - b`)
@@ -81,16 +81,16 @@ it('edit a thought with descendants', () => {
     existingThoughtChange({
       newValue: 'aa',
       oldValue: 'a',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'a', rank: 0 }] as SimplePath
     })
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - aa
     - a1
     - a2`)
@@ -98,7 +98,7 @@ it('edit a thought with descendants', () => {
   // aa should exist in ROOT context
   expect(getContexts(stateNew, 'aa'))
     .toMatchObject([{
-      context: [ROOT_TOKEN]
+      context: [HOME_TOKEN]
     }])
   expect(getAllChildren(stateNew, ['aa']))
     .toMatchObject([{ value: 'a1', rank: 0 }, { value: 'a2', rank: 1 }])
@@ -122,9 +122,9 @@ it('edit a thought existing in mutliple contexts', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - abc
   - b
@@ -157,9 +157,9 @@ it('edit a thought that exists in another context', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - ab
   - b
@@ -201,9 +201,9 @@ it('edit a child with the same value as its parent', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - ab`)
 
@@ -230,22 +230,22 @@ it('do not duplicate children when new and old context are same', () => {
     existingThoughtChange({
       newValue: 'as',
       oldValue: 'a',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'a', rank: 0 }] as SimplePath
     }),
     existingThoughtChange({
       newValue: 'a',
       oldValue: 'as',
-      context: [ROOT_TOKEN],
+      context: [HOME_TOKEN],
       path: [{ value: 'as', rank: 0 }] as SimplePath
     })
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${ROOT_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
 })

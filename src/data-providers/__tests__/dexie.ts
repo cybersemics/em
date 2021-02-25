@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { ROOT_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { getThought } from '../../selectors'
 import { clear, newThought } from '../../action-creators'
@@ -7,14 +7,14 @@ import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getThought'
-import sinonFakeTimer from '../../test-helpers/sinonFakeTimer'
+import testTimer from '../../test-helpers/testTimer'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
   For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
 */
 
-const fakeTimer = sinonFakeTimer()
+const fakeTimer = testTimer()
 
 describe('dexie', () => {
   beforeEach(initDB)
@@ -62,7 +62,7 @@ describe('integration', () => {
     fakeTimer.useRealTimer()
 
     // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
-    const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
+    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
       children: [{ value: 'a', rank: 0 }]
@@ -77,7 +77,7 @@ describe('integration', () => {
       { type: 'newThought', value: '' },
       {
         type: 'existingThoughtChange',
-        context: [ROOT_TOKEN],
+        context: [HOME_TOKEN],
         oldValue: '',
         newValue: 'a',
         path: [{ value: '', rank: 0 }],
@@ -88,7 +88,7 @@ describe('integration', () => {
 
     fakeTimer.useRealTimer()
 
-    const parentEntryRoot = await getContext(db, [ROOT_TOKEN])
+    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
       children: [{ value: 'a', rank: 0 }]

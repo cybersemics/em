@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending, simplifyPath } from '../selectors'
+import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending, simplifyPath, rootedParentOf } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
 
@@ -22,8 +22,7 @@ import {
   reducerFlow,
   removeContext,
   removeDuplicatedContext,
-  rootedParentOf,
-  subsetThoughts,
+  isDescendantPath,
   timestamp,
 } from '../util'
 
@@ -57,8 +56,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const key = hashThought(value)
   const oldRank = headRank(oldSimplePath)
   const newRank = headRank(newSimplePath)
-  const oldContext = rootedParentOf(oldThoughts)
-  const newContext = rootedParentOf(newThoughts)
+  const oldContext = rootedParentOf(state, oldThoughts)
+  const newContext = rootedParentOf(state, newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const oldThought = getThought(state, value)
 
@@ -83,7 +82,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id as string, archived as Timestamp)
 
   const newThought = removeDuplicatedContext(movedThought, newContext)
-  const isPathInCursor = state.cursor && subsetThoughts(state.cursor, oldPath)
+  const isPathInCursor = state.cursor && isDescendantPath(state.cursor, oldPath)
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let

@@ -10,9 +10,9 @@ import {
   head,
   headValue,
   isEM,
-  isRoot,
   pathToContext,
   reducerFlow,
+  isRoot,
 } from '../util'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
@@ -25,7 +25,7 @@ const subCategorizeOne = (state: State) => {
   const cursorParent = parentOf(cursor)
   const context = pathToContext(cursorParent)
 
-  // cancel if a direct child of EM_TOKEN or ROOT_TOKEN
+  // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
     return alert(state, {
       value: `Subthoughts of the "${isEM(cursorParent) ? 'em' : 'home'}" contex may not be de-indented.`

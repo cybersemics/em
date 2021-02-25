@@ -1,5 +1,5 @@
 import React from 'react'
-import { RANKED_ROOT } from '../constants'
+import { HOME_PATH } from '../constants'
 import { attributeEquals, getSetting, simplifyPath } from '../selectors'
 import { setCursor, toggleAttribute } from '../action-creators'
 import { pathToContext } from '../util'
@@ -29,7 +29,7 @@ const toggleSortShortcut: Shortcut = {
 
     const globalSort = getSetting(state, ['Global Sort'])
     const sortPreference = globalSort === 'Alphabetical' ? 'None' : 'Alphabetical'
-    const simplePath = simplifyPath(state, cursor || RANKED_ROOT)
+    const simplePath = simplifyPath(state, cursor || HOME_PATH)
     const context = pathToContext(simplePath)
 
     dispatch(toggleAttribute({
@@ -46,7 +46,7 @@ const toggleSortShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
 
-    const context = pathToContext(cursor ? simplifyPath(state, cursor) : RANKED_ROOT)
+    const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
 
     return attributeEquals(state, context, '=sort', 'Alphabetical')
   }
