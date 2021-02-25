@@ -76,6 +76,10 @@ it('undo thought change', () => {
 
 it('persists undo thought change', async () => {
 
+  /**
+   * Note: we can't use await with initialize as that results in a timeout error due to dexie. It's handled using the useFakeTimer from Sinon.
+   * More on that here - https://github.com/cybersemics/em/issues/919#issuecomment-739135971.
+   */
   initialize()
 
   fakeTimer.useFakeTimer()
@@ -88,11 +92,9 @@ it('persists undo thought change', async () => {
         - b`
     }),
     setCursorFirstMatchActionCreator(['a']),
+    newThought({ value: 'alpha', insertNewSubthought: true }), { type: 'undoAction' }
   ]
   )
-  await fakeTimer.runAllAsync()
-
-  appStore.dispatch([newThought({ value: 'alpha', insertNewSubthought: true }), { type: 'undoAction' }])
   await fakeTimer.runAllAsync()
 
   fakeTimer.useRealTimer()

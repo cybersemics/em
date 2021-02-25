@@ -5,13 +5,14 @@ import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import { State } from '../util/initialState'
 import { Index, Patch } from '../types'
 import { updateThoughts } from '../reducers'
+import { reducerFlow } from '../util'
 
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 
 /**
  * Manually extract thought and context index updates along with pushQueue.
  */
-const extractUpdates = (patch: Patch, newState: State) => {
+const extractUpdates = (newState: State, patch: Patch) => {
   const thoughtIndexPath = `/thoughts/thoughtIndex/`
   const contextIndexPath = `/thoughts/contextIndex/`
   const thoughtIndexChanges = patch.filter(p => p.path.indexOf(thoughtIndexPath) === 0)
@@ -116,11 +117,8 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
   const undoTwice = penultimateInversePatch && !!((lastAction && NAVIGATION_ACTIONS[lastAction]) ||
   (penultimateAction && (NAVIGATION_ACTIONS[penultimateAction] || penultimateAction === 'newThought')))
 
-  const newState = undoTwice ? undoReducer(undoReducer(state)) : undoReducer(state)
-
   const poppedInversePatches = undoTwice ? [penultimateInversePatch, lastInversePatch] : [lastInversePatch]
-  const asyncUpdates = extractUpdates(poppedInversePatches.flat(), newState)
-  return { ...newState, ...asyncUpdates }
+  return reducerFlow([undoTwice ? undoReducer : null, undoReducer, state => extractUpdates(state, poppedInversePatches.flat())])(state)
 }
 
 /**
@@ -134,11 +132,8 @@ const redoHandler = (state: State, patches: Patch[]) => {
 
   const redoTwice = lastAction && (NAVIGATION_ACTIONS[lastAction] || lastAction === 'newThought')
 
-  const newState = redoTwice ? redoReducer(redoReducer(state)) : redoReducer(state)
-
   const poppedPatches = redoTwice ? [nthLast(patches, 2), lastPatch] : [lastPatch]
-  const asyncUpdates = extractUpdates(poppedPatches.flat(), newState)
-  return { ...newState, ...asyncUpdates }
+  return reducerFlow([redoTwice ? redoReducer : null, redoReducer, state => extractUpdates(state, poppedPatches.flat())])(state)
 }
 
 /**
