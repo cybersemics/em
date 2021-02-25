@@ -1,6 +1,7 @@
+import { store as appStore } from '../../store'
 import { MODALS, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
-import { importText, newThought, setCursor } from '../../action-creators'
+import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
@@ -8,6 +9,10 @@ import undoShortcut from '../undo'
 import { initialState } from '../../util'
 import * as undoUtils from '../../util/isUndoEnabled'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import sinonFakeTimer from '../../test-helpers/sinonFakeTimer'
+import { initialize } from '../../initialize'
+
+const fakeTimer = sinonFakeTimer()
 
 describe('undo shortcut', () => {
   const isUndoEnabled = jest.spyOn(undoUtils, 'isUndoEnabled')
@@ -67,6 +72,47 @@ it('undo thought change', () => {
   - b`
 
   expect(exported).toEqual(expectedOutput)
+})
+
+it('persists undo thought change', async () => {
+
+  /**
+   * Note: we can't use await with initialize as that results in a timeout error due to dexie. It's handled using the useFakeTimer from Sinon.
+   * More on that here - https://github.com/cybersemics/em/issues/919#issuecomment-739135971.
+   */
+  initialize()
+
+  fakeTimer.useFakeTimer()
+
+  appStore.dispatch([
+    importText({
+      path: RANKED_ROOT,
+      text: `
+        - a
+        - b`
+    }),
+    setCursorFirstMatchActionCreator(['a']),
+    newThought({ value: 'alpha', insertNewSubthought: true }), { type: 'undoAction' }
+  ]
+  )
+  await fakeTimer.runAllAsync()
+
+  fakeTimer.useRealTimer()
+
+  // clear and call initialize again to reload from local db (simulating page refresh)
+  appStore.dispatch(clear())
+  fakeTimer.useFakeTimer()
+  initialize()
+  await fakeTimer.runAllAsync()
+
+  const exported = exportContext(appStore.getState(), [ROOT_TOKEN], 'text/plain')
+
+  const expectedOutput = `- ${ROOT_TOKEN}
+  - a
+  - b`
+
+  expect(exported).toEqual(expectedOutput)
+
 })
 
 it('group all navigation actions following an undoable(non-navigation) action and undo them together', () => {
