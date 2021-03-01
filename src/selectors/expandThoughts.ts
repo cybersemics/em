@@ -108,7 +108,7 @@ function expandThoughts (state: State, path: Path | null, { depth = 0, returnCon
 
   const initialExpanded = {
     // expand current thought
-    [hashContext(pathToContext(rootedPath))]: returnContexts ? pathToContext(simplePath) : rootedPath,
+    [hashContext(pathToContext(rootedPath))]: returnContexts ? context : rootedPath,
 
     // expand context
     // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
