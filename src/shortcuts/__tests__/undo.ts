@@ -9,7 +9,7 @@ import undoShortcut from '../undo'
 import { initialState } from '../../util'
 import * as undoUtils from '../../util/isUndoEnabled'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import sinonFakeTimer from '../../test-helpers/sinonFakeTimer'
+import sinonFakeTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
 
 const fakeTimer = sinonFakeTimer()
@@ -86,7 +86,7 @@ it('persists undo thought change', async () => {
 
   appStore.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
         - b`
@@ -105,9 +105,9 @@ it('persists undo thought change', async () => {
   initialize()
   await fakeTimer.runAllAsync()
 
-  const exported = exportContext(appStore.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b`
 

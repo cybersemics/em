@@ -38,7 +38,7 @@ const publishPinChildren = (state: State, context: Context) => publishMode() && 
 )
 
 function expandThoughts(state: State, path: Path | null, options?: { depth?: number }): Index<Path>
-function expandThoughts<B extends boolean> (state: State, path: Path | null, options?: { depth?: number, returnContexts?: B }): Index<B extends true ? Context : Context>
+function expandThoughts<B extends boolean> (state: State, path: Path | null, options?: { depth?: number, returnContexts?: B }): Index<B extends true ? Context : Path>
 
 /** Returns an expansion map marking all contexts that should be expanded.
  *
@@ -50,7 +50,7 @@ function expandThoughts<B extends boolean> (state: State, path: Path | null, opt
  *   ...
  * }
  */
-function expandThoughts (state: State, path: Path | null, { depth = 0, returnContexts = false }: { depth?: number, returnContexts?: boolean } = {}): Index<Path | Context> {
+function expandThoughts (state: State, path: Path | null, { depth = 0, returnContexts }: { depth?: number, returnContexts?: boolean } = {}): Index<Path | Context> {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -108,7 +108,7 @@ function expandThoughts (state: State, path: Path | null, { depth = 0, returnCon
 
   const initialExpanded = {
     // expand current thought
-    [hashContext(pathToContext(rootedPath))]: returnContexts ? context : rootedPath,
+    [hashContext(pathToContext(rootedPath))]: returnContexts ? pathToContext(simplePath) : rootedPath,
 
     // expand context
     // this allows expansion of column 1 when the cursor is on column 2 in the table view, and uncles of the cursor that end in ":"
