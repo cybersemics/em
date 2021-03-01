@@ -9,10 +9,10 @@ import undoShortcut from '../undo'
 import { initialState } from '../../util'
 import * as undoUtils from '../../util/isUndoEnabled'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import sinonFakeTimer from '../../test-helpers/sinonFakeTimer'
+import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
 
-const fakeTimer = sinonFakeTimer()
+const timer = testTimer()
 
 describe('undo shortcut', () => {
   const isUndoEnabled = jest.spyOn(undoUtils, 'isUndoEnabled')
@@ -77,16 +77,16 @@ it('undo thought change', () => {
 it('persists undo thought change', async () => {
 
   /**
-   * Note: we can't use await with initialize as that results in a timeout error due to dexie. It's handled using the useFakeTimer from Sinon.
+   * Note: we can't use await with initialize as that results in a timeout error due to dexie. It's handled using the usetestTimer from Sinon.
    * More on that here - https://github.com/cybersemics/em/issues/919#issuecomment-739135971.
    */
   initialize()
 
-  fakeTimer.useFakeTimer()
+  timer.useFakeTimer()
 
   appStore.dispatch([
     importText({
-      path: RANKED_ROOT,
+      path: HOME_PATH,
       text: `
         - a
         - b`
@@ -95,19 +95,19 @@ it('persists undo thought change', async () => {
     newThought({ value: 'alpha', insertNewSubthought: true }), { type: 'undoAction' }
   ]
   )
-  await fakeTimer.runAllAsync()
+  await timer.runAllAsync()
 
-  fakeTimer.useRealTimer()
+  timer.useRealTimer()
 
   // clear and call initialize again to reload from local db (simulating page refresh)
   appStore.dispatch(clear())
-  fakeTimer.useFakeTimer()
+  timer.useFakeTimer()
   initialize()
-  await fakeTimer.runAllAsync()
+  await timer.runAllAsync()
 
-  const exported = exportContext(appStore.getState(), [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${ROOT_TOKEN}
+  const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b`
 
