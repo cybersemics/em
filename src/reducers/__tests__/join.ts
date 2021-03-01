@@ -1,6 +1,6 @@
-import { initialState, reducerFlow, removeRoot } from '../../util'
+import { initialState, reducerFlow, removeHome } from '../../util'
 import { join } from '../../reducers'
-import { RANKED_ROOT, ROOT_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import importText from '../importText'
 import { exportContext, getChildrenRanked } from '../../selectors'
@@ -11,19 +11,19 @@ it('joins two simple thoughts', () => {
   - n
 - b`
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     setCursorFirstMatch(['a', 'm']),
     join()
   ]
 
   const newState = reducerFlow(steps)(initialState())
-  const exported = exportContext(newState, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
   const expectedOutput = `
 - a
   - m n
 - b
 `
-  expect(removeRoot(exported)).toEqual(expectedOutput)
+  expect(removeHome(exported)).toEqual(expectedOutput)
 })
 
 it('joins two thoughts and merges their children', () => {
@@ -40,14 +40,14 @@ it('joins two thoughts and merges their children', () => {
     - f
 - b`
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     setCursorFirstMatch(['a', 'o']),
     join()
   ]
 
   const newState = reducerFlow(steps)(initialState())
 
-  const exported = exportContext(newState, [ROOT_TOKEN], 'text/plain')
+  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
   const expectedOutput = `
 - a
   - m n o p
@@ -59,7 +59,7 @@ it('joins two thoughts and merges their children', () => {
     - f
 - b
 `
-  expect(removeRoot(exported)).toEqual(expectedOutput)
+  expect(removeHome(exported)).toEqual(expectedOutput)
 
 })
 
@@ -74,7 +74,7 @@ it('generates unique & non-conflicting ranks', () => {
     - d
 - b`
   const steps = [
-    importText({ path: RANKED_ROOT, text }),
+    importText({ path: HOME_PATH, text }),
     setCursorFirstMatch(['a', 'n']),
     join()
   ]
