@@ -82,7 +82,7 @@ it('persists undo thought change', async () => {
    */
   initialize()
 
-  timer.usetimer()
+  timer.useFakeTimer()
 
   appStore.dispatch([
     importText({
@@ -101,7 +101,7 @@ it('persists undo thought change', async () => {
 
   // clear and call initialize again to reload from local db (simulating page refresh)
   appStore.dispatch(clear())
-  timer.usetimer()
+  timer.useFakeTimer()
   initialize()
   await timer.runAllAsync()
 
