@@ -1,14 +1,13 @@
 import { lower } from './lower'
 import { Child, ComparatorFunction, ComparatorValue } from '../types'
-import { EMOJI_REGEX_STRING } from '../constants'
+import { EMOJI_REGEX } from '../constants'
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
-const regexEmojis = new RegExp(EMOJI_REGEX_STRING)
 const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
 const regexShortDateWithSlash = /\d{1,2}\/\d{1,2}/
 
 /** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
-const removeEmojisAndSpaces = (str: string) => str.replace(regexEmojis, '').trim()
+const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX, '').trim()
 
 /** Parse a date string and handle M/d (e.g. "2/1") for Safari. */
 const parseDate = (s: string) =>
@@ -25,8 +24,8 @@ export const compare = <T>(a: T, b: T): ComparatorValue => a > b ? 1 : a < b ? -
 
 /** A comparator that sorts emojis above non-emojis. */
 export const compareStringsWithEmoji = (a: string, b: string) => {
-  const aStartsWithEmoji = regexEmojis.test(a)
-  const bStartsWithEmoji = regexEmojis.test(b)
+  const aStartsWithEmoji = EMOJI_REGEX.test(a)
+  const bStartsWithEmoji = EMOJI_REGEX.test(b)
   return aStartsWithEmoji && !bStartsWithEmoji ? -1
     : bStartsWithEmoji && !aStartsWithEmoji ? 1
     : 0
