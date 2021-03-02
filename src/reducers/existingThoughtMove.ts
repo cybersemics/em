@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending, simplifyPath, rootedParentOf } from '../selectors'
+import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending, simplifyPath, rootedParentOf, pathExists } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
 
@@ -15,6 +15,7 @@ import {
   head,
   headId,
   headRank,
+  isDescendant,
   moveThought,
   normalizeThought,
   parentOf,
@@ -236,14 +237,16 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const contextIndexDescendantUpdates = sameContext
     ? {} as {
       contextIndex: Index<Parent | null>,
-      pendingMoves: { pathOld: Path, pathNew: Path }[],
+      pendingPulls: {path: Path}[],
+      descendantMoves: { pathOld: Path, pathNew: Path }[],
     }
     : Object.values(childUpdates).reduce((accum, childUpdate) => {
 
       // use contextIndex from stale state and add new changes made to contextIndex with each iteartion
       const updatedState: State = { ...state, thoughts: { ...state.thoughts, contextIndex: { ...state.thoughts.contextIndex, ...accum.contextIndex as Index<Parent> } } }
 
-      const contextNew = pathToContext(parentOf(childUpdate.pathNew))
+      const newPathParent = parentOf(childUpdate.pathNew)
+      const contextNew = pathToContext(newPathParent)
       const contextOld = pathToContext(parentOf(childUpdate.pathOld))
       const contextEncodedOld = hashContext(contextOld)
       const contextEncodedNew = hashContext(contextNew)
@@ -268,38 +271,45 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
           ...childUpdate.archived ? { archived: childUpdate.archived } : null
         })
 
+      const conflictedPath = pathExists(state, contextNew) ? newPathParent : null
+      const isNewContextPending = conflictedPath && isPending(state, contextNew)
+
+      const isNewContextPendingDescendant = accum.pendingPulls.length && isDescendant(pathToContext(accum.pendingPulls[0].path), contextNew)
+
       const accumNew = {
         contextIndex: {
           ...accum.contextIndex,
-          [contextEncodedOld]: childrenOld.length > 0 ? {
+          ...!isNewContextPendingDescendant ? { [contextEncodedOld]: childrenOld.length > 0 ? {
             id: contextEncodedOld,
             context: contextOld,
             children: childrenOld,
             lastUpdated: timestamp(),
             ...childUpdate.pending ? { pending: true } : null,
-          } : null,
-          [contextEncodedNew]: {
+          } : null } : {},
+          ...!isNewContextPendingDescendant ? { [contextEncodedNew]: {
             id: contextEncodedNew,
             context: contextNew,
             children: childrenNew,
             lastUpdated: timestamp(),
             ...childUpdate.pending ? { pending: true } : null,
-          },
+          } } : {},
         },
-        pendingMoves: [...accum.pendingMoves, ...childUpdate.pending ? [{
+        pendingPulls: accum.pendingPulls.length === 0 ? [...conflictedPath && isNewContextPending ? [{ path: conflictedPath }] : []] : accum.pendingPulls,
+        descendantMoves: [...accum.descendantMoves, ...(conflictedPath && isNewContextPending) || childUpdate.pending ? [{
           pathOld: childUpdate.pathOld,
           pathNew: childUpdate.pathNew,
         }] : []]
       }
-
       return accumNew
     }
     , {
       contextIndex: {},
-      pendingMoves: [] as { pathOld: Path, pathNew: Path }[]
+      pendingPulls: [] as {path: Path}[],
+      descendantMoves: [] as { pathOld: Path, pathNew: Path }[],
     } as {
       contextIndex: Index<Parent | null>,
-      pendingMoves: { pathOld: Path, pathNew: Path }[],
+      pendingPulls: { path: Path }[],
+      descendantMoves: { pathOld: Path, pathNew: Path }[],
     })
 
   const contextIndexUpdates: Index<Parent | null> = {
@@ -358,10 +368,10 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       contextIndexUpdates,
       thoughtIndexUpdates,
       recentlyEdited,
-      pendingMoves: contextIndexDescendantUpdates.pendingMoves,
+      pendingPulls: contextIndexDescendantUpdates.pendingPulls,
+      descendantMoves: contextIndexDescendantUpdates.descendantMoves,
     }),
 
-    // render
     render,
 
   ])(state)
