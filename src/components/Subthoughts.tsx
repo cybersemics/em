@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import assert from 'assert'
@@ -7,8 +7,8 @@ import { store } from '../store'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
-import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import { alert, error } from '../action-creators'
+import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
@@ -331,6 +331,18 @@ export const SubthoughtsComponent = ({
   const resolvedPath = path ?? simplePath
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
+
+  useEffect(() => {
+    if (isHovering) {
+      store.dispatch(dragInProgress({
+        value: true,
+        draggingThought: state.draggingThought,
+        hoveringThought: [...context],
+        hoveringPath: path,
+        hoverId: DROP_TARGET.EmptyDrop
+      }))
+    }
+  }, [isHovering])
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))

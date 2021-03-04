@@ -8,7 +8,7 @@ import { isTouch } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, error, existingThoughtMove, expandContextThought, newThoughtSubmit, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
 import { Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
 
@@ -64,6 +64,8 @@ import {
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
+import useIsChildHovering from '../hooks/useIsChildHovering'
+import { compareReasonable } from '../util/compareThought'
 
 /**********************************************************************
  * Redux
@@ -448,7 +450,9 @@ const ThoughtContainer = ({
       store.dispatch(dragInProgress({
         value: true,
         draggingThought: state.draggingThought,
-        hoveringThought: [...context]
+        hoveringThought: [...context],
+        hoveringPath: path,
+        hoverId: DROP_TARGET.ThoughtDrop
       }))
     }
   }, [isHovering])
@@ -509,18 +513,18 @@ const ThoughtContainer = ({
     ? head(pathToContext(state.draggingThought))
     : null
 
-  // check if hovering thought context matches current thought
-  const isAnyChildHovering = isDeepHovering && !isHovering && state.hoveringThought
-    && thoughts.length === state.hoveringThought.length
-    && state.hoveringThought.every((thought: string, index: number) => thought === thoughts[index])
+  const isAnyChildHovering = useIsChildHovering(thoughts, isHovering, isDeepHovering)
+
+  /** Checks if any descendents of the direct siblings is being hovered. */
+  const isAnySiblingDescendantHovering = () => !isHovering && state.hoveringPath && isDescendantPath(state.hoveringPath, parentOf(path)) && (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.EmptyDrop)
 
   const shouldDisplayHover = cursorOnAlphabeticalSort
     // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
-    ? state.dragInProgress && isParentHovering && draggingThoughtValue
+    ? state.dragInProgress && isParentHovering && draggingThoughtValue && !isAnySiblingDescendantHovering()
       // check if it's alphabetically previous to current thought
-      && draggingThoughtValue <= value
+      && compareReasonable(draggingThoughtValue, value) <= 0
       // check if it's alphabetically next to previous thought if it exists
-      && (!prevChild || draggingThoughtValue > (prevChild as Child).value)
+      && (!prevChild || compareReasonable(draggingThoughtValue, (prevChild as Child).value) === 1)
     // if alphabetical sort is disabled just check if current thought is hovering
     : globals.simulateDropHover || isHovering
 

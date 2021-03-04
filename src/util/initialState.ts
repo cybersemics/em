@@ -1,4 +1,4 @@
-import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, DROP_TARGET } from '../constants'
 import globals from '../globals'
 import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User } from '../types'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
@@ -65,6 +65,8 @@ export interface State {
   expanded: Index<Path>,
   expandedContextThought?: Path,
   hoveringThought?: Context,
+  hoveringPath?: Path,
+  hoverId?: DROP_TARGET,
   invalidState: boolean,
   inversePatches: Patch[],
   isLoading: boolean,

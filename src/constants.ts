@@ -279,5 +279,10 @@ export const MODALS: Index<string> = {
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'
 
+export enum DROP_TARGET {
+  EmptyDrop = 'EmptyDrop',
+  ThoughtDrop = 'ThoughtDrop'
+}
+
 // eslint-disable-next-line no-useless-escape
 export const EMOJI_REGEX = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/u
