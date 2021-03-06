@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow } from '../util'
 import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath, rootedParentOf } from '../selectors'
-import { archiveThought, deleteThought, existingThoughtChange, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
+import { deleteThought, existingThoughtChange, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
@@ -28,7 +28,14 @@ const deleteEmptyThought = (state: State): State => {
   }
   // archive an empty thought with hidden children
   else if (isEmpty && visibleChildren.length === 0) {
-    return archiveThought(state, {})
+    const archivedChild = allChildren[0]
+    return reducerFlow([
+      existingThoughtMove({ oldPath: [...simplePath, archivedChild], newPath: [...parentOf(cursor), archivedChild] }),
+      state => existingThoughtDelete(state, {
+        context: parentOf(context),
+        thoughtRanked: head(simplePath)
+      })
+    ])(state)
   }
   // delete from beginning and merge with previous sibling
   else if (offset === 0 && sel?.isCollapsed && !showContexts) {

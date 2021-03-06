@@ -13,6 +13,7 @@ import deleteEmptyThought from '../deleteEmptyThought'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
+import archiveThought from '../archiveThought'
 
 it('delete empty thought', () => {
 
@@ -66,23 +67,23 @@ it('do not delete thought with children', () => {
 
 })
 
-it('archive thought with hidden children', () => {
+it(`archive thought with hidden children - arvhive all children in cursor's parent`, () => {
 
   const steps = [
     newThought(''),
-    newSubthought('=one'),
-    cursorBack,
-    deleteEmptyThought,
+    newSubthought('1'),
+    archiveThought({}),
+    deleteEmptyThought
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
+
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
-    - ${''/* prevent trim_trailing_whitespace */}
-      - =one`)
+    - 1`)
 
 })
 
