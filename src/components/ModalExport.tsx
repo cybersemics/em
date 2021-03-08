@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
@@ -13,9 +13,11 @@ import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
 import { State } from '../util/initialState'
 import { ExportOption } from '../types'
+import useOnClickOutside from 'use-onclickoutside'
 
 const exportOptions: ExportOption[] = [
-  { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
+  { type: 'text/plain', label: 'Plain Text (lossless)', extension: 'txt' },
+  { type: 'text/plain', label: 'Plain Text', extension: 'txt', excludeMeta: true },
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
@@ -65,28 +67,40 @@ const ModalExport = () => {
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
     const exported = exportContext(store.getState(), context, selected.type, {
-      title: titleChild ? titleChild.value : undefined
+      title: titleChild ? titleChild.value : undefined,
+      excludeMeta: selected.excludeMeta
     })
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
 
+  const closeModal = useCallback(() => {
+    setIsOpen(false)
+  }, [])
+
+  const dropDownRef = React.useRef<HTMLDivElement>(null)
+  useOnClickOutside(dropDownRef, closeModal)
+
   // fetch all pending descendants of the cursor once before they are exported
   useEffect(() => {
 
-    // track isMounted so we can cancel the call to setExportContent after unmount
-    isMounted.current = true
-
-    dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
-      .then(() => {
-        if (isMounted.current) {
-          setExportContentFromCursor()
-        }
-      })
+    if (!isMounted.current) {
+      // track isMounted so we can cancel the call to setExportContent after unmount
+      isMounted.current = true
+      dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
+        .then(() => {
+          if (isMounted.current) {
+            setExportContentFromCursor()
+          }
+        })
+    }
+    else {
+      setExportContentFromCursor()
+    }
 
     return () => {
       isMounted.current = false
     }
-  }, [])
+  }, [selected])
 
   useEffect(() => {
 
@@ -209,12 +223,12 @@ const ModalExport = () => {
               isOpen={isOpen}
               selected={selected}
               onSelect={(option: ExportOption) => {
-                setExportContentFromCursor()
                 setSelected(option)
                 setIsOpen(false)
               }}
               options={exportOptions}
               dark={dark}
+              ref={dropDownRef}
             />
           </div>
         </span>
