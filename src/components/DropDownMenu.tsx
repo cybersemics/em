@@ -12,39 +12,36 @@ interface DropDownMenuProps {
 }
 
 /** A custom drop down menu. */
-const DropDownMenu = ({ isOpen, onSelect, selected, options, dark }: DropDownMenuProps) =>
-  <React.Fragment>
-    {isOpen && <div className='drop-down-wrapper' style={{
-      border: '1px solid ' + (dark ? 'white' : 'black'),
-    }}>
-      {options.map((option, index) =>
-        <div
-          style={{ cursor: 'pointer' }}
-          key={index}
-          onClick={() => {
-            if (onSelect) {
-              onSelect(option)
-            }
-          }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginLeft: '10px'
-          }}>
-            {
-              option.type === (selected || options[0]).type ? <img
-                src={dark ? Checked : CheckedBlack}
-                alt='Checked'
-                width='16px'
-                height='16px'
-              /> : <div style={{ width: '16px', height: '16px' }}>
-              </div>
-            }
-            <span style={{ marginLeft: '10px' }}>{option.label}</span>
-          </div>
+// eslint-disable-next-line react/display-name
+const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(({ isOpen, onSelect, selected, options, dark }, ref) => {
+  return isOpen ? <div ref={ref} className='drop-down-wrapper' style={{
+    border: '1px solid ' + (dark ? 'white' : 'black'),
+  }}>
+    {options.map((option, index) =>
+      <div
+        className='drop-down-option-wrapper'
+        key={index}
+        onClick={() => {
+          if (onSelect) {
+            onSelect(option)
+          }
+        }}>
+        <div className='drop-down-option'>
+          {
+            option.label === (selected || options[0]).label ? <img
+              src={dark ? Checked : CheckedBlack}
+              alt='Checked'
+              width='16px'
+              height='16px'
+            /> : <div style={{ width: '16px', height: '16px' }}>
+            </div>
+          }
+          <span className='drop-down-label' >{option.label}</span>
         </div>
-      )}
-    </div>}
-  </React.Fragment>
+      </div>
+    )}
+  </div> : null
+}
+)
 
 export default DropDownMenu

@@ -1,5 +1,5 @@
 import { attribute, getChildrenRanked } from '../selectors'
-import { head, isFunction, unroot } from '../util'
+import { filter, head, isFunction, unroot } from '../util'
 import { Child, Context, MimeType } from '../types'
 import { State } from '../util/initialState'
 
@@ -15,6 +15,7 @@ interface Options {
   indent?: number,
   title?: string,
   excludeSrc?: boolean,
+  excludeMeta?: boolean,
 }
 
 /** Exports the navigable subtree of the given context.
@@ -23,7 +24,7 @@ interface Options {
  * @param format
  * @param title     Replace the value of the root thought with a new title.
  */
-export const exportContext = (state: State, context: Context, format: MimeType = 'text/html', { indent = 0, title, excludeSrc }: Options = {}): string => {
+export const exportContext = (state: State, context: Context, format: MimeType = 'text/html', { indent = 0, title, excludeSrc, excludeMeta }: Options = {}): string => {
   const linePrefix = format === 'text/html' ? '<li>' : '- '
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -33,10 +34,11 @@ export const exportContext = (state: State, context: Context, format: MimeType =
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
   const children = getChildrenRanked(state, context)
 
-  // if excludeSrc is true, do not export any non-function siblings of =src, i.e. loaded content
-  const childrenFiltered = excludeSrc && attribute(state, context, '=src')
-    ? children.filter(child => isFunction(child.value))
-    : children
+  const childrenFiltered = filter(children, [
+    // if excludeSrc is true, do not export any non-function siblings of =src, i.e. loaded content
+    ...excludeSrc && attribute(state, context, '=src') ? [(child: Child) => isFunction(child.value)] : [],
+    ...excludeMeta ? [(child: Child) => !isFunction(child.value)] : []
+  ])
 
   /** Outputs an exported child. */
   const exportChild = (child: Child) => '  ' + exportContext(
@@ -45,6 +47,7 @@ export const exportContext = (state: State, context: Context, format: MimeType =
     format,
     {
       excludeSrc,
+      excludeMeta,
       indent: indent + (format === 'text/html' ? indent === 0 ? 3 : 2 : 1),
     }
   )

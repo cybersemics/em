@@ -66,6 +66,7 @@
     "redux-devtools-extension": "^2.13.8",
     "redux-thunk": "^2.3.0",
     "ts-key-enum": "^2.0.6",
+    "use-onclickoutside": "^0.3.1",
     "uuid": "^8.3.2",
     "xhtml-purifier": "^0.4.1"
   },
