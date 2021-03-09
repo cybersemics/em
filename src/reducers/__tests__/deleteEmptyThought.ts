@@ -3,7 +3,7 @@ import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 
 // reducers
@@ -13,7 +13,7 @@ import deleteEmptyThought from '../deleteEmptyThought'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
-import archiveThought from '../archiveThought'
+import importTextReducer from '../importText'
 
 it('delete empty thought', () => {
 
@@ -70,9 +70,15 @@ it('do not delete thought with children', () => {
 it(`archive thought with hidden children - arvhive all children in cursor's parent`, () => {
 
   const steps = [
-    newThought(''),
-    newSubthought('1'),
-    archiveThought({}),
+    importTextReducer({
+      path: HOME_PATH,
+      text: `
+        - 
+          - =a
+          - =b`
+    }),
+
+    setCursorFirstMatch(['']),
     deleteEmptyThought
   ]
 
@@ -82,8 +88,8 @@ it(`archive thought with hidden children - arvhive all children in cursor's pare
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - =archive
-    - 1`)
+  - =a
+  - =b`)
 
 })
 
