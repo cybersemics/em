@@ -5,6 +5,13 @@ import { existingThoughtMove, importText, newSubthought, newThought, setCursor }
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import { State } from '../../util/initialState'
 import { SimplePath } from '../../types'
+import { store as appStore } from '../../store'
+import testTimer from '../../test-helpers/testTimer'
+import { initialize } from '../../initialize'
+import { clear, importText as importTextAction, existingThoughtMove as existingThoughtMoveAction } from '../../action-creators'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+
+const timer = testTimer()
 
 it('move within root', () => {
 
@@ -619,4 +626,63 @@ it('consitent rank between thoughtIndex and contextIndex on duplicate merge', ()
   const rankFromContextIndex = getChildren(stateNew, [HOME_TOKEN]).find(child => child.value === 'b')?.rank
 
   expect(contextsOfB[0].rank).toBe(rankFromContextIndex)
+})
+
+it('pending thoughts should be merged correctly(fetch pending before move)', async () => {
+  initialize()
+
+  const text = `
+  - a
+    - b
+      -c
+        - 1
+        - 2
+  - d
+    - b
+      - c
+        - 3
+        - 4`
+
+  timer.useFakeTimer()
+
+  appStore.dispatch([
+    importTextAction({
+      path: HOME_PATH,
+      text
+    }),
+  ]
+  )
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+  // clear and call initialize again to reload from local db (simulating page refresh)
+  appStore.dispatch(clear())
+  await timer.runAllAsync()
+
+  initialize()
+
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+
+  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+  await timer.runAllAsync()
+
+  appStore.dispatch([
+    setCursorFirstMatchActionCreator(['a']),
+    existingThoughtMoveAction({
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+      newPath: [{ value: 'd', rank: 1 }, { value: 'b', rank: 1 }],
+    }),
+    setCursorFirstMatchActionCreator(['d', 'b'])
+  ]
+  )
+  await timer.runAllAsync()
+
+  timer.useRealTimer()
+
+  const mergedChildren = getAllChildren(appStore.getState(), ['d', 'b', 'c']).map(child => child.value)
+
+  expect(new Set(mergedChildren)).toMatchObject(new Set(['1', '2', '3', '4']))
+
 })
