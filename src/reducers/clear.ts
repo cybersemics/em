@@ -10,9 +10,6 @@ const clear = (state: State, { full }: Options = {}) => ({
   ...full ? null : {
     autologin: false,
     isLoading: false,
-    'modal-complete-welcome': true,
-    showModal: null,
-    tutorial: false,
   }
 })
 

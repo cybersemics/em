@@ -16,7 +16,7 @@ const logout = (): Thunk => dispatch => {
   })
 
   // clear autologin
-  localStorage.autologin = false
+  localStorage.clear()
 
   // clear state variables
   dispatch(clear())
