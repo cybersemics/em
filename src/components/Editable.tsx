@@ -17,7 +17,6 @@ import {
   EDIT_THROTTLE,
   EM_TOKEN,
   MODIFIER_KEYS,
-  NOOP,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -584,8 +583,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     e.stopPropagation()
   }
 
-  /** Handles a a mouse or touch event as a tap event. Intended for mobile. Sets the cursor on the thought when the tap ends without a drag. */
-  const onTap = (e: React.MouseEvent | React.TouchEvent) => {
+  /** Sets the cursor on the thought when the tap ends without a drag. */
+  const onTouchEnd = (e: React.MouseEvent | React.TouchEvent) => {
     // make sure to get updated state
     const state = store.getState()
 
@@ -608,10 +607,6 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // prevent focus to allow navigation with mobile keyboard down
       e.preventDefault()
       setCursorOnThought()
-    }
-    else if (isHiddenByAutofocus) {
-      e.preventDefault()
-      dispatch(cursorBack())
     }
   }
 
@@ -643,8 +638,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
     onClick={stopPropagation}
-    onTouchEnd={onTap}
-    onMouseDown={isTouch ? NOOP : onMouseDown}
+    onTouchEnd={onTouchEnd}
+    // must call onMouseDown on mobile since onTouchEnd cannot preventDefault
+    // otherwise gestures and scrolling can trigger cursorBack (#1054)
+    onMouseDown={onMouseDown}
     onFocus={onFocus}
     onBlur={onBlur}
     onChange={onChangeHandler}
