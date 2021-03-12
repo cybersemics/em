@@ -77,7 +77,6 @@ it(`archive thought with hidden children - arvhive all children in cursor's pare
           - =a
           - =b`
     }),
-
     setCursorFirstMatch(['']),
     deleteEmptyThought
   ]
@@ -88,8 +87,9 @@ it(`archive thought with hidden children - arvhive all children in cursor's pare
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - =a
-  - =b`)
+  - =archive
+    - =a
+    - =b`)
 
 })
 

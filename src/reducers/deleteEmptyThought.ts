@@ -4,6 +4,7 @@ import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevS
 import { deleteThought, existingThoughtChange, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
+import archiveThought from './archiveThought'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {
@@ -29,7 +30,11 @@ const deleteEmptyThought = (state: State): State => {
   // archive an empty thought with hidden children
   else if (isEmpty && visibleChildren.length === 0) {
     return reducerFlow([
-      ...allChildren.map(archivedChild => existingThoughtMove({ oldPath: [...cursor, archivedChild], newPath: [...parentOf(cursor), archivedChild] })),
+      ...allChildren.map(child => archiveThought({ path: [...cursor, child] })),
+      state => {
+        const archivedChild = getChildrenRanked(state, context)[0]
+        return existingThoughtMove(state, { oldPath: [...cursor, archivedChild], newPath: [...parentOf(cursor), archivedChild] })
+      },
       state => existingThoughtDelete(state, {
         context: parentOf(context),
         thoughtRanked: head(cursor)
