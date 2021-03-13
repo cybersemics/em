@@ -1,4 +1,4 @@
-import { restoreCursorBeforeSearch, scrollCursorIntoView, search, setCursor } from '../action-creators'
+import { restoreCursorBeforeSearch, scrollCursorIntoView, search, searchContexts, setCursor } from '../action-creators'
 import { clearSelection } from '../util'
 import { Thunk } from '../types'
 
@@ -9,6 +9,7 @@ const home = (): Thunk => (dispatch, getState) => {
 
   if (state.search != null) {
     dispatch(search({ value: null }))
+    dispatch(searchContexts({ value: null }))
     dispatch(restoreCursorBeforeSearch)
   }
   else {

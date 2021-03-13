@@ -1,37 +1,57 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import { exists } from '../selectors'
-import { searchLimit as setSearchLimit } from '../action-creators'
+import { searchContexts, searchLimit as setSearchLimit } from '../action-creators'
 import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThoughtsSequential, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 import { State } from '../util/initialState'
 import { Connected, Index, Lexeme, SimplePath } from '../types'
+import SearchService from '../search/searchService'
+import getFirebaseProvider from '../data-providers/firebase'
 
 interface SearchSubthoughtsProps {
   search?: string | null,
   archived?: boolean,
   searchLimit?: number,
+  remoteSearch: boolean,
   thoughtIndex: Index<Lexeme>,
 }
-
 /** Number of thoughts to limit the search results to by default. */
 const DEFAULT_SEARCH_LIMIT = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ archived, search, searchLimit, thoughts: { thoughtIndex } }: State) => ({
+const mapStateToProps = ({ archived, search, remoteSearch, searchLimit, thoughts: { thoughtIndex } }: State) => ({
   archived,
   search,
+  remoteSearch,
   searchLimit,
   thoughtIndex,
 })
 
 /** Subthoughts of search. */
-const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, archived, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
+const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ remoteSearch, search, archived, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
+
+  const [isRemoteSearching, setIsRemoteSearching] = useState(false)
+
+  /** Handles remote search. */
+  const handleRemoteSearch = async (value: string) => {
+    setIsRemoteSearching(true)
+    const searchService = SearchService()
+    const contextMap = await searchService.searchAndGenerateContextMap(value, getFirebaseProvider(store.getState(), store.dispatch))
+    dispatch(searchContexts({ value: contextMap }))
+    setIsRemoteSearching(false)
+  }
+
+  useEffect(() => {
+    if (search && window.algoliaClient) handleRemoteSearch(search)
+  }, [search, remoteSearch])
 
   if (!search) return null
+
+  if (isRemoteSearching) return <div>...searching</div>
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
 
@@ -83,10 +103,10 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ search, arch
       childrenForced={children.slice(0, searchLimit)}
       simplePath={HOME_PATH}
       allowSingleContextParent={true}
-      // expandable={true}
+      expandable={true}
     />
     {children.length > DEFAULT_SEARCH_LIMIT ? <a className='indent text-note' onClick={
-      () => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT }))
+      () => dispatch(setSearchLimit({ value: searchLimit ?? 0 + DEFAULT_SEARCH_LIMIT }))
     }>More...</a> : null}
   </div>
 }

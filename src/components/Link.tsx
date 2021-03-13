@@ -5,7 +5,7 @@ import { EM_TOKEN } from '../constants'
 import { hashContextUrl } from '../selectors'
 import { clearSelection, decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToContext, strip } from '../util'
 import { Connected, SimplePath } from '../types'
-import { scrollCursorIntoView, search, setCursor, toggleSidebar } from '../action-creators'
+import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
 
 interface LinkProps {
   charLimit?: number,
@@ -23,6 +23,7 @@ const Link = ({ simplePath, label, charLimit = 32, dispatch }: Connected<LinkPro
     e.preventDefault()
     clearSelection()
     dispatch(search({ value: null }))
+    dispatch(searchContexts({ value: null }))
     dispatch(setCursor({ path: simplePath }))
     dispatch(toggleSidebar({ value: false }))
     dispatch(scrollCursorIntoView())
