@@ -1,23 +1,15 @@
-import { ALGOLIA_CONFIG } from '../constants'
 import { DataProvider } from '../data-providers/DataProvider'
 import { Context, Index, Lexeme } from '../types'
 import { hashContext } from '../util'
+import { search } from './algolia'
 
 /**
- * Search Service that initializes algoliasearch and returns handlers for seraching thoughtIndex.
+ * Search Service that uses algoliaClient for searching thoughtIndex.
  */
 const SearchService = () => {
-  const client = window.algoliaClient
-
-  if (!client) throw new Error('SearchService wasinstantiated before algolia client was registered.')
-
-  const index = client.initIndex(ALGOLIA_CONFIG.index)
 
   /** Get results by value. */
-  const searchByValue = async (value: string) => {
-    const searchResult = await index.search(value)
-    return (searchResult.hits as any) as Record<'thoughtHash' | 'value', string>[]
-  }
+  const searchByValue = (value: string) => search(value)
 
   /**
    * Search by value and generate context map from lexemes.

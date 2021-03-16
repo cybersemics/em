@@ -1,6 +1,6 @@
 import { clearAll } from '../data-providers/dexie'
 import { never } from '../util'
-import { clear, importText, setRemoteSearch } from '../action-creators'
+import { clear, importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Thunk } from '../types'
 
@@ -9,8 +9,6 @@ const logout = (): Thunk => dispatch => {
 
   // sign out first to prevent updates to remote
   window.firebase.auth().signOut()
-
-  window.algoliaClient = null
 
   // clear local db
   clearAll().catch(err => {
@@ -22,8 +20,6 @@ const logout = (): Thunk => dispatch => {
 
   // clear state variables
   dispatch(clear())
-
-  dispatch(setRemoteSearch(false))
 
   // reset initial settings
   dispatch(importText({

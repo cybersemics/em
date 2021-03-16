@@ -37,16 +37,23 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ remoteSearch
   const [isRemoteSearching, setIsRemoteSearching] = useState(false)
 
   /** Handles remote search. */
-  const handleRemoteSearch = async (value: string) => {
+  const searchRemote = async (value: string) => {
     setIsRemoteSearching(true)
     const searchService = SearchService()
-    const contextMap = await searchService.searchAndGenerateContextMap(value, getFirebaseProvider(store.getState(), store.dispatch))
-    dispatch(searchContexts({ value: contextMap }))
+
+    try {
+      const contextMap = await searchService.searchAndGenerateContextMap(value, getFirebaseProvider(store.getState(), store.dispatch))
+      dispatch(searchContexts({ value: contextMap }))
+    }
+    catch (err) {
+      console.warn('Remote search failed')
+    }
+
     setIsRemoteSearching(false)
   }
 
   useEffect(() => {
-    if (search && window.algoliaClient) handleRemoteSearch(search)
+    if (search && remoteSearch) searchRemote(search)
   }, [search, remoteSearch])
 
   if (!search) return null
@@ -106,7 +113,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ remoteSearch
       expandable={true}
     />
     {children.length > DEFAULT_SEARCH_LIMIT ? <a className='indent text-note' onClick={
-      () => dispatch(setSearchLimit({ value: searchLimit ?? 0 + DEFAULT_SEARCH_LIMIT }))
+      () => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT }))
     }>More...</a> : null}
   </div>
 }

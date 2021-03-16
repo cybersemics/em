@@ -3,7 +3,6 @@ import { ReactNode } from 'react'
 import { AnyAction } from 'redux'
 import { State } from './util/initialState'
 import { GestureResponderEvent } from 'react-native'
-import { SearchClient } from 'algoliasearch'
 
 /********************************
  * Global
@@ -16,7 +15,6 @@ declare global {
 
   interface Window {
     firebase: Firebase,
-    algoliaClient: SearchClient | null,
     em: unknown,
     debug: (message: string) => void,
   }

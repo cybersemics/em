@@ -113,17 +113,18 @@ export const ABSOLUTE_PATH = [{ value: ABSOLUTE_TOKEN, rank: 0 }] as SimplePath
 export const ALLOW_SINGLE_CONTEXT = false
 
 export const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyBpC2KffoQNufewJ4uS-WS72sqeXVJ5T-U',
-  authDomain: 'em-search-test.firebaseapp.com',
-  databaseURL: 'https://em-search-test-default-rtdb.firebaseio.com/',
-  projectId: 'em-search-test',
-  storageBucket: 'gs://em-search-test.appspot.com/',
-  messagingSenderId: '91947960488'
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY as string,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN as string,
+  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL as string,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID as string,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET as string,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGE_SENDER_ID as string,
 }
 
 export const ALGOLIA_CONFIG = {
-  applicationId: 'AJCS0S8FVN',
-  index: 'SEARCH_EM'
+  applicationId: process.env.REACT_APP_ALGOLIA_APPPLICATION_ID as string,
+  index: process.env.REACT_APP_ALGOLIA_INDEX as string,
+  searchKeyEndpoint: process.env.REACT_APP_ALGOLIA_SEARCH_KEY_ENDPOINT as string
 }
 
 /** An identify function that returns the value passed to it. */
