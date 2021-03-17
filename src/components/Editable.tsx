@@ -324,25 +324,49 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   useEffect(() => {
     const { editing, noteFocus, dragHold } = state
+
+    // focus on the ContentEditable element if editing os on desktop
     const editMode = !isTouch || editing
-    // focus on the ContentEditable element if editing
-    // if cursorOffset is null, do not setSelection to preserve click/touch offset, unless there is no browser selection
 
-    // console.info({
-    //   thoughts,
-    //   isEditing,
-    //   contentRef: !!contentRef.current,
-    //   editMode: !isTouch || editing,
-    //   noFocusNode: !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold,
-    // })
+    // if there is no browser selection, do not manually call setSelection as it does not preserve the cursor offset. Instead allow the default focus event.
+    const cursorWithoutSelection = state.cursorOffset !== null || !window.getSelection()?.focusNode
 
-    // Note: Allow tranisent editable to have focus on render
-    if (transient ||
-        (
-          isEditing && editMode && !noteFocus && contentRef.current
-          && (state.cursorOffset !== null || !window.getSelection()?.focusNode)
-          && !dragHold)
-    ) {
+    // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
+    // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
+    // disable on mobile to avoid infinite loop (#908)
+    const isAtBeginning = !isTouch && window.getSelection()?.focusOffset === 0
+
+    /**
+     * Note: There are a lot of different values that determine if setSelection is called!
+     * You may need to inspect them if something goes wrong.
+     */
+    // if (isEditing) {
+    //   const { isCollapsed, focusOffset, focusNode } = window.getSelection() || {}
+    //   console.info({
+    //     thoughts,
+    //     transient,
+    //     editMode,
+    //     isEditing,
+    //     contentRef: !!contentRef.current,
+    //     noFocusNode: !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold,
+    //     '!dragHold': dragHold,
+    //     '!noteFocus': noteFocus,
+    //     cursorOffset: cursorOffset !== null,
+    //     isCollapsed,
+    //     focusOffset,
+    //     focusNode: !!focusNode,
+    //   })
+    // }
+
+    // allow transient editable to have focus on render
+    if (transient || (
+      isEditing &&
+      editMode &&
+      !noteFocus &&
+      contentRef.current &&
+      (cursorWithoutSelection || isAtBeginning) &&
+      !dragHold
+    )) {
       /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
         On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).
@@ -564,49 +588,30 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     }
   }
 
-  /**
-   * Sets the cursor on the thought when the mouse is clicked.
-   * Focus can only be prevented in mousedown event.
-   */
-  const onMouseDown = (e: React.MouseEvent) => {
-    // if editing is disabled, set the cursor since onFocus will not trigger
-    if (disabled) {
-      setCursorOnThought()
-    }
-    // disable focus on hidden thoughts
-    else if (isElementHiddenByAutoFocus(e.target as HTMLElement)) {
-      e.preventDefault()
-      dispatch(cursorBack())
-    }
-
-    // stop propagation to AppComponent which would otherwise call cursorBack
-    e.stopPropagation()
-  }
-
   /** Sets the cursor on the thought when the tap ends without a drag. */
-  const onTouchEnd = (e: React.MouseEvent | React.TouchEvent) => {
-    // make sure to get updated state
+  const onTap = (e: React.MouseEvent | React.TouchEvent) => {
     const state = store.getState()
 
     showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
 
     const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
+    const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
-    if (
+    if (disabled || (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
       !isHiddenByAutofocus &&
-      (
-        // no cursor
-        !state.cursor ||
-        // clicking a different thought (when not editing)
-        (!state.editing && !equalPath(path, state.cursor))
-      )) {
+      !editingOrOnCursor
+    )) {
 
       // prevent focus to allow navigation with mobile keyboard down
       e.preventDefault()
       setCursorOnThought()
+    }
+    else if (isHiddenByAutofocus) {
+      e.preventDefault()
+      dispatch(cursorBack())
     }
   }
 
@@ -638,10 +643,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     : 'Add a thought'}
     // stop propagation to prevent default content onClick (which removes the cursor)
     onClick={stopPropagation}
-    onTouchEnd={onTouchEnd}
-    // must call onMouseDown on mobile since onTouchEnd cannot preventDefault
+    onTouchEnd={onTap}
+    // must call onMouseDown on mobile since onTap cannot preventDefault
     // otherwise gestures and scrolling can trigger cursorBack (#1054)
-    onMouseDown={onMouseDown}
+    onMouseDown={onTap}
     onFocus={onFocus}
     onBlur={onBlur}
     onChange={onChangeHandler}
