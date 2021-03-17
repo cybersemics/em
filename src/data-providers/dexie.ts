@@ -1,8 +1,22 @@
 /* eslint-disable fp/no-this */
 import Dexie from 'dexie'
 import _ from 'lodash'
-import { timestamp } from '../util'
-import { Context, Index, Lexeme, Parent, Timestamp } from '../types'
+import { hashThought, timestamp } from '../util'
+import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
+
+/**
+ * Returns array of non duplicate words from the given string value.
+ */
+const getWordsFromValue = (value: string) => {
+  const allWords = value.split(' ')
+
+  const wordsIndex = allWords.reduce<Index<boolean>>((acc, word: string) => {
+    acc[word] = true
+    return acc
+  }, {})
+
+  return Object.keys(wordsIndex)
+}
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -15,6 +29,7 @@ class EM extends Dexie {
 
   contextIndex: Dexie.Table<Parent, string>;
   thoughtIndex: Dexie.Table<Lexeme, string>;
+  thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>;
   helpers: Dexie.Table<Helper, string>;
   logs: Dexie.Table<Log, number>;
 
@@ -23,13 +38,15 @@ class EM extends Dexie {
 
     this.version(1).stores({
       contextIndex: 'id, context, *children, lastUpdated',
-      thoughtIndex: 'id, value, *contexts, created, lastUpdated',
+      thoughtIndex: 'id, value, *contexts, created, lastUpdated, *words',
+      thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       logs: '++id, created, message, stack',
     })
 
     this.contextIndex = this.table('contextIndex')
     this.thoughtIndex = this.table('thoughtIndex')
+    this.thoughtWordsIndex = this.table('thoughtWordsIndex')
     this.helpers = this.table('helpers')
     this.logs = this.table('logs')
   }
@@ -69,7 +86,38 @@ const initDB = async () => {
       thoughtIndex: 'id, value, *contexts, created, lastUpdated',
       contextIndex: 'id, *children, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
+      thoughtWordsIndex: 'id, *words',
       logs: '++id, created, message, stack',
+    })
+
+    // Hooks to add full text index
+    // Related resource: https://github.com/dfahlander/Dexie.js/blob/master/samples/full-text-search/FullTextSearch.js
+
+    db.thoughtIndex.hook('creating', (primaryKey, lexeme, transaction) => {
+      transaction.on('complete', () => {
+        db.thoughtWordsIndex.put({
+          id: hashThought(lexeme.value),
+          words: getWordsFromValue(lexeme.value)
+        })
+      })
+    })
+
+    db.thoughtIndex.hook('updating', (modificationObject, primaryKey, lexeme, transaction) => {
+      transaction.on('complete', () => {
+        // eslint-disable-next-line no-prototype-builtins
+        if (modificationObject.hasOwnProperty('value')) {
+          db.thoughtWordsIndex.update(hashThought(lexeme.value), {
+            words: lexeme.value.trim().length > 0 ? getWordsFromValue(lexeme.value) : []
+          })
+        }
+      })
+    })
+
+    db.thoughtIndex.hook('deleting', (primaryKey, lexeme, transaction) => {
+      transaction.on('complete', () => {
+        // Sometimes lexeme is undefined ??
+        if (lexeme) db.thoughtWordsIndex.delete(hashThought(lexeme.value))
+      })
     })
   }
 
@@ -161,6 +209,26 @@ export const deleteCursor = async () => db.helpers.update('EM', { cursor: null }
 
 /** Gets the full logs. */
 export const getLogs = async () => db.logs.toArray()
+
+/**
+ * Full text search and returns lexeme.
+ */
+export const fullTextSearch = async (value: string) => {
+
+  // Related resource: https://github.com/dfahlander/Dexie.js/issues/281
+  const words = getWordsFromValue(value)
+
+  const lexemes = await db.transaction('r', db.thoughtWordsIndex, db.thoughtIndex, async () => {
+    const matchedKeysArray = await Dexie.Promise.all(
+      words.map(word =>
+        db.thoughtWordsIndex.where('words').startsWithIgnoreCase(word).primaryKeys()
+      ))
+    const intersectionKeys = matchedKeysArray.reduce((acc, keys) => acc.filter(key => keys.includes(key)))
+    return db.thoughtIndex.bulkGet(intersectionKeys)
+  })
+
+  return lexemes
+}
 
 /** Logs a message. */
 export const log = async ({ message, stack }: { message: string, stack: any }) =>

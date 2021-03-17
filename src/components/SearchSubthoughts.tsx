@@ -9,7 +9,8 @@ import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 import { State } from '../util/initialState'
 import { Connected, Index, Lexeme, SimplePath } from '../types'
-import SearchService from '../search/searchService'
+import { getRemoteSearch } from '../search/algoliaSearch'
+import * as searchLocal from '../search/localSearch'
 import getFirebaseProvider from '../data-providers/firebase'
 
 interface SearchSubthoughtsProps {
@@ -35,30 +36,34 @@ const mapStateToProps = ({ archived, search, remoteSearch, searchLimit, thoughts
 const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ remoteSearch, search, archived, searchLimit = DEFAULT_SEARCH_LIMIT, thoughtIndex, dispatch }) => {
 
   const [isRemoteSearching, setIsRemoteSearching] = useState(false)
+  const [isLocalSearching, setIsLocalSearching] = useState(false)
 
-  /** Handles remote search. */
-  const searchRemote = async (value: string) => {
-    setIsRemoteSearching(true)
-    const searchService = SearchService()
+  /**
+   * Search thoughts remotely or locally and add it to pullQueue.
+   */
+  const searchThoughts = async (value: string) => {
 
+    const searchRemote = getRemoteSearch(getFirebaseProvider(store.getState(), store.dispatch))
+
+    const setLoadingState = remoteSearch ? setIsRemoteSearching : setIsLocalSearching
+    setLoadingState(true)
     try {
-      const contextMap = await searchService.searchAndGenerateContextMap(value, getFirebaseProvider(store.getState(), store.dispatch))
+      const contextMap = await (remoteSearch ? searchRemote : searchLocal).searchAndGenerateContextMap(value)
       dispatch(searchContexts({ value: contextMap }))
     }
     catch (err) {
-      console.warn('Remote search failed')
+      console.warn(`${remoteSearch ? 'Remote' : 'Local'} search failed`)
     }
-
-    setIsRemoteSearching(false)
+    setLoadingState(false)
   }
 
   useEffect(() => {
-    if (search && remoteSearch) searchRemote(search)
+    if (search) searchThoughts(search)
   }, [search, remoteSearch])
 
   if (!search) return null
 
-  if (isRemoteSearching) return <div>...searching</div>
+  if (isRemoteSearching || isLocalSearching) return <div>...searching</div>
 
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
 

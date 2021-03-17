@@ -5,7 +5,7 @@ import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
 import { State } from '../util/initialState'
 import { Snapshot, User } from '../types'
-import initAlgoliaSearch from '../search/algolia'
+import initAlgoliaSearch from '../search/algoliaSearch'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
@@ -22,7 +22,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
       }
       else {
         store.dispatch(authenticate({ value: false }))
-        store.dispatch(setRemoteSearch(false))
+        store.dispatch(setRemoteSearch({ value: false }))
       }
     })
 
