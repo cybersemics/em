@@ -36,7 +36,7 @@ const initAlgoliaSearch = async (userId: string, store: Store) => {
   const apiKey = await getAlgoliaApiKey(userId)
   const algoliaClient = AlgoliaClient(ALGOLIA_CONFIG.applicationId, apiKey)
   searchIndex = algoliaClient.initIndex(ALGOLIA_CONFIG.index)
-  store.dispatch(setRemoteSearch())
+  store.dispatch(setRemoteSearch({ value: true }))
 }
 
 export default initAlgoliaSearch
