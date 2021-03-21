@@ -1,0 +1,8 @@
+{
+  "algolia": {
+    "index": "search_index",
+    "api_key": "api_key",
+    "search_key": "search_key",
+    "app_id": "application_id"
+  }
+}

@@ -3,14 +3,14 @@ module.exports = {
     browser: true,
     es6: true,
     mocha: true,
-    jest: true,
+    jest: true
   },
   extends: [
     'standard',
     'react-app',
     'plugin:react/recommended',
     'plugin:import/typescript',
-    'raine',
+    'raine'
   ],
   ignorePatterns: 'scripts',
   overrides: [
