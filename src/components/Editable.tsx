@@ -588,7 +588,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     }
   }
 
-  /** Sets the cursor on the thought when the tap ends without a drag. */
+  /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = (e: React.MouseEvent | React.TouchEvent) => {
     const state = store.getState()
 
@@ -601,17 +601,16 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
-      !isHiddenByAutofocus &&
       !editingOrOnCursor
     )) {
-
-      // prevent focus to allow navigation with mobile keyboard down
       e.preventDefault()
-      setCursorOnThought()
-    }
-    else if (isHiddenByAutofocus) {
-      e.preventDefault()
-      dispatch(cursorBack())
+      if (isHiddenByAutofocus) {
+        dispatch(cursorBack())
+      }
+      else {
+        // prevent focus to allow navigation with mobile keyboard down
+        setCursorOnThought()
+      }
     }
   }
 
