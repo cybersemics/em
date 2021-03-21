@@ -40,7 +40,13 @@ const getRankAfter = (state: State, simplePath: SimplePath) => {
   const nextSubthought = children[i + 1]
 
   const newRank = nextSubthought
-    ? (prevSubthought.rank + nextSubthought.rank) / 2
+    // provide a safeguard if the rank doesn't change
+    // this *should* never happen, but it will occur if prev and next thought end up with the same rank due to a data integrity isuse
+    ? prevSubthought.rank === nextSubthought.rank
+      ? (console.warn('Duplicate ranks detected', prevSubthought, nextSubthought), prevSubthought.rank - Math.random()) // nudge into non-conflicting rank
+      // default case set the rank halfway between the prev and next thoughts
+      : (prevSubthought.rank + nextSubthought.rank) / 2
+    // if there is no next thought (i.e. the thought is the last child) then simply increment the rank
     : prevSubthought.rank + 1
 
   // guard against NaN/undefined
