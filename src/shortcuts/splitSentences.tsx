@@ -1,6 +1,6 @@
 import React, { Dispatch } from 'react'
 import _ from 'lodash'
-import { parentOf, headValue, pathToContext } from '../util'
+import { parentOf, headValue, pathToContext, splitSentence } from '../util'
 import { alert, splitSentences } from '../action-creators'
 import { Action } from 'redux'
 import { getAllChildren, isContextViewActive } from '../selectors'
@@ -25,7 +25,8 @@ const splitSentencesShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     const value = headValue(cursor!)
-    const sentences = value.split(/[.!?]+/g).filter(s => s !== '').map(s => `${s.trim()}.`)
+    const sentences = splitSentence(value)
+
     if (!sentences || sentences.length === 1) {
       dispatch(alert('Cannot split sentences: thought has only one sentence.', { alertType: 'splitSentencesErr2', clearTimeout: 3000 }))
       return

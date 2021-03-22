@@ -20,6 +20,35 @@ it('split single thought by sentences', () => {
   - Three.`)
 })
 
+it('split single thought on comma when there are no periods', () => {
+  const steps = [
+    newThought('One, Two, Three'),
+    splitSentences()
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - One
+  - Two
+  - Three`)
+})
+
+it('split single thought on period when there is a combination of periods and commas.', () => {
+  const steps = [
+    newThought('One.Two, Three'),
+    splitSentences()
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - One.
+  - Two, Three.`)
+})
+
 it('split thought by sentences surrounded by siblings', () => {
   const steps = [
     newThought('a'),

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { parentOf, head, headRank, headValue, pathToContext, reducerFlow } from '../util'
+import { parentOf, head, headRank, headValue, pathToContext, reducerFlow, splitSentence } from '../util'
 import { editableRender, editingValue, existingThoughtChange, newThought, setCursor } from '../reducers'
 import { rootedParentOf, simplifyPath } from '../selectors'
 
@@ -13,7 +13,7 @@ const splitSentences = (state: State) => {
   const rank = headRank(cursor)
   const value = headValue(cursor)
 
-  const sentences = value.split(/[.!?]+/g).filter(s => s !== '').map(s => `${s.trim()}.`)
+  const sentences = splitSentence(value)
 
   if (sentences.length === 1) {
     return state
