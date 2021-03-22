@@ -132,3 +132,36 @@ it('merge duplicate children', () => {
     .toMatchObject([{ value: 'a', rank: 0 }, { value: 'c', rank: 0 }])
 
 })
+
+it('after collapse context set cursor to the first visible children.', () => {
+
+  const steps = [
+    newThought('a'),
+    newSubthought('b'),
+    newSubthought('=x'),
+    newThought('c'),
+    cursorBack,
+    collapseContext({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor).toMatchObject([{ value: 'a' }, { value: 'c' }])
+})
+
+it('after collapse context set cursor to the parent if there are no visible children.', () => {
+
+  const steps = [
+    newThought('a'),
+    newSubthought('b'),
+    newSubthought('=x'),
+    cursorBack,
+    collapseContext({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor).toMatchObject([{ value: 'a' }])
+})
