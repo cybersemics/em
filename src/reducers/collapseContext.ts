@@ -1,6 +1,6 @@
 import { head, parentOf, pathToContext, reducerFlow, unroot } from '../util'
 import { State } from '../util/initialState'
-import { getAllChildren, simplifyPath } from '../selectors'
+import { getAllChildren, isChildVisible, simplifyPath } from '../selectors'
 import { archiveThought, existingThoughtMove, setCursor } from '../reducers'
 import _ from 'lodash'
 import existingThoughtDelete from './existingThoughtDelete'
@@ -24,6 +24,15 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
 
   const children = getAllChildren(state, context)
 
+  /** Returns new cursor after collapse. */
+  const getNewCursor = () => {
+    const visibleChildren = state.showHiddenThoughts
+      ? children
+      : children.filter(isChildVisible(state, context))
+
+    return unroot([...parentOf(path), ...visibleChildren.length > 0 ? [visibleChildren[0]] : []])
+  }
+
   return reducerFlow(
     children.length > 0 ? [
       ...children.map(child =>
@@ -39,7 +48,7 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
           thoughtRanked: head(simpleCursor)
         }),
       setCursor({
-        path: unroot([...parentOf(path), children[0]]),
+        path: getNewCursor(),
         editing: state.editing,
         offset: 0
       }),
