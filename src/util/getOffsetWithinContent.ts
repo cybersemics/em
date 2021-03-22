@@ -11,8 +11,11 @@ export const getOffsetWithinContent = (el: HTMLElement) => {
   // insert dummy text at the end of the range
   sel!.getRangeAt(0).insertNode(target)
 
+  const nodeBeforeCaret = el.childNodes[0]
+
   // find the index of the dummy text within the inner html of the contenteditable
-  const offset = el.innerHTML.indexOf('\u0001')
+  const offset = nodeBeforeCaret?.nodeValue?.length
+
   target.parentNode?.removeChild(target)
-  return offset !== -1 ? offset : 0
+  return offset || 0
 }
