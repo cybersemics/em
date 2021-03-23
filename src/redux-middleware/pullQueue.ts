@@ -85,6 +85,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // track when visible contexts change
   let lastVisibleContexts: Index<Context> = {} // eslint-disable-line fp/no-let
 
+  // track when search contexts change
+  let lastSearchContexts: State['searchContexts'] = {} // eslint-disable-line fp/no-let
+
   // queque contexts entries to be pulled from the data source
   // initialize with em and root contexts
   // eslint-disable-next-line fp/no-let
@@ -94,7 +97,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   const flushPullQueue = async () => {
 
     // expand pull queue to include its children
-    const extendedPullQueue = appendVisibleContexts(getState(), pullQueue, { ...lastVisibleContexts })
+    const extendedPullQueue = appendVisibleContexts(getState(), pullQueue, { ...lastVisibleContexts, ...lastSearchContexts })
 
     pullQueue = {}
 
@@ -122,13 +125,15 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // must do this within this (debounced) function, otherwise state.pushQueue will still be empty
     if (hasPushes(state)) return
 
+    const isSearchSame = state.searchContexts === lastSearchContexts || equalArrays(Object.keys(state.searchContexts ?? {}), Object.keys(lastSearchContexts ?? {}))
+
     const expandedContexts = expandThoughts(state, state.cursor, {
       returnContexts: true,
     })
 
     // return if expanded is the same, unless force is specified or expanded is empty
     if (!force && Object.keys(state.expanded).length > 0
-    && equalArrays(Object.keys(expandedContexts), Object.keys(lastExpanded))) return
+    && equalArrays(Object.keys(expandedContexts), Object.keys(lastExpanded)) && isSearchSame) return
 
     // TODO: Can we use only lastExpanded and get rid of lastVisibleContexts?
     // if (!force && equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded))) return
@@ -137,10 +142,13 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     const visibleContexts = getVisibleContexts(state, expandedContexts)
 
-    if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts))) return
+    if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts)) && isSearchSame) return
 
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
+
+    // update last searchContexts
+    lastSearchContexts = state.searchContexts
 
     // do not throttle initial flush
     if (isLoaded) {

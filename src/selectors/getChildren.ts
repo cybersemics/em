@@ -81,17 +81,16 @@ const isChildInCursor = (state: State, path: Path, simplePath: SimplePath, child
 }
 
 /** Returns head of context if parent has active context view. */
-const pathHeadValue = (state: State, path: Path, child: Child | ThoughtContext) => {
-  const showContexts = isContextViewActive(state, pathToContext(path))
+const pathHeadValue = (state: State, path: Path, child: Child | ThoughtContext, showContexts: boolean) => {
   return showContexts
     ? head((child as ThoughtContext).context)
     : (child as Child).value
 }
 
 /** Checks if the child is visible and also checks if the child lies within the cursor. */
-const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
+const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, isForcedChildren = false, child: Child | ThoughtContext) => {
   return state.showHiddenThoughts ||
-  isChildVisible(state, pathToContext(simplePath), { value: pathHeadValue(state, path, child), rank: child.rank }) ||
+  isChildVisible(state, pathToContext(simplePath), { value: pathHeadValue(state, path, child, isForcedChildren), rank: child.rank }) ||
   isChildInCursor(state, path, simplePath, child)
 })
 
@@ -107,7 +106,7 @@ const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | Thoug
  * 2. Checks if child is within cursor.
  * 3. Checks if child is created after latest absolute context toggle if starting context is absolute.
  */
-export const childrenFilterPredicate = _.curry((state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
-  return isChildVisibleWithCursorCheck(state, path, simplePath, child) &&
+export const childrenFilterPredicate = _.curry((state: State, path: Path, simplePath: SimplePath, isContextViewActive = false, child: Child | ThoughtContext) => {
+  return isChildVisibleWithCursorCheck(state, path, simplePath, isContextViewActive, child) &&
   (!isAbsolute(state.rootContext) || isCreatedAfterAbsoluteToggle(state, child))
-})
+}, 5)

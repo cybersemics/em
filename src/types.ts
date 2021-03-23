@@ -114,6 +114,11 @@ export interface Lexeme {
   lastUpdated: Timestamp,
 }
 
+export interface ThoughtWordsIndex {
+  id: string,
+  words: string[],
+}
+
 /** A thought with a specific rank. */
 export interface Child {
   id?: string,
