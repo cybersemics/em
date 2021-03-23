@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import { exists } from '../selectors'
-import { searchContexts, searchLimit as setSearchLimit } from '../action-creators'
+import { searchContexts, searchLimit as setSearchLimit, error } from '../action-creators'
 import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThoughtsSequential, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
@@ -52,7 +52,9 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ remoteSearch
       dispatch(searchContexts({ value: contextMap }))
     }
     catch (err) {
-      console.warn(`${remoteSearch ? 'Remote' : 'Local'} search failed`)
+      const errorMessage = `${remoteSearch ? 'Remote' : 'Local'} search failed`
+      dispatch(error({ value: errorMessage }))
+      console.error(errorMessage)
     }
     setLoadingState(false)
   }

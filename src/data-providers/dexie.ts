@@ -4,20 +4,6 @@ import _ from 'lodash'
 import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
 
-/**
- * Returns array of non duplicate words from the given string value.
- */
-const getWordsFromValue = (value: string) => {
-  const allWords = value.split(' ')
-
-  const wordsIndex = allWords.reduce<Index<boolean>>((acc, word: string) => {
-    acc[word] = true
-    return acc
-  }, {})
-
-  return Object.keys(wordsIndex)
-}
-
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
 // NOTE: Could not get this to work in setupTests.js
@@ -97,7 +83,7 @@ const initDB = async () => {
       transaction.on('complete', () => {
         db.thoughtWordsIndex.put({
           id: hashThought(lexeme.value),
-          words: getWordsFromValue(lexeme.value)
+          words: _.uniq(lexeme.value.split(' '))
         })
       })
     })
@@ -107,7 +93,7 @@ const initDB = async () => {
         // eslint-disable-next-line no-prototype-builtins
         if (modificationObject.hasOwnProperty('value')) {
           db.thoughtWordsIndex.update(hashThought(lexeme.value), {
-            words: lexeme.value.trim().length > 0 ? getWordsFromValue(lexeme.value) : []
+            words: lexeme.value.trim().length > 0 ? _.uniq(lexeme.value.trim().split(' ')) : []
           })
         }
       })
@@ -216,7 +202,7 @@ export const getLogs = async () => db.logs.toArray()
 export const fullTextSearch = async (value: string) => {
 
   // Related resource: https://github.com/dfahlander/Dexie.js/issues/281
-  const words = getWordsFromValue(value)
+  const words = _.uniq(value.split(' '))
 
   const lexemes = await db.transaction('r', db.thoughtWordsIndex, db.thoughtIndex, async () => {
     const matchedKeysArray = await Dexie.Promise.all(

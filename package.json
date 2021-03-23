@@ -21,7 +21,7 @@
     "clean": "rm -rf ./node_modules/.cache/eslint-loader",
     "docs": "typedoc --options typedoc.json",
     "deploy": "npm version major && npm run build && firebase deploy --only hosting",
-    "deploy:functions": "cat ./firebase-config.json | node ./scripts/setFirebaseConfig.js && npm version major && cd ./functions && npm run build && firebase deploy --only functions",
+    "deploy:functions": "cat ./firebase-config.json | node ./scripts/setFirebaseConfig.js && cd ./functions && npm run build && firebase deploy --only functions",
     "postinstall": "husky install",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output lint:*",
     "lint:src": "eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
