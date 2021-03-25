@@ -93,11 +93,6 @@ it('add attribute if key has already been created', () => {
       key: '=test',
       value: 'hello'
     }),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'goodbye'
-    })
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -107,6 +102,6 @@ it('add attribute if key has already been created', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =test
-      - goodbye`)
+      - hello`)
 
 })

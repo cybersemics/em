@@ -1,6 +1,6 @@
 import React from 'react'
 import { attributeEquals, simplifyPath } from '../selectors'
-import { parentOf, pathToContext } from '../util'
+import { pathToContext } from '../util'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 import { HOME_PATH } from '../constants'
@@ -25,12 +25,11 @@ const pinOpenShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const context = pathToContext(parentOf(cursor))
-    const isPinned = attributeEquals(state, context, '=pin', 'true')
+    const context = pathToContext(cursor)
     dispatch(toggleAttribute({
-      context: pathToContext(cursor),
+      context,
       key: '=pin',
-      value: isPinned ? 'false' : 'true'
+      value: 'true',
     }))
   },
   isActive: getState => {

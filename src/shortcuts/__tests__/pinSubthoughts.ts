@@ -6,7 +6,7 @@ import pinSubthoughtsShortcut from '../pinSubthoughts'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
-it('toggle on =pinChildren attribute of cursor (initial state without =pinChildren)', () => {
+it('toggle on when there is no =pinChildren', () => {
 
   const store = createTestStore()
 
@@ -32,7 +32,7 @@ it('toggle on =pinChildren attribute of cursor (initial state without =pinChildr
   expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('true')
 })
 
-it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set to false)', () => {
+it('toggle on when =pinChildren is false', () => {
 
   const store = createTestStore()
 
@@ -60,7 +60,7 @@ it('toggle on =pinChildren attribute of cursor (initial state =pinChildren set t
   expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('true')
 })
 
-it('toggle off =pinChildren attribute of cursor', () => {
+it('remove =pinChildren when toggling off from true', () => {
 
   const store = createTestStore()
 
@@ -85,5 +85,5 @@ it('toggle off =pinChildren attribute of cursor', () => {
   executeShortcut(pinSubthoughtsShortcut, { store })
 
   // parent of cursor should not have =pinChildren set to true
-  expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('false')
+  expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe(null)
 })

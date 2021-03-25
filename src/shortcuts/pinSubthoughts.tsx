@@ -29,12 +29,11 @@ const pinSubthoughtsShortcut: Shortcut = {
 
     const simplePath = simplifyPath(state, cursor)
     const context = pathToContext(simplePath)
-    const isPinned = attributeEquals(state, context, '=pinChildren', 'true')
 
     dispatch(toggleAttribute({
       context,
       key: '=pinChildren',
-      value: isPinned ? 'false' : 'true'
+      value: 'true',
     }))
   },
   isActive: getState => {
