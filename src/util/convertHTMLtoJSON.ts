@@ -130,15 +130,18 @@ const joinChildren = (nodes: Block[]) => {
 }
 
 /** Converts an <li> element to a Block. */
-const liToBlock = (node: Element): Block => {
+const liToBlock = (node: Element): (Block | Block[]) => {
+
   const [firstChild] = node.children
   return firstChild.type === 'text' ? {
     scope: firstChild.content,
     children: []
-  } : {
-    scope: '',
-    children: himalayaToBlock((firstChild as Element).children) as Block[]
   }
+  // only add empty parent if the li node is empty and has nested list
+    : firstChild.type === 'element' && firstChild.tagName === 'ul' ? {
+      scope: '',
+      children: himalayaToBlock((firstChild as Element).children) as Block[]
+    } : himalayaToBlock(node.children) as Block[]
 }
 
 /** Converts a <ul> element to a Block. */
@@ -169,7 +172,7 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
     : node.type === 'text' ? textNodeToBlock(node)
     : isWorkflowyNote(node) ? workflowyNoteToBlock(node)
     : node.tagName === 'ul' ? ulToBlock(node, nodes[index - 1] as Element)
-    : node.children.length === 1 ? liToBlock(node)
+    : node.tagName === 'li' && node.children.length === 1 ? liToBlock(node)
     : himalayaToBlock(node.children)
   )
 
