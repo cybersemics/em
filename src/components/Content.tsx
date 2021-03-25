@@ -52,7 +52,7 @@ const mapStateToProps = (state: State) => {
   const children = getAllChildren(state, rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
-  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, rankedRoot, false)).length
+  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, [], false)).length
 
   // pass rootSort to allow root Subthoughts ro render on toggleSort
   const rootSort = attribute(state, rootContext, '=sort') || 'None'

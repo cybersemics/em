@@ -261,7 +261,7 @@ describe('hidden thoughts', () => {
       text: `
         - a
           - d
-            =meta2
+            - =meta2
               - e
         - b
         - =meta1
@@ -331,7 +331,7 @@ describe('hidden thoughts', () => {
         text: `
           - a
             - d
-              =meta2
+              - =meta2
                 - e
           - b
             - d`
@@ -394,6 +394,111 @@ describe('hidden thoughts', () => {
     // meta thoughts should be visible when it lies in cursor path
     expect(nestedMetaThought2()).toHaveLength(1)
     expect(nestedMetaThought2Child()).toHaveLength(1)
+  })
+
+  it('do not hide meta attribute thought when it is the descendant of the meta cursor.', () => {
+
+    // import thoughts
+    store.dispatch(importText({
+      path: HOME_PATH,
+      preventSetCursor: true,
+      text: `
+        - a
+          - =meta1
+            - =meta2`,
+    }))
+
+    // update DOM
+    wrapper.update()
+
+    /* eslint-disable jsdoc/require-jsdoc */
+    const metaThought2 = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['=meta2']))
+
+    // meta2 should should not be visible when it doesn't lie in cursor path or is not descendant of meta cursor
+    expect(metaThought2()).toHaveLength(0)
+
+    store.dispatch(setCursorFirstMatchActionCreator(['a', '=meta1']))
+
+    wrapper.update()
+
+    // meta2 should should be visible when it is descendant of the meta cursor
+    expect(metaThought2()).toHaveLength(0)
+  })
+
+  it('do not hide meta attribute thought when it is the descendant of the meta cursor (Context View).', () => {
+
+    // import thoughts
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        preventSetCursor: true,
+        text: `
+        - a
+          - d
+            - e
+              - =meta1
+                - =meta2
+        - b
+          - d`,
+      }),
+      setCursorFirstMatchActionCreator(['b', 'd']),
+      { type: 'toggleContextView' },
+      setCursorFirstMatchActionCreator(['b', 'd', 'a'])
+    ])
+
+    /*
+    Expected structure after activating context view.
+
+    - a
+      - d
+        - e
+          - =meta1
+            - =meta2
+    - b
+      - d (~)
+       - b.d
+       - a.d (cursor)
+        - e
+         - =meta1 (expecting =meta1 and =meta2 be hidden)
+          - =meta2
+    */
+
+    // update DOM
+    wrapper.update()
+
+    /* eslint-disable jsdoc/require-jsdoc */
+    const metaThought2 = () => wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['=meta2']))
+
+    // meta2 should should not be visible when it doesn't lie in cursor path or is not descendant of meta cursor
+    expect(metaThought2()).toHaveLength(0)
+
+    store.dispatch(setCursorFirstMatchActionCreator(['b', 'd', 'a', '=meta1']))
+
+    wrapper.update()
+
+    /*
+    Expected structure
+
+    - a
+      - d
+        - e
+          - =meta1
+            - =meta2
+    - b
+      - d (~)
+       - b.d
+       - a.d
+        - e
+         - =meta1 (meta cursor)
+          - =meta2 (expecting =meta2 to be visible too)
+    */
+
+    // meta2 should should be visible when it is descendant of the meta cursor
+    expect(metaThought2()).toHaveLength(0)
   })
 })
 

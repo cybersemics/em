@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { appendChildPath, getChildPath, getSortPreference, hasChild, isContextViewActive } from '../selectors'
-import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot } from '../util'
-import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, SimplePath, Parent, Path } from '../types'
+import { getSortPreference, hasChild, isContextViewActive } from '../selectors'
+import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant } from '../util'
+import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path } from '../types'
+
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
 
@@ -31,6 +32,14 @@ const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: Sta
     : children.filter(isChildVisible(state, context))
 })
 
+/** Makes a getAllChildren function that only returns visible thoughts with cursor check. */
+const getVisibleThoughtsWithCursorCheck = _.curry((getThoughtsFunction: GetThoughts, state: State, path: Path, context: Context) => {
+  const children = getThoughtsFunction(state, context)
+  return state.showHiddenThoughts
+    ? children
+    : children.filter(isChildVisibleWithCursorCheck(state, path, context, false))
+})
+
 /** Returns true if the context has any visible children. */
 export const hasChildren = (state: State, context: Context) => {
   const children = getAllChildren(state, context)
@@ -52,9 +61,14 @@ export const getAllChildrenSorted = (state: State, context: Context) => {
 }
 
 /** Gets all visible children within a context sorted by rank or sort preference.
- * Note: It doesn't check if thought lies within the cursor path.
+ * Note: It doesn't check if thought lies within the cursor path or is descendant of meta cursor.
  */
 export const getChildrenSorted = getVisibleThoughts(getAllChildrenSorted)
+
+/** Gets all visible children within a context sorted by rank or sort preference.
+ * Note: It checks if thought lies within the cursor path or is descendant of meta cursor.
+ */
+export const getChildrenSortedWithCursorCheck = getVisibleThoughtsWithCursorCheck(getAllChildrenSorted)
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
@@ -72,11 +86,20 @@ export const getChildrenRanked = (state: State, context: Context): Child[] =>
 export const firstVisibleChild = (state: State, context: Context) =>
   getChildrenSorted(state, context)[0]
 
+/** Returns the first visible child (with cursor check) of a context. */
+export const firstVisibleChildWithCursorCheck = (state: State, path: Path, context: Context) =>
+  getChildrenSortedWithCursorCheck(state, path, context)[0]
+
 /** Checks if a child lies within the cursor path. */
-const isChildInCursor = (state: State, path: Path, simplePath: SimplePath, child: Child | ThoughtContext) => {
-  const showContexts = isContextViewActive(state, pathToContext(path))
-  const childSimplePath = getChildPath(state, child, simplePath, showContexts)
-  const childPath = appendChildPath(state, childSimplePath, path)
+const isChildInCursor = (state: State, path: Path, showContexts: boolean, child: Child | ThoughtContext) => {
+  const childPath = unroot([
+    ...path, showContexts ? {
+      value: pathHeadValue(state, path, child, showContexts),
+      rank: (child as ThoughtContext).rank,
+      lastUpdated: (child as ThoughtContext).lastUpdated,
+      archived: (child as ThoughtContext).archived
+    } : child as Child
+  ])
   return state.cursor && equalThoughtRanked(state.cursor[childPath.length - 1], head(childPath))
 }
 
@@ -87,12 +110,26 @@ const pathHeadValue = (state: State, path: Path, child: Child | ThoughtContext, 
     : (child as Child).value
 }
 
-/** Checks if the child is visible and also checks if the child lies within the cursor. */
-const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, simplePath: SimplePath, isForcedChildren = false, child: Child | ThoughtContext) => {
+/** Check if the cursor is a meta attribute && the given context is the descendant of the cursor.  */
+const isDescendantOfMetaCursor = (state: State, context: Context): boolean => {
+  if (!state.cursor) return false
+
+  return isFunction(headValue(state.cursor)) && isDescendant(pathToContext(state.cursor), context)
+}
+
+/** Checks if the child is visible or if the child lies within the cursor or is descendant of the meta cursor. */
+const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, context: Context, isForcedChildren = false, child: Child | ThoughtContext) => {
+
+  const showContexts = isContextViewActive(state, pathToContext(path))
+
+  const value = pathHeadValue(state, path, child, showContexts || isForcedChildren)
+  const childContext = [...pathToContext(path), value]
+
   return state.showHiddenThoughts ||
-  isChildVisible(state, pathToContext(simplePath), { value: pathHeadValue(state, path, child, isForcedChildren), rank: child.rank }) ||
-  isChildInCursor(state, path, simplePath, child)
-})
+  isChildVisible(state, context, { value, rank: child.rank }) ||
+  isChildInCursor(state, path, showContexts, child)
+  || isDescendantOfMetaCursor(state, childContext)
+}, 5)
 
 /** Checks if the child is created after latest absolute context toggle. */
 const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | ThoughtContext) =>
@@ -106,7 +143,7 @@ const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | Thoug
  * 2. Checks if child is within cursor.
  * 3. Checks if child is created after latest absolute context toggle if starting context is absolute.
  */
-export const childrenFilterPredicate = _.curry((state: State, path: Path, simplePath: SimplePath, isContextViewActive = false, child: Child | ThoughtContext) => {
-  return isChildVisibleWithCursorCheck(state, path, simplePath, isContextViewActive, child) &&
+export const childrenFilterPredicate = _.curry((state: State, path: Path, context: Context, isForcedChildren = false, child: Child | ThoughtContext) => {
+  return isChildVisibleWithCursorCheck(state, path, context, isForcedChildren, child) &&
   (!isAbsolute(state.rootContext) || isCreatedAfterAbsoluteToggle(state, child))
 }, 5)

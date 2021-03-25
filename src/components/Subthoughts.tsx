@@ -374,7 +374,7 @@ export const SubthoughtsComponent = ({
     return cursor[depth] && cursor[depth].rank === child.rank
   }) : 0
 
-  const filteredChildren = children.filter(childrenFilterPredicate(state, resolvedPath, simplePath, showContexts))
+  const filteredChildren = children.filter(childrenFilterPredicate(state, resolvedPath, pathToContext(simplePath), !!childrenForced))
 
   const proposedPageSize = isRoot(simplePath)
     ? Infinity

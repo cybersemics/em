@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { ALLOW_SINGLE_CONTEXT, HOME_PATH, HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, pathToContext, once, unroot } from '../util'
-import { firstVisibleChild, getContexts, getContextsSortedAndRanked, getThought, isContextViewActive, splitChain, nextSibling as thoughtNextSibling, rootedParentOf } from '../selectors'
+import { firstVisibleChildWithCursorCheck, getContexts, getContextsSortedAndRanked, getThought, isContextViewActive, splitChain, nextSibling as thoughtNextSibling, rootedParentOf } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
 
@@ -122,7 +122,7 @@ const nextInContextView = (state: State, value: string, rank: number, path: Path
   }
   // if the focus is on or within a context
   else if (isContextViewActive(state, pathToContext(rankedContext))) {
-    const firstChild = once(() => firstVisibleChild(state, getContextFromContextChain(state, contextChain) || [HOME_TOKEN]))
+    const firstChild = once(() => firstVisibleChildWithCursorCheck(state, path, getContextFromContextChain(state, contextChain) || [HOME_TOKEN]))
 
     const nextSibling = nextSiblingContext(state, rank, context)
     const rankedContextHead = head(rankedContext)
@@ -161,7 +161,7 @@ const nextInThoughtView = (state: State, value: string, context: Context, rank: 
 
   if (contextChain.length > 1 && _.last(contextChain)!.length === 1) return null
 
-  const firstChild = !ignoreChildren && firstVisibleChild(state, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || [HOME_TOKEN])
+  const firstChild = !ignoreChildren && firstVisibleChildWithCursorCheck(state, path, contextChain.length > 1 ? getContextFromContextChain(state, contextChain) : pathToContext(path) || [HOME_TOKEN])
 
   const thoughtViewPath = once(() => !ignoreChildren && contextChain.length > 1 ? getPathFromContextChain(state, contextChain) : path)
   // pathToContext is expensive than duplicate condition check hence using the former
