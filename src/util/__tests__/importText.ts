@@ -572,3 +572,19 @@ it('decode HTML entities', () => {
   - one & two
   - three < four`)
 })
+
+// related: https://github.com/cybersemics/em/issues/1008
+it('do not parse as html when value has tags inside indented text', () => {
+
+  expect(importExport(`
+  - a
+    - b
+    - <li>c</li>
+  `))
+    .toBe(
+      `
+- a
+  - b
+  - c
+`)
+})
