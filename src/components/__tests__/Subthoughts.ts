@@ -414,7 +414,7 @@ describe('hidden thoughts', () => {
     /* eslint-disable jsdoc/require-jsdoc */
     const metaThought2 = () => wrapper
       .find(Subthoughts)
-      .filterWhere(wherePath(['=meta2']))
+      .filterWhere(wherePath(['a', '=meta1', '=meta2']))
 
     // meta2 should should not be visible when it doesn't lie in cursor path or is not descendant of meta cursor
     expect(metaThought2()).toHaveLength(0)
@@ -424,7 +424,7 @@ describe('hidden thoughts', () => {
     wrapper.update()
 
     // meta2 should should be visible when it is descendant of the meta cursor
-    expect(metaThought2()).toHaveLength(0)
+    expect(metaThought2()).toHaveLength(1)
   })
 
   it('do not hide meta attribute thought when it is the descendant of the meta cursor (Context View).', () => {
@@ -471,12 +471,12 @@ describe('hidden thoughts', () => {
     /* eslint-disable jsdoc/require-jsdoc */
     const metaThought2 = () => wrapper
       .find(Subthoughts)
-      .filterWhere(wherePath(['=meta2']))
+      .filterWhere(wherePath(['b', 'd', 'a', 'e', '=meta1', '=meta2']))
 
     // meta2 should should not be visible when it doesn't lie in cursor path or is not descendant of meta cursor
     expect(metaThought2()).toHaveLength(0)
 
-    store.dispatch(setCursorFirstMatchActionCreator(['b', 'd', 'a', '=meta1']))
+    store.dispatch(setCursorFirstMatchActionCreator(['b', 'd', 'a', 'e', '=meta1']))
 
     wrapper.update()
 
@@ -498,7 +498,7 @@ describe('hidden thoughts', () => {
     */
 
     // meta2 should should be visible when it is descendant of the meta cursor
-    expect(metaThought2()).toHaveLength(0)
+    expect(metaThought2()).toHaveLength(1)
   })
 })
 
