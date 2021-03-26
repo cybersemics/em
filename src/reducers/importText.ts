@@ -16,8 +16,9 @@ const regexpListItem = /<li(?:\s|>)/gmi
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
 
-// has at least one list item or paragraph
-const regexpHasListItems = /<li|p(?:\s|>).*?>.*<\/li|p>/mi
+// regex that checks if the value starts with closed html tag
+// Note: This regex cannot check properly for a tag nested within itself. However for general cases it works properly.
+const regexStartsWithClosedTag = /^<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)<\/\1>/ism
 
 /** Converts data output from jex-block-parser into HTML.
  *
@@ -76,8 +77,8 @@ const bodyContent = (html: string) => {
 /** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
 const rawTextToHtml = (text: string) => {
 
-  // if the input text has any <li> elements at all, treat it as HTML
-  const isHTML = regexpHasListItems.test(text)
+  // if the input text starts with a closed html tag
+  const isHTML = regexStartsWithClosedTag.test(text.trim())
   const decodedInputText = unescape(text)
 
   // use jex-block-parser to convert indentent plaintext into nested HTML lists
