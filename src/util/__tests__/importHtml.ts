@@ -151,6 +151,25 @@ it('empty thought with nested li\'s', () => {
 `)
 })
 
+it('do not add empty parent thought when empty li node has no nested li\'s', () => {
+  expect(importExport(`
+<li>
+  a
+  <ul>
+    <li>b</li>
+    <li>
+      <b>c</b>
+    </li>
+  </ul>
+</li>
+`))
+    .toBe(`
+- a
+  - b
+  - <b>c</b>
+`)
+})
+
 it('multiple nested lists', () => {
   expect(importExport(`
 <li>a
