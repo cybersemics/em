@@ -26,6 +26,7 @@ import Scale from './Scale'
 import Tutorial from './Tutorial'
 import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
+import ModalFeedback from './ModalFeedback'
 
 const Content = React.lazy(() => import('./Content'))
 
@@ -133,6 +134,7 @@ const AppComponent: FC<Props> = props => {
           ? showModal === 'welcome' ? <ModalWelcome />
           : showModal === 'help' ? <ModalHelp />
           : showModal === 'export' ? <ModalExport />
+          : showModal === 'feedback' ? <ModalFeedback />
           : 'Invalid showModal'
 
           // navigation, content, and footer

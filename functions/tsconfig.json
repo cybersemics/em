@@ -9,6 +9,7 @@
     "target": "es2017",
     "baseUrl": "./",
     "skipLibCheck": true,
+    "esModuleInterop": true,
   },
   "compileOnSave": true,
   "include": [
