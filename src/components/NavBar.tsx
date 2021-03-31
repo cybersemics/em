@@ -10,6 +10,7 @@ import { State } from '../util/initialState'
 import { Path } from '../types'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
+import FeedbackButton from './FeedbackButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -39,7 +40,10 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, po
           </CSSTransition>
         </React.Fragment> : null}
 
-        <QuickAddButton />
+        <div className='nav-right-button-group'>
+          <FeedbackButton/>
+          <QuickAddButton />
+        </div>
 
       </div>
     </div>

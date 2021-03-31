@@ -127,6 +127,8 @@ export const ALGOLIA_CONFIG = {
   searchKeyEndpoint: process.env.REACT_APP_ALGOLIA_SEARCH_KEY_ENDPOINT as string
 }
 
+export const FEEDBACK_URL = process.env.REACT_APP_FEEDBACK_URL as string
+
 /** An identify function that returns the value passed to it. */
 export const ID = <T = any>(x: T): T => x
 
@@ -280,7 +282,8 @@ export const MODALS: Index<string> = {
   welcome: 'welcome',
   help: 'help',
   home: 'home',
-  export: 'export'
+  export: 'export',
+  feedback: 'feedback'
 }
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'

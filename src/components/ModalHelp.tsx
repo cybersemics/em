@@ -14,6 +14,7 @@ import { Connected, GesturePath, Shortcut } from '../types'
 import GestureDiagram from './GestureDiagram'
 import Logs from './Logs'
 import Modal from './Modal'
+import { ActionButton } from './ActionButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -67,7 +68,11 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
     window.location = window.location // eslint-disable-line no-self-assign
   }
 
-  return <Modal id='help' title='Help' className='popup'>
+  return <Modal id='help' title='Help' className='popup' actions={
+    () => [
+      <ActionButton key='close' title='Close'/>
+    ]
+  }>
 
     <section className='popup-section'>
       <h2 className='modal-subtitle'>Tutorials</h2>
