@@ -1,7 +1,17 @@
+import _ from 'lodash'
 import { SimplePath, Path } from '../types'
 import { parentOf, head, pathToContext, unroot } from '../util'
+import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import { State } from '../util/initialState'
 import isContextViewActive from './isContextViewActive'
+
+/** A memoize resolver that handles child and simplePath value equality for getChildPath. */
+const resolve = (state: State, childPath: SimplePath, parentThoughtsResolved?: Path) =>
+  resolveArray([
+    parentThoughtsResolved ? isContextViewActive(state, pathToContext(parentThoughtsResolved)) : '',
+    resolvePath(childPath),
+    resolvePath(parentThoughtsResolved || [])
+  ])
 
 /** Appends the head of a child SimplePath to a parent Path. In case of parent with active context view it appends head of the parent of the childPath.
  *
@@ -18,7 +28,7 @@ import isContextViewActive from './isContextViewActive'
  * // returns [i', 'j', 'k', 't']
  * appendChildPath(state, ['r', 's', 't', 'k'], ['i', 'j', 'k'])
  * */
-const appendChildPath = (state: State, childPath: SimplePath, parentThoughtsResolved?: Path): Path => {
+const appendChildPath = _.memoize((state: State, childPath: SimplePath, parentThoughtsResolved?: Path): Path => {
   if (!parentThoughtsResolved) return childPath as Path
 
   const isParentContextViewActive = isContextViewActive(state, pathToContext(parentThoughtsResolved))
@@ -26,6 +36,6 @@ const appendChildPath = (state: State, childPath: SimplePath, parentThoughtsReso
     ...parentThoughtsResolved,
     head(isParentContextViewActive ? parentOf(childPath) : childPath)
   ])
-}
+}, resolve)
 
 export default appendChildPath
