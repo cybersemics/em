@@ -1,0 +1,32 @@
+import { Page } from 'puppeteer'
+
+interface Options {
+  unrankedPath: string[],
+  offset?: number,
+  end?: boolean,
+}
+
+/**
+ * Set cursor to the first matched path and set it's selection in puppeteer environment.
+ */
+const setCursorAndSelection = async (page: Page, {
+  unrankedPath, offset, end
+}: Options) => {
+  await page.evaluate(async (unrankedPath, offset, end) => {
+    const testHelpers = (window.em as any).testHelpers
+    testHelpers.setCursorFirstMatch(unrankedPath)
+    const focusNode = document.getSelection()?.focusNode
+    if (focusNode) {
+      const editableNode = focusNode.nodeName === '#text' ? focusNode.parentNode : focusNode
+      /* Note: Puppeteer serializes the dom nodes when passed as arguments to an exposed function.
+      Serializing nodes causes circular json error. So frequently used utils needs to be exposed to window object.
+      */
+      testHelpers.setSelection(editableNode, {
+        offset,
+        end
+      })
+    }
+  }, unrankedPath, offset || 0, end || false)
+}
+
+export default setCursorAndSelection
