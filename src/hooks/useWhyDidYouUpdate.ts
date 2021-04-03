@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Index } from '../types'
 
-/** Log changed props. Useful for debugging unnecessary renders */
+/** Log changed props. Useful for debugging unnecessary renders. */
 const useWhyDidYouUpdate = (name: string, props: any) => {
   // Get a mutable ref object where we can store props ...
   // ... for comparison next time this hook runs.
