@@ -52,6 +52,7 @@ export interface Ref {
   child: (name: string) => Ref,
   once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>,
   on: (eventName: string, callback: (snapshot: Snapshot) => any) => void,
+  off: (eventName: string) => void,
   update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>,
 }
 

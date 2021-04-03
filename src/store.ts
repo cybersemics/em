@@ -14,6 +14,7 @@ import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
 import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
+import remoteSyncMiddleware from './redux-middleware/remoteSync'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -28,6 +29,7 @@ export const store = createStore(
     thunk,
     pushQueue,
     pullQueue,
+    remoteSyncMiddleware,
     updateUrlHistory
   ), undoRedoReducerEnhancer, cursorChangedEnhancer)
 )
