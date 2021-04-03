@@ -472,6 +472,11 @@ export const SubthoughtsComponent = ({
           /** Returns true if the cursor in in the child path. */
           const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
           const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
+          const style = {
+            ...styleGrandChildren,
+            ...styleChildren,
+            ...isEditingChildPath() ? styleZoom : null,
+          }
 
           /** Returns true if the bullet should be hidden. */
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
@@ -500,11 +505,7 @@ export const SubthoughtsComponent = ({
             showContexts={showContexts}
             prevChild={filteredChildren[i - 1]}
             isParentHovering={isParentHovering}
-            style={{
-              ...styleGrandChildren,
-              ...styleChildren,
-              ...isEditingChildPath() ? styleZoom : null,
-            }}
+            style={Object.keys(style).length > 0 ? style : undefined}
             path={appendChildPath(state, childPath, path)}
             simplePath={childPath}
           /> : null

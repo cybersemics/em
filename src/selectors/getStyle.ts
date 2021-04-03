@@ -4,16 +4,18 @@ import { State } from '../util/initialState'
 import { Context } from '../types'
 import { keyValueBy } from '../util/keyValueBy'
 
-/** Parses the =style attribute of a given context into an object that can be passed to React styles. */
+/** Parses the =style attribute of a given context into an object that can be passed to React styles. Returns null if there are no styles. */
 const getStyle = (state: State, context: Context, { container }: { container?: boolean } = {}) => {
 
   const styleContext = [...context, container ? '=styleContainer' : '=style']
   const children = getAllChildren(state, styleContext)
 
-  return keyValueBy(children, ({ value }) => {
+  const styles = keyValueBy(children, ({ value }) => {
     const styleValueThought = getAllChildren(state, [...styleContext, value])[0]
     return styleValueThought ? { [_.camelCase(value)]: styleValueThought.value } : null
   })
+
+  return Object.keys(styles).length > 0 ? styles : null
 }
 
 export default getStyle
