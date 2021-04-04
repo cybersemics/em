@@ -14,18 +14,19 @@ const setCursorAndSelection = async (page: Page, {
 }: Options) => {
   await page.evaluate(async (unrankedPath, offset, end) => {
     const testHelpers = (window.em as any).testHelpers
-    testHelpers.setCursorFirstMatch(unrankedPath)
+    await testHelpers.setCursorFirstMatch(unrankedPath)
     const focusNode = document.getSelection()?.focusNode
-    if (focusNode) {
-      const editableNode = focusNode.nodeName === '#text' ? focusNode.parentNode : focusNode
-      /* Note: Puppeteer serializes the dom nodes when passed as arguments to an exposed function.
+
+    if (!focusNode) throw new Error('No selection found.')
+
+    const editableNode = focusNode.nodeName === '#text' ? focusNode.parentNode : focusNode
+    /* Note: Puppeteer serializes the dom nodes when passed as arguments to an exposed function.
       Serializing nodes causes circular json error. So frequently used utils needs to be exposed to window object.
       */
-      testHelpers.setSelection(editableNode, {
-        offset,
-        end
-      })
-    }
+    testHelpers.setSelection(editableNode, {
+      offset,
+      end
+    })
   }, unrankedPath, offset || 0, end || false)
 }
 

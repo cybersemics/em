@@ -7,7 +7,6 @@ const puppeteer = require('puppeteer')
 const { setup: setupDevServer, teardown: teardownDevServer } = require('jest-dev-server')
 const fs = require('fs/promises')
 const path = require('path')
-const runCommand = require('./run-command')
 
 /**
  * Delay for tests.
@@ -29,12 +28,8 @@ class PuppeteerEnvironment extends JsDomEnvironment {
     const doesBuildExist = await fs.access(buildPath).then(() => true).catch(() => false)
 
     if (!doesBuildExist) {
-      try {
-        await runCommand('npm run build')
-      }
-      catch (err) {
-        console.log('Build failed')
-      }
+      console.log(chalk.red('App build not found.'))
+      throw new Error('App build not found.')
     }
 
     await setupDevServer({
