@@ -178,6 +178,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
       <div>Context View icon by <a href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>Travis Avery</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Export icon by <a href='https://www.flaticon.com/authors/those-icons' title='Those Icons'>Those Icons</a> from <a href='https://www.flaticon.com/' title='Flaticon'>www.flaticon.com</a></div>
       <div>Export icon by <a href='https://thenounproject.com/tgtdesign18'>Mahesh Keshvala</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
+      <div>Feedback icon by <a href='https://thenounproject.com/deanmtam'>Dean Mocha</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Hidden Thoughts icon by <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Indent icons by <a href='https://www.flaticon.com/authors/bqlqn' title='bqlqn'>bqlqn</a> from <a href='https://www.flaticon.com/' title='Flaticon'>flaticon.com</a></div>
       <div>Note icon by <a href='https://thenounproject.com/iconsphere/collection/populars/?i=2321491'>iconsphere</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>

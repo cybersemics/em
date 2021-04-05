@@ -647,7 +647,7 @@ body.dark {
 .nav-container .nav-right-button-group {
   display: grid;
   grid-auto-flow: column;
-  grid-column-gap: 10px;
+  grid-column-gap: 15px;
   align-items: center;
 }
 
