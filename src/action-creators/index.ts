@@ -58,7 +58,6 @@ export const setFirstSubthought = reducerToThunk<typeof reducers.setFirstSubthou
 export const setNoteFocus = reducerToThunk<typeof reducers.setNoteFocus>('setNoteFocus')
 export const setResourceCache = reducerToThunk<typeof reducers.setResourceCache>('setResourceCache')
 export const settings = reducerToThunk<typeof reducers.settings>('settings')
-export const showModal = reducerToThunk<typeof reducers.showModal>('showModal')
 export const splitSentences = reducerToThunk<typeof reducers.splitSentences>('splitSentences')
 export const splitThought = reducerToThunk<typeof reducers.splitThought>('splitThought')
 export const status = reducerToThunk<typeof reducers.status>('status')
@@ -101,6 +100,7 @@ export { default as restoreCursorBeforeSearch } from './restoreCursorBeforeSearc
 export { default as scrollCursorIntoView } from './scrollCursorIntoView'
 export { default as setEditingValue } from './setEditingValue'
 export { default as setInvalidState } from './setInvalidState'
+export { default as showModal } from './showModal'
 export { default as subCategorizeAll } from './subCategorizeAll'
 export { default as subCategorizeOne } from './subCategorizeOne'
 export { default as suppressExpansion } from './suppressExpansion'
