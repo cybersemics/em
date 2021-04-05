@@ -63,11 +63,12 @@ const ModalFeedback = () => {
     }
   }, [feedback])
 
-  return <Modal id='feedback' title='Feedback' className='popup' center actions={({ remindMeLater }) => [
-    <ActionButton key='cancel' title='Cancel' onClick={remindMeLater} inActive={true}/>,
-    <ActionButton key='send' title='Send' active={true} isLoading={isSubmitting} isDisabled={isDisabled} onClick={() => onSubmit({ remindMeLater })}/>,
-  ]}>
-    <textarea placeholder='Enter feedback' rows={1} value={feedback} onChange={onChange}/>
+  return <Modal id='feedback' title='Feedback' className='popup' center actions={({ remindMeLater }) => <div>
+    <ActionButton key='send' title='Send' active={true} isLoading={isSubmitting} isDisabled={isDisabled} onClick={() => onSubmit({ remindMeLater })} />
+    <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => remindMeLater()}>Cancel</a></div>
+  </div>}>
+    <p style={{ fontSize: 18, marginBottom: 30 }}>Send us your bugs, hopes, and dreams!</p>
+    <textarea placeholder={`Enter your message`} rows={1} value={feedback} onChange={onChange} style={{ borderRadius: 5 }} />
   </Modal>
 }
 

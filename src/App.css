@@ -1895,11 +1895,6 @@ h1 .num-contexts {
   background-color: #aaa;
 }
 
-.dark .popup .modal-actions a.button.button-active {
-  background-color: lightblue;
-}
-
-
 .popup .modal-actions {
   display: flex;
   justify-content: center;

@@ -41,12 +41,10 @@ const HomeLink = ({ dark, color, showModal, size, style, dispatch }: Connected<H
       </span>
     </a>
     {showModal === 'home'
-      ? <Modal id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' actions={({ close }) => [
-        <span key='span'>
-          <a onClick={() => dispatch(modalComplete(MODALS.home))}>Got it!</a>
-          <a onClick={() => close && close(MODAL_CLOSE_DURATION)}>Remind me later</a>
-        </span>
-      ]}/>
+      ? <Modal id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' actions={({ close }) => <span key='span'>
+        <a onClick={() => dispatch(modalComplete(MODALS.home))}>Got it!</a>
+        <a onClick={() => close && close(MODAL_CLOSE_DURATION)}>Remind me later</a>
+      </span>}/>
       : null
     }
   </span>

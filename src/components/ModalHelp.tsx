@@ -69,9 +69,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
   }
 
   return <Modal id='help' title='Help' className='popup' actions={
-    () => [
-      <ActionButton key='close' title='Close'/>
-    ]
+    ({ remindMeLater }) => <ActionButton key='close' title='Close' onClick={() => remindMeLater()} />
   }>
 
     <section className='popup-section'>
