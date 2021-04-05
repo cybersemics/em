@@ -34,14 +34,14 @@ const ModalFeedback = () => {
     <ActionButton key='send' title='Send' active={true} isLoading={isSubmitting} isDisabled={isDisabled} onClick={async () => {
       setIsSubmitting(true)
       try {
-        const response = await submitFeedback(feedback, uid)
-        const { message } = response.data as FeedbackResponse
-        dispatch(alert(message))
+        await submitFeedback(feedback, uid)
+        dispatch(alert('Feedback sent!'))
         remindMeLater()
       }
       catch (err) {
+        console.error('Error sending feedback', err)
         const { response } = err as AxiosError
-        const message = (response?.data as FeedbackResponse)?.message ?? 'Something went wrong!'
+        const message = (response?.data as FeedbackResponse)?.message ?? 'Error sending feedback'
         dispatch(alert(message))
         setIsSubmitting(false)
       }
