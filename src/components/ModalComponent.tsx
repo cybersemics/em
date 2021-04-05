@@ -7,7 +7,7 @@ import { Connected } from '../types'
 import { modalRemindMeLater, modalComplete, tutorial } from '../action-creators'
 
 interface ModalActionHelpers {
-  close: ModalComponent['close'],
+  close: (duration?: number) => void,
   remindMeLater: ModalComponent['remindMeLater'],
   complete: ModalComponent['complete'],
 }
@@ -24,7 +24,7 @@ export interface ModalProps {
   positionAtCursor?: boolean,
   show?: boolean,
   style?: React.CSSProperties,
-  actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode[],
+  actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode,
   title: string,
   top?: number,
 }
@@ -41,7 +41,7 @@ const getSelectionCoordinates = () => {
 /** A generic modal component. */
 class ModalComponent extends React.Component<Connected<ModalProps>> {
 
-  close: ((duration: number) => void) | null = null;
+  animateAndClose: ((duration?: number) => void) | null = null;
   escapeListener: ((e: KeyboardEvent) => void) | null = null;
   ref: React.RefObject<HTMLDivElement>;
 
@@ -61,14 +61,14 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
       this.escapeListener = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           e.stopPropagation()
-          this.close!(MODAL_CLOSE_DURATION)
+          this.close!()
         }
       }
 
       /**
        * Animate and close the modal.
        */
-      this.close = (duration: number) => {
+      this.animateAndClose = (duration: number = MODAL_CLOSE_DURATION) => {
         const { id, dispatch } = this.props
         window.removeEventListener('keydown', this.escapeListener!, true)
         modalCleanup()
@@ -85,12 +85,15 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
     }
   }
 
+  close = (duration?: number) => this.animateAndClose!(duration)
+
   componentWillUnmount() {
     modalCleanup()
     window.removeEventListener('keydown', this.escapeListener!, true)
   }
 
   remindMeLater = () => this.props.dispatch(modalRemindMeLater({ id: this.props.id }))
+
   /** Dispatches a modalComplete action for the modal. */
   complete = () => this.props.dispatch(modalComplete(this.props.id))
 
@@ -134,11 +137,11 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
             {actions({
               close: this.close,
               remindMeLater: this.remindMeLater,
-              complete: this.complete
+              complete: this.complete,
             })}
           </div>
         }
-        <a className='modal-close' onClick={() => this.close!(MODAL_CLOSE_DURATION)}><span>✕</span></a>
+        <a className='modal-close' onClick={() => this.close()}><span>✕</span></a>
       </div>
     </div>
   }
