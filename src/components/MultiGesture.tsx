@@ -4,13 +4,7 @@ import { noop } from 'lodash'
 import { Direction, GesturePath } from '../types'
 import { GestureResponderEvent } from 'react-native'
 
-// polyfill window.matchMedia for JSDOM environment
-require('matchmedia-polyfill')
-
-// 1. use require so that matchMedia can be polyfilled before importing react-native-web
-// fixed in react-native-web v0.14.6
-// https://github.com/necolas/react-native-web/commit/18f5a33c0d27c0d81ab92489a39076ee2a677525
-// 2. expects peer dependencies react-dom and react-native-web
+// expects peer dependencies react-dom and react-native-web
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { PanResponder, View } = require('react-native')
 

@@ -48,7 +48,6 @@
     "ipfs-http-client": "^43.0.1",
     "jex-block-parser": "^1.0.0",
     "lodash": "^4.17.20",
-    "matchmedia-polyfill": "^0.3.2",
     "murmurhash3js": "^3.0.1",
     "page-lifecycle": "https://github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
