@@ -5,9 +5,22 @@ import { EMOJI_REGEX } from '../constants'
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
 const regexShortDateWithSlash = /\d{1,2}\/\d{1,2}/
+const ignoredPrefixes = ['the ']
 
 /** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
 const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX, '').trim()
+
+/** Remove ignored prefixes from comparator inputs. */
+const removeIgnoredPrefixes = (str: string) => {
+  const ignoredKeywords = ignoredPrefixes.join('|')
+  const regex = new RegExp(`^(${ignoredKeywords})(.*)`, 'gm')
+  return str.replace(regex, `$2`)
+}
+
+/** Make comparator inputs reasonable.  */
+const makeReasonable = (str: string) => {
+  return removeIgnoredPrefixes(removeEmojisAndSpaces(str))
+}
 
 /** Parse a date string and handle M/d (e.g. "2/1") for Safari. */
 const parseDate = (s: string) =>
@@ -119,7 +132,7 @@ export const compareReasonable = makeOrderedComparator<string>([
   compareEmpty,
   comparePunctuationAndOther,
   compareStringsWithEmoji,
-  (a, b) => compareReasonableText(removeEmojisAndSpaces(a), removeEmojisAndSpaces(b)),
+  (a, b) => compareReasonableText(makeReasonable(a), makeReasonable(b)),
 ])
 
 /** Compare the value of two thoughts. */
