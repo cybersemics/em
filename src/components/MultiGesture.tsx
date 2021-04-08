@@ -78,10 +78,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     this.panResponder = PanResponder.create({
 
-      // TODO: remove after upgrade to 0.14.6
-      onStartShouldSetPanResponder: noTextSelected,
-      onStartShouldSetPanResponderCapture: noTextSelected,
-
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: thought it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
