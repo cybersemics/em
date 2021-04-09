@@ -6,6 +6,7 @@ import { equalArrays, hashContext, head, keyValueBy, pathToContext, unroot } fro
 import { pull } from '../action-creators'
 import { State } from '../util/initialState'
 import { Child, Context, ContextHash, Index, ThoughtContext } from '../types'
+import { getSessionCount } from '../util/sessionCount'
 
 /** Debounce visible thought checks to avoid checking on every action. */
 const updatePullQueueDelay = 10
@@ -181,7 +182,10 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // do not updatePullQueue if there are syncs queued or in progress
     // this gets checked again in updatePullQueue, but short circuit here if possible
     else if (!hasPushes(getState())) {
-      updatePullQueueDebounced()
+      const sessionCount = getSessionCount()
+      if ((sessionCount && sessionCount > 1) || action.type === 'loadLocalState') {
+        updatePullQueueDebounced()
+      }
     }
   }
 }

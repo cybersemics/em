@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Provider } from 'react-redux'
 import { store } from '../store'
 
@@ -7,12 +7,17 @@ import AppComponent from './AppComponent'
 import ErrorBoundaryContainer from './ErrorBoundaryContainer'
 import TouchMonitor from './TouchMonitor'
 import { DragAndDropContext } from './DragAndDropContext'
+import { incrementSessionCount } from '../util/sessionCount'
 
 /**
  * App.
  */
-export const App = () =>
-  <DragAndDropContext>
+export const App = () => {
+  useEffect(() => {
+    incrementSessionCount()
+  }, [])
+
+  return <DragAndDropContext>
     <Provider store={store}>
       <ErrorBoundaryContainer>
         <TouchMonitor>
@@ -21,3 +26,4 @@ export const App = () =>
       </ErrorBoundaryContainer>
     </Provider>
   </DragAndDropContext>
+}

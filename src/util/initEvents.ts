@@ -9,6 +9,7 @@ import { alert, error, scrollCursorIntoView, setCursor, toggleTopControlsAndBrea
 import { Path } from '../types'
 import { equalPath } from './equalPath'
 import lifecycle from 'page-lifecycle'
+import { decrementSessionCount } from './sessionCount'
 
 declare global {
   interface Window {
@@ -71,6 +72,7 @@ export const initEvents = (store: Store<State, any>) => {
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
 
     const shouldConfirmReload = store.getState().isPushing
+    decrementSessionCount()
 
     if (shouldConfirmReload) {
       // Note: Showing confirmation dialog can vary between browsers. https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
