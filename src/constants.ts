@@ -292,3 +292,5 @@ export enum DROP_TARGET {
 
 // eslint-disable-next-line no-useless-escape
 export const EMOJI_REGEX = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/u
+
+export const IGNORED_PREFIXES = ['the ']

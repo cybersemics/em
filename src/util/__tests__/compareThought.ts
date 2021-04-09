@@ -100,4 +100,13 @@ describe('compareReasonable', () => {
     expect(compareReasonable('🍍 a', '🍍 b')).toBe(-1)
   })
 
+  it('sort by removing ignored prefixes', () => {
+    expect(compareReasonable('the apple', 'apple')).toBe(0)
+    expect(compareReasonable('the apple', 'book')).toBe(-1)
+    expect(compareReasonable('theatre', 'book')).toBe(1)
+    expect(compareReasonable('the apple', 'theatre')).toBe(-1)
+    expect(compareReasonable('🍍 the apple', '🍍 book')).toBe(-1)
+    expect(compareReasonable('🍍 the apple', '🍍 apple')).toBe(0)
+  })
+
 })

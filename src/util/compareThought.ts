@@ -1,21 +1,17 @@
 import { lower } from './lower'
 import { Child, ComparatorFunction, ComparatorValue } from '../types'
-import { EMOJI_REGEX } from '../constants'
+import { EMOJI_REGEX, IGNORED_PREFIXES } from '../constants'
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
 const regexShortDateWithSlash = /\d{1,2}\/\d{1,2}/
-const ignoredPrefixes = ['the ']
+const regexIgnoredPrefixes = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gm')
 
 /** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
 const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX, '').trim()
 
 /** Remove ignored prefixes from comparator inputs. */
-const removeIgnoredPrefixes = (str: string) => {
-  const ignoredKeywords = ignoredPrefixes.join('|')
-  const regex = new RegExp(`^(${ignoredKeywords})(.*)`, 'gm')
-  return str.replace(regex, `$2`)
-}
+const removeIgnoredPrefixes = (str: string) => str.replace(regexIgnoredPrefixes, `$2`)
 
 /** Make comparator inputs reasonable.  */
 const makeReasonable = (str: string) => {
