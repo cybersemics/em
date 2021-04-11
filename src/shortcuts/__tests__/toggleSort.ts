@@ -1,11 +1,15 @@
 import { EM_TOKEN, HOME_PATH } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute, rankThoughtsFirstMatch } from '../../selectors'
-import { existingThoughtChange, importText, setCursor } from '../../action-creators'
+import { existingThoughtChange, importText, newThought, setCursor, toggleAttribute } from '../../action-creators'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { SimplePath, Thunk } from '../../types'
+import { store } from '../../store'
+import { findThoughtByText } from '../../test-helpers/queries'
+import { findAllByPlaceholderText } from '@testing-library/react'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
 
@@ -133,4 +137,61 @@ it('override global Alphabetical with local None', () => {
   executeShortcut(toggleSortShortcut, { store })
 
   expect(attribute(store.getState(), ['a'], '=sort')).toBe('None')
+})
+
+describe('Sort thoughts', () => {
+  beforeEach(async () => {
+    await createTestApp()
+  })
+  afterEach(cleanupTestApp)
+
+  it('thoughts are sorted alphabetically', async () => {
+    const thoughtValue = 'c'
+    store.dispatch([
+      newThought({ value: thoughtValue }),
+      newThought({ value: 'a' }),
+      newThought({ value: 'b' }),
+      setCursor({ path: null }),
+    ])
+
+    store.dispatch(toggleAttribute({
+      context: ['__ROOT__'],
+      key: '=sort',
+      value: 'Alphabetical',
+    }))
+
+    const thought = await findThoughtByText(thoughtValue)
+    expect(thought).toBeTruthy()
+
+    const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+    const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+
+    expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
+  })
+
+  it('subthoughts are sorted alphabetically', async () => {
+
+    const thoughtValue = 'a'
+    store.dispatch([
+      newThought({ value: thoughtValue }),
+      newThought({ value: '3', insertNewSubthought: true }),
+      newThought({ value: '1' }),
+      newThought({ value: '2' }),
+      setCursorFirstMatchActionCreator([thoughtValue])
+    ])
+
+    store.dispatch(toggleAttribute({
+      context: ['a'],
+      key: '=sort',
+      value: 'Alphabetical',
+    }))
+
+    const thought = await findThoughtByText(thoughtValue)
+    expect(thought).toBeTruthy()
+
+    const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
+    const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+
+    expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
+  })
 })
