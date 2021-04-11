@@ -3,6 +3,9 @@ import * as murmurHash3 from 'murmurhash3js'
 import classNames from 'classnames'
 import Modal from './Modal'
 import { BETA_HASH } from '../constants'
+import { ActionButton } from './ActionButton'
+import { useDispatch } from 'react-redux'
+import { tutorial } from '../action-creators'
 
 const isLocalNetwork = Boolean(
   window.location.hostname === 'localhost' ||
@@ -66,6 +69,7 @@ const ModalWelcome = () => {
   const [invited, setInvited] = useState(isLocalNetwork || validateInviteCode(inviteCode))
   const [inviteTransition, setInviteTransition] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const dispatch = useDispatch()
 
   /** Submit a beta invite code. */
   const submitInviteCode = async () => {
@@ -109,8 +113,21 @@ const ModalWelcome = () => {
     }
   }
 
+  /**
+   * End tutorial.
+   */
+  const endTutorial = () => dispatch(tutorial({
+    value: false
+  }))
+
   return <div ref={onRef}>
-    <Modal id='welcome' title='Welcome to em' className='popup' hideModalActions={!invited} center>
+    <Modal id='welcome' title='Welcome to em' className='popup' hideModalActions={!invited} center actions={({ complete }) => <div>
+      <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
+      <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => {
+        endTutorial()
+        complete()
+      }}>This ain’t my first rodeo. Skip it.</a></div>
+    </div>}>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div style={{ maxWidth: 560 }} className={classNames({
           'animate-slow': inviteTransition,

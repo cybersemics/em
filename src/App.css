@@ -121,6 +121,17 @@ a.button {
   background-color: black;
 }
 
+a.button.action-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 300ms ease-in-out;
+}
+
+a.button.action-button.disabled {
+  opacity: 0.5;
+}
+
 a.button:active {
   background-color: #111;
 }
@@ -631,6 +642,13 @@ body.dark {
   position: absolute;
   width: calc(100% - 30px); /* offset .nav padding */
   transition: background-color 0.2s ease-out;
+}
+
+.nav-container .nav-right-button-group {
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: 15px;
+  align-items: center;
 }
 
 .nav-fill {
@@ -1836,6 +1854,8 @@ h1 .num-contexts {
   color: white;
   padding-top: 2px;
   padding-bottom: 2px;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 
 .popup-section {
@@ -1871,17 +1891,14 @@ h1 .num-contexts {
   color: white;
 }
 
-.popup .modal-actions a.button-inactive {
+.popup .modal-actions a.button.button-inactive {
   background-color: #aaa;
 }
 
-.dark .popup .modal-actions .button-active {
-  background-color: lightblue;
-}
-
-
 .popup .modal-actions {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .popup .logo {
@@ -2985,3 +3002,48 @@ code, .code {
 .preventAutoscroll {
   animation: 0.01s 1 preventAutoscroll;
 }
+
+@keyframes ripple_loader {
+  0% {
+    top: 100%;
+    left: 100%;
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    top: 7.14%;
+    left: 7.14%;
+    width: 162.5%;
+    height: 162.5%;
+    opacity: 0;
+  }
+}.ripple_loader div {
+  position: absolute;
+  border-width: 19.04%;
+  border-style: solid;
+  opacity: 1;
+  border-radius: 50%;
+  animation: ripple_loader 1s cubic-bezier(0,0.2,0.8,1) infinite;
+}.ripple_loader div:nth-child(1) {
+  border-color: #e90c59;
+  animation-delay: 0s;
+}
+.ripple_loader div:nth-child(2) {
+  border-color: #46dff0;
+  animation-delay: -0.5s;
+}
+.ripple_loader_container {
+  display: inline-block;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0);
+}
+.ripple_loader {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform: translateZ(0) scale(0.49);
+  backface-visibility: hidden;
+  transform-origin: 0 0; /* see note above */
+}
+.ripple_loader div { box-sizing: content-box; }

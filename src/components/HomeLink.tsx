@@ -1,10 +1,11 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../selectors'
-import { home } from '../action-creators'
+import { home, modalComplete } from '../action-creators'
 import { Connected } from '../types'
 import { State } from '../util/initialState'
 import Modal from './Modal'
+import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
 
 interface HomeLinkProps {
   color?: string,
@@ -40,7 +41,10 @@ const HomeLink = ({ dark, color, showModal, size, style, dispatch }: Connected<H
       </span>
     </a>
     {showModal === 'home'
-      ? <Modal id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' />
+      ? <Modal id='home' title='Tap the "em" icon to return to the home context' arrow='arrow arrow-top arrow-topleft' actions={({ close }) => <span key='span'>
+        <a onClick={() => dispatch(modalComplete(MODALS.home))}>Got it!</a>
+        <a onClick={() => close && close(MODAL_CLOSE_DURATION)}>Remind me later</a>
+      </span>}/>
       : null
     }
   </span>

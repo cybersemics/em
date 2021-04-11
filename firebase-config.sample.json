@@ -1,0 +1,18 @@
+{
+  "algolia": {
+    "index": "search_index",
+    "api_key": "api_key",
+    "search_key": "search_key",
+    "app_id": "application_id"
+  },
+  "mailgun": {
+    "api_key": "api_key",
+    "domain": "domain.com",
+    "feedback_email": "feedback@domain.com",
+    "em_support_email": "support@domain.com",
+    "rate_limit": {
+      "max_calls": 3,
+      "period": 120
+    }
+  }
+}
