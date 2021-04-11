@@ -4,11 +4,10 @@
 
 import { delay } from '../../test-helpers/delay'
 import clickBullet from '../../test-helpers/e2e-helpers/clickBullet'
-import clickEditable from '../../test-helpers/e2e-helpers/clickEditable'
-import getEditableContextHashFromSelection from '../../test-helpers/e2e-helpers/getEditableContextFromSelection'
-import importTextFirstMatch from '../../test-helpers/e2e-helpers/importTextFirstMatch'
-import setCursorAndSelection from '../../test-helpers/e2e-helpers/setCursorAndSelection'
-import { hashContext } from '../../util'
+import clickWithOffset from '../../test-helpers/e2e-helpers/clickWithOffset'
+import getEditableNodeHandle from '../../test-helpers/e2e-helpers/getEditableNodeHandle'
+import paste from '../../test-helpers/e2e-helpers/paste'
+import setCursor from '../../test-helpers/e2e-helpers/setCursor'
 
 beforeEach(async () => {
   await page.click('#skip-tutorial')
@@ -18,14 +17,14 @@ afterEach(async () => {
   await page.evaluate(async () => {
     const testHelpers = (window.em as any).testHelpers
     await testHelpers.clearAll()
-    await localStorage.clear()
+    localStorage.clear()
   })
 
   await page.reload({
     waitUntil: 'load'
   })
 
-  // wait for alerts to get dismissed
+  // Note: Callback attached to the page to dismiss alerts doesn't seem to work propely unless small delay is added after page reload.
   await delay(50)
 })
 
@@ -40,10 +39,9 @@ describe('caret testing', () => {
     - insomnia
       - rest api`
 
-    await importTextFirstMatch(page, [''], importText)
+    await paste(page, [''], importText)
 
-    await setCursorAndSelection(page, {
-      unrankedPath: ['puppeteer', 'web scrapping'],
+    await setCursor(page, ['puppeteer', 'web scrapping'], {
       offset: 3
     })
 
@@ -62,16 +60,14 @@ describe('caret testing', () => {
     - Don't stay awake for too long
       - I don't wanna fall asleep`
 
-    await importTextFirstMatch(page, [''], importText)
+    await paste(page, [''], importText)
 
-    await setCursorAndSelection(page, {
-      unrankedPath: ['Don\'t stay awake for too long', 'I don\'t wanna fall asleep'],
-      offset: 10
-    })
+    await setCursor(page,
+      ['Don\'t stay awake for too long', 'I don\'t wanna fall asleep'], {
+        offset: 10
+      })
 
-    const hashedContext = hashContext(['Don\'t stay awake for too long'], 0)
-
-    await clickBullet(page, hashedContext)
+    await clickBullet(page, 'Don\'t stay awake for too long')
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
 
@@ -85,17 +81,15 @@ describe('caret testing', () => {
     const importText = `
     - Purple Rain`
 
-    await importTextFirstMatch(page, [''], importText)
+    await paste(page, [''], importText)
 
-    await setCursorAndSelection(page, {
-      unrankedPath: ['Richard Feynman'],
+    await setCursor(page, ['Purple Rain'], {
       offset: 5
     })
 
-    const hashedContext = hashContext(['Purple Rain'], 0)
+    const editableNodeHandle = await getEditableNodeHandle(page, 'Purple Rain')
 
-    await clickEditable(page, {
-      hashedContext,
+    await clickWithOffset(page, editableNodeHandle, {
       horizontalClickLine: 'left'
     })
 
@@ -111,17 +105,15 @@ describe('caret testing', () => {
     const importText = `
     - Richard Feynman`
 
-    await importTextFirstMatch(page, [''], importText)
+    await paste(page, [''], importText)
 
-    await setCursorAndSelection(page, {
-      unrankedPath: ['Richard Feynman'],
+    await setCursor(page, ['Richard Feynman'], {
       offset: 0
     })
 
-    const hashedContext = hashContext(['Richard Feynman'], 0)
+    const editableNodeHandle = await getEditableNodeHandle(page, 'Richard Feynman')
 
-    await clickEditable(page, {
-      hashedContext,
+    await clickWithOffset(page, editableNodeHandle, {
       horizontalClickLine: 'right'
     })
 
@@ -137,18 +129,16 @@ describe('caret testing', () => {
     const importText = `
     - Freddie Mercury`
 
-    await importTextFirstMatch(page, [''], importText)
+    await paste(page, [''], importText)
 
-    await setCursorAndSelection(page, {
-      unrankedPath: ['Freddie Mercury'],
+    await setCursor(page, ['Freddie Mercury'], {
       offset: 0
     })
 
-    const hashedContext = hashContext(['Freddie Mercury'], 0)
+    const editableNodeHandle = await getEditableNodeHandle(page, 'Freddie Mercury')
 
     // click on the given offset node of the editable using mouse click
-    await clickEditable(page, {
-      hashedContext,
+    await clickWithOffset(page, editableNodeHandle, {
       offset: 7
     })
 
@@ -167,21 +157,18 @@ describe('caret testing', () => {
       - Labrador
       - Golden Retriever`
 
-    await importTextFirstMatch(page, [''], importText)
+    await paste(page, [''], importText)
 
-    await setCursorAndSelection(page, {
-      unrankedPath: ['Dogs', 'Husky'],
+    await setCursor(page, ['Dogs', 'Husky'], {
       offset: 0
     })
 
     await page.keyboard.press('ArrowDown')
 
-    const focusedEditableContextHash = await getEditableContextHashFromSelection(page)
-
-    const contextHash = hashContext(['Dogs', 'Labrador'], 1)
+    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
 
     // the focus must be in Dogs/Labrador after cursor down
-    expect(contextHash).toBe(focusedEditableContextHash)
+    expect(textContext).toBe('Labrador')
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
 

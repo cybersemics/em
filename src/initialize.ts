@@ -6,7 +6,7 @@ import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import { setCursorFirstMatchActionCreator } from './test-helpers/setCursorFirstMatch'
-import { importOnFirstMatchPathActionCreator } from './test-helpers/importOnFirstMatchPath'
+import importOnFirstMatchPathActionCreator from './test-helpers/importOnFirstMatchPath'
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
 

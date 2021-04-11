@@ -20,7 +20,7 @@ class PuppeteerEnvironment extends JsDomEnvironment {
   }
 
   async setup() {
-    console.log(chalk.yellow('Setup Test Environment.'))
+    console.info(chalk.yellow('Setup Test Environment.'))
 
     await super.setup()
 
@@ -28,7 +28,7 @@ class PuppeteerEnvironment extends JsDomEnvironment {
     const doesBuildExist = await fs.access(buildPath).then(() => true).catch(() => false)
 
     if (!doesBuildExist) {
-      console.log(chalk.red('App build not found.'))
+      console.error(chalk.red('App build not found.'))
       throw new Error('App build not found.')
     }
 
@@ -59,14 +59,10 @@ class PuppeteerEnvironment extends JsDomEnvironment {
   }
 
   async teardown() {
-    console.log(chalk.yellow('Teardown Test Environment.'))
+    console.info(chalk.yellow('Teardown Test Environment.'))
     await this.global.browser.close()
     await teardownDevServer()
     await super.teardown()
-  }
-
-  runScript(script) {
-    return super.runScript(script)
   }
 }
 

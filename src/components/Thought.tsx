@@ -536,7 +536,6 @@ const ThoughtContainer = ({
     'child-divider': isDivider(thought!.value ?? ''),
     'cursor-parent': isCursorParent,
     'cursor-grandparent': isCursorGrandparent,
-    [`context-${hashContext(pathToContext(path), rank)}`]: true,
     // used so that the autofocus can properly highlight the immediate parent of the cursor
     editing: isEditing,
     expanded: isExpanded,

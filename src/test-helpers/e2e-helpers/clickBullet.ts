@@ -1,14 +1,26 @@
 import { Page } from 'puppeteer'
+import getEditableNodeHandle from './getEditableNodeHandle'
 
 /**
  * Click the bullet for the given thought.
  */
-const clickBullet = async (page: Page, hashedContext: string) => {
-  const query = `.context-${hashedContext} > .thought-container .bullet .glyph`
-  const bulletNode = await page.evaluateHandle(query => {
-    return document.querySelector(query) as HTMLElement
-  }, query)
+const clickBullet = async (page: Page, value: string) => {
+
+  const editableNode = await getEditableNodeHandle(page, value)
+
+  if (!editableNode) throw new Error('editable node for the given value not found.')
+
+  const bulletNode = await page.evaluateHandle((editableNode: Element) => {
+
+    const thoughtContainer = editableNode.closest('.thought-container') as HTMLElement
+
+    if (!thoughtContainer) return
+
+    return thoughtContainer.querySelector(':scope > .bullet .glyph')
+  }, editableNode)
+
   if (!bulletNode) throw new Error('Bullet node not found.')
+
   await bulletNode.asElement()?.click()
 }
 
