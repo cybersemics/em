@@ -12,4 +12,4 @@ npm run build
 
 ## Usage
 
-Run `npm run start` to see usage.
+Run `node build/scripts/diff/index.js` to see usage.
