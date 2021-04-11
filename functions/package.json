@@ -2,7 +2,7 @@
   "name": "functions",
   "scripts": {
     "lint": "eslint \"./src/**/*\"",
-    "build": "tsc --project ./tsconfig.json",
+    "build": "tsc --project ./tsconfig.json && cp -R ./src/templates ./lib",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
@@ -22,6 +22,7 @@
     "firebase-functions": "^3.13.2",
     "firebase-functions-rate-limiter": "^3.8.3",
     "form-data": "^4.0.0",
+    "handlebars": "^4.7.7",
     "mailgun.js": "^3.3.0"
   },
   "devDependencies": {

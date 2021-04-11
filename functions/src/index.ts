@@ -6,7 +6,9 @@ import Mailgun from 'mailgun.js'
 import cors from 'cors'
 import { FirebaseFunctionsRateLimiter } from 'firebase-functions-rate-limiter'
 import { encode } from 'firebase-encode'
-import feedbackEmail from './feedbackEmail'
+import { readFileSync } from 'fs'
+import path from 'path'
+import handlebar from 'handlebars'
 
 admin.initializeApp()
 const database = admin.database()
@@ -38,14 +40,14 @@ const initializeIndex = async (): Promise<void> => {
   const exists = await index.exists()
   if (exists) console.log('[Algolia Index exists]')
   else {
-    console.log('[Algolia Index doesn\'t exist]')
+    console.info('[Algolia Index doesn\'t exist]')
     // Set proper facets filters and searchable attributes
     await index.setSettings({
       searchableAttributes: ['value'],
       attributesForFaceting: ['filterOnly(userId)'],
     })
 
-    console.log('[Algolia Index created]')
+    console.info('[Algolia Index created]')
   }
 }
 
@@ -100,7 +102,7 @@ export const addIndexOnCreateThoughtIndex = functions.database
 
 export const deleteIndexOnThoughtIndexDelete = functions.database
   .ref('users/{userId}/thoughtIndex/{thoughtHash}')
-  .onDelete(async (snapshot, context) => {
+  .onDelete(async (_, context) => {
     const { thoughtHash } = context.params
     try {
       await index.deleteObject(thoughtHash)
@@ -131,10 +133,9 @@ export const sendFeedbackEmail = functions.https.onRequest(async (request, respo
       await rateLimiter.rejectOnQuotaExceededOrRecordUsage(encode(ip as string))
     }
     catch (err) {
-      response.status(429).json({
+      return response.status(429).json({
         message: 'Your feedback submission has been rate limited.'
       })
-      return
     }
 
     const getUserNameAndEmail = async () => {
@@ -150,6 +151,8 @@ export const sendFeedbackEmail = functions.https.onRequest(async (request, respo
       }
     }
 
+    const feedbackTemplate = readFileSync(path.resolve(__dirname, 'templates', 'feedback.hbs')).toString('utf8')
+    const template = handlebar.compile(feedbackTemplate)
     const userDetail = userId ? await getUserNameAndEmail() : null
 
     if (userId && userDetail && !userDetail.name) {
@@ -178,18 +181,25 @@ export const sendFeedbackEmail = functions.https.onRequest(async (request, respo
         MAILGUN_DOMAIN,
         {
           from:
-            `Em Feedback <${MAILGUN_FEEDBACK_EMAIL}>`,
+            `Em Feedback <${userDetail?.email ?? MAILGUN_FEEDBACK_EMAIL}>`,
           to: [MAILGUN_SUPPORT_EMAIL],
           subject: 'App Feedback',
-          html: feedbackEmail(userDetail ? userDetail.name : 'Anonymous User', feedback, userDetail?.email),
+          html: template({
+            feedback,
+            name: userDetail?.name ?? 'Anonymous User',
+            email: userDetail?.email
+          }),
         }
       )
     }
     catch (err) {
-      console.log(err, 'Mailgun error')
+      console.error(err, 'Mailgun error')
+      return response.status(500).json({
+        message: 'Feedback could not be sent.'
+      })
     }
 
-    response.json({
+    return response.json({
       message: 'Feedback sent successfully.',
     })
   })
