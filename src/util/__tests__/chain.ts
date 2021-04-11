@@ -32,8 +32,8 @@ it('match pivot value in plural form', () => {
   expect(pathToContext(chain(
     initialState(),
     [
-      rankThoughtsSequential(['a', 'cats']),
+      rankThoughtsSequential(['a', 'cats']) as SimplePath,
     ],
-    rankThoughtsSequential(['b', 'cat'])
+    rankThoughtsSequential(['b', 'cat']) as SimplePath
   ))).toEqual(['a', 'cats', 'b'])
 })
