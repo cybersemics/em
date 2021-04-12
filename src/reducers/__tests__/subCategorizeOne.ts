@@ -1,10 +1,11 @@
-import { HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
+import importText from '../importText'
 import subCategorizeOne from '../subCategorizeOne'
 import setCursor from '../setCursor'
 
@@ -76,6 +77,42 @@ it('set cursor on new empty thought', () => {
 
   expect(stateNew.cursor)
     .toMatchObject([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
+
+})
+
+it('subcategorize within alphabteically sorted context', () => {
+
+  const steps = [
+    importText({
+      path: HOME_PATH,
+      text: `
+      - A
+        - =sort
+          - Alphabetical
+        - D
+        - B
+        - C
+        - E`
+    }),
+    setCursor({
+      path: [{ value: 'A', rank: 0 }, { value: 'E', rank: 4 }]
+    }),
+    subCategorizeOne
+  ]
+
+  // run steps through reducer flow
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - =sort
+      - Alphabetical
+    - D
+    - B
+    - C
+    - ${''/* prevent trim_trailing_whitespace */}
+      - E`)
 
 })
 
