@@ -44,6 +44,7 @@ import {
   getChildPath,
   appendChildPath,
   getContextsSortedAndRanked,
+  getEditingPath,
   getNextRank,
   getPrevRank,
   getSetting,
@@ -114,7 +115,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent
-    ? parentOf(props.simplePath).concat(head(cursor!)) as SimplePath
+    ? getEditingPath(state, props.simplePath)
     : simplePath
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '', undefined) as Path | undefined

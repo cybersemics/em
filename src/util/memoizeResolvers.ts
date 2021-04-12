@@ -9,5 +9,5 @@ export const resolveShallow = (o: Index<any>): string =>
   resolveArray(Object.values(o))
 
 /** A memoize resolver for Paths. */
-export const resolvePath = (path: Path): string =>
-  resolveArray(path.map(resolveShallow))
+export const resolvePath = (path: Path | null): string | null =>
+  path ? resolveArray(path.map(resolveShallow)) : path
