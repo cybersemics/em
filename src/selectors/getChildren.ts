@@ -4,6 +4,9 @@ import { getSortPreference, hasChild, isContextViewActive } from '../selectors'
 import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant } from '../util'
 import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path } from '../types'
 
+// use global instance of empty array so object reference doesn't change
+const noChildren: Child[] = []
+
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Child[]
 
@@ -18,7 +21,7 @@ export const getParent = ({ thoughts: { contextIndex } }: State, context: Contex
 
 /** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
 export const getAllChildrenByContextHash = ({ thoughts: { contextIndex } }: State, contextEncoded: ContextHash): Child[] =>
-  contextIndex[contextEncoded]?.children || []
+  contextIndex[contextEncoded]?.children || noChildren
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) =>
