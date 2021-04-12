@@ -7,7 +7,15 @@ import { Child, SimplePath, ThoughtContext } from '../types'
 
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */
 const resolve = (state: State, child: Child | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>
-  resolveArray([resolveShallow(child), resolvePath(simplePath), showContexts])
+  resolveArray([
+    // slow, but ensures getChildPath doesn't get memoized when children change
+    showContexts && (child as ThoughtContext).context
+      ? resolvePath(getAllChildren(state, (child as ThoughtContext).context))
+      : '',
+    resolveShallow(child),
+    resolvePath(simplePath),
+    showContexts,
+  ])
 
 /** Because the current thought only needs to hash match another thought we need to use the exact value of the child from the other context child.context SHOULD always be defined when showContexts is true. */
 const getChildPath = _.memoize((state: State, child: Child | ThoughtContext, simplePath: SimplePath, showContexts?: boolean): SimplePath => {
@@ -17,6 +25,7 @@ const getChildPath = _.memoize((state: State, child: Child | ThoughtContext, sim
     || head(simplePath)
 
   const childPath = (showContexts
+    // rankThoughtsFirstMatch not accounted for by memoize resolver
     ? rankThoughtsFirstMatch(state, (child as ThoughtContext).context).concat(otherSubthought)
     : unroot(simplePath).concat(child as Child)) as SimplePath
 

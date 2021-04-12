@@ -8,6 +8,7 @@ import isContextViewActive from './isContextViewActive'
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */
 const resolve = (state: State, childPath: SimplePath, parentThoughtsResolved?: Path) =>
   resolveArray([
+    // slow, but ensures appendChildPath doesn't get memoized when context view changes
     parentThoughtsResolved ? isContextViewActive(state, pathToContext(parentThoughtsResolved)) : '',
     resolvePath(childPath),
     resolvePath(parentThoughtsResolved || [])

@@ -4,7 +4,7 @@ import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
-/** Memoizes getEditingPath. */
+/** Memoize resolver for getEditingPath. */
 const resolve = (state: State, simplePath: SimplePath) =>
   resolveArray([resolvePath(state.cursor), resolvePath(simplePath)])
 
