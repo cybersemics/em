@@ -1,12 +1,12 @@
 import { Page } from 'puppeteer'
-import getEditableNodeHandle from './getEditableNodeHandle'
+import getEditable from './getEditable'
 
 /**
  * Click the bullet for the given thought.
  */
 const clickBullet = async (page: Page, value: string) => {
 
-  const editableNode = await getEditableNodeHandle(page, value)
+  const editableNode = await getEditable(page, value)
 
   if (!editableNode) throw new Error('editable node for the given value not found.')
 
