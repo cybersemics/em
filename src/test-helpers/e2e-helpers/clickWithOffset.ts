@@ -5,14 +5,16 @@ interface Options {
   horizontalClickLine?: 'left' | 'right',
   // Specify specific node on editable to click on. Overrides horizontalClickLine
   offset?: number,
+  // Number of pixels of x offset to add to the click coordinates
+  x,
+  // Number of pixels of y offset to add to the click coordinates
+  y,
 }
-
-const HORIZONTAL_OFFSET = 50
 
 /**
  * Click the given node with offset.
  */
-const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClickLine = 'left', offset }: Options) => {
+const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClickLine = 'left', offset, x = 0, y = 0 }: Options) => {
 
   const boundingBox = await nodeHandle.asElement()?.boundingBox()
 
@@ -33,8 +35,8 @@ const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClick
 
   const coordinate = !offset ? {
     x: boundingBox.x + (
-      horizontalClickLine === 'left' ? -HORIZONTAL_OFFSET
-      : horizontalClickLine === 'right' ? boundingBox.width + HORIZONTAL_OFFSET
+      horizontalClickLine === 'left' ? 0
+      : horizontalClickLine === 'right' ? boundingBox.width
       : boundingBox.width / 2
     ),
     y: boundingBox.y + (boundingBox.height / 2)
@@ -42,7 +44,7 @@ const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClick
 
   if (!coordinate) throw new Error('Coordinate not found.')
 
-  await page.mouse.click(coordinate.x, coordinate.y)
+  await page.mouse.click(coordinate.x + x, coordinate.y + y)
 }
 
 export default clickEditable

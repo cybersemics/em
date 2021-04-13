@@ -61,7 +61,7 @@ describe('caret testing', () => {
     expect(offset).toBe(0)
   })
 
-  it('clicking to the left of a thought, the caret should move to the beginning of the thought.', async () => {
+  it('clicking on the left edge of a thought, the caret should move to the beginning of the thought.', async () => {
 
     const importText = `
     - Purple Rain`
@@ -76,7 +76,22 @@ describe('caret testing', () => {
     expect(offset).toBe(0)
   })
 
-  it('clicking to the right of a thought, the caret should move to the end of the thought.', async () => {
+  it('clicking to the left of a thought, the caret should move to the beginning of the thought.', async () => {
+
+    const importText = `
+    - Purple Rain`
+
+    await page.keyboard.press('Enter')
+    await paste(page, [''], importText)
+    await setCursor(page, ['Purple Rain'], { offset: 5 })
+    const editableNodeHandle = await getEditable(page, 'Purple Rain')
+    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
+
+    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    expect(offset).toBe(0)
+  })
+
+  it('clicking on the right edge of a thought, the caret should move to the end of the thought.', async () => {
 
     const importText = `
     - Richard Feynman`
@@ -89,6 +104,21 @@ describe('caret testing', () => {
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
     expect(offset).toBe('Richard Feynman'.length)
+  })
+
+  it.skip('clicking to the right of a thought, the caret should...?', async () => {
+
+    // const importText = `
+    // - Richard Feynman`
+
+    // await page.keyboard.press('Enter')
+    // await paste(page, [''], importText)
+    // await setCursor(page, ['Richard Feynman'], { offset: 0 })
+    // const editableNodeHandle = await getEditable(page, 'Richard Feynman')
+    // await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
+
+    // const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    // expect(offset).toBe('Richard Feynman'.length)
   })
 
   it('clicking in the middle of a thought, the caret should be set to the point that is clicked.', async () => {
