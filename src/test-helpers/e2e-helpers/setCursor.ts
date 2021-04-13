@@ -8,10 +8,7 @@ interface Options {
 /**
  * Set cursor to the first matched path and set it's selection in puppeteer environment.
  */
-const setCursor = async (page: Page, unrankedPath: string[], {
-  offset,
-  end
-}: Options) => {
+const setCursor = async (page: Page, unrankedPath: string[], { offset, end }: Options) => {
   await page.evaluate(async (unrankedPath, offset, end) => {
     const testHelpers = (window.em as any).testHelpers
     await testHelpers.setCursorFirstMatch(unrankedPath)

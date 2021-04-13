@@ -7,6 +7,8 @@ interface Options {
   offset?: number,
 }
 
+const HORIZONTAL_OFFSET = 50
+
 /**
  * Click the given node with offset.
  */
@@ -30,7 +32,11 @@ const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClick
   }, nodeHandle, offset || 0)
 
   const coordinate = !offset ? {
-    x: boundingBox.x + (horizontalClickLine === 'left' ? 0 : horizontalClickLine === 'right' ? boundingBox.width : boundingBox.width / 2),
+    x: boundingBox.x + (
+      horizontalClickLine === 'left' ? -HORIZONTAL_OFFSET
+      : horizontalClickLine === 'right' ? boundingBox.width + HORIZONTAL_OFFSET
+      : boundingBox.width / 2
+    ),
     y: boundingBox.y + (boundingBox.height / 2)
   } : await offsetCoordinates()
 
