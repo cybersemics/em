@@ -3,9 +3,10 @@ import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getParent, getThought, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { State } from './util/initialState'
-import { hashContext, hashThought, initEvents, initFirebase, owner, urlDataSource } from './util'
+import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
-
+import { setCursorFirstMatchActionCreator } from './test-helpers/setCursorFirstMatch'
+import importOnFirstMatchPathActionCreator from './test-helpers/importOnFirstMatchPath'
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
 
@@ -43,10 +44,23 @@ export const initialize = async () => {
 const withState = <T, R>(f: (state: State, ...args: T[]) => R) =>
   (...args: T[]) => f(store.getState(), ...args)
 
+/** Set cursor function that is exposed to window for puppeteer testing. */
+const setCursorFirstMatch = (unrankedPath: string[]) => store.dispatch(setCursorFirstMatchActionCreator(unrankedPath))
+
+/** Imports text on given unranked path. Used in puppeteer testing. */
+const importTextFirstMatch = (unrankedPath: string[], text: string) => store.dispatch(importOnFirstMatchPathActionCreator(unrankedPath, text))
+
 // add em object to window for debugging
 window.em = {
   db,
   store,
+  // helper functions that will be used by puppeteer tests
+  testHelpers: {
+    setCursorFirstMatch,
+    setSelection,
+    importTextFirstMatch,
+    clearAll: db.clearAll
+  },
   getContexts: withState(getContexts),
   getThought: withState(getThought),
   getParent: withState(getParent),

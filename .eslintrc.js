@@ -30,13 +30,6 @@ module.exports = {
         Atomics: 'readonly',
         SharedArrayBuffer: 'readonly'
       },
-      parser: '@typescript-eslint/parser',
-      parserOptions: {
-        ecmaFeatures: { jsx: true },
-        ecmaVersion: 2018,
-        sourceType: 'module',
-        project: './tsconfig.json'
-      },
       plugins: ['@typescript-eslint'],
       rules: {
         'import/prefer-default-export': 0,
@@ -77,21 +70,31 @@ module.exports = {
           'prefer-single'
         ]
       },
-      settings: { react: { version: 'detect' } }
+      settings: { react: { version: 'detect' } },
+      overrides: [
+        {
+          files: ['./src/**/*.ts', './src/**/*.tsx'],
+          parser: '@typescript-eslint/parser',
+          parserOptions: {
+            ecmaFeatures: { jsx: true },
+            ecmaVersion: 2018,
+            sourceType: 'module',
+            project: './tsconfig.json',
+          }
+        },
+        {
+          files: ['./src/e2e/**/*.ts'],
+          rules: {
+            'jsdoc/check-tag-names': 0
+          }
+        }
+      ]
     }
   ],
   // to be removed later
   globals: {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly'
-  },
-  parserOptions: {
-    ecmaFeatures: {
-      jsx: true
-    },
-    ecmaVersion: 2018,
-    sourceType: 'module',
-    project: './tsconfig.json'
   },
   plugins: [
     'export-default-identifier',

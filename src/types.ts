@@ -17,6 +17,8 @@ declare global {
     firebase: Firebase,
     em: unknown,
     debug: (message: string) => void,
+    // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.
+    delay: (ms: number) => Promise<boolean>,
   }
 
   interface Navigator {

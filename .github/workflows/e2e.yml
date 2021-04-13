@@ -1,0 +1,36 @@
+name: E2E Tests
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - "**"
+
+env:
+  CI: true
+  HUSKY: 0
+
+jobs:
+  run:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test:e2e
