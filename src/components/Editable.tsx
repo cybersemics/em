@@ -68,6 +68,11 @@ const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
 const asyncFocusThrottled = _.throttle(asyncFocus, 100)
 
+// track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
+// otherwise it can trigger unnecessary re-renders
+// intended to be global, not local state
+let blurring = false
+
 /** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
 const makeToolbarPositionFixed = () => {
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
@@ -533,7 +538,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur = () => {
 
-    dispatch(setEditingValue(null))
+    blurring = true
 
     if (isTouch && isSafari()) {
       resetToolbarPosition()
@@ -558,14 +563,21 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     // wait until the next render to determine if we have really blurred
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
-    if (isTouch) {
-      setTimeout(() => {
+    setTimeout(() => {
+
+      // only setEditingValue if blur is not immediately followed by focus
+      if (blurring) {
+        blurring = false
+        dispatch(setEditingValue(null))
+      }
+
+      if (isTouch) {
         // Set editing value to false if user exit editing mode by tapping on other elements other than editable.
         if (!window.getSelection()?.focusNode || !window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')) {
           dispatch(editing({ value: false }))
         }
-      })
-    }
+      }
+    })
   }
 
   /**
@@ -573,6 +585,9 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = () => {
+
+    // do not allow blur to setEditingValue when it is followed immediately by a focus
+    blurring = false
 
     if (isTouch && isSafari()) {
       makeToolbarPositionFixed()

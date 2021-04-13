@@ -44,6 +44,7 @@ import {
   getChildPath,
   appendChildPath,
   getContextsSortedAndRanked,
+  getEditingPath,
   getNextRank,
   getPrevRank,
   getSetting,
@@ -114,7 +115,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent
-    ? parentOf(props.simplePath).concat(head(cursor!)) as SimplePath
+    ? getEditingPath(state, props.simplePath)
     : simplePath
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '', undefined) as Path | undefined
@@ -472,6 +473,11 @@ export const SubthoughtsComponent = ({
           /** Returns true if the cursor in in the child path. */
           const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
           const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
+          const style = {
+            ...styleGrandChildren,
+            ...styleChildren,
+            ...isEditingChildPath() ? styleZoom : null,
+          }
 
           /** Returns true if the bullet should be hidden. */
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
@@ -500,11 +506,7 @@ export const SubthoughtsComponent = ({
             showContexts={showContexts}
             prevChild={filteredChildren[i - 1]}
             isParentHovering={isParentHovering}
-            style={{
-              ...styleGrandChildren,
-              ...styleChildren,
-              ...isEditingChildPath() ? styleZoom : null,
-            }}
+            style={Object.keys(style).length > 0 ? style : undefined}
             path={appendChildPath(state, childPath, path)}
             simplePath={childPath}
           /> : null

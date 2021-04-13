@@ -34,11 +34,11 @@ const lower = (s: string) => s.toLowerCase()
  * - ignore emojis (when there is other text)
  * - singularize.
  */
-export const normalizeThought = _.flow([
+export const normalizeThought = _.memoize(_.flow([
   // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
   stripTags,
   lower,
   trim,
   stripEmojiFromText,
   singularize,
-])
+]))

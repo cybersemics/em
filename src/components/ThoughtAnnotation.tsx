@@ -20,7 +20,7 @@ interface ThoughtAnnotationProps {
   editingValue?: string | null,
   focusOffset?: number,
   homeContext?: boolean,
-  invalidState?: boolean | null,
+  invalidState?: boolean,
   isEditing?: boolean,
   minContexts?: number,
   path: Path,
@@ -82,7 +82,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
   return {
     dark: theme(state) !== 'Light',
     editingValue: isEditing ? editingValue : null,
-    invalidState: isEditing ? invalidState : null,
+    invalidState: isEditing ? invalidState : false,
     isEditing,
     showHiddenThoughts,
     path: simplePathLive,

@@ -412,7 +412,7 @@ const ThoughtContainer = ({
   contextBinding,
   path,
   count = 0,
-  cursor = [],
+  cursor,
   cursorOffset,
   depth = 0,
   dragPreview,
@@ -443,6 +443,8 @@ const ThoughtContainer = ({
   view,
   toggleTopControlsAndBreadcrumbs
 }: ConnectedDraggableThoughtContainerProps) => {
+
+  cursor = cursor || []
 
   const state = store.getState()
   useEffect(() => {
