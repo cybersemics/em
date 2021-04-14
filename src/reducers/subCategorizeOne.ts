@@ -1,4 +1,4 @@
-import { alert, existingThoughtMove } from '../reducers'
+import { alert, existingThoughtMove, newThoughtSubmit, setCursor } from '../reducers'
 import { getRankBefore, hasChild, rootedParentOf, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Child } from '../types'
@@ -15,8 +15,6 @@ import {
   reducerFlow,
   isRoot,
 } from '../util'
-import newThoughtSubmit from './newThoughtSubmit'
-import setCursor from './setCursor'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
 const subCategorizeOne = (state: State) => {
