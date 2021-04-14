@@ -85,9 +85,6 @@ const getChildrenSortedAlphabetical = (state: State, context: Context) =>
 export const getChildrenRanked = (state: State, context: Context): Child[] =>
   getChildrenSortedBy(state, context, compareByRank)
 
-/** Gets all visible children of a context sorted by their ranking. */
-export const getVisibleChildrenRanked = getVisibleThoughts(getChildrenRanked)
-
 /** Returns the first visible child of a context. */
 export const firstVisibleChild = (state: State, context: Context) =>
   getChildrenSorted(state, context)[0]

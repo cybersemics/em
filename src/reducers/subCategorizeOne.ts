@@ -1,10 +1,11 @@
-import { alert, existingThoughtMove, newThought } from '../reducers'
-import { getThoughtBefore, hasChild, simplifyPath } from '../selectors'
+import { alert, existingThoughtMove } from '../reducers'
+import { getRankBefore, hasChild, rootedParentOf, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Child } from '../types'
 
 // util
 import {
+  createId,
   parentOf,
   ellipsize,
   head,
@@ -14,6 +15,8 @@ import {
   reducerFlow,
   isRoot,
 } from '../util'
+import newThoughtSubmit from './newThoughtSubmit'
+import setCursor from './setCursor'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
 const subCategorizeOne = (state: State) => {
@@ -43,17 +46,27 @@ const subCategorizeOne = (state: State) => {
     })
   }
 
-  /** Gets the last created thought inserted before the cursor. */
-  const thoughtNew = (state: State) => {
-    const path = simplifyPath(state, cursor)
-    return getThoughtBefore(state, path, false)
+  const simplePath = simplifyPath(state, cursor)
+  const newRank = getRankBefore(state, simplePath)
+
+  const child: Child = {
+    rank: newRank,
+    value: '',
+    id: createId()
   }
 
   return reducerFlow([
-    newThought({ insertBefore: true }),
+    newThoughtSubmit({
+      context: pathToContext(rootedParentOf(state, simplePath)),
+      ...child
+    }),
+    setCursor({
+      path: cursorParent.concat(child),
+      offset: 0
+    }),
     state => existingThoughtMove(state, {
       oldPath: cursor,
-      newPath: cursorParent.concat(thoughtNew(state) as Child, head(cursor))
+      newPath: cursorParent.concat(child, head(cursor))
     })
   ])(state)
 }
