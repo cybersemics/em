@@ -195,7 +195,7 @@ describe('DOM', () => {
     expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
   })
 
-  describe.only('empty thought ordering is preserved at the point of creation', () => {
+  describe('empty thought ordering is preserved at the point of creation', () => {
 
     it('after first thought', async () => {
       store.dispatch([
@@ -363,6 +363,70 @@ describe('DOM', () => {
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('abcde_f')
+    })
+
+    it('multiple empty thoughts', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['a']),
+        newThought({ value: '', insertBefore: true }),
+        setCursorFirstMatchActionCreator(['a']),
+        newThought({ value: '' }),
+        setCursorFirstMatchActionCreator(['c']),
+        newThought({ value: '' }),
+        setCursorFirstMatchActionCreator(['f']),
+        newThought({ value: '' }),
+      ])
+
+      const thought = await findThoughtByText('a')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_a_bc_def_')
+    })
+
+    // TODO
+    it.skip('multiple contiguous empty thoughts', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['c']),
+        newThought({ value: '' }),
+        newThought({ value: '' }),
+      ])
+
+      const thought = await findThoughtByText('a')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('abc__def')
     })
 
   })

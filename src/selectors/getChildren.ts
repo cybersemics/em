@@ -82,20 +82,50 @@ const rankDiff = (a: Child, b: Child) => Math.abs(a?.rank - b?.rank)
 
 /** Generates children sorted by their values. */
 const getChildrenSortedAlphabetical = (state: State, context: Context) => {
+
+  // default sort (no empty thoughts)
   const sorted = getChildrenSortedBy(state, context, compareThought)
-  const emptyIndex = sorted.findIndex(child => !child.value)
+  let emptyIndex = sorted.findIndex(child => !child.value)
   if (emptyIndex === -1) return sorted
 
-  const sortedWithIndex = sorted.map((child, i) => ({ ...child, i }))
-  const sortedNoEmpty = sortedWithIndex.filter(child => child.value)
-  const empty = sortedWithIndex[emptyIndex]
-  const nearestSibling = sortedNoEmpty.reduce((accum, child) => {
-    const diffEmpty = rankDiff(empty, child)
-    const diffMin = rankDiff(empty, accum)
-    return diffEmpty < diffMin ? child : accum
-  }, sortedNoEmpty[0])
-  const isEmptyBeforeNearest = empty.rank < nearestSibling.rank
-  return splice(sortedNoEmpty, nearestSibling.i + (isEmptyBeforeNearest ? -1 : 0), 0, empty)
+  // sort with empty thoughts at their point of creation
+  // for each empty thought, find the nearest thought according to rank, determine if it was created before or after, and then splice the empty thought back into the sorted array where it was created
+  let sortedFinal = sorted
+  const numEmpties = sorted.filter(child => !child.value).length
+  let i = 0
+
+  // eslint-disable-next-line fp/no-loops
+  while (emptyIndex !== -1 && i++ < numEmpties) {
+
+    // add an index to each thought
+    const sortedWithIndex = sortedFinal.map((child, i) => ({ ...child, i }))
+
+    // remove the first empty thought
+    const sortedNoEmpty = splice(sortedWithIndex, emptyIndex, 1)
+    const empty = sortedWithIndex[emptyIndex]
+
+    // find the nearest sibling to the empty thought
+    // getRankBefore places the new thought closer its next sibling
+    // getRankAfter places the new thought closer its previous sibling
+    const nearestSibling = sortedNoEmpty.reduce((accum, child) => {
+      const diffEmpty = rankDiff(empty, child)
+      const diffMin = rankDiff(empty, accum)
+      return diffEmpty < diffMin ? child : accum
+    }, sortedNoEmpty[0])
+
+    // determine whether the empty thought was created before or after
+    const isEmptyBeforeNearest = empty.rank < nearestSibling.rank
+
+    // calculate the new index and splice the empty thought into place
+    const emptyIndexNew = nearestSibling.i + (isEmptyBeforeNearest ? -1 : 0)
+    sortedFinal = splice(sortedNoEmpty, emptyIndexNew, 0, empty)
+
+    // get the emptyIndex for the next iteration of the loop, ignoring empty thoughts that have already been spliced
+    emptyIndex = sortedFinal.findIndex((child, i) => i < emptyIndexNew && !child.value)
+
+  }
+
+  return sortedFinal
 }
 
 /** Gets all children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
