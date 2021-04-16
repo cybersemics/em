@@ -139,7 +139,7 @@ it('override global Alphabetical with local None', () => {
   expect(attribute(store.getState(), ['a'], '=sort')).toBe('None')
 })
 
-describe('Sort thoughts', () => {
+describe('DOM', () => {
   beforeEach(async () => {
     await createTestApp()
   })
@@ -194,4 +194,177 @@ describe('Sort thoughts', () => {
 
     expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
   })
+
+  describe.only('empty thought ordering is preserved at the point of creation', () => {
+
+    it('after first thought', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['a']),
+        newThought({ value: '' }),
+      ])
+
+      const thought = await findThoughtByText('a')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('a_bcdef')
+    })
+
+    it('after middle thought', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['c']),
+        newThought({ value: '' }),
+      ])
+
+      const thought = await findThoughtByText('a')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('abc_def')
+    })
+
+    it('after last thought', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['f']),
+        newThought({ value: '' }),
+      ])
+
+      const thought = await findThoughtByText('a')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('abcdef_')
+    })
+
+    it('before first thought', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['a']),
+        newThought({ value: '', insertBefore: true }),
+      ])
+
+      const thought = await findThoughtByText('a')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_abcdef')
+    })
+
+    it('before middle thought', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['c']),
+        newThought({ value: '', insertBefore: true }),
+      ])
+
+      const thought = await findThoughtByText('a')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('ab_cdef')
+    })
+
+    it('before last thought', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['f']),
+        newThought({ value: '', insertBefore: true }),
+      ])
+
+      const thought = await findThoughtByText('a')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('abcde_f')
+    })
+
+  })
+
 })

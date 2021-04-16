@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
 import { getSortPreference, hasChild, isContextViewActive } from '../selectors'
-import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant } from '../util'
+import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant, splice } from '../util'
 import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path } from '../types'
 
 // use global instance of empty array so object reference doesn't change
@@ -77,9 +77,26 @@ export const getChildrenSortedWithCursorCheck = getVisibleThoughtsWithCursorChec
 const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
   sort(getAllChildren(state, context), compare)
 
+/** Returns the absolute difference between to child ranks. */
+const rankDiff = (a: Child, b: Child) => Math.abs(a?.rank - b?.rank)
+
 /** Generates children sorted by their values. */
-const getChildrenSortedAlphabetical = (state: State, context: Context) =>
-  getChildrenSortedBy(state, context, compareThought)
+const getChildrenSortedAlphabetical = (state: State, context: Context) => {
+  const sorted = getChildrenSortedBy(state, context, compareThought)
+  const emptyIndex = sorted.findIndex(child => !child.value)
+  if (emptyIndex === -1) return sorted
+
+  const sortedWithIndex = sorted.map((child, i) => ({ ...child, i }))
+  const sortedNoEmpty = sortedWithIndex.filter(child => child.value)
+  const empty = sortedWithIndex[emptyIndex]
+  const nearestSibling = sortedNoEmpty.reduce((accum, child) => {
+    const diffEmpty = rankDiff(empty, child)
+    const diffMin = rankDiff(empty, accum)
+    return diffEmpty < diffMin ? child : accum
+  }, sortedNoEmpty[0])
+  const isEmptyBeforeNearest = empty.rank < nearestSibling.rank
+  return splice(sortedNoEmpty, nearestSibling.i + (isEmptyBeforeNearest ? -1 : 0), 0, empty)
+}
 
 /** Gets all children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
 export const getChildrenRanked = (state: State, context: Context): Child[] =>
