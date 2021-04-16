@@ -80,15 +80,18 @@ const getChildrenSortedBy = (state: State, context: Context, compare: Comparator
 /** Returns the absolute difference between to child ranks. */
 const rankDiff = (a: Child, b: Child) => Math.abs(a?.rank - b?.rank)
 
-/** Generates children sorted by their values. */
-const getChildrenSortedAlphabetical = (state: State, context: Context) => {
-
-  // default sort (no empty thoughts)
+/** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
+const getChildrenSortedAlphabetical = (state: State, context: Context): Child[] => {
   const sorted = getChildrenSortedBy(state, context, compareThought)
-  let emptyIndex = sorted.findIndex(child => !child.value)
-  if (emptyIndex === -1) return sorted
+  const emptyIndex = sorted.findIndex(child => !child.value)
+  return emptyIndex === -1 ? sorted : resortEmptyInPlace(sorted)
+}
 
-  // sort with empty thoughts at their point of creation
+/** Re-sorts empty thoughts in a sorted array to their point of creation. */
+const resortEmptyInPlace = (sorted: Child[]): Child[] => {
+
+  let emptyIndex = sorted.findIndex(child => !child.value)
+
   // for each empty thought, find the nearest thought according to rank, determine if it was created before or after, and then splice the empty thought back into the sorted array where it was created
   let sortedFinal = sorted
   const numEmpties = sorted.filter(child => !child.value).length
