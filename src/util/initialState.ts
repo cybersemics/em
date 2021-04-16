@@ -71,6 +71,7 @@ export interface State {
   inversePatches: Patch[],
   isLoading: boolean,
   isPushing?: boolean,
+  isPulling?: boolean,
   lastUpdated?: string,
   modals: Index<ModalProperties>,
   noteFocus: boolean,

@@ -6,9 +6,10 @@ import { equalArrays, hashContext, head, keyValueBy, pathToContext, unroot } fro
 import { pull } from '../action-creators'
 import { State } from '../util/initialState'
 import { Child, Context, ContextHash, Index, ThoughtContext } from '../types'
+import { isPulling } from '../reducers'
 
 /** Debounce visible thought checks to avoid checking on every action. */
-const updatePullQueueDelay = 10
+const updatePullQueueDelay = 100
 
 /** Limit frequency of fetching pull queue contexts. Ignored on first flush. */
 const flushPullQueueDelay = 500
@@ -101,11 +102,16 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
-    const hasMorePending = await dispatch(pull(extendedPullQueue))
+    if (Object.keys(extendedPullQueue).length !== 0) {
+      isPulling({ value: true })
+      const hasMorePending = await dispatch(pull(extendedPullQueue))
 
-    const { user } = getState()
-    if (!user && hasMorePending) {
-      updatePullQueue({ force: true })
+      const { user } = getState()
+      if (!user && hasMorePending) {
+        updatePullQueue({ force: true })
+      }
+      isPulling({ value: false })
+
     }
   }
 

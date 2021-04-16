@@ -6,6 +6,7 @@ import { HOME_TOKEN } from '../constants'
 import { hashContext, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
 import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../types'
+import { hasPushes } from '../selectors'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = hashContext([HOME_TOKEN])
@@ -41,15 +42,17 @@ const pull = (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Thunk
 
     // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
     // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
-    dispatch(updateThoughts({
-      contextIndexUpdates: thoughts.contextIndex,
-      thoughtIndexUpdates: thoughts.thoughtIndex,
-      local: false,
-      remote: false,
-      // if the root is in the contextMap, force isLoading: false
-      // otherwise isLoading will not be automatically unset by updateThoughts if the root context is empty
-      ...ROOT_ENCODED in contextMap ? { isLoading: false } : null
-    }))
+    if (!hasPushes(getState()) && !getState().isPulling) {
+      dispatch(updateThoughts({
+        contextIndexUpdates: thoughts.contextIndex,
+        thoughtIndexUpdates: thoughts.thoughtIndex,
+        local: false,
+        remote: false,
+        // if the root is in the contextMap, force isLoading: false
+        // otherwise isLoading will not be automatically unset by updateThoughts if the root context is empty
+        ...ROOT_ENCODED in contextMap ? { isLoading: false } : null
+      }))
+    }
   }
 
   const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
