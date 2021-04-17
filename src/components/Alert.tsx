@@ -38,7 +38,7 @@ const AlertComponent = ({ alert, onClose }: { alert: NonNullable<Alert>, onClose
   const useSwipeToDismissProps = useSwipeToDismiss({ onDismiss: onClose })
 
   return <div className='alert' {...useSwipeToDismissProps}>
-    <span className='alert-text'>{alert.value}</span>
+    <span className='alert-text' dangerouslySetInnerHTML={{ __html: alert.value || '' }}/>
     {alert.showCloseLink ? <a className='upper-right status-close-x text-small' onClick={onClose}>✕</a> : null}
   </div>
 }

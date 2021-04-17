@@ -71,6 +71,7 @@
     "redux": "^4.0.5",
     "redux-devtools-extension": "^2.13.8",
     "redux-thunk": "^2.3.0",
+    "truncate-html": "^1.0.3",
     "ts-key-enum": "^2.0.6",
     "use-onclickoutside": "^0.3.1",
     "uuid": "^8.3.2",
