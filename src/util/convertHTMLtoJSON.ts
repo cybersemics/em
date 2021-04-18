@@ -15,8 +15,14 @@ const isFormattingTag = (node: HimalayaNode) => node.type === 'element'
 
 /** Strip span and encode a <i> or <b> element as HTML. */
 const formattingNodeToHtml = (node: Element) => {
-  const content = (_.head(node.children) as Text).content
+  const content: string = node.children.reduce((acc, child) => {
+    return acc + (child.type === 'text' ? child.content
+      : child.type === 'comment' ? ''
+      : formattingNodeToHtml(child))
+  }, '')
+
   if (node.tagName === 'span') return content
+
   return `<${node.tagName}>${content}</${node.tagName}>`
 }
 
