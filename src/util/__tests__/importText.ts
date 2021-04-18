@@ -588,3 +588,56 @@ it('do not parse as html when value has tags inside indented text', () => {
   - c
 `)
 })
+
+it('import single-line nested html tags', () => {
+
+  const text = `- ${HOME_TOKEN}
+  - a
+    - b`
+
+  const paste = `<b><i>A</i></b>`
+
+  const stateNew = reducerFlow([
+
+    // importing single-line needs an existing thought
+    importText({ path: HOME_PATH, text }),
+
+    // manually change `b` to empty thought to not see 'b' end of the new value.
+    existingThoughtChange({
+      newValue: '',
+      oldValue: 'b',
+      context: ['a'],
+      path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }] as SimplePath
+    }),
+
+    importText({
+      path: [{ value: 'a', rank: 0 }, { value: '', rank: 0 }],
+      text: paste,
+    }),
+
+  ])(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported)
+    .toBe(`- ${HOME_TOKEN}
+  - a
+    - <b><i>A</i></b>`)
+})
+
+it('import multi-line nested html tags', () => {
+  const paste = `
+  <li><i><b>A</b></i></li>
+  <li><i><b>B</b></i></li>
+  <li><i><b>C</b></i></li>
+  `
+  const actual = importExport(paste)
+  expect(actual)
+    .toBe(
+      `
+- <i><b>A</b></i>
+- <i><b>B</b></i>
+- <i><b>C</b></i>
+`
+    )
+})
