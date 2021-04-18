@@ -105,7 +105,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
     // state.cursor should always be null here, but check to make sure we're not overriding it
-    !state.cursorInitialized && !state.cursor
+    !state.cursor && thoughts
       ? state => {
         const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
         const cursorNew = !path || isRoot(path) ? null : path
@@ -113,7 +113,6 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
           ...state,
           contextViews,
           cursor: cursorNew,
-          cursorInitialized: true,
         }
       }
       : null,
@@ -122,8 +121,20 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     state => ({
       ...state,
       expanded: expandThoughts(state, state.cursor),
-    })
+    }),
 
+    !state.cursorInitialized ? state => {
+      const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
+      return !path || path.some(pathItem => pathItem.id === '') ?
+        state
+        : {
+          ...state,
+          cursorInitialized: true,
+          cursor: path,
+          contextViews
+        }
+
+    } : null,
   ])(state)
 }
 
