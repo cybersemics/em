@@ -84,6 +84,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const newThought = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = state.cursor && isDescendantPath(state.cursor, oldPath)
 
+  // update thoughtIndex here since recursive updates may have to update same lexeme
+  thoughtIndexNew[key] = newThought
+
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
@@ -317,8 +320,6 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     [key]: newThought,
     ...descendantUpdates
   }
-
-  thoughtIndexNew[key] = newThought
 
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }

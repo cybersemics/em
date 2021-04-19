@@ -206,7 +206,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     return getChildrenRanked(state, context).reduce((accum, child) => {
 
       const hashedKey = hashThought(child.value)
-      const childLexeme = getThought(state, child.value)
+      // use updated thoughtIndex if available
+      const childLexeme = accum[hashedKey]?.lexemeNew || getThought(state, child.value)
       const childOldPath = [...pathOld, child]
       const childNewPath = [...pathNew || pathOld, child]
       const childContext = [...context, child.value]
@@ -230,12 +231,16 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = lexemeNew
 
-      const accumNew = {
+      const updatedAccum = {
         // merge ancestor updates
         ...accumRecursive,
         // merge sibling updates
         // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
         ...accum,
+      }
+
+      const accumNew = {
+        ...updatedAccum,
         // merge current thought updates
         [hashedKey]: {
           lexemeNew,
@@ -245,8 +250,9 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
           pending: isPending(state, childContext),
           // return parallel lists so that the old contextIndex can be deleted and new contextIndex can be added
           // TODO: This could be improved by putting it directly into the form required by contextIndex to avoid later merging
-          contextsOld: ((accumRecursive[hashedKey] || {}).contextsOld || []).concat([context]),
-          contextsNew: ((accumRecursive[hashedKey] || {}).contextsNew || []).concat([contextNew])
+          // use latest thoughtIndex here
+          contextsOld: ((updatedAccum[hashedKey] || {}).contextsOld || []).concat([context]),
+          contextsNew: ((updatedAccum[hashedKey] || {}).contextsNew || []).concat([contextNew])
         } as RecursiveUpdateResult
       }
 

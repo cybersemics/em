@@ -1,6 +1,6 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked } from '../../selectors'
+import { checkDataIntegrity, exportContext, getContexts, getThought, getAllChildren, getChildrenRanked } from '../../selectors'
 import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
 
 it('move within root', () => {
@@ -559,4 +559,29 @@ it('move with nested duplicate thoughts and merge their children', () => {
 
   // context ['p', 'a', 'b'] should not have any garbage children
   expect(getChildrenRanked(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
+})
+
+// Issue: https://github.com/cybersemics/em/issues/1096
+it('data integrity test', () => {
+
+  const text = `
+  - k
+    - a
+      - b
+        - c
+  - m`
+
+  const steps = [
+    importText({ path: HOME_PATH, text }),
+    existingThoughtMove({
+      oldPath: [{ value: 'k', rank: 0 }, { value: 'a', rank: 0 }],
+      newPath: [{ value: 'm', rank: 0 }],
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const noOfUpdates = Object.keys(checkDataIntegrity(stateNew)).length
+
+  expect(noOfUpdates).toBe(0)
 })
