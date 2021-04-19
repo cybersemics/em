@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { State, PushBatch } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts } from '../selectors'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
-import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
+import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot, hashThought } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
 import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtsInterface } from '../types'
 
@@ -104,15 +104,20 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     }),
 
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
-    // state.cursor should always be null here, but check to make sure we're not overriding it
-    !state.cursor && thoughts
+    !state.cursorInitialized
       ? state => {
         const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
         const cursorNew = !path || isRoot(path) ? null : path
-        return {
+        const thoughtsLoaded = cursorNew?.every(pathItem => thoughts.thoughtIndex[hashThought(pathItem.value)])
+
+        return thoughtsLoaded || !cursorNew ? {
           ...state,
           contextViews,
           cursor: cursorNew,
+          cursorInitialized: true,
+        } : {
+          ...state,
+          cursor: cursorNew
         }
       }
       : null,
@@ -121,20 +126,8 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     state => ({
       ...state,
       expanded: expandThoughts(state, state.cursor),
-    }),
+    })
 
-    !state.cursorInitialized ? state => {
-      const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
-      return !path || path.some(pathItem => pathItem.id === '') ?
-        state
-        : {
-          ...state,
-          cursorInitialized: true,
-          cursor: path,
-          contextViews
-        }
-
-    } : null,
   ])(state)
 }
 
