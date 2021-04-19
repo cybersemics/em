@@ -1,9 +1,9 @@
 import globals from '../globals'
-import { EXPAND_THOUGHT_CHAR, MAX_EXPAND_DEPTH, HOME_PATH, HOME_TOKEN } from '../constants'
-import { attribute, attributeEquals, getChildPath, getContexts, getAllChildren, isContextViewActive, simplifyPath, rootedParentOf } from '../selectors'
+import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_EXPAND_DEPTH } from '../constants'
+import { attribute, attributeEquals, getAllChildren, getChildPath, getContexts, isContextViewActive, rootedParentOf, simplifyPath } from '../selectors'
 import { Child, Context, Index, Path, ThoughtContext } from '../types'
 import { State } from '../util/initialState'
-import { equalThoughtRanked, hashContext, head, headValue, isFunction, isURL, keyValueBy, parentOf, pathToContext, publishMode, unroot } from '../util'
+import { equalThoughtRanked, hashContext, head, headValue, isFunction, isURL, keyValueBy, parentOf, pathToContext, publishMode, strip, unroot } from '../util'
 
 /** Get the value of the Child | Th oughtContext. */
 const childValue = (child: Child | ThoughtContext, showContexts: boolean) => showContexts
@@ -38,7 +38,7 @@ const publishPinChildren = (state: State, context: Context) => publishMode() && 
 )
 
 function expandThoughts(state: State, path: Path | null, options?: { depth?: number }): Index<Path>
-function expandThoughts<B extends boolean> (state: State, path: Path | null, options?: { depth?: number, returnContexts?: B }): Index<B extends true ? Context : Path>
+function expandThoughts<B extends boolean>(state: State, path: Path | null, options?: { depth?: number, returnContexts?: B }): Index<B extends true ? Context : Path>
 
 /** Returns an expansion map marking all contexts that should be expanded.
  *
@@ -50,7 +50,7 @@ function expandThoughts<B extends boolean> (state: State, path: Path | null, opt
  *   ...
  * }
  */
-function expandThoughts (state: State, path: Path | null, { depth = 0, returnContexts }: { depth?: number, returnContexts?: boolean } = {}): Index<Path | Context> {
+function expandThoughts(state: State, path: Path | null, { depth = 0, returnContexts }: { depth?: number, returnContexts?: boolean } = {}): Index<Path | Context> {
 
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
@@ -102,7 +102,7 @@ function expandThoughts (state: State, path: Path | null, { depth = 0, returnCon
   const childrenPinned = isOnlyChildNoUrl || isTable(state, context) || pinChildren(state, context) || publishPinChildren(state, context)
     ? children
     : children.filter(child => {
-      const value = childValue(child, showContexts)
+      const value = strip(childValue(child, showContexts))
       return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isPinned(child) === 'true'
     })
 

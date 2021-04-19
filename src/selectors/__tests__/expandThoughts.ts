@@ -393,3 +393,75 @@ describe('=pinChildren', () => {
   })
 
 })
+
+describe('expand with : char', () => {
+
+  it('thoughts end with ":" are expanded', () => {
+
+    const text = `
+    - a
+      - x
+      - y
+    - b:
+      - c
+      - d
+    - x
+      - 1
+      - 2`
+
+    const steps = [
+      importText({ path: HOME_PATH, text }),
+      setCursorFirstMatch(['a'])
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'x'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['x'])).toBeFalsy()
+  })
+
+  it('subthoughts end with ":" are expanded', () => {
+
+    const text = `
+    - a
+      - x
+    - b:
+      - c:
+        - x
+          - a
+        - y
+      - d`
+
+    const steps = [
+      importText({ path: HOME_PATH, text }),
+      setCursorFirstMatch(['a'])
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b', 'c'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b', 'c', 'x'])).toBeFalsy()
+  })
+
+  it('thougts that contain html and end with ":" are expanded', () => {
+    const steps = [
+      newThought('a'),
+      newSubthought('x'),
+      setCursorFirstMatch(['a']),
+      newThought('<b>b:</b>'),
+      newSubthought('<b><i>c:</i></b>'),
+      newSubthought('d'),
+      setCursorFirstMatch(['a'])
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b', 'c'])).toBeTruthy()
+  })
+})

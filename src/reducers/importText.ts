@@ -125,8 +125,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
   const destValue = rawDestValue || destThought.value
 
   // if we are only importing a single line of html, then simply modify the current thought
-  if (numLines === 1) {
-
+  if (numLines <= 1 && !isRoam) {
     const textNormalized = strip(convertedText, { preserveFormatting: true })
 
     // get the range if there is one so that we can import over the selected html

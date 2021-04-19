@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
 import { getSortPreference, hasChild, isContextViewActive } from '../selectors'
-import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant } from '../util'
+import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant, splice } from '../util'
 import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path } from '../types'
 
 // use global instance of empty array so object reference doesn't change
@@ -77,9 +77,59 @@ export const getChildrenSortedWithCursorCheck = getVisibleThoughtsWithCursorChec
 const getChildrenSortedBy = (state: State, context: Context, compare: ComparatorFunction<Child>) =>
   sort(getAllChildren(state, context), compare)
 
-/** Generates children sorted by their values. */
-const getChildrenSortedAlphabetical = (state: State, context: Context) =>
-  getChildrenSortedBy(state, context, compareThought)
+/** Returns the absolute difference between to child ranks. */
+const rankDiff = (a: Child, b: Child) => Math.abs(a?.rank - b?.rank)
+
+/** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
+const getChildrenSortedAlphabetical = (state: State, context: Context): Child[] => {
+  const sorted = getChildrenSortedBy(state, context, compareThought)
+  const emptyIndex = sorted.findIndex(child => !child.value)
+  return emptyIndex === -1 ? sorted : resortEmptyInPlace(sorted)
+}
+
+/** Re-sorts empty thoughts in a sorted array to their point of creation. */
+const resortEmptyInPlace = (sorted: Child[]): Child[] => {
+
+  let emptyIndex = sorted.findIndex(child => !child.value)
+
+  // for each empty thought, find the nearest thought according to rank, determine if it was created before or after, and then splice the empty thought back into the sorted array where it was created
+  let sortedFinal = sorted
+  const numEmpties = sorted.filter(child => !child.value).length
+  let i = 0
+
+  // eslint-disable-next-line fp/no-loops
+  while (emptyIndex !== -1 && i++ < numEmpties) {
+
+    // add an index to each thought
+    const sortedWithIndex = sortedFinal.map((child, i) => ({ ...child, i }))
+
+    // remove the first empty thought
+    const sortedNoEmpty = splice(sortedWithIndex, emptyIndex, 1)
+    const empty = sortedWithIndex[emptyIndex]
+
+    // find the nearest sibling to the empty thought
+    // getRankBefore places the new thought closer its next sibling
+    // getRankAfter places the new thought closer its previous sibling
+    const nearestSibling = sortedNoEmpty.reduce((accum, child) => {
+      const diffEmpty = rankDiff(empty, child)
+      const diffMin = rankDiff(empty, accum)
+      return diffEmpty < diffMin ? child : accum
+    }, sortedNoEmpty[0])
+
+    // determine whether the empty thought was created before or after
+    const isEmptyBeforeNearest = empty.rank < nearestSibling.rank
+
+    // calculate the new index and splice the empty thought into place
+    const emptyIndexNew = nearestSibling.i + (isEmptyBeforeNearest ? -1 : 0)
+    sortedFinal = splice(sortedNoEmpty, emptyIndexNew, 0, empty)
+
+    // get the emptyIndex for the next iteration of the loop, ignoring empty thoughts that have already been spliced
+    emptyIndex = sortedFinal.findIndex((child, i) => i < emptyIndexNew && !child.value)
+
+  }
+
+  return sortedFinal
+}
 
 /** Gets all children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
 export const getChildrenRanked = (state: State, context: Context): Child[] =>

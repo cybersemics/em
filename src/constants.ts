@@ -121,9 +121,9 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGE_SENDER_ID as string,
 }
 
-if (!FIREBASE_CONFIG.apiKey) {
-  console.warn('Environment variable not set: REACT_APP_FIREBASE_API_KEY')
-}
+// if (!FIREBASE_CONFIG.apiKey) {
+//   console.warn('Environment variable not set: REACT_APP_FIREBASE_API_KEY')
+// }
 
 export const ALGOLIA_CONFIG = {
   applicationId: process.env.REACT_APP_ALGOLIA_APPPLICATION_ID as string,
@@ -131,15 +131,15 @@ export const ALGOLIA_CONFIG = {
   searchKeyEndpoint: process.env.REACT_APP_ALGOLIA_SEARCH_KEY_ENDPOINT as string
 }
 
-if (!ALGOLIA_CONFIG.applicationId) {
-  console.warn('Environment variable not set: REACT_APP_ALGOLIA_APPPLICATION_ID')
-}
+// if (!ALGOLIA_CONFIG.applicationId) {
+//   console.warn('Environment variable not set: REACT_APP_ALGOLIA_APPPLICATION_ID')
+// }
 
 export const FEEDBACK_URL = process.env.REACT_APP_FEEDBACK_URL as string
 
-if (!FEEDBACK_URL) {
-  console.warn('Environment variable not set: REACT_APP_FEEDBACK_URL')
-}
+// if (!FEEDBACK_URL) {
+//   console.warn('Environment variable not set: REACT_APP_FEEDBACK_URL')
+// }
 
 /** An identify function that returns the value passed to it. */
 export const ID = <T = any>(x: T): T => x
