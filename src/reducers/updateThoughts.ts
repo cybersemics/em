@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { State, PushBatch } from '../util/initialState'
-import { decodeThoughtsUrl, expandThoughts } from '../selectors'
+import { decodeThoughtsUrl, expandThoughts, getThought } from '../selectors'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
-import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot, hashThought } from '../util'
+import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
 import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtsInterface } from '../types'
 
@@ -108,9 +108,9 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
       ? state => {
         const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
         const cursorNew = !path || isRoot(path) ? null : path
-        const thoughtsLoaded = cursorNew?.every(pathItem => thoughts.thoughtIndex[hashThought(pathItem.value)])
+        const isCursorLoaded = cursorNew?.every(child => getThought(state, child.value))
 
-        return thoughtsLoaded || !cursorNew ? {
+        return isCursorLoaded || !cursorNew ? {
           ...state,
           contextViews,
           cursor: cursorNew,
