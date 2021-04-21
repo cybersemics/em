@@ -2,14 +2,14 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 
-import { delay } from '../../test-helpers/delay'
 import clickBullet from '../../test-helpers/e2e-helpers/clickBullet'
 import clickWithOffset from '../../test-helpers/e2e-helpers/clickWithOffset'
 import getEditable from '../../test-helpers/e2e-helpers/getEditable'
 import paste from '../../test-helpers/e2e-helpers/paste'
-import setCursor from '../../test-helpers/e2e-helpers/setCursor'
+import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
 
 beforeEach(async () => {
+  await page.waitForSelector('#skip-tutorial')
   await page.click('#skip-tutorial')
 })
 
@@ -20,12 +20,9 @@ afterEach(async () => {
     localStorage.clear()
   })
 
-  await page.reload({
-    waitUntil: 'load'
-  })
-
-  // Note: Callback attached to the page to dismiss alerts doesn't seem to work propely unless small delay is added after page reload.
-  await delay(50)
+  // wait until localStorage become empty
+  await page.waitForFunction(() => localStorage.length === 0)
+  await page.reload({ waitUntil: ['load', 'domcontentloaded', 'networkidle0', 'networkidle2'] })
 })
 
 describe('caret testing', () => {
@@ -39,7 +36,14 @@ describe('caret testing', () => {
 
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
-    await setCursor(page, ['puppeteer', 'web scrapping'], { offset: 3 })
+
+    await clickBullet(page, 'puppeteer')
+    await clickBullet(page, 'web scrapping')
+
+    await waitForEditable(page, 'web scrapping')
+    const editableNodeHandle = await getEditable(page, 'web scrapping')
+    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 3 })
+
     await page.keyboard.press('Enter')
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
@@ -54,9 +58,12 @@ describe('caret testing', () => {
 
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
-    await setCursor(page, ['Don\'t stay awake for too long', 'I don\'t wanna fall asleep'], { offset: 10 })
-    await clickBullet(page, 'Don\'t stay awake for too long')
 
+    await waitForEditable(page, 'I don\'t wanna fall asleep')
+    const editableNodeHandle = await getEditable(page, 'I don\'t wanna fall asleep')
+    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 10 })
+
+    await clickBullet(page, 'Don\'t stay awake for too long')
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
     expect(offset).toBe(0)
   })
@@ -68,8 +75,12 @@ describe('caret testing', () => {
 
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
-    await setCursor(page, ['Purple Rain'], { offset: 5 })
+
+    await waitForEditable(page, 'Purple Rain')
     const editableNodeHandle = await getEditable(page, 'Purple Rain')
+
+    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 5 })
+    await page.waitForFunction(() => window.getSelection()?.focusOffset === 5)
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
@@ -83,8 +94,12 @@ describe('caret testing', () => {
 
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
-    await setCursor(page, ['Purple Rain'], { offset: 5 })
+
+    await waitForEditable(page, 'Purple Rain')
     const editableNodeHandle = await getEditable(page, 'Purple Rain')
+
+    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 5 })
+    await page.waitForFunction(() => window.getSelection()?.focusOffset === 5)
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
@@ -98,8 +113,12 @@ describe('caret testing', () => {
 
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
-    await setCursor(page, ['Richard Feynman'], { offset: 0 })
+
+    await waitForEditable(page, 'Richard Feynman')
     const editableNodeHandle = await getEditable(page, 'Richard Feynman')
+
+    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
+    await page.waitForFunction(() => window.getSelection()?.focusOffset === 0)
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'right' })
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
@@ -128,10 +147,11 @@ describe('caret testing', () => {
 
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
-    await setCursor(page, ['Freddie Mercury'], { offset: 0 })
+
+    await waitForEditable(page, 'Freddie Mercury')
+    const editableNodeHandle = await getEditable(page, 'Freddie Mercury')
 
     // click on the given offset node of the editable using mouse click
-    const editableNodeHandle = await getEditable(page, 'Freddie Mercury')
     await clickWithOffset(page, editableNodeHandle, { offset: 7 })
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
@@ -148,7 +168,11 @@ describe('caret testing', () => {
 
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
-    await setCursor(page, ['Dogs', 'Husky'], { offset: 0 })
+
+    await waitForEditable(page, 'Husky')
+    const editableNodeHandle = await getEditable(page, 'Husky')
+    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
+
     await page.keyboard.press('ArrowDown')
 
     // the focus must be in Dogs/Labrador after cursor down
