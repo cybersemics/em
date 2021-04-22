@@ -110,6 +110,9 @@ const ModalExport = () => {
 
     clipboard.on('success', () => {
 
+      // Note: clipboard leaves unwanted text selection after copy operation. so removing it to prevent issue with gesture handler
+      if (document.getSelection()?.toString()) document.getSelection()?.removeAllRanges()
+
       dispatch([
         modalRemindMeLater({ id: 'help' }),
         alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 })
