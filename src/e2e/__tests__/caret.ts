@@ -4,9 +4,9 @@
 
 import clickBullet from '../../test-helpers/e2e-helpers/clickBullet'
 import clickWithOffset from '../../test-helpers/e2e-helpers/clickWithOffset'
-import getEditable from '../../test-helpers/e2e-helpers/getEditable'
 import paste from '../../test-helpers/e2e-helpers/paste'
 import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
+import clickThought from '../../test-helpers/e2e-helpers/clickThought'
 
 beforeEach(async () => {
   await page.waitForSelector('#skip-tutorial')
@@ -37,12 +37,11 @@ describe('caret testing', () => {
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
-    await clickBullet(page, 'puppeteer')
-    await clickBullet(page, 'web scrapping')
+    await clickThought(page, 'puppeteer')
+    await clickThought(page, 'web scrapping')
 
-    await waitForEditable(page, 'web scrapping')
-    const editableNodeHandle = await getEditable(page, 'web scrapping')
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 3 })
+    const editableNodeHandle = await waitForEditable(page, 'web scrapping')
+    await clickWithOffset(page, editableNodeHandle, { offset: 3 })
 
     await page.keyboard.press('Enter')
 
@@ -59,8 +58,7 @@ describe('caret testing', () => {
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
-    await waitForEditable(page, 'I don\'t wanna fall asleep')
-    const editableNodeHandle = await getEditable(page, 'I don\'t wanna fall asleep')
+    const editableNodeHandle = await waitForEditable(page, 'I don\'t wanna fall asleep')
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 10 })
 
     await clickBullet(page, 'Don\'t stay awake for too long')
@@ -76,8 +74,7 @@ describe('caret testing', () => {
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
-    await waitForEditable(page, 'Purple Rain')
-    const editableNodeHandle = await getEditable(page, 'Purple Rain')
+    const editableNodeHandle = await waitForEditable(page, 'Purple Rain')
 
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 5 })
     await page.waitForFunction(() => window.getSelection()?.focusOffset === 5)
@@ -95,8 +92,7 @@ describe('caret testing', () => {
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
-    await waitForEditable(page, 'Purple Rain')
-    const editableNodeHandle = await getEditable(page, 'Purple Rain')
+    const editableNodeHandle = await waitForEditable(page, 'Purple Rain')
 
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 5 })
     await page.waitForFunction(() => window.getSelection()?.focusOffset === 5)
@@ -114,8 +110,7 @@ describe('caret testing', () => {
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
-    await waitForEditable(page, 'Richard Feynman')
-    const editableNodeHandle = await getEditable(page, 'Richard Feynman')
+    const editableNodeHandle = await waitForEditable(page, 'Richard Feynman')
 
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
     await page.waitForFunction(() => window.getSelection()?.focusOffset === 0)
@@ -148,8 +143,7 @@ describe('caret testing', () => {
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
-    await waitForEditable(page, 'Freddie Mercury')
-    const editableNodeHandle = await getEditable(page, 'Freddie Mercury')
+    const editableNodeHandle = await waitForEditable(page, 'Freddie Mercury')
 
     // click on the given offset node of the editable using mouse click
     await clickWithOffset(page, editableNodeHandle, { offset: 7 })
@@ -169,8 +163,7 @@ describe('caret testing', () => {
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
-    await waitForEditable(page, 'Husky')
-    const editableNodeHandle = await getEditable(page, 'Husky')
+    const editableNodeHandle = await waitForEditable(page, 'Husky')
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
 
     await page.keyboard.press('ArrowDown')

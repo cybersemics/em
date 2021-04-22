@@ -6,7 +6,7 @@ import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import importOnFirstMatchPathActionCreator from './test-helpers/importOnFirstMatchPath'
-import getThoughtFromDB from './test-helpers/getThoughtFromDB'
+import getLexemeFromDB from './test-helpers/e2e-helpers/getLexemeFromDB'
 import _ from 'lodash'
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
@@ -56,7 +56,7 @@ window.em = {
   testHelpers: {
     setSelection,
     importTextFirstMatch,
-    getThoughtFromDB,
+    getLexemeFromDB,
     getState: store.getState,
     subscribe: store.subscribe,
     _: _,

@@ -5,8 +5,11 @@ import { Page } from 'puppeteer'
  */
 const waitForEditable = async (page: Page, value: string) =>
   await page.waitForFunction((value: string) => {
-    return Array.from(document.getElementsByClassName('editable'))
-      .some(element => element.innerHTML === value)
+    const editableElement = Array.from(document.getElementsByClassName('editable'))
+      .find(element => element.innerHTML === value)
+    if (editableElement) {
+      return editableElement
+    }
   }, {}, value)
 
 export default waitForEditable

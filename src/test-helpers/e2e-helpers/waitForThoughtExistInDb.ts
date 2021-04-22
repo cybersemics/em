@@ -9,7 +9,7 @@ const waitForThoughtExistInDb = async (page: Page, value: string) => {
       /** Check thought whether written to DB. */
       function checkThought() {
         setTimeout(async () => {
-          const thoughtFromDB = await testHelpers.getThoughtFromDB(value)
+          const thoughtFromDB = await testHelpers.getLexemeFromDB(value)
           thoughtFromDB ? resolve(thoughtFromDB) : checkThought()
         }, 50)
       }

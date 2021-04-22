@@ -4,10 +4,10 @@
 
 import paste from '../../test-helpers/e2e-helpers/paste'
 import getEditingText from '../../test-helpers/e2e-helpers/getEditingText'
-import clickBullet from '../../test-helpers/e2e-helpers/clickBullet'
 import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
 import waitForThoughtToExistInDb from '../../test-helpers/e2e-helpers/waitForThoughtExistInDb'
 import waitForState from '../../test-helpers/e2e-helpers/waitForState'
+import clickThought from '../../test-helpers/e2e-helpers/clickThought'
 
 beforeEach(async () => {
   await page.waitForSelector('#skip-tutorial')
@@ -35,7 +35,7 @@ describe('cursor testing', () => {
     await paste(page, [''], importText)
     await waitForEditable(page, 'B')
 
-    await clickBullet(page, 'B')
+    await clickThought(page, 'B')
 
     await waitForState(page, 'isPushing', false)
     await waitForThoughtToExistInDb(page, 'B')
@@ -59,7 +59,7 @@ describe('cursor testing', () => {
     await paste(page, [''], importText)
 
     await waitForEditable(page, 'Z')
-    await clickBullet(page, 'Z')
+    await clickThought(page, 'Z')
 
     await waitForState(page, 'isPushing', false)
     await waitForThoughtToExistInDb(page, 'B')
