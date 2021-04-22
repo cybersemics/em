@@ -43,8 +43,7 @@ describe('cursor testing', () => {
     await page.evaluate(() => window.location.reload())
 
     await waitForEditable(page, 'B')
-    const editingElement = await getEditingText(page)
-    const thoughtValue = editingElement._remoteObject.value
+    const thoughtValue = await getEditingText(page)
     expect(thoughtValue).toBe('B')
   })
 
@@ -69,8 +68,7 @@ describe('cursor testing', () => {
     await page.evaluate(() => window.location.reload())
 
     await waitForEditable(page, 'Z')
-    const editingElement = await getEditingText(page)
-    const thoughtValue = editingElement._remoteObject.value
+    const thoughtValue = await getEditingText(page)
     expect(thoughtValue).toBe('Z')
   })
 

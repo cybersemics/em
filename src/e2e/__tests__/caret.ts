@@ -59,7 +59,7 @@ describe('caret testing', () => {
     await paste(page, [''], importText)
 
     const editableNodeHandle = await waitForEditable(page, 'I don\'t wanna fall asleep')
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 10 })
+    await clickWithOffset(page, editableNodeHandle, { offset: 10 })
 
     await clickBullet(page, 'Don\'t stay awake for too long')
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
@@ -76,7 +76,7 @@ describe('caret testing', () => {
 
     const editableNodeHandle = await waitForEditable(page, 'Purple Rain')
 
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 5 })
+    await clickWithOffset(page, editableNodeHandle, { offset: 5 })
     await page.waitForFunction(() => window.getSelection()?.focusOffset === 5)
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
 
@@ -94,7 +94,7 @@ describe('caret testing', () => {
 
     const editableNodeHandle = await waitForEditable(page, 'Purple Rain')
 
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', offset: 5 })
+    await clickWithOffset(page, editableNodeHandle, { offset: 5 })
     await page.waitForFunction(() => window.getSelection()?.focusOffset === 5)
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
 
