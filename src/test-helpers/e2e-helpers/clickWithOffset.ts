@@ -6,9 +6,9 @@ interface Options {
   // Specify specific node on editable to click on. Overrides horizontalClickLine
   offset?: number,
   // Number of pixels of x offset to add to the click coordinates
-  x: number,
+  x?: number,
   // Number of pixels of y offset to add to the click coordinates
-  y: number,
+  y?: number,
 }
 
 /**
