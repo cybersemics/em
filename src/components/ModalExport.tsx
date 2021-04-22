@@ -110,6 +110,9 @@ const ModalExport = () => {
 
     clipboard.on('success', () => {
 
+      // Note: clipboard seems to create unwanted text selection so removing it after copy operation is successfull.
+      if (window.getSelection()?.toString()) window.getSelection()?.removeAllRanges()
+
       dispatch([
         modalRemindMeLater({ id: 'help' }),
         alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 })
