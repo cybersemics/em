@@ -20,7 +20,7 @@ const Tutorial2StepContext1Parent = ({ cursor, tutorialChoice, rootSubthoughts }
   <p>You should create this thought at the top level, i.e. not <i>within</i> any other thoughts.
     <TutorialHint>
       <br /><br />{
-        rootSubthoughts.length > 0 && (!cursor || cursor.length > 1)
+        rootSubthoughts && rootSubthoughts.length > 0 && (!cursor || cursor.length > 1)
           ? <Fragment>Select {rootSubthoughts.length === 1 ? 'the top-level thought' : 'one of the top-level thoughts'} ({joinConjunction(rootSubthoughts.map(child => `"${ellipsize(child.value)}"`), 'or')}). </Fragment>
           : null
       }{isTouch ? 'Trace the line below with your finger' : `Hit the Enter key`} to create a new thought. Then type "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}".
