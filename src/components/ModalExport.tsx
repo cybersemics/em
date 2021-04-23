@@ -57,12 +57,13 @@ const ModalExport = () => {
   const exportThoughtsPhrase = isRoot(cursor)
     ? ` all ${numDescendants} thoughts`
     : `"${titleShort}"${numDescendants > 0 ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}`
+
   const exportMessage = <span>
-    {exportWord} {exportThoughtsPhrase}
+    {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>
     <span> as <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a></span>
     .
   </span>
-  const publishMessage = <span>Publish {exportThoughtsPhrase}.</span>
+  const publishMessage = <span>Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>.</span>
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
@@ -262,7 +263,7 @@ const ModalExport = () => {
           {publishedCIDs.length > 0
             ? <div>
               Published: {publishedCIDs.map(cid =>
-                <a key={cid} target='_blank' rel='noopener noreferrer' href={getPublishUrl(cid)}>{titleMedium}</a>
+                <a key={cid} target='_blank' rel='noopener noreferrer' href={getPublishUrl(cid)} dangerouslySetInnerHTML={{ __html: titleMedium }}/>
               )}
             </div>
             : <div>
