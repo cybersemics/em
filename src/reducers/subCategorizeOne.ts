@@ -60,7 +60,8 @@ const subCategorizeOne = (state: State) => {
     }),
     setCursor({
       path: cursorParent.concat(child),
-      offset: 0
+      offset: 0,
+      editing: true
     }),
     state => existingThoughtMove(state, {
       oldPath: cursor,
