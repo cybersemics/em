@@ -84,7 +84,7 @@ const rankDiff = (a: Child, b: Child) => Math.abs(a?.rank - b?.rank)
 const getChildrenSortedAlphabetical = (state: State, context: Context): Child[] => {
   const sorted = getChildrenSortedBy(state, context, compareThought)
   const emptyIndex = sorted.findIndex(child => !child.value)
-  return emptyIndex === -1 ? sorted : resortEmptyInPlace(sorted)
+  return emptyIndex === -1 || sorted.length === 1 ? sorted : resortEmptyInPlace(sorted)
 }
 
 /** Re-sorts empty thoughts in a sorted array to their point of creation. */
