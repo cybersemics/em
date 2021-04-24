@@ -22,23 +22,27 @@ const mapStateToProps = (state: State) => {
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, position: string, showBreadcrumbs: boolean }) => // eslint-disable-line @typescript-eslint/no-unused-vars
-  <div className={classNames({
+const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, position: string, showBreadcrumbs: boolean }) => {
+
+  const isTutorialOn = isTutorial(store.getState())
+  const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path
+
+  return <div className={classNames({
     nav: true,
     ['nav-' + position]: true,
     'nav-fill': cursor && cursor.length > 1
   })}>
-    <div className={classNames({
-      'nav-inset': true,
-    })}>
-      <div className='nav-container'>
+    <div className='nav-inset'>
+      <div className='nav-container' style={{ justifyContent: 'flex-end' }}>
 
-        {!isTutorial(store.getState()) ? <React.Fragment>
+        {!isTutorialOn && <>
           {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
           <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
-            <ContextBreadcrumbs path={(cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path} classNamesObject={{ 'nav-breadcrumbs': true }} />
+            <div style={{ flexGrow: 1 }}>
+              <ContextBreadcrumbs path={breadcrumbPath} classNamesObject={{ 'nav-breadcrumbs': true }} />
+            </div>
           </CSSTransition>
-        </React.Fragment> : null}
+        </>}
 
         <div className='nav-right-button-group'>
           <FeedbackButton/>
@@ -48,5 +52,6 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, po
       </div>
     </div>
   </div>
+}
 
 export default connect(mapStateToProps)(NavBar)

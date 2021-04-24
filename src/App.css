@@ -636,6 +636,7 @@ body.dark {
   position: sticky;
   z-index: 1;
   padding: 0 15px 0 10px;
+  bottom: 0;
 }
 
 .nav-container {
