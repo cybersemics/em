@@ -18,6 +18,7 @@ yarn-debug.log*
 yarn-error.log*
 
 .firebase
+.firebaserc
 .idea
 .history
 .eslintcache
