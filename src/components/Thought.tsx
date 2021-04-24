@@ -624,7 +624,7 @@ const ThoughtContainer = ({
       isParentHovering={isAnyChildHovering}
       showContexts={allowSingleContext}
       simplePath={simplePath}
-      sort={attribute(store.getState(), pathToContext(simplePathLive!), '=sort') || 'None'}
+      sort={getSortPreference(store.getState(), pathToContext(simplePathLive!))}
     />
   </li>)) : null
 }

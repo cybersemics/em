@@ -195,6 +195,91 @@ describe('DOM', () => {
     expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
   })
 
+  describe('sort with Global Sort settings', () => {
+    it('thoughts are sorted alphabetically when "Global Sort" settings is Alphabetical', async () => {
+      const thoughtValue = 'c'
+      store.dispatch([
+        newThought({ value: thoughtValue }),
+        newThought({ value: 'b' }),
+        newThought({ value: 'a' }),
+        setCursor({ path: null }),
+
+        ((dispatch, getState) => dispatch(existingThoughtChange({
+          context: [EM_TOKEN, 'Settings', 'Global Sort'],
+          oldValue: 'None',
+          newValue: 'Alphabetical',
+          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
+        }))) as Thunk,
+      ])
+
+      const thought = await findThoughtByText(thoughtValue)
+      expect(thought).toBeTruthy()
+
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+
+      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
+    })
+
+    it('subthoughts are sorted alphabetically when "Global Sort" settings is Alphabetical', async () => {
+
+      const thoughtValue = 'a'
+      store.dispatch([
+        newThought({ value: thoughtValue }),
+        newThought({ value: '3', insertNewSubthought: true }),
+        newThought({ value: '1' }),
+        newThought({ value: '2' }),
+        setCursorFirstMatchActionCreator([thoughtValue]),
+        ((dispatch, getState) => dispatch(existingThoughtChange({
+          context: [EM_TOKEN, 'Settings', 'Global Sort'],
+          oldValue: 'None',
+          newValue: 'Alphabetical',
+          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
+        }))) as Thunk,
+      ])
+
+      const thought = await findThoughtByText(thoughtValue)
+      expect(thought).toBeTruthy()
+
+      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
+      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+
+      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
+    })
+
+    it('subthoughts are not sorted alphabetically when toggling sort and "Global Sort" settings is Alphabetical', async () => {
+
+      const thoughtValue = 'a'
+      store.dispatch([
+        newThought({ value: thoughtValue }),
+        newThought({ value: '3', insertNewSubthought: true }),
+        newThought({ value: '1' }),
+        newThought({ value: '2' }),
+        setCursorFirstMatchActionCreator([thoughtValue]),
+        ((dispatch, getState) => dispatch(existingThoughtChange({
+          context: [EM_TOKEN, 'Settings', 'Global Sort'],
+          oldValue: 'None',
+          newValue: 'Alphabetical',
+          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
+        }))) as Thunk,
+      ])
+
+      store.dispatch(toggleAttribute({
+        context: ['a'],
+        key: '=sort',
+        value: 'None',
+      }))
+
+      const thought = await findThoughtByText(thoughtValue)
+      expect(thought).toBeTruthy()
+
+      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
+      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+
+      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '1', '2'])
+    })
+  })
+
   describe('empty thought ordering is preserved at the point of creation', () => {
 
     it('after first thought', async () => {

@@ -5,7 +5,7 @@ import classNames from 'classnames'
 import { isTouch } from '../browser'
 import { cursorBack as cursorBackActionCreator, expandContextThought, modalRemindMeLater, toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
 import { MODAL_CLOSE_DURATION, ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { attribute, getSetting, getAllChildren, isTutorial } from '../selectors'
+import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
 import { State } from '../util/initialState'
 
@@ -55,7 +55,8 @@ const mapStateToProps = (state: State) => {
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, [], false)).length
 
   // pass rootSort to allow root Subthoughts ro render on toggleSort
-  const rootSort = attribute(state, rootContext, '=sort') || 'None'
+
+  const rootSort = getSortPreference(state, rootContext)
 
   return {
     search,

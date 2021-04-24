@@ -1,6 +1,6 @@
 import React from 'react'
 import { HOME_PATH } from '../constants'
-import { attributeEquals, getSetting, simplifyPath } from '../selectors'
+import { getSetting, getSortPreference, simplifyPath } from '../selectors'
 import { setCursor, toggleAttribute } from '../action-creators'
 import { pathToContext } from '../util'
 import { Icon as IconType, Shortcut } from '../types'
@@ -47,8 +47,7 @@ const toggleSortShortcut: Shortcut = {
     const { cursor } = state
 
     const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
-
-    return attributeEquals(state, context, '=sort', 'Alphabetical')
+    return getSortPreference(state, context) === 'Alphabetical'
   }
 }
 
