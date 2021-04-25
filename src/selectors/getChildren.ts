@@ -90,6 +90,8 @@ const getChildrenSortedAlphabetical = (state: State, context: Context): Child[] 
 /** Re-sorts empty thoughts in a sorted array to their point of creation. */
 const resortEmptyInPlace = (sorted: Child[]): Child[] => {
 
+  if (sorted.length === 1) return sorted
+
   let emptyIndex = sorted.findIndex(child => !child.value)
 
   // for each empty thought, find the nearest thought according to rank, determine if it was created before or after, and then splice the empty thought back into the sorted array where it was created

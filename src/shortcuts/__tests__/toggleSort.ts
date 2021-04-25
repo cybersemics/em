@@ -399,6 +399,35 @@ describe('DOM', () => {
       expect(childrenString).toMatch('_a_bc_def_')
     })
 
+    it('only one empty subthought', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - a
+              - c
+              - e
+              - b
+          `
+        }),
+        setCursorFirstMatchActionCreator(['a']),
+        newThought({ value: '', insertNewSubthought: true }),
+      ])
+
+      const thought = await findThoughtByText('a')
+
+      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
+      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+      const childrenString = thoughtChildren.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_')
+    })
+
     // TODO
     it.skip('multiple contiguous empty thoughts', async () => {
       store.dispatch([
