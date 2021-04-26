@@ -1,8 +1,9 @@
-import { HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getAllChildren } from '../../selectors'
-import { existingThoughtChange, newThought, setCursor } from '../../reducers'
+import { existingThoughtChange, newThought, setCursor, importText } from '../../reducers'
 import { SimplePath } from '../../types'
+import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 it('edit a thought', () => {
 
@@ -248,4 +249,38 @@ it('do not duplicate children when new and old context are same', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
+})
+
+// Issue: https://github.com/cybersemics/em/issues/1095
+it('data integrity test', () => {
+  const text = `
+    - a
+      - b
+        - d
+      - d`
+
+  const steps = [
+    importText({
+      path: HOME_PATH,
+      text
+    }),
+    setCursor({
+      path: [{
+        value: 'a',
+        rank: 0
+      }]
+    }),
+    existingThoughtChange({
+      newValue: 'azkaban',
+      oldValue: 'a',
+      context: [HOME_TOKEN],
+      path: [{ value: 'a', rank: 0 }] as SimplePath
+    })
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const noOfUpdates = Object.keys(checkDataIntegrity(stateNew)).length
+
+  expect(noOfUpdates).toBe(0)
 })
