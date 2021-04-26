@@ -224,7 +224,7 @@ describe('caret testing for mobile platform', () => {
     await page.emulate(iPhone)
   })
 
-  it.skip('noop', () => {
+  it('noop', () => {
     expect(0).toBe(0)
   })
 })
@@ -234,7 +234,7 @@ describe('caret testing for desktop platform', () => {
     await page.emulate(desktop)
   })
 
-  it.skip('noop', () => {
+  it('noop', () => {
     expect(0).toBe(0)
   })
 

@@ -40,9 +40,7 @@ class PuppeteerEnvironment extends JsDomEnvironment {
     })
 
     const browser = await puppeteer.launch({
-      headless: true,
-      devtools: false,
-      // slowMo: 40
+      headless: true
     })
 
     this.global.browser = browser
