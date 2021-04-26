@@ -2,10 +2,6 @@ import { hashContext, hashThought } from '../util'
 import { State } from '../util/initialState'
 import { Index, Parent, Timestamp } from '../types'
 
-/**
- * This script runs client-side (in the browser console) and operate directly on in-memory data using window.em and then dispatching updateThoughts to sync.
- */
-
 /** Iterates through each lexeme in thoughtIndex, identifies lexeme.contexts that are not replicated in contextIndex, and generates contextIndexUpdates that are dispatched to restore them. */
 const checkDataIntegrity = (state: State, max = 100000) => {
 

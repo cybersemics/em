@@ -1,7 +1,8 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
-import { checkDataIntegrity, exportContext, getContexts, getThought, getAllChildren, getChildrenRanked } from '../../selectors'
+import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked } from '../../selectors'
 import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
+import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 it('move within root', () => {
 

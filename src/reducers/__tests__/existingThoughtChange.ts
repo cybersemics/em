@@ -1,8 +1,9 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { checkDataIntegrity, exportContext, getContexts, getAllChildren } from '../../selectors'
+import { exportContext, getContexts, getAllChildren } from '../../selectors'
 import { existingThoughtChange, newThought, setCursor, importText } from '../../reducers'
 import { SimplePath } from '../../types'
+import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 it('edit a thought', () => {
 
