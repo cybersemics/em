@@ -30,6 +30,10 @@ Dependency notes:
     "react",
     "react-dom",
 
+    // Broken:  ^6.0.1 → ^7.0.5
+    // InstalledClock not exported; need to troubleshoot
+    "@sinonjs/fake-timers",
+
     // ts-key-enum v3 does not work with @babel/plugin-transform-typescript which is a subdependency of react-scripts
     //
     // em@163.0.0
