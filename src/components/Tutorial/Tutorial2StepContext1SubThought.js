@@ -28,9 +28,8 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
     }</p>
     {
       // e.g. Home
-      rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
-        // e.g. Home/To Do
-        getChildrenRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+      // e.g. Home/To Do
+      getChildrenRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
         ? <p>Do you remember how to do it?
           <TutorialHint>
             <br /><br />
@@ -43,5 +42,6 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
     }
   </Fragment>
 }
+// rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
 
 export default Tutorial2StepContext1SubThought

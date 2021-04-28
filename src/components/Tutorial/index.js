@@ -84,29 +84,31 @@ const Tutorial = ({ contextViews, cursor, rootChildren, tutorialChoice, tutorial
       (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
       (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
     )
+    /* eslint-disable */
       ? <div className='tutorial-trace-gesture'>
-        <GestureDiagram path={
-          tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
-            tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
-            tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
-            tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
-            ? shortcutById('newThoughtOrOutdent').gesture
-            : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
-              tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
-              tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
-              tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
-              tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
-              ? shortcutById('newSubthought').gesture
-              : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
-                ? shortcutById('toggleContextView').gesture
-                : null
-        }
-        size='160'
-        strokeWidth='10'
-        arrowSize='5'
-        className='animate-pulse'
-        />
-      </div>
+          <GestureDiagram path =
+            {
+              tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
+                tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
+                tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
+                tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
+                ? shortcutById('newThoughtOrOutdent').gesture
+                : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
+                  tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
+                  tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
+                  tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
+                  tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
+                  ? shortcutById('newSubthought').gesture
+                  : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
+                    ? shortcutById('toggleContextView').gesture
+                    : null
+            }
+            size='160'
+            strokeWidth='10'
+            arrowSize='5'
+            className='animate-pulse'
+          />
+        </div>
       : null
     }
 
