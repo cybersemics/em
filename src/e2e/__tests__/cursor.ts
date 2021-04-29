@@ -8,20 +8,22 @@ import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
 import waitForThoughtToExistInDb from '../../test-helpers/e2e-helpers/waitForThoughtExistInDb'
 import waitForState from '../../test-helpers/e2e-helpers/waitForState'
 import clickThought from '../../test-helpers/e2e-helpers/clickThought'
-import skipTutorial from '../../test-helpers/e2e-helpers/skipTutorial'
+import initPage from '../../test-helpers/e2e-helpers/initPage'
+import { BrowserContext, Device, Page } from 'puppeteer'
+
+let page: Page
+let context: BrowserContext
+let emulatedDevice: Device
+jest.setTimeout(30000)
 
 beforeEach(async () => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  await openNewPage()
-  await skipTutorial(page)
-
+  const { page: newPage, context: newContext } = await initPage(browser, { emulatedDevice })
+  page = newPage
+  context = newContext
 })
 
 afterEach(async () => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  await closePage()
+  await context.close()
 })
 
 describe('cursor testing', () => {

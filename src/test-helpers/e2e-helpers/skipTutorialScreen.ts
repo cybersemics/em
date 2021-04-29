@@ -1,16 +1,14 @@
 import { Page } from 'puppeteer'
-import waitForState from './waitForState'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 
 /**
  * Skip tutorial screen.
  */
-const skipTutorial = async (page: Page) => {
-  await waitForState(page, 'isLoading', false)
+const skipTutorialScreen = async (page: Page) => {
   await waitForContextHasChildWithValue(page, ['__EM__', 'Settings', 'Tutorial'], 'On')
   await page.waitForSelector('#skip-tutorial')
-  await page.click('#skip-tutorial')
+  await page.evaluate(() => document.getElementById('skip-tutorial')?.click())
   await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
 }
 
-export default skipTutorial
+export default skipTutorialScreen

@@ -1,40 +1,41 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
-
 import clickBullet from '../../test-helpers/e2e-helpers/clickBullet'
 import clickWithOffset from '../../test-helpers/e2e-helpers/clickWithOffset'
 import paste from '../../test-helpers/e2e-helpers/paste'
 import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
-import clickThought from '../../test-helpers/e2e-helpers/clickThought'
 import waitForState from '../../test-helpers/e2e-helpers/waitForState'
-import { devices } from 'puppeteer'
-import skipTutorial from '../../test-helpers/e2e-helpers/skipTutorial'
+import { BrowserContext, Device, devices, Page } from 'puppeteer'
+import initPage from '../../test-helpers/e2e-helpers/initPage'
+import clickThought from '../../test-helpers/e2e-helpers/clickThought'
+import BrowserInstance from '../BrowserInstance.js'
+
+let page: Page
+let context: BrowserContext
+let emulatedDevice: Device
 
 beforeEach(async () => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  await openNewPage()
-  await skipTutorial(page)
-
+  const browser = await BrowserInstance
+  const { page: newPage, context: newContext } = await initPage(browser, { emulatedDevice })
+  page = newPage
+  context = newContext
 })
 
 afterEach(async () => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  await closePage()
+  await context.close()
 })
 
 describe('caret testing', () => {
 
   it('caret should be at the beginning of thought after split on enter', async () => {
+    // const { page, context } = await initPage(browser)
 
     const importText = `
     - puppeteer
       - web scrapping
     - insomnia
       - rest api`
-
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
@@ -54,6 +55,7 @@ describe('caret testing', () => {
   })
 
   it('clicking a bullet, the caret should move to the beginning of the thought', async () => {
+    // const { page, context } = await initPage(browser)
 
     const importText = `
     - Don't stay awake for too long
@@ -185,9 +187,7 @@ describe('caret testing', () => {
 describe('caret testing for mobile platform', () => {
   beforeEach(async () => {
     // Don't emulate in here, because this block is called before beforeEach method above.
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    global.emulatedDevice = devices['iPhone 11']
+    emulatedDevice = devices['iPhone 11']
   })
 
   it('when subCategorizeOne, caret should be on new thought', async () => {
