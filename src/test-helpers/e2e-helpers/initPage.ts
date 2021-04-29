@@ -2,6 +2,7 @@ import skipTutorialScreen from './skipTutorialScreen'
 import { Browser, Device, Page } from 'puppeteer'
 
 export interface InitPageOptions {
+  puppeteerBrowser?: Browser,
   url?: string,
   skipTutorial?: boolean,
   emulatedDevice?: Device,
@@ -10,8 +11,8 @@ export interface InitPageOptions {
 /**
  * Create a new incognito context and page.
  */
-const initPage = async (browser: Browser, { url = 'http://localhost:3000', emulatedDevice, skipTutorial = true }: InitPageOptions) => {
-  const context = await browser.createIncognitoBrowserContext()
+const initPage = async ({ puppeteerBrowser = browser, url = 'http://localhost:3000', emulatedDevice, skipTutorial = true }: InitPageOptions) => {
+  const context = await puppeteerBrowser.createIncognitoBrowserContext()
   const page: Page = await context.newPage()
 
   if (emulatedDevice) {

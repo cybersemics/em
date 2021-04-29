@@ -7,8 +7,9 @@ const JsDomEnvironment = require('jest-environment-jsdom')
 const { setup: setupDevServer, teardown: teardownDevServer } = require('jest-dev-server')
 const fs = require('fs/promises')
 const path = require('path')
-const BrowserInstance = require('./BrowserInstance.js')
-/** */
+const puppeteer = require('puppeteer')
+
+/** Puppeteer Environment for jest. */
 class PuppeteerEnvironment extends JsDomEnvironment {
   browser;
   constructor(config) {
@@ -35,12 +36,15 @@ class PuppeteerEnvironment extends JsDomEnvironment {
       port: 3000
     })
 
-    this.browser = await BrowserInstance
+    this.global.browser = await puppeteer.launch({
+      headless: true,
+    })
+
   }
 
   async teardown() {
     console.info(chalk.yellow('Teardown Test Environment.'))
-    await this.browser.close()
+    await this.global.browser.close()
     await teardownDevServer()
     await super.teardown()
   }

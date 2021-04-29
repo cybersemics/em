@@ -11,22 +11,21 @@ import clickThought from '../../test-helpers/e2e-helpers/clickThought'
 import initPage from '../../test-helpers/e2e-helpers/initPage'
 import { BrowserContext, Device, Page } from 'puppeteer'
 
-let page: Page
-let context: BrowserContext
-let emulatedDevice: Device
-jest.setTimeout(30000)
-
-beforeEach(async () => {
-  const { page: newPage, context: newContext } = await initPage(browser, { emulatedDevice })
-  page = newPage
-  context = newContext
-})
-
-afterEach(async () => {
-  await context.close()
-})
-
 describe('cursor testing', () => {
+  let page: Page
+  let context: BrowserContext
+  let emulatedDevice: Device
+
+  beforeEach(async () => {
+    const { page: newPage, context: newContext } = await initPage({ emulatedDevice })
+    page = newPage
+    context = newContext
+  })
+
+  afterEach(async () => {
+    await context.close()
+  })
+
   it('cursor on a home thought', async () => {
 
     const importText = `

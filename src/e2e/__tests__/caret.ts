@@ -6,30 +6,25 @@ import clickWithOffset from '../../test-helpers/e2e-helpers/clickWithOffset'
 import paste from '../../test-helpers/e2e-helpers/paste'
 import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
 import waitForState from '../../test-helpers/e2e-helpers/waitForState'
-import { BrowserContext, Device, devices, Page } from 'puppeteer'
+import { BrowserContext, devices, Page } from 'puppeteer'
 import initPage from '../../test-helpers/e2e-helpers/initPage'
 import clickThought from '../../test-helpers/e2e-helpers/clickThought'
-import BrowserInstance from '../BrowserInstance.js'
-
-let page: Page
-let context: BrowserContext
-let emulatedDevice: Device
-
-beforeEach(async () => {
-  const browser = await BrowserInstance
-  const { page: newPage, context: newContext } = await initPage(browser, { emulatedDevice })
-  page = newPage
-  context = newContext
-})
-
-afterEach(async () => {
-  await context.close()
-})
 
 describe('caret testing', () => {
+  let page: Page
+  let context: BrowserContext
+
+  beforeEach(async () => {
+    const { page: newPage, context: newContext } = await initPage({})
+    page = newPage
+    context = newContext
+  })
+
+  afterEach(async () => {
+    await context.close()
+  })
 
   it('caret should be at the beginning of thought after split on enter', async () => {
-    // const { page, context } = await initPage(browser)
 
     const importText = `
     - puppeteer
@@ -55,7 +50,6 @@ describe('caret testing', () => {
   })
 
   it('clicking a bullet, the caret should move to the beginning of the thought', async () => {
-    // const { page, context } = await initPage(browser)
 
     const importText = `
     - Don't stay awake for too long
@@ -185,9 +179,17 @@ describe('caret testing', () => {
 })
 
 describe('caret testing for mobile platform', () => {
+  let page: Page
+  let context: BrowserContext
+
   beforeEach(async () => {
-    // Don't emulate in here, because this block is called before beforeEach method above.
-    emulatedDevice = devices['iPhone 11']
+    const { page: newPage, context: newContext } = await initPage({ emulatedDevice: devices['iPhone 11'] })
+    page = newPage
+    context = newContext
+  })
+
+  afterEach(async () => {
+    await context.close()
   })
 
   it('when subCategorizeOne, caret should be on new thought', async () => {
