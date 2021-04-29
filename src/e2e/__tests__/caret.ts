@@ -6,22 +6,19 @@ import clickWithOffset from '../../test-helpers/e2e-helpers/clickWithOffset'
 import paste from '../../test-helpers/e2e-helpers/paste'
 import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
 import waitForState from '../../test-helpers/e2e-helpers/waitForState'
-import { BrowserContext, devices, Page } from 'puppeteer'
+import { devices, Page } from 'puppeteer'
 import initPage from '../../test-helpers/e2e-helpers/initPage'
 import clickThought from '../../test-helpers/e2e-helpers/clickThought'
 
 describe('caret testing', () => {
   let page: Page
-  let context: BrowserContext
 
   beforeEach(async () => {
-    const { page: newPage, context: newContext } = await initPage({})
-    page = newPage
-    context = newContext
+    page = await initPage()
   })
 
   afterEach(async () => {
-    await context.close()
+    await page.browserContext().close()
   })
 
   it('caret should be at the beginning of thought after split on enter', async () => {
@@ -180,16 +177,13 @@ describe('caret testing', () => {
 
 describe('caret testing for mobile platform', () => {
   let page: Page
-  let context: BrowserContext
 
   beforeEach(async () => {
-    const { page: newPage, context: newContext } = await initPage({ emulatedDevice: devices['iPhone 11'] })
-    page = newPage
-    context = newContext
+    page = await initPage({ emulatedDevice: devices['iPhone 11'] })
   })
 
   afterEach(async () => {
-    await context.close()
+    await page.browserContext().close()
   })
 
   it('when subCategorizeOne, caret should be on new thought', async () => {

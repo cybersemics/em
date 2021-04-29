@@ -9,21 +9,17 @@ import waitForThoughtToExistInDb from '../../test-helpers/e2e-helpers/waitForTho
 import waitForState from '../../test-helpers/e2e-helpers/waitForState'
 import clickThought from '../../test-helpers/e2e-helpers/clickThought'
 import initPage from '../../test-helpers/e2e-helpers/initPage'
-import { BrowserContext, Device, Page } from 'puppeteer'
+import { Page } from 'puppeteer'
 
 describe('cursor testing', () => {
   let page: Page
-  let context: BrowserContext
-  let emulatedDevice: Device
 
   beforeEach(async () => {
-    const { page: newPage, context: newContext } = await initPage({ emulatedDevice })
-    page = newPage
-    context = newContext
+    page = await initPage()
   })
 
   afterEach(async () => {
-    await context.close()
+    await page.browserContext().close()
   })
 
   it('cursor on a home thought', async () => {

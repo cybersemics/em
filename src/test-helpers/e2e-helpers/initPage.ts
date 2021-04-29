@@ -11,7 +11,7 @@ export interface InitPageOptions {
 /**
  * Create a new incognito context and page.
  */
-const initPage = async ({ puppeteerBrowser = browser, url = 'http://localhost:3000', emulatedDevice, skipTutorial = true }: InitPageOptions) => {
+const initPage = async ({ puppeteerBrowser = browser, url = 'http://localhost:3000', emulatedDevice, skipTutorial = true }: InitPageOptions = {}) => {
   const context = await puppeteerBrowser.createIncognitoBrowserContext()
   const page: Page = await context.newPage()
 
@@ -26,7 +26,7 @@ const initPage = async ({ puppeteerBrowser = browser, url = 'http://localhost:30
 
   skipTutorial && await skipTutorialScreen(page)
 
-  return { page, context }
+  return page
 
 }
 export default initPage
