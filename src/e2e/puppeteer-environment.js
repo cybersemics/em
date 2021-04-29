@@ -1,20 +1,17 @@
 /* eslint-disable fp/no-class */
 /* eslint-disable no-useless-constructor */
 /* eslint-disable no-console */
+
 const chalk = require('chalk')
 const JsDomEnvironment = require('jest-environment-jsdom')
-const puppeteer = require('puppeteer')
 const { setup: setupDevServer, teardown: teardownDevServer } = require('jest-dev-server')
 const fs = require('fs/promises')
 const path = require('path')
+const puppeteer = require('puppeteer')
 
-/**
- * Delay for tests.
- */
-const delay = ms => new Promise(resolve => setTimeout(() => resolve(true), ms))
-
-/** */
+/** Puppeteer Environment for jest. */
 class PuppeteerEnvironment extends JsDomEnvironment {
+  browser;
   constructor(config) {
     super(config)
   }
@@ -39,23 +36,10 @@ class PuppeteerEnvironment extends JsDomEnvironment {
       port: 3000
     })
 
-    const browser = await puppeteer.launch({
+    this.global.browser = await puppeteer.launch({
       headless: true,
     })
 
-    this.global.browser = browser
-
-    await browser.defaultBrowserContext().overridePermissions('http://localhost:3000/', ['clipboard-read', 'clipboard-write'])
-
-    this.global.page = await this.global.browser.newPage()
-
-    await this.global.page.goto('http://localhost:3000/', { waitUntil: 'load' })
-
-    await this.global.page.exposeFunction('delay', delay)
-
-    this.global.page.on('dialog', async dialog => {
-      await dialog.accept()
-    })
   }
 
   async teardown() {

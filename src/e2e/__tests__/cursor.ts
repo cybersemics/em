@@ -8,25 +8,20 @@ import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
 import waitForThoughtToExistInDb from '../../test-helpers/e2e-helpers/waitForThoughtExistInDb'
 import waitForState from '../../test-helpers/e2e-helpers/waitForState'
 import clickThought from '../../test-helpers/e2e-helpers/clickThought'
-
-beforeEach(async () => {
-  await page.waitForSelector('#skip-tutorial')
-  await page.click('#skip-tutorial')
-})
-
-afterEach(async () => {
-
-  await page.evaluate(async () => {
-    const testHelpers = (window.em as any).testHelpers
-    await testHelpers.clearAll()
-    localStorage.clear()
-  })
-
-  await page.waitForFunction(() => localStorage.length === 0)
-  await page.goto('http://localhost:3000/', { waitUntil: 'load' })
-})
+import initPage from '../../test-helpers/e2e-helpers/initPage'
+import { Page } from 'puppeteer'
 
 describe('cursor testing', () => {
+  let page: Page
+
+  beforeEach(async () => {
+    page = await initPage()
+  })
+
+  afterEach(async () => {
+    await page.browserContext().close()
+  })
+
   it('cursor on a home thought', async () => {
 
     const importText = `
@@ -71,5 +66,4 @@ describe('cursor testing', () => {
     const thoughtValue = await getEditingText(page)
     expect(thoughtValue).toBe('Z')
   })
-
 })

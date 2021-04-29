@@ -1,31 +1,26 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
-
 import clickBullet from '../../test-helpers/e2e-helpers/clickBullet'
 import clickWithOffset from '../../test-helpers/e2e-helpers/clickWithOffset'
 import paste from '../../test-helpers/e2e-helpers/paste'
 import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
+import waitForState from '../../test-helpers/e2e-helpers/waitForState'
+import { devices, Page } from 'puppeteer'
+import initPage from '../../test-helpers/e2e-helpers/initPage'
 import clickThought from '../../test-helpers/e2e-helpers/clickThought'
 
-beforeEach(async () => {
-  await page.waitForSelector('#skip-tutorial')
-  await page.click('#skip-tutorial')
-})
+describe('caret testing', () => {
+  let page: Page
 
-afterEach(async () => {
-  await page.evaluate(async () => {
-    const testHelpers = (window.em as any).testHelpers
-    await testHelpers.clearAll()
-    localStorage.clear()
+  beforeEach(async () => {
+    page = await initPage()
   })
 
-  // wait until localStorage become empty
-  await page.waitForFunction(() => localStorage.length === 0)
-  await page.reload({ waitUntil: ['load', 'domcontentloaded', 'networkidle0', 'networkidle2'] })
-})
+  afterEach(async () => {
+    await page.browserContext().close()
+  })
 
-describe('caret testing', () => {
   it('caret should be at the beginning of thought after split on enter', async () => {
 
     const importText = `
@@ -33,11 +28,13 @@ describe('caret testing', () => {
       - web scrapping
     - insomnia
       - rest api`
-
     await page.keyboard.press('Enter')
     await paste(page, [''], importText)
 
+    await waitForEditable(page, 'puppeteer')
     await clickThought(page, 'puppeteer')
+
+    await waitForEditable(page, 'web scrapping')
     await clickThought(page, 'web scrapping')
 
     const editableNodeHandle = await waitForEditable(page, 'web scrapping')
@@ -174,5 +171,44 @@ describe('caret testing', () => {
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
     expect(offset).toBe(0)
+  })
+
+})
+
+describe('caret testing for mobile platform', () => {
+  let page: Page
+
+  beforeEach(async () => {
+    page = await initPage({ emulatedDevice: devices['iPhone 11'] })
+  })
+
+  afterEach(async () => {
+    await page.browserContext().close()
+  })
+
+  it('when subCategorizeOne, caret should be on new thought', async () => {
+    const importText = `
+    - A
+      - B`
+
+    await page.keyboard.press('Enter')
+    await paste(page, [''], importText)
+
+    const editableNodeHandle = await waitForEditable(page, 'B')
+    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
+
+    // to close keyboard
+    await clickBullet(page, 'B')
+
+    await page.click('#subcategorizeOne')
+
+    await waitForState(page, 'editing', true)
+
+    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
+    expect(textContext).toBe('')
+
+    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    expect(offset).toBe(0)
+
   })
 })
