@@ -2,7 +2,7 @@ import React from 'react'
 import { connect, useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { login, logout, showModal } from '../action-creators'
+import { logout, showModal } from '../action-creators'
 import { getSetting, isTutorial } from '../selectors'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import { State } from '../util/initialState'
@@ -43,7 +43,7 @@ const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status }: Ret
         <span className='footer-divider'> | </span>
         {authenticated
           ? <a tabIndex={-1} onClick={() => dispatch(logout())}>Log Out</a>
-          : <a tabIndex={-1} onClick={() => dispatch(login())}>Log In</a>
+          : <a tabIndex={-1} onClick={() => dispatch(showModal({ id: 'auth' }))}>Log In</a>
         }
       </span> : null}
     </li><br />

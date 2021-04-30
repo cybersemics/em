@@ -121,6 +121,8 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGE_SENDER_ID as string,
 }
 
+export const FIREBASE_REDIRECT_URL = process.env.REACT_APP_FIREBASE_REDIRECT_URL
+
 // if (!FIREBASE_CONFIG.apiKey) {
 //   console.warn('Environment variable not set: REACT_APP_FIREBASE_API_KEY')
 // }
@@ -296,7 +298,8 @@ export const MODALS: Index<string> = {
   help: 'help',
   home: 'home',
   export: 'export',
-  feedback: 'feedback'
+  feedback: 'feedback',
+  auth: 'auth'
 }
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'
