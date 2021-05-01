@@ -25,8 +25,6 @@ import {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const { thoughts: { contextIndex }, cursor, expanded = {} } = state
-  // console.log('state', state)
-  // console.log([HOME_TOKEN])
   return {
     contextIndex,
     cursor,

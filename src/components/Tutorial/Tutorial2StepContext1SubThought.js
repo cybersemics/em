@@ -9,9 +9,9 @@ import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthoughts }) => {
+const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren }) => {
 
-  const context1SubthoughtisCreated = context1SubthoughtCreated({ rootSubthoughts, tutorialChoice })
+  const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
 
   if (context1SubthoughtisCreated) {
     return <Fragment>
@@ -28,8 +28,9 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
     }</p>
     {
       // e.g. Home
-      // e.g. Home/To Do
-      getChildrenRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+      rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
+        // e.g. Home/To Do
+        getChildrenRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
         ? <p>Do you remember how to do it?
           <TutorialHint>
             <br /><br />
@@ -42,6 +43,5 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootSubthough
     }
   </Fragment>
 }
-// rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
 
 export default Tutorial2StepContext1SubThought
