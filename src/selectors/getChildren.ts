@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { getSortPreference, hasChild, isContextViewActive } from '../selectors'
-import { compareByRank, compareThought, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant, splice } from '../util'
+import { getSortPreference, hasChild, isContextViewActive, isSortPreferenceAlphabetical } from '../selectors'
+import { compareByRank, compareThought, compareThoughtDescending, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant, splice } from '../util'
 import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path } from '../types'
 
 // use global instance of empty array so object reference doesn't change
@@ -56,8 +56,7 @@ export const getChildren = getVisibleThoughts(getAllChildren)
 
 /** Gets all children within a context sorted by rank or sort preference. */
 export const getAllChildrenSorted = (state: State, context: Context) => {
-  const sortPreference = getSortPreference(state, context)
-  const getThoughtsFunction = sortPreference === 'Alphabetical'
+  const getThoughtsFunction = isSortPreferenceAlphabetical(state, context)
     ? getChildrenSortedAlphabetical
     : getChildrenRanked
   return getThoughtsFunction(state, context)
@@ -82,7 +81,10 @@ const rankDiff = (a: Child, b: Child) => Math.abs(a?.rank - b?.rank)
 
 /** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
 const getChildrenSortedAlphabetical = (state: State, context: Context): Child[] => {
-  const sorted = getChildrenSortedBy(state, context, compareThought)
+  const comparatorFunction = getSortPreference(state, context) === 'Alphabetical/desc'
+    ? compareThoughtDescending
+    : compareThought
+  const sorted = getChildrenSortedBy(state, context, comparatorFunction)
   const emptyIndex = sorted.findIndex(child => !child.value)
   return emptyIndex === -1 ? sorted : resortEmptyInPlace(sorted)
 }

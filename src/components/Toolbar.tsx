@@ -211,11 +211,13 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                     exec(store.dispatch, store.getState, e, { type: 'toolbar' })
                   }}
                 >
-                  <SVG style={{
-                    fill: !isActive || isActive(store.getState) ? fg : 'gray',
-                    width: fontSize + 4,
-                    height: fontSize + 4,
-                  }} />
+                  <SVG
+                    getState={store.getState}
+                    style={{
+                      fill: !isActive || isActive(store.getState) ? fg : 'gray',
+                      width: fontSize + 4,
+                      height: fontSize + 4,
+                    }} />
                 </div>
               )
             })}

@@ -39,7 +39,6 @@ import {
 // selectors
 import {
   attribute,
-  attributeEquals,
   childrenFilterPredicate,
   getChildPath,
   appendChildPath,
@@ -54,6 +53,7 @@ import {
   getAllChildrenSorted,
   isContextViewActive,
   rootedParentOf,
+  isSortPreferenceAlphabetical,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -351,7 +351,7 @@ export const SubthoughtsComponent = ({
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : showContexts ?
       getContextsSortedAndRanked(state, headValue(simplePath))
-      : sortPreference === 'Alphabetical' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
+      : sortPreference === 'Alphabetical' || sortPreference === 'Alphabetical/desc' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
       : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging
@@ -433,7 +433,7 @@ export const SubthoughtsComponent = ({
   const styleGrandChildren = getStyle(state, contextGrandchildren)
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
-  const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
+  const cursorOnAlphabeticalSort = cursor && isSortPreferenceAlphabetical(state, context)
 
   return <React.Fragment>
 

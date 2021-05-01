@@ -34,7 +34,7 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
   expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
 })
 
-it('toggle off sort preference of cursor (initial state with =sort/Alphabetical)', () => {
+it('toggle  sort preference descending of cursor (initial state with =sort/Alphabetical)', () => {
 
   const store = createTestStore()
 
@@ -51,6 +51,89 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical)
           - c
           - e`
     }),
+    setCursorFirstMatchActionCreator(['a']),
+  ])
+
+  executeShortcut(toggleSortShortcut, { store })
+
+  expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical/desc')
+})
+
+it('toggle sort preference descending of cursor (initial state with =sort/Alphabetical)', () => {
+
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      path: HOME_PATH,
+      text: `
+        - a
+          - =sort
+            - Alphabetical
+          - d
+          - b
+          - c
+          - e`
+    }),
+    setCursorFirstMatchActionCreator(['a']),
+  ])
+
+  executeShortcut(toggleSortShortcut, { store })
+
+  expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical/desc')
+})
+
+it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/desc)', () => {
+
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      path: HOME_PATH,
+      text: `
+        - a
+          - =sort
+            - Alphabetical/desc
+          - d
+          - b
+          - c
+          - e`
+    }),
+    setCursorFirstMatchActionCreator(['a']),
+  ])
+
+  executeShortcut(toggleSortShortcut, { store })
+
+  expect(attribute(store.getState(), ['a'], '=sort')).toBe(null)
+})
+
+it('toggle off sort preference of cursor (initial state with =sort/Alphabetical and Global Sort Alphabetical/desc)', () => {
+
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      path: HOME_PATH,
+      text: `
+        - a
+          - =sort
+            - Alphabetical
+          - d
+          - b
+          - c
+          - e`
+    }),
+
+    ((dispatch, getState) => dispatch(existingThoughtChange({
+      context: [EM_TOKEN, 'Settings', 'Global Sort'],
+      oldValue: 'None',
+      newValue: 'Alphabetical/desc',
+      path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
+    }))) as Thunk,
+
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -84,7 +167,7 @@ it('toggle on sort preference of home context when cursor is null (initial state
   expect(attribute(store.getState(), [], '=sort')).toBe('Alphabetical')
 })
 
-it('toggle off sort preference of home context when cursor is null (initial state with =sort/Alphabetical)', () => {
+it('toggle sort preference descending of home context when cursor is null (initial state with =sort/Alphabetical)', () => {
 
   const store = createTestStore()
 
@@ -104,10 +187,10 @@ it('toggle off sort preference of home context when cursor is null (initial stat
 
   executeShortcut(toggleSortShortcut, { store })
 
-  expect(attribute(store.getState(), [], '=sort')).toBe(null)
+  expect(attribute(store.getState(), [], '=sort')).toBe('Alphabetical/desc')
 })
 
-it('override global Alphabetical with local None', () => {
+it('override global Alphabetical with local Alphabetical/desc', () => {
 
   const store = createTestStore()
 
@@ -136,7 +219,7 @@ it('override global Alphabetical with local None', () => {
 
   executeShortcut(toggleSortShortcut, { store })
 
-  expect(attribute(store.getState(), ['a'], '=sort')).toBe('None')
+  expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical/desc')
 })
 
 describe('DOM', () => {
@@ -275,6 +358,58 @@ describe('DOM', () => {
       const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
 
       expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '1', '2'])
+    })
+  })
+
+  describe('descending order', () => {
+    it('thoughts are sorted alphabetically in descending order', async () => {
+      const thoughtValue = 'c'
+      store.dispatch([
+        newThought({ value: thoughtValue }),
+        newThought({ value: 'a' }),
+        newThought({ value: 'b' }),
+        setCursor({ path: null }),
+      ])
+
+      store.dispatch(toggleAttribute({
+        context: ['__ROOT__'],
+        key: '=sort',
+        value: 'Alphabetical/desc',
+      }))
+
+      const thought = await findThoughtByText(thoughtValue)
+      expect(thought).toBeTruthy()
+
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+
+      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
+    })
+
+    it('subthoughts are sorted alphabetically in descending order', async () => {
+
+      const thoughtValue = 'a'
+      store.dispatch([
+        newThought({ value: thoughtValue }),
+        newThought({ value: '3', insertNewSubthought: true }),
+        newThought({ value: '1' }),
+        newThought({ value: '2' }),
+        setCursorFirstMatchActionCreator([thoughtValue])
+      ])
+
+      store.dispatch(toggleAttribute({
+        context: ['a'],
+        key: '=sort',
+        value: 'Alphabetical/desc',
+      }))
+
+      const thought = await findThoughtByText(thoughtValue)
+      expect(thought).toBeTruthy()
+
+      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
+      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+
+      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
     })
   })
 

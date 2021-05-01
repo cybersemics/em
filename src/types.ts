@@ -206,6 +206,7 @@ export interface Icon {
   size?: number,
   style?: React.CSSProperties,
   width?: number,
+  getState?: () => State,
 }
 
 export interface Key {

@@ -50,7 +50,6 @@ import {
 // selectors
 import {
   attribute,
-  attributeEquals,
   getNextRank,
   getRankBefore,
   getSortPreference,
@@ -64,6 +63,7 @@ import {
   isContextViewActive,
   rootedParentOf,
   getChildren,
+  isSortPreferenceAlphabetical,
 } from '../selectors'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import { compareReasonable } from '../util/compareThought'
@@ -510,7 +510,7 @@ const ThoughtContainer = ({
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
 
-  const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
+  const cursorOnAlphabeticalSort = cursor && isSortPreferenceAlphabetical(state, context)
 
   const draggingThoughtValue = state.draggingThought
     ? head(pathToContext(state.draggingThought))
