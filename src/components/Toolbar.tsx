@@ -55,7 +55,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
   const [lastScrollLeft, setLastScrollLeft] = useState<number | undefined>()
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState<string | undefined>()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState<string | undefined>()
-  const [pressingToolbarId, setPressingToolbarId] = useState('')
+  const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
   const fg = dark ? 'white' : 'black'
   const arrowWidth = fontSize / 3
 
@@ -89,7 +89,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
     store.dispatch(scrollPrioritize(false))
     clearTimeout(holdTimer)
     clearTimeout(holdTimer2)
-    setPressingToolbarId('')
+    setPressingToolbarId(null)
   }
 
   /** Sets the timer that wairts for the overlay delay. */
@@ -196,7 +196,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                 <div
                   key={name}
                   id={id}
-                  style={pressingToolbarId === id ? { paddingTop: '10px' } : {}}
+                  style={pressingToolbarId === id ? { paddingTop: '10px', transition: 'padding 0.2s ease 0s' } : {}}
                   className='toolbar-icon'
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}
