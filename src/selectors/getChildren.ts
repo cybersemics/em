@@ -173,11 +173,11 @@ const isDescendantOfMetaCursor = (state: State, context: Context): boolean => {
 }
 
 /** Checks if the child is visible or if the child lies within the cursor or is descendant of the meta cursor. */
-const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, context: Context, isForcedChildren = false, child: Child | ThoughtContext) => {
+const isChildVisibleWithCursorCheck = _.curry((state: State, path: Path, context: Context, showContexts = false, child: Child | ThoughtContext) => {
 
-  const showContexts = isContextViewActive(state, pathToContext(path))
+  showContexts = showContexts || isContextViewActive(state, pathToContext(path))
 
-  const value = pathHeadValue(state, path, child, showContexts || isForcedChildren)
+  const value = pathHeadValue(state, path, child, showContexts)
   const childContext = [...pathToContext(path), value]
 
   return state.showHiddenThoughts ||
@@ -198,7 +198,7 @@ const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | Thoug
  * 2. Checks if child is within cursor.
  * 3. Checks if child is created after latest absolute context toggle if starting context is absolute.
  */
-export const childrenFilterPredicate = _.curry((state: State, path: Path, context: Context, isForcedChildren = false, child: Child | ThoughtContext) => {
-  return isChildVisibleWithCursorCheck(state, path, context, isForcedChildren, child) &&
+export const childrenFilterPredicate = _.curry((state: State, path: Path, context: Context, showContexts = false, child: Child | ThoughtContext) => {
+  return isChildVisibleWithCursorCheck(state, path, context, showContexts, child) &&
   (!isAbsolute(state.rootContext) || isCreatedAfterAbsoluteToggle(state, child))
 }, 5)
