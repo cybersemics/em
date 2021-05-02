@@ -1,6 +1,5 @@
 import AlgoliaClient, { SearchIndex } from 'algoliasearch'
 import { Store } from 'redux'
-import { ALGOLIA_CONFIG } from '../constants'
 import { setRemoteSearch } from '../action-creators'
 import { Context, Index } from '../types'
 import { getContextMap, getAlgoliaApiKey } from '../util'
@@ -29,13 +28,18 @@ export const getRemoteSearch = (remoteDataProvider: DataProvider) => {
   }
 }
 
+interface AlgoliaConfig {
+  applicationId: string,
+  index: string,
+}
+
 /**
  * Initialize algolia search client.
  */
-const initAlgoliaSearch = async (userId: string, store: Store) => {
+const initAlgoliaSearch = async (userId: string, algoliaConfig: AlgoliaConfig, store: Store) => {
   const apiKey = await getAlgoliaApiKey(userId)
-  const algoliaClient = AlgoliaClient(ALGOLIA_CONFIG.applicationId, apiKey)
-  searchIndex = algoliaClient.initIndex(ALGOLIA_CONFIG.index)
+  const algoliaClient = AlgoliaClient(algoliaConfig.applicationId, apiKey)
+  searchIndex = algoliaClient.initIndex(algoliaConfig.index)
   store.dispatch(setRemoteSearch({ value: true }))
 }
 

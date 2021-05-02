@@ -1,7 +1,7 @@
 import { Store } from 'redux'
 import globals from '../globals'
 import { authenticate, loadPublicThoughts, setRemoteSearch, status as statusActionCreator, userAuthenticated } from '../action-creators'
-import { FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
+import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
 import { State } from '../util/initialState'
 import { Snapshot, User } from '../types'
@@ -18,7 +18,12 @@ export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
     firebase.auth().onAuthStateChanged((user: User) => {
       if (user) {
         store.dispatch(userAuthenticated(user))
-        initAlgoliaSearch(user.uid, store)
+
+        const { applicationId, index } = ALGOLIA_CONFIG
+        const hasRemoteConfig = applicationId && index
+
+        if (!hasRemoteConfig) console.warn('Algolia configs not found. Remote search is not enabled.')
+        else initAlgoliaSearch(user.uid, { applicationId, index }, store)
       }
       else {
         store.dispatch(authenticate({ value: false }))

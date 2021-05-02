@@ -25,7 +25,11 @@ describe('remote search', () => {
   beforeEach(async () => {
     const mockStore = createMockStore()
     const store = mockStore(initialState())
-    await initAlgoliaSearch('userId', store)
+
+    await initAlgoliaSearch('userId', {
+      applicationId: 'test_application_id',
+      index: 'test_index'
+    }, store)
   })
 
   it('return context map from the remote search hits', async () => {
