@@ -196,7 +196,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                 <div
                   key={name}
                   id={id}
-                  style={pressingToolbarId === id ? { paddingTop: '10px', transition: 'padding 0.2s ease 0s' } : {}}
+                  style={pressingToolbarId === id ? { paddingTop: '10px' } : {}}
                   className='toolbar-icon'
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}

@@ -387,6 +387,7 @@ a.text-link {
   padding: 5px 8px;
   border-radius: 3px;
   z-index: 1;
+  transition: padding 0.2s ease 0s;
 }
 
 .toolbar-icon .icon {
