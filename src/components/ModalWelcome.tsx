@@ -2,10 +2,12 @@ import React, { useState } from 'react'
 import * as murmurHash3 from 'murmurhash3js'
 import classNames from 'classnames'
 import Modal from './Modal'
-import { BETA_HASH } from '../constants'
+import { BETA_HASH, EM_TOKEN } from '../constants'
 import { ActionButton } from './ActionButton'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { tutorial } from '../action-creators'
+import { getAllChildren } from '../selectors'
+import { State } from '../util/initialState'
 
 const isLocalNetwork = Boolean(
   window.location.hostname === 'localhost' ||
@@ -69,6 +71,9 @@ const ModalWelcome = () => {
   const [invited, setInvited] = useState(isLocalNetwork || validateInviteCode(inviteCode))
   const [inviteTransition, setInviteTransition] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isTutorialSettingsLoaded = useSelector(
+    (state: State) => getAllChildren(state, [EM_TOKEN, 'Settings', 'Tutorial']).length > 0
+  )
   const dispatch = useDispatch()
 
   /** Submit a beta invite code. */
@@ -123,10 +128,11 @@ const ModalWelcome = () => {
   return <div ref={onRef}>
     <Modal id='welcome' title='Welcome to em' className='popup' hideModalActions={!invited} center actions={({ complete }) => <div>
       <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
-      <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => {
+      { isTutorialSettingsLoaded && <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => {
         endTutorial()
         complete()
       }}>This ain’t my first rodeo. Skip it.</a></div>
+      }
     </div>}>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div style={{ maxWidth: 560 }} className={classNames({
