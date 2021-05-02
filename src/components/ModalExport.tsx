@@ -5,7 +5,7 @@ import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_35
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
-import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isRoot, pathToContext, removeHome, timestamp, unroot } from '../util'
+import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isFunction, isRoot, pathToContext, removeHome, timestamp, unroot } from '../util'
 import { alert, error, modalRemindMeLater, pull } from '../action-creators'
 import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
@@ -50,7 +50,9 @@ const ModalExport = () => {
     ? { color: 'black', backgroundColor: 'white' }
     : { color: 'white', backgroundColor: 'black' }
 
-  const numDescendants = getDescendants(state, simplePath).length
+  const numDescendants = getDescendants(state, simplePath, {
+    filterFunction: selected.excludeMeta ? child => !isFunction(child.value) : undefined
+  }).length
 
   const exportWord = 'share' in navigator ? 'Share' : 'Download'
 
