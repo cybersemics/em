@@ -63,6 +63,7 @@ import {
   isBefore,
   isContextViewActive,
   rootedParentOf,
+  getChildren,
 } from '../selectors'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import { compareReasonable } from '../util/compareThought'
@@ -156,7 +157,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isCursorParent = distance === 2
     // grandparent
-    ? equalPath(rootedParentOf(state, parentOf(cursor || [])), path) && getChildrenRanked(state, pathToContext(cursor || [])).length === 0
+    ? equalPath(rootedParentOf(state, parentOf(cursor || [])), path) && getChildren(state, pathToContext(cursor || [])).length === 0
     // parent
     : equalPath(parentOf(cursor || []), path)
 
