@@ -8,7 +8,7 @@ import {
   compareReasonable,
   compareStringsWithEmoji,
   makeOrderedComparator,
-  compareReasonableDescending,
+  compareThoughtDescending,
 } from '../../util/compareThought'
 
 it('compareNumberAndOther', () => {
@@ -114,22 +114,22 @@ describe('compareReasonable', () => {
 describe('compareReasonableDescending', () => {
 
   it('sort emojis above non-emojis and sort within emoji group in descending order', () => {
-    expect(compareReasonableDescending('a', 'a')).toBe(0)
-    expect(compareReasonableDescending('a', 'b')).toBe(1)
-    expect(compareReasonableDescending('🍍 a', 'a')).toBe(1)
-    expect(compareReasonableDescending('🍍 a', 'b')).toBe(1)
-    expect(compareReasonableDescending('a', '🍍 a')).toBe(-1)
-    expect(compareReasonableDescending('b', '🍍 a')).toBe(-1)
-    expect(compareReasonableDescending('🍍 a', '🍍 a')).toBe(0)
-    expect(compareReasonableDescending('🍍 a', '🍍 b')).toBe(1)
+    expect(compareThoughtDescending('a', 'a')).toBe(0)
+    expect(compareThoughtDescending('a', 'b')).toBe(1)
+    expect(compareThoughtDescending('🍍 a', 'a')).toBe(1)
+    expect(compareThoughtDescending('🍍 a', 'b')).toBe(1)
+    expect(compareThoughtDescending('a', '🍍 a')).toBe(-1)
+    expect(compareThoughtDescending('b', '🍍 a')).toBe(-1)
+    expect(compareThoughtDescending('🍍 a', '🍍 a')).toBe(0)
+    expect(compareThoughtDescending('🍍 a', '🍍 b')).toBe(1)
   })
 
   it('sort by removing ignored prefixes in descending order', () => {
-    expect(compareReasonableDescending('the apple', 'apple')).toBe(0)
-    expect(compareReasonableDescending('the apple', 'book')).toBe(1)
-    expect(compareReasonableDescending('theatre', 'book')).toBe(-1)
-    expect(compareReasonableDescending('the apple', 'theatre')).toBe(1)
-    expect(compareReasonableDescending('🍍 the apple', '🍍 book')).toBe(1)
-    expect(compareReasonableDescending('🍍 the apple', '🍍 apple')).toBe(0)
+    expect(compareThoughtDescending('the apple', 'apple')).toBe(0)
+    expect(compareThoughtDescending('the apple', 'book')).toBe(1)
+    expect(compareThoughtDescending('theatre', 'book')).toBe(-1)
+    expect(compareThoughtDescending('the apple', 'theatre')).toBe(1)
+    expect(compareThoughtDescending('🍍 the apple', '🍍 book')).toBe(1)
+    expect(compareThoughtDescending('🍍 the apple', '🍍 apple')).toBe(0)
   })
 })

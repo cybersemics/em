@@ -12,7 +12,7 @@ import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
-import { Child, GesturePath, Index, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, GesturePath, Index, Path, SimplePath, SortPreference, ThoughtContext } from '../types'
 
 // util
 import {
@@ -46,7 +46,6 @@ import {
   getEditingPath,
   getNextRank,
   getPrevRank,
-  getSetting,
   getStyle,
   getAllChildren,
   getChildrenRanked,
@@ -54,6 +53,7 @@ import {
   isContextViewActive,
   rootedParentOf,
   isSortPreferenceAlphabetical,
+  getGlobalSortPreference,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -66,7 +66,7 @@ interface SubthoughtsProps {
   expandable?: boolean,
   isParentHovering?: boolean,
   showContexts?: boolean,
-  sort?: string,
+  sort?: SortPreference,
   simplePath: SimplePath,
   path?: Path,
 }
@@ -325,7 +325,7 @@ export const SubthoughtsComponent = ({
   // <Subthoughts> render
   const state = store.getState()
   const [page, setPage] = useState(1)
-  const globalSort = getSetting(state, ['Global Sort']) || 'None'
+  const globalSort = getGlobalSortPreference(state)
   const sortPreference = contextSort || globalSort
   const { cursor } = state
 
@@ -347,11 +347,10 @@ export const SubthoughtsComponent = ({
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
-
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : showContexts ?
       getContextsSortedAndRanked(state, headValue(simplePath))
-      : sortPreference === 'Alphabetical' || sortPreference === 'Alphabetical/desc' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
+      : sortPreference?.type !== 'None' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
       : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
   // check duplicate ranks for debugging

@@ -64,6 +64,7 @@ import {
   rootedParentOf,
   getChildren,
   isSortPreferenceAlphabetical,
+  isContextSorted,
 } from '../selectors'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import { compareReasonable } from '../util/compareThought'
@@ -256,7 +257,7 @@ const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonit
   const thoughtsTo = props.simplePathLive!
   const thoughts = pathToContext(props.simplePathLive!)
   const context = parentOf(thoughts)
-  const isSorted = getSortPreference(state, context).includes('Alphabetical')
+  const isSorted = isContextSorted(state, context)
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)

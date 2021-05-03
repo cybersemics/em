@@ -3,9 +3,9 @@ import { State } from '../util/initialState'
 import { Context } from '../types'
 
 /** Get whether the given context sorted alphabetically. */
-const isSortPreferenceAlphabetical = (state: State, context: Context) => {
+const isContextSorted = (state: State, context: Context) => {
   const sortPreference = getSortPreference(state, context)
-  return sortPreference.type === 'Alphabetical'
+  return sortPreference.type !== 'None'
 }
 
-export default isSortPreferenceAlphabetical
+export default isContextSorted

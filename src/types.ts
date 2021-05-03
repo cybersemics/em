@@ -148,6 +148,12 @@ export interface Parent {
   pending?: boolean,
 }
 
+/** Sort Preferences with type and direction. */
+export interface SortPreference{
+  type: string,
+  direction: 'Asc' | 'Desc' | null,
+}
+
 /** Extends store.dispatch to allow arrays and thunks.
  *
  * @example
@@ -206,6 +212,7 @@ export interface Icon {
   size?: number,
   style?: React.CSSProperties,
   width?: number,
+  additionalProps?: any,
   getState?: () => State,
 }
 
@@ -233,6 +240,7 @@ export interface Shortcut {
   svg?: (icon: Icon) => ReactNode,
   canExecute?: (getState: () => State, e: Event) => boolean,
   exec: (dispatch: Dispatch, getState: () => State, e: Event | GestureResponderEvent | React.MouseEvent, { type }: { type: string }) => void,
+  additionalIconProps?: (getState: () => State) => any,
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'

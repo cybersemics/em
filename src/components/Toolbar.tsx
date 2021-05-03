@@ -189,7 +189,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
           >
             <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
             {shortcutIds.map(id => {
-              const { name, svg, exec, isActive } = shortcutById(id)!
+              const { name, svg, exec, isActive, additionalIconProps } = shortcutById(id)!
               // TODO: type svg correctly
               const SVG = svg as React.FC<Icon>
               return (
@@ -212,6 +212,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                   }}
                 >
                   <SVG
+                    additionalProps={additionalIconProps && additionalIconProps(store.getState)}
                     getState={store.getState}
                     style={{
                       fill: !isActive || isActive(store.getState) ? fg : 'gray',

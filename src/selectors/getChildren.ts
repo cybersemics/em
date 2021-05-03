@@ -81,7 +81,7 @@ const rankDiff = (a: Child, b: Child) => Math.abs(a?.rank - b?.rank)
 
 /** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
 const getChildrenSortedAlphabetical = (state: State, context: Context): Child[] => {
-  const comparatorFunction = getSortPreference(state, context) === 'Alphabetical/desc'
+  const comparatorFunction = getSortPreference(state, context).direction === 'Desc'
     ? compareThoughtDescending
     : compareThought
   const sorted = getChildrenSortedBy(state, context, comparatorFunction)
