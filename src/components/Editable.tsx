@@ -40,7 +40,6 @@ import {
   headValue,
   isDivider,
   isElementHiddenByAutoFocus,
-  isHTML,
   isURL,
   pathToContext,
   setSelection,
@@ -524,9 +523,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
       dispatch(importText({
         path,
-        text: isHTML(plainText)
-          ? plainText
-          : htmlText || plainText,
+        // Note: priortize plainText over htmlText as imporText itself checks if the given text is an html
+        text: plainText || htmlText,
         rawDestValue,
       }))
 
