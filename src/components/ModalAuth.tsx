@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, useCallback, useEffect, useRef, useState } from 'react'
+import React, { ChangeEvent, FC, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { alert, login } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
@@ -95,16 +95,6 @@ const ModalAuth = () => {
     }
   }, [])
 
-  const submitAction = useRef<SubmitAction>(signUp)
-
-  /** Handle email change. */
-  const onChangeEmail = (e: ChangeEvent<HTMLInputElement>) => {
-    updateEmail(e.target.value)
-  }
-
-  /** Handle password change. */
-  const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
-
   /** Reset password using reset email. */
   const resetPassword: SubmitAction = useCallback(async (closeModal, email) => {
     updateIsSubmitting(true)
@@ -135,6 +125,10 @@ const ModalAuth = () => {
     }
   }, [])
 
+  const submitAction = isModeActive(modes.login) ? loginWithEmailAndPassword
+    : isModeActive(modes.signup) ? signUp
+    : resetPassword
+
   /**
    * Reset Email and Password fields.
    */
@@ -154,8 +148,13 @@ const ModalAuth = () => {
 
   useEffect(() => {
     resetFormFields()
-    submitAction.current = isModeActive(modes.login) ? loginWithEmailAndPassword : isModeActive(modes.signup) ? signUp : resetPassword
   }, [activeMode])
+
+  /** Handle email change. */
+  const onChangeEmail = (e: ChangeEvent<HTMLInputElement>) => updateEmail(e.target.value)
+
+  /** Handle password change. */
+  const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
 
   /** Show Sign Up with email and password. */
   const showSignup = () => updateActiveMode(modes.signup)
@@ -167,7 +166,7 @@ const ModalAuth = () => {
   const showForgotPassword = () => updateActiveMode(modes.resetPassword)
 
   return <Modal id='auth' title={activeMode.modalTitle} className='popup' center actions={({ remindMeLater: closeModal }) => <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
-    <ActionButton key={activeMode.modalKey} title={activeMode.modalTitle} active={true} isLoading={isSubmitting} onClick={() => submitAction.current?.(closeModal, email, password)} />
+    <ActionButton key={activeMode.modalKey} title={activeMode.modalTitle} active={true} isLoading={isSubmitting} onClick={() => submitAction(closeModal, email, password)} />
     {!isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showLogin}>{ isModeActive(modes.resetPassword) ? 'Back to Login' : 'Already have an account? Log in' }</button>}
     {isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showSignup}>Need an account? Sign up</button>}
     {!isModeActive(modes.resetPassword) && <button disabled={isSubmitting} className='button' onClick={signInWithGoogle}>Log in using Google</button>}
