@@ -8,7 +8,8 @@ import Modal from './Modal'
 
 const firebaseErrorsIndex = {
   'auth/weak-password': 'Password should be at least 6 characters',
-  'auth/email-already-in-use': 'Account already present. Please log in',
+  'auth/email-already-in-use': 'Account already exists',
+  'auth/invalid-email': 'Invalid email',
   'auth/wrong-password': 'Invalid username or password',
   'auth/user-not-found': 'User not found',
   'auth/too-many-requests': 'Account temporarily disabled. You can restore it by resetting your password',
