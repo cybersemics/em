@@ -157,24 +157,20 @@ const ModalAuth = () => {
     submitAction.current = isModeActive(modes.login) ? loginWithEmailAndPassword : isModeActive(modes.signup) ? signUp : resetPassword
   }, [activeMode])
 
-  /**
-   * Enable Login with email and password.
-   */
-  const handleLogin = () => {
-    updateActiveMode(modes.login)
-  }
+  /** Show Sign Up with email and password. */
+  const showSignup = () => updateActiveMode(modes.signup)
 
-  /**
-   * Enable Password recovery assistance.
-   */
-  const handleForgotPassword = () => {
-    updateActiveMode(modes.resetPassword)
-  }
+  /** Show Login with email and password. */
+  const showLogin = () => updateActiveMode(modes.login)
 
-  return <Modal id='auth' title={activeMode.modalTitle} className='popup' center actions={({ remindMeLater: closeModal }) => <div>
+  /** Show Password recovery assistance. */
+  const showForgotPassword = () => updateActiveMode(modes.resetPassword)
+
+  return <Modal id='auth' title={activeMode.modalTitle} className='popup' center actions={({ remindMeLater: closeModal }) => <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
     <ActionButton key={activeMode.modalKey} title={activeMode.modalTitle} active={true} isLoading={isSubmitting} onClick={() => submitAction.current?.(closeModal, email, password)} />
-    {!isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={handleLogin}>Already have an account? Login</button>}
-    <button disabled={isSubmitting} className='button' onClick={signInWithGoogle}>Login using Google</button>
+    {!isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showLogin}>{ isModeActive(modes.resetPassword) ? 'Back to Login' : 'Already have an account? Log in' }</button>}
+    {isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showSignup}>Need an account? Sign up</button>}
+    {!isModeActive(modes.resetPassword) && <button disabled={isSubmitting} className='button' onClick={signInWithGoogle}>Log in using Google</button>}
     <button disabled={isSubmitting} className='button' key='cancel' style={{ fontSize: '1.2rem', opacity: 0.5 }}><a id='cancel-login' onClick={() => closeModal()}>Cancel</a></button>
   </div>}>
     <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
@@ -183,7 +179,7 @@ const ModalAuth = () => {
 
       {!isModeActive(modes.resetPassword) && <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />}
 
-      {isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={handleForgotPassword}>Forgot Password?</button>}
+      {isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showForgotPassword}>Forgot Password?</button>}
 
       {error && <span style={{ color: 'crimson' }}>{error}</span>}
 
