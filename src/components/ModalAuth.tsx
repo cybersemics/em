@@ -65,10 +65,10 @@ const modes: Index<Mode> = {
   }
 }
 
-/** Modal to leave feedback. */
+/** A modal dialog for signing up, logging in, and resetting password. */
 const ModalAuth = () => {
 
-  /** Checks if the given mode is actiev. */
+  /** Checks if the given mode is active. */
   const isModeActive = (mode: Mode) => activeMode.name === mode.name
 
   const [activeMode, updateActiveMode] = useState(modes.signup)
