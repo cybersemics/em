@@ -35,6 +35,9 @@ interface Firebase {
     currentUser: User,
     onAuthStateChanged: (f: (user: User) => void) => void,
     signInWithRedirect: (provider: any) => void,
+    createUserWithEmailAndPassword: (email: string, password: string) => Promise<{user: User}>,
+    signInWithEmailAndPassword: (email: string, password: string) => Promise<{user: User}>,
+    sendPasswordResetEmail: (email: string, passwordResetOptions: { url: string }) => Promise<void>,
     signOut: () => void,
   }) & { GoogleAuthProvider: any },
   database: () => {

@@ -77,6 +77,33 @@ li {
   list-style: none;
 }
 
+input {
+  width: 40%;
+  min-width: 300px;
+  display: block;
+  margin: 0 auto;
+  padding: 10px;
+  font-size: 16px;
+  border: solid 1px #ddd;
+  border-radius: 10px;
+  margin-bottom: 2vh;
+}
+input:focus {
+  border: solid 1px #eee;
+  outline: 0 none;
+}
+
+
+.dark input:focus {
+  border: solid 1px #999;
+}
+
+.dark input {
+  color: white;
+  border: solid 1px #333;
+  background-color: black;
+}
+
 textarea {
   width: calc(100% - 40px);
   display: block;
@@ -1887,6 +1914,21 @@ h1 .num-contexts {
 .dark .popup .modal-actions a.button {
   color: black;
   background-color: white;
+}
+
+.modal-content .button {
+  cursor: pointer;
+  font-size: 0.9rem;
+  background: transparent;
+  color: #ccc;
+  display: block;
+  border: 0 none;
+  margin: 10px auto 0;
+}
+.modal-content .button:focus {
+  color: #fff;
+  outline: 0 none;
+  border: 0 none;
 }
 
 .dark .popup .modal-actions a {

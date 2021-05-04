@@ -189,7 +189,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     if (toolbarOverlay || scrollPrioritized) return
 
     // disable when welcome, shortcuts, or feeback modals are displayed
-    if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback') return
+    if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback' || state.showModal === 'auth') return
 
     const shortcut = shortcutKeyIndex[hashKeyDown(e)]
 
