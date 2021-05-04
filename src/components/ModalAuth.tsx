@@ -178,24 +178,15 @@ const ModalAuth = () => {
     <button disabled={isSubmitting} className='button' key='cancel' style={{ fontSize: '1.2rem', opacity: 0.5 }}><a id='cancel-login' onClick={() => closeModal()}>Cancel</a></button>
   </div>}>
     <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-      {
-        isModeActive(modes.signup) ? <>
-          <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
-          <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
-        </> : <>
-          {
-            isModeActive(modes.login) ? <>
-              <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
-              <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
-              <button disabled={isSubmitting} className='button' onClick={handleForgotPassword}>Forgot Password?</button>
-            </>
-            : <>
-              <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
-            </>
-          }
-        </>
-      }
+
+      <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
+
+      {!isModeActive(modes.resetPassword) && <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />}
+
+      {isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={handleForgotPassword}>Forgot Password?</button>}
+
       {error && <span style={{ color: 'crimson' }}>{error}</span>}
+
     </div>
 
   </Modal>
