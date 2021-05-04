@@ -40,27 +40,37 @@ const Input:FC<InputProps> = ({ type, placeholder, value, onBlur }) => {
   return <input type={type} placeholder={placeholder} value={inputValue} onChange={onChange} onBlur={onBlur}/>
 }
 
-const modalKeys = {
-  login: 'login',
-  signup: 'signup',
-  resetPassword: 'resetPassword',
+interface Mode {
+  name: string,
+  modalKey: string,
+  modalTitle: string,
 }
 
-const modalTitles = {
-  login: 'Log In',
-  signup: 'Sign Up',
-  resetPassword: 'Reset Password',
+const modes = {
+  login: {
+    name: 'login',
+    modalKey: 'login',
+    modalTitle: 'Log In'
+  },
+  signup: {
+    name: 'signup',
+    modalKey: 'signup',
+    modalTitle: 'Sign Up'
+  },
+  resetPassword: {
+    name: 'resetPassword',
+    modalKey: 'resetPassword',
+    modalTitle: 'Reset Password'
+  }
 }
 
 /** Modal to leave feedback. */
 const ModalAuth = () => {
 
-  const [title, updateTitle] = useState(modalTitles.signup)
-  const [modalKey, updateModalKey] = useState(modalKeys.signup)
+  /** Checks if the given mode is actiev. */
+  const isModeActive = (mode: Mode) => activeMode.name === mode.name
 
-  const [showLogin, updateShowLogin] = useState(false)
-  const [forgotPassword, updateForgotPassword] = useState(false)
-  const [showForgotPasswordOption, updateShowForgotPasswordOption] = useState(false)
+  const [activeMode, updateActiveMode] = useState(modes.signup)
   const [email, updateEmail] = useState('')
   const [password, updatePassword] = useState('')
   const [error, updateError] = useState<null | string>(null)
@@ -120,9 +130,6 @@ const ModalAuth = () => {
     }
     catch (error) {
       updateIsSubmitting(false)
-      if (error?.code === 'auth/wrong-password') {
-        updateShowForgotPasswordOption(true)
-      }
       return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
     }
   }, [])
@@ -144,47 +151,42 @@ const ModalAuth = () => {
     dispatch(login())
   }
 
+  useEffect(() => {
+    resetFormFields()
+    submitAction.current = isModeActive(modes.login) ? loginWithEmailAndPassword : isModeActive(modes.signup) ? signUp : resetPassword
+  }, [activeMode])
+
   /**
    * Enable Login with email and password.
    */
   const handleLogin = () => {
-    updateModalKey(modalKeys.login)
-    updateTitle(modalTitles.login)
-    updateShowLogin(true)
-    resetFormFields()
-    submitAction.current = loginWithEmailAndPassword
+    updateActiveMode(modes.login)
   }
 
   /**
    * Enable Password recovery assistance.
    */
   const handleForgotPassword = () => {
-    updateModalKey(modalKeys.resetPassword)
-    updateTitle(modalTitles.resetPassword)
-    updateForgotPassword(true)
-    resetFormFields()
-    submitAction.current = resetPassword
+    updateActiveMode(modes.resetPassword)
   }
 
   return <Modal id='auth' title='Auth' className='popup' center actions={({ remindMeLater: closeModal }) => <div>
-    <ActionButton key={modalKey} title={title} active={true} isLoading={isSubmitting} onClick={() => submitAction.current?.(closeModal, email, password)} />
-    {!showLogin && <button disabled={isSubmitting} className='button' onClick={handleLogin}>Already have an account? Login</button>}
+    <ActionButton key={activeMode.modalKey} title={activeMode.modalTitle} active={true} isLoading={isSubmitting} onClick={() => submitAction.current?.(closeModal, email, password)} />
+    {!isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={handleLogin}>Already have an account? Login</button>}
     <button disabled={isSubmitting} className='button' onClick={signInWithGoogle}>Login using Google</button>
     <button disabled={isSubmitting} className='button' key='cancel' style={{ fontSize: '1.2rem', opacity: 0.5 }}><a id='cancel-login' onClick={() => closeModal()}>Cancel</a></button>
   </div>}>
     <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
       {
-        !showLogin ? <>
+        isModeActive(modes.signup) ? <>
           <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
           <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
         </> : <>
           {
-            !forgotPassword ? <>
+            isModeActive(modes.login) ? <>
               <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
               <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
-              {
-                showForgotPasswordOption ? <button disabled={isSubmitting} className='button' onClick={handleForgotPassword}>Forgot Password?</button> : <></>
-              }
+              <button disabled={isSubmitting} className='button' onClick={handleForgotPassword}>Forgot Password?</button>
             </>
             : <>
               <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
