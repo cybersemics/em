@@ -170,7 +170,7 @@ const ModalAuth = () => {
     updateActiveMode(modes.resetPassword)
   }
 
-  return <Modal id='auth' title='Auth' className='popup' center actions={({ remindMeLater: closeModal }) => <div>
+  return <Modal id='auth' title={activeMode.modalTitle} className='popup' center actions={({ remindMeLater: closeModal }) => <div>
     <ActionButton key={activeMode.modalKey} title={activeMode.modalTitle} active={true} isLoading={isSubmitting} onClick={() => submitAction.current?.(closeModal, email, password)} />
     {!isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={handleLogin}>Already have an account? Login</button>}
     <button disabled={isSubmitting} className='button' onClick={signInWithGoogle}>Login using Google</button>
