@@ -20,7 +20,7 @@ import {
 } from '../../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialStepAutoExpand = ({ cursor, rootSubthoughts = [] } = {}) => {
+const TutorialStepAutoExpand = ({ cursor } = {}) => {
 
   const state = store.getState()
   const cursorContext = pathToContext(cursor || [])
