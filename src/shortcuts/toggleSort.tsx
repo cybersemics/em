@@ -1,14 +1,23 @@
 import React from 'react'
 import { HOME_PATH } from '../constants'
-import { simplifyPath, getSortPreference, getCursorSortDirection } from '../selectors'
+import { simplifyPath, getSortPreference } from '../selectors'
 import { deleteAttribute, setCursor, toggleAttribute } from '../action-creators'
 import { pathToContext, unroot } from '../util'
 import { Icon as IconType, Shortcut, SortPreference } from '../types'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 import { useSelector } from 'react-redux'
+import { State } from '../util/initialState'
 
 /* Available sort preferences */
 const sortPreferences = ['None', 'Alphabetical']
+
+/** Get sort direction of cursor. */
+const getCursorSortDirection = (state: State) => {
+  const { cursor } = state
+  const simplePath = simplifyPath(state, cursor || HOME_PATH)
+  const context = pathToContext(simplePath)
+  return getSortPreference(state, context).direction
+}
 
 /** Ascending Icon Component. */
 const IconAsc = ({ size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} style={style} viewBox='0 0 24 24' enableBackground='new 0 0 24 24'>
