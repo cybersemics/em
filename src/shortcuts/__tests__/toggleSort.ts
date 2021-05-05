@@ -383,9 +383,8 @@ describe('DOM', () => {
 
   describe('descending order', () => {
     it('thoughts are sorted alphabetically in descending order', async () => {
-      const thoughtValue = 'c'
       store.dispatch([
-        newThought({ value: thoughtValue }),
+        newThought({ value: 'c' }),
         newThought({ value: 'a' }),
         newThought({ value: 'b' }),
         setCursor({ path: null }),
@@ -403,7 +402,7 @@ describe('DOM', () => {
         })
       ])
 
-      const thought = await findThoughtByText(thoughtValue)
+      const thought = await findThoughtByText('c')
       expect(thought).toBeTruthy()
 
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
@@ -414,13 +413,12 @@ describe('DOM', () => {
 
     it('subthoughts are sorted alphabetically in descending order', async () => {
 
-      const thoughtValue = 'a'
       store.dispatch([
-        newThought({ value: thoughtValue }),
+        newThought({ value: 'a' }),
         newThought({ value: '3', insertNewSubthought: true }),
         newThought({ value: '1' }),
         newThought({ value: '2' }),
-        setCursorFirstMatchActionCreator([thoughtValue])
+        setCursorFirstMatchActionCreator(['a'])
       ])
 
       store.dispatch([toggleAttribute({
@@ -433,7 +431,7 @@ describe('DOM', () => {
         value: 'Desc',
       })])
 
-      const thought = await findThoughtByText(thoughtValue)
+      const thought = await findThoughtByText('a')
       expect(thought).toBeTruthy()
 
       const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
