@@ -13,11 +13,11 @@ import {
 } from '../../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext2 = ({ tutorialChoice, rootSubthoughts, cursor }) => <Fragment>
+const Tutorial2StepContext2 = ({ tutorialChoice, rootChildren, cursor }) => <Fragment>
   <p>Now add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”.</p>
   {
     // e.g. Work
-    rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase())
+    rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase())
       ? <p>Do you remember how to do it?
         <TutorialHint>
           <br /><br />{cursor && cursor.length === 2 && cursor[0].value === TUTORIAL_CONTEXT2_PARENT[tutorialChoice]

@@ -27,10 +27,10 @@ import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) => {
+const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {
   const state = store.getState()
   // e.g. Work
-  return rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
+  return rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do
   getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) &&
   // e.g. Work/To Do/y
@@ -38,14 +38,14 @@ const context2SubthoughtCreated = ({ rootSubthoughts, tutorialChoice }) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, cursor }) => {
+const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor }) => {
 
   const state = store.getState()
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
   const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
   const contexts = getContexts(state, caseSensitiveValue)
 
-  const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootSubthoughts, tutorialChoice })
+  const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
 
   if (isContext2SubthoughtCreated) {
     return <Fragment>
@@ -67,7 +67,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootSubthoughts, curs
     } Add it to this “{TUTORIAL_CONTEXT[tutorialChoice]}” list.</p>
     {
       // e.g. Work
-      rootSubthoughts.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
+      rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
         // e.g. Work/To Do
         getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
         ? <p>Do you remember how to do it?

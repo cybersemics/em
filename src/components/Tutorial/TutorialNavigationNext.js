@@ -29,7 +29,7 @@ const mapStateToProps = state => {
     contextIndex,
     cursor,
     expanded,
-    rootSubthoughts: getAllChildren(state, [HOME_TOKEN]),
+    rootChildren: getAllChildren(state, [HOME_TOKEN]),
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
     tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
   }
@@ -41,7 +41,7 @@ const TutorialNavigationNext = connect(mapStateToProps)(
     contextIndex,
     cursor,
     expanded,
-    rootSubthoughts,
+    rootChildren,
     tutorialChoice,
     tutorialStep,
     dispatch,
@@ -60,8 +60,8 @@ const TutorialNavigationNext = connect(mapStateToProps)(
         tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER
       ) && (!cursor || headValue(cursor).length > 0)) ||
-      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT && context1SubthoughtCreated({ rootSubthoughts, tutorialChoice })) ||
-      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT && context2SubthoughtCreated({ rootSubthoughts, tutorialChoice }))
+      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT && context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
+      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT && context2SubthoughtCreated({ rootChildren, tutorialChoice }))
       ? <TutorialNavigationButton clickHandler={() => dispatch(tutorialNext({}))} value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'} />
       : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
   })

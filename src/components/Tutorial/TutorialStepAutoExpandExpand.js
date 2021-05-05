@@ -5,11 +5,11 @@ import { getChildrenRanked } from '../../selectors'
 import { ellipsize, pathToContext } from '../../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialStepAutoExpandExpand = ({ cursor, rootSubthoughts = [] }) => {
+const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }) => {
 
   /** A thought in the root that is not the cursor and has children. */
   const rootSubthoughtNotCursorWithSubthoughts = () =>
-    rootSubthoughts.find(child =>
+    rootChildren.find(child =>
       (!cursor || pathToContext(cursor).indexOf(child.value) === -1) &&
       getChildrenRanked(store.getState(), [child]).length > 0
     )
