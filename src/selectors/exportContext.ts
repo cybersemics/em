@@ -17,6 +17,7 @@ interface Options {
   title?: string,
   excludeSrc?: boolean,
   excludeMeta?: boolean,
+  depth?: number,
 }
 
 /** Exports the navigable subtree of the given context.
@@ -25,8 +26,7 @@ interface Options {
  * @param format
  * @param title     Replace the value of the root thought with a new title.
  */
-export const exportContext = (state: State, context: Context, format: MimeType = 'text/html', { indent = 0, title, excludeSrc, excludeMeta }: Options = {}): string => {
-  const linePrefix = format === 'text/html' ? '<li>' : '- '
+export const exportContext = (state: State, context: Context, format: MimeType = 'text/html', { indent = 0, title, excludeSrc, excludeMeta, depth = 0 }: Options = {}): string => {
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
   const tab1 = tab0 + '  '
@@ -40,6 +40,9 @@ export const exportContext = (state: State, context: Context, format: MimeType =
     excludeMeta ? (child: Child) => !isFunction(child.value) : true
   ))
 
+  // Note: export single thought without bullet
+  const linePrefix = format === 'text/html' ? '<li>' : depth === 0 && childrenFiltered.length === 0 ? '' : '- '
+
   /** Outputs an exported child. */
   const exportChild = (child: Child) => '  ' + exportContext(
     state,
@@ -49,6 +52,7 @@ export const exportContext = (state: State, context: Context, format: MimeType =
       excludeSrc,
       excludeMeta,
       indent: indent + (format === 'text/html' ? indent === 0 ? 3 : 2 : 1),
+      depth: depth + 1
     }
   )
 
