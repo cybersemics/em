@@ -8,7 +8,9 @@ import {
   compareReasonable,
   compareStringsWithEmoji,
   makeOrderedComparator,
+  compareThoughtDescending,
 } from '../../util/compareThought'
+import { Child } from '../../types'
 
 it('compareNumberAndOther', () => {
   expect(compareNumberAndOther(1, 2)).toBe(0)
@@ -108,5 +110,33 @@ describe('compareReasonable', () => {
     expect(compareReasonable('🍍 the apple', '🍍 book')).toBe(-1)
     expect(compareReasonable('🍍 the apple', '🍍 apple')).toBe(0)
   })
+})
 
+describe('compareReasonableDescending', () => {
+
+  /**
+   * Build Child object for tests.
+   */
+  const buildChild = (value: string): Child =>
+    ({ id: '0', rank: 0, value: value })
+
+  it('sort emojis above non-emojis and sort within emoji group in descending order', () => {
+    expect(compareThoughtDescending(buildChild('a'), buildChild('a'))).toBe(0)
+    expect(compareThoughtDescending(buildChild('a'), buildChild('b'))).toBe(1)
+    expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('a'))).toBe(1)
+    expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('b'))).toBe(1)
+    expect(compareThoughtDescending(buildChild('a'), buildChild('🍍 a'))).toBe(-1)
+    expect(compareThoughtDescending(buildChild('b'), buildChild('🍍 a'))).toBe(-1)
+    expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('🍍 a'))).toBe(0)
+    expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('🍍 b'))).toBe(1)
+  })
+
+  it('sort by removing ignored prefixes in descending order', () => {
+    expect(compareThoughtDescending(buildChild('the apple'), buildChild('apple'))).toBe(0)
+    expect(compareThoughtDescending(buildChild('the apple'), buildChild('book'))).toBe(1)
+    expect(compareThoughtDescending(buildChild('theatre'), buildChild('book'))).toBe(-1)
+    expect(compareThoughtDescending(buildChild('the apple'), buildChild('theatre'))).toBe(1)
+    expect(compareThoughtDescending(buildChild('🍍 the apple'), buildChild('🍍 book'))).toBe(1)
+    expect(compareThoughtDescending(buildChild('🍍 the apple'), buildChild('🍍 apple'))).toBe(0)
+  })
 })

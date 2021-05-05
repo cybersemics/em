@@ -131,5 +131,11 @@ export const compareReasonable = makeOrderedComparator<string>([
   (a, b) => compareReasonableText(makeReasonable(a), makeReasonable(b)),
 ])
 
+/** Get reverse of the given comparator. */
+const reverse = <T>(comparator: ComparatorFunction<T>) => (a: T, b: T) => comparator(b, a)
+
 /** Compare the value of two thoughts. */
 export const compareThought = (a: Child, b: Child) => compareReasonable(a.value, b.value)
+
+/** A comparator that sorts in descending order. */
+export const compareThoughtDescending = reverse(compareThought)

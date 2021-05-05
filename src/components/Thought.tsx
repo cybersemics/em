@@ -50,7 +50,6 @@ import {
 // selectors
 import {
   attribute,
-  attributeEquals,
   getNextRank,
   getRankBefore,
   getSortPreference,
@@ -256,7 +255,7 @@ const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonit
   const thoughtsTo = props.simplePathLive!
   const thoughts = pathToContext(props.simplePathLive!)
   const context = parentOf(thoughts)
-  const isSorted = getSortPreference(state, context).includes('Alphabetical')
+  const isSorted = getSortPreference(state, context).type !== 'None'
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
@@ -510,7 +509,7 @@ const ThoughtContainer = ({
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
 
-  const cursorOnAlphabeticalSort = cursor && attributeEquals(state, context, '=sort', 'Alphabetical')
+  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
   const draggingThoughtValue = state.draggingThought
     ? head(pathToContext(state.draggingThought))

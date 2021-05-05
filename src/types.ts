@@ -151,6 +151,14 @@ export interface Parent {
   pending?: boolean,
 }
 
+/** Sort Preferences with type and direction. */
+export interface SortPreference{
+  type: string,
+  direction: SortDirection | null,
+}
+
+export type SortDirection = 'Asc' | 'Desc'
+
 /** Extends store.dispatch to allow arrays and thunks.
  *
  * @example

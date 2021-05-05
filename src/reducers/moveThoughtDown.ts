@@ -26,7 +26,7 @@ const moveThoughtDown = (state: State) => {
   if (!nextThought && !nextUnclePath) return state
 
   // get sorted state
-  const isSorted = getSortPreference(state, context) === 'Alphabetical'
+  const isSorted = getSortPreference(state, context).type !== 'None'
 
   if (isSorted && !nextUnclePath) {
     return alert(state, {

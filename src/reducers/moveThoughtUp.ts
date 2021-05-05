@@ -2,7 +2,7 @@ import { alert, existingThoughtMove } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 import { parentOf, ellipsize, head, headRank, headValue, pathToContext } from '../util'
-import { getNextRank, getRankBefore, getSortPreference, getThoughtBefore, hasChild, rootedParentOf, prevSibling, simplifyPath } from '../selectors'
+import { getNextRank, getRankBefore, getThoughtBefore, hasChild, rootedParentOf, prevSibling, simplifyPath, getSortPreference } from '../selectors'
 
 /** Swaps the thought with its previous siblings. */
 const moveThoughtUp = (state: State) => {
@@ -26,7 +26,7 @@ const moveThoughtUp = (state: State) => {
   if (!prevThought && !prevUnclePath) return state
 
   // get sorted state
-  const isSorted = getSortPreference(state, context) === 'Alphabetical'
+  const isSorted = getSortPreference(state, context).type !== 'None'
 
   // metaprogramming functions that prevent moving
   if (isSorted && !prevUnclePath) {
