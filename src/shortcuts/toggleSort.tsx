@@ -1,15 +1,16 @@
 import React from 'react'
 import { HOME_PATH } from '../constants'
-import { simplifyPath, isSortPreferenceAlphabetical, getSortPreference } from '../selectors'
+import { simplifyPath, getSortPreference, getCursorSortDirection } from '../selectors'
 import { deleteAttribute, setCursor, toggleAttribute } from '../action-creators'
 import { pathToContext, unroot } from '../util'
 import { Icon as IconType, Shortcut, SortPreference } from '../types'
-import { getGlobalSortPreference } from '../selectors/getSortPreference'
+import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
+import { useSelector } from 'react-redux'
 
 /* Available sort preferences */
 const sortPreferences = ['None', 'Alphabetical']
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Ascending Icon Component. */
 const IconAsc = ({ size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} style={style} viewBox='0 0 24 24' enableBackground='new 0 0 24 24'>
   <g style={{ transform: 'translateY(4px)' }}>
     <polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6'/>
@@ -21,7 +22,7 @@ const IconAsc = ({ size = 20, style }: IconType) => <svg version='1.1' className
   </g>
 </svg>
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Descending Icon Component. */
 const IconDesc = ({ size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} style={style} viewBox='0 0 24 24' enableBackground='new 0 0 24 24'>
   <g style={{ transform: 'translateY(4px)' }}>
     <polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6'/>
@@ -34,8 +35,9 @@ const IconDesc = ({ size = 20, style }: IconType) => <svg version='1.1' classNam
 </svg>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Icon = ({ size = 20, style, additionalProps }: IconType) => {
-  const { component: Component } = additionalProps
+const Icon = ({ size = 20, style }: IconType) => {
+  const direction = useSelector(getCursorSortDirection)
+  const Component = direction === 'Desc' ? IconDesc : IconAsc
   return <Component size={size} style={style}/>
 }
 
@@ -122,15 +124,8 @@ const toggleSortShortcut: Shortcut = {
 
     const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
 
-    return isSortPreferenceAlphabetical(state, context)
+    return getSortPreference(state, context).type === 'Alphabetical'
   },
-  additionalIconProps: getState => {
-    const state = getState()
-    const { cursor } = state
-    const simplePath = simplifyPath(state, cursor || HOME_PATH)
-    const context = pathToContext(simplePath)
-    return { component: getSortPreference(state, context).direction === 'Desc' ? IconDesc : IconAsc }
-  }
 }
 
 export default toggleSortShortcut

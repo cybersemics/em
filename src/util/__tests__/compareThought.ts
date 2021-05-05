@@ -118,7 +118,7 @@ describe('compareReasonableDescending', () => {
    * Build Child object for tests.
    */
   const buildChild = (value: string): Child =>
-    ({ archived: undefined, id: '0', lastUpdated: undefined, rank: 0, value: value })
+    ({ id: '0', rank: 0, value: value })
 
   it('sort emojis above non-emojis and sort within emoji group in descending order', () => {
     expect(compareThoughtDescending(buildChild('a'), buildChild('a'))).toBe(0)

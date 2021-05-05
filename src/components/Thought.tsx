@@ -63,8 +63,6 @@ import {
   isContextViewActive,
   rootedParentOf,
   getChildren,
-  isSortPreferenceAlphabetical,
-  isContextSorted,
 } from '../selectors'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import { compareReasonable } from '../util/compareThought'
@@ -257,7 +255,7 @@ const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonit
   const thoughtsTo = props.simplePathLive!
   const thoughts = pathToContext(props.simplePathLive!)
   const context = parentOf(thoughts)
-  const isSorted = isContextSorted(state, context)
+  const isSorted = getSortPreference(state, context).type !== 'None'
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= 2
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
@@ -511,7 +509,7 @@ const ThoughtContainer = ({
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
 
-  const cursorOnAlphabeticalSort = cursor && isSortPreferenceAlphabetical(state, context)
+  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
   const draggingThoughtValue = state.draggingThought
     ? head(pathToContext(state.draggingThought))

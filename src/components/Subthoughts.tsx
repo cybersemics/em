@@ -52,8 +52,7 @@ import {
   getAllChildrenSorted,
   isContextViewActive,
   rootedParentOf,
-  isSortPreferenceAlphabetical,
-  getGlobalSortPreference,
+  getGlobalSortPreference, getSortPreference,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -432,7 +431,7 @@ export const SubthoughtsComponent = ({
   const styleGrandChildren = getStyle(state, contextGrandchildren)
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
-  const cursorOnAlphabeticalSort = cursor && isSortPreferenceAlphabetical(state, context)
+  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
   return <React.Fragment>
 

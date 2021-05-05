@@ -151,8 +151,10 @@ export interface Parent {
 /** Sort Preferences with type and direction. */
 export interface SortPreference{
   type: string,
-  direction: 'Asc' | 'Desc' | null,
+  direction: SortDirection | null,
 }
+
+export type SortDirection = 'Asc' | 'Desc'
 
 /** Extends store.dispatch to allow arrays and thunks.
  *
@@ -212,8 +214,6 @@ export interface Icon {
   size?: number,
   style?: React.CSSProperties,
   width?: number,
-  additionalProps?: any,
-  getState?: () => State,
 }
 
 export interface Key {

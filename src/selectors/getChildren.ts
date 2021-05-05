@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { getSortPreference, hasChild, isContextViewActive, isSortPreferenceAlphabetical } from '../selectors'
+import { getSortPreference, hasChild, isContextViewActive } from '../selectors'
 import { compareByRank, compareThought, compareThoughtDescending, hashContext, isAbsolute, isFunction, sort, pathToContext, equalThoughtRanked, head, unroot, headValue, isDescendant, splice } from '../util'
 import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path } from '../types'
 
@@ -56,7 +56,7 @@ export const getChildren = getVisibleThoughts(getAllChildren)
 
 /** Gets all children within a context sorted by rank or sort preference. */
 export const getAllChildrenSorted = (state: State, context: Context) => {
-  const getThoughtsFunction = isSortPreferenceAlphabetical(state, context)
+  const getThoughtsFunction = getSortPreference(state, context).type === 'Alphabetical'
     ? getChildrenSortedAlphabetical
     : getChildrenRanked
   return getThoughtsFunction(state, context)
