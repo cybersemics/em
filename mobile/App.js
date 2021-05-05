@@ -1,21 +1,12 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react'
+import WebView from 'react-native-webview'
 
+const EM_APP_LOCAL_ADDRESS = 'http://192.168.1.2:3000'
+
+/**
+ * App Component.
+ */
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+  return <WebView source={{ uri: EM_APP_LOCAL_ADDRESS }} style={{ marginTop: 50 }} />
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+}

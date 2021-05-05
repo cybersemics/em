@@ -24,6 +24,7 @@
     "deploy:functions": "cat ./firebase-config.json | node ./scripts/setFirebaseConfig.js && cd ./functions && npm run build && firebase deploy --only functions",
     "postinstall": "husky install && npm run expo:install",
     "expo:install": "cd ./mobile && npm install",
+    "expo:start": "cd ./mobile && expo start",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output lint:*",
     "lint:src": "eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:no-yarn": "node ./scripts/no-files.js yarn.lock",
