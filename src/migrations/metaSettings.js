@@ -29,9 +29,6 @@ export const migrate = async state => {
     if (state.settings && state.settings.dark != null) {
       localStorage.setItem('Settings/Theme', state.settings.dark ? 'Dark' : 'Light')
     }
-    if (state.settings && state.settings.scaleSize) {
-      localStorage.setItem('Settings/Font Size', state.settings.scaleSize * 16)
-    }
     if (state.settings && state.settings.tutorial != null) {
       localStorage.setItem('Settings/Tutorial', state.settings.tutorial ? 'On' : 'Off')
     }

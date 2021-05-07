@@ -2,7 +2,7 @@ import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'
 import { noop } from 'lodash'
-import { getFontSize, isTutorial } from '../selectors'
+import { isTutorial } from '../selectors'
 import { toggleSidebar } from '../action-creators'
 import { State } from '../util/initialState'
 import { CSSTransition } from 'react-transition-group'
@@ -20,7 +20,7 @@ const HamburgerMenu = () => {
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const showTopControls = useSelector((state: State) => state.showTopControls)
   const dispatch = useDispatch()
-  const fontSize = useSelector<State, number>(getFontSize)
+  const fontSize = useSelector<State, number>((state: State) => state.fontSize)
 
   const width = fontSize * 1.3
   const paddingTop = 15 + fontSize * 0.1

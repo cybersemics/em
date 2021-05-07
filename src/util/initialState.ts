@@ -64,6 +64,7 @@ export interface State {
   error?: string | null,
   expanded: Index<Path>,
   expandedContextThought?: Path,
+  fontSize: number,
   hoveringThought?: Context,
   hoveringPath?: Path,
   hoverId?: DROP_TARGET,
@@ -100,6 +101,12 @@ export interface State {
   toolbarOverlay?: string | null,
   tutorialStep?: number,
   user?: User,
+}
+
+/** Safely gets a value from localStorage if it is in the environment. */
+const getLocal = (key: string) => {
+  if (typeof localStorage === 'undefined') return undefined
+  return localStorage.getItem(key)
 }
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
@@ -169,7 +176,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
   const state: State = {
     authenticated: false,
     // eslint-disable-next-line no-mixed-operators
-    autologin: typeof localStorage !== 'undefined' && localStorage.autologin === 'true',
+    autologin: getLocal('autologin') === 'true',
     contextViews: {},
     cursor: null,
     cursorBeforeSearch: null,
@@ -183,6 +190,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     editing: null,
     editingValue: null,
     expanded: {},
+    fontSize: +(getLocal('fontSize') || 18),
     invalidState: false,
     inversePatches: [],
     isLoading: true,
@@ -203,7 +211,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     showTopControls: true,
     showBreadcrumbs: true,
     // eslint-disable-next-line no-mixed-operators
-    splitPosition: parseJsonSafe(typeof localStorage !== 'undefined' ? localStorage.getItem('splitPosition') : null, 0),
+    splitPosition: parseJsonSafe(getLocal('splitPosition') || null, 0),
     rootContext: [HOME_TOKEN],
     /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
@@ -221,9 +229,9 @@ export const initialState = (created: Timestamp = timestamp()) => {
     // initial modal states
     state.modals[MODALS[key]] = {
       // eslint-disable-next-line no-mixed-operators
-      complete: globals.disableTutorial || JSON.parse(typeof localStorage !== 'undefined' && localStorage['modal-complete-' + MODALS[key]] || 'false'),
+      complete: globals.disableTutorial || JSON.parse(getLocal('modal-complete-' + MODALS[key]) || 'false'),
       // eslint-disable-next-line no-mixed-operators
-      hideuntil: JSON.parse(typeof localStorage !== 'undefined' && localStorage['modal-hideuntil-' + MODALS[key]] || '0')
+      hideuntil: JSON.parse(getLocal('modal-hideuntil-' + MODALS[key]) || '0')
     }
   })
 

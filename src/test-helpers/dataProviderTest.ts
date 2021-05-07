@@ -610,8 +610,8 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const emText = `
         - Settings
-          - Font Size
-            - 16
+          - Theme
+            - Dark
       `
 
       const stateNew = reducerFlow([
@@ -638,7 +638,7 @@ const dataProviderTest = (provider: DataProvider) => {
           ['x', 'y'],
           [EM_TOKEN],
           [EM_TOKEN, 'Settings'],
-          [EM_TOKEN, 'Settings', 'Font Size'],
+          [EM_TOKEN, 'Settings', 'Theme'],
         ].map(cx => hashContext(cx))),
         [hashContext(['x', 'y', 'z'])]: {
           ...contextIndex[hashContext(['x', 'y', 'z'])],
@@ -647,7 +647,7 @@ const dataProviderTest = (provider: DataProvider) => {
           lastUpdated: never(),
         },
         // empty contexts are present in local state but not provider state
-        // [hashContext([EM_TOKEN, 'Settings', 'Font Size', '16'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Font Size', '16'])],
+        // [hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])],
       })
 
       // support optional id property
@@ -660,7 +660,7 @@ const dataProviderTest = (provider: DataProvider) => {
       )
 
       expect(thoughtIndexLocalWithoutIds).toEqual(
-        _.pick(thoughtIndex, [EM_TOKEN, 'x', 'y', 'z', 'Settings', 'Font Size', '16'].map(hashThought))
+        _.pick(thoughtIndex, [EM_TOKEN, 'x', 'y', 'z', 'Settings', 'Theme', 'Dark'].map(hashThought))
       )
 
     })

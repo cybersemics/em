@@ -16,8 +16,8 @@ import { shortcutById } from '../shortcuts'
 import { isTouch } from '../browser'
 import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
-import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE, SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import { getFontSize, getSetting, subtree, theme } from '../selectors'
+import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { subtree, theme } from '../selectors'
 import { State } from '../util/initialState'
 import { Icon, Timer } from '../types'
 
@@ -27,18 +27,16 @@ import TriangleRight from './TriangleRight'
 import Shortcut from './Shortcut'
 
 const ARROW_SCROLL_BUFFER = 20
-const fontSizeLocal = +(localStorage['Settings/Font Size'] || DEFAULT_FONT_SIZE)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
 
-  const { cursor, thoughts, isLoading, toolbarOverlay, scrollPrioritized, showTopControls } = state
+  const { cursor, fontSize, thoughts, isLoading, toolbarOverlay, scrollPrioritized, showTopControls } = state
 
   return {
     dark: theme(state) !== 'Light',
     isLoading,
-    fontSize: getFontSize(state),
-    scale: (+(getSetting(state, 'Font Size') ?? 0) || fontSizeLocal || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE,
+    fontSize,
     scrollPrioritized,
     toolbarOverlay,
     // We cannot know if any one the shortcut's active status,has changed, so we re-render everytime thoughts or cursor is changed

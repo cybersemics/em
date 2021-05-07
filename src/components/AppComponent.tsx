@@ -3,10 +3,10 @@ import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import { isAndroid, isTouch } from '../browser'
-import { BASE_FONT_SIZE, DEFAULT_FONT_SIZE } from '../constants'
+import { BASE_FONT_SIZE } from '../constants'
 import { inputHandlers } from '../shortcuts'
 import { isDocumentEditable } from '../util'
-import { getSetting, isTutorial, theme } from '../selectors'
+import { isTutorial, theme } from '../selectors'
 import { State } from '../util/initialState'
 import { updateSplitPosition } from '../action-creators'
 import { store } from '../store'
@@ -31,7 +31,6 @@ import ModalAuth from './ModalAuth'
 
 const Content = React.lazy(() => import('./Content'))
 
-const fontSizeLocal = +(localStorage['Settings/Font Size'] || 16)
 const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
@@ -53,7 +52,7 @@ interface DispatchProps {
 const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
   const dark = theme(state) !== 'Light'
-  const scale = +(getSetting(state, 'Font Size') || fontSizeLocal || DEFAULT_FONT_SIZE) / BASE_FONT_SIZE
+  const scale = state.fontSize / BASE_FONT_SIZE
   return {
     dark,
     dragInProgress,

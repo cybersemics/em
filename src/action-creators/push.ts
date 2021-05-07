@@ -16,7 +16,7 @@ import { Thunk, Index, Lexeme, Parent } from '../types'
 //   ...
 // }
 const localStorageSettingsContexts = _.keyBy(
-  ['Font Size', 'Tutorial', 'Last Updated'],
+  ['Tutorial', 'Last Updated'],
   value => hashContext([EM_TOKEN, 'Settings', value])
 )
 

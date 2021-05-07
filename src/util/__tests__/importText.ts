@@ -237,15 +237,25 @@ it('initialSettings', () => {
         </ul>
       </li>
 
-      <li>Font Size
+      <li>Global Sort
         <ul>
           <li>=readonly</li>
-          <li>=type
+          <li>=options
             <ul>
-              <li>Number</li>
+              <li>None</li>
+              <li>Alphabetical</li>
             </ul>
           </li>
-          <li>18</li>
+          <li>None
+            <ul>
+              <li>=options
+                <ul>
+                  <li>Asc</li>
+                  <li>Desc</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
         </ul>
       </li>
 
@@ -262,11 +272,15 @@ it('initialSettings', () => {
       - Dark
       - Light
     - Dark
-  - Font Size
+  - Global Sort
     - =readonly
-    - =type
-      - Number
-    - 18
+    - =options
+      - None
+      - Alphabetical
+    - None
+      - =options
+        - Asc
+        - Desc
 `)
 })
 
