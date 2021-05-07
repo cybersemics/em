@@ -40,13 +40,12 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <div id="debug"></div>
-    <script type="module" src="/src/index.tsx"></script>
-    <!-- TODO: Vite -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase.js"></script> -->
     <script>
       // Note: Initially theme needs to be set here before react loads. Else it causes white flash.
       const theme = localStorage['Settings/Theme'] || 'dark'
       document.body.classList.add(theme)
     </script>
+    <script type="module" src="/src/index.tsx"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase.js"></script>
   </body>
 </html>
