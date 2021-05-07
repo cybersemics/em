@@ -2,11 +2,7 @@
 import React from 'react'
 import { noop } from 'lodash'
 import { Direction, GesturePath } from '../types'
-import { GestureResponderEvent } from 'react-native'
-
-// expects peer dependencies react-dom and react-native-web
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PanResponder, View } = require('react-native')
+import { GestureResponderEvent, PanResponder, View } from 'react-native'
 
 interface Point {
   x: number,
