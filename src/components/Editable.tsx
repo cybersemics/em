@@ -389,7 +389,9 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       }
     }
 
-    isTapped && setIsTapped(false)
+    if (isTapped) {
+      setIsTapped(false)
+    }
 
     /** Flushes pending edits. */
     const flush = () => throttledChangeRef.current.flush()
@@ -614,7 +616,6 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
-    setIsTapped(true)
 
     if (disabled || (
       !globals.touching &&
@@ -630,6 +631,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         // prevent focus to allow navigation with mobile keyboard down
         setCursorOnThought()
       }
+    }
+    else {
+      // We need to know that user clicked the editable to not set caret programmatically, because caret will be already set by browser. Issue: #981
+      setIsTapped(true)
     }
   }
 
