@@ -612,7 +612,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
-    if (disabled || (
+    if (disabled || isHiddenByAutofocus || (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
