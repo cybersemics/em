@@ -1,5 +1,5 @@
 import React from 'react'
-import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
+// import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useDispatch, useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 import _ from 'lodash'
@@ -9,7 +9,9 @@ import { State } from '../util/initialState'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 
 // extend SwipeableDrawer with classes prop
-const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<SwipeableDrawerProps & { classes: any }>
+// const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<SwipeableDrawerProps & { classes: any }>
+// eslint-disable-next-line jsdoc/require-jsdoc
+const SwipeableDrawerWithClasses = ({ children }: any) => children
 
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {
