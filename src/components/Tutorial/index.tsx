@@ -5,9 +5,11 @@ import { TransitionGroup } from 'react-transition-group'
 import { isTouch } from '../../browser'
 import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
-import { headValue } from '../../util'
+import { headValue, once } from '../../util'
 import { getParent, getSetting } from '../../selectors'
 import { tutorial } from '../../action-creators'
+import { State } from '../../util/initialState'
+import { Connected, GesturePath } from '../../types'
 
 // constants
 import {
@@ -39,25 +41,44 @@ const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
 assert(newThoughtShortcut)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = state => {
+const mapStateToProps = (state: State) => {
   const { contextViews, cursor } = state
   return {
     contextViews,
     cursor,
     rootChildren: getParent(state, [HOME_TOKEN])?.children,
-    tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
-    tutorialStep: +getSetting(state, 'Tutorial Step') || 1
+    tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT1_PARENT,
+    tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
   }
 }
 
 /** Tutorial component. */
-const Tutorial = ({ contextViews, cursor, rootChildren, tutorialChoice, tutorialStep, dispatch }) => {
+const Tutorial = ({ contextViews, cursor, rootChildren, tutorialChoice, tutorialStep, dispatch }: Connected<ReturnType<typeof mapStateToProps>>) => {
 
   rootChildren = rootChildren || []
 
   const tutorialStepProps = { cursor, tutorialChoice, rootChildren, contextViews, dispatch, key: Math.floor(tutorialStep) }
 
-  const tutorialStepComponent = TutorialStepComponentMap[Math.floor(tutorialStep)]
+  const tutorialStepComponent = TutorialStepComponentMap[Math.floor(tutorialStep) as keyof typeof TutorialStepComponentMap]
+
+  const gesture = once(() => (
+    (tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
+    tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
+    tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
+    tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
+      ? shortcutById('newThoughtOrOutdent')?.gesture
+      : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
+      tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
+      tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
+      tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
+      tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
+        ? shortcutById('newSubthought')?.gesture
+        : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
+          ? shortcutById('toggleContextView')?.gesture
+          : null)
+    || null) as GesturePath | null // Why does it add 'string' to the type union without this?
+  )
+
   return <div className='tutorial'><div className='tutorial-inner'>
     <a className='upper-right tutorial-skip text-small' style={{ visibility: tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden' }} onClick={() => dispatch(tutorial({ value: false }))}>✕ close tutorial</a>
     <div className='clear'>
@@ -73,7 +94,7 @@ const Tutorial = ({ contextViews, cursor, rootChildren, tutorialChoice, tutorial
     </div>
 
     {isTouch && (
-      tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
+      (tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
       tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
       tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
       tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE ||
@@ -83,28 +104,14 @@ const Tutorial = ({ contextViews, cursor, rootChildren, tutorialChoice, tutorial
       (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
       (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
       (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT && cursor && headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+      ) && gesture()
     )
       ? <div className='tutorial-trace-gesture'>
-        <GestureDiagram path={
-          tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT ||
-            tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
-            tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
-            tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
-            ? shortcutById('newThoughtOrOutdent').gesture
-            : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
-              tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
-              tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
-              tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
-              tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
-              ? shortcutById('newSubthought').gesture
-              : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
-                ? shortcutById('toggleContextView').gesture
-                : null
-        }
-        size='160'
-        strokeWidth='10'
-        arrowSize='5'
-        className='animate-pulse'
+        <GestureDiagram path={gesture()!}
+          size={160}
+          strokeWidth={10}
+          arrowSize={5}
+          className='animate-pulse'
         />
       </div>
       : null
