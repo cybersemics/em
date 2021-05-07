@@ -8,6 +8,10 @@ export { default as INITIAL_SETTINGS } from './initialSettings'
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
 export const FADEOUT_DURATION = 400
+
+// number of ms to wait after thought hover to expand it's children
+export const EXPAND_HOVER_DELAY = 1000
+
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
 export const OFFLINE_TIMEOUT = 8 * 1000

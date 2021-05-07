@@ -1,5 +1,6 @@
 import { useSelector } from 'react-redux'
 import { Context } from '../types'
+import { pathToContext } from '../util'
 import { State } from '../util/initialState'
 
 /**
@@ -10,7 +11,8 @@ const useIsChildHovering = (thoughts: Context, isHovering: boolean, isDeepHoveri
     Thought component needs to be reactive to the change of hoveringThought but only rerender when calculated value of isChildHovering changes.
     So instead of passing it through mapStateToProps which will re-render component everytime, instead use custom hook that will react to the changes.
   */
-  const hoveringThought = useSelector((state: State) => state.hoveringThought)
+  const hoveringPath = useSelector((state: State) => state.hoveringPath)
+  const hoveringThought = hoveringPath && pathToContext(hoveringPath)
   return isDeepHovering && !isHovering && hoveringThought
   && thoughts.length === hoveringThought.length
   && hoveringThought.every((thought: string, index: number) => thought === thoughts[index])

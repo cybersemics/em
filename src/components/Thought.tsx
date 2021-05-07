@@ -63,6 +63,7 @@ import {
   isContextViewActive,
   rootedParentOf,
   getChildren,
+  visibleDistanceAboveCursor,
 } from '../selectors'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import { compareReasonable } from '../util/compareThought'
@@ -131,6 +132,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     expanded,
     expandedContextThought,
     search,
+    expandHoverTopPath
   } = state
 
   const {
@@ -154,16 +156,20 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)
   ) : 0
 
-  const isCursorParent = distance === 2
+  const isExpandedHoverTopPath = expandHoverTopPath && equalPath(path, expandHoverTopPath)
+
+  // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
+  const isCursorParent = isExpandedHoverTopPath || (distance === 2
     // grandparent
     ? equalPath(rootedParentOf(state, parentOf(cursor || [])), path) && getChildren(state, pathToContext(cursor || [])).length === 0
     // parent
-    : equalPath(parentOf(cursor || []), path)
+    : equalPath(parentOf(cursor || []), path))
 
   const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as SimplePath | undefined
 
+  // Note: An active expand hover top thought cannot be a cusor's grandparent as it is already treated as cursor's parent.
   const isCursorGrandparent =
-    equalPath(rootedParentOf(state, parentOf(cursor || [])), path)
+    !isExpandedHoverTopPath && equalPath(rootedParentOf(state, parentOf(cursor || [])), path)
 
   const value = headValue(simplePathLive)
 
@@ -250,23 +256,32 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
-  const { cursor } = state
+  const { cursor, expandHoverTopPath } = state
+  const { path } = props
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
-  const thoughts = pathToContext(props.simplePathLive!)
-  const context = parentOf(thoughts)
+  const simpleThoughts = pathToContext(props.simplePathLive!)
+  const context = parentOf(simpleThoughts)
   const isSorted = getSortPreference(state, context).type !== 'None'
-  const distance = cursor ? cursor.length - thoughtsTo.length : 0
-  const isHidden = distance >= 2
+
+  const distance = cursor ? cursor?.length - thoughtsTo.length : 0
+
+  /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
+  const isExpandedTop = () => expandHoverTopPath && path.length > expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
+
+  const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
+
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
-  const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
+  const isDescendantOfFrom = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
   const oldContext = rootedParentOf(state, thoughtsFrom)
   const newContext = rootedParentOf(state, thoughtsTo)
   const sameContext = equalArrays(oldContext, newContext)
 
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
-  // allow drop on itself or after itself even though it is a noop so that drop-hover appears consistently
-  return !isHidden && !isDescendant && (!isSorted || !sameContext)
+  // allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
+  // allow drop if thought is the nearest visible though to the root
+  // allow drop if the thought is the active expanded top context or it's direct children
+  return !isHidden && !isDescendantOfFrom && (!isSorted || !sameContext)
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -331,6 +346,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
+  // is being hovered over current thought irrespective of whether the given item is droppable
+  isBeingHoveredOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver()
 })
 
@@ -428,6 +445,7 @@ const ThoughtContainer = ({
   isDragging,
   isEditing,
   isEditingPath,
+  isBeingHoveredOver,
   isExpanded,
   isHovering,
   isParentHovering,
@@ -447,17 +465,17 @@ const ThoughtContainer = ({
   cursor = cursor || []
 
   const state = store.getState()
+
   useEffect(() => {
-    if (isHovering) {
+    if (isBeingHoveredOver) {
       store.dispatch(dragInProgress({
         value: true,
         draggingThought: state.draggingThought,
-        hoveringThought: [...context],
         hoveringPath: path,
         hoverId: DROP_TARGET.ThoughtDrop
       }))
     }
-  }, [isHovering])
+  }, [isBeingHoveredOver])
 
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
