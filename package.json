@@ -5,6 +5,9 @@
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
   "private": true,
+  "engines": {
+    "npm": "6"
+  },
   "browserslist": {
     "production": [
       "defaults"
