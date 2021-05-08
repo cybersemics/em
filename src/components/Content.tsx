@@ -102,7 +102,12 @@ const Content: ContentComponent = props => {
   const contentRef = useRef<HTMLDivElement>(null)
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
-  const clickOnEmptySpace = () => {
+  const clickOnEmptySpace = (e: any) => {
+    // Stop event bubbling. We need to handle this event if we click really on content element not other elements.
+    if (e.target.id !== 'content') {
+      return
+    }
+
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
     // prevent text selection from calling cursorBack incorrectly
     const selection = window.getSelection()
@@ -135,7 +140,8 @@ const Content: ContentComponent = props => {
       id='content'
       ref={contentRef}
       className={contentClassNames}
-      onClick={clickOnEmptySpace}
+      onTouchEnd={clickOnEmptySpace}
+      onMouseDown={clickOnEmptySpace}
     >
       {search != null
         ? <Search />
