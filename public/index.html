@@ -28,6 +28,14 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>em</title>
+
+    <style>
+      body.dark {
+        color: white;
+        background-color: black;
+      }
+    </style>
+
   </head>
   <body>
     <noscript>
@@ -48,6 +56,10 @@
     <div id="debug"></div>
 
     <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase.js"></script>
-
+    <script>
+      // Note: Initially theme needs to be set here before react loads. Else it causes white flash.
+      const theme = localStorage['Settings/Theme'] || 'dark'
+      document.body.classList.add(theme)
+    </script>
   </body>
 </html>
