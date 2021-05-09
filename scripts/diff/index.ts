@@ -45,8 +45,9 @@ const repeat = (s: string, n: number) =>
   (new Array(n)).fill(s).join('')
 
 /** Removes <li> to avoid the importText bug that misinterprets the whole file as HTML. */
-const scrub = (s: string) =>
-  s.replace(/\<\/?li\>/gi, '')
+const scrub = (s: string) => s
+  .replace(/\<\/?li\>/gi, '')
+  .replace(/em\>/gi, 'i>') // #1131
 
 /** Renders a single thought for a context. Does not fill in missing ancestors. */
 const renderContext = (context: Context): string =>
