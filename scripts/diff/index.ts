@@ -10,15 +10,17 @@ import { hashContext, hashThought, head, unroot } from '../../src/util'
 import { State } from '../../src/util/initialState'
 import { Child, Context, Index, Parent } from '../../src/types'
 
-const helpText = `Usage: npm run start -- em-proto-data1.json em-proto-data2.json`
+const userId = 'm9S244ovF7fVrwpAoqoWxcz08s52'
+
+const helpText = `Usage: npm run start -- em-proto-data_OLD.json em-proto-data-NEW.json`
 
 let prevContext: Context = []
 
 interface Database {
-  users: Index<RemoteState>
+  users: Index<UserState>
 }
 
-interface RemoteState {
+interface UserState {
   thoughtIndex: State['thoughts']['thoughtIndex'],
   contextIndex: State['thoughts']['contextIndex'],
 }
@@ -27,7 +29,7 @@ const appendContext = (context: Context, child: string) =>
   unroot([...context, child])
 
 /** Traverses the contextIndex, calling a function for each context. */
-const traverse = (state: RemoteState, f: (parent: Parent) => void, options: { context: Context } = { context: [HOME_TOKEN] }) => {
+const traverse = (state: UserState, f: (parent: Parent) => void, options: { context: Context } = { context: [HOME_TOKEN] }) => {
   const context = options.context
   const parent = state.contextIndex[hashContext(context)]
   if (parent) {
@@ -111,12 +113,12 @@ const main = () => {
 
   // read
   const input1 = fs.readFileSync(file1, 'utf-8')
-  const db1 = JSON.parse(input1) as Database
-  const state1 = db1.users.m9S244ovF7fVrwpAoqoWxcz08s52
+  const db1 = JSON.parse(input1) as Database | UserState
+  const state1 = (db1 as Database).users?.[userId] || db1 as UserState
 
   const input2 = fs.readFileSync(file2, 'utf-8')
-  const db2 = JSON.parse(input2) as Database
-  const state2 = db2.users.m9S244ovF7fVrwpAoqoWxcz08s52
+  const db2 = JSON.parse(input2) as Database | UserState
+  const state2 = (db2 as Database).users?.[userId] || db2 as UserState
 
   // diff
   traverse(state1, (parent1: Parent) => {
