@@ -1,0 +1,47 @@
+const initialSettings = `
+- Settings
+  - =readonly
+  - Theme
+    - =readonly
+    - =options
+      - Dark
+      - Light
+    - Dark
+  - Global Sort
+    - =readonly
+    - =options
+      - None
+      - Alphabetical
+    - None
+      - =options
+        - Desc
+        - Asc
+  - Data Integrity Check
+    - =readonly
+    - =hidden
+    - =options
+      - On
+      - Off
+    - Off
+  - Tutorial
+    - =readonly
+    - =hidden
+    - =options
+      - On
+      - Off
+    - On
+  - Tutorial Choice
+    - =readonly
+    - =hidden
+    - =type
+      - Number
+    - 0
+  - Tutorial Step
+    - =readonly
+    - =hidden
+    - =type
+      - Number
+    - 1
+`
+
+export default initialSettings

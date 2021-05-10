@@ -1,7 +1,8 @@
 /** Defines app-wide constants. */
 
-import raw from 'raw.macro'
 import { Index, SimplePath } from './types'
+
+export { default as INITIAL_SETTINGS } from './initialSettings'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -210,8 +211,6 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
 ]
 
 export const EDIT_THROTTLE = 1000
-
-export const INITIAL_SETTINGS = raw('./initialSettings.html')
 
 export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
 

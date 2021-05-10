@@ -1,9 +1,5 @@
 Run this script to recalculate contextIndex and thoughtIndex hashes.
 
-## Setup
-
-You will need to comment out `raw.macro` in `constants.ts` to be able to compile directly with tsc.
-
 ## Build
 
 ```sh
