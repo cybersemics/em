@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { unescape } from 'html-escaper'
@@ -181,6 +181,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const editableNonceRef = useRef(state.editableNonce)
+  const [isTapped, setIsTapped] = useState(false)
 
   useEffect(() => {
     editableNonceRef.current = state.editableNonce
@@ -362,7 +363,6 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     //     focusNode: !!focusNode,
     //   })
     // }
-
     // allow transient editable to have focus on render
     if (transient || (
       isEditing &&
@@ -370,7 +370,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       !noteFocus &&
       contentRef.current &&
       (cursorWithoutSelection || isAtBeginning) &&
-      !dragHold
+      !dragHold &&
+      !isTapped
     )) {
       /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
@@ -386,6 +387,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       else {
         setSelectionToCursorOffset()
       }
+    }
+
+    if (isTapped) {
+      setIsTapped(false)
     }
 
     /** Flushes pending edits. */
@@ -626,6 +631,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         // prevent focus to allow navigation with mobile keyboard down
         setCursorOnThought()
       }
+    }
+    else {
+      // We need to know that user clicked the editable to not set caret programmatically, because caret will be already set by browser. Issue: #981
+      setIsTapped(true)
     }
   }
 

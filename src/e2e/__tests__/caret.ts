@@ -9,6 +9,7 @@ import waitForState from '../../test-helpers/e2e-helpers/waitForState'
 import { devices, Page } from 'puppeteer'
 import initPage from '../../test-helpers/e2e-helpers/initPage'
 import clickThought from '../../test-helpers/e2e-helpers/clickThought'
+import waitForThoughtToExistInDb from '../../test-helpers/e2e-helpers/waitForThoughtExistInDb'
 
 describe('caret testing', () => {
   let page: Page
@@ -171,6 +172,32 @@ describe('caret testing', () => {
 
     const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
     expect(offset).toBe(0)
+  })
+
+  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
+    const importText = `
+    - a
+    - b`
+
+    await page.keyboard.press('Enter')
+    await paste(page, [''], importText)
+
+    await clickThought(page, 'a')
+
+    // Set cursor to null
+    await page.click('#content')
+
+    await waitForState(page, 'isPushing', false)
+    await waitForThoughtToExistInDb(page, 'a')
+    await waitForThoughtToExistInDb(page, 'b')
+
+    await page.evaluate(() => window.location.reload())
+
+    await waitForEditable(page, 'b')
+    await clickThought(page, 'b')
+
+    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
+    expect(textContext).toBe('b')
   })
 
 })
