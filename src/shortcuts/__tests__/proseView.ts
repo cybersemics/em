@@ -1,11 +1,9 @@
 import { HOME_PATH } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
+import proseViewShortcut from '../proseView'
 import { attribute } from '../../selectors'
 import { importText } from '../../action-creators'
 import executeShortcut from '../../test-helpers/executeShortcut'
-
-// must be imported after selectors to avoid circular import
-import proseViewShortcut from '../proseView'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {

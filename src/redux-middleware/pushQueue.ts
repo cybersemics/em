@@ -1,12 +1,10 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
+import { clearPushQueue, existingThoughtChange, existingThoughtDelete, existingThoughtMove, isPushing, pull, push } from '../action-creators'
 import { hasPushes } from '../selectors'
 import { hashContext, keyValueBy, pathToContext } from '../util'
 import { PushBatch, State } from '../util/initialState'
 import { Thunk, Context, Index } from '../types'
-
-// import at end to avoid circular import
-import { clearPushQueue, existingThoughtChange, existingThoughtDelete, existingThoughtMove, isPushing, pull, push } from '../action-creators'
 
 /** Merges multiple push batches into a single batch. Uses last value of local/remote. */
 const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>

@@ -1,16 +1,9 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, DROP_TARGET } from '../constants'
 import globals from '../globals'
+import { canShowModal } from '../selectors'
+import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User } from '../types'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
-
-// import util/selector functions directly since importing from ../util/index causes circular dependency
-import { hashContext } from '../util/hashContext'
-import { hashThought } from '../util/hashThought'
-import { isDocumentEditable } from '../util/isDocumentEditable'
-import { never } from '../util/never'
-import { parseJsonSafe } from '../util/parseJsonSafe'
-import { timestamp } from '../util/timestamp'
-import canShowModal from '../selectors/canShowModal'
 
 interface ModalProperties {
   complete: boolean,
