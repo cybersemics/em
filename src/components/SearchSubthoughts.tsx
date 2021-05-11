@@ -4,7 +4,7 @@ import { store } from '../store'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import { exists } from '../selectors'
 import { searchContexts, searchLimit as setSearchLimit, error } from '../action-creators'
-import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, rankThoughtsSequential, sort } from '../util'
+import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 import { State } from '../util/initialState'
@@ -86,17 +86,16 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({ remoteSearch
       : 0
   }
 
-  const children = search ? rankThoughtsSequential(
-    sort(Object.values(thoughtIndex)
-      .filter(thought =>
-        (archived || !isArchived(thought)) &&
-        thought.value !== HOME_TOKEN &&
-        thought.value !== EM_TOKEN &&
-        searchRegexp.test(thought.value)
-      )
-      .map(thought => thought.value),
+  const children = search ? sort(Object.values(thoughtIndex)
+    .filter(thought =>
+      (archived || !isArchived(thought)) &&
+      thought.value !== HOME_TOKEN &&
+      thought.value !== EM_TOKEN &&
+      searchRegexp.test(thought.value)
+    )
+    .map((thought, i) => ({ id: thought.id, value: thought.value, rank: i }),
     // cannot group cases by return value because conditionals must be checked in order of precedence
-    comparator)
+      comparator)
   ) : []
 
   /** Sets the leaf classname dynamically. */
