@@ -118,7 +118,7 @@ const AppComponent: FC<Props> = props => {
       <Alert />
       <ErrorMessage />
 
-      {isDocumentEditable() && !tutorial && <>
+      {isDocumentEditable() && !tutorial && !showModal && <>
         <Sidebar />
         <HamburgerMenu />
       </>}
