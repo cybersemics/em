@@ -167,11 +167,23 @@ const ModalAuth = () => {
   const showForgotPassword = () => updateActiveMode(modes.resetPassword)
 
   return <Modal id='auth' title={activeMode.modalTitle} className='popup' center actions={({ remindMeLater: closeModal }) => <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
+
     <ActionButton key={activeMode.modalKey} title={activeMode.modalTitle} active={true} isLoading={isSubmitting} onClick={() => submitAction(closeModal, email, password)} />
-    {!isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showLogin}>{ isModeActive(modes.resetPassword) ? 'Back to Login' : 'Already have an account? Log in' }</button>}
-    {isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showSignup}>Need an account? Sign up</button>}
-    {!isModeActive(modes.resetPassword) && <button disabled={isSubmitting} className='button' onClick={signInWithGoogle}>Log in using Google</button>}
-    <button disabled={isSubmitting} className='button' key='cancel' style={{ fontSize: '1.2rem', opacity: 0.5 }}><a id='cancel-login' onClick={() => closeModal()}>Cancel</a></button>
+
+    {!isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showLogin} style={{ textDecoration: 'underline', marginTop: 15 }}>
+      { isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in' }
+    </button>}
+
+    {isModeActive(modes.login) && <button disabled={isSubmitting} className='button' onClick={showSignup} style={{ textDecoration: 'underline', marginTop: 15 }}>
+      Create an account
+    </button>}
+
+    {!isModeActive(modes.resetPassword) && <button disabled={isSubmitting} className='button' style={{ textDecoration: 'underline', marginTop: 15 }} onClick={signInWithGoogle}>
+      Sign in with Google
+    </button>}
+
+    <button disabled={isSubmitting} className='button' key='cancel' style={{ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }}><a id='cancel-login' onClick={() => closeModal()}>Work Offline</a></button>
+
   </div>}>
     <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
 
