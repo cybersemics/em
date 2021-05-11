@@ -48,6 +48,8 @@ const repeat = (s: string, n: number) =>
 const scrub = (s: string) => s
   .replace(/\<\/?li\>/gi, '')
   .replace(/em\>/gi, 'i>') // #1131
+  .replace(/\<br\>$/gi, '') // #1131
+  .replace(/<span.*?>/gi, '') // #1131
 
 /** Renders a single thought for a context. Does not fill in missing ancestors. */
 const renderContext = (context: Context): string =>
