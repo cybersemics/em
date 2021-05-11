@@ -100,14 +100,13 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 const Content: ContentComponent = props => {
   const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus, rootSort, isAbsoluteContext } = props
   const contentRef = useRef<HTMLDivElement>(null)
-  const [isPressed, setIsPressed] = useState<boolean | null>(null)
+  const [isPressed, setIsPressed] = useState<boolean>(false)
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace = () => {
-    // We need to make sure the user starts the action by pressing the Content element.
-    if (!isPressed) {
-      return
-    }
+    // make sure the the actual Content element has been clicked
+    // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
+    if (!isPressed) return
     setIsPressed(false)
 
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
