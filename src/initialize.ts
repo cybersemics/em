@@ -11,6 +11,7 @@ import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
 
+import { setupDexieSubscriptions } from './util/sync'
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
 
@@ -36,6 +37,8 @@ export const initialize = async () => {
   initFirebase({ store })
 
   await thoughtsLocalPromise
+
+  setupDexieSubscriptions()
 
   return {
     thoughtsLocalPromise,

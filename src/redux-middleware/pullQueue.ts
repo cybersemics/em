@@ -7,6 +7,8 @@ import { pull } from '../action-creators'
 import { State } from '../util/initialState'
 import { Child, Context, ContextHash, Index, ThoughtContext } from '../types'
 
+const ROOT_ENCODED = hashContext([HOME_TOKEN])
+
 /** Debounce visible thought checks to avoid checking on every action. */
 const updatePullQueueDelay = 10
 
@@ -101,11 +103,14 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
-    const hasMorePending = await dispatch(pull(extendedPullQueue))
+    // hack to run pull only on boot | pullQueue middleware would probably not be needed after subscriptions
+    if (Object.keys(extendedPullQueue).length !== 0 && (ROOT_ENCODED in extendedPullQueue)) {
+      const hasMorePending = await dispatch(pull(extendedPullQueue))
 
-    const { user } = getState()
-    if (!user && hasMorePending) {
-      updatePullQueue({ force: true })
+      const { user } = getState()
+      if (!user && hasMorePending) {
+        updatePullQueue({ force: true })
+      }
     }
   }
 

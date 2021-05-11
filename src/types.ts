@@ -11,6 +11,10 @@ import { GestureResponderEvent } from 'react-native'
 declare global {
   interface Document {
     DND: any,
+    webkitHidden: any,
+     mozHidden: any,
+     msHidden: any,
+     oHidden: any,
   }
 
   interface Window {
@@ -115,6 +119,7 @@ export interface Lexeme {
   value: string,
   contexts: ThoughtContext[],
   created: Timestamp,
+  updatedBy?: string,
   lastUpdated: Timestamp,
 }
 
@@ -146,6 +151,7 @@ export interface Parent {
   id?: string,
   context: Context,
   children: Child[],
+  updatedBy?: string,
   lastUpdated: Timestamp,
   pending?: boolean,
 }

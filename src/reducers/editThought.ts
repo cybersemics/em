@@ -24,6 +24,7 @@ import {
   timestamp,
   unroot,
 } from '../util'
+import { getSessionId } from '../util/sessionManager'
 
 export interface editThoughtPayload {
   oldValue: string,
@@ -322,17 +323,20 @@ const editThought = (state: State, { oldValue, newValue, context, showContexts, 
       context: contextNew,
       children: thoughtNewSubthoughts,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     },
     ...showContexts ? {
       [contextOldEncoded]: {
         context: contextOld,
         children: thoughtOldSubthoughts,
         lastUpdated: timestamp(),
+        updatedBy: getSessionId()
       },
       [contextParentEncoded]: {
         context: contextParent,
         children: thoughtParentSubthoughts,
         lastUpdated: timestamp(),
+        updatedBy: getSessionId()
       }
     } : null,
     ...contextIndexDescendantUpdates,

@@ -1,8 +1,10 @@
 /* eslint-disable fp/no-this */
 import Dexie from 'dexie'
+import 'dexie-observable'
 import _ from 'lodash'
 import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
+import { getSessionId } from '../util/sessionManager'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -23,8 +25,8 @@ class EM extends Dexie {
     super('Database')
 
     this.version(1).stores({
-      contextIndex: 'id, context, *children, lastUpdated',
-      thoughtIndex: 'id, value, *contexts, created, lastUpdated, *words',
+      contextIndex: 'id, context, *children, lastUpdated, updatedBy',
+      thoughtIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       logs: '++id, created, message, stack',
@@ -54,7 +56,7 @@ export interface Log {
   stack?: any,
 }
 
-const db = new Dexie('EM') as EM
+export const db = new Dexie('EM') as EM
 
 /** Initializes the EM record where helpers are stored. */
 const initHelpers = async () => {
@@ -119,12 +121,13 @@ export const clearAll = () => Promise.all([
 
 /** Updates a single thought in the thoughtIndex. */
 export const updateThought = async (id: string, thought: Lexeme) =>
-  db.thoughtIndex.put({ id, ...thought })
+  db.thoughtIndex.put({ id, ...thought, updatedBy: getSessionId() })
 
 /** Updates multiple thoughts in the thoughtIndex. */
 export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) => {
   const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
     ...thoughtIndexMap[key] as Lexeme,
+    updatedBy: getSessionId(),
     id: key,
   }))
   return db.thoughtIndex.bulkPut(thoughtsArray)
@@ -147,13 +150,14 @@ export const getThoughtIndex = async () => {
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
 export const updateContext = async (id: string, { context, children, lastUpdated }: Parent) => {
-  return db.contextIndex.put({ id, context, children, lastUpdated })
+  return db.contextIndex.put({ id, context, children, updatedBy: getSessionId(), lastUpdated })
 }
 
 /** Updates multiple thoughts in the contextIndex. */
 export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) => {
   const contextsArray = Object.keys(contextIndexMap).map(key => ({
     ...contextIndexMap[key] as Parent,
+    updatedBy: getSessionId(),
     id: key,
   }))
   return db.contextIndex.bulkPut(contextsArray)
