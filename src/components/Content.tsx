@@ -1,4 +1,4 @@
-import React, { FC, MouseEvent, useMemo, useRef } from 'react'
+import React, { FC, MouseEvent, useMemo, useRef, useState } from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
@@ -100,13 +100,15 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 const Content: ContentComponent = props => {
   const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus, rootSort, isAbsoluteContext } = props
   const contentRef = useRef<HTMLDivElement>(null)
+  const [isPressed, setIsPressed] = useState<boolean | null>(null)
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
-  const clickOnEmptySpace = (e: any) => {
-    // Stop event bubbling. We need to handle this event if we click really on content element not other elements.
-    if (e.target.id !== 'content') {
+  const clickOnEmptySpace = () => {
+    // We need to make sure the user starts the action by pressing the Content element.
+    if (!isPressed) {
       return
     }
+    setIsPressed(false)
 
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
     // prevent text selection from calling cursorBack incorrectly
@@ -140,8 +142,8 @@ const Content: ContentComponent = props => {
       id='content'
       ref={contentRef}
       className={contentClassNames}
-      onTouchEnd={clickOnEmptySpace}
-      onMouseDown={clickOnEmptySpace}
+      onClick={clickOnEmptySpace}
+      onMouseDown={() => setIsPressed(true)}
     >
       {search != null
         ? <Search />

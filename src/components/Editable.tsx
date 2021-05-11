@@ -605,6 +605,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation()
+
     const state = store.getState()
 
     showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
