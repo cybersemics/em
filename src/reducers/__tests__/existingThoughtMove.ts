@@ -594,7 +594,7 @@ it('data integrity test', () => {
   expect(noOfUpdates).toBe(0)
 })
 
-it('pending thoughts should be merged correctly(fetch pending before move)', async () => {
+it('pending destination should be merged correctly (fetch pending before move)', async () => {
   initialize()
 
   const text = `
@@ -632,13 +632,74 @@ it('pending thoughts should be merged correctly(fetch pending before move)', asy
   timer.useFakeTimer()
 
   appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+
+  // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
   appStore.dispatch([
-    setCursorFirstMatchActionCreator(['a']),
     existingThoughtMoveAction({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
       newPath: [{ value: 'd', rank: 1 }, { value: 'b', rank: 1 }],
+    })
+  ])
+  await timer.runAllAsync()
+
+  timer.useRealTimer()
+
+  const mergedChildren = getAllChildren(appStore.getState(), ['d', 'b', 'c'])
+  expect(mergedChildren).toMatchObject([
+    { value: 'three', rank: 0 },
+    { value: 'four', rank: 1 },
+    { value: 'one', rank: 2 },
+    { value: 'two', rank: 3 },
+  ])
+
+})
+
+it('pending destination descendants should be merged correctly (fetch pending before move)', async () => {
+  initialize()
+
+  const text = `
+  - a
+    - b
+      -c
+        - one
+        - two
+  - b
+    - c
+      - three
+      - four`
+
+  timer.useFakeTimer()
+
+  appStore.dispatch([
+    importTextAction({
+      path: HOME_PATH,
+      text
+    }),
+  ])
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+  // clear and call initialize again to reload from local db (simulating page refresh)
+  appStore.dispatch(clear())
+  await timer.runAllAsync()
+
+  initialize()
+
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+
+  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+
+  // wait for pullBeforeMove middleware to execute
+  await timer.runAllAsync()
+
+  appStore.dispatch([
+    existingThoughtMoveAction({
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+      newPath: [{ value: 'b', rank: 0.5 }],
     })
   ]
   )
@@ -646,13 +707,12 @@ it('pending thoughts should be merged correctly(fetch pending before move)', asy
 
   timer.useRealTimer()
 
-  const mergedChildren = getAllChildren(appStore.getState(), ['d', 'b', 'c'])
-
-  const mergedChildrenRanks = mergedChildren.map(child => child.rank)
-  expect(new Set(mergedChildrenRanks)).toMatchObject(new Set([0, 1, 2, 3]))
-
-  const mergedChildrenValues = mergedChildren.map(child => child.value)
-
-  expect(new Set(mergedChildrenValues)).toMatchObject(new Set(['one', 'two', 'three', 'four']))
+  const mergedChildren = getAllChildren(appStore.getState(), ['b', 'c'])
+  expect(mergedChildren).toMatchObject([
+    { value: 'three', rank: 0 },
+    { value: 'four', rank: 1 },
+    { value: 'one', rank: 2 },
+    { value: 'two', rank: 3 },
+  ])
 
 })
