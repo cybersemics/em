@@ -3,6 +3,13 @@ import { equalArrays, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked } from '../../selectors'
 import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+import { store as appStore } from '../../store'
+import testTimer from '../../test-helpers/testTimer'
+import { initialize } from '../../initialize'
+import { clear, importText as importTextAction, existingThoughtMove as existingThoughtMoveAction } from '../../action-creators'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+
+const timer = testTimer()
 
 it('move within root', () => {
 
@@ -585,4 +592,67 @@ it('data integrity test', () => {
   const noOfUpdates = Object.keys(checkDataIntegrity(stateNew)).length
 
   expect(noOfUpdates).toBe(0)
+})
+
+it('pending thoughts should be merged correctly(fetch pending before move)', async () => {
+  initialize()
+
+  const text = `
+  - a
+    - b
+      -c
+        - one
+        - two
+  - d
+    - b
+      - c
+        - three
+        - four`
+
+  timer.useFakeTimer()
+
+  appStore.dispatch([
+    importTextAction({
+      path: HOME_PATH,
+      text
+    }),
+  ]
+  )
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+  // clear and call initialize again to reload from local db (simulating page refresh)
+  appStore.dispatch(clear())
+  await timer.runAllAsync()
+
+  initialize()
+
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+
+  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+  await timer.runAllAsync()
+
+  appStore.dispatch([
+    setCursorFirstMatchActionCreator(['a']),
+    existingThoughtMoveAction({
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+      newPath: [{ value: 'd', rank: 1 }, { value: 'b', rank: 1 }],
+    })
+  ]
+  )
+  await timer.runAllAsync()
+
+  timer.useRealTimer()
+
+  const mergedChildren = getAllChildren(appStore.getState(), ['d', 'b', 'c'])
+
+  const mergedChildrenRanks = mergedChildren.map(child => child.rank)
+  expect(new Set(mergedChildrenRanks)).toMatchObject(new Set([0, 1, 2, 3]))
+
+  const mergedChildrenValues = mergedChildren.map(child => child.value)
+
+  expect(new Set(mergedChildrenValues)).toMatchObject(new Set(['one', 'two', 'three', 'four']))
+
 })
