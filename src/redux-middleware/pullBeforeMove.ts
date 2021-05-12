@@ -7,7 +7,7 @@ import { State } from '../util/initialState'
 /**
  * Middleware that fetches any pending descendants before a thought-move operation.
  */
-const fetchBeforeMove: ThunkMiddleware<State> = ({ getState, dispatch }) => {
+const pullBeforeMove: ThunkMiddleware<State> = ({ getState, dispatch }) => {
 
   return next => async action => {
 
@@ -32,4 +32,4 @@ const fetchBeforeMove: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   }
 }
 
-export default fetchBeforeMove
+export default pullBeforeMove
