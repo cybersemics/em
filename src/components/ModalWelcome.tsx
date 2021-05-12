@@ -128,10 +128,10 @@ const ModalWelcome = () => {
   return <div ref={onRef}>
     <Modal id='welcome' title='Welcome to em' className='popup' hideModalActions={!invited} center actions={({ complete }) => <div>
       <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
-      { isTutorialSettingsLoaded && <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => {
+      { <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={isTutorialSettingsLoaded ? () => {
         endTutorial()
         complete()
-      }}>This ain’t my first rodeo. Skip it.</a></div>
+      } : undefined}>This ain’t my first rodeo. Skip it.</a></div>
       }
     </div>}>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
