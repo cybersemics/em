@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import * as pluralize from 'pluralize'
+// import * as pluralize from 'pluralize'
 import { REGEXP_TAGS } from '../constants'
 import emojiStrip from 'emoji-strip'
 
@@ -21,7 +21,7 @@ export const stripTags = (s: string) => s.replace(REGEXP_TAGS, '')
 /**
  * Making character 's' will just become an empty value ''.
  * Skip it else it will cause "s" character to have same no of context as empty thoughts in the entire tree. */
-export const singularize = (s: string) => s !== 's' ? pluralize.singular(s) : s
+export const singularize = (s: string) => s // !== 's' ? pluralize.singular(s) : s
 
 /** Converts a string to lowecase. */
 const lower = (s: string) => s.toLowerCase()
