@@ -24,7 +24,7 @@ const fetchBeforeMove: ThunkMiddleware<State> = ({ getState, dispatch }) => {
       const isNewContextPending = conflictedPath && isPending(state, newContext)
       if (isNewContextPending) {
         const toPull = { [hashContext(newContext)]: newContext }
-        await pull(toPull, { maxDepth: Infinity })(dispatch, getState)
+        await dispatch(pull(toPull, { maxDepth: Infinity }))
       }
     }
     next(action)
