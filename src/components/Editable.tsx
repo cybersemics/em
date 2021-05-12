@@ -610,7 +610,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation()
+    // Stop propagation to not trigger onMouseDown event of Content.
+    if (e.nativeEvent instanceof MouseEvent) {
+      e.stopPropagation()
+    }
 
     const state = store.getState()
 
