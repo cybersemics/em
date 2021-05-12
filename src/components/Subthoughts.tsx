@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import assert from 'assert'
 import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { store } from '../store'
 import { isTouch } from '../browser'
@@ -73,8 +72,8 @@ interface SubthoughtsProps {
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
 const toggleContextViewShortcut = shortcutById('toggleContextView')
-assert(subthoughtShortcut)
-assert(toggleContextViewShortcut)
+if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
+if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
 const PAGINATION_SIZE = 100
 

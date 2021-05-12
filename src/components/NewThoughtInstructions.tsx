@@ -1,6 +1,5 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-import assert from 'assert'
 import { isTouch } from '../browser'
 import { shortcutById } from '../shortcuts'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
@@ -17,7 +16,9 @@ interface NewThoughtInstructionsProps {
 
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
-assert(newThoughtShortcut)
+if (!newThoughtShortcut) {
+  throw new Error('newThoughtOrOutdent shortcut not found.')
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {

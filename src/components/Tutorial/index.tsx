@@ -1,4 +1,3 @@
-import assert from 'assert'
 import React from 'react'
 import { connect } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
@@ -38,7 +37,9 @@ import TutorialNavigation from './TutorialNavigation'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
-assert(newThoughtShortcut)
+if (!newThoughtShortcut) {
+  throw new Error('newThoughtOrOutdent shortcut not found.')
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
