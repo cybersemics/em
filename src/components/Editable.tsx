@@ -610,6 +610,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation()
+
     const state = store.getState()
 
     showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
@@ -617,7 +619,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
-    if (disabled || (
+    if (disabled || isHiddenByAutofocus || (
       !globals.touching &&
       // not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       !state.dragInProgress &&
