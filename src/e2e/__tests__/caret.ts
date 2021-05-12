@@ -238,22 +238,4 @@ describe('caret testing for mobile platform', () => {
     expect(offset).toBe(0)
 
   })
-
-  it('on clicking the hidden thought, caret should be on the parent thought of editing thought', async () => {
-    const importText = `
-    - A
-      - B
-        -C
-    - D`
-
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
-
-    await clickThought(page, 'A')
-    await clickThought(page, 'C')
-    await clickThought(page, 'D')
-
-    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
-    expect(textContext).toBe('B')
-  })
 })
