@@ -109,7 +109,7 @@ const flushMoves = (): Thunk => async (dispatch, getState) => {
 
   const { pushQueue } = getState()
 
-  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  // if there are pending thoughts that need to be moved, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtMove
   const pendingMoves = pushQueue.map(batch => batch.pendingMoves || []).flat()
   if (pendingMoves?.length) {
 
