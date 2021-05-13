@@ -42,6 +42,7 @@ interface StateProps {
   scale?: number,
   showSplitView?: boolean,
   splitPosition?: number,
+  fontSize: number,
 }
 
 interface DispatchProps {
@@ -61,6 +62,7 @@ const mapStateToProps = (state: State): StateProps => {
     showModal,
     splitPosition,
     showSplitView,
+    fontSize: state.fontSize
   }
 }
 
@@ -79,7 +81,7 @@ const MultiGestureIfTouch: FC = ({ children }) => isTouch
  * The main app component.
  */
 const AppComponent: FC<Props> = props => {
-  const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos } = props
+  const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos, fontSize } = props
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
@@ -142,7 +144,7 @@ const AppComponent: FC<Props> = props => {
           : <>
             {tutorial && !isLoading ? <Tutorial /> : null}
             <SplitPane
-              style={{ position: 'relative', fontSize: (scale! * 13.33333) + 'px' }}
+              style={{ position: 'relative', fontSize: fontSize + 'px' }}
               className={isSplitting ? 'animating' : ''}
               split='vertical'
               defaultSize={!splitView ? '100%' : splitPosition || '50%'}
