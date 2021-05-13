@@ -68,11 +68,14 @@ const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
 
 type Props = StateProps & DispatchProps
 
+/** Cancel gesture if there is an active text selection on active drag. */
+const shouldCancelGesture = () => !!window.getSelection()?.toString() || store.getState().dragInProgress
+
 /**
  * Wrap an element in the MultiGesture componentt if the user has a touch screen.
  */
 const MultiGestureIfTouch: FC = ({ children }) => isTouch
-  ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd}>{children}</MultiGesture>
+  ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd} shouldCancelGesture={shouldCancelGesture}>{children}</MultiGesture>
   : <>{children}</>
 
 /**
