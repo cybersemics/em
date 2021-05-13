@@ -142,25 +142,19 @@ const AppComponent: FC<Props> = props => {
           : <>
             {tutorial && !isLoading ? <Tutorial /> : null}
             <SplitPane
-              style={{ position: 'relative' }}
+              style={{ position: 'relative', fontSize: (scale! * 13.33333) + 'px' }}
               className={isSplitting ? 'animating' : ''}
               split='vertical'
               defaultSize={!splitView ? '100%' : splitPosition || '50%'}
               size={!splitView ? '100%' : splitPosition || '50%'}
               onDragFinished={updateSplitPos}
             >
-              <Scale amount={scale!}>
-                <Suspense fallback={<ContentFallback />}>
-                  <Content />
-                </Suspense>
-              </Scale>
-
+              <Suspense fallback={<ContentFallback />}>
+                <Content />
+              </Suspense>
               {showSplitView
                 ?
-                <Scale amount={scale!}>
-                  <Content />
-                </Scale>
-
+                <Content />
               // children required by SplitPane
                 : <div />}
             </SplitPane>
