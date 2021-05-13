@@ -44,7 +44,7 @@ const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClick
 
   if (!coordinate) throw new Error('Coordinate not found.')
 
-  await page.mouse.click(coordinate.x + x, coordinate.y + y)
+  await page.mouse.click(coordinate.x + x - (horizontalClickLine === 'right' ? 1 : 0), coordinate.y + y)
 }
 
 export default clickEditable
