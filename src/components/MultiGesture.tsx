@@ -24,6 +24,7 @@ interface MultiGestureProps {
   onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void,
   onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void,
   onStart?: () => void,
+  shouldCancelGesture?: () => boolean,
   scrollThreshold?: number,
   threshold?: number,
 }
@@ -35,9 +36,6 @@ const gesture = (p1: Point, p2: Point, threshold: number) =>
   p2.x - p1.x > threshold ? 'r' :
   p1.x - p2.x > threshold ? 'l' :
   null
-
-/** Returns true if no text is selected. */
-const noTextSelected = () => !window.getSelection()?.toString()
 
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
@@ -75,8 +73,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: thought it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
-      onMoveShouldSetPanResponder: noTextSelected,
-      onMoveShouldSetPanResponderCapture: noTextSelected,
+      onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.() ?? true,
+      onMoveShouldSetPanResponderCapture: () => !this.props.shouldCancelGesture?.() ?? true,
 
       // does not report moveX and moveY
       // onPanResponderGrant: (e, gestureState) => {},
@@ -84,6 +82,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
 
         if (this.abandon) {
+          return
+        }
+
+        if (this.props.shouldCancelGesture?.()) {
+          this.abandon = true
           return
         }
 
