@@ -55,7 +55,6 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const value = head(oldThoughts)
   const key = hashThought(value)
   const oldRank = headRank(oldSimplePath)
-  const newRank = headRank(newSimplePath)
   const oldContext = rootedParentOf(state, oldThoughts)
   const newContext = rootedParentOf(state, newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
@@ -66,6 +65,14 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     console.error('Lexeme not found', oldPath)
     return state
   }
+
+  const duplicateSubthought = getChildrenRanked(state, newContext)
+    .find(thought => normalizeThought(thought.value) === normalizeThought(value))
+
+  const isDuplicateMerge = duplicateSubthought && !sameContext
+
+  // If there is a duplicate merge use the previous rank instead of the new
+  const newRank = isDuplicateMerge && duplicateSubthought ? duplicateSubthought.rank : headRank(newSimplePath)
 
   const isArchived = newThoughts.indexOf('=archive') !== -1
   // find exact thought from thoughtIndex
@@ -105,16 +112,11 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const subthoughtsOld = getAllChildren(state, oldContext)
     .filter(child => !equalThoughtRanked(child, { value, rank: oldRank }))
 
-  const duplicateSubthought = getChildrenRanked(state, newContext)
-    .find(thought => normalizeThought(thought.value) === normalizeThought(value))
-
-  const isDuplicateMerge = duplicateSubthought && !sameContext
-
   const subthoughtsNew = getAllChildren(state, newContext)
     .filter(child => normalizeThought(child.value) !== normalizeThought(value))
     .concat({
       value,
-      rank: isDuplicateMerge && duplicateSubthought ? duplicateSubthought.rank : newRank,
+      rank: newRank,
       id,
       lastUpdated: timestamp(),
       ...archived ? { archived } : {},
