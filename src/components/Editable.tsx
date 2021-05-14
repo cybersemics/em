@@ -45,6 +45,7 @@ import {
   pathToContext,
   setSelection,
   strip,
+  normalizeThought,
 } from '../util'
 
 // selectors
@@ -439,7 +440,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
 
     const thoughtsInContext = getAllChildren(state, context)
-    const hasDuplicate = newValue !== '' && thoughtsInContext.some(thought => thought.value === newValue)
+
+    const normalizedNewValue = normalizeThought(newValue)
+
+    const hasDuplicate = newValue !== '' && thoughtsInContext.some(thought => normalizeThought(thought.value) === normalizedNewValue)
     if (hasDuplicate) {
       showDuplicationAlert(true, dispatch)
       throttledChangeRef.current.cancel() // see above
