@@ -210,8 +210,20 @@ const ModalExport = () => {
     setPublishing(false)
   }
 
+  const [advancedSettings, setadvancedSettings] = useState(false)
+
+  /** Toggles advanced setting when Advanced CTA is clicked. */
+  const onAdvancedClick = () => setadvancedSettings(!advancedSettings)
+
   return (
     <Modal id='export' title='Export' className='popup'>
+
+      <div className='cp-clipboard-wrapper'>
+        {exportContent !== null
+          ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
+          : <LoadingEllipsis />
+        }
+      </div>
 
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>{exportMessage}</span>
@@ -240,11 +252,11 @@ const ModalExport = () => {
         </span>
       </div>
 
-      <div className='cp-clipboard-wrapper'>
-        {exportContent !== null
-          ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
-          : <LoadingEllipsis />
-        }
+      <div className='advance-setting-wrapper'>
+        <a className='advance-setting-link' onClick={onAdvancedClick}>Advanced</a>
+        {advancedSettings && <div className='advanced-setting-section'>
+          Advanced settings will go here
+        </div>}
       </div>
 
       <div className='modal-export-btns-wrapper'>

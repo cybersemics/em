@@ -3127,3 +3127,12 @@ code, .code {
   transform-origin: 0 0; /* see note above */
 }
 .ripple_loader div { box-sizing: content-box; }
+
+.advance-setting-wrapper {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.advanced-setting-section {
+  margin: 15px auto;
+}
