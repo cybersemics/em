@@ -24,7 +24,7 @@ const AlertWithTransition = ({ alert, close }: AlertComponentProps) => {
 
   return <TransitionGroup>
     {alert
-      ? <CSSTransition key={0} timeout={200} classNames='fade'>
+      ? <CSSTransition key={0} timeout={800} classNames='fade'>
         { /* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */ }
         <AlertComponent alert={alert} onClose={close} key={alert.value} />
       </CSSTransition>
