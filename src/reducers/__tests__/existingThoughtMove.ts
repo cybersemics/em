@@ -1,8 +1,10 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked } from '../../selectors'
+import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked, getRankAfter, getChildren } from '../../selectors'
 import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+import { State } from '../../util/initialState'
+import { SimplePath } from '../../types'
 
 it('move within root', () => {
 
@@ -585,4 +587,32 @@ it('data integrity test', () => {
   const noOfUpdates = Object.keys(checkDataIntegrity(stateNew)).length
 
   expect(noOfUpdates).toBe(0)
+})
+
+it('consitent rank between thoughtIndex and contextIndex on duplicate merge', () => {
+
+  const text = `
+  - a
+    - b
+  - b`
+
+  const steps = [
+    importText({ path: HOME_PATH, text }),
+    (state: State) =>
+      existingThoughtMove(state, {
+        oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+        // Note: Here new rank will be 0.5 because it's calculated between a (0) and b (1)
+        newPath: [{ value: 'b', rank: getRankAfter(state, [{ value: 'a', rank: 0 }] as SimplePath) }],
+      })
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const contextsOfB = getContexts(stateNew, 'b')
+
+  expect(contextsOfB).toHaveLength(1)
+
+  const rankFromContextIndex = getChildren(stateNew, [HOME_TOKEN]).find(child => child.value === 'b')?.rank
+
+  expect(contextsOfB[0].rank).toBe(rankFromContextIndex)
 })
