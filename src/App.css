@@ -3167,7 +3167,7 @@ a.advance-setting-link { color: #000; }
   max-width: 34em;
 }
 
-.chevron-up {
+.rotate180 {
   transform: rotate(180deg);
 }
 
@@ -3225,8 +3225,6 @@ a.advance-setting-link { color: #000; }
   height: 9px;
   border: solid white;
   border-width: 0 2px 2px 0;
-  -webkit-transform: rotate(45deg);
-  -ms-transform: rotate(45deg);
   transform: rotate(45deg);
 }
 /* Custom checkbox style ends */

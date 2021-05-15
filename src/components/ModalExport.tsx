@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
-import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
@@ -11,6 +9,7 @@ import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } fr
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
+import ChevronImg from './ChevronImg'
 import { State } from '../util/initialState'
 import { ExportOption } from '../types'
 import useOnClickOutside from 'use-onclickoutside'
@@ -18,13 +17,13 @@ import useOnClickOutside from 'use-onclickoutside'
 interface AdvancedSetting {
   id: string,
   onChangeFunc: () => void,
-  seq: boolean,
+  defaultChecked: boolean,
   title: string,
   description: string,
 }
 
 const exportOptions: ExportOption[] = [
-  { type: 'text/plain', label: 'Plain Text', extension: 'txt', excludeMeta: true },
+  { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
@@ -50,6 +49,7 @@ const ModalExport = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
   const [exportContent, setExportContent] = useState<string | null>(null)
+  const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
 
   const dark = theme(state) !== 'Light'
   const themeColor = { color: dark ? 'white' : 'black' }
@@ -58,7 +58,7 @@ const ModalExport = () => {
     : { color: 'white', backgroundColor: 'black' }
 
   const numDescendants = getDescendants(state, simplePath, {
-    filterFunction: selected.excludeMeta ? child => !isFunction(child.value) : undefined
+    filterFunction: !shouldIncludeMetaAttributes ? child => !isFunction(child.value) : undefined
   }).length
 
   const exportWord = 'share' in navigator ? 'Share' : 'Download'
@@ -110,7 +110,7 @@ const ModalExport = () => {
     return () => {
       isMounted.current = false
     }
-  }, [selected])
+  }, [selected, shouldIncludeMetaAttributes])
 
   useEffect(() => {
 
@@ -222,24 +222,15 @@ const ModalExport = () => {
   /** Toggles advanced setting when Advanced CTA is clicked. */
   const onAdvancedClick = () => setAdvancedSettings(!advancedSettings)
 
-  const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
-
   /** Updates checkbox value when clicked and set the appropriate value in the selected option. */
-  const onChangeLosslessCheckbox = () => {
-    const updatedValue = {
-      ...selected,
-      excludeMeta: !shouldIncludeMetaAttributes
-    }
-    setSelected(updatedValue)
-    setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
-  }
+  const onChangeLosslessCheckbox = () => setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
 
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
   const advancedSettingsArray: AdvancedSetting[] = [
     {
       id: 'lossless-checkbox',
       onChangeFunc: onChangeLosslessCheckbox,
-      seq: true,
+      defaultChecked: true,
       title: 'Lossless',
       description: 'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or exporting to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.'
     }
@@ -252,20 +243,13 @@ const ModalExport = () => {
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>{exportMessage}</span>
         <span className='modal-drop-down-holder'>
-          <img
-            src={dark ? ArrowDownWhite : ArrowDownBlack}
-            alt='Arrow'
-            height='22px'
-            width='22px'
-            style={{ cursor: 'pointer' }}
-            onClick={() => setIsOpen(!isOpen)}
-          />
+          <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} />
           <div ref={setWrapper}>
             <DropDownMenu
               isOpen={isOpen}
               selected={selected}
               onSelect={(option: ExportOption) => {
-                setSelected({ ...option, excludeMeta: !shouldIncludeMetaAttributes })
+                setSelected(option)
                 setIsOpen(false)
               }}
               options={exportOptions}
@@ -280,28 +264,25 @@ const ModalExport = () => {
       <div className='advance-setting-wrapper'>
         <span><a className='advance-setting-link no-select' onClick={onAdvancedClick} style={{ opacity: advancedSettings ? 1 : 0.5 }}>Advanced</a></span>
         <span className='advance-setting-chevron'>
-          <img
-            src={dark ? ArrowDownWhite : ArrowDownBlack}
-            alt='Arrow'
-            height='22px'
-            width='22px'
-            onClick={onAdvancedClick}
-            className={advancedSettings ? 'chevron-up' : ''}
-            style={{ cursor: 'pointer', opacity: advancedSettings ? 1 : 0.5 }}
+          <ChevronImg
+            dark={dark}
+            onClickHandle={onAdvancedClick}
+            className={advancedSettings ? 'rotate180' : ''}
+            additonalStyle={{ opacity: advancedSettings ? 1 : 0.5 }}
           />
         </span>
       </div>
 
       {advancedSettings &&
         <div className='advance-setting-section'>
-          {advancedSettingsArray.map(({ id, onChangeFunc, seq, title, description }) => {
+          {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, title, description }) => {
             return (
               <label className='checkbox-container' key={`${id}-key-${title}`}>
                 <div>
                   <p className='advance-setting-label'>{title}</p>
                   <p className='advance-setting-description dim'>{description}</p>
                 </div>
-                <input type='checkbox' id={id} onChange={onChangeFunc} defaultChecked={seq} />
+                <input type='checkbox' id={id} onChange={onChangeFunc} defaultChecked={defaultChecked} />
                 <span className='checkmark'></span>
               </label>
             )
