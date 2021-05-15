@@ -1,6 +1,5 @@
 import React, { FC, MouseEvent, useMemo, useRef, useState } from 'react'
-import { Dispatch } from 'redux'
-import { connect } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import { isTouch } from '../browser'
 import { cursorBack as cursorBackActionCreator, expandContextThought, modalRemindMeLater, toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
@@ -71,14 +70,7 @@ const mapStateToProps = (state: State) => {
   }
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-  showRemindMeLaterModal: () => dispatch(modalRemindMeLater({ duration: MODAL_CLOSE_DURATION })),
-  cursorBack: () => dispatch(cursorBackActionCreator()),
-  toggleSidebar: () => dispatch(toggleSidebarActionCreator({})),
-})
-
-type ContentComponent = FC<ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>>
+type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
 
 /**
  * Calculates whether there was a click on the left margin or padding zone of content element.
@@ -98,7 +90,8 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const { search, isTutorialLocal, tutorialStep, showModal, showRemindMeLaterModal, cursorBack: moveCursorBack, toggleSidebar, rootThoughtsLength, noteFocus, rootSort, isAbsoluteContext } = props
+  const { search, isTutorialLocal, tutorialStep, showModal, rootThoughtsLength, noteFocus, rootSort, isAbsoluteContext } = props
+  const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
 
@@ -117,10 +110,10 @@ const Content: ContentComponent = props => {
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (showModal) {
-      showRemindMeLaterModal()
+      dispatch(modalRemindMeLater({ duration: MODAL_CLOSE_DURATION }))
     }
     else if (!noteFocus) {
-      moveCursorBack()
+      dispatch(cursorBackActionCreator())
       expandContextThought(null)
     }
   }
@@ -134,7 +127,7 @@ const Content: ContentComponent = props => {
 
   return <div id='content-wrapper' onClick={e => {
     if (!showModal && isLeftSpaceClick(e, contentRef.current!)) {
-      toggleSidebar()
+      dispatch(toggleSidebarActionCreator({}))
     }
   }}>
     <div
@@ -159,4 +152,4 @@ const Content: ContentComponent = props => {
   </div>
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Content)
+export default connect(mapStateToProps)(Content)
