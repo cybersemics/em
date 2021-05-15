@@ -3,12 +3,12 @@ import React from 'react'
 // eslint-disable-next-line jsdoc/require-jsdoc
 const UrlIcon = () =>
   <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
-    width="18" height="18"
+    width="1em" height="1em"
     viewBox="0 0 30 30"
     style={{
       marginLeft: '2px',
-      marginTop: '-4px',
-      padding: '3px 3px 3px 1px',
+      marginTop: '-0.056em',
+      padding: '0.167em 0.167em 0.167em 0.056em',
       cursor: 'pointer',
       pointerEvents: 'all'
     }}

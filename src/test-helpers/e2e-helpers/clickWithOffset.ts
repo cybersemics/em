@@ -36,7 +36,7 @@ const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClick
   const coordinate = !offset ? {
     x: boundingBox.x + (
       horizontalClickLine === 'left' ? 0
-      : horizontalClickLine === 'right' ? boundingBox.width
+      : horizontalClickLine === 'right' ? boundingBox.width - 1
       : boundingBox.width / 2
     ),
     y: boundingBox.y + (boundingBox.height / 2)
