@@ -16,7 +16,6 @@ import { ExportOption } from '../types'
 import useOnClickOutside from 'use-onclickoutside'
 
 const exportOptions: ExportOption[] = [
-  { type: 'text/plain', label: 'Plain Text (lossless)', extension: 'txt' },
   { type: 'text/plain', label: 'Plain Text', extension: 'txt', excludeMeta: true },
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
@@ -71,7 +70,7 @@ const ModalExport = () => {
   const setExportContentFromCursor = () => {
     const exported = exportContext(store.getState(), context, selected.type, {
       title: titleChild ? titleChild.value : undefined,
-      excludeMeta: selected.excludeMeta
+      excludeMeta: !shouldIncludeMetaAttributes
     })
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
@@ -210,10 +209,33 @@ const ModalExport = () => {
     setPublishing(false)
   }
 
-  const [advancedSettings, setadvancedSettings] = useState(false)
+  const [advancedSettings, setAdvancedSettings] = useState(false)
 
   /** Toggles advanced setting when Advanced CTA is clicked. */
-  const onAdvancedClick = () => setadvancedSettings(!advancedSettings)
+  const onAdvancedClick = () => setAdvancedSettings(!advancedSettings)
+
+  const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
+
+  /** Updates checkbox value when clicked and set the appropriate value in the selected option. */
+  const onChangeLosslessCheckbox = () => {
+    const updatedValue = {
+      ...selected,
+      excludeMeta: !shouldIncludeMetaAttributes
+    }
+    setSelected(updatedValue)
+    setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
+  }
+
+  /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
+  const checkboxArray = [
+    {
+      id: 'lossless-checkbox',
+      onChangeFunc: onChangeLosslessCheckbox,
+      seq: 1,
+      title: 'Lossless',
+      description: 'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck thuis option for social sharing or export to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.'
+    }
+  ]
 
   return (
     <Modal id='export' title='Export' className='popup'>
@@ -241,7 +263,7 @@ const ModalExport = () => {
               isOpen={isOpen}
               selected={selected}
               onSelect={(option: ExportOption) => {
-                setSelected(option)
+                setSelected({ ...option, excludeMeta: !shouldIncludeMetaAttributes })
                 setIsOpen(false)
               }}
               options={exportOptions}
@@ -253,11 +275,35 @@ const ModalExport = () => {
       </div>
 
       <div className='advance-setting-wrapper'>
-        <a className='advance-setting-link' onClick={onAdvancedClick}>Advanced</a>
-        {advancedSettings && <div className='advanced-setting-section'>
-          Advanced settings will go here
-        </div>}
+        <span><a className='advance-setting-link' onClick={onAdvancedClick}>Advanced</a></span>
+        <span className='advance-setting-chevron'>
+          <img
+            src={dark ? ArrowDownWhite : ArrowDownBlack}
+            alt='Arrow'
+            height='22px'
+            width='22px'
+            style={{ cursor: 'pointer' }}
+            onClick={onAdvancedClick}
+            className={advancedSettings ? 'chevron-up' : ''}
+          />
+        </span>
       </div>
+      {advancedSettings &&
+        <div className='advance-setting-section'>
+          {checkboxArray.map(({ id, onChangeFunc, seq, title, description }) => {
+            return (
+              <label className='checkbox-container' key={`${id}-key-${title}`}>
+                <div>
+                  <p>{title}</p>
+                  <p className='dim'>{description}</p>
+                </div>
+                <input type='checkbox' id={id} onChange={onChangeFunc} defaultChecked={seq === 1} />
+                <span className='checkmark'></span>
+              </label>
+            )
+          })}
+        </div>
+      }
 
       <div className='modal-export-btns-wrapper'>
 
