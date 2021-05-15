@@ -872,7 +872,7 @@ body.dark {
 
 .fade-exit-active {
   opacity: 0;
-  transition: opacity 0.2s ease-out;
+  transition: opacity 0.8s ease-out;
 }
 
 /* react-transition-group animation: fade */
