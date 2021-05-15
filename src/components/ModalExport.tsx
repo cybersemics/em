@@ -240,14 +240,6 @@ const ModalExport = () => {
   return (
     <Modal id='export' title='Export' className='popup'>
 
-      {/* Copy to clipboard */}
-      <div className='cp-clipboard-wrapper'>
-        {exportContent !== null
-          ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
-          : <LoadingEllipsis />
-        }
-      </div>
-
       {/* Export message */}
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>{exportMessage}</span>
@@ -321,6 +313,14 @@ const ModalExport = () => {
           {exportWord}
         </button>
 
+      </div>
+
+      {/* Copy to clipboard */}
+      <div className='cp-clipboard-wrapper'>
+        {exportContent !== null
+          ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
+          : <LoadingEllipsis />
+        }
       </div>
 
       {/* Publish */}
