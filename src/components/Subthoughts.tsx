@@ -88,7 +88,9 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     cursor,
     dataNonce,
     showHiddenThoughts,
-    rootContext
+    rootContext,
+    expandedBottom,
+    expandHoverTopPath
   } = state
 
   const isAbsoluteContext = isAbsolute(rootContext)
@@ -106,6 +108,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const thoughtsLive = pathToContext(pathLive)
   const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
   const showContextsParent = isContextViewActive(state, parentOf(thoughtsLive))
+
   const simplePath = showContexts && showContextsParent
     ? parentOf(props.simplePath)
     : props.simplePath
@@ -124,12 +127,21 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // TODO: Resolve cursor to a simplePath
   const isCursorLeaf = cursor && !getAllChildren(state, pathToContext(cursor))
     .some((child: Child) => !isFunction(child.value))
+
   const cursorDepth = cursor
     ? cursor.length - (isCursorLeaf ? 1 : 0)
     : 0
-  const distance = cursor ? Math.max(0,
-    Math.min(MAX_DISTANCE_FROM_CURSOR, cursorDepth - (props.depth ?? 0))
+
+  const expandTopDistance = expandHoverTopPath && expandHoverTopPath?.length + 1
+
+  // Note: If there is an active expand top path then distance should be caculated with reference of expandTopDistance
+  const referenceDepth = expandTopDistance || cursorDepth
+
+  const distance = referenceDepth ? Math.max(0,
+    Math.min(MAX_DISTANCE_FROM_CURSOR, referenceDepth - (props.depth ?? 0))
   ) : 0
+
+  const contextHash = hashContext(pathToContext(resolvedPath))
 
   return {
     contextBinding,
@@ -141,7 +153,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     simplePath: simplePathLive,
     // re-render if children change
     __render: getAllChildren(state, pathToContext(simplePathLive)),
-    isExpanded: store.getState().expanded[hashContext(pathToContext(resolvedPath))],
+    // expand thought due to cursor and hover expansion
+    isExpanded: store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
     isAbsoluteContext,
   }
 }
@@ -155,9 +168,16 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
   const thoughtsTo = props.simplePath
-  const cursor = store.getState().cursor
+  const { cursor, expandHoverTopPath } = store.getState()
+
+  const { path } = props
+
+  /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
+  const isExpandedTop = () => path && expandHoverTopPath && path.length >= expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
+
   const distance = cursor ? cursor.length - thoughtsTo.length : 0
-  const isHidden = distance >= 2
+  const isHidden = distance >= 2 && !isExpandedTop()
+
   // there is no self thought to check since this is <Subthoughts>
   const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
   const divider = isDivider(headValue(thoughtsTo))
@@ -336,7 +356,6 @@ export const SubthoughtsComponent = ({
       store.dispatch(dragInProgress({
         value: true,
         draggingThought: state.draggingThought,
-        hoveringThought: [...context],
         hoveringPath: path,
         hoverId: DROP_TARGET.EmptyDrop
       }))
@@ -418,9 +437,9 @@ export const SubthoughtsComponent = ({
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   const actualDistance =
-    shouldHide || zoom ? 2
-    : shouldDim ? 1
-    : distance
+  shouldHide || zoom ? 2
+  : shouldDim ? 1
+  : distance
 
   const context = pathToContext(simplePath)
 

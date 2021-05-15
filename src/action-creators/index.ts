@@ -12,6 +12,7 @@ export const archiveThought = reducerToThunk<typeof reducers.archiveThought>('ar
 export const authenticate = reducerToThunk<typeof reducers.authenticate>('authenticate')
 export const bumpThoughtDown = reducerToThunk<typeof reducers.bumpThoughtDown>('bumpThoughtDown')
 export const clear = reducerToThunk<typeof reducers.clear>('clear')
+export const clearExpandBottom = reducerToThunk<typeof reducers.clearExpandBottom>('clearExpandBottom')
 export const clearPushQueue = reducerToThunk<typeof reducers.clearPushQueue>('clearPushQueue')
 export const collapseContext = reducerToThunk<typeof reducers.collapseContext>('collapseContext')
 export const cursorBeforeSearch = reducerToThunk<typeof reducers.cursorBeforeSearch>('cursorBeforeSearch')
@@ -25,11 +26,12 @@ export const deleteData = reducerToThunk<typeof reducers.deleteData>('deleteData
 export const deleteEmptyThought = reducerToThunk<typeof reducers.deleteEmptyThought>('deleteEmptyThought')
 export const deleteThought = reducerToThunk<typeof reducers.deleteThought>('deleteThought')
 export const dragHold = reducerToThunk<typeof reducers.dragHold>('dragHold')
-export const dragInProgress = reducerToThunk<typeof reducers.dragInProgress>('dragInProgress')
 export const editableRender = reducerToThunk<typeof reducers.editableRender>('editableRender')
 export const editing = reducerToThunk<typeof reducers.editing>('editing')
 export const editingValue = reducerToThunk<typeof reducers.editingValue>('editingValue')
 export const error = reducerToThunk<typeof reducers.error>('error')
+export const expandHoverTop = reducerToThunk<typeof reducers.expandHoverTop>('expandHoverTop')
+export const expandBottom = reducerToThunk<typeof reducers.expandBottom>('expandBottom')
 export const existingThoughtChange = reducerToThunk<typeof reducers.existingThoughtChange>('existingThoughtChange')
 export const existingThoughtDelete = reducerToThunk<typeof reducers.existingThoughtDelete>('existingThoughtDelete')
 export const existingThoughtMove = reducerToThunk<typeof reducers.existingThoughtMove>('existingThoughtMove')
@@ -81,7 +83,10 @@ export { default as alert } from './alert'
 export { default as cursorNext } from './cursorNext'
 export { default as cursorPrev } from './cursorPrev'
 export { default as dataIntegrityCheck } from './dataIntegrityCheck'
+export { default as dragInProgress } from './dragInProgress'
 export { default as expandContextThought } from './expandContextThought'
+export { default as expandOnHoverBottom } from './expandOnHoverBottom'
+export { default as expandOnHoverTop } from './expandOnHoverTop'
 export { default as fontSize } from './fontSize'
 export { default as home } from './home'
 export { default as importText } from './importText'

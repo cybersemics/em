@@ -8,6 +8,7 @@ import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import importOnFirstMatchPathActionCreator from './test-helpers/importOnFirstMatchPath'
 import getLexemeFromDB from './test-helpers/e2e-helpers/getLexemeFromDB'
 import _ from 'lodash'
+
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
 
