@@ -42,10 +42,10 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
       )}</div>
 
       {tutorialStep === TUTORIAL_STEP_SUCCESS
-        ? <React.Fragment>
+        ? <>
           <TutorialNavigationButton clickHandler={() => dispatch(setTutorialStep({ value: TUTORIAL2_STEP_START }))} value="Learn more" />
           <TutorialNavigationButton clickHandler={() => dispatch(tutorial({ value: false }))} value="Play on my own" />
-        </React.Fragment>
+        </>
         : tutorialStep === TUTORIAL2_STEP_CHOOSE
           ? <ul className='simple-list'>
             {tutorialOptions.map(({ key, value, textValue }) =>
@@ -59,10 +59,10 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
               </li>
             )}
           </ul>
-          : <React.Fragment>
+          : <>
             <TutorialNavigationPrev tutorialStep={tutorialStep} />
             <TutorialNavigationNext tutorialStep={tutorialStep} />
-          </React.Fragment>
+          </>
       }
     </div>)
 }

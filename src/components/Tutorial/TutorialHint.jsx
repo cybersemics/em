@@ -14,12 +14,12 @@ const TutorialHint = connect(mapStateToProps)(({ tutorialStep, children, dispatc
   // fractional steps are hints
   const hint = tutorialStep !== Math.floor(tutorialStep)
 
-  return <React.Fragment>
+  return <>
     {!hint
       ? <a className='button button-variable-width button-status button-less-padding text-small button-dim' onClick={() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 }))}>hint</a>
       : children
     }
-  </React.Fragment>
+  </>
 })
 
 export default TutorialHint

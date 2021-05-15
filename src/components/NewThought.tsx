@@ -103,7 +103,7 @@ const NewThought = ({ show, path, cursor, onClick, showContexts, label, value = 
           'button-variable-width': type === 'button',
         })}
         onClick={() => onClick && onClick({ distance, showContexts, path, value })}
-        >{label || <React.Fragment>Add a {showContexts ? 'context' : 'thought'}</React.Fragment>}</a>
+        >{label || <>Add a {showContexts ? 'context' : 'thought'}</>}</a>
       </div>
     </li>
   </ul> : null

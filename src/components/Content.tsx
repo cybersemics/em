@@ -136,14 +136,14 @@ const Content: ContentComponent = props => {
     >
       {search != null
         ? <Search />
-        : <React.Fragment>
+        : <>
           {rootThoughtsLength === 0 ?
             isAbsoluteContext ? TransientEditable : <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} /> : <Subthoughts
               simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH}
               expandable={true}
               sort={rootSort}
             />}
-        </React.Fragment>
+        </>
       }
     </div>
   </div>

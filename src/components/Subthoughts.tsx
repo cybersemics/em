@@ -451,7 +451,7 @@ export const SubthoughtsComponent = ({
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
-  return <React.Fragment>
+  return <>
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding!).join('/')})</div> : null}
     {show && showContexts && !(children.length === 0 && isRoot(simplePath))
@@ -542,7 +542,7 @@ export const SubthoughtsComponent = ({
       isHovering={isHovering}
     />}
     {isPaginated && distance !== 2 && <a className='indent text-note' onClick={() => setPage(page + 1)}>More...</a>}
-  </React.Fragment>
+  </>
 }
 
 SubthoughtsComponent.displayName = 'SubthoughtComponent'

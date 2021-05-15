@@ -48,11 +48,11 @@ const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status }: Ret
       </span> : null}
     </li><br />
 
-    {user && <React.Fragment>
+    {user && <>
       <li><span className='dim'>Status: </span><span className={status === 'offline' ? 'dim' : status === 'loaded' ? 'online' : undefined}>{status === 'loaded' ? 'Online' : status[0].toUpperCase() + status.substring(1)}</span></li>
       <li><span className='dim'>Logged in as: </span>{user.email}</li>
       <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li>
-    </React.Fragment>}
+    </>}
 
     <li><span className='dim'>Version: </span><span>{pkg.version}</span></li>
 

@@ -260,7 +260,7 @@ const ModalExport = () => {
 
       </div>
 
-      {isDocumentEditable() && <React.Fragment>
+      {isDocumentEditable() && <>
         <div className='modal-export-publish'>
           {publishedCIDs.length > 0
             ? <div>
@@ -304,7 +304,7 @@ const ModalExport = () => {
           </button>}
 
         </div>
-      </React.Fragment>}
+      </>}
 
     </Modal>
   )
