@@ -248,10 +248,10 @@ a.text-link {
 }
 
 .context-breadcrumbs {
-  font-size: 13px;
+  font-size: 0.867em;
   color: gray;
-  margin-top: 8px;
-  min-height: 1rem;
+  margin-top: 0.533em;
+  min-height: 1em;
 }
 
 .context-breadcrumbs .superscript-container {
@@ -1064,12 +1064,12 @@ h1 .num-contexts {
 /* In context view, make room for breadcrumbs. */
 .child.show-contexts > .thought-container .bullet {
   position: relative;
-  top: 24px;
+  top: 1.6em;
 }
 
 .child.show-contexts > .thought-container .bullet-cursor-overlay {
   /** use transform to not interfere with existing margin-top calculation */
-  transform: translateY(24px);
+  transform: translateY(0.58em);
 }
 
 .child > .thought-container > .bullet .glyph {
@@ -1517,7 +1517,7 @@ h1 .num-contexts {
 
 .child.show-contexts.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
 .child.show-contexts:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-  margin-top: calc(0.18em - 4px); /* */
+  margin-top: calc(0.30em - 4px); /* */
 }
 
 .dark .child.editing > .thought-container > .thought .bullet-cursor-overlay {
