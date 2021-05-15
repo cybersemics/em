@@ -436,6 +436,7 @@ a.text-link {
   height: 50px;
   background-color: white;
   box-shadow: 10px -20px 15px 25px white;
+  pointer-events: none; /* allows clickOnEmptySpace */
 }
 
 .dark .toolbar-mask {
