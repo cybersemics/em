@@ -42,9 +42,6 @@ const mapStateToProps = (state: State) => {
 
   const isTutorialLocal = isLoading ? tutorialLocal : isTutorial(state)
 
-  // @typescript-eslint/eslint-plugin does not yet support no-extra-parens with nullish coallescing operator
-  // See: https://github.com/typescript-eslint/typescript-eslint/issues/1052
-  // eslint-disable-next-line @typescript-eslint/no-extra-parens
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   const isAbsoluteContext = isAbsolute(rootContext)
