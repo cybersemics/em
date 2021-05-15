@@ -233,13 +233,14 @@ const ModalExport = () => {
       onChangeFunc: onChangeLosslessCheckbox,
       seq: 1,
       title: 'Lossless',
-      description: 'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck thuis option for social sharing or export to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.'
+      description: 'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or exporting to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.'
     }
   ]
 
   return (
     <Modal id='export' title='Export' className='popup'>
 
+      {/* Copy to clipboard */}
       <div className='cp-clipboard-wrapper'>
         {exportContent !== null
           ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
@@ -247,6 +248,7 @@ const ModalExport = () => {
         }
       </div>
 
+      {/* Export message */}
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>{exportMessage}</span>
         <span className='modal-drop-down-holder'>
@@ -274,28 +276,30 @@ const ModalExport = () => {
         </span>
       </div>
 
+      {/* Advanced Settings */}
       <div className='advance-setting-wrapper'>
-        <span><a className='advance-setting-link' onClick={onAdvancedClick}>Advanced</a></span>
+        <span><a className='advance-setting-link no-select' onClick={onAdvancedClick} style={{ opacity: advancedSettings ? 1 : 0.5 }}>Advanced</a></span>
         <span className='advance-setting-chevron'>
           <img
             src={dark ? ArrowDownWhite : ArrowDownBlack}
             alt='Arrow'
             height='22px'
             width='22px'
-            style={{ cursor: 'pointer' }}
             onClick={onAdvancedClick}
             className={advancedSettings ? 'chevron-up' : ''}
+            style={{ cursor: 'pointer', opacity: advancedSettings ? 1 : 0.5 }}
           />
         </span>
       </div>
+
       {advancedSettings &&
         <div className='advance-setting-section'>
           {checkboxArray.map(({ id, onChangeFunc, seq, title, description }) => {
             return (
               <label className='checkbox-container' key={`${id}-key-${title}`}>
                 <div>
-                  <p>{title}</p>
-                  <p className='dim'>{description}</p>
+                  <p className='advance-setting-label'>{title}</p>
+                  <p className='advance-setting-description dim'>{description}</p>
                 </div>
                 <input type='checkbox' id={id} onChange={onChangeFunc} defaultChecked={seq === 1} />
                 <span className='checkmark'></span>
@@ -305,6 +309,7 @@ const ModalExport = () => {
         </div>
       }
 
+      {/* Download button */}
       <div className='modal-export-btns-wrapper'>
 
         <button
@@ -317,6 +322,8 @@ const ModalExport = () => {
         </button>
 
       </div>
+
+      {/* Publish */}
 
       {isDocumentEditable() && <>
         <div className='modal-export-publish'>

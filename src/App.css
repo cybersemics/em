@@ -3135,10 +3135,23 @@ code, .code {
   margin-bottom: 20px;
 }
 
+p.advance-setting-label {
+  margin-bottom: 5px;
+  line-height: 1.2;
+}
+
+p.advance-setting-description {
+  font-size: 90%;
+}
+
 .advance-setting-link {
   display: flex;
   position: relative;
+  transition: opacity 100ms ease-in-out;
 }
+
+a.advance-setting-link { color: #000; }
+.dark a.advance-setting-link { color: #fff; }
 
 .advance-setting-chevron {
   display: flex;
@@ -3150,8 +3163,8 @@ code, .code {
 .advance-setting-section {
   display: flex;
   justify-content: center;
-  margin: 0 auto 20px;
-  width: 90%;
+  margin: 0 auto;
+  max-width: 34em;
 }
 
 .chevron-up {
@@ -3165,9 +3178,6 @@ code, .code {
   padding-left: 35px;
   margin-bottom: 12px;
   cursor: pointer;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none;
 }
 
