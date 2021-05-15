@@ -15,6 +15,14 @@ import { State } from '../util/initialState'
 import { ExportOption } from '../types'
 import useOnClickOutside from 'use-onclickoutside'
 
+interface AdvancedSetting {
+  id: string,
+  onChangeFunc: () => void,
+  seq: boolean,
+  title: string,
+  description: string,
+}
+
 const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt', excludeMeta: true },
   { type: 'text/html', label: 'HTML', extension: 'html' },
@@ -227,11 +235,11 @@ const ModalExport = () => {
   }
 
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
-  const checkboxArray = [
+  const advancedSettingsArray: AdvancedSetting[] = [
     {
       id: 'lossless-checkbox',
       onChangeFunc: onChangeLosslessCheckbox,
-      seq: 1,
+      seq: true,
       title: 'Lossless',
       description: 'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or exporting to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.'
     }
@@ -286,14 +294,14 @@ const ModalExport = () => {
 
       {advancedSettings &&
         <div className='advance-setting-section'>
-          {checkboxArray.map(({ id, onChangeFunc, seq, title, description }) => {
+          {advancedSettingsArray.map(({ id, onChangeFunc, seq, title, description }) => {
             return (
               <label className='checkbox-container' key={`${id}-key-${title}`}>
                 <div>
                   <p className='advance-setting-label'>{title}</p>
                   <p className='advance-setting-description dim'>{description}</p>
                 </div>
-                <input type='checkbox' id={id} onChange={onChangeFunc} defaultChecked={seq === 1} />
+                <input type='checkbox' id={id} onChange={onChangeFunc} defaultChecked={seq} />
                 <span className='checkmark'></span>
               </label>
             )
