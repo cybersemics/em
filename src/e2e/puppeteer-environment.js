@@ -5,7 +5,7 @@
 const chalk = require('chalk')
 const JsDomEnvironment = require('jest-environment-jsdom')
 const { setup: setupDevServer, teardown: teardownDevServer } = require('jest-dev-server')
-const fs = require('fs/promises')
+const fs = require('fs')
 const path = require('path')
 const puppeteer = require('puppeteer')
 
@@ -22,7 +22,7 @@ class PuppeteerEnvironment extends JsDomEnvironment {
     await super.setup()
 
     const buildPath = path.join(__dirname, '..', '..', 'build')
-    const doesBuildExist = await fs.access(buildPath).then(() => true).catch(() => false)
+    const doesBuildExist = fs.existsSync(buildPath)
 
     if (!doesBuildExist) {
       console.error(chalk.red('App build not found.'))
