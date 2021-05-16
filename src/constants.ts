@@ -222,6 +222,8 @@ export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%
 
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 
+export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
+
 export const REGEXP_TAGS = /(<([^>]+)>)/ig
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
