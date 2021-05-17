@@ -17,7 +17,6 @@ import {
   EDIT_THROTTLE,
   EM_TOKEN,
   MODIFIER_KEYS,
-  REGEXP_CONTAINS_META_TAG,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -112,11 +111,6 @@ const updateToolbarPositionOnScroll = () => {
     el.style.top = `${window.scrollY}px`
   })
 }
-
-/**
- * Check if clipboard data copied from an app such as (Webstorm, Notes, Notion..).
- */
-const isCopiedFromApp = (htmlText: string) => REGEXP_CONTAINS_META_TAG.test(htmlText)
 
 interface EditableProps {
   path: Path,
@@ -541,7 +535,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         path,
         text: isHTML(plainText)
           ? plainText
-          : isCopiedFromApp(htmlText) ? plainText : htmlText || plainText,
+          : htmlText || plainText,
         rawDestValue,
       }))
 

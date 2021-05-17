@@ -62,8 +62,16 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
 
 /** Retrieves the content within the body tags of the given HTML. Returns the full string if no body tags are found. */
 const bodyContent = (html: string) => {
-  const matches = html.match(/<body[^>]*>([\w|\W]*)<\/body>/)
-  return !matches || matches.length < 2 ? html : matches[1]
+  const htmlLowerCase = html.toLowerCase()
+  const startTag = htmlLowerCase.indexOf('<body')
+  const bodyTagLength = startTag !== -1
+    ? htmlLowerCase.slice(0, startTag).indexOf('>')
+    : 0
+  const endTag = htmlLowerCase.indexOf('</body>')
+
+  return startTag === -1
+    ? html
+    : html.slice(startTag + bodyTagLength, endTag !== -1 ? endTag : html.length)
 }
 
 /** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
