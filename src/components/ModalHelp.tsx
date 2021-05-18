@@ -4,7 +4,7 @@ import { isTouch } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { makeCompareByProp, sort } from '../util'
-import { modalRemindMeLater, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
+import { modalRemindMeLater, toggleShortcutsDiagram, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
 import { getSetting } from '../selectors'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import { State } from '../util/initialState'
@@ -18,10 +18,11 @@ import { ActionButton } from './ActionButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { showQueue } = state
+  const { showQueue, enableLatestShorcutsDiagram } = state
   return {
     showQueue,
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
+    enableLatestShorcutsDiagram,
   }
 }
 
@@ -55,9 +56,12 @@ const ShortcutTable = () => {
 }
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
-const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialStep: number, showQueue?: boolean | null }>) => {
+const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiagram }: Connected<ReturnType<typeof mapStateToProps>>) => {
 
   const [logs, setLogs] = useState<db.Log[] | null>(null)
+
+  /** Toogle shortcuts diagram settings. */
+  const toggleShortcutsDiagramSetting = () => dispatch(toggleShortcutsDiagram())
 
   /** Toggles the logs. Loads the logs if they have not been loaded yet. */
   const toggleLogs = async () =>
@@ -172,6 +176,12 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
     <p>Options: Article, List, Table, Prose<br />
     Controls how the thought and its subthoughts are displayed.</p>
 
+    <h2 className='modal-subtitle'>Development Settings</h2>
+
+    <form>
+      <label onChange={toggleShortcutsDiagramSetting}><input type='checkbox' checked={enableLatestShorcutsDiagram}></input> Enable gesture diagrams (touch screen) </label>
+    </form>
+
     <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
       <div>Context View icon by <a href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>Travis Avery</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Export icon by <a href='https://www.flaticon.com/authors/those-icons' title='Those Icons'>Those Icons</a> from <a href='https://www.flaticon.com/' title='Flaticon'>www.flaticon.com</a></div>
@@ -195,7 +205,6 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch }: Connected<{ tutorialSt
       <a tabIndex={-1} onClick={toggleLogs}>Logs</a>
       {logs && <Logs logs={logs ?? []} />}
     </p>
-
   </Modal>
 }
 

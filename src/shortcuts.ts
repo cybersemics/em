@@ -4,7 +4,7 @@ import Emitter from 'emitter20'
 import { Store } from 'redux'
 import { isMac, isTouch } from './browser'
 import globals from './globals'
-import { alert, suppressExpansion, toggleTopControlsAndBreadcrumbs } from './action-creators'
+import { alert, suppressExpansion, showLatestShortcuts, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
 import { State } from './util/initialState'
 import { keyValueBy } from './util/keyValueBy'
@@ -150,6 +150,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       if (shortcut) {
         shortcutEmitter.trigger('shortcut', shortcut)
         shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
+        if (store.getState().enableLatestShorcutsDiagram) store.dispatch(showLatestShortcuts(shortcut))
       }
     }
 

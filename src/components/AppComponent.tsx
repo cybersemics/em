@@ -28,6 +28,7 @@ import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
 import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
+import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 
 const Content = React.lazy(() => import('./Content'))
 
@@ -43,6 +44,7 @@ interface StateProps {
   showSplitView?: boolean,
   splitPosition?: number,
   fontSize: number,
+  enableLatestShorcutsDiagram: boolean,
 }
 
 interface DispatchProps {
@@ -51,7 +53,7 @@ interface DispatchProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
-  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView } = state
+  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShorcutsDiagram } = state
   const dark = theme(state) !== 'Light'
   const scale = state.fontSize / BASE_FONT_SIZE
   return {
@@ -62,7 +64,8 @@ const mapStateToProps = (state: State): StateProps => {
     showModal,
     splitPosition,
     showSplitView,
-    fontSize: state.fontSize
+    fontSize: state.fontSize,
+    enableLatestShorcutsDiagram
   }
 }
 
@@ -84,7 +87,7 @@ const MultiGestureIfTouch: FC = ({ children }) => isTouch
  * The main app component.
  */
 const AppComponent: FC<Props> = props => {
-  const { dark, dragInProgress, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos, fontSize } = props
+  const { dark, dragInProgress, enableLatestShorcutsDiagram, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos, fontSize } = props
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
@@ -122,6 +125,7 @@ const AppComponent: FC<Props> = props => {
 
       <Alert />
       <ErrorMessage />
+      { enableLatestShorcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
 
       {isDocumentEditable() && !tutorial && !showModal && <>
         <Sidebar />

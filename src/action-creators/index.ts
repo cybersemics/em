@@ -8,11 +8,13 @@ const reducerToThunk = <T extends (state: State, payload: any) => Record<string,
   (payload?: Parameters<T>[1]): Thunk<void> => dispatch => dispatch({ type: name, ...payload })
 
 // export all reducers as properly typed thunks
+export const addLatestShortcuts = reducerToThunk<typeof reducers.addLatestShortcuts>('addLatestShortcuts')
 export const archiveThought = reducerToThunk<typeof reducers.archiveThought>('archiveThought')
 export const authenticate = reducerToThunk<typeof reducers.authenticate>('authenticate')
 export const bumpThoughtDown = reducerToThunk<typeof reducers.bumpThoughtDown>('bumpThoughtDown')
 export const clear = reducerToThunk<typeof reducers.clear>('clear')
 export const clearExpandBottom = reducerToThunk<typeof reducers.clearExpandBottom>('clearExpandBottom')
+export const clearLatestShortcuts = reducerToThunk<typeof reducers.clearLatestShortcuts>('clearLatestShortcuts')
 export const clearPushQueue = reducerToThunk<typeof reducers.clearPushQueue>('clearPushQueue')
 export const collapseContext = reducerToThunk<typeof reducers.collapseContext>('collapseContext')
 export const cursorBeforeSearch = reducerToThunk<typeof reducers.cursorBeforeSearch>('cursorBeforeSearch')
@@ -67,6 +69,7 @@ export const toggleAbsoluteContext = reducerToThunk<typeof reducers.toggleAbsolu
 export const toggleAttribute = reducerToThunk<typeof reducers.toggleAttribute>('toggleAttribute')
 export const toggleContextView = reducerToThunk<typeof reducers.toggleContextView>('toggleContextView')
 export const toggleHiddenThoughts = reducerToThunk<typeof reducers.toggleHiddenThoughts>('toggleHiddenThoughts')
+export const toggleShortcutsDiagram = reducerToThunk<typeof reducers.toggleShortcutsDiagram>('toggleShortcutsDiagram')
 export const toggleSidebar = reducerToThunk<typeof reducers.toggleSidebar>('toggleSidebar')
 export const toggleSplitView = reducerToThunk<typeof reducers.toggleSplitView>('toggleSplitView')
 export const tutorial = reducerToThunk<typeof reducers.tutorial>('tutorial')
@@ -106,6 +109,7 @@ export { default as restoreCursorBeforeSearch } from './restoreCursorBeforeSearc
 export { default as scrollCursorIntoView } from './scrollCursorIntoView'
 export { default as setEditingValue } from './setEditingValue'
 export { default as setInvalidState } from './setInvalidState'
+export { default as showLatestShortcuts } from './showLatestShortcuts'
 export { default as showModal } from './showModal'
 export { default as subCategorizeAll } from './subCategorizeAll'
 export { default as subCategorizeOne } from './subCategorizeOne'

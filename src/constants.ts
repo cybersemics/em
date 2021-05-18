@@ -29,6 +29,11 @@ export const MODAL_NEWCHILD_DELAY = 1200
 export const DIVIDER_PLUS_PX = 30
 export const DIVIDER_MIN_WIDTH = 85
 
+export const LATEST_SHORTCUT_DIAGRAM_DURATION = 800
+
+// number of latest shorrcuts to show at a time
+export const LATEST_SHORTCUT_LIMIT = 3
+
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
 // fractional values may be used for "hints" that are not included in the Next/Prev sequence

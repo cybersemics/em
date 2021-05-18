@@ -2,7 +2,7 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, DROP_TARGE
 import globals from '../globals'
 import { canShowModal } from '../selectors'
 import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
-import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User } from '../types'
+import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User, Shortcut } from '../types'
 import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
 
 interface ModalProperties {
@@ -96,6 +96,8 @@ export interface State {
   toolbarOverlay?: string | null,
   tutorialStep?: number,
   user?: User,
+  latestShortcuts: Shortcut[],
+  enableLatestShorcutsDiagram: boolean,
 }
 
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -184,6 +186,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     editableNonce: 0,
     editing: null,
     editingValue: null,
+    enableLatestShorcutsDiagram: false,
     expanded: {},
     fontSize: +(getLocal('fontSize') || 18),
     expandedBottom: {},
@@ -192,6 +195,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     inversePatches: [],
     isLoading: true,
     isPushing: false,
+    latestShortcuts: [],
     modals: {},
     noteFocus: false, // true if a note has the browser selection
     patches: [],
