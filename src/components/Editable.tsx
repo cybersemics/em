@@ -443,7 +443,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     const normalizedNewValue = normalizeThought(newValue)
 
-    const hasDuplicate = newValue !== '' && thoughtsInContext.some(thought => normalizeThought(thought.value) === normalizedNewValue)
+    const hasDuplicate = newValue !== '' && thoughtsInContext.some(thought => rank !== thought.rank && normalizeThought(thought.value) === normalizedNewValue)
     if (hasDuplicate) {
       showDuplicationAlert(true, dispatch)
       throttledChangeRef.current.cancel() // see above
