@@ -1,8 +1,8 @@
-import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { FC, Suspense, useEffect, useLayoutEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
-import { isAndroid, isSafari, isTouch } from '../browser'
+import { isAndroid, isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import { inputHandlers } from '../shortcuts'
 import { isDocumentEditable } from '../util'
@@ -29,7 +29,6 @@ import HamburgerMenu from './HamburgerMenu'
 import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
-import useViewportChange from '../hooks/useViewportChange'
 
 const Content = React.lazy(() => import('./Content'))
 
@@ -84,30 +83,6 @@ const MultiGestureIfTouch: FC = ({ children }) => isTouch
   ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd} shouldCancelGesture={shouldCancelGesture}>{children}</MultiGesture>
   : <>{children}</>
 
-/**
- * Navbar place at the bottom.
- */
-const NavBarBottom: FC<{ scale?: number }> = ({ scale }) => {
-  const wrapperRef = useRef<HTMLDivElement>(null)
-
-  /** Keep nav bar above active keyboard on ios safari. */
-  const handleVisualViewportChange = useCallback(() => {
-    if (isSafari() && isTouch) {
-      requestAnimationFrame(() => {
-        const bottom = window.innerHeight - window.visualViewport.height
-        if (wrapperRef.current) wrapperRef.current.style.bottom = `${bottom}px`
-      })
-    }
-  }, [])
-
-  useViewportChange(handleVisualViewportChange)
-
-  return <div ref={wrapperRef} className='nav-bottom-wrapper'>
-    <Scale amount={scale!} origin='bottom left'>
-      <NavBar position='bottom' />
-    </Scale>
-  </div>
-}
 /**
  * The main app component.
  */
@@ -192,7 +167,13 @@ const AppComponent: FC<Props> = props => {
               // children required by SplitPane
                 : <div />}
             </SplitPane>
-            <NavBarBottom scale={scale}/>
+
+            <div className='nav-bottom-wrapper'>
+              <Scale amount={scale!} origin='bottom left'>
+                <NavBar position='bottom' />
+              </Scale>
+            </div>
+
           </>
         }
 

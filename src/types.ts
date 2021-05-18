@@ -87,9 +87,6 @@ export type ComparatorFunction<T> = (a: T, b: T) => ComparatorValue
 /** Set of file types supported for exporting thoughts. */
 export type MimeType = 'text/plain' | 'text/html'
 
-/** Theme variant. */
-export type ThemeVariant = 'Light' | 'Dark'
-
 /** A very generic object. */
 export type Index<T = any> = {[key: string]: T}
 

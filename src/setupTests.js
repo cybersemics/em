@@ -9,7 +9,3 @@ configure({ adapter: new Adapter() })
 // add noop functions to prevent implementation error during test
 window.blur = noop
 window.scrollTo = noop
-window.visualViewport = {
-  addEventListener: noop,
-  removeEventListener: noop
-}

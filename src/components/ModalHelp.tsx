@@ -179,7 +179,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
     <h2 className='modal-subtitle'>Development Settings</h2>
 
     <form>
-      <label onChange={toggleShortcutsDiagramSetting}><input type='checkbox' defaultChecked={enableLatestShorcutsDiagram}></input> Enable gesture diagrams (touch screen) </label>
+      <label onChange={toggleShortcutsDiagramSetting}><input type='checkbox' checked={enableLatestShorcutsDiagram}></input> Enable gesture diagrams (touch screen) </label>
     </form>
 
     <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>

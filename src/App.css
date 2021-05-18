@@ -705,8 +705,6 @@ body.dark {
 
 .nav-bottom-wrapper {
   position: sticky;
-  /* for transition when bottom is changed on active keyboard. */
-  transition: bottom 300ms ease;
   /* cannot use safe-area-inset here because of mobile Safari z-index issues. */
   bottom: 0;
 }
@@ -2972,21 +2970,11 @@ code, .code {
   transition: transform 200ms ease-in-out;
 }
 
-.latest-shortcuts-sticky {
-  position: sticky;
-  height: 0px;
-  width: 100%;
-  z-index: 10;
-  pointer-events: none;
-  overflow: visible;
-  top: 0;
-}
-
 .latest-shortcuts-wrapper {
   position: absolute;
-  width: 100%;
-  /* Note: Here height in vh is only applied for chrome. Height in ios safari will be chaged by js. */
+  /* Using vh here allows shortcuts diagram to always appear keyboard in mobile. */
   height: 100vh;
+  width: 100%;
 }
 
 .latest-shortcuts-transition-enter {
@@ -3020,11 +3008,11 @@ code, .code {
 }
 
 .latest-shortcuts.bottom {
-  bottom: 10%;
+  bottom: 20%;
 }
 
 .latest-shortcuts .shortcut-tab {
-  background: rgb(228, 228, 228);
+  background: rgb(94, 94, 94);
   border-radius: 7px;
   display: flex;
   justify-content: center;
@@ -3032,10 +3020,6 @@ code, .code {
   opacity: 0.7;
   padding: 10px;
   margin: 0 2px;
-}
-
-.dark .latest-shortcuts .shortcut-tab {
-  background: rgb(68, 68, 68);
 }
 
 .quick-add-button.rotate {
