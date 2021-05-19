@@ -95,7 +95,6 @@ export interface ExportOption {
   type: MimeType,
   label: string,
   extension: string,
-  excludeMeta?: boolean,
 }
 
 /** A timestamp string. */

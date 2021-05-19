@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
-import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
@@ -11,13 +9,21 @@ import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } fr
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
+import ChevronImg from './ChevronImg'
 import { State } from '../util/initialState'
 import { ExportOption } from '../types'
 import useOnClickOutside from 'use-onclickoutside'
 
+interface AdvancedSetting {
+  id: string,
+  onChangeFunc: () => void,
+  defaultChecked: boolean,
+  title: string,
+  description: string,
+}
+
 const exportOptions: ExportOption[] = [
-  { type: 'text/plain', label: 'Plain Text (lossless)', extension: 'txt' },
-  { type: 'text/plain', label: 'Plain Text', extension: 'txt', excludeMeta: true },
+  { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
@@ -43,6 +49,7 @@ const ModalExport = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
   const [exportContent, setExportContent] = useState<string | null>(null)
+  const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
 
   const dark = theme(state) !== 'Light'
   const themeColor = { color: dark ? 'white' : 'black' }
@@ -51,7 +58,7 @@ const ModalExport = () => {
     : { color: 'white', backgroundColor: 'black' }
 
   const numDescendants = getDescendants(state, simplePath, {
-    filterFunction: selected.excludeMeta ? child => !isFunction(child.value) : undefined
+    filterFunction: !shouldIncludeMetaAttributes ? child => !isFunction(child.value) : undefined
   }).length
 
   const exportWord = 'share' in navigator ? 'Share' : 'Download'
@@ -71,7 +78,7 @@ const ModalExport = () => {
   const setExportContentFromCursor = () => {
     const exported = exportContext(store.getState(), context, selected.type, {
       title: titleChild ? titleChild.value : undefined,
-      excludeMeta: selected.excludeMeta
+      excludeMeta: !shouldIncludeMetaAttributes
     })
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
@@ -103,7 +110,7 @@ const ModalExport = () => {
     return () => {
       isMounted.current = false
     }
-  }, [selected])
+  }, [selected, shouldIncludeMetaAttributes])
 
   useEffect(() => {
 
@@ -210,20 +217,33 @@ const ModalExport = () => {
     setPublishing(false)
   }
 
+  const [advancedSettings, setAdvancedSettings] = useState(false)
+
+  /** Toggles advanced setting when Advanced CTA is clicked. */
+  const onAdvancedClick = () => setAdvancedSettings(!advancedSettings)
+
+  /** Updates checkbox value when clicked and set the appropriate value in the selected option. */
+  const onChangeLosslessCheckbox = () => setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
+
+  /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
+  const advancedSettingsArray: AdvancedSetting[] = [
+    {
+      id: 'lossless-checkbox',
+      onChangeFunc: onChangeLosslessCheckbox,
+      defaultChecked: true,
+      title: 'Lossless',
+      description: 'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or exporting to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.'
+    }
+  ]
+
   return (
     <Modal id='export' title='Export' className='popup'>
 
+      {/* Export message */}
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>{exportMessage}</span>
         <span className='modal-drop-down-holder'>
-          <img
-            src={dark ? ArrowDownWhite : ArrowDownBlack}
-            alt='Arrow'
-            height='22px'
-            width='22px'
-            style={{ cursor: 'pointer' }}
-            onClick={() => setIsOpen(!isOpen)}
-          />
+          <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} />
           <div ref={setWrapper}>
             <DropDownMenu
               isOpen={isOpen}
@@ -240,13 +260,37 @@ const ModalExport = () => {
         </span>
       </div>
 
-      <div className='cp-clipboard-wrapper'>
-        {exportContent !== null
-          ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
-          : <LoadingEllipsis />
-        }
+      {/* Advanced Settings */}
+      <div className='advance-setting-wrapper'>
+        <span><a className='advance-setting-link no-select' onClick={onAdvancedClick} style={{ opacity: advancedSettings ? 1 : 0.5 }}>Advanced</a></span>
+        <span className='advance-setting-chevron'>
+          <ChevronImg
+            dark={dark}
+            onClickHandle={onAdvancedClick}
+            className={advancedSettings ? 'rotate180' : ''}
+            additonalStyle={{ opacity: advancedSettings ? 1 : 0.5 }}
+          />
+        </span>
       </div>
 
+      {advancedSettings &&
+        <div className='advance-setting-section'>
+          {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, title, description }) => {
+            return (
+              <label className='checkbox-container' key={`${id}-key-${title}`}>
+                <div>
+                  <p className='advance-setting-label'>{title}</p>
+                  <p className='advance-setting-description dim'>{description}</p>
+                </div>
+                <input type='checkbox' id={id} onChange={onChangeFunc} defaultChecked={defaultChecked} />
+                <span className='checkmark'></span>
+              </label>
+            )
+          })}
+        </div>
+      }
+
+      {/* Download button */}
       <div className='modal-export-btns-wrapper'>
 
         <button
@@ -259,6 +303,16 @@ const ModalExport = () => {
         </button>
 
       </div>
+
+      {/* Copy to clipboard */}
+      <div className='cp-clipboard-wrapper'>
+        {exportContent !== null
+          ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
+          : <LoadingEllipsis />
+        }
+      </div>
+
+      {/* Publish */}
 
       {isDocumentEditable() && <>
         <div className='modal-export-publish'>
