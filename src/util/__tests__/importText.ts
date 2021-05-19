@@ -655,3 +655,200 @@ it('import multi-line nested html tags', () => {
 `
     )
 })
+
+describe('HTML content', () => {
+  it('should paste plain text that contains formatting', () => {
+    const paste =
+      `<b>a</b>
+<b>b</b>`
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(
+        `
+- <b>a</b>
+- <b>b</b>
+`)
+  })
+
+  it('should paste plain text that contains formatting and bullet indicator is inside of formatting tags', () => {
+    const paste =
+      `<b>a</b>
+<b> -b</b>`
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(
+        `
+- <b>a</b>
+  - <b>b</b>
+`)
+  })
+
+  it('should paste text properly that is copied from MacOS Notes.app', () => {
+    /* eslint-disable no-irregular-whitespace */
+    const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="1894.6">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
+</style>
+</head>
+<body>
+<p class="p1">A</p>
+<p class="p1"><span class="Apple-converted-space"> </span>- B</p>
+<p class="p1"><span class="Apple-converted-space"> </span>- C</p>
+</body>
+</html>
+`
+    /* eslint-enable no-irregular-whitespace */
+
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(
+        `
+- A
+  - B
+  - C
+`)
+  })
+
+  it('should paste text properly that is copied from WebStorm', () => {
+    /* eslint-disable no-irregular-whitespace */
+    const paste = `<html>
+       <head>
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+       </head>
+       <body>
+          <pre style="background-color:#2b2b2b;color:#a9b7c6;font-family:'JetBrains Mono',monospace;font-size:9.8pt;">A<br>&#32;-B<br>&#32;-C<br></pre>
+       </body>
+    </html>`
+    /* eslint-enable no-irregular-whitespace */
+
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(
+        `
+- A
+  - B
+  - C
+`)
+  })
+
+  it('should paste text properly that is copied from IOS notes.app', () => {
+    /* eslint-disable no-irregular-whitespace */
+    const paste = `<meta charset="UTF-8"><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;">A</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- B</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- C</span></p>`
+    /* eslint-enable no-irregular-whitespace */
+
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(
+        `
+- A
+  - B
+  - C
+`)
+  })
+
+  it('should paste text that contains li tags properly that is copied from macos notes.app', () => {
+    /* eslint-disable no-irregular-whitespace */
+    const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="1894.6">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
+</style>
+</head>
+<body>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;li&gt;&lt;i&gt;&lt;b&gt;A&lt;/b&gt;&lt;/i&gt;&lt;/li&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;li&gt;&lt;i&gt;&lt;b&gt;B&lt;/b&gt;&lt;/i&gt;&lt;/li&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;li&gt;&lt;i&gt;&lt;b&gt;C&lt;/b&gt;&lt;/i&gt;&lt;/li&gt;</p>
+</body>
+</html>`
+    /* eslint-enable no-irregular-whitespace */
+
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(
+        `
+- <i><b>A</b></i>
+- <i><b>B</b></i>
+- <i><b>C</b></i>
+`)
+  })
+
+  it('should paste text that contains formatting properly that is copied from macos notes.app', () => {
+    /* eslint-disable no-irregular-whitespace */
+    const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="1894.6">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
+</style>
+</head>
+<body>
+<p class="p1"><b><i>A</i></b></p>
+<p class="p1"><span class="Apple-converted-space">  </span>- <b>B</b></p>
+<p class="p1"><span class="Apple-converted-space">  </span>- <i>C</i></p>
+</body>
+</html>
+`
+    /* eslint-enable no-irregular-whitespace */
+
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(
+        `
+- <b><i>A</i></b>
+  - <b>B</b>
+  - <i>C</i>
+`)
+  })
+
+  it('should paste text that contains multiple formatting properly that is copied from macos notes.app', () => {
+    /* eslint-disable no-irregular-whitespace */
+    const paste = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title></title>
+<meta name="Generator" content="Cocoa HTML Writer">
+<meta name="CocoaVersion" content="1894.6">
+<style type="text/css">
+p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
+</style>
+</head>
+<body>
+<p class="p1"><b>A</b></p>
+<p class="p1"><span class="Apple-converted-space"> </span>- <b><i>B</i></b></p>
+<p class="p1"><span class="Apple-converted-space"> </span>- <b>C</b></p>
+</body>
+</html>
+
+`
+    /* eslint-enable no-irregular-whitespace */
+
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(
+        `
+- <b>A</b>
+  - <b><i>B</i></b>
+  - <b>C</b>
+`)
+  })
+})
