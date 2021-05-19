@@ -8,6 +8,7 @@ import { Block, Path, SimplePath, Timestamp } from '../types'
 import { State } from '../util/initialState'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
+import { REGEXP_CONTAINS_META_TAG } from '../constants'
 // import { HOME_TOKEN } from '../constants'
 
 // a list item tag
@@ -16,9 +17,16 @@ const regexpListItem = /<li(?:\s|>)/gmi
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
 
+const regexpLeadingSpacesAndBullet = /^\s*(?:[-—▪◦•]|\*\s)?/
+
 // regex that checks if the value starts with closed html tag
 // Note: This regex cannot check properly for a tag nested within itself. However for general cases it works properly.
 const regexStartsWithClosedTag = /^<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)<\/\1>/ism
+
+/**
+ * Check if clipboard data copied from an app such as (Webstorm, Notes, Notion..).
+ */
+const isCopiedFromApp = (htmlText: string) => REGEXP_CONTAINS_META_TAG.test(htmlText)
 
 /** Converts data output from jex-block-parser into HTML.
  *
@@ -62,23 +70,48 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
 
 /** Retrieves the content within the body tags of the given HTML. Returns the full string if no body tags are found. */
 const bodyContent = (html: string) => {
-  const htmlLowerCase = html.toLowerCase()
-  const startTag = htmlLowerCase.indexOf('<body')
-  const bodyTagLength = startTag !== -1
-    ? htmlLowerCase.slice(0, startTag).indexOf('>')
-    : 0
-  const endTag = htmlLowerCase.indexOf('</body>')
-
-  return startTag === -1
-    ? html
-    : html.slice(startTag + bodyTagLength, endTag !== -1 ? endTag : html.length)
+  const matches = html.match(/<body[^>]*>([\w|\W]*)<\/body>/)
+  return !matches || matches.length < 2 ? html : matches[1]
 }
 
+/**
+ * Move leading spaces and bullet indicator to the beginning.
+ *
+ * @example
+ * <b>  - B</b>
+ * to
+ *   -<b> B</b>
+ */
+const moveLeadingSpacesToBeginning = (line: string) => {
+  if (regexpPlaintextBullet.test(line)) {
+    return line
+  }
+  const trimmedText = strip(line, { preserveFormatting: false, preventTrim: true })
+  const matches = trimmedText.match(regexpLeadingSpacesAndBullet)
+  return matches ? matches[0] + line.replace(matches[0], '') : line
+}
+
+/**
+ * Parse html body content.
+ */
+const parseBodyContent = (html: string) => {
+  const content = bodyContent(html)
+  // If content has <li> tags, don't convert content to blocks and then again html.
+  if (regexpListItem.test(content)) {
+    return content
+  }
+  const stripped = strip(content, { preserveFormatting: true })
+    .split('\n')
+    .map(moveLeadingSpacesToBeginning)
+    .join('\n')
+
+  return blocksToHtml(parse(unescape(stripped)))
+}
 /** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
 const rawTextToHtml = (text: string) => {
 
   // if the input text starts with a closed html tag
-  const isHTML = regexStartsWithClosedTag.test(text.trim())
+  const isHTML = regexStartsWithClosedTag.test(text.trim()) || isCopiedFromApp(text.trim())
   const decodedInputText = unescape(text)
 
   // use jex-block-parser to convert indentent plaintext into nested HTML lists
@@ -94,7 +127,7 @@ const rawTextToHtml = (text: string) => {
       .map(line => `${line.replace(regexpPlaintextBullet, '').trim()}`)
       .join('')
     // if it's an entire HTML page, ignore everything outside the body tags
-    : bodyContent(text)
+    : parseBodyContent(text)
 }
 
 interface Options {
