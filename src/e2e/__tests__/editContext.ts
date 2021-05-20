@@ -43,13 +43,17 @@ describe('Context view: edit context testing', () => {
 
     await clickThought(page, 'a')
 
-    const thoughtValueInitial = await getEditingText(page)
-    thoughtValueInitial?.replace('a', 'apple')
+    const initialFirstThought = await getEditingText(page)
+    expect(initialFirstThought).toBe('a')
+
+    await page.$eval('.editing .editable', e => {
+      e.innerHTML = 'apple'
+    })
 
     await clickThought(page, 'b')
     await clickThought(page, 'm')
 
-    const thoughtValue = await getEditingText(page)
-    expect(thoughtValue === 'apple').toBeFalsy()
+    const updatedFirstThought = await page.$eval('#content ul li .thought .editable', e => e.innerHTML)
+    expect(updatedFirstThought === 'apple').toBeFalsy()
   })
 })
