@@ -10,6 +10,7 @@ import { devices, Page } from 'puppeteer'
 import initPage from '../../test-helpers/e2e-helpers/initPage'
 import clickThought from '../../test-helpers/e2e-helpers/clickThought'
 import waitForThoughtToExistInDb from '../../test-helpers/e2e-helpers/waitForThoughtExistInDb'
+import waitForElementBecomeHidden from '../../test-helpers/e2e-helpers/waitForElementBecomeHidden'
 
 describe('caret testing', () => {
   let page: Page
@@ -251,6 +252,7 @@ describe('caret testing for mobile platform', () => {
 
     await clickThought(page, 'A')
     await clickThought(page, 'C')
+    await waitForElementBecomeHidden(page, 'D')
     await clickThought(page, 'D')
 
     const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)

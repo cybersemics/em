@@ -8,7 +8,7 @@ const getAlphaValue = (color: string) => {
 }
 
 /** Returns true if the element has been hidden by alpha value of thecolor. */
-export const isElementHiddenByColor = (el: HTMLElement) => {
+export const isElementHiddenByAutoFocus = (el: HTMLElement) => {
   const color = window.getComputedStyle(el, null).color
   return getAlphaValue(color) === 0
 }

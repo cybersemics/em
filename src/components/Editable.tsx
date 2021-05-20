@@ -39,7 +39,7 @@ import {
   head,
   headValue,
   isDivider,
-  isElementHiddenByColor,
+  isElementHiddenByAutoFocus,
   isHTML,
   isURL,
   pathToContext,
@@ -623,7 +623,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
 
-    const isHiddenByAutofocus = isElementHiddenByColor(e.target as HTMLElement)
+    const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
     if (disabled ||
