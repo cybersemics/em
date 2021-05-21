@@ -28,6 +28,7 @@ export const splitSentence = (value: string) => {
   let removeFront = 0
 
   const newSentences = sentences.map((s, i) => {
+    if (filterOut.includes(i)) return s
 
     // remove first character ' or  " or ) or "), etc.
     if (removeFront !== 0) {
@@ -60,27 +61,27 @@ export const splitSentence = (value: string) => {
       return newSentence.trim()
     }
 
-    // Case3, When it is i.e.
-    if (newSentence.match(/i.e./)) {
+    // Case3, when it is i.e. or e.g.
+    if (isDoubleDots(s, sentences[i + 1], spliters[i + 1])) {
       filterOut = filterOut.concat(i + 1)
 
-      if (sentences[i + 2]) {
+      // add the sentence after the ".".
+      if (spliters[i + 1] === '.' && sentences[i + 2]) {
         filterOut = filterOut.concat(i + 2)
         newSentence += sentences[i + 2]
-        // hava a spliter after those words
         if (spliters[i + 2]) newSentence += spliters[i + 2]
       }
       return newSentence.trim()
     }
 
     /**
-     * There is also a situation we have to move the characters between two split sentences.
-     * When it ends with .", .), !), ?"), ;), etc.
-     * The ", ), ?") will stay on the front of the next sentence, hence it needs to be removed and added back to the end of the current sentence.
+     * Case 4, when it ends with .", .), !), ?"), ;), etc.
+     * The ", ), ") will stay on the front of the next sentence.
+     * Hence, they are needed to be removed and added back to the end of the current sentence.
      */
-    if (sentences[i + 1].match(/^[)'"]/)) {
-      const spliters = sentences[i + 1].match(/^[)'"]+/)
-      if (spliters) removeFront = spliters[0].length
+    const pattern = sentences[i + 1].match(/^[)'"]+/)
+    if (pattern) {
+      removeFront = pattern[0].length
       return (s + sentences[i + 1].slice(0, removeFront)).trim()
     }
 
@@ -98,8 +99,8 @@ export const splitSentence = (value: string) => {
  * Examples: Mr. Dr. Apt. Feb.
  */
 function isAbbrev (word : string) {
-  const patt = /[A-Z][a-z]*[.]$/g
-  return !!word.match(patt)
+  const pattern = /[A-Z][a-z]*[.]$/g
+  return !!word.match(pattern)
 }
 
 /**
@@ -111,4 +112,19 @@ function isAbbrev (word : string) {
  */
 function isDecimalNum (str1 : string, str2: string) {
   return !!str1.match(/[0-9].$/) && !!str2.match(/^[0-9]/)
+}
+
+/**
+ * Function: isDoubleDots., example: i.e., e.g..
+ *
+ * @param str1 The charactor before the first spliter.
+ * @param str2 The charactor after the first spliter.
+ * @param spliter2 The second spliter.
+ * @returns A bolean value that says whether the dot comes from a decimal number, such as 5.76, $3.2, 2.54M, 20.1K.
+ */
+function isDoubleDots (str1 : string, str2: string, spliter2: string) {
+  const iePattern = !!str1.match(/i.$/) && !!str2.match(/^e/) && !!spliter2.match(/^./)
+  const egPattern = !!str1.match(/e.$/) && !!str2.match(/^g/) && !!spliter2.match(/^./)
+
+  return iePattern || egPattern
 }
