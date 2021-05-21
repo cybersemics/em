@@ -280,7 +280,51 @@ it('data integrity test', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const noOfUpdates = Object.keys(checkDataIntegrity(stateNew)).length
+  const { thoughtIndexUpdates, contextIndexUpdates } = checkDataIntegrity(stateNew)
 
-  expect(noOfUpdates).toBe(0)
+  const thoughtUpdates = Object.keys(thoughtIndexUpdates).length
+  const contextUpdates = Object.keys(contextIndexUpdates).length
+
+  expect(thoughtUpdates).toBe(0)
+  expect(contextUpdates).toBe(0)
+})
+
+// Issue: https://github.com/cybersemics/em/issues/1144
+it('data integrity test after editing a parent with multiple descendants with same value and depth', () => {
+
+  const text = `
+  - ${' '}
+    - a
+      - m
+    - b
+      - m`
+
+  const steps = [
+    importText({
+      path: HOME_PATH,
+      text
+    }),
+    setCursor({
+      path: [{
+        value: '',
+        rank: 0
+      }]
+    }),
+    existingThoughtChange({
+      newValue: 'x',
+      oldValue: '',
+      context: [HOME_TOKEN],
+      path: [{ value: '', rank: 0 }] as SimplePath
+    })
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const { thoughtIndexUpdates, contextIndexUpdates } = checkDataIntegrity(stateNew)
+
+  const thoughtUpdates = Object.keys(thoughtIndexUpdates).length
+  const contextUpdates = Object.keys(contextIndexUpdates).length
+
+  expect(thoughtUpdates).toBe(0)
+  expect(contextUpdates).toBe(0)
 })

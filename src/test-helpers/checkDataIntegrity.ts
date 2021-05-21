@@ -1,12 +1,13 @@
 import { hashContext, hashThought } from '../util'
 import { State } from '../util/initialState'
-import { Index, Parent, Timestamp } from '../types'
+import { Index, Lexeme, Parent, Timestamp } from '../types'
 
-/** Iterates through each lexeme in thoughtIndex, identifies lexeme.contexts that are not replicated in contextIndex, and generates contextIndexUpdates that are dispatched to restore them. */
+/** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the updates if indexes are not in sync. */
 const checkDataIntegrity = (state: State, max = 100000) => {
 
   const { contextIndex, thoughtIndex } = state.thoughts
   const contextIndexUpdates: Index<Parent> = {}
+  const thoughtIndexUpdates: Index<Lexeme> = {}
 
   Object.keys(thoughtIndex)
     .slice(0, max)
@@ -61,7 +62,37 @@ const checkDataIntegrity = (state: State, max = 100000) => {
       }, {})
     })
 
-  return contextIndexUpdates
+  Object.keys(contextIndex)
+    .slice(0, max)
+    .forEach(key => {
+      const parent = contextIndex[key]
+
+      const parentContextHash = hashContext(parent.context)
+
+      if (!parent.children) return
+
+      parent.children.forEach(child => {
+        const thoughtHash = hashThought(child.value)
+        const lexeme = thoughtIndexUpdates[thoughtHash] || thoughtIndex[thoughtHash]
+
+        const hasThoughtIndexEntry = lexeme && lexeme.contexts.some(thoughtContext => hashContext(thoughtContext.context) === parentContextHash)
+
+        if (!hasThoughtIndexEntry) {
+          thoughtIndexUpdates[thoughtHash] = {
+            ...lexeme,
+            contexts: [
+              ...lexeme.contexts,
+              {
+                context: parent.context,
+                rank: child.rank
+              }
+            ]
+          }
+        }
+      }, {})
+    })
+
+  return { contextIndexUpdates, thoughtIndexUpdates }
 }
 
 export default checkDataIntegrity
