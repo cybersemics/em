@@ -8,6 +8,7 @@ const { setup: setupDevServer, teardown: teardownDevServer } = require('jest-dev
 const fs = require('fs')
 const path = require('path')
 const puppeteer = require('puppeteer')
+const portUsed = require('tcp-port-used')
 
 /** Puppeteer Environment for jest. */
 class PuppeteerEnvironment extends JsDomEnvironment {
@@ -21,20 +22,27 @@ class PuppeteerEnvironment extends JsDomEnvironment {
 
     await super.setup()
 
-    const buildPath = path.join(__dirname, '..', '..', 'build')
-    const doesBuildExist = fs.existsSync(buildPath)
-
-    if (!doesBuildExist) {
-      console.error(chalk.red('App build not found.'))
-      throw new Error('App build not found.')
+    // use existing app if already running
+    if (await portUsed.check(3000, 'localhost')) {
+      console.info(chalk.yellow('Using the currently running app on http://localhost:3000'))
     }
+    // otherwise serve up the build folder
+    else {
+      const buildPath = path.join(__dirname, '..', '..', 'build')
+      const doesBuildExist = fs.existsSync(buildPath)
 
-    await setupDevServer({
-      command: 'npm run servebuild',
-      launchTimeout: 300000,
-      debug: true,
-      port: 3000
-    })
+      if (!doesBuildExist) {
+        console.error(chalk.red('App build not found.'))
+        throw new Error('App build not found.')
+      }
+
+      await setupDevServer({
+        command: 'npm run servebuild',
+        launchTimeout: 300000,
+        debug: true,
+        port: 3000
+      })
+    }
 
     this.global.browser = await puppeteer.launch({
       headless: true,
