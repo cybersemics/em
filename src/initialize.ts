@@ -7,6 +7,7 @@ import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import importOnFirstMatchPathActionCreator from './test-helpers/importOnFirstMatchPath'
 import getLexemeFromDB from './test-helpers/e2e-helpers/getLexemeFromDB'
+import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
 
 /** Initilaize local db , firebase and window events. */
@@ -71,6 +72,7 @@ window.em = {
   hashContext,
   hashThought,
   isPending: withState(isPending),
+  checkDataIntegrity: withState(checkDataIntegrity)
 }
 
 /** Logs debugging information to a fixed position debug window. Useful for PWA debugging. */

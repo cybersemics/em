@@ -584,9 +584,13 @@ it('data integrity test', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const noOfUpdates = Object.keys(checkDataIntegrity(stateNew)).length
+  const { thoughtIndexUpdates, contextIndexUpdates } = checkDataIntegrity(stateNew)
 
-  expect(noOfUpdates).toBe(0)
+  const thoughtUpdates = Object.keys(thoughtIndexUpdates).length
+  const contextUpdates = Object.keys(contextIndexUpdates).length
+
+  expect(thoughtUpdates).toBe(0)
+  expect(contextUpdates).toBe(0)
 })
 
 it('consitent rank between thoughtIndex and contextIndex on duplicate merge', () => {

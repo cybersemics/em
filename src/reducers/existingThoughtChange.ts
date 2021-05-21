@@ -36,11 +36,8 @@ export interface ExistingThoughtChangePayload {
 
 interface RecursiveUpdateResult {
   lexemeNew: Lexeme,
-  context: Context,
   contextsOld: Context[],
   contextsNew: Context[],
-  pathOld: Path,
-  pathNew: Path,
   pending?: boolean,
 }
 
@@ -205,9 +202,17 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
 
     return getChildrenRanked(state, context).reduce((accum, child) => {
 
+      const updatedAccum = {
+        // merge ancestor updates
+        ...accumRecursive,
+        // merge sibling updates
+        // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
+        ...accum,
+      }
+
       const hashedKey = hashThought(child.value)
       // use updated thoughtIndex if available
-      const childLexeme = accum[hashedKey]?.lexemeNew || getThought(state, child.value)
+      const childLexeme = updatedAccum[hashedKey]?.lexemeNew || getThought(state, child.value)
       const childOldPath = [...pathOld, child]
       const childNewPath = [...pathNew || pathOld, child]
       const childContext = [...context, child.value]
@@ -215,12 +220,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       // this should only happen if there is a thoughtIndex integrity violation
       if (!childLexeme) {
         // console.error(`Missing child ${child.value} in ${context}`)
-        const accumNew = {
-          ...accumRecursive,
-          ...accum,
-        }
         return {
-          ...recursiveUpdates(childOldPath, childNewPath, contextRecursive.concat(child.value), accumNew)
+          ...recursiveUpdates(childOldPath, childNewPath, contextRecursive.concat(child.value), updatedAccum)
         }
       }
 
@@ -231,24 +232,12 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndex[hashedKey] = lexemeNew
 
-      const updatedAccum = {
-        // merge ancestor updates
-        ...accumRecursive,
-        // merge sibling updates
-        // Order matters: accum must have precendence over accumRecursive so that contextNew is correct
-        ...accum,
-      }
-
       const accumNew = {
         ...updatedAccum,
         // merge current thought updates
         [hashedKey]: {
           lexemeNew,
-          context,
-          pathOld: childOldPath,
-          pathNew: childNewPath,
           pending: isPending(state, childContext),
-          // return parallel lists so that the old contextIndex can be deleted and new contextIndex can be added
           // TODO: This could be improved by putting it directly into the form required by contextIndex to avoid later merging
           // use latest thoughtIndex here
           contextsOld: ((updatedAccum[hashedKey] || {}).contextsOld || []).concat([context]),
