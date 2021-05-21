@@ -1,6 +1,14 @@
-/** Returns true if the element has been hidden by the distance-from-cursor autofocus. */
+/** Get alpha value of given color. */
+const getAlphaValue = (color: string) => {
+  if (color.startsWith('rgba')) {
+    const alpha = color.replace(/^.*,(.+)\)/, '$1')
+    return parseFloat(alpha)
+  }
+  return 1
+}
+
+/** Returns true if the element has been hidden by alpha value of thecolor. */
 export const isElementHiddenByAutoFocus = (el: HTMLElement) => {
-  const children = el.closest('.children')
-  return children ? (children.classList.contains('distance-from-cursor-2') && !el.closest('.cursor-parent')) ||
-    children.classList.contains('distance-from-cursor-3') : false
+  const color = window.getComputedStyle(el, null).color
+  return getAlphaValue(color) === 0
 }
