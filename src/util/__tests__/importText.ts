@@ -191,7 +191,7 @@ it('import and merge descendants', () => {
       },
       {
         value: 'x',
-        // Note: x has rank two because exisitingThoughtMove doesn't account for duplicate merges for calualting rank. In this case b value is a duplicate merge in the context of ['a']
+        // Note: x has rank two because existingThoughtMove doesn't account for duplicate merges for calualting rank. In this case b value is a duplicate merge in the context of ['a']
         rank: 2,
       }],
     },

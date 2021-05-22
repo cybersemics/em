@@ -79,9 +79,9 @@ const checkDataIntegrity = (state: State, max = 100000) => {
 
         if (!hasThoughtIndexEntry) {
           thoughtIndexUpdates[thoughtHash] = {
-            ...lexeme,
+            ...lexeme || {},
             contexts: [
-              ...lexeme.contexts,
+              ...lexeme?.contexts ?? [],
               {
                 context: parent.context,
                 rank: child.rank

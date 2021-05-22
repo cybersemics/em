@@ -33,7 +33,8 @@
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
     "servebuild": "serve -s build -l 3000",
     "test": "react-scripts test --testPathIgnorePatterns=./src/e2e",
-    "test:e2e": "react-scripts test ./src/e2e"
+    "test:e2e": "react-scripts test ./src/e2e",
+    "t": "react-scripts test"
   },
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",

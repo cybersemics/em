@@ -4,12 +4,15 @@ import { HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import testTimer from '../../test-helpers/testTimer'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
 beforeEach(async () => {
   wrapper = await createTestApp()
 })
+
+const fakeTimer = testTimer()
 
 afterEach(cleanupTestApp)
 
@@ -19,12 +22,14 @@ it('convert "---" to divider', async () => {
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
   const editable = wrapper.find('div.editable')
-  await editable.simulate('change', { target: { value: '---' } })
+
+  await fakeTimer.runAsyncCode(async () => {
+    editable.simulate('change', { target: { value: '---' } })
+  })
 
   // cursor back to trigger existingThoughtChange
   windowEvent('keydown', { key: 'Escape' })
 
-  jest.runOnlyPendingTimers()
   wrapper.update()
 
   const divider = wrapper.find('Divider')
@@ -38,12 +43,14 @@ it('convert "–-" (emdash + dash) to divider', async () => {
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
   const editable = wrapper.find('div.editable')
-  await editable.simulate('change', { target: { value: '—-' } })
+
+  await fakeTimer.runAsyncCode(() => {
+    editable.simulate('change', { target: { value: '—-' } })
+  })
 
   // cursor back to trigger existingThoughtChange
   windowEvent('keydown', { key: 'Escape' })
 
-  jest.runOnlyPendingTimers()
   wrapper.update()
 
   const divider = wrapper.find('Divider')
@@ -57,12 +64,13 @@ it('do not convert "-" to divider', async () => {
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
   const editable = wrapper.find('div.editable')
-  await editable.simulate('change', { target: { value: '-' } })
+
+  await fakeTimer.runAsyncCode(() => {
+    editable.simulate('change', { target: { value: '-' } })
+  })
 
   // cursor back to trigger existingThoughtChange
   windowEvent('keydown', { key: 'Escape' })
-
-  jest.runOnlyPendingTimers()
 
   // state
   const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
@@ -82,7 +90,10 @@ it('do not convert "—" (emdash) to divider', async () => {
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
   const editable = wrapper.find('div.editable')
-  await editable.simulate('change', { target: { value: '—' } })
+
+  await fakeTimer.runAsyncCode(() => {
+    editable.simulate('change', { target: { value: '—' } })
+  })
 
   // cursor back to trigger existingThoughtChange
   windowEvent('keydown', { key: 'Escape' })

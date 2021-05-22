@@ -4,7 +4,7 @@ import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { unescape } from 'html-escaper'
 import classNames from 'classnames'
-import { alert, cursorBack, editing, error, existingThoughtChange, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext, newThought } from '../action-creators'
+import { alert, cursorBack, editing, error, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext, newThought, thoughtChange } from '../action-creators'
 import { isTouch, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
@@ -122,7 +122,7 @@ interface EditableProps {
   style?: React.CSSProperties,
   simplePath: SimplePath,
   /* If transient is true:
-    1. Instead of calling exisitingThoughtChange, it calls newThought to add the given child to the state.
+    1. Instead of calling existingThoughtChange, it calls newThought to add the given child to the state.
     2. It also sets focus to itself on render.
   */
   transient?: boolean,
@@ -276,7 +276,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     if (thought) {
 
-      dispatch(existingThoughtChange({
+      dispatch(thoughtChange({
         context,
         showContexts,
         oldValue,

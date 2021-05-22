@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import FakeTimer, { InstalledClock } from '@sinonjs/fake-timers'
 
 /**
@@ -30,10 +31,19 @@ const testTimer = () => {
     else console.warn('runAllAsync: Fake clock has not been installed')
   }
 
+  /** Sets the fake timer, runs the code, flushes all the pending timers and the sets back the real timer. */
+  const runAsyncCode = async (fn: () => void) => {
+    useFakeTimer()
+    fn()
+    await runAllAsync()
+    useRealTimer()
+  }
+
   return {
     useFakeTimer,
     useRealTimer,
     runAllAsync,
+    runAsyncCode
   }
 }
 
