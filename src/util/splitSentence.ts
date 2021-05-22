@@ -3,12 +3,13 @@ import { once } from './once'
 /**
  * Splits given value by special characters.
  */
-export const splitSentence = (value: string) => {
+export const splitSentence = (value: string) : string[] => {
   // pattern1, single symbol: . ; ! ?
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
 
-  /** Checks if the value has no other main split characters  except one period at the end.
+  /**
+   * Checks if the value has no other main split characters  except one period at the end.
    * If so, allow split on comma only if there are no main  split characters in the value or has only one period at the end.
    */
   const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(value.trim()))
@@ -25,70 +26,55 @@ export const splitSentence = (value: string) => {
    */
   const sentences = value.split(mainSplitRegex)
   let filterOut: number[] = []
-  let removeFront = 0
+  let newSentences : string[] = []
 
-  const newSentences = sentences.map((s, i) => {
-    if (filterOut.includes(i)) return s
-
-    // remove first character ' or  " or ) or "), etc.
-    if (removeFront !== 0) {
-      s = s.slice(removeFront)
-      removeFront = 0
+  sentences.forEach((s : string, i : number) : void => {
+    if (i === 0) {
+      newSentences = [sentences[0] + spliters[0]]
+      return
     }
 
-    // when it reaches the last sentense with no spliters on the end
-    if (!spliters[i]) return s.trim()
+    let prevSentence = newSentences[i - 1]
+    let currSentence = s
+    let prevCurrSentence = prevSentence + s
 
-    // when it reaches the last sentense with a spliter on the end
-    s += spliters[i]
-    if (!sentences[i + 1]) return s.trim()
+    if (spliters[i]) {
+      currSentence += spliters[i]
+      prevCurrSentence += spliters[i]
+    }
 
     /**
-     * In some cases, we need to recombine the sentences back to one.
+     * In some cases, we must combine the current sentence with the previous sentence to form one sentence.
+     * Case1, when it ends with Mr., Dr., Apt., Oct.
+     * Case2, when it ends with a number like $5.3, 3.8M.
+     * Case3, when it is i.e. or e.g. .
      */
-    let newSentence = s + sentences[i + 1]
-    if (spliters[i + 1]) newSentence += spliters[i + 1]
-
-    // Case1, when it ends with Mr., Dr., Apt., Oct.
-    if (isAbbrev(s)) {
-      filterOut = filterOut.concat(i + 1)
-      return newSentence.trim()
-    }
-
-    // Case2, when it ends with a number like $5.3, 3.8M
-    if (isDecimalNum(s, sentences[i + 1])) {
-      filterOut = filterOut.concat(i + 1)
-      return newSentence.trim()
-    }
-
-    // Case3, when it is i.e. or e.g.
-    if (isDoubleDots(s, sentences[i + 1], spliters[i + 1])) {
-      filterOut = filterOut.concat(i + 1)
-
-      // add the sentence after the ".".
-      if (spliters[i + 1] === '.' && sentences[i + 2]) {
-        filterOut = filterOut.concat(i + 2)
-        newSentence += sentences[i + 2]
-        if (spliters[i + 2]) newSentence += spliters[i + 2]
-      }
-      return newSentence.trim()
+    if (isAbbrev(prevSentence) || isDecimalNum(prevSentence, s) || isDoubleDots(prevSentence, s, spliters[i])) {
+      filterOut = [...filterOut, i - 1]
+      newSentences = [...newSentences, prevCurrSentence]
+      return
     }
 
     /**
-     * Case 4, when it ends with .", .), !), ?"), ;), etc.
+     * When it ends with .", .), !), ?"), ;), etc.
      * The ", ), ") will stay on the front of the next sentence.
      * Hence, they are needed to be removed and added back to the end of the current sentence.
      */
-    const pattern = sentences[i + 1].match(/^[)'"]+/)
+    const pattern = s.match(/^[)'"]+/)
     if (pattern) {
-      removeFront = pattern[0].length
-      return (s + sentences[i + 1].slice(0, removeFront)).trim()
+      const removeFront = pattern[0].length
+      prevSentence += currSentence.slice(0, removeFront)
+      prevCurrSentence = currSentence.slice(removeFront)
+
+      newSentences = [...newSentences.slice(0, -1), prevSentence, prevCurrSentence]
+      return
     }
 
-    return s.trim()
+    // When the original spliter is correct
+    newSentences = [...newSentences, currSentence]
   })
 
-  return newSentences.filter((s, i) => !filterOut.includes(i))
+  return newSentences.filter((s, i) => !filterOut.includes(i)).map(s => s.trim())
 }
 
 /**
@@ -111,7 +97,7 @@ function isAbbrev (word : string) {
  * @returns A bolean that says whether the dot comes from a decimal number, such as 5.76, $3.2, 2.54M, 20.1K.
  */
 function isDecimalNum (str1 : string, str2: string) {
-  return !!str1.match(/[0-9].$/) && !!str2.match(/^[0-9]/)
+  return !!str1.match(/[0-9]\.$/) && !!str2.match(/^[0-9]/)
 }
 
 /**
@@ -123,8 +109,11 @@ function isDecimalNum (str1 : string, str2: string) {
  * @returns A bolean value that says whether the dot comes from a decimal number, such as 5.76, $3.2, 2.54M, 20.1K.
  */
 function isDoubleDots (str1 : string, str2: string, spliter2: string) {
-  const iePattern = !!str1.match(/i.$/) && !!str2.match(/^e/) && !!spliter2.match(/^./)
-  const egPattern = !!str1.match(/e.$/) && !!str2.match(/^g/) && !!spliter2.match(/^./)
+  const ieHalfPattern = !!str1.match(/i\.$/) && !!str2.match(/^e/) && !!spliter2.match(/^\./)
+  const egHalfPattern = !!str1.match(/e\.$/) && !!str2.match(/^g/) && !!spliter2.match(/^\./)
 
-  return iePattern || egPattern
+  const iePattern = !!str1.match(/i\.e\.$/)
+  const egPattern = !!str1.match(/e\.g\.$/)
+
+  return ieHalfPattern || egHalfPattern || iePattern || egPattern
 }
