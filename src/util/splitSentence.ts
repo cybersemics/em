@@ -49,7 +49,7 @@ export const splitSentence = (value: string) : string[] => {
      * Case2, when it ends with a number like $5.3, 3.8M.
      * Case3, when it is i.e. or e.g. .
      */
-    if (isAbbrev(prevSentence) || isDecimalNum(prevSentence, s) || isDoubleDots(prevSentence, s, spliters[i])) {
+    if (isAbbrev(prevSentence, s) || isDecimalNum(prevSentence, s) || isDoubleDots(prevSentence, s, spliters[i])) {
       filterOut = [...filterOut, i - 1]
       newSentences = [...newSentences, prevCurrSentence]
       return
@@ -72,21 +72,23 @@ export const splitSentence = (value: string) : string[] => {
 
     // When the original spliter is correct
     newSentences = [...newSentences, currSentence]
+
   })
 
-  return newSentences.filter((s, i) => !filterOut.includes(i)).map(s => s.trim())
+  return newSentences.filter((s, i) => !filterOut.includes(i)).filter(s => s !== '').map(s => s.trim())
 }
 
 /**
  * Function: isAbbrev.
  *
- * @param word The sentence that has been split.
+ * @param word The sentence just added into the newSentences array.
+ * @param s The current sentence which is right behind the spliter.
  * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
  * Examples: Mr. Dr. Apt. Feb.
  */
-function isAbbrev (word : string) {
-  const pattern = /[A-Z][a-z]*[.]$/g
-  return !!word.match(pattern)
+function isAbbrev (word : string, s : string) {
+  const pattern = /[A-Z](?=[a-z]+\.$)/
+  return !!word.match(pattern) && s[0] === ' '
 }
 
 /**
@@ -106,7 +108,7 @@ function isDecimalNum (str1 : string, str2: string) {
  * @param str1 The charactor before the first spliter.
  * @param str2 The charactor after the first spliter.
  * @param spliter2 The second spliter.
- * @returns A bolean value that says whether the dot comes from a decimal number, such as 5.76, $3.2, 2.54M, 20.1K.
+ * @returns A bolean value that says whether it is i.e. or e.g..
  */
 function isDoubleDots (str1 : string, str2: string, spliter2: string) {
   const ieHalfPattern = !!str1.match(/i\.$/) && !!str2.match(/^e/) && !!spliter2.match(/^\./)
