@@ -153,6 +153,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
     if (scrollDifference >= 5) {
       store.dispatch(scrollPrioritize(true))
       store.dispatch(overlayHide())
+      setPressingToolbarId(null)
       clearTimeout(holdTimer)
     }
 
