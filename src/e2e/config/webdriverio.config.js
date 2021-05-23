@@ -10,6 +10,7 @@ const config = {
     unicodeKeyboard: true,
     build: process.env.BROWSERSTACK_BUILD_NAME || '-',
     project: process.env.BROWSERSTACK_PROJECT_NAME || '-',
+    'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || '',
     'browserstack.local': 'true',
 
   },
