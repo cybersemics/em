@@ -1,7 +1,7 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import { unescape } from 'html-escaper'
-import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, strip, validateRoam, createId, unroot } from '../util'
+import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, strip, validateRoam, createId } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
 import { Block, Path, SimplePath, Timestamp } from '../types'
@@ -199,19 +199,32 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
     const uuid = createId()
 
+    const isDestContextEmpty = getAllChildren(state, context).length === 0
+
+    /** Check if destination's parent context has more than one children. */
+    const isDestParentContextEmpty = () => getAllChildren(state, rootedParentOf(state, context)).length <= 1
+
+    const destEmpty = destThought.value === '' && isDestContextEmpty
+
+    const shouldImportIntoDummy = destEmpty ? !isDestParentContextEmpty() : !isDestContextEmpty
+
     // Note: Create a dummy thought and then import new thoughts into its context and then collpase it . Since collapse uses existingThoughtMove it merges imported thoughts.
-    const updatedState = newThought(state, {
+    const updatedState = shouldImportIntoDummy ? newThought(state, {
       at: simplePath,
       insertNewSubthought: true,
       value: uuid
-    })
+    }) : state
 
-    const destEmpty = destThought.value === '' && getAllChildren(state, context).length === 0
+    /**
+     * Returns destination path.
+     */
+    const getDestinationPath = () => {
+      if (!shouldImportIntoDummy) return simplePath
+      const newDummyThought = getAllChildren(updatedState, context).find(child => child.value === uuid)
+      return (newDummyThought ? [...simplePath, newDummyThought] : simplePath) as SimplePath
+    }
 
-    // New dummy thoughts for collapsing
-    const newDummyThought = getAllChildren(updatedState, context).find(child => child.value === uuid)
-
-    const newDestinationPath = unroot(newDummyThought ? [...simplePath, newDummyThought] : simplePath) as SimplePath
+    const newDestinationPath = getDestinationPath()
 
     const imported = importJSON(updatedState, newDestinationPath, json, { lastUpdated, skipRoot })
 
@@ -219,10 +232,15 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
     const setLastImportedCursor = (state: State) => {
 
       const lastImportedContext = pathToContext(imported.lastImported)
-      const cursorContextHead = lastImportedContext.slice(0, newDestinationPath.length - (destEmpty ? 2 : 1))
-      const cursorContextTail = lastImportedContext.slice(newDestinationPath.length)
-      const newCursorContext = cursorContextHead.concat(cursorContextTail)
-      const newCursor = rankThoughtsFirstMatch(state, newCursorContext)
+
+      /** Get last iumported cursor after using collapse. */
+      const getLastImportedAfterCollapse = () => {
+        const cursorContextHead = lastImportedContext.slice(0, newDestinationPath.length - (destEmpty ? 2 : 1))
+        const cursorContextTail = lastImportedContext.slice(newDestinationPath.length)
+        return [...cursorContextHead, ...cursorContextTail]
+      }
+
+      const newCursor = rankThoughtsFirstMatch(state, shouldImportIntoDummy ? getLastImportedAfterCollapse() : lastImportedContext)
 
       return setCursor(state, {
         path: newCursor,
@@ -234,9 +252,9 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
     return reducerFlow([
       updateThoughts(imported),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
-      collapseContext({ deleteCursor: true, at: newDestinationPath }),
+      shouldImportIntoDummy ? collapseContext({ deleteCursor: true, at: newDestinationPath }) : null,
       // if original destination has empty then collapse once more.
-      destEmpty ?
+      shouldImportIntoDummy && destEmpty ?
         collapseContext({ deleteCursor: true, at: parentOfDestination }) : null,
       // restore the selection to the last imported thought on the first level
       // Note: Since collapseContext behavior sets cursor to the first children, we need to set cursor back to the old cursor if preventSetCursor is true.
