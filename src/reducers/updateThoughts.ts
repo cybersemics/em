@@ -99,7 +99,8 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
       // or isLoading can be forced by passing it directly to updateThoughts
       isLoading: stillLoading,
       recentlyEdited: recentlyEditedNew,
-      pushQueue: [...state.pushQueue, batch],
+      // only push the batch to the pushQueue if syncing at least local or remote
+      ...batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null,
       thoughts,
     }),
 

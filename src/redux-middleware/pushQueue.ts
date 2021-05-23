@@ -147,6 +147,10 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
   const localBatches = pushQueue.filter(batch => batch.local)
   const remoteBatches = pushQueue.filter(batch => batch.remote)
 
+  if (localBatches.length + remoteBatches.length < pushQueue.length) {
+    throw new Error('Invalid pushQueue batch. local and remote cannot both be false.')
+  }
+
   // merge batches
   const localMergedBatch = localBatches.reduce(mergeBatch, {} as PushBatch)
   const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as PushBatch)
