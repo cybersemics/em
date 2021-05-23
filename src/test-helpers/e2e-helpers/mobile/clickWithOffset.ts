@@ -1,7 +1,5 @@
 import { Browser } from 'webdriverio'
-
-// Safari url bar height, we can try to get this by webdriverio commands.
-const SAFARI_URL_BAR_HEIGHT = 100
+import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should the mouse be clicked
@@ -50,10 +48,12 @@ const clickEditable = async (browser: Browser<'async'>, nodeHandle: any, { horiz
 
   if (!coordinate) throw new Error('Coordinate not found.')
 
+  const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="TopBrowserBar"]')
+
   await browser.touchAction({
     action: 'tap',
     x: coordinate.x + x,
-    y: coordinate.y + y + SAFARI_URL_BAR_HEIGHT,
+    y: coordinate.y + y + (topBarRect.y + topBarRect.height + 3),
   })
 
 }
