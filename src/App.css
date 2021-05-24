@@ -77,7 +77,7 @@ li {
   list-style: none;
 }
 
-input[type='text'] {
+input:not([type=checkbox]) {
   width: 40%;
   min-width: 300px;
   display: block;
