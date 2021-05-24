@@ -454,8 +454,8 @@ export const SubthoughtsComponent = ({
   return <>
 
     {contextBinding && showContexts ? <div className='text-note text-small'>(Bound to {pathToContext(contextBinding!).join('/')})</div> : null}
-    {show && showContexts && !(children.length === 0 && isRoot(simplePath))
-      ? children.length < (allowSingleContext ? 1 : 2) ?
+    {show && showContexts && !(filteredChildren.length === 0 && isRoot(simplePath))
+      ? filteredChildren.length < (allowSingleContext ? 1 : 2) ?
 
         // No children
         <NoChildren allowSingleContext={allowSingleContext} children={children as Child[]} simplePath={simplePath} />
@@ -464,7 +464,7 @@ export const SubthoughtsComponent = ({
 
       : null}
 
-    {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
+    {show && filteredChildren.length > (showContexts && !allowSingleContext ? 1 : 0) ? <ul
       // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(simplePath))) : null}
       className={classNames({
         children: true,
