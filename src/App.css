@@ -1757,7 +1757,15 @@ h1 .num-contexts {
   margin: 0 6px;
 }
 
-.increase-font { font-size: 1.5em; }
+.increase-font {
+  font-size: 1.6em;
+  padding-right: 12px;
+}
+
+.decrease-font {
+  padding-left: 12px;
+  padding-right: 12px;
+}
 
 .floatLeft { float: left; }
 /* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
