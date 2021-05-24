@@ -1722,10 +1722,10 @@ h1 .num-contexts {
 /* Footer styles - START */
 
 .footer {
-  padding: 20px;
+  padding: 1.75em;
   margin: 0;
   text-align: right;
-  font-size: 70%;
+  font-size: 75%;
   list-style: none;
   background-color: #e4e4e4; /* 80% of #ddd */
   box-sizing: border-box;

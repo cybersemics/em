@@ -151,7 +151,7 @@ const AppComponent: FC<Props> = props => {
           : <>
             {tutorial && !isLoading ? <Tutorial /> : null}
             <SplitPane
-              style={{ position: 'relative', fontSize: fontSize + 'px' }}
+              style={{ position: 'relative', fontSize }}
               className={isSplitting ? 'animating' : ''}
               split='vertical'
               defaultSize={!splitView ? '100%' : splitPosition || '50%'}
@@ -177,9 +177,9 @@ const AppComponent: FC<Props> = props => {
           </>
         }
 
-        {!showModal && isDocumentEditable() && <Scale amount={scale!}>
+        {!showModal && isDocumentEditable() && <div style={{ fontSize }}>
           <Footer />
-        </Scale>}
+        </div>}
 
       </MultiGestureIfTouch>
     </div>
