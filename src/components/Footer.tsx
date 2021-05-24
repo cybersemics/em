@@ -27,12 +27,11 @@ const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status, fontS
 
   const firstUpdate = useRef(true)
 
+  // alert when font size changes
   useEffect(() => {
-    /** Below check is needed to stop alert dispatch when rendered for first time. */
+    // prevent alert dispatch when rendered for first time
     if (!firstUpdate.current) {
-      dispatch(alert(`Font size: ${fontSize}`))
-
-      setTimeout(() => dispatch(alert(null)), 2000)
+      dispatch(alert(`Font size: ${fontSize}`, { clearTimeout: 2000 }))
 
       window.scrollTo({
         top: document.body.scrollHeight,
