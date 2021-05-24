@@ -464,7 +464,7 @@ export const SubthoughtsComponent = ({
 
       : null}
 
-    {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show ? <ul
+    {children.length > (showContexts && !allowSingleContext ? 1 : 0) && show && filteredChildren.length > 0 ? <ul
       // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(simplePath))) : null}
       className={classNames({
         children: true,

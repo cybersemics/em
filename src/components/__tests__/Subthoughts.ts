@@ -248,6 +248,70 @@ describe('context view', () => {
 
   })
 
+  it('renders EmptyChildrenDrop when no subthought ', () => {
+
+    const now = timestamp()
+
+    // import thoughts
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        text: `
+          - a
+          - b
+        `,
+        lastUpdated: now,
+      }),
+      setCursorFirstMatchActionCreator(['a']),
+      { type: 'toggleContextView' },
+    ])
+
+    // update DOM
+    wrapper.update()
+
+    // assert context view container
+    const subthoughtsWrapper = wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['a']))
+      .find('EmptyChildrenDropTarget')
+
+    expect(subthoughtsWrapper).toHaveLength(1)
+  })
+
+  it('do not render EmptyChildrenDrop when subthought present', () => {
+
+    const now = timestamp()
+
+    // import thoughts
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+        `,
+        lastUpdated: now,
+      }),
+      setCursorFirstMatchActionCreator(['a']),
+      { type: 'toggleContextView' },
+    ])
+
+    // update DOM
+    wrapper.update()
+
+    // assert context view container
+    const subthoughtsWrapper = wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['=meta1', 'a']))
+      .find('EmptyChildrenDropTarget')
+
+    expect(subthoughtsWrapper).toHaveLength(0)
+  })
+
 })
 
 describe('hidden thoughts', () => {
