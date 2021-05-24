@@ -54,7 +54,6 @@ const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status, fontS
     <li>
       <span className='floatLeft'>
         <a className='increase-font expand-click-area-left no-select' onClick={() => dispatch(scaleFontUp())}>A</a>
-        <span>  </span>
         <a className='decrease-font expand-click-area-right no-select' onClick={() => dispatch(scaleFontDown())}>A</a>
       </span>
       <a tabIndex={-1} onClick={() => dispatch(showModal({ id: 'feedback' }))} target='_blank' rel='noopener noreferrer'>Feedback</a>

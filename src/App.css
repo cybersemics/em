@@ -1758,8 +1758,13 @@ h1 .num-contexts {
 }
 
 .increase-font {
-  font-size: 1.5em;
-  padding-right: 1em;
+  font-size: 1.6em;
+  padding-right: 12px;
+}
+
+.decrease-font {
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .floatLeft { float: left; }
