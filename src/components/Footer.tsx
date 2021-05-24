@@ -9,11 +9,13 @@ import { State } from '../util/initialState'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { authenticated, status, user, fontSize } = state
+  const { authenticated, fontSize, isPushing, pushQueue, status, user } = state
   return {
     authenticated,
-    status,
+    isPushing,
     isTutorialOn: isTutorial(state),
+    pushQueueLength: pushQueue.length,
+    status,
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
     user,
     fontSize,
@@ -21,7 +23,7 @@ const mapStateToProps = (state: State) => {
 }
 
 /** A footer component with some useful links. */
-const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status, fontSize }: ReturnType<typeof mapStateToProps>) => {
+const Footer = ({ authenticated, fontSize, isPushing, isTutorialOn, pushQueueLength, tutorialStep, user, status }: ReturnType<typeof mapStateToProps>) => {
 
   const dispatch = useDispatch()
 
@@ -68,7 +70,9 @@ const Footer = ({ authenticated, tutorialStep, user, isTutorialOn, status, fontS
     </li><br />
 
     {user && <>
-      <li><span className='dim'>Status: </span><span className={status === 'offline' ? 'dim' : status === 'loaded' ? 'online' : undefined}>{status === 'loaded' ? 'Online' : status[0].toUpperCase() + status.substring(1)}</span></li>
+      <li><span className='dim'>Status: </span><span className={status === 'offline' ? 'dim' : pushQueueLength > 0 && !isPushing ? 'error' : status === 'loaded' ? 'online' : undefined}>
+        {pushQueueLength > 0 ? 'Saving' : status === 'loaded' ? 'Online' : status[0].toUpperCase() + status.substring(1)}
+      </span></li>
       <li><span className='dim'>Logged in as: </span>{user.email}</li>
       <li><span className='dim'>User ID: </span><span className='mono'>{user.uid.slice(0, 6)}</span></li>
     </>}
