@@ -9,8 +9,11 @@ import { Thunk, Context, Path } from '../types'
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (offset: number, context: Context | null, state: State) => {
   const { editingValue } = state
-  const siblings = context && getAllChildren(state, context)
-  return siblings && editingValue && siblings.some(sibling => sibling.value === editingValue.substring(0, offset) || sibling.value === editingValue.substring(offset))
+  if (!editingValue) return false
+  const siblings = getAllChildren(state, context || [HOME_TOKEN])
+  const left = editingValue?.substring(0, offset)
+  const right = editingValue?.substring(offset)
+  return left === right || siblings.some(sibling => sibling.value === left || sibling.value === right)
 }
 
 /**
