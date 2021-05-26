@@ -77,6 +77,8 @@ li {
   list-style: none;
 }
 
+input[type='email'],
+input[type='password'],
 input[type='text'] {
   width: 40%;
   min-width: 300px;
