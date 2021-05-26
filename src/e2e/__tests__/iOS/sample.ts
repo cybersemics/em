@@ -11,7 +11,7 @@ import waitForEditable from '../../../test-helpers/e2e-helpers/mobile/waitForEdi
 import clickThought from '../../../test-helpers/e2e-helpers/mobile/clickThought'
 import clickWithOffset from '../../../test-helpers/e2e-helpers/mobile/clickWithOffset'
 import execute from '../../../test-helpers/e2e-helpers/mobile/execute'
-import tapReturn from '../../../test-helpers/e2e-helpers/mobile/tapReturn'
+import tapReturnKey from '../../../test-helpers/e2e-helpers/mobile/tapReturnKey'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
@@ -46,7 +46,7 @@ describe('Caret Test', () => {
     const editableNodeHandle = await waitForEditable(mobileBrowser, 'web scrapping')
     await clickWithOffset(mobileBrowser, editableNodeHandle, { offset: 3 })
 
-    await tapReturn(mobileBrowser)
+    await tapReturnKey(mobileBrowser)
 
     const offset = await execute(mobileBrowser, () => window.getSelection()?.focusOffset)
     expect(offset).toBe(0)
