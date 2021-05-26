@@ -42,6 +42,7 @@
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "algoliasearch": "^4.9.1",
     "axios": "^0.21.1",
+    "browserstack-local": "^1.4.8",
     "classnames": "^2.3.1",
     "clipboard": "^2.0.8",
     "dexie": "^3.0.3",

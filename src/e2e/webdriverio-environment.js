@@ -9,11 +9,13 @@ const fs = require('fs')
 const path = require('path')
 const chalk = require('chalk')
 const wdio = require('webdriverio')
+const browserstack = require('browserstack-local')
 
 const config = require('./config/webdriverio.config')
 
 /** Webdriverio Environment for jest. */
 class WebdriverIOEnvironment extends JsDomEnvironment {
+  bsLocal
 
   constructor(config) {
     super(config)
@@ -45,6 +47,7 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
       })
     }
     try {
+      this.startBrowserStackLocal()
       this.global.browser = await wdio.remote(config)
     }
     catch (e) {
@@ -55,9 +58,27 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
 
   async teardown() {
     console.info(chalk.yellow('Teardown Test Environment for webdriverio.'))
+    this.stopBrowserStackLocal()
     await this.global.browser.deleteSession()
     await teardownDevServer()
     await super.teardown()
+  }
+
+  startBrowserStackLocal() {
+    if (config.capabilities['browserstack.localIdentifier'].startsWith('local')) {
+      this.bsLocal = new browserstack.Local()
+      this.bsLocal.start({ localIdentifier: config.capabilities['browserstack.localIdentifier'] }, function (e) {
+        console.log('Started BrowserStackLocal')
+      })
+    }
+  }
+
+  stopBrowserStackLocal() {
+    if (this.bsLocal && this.bsLocal.isRunning()) {
+      this.bsLocal.stop(() => {
+        console.info(chalk.green('Stopped BrowserStackLocal'))
+      })
+    }
   }
 }
 

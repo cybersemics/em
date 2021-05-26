@@ -1,5 +1,7 @@
+const user = process.env.BROWSERSTACK_USERNAME || 'username'
+
 const config = {
-  user: process.env.BROWSERSTACK_USERNAME || 'username',
+  user: user,
   key: process.env.BROWSERSTACK_ACCESS_KEY || 'access_key',
 
   capabilities: {
@@ -8,9 +10,9 @@ const config = {
     deviceName: 'iPhone 12',
     browserName: 'Safari',
     unicodeKeyboard: true,
-    build: process.env.BROWSERSTACK_BUILD_NAME || '-',
-    project: process.env.BROWSERSTACK_PROJECT_NAME || '-',
-    'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || '',
+    build: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user}`,
+    project: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
+    'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || 'local-' + new Date().getTime(),
     'browserstack.local': 'true',
 
   },
