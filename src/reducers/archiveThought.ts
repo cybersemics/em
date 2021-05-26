@@ -154,7 +154,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
         // undo alert
         alert({
-          value: `Deleted ${ellipsize(headValue(showContexts ? simplePath : path))}`,
+          value: `Archived ${ellipsize(headValue(showContexts ? simplePath : path))}`,
           // provide an alertType so the delete shortcut can null the alert after a delay
           alertType: 'undoArchive',
           showCloseLink: true,

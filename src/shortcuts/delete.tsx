@@ -51,7 +51,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
         if (state.alert && state.alert.alertType === 'undoArchive') {
           dispatch(alert(null))
         }
-      }, 10000)
+      }, 5000)
 
       // archive the thought
       dispatch(archiveThought({ path: state.cursor ?? undefined }))
