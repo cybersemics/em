@@ -43,7 +43,7 @@ it('collapse context with single child', () => {
     - c`)
 
   expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'c', rank: 0 }])
+    .toMatchObject([{ value: 'a' }, { value: 'c' }])
 
 })
 
@@ -51,7 +51,8 @@ it('collapse context with multiple children', () => {
 
   const steps = [
     newThought('a'),
-    newSubthought('b'),
+    newSubthought('k'),
+    newThought('b'),
     newSubthought('c'),
     newThought('d'),
     cursorBack,
@@ -66,11 +67,12 @@ it('collapse context with multiple children', () => {
   - a
     - =archive
       - b
+    - k
     - c
     - d`)
 
   expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'c', rank: 0 }])
+    .toMatchObject([{ value: 'a' }, { value: 'c' }])
 
 })
 
@@ -96,11 +98,11 @@ it('merge children', () => {
     - =archive
       - b
     - c
-    - x
-    - d`)
+    - d
+    - x`)
 
   expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'c', rank: 0 }])
+    .toMatchObject([{ value: 'a' }, { value: 'c' }])
 
 })
 
@@ -129,7 +131,7 @@ it('merge duplicate children', () => {
     - d`)
 
   expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'c', rank: 0 }])
+    .toMatchObject([{ value: 'a' }, { value: 'c' }])
 
 })
 

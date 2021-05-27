@@ -179,7 +179,6 @@ it('import and merge descendants', () => {
       },
       {
         value: 'j',
-        rank: 1,
       }
       ],
     },
