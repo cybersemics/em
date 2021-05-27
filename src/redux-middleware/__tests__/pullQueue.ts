@@ -1,7 +1,6 @@
 import { store } from '../../store'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { clear, existingThoughtChange, existingThoughtDelete, existingThoughtMove, importText, newThought, setCursor } from '../../action-creators'
-import { initialize } from '../../initialize'
 import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
@@ -9,6 +8,7 @@ import { DataProvider } from '../../data-providers/DataProvider'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { SimplePath } from '../../types'
 import testTimer from '../../test-helpers/testTimer'
+import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
@@ -19,20 +19,8 @@ const fakeTimer = testTimer()
 
 const db = dexie as DataProvider
 
-beforeEach(async () => {
-  fakeTimer.useFakeTimer()
-  initialize()
-  await fakeTimer.runAllAsync()
-  fakeTimer.useRealTimer()
-})
-
-afterEach(async () => {
-  fakeTimer.useFakeTimer()
-  store.dispatch(clear())
-  await fakeTimer.runAllAsync()
-  fakeTimer.useRealTimer()
-  await db.clearAll()
-})
+beforeEach(createTestApp)
+afterEach(cleanupTestApp)
 
 it('disable isLoading after initialize', async () => {
   expect(store.getState().isLoading).toBe(false)
@@ -73,11 +61,7 @@ it('load thought', async () => {
     children: [{ value: 'a' }]
   })
 
-  // clear and call initialize again to reload from db (simulating page refresh)
-  store.dispatch(clear())
-  fakeTimer.useFakeTimer()
-  initialize()
-  await fakeTimer.runAllAsync()
+  await refreshTestApp()
 
   const childrenAfterInitialize = getAllChildren(store.getState(), [HOME_TOKEN])
   expect(childrenAfterInitialize).toMatchObject([
@@ -139,14 +123,7 @@ it('load buffered thoughts', async () => {
   // clear state
   // call initialize again to reload from db (simulating page refresh)
 
-  fakeTimer.useFakeTimer()
-  store.dispatch(clear())
-  await fakeTimer.runAllAsync()
-
-  initialize()
-  await fakeTimer.runAllAsync()
-
-  fakeTimer.useRealTimer()
+  await refreshTestApp()
 
   const state = store.getState()
   expect(getAllChildren(state, [HOME_TOKEN])).toMatchObject([{ value: 'a' }])
@@ -186,12 +163,9 @@ it('delete thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
+  await refreshTestApp()
+
   fakeTimer.useFakeTimer()
-  // clear and call initialize again to reload from db (simulating page refresh)
-  store.dispatch(clear())
-  await fakeTimer.runAllAsync()
-  initialize()
-  await fakeTimer.runAllAsync()
 
   // delete thought with buffered descendants
   store.dispatch(existingThoughtDelete({
@@ -243,15 +217,9 @@ it('move thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
-  // clear and call initialize again to reload from db (simulating page refresh)
+  await refreshTestApp()
+
   fakeTimer.useFakeTimer()
-
-  store.dispatch(clear())
-  await fakeTimer.runAllAsync()
-
-  initialize()
-  await fakeTimer.runAllAsync()
-
   // delete thought with buffered descendants
   const aPath = rankThoughtsFirstMatch(store.getState(), ['a'])
   const xPath = rankThoughtsFirstMatch(store.getState(), ['x'])
@@ -313,19 +281,13 @@ it('edit thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
+  await refreshTestApp()
   fakeTimer.useFakeTimer()
-
-  // clear and call initialize again to reload from db (simulating page refresh)
-  store.dispatch(clear())
-  await fakeTimer.runAllAsync()
-
-  initialize()
-  await fakeTimer.runAllAsync()
 
   // delete thought with buffered descendants
   store.dispatch(existingThoughtChange({
     oldValue: 'a',
-    newValue: 'a!',
+    newValue: 'k',
     context: [HOME_TOKEN],
     path: [{ value: 'a', rank: 1 }] as SimplePath,
   }))
@@ -334,20 +296,20 @@ it('edit thought with buffered descendants', async () => {
 
   fakeTimer.useRealTimer()
 
-  expect(getAllChildren(store.getState(), [HOME_TOKEN])).toMatchObject([{ value: 'x' }, { value: 'a!' }])
+  expect(getAllChildren(store.getState(), [HOME_TOKEN])).toMatchObject([{ value: 'x' }, { value: 'k' }])
 
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a!' }] })
+  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'k' }] })
   expect(await getContext(db, ['a'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 
-  expect(await getContext(db, ['a!'])).toMatchObject({ children: [{ value: 'm' }, { value: 'b' }] })
-  expect(await getContext(db, ['a!', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-  expect(await getContext(db, ['a!', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-  expect(await getContext(db, ['a!', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
-  expect(await getContext(db, ['a!', 'b', 'c', 'd', 'e'])).toBeUndefined()
+  expect(await getContext(db, ['k'])).toMatchObject({ children: [{ value: 'm' }, { value: 'b' }] })
+  expect(await getContext(db, ['k!', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
+  expect(await getContext(db, ['k!', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
+  expect(await getContext(db, ['k!', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
+  expect(await getContext(db, ['k!', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
 })
 
@@ -380,15 +342,8 @@ it.only('export thought with buffered descendants', async () => {
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 
-  // clear and call initialize again to reload from db (simulating page refresh)
-
+  await refreshTestApp()
   fakeTimer.useFakeTimer()
-
-  store.dispatch(clear())
-  await fakeTimer.runAllAsync()
-
-  initialize()
-  await fakeTimer.runAllAsync()
 
   // delete thought with buffered descendants
   store.dispatch(existingThoughtDelete({

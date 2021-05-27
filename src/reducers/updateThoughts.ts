@@ -62,6 +62,15 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
+  //  lexemes from the updates that are not available in the state yet.
+  const pendingLexemes = Object.keys(thoughtIndexUpdates).reduce<Index<boolean>>((acc, thoughtId) => {
+    const lexemeInState = state.thoughts.thoughtIndex[thoughtId]
+    return {
+      ...acc,
+      ...lexemeInState ? {} : { [thoughtId]: true }
+    }
+  }, {})
+
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
     thoughtIndexUpdates,
@@ -72,7 +81,8 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     pendingEdits,
     pendingMoves,
     local,
-    remote
+    remote,
+    pendingLexemes,
   }
 
   logWithTime('updateThoughts: merge pushQueue')

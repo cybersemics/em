@@ -32,6 +32,7 @@ export interface PushBatch {
   pendingEdits?: ExistingThoughtChangePayload[],
   pendingMoves?: { pathOld: Path, pathNew: Path }[],
   updates?: Index<string>,
+  pendingLexemes?: Index<boolean>,
 }
 
 export interface State {
