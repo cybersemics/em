@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { Element, HimalayaNode, Text, parse } from 'himalaya'
 import { Block } from '../types'
+import closeNonClosedHtmlTags from './closeNonClosedHtmlTags'
 
 /** Retrieve attribute from Element node by key. */
 const getAttribute = (key: string, node: Element) => {
@@ -195,7 +196,7 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
 export const convertHTMLtoJSON = (html: string) => {
-  const nodes = parse(html)
+  const nodes = parse(closeNonClosedHtmlTags(html))
   const blocks = himalayaToBlock(removeEmptyNodesAndComments(nodes))
   return Array.isArray(blocks) ? blocks : [blocks]
 }

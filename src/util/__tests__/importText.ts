@@ -655,6 +655,25 @@ it('import multi-line nested html tags', () => {
     )
 })
 
+it('import text that contains non closed span tag', () => {
+  const paste = `
+- a
+- b
+- <span>c
+- d
+  `
+  const actual = importExport(paste)
+  expect(actual)
+    .toBe(
+      `
+- a
+- b
+- c
+- d
+`
+    )
+})
+
 describe('HTML content', () => {
   it('should paste plain text that contains formatting', () => {
     const paste =
