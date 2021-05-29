@@ -12,7 +12,7 @@ const getAttribute = (key: string, node: Element) => {
 
 /** Check whether node is formatting tag element (<i>...</i>, <b>...</b> or <span>...</span>). */
 const isFormattingTag = (node: HimalayaNode) => node.type === 'element'
-  && (node.tagName === 'i' || node.tagName === 'b' || (node.tagName === 'span' && getAttribute('class', node) !== 'note'))
+  && (node.tagName === 'i' || node.tagName === 'b' || node.tagName === 'em' || (node.tagName === 'span' && getAttribute('class', node) !== 'note'))
 
 /** Strip span and encode a <i> or <b> element as HTML. */
 const formattingNodeToHtml = (node: Element) => {

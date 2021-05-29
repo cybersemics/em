@@ -655,6 +655,19 @@ it('import multi-line nested html tags', () => {
     )
 })
 
+it('import text that contains em tag', () => {
+  const text = `
+  - a
+    - b
+    - <em>c</em>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+  - b
+  - <em>c</em>`)
+})
+
 it('import text that contains non closed span tag', () => {
   const paste = `
 - a
