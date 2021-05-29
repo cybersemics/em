@@ -170,8 +170,12 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 
   // handle <br> tag (which may be a WorkFlowy note or a normal line break)
   const brIndex = nodes.findIndex(isBr)
+
   if (brIndex !== -1) {
-    return himalayaToBlock(handleBr(nodes, brIndex))
+    const himalayaToBlocks = himalayaToBlock(handleBr(nodes, brIndex))
+    return Array.isArray(himalayaToBlocks) && himalayaToBlocks.length === 1
+      ? himalayaToBlocks[0]
+      : himalayaToBlocks
   }
 
   const blocks = nodes.map((node, index) =>

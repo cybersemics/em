@@ -687,6 +687,34 @@ it('import text that contains non closed span tag', () => {
     )
 })
 
+it('import text that contains br tag that does not have children', () => {
+  const text = `
+  - a
+  - b
+  - c<br>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+- b
+- c`)
+})
+
+it('import text that contains br tag that has note children', () => {
+  const text = `
+  - a
+  - b
+  - c<br><span class="note">This is c!</span>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+- b
+- c
+  - =note
+    - This is c!`)
+})
+
 describe('HTML content', () => {
   it('should paste plain text that contains formatting', () => {
     const paste =
