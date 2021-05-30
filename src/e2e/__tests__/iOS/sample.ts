@@ -10,7 +10,7 @@ import paste from '../../../test-helpers/e2e-helpers/mobile/paste'
 import waitForEditable from '../../../test-helpers/e2e-helpers/mobile/waitForEditable'
 import clickThought from '../../../test-helpers/e2e-helpers/mobile/clickThought'
 import clickWithOffset from '../../../test-helpers/e2e-helpers/mobile/clickWithOffset'
-import execute from '../../../test-helpers/e2e-helpers/mobile/execute'
+// import execute from '../../../test-helpers/e2e-helpers/mobile/execute'
 import tapReturnKey from '../../../test-helpers/e2e-helpers/mobile/tapReturnKey'
 
 jest.setTimeout(90000)
@@ -48,7 +48,7 @@ describe('Caret Test', () => {
 
     await tapReturnKey(mobileBrowser)
 
-    const offset = await execute(mobileBrowser, () => window.getSelection()?.focusOffset)
+    const offset = await mobileBrowser.execute(() => window.getSelection()?.focusOffset)
     expect(offset).toBe(0)
 
     const editingText = await getEditingText(mobileBrowser)

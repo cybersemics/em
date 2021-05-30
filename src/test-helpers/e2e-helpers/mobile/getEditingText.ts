@@ -1,10 +1,8 @@
-
 import { Browser } from 'webdriverio'
-import execute from './execute'
 
 /** Get the thought value that cursor on. */
-const getEditingText = (browser: Browser<any>) => {
-  return execute(browser, () => {
+const getEditingText = (browser: Browser<'async'>) => {
+  return browser.execute(() => {
     return document.querySelector('.editing .editable')?.innerHTML
   })
 }
