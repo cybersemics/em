@@ -3,15 +3,15 @@
  */
 
 import { Browser } from 'webdriverio'
-import getEditingText from '../../../test-helpers/e2e-helpers/mobile/getEditingText'
-import waitForElement from '../../../test-helpers/e2e-helpers/mobile/waitForElement'
-import newThoughtGesture from '../../../test-helpers/e2e-helpers/mobile/gestures/newThoughtGesture'
-import paste from '../../../test-helpers/e2e-helpers/mobile/paste'
-import waitForEditable from '../../../test-helpers/e2e-helpers/mobile/waitForEditable'
-import clickThought from '../../../test-helpers/e2e-helpers/mobile/clickThought'
-import clickWithOffset from '../../../test-helpers/e2e-helpers/mobile/clickWithOffset'
+import getEditingText from '../../helpers/mobile/getEditingText'
+import waitForElement from '../../helpers/mobile/waitForElement'
+import newThoughtGesture from '../../helpers/mobile/gestures/newThoughtGesture'
+import paste from '../../helpers/mobile/paste'
+import waitForEditable from '../../helpers/mobile/waitForEditable'
+import clickThought from '../../helpers/mobile/clickThought'
+import clickWithOffset from '../../helpers/mobile/clickWithOffset'
 // import execute from '../../../test-helpers/e2e-helpers/mobile/execute'
-import tapReturnKey from '../../../test-helpers/e2e-helpers/mobile/tapReturnKey'
+import tapReturnKey from '../../helpers/mobile/tapReturnKey'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>

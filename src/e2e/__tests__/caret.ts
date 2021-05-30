@@ -1,16 +1,16 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
-import clickBullet from '../../test-helpers/e2e-helpers/clickBullet'
-import clickWithOffset from '../../test-helpers/e2e-helpers/clickWithOffset'
-import paste from '../../test-helpers/e2e-helpers/paste'
-import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
-import waitForState from '../../test-helpers/e2e-helpers/waitForState'
+import clickBullet from '../helpers/clickBullet'
+import clickWithOffset from '../helpers/clickWithOffset'
+import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForState from '../helpers/waitForState'
 import { devices, Page } from 'puppeteer'
-import initPage from '../../test-helpers/e2e-helpers/initPage'
-import clickThought from '../../test-helpers/e2e-helpers/clickThought'
-import waitForThoughtToExistInDb from '../../test-helpers/e2e-helpers/waitForThoughtExistInDb'
-import waitForElementBecomeHidden from '../../test-helpers/e2e-helpers/waitForElementBecomeHidden'
+import initPage from '../helpers/initPage'
+import clickThought from '../helpers/clickThought'
+import waitForThoughtToExistInDb from '../helpers/waitForThoughtExistInDb'
+import waitForElementBecomeHidden from '../helpers/waitForElementBecomeHidden'
 
 describe('caret testing', () => {
   let page: Page

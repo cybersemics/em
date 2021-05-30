@@ -2,11 +2,11 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 
-import paste from '../../test-helpers/e2e-helpers/paste'
-import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
-import clickThought from '../../test-helpers/e2e-helpers/clickThought'
-import getEditable from '../../test-helpers/e2e-helpers/getEditable'
-import initPage from '../../test-helpers/e2e-helpers/initPage'
+import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
+import clickThought from '../helpers/clickThought'
+import getEditable from '../helpers/getEditable'
+import initPage from '../helpers/initPage'
 import { JSHandle, Page } from 'puppeteer'
 
 /** Gets the first subthought of an editable. */
