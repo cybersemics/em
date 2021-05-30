@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { Element, HimalayaNode, Text, parse } from 'himalaya'
 import { Block } from '../types'
-import closeNonClosedHtmlTags from './closeNonClosedHtmlTags'
+import truncate from 'truncate-html'
 
 /** Retrieve attribute from Element node by key. */
 const getAttribute = (key: string, node: Element) => {
@@ -196,6 +196,11 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
     : blocks as Block[]
 
   return result
+}
+
+/** Close non closed html tags. */
+const closeNonClosedHtmlTags = (html :string) => {
+  return truncate(html, html.length)
 }
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
