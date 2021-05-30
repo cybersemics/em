@@ -6,12 +6,18 @@ interface StyleProperty {
 const blackColors = ['#000000', '#000', 'rgb(0,0,0)', 'rgba(0,0,0,1)', 'black']
 const whiteColors = ['#ffffff', '#fff', 'rgb(255,255,255)', 'rgba(255,255,255,1)', 'white']
 
+/** Check given value is black. */
+const isColorBlack = (value: string) => blackColors.includes(value.replace(/\s/g, ''))
+
+/** Check given value is white. */
+const isColorWhite = (value: string) => whiteColors.includes(value.replace(/\s/g, ''))
+
 const allowedStyleProperties = [
   {
     property: 'color',
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const background = styleProperties.find(property => property.name.startsWith('background'))
-      return !((blackColors.includes(styleProperty.value) || whiteColors.includes(styleProperty.value)) && !background)
+      return !((isColorBlack(styleProperty.value) || isColorWhite(styleProperty.value)) && !background)
     }
   },
   {
@@ -28,7 +34,7 @@ const allowedStyleProperties = [
     property: 'background',
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const color = styleProperties.find(property => property.name === 'color')
-      return !(whiteColors.includes(styleProperty.value) && !color)
+      return !(isColorWhite(styleProperty.value) && !color)
     }
   },
   { property: 'border' },
@@ -49,8 +55,8 @@ const parseStyleString = (styleString: string) : StyleProperty[] => {
     .map(styleProperty => {
       const style = styleProperty.split(':')
       return {
-        name: style[0].trim(),
-        value: style[1].trim()
+        name: style[0].trim().toLowerCase(),
+        value: style[1].trim().toLowerCase()
       }
     })
 }
