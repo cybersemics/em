@@ -6,8 +6,7 @@ const waitForEditable = async(browser: Browser<'async'>, value: string) => {
   await browser.waitUntil(async () => await browser.execute(value => {
     return Array.from(document.getElementsByClassName('editable'))
       .filter(element => element.innerHTML === value).length > 0
-  }, value)
-  , { timeout: 11000 })
+  }, value))
   return await getEditable(browser, value)
 }
 
