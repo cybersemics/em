@@ -67,7 +67,7 @@ const stripStyleAttribute = (style: string) => {
   return styles.reduce((acc, property) => {
     const styleProperty = allowedStyleProperties.find(allowedStyleProperty => property.name.startsWith(allowedStyleProperty.property))
     if (styleProperty && (!styleProperty.test || styleProperty.test(property, styles))) {
-      acc += `${property.name}: ${property.value};`
+      return acc + `${property.name}: ${property.value};`
     }
     return acc
   }, '')
