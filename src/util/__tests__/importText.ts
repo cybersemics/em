@@ -655,6 +655,66 @@ it('import multi-line nested html tags', () => {
     )
 })
 
+it('import text that contains em tag', () => {
+  const text = `
+  - a
+    - b
+    - <em>c</em>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+  - b
+  - <em>c</em>`)
+})
+
+it('import text that contains non closed span tag', () => {
+  const paste = `
+- a
+- b
+- <span>c
+- d
+  `
+  const actual = importExport(paste)
+  expect(actual)
+    .toBe(
+      `
+- a
+- b
+- c
+- d
+`
+    )
+})
+
+it('import text that contains br tag that does not have children', () => {
+  const text = `
+  - a
+  - b
+  - c<br>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+- b
+- c`)
+})
+
+it('import text that contains br tag that has note children', () => {
+  const text = `
+  - a
+  - b
+  - c<br><span class="note">This is c!</span>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+- b
+- c
+  - =note
+    - This is c!`)
+})
+
 describe('HTML content', () => {
   it('should paste plain text that contains formatting', () => {
     const paste =

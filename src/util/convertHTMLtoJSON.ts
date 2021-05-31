@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { Element, HimalayaNode, parse, Text } from 'himalaya'
 import { Block } from '../types'
+import truncate from 'truncate-html'
 import stripStyleAttribute from './stripStyleAttribute'
 
 /** Retrieve attribute from Element node by key. */
@@ -12,7 +13,7 @@ const getAttribute = (key: string, node: Element) => {
 
 /** Check whether node is formatting tag element (<i>...</i>, <b>...</b> or <span>...</span>). */
 const isFormattingTag = (node: HimalayaNode) => node.type === 'element'
-  && (node.tagName === 'i' || node.tagName === 'b' || (node.tagName === 'span' && getAttribute('class', node) !== 'note'))
+  && (node.tagName === 'i' || node.tagName === 'b' || node.tagName === 'em' || (node.tagName === 'span' && getAttribute('class', node) !== 'note'))
 
 /** Strip span and encode a <i> or <b> element as HTML. */
 const formattingNodeToHtml = (node: Element) => {
@@ -180,8 +181,12 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 
   // handle <br> tag (which may be a WorkFlowy note or a normal line break)
   const brIndex = nodes.findIndex(isBr)
+
   if (brIndex !== -1) {
-    return himalayaToBlock(handleBr(nodes, brIndex))
+    const himalayaToBlocks = himalayaToBlock(handleBr(nodes, brIndex))
+    return Array.isArray(himalayaToBlocks) && himalayaToBlocks.length === 1
+      ? himalayaToBlocks[0]
+      : himalayaToBlocks
   }
 
   const blocks = nodes.map((node, index) =>
@@ -204,9 +209,14 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
   return result
 }
 
+/** Close non closed html tags. */
+const closeNonClosedHtmlTags = (html :string) => {
+  return truncate(html, html.length)
+}
+
 /** Parses input HTML and saves in JSON array using Himalaya. */
 export const convertHTMLtoJSON = (html: string) => {
-  const nodes = parse(html)
+  const nodes = parse(closeNonClosedHtmlTags(html))
   const blocks = himalayaToBlock(removeEmptyNodesAndComments(nodes))
   return Array.isArray(blocks) ? blocks : [blocks]
 }
