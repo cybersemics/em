@@ -38,9 +38,9 @@ export const exportContext = (state: State, context: Context, format: MimeType =
   const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 
   const childrenFiltered = children.filter(and(
-    !excludeSrc || !attribute(state, context, '=src') || (child: Child) => isFunction(child.value),
+    !excludeSrc || !attribute(state, context, '=src') || ((child: Child) => isFunction(child.value)),
     !excludeArchived || !attribute(state, context, '=archive'),
-    !excludeMeta || (child: Child) => !isFunction(child.value) || child.value === '=note'
+    !excludeMeta || ((child: Child) => !isFunction(child.value) || child.value === '=note')
   ))
 
   // Note: export single thought without bullet
