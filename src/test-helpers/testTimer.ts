@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import FakeTimer, { InstalledClock } from '@sinonjs/fake-timers'
 
 /**
@@ -11,7 +12,12 @@ const testTimer = () => {
    * Install timer.
    */
   const useFakeTimer = () => {
-    if (!clock) clock = FakeTimer.install()
+    if (!clock) {
+      clock = FakeTimer.install({
+        now: Date.now(),
+        shouldAdvanceTime: true
+      })
+    }
   }
 
   /**

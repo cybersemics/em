@@ -34,8 +34,6 @@ it('create, navigate, and edit thoughts', async () => {
   // create top subthought
   windowEvent('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
 
-  jest.runOnlyPendingTimers()
-
   // state
   const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
   expect(rootSubthoughts).toHaveLength(1)
@@ -55,7 +53,6 @@ it('create, navigate, and edit thoughts', async () => {
   expect(aSubthoughts).toHaveLength(2)
   expect(aSubthoughts.at(0).text()).toBe('')
   expect(aSubthoughts.at(1).text()).toBe('a1')
-
 })
 
 // Intermittent test failure. Unable to reproduce locally.
@@ -86,7 +83,6 @@ it.skip('caret is set on new subthought', async () => {
   wrapper.update()
   const editableSubthought = wrapper.find('.children .children div.editable')
   await editableSubthought.simulate('change', { target: { value: 'a1' } })
-  jest.runOnlyPendingTimers()
 
   store.dispatch(render())
   jest.runOnlyPendingTimers()
@@ -108,7 +104,6 @@ it('do not allow edit to duplicate thought', async () => {
       - c`
   }))
 
-  jest.runOnlyPendingTimers()
   wrapper.update()
 
   // try to change `c` to `a`
@@ -126,7 +121,6 @@ it('do not allow edit to duplicate thought', async () => {
     { value: 'c', rank: 2 },
   ])
   expect(rootSubthoughts).toHaveLength(3)
-
 })
 
 it('allow duplicate empty thoughts', async () => {

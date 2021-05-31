@@ -73,7 +73,7 @@ it(`archive thought with hidden children - arvhive all children in cursor's pare
     importTextReducer({
       path: HOME_PATH,
       text: `
-        - 
+        -
           - =a
           - =b`
     }),
@@ -248,7 +248,7 @@ describe('mount', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
-  it('after deleteEmptyThought, caret should move to end of previous thought', () => {
+  it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
     store.dispatch([
       { type: 'newThought', value: 'apple' },
       { type: 'newThought' },
@@ -258,13 +258,13 @@ describe('mount', () => {
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 
-  it('after merging siblings, caret should be in between', () => {
+  it('after merging siblings, caret should be in between', async () => {
     store.dispatch([
       importText({
         path: HOME_PATH,
         text: `
-        - apple
-        - banana`
+          - apple
+          - banana`
       }),
       setCursorFirstMatchActionCreator(['banana']),
       { type: 'deleteEmptyThought' },
@@ -272,5 +272,4 @@ describe('mount', () => {
     jest.runOnlyPendingTimers()
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
-
 })

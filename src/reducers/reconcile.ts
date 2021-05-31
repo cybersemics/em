@@ -68,7 +68,7 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: [Though
       : null,
 
     // update local
-    Object.keys(contextIndexRemoteOnly).length > 0
+    Object.keys(contextIndexRemoteOnly).length > 0 || Object.keys(thoughtIndexRemoteOnly).length > 0
       ? state => updateThoughts(state, {
         contextIndexUpdates: contextIndexRemoteOnly,
         thoughtIndexUpdates: thoughtIndexRemoteOnly,
@@ -77,7 +77,7 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: [Though
       : null,
 
     // update remote
-    Object.keys(contextIndexLocalOnly).length > 0
+    Object.keys(contextIndexLocalOnly).length > 0 || Object.keys(thoughtIndexLocalOnly).length > 0
       ? state => updateThoughts(state, {
         contextIndexUpdates: contextIndexLocalOnly,
         thoughtIndexUpdates: thoughtIndexLocalOnly,
