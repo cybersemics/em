@@ -1,10 +1,10 @@
 const regexAllTags = /<(?:.|\n)*?>/gmi
-const regexPreserveFormattingTags = /<(?!\/?(b|i|u|em|strong)(?: (?:.|\n)*)?>)(?:.|\n)*?>/gmi
-const regexTagAndAttributes = /<(?![/])(?:(\w*)((?:.|\n)*?))\/?>/gmi
+const regexPreserveFormattingTags = /<(?!\/?(b|i|u|em|strong|span)(?: (?:.|\n)*)?>)(?:.|\n)*?>/gmi
+const regexTagAndAttributes = /<(?![/]|span)(?:(\w*)((?:.|\n)*?))\/?>/gmi
 const regexNbsp = /&nbsp;/gmi
 const regexDecimalSpace = /&#32;/gmi
 const regexBrTag = /<br.*?>/gmi
-
+const regexSpanTagOnlyContainsWhitespaces = /<span[^>]*>([\s]+)<\/span>/gmi
 type StripOptions = { preserveFormatting?: boolean, preventTrim?: boolean }
 
 /** Strip HTML tags, convert nbsp to normal spaces, and trim. */
@@ -13,6 +13,7 @@ export const strip = (html: string, { preserveFormatting, preventTrim }: StripOp
     .replace(/<\/p><p/g, '</p>\n<p') // <p> is a block element, if there is no newline between <p> tags add newline.
     .replace(regexBrTag, '\n') // Some text editors add <br> instead of \n
     .replace(preserveFormatting ? regexPreserveFormattingTags : regexAllTags, '')
+    .replace(regexSpanTagOnlyContainsWhitespaces, '$1') // Replace span tags contain whitespaces
     // second pass to replace formatting tag attributes e.g. <b style="...">
     .replace(regexTagAndAttributes, '<$1>')
     .replace(regexNbsp, ' ')
