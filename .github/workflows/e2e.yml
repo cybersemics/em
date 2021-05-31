@@ -33,4 +33,4 @@ jobs:
         run: npm run build
 
       - name: Test
-        run: npm run test:e2e
+        run: npm run test:e2e:prod
