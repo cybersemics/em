@@ -1,6 +1,7 @@
 import _ from 'lodash'
-import { Element, HimalayaNode, Text, parse } from 'himalaya'
+import { Element, HimalayaNode, parse, Text } from 'himalaya'
 import { Block } from '../types'
+import stripStyleAttribute from './stripStyleAttribute'
 
 /** Retrieve attribute from Element node by key. */
 const getAttribute = (key: string, node: Element) => {
@@ -21,7 +22,17 @@ const formattingNodeToHtml = (node: Element) => {
       : formattingNodeToHtml(child))
   }, '')
 
-  if (node.tagName === 'span') return content
+  if (node.tagName === 'span') {
+    const styleAttribute = _.find(node.attributes, { key: 'style' })
+    if (!styleAttribute) {
+      return content
+    }
+    const strippedStyleAttribute = stripStyleAttribute(styleAttribute.value)
+    return strippedStyleAttribute.length > 0
+      ? `<${node.tagName} style="${strippedStyleAttribute}">${content}</${node.tagName}>`
+      : content
+
+  }
 
   return `<${node.tagName}>${content}</${node.tagName}>`
 }
@@ -143,7 +154,7 @@ const liToBlock = (node: Element): (Block | Block[]) => {
     scope: firstChild.content,
     children: []
   }
-  // only add empty parent if the li node is empty and has nested list
+    // only add empty parent if the li node is empty and has nested list
     : firstChild.type === 'element' && firstChild.tagName === 'ul' ? {
       scope: '',
       children: himalayaToBlock((firstChild as Element).children) as Block[]
