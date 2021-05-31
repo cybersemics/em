@@ -6,7 +6,8 @@
   "license": "NoHarm-draft",
   "private": true,
   "engines": {
-    "npm": "6"
+    "npm": ">=6",
+    "node": ">=12"
   },
   "browserslist": {
     "production": [
@@ -54,7 +55,7 @@
     "jex-block-parser": "^1.0.0",
     "lodash": "^4.17.21",
     "murmurhash3js": "^3.0.1",
-    "page-lifecycle": "https://github.com/magic-akari/page-lifecycle#feat/add-types",
+    "page-lifecycle": "git+https://git@github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "react": "^16.14.0",
     "react-contenteditable": "^3.3.5",

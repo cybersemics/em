@@ -655,6 +655,84 @@ it('import multi-line nested html tags', () => {
     )
 })
 
+it('export note as a normal thought if lossless not selected', () => {
+
+  const text = `- ${HOME_TOKEN}
+  - a
+   - =note
+     - b
+   - c`
+
+  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
+
+  expect(exported)
+    .toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c`)
+})
+
+it('import text that contains em tag', () => {
+  const text = `
+  - a
+    - b
+    - <em>c</em>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+  - b
+  - <em>c</em>`)
+})
+
+it('import text that contains non closed span tag', () => {
+  const paste = `
+- a
+- b
+- <span>c
+- d
+  `
+  const actual = importExport(paste)
+  expect(actual)
+    .toBe(
+      `
+- a
+- b
+- c
+- d
+`
+    )
+})
+
+it('import text that contains br tag that does not have children', () => {
+  const text = `
+  - a
+  - b
+  - c<br>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+- b
+- c`)
+})
+
+it('import text that contains br tag that has note children', () => {
+  const text = `
+  - a
+  - b
+  - c<br><span class="note">This is c!</span>`
+  const exported = importExport(text)
+  expect(exported.trim())
+    .toBe(
+      `- a
+- b
+- c
+  - =note
+    - This is c!`)
+})
+
 describe('HTML content', () => {
   it('should paste plain text that contains formatting', () => {
     const paste =
@@ -848,6 +926,23 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 - <b>A</b>
   - <b><i>B</i></b>
   - <b>C</b>
+`)
+  })
+
+  it('should paste text that contains formatting that is copied from IOS notes.app', () => {
+    /* eslint-disable no-irregular-whitespace */
+    const paste = `<meta charset="UTF-8"><p class="p1"
+                         style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;">
+    <span class="s1" style="font-weight: bold; font-style: normal; font-size: 14px;">A</span></p><p class="p1"
+                                                                                                    style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;">
+    <span class="s1" style="font-weight: bold; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>B</span></p>`
+    /* eslint-enable no-irregular-whitespace */
+
+    const actual = importExport(paste)
+    expect(actual)
+      .toBe(`
+- <span style="font-weight: bold;">A</span>
+  - <span style="font-weight: bold;"> B</span>
 `)
   })
 })

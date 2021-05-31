@@ -12,6 +12,7 @@ import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { State } from '../util/initialState'
 import { ExportOption } from '../types'
+import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
 
 interface AdvancedSetting {
@@ -63,7 +64,7 @@ const ModalExport = () => {
     filterFunction: !shouldIncludeMetaAttributes ? child => !isFunction(child.value) : !shouldIncludeArchived ? child => child.value !== '=archive' : undefined
   }).length
 
-  const exportWord = 'share' in navigator ? 'Share' : 'Download'
+  const exportWord = isTouch ? 'Share' : 'Download'
 
   const exportThoughtsPhrase = isRoot(cursor)
     ? ` all ${numDescendants} thoughts`

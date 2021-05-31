@@ -35,18 +35,19 @@ export const exportContext = (state: State, context: Context, format: MimeType =
   const childrenPrefix = format === 'text/html' ? `\n${tab2}<ul>` : ''
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
   const children = getChildrenRanked(state, context)
+  const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 
   const childrenFiltered = children.filter(and(
-    excludeSrc && attribute(state, context, '=src') ? (child: Child) => isFunction(child.value) : true,
-    excludeArchived && attribute(state, context, '=archive') ? (child: Child) => !isFunction(child.value) : true,
-    excludeMeta ? (child: Child) => !isFunction(child.value) : true
+    !excludeSrc || !attribute(state, context, '=src') || (child: Child) => isFunction(child.value),
+    !excludeArchived || !attribute(state, context, '=archive'),
+    !excludeMeta || (child: Child) => !isFunction(child.value) || child.value === '=note'
   ))
 
   // Note: export single thought without bullet
   const linePrefix = format === 'text/html' ? '<li>' : depth === 0 && childrenFiltered.length === 0 ? '' : '- '
 
   /** Outputs an exported child. */
-  const exportChild = (child: Child) => '  ' + exportContext(
+  const exportChild = (child: Child) => (isNoteAndMetaExcluded ? '' : '  ') + exportContext(
     state,
     unroot(context.concat(child.value)) as Context,
     format,
@@ -54,10 +55,15 @@ export const exportContext = (state: State, context: Context, format: MimeType =
       excludeSrc,
       excludeMeta,
       excludeArchived,
-      indent: indent + (format === 'text/html' ? indent === 0 ? 3 : 2 : 1),
+      indent: indent + (isNoteAndMetaExcluded ? 0 : format === 'text/html' ? indent === 0 ? 3 : 2 : 1),
       depth: depth + 1
     }
   )
+
+  // Export children of note as a thought when not lossless selected
+  if (isNoteAndMetaExcluded) {
+    return childrenFiltered.map(exportChild).join('\n')
+  }
 
   const exportedChildren = childrenFiltered.length > 0
     ? `${childrenPrefix}\n${childrenFiltered.map(exportChild).join('\n')}${childrenPostfix}${format === 'text/html' ? indent === 0 ? tab0 : tab1 : ''}`
