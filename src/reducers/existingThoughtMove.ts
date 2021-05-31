@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
 import { render, updateThoughts } from '../reducers'
-import { getNextRank, getThought, getAllChildren, getChildrenRanked, isPending, simplifyPath, rootedParentOf, pathExists } from '../selectors'
+import { getNextRank, getThought, getChildrenRanked, isPending, simplifyPath, rootedParentOf, pathExists, getAllChildren } from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
 
@@ -226,7 +226,15 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     }, { lexemeUpdates: {}, childUpdates: {} } as RecursiveMoveResult)
   }
 
-  const { lexemeUpdates, childUpdates } = recursiveUpdates(oldSimplePath, updatedNewSimplePath)
+  const conflictedPath = pathExists(state, newContext) ? newContext : null
+
+  const isNewContextPending = conflictedPath && isPending(state, pathToContext(newPath))
+
+  // short-circuit moves if new context is pending
+  const { lexemeUpdates, childUpdates } = !isNewContextPending ? recursiveUpdates(oldSimplePath, updatedNewSimplePath) : {
+    lexemeUpdates: {},
+    childUpdates: {}
+  }
 
   const descendantUpdates = _.transform(lexemeUpdates, (accum, newThought, key: string) => {
     accum[key] = newThought
@@ -368,8 +376,9 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
       contextIndexUpdates,
       thoughtIndexUpdates,
       recentlyEdited,
-      pendingPulls: contextIndexDescendantUpdates.pendingPulls,
-      descendantMoves: contextIndexDescendantUpdates.descendantMoves,
+      // load the children of the conflicted path if it's pending
+      pendingPulls: !isNewContextPending ? contextIndexDescendantUpdates.pendingPulls : [{ path: newPath }],
+      descendantMoves: !isNewContextPending ? contextIndexDescendantUpdates.descendantMoves : [{ pathNew: newPath, pathOld: oldPath }],
     }),
 
     render,
