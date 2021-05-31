@@ -3175,6 +3175,7 @@ a.advance-setting-link { color: #000; }
   justify-content: center;
   margin: 0 auto;
   max-width: 34em;
+  flex-direction: column;
 }
 
 .rotate180 {

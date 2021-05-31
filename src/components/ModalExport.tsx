@@ -19,6 +19,7 @@ interface AdvancedSetting {
   id: string,
   onChangeFunc: () => void,
   defaultChecked: boolean,
+  checked: boolean,
   title: string,
   description: string,
 }
@@ -51,6 +52,7 @@ const ModalExport = () => {
   const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
   const [exportContent, setExportContent] = useState<string | null>(null)
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
+  const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
 
   const dark = theme(state) !== 'Light'
   const themeColor = { color: dark ? 'white' : 'black' }
@@ -59,7 +61,7 @@ const ModalExport = () => {
     : { color: 'white', backgroundColor: 'black' }
 
   const numDescendants = getDescendants(state, simplePath, {
-    filterFunction: !shouldIncludeMetaAttributes ? child => !isFunction(child.value) : undefined
+    filterFunction: !shouldIncludeMetaAttributes ? child => !isFunction(child.value) : !shouldIncludeArchived ? child => child.value !== '=archive' : undefined
   }).length
 
   const exportWord = isTouch ? 'Share' : 'Download'
@@ -79,8 +81,10 @@ const ModalExport = () => {
   const setExportContentFromCursor = () => {
     const exported = exportContext(store.getState(), context, selected.type, {
       title: titleChild ? titleChild.value : undefined,
-      excludeMeta: !shouldIncludeMetaAttributes
+      excludeMeta: !shouldIncludeMetaAttributes,
+      excludeArchived: !shouldIncludeArchived,
     })
+
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
 
@@ -108,10 +112,12 @@ const ModalExport = () => {
       setExportContentFromCursor()
     }
 
+    if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
+
     return () => {
       isMounted.current = false
     }
-  }, [selected, shouldIncludeMetaAttributes])
+  }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
 
   useEffect(() => {
 
@@ -195,6 +201,8 @@ const ModalExport = () => {
     // export without =src content
     const exported = exportContext(store.getState(), context, selected.type, {
       excludeSrc: true,
+      excludeMeta: !shouldIncludeMetaAttributes,
+      excludeArchived: !shouldIncludeArchived,
       title: titleChild ? titleChild.value : undefined,
     })
 
@@ -223,8 +231,11 @@ const ModalExport = () => {
   /** Toggles advanced setting when Advanced CTA is clicked. */
   const onAdvancedClick = () => setAdvancedSettings(!advancedSettings)
 
-  /** Updates checkbox value when clicked and set the appropriate value in the selected option. */
+  /** Updates lossless checkbox value when clicked and set the appropriate value in the selected option. */
   const onChangeLosslessCheckbox = () => setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
+
+  /** Updates archived checkbox value when clicked and set the appropriate value in the selected option. */
+  const onChangeArchivedCheckbox = () => setShouldIncludeArchived(!shouldIncludeArchived)
 
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
   const advancedSettingsArray: AdvancedSetting[] = [
@@ -232,8 +243,17 @@ const ModalExport = () => {
       id: 'lossless-checkbox',
       onChangeFunc: onChangeLosslessCheckbox,
       defaultChecked: true,
+      checked: shouldIncludeMetaAttributes,
       title: 'Lossless',
       description: 'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or exporting to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.'
+    },
+    {
+      id: 'archived-checkbox',
+      onChangeFunc: onChangeArchivedCheckbox,
+      defaultChecked: true,
+      checked: shouldIncludeArchived,
+      title: 'Archived',
+      description: 'When checked, the exported thoughts include archived thoughts.'
     }
   ]
 
@@ -276,14 +296,14 @@ const ModalExport = () => {
 
       {advancedSettings &&
         <div className='advance-setting-section'>
-          {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, title, description }) => {
+          {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, checked, title, description }) => {
             return (
               <label className='checkbox-container' key={`${id}-key-${title}`}>
                 <div>
                   <p className='advance-setting-label'>{title}</p>
                   <p className='advance-setting-description dim'>{description}</p>
                 </div>
-                <input type='checkbox' id={id} onChange={onChangeFunc} defaultChecked={defaultChecked} />
+                <input type='checkbox' id={id} checked={checked} onChange={onChangeFunc} defaultChecked={defaultChecked} />
                 <span className='checkmark'></span>
               </label>
             )

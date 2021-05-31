@@ -18,6 +18,7 @@ interface Options {
   excludeSrc?: boolean,
   excludeMeta?: boolean,
   depth?: number,
+  excludeArchived?: boolean,
 }
 
 /** Exports the navigable subtree of the given context.
@@ -26,7 +27,7 @@ interface Options {
  * @param format
  * @param title     Replace the value of the root thought with a new title.
  */
-export const exportContext = (state: State, context: Context, format: MimeType = 'text/html', { indent = 0, title, excludeSrc, excludeMeta, depth = 0 }: Options = {}): string => {
+export const exportContext = (state: State, context: Context, format: MimeType = 'text/html', { indent = 0, title, excludeSrc, excludeMeta, depth = 0, excludeArchived }: Options = {}): string => {
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
   const tab1 = tab0 + '  '
@@ -37,8 +38,9 @@ export const exportContext = (state: State, context: Context, format: MimeType =
   const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 
   const childrenFiltered = children.filter(and(
-    excludeSrc && attribute(state, context, '=src') ? (child: Child) => isFunction(child.value) : true,
-    excludeMeta ? (child: Child) => !isFunction(child.value) || child.value === '=note' : true
+    !excludeSrc || !attribute(state, context, '=src') || ((child: Child) => isFunction(child.value)),
+    !excludeArchived || !attribute(state, context, '=archive'),
+    !excludeMeta || ((child: Child) => !isFunction(child.value) || child.value === '=note')
   ))
 
   // Note: export single thought without bullet
@@ -52,6 +54,7 @@ export const exportContext = (state: State, context: Context, format: MimeType =
     {
       excludeSrc,
       excludeMeta,
+      excludeArchived,
       indent: indent + (isNoteAndMetaExcluded ? 0 : format === 'text/html' ? indent === 0 ? 3 : 2 : 1),
       depth: depth + 1
     }
