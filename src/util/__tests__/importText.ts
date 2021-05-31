@@ -655,6 +655,24 @@ it('import multi-line nested html tags', () => {
     )
 })
 
+it('export note as a normal thought if lossless not selected', () => {
+
+  const text = `- ${HOME_TOKEN}
+  - a
+   - =note
+     - b
+   - c`
+
+  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
+
+  expect(exported)
+    .toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c`)
+})
+
 it('import text that contains em tag', () => {
   const text = `
   - a
