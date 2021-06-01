@@ -1,73 +1,78 @@
 /**
- * Function: isAbbrEndSplitter.
+ * Function: isAbbrev.
  *
- * @param str The sentence just added into the newSentences array, it contains the sentence and the first splitter.
+ * @param str1 The sentence just added into the result sentence, it contains the sentence and the splitter.
  * @param s The current sentence which is right behind the spliter.
  * @param spliter2 The second spliter.
  * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
- * Examples: Mr. Dr. Apt. Prof. Ph.D.
+ * Examples: Mr. Dr.q Apt. Prof. Ph.D.
  */
-export function isAbbrev(prevSentence : string, s: string, spliter2 : string) {
-  return isAbbrEndSplitter(prevSentence, s) || isAbbrMidSplitter(prevSentence, s) || isAbbrDoubleSplitter(prevSentence, s, spliter2)
+export function isAbbrev(str1 : string, s: string, spliter2 : string) {
+
+  return isAbbrEndSplitter(str1, s) || isAbbrMidSplitter(str1, s) || isAbbrDoubleSplitter(str1, s, spliter2)
 }
 
 /**
  * Function: isAbbrEndSplitter.
  *
- * @param str The sentence just added into the newSentences array, it contains the sentence and the first splitter.
- * @param s The current sentence which is right behind the spliter.
- * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
+ * @param str1 The sentence just added into the result sentence, it contains the sentence and the splitter.
+ * @param s The current sentence which sits right behind the spliter.
+ * @returns A boolean value that tells whether the dot comes from an Abbrev word that has an dot on the word end, and shouldn't be split
  * Examples: Mr. Dr. Apt. Feb. Prof.
  */
-function isAbbrEndSplitter (str : string, s : string) {
+function isAbbrEndSplitter (str1 : string, s : string) {
+  if (str1[str1.length - 1] !== '.') return false
+
   const twoLetters = ['Mr.', 'Ms.', 'Dr.', 'Rm.', 'No.', 'no.', 'vs.', 'Rd.', 'St.', 'Co.', 'Jr.', 'pl.', 'Sr.']
   const threeLetters = ['Mrs.', 'Jan.', 'Feb.', 'Jun.', 'Aug.', 'Oct.', 'Nov.', 'Dec.', 'Apt.', 'est.', 'Ave.', 'Tel.', 'alt.', 'Col.', 'inc.', 'Ltd.', 'vol.']
   const fourLetters = ['Sept.', 'addr.', 'Prof.', 'Dept.', 'temp.', 'Blvd.', 'abbr.', 'Assn.', 'Corp.', 'Univ.']
   const fiveLetters = ['et al.']
   const sixLetters = ['Abbrev.', 'approx.']
 
-  const len = str.length
-  const isTwoLetters = twoLetters.includes(str.slice(len - 3, len))
-  const isThreeLetters = threeLetters.includes(str.slice(len - 4, len))
-  const isFourLetters = fourLetters.includes(str.slice(len - 5, len))
-  const isFiveLetters = fiveLetters.includes(str.slice(len - 6, len))
-  const isSixLetters = sixLetters.includes(str.slice(len - 7, len))
+  const len = str1.length
+  const isTwoLetters = twoLetters.includes(str1.slice(len - 3, len))
+  const isThreeLetters = threeLetters.includes(str1.slice(len - 4, len))
+  const isFourLetters = fourLetters.includes(str1.slice(len - 5, len))
+  const isFiveLetters = fiveLetters.includes(str1.slice(len - 6, len))
+  const isSixLetters = sixLetters.includes(str1.slice(len - 7, len))
 
-  return !!isTwoLetters || !!isThreeLetters || !!isFourLetters || !!isFiveLetters || !!isSixLetters
+  return isTwoLetters || isThreeLetters || isFourLetters || isFiveLetters || isSixLetters
 }
 
 /**
  * Function: isAbbrMidSplitter.
  *
- * @param str The sentence just added into the newSentences array, it contains the sentence and the first splitter.
+ * @param str1 The sentence just added into the result sentences, it contains the sentence and the splitter.
  * @param s The current sentence which is right behind the spliter.
- * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
- * Examples: TL;DR.
+ * @returns A boolean value that tells whether the dot comes from an Abbrev word like TL;DR, and shouldn't be split.
  */
-function isAbbrMidSplitter (str : string, s : string) {
+function isAbbrMidSplitter (str1 : string, s : string) {
 
-  const isphD = !!str.match(/[ph.|Ph.]$/) && !!s.match(/^[d|D]/)
-  const isTLDR = !!str.match(/TL;$/) && !!s.match(/^DR/)
+  const isphD = !!str1.match(/[ph.|Ph.]$/) && !!s.match(/^[d|D]/)
+  const isTLDR = !!str1.match(/TL;|tl;$/) && !!s.match(/^DR|dr/)
   return isphD || isTLDR
 }
 
 /**
  * Function: isAbbrDoubleSplitter, example: i.e., e.g..
  *
- * @param str1 The charactor before the first spliter and the first spliter.
- * @param str2 The charactor after the first spliter.
+ * @param str1 The sentence before the first spliter and the first spliter.
+ * @param s The sentence after the first spliter.
  * @param spliter2 The second spliter.
- * @returns A bolean value that says whether it is something inside the pair array, such as M.S.
+ * @returns A bolean value that says whether it is an abbreviation that has double dots, such as M.S., R.N. .
  */
-function isAbbrDoubleSplitter (str1 : string, str2: string, spliter2: string) {
-  const pairs1 = [['B.', 'A.'], ['M.', 'S.'], ['B.', 'S.'], ['B.', 'C.'], ['D.', 'C.'], ['R.', 'N.'], ['U.', 'S.'], ['P.', 'S.'], ['e.', 'g.'], ['i.', 'e.'], ['U.', 'N.'], ['P.', 'O.']]
-  const pairs2 = [['Ph.', 'D.'], ['Ed.', 'D.']]
+function isAbbrDoubleSplitter (str1 : string, s: string, spliter2: string) {
+  if (str1[str1.length - 1] !== '.') return false
+
+  const pairs = [['B.', 'A.'], ['M.', 'S.'], ['B.', 'S.'], ['B.', 'C.'], ['D.', 'C.'], ['R.', 'N.'], ['U.', 'S.'], ['P.', 'S.'], ['e.', 'g.'], ['i.', 'e.'], ['U.', 'N.'], ['P.', 'O.'], ['Ph.', 'D.'], ['Ed.', 'D.']]
 
   const len = str1.length
-  const isHalfPattern = !!pairs1.find(p => str1.slice(len - 2) === p[0] && p[1] === str2 + spliter2) || !!pairs2.find(p => str1.slice(len - 3) === p[0] && p[1] === str2 + spliter2)
+  const isHalfPattern = !!pairs.find(p => p[1] === s + spliter2?.charAt(0) && str1.slice(len - p[0].length) === p[0])
 
-  const isFullPattern : boolean = !!pairs1.find(p =>
-    str1.slice(len - 4) === p[0] + p[1]) || !!pairs2.find(p => str1.slice(len - 5) === p[0] + p[1])
+  if (isHalfPattern) return isHalfPattern
 
-  return isHalfPattern || isFullPattern
+  const isFullPattern = !!pairs.find(p =>
+    str1.slice(len - p[0].length - p[1].length) === p[0] + p[1])
+
+  return isFullPattern
 }
