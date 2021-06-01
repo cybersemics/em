@@ -42,12 +42,12 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, po
               <ContextBreadcrumbs path={breadcrumbPath} classNamesObject={{ 'nav-breadcrumbs': true }} />
             </div>
           </CSSTransition>
-        </>}
 
-        <div className='nav-right-button-group'>
-          <FeedbackButton/>
-          <QuickAddButton />
-        </div>
+          <div className='nav-right-button-group'>
+            <FeedbackButton/>
+            <QuickAddButton />
+          </div>
+        </>}
 
       </div>
     </div>
