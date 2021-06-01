@@ -79,8 +79,8 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
     <section className='popup-section'>
       <h2 className='modal-subtitle'>Tutorials</h2>
 
-      <div className='modal-actions center'>
-        <p><a className='button' onClick={() => {
+      <div className='modal-actions modal-actions-stack center'>
+        <div><a className='button' onClick={() => {
           dispatch([
             tutorial({ value: true }),
             // allow resume
@@ -88,15 +88,15 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
             setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
             modalRemindMeLater({ id: 'help' }),
           ])
-        }}>Part I: Intro</a></p>
-        <p><a className='button' onClick={() => {
+        }}>Part I: Intro</a></div>
+        <div><a className='button' onClick={() => {
           dispatch([
             tutorial({ value: true }),
             // allow resume
             setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
             modalRemindMeLater({ id: 'help' })
           ])
-        }}>Part II: Contexts</a></p>
+        }}>Part II: Contexts</a></div>
       </div>
     </section>
 

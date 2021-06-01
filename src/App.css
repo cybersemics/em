@@ -1940,10 +1940,22 @@ h1 .num-contexts {
   background-color: #aaa;
 }
 
-.popup .modal-actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/** Use .modal-actions-stack for buttons that switch to vertical layout on small screen sizes. */
+.popup .modal-actions.modal-actions-stack a.button {
+  margin-bottom: 0.5em;
+}
+@media screen and (min-width: 480px) {
+  .popup .modal-actions.modal-actions-stack {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .popup .modal-actions.modal-actions-stack > * {
+    margin-top: 1em;
+  }
+  .popup .modal-actions.modal-actions-stack > :not(:last-child) {
+    margin-right: 1em;
+  }
 }
 
 .popup .logo {

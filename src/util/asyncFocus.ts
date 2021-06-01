@@ -18,7 +18,12 @@ export const AsyncFocus = (): () => void => {
   hiddenInput.setAttribute('type', 'text')
   hiddenInput.style.position = 'absolute'
   hiddenInput.style.opacity = '0'
+
+  // even with position:absolute having a positive width can affect the body width at very small screen sizes
   hiddenInput.style.height = '0'
+  hiddenInput.style.width = '0'
+  hiddenInput.style.minWidth = '0'
+  hiddenInput.style.minHeight = '0'
 
   // disable auto zoom
   // See: https://stackoverflow.com/questions/2989263/disable-auto-zoom-in-input-text-tag-safari-on-iphone
