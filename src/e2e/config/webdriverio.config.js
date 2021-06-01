@@ -10,7 +10,7 @@ const config = {
     deviceName: 'iPhone 12',
     browserName: 'Safari',
     unicodeKeyboard: true,
-    build: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user}`,
+    build: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${new Date().toISOString().slice(0, 10)}`,
     project: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
     'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || 'local-' + new Date().getTime(),
     'browserstack.local': 'true',

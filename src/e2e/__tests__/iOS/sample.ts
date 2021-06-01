@@ -15,17 +15,21 @@ import tapReturnKey from '../../helpers/mobile/tapReturnKey'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
-
+let isFirstTest = true
 describe('Caret Test', () => {
 
   beforeEach(async() => {
+    // Don't reload session for the first test. webdriverio already creates a session on init.
+    if (!isFirstTest) {
+      await mobileBrowser.reloadSession()
+    }
+    else {
+      isFirstTest = false
+    }
+
     await mobileBrowser.url('http://bs-local.com:3000')
     const skipElement = await waitForElement(mobileBrowser, '#skip-tutorial')
     await skipElement.click()
-  })
-
-  afterEach(async() => {
-    await mobileBrowser.reloadSession()
   })
 
   it('#sample test 1', async () => {

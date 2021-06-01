@@ -52,6 +52,7 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
     }
     catch (e) {
       console.error(e)
+      throw e
     }
 
   }
