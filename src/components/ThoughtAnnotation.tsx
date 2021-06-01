@@ -29,6 +29,7 @@ interface ThoughtAnnotationProps {
   showHiddenThoughts?: boolean,
   simplePath: SimplePath,
   style?: React.CSSProperties,
+  isValueEditing?: boolean,
 }
 
 /** Sets the innerHTML of the subthought text. */
@@ -86,6 +87,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     isEditing,
     showHiddenThoughts,
     path: simplePathLive,
+    isThoughtValueEditing: editingValue === headValue(props.path) // Re-render ThoughtAnnotation on each change of this value.
   }
 }
 
