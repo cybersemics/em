@@ -2,7 +2,7 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 
-import initPage from '../../test-helpers/e2e-helpers/initPage'
+import initPage from '../helpers/initPage'
 import { Page } from 'puppeteer'
 
 describe('newThought', () => {
