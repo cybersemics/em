@@ -193,9 +193,10 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
       <div>Pin icon by <a href='https://thenounproject.com/search/?q=%22pin%20many%22&i=496735'>Hea Poh Lin</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Prose View icon by <a href='https://thenounproject.com/coquet_adrien'>Adrien Coquet</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Search icon by <a href='https://icons8.com/icon/7695/search'>Icons8</a></div>
-      <div>Subcategorize icons by <a href='hhttps://thenounproject.com/term/circuit/1685927/'>Hare Krishna</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
+      <div>Subcategorize icons by <a href='https://thenounproject.com/term/circuit/1685927/'>Hare Krishna</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Table icon by <a href='https://thenounproject.com/icon54app/collection/table-light-icon-set/?i=2762107'>icon 54</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
       <div>Undo and Redo Icons by <a href='https://www.flaticon.com/authors/pixel-perfect' title='Pixel perfect'>Pixel perfect</a> from <a href='https://www.flaticon.com/' title='Flaticon'> www.flaticon.com</a></div>
+      <div>Share icon by <a href='https://thenounproject.com/term/share/1058861/'>Тимур Минвалеев</a> from the <a href='https://thenounproject.com'>Noun Project</a></div>
     </div>
 
     <br />
