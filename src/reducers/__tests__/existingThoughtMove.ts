@@ -1,6 +1,6 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked, getRankAfter, getChildren } from '../../selectors'
+import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked, getRankAfter, getChildren, isPending } from '../../selectors'
 import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import { State } from '../../util/initialState'
@@ -628,20 +628,20 @@ it('consitent rank between thoughtIndex and contextIndex on duplicate merge', ()
   expect(contextsOfB[0].rank).toBe(rankFromContextIndex)
 })
 
-it('pending thoughts should be merged correctly(fetch pending before move)', async () => {
+it('pending destination should be merged correctly (fetch pending before move)', async () => {
   initialize()
 
   const text = `
   - a
     - b
       -c
-        - 1
-        - 2
+        - one
+        - two
   - d
     - b
       - c
-        - 3
-        - 4`
+        - three
+        - four`
 
   timer.useFakeTimer()
 
@@ -666,23 +666,86 @@ it('pending thoughts should be merged correctly(fetch pending before move)', asy
   timer.useFakeTimer()
 
   appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+
+  // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
   appStore.dispatch([
-    setCursorFirstMatchActionCreator(['a']),
     existingThoughtMoveAction({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
       newPath: [{ value: 'd', rank: 1 }, { value: 'b', rank: 1 }],
+    })
+  ])
+  await timer.runAllAsync()
+
+  timer.useRealTimer()
+
+  const mergedChildren = getAllChildren(appStore.getState(), ['d', 'b', 'c'])
+  expect(mergedChildren).toMatchObject([
+    { value: 'three', rank: 0 },
+    { value: 'four', rank: 1 },
+    { value: 'one', rank: 2 },
+    { value: 'two', rank: 3 },
+  ])
+
+})
+
+it('only fetch the descendants upto the possible conflicting path', async () => {
+  initialize()
+
+  const text = `
+  - a
+    - b
+      -c
+        - 1
+        - 2
+  - p
+    - b
+      - c
+        - 3
+          - 3.1
+          - 3.2
+            - 3.2.1
+        - 4`
+
+  timer.useFakeTimer()
+
+  appStore.dispatch([
+    importTextAction({
+      path: HOME_PATH,
+      text
     }),
-    setCursorFirstMatchActionCreator(['d', 'b'])
+  ])
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+  // clear and call initialize again to reload from local db (simulating page refresh)
+  appStore.dispatch(clear())
+  await timer.runAllAsync()
+
+  initialize()
+
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+
+  expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(true)
+  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+
+  // wait for pullBeforeMove middleware to execute
+  await timer.runAllAsync()
+
+  appStore.dispatch([
+    existingThoughtMoveAction({
+      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+      newPath: [{ value: 'p', rank: 1 }, { value: 'b', rank: 1 }],
+    })
   ]
   )
   await timer.runAllAsync()
 
   timer.useRealTimer()
 
-  const mergedChildren = getAllChildren(appStore.getState(), ['d', 'b', 'c']).map(child => child.value)
-
-  expect(new Set(mergedChildren)).toMatchObject(new Set(['1', '2', '3', '4']))
-
+  expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(false)
+  expect(isPending(appStore.getState(), ['p', 'b', 'c', '3'])).toEqual(true)
 })

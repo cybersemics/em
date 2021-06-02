@@ -108,11 +108,14 @@ const flushEdits = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (disp
 /** Pull all descendants of pending moves and dispatch existingThoughtMove to fully move. */
 const flushMoves = (pushQueue: PushBatch[]): Thunk => async (dispatch, getState) => {
 
-  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  const state = getState()
+  // if there are pending thoughts that need to be moved, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtMove
   const descendantMoves = pushQueue.map(batch => batch.descendantMoves || []).flat()
   const pendingPulls = pushQueue.map(batch => batch.pendingPulls || []).flat()
 
   let maxDepth = Infinity
+
+  // pull all children of source context
   if (descendantMoves?.length) {
 
     const pending: Index<Context> = keyValueBy(descendantMoves, ({ pathOld }) => {
@@ -120,12 +123,11 @@ const flushMoves = (pushQueue: PushBatch[]): Thunk => async (dispatch, getState)
       // skip the pull for loaded descendants
       return { [hashContext(context)]: context }
     })
-
     await dispatch(pull(pending, { maxDepth: Infinity }))
-    maxDepth = getDepth(getState(), pathToContext(descendantMoves[0].pathOld))
+    maxDepth = Math.max(...descendantMoves.map(({ pathOld }) => getDepth(state, pathToContext(pathOld))))
   }
 
-  // pull all children of destination context before moving any thoughts
+  // pull all children of destination (upto max depth of possibly conflcited path) context before moving any thoughts
   if (pendingPulls.length) {
     const pathToLoad = keyValueBy(pendingPulls, ({ path }) => {
       const context = pathToContext(path)
