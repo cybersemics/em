@@ -1,7 +1,7 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import { unescape } from 'html-escaper'
-import { parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, strip, validateRoam, createId } from '../util'
+import { getTextContentFromHTML, parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, strip, validateRoam, createId } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
 import { Block, Path, SimplePath, Timestamp } from '../types'
@@ -174,7 +174,12 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
     // insert the textNormalized into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
-    const newValue = (destValue.slice(0, startOffset) + textNormalized + destValue.slice(endOffset)).trim()
+
+    const left = (destValue.slice(0, startOffset) + textNormalized).trimLeft()
+    const right = destValue.slice(endOffset).trimRight()
+    const newValue = left + right
+
+    const offset = getTextContentFromHTML(left).length
 
     return reducerFlow([
 
@@ -187,7 +192,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
       !preventSetCursor && path ? setCursor({
         path: [...parentOf(path), { ...destThought, value: newValue }],
-        offset: startOffset + textNormalized.length,
+        offset,
       }) : null,
 
     ])(state)

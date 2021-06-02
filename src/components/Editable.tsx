@@ -46,6 +46,7 @@ import {
   setSelection,
   strip,
   normalizeThought,
+  getCaretPositionDetails,
 } from '../util'
 
 // selectors
@@ -325,7 +326,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
     if (contentRef.current) {
-      setSelection(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
+      const caretPositionDetails = getCaretPositionDetails(contentRef.current, cursorOffset || state.cursorOffset || 0)
+      setSelection(caretPositionDetails?.focusNode ?? contentRef.current, { offset: caretPositionDetails?.offset || 0 })
     }
   }
 

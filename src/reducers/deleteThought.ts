@@ -12,6 +12,7 @@ import {
   once,
   reducerFlow,
   unroot,
+  getTextContentFromHTML,
 } from '../util'
 
 // selectors
@@ -107,7 +108,7 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
           : parentOf(path).concat(next() as Child)
         ), { offset: 0 }] :
         // Case III: delete last thought in context; set cursor on context
-        thoughts.length > 1 ? [rootedParentOf(state, path), { offset: head(context).length }]
+        thoughts.length > 1 ? [rootedParentOf(state, path), { offset: getTextContentFromHTML(head(context)).length }]
         // Case IV: delete very last thought; remove cursor
         : [null]
       )(state)

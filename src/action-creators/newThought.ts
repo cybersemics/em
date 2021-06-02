@@ -6,14 +6,17 @@ import { alert } from '../action-creators'
 import { State } from '../util/initialState'
 import { Thunk, Context, Path } from '../types'
 
+interface SplitResult {
+  left: string,
+  right: string,
+}
+
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
-const isDuplicateOnSplit = (offset: number, context: Context | null, state: State) => {
+const isDuplicateOnSplit = (splitResult: SplitResult, context: Context | null, state: State) => {
   const { editingValue } = state
   if (!editingValue) return false
   const siblings = getAllChildren(state, context || [HOME_TOKEN])
-  const left = editingValue?.substring(0, offset)
-  const right = editingValue?.substring(offset)
-  return left === right || siblings.some(sibling => sibling.value === left || sibling.value === right)
+  return splitResult.left === splitResult.right || siblings.some(sibling => sibling.value === splitResult.left || sibling.value === splitResult.right)
 }
 
 /**
@@ -26,7 +29,7 @@ const newThought = ({
   at,
   insertBefore,
   insertNewSubthought,
-  offset,
+  splitResult,
   preventSetCursor,
   preventSplit,
   value = ''
@@ -34,7 +37,7 @@ const newThought = ({
   at?: Path,
   insertBefore?: boolean,
   insertNewSubthought?: boolean,
-  offset?: number,
+  splitResult?: { left: string, right: string } | null,
   preventSetCursor?: boolean,
   preventSplit?: boolean,
   value?: string,
@@ -64,18 +67,19 @@ const newThought = ({
   // split the thought at the selection
   // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
   // do not split with gesture, as Enter is avialable and separate in the context of mobile
-  const split = !preventSplit && path && isFocusOnEditable && !showContexts && !value && offset! > 0 && editingValue && offset! < editingValue.length
+  const split = !preventSplit && path && isFocusOnEditable && !showContexts && !value && editingValue && splitResult && splitResult.left.length > 0 && splitResult.right.length > 0 && splitResult.left.length < editingValue?.length
+
   if ((!split || !uneditable) && isTouch && isSafari) {
     asyncFocus()
   }
   if (split) {
-    if (isDuplicateOnSplit(offset!, context, state)) {
+    if (isDuplicateOnSplit(splitResult!, context, state)) {
       dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts', clearTimeout: 2000 }))
       return
     }
     dispatch(uneditable && path
       ? { type: 'error', value: `"${ellipsize(headValue(path))}" is uneditable and cannot be split.` }
-      : { type: 'splitThought', offset })
+      : { type: 'splitThought', splitResult })
     return
   }
 

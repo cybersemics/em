@@ -101,6 +101,8 @@ const setCursor = (state: State, {
       headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
     )
 
+  const updatedOffset = offset ?? (state.editingValue !== null ? 0 : null)
+
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   const stateNew = equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
     // must re-render even if cursor has not moved
@@ -112,6 +114,7 @@ const setCursor = (state: State, {
       ...state,
       // this is needed in particular for creating a new note, otherwise the cursor will disappear
       editing: editing != null ? editing : state.editing,
+      cursorOffset: updatedOffset,
       expanded,
       noteFocus,
     })
@@ -131,7 +134,7 @@ const setCursor = (state: State, {
       : state.cursorHistory,
       // set cursorOffset to null if editingValue is null
       // (prevents Editable from calling setSelection on click since we want the default cursor placement in that case)
-      cursorOffset: offset ?? (state.editingValue !== null ? 0 : null),
+      cursorOffset: updatedOffset,
       contextViews: newContextViews,
       editing: editing != null ? editing : state.editing,
       expanded,

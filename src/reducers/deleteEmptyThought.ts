@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../constants'
-import { head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow } from '../util'
+import { getTextContentFromHTML, head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow } from '../util'
 import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath, rootedParentOf } from '../selectors'
 import { deleteThought, existingThoughtChange, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
@@ -87,7 +87,7 @@ const deleteEmptyThought = (state: State): State => {
         // move the cursor to the new thought at the correct offset
         setCursor({
           path: pathPrevNew,
-          offset: prev.value.length,
+          offset: getTextContentFromHTML(prev.value).length,
           editing
         }),
 

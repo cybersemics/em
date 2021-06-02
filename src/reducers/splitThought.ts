@@ -7,15 +7,19 @@ import { editableRender, existingThoughtChange, existingThoughtMove, newThought,
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
+interface SplitResult {
+  left: string,
+  right: string,
+}
+
 /** Splits a thought into two thoughts.
  *
  * @param path     The path of the thought to split. Defaults to cursor.
  * @param offset   The index within the thought at which to split. Defaults to the browser selection offset.
  */
-const splitThought = (state: State, { path, offset }: { path?: Path, offset?: number }) => {
+const splitThought = (state: State, { path, splitResult }: { path?: Path, splitResult: SplitResult }) => {
 
   path = path || state.cursor as Path
-  offset = offset || window.getSelection()?.focusOffset
 
   const simplePath = simplifyPath(state, path)
 
@@ -31,8 +35,9 @@ const splitThought = (state: State, { path, offset }: { path?: Path, offset?: nu
           Since xhtmlPurifier adds unwanted <p> tags too, so strip is used to remove such tags while preserving formatting tags.
           issue: https://github.com/cybersemics/em/issues/742
   */
-  const valueLeft = strip(xhtmlPurifier.purify(value.slice(0, offset)), { preserveFormatting: true })
-  const valueRight = strip(xhtmlPurifier.purify(value.slice(offset)), { preserveFormatting: true })
+  const valueLeft = strip(xhtmlPurifier.purify(splitResult.left), { preserveFormatting: true })
+  const valueRight = strip(xhtmlPurifier.purify(splitResult.right), { preserveFormatting: true })
+
   const pathLeft = parentOf(path).concat({ value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([
