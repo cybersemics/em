@@ -1,5 +1,5 @@
 import { once } from './once'
-import { isAbbrev } from './isAbbreviation'
+import isAbbrev from './isAbbreviation'
 
 /**
  * Splits given value by special characters.
@@ -9,10 +9,10 @@ export const splitSentence = (value: string) : string[] => {
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
 
-  const spliters = value.match(mainSplitRegex)
+  const splitters = value.match(mainSplitRegex)
 
   // When it cannot be split by the main spliter, spliter by ','
-  if (!spliters) return value.split(',').filter(s => s !== '').map(s => s.trim())
+  if (!splitters) return value.split(',').filter(s => s !== '').map(s => s.trim())
 
   /**
    * Checks if the value has no other main split characters  except one period at the end.
@@ -28,19 +28,18 @@ export const splitSentence = (value: string) : string[] => {
   const sentences = value.split(mainSplitRegex)
 
   /**
-   * The reduce function return a string, which is a combination of all the sentences, we then can split it during the next step.
-   * Google searching keyword '^^' or '^#' return 0 result for both of them. Hence, it is safe in using the below seperator to link each sentence into one string.
+   * The reduce function return a string, which is a combination of all the sentences, we then use __SEP__ to seperate each qualified sentence that can be split during the next step.
    */
-  const seperator = value.indexOf('^^') > 0 ? '^#' : '^^'
+  const SEPARATOR_TOKEN = '__SEP__'
   const initialValue = sentences[0]
 
   const resultSentences = sentences.reduce((newSentence : string, s : string, i : number) => {
 
-    if (i === 0) return newSentence + spliters[0]
+    if (i === 0) return newSentence + splitters[0]
 
-    const seperatorIndex = newSentence.lastIndexOf(seperator)
+    const seperatorIndex = newSentence.lastIndexOf(SEPARATOR_TOKEN)
     const prevSentence = seperatorIndex < 0 ? newSentence : newSentence.slice(seperatorIndex + 2)
-    const currSentence = spliters[i] ? s + spliters[i] : s
+    const currSentence = splitters[i] ? s + splitters[i] : s
 
     /**
      * Combine the current sentence with the previous sentence to form one new sentence if it is the below conditions:
@@ -49,7 +48,7 @@ export const splitSentence = (value: string) : string[] => {
      * Case3: ending with url address
      * Case4: ending with Mr., Dr., Apt., i.e., Ph.D..
      */
-    if (isDecimalNum(prevSentence, s) || isEmail(prevSentence, s) || isUrl(prevSentence, s) || isAbbrev(prevSentence, s, spliters[i])) {
+    if (isDecimalNum(prevSentence, s) || isEmail(prevSentence, s) || isUrl(prevSentence, s) || isAbbrev(prevSentence, s, splitters[i])) {
 
       return newSentence + currSentence
     }
@@ -63,23 +62,23 @@ export const splitSentence = (value: string) : string[] => {
     if (matched) {
       const removeFront = calculateRemoveFront(prevSentence, s, matched)
 
-      if (removeFront === 0) return newSentence + seperator + currSentence
+      if (removeFront === 0) return newSentence + SEPARATOR_TOKEN + currSentence
 
       const backPart = currSentence.slice(removeFront)
       const frontPart = currSentence.slice(0, removeFront)
-      return backPart ? newSentence + frontPart + seperator + backPart : newSentence + frontPart
+      return backPart ? newSentence + frontPart + SEPARATOR_TOKEN + backPart : newSentence + frontPart
     }
 
     // On other conditions,the original spliter is the real splitter
-    return newSentence + seperator + currSentence
+    return newSentence + SEPARATOR_TOKEN + currSentence
   }, initialValue)
 
   // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by comma
-  const res = resultSentences.split(seperator).filter(s => /\S+/.test(s))
+  const res = resultSentences.split(SEPARATOR_TOKEN).filter(s => /\S+/.test(s))
   const hasOnlyPeoriodSpliterAtEnd = !/;!?$/.test(resultSentences)
   if (res.length === 1 && hasOnlyPeoriodSpliterAtEnd) {
 
-    return resultSentences.replace(/,/g, `${seperator}`).split(seperator).filter(s => /\S+/.test(s)).map(s => s.trim())
+    return resultSentences.replace(/,/g, `${SEPARATOR_TOKEN}`).split(SEPARATOR_TOKEN).filter(s => /\S+/.test(s)).map(s => s.trim())
   }
 
   return res.map(s => s.trim())

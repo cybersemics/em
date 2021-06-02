@@ -99,7 +99,7 @@ describe('simple split', () => {
   - b`)
   })
 
-  it('split single thought as expected if the thought has spliter ... and ?!', () => {
+  it('split single thought as expected if the thought has splitter ... and ?!', () => {
     const thought = 'One... Two?! Three. '
     const exported = splitThought(thought)
 
@@ -109,7 +109,7 @@ describe('simple split', () => {
   - Three.`)
   })
 
-  it('split single thought by spliters and remove the empty thought when the thought ends with empty spaces after the spliter. ', () => {
+  it('split single thought by splitters and remove the empty thought when the thought ends with empty spaces after the splitter. ', () => {
     const thought = 'One.Two.  '
     const exported = splitThought(thought)
 
@@ -122,7 +122,7 @@ describe('simple split', () => {
 // When it ends with .", .), !), ?"), ;), etc.
 describe('brackets or quatations', () => {
 
-  it('split single thought on the way that the closed bracket goes with the previous sentence if a spliter is immediately followed by a closed bracket', () => {
+  it('split single thought on the way that the closed bracket goes with the previous sentence if a splitter is immediately followed by a closed bracket', () => {
     const thought = 'One. (Two.)Three.'
     const exported = splitThought(thought)
 
@@ -132,7 +132,7 @@ describe('brackets or quatations', () => {
   - Three.`)
   })
 
-  it('split the single thought on the way that the left quotation marks should go with the sentence that is on the right of the spliter, while the right quotation marks should go with the sentence which is on the left of the spliter', () => {
+  it('split the single thought on the way that the left quotation marks should go with the sentence that is on the right of the splitter, while the right quotation marks should go with the sentence which is on the left of the splitter', () => {
     const thought = 'One." Two."Three.'
     const exported = splitThought(thought)
 
@@ -173,7 +173,7 @@ describe('brackets or quatations', () => {
   - "  Three."`)
   })
 
-  it('split single thought as expected if multiple sets of brackets and quotation marks next to each other and seperated by a spliter. ', () => {
+  it('split single thought as expected if multiple sets of brackets and quotation marks next to each other and seperated by a splitter. ', () => {
     const thought = '\'One\'. ("Two?")   Three.'
     const exported = splitThought(thought)
 
@@ -183,7 +183,7 @@ describe('brackets or quatations', () => {
   - Three.`)
   })
 
-  it('split single thought in a way that the empty space between the spliter and the " should be kept', () => {
+  it('split single thought in a way that the empty space between the splitter and the " should be kept', () => {
     const thought = 'One. "Two.  "Three.'
     const exported = splitThought(thought)
 
@@ -222,7 +222,7 @@ describe('abbreviations', () => {
   - He will receive his B.S. degree this year.`)
   })
 
-  it('thought should not be split when the spliter comes from a spliter in the mid-position of an abbreviation', () => {
+  it('thought should not be split when the splitter comes from a splitter in the mid-position of an abbreviation', () => {
     const thought = 'TL;DR'
     const exported = splitThought(thought)
 
@@ -247,7 +247,7 @@ describe('abbreviations', () => {
   - meet Dr. Chin.`)
   })
 
-  it('split thought as expected when empty spaces present between the abbreviation and the spliter', () => {
+  it('split thought as expected when empty spaces present between the abbreviation and the splitter', () => {
     const thought = 'go to Washington D.C. ; meet Dr. Chin.'
     const exported = splitThought(thought)
 
@@ -256,7 +256,7 @@ describe('abbreviations', () => {
   - meet Dr. Chin.`)
   })
 
-  it('split thought as expected when multiple abbreviations exsit in the thought, and it ends with an abbreviation with no spliter behind but empty space', () => {
+  it('split thought as expected when multiple abbreviations exsit in the thought, and it ends with an abbreviation with no splitter behind but empty space', () => {
     const thought = 'meet Dr. Chin. go to Washington D.C. '
     const exported = splitThought(thought)
 
@@ -301,7 +301,7 @@ describe('abbreviations', () => {
   - Two ("U.N.") Three.`)
   })
 
-  it('split thought as expected if the dot comes from an abbreviation, ends with a spliter, a quotation mark and a bracket', () => {
+  it('split thought as expected if the dot comes from an abbreviation, ends with a splitter, a quotation mark and a bracket', () => {
     const thought = 'One. Two ("U.N.?") Three.'
     const exported = splitThought(thought)
 
@@ -348,7 +348,7 @@ describe('decimal numbers', () => {
   - Pear: $15.`)
   })
 
-  it('split single thought as expected if the dot comes from a decimal number followed by a spliter and a brackct', () => {
+  it('split single thought as expected if the dot comes from a decimal number followed by a splitter and a brackct', () => {
     const thought = 'One. ( $12.30, $3.50?) Two.'
     const exported = splitThought(thought)
 
@@ -358,7 +358,7 @@ describe('decimal numbers', () => {
   - Two.`)
   })
 
-  it('split single thought as expected if a decimal number followed by a spliter and a brackct that nexts to another quotation mark', () => {
+  it('split single thought as expected if a decimal number followed by a splitter and a brackct that nexts to another quotation mark', () => {
     const thought = '($3.50?)"One."'
     const exported = splitThought(thought)
 
@@ -367,7 +367,7 @@ describe('decimal numbers', () => {
   - "One."`)
   })
 
-  it('split single thought as expected if the dot comes from a decimal number ends with a spliter and an empty space, followed by a quotation mark and a closed bracket', () => {
+  it('split single thought as expected if the dot comes from a decimal number ends with a splitter and an empty space, followed by a quotation mark and a closed bracket', () => {
     const thought = 'One. (" $2.3, 3.5M! ") Two.'
     const exported = splitThought(thought)
 
@@ -377,7 +377,7 @@ describe('decimal numbers', () => {
   - Two.`)
   })
 
-  it('split single thought if two interger numbers are seperated by a spliter that is not a dot', () => {
+  it('split single thought if two interger numbers are seperated by a splitter that is not a dot', () => {
     const thought = '2!3'
     const exported = splitThought(thought)
 
@@ -439,7 +439,7 @@ describe('email address', () => {
   - Two.`)
   })
 
-  it('split single thought as expected if it has more than one email address in the sentence before the real spliter ', () => {
+  it('split single thought as expected if it has more than one email address in the sentence before the real splitter ', () => {
     const thought = 'abc@email.com def@email.com; One.'
     const exported = splitThought(thought)
 
@@ -448,7 +448,7 @@ describe('email address', () => {
   - One.`)
   })
 
-  it('split single thought as expected if it has more than one email address in the sentence after the real spliter ', () => {
+  it('split single thought as expected if it has more than one email address in the sentence after the real splitter ', () => {
     const thought = 'One. abc@email.com def@email.com;'
     const exported = splitThought(thought)
 
@@ -457,7 +457,7 @@ describe('email address', () => {
   - abc@email.com def@email.com;`)
   })
 
-  it('split single thought as expected if there is empty spaces between the email address and the real spliter', () => {
+  it('split single thought as expected if there is empty spaces between the email address and the real splitter', () => {
     const thought = 'abc@email.com def@email.com ; One.'
     const exported = splitThought(thought)
 
@@ -509,7 +509,7 @@ describe('url address', () => {
   - https://abc.com/search?id=123`)
   })
 
-  it('split single thought as expected if there is empty spaces between the url address and the real spliter', () => {
+  it('split single thought as expected if there is empty spaces between the url address and the real splitter', () => {
     const thought = 'abc.com ; One.'
     const exported = splitThought(thought)
 
@@ -547,7 +547,7 @@ describe('url address', () => {
   - e`)
   })
 
-  it('split single thought as expected if it has more than one url address before the real spliter', () => {
+  it('split single thought as expected if it has more than one url address before the real splitter', () => {
     const thought = 'http://www.abc.com, www.def.com! www.def.com/xyz'
     const exported = splitThought(thought)
 
@@ -556,7 +556,7 @@ describe('url address', () => {
   - www.def.com/xyz`)
   })
 
-  it('split single thought as expected if there are two or more urls present after the real spliter', () => {
+  it('split single thought as expected if there are two or more urls present after the real splitter', () => {
     const thought = 'http://www.abc.com; www.def.com, www.def.com/xyz'
     const exported = splitThought(thought)
 
@@ -578,7 +578,7 @@ describe('combinations of three or more categories', () => {
   - $3.4`)
   })
 
-  it('split single thought as expected if a url address and an email address surrounded by quotation marks are seperated by a spliter', () => {
+  it('split single thought as expected if a url address and an email address surrounded by quotation marks are seperated by a splitter', () => {
     const thought = 'www.xyz.com!"abc@email.com"'
     const exported = splitThought(thought)
 
@@ -587,7 +587,7 @@ describe('combinations of three or more categories', () => {
   - "abc@email.com"`)
   })
 
-  it('split single thought as expected if a url address and an email address surrounded by quotation marks in one sentence are seperated by empty spaces and a spliter', () => {
+  it('split single thought as expected if a url address and an email address surrounded by quotation marks in one sentence are seperated by empty spaces and a splitter', () => {
     const thought = 'www.xyz.com ..."abc@email.com"'
     const exported = splitThought(thought)
 
@@ -596,7 +596,7 @@ describe('combinations of three or more categories', () => {
   - "abc@email.com"`)
   })
 
-  it('split single thought as expected if there are two or more special cases in one sentence before the spliter, ', () => {
+  it('split single thought as expected if there are two or more special cases in one sentence before the splitter, ', () => {
     const thought = 'abc@xyz.com, www.xyz.com/def! http://www.abc.com $3.20'
     const exported = splitThought(thought)
 

@@ -7,7 +7,7 @@
  * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
  * Examples: Mr. Dr.q Apt. Prof. Ph.D.
  */
-export function isAbbrev(str1 : string, s: string, spliter2 : string) {
+export default function isAbbrev(str1 : string, s: string, spliter2 : string) {
 
   return isAbbrEndSplitter(str1, s) || isAbbrMidSplitter(str1, s) || isAbbrDoubleSplitter(str1, s, spliter2)
 }
