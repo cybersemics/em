@@ -29,7 +29,6 @@ interface ThoughtAnnotationProps {
   showHiddenThoughts?: boolean,
   simplePath: SimplePath,
   style?: React.CSSProperties,
-  isValueEditing?: boolean,
 }
 
 /** Sets the innerHTML of the subthought text. */
