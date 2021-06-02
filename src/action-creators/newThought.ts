@@ -4,12 +4,7 @@ import { getSetting, getAllChildren, hasChild, isContextViewActive } from '../se
 import { asyncFocus, parentOf, ellipsize, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import { State } from '../util/initialState'
-import { Thunk, Context, Path } from '../types'
-
-interface SplitResult {
-  left: string,
-  right: string,
-}
+import { Thunk, Context, Path, SplitResult } from '../types'
 
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (splitResult: SplitResult, context: Context | null, state: State) => {

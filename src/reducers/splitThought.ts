@@ -5,12 +5,7 @@ import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { editableRender, existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
 import { State } from '../util/initialState'
-import { Path } from '../types'
-
-interface SplitResult {
-  left: string,
-  right: string,
-}
+import { Path, SplitResult } from '../types'
 
 /** Splits a thought into two thoughts.
  *

@@ -301,3 +301,23 @@ export type ThoughtsInterface = ThoughtIndices & ThoughtCaches
 export type Await<T> = T extends PromiseLike<infer U> ? U : T
 
 export type Timer = ReturnType<typeof setTimeout>
+
+/*
+  Represents the result of a split operation on an Editable.
+
+  In the simple case, left + right === value.
+  In the more complex case, beginning and ending tags are regenerated if an element gets split.
+
+  e.g. <b>bold and <i>italic<i></b>.
+
+  Splitting after "and" yields:
+
+  {
+    left: '<b>bold and </b>',
+    right: '<b><i>italic</i></b>'
+  }
+*/
+export interface SplitResult {
+  left: string,
+  right: string,
+}
