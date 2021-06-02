@@ -86,6 +86,8 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     isEditing,
     showHiddenThoughts,
     path: simplePathLive,
+    // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
+    isThoughtValueEditing: editingValue === headValue(simplePathLive)
   }
 }
 
