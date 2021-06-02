@@ -29,6 +29,11 @@ interface ThoughtPair {
   parent: Parent,
 }
 
+type SaveThoughtsUpdate = ThoughtIndices & {
+  // duplicate index keeps track of number of times a value has appeared in the context
+  duplicateIndex: Index<number>,
+}
+
 /** Replace head block with its children, or drop it, if head has no children. */
 const skipRootThought = (blocks: Block[]) => {
   const head = _.head(blocks)
@@ -94,11 +99,17 @@ const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtI
     }
   }
 
-  const updates = blocks.reduce((accum, block, index) => {
+  const updates = blocks.reduce<SaveThoughtsUpdate>((accum, block, index) => {
     const skipLevel = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
     const rank = startRank + index * rankIncrement
+
+    const value = block.scope.trim()
+    const hashedValue = hashThought(value)
+    const duplicateValueCount = accum.duplicateIndex[hashedValue]
+
+    const nonDuplicateValue = duplicateValueCount && duplicateValueCount > 0 ? `${value}(${duplicateValueCount})` : value
+
     if (!skipLevel) {
-      const value = block.scope.trim()
 
       const existingChildren =
         contextIndexUpdates[contextEncoded]?.children ||
@@ -117,26 +128,41 @@ const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtI
       const createdInherited = block.created ||
         childCreated ||
         lastUpdated
-      const { lexeme, parent } = insertThought(stateNew, existingParent, value, context, rank, createdInherited, lastUpdatedInherited)
+      const { lexeme, parent } = insertThought(stateNew, existingParent, nonDuplicateValue, context, rank, createdInherited, lastUpdatedInherited)
 
       // TODO: remove mutations
       contextIndexUpdates[contextEncoded] = parent
-      thoughtIndexUpdates[hashThought(value)] = lexeme
+      thoughtIndexUpdates[hashThought(nonDuplicateValue)] = lexeme
+    }
+
+    const updatedDuplicateIndex = {
+      ...accum.duplicateIndex,
+      [hashedValue]: duplicateValueCount ? duplicateValueCount + 1 : 1
     }
 
     if (block.children.length > 0) {
-      const childContext = skipLevel ? context : unroot([...context, block.scope])
-      return saveThoughts(state, contextIndexUpdates, thoughtIndexUpdates, childContext, block.children, rankIncrement, startRank, lastUpdated)
+      const childContext = skipLevel ? context : unroot([...context, nonDuplicateValue])
+      return {
+        ...saveThoughts(state, contextIndexUpdates, thoughtIndexUpdates, childContext, block.children, rankIncrement, startRank, lastUpdated),
+        duplicateIndex: updatedDuplicateIndex,
+      }
     }
     else {
-      return accum
+      return {
+        ...accum,
+        duplicateIndex: updatedDuplicateIndex
+      }
     }
   }, {
     contextIndex: contextIndexUpdates,
     thoughtIndex: thoughtIndexUpdates,
-  } as ThoughtIndices)
+    duplicateIndex: {}
+  })
 
-  return updates
+  return {
+    contextIndex: updates.contextIndex,
+    thoughtIndex: updates.thoughtIndex
+  }
 }
 
 /** Return number of contexts in blocks array. */
