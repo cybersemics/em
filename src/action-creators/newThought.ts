@@ -32,7 +32,7 @@ const newThought = ({
   at?: Path,
   insertBefore?: boolean,
   insertNewSubthought?: boolean,
-  splitResult?: { left: string, right: string } | null,
+  splitResult?: SplitResult | null,
   preventSetCursor?: boolean,
   preventSplit?: boolean,
   value?: string,
