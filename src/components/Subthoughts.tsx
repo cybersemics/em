@@ -11,7 +11,7 @@ import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
-import { Child, GesturePath, Index, Path, SimplePath, SortPreference, ThoughtContext } from '../types'
+import { Child, Context, GesturePath, Index, Path, SimplePath, SortPreference, ThoughtContext } from '../types'
 
 // util
 import {
@@ -25,7 +25,6 @@ import {
   headValue,
   isDivider,
   isEM,
-  isFunction,
   parseJsonSafe,
   pathToContext,
   isDescendantPath,
@@ -33,6 +32,7 @@ import {
   isRoot,
   unroot,
   isAbsolute,
+  isDescendant,
 } from '../util'
 
 // selectors
@@ -51,7 +51,9 @@ import {
   getAllChildrenSorted,
   isContextViewActive,
   rootedParentOf,
-  getGlobalSortPreference, getSortPreference,
+  getGlobalSortPreference,
+  getSortPreference,
+  getChildren,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -76,6 +78,9 @@ if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
 if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
 const PAGINATION_SIZE = 100
+
+/** Check if the given path is a leaf. */
+const isLeaf = (state: State, context: Context) => getChildren(state, context).length === 0
 
 /********************************************************************
  * mapStateToProps
@@ -125,8 +130,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
   // TODO: Resolve cursor to a simplePath
-  const isCursorLeaf = cursor && !getAllChildren(state, pathToContext(cursor))
-    .some((child: Child) => !isFunction(child.value))
+  const isCursorLeaf = cursor && isLeaf(state, pathToContext(cursor))
 
   const cursorDepth = cursor
     ? cursor.length - (isCursorLeaf ? 1 : 0)
@@ -335,9 +339,7 @@ export const SubthoughtsComponent = ({
   showContexts,
   sort: contextSort,
   simplePath,
-  showHiddenThoughts,
   isExpanded,
-  isAbsoluteContext
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
 
   // <Subthoughts> render
@@ -403,27 +405,6 @@ export const SubthoughtsComponent = ({
   const isPaginated = show && filteredChildren.length > proposedPageSize
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
-  // get shared subcontext index between cursor and path
-  const subcontextIndex = checkIfPathShareSubcontext(cursor || [], resolvedPath)
-
-  // check if thoughtResolved is ancestor, descendant of cursor or is equal to cursor itself
-  const isAncestorOrDescendant = (subcontextIndex + 1) === (cursor || []).length
-  || (subcontextIndex + 1) === resolvedPath.length
-
-  /*
-    Check if the chilren are distant relatives and their depth equals to or greater than cursor.
-    With current implementation we don't cosider the condition where a node which is neither ancestor or descendant
-    of cursor can have zero distance-from-cursor. So we check the condition here and dim the nodes.
-  */
-  const shouldDim = (distance === 0) && !isAncestorOrDescendant
-
-  /*
-    Unlike normal view where there is only one expanded thougt in a context, table view node has all its children expand and render their respective subthoughts.
-    If we select any grandchildren of the main table view node, all it's children will disappear but the grandchildren will still show up.
-    We check that condtion and hide the node.
-  */
-  const shouldHide = (distance === 1) && !isAncestorOrDescendant && unroot(resolvedPath).length > 0
-
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
     1. Force actualDistance to 2 to hide thoughts.
@@ -436,8 +417,51 @@ export const SubthoughtsComponent = ({
   const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath) // eslint-disable-line jsdoc/require-jsdoc
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
+  const cursorContext = pathToContext(cursor || [])
+
+  const isCursorLeaf = cursor && isLeaf(state, cursorContext)
+
+  const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
+
+  /** First visible thought at the top. */
+  const firstVisiblePath = cursor?.slice(0, -maxDistance)
+
+  const isDescendantOfFirstVisiblePath = isDescendant(pathToContext(firstVisiblePath || []), pathToContext(resolvedPath))
+
+  const cursorSubcontextIndex = checkIfPathShareSubcontext(cursor || [], resolvedPath)
+
+  const isAncestorOfCursor = cursor && resolvedPath.length === (cursorSubcontextIndex + 1) && cursor?.length > resolvedPath.length
+
+  const isDescendantOfCursor = cursor && cursor.length === (cursorSubcontextIndex + 1) && resolvedPath.length > cursor?.length
+
+  const isCursor = cursor && resolvedPath.length === (cursorSubcontextIndex + 1) && resolvedPath.length === cursor?.length
+
+  /*
+    The thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
+  */
+  const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
+
+  /*
+    The thoughts that are the not cursor nor descendants of the cursor should be dimmed.
+  */
+  const shouldDim = isDescendantOfFirstVisiblePath && !isCursor && !isDescendantOfCursor
+
+  /*
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+  */
+
+  /*
+    Note: The following properties is applied to the immediate childrens with given class.
+
+    distance-from-cursor-0 fully visible
+    distance-from-cursor-1 dimmed
+    distance-from-cursor-2 shifted left and hidden
+    distance-from-cursor-3 shiifted left and hidden
+
+    Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
+  */
   const actualDistance =
-  shouldHide || zoom ? 2
+  shouldShiftAndHide || zoom ? 2
   : shouldDim ? 1
   : distance
 
