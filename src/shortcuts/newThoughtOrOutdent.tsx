@@ -2,7 +2,7 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../types'
 import { isTouch } from '../browser'
-import { getOffsetWithinContent, headValue, isDocumentEditable } from '../util'
+import { splitAtSelection, headValue, isDocumentEditable } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
 
@@ -35,12 +35,12 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
     const target = e.target as HTMLElement
 
     // Note: e.target should be a HTMLElement and a content editable node
-    const offset = cursor && isTargetHTMLElement && target.hasAttribute('contenteditable')
-      ? getOffsetWithinContent(target)
-      : 0
+    const isTargetAnEditable = isTargetHTMLElement && target.hasAttribute('contenteditable')
+
+    const splitResult = cursor && isTargetAnEditable ? splitAtSelection(target) : null
 
     // prevent split on gesture
-    dispatch(newThought({ value: '', offset, preventSplit: type === 'gesture' }))
+    dispatch(newThought({ value: '', splitResult, preventSplit: type === 'gesture' }))
   }
 }
 

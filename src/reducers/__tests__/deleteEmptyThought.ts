@@ -1,5 +1,5 @@
-import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
+import { exportContext, getChildren } from '../../selectors'
 import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -255,7 +255,13 @@ describe('mount', () => {
       { type: 'deleteEmptyThought' }
     ])
     jest.runOnlyPendingTimers()
-    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+
+    const dummyEditable = document.createElement('div')
+    dummyEditable.innerHTML = 'apple'
+
+    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
+
+    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
   })
 
   it('after merging siblings, caret should be in between', async () => {
@@ -270,6 +276,15 @@ describe('mount', () => {
       { type: 'deleteEmptyThought' },
     ])
     jest.runOnlyPendingTimers()
-    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+
+    const mergedValue = getChildren(store.getState(), [HOME_TOKEN])[0].value
+
+    const dummyEditable = document.createElement('div')
+    dummyEditable.innerHTML = mergedValue
+
+    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
+
+    // TODO: Also check the if the selection focusNode parent is the correct editable
+    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
   })
 })

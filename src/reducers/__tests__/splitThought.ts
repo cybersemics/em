@@ -10,7 +10,10 @@ it('split thought', () => {
 
   const steps = [
     newThought('apple'),
-    splitThought({ offset: 2 }),
+    splitThought({ splitResult: {
+      left: 'ap',
+      right: 'ple'
+    } }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -27,7 +30,10 @@ it('cursor moves to second thought', () => {
 
   const steps = [
     newThought('apple'),
-    splitThought({ offset: 2 })
+    splitThought({ splitResult: {
+      left: 'ap',
+      right: 'ple'
+    } })
   ]
 
   // run steps through reducer flow

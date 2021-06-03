@@ -23,6 +23,7 @@ import {
 import {
   createId,
   ellipsize,
+  getTextContentFromHTML,
   head,
   headValue,
   parentOf,
@@ -158,7 +159,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
           ...insertNewSubthought ? path : parentOf(path),
           { value, rank: newRank, id }
         ]),
-        offset: offset != null ? offset : value.length,
+        offset: offset != null ? offset : getTextContentFromHTML(value).length,
       })
       : null,
 

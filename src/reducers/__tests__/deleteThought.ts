@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
+import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -176,7 +176,16 @@ describe('mount', () => {
       { type: 'deleteThought' },
     ])
     jest.runOnlyPendingTimers()
-    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+
+    // Note: To test caret position always use getCaretPostionDetails with a dummy div.
+    const dummyEditable = document.createElement('div')
+    dummyEditable.innerHTML = 'apple'
+
+    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
+
+    // TODO: Also check the if the selection focusNode parent is the correct editable
+
+    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
   })
 
 })

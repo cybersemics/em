@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { parentOf, head, headRank, headValue, pathToContext, reducerFlow, splitSentence } from '../util'
+import { parentOf, getTextContentFromHTML, head, headRank, headValue, pathToContext, reducerFlow, splitSentence } from '../util'
 import { editableRender, editingValue, existingThoughtChange, newThought, setCursor } from '../reducers'
 import { rootedParentOf, simplifyPath } from '../selectors'
 
@@ -30,7 +30,7 @@ const splitSentences = (state: State) => {
       path: simplifyPath(state, cursor),
       rankInContext: rank }),
     ...otherSentences.map(sentence => newThought({ value: sentence })),
-    setCursor({ path: newCursor, offset: firstSentence.length }),
+    setCursor({ path: newCursor, offset: getTextContentFromHTML(firstSentence).length }),
     editingValue({ value: firstSentence }),
     editableRender
   ]
