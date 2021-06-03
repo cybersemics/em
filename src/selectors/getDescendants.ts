@@ -10,7 +10,7 @@ interface Options {
 }
 
 /** Generates a flat list of all descendants. */
-const getDescendants = (state: State, path: SimplePath, { recur, filterFunction }: Options): Child[] => {
+const getDescendants = (state: State, path: SimplePath, { recur, filterFunction }: Options = {}): Child[] => {
   const children = getChildrenRanked(state, pathToContext(path))
   // only append current thought in recursive calls
   return (recur ? [head(path)] : []).concat(

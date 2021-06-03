@@ -283,6 +283,36 @@ it('initialSettings', () => {
 `)
 })
 
+it('increment duplicates', () => {
+  const text = `
+  - a
+    - b
+      - c
+      - c
+      - d
+    - b 
+  - a
+    - b
+      - d
+      - e`
+
+  const expectedExport = `
+- a
+  - b
+    - c
+    - c(1)
+    - d
+  - b(1)
+- a(1)
+  - b
+    - d
+    - e`
+  const exported = importExport(text)
+
+  expect(exported.trim())
+    .toBe(expectedExport.trim())
+})
+
 it('two root thoughts', () => {
   const text = `- a
   - b

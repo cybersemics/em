@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { clearPushQueue, existingThoughtChange, existingThoughtDelete, existingThoughtMove, isPushing, pull, pullLexemes, push, updateThoughts } from '../action-creators'
 import { hasPushes } from '../selectors'
-import { equalArrays, hashContext, keyValueBy, pathToContext } from '../util'
+import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
 import { PushBatch, State } from '../util/initialState'
 import { Thunk, Context, Index, Lexeme } from '../types'
 import { store } from '../store'
@@ -31,9 +31,9 @@ const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>
       ...accum.pendingEdits || [],
       ...batch.pendingEdits || [],
     ],
-    pendingMoves: [
-      ...accum.pendingMoves || [],
-      ...batch.pendingMoves || [],
+    descendantMoves: [
+      ...accum.descendantMoves || [],
+      ...batch.descendantMoves || [],
     ],
     pendingLexemes: {
       ...accum.pendingLexemes || {},
@@ -108,26 +108,43 @@ const flushEdits = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (disp
 /** Pull all descendants of pending moves and dispatch existingThoughtMove to fully move. */
 const flushMoves = (pushQueue: PushBatch[]): Thunk => async (dispatch, getState) => {
 
+  const state = getState()
   // if there are pending thoughts that need to be moved, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtMove
-  const pendingMoves = pushQueue.map(batch => batch.pendingMoves || []).flat()
-  if (pendingMoves?.length) {
+  const descendantMoves = pushQueue.map(batch => batch.descendantMoves || []).flat()
+  const pendingPulls = pushQueue.map(batch => batch.pendingPulls || []).flat()
 
-    const pending: Index<Context> = keyValueBy(pendingMoves, ({ pathOld }) => {
+  let maxDepth = Infinity
+
+  // pull all children of source context
+  if (descendantMoves?.length) {
+
+    const pending: Index<Context> = keyValueBy(descendantMoves, ({ pathOld }) => {
       const context = pathToContext(pathOld)
+      // skip the pull for loaded descendants
+      return { [hashContext(context)]: context }
+    })
+    await dispatch(pull(pending, { maxDepth: Infinity }))
+    maxDepth = Math.max(...descendantMoves.map(({ pathOld }) => getDepth(state, pathToContext(pathOld))))
+  }
+
+  // pull all children of destination (upto max depth of possibly conflcited path) context before moving any thoughts
+  if (pendingPulls.length) {
+    const pathToLoad = keyValueBy(pendingPulls, ({ path }) => {
+      const context = pathToContext(path)
       return {
         [hashContext(context)]: context
       }
     })
 
-    await dispatch(pull(pending, { maxDepth: Infinity }))
-
-    pendingMoves.forEach(({ pathOld, pathNew }) => {
-      dispatch(existingThoughtMove({
-        oldPath: pathOld,
-        newPath: pathNew,
-      }))
-    })
+    await dispatch(pull(pathToLoad, { maxDepth }))
   }
+
+  descendantMoves.forEach(({ pathOld, pathNew }) => {
+    dispatch(existingThoughtMove({
+      oldPath: pathOld,
+      newPath: pathNew,
+    }))
+  })
 
 }
 

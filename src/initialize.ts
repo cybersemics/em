@@ -6,7 +6,7 @@ import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import importOnFirstMatchPathActionCreator from './test-helpers/importOnFirstMatchPath'
-import getLexemeFromDB from './test-helpers/e2e-helpers/getLexemeFromDB'
+import getLexemeFromDB from './e2e/helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
 

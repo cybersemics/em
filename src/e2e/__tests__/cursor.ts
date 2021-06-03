@@ -2,13 +2,13 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 
-import paste from '../../test-helpers/e2e-helpers/paste'
-import getEditingText from '../../test-helpers/e2e-helpers/getEditingText'
-import waitForEditable from '../../test-helpers/e2e-helpers/waitForEditable'
-import waitForThoughtToExistInDb from '../../test-helpers/e2e-helpers/waitForThoughtExistInDb'
-import waitForState from '../../test-helpers/e2e-helpers/waitForState'
-import clickThought from '../../test-helpers/e2e-helpers/clickThought'
-import initPage from '../../test-helpers/e2e-helpers/initPage'
+import paste from '../helpers/paste'
+import getEditingText from '../helpers/getEditingText'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForThoughtToExistInDb from '../helpers/waitForThoughtExistInDb'
+import waitForState from '../helpers/waitForState'
+import clickThought from '../helpers/clickThought'
+import initPage from '../helpers/initPage'
 import { Page } from 'puppeteer'
 
 describe('cursor testing', () => {

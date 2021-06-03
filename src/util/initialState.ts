@@ -30,7 +30,8 @@ export interface PushBatch {
   recentlyEdited: RecentlyEditedTree,
   pendingDeletes?: { context: Context, child: Child }[],
   pendingEdits?: ExistingThoughtChangePayload[],
-  pendingMoves?: { pathOld: Path, pathNew: Path }[],
+  descendantMoves?: { pathOld: Path, pathNew: Path, pathToPull?: Path }[],
+  pendingPulls?: { path: Path }[],
   updates?: Index<string>,
   pendingLexemes?: Index<boolean>,
 }

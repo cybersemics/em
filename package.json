@@ -34,8 +34,9 @@
     "lint:package-lock": "node ./scripts/validate-package-lock.js",
     "servebuild": "serve -s build -l 3000",
     "test": "react-scripts test --testPathIgnorePatterns=./src/e2e",
-    "test:e2e": "react-scripts test ./src/e2e",
-    "test:e2e:prod": "npm run servebuild & react-scripts test ./src/e2e; kill $!"
+    "test:e2e": "react-scripts test ./src/e2e --testPathIgnorePatterns=./src/e2e/__tests__/iOS",
+    "test:e2e:ios": "react-scripts test ./src/e2e/__tests__/iOS",
+    "test:e2e:prod": "npm run servebuild & npm run test:e2e; kill $!"
   },
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
@@ -114,6 +115,7 @@
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
+    "browserstack-local": "^1.4.8",
     "chalk": "^4.1.1",
     "em-typedoc-theme": "^0.3.0",
     "enzyme": "^3.11.0",
@@ -133,6 +135,8 @@
     "fake-indexeddb": "^3.1.2",
     "husky": "^6.0.0",
     "it-all": "^1.0.5",
+    "jest-dev-server": "^5.0.0",
+    "jest-environment-node": "^26.6.2",
     "jest-environment-puppeteer-jsdom": "^4.3.1",
     "jest-localstorage-mock": "^2.4.10",
     "jest-puppeteer": "^5.0.2",
@@ -142,10 +146,12 @@
     "react-dnd-test-utils": "^11.1.3",
     "redux-mock-store": "^1.5.4",
     "serve": "^11.3.2",
+    "tcp-port-used": "^1.0.2",
     "typedoc": "^0.17.8",
     "typedoc-plugin-exclude-references": "^1.0.0",
     "typedoc-plugin-external-module-name": "^4.0.6",
     "typedoc-plugin-rename-named-parameters": "^1.0.6",
-    "typescript": "^4.2.4"
+    "typescript": "^4.2.4",
+    "webdriverio": "^7.6.0"
   }
 }
