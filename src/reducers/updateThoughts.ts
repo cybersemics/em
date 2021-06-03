@@ -12,7 +12,8 @@ export interface UpdateThoughtsOptions {
   recentlyEdited?: Index,
   pendingDeletes?: { context: Context, child: Child }[],
   pendingEdits?: ExistingThoughtChangePayload[],
-  pendingMoves?: { pathOld: Path, pathNew: Path }[],
+  pendingPulls?: { path: Path }[],
+  descendantMoves?: { pathOld: Path, pathNew: Path }[],
   contextChain?: SimplePath[],
   updates?: Index<string>,
   local?: boolean,
@@ -28,7 +29,7 @@ const rootEncoded = hashContext([HOME_TOKEN])
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, pendingDeletes, pendingEdits, pendingMoves, local = true, remote = true, isLoading }: UpdateThoughtsOptions) => {
+const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, pendingDeletes, pendingEdits, descendantMoves, pendingPulls, local = true, remote = true, isLoading }: UpdateThoughtsOptions) => {
 
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
@@ -79,7 +80,8 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     updates,
     pendingDeletes,
     pendingEdits,
-    pendingMoves,
+    descendantMoves,
+    pendingPulls,
     local,
     remote,
     pendingLexemes,
