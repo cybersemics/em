@@ -6,15 +6,16 @@ global.document = { hasFocus: () => false } as any
 import fs from 'fs'
 import _ from 'lodash'
 import { HOME_TOKEN } from '../../src/constants'
-import { hashContext, hashThought, head, normalizeThought, unroot } from '../../src/util'
+import { hashContext, hashThought, head, normalizeThought, timestamp, unroot } from '../../src/util'
 import { Child, Context, Index, Lexeme, Parent, ThoughtContext } from '../../src/types'
 
 // arrays are stored as objects with a numeric index in Firebase
 // so we have to override array types
 // (we could also convert the Firebase State to a proper State instead)
+type FirebaseContext = Index<string>
 type FirebaseLexeme = { contexts: Index<FirebaseThoughtContext>, value: string }
 type FirebaseParent = { children: Index<Child> }
-type FirebaseThoughtContext = { context: Index<string> }
+type FirebaseThoughtContext = { id?: string, context: FirebaseContext, rank: number }
 
 interface Database {
   users: Index<UserState>
@@ -58,9 +59,30 @@ const repair = {
     delete state.thoughtIndex[hashThought(lexeme.value)]
   },
 
-  missingParents: (state: UserState, lexeme: FirebaseLexeme) => {
+  missingParents: (state: UserState, lexeme: FirebaseLexeme, cx: FirebaseThoughtContext) => {
     missingParents++
-    // const msg = `Parent of Lexeme "${lexeme.value}" missing from ThoughtContext "${context}"`
+
+    // recreate the missing parent
+    const context = Object.values(cx.context)
+    const id = hashContext(context)
+    const childNew: Child = {
+      ...cx.id ? { id: cx.id } : null,
+      value: lexeme.value,
+      rank: cx.rank,
+      lastUpdated: timestamp(),
+    }
+    const parentNew: Parent = {
+      id,
+      children: [childNew],
+      context,
+      lastUpdated: timestamp(),
+    }
+    // arrays can be safely saved to Firebase
+    state.contextIndex[id] = parentNew as unknown as FirebaseParent
+
+    // const msg = `{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but no Parent exists.`
+    // console.error(msg)
+    // console.error('parentNew', parentNew)
   },
 
   missingParentChildren: (state: UserState, lexeme: FirebaseLexeme) => {
@@ -104,7 +126,7 @@ const restoreChildren = (state: UserState) => {
       const context = Object.values(cx.context)
       const parent = state.contextIndex[hashContext(context)]
       if (!parent) {
-        repair.missingParents(state, lexeme)
+        repair.missingParents(state, lexeme, cx)
         return
       }
       else if (!parent.children) {
