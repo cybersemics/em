@@ -49,7 +49,7 @@ const restoreChildren = (state: UserState) => {
     }
     else if (!lexeme.contexts) {
       missingLexemeContexts++
-      console.warn(`Missing lexeme.contexts in "${lexeme.value}"`)
+      // console.warn(`Missing lexeme.contexts in "${lexeme.value}"`)
       // delete lexeme since there are no contexts to restore it to
       delete state.thoughtIndex[hashThought(lexeme.value)]
     }
@@ -59,8 +59,9 @@ const restoreChildren = (state: UserState) => {
 
       if (!cx.context) {
         missingThoughtContexts++
-        const msg = `Missing cx.context "${lexeme.value}"`
-        console.error(msg)
+        // const msg = `Missing cx.context "${lexeme.value}"`
+        // delete lexeme since there are no contexts to restore it to
+        delete state.thoughtIndex[hashThought(lexeme.value)]
         return
       }
 
