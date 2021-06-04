@@ -70,12 +70,16 @@ const ModalExport = () => {
   })
 
   /** A message that describes which thoughts will be exported and presents a mime type dropdown. */
-  const ExportMessage = () => <span>
-    {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>
-    <span> as <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a></span>
-    .
-  </span>
-  const publishMessage = <span>Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>.</span>
+  const ExportMessage = () =>
+    <span>
+      {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>
+      <span> as <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a></span>
+      .
+    </span>
+
+  /** A message that describes which thoughts will be published. */
+  const PublishMessage = () =>
+    <span>Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>.</span>
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
@@ -344,7 +348,7 @@ const ModalExport = () => {
               )}
             </div>
             : <div>
-              <p>{publishing ? 'Publishing...' : publishMessage}</p>
+              <p>{publishing ? 'Publishing...' : <PublishMessage />}</p>
               <p className='dim'><i>Note: These thoughts are published permanently. <br/>
               This action cannot be undone.</i></p>
             </div>

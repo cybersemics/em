@@ -2,21 +2,25 @@ import _ from 'lodash'
 import { head, pathToContext, unroot } from '../util'
 import { getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
-import { Child, SimplePath } from '../types'
+import { Child, Context, SimplePath } from '../types'
 
 interface Options {
   recur?: boolean,
-  filterFunction?: (child: Child) => boolean,
+  filterFunction?: (child: Child, context: Context, simplePath: SimplePath) => boolean,
 }
 
 /** Generates a flat list of all descendants. */
-const getDescendants = (state: State, path: SimplePath, { recur, filterFunction }: Options = {}): Child[] => {
-  const children = getChildrenRanked(state, pathToContext(path))
+const getDescendants = (state: State, simplePath: SimplePath, { recur, filterFunction }: Options = {}): Child[] => {
+  const context = pathToContext(simplePath)
+  const children = getChildrenRanked(state, context)
+  const filteredChildren = filterFunction
+    ? children.filter(child => filterFunction(child, context, simplePath))
+    : children
   // only append current thought in recursive calls
-  return (recur ? [head(path)] : []).concat(
+  return (recur ? [head(simplePath)] : []).concat(
     _.flatMap(
-      filterFunction ? children.filter(filterFunction) : children,
-      child => getDescendants(state, unroot(path.concat(child) as SimplePath), {
+      filteredChildren,
+      child => getDescendants(state, unroot([...simplePath, child] as SimplePath), {
         recur: true,
         filterFunction
       }))

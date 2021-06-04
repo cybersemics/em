@@ -1,7 +1,7 @@
 import ClipboardJS from 'clipboard'
-import { editableNode, getExportPhrase, isDocumentEditable, pathToContext, setSelection } from '../util'
-import { exportContext, simplifyPath } from '../selectors'
-import { alert } from '../action-creators'
+import { editableNode, getExportPhrase, hashContext, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { exportContext, getDescendants, isPending, simplifyPath } from '../selectors'
+import { alert, pull } from '../action-creators'
 import { Shortcut } from '../types'
 
 /** Copies a string directly to the clipboard by simulating a button click with ClipboadJS. */
@@ -22,13 +22,29 @@ const copyCursorShortcut: Shortcut = {
     !window.getSelection()?.toString() &&
     !!getState().cursor &&
     isDocumentEditable(),
-  exec: (dispatch, getState) => {
+  exec: async (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
     const simplePath = simplifyPath(state, cursor!)
     const context = pathToContext(simplePath)
-    const exported = exportContext(state, context, 'text/plain')
     const offset = window.getSelection()?.focusOffset
+
+    // if there are any pending descendants, do a pull
+    // otherwise copy whatever is in state
+    let hasPending = false
+    getDescendants(state, simplePath, {
+      // use filterFunction just to check if any child is pending
+      filterFunction: (child, context) => {
+        if (isPending(state, [...context, child.value])) hasPending = true
+        return true
+      }
+    })
+    if (hasPending) {
+      dispatch(alert(`Loading thoughts...`, { alertType: 'clipboard' }))
+      await dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
+    }
+
+    const exported = exportContext(state, context, 'text/plain')
     copy(exported)
 
     // restore selection
