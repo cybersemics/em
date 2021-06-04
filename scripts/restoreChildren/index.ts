@@ -37,7 +37,6 @@ let limit = Infinity
 let missingLexemeContexts = 0
 let missingThoughtContexts = 0
 let missingParents = 0
-let missingParentChildren = 0
 let missingChildInParent = 0
 
 // repair functions (mutates state)
@@ -85,13 +84,6 @@ const repair = {
     // console.error('parentNew', parentNew)
   },
 
-  missingParentChildren: (state: UserState, lexeme: FirebaseLexeme) => {
-    missingParentChildren++
-    // const msg = `Missing children of "${lexeme.value}" missing from ThoughtContext "${context}"`
-    // console.error(msg)
-    // console.error('parent', parent)
-  },
-
   missingChildInParent: (state: UserState, lexeme: FirebaseLexeme) => {
     missingChildInParent++
     // console.log('value', lexeme.value)
@@ -130,8 +122,7 @@ const restoreChildren = (state: UserState) => {
         return
       }
       else if (!parent.children) {
-        repair.missingParentChildren(state, lexeme)
-        return
+        throw new Error('Missing parent.childen. This was unexpected. A repair function has not been implemented.')
       }
       const childInParent = Object.values(parent.children).find(child =>
         normalizeThought(child.value) === normalizeThought(lexeme.value)
@@ -179,7 +170,6 @@ const main = () => {
   console.log('Missing lexeme.contexts:', missingLexemeContexts)
   console.log('Missing cx.context:', missingThoughtContexts)
   console.log('Missing parent:', missingParents)
-  console.log('Missing parent.children:', missingParentChildren)
   console.log('Missing childInParent:', missingChildInParent)
   console.log('')
 
