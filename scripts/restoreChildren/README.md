@@ -1,14 +1,40 @@
 Restore missing children from traversing all lexemes in an exported em db.
 
+Outputs two files:
+
+- [filename].repaired.json
+- [filename].formatted.json
+
 ## Build
 
 ```sh
-../../node_modules/.bin/tsc -w
+npm run build
 ```
+
+Watch:
+
+npm run build -- --watch
 
 ## Usage
 
 ```sh
-node build/scripts/restoreChildren/index.js /Users/raine/Documents/Backups/em,\ Workflowy/2021-03-25T07_48_47Z_em-proto_data.json
+npm run start [filename]
 ```
 
+Input data is formatted and written to disk for easy diffing:
+
+```sh
+git diff [filename].formatted.json [filename].repaired.json
+```
+
+## Example
+
+```sh
+npm run start /Users/raine/Documents/Backups/em,\ Workflowy/2021-03-25T07_48_47Z_em-proto_data.json
+```
+
+Input data is formatted and written to disk for easy diffing:
+
+```sh
+git diff "/Users/raine/Documents/Backups/em, Workflowy/em-proto-KB6Go0pfKJeoBmOheF1wJwXowbP2-export - 06-04-21.formatted.json" "/Users/raine/Documents/Backups/em, Workflowy/em-proto-KB6Go0pfKJeoBmOheF1wJwXowbP2-export - 06-04-21.repaired.json"
+```

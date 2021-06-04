@@ -50,6 +50,8 @@ const restoreChildren = (state: UserState) => {
     else if (!lexeme.contexts) {
       missingLexemeContexts++
       console.warn(`Missing lexeme.contexts in "${lexeme.value}"`)
+      // delete lexeme since there are no contexts to restore it to
+      delete state.thoughtIndex[hashThought(lexeme.value)]
     }
     // convert Firebase object to array
     const contexts = Object.values(lexeme.contexts || {})
@@ -98,18 +100,22 @@ const restoreChildren = (state: UserState) => {
  *****************************************************************/
 const main = () => {
 
-  const [,,file1, file2] = process.argv
-
   // check args
   if (process.argv.length < 3) {
     console.info(helpText)
     process.exit(0)
   }
 
+  const [,,fileIn] = process.argv
+
   // read
-  const input = fs.readFileSync(file1, 'utf-8')
+  const input = fs.readFileSync(fileIn, 'utf-8')
   const db = JSON.parse(input) as Database | UserState
   const state = (db as Database).users?.[userId] || db as UserState
+
+  // reformat input json so it can easily be compared with output json
+  const fileInFormatted = `${fileIn.slice(0, -'.json'.length)}.formatted.json`
+  fs.writeFileSync(fileInFormatted, JSON.stringify(state, null, 2))
 
   restoreChildren(state)
 
@@ -123,7 +129,11 @@ const main = () => {
   console.log('')
 
   // write
-  console.log('Done')
+  const fileOut = `${fileIn.slice(0, -'.json'.length)}.repaired.json`
+  fs.writeFileSync(fileOut, JSON.stringify(state, null, 2))
+
+  console.log(`Input state (formatted) written to: ${fileInFormatted}`)
+  console.log(`Output state written to: ${fileOut}`)
 
 }
 
