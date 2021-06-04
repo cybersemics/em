@@ -183,8 +183,8 @@ const main = () => {
   const state = (db as Database).users?.[userId] || db as UserState
 
   // reformat input json so it can easily be compared with output json
-  const fileInFormatted = `${fileIn.slice(0, -'.json'.length)}.formatted.json`
-  const fileFormatted = JSON.stringify(state, null, 2)
+  // const fileInFormatted = `${fileIn.slice(0, -'.json'.length)}.formatted.json`
+  // const fileFormatted = JSON.stringify(state, null, 2)
 
   restoreChildren(state)
 
@@ -204,10 +204,10 @@ const main = () => {
   }
   else
   {
-    fs.writeFileSync(fileInFormatted, fileFormatted)
-    fs.writeFileSync(fileOut, JSON.stringify(state, null, 2))
+    // fs.writeFileSync(fileInFormatted, fileFormatted)
+    // console.log(`Input state (formatted) written to: ${fileInFormatted}`)
 
-    console.log(`Input state (formatted) written to: ${fileInFormatted}`)
+    fs.writeFileSync(fileOut, JSON.stringify(state, null, 2))
     console.log(`Output state written to: ${fileOut}`)
   }
 
