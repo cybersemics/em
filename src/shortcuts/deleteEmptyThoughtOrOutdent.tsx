@@ -71,11 +71,17 @@ const canExecuteOutdent = (state: State) => {
   if (!cursor || !selection) return false
 
   const offset = selection.focusOffset
+  const focusedEditingValue = state.editingValue || ''
+  const contextOfCursor = pathToContext(cursor)
+  const parentOfCursor = parentOf(contextOfCursor)
+  const filteredList = contextOfCursor.filter(el => !parentOfCursor.includes(el))
+
   return cursor &&
     offset === 0 &&
     isDocumentEditable() &&
     headValue(cursor).length !== 0 &&
-    getChildren(state, parentOf(pathToContext(cursor))).length === 1
+    getChildren(state, parentOfCursor).length === 1 &&
+    filteredList.length === 1 && !filteredList.includes(focusedEditingValue)
 }
 
 /** A selector that returns true if merged thought value is duplicate. */
