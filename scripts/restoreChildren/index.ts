@@ -39,6 +39,9 @@ let missingThoughtContexts = 0
 let missingParents = 0
 let missingChildInParent = 0
 
+// a tiny number in the order of magnitude of 0.0001 - 0.001 that ensures new children's ranks do not conflict
+const smudge = () => Math.floor(Math.random() * 1000) / 1000000
+
 // repair functions (mutates state)
 const repair = {
 
@@ -64,10 +67,11 @@ const repair = {
     // recreate the missing parent
     const context = Object.values(cx.context)
     const id = hashContext(context)
+    const rankNew = cx.rank + smudge()
     const childNew: Child = {
       ...cx.id ? { id: cx.id } : null,
-      value: lexeme.value,
-      rank: cx.rank,
+      value: lexeme.value, // use Lexeme value since we the in-context value is lost
+      rank: rankNew,
       lastUpdated: timestamp(),
     }
     const parentNew: Parent = {
@@ -78,17 +82,36 @@ const repair = {
     }
     // arrays can be safely saved to Firebase
     state.contextIndex[id] = parentNew as unknown as FirebaseParent
+    cx.rank = rankNew
 
     // const msg = `{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but no Parent exists.`
     // console.error(msg)
     // console.error('parentNew', parentNew)
   },
 
-  missingChildInParent: (state: UserState, lexeme: FirebaseLexeme) => {
+  missingChildInParent: (state: UserState, lexeme: FirebaseLexeme, cx: FirebaseThoughtContext, parent: FirebaseParent) => {
     missingChildInParent++
-    // console.log('value', lexeme.value)
-    // console.log('cx', cx)
-    // console.log('childInParent', childInParent)
+
+    // print before parent has been mutated
+    // console.error(`{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but is not found in the corresponding Parent's children.`)
+    // console.error('parentOld', parent)
+
+    const context = Object.values(cx.context)
+    const id = hashContext(context)
+    const children = parent.children
+    const rankNew = cx.rank + smudge()
+    const childNew: Child = {
+      ...cx.id ? { id: cx.id } : null,
+      value: lexeme.value, // use Lexeme value since we the in-context value is lost
+      rank: rankNew,
+      lastUpdated: timestamp(),
+    }
+    // simulate push on FirebaseContext
+    children[Object.values(children).length] = childNew
+    cx.rank = rankNew
+
+    // print after parent has been mutated
+    // console.log('parentNew', parent)
   },
 
 }
@@ -128,7 +151,7 @@ const restoreChildren = (state: UserState) => {
         normalizeThought(child.value) === normalizeThought(lexeme.value)
       )
       if (!childInParent) {
-        repair.missingChildInParent(state, lexeme)
+        repair.missingChildInParent(state, lexeme, cx, parent)
         return
       }
     })
