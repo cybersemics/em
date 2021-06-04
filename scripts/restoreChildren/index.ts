@@ -39,6 +39,47 @@ let missingParents = 0
 let missingParentChildren = 0
 let missingChildInParent = 0
 
+// repair functions (mutates state)
+const repair = {
+
+  missingLexemeContexts: (state: UserState, lexeme: FirebaseLexeme) => {
+    missingLexemeContexts++
+    // console.warn(`Missing lexeme.contexts in "${lexeme.value}"`)
+
+    // delete lexeme since there are no contexts to restore it to
+    delete state.thoughtIndex[hashThought(lexeme.value)]
+  },
+
+  missingThoughtContexts: (state: UserState, lexeme: FirebaseLexeme) => {
+    missingThoughtContexts++
+    // const msg = `Missing cx.context "${lexeme.value}"`
+
+    // delete lexeme since there are no contexts to restore it to
+    delete state.thoughtIndex[hashThought(lexeme.value)]
+  },
+
+  missingParents: (state: UserState, lexeme: FirebaseLexeme) => {
+    missingParents++
+    // const msg = `Parent of Lexeme "${lexeme.value}" missing from ThoughtContext "${context}"`
+  },
+
+  missingParentChildren: (state: UserState, lexeme: FirebaseLexeme) => {
+    missingParentChildren++
+    // const msg = `Missing children of "${lexeme.value}" missing from ThoughtContext "${context}"`
+    // console.error(msg)
+    // console.error('parent', parent)
+  },
+
+  missingChildInParent: (state: UserState, lexeme: FirebaseLexeme) => {
+    missingChildInParent++
+    // console.log('value', lexeme.value)
+    // console.log('cx', cx)
+    // console.log('childInParent', childInParent)
+  },
+
+}
+
+/** Restore missing children by traversing all lexemes in an exported em db. Mutates given state. */
 const restoreChildren = (state: UserState) => {
 
   const lexemes = Object.values(state.thoughtIndex)
@@ -48,46 +89,33 @@ const restoreChildren = (state: UserState) => {
       process.exit(1)
     }
     else if (!lexeme.contexts) {
-      missingLexemeContexts++
-      // console.warn(`Missing lexeme.contexts in "${lexeme.value}"`)
-      // delete lexeme since there are no contexts to restore it to
-      delete state.thoughtIndex[hashThought(lexeme.value)]
+      repair.missingLexemeContexts(state, lexeme)
+      return
     }
     // convert Firebase object to array
     const contexts = Object.values(lexeme.contexts || {})
     contexts.forEach(cx => {
 
       if (!cx.context) {
-        missingThoughtContexts++
-        // const msg = `Missing cx.context "${lexeme.value}"`
-        // delete lexeme since there are no contexts to restore it to
-        delete state.thoughtIndex[hashThought(lexeme.value)]
+        repair.missingThoughtContexts(state, lexeme)
         return
       }
 
       const context = Object.values(cx.context)
       const parent = state.contextIndex[hashContext(context)]
       if (!parent) {
-        missingParents++
-        // const msg = `Parent of Lexeme "${lexeme.value}" missing from ThoughtContext "${context}"`
-        // throw new Error(msg)
+        repair.missingParents(state, lexeme)
         return
       }
       else if (!parent.children) {
-        missingParentChildren++
-        // const msg = `Missing children of "${lexeme.value}" missing from ThoughtContext "${context}"`
-        // console.error(msg)
-        // console.error('parent', parent)
+        repair.missingParentChildren(state, lexeme)
         return
       }
       const childInParent = Object.values(parent.children).find(child =>
         normalizeThought(child.value) === normalizeThought(lexeme.value)
       )
-      // console.log('value', lexeme.value)
-      // console.log('cx', cx)
-      // console.log('childInParent', childInParent)
       if (!childInParent) {
-        missingChildInParent++
+        repair.missingChildInParent(state, lexeme)
         return
       }
     })
@@ -101,13 +129,17 @@ const restoreChildren = (state: UserState) => {
  *****************************************************************/
 const main = () => {
 
-  // check args
+  // validate
   if (process.argv.length < 3) {
     console.info(helpText)
     process.exit(0)
   }
 
+  // parse args
   const [,,fileIn] = process.argv
+  const options = process.argv.slice(2).reduce<Index<boolean>>((accum, arg) => ({
+    ...arg.startsWith('--') ? { [arg.slice(2)]: true } : null,
+  }), {})
 
   // read
   const input = fs.readFileSync(fileIn, 'utf-8')
@@ -116,7 +148,7 @@ const main = () => {
 
   // reformat input json so it can easily be compared with output json
   const fileInFormatted = `${fileIn.slice(0, -'.json'.length)}.formatted.json`
-  fs.writeFileSync(fileInFormatted, JSON.stringify(state, null, 2))
+  const fileFormatted = JSON.stringify(state, null, 2)
 
   restoreChildren(state)
 
@@ -131,10 +163,18 @@ const main = () => {
 
   // write
   const fileOut = `${fileIn.slice(0, -'.json'.length)}.repaired.json`
-  fs.writeFileSync(fileOut, JSON.stringify(state, null, 2))
 
-  console.log(`Input state (formatted) written to: ${fileInFormatted}`)
-  console.log(`Output state written to: ${fileOut}`)
+  if (options.dry) {
+    console.log('Done')
+  }
+  else
+  {
+    fs.writeFileSync(fileInFormatted, fileFormatted)
+    fs.writeFileSync(fileOut, JSON.stringify(state, null, 2))
+
+    console.log(`Input state (formatted) written to: ${fileInFormatted}`)
+    console.log(`Output state written to: ${fileOut}`)
+  }
 
 }
 

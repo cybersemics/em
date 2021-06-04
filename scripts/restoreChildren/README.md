@@ -1,4 +1,4 @@
-Restore missing children from traversing all lexemes in an exported em db.
+Restore missing children by traversing all lexemes in an exported em db.
 
 Outputs two files:
 
@@ -26,6 +26,10 @@ Input data is formatted and written to disk for easy diffing:
 ```sh
 git diff [filename].formatted.json [filename].repaired.json
 ```
+
+Dry Run:
+
+npm run start [filename] -- --dry
 
 ## Example
 
