@@ -3,9 +3,9 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
-import { download, ellipsize, getPublishUrl, hashContext, headValue, isDocumentEditable, isFunction, isRoot, pathToContext, removeHome, timestamp, unroot } from '../util'
+import { download, ellipsize, getExportPhrase, getPublishUrl, hashContext, headValue, isDocumentEditable, isFunction, isRoot, pathToContext, removeHome, timestamp, unroot } from '../util'
 import { alert, error, modalRemindMeLater, pull } from '../action-creators'
-import { exportContext, getDescendants, getAllChildren, simplifyPath, theme } from '../selectors'
+import { exportContext, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
@@ -60,17 +60,17 @@ const ModalExport = () => {
     ? { color: 'black', backgroundColor: 'white' }
     : { color: 'white', backgroundColor: 'black' }
 
-  const numDescendants = getDescendants(state, simplePath, {
-    filterFunction: !shouldIncludeMetaAttributes ? child => !isFunction(child.value) : !shouldIncludeArchived ? child => child.value !== '=archive' : undefined
-  }).length
-
   const exportWord = isTouch ? 'Share' : 'Download'
 
-  const exportThoughtsPhrase = isRoot(cursor)
-    ? ` all ${numDescendants} thoughts`
-    : `"${titleShort}"${numDescendants > 0 ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}`
+  const exportThoughtsPhrase = getExportPhrase(state, simplePath, {
+    filterFunction: !shouldIncludeMetaAttributes
+      ? child => !isFunction(child.value)
+      : !shouldIncludeArchived ? child => child.value !== '=archive' : undefined,
+    value: title,
+  })
 
-  const exportMessage = <span>
+  /** A message that describes which thoughts will be exported and presents a mime type dropdown. */
+  const ExportMessage = () => <span>
     {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>
     <span> as <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a></span>
     .
@@ -262,7 +262,7 @@ const ModalExport = () => {
 
       {/* Export message */}
       <div className='modal-export-wrapper'>
-        <span className='modal-content-to-export'>{exportMessage}</span>
+        <span className='modal-content-to-export'><ExportMessage /></span>
         <span className='modal-drop-down-holder'>
           <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} />
           <div ref={setWrapper}>
