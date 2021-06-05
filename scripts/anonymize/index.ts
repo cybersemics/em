@@ -6,7 +6,8 @@ global.document = { hasFocus: () => false } as any
 import fs from 'fs'
 import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
-import { hashContext, hashThought, timestamp } from '../../src/util'
+import { HOME_TOKEN } from '../../src/constants'
+import { hashContext, hashThought, isRoot, timestamp } from '../../src/util'
 import { Child, Context, Index, Lexeme, Parent } from '../../src/types'
 
 // arrays are stored as objects with a numeric index in Firebase
@@ -52,7 +53,6 @@ const anonymize = {
 
   contextIndex: (contextIndex: Index<FirebaseParent>) => {
 
-    // anonymize contextIndex
     const parentEntries = Object.entries(contextIndex)
     parentEntries.forEach(([id, parent]) => {
       if (limit-- <= 0) {
@@ -61,7 +61,8 @@ const anonymize = {
       }
 
       // context
-      const contextNew = Object.values(parent.context).map(anonymizeString)
+      const parentIsRoot = isRoot(Object.values(parent.context || {}))
+      const contextNew = Object.values(parent.context || {}).map(anonymizeString)
       parent.context = contextNew as unknown as FirebaseContext
 
       // children
@@ -71,9 +72,11 @@ const anonymize = {
       })) as unknown as Index<Child>
 
       // context hash
-      const idNew = hashContext(contextNew)
-      contextIndex[idNew] = parent
-      delete contextIndex[id]
+      if (!parentIsRoot) {
+        const idNew = hashContext(contextNew)
+        contextIndex[idNew] = parent
+        delete contextIndex[id]
+      }
 
     })
 
@@ -81,7 +84,6 @@ const anonymize = {
 
   thoughtIndex: (thoughtIndex: Index<FirebaseLexeme>) => {
 
-    // anonymize thoughtIndex
     const lexemeEntries = Object.entries(thoughtIndex)
     lexemeEntries.forEach(([id, lexeme]) => {
       if (limit-- <= 0) {
@@ -89,16 +91,19 @@ const anonymize = {
         process.exit(1)
       }
 
+      const lexemeIsRoot = isRoot([lexeme.value])
       lexeme.value = anonymizeString(lexeme.value)
-      lexeme.contexts = Object.values(lexeme.contexts).map(cx => ({
+      lexeme.contexts = Object.values(lexeme.contexts || {}).map(cx => ({
         ...cx,
-        context: Object.values(cx.context).map(anonymizeString)
+        context: Object.values(cx.context || {}).map(anonymizeString)
       })) as unknown as Index<FirebaseThoughtContext>
 
       // value hash
-      const idNew = hashThought(lexeme.value)
-      thoughtIndex[idNew] = lexeme
-      delete thoughtIndex[id]
+      if (!lexemeIsRoot) {
+        const idNew = hashThought(lexeme.value)
+        thoughtIndex[idNew] = lexeme
+        delete thoughtIndex[id]
+      }
 
     })
 
@@ -112,7 +117,7 @@ const anonymizeState = (state: UserState, options: Options = {}) => {
   anonymize.contextIndex(state.contextIndex)
   anonymize.thoughtIndex(state.thoughtIndex)
 
-  return _.pick(state, ['contextIndex', 'thoughtIndex', 'lastUpdated'])
+  return _.pick(state, ['contextIndex', 'thoughtIndex', 'lastUpdated']) as UserState
 }
 
 /*****************************************************************
@@ -138,11 +143,11 @@ const main = () => {
   const db = JSON.parse(input) as Database | UserState
   const state = (db as Database).users?.[userId] || db as UserState
 
-  anonymizeState(state, options)
+  const stateNew = anonymizeState(state, options)
 
   console.log('')
-  console.log('Parents:', Object.values(state.contextIndex).length)
-  console.log('Lexemes:', Object.values(state.thoughtIndex).length)
+  console.log('Parents:', Object.values(stateNew.contextIndex).length)
+  console.log('Lexemes:', Object.values(stateNew.thoughtIndex).length)
   console.log('')
 
   // write
@@ -153,7 +158,7 @@ const main = () => {
   }
   else
   {
-    fs.writeFileSync(fileOut, JSON.stringify(state, null, 2))
+    fs.writeFileSync(fileOut, JSON.stringify(stateNew, null, 2))
     console.log(`Output state written to: ${fileOut}`)
   }
 
