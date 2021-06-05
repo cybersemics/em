@@ -46,6 +46,15 @@ describe('split by comma', () => {
   - Two
   - Three`)
   })
+
+  it('split single thought on commas when there is a combination of periods and commas, but no empty space followed by the periods.', () => {
+    const thought = 'One.Two, Three'
+    const exported = splitThought(thought)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - One.Two
+  - Three`)
+  })
 })
 
 describe('simple split', () => {
@@ -61,7 +70,7 @@ describe('simple split', () => {
   })
 
   it('split single thought on period when there is a combination of periods and commas.', () => {
-    const thought = 'One.Two, Three'
+    const thought = 'One. Two, Three'
     const exported = splitThought(thought)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -69,7 +78,7 @@ describe('simple split', () => {
   - Two, Three`)
   })
 
-  it('split single thought on main split characters if thought has only one period at the end but has other split characters too. ', () => {
+  it('split single thought on main split characters if thought has only one period at the end but has other split characters too, even there is no empty space followed by that splitter', () => {
     const thought = 'One,Seven?Two!Three.'
     const exported = splitThought(thought)
 
@@ -110,7 +119,7 @@ describe('simple split', () => {
   })
 
   it('split single thought by splitters and remove the empty thought when the thought ends with empty spaces after the splitter. ', () => {
-    const thought = 'One.Two.  '
+    const thought = 'One. Two.  '
     const exported = splitThought(thought)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -143,24 +152,23 @@ describe('brackets or quatations', () => {
   })
 
   it('split the single thought as expected if multiple sets of brackets and quotation marks present in one sentence. ', () => {
-    const thought = 'One. (Two) "Three."   Four.'
+    const thought = 'One.(Two) "Three."   Four.'
     const exported = splitThought(thought)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - One.
-  - (Two) "Three."
+  - One.(Two) "Three."
   - Four.`)
   })
 
   it('split single thought as expected if closed brackets and quotation marks present in one sentence. ', () => {
-    const thought = 'One. ("Two?") "(Three?)"  Three.'
+    const thought = 'One. ("Two?") "(Three.Four?)"  Five.'
     const exported = splitThought(thought)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
   - One.
   - ("Two?")
-  - "(Three?)"
-  - Three.`)
+  - "(Three.Four?)"
+  - Five.`)
   })
 
   it('split single thoughtas expected if a closed bracket present before a left quotation mark. ', () => {
@@ -540,11 +548,8 @@ describe('url address', () => {
     const exported = splitThought(thought)
 
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - xyz.info abc.
-  - Edf One.
-  - Two.
-  - abc.
-  - e`)
+  - xyz.info abc.Edf One.Two.
+  - abc.e`)
   })
 
   it('split single thought as expected if it has more than one url address before the real splitter', () => {
@@ -566,7 +571,7 @@ describe('url address', () => {
   })
 })
 
-describe('combinations of three or more categories', () => {
+describe('complicated cases', () => {
 
   it('split single thought by commas if there are multiple cases in one sentence, but they are seperated by commas', () => {
     const thought = 'www.xyz.com,  abc@email.com, $3.4'
@@ -614,6 +619,16 @@ describe('combinations of three or more categories', () => {
   - $3.20, One.
   - http://www.abc.com Two abc@email.com  ;)
   - "Three."`)
+  })
+
+  it('split single thought as expected if it has other special cases', () => {
+    const thought = 'react.js; file: abc.txt, def.doc"One.Two.Three". IPv4: 11.11.11.111'
+    const exported = splitThought(thought)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - react.js;
+  - file: abc.txt, def.doc"One.Two.Three".
+  - IPv4: 11.11.11.111`)
   })
 })
 

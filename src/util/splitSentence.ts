@@ -38,29 +38,27 @@ export const splitSentence = (value: string) : string[] => {
     if (i === 0) return newSentence + splitters[0]
 
     const seperatorIndex = newSentence.lastIndexOf(SEPARATOR_TOKEN)
-    const prevSentence = seperatorIndex < 0 ? newSentence : newSentence.slice(seperatorIndex + 2)
+    const prevSentence = seperatorIndex < 0 ? newSentence : newSentence.slice(seperatorIndex + 7)
     const currSentence = splitters[i] ? s + splitters[i] : s
 
     /**
      * Combine the current sentence with the previous sentence to form one new sentence if it is the below conditions:
-     * Case1: ending with a number like $5.3, 3.8M.
-     * Case2: ending with an email address.
-     * Case3: ending with url address
-     * Case4: ending with Mr., Dr., Apt., i.e., Ph.D..
+     * Case1: ending with url address
+     * Case2: ending with Mr., Dr., Apt., i.e., Ph.D..
      */
-    if (isDecimalNum(prevSentence, s) || isEmail(prevSentence, s) || isUrl(prevSentence, s) || isAbbrev(prevSentence, s, splitters[i])) {
+    if (isAbbrev(prevSentence, s) || isUrl(prevSentence, s)) {
 
       return newSentence + currSentence
     }
 
     /**
-     * When it ends with .", .), !), ?"), ;), etc.
+     * Case3: ending with .", .), !), ?"), ;), etc.
      * The ", ), ") will stay on the front of the next sentence.
      * Hence, they are needed to be removed and added back to the end of the current sentence.
      */
     const matched = s.trimLeft().match(/^[)'"]+/)
-    if (matched) {
-      const removeFront = calculateRemoveFront(prevSentence, s, matched)
+    const removeFront = matched !== null ? calculateRemoveFront(prevSentence, s, matched) : 0
+    if (matched !== null) {
 
       if (removeFront === 0) return newSentence + SEPARATOR_TOKEN + currSentence
 
@@ -68,6 +66,14 @@ export const splitSentence = (value: string) : string[] => {
       const frontPart = currSentence.slice(0, removeFront)
       return backPart ? newSentence + frontPart + SEPARATOR_TOKEN + backPart : newSentence + frontPart
     }
+
+    /**
+     * Case4: ending with a number like $5.3, 3.8M.
+     * Case5: ending with an email address.
+     * Case6: ending with a name, e.g. react.js
+     * Case7: ending with an IP address.
+     */
+    if (prevSentence[prevSentence.length - 1] === '.' && s[0] !== ' ') return newSentence + currSentence
 
     // On other conditions,the original spliter is the real splitter
     return newSentence + SEPARATOR_TOKEN + currSentence
@@ -107,34 +113,6 @@ function calculateRemoveFront (str1 : string, s: string, matched : string[]) {
   const leftEmptySpace = s.length - s.trimLeft().length
 
   return leftEmptySpace + matched[0].length + leftSingleCalib + leftDoubleCalib
-}
-
-/**
- * Function: isDecimalNum.
- *
- * @param str1 The previous sentence plus the previous spliter.
- * @param s The current sentence, which doesn't include the current spliter.
- * @returns A bolean that says whether the dot comes from a decimal number, such as 5.76, $3.2, 2.54M, 20.1K.
- */
-function isDecimalNum (str1 : string, s: string) {
-  return /[0-9]\.$/.test(str1) && /^[0-9]/.test(s)
-}
-
-/**
- * Function: isEmail.
- *
- * @param str1 The previous sentence and the previous spliter.
- * @param s The current sentence, which doesn't include the current spliter.
- * @param spliter2 The current spliter.
- * @returns A bolean that says whether the dot comes from an email address.
- */
-function isEmail (str1 : string, s : string) {
-  // Any space  means the email address has ended
-  if (/[?!;]$/.test(str1) || (str1[str1.length - 1] === '.' && s[0] === ' ')) return false
-
-  const combinedStr = str1.slice(str1.lastIndexOf(' ') + 1) + s
-
-  return /[a-zA-Z0-9._-]+@([a-zA-Z0-9_-]+\.)*[a-zA-Z0-9_-]+\.[a-zA-Z]*/.test(combinedStr)
 }
 
 /**

@@ -3,13 +3,12 @@
  *
  * @param str1 The sentence just added into the result sentence, it contains the sentence and the splitter.
  * @param s The current sentence which is right behind the spliter.
- * @param spliter2 The second spliter.
  * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
  * Examples: Mr. Dr.q Apt. Prof. Ph.D.
  */
-export default function isAbbrev(str1 : string, s: string, spliter2 : string) {
+export default function isAbbrev(str1 : string, s: string) {
 
-  return isAbbrEndSplitter(str1, s) || isAbbrMidSplitter(str1, s) || isAbbrDoubleSplitter(str1, s, spliter2)
+  return isAbbrEndSplitter(str1) || isAbbrMidSplitter(str1, s) || isAbbrDoubleSplitter(str1, s)
 }
 
 /**
@@ -20,7 +19,7 @@ export default function isAbbrev(str1 : string, s: string, spliter2 : string) {
  * @returns A boolean value that tells whether the dot comes from an Abbrev word that has an dot on the word end, and shouldn't be split
  * Examples: Mr. Dr. Apt. Feb. Prof.
  */
-function isAbbrEndSplitter (str1 : string, s : string) {
+function isAbbrEndSplitter (str1 : string) {
   if (str1[str1.length - 1] !== '.') return false
 
   const twoLetters = ['Mr.', 'Ms.', 'Dr.', 'Rm.', 'No.', 'no.', 'vs.', 'Rd.', 'St.', 'Co.', 'Jr.', 'pl.', 'Sr.']
@@ -47,10 +46,8 @@ function isAbbrEndSplitter (str1 : string, s : string) {
  * @returns A boolean value that tells whether the dot comes from an Abbrev word like TL;DR, and shouldn't be split.
  */
 function isAbbrMidSplitter (str1 : string, s : string) {
-
-  const isphD = !!str1.match(/[ph.|Ph.]$/) && !!s.match(/^[d|D]/)
   const isTLDR = !!str1.match(/TL;|tl;$/) && !!s.match(/^DR|dr/)
-  return isphD || isTLDR
+  return isTLDR
 }
 
 /**
@@ -58,18 +55,14 @@ function isAbbrMidSplitter (str1 : string, s : string) {
  *
  * @param str1 The sentence before the first spliter and the first spliter.
  * @param s The sentence after the first spliter.
- * @param spliter2 The second spliter.
  * @returns A bolean value that says whether it is an abbreviation that has double dots, such as M.S., R.N. .
  */
-function isAbbrDoubleSplitter (str1 : string, s: string, spliter2: string) {
+function isAbbrDoubleSplitter (str1 : string, s: string) {
   if (str1[str1.length - 1] !== '.') return false
 
   const pairs = [['B.', 'A.'], ['M.', 'S.'], ['B.', 'S.'], ['B.', 'C.'], ['D.', 'C.'], ['R.', 'N.'], ['U.', 'S.'], ['P.', 'S.'], ['e.', 'g.'], ['i.', 'e.'], ['U.', 'N.'], ['P.', 'O.'], ['Ph.', 'D.'], ['Ed.', 'D.']]
 
   const len = str1.length
-  const isHalfPattern = !!pairs.find(p => p[1] === s + spliter2?.charAt(0) && str1.slice(len - p[0].length) === p[0])
-
-  if (isHalfPattern) return isHalfPattern
 
   const isFullPattern = !!pairs.find(p =>
     str1.slice(len - p[0].length - p[1].length) === p[0] + p[1])
