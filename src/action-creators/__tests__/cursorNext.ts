@@ -2,6 +2,7 @@ import { HOME_PATH } from '../../constants'
 import { cursorNext, importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import globals from '../../globals'
 
 describe('normal view', () => {
 
@@ -125,5 +126,90 @@ describe('normal view', () => {
       .toMatchObject([{ value: 'b' }])
 
   })
+})
 
+describe('global suppress expansion', () => {
+
+  beforeEach(() => {
+    globals.suppressExpansion = false
+  })
+
+  it('suppress expansion path on cursorNext', async () => {
+    const text = `
+    - a
+      - d
+        - k
+      - c
+        - e
+        - f`
+
+    jest.useFakeTimers()
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        text,
+      }),
+      setCursorFirstMatchActionCreator(['a', 'd']),
+      cursorNext()
+    ])
+
+    expect(globals.suppressExpansion)
+      .toBe(true)
+  })
+
+  it('do not activate suppress expansion on cursorNext if new cursor is pinned', async () => {
+    const text = `
+    - a
+      - d
+        - k
+      - c
+        - =pin
+          - true
+        - e
+        - f`
+
+    jest.useFakeTimers()
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        text,
+      }),
+      setCursorFirstMatchActionCreator(['a', 'd']),
+      cursorNext()
+    ])
+
+    expect(globals.suppressExpansion)
+      .toBe(false)
+  })
+
+  it('do not activate suppress expansion on cursorNext if new cursor parent has pinned children', async () => {
+    const text = `
+    - a
+      - =pinChildren
+        - true
+      - d
+        - k
+      - c
+        - e
+        - f`
+
+    jest.useFakeTimers()
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        text,
+      }),
+      setCursorFirstMatchActionCreator(['a', 'd']),
+      cursorNext()
+    ])
+
+    expect(globals.suppressExpansion)
+      .toBe(false)
+  })
 })

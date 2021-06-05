@@ -5,6 +5,7 @@ import { equalPath, equalThoughtRanked, hashContext, headValue, isDescendant, pa
 import { render, settings } from '../reducers'
 import { State } from '../util/initialState'
 import { Index, Path, SimplePath, TutorialChoice } from '../types'
+import globals from '../globals'
 
 /**
  * Sets the cursor on a thought.
@@ -71,7 +72,7 @@ const setCursor = (state: State, {
   //   }
   // })
 
-  const expanded = expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
+  const expanded = globals.suppressExpansion ? {} : expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
 
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)

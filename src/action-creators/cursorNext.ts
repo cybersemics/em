@@ -1,10 +1,10 @@
 import { HOME_TOKEN } from '../constants'
 import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
-import { parentOf } from '../util'
+import { parentOf, pathToContext } from '../util'
 import { Thunk } from '../types'
 
 // must be imported after util (???)
-import { getChildrenSorted, getThoughtAfter, simplifyPath } from '../selectors'
+import { attributeEquals, getChildrenSorted, getThoughtAfter, simplifyPath } from '../selectors'
 
 /** Moves the cursor to the next sibling, ignoring descendants. */
 const cursorNext = (): Thunk => (dispatch, getState) => {
@@ -23,10 +23,13 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
   const next = getThoughtAfter(state, simplifyPath(state, cursor))
   if (!next) return
 
-  // just long enough to keep the expansion suppressed during cursor movement in rapid succession
-  dispatch(suppressExpansion({ duration: 100 }))
-
   const path = parentOf(cursor).concat(next)
+
+  const isCursorPinned = attributeEquals(state, pathToContext(path), '=pin', 'true') || attributeEquals(state, pathToContext(parentOf(path)), '=pinChildren', 'true')
+
+  // just long enough to keep the expansion suppressed during cursor movement in rapid succession
+  if (!isCursorPinned) dispatch(suppressExpansion({ duration: 100 }))
+
   dispatch(setCursor({ path }))
   dispatch(scrollCursorIntoView())
 }
