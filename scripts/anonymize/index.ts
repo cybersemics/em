@@ -6,8 +6,8 @@ global.document = { hasFocus: () => false } as any
 import fs from 'fs'
 import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
-import { HOME_TOKEN } from '../../src/constants'
-import { hashContext, hashThought, isRoot, timestamp } from '../../src/util'
+import { EM_TOKEN, HOME_TOKEN } from '../../src/constants'
+import { hashContext, hashThought, isEM, isRoot, normalizeThought, timestamp } from '../../src/util'
 import { Child, Context, Index, Lexeme, Parent } from '../../src/types'
 
 // arrays are stored as objects with a numeric index in Firebase
@@ -47,7 +47,18 @@ const helpText = `Usage:
 let limit = Infinity
 
 const salt = timestamp()
-const anonymizeString = (value: string) => murmurHash3.x64.hash128(salt + value).slice(0, 8)
+
+/** Anonymizes a context. */
+const anonymizeContext = (context: FirebaseContext): string[] =>
+  Object.values(context || {}).map(anonymizeValue)
+
+/** Anonynmizes a string value. Ignores root. */
+const anonymizeValue = (value: string): string => {
+  const anon = value === HOME_TOKEN || value === EM_TOKEN
+    ? value
+    : value + '-' + murmurHash3.x64.hash128(salt + normalizeThought(value)).slice(0, 8)
+  return anon
+}
 
 const anonymize = {
 
@@ -61,17 +72,21 @@ const anonymize = {
       }
 
       // context
-      const parentIsRoot = isRoot(Object.values(parent.context || {}))
-      const contextNew = Object.values(parent.context || {}).map(anonymizeString)
+      const parentIsRoot = isRoot(Object.values(parent.context || {})) ||
+        isEM(Object.values(parent.context || {}))
+      const contextNew = anonymizeContext(parent.context)
       parent.context = contextNew as unknown as FirebaseContext
 
       // children
       parent.children = Object.values(parent.children).map(child => ({
         ...child,
-        value: anonymizeString(child.value),
+        value: anonymizeValue(child.value),
       })) as unknown as Index<Child>
 
       // context hash
+      // TODO:
+      //   One and Ones have the same hash.
+      //   After being anonymized, they do not.
       if (!parentIsRoot) {
         const idNew = hashContext(contextNew)
         contextIndex[idNew] = parent
@@ -91,14 +106,17 @@ const anonymize = {
         process.exit(1)
       }
 
-      const lexemeIsRoot = isRoot([lexeme.value])
-      lexeme.value = anonymizeString(lexeme.value)
+      const lexemeIsRoot = isRoot([lexeme.value]) || isEM([lexeme.value])
+      lexeme.value = anonymizeValue(lexeme.value)
       lexeme.contexts = Object.values(lexeme.contexts || {}).map(cx => ({
         ...cx,
-        context: Object.values(cx.context || {}).map(anonymizeString)
+        context: anonymizeContext(cx.context)
       })) as unknown as Index<FirebaseThoughtContext>
 
       // value hash
+      // TODO:
+      //   One and Ones have the same hash.
+      //   After being anonymized, they do not.
       if (!lexemeIsRoot) {
         const idNew = hashThought(lexeme.value)
         thoughtIndex[idNew] = lexeme

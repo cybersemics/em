@@ -5,7 +5,7 @@ global.document = { hasFocus: () => false } as any
 
 import fs from 'fs'
 import _ from 'lodash'
-import { HOME_TOKEN } from '../../src/constants'
+import { EM_TOKEN, HOME_TOKEN } from '../../src/constants'
 import { hashContext, hashThought, head, normalizeThought, timestamp, unroot } from '../../src/util'
 import { Child, Context, Index, Lexeme, Parent, ThoughtContext } from '../../src/types'
 
@@ -54,7 +54,7 @@ const smudge = () => Math.floor(Math.random() * 1000) / 1000000
 // repair functions (mutates state)
 const repair = {
 
-  missingLexemeContexts: (state: UserState, lexeme: FirebaseLexeme, options: Options = {}) => {
+  missingLexemeContext: (state: UserState, lexeme: FirebaseLexeme, options: Options = {}) => {
     if (lexeme.value === HOME_TOKEN) return
 
     missingLexemeContexts++
@@ -67,24 +67,26 @@ const repair = {
     delete state.thoughtIndex[hashThought(lexeme.value)]
   },
 
-  missingThoughtContexts: (state: UserState, lexeme: FirebaseLexeme, options: Options = {}) => {
-    if (lexeme.value === HOME_TOKEN) return
+  missingThoughtContext: (state: UserState, lexeme: FirebaseLexeme, cx: FirebaseThoughtContext, options: Options = {}) => {
+    // HOME and EM are expected to not have thought contexts
+    if (lexeme.value === HOME_TOKEN || lexeme.value === EM_TOKEN) return
 
     missingThoughtContexts++
 
     if (options.verbose) {
-      console.error(`Missing cx.context "${lexeme.value}" (deleting)`)
+      console.error(`Missing cx.context "${lexeme.value}" (removing from lexeme)`)
     }
 
-    // delete lexeme since there are no contexts to restore it to
-    delete state.thoughtIndex[hashThought(lexeme.value)]
+    // remove ThoughtContext from lexeme since there is no context to restore it to
+    lexeme.contexts = Object.values(lexeme.contexts)
+      .filter(thoughtContext => thoughtContext !== cx) as unknown as Index<FirebaseThoughtContext>
   },
 
   missingParents: (state: UserState, lexeme: FirebaseLexeme, cx: FirebaseThoughtContext, options: Options = {}) => {
     missingParents++
 
     // recreate the missing parent
-    const context = Object.values(cx.context)
+    const context = Object.values(cx.context || {})
     const id = hashContext(context)
     const rankNew = cx.rank + smudge()
     const childNew: Child = {
@@ -119,7 +121,7 @@ const repair = {
       console.error('parentOld', parent)
     }
 
-    const context = Object.values(cx.context)
+    const context = Object.values(cx.context || {})
     const id = hashContext(context)
     const children = parent.children
     const rankNew = cx.rank + smudge()
@@ -135,7 +137,7 @@ const repair = {
 
     // print after parent has been mutated
     if (options.verbose) {
-      console.log('parentNew', parent)
+      console.error('parentNew', parent)
     }
   },
 
@@ -151,7 +153,7 @@ const restoreChildren = (state: UserState, options: Options = {}) => {
       process.exit(1)
     }
     else if (!lexeme.contexts) {
-      repair.missingLexemeContexts(state, lexeme, options)
+      repair.missingLexemeContext(state, lexeme, options)
       return
     }
     // convert Firebase object to array
@@ -159,11 +161,10 @@ const restoreChildren = (state: UserState, options: Options = {}) => {
     contexts.forEach(cx => {
 
       if (!cx.context) {
-        repair.missingThoughtContexts(state, lexeme, options)
-        return
+        repair.missingThoughtContext(state, lexeme, cx, options)
       }
 
-      const context = Object.values(cx.context)
+      const context = Object.values(cx.context || {})
       const parent = state.contextIndex[hashContext(context)]
       if (!parent) {
         repair.missingParents(state, lexeme, cx, options)
