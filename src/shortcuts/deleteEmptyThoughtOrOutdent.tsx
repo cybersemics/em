@@ -71,17 +71,12 @@ const canExecuteOutdent = (state: State) => {
   if (!cursor || !selection) return false
 
   const offset = selection.focusOffset
-  const focusedEditingValue = state.editingValue || ''
-  const contextOfCursor = pathToContext(cursor)
-  const parentOfCursor = parentOf(contextOfCursor)
-  const filteredList = contextOfCursor.filter(el => !parentOfCursor.includes(el))
 
   return cursor &&
     offset === 0 &&
     isDocumentEditable() &&
     headValue(cursor).length !== 0 &&
-    getChildren(state, parentOfCursor).length === 1 &&
-    filteredList.length === 1 && !filteredList.includes(focusedEditingValue)
+    getChildren(state, parentOf(pathToContext(cursor))).length === 1
 }
 
 /** A selector that returns true if merged thought value is duplicate. */
@@ -114,7 +109,12 @@ const canExecute = (getState: () => State) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState) => {
-  if (canExecuteOutdent(getState())) {
+  const editable = document.querySelector('.editing .editable') as HTMLElement
+  /** The below condition will be true only when user triggered clearThought. In that scenario innerHTML will empty but editingValue will be non-empty. */
+  if (editable?.innerHTML === '' && editable?.getAttribute('placeholder') !== '') {
+    dispatch(deleteEmptyThought)
+  }
+  else if (canExecuteOutdent(getState())) {
     dispatch(outdent())
   }
   // additional check for duplicates

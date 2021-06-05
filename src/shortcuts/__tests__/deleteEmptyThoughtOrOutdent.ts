@@ -26,7 +26,6 @@ it('do nothing when there is no cursor', () => {
 })
 
 it('outdent on pressing backspace at the beginning of the thought', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -74,6 +73,36 @@ it('do not outdent thought with siblings', () => {
   - a
     - b
       - cd`
+
+  expect(exported).toEqual(expectedOutput)
+})
+
+it('delete the thought when user triggered clearThought and then hit back', () => {
+  const container = document.createElement('div')
+  container.setAttribute('class', 'editing')
+  container.innerHTML = `<div class="preventAutoscroll editable" placeholder="c" contenteditable="true"></div>`
+  document.body.appendChild(container)
+
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch(importText({
+    path: HOME_PATH,
+    text: `
+      - a
+        - b
+          - c
+  ` }))
+
+  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) }))
+
+  executeShortcut(deleteEmptyThoughtOrOutdent, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  const expectedOutput = `- ${HOME_TOKEN}
+  - a
+    - b`
 
   expect(exported).toEqual(expectedOutput)
 })
