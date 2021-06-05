@@ -26,6 +26,15 @@ interface UserState {
   contextIndex: Index<FirebaseParent>,
 }
 
+interface Options {
+
+  // runs the repair without writing to disk
+  dry?: boolean,
+
+  // prints additional information for each repair
+  verbose?: boolean,
+}
+
 const userId = 'm9S244ovF7fVrwpAoqoWxcz08s52'
 
 const helpText = `Usage:
@@ -45,23 +54,33 @@ const smudge = () => Math.floor(Math.random() * 1000) / 1000000
 // repair functions (mutates state)
 const repair = {
 
-  missingLexemeContexts: (state: UserState, lexeme: FirebaseLexeme) => {
+  missingLexemeContexts: (state: UserState, lexeme: FirebaseLexeme, options: Options = {}) => {
+    if (lexeme.value === HOME_TOKEN) return
+
     missingLexemeContexts++
-    // console.warn(`Missing lexeme.contexts in "${lexeme.value}"`)
+
+    if (options.verbose) {
+      console.error(`Missing lexeme.contexts in "${lexeme.value}" (deleting)`)
+    }
 
     // delete lexeme since there are no contexts to restore it to
     delete state.thoughtIndex[hashThought(lexeme.value)]
   },
 
-  missingThoughtContexts: (state: UserState, lexeme: FirebaseLexeme) => {
+  missingThoughtContexts: (state: UserState, lexeme: FirebaseLexeme, options: Options = {}) => {
+    if (lexeme.value === HOME_TOKEN) return
+
     missingThoughtContexts++
-    // const msg = `Missing cx.context "${lexeme.value}"`
+
+    if (options.verbose) {
+      console.error(`Missing cx.context "${lexeme.value}" (deleting)`)
+    }
 
     // delete lexeme since there are no contexts to restore it to
     delete state.thoughtIndex[hashThought(lexeme.value)]
   },
 
-  missingParents: (state: UserState, lexeme: FirebaseLexeme, cx: FirebaseThoughtContext) => {
+  missingParents: (state: UserState, lexeme: FirebaseLexeme, cx: FirebaseThoughtContext, options: Options = {}) => {
     missingParents++
 
     // recreate the missing parent
@@ -84,17 +103,21 @@ const repair = {
     state.contextIndex[id] = parentNew as unknown as FirebaseParent
     cx.rank = rankNew
 
-    // const msg = `{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but no Parent exists.`
-    // console.error(msg)
-    // console.error('parentNew', parentNew)
+    if (options.verbose) {
+      const msg = `{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but no Parent exists.`
+      console.error(msg)
+      console.error('parentNew', parentNew)
+    }
   },
 
-  missingChildInParent: (state: UserState, lexeme: FirebaseLexeme, cx: FirebaseThoughtContext, parent: FirebaseParent) => {
+  missingChildInParent: (state: UserState, lexeme: FirebaseLexeme, cx: FirebaseThoughtContext, parent: FirebaseParent, options: Options = {}) => {
     missingChildInParent++
 
     // print before parent has been mutated
-    // console.error(`{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but is not found in the corresponding Parent's children.`)
-    // console.error('parentOld', parent)
+    if (options.verbose) {
+      console.error(`{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but is not found in the corresponding Parent's children.`)
+      console.error('parentOld', parent)
+    }
 
     const context = Object.values(cx.context)
     const id = hashContext(context)
@@ -111,13 +134,15 @@ const repair = {
     cx.rank = rankNew
 
     // print after parent has been mutated
-    // console.log('parentNew', parent)
+    if (options.verbose) {
+      console.log('parentNew', parent)
+    }
   },
 
 }
 
 /** Restore missing children by traversing all lexemes in an exported em db. Mutates given state. */
-const restoreChildren = (state: UserState) => {
+const restoreChildren = (state: UserState, options: Options = {}) => {
 
   const lexemes = Object.values(state.thoughtIndex)
   lexemes.forEach(lexeme => {
@@ -126,7 +151,7 @@ const restoreChildren = (state: UserState) => {
       process.exit(1)
     }
     else if (!lexeme.contexts) {
-      repair.missingLexemeContexts(state, lexeme)
+      repair.missingLexemeContexts(state, lexeme, options)
       return
     }
     // convert Firebase object to array
@@ -134,14 +159,14 @@ const restoreChildren = (state: UserState) => {
     contexts.forEach(cx => {
 
       if (!cx.context) {
-        repair.missingThoughtContexts(state, lexeme)
+        repair.missingThoughtContexts(state, lexeme, options)
         return
       }
 
       const context = Object.values(cx.context)
       const parent = state.contextIndex[hashContext(context)]
       if (!parent) {
-        repair.missingParents(state, lexeme, cx)
+        repair.missingParents(state, lexeme, cx, options)
         return
       }
       else if (!parent.children) {
@@ -151,7 +176,7 @@ const restoreChildren = (state: UserState) => {
         normalizeThought(child.value) === normalizeThought(lexeme.value)
       )
       if (!childInParent) {
-        repair.missingChildInParent(state, lexeme, cx, parent)
+        repair.missingChildInParent(state, lexeme, cx, parent, options)
         return
       }
     })
@@ -173,7 +198,8 @@ const main = () => {
 
   // parse args
   const [,,fileIn] = process.argv
-  const options = process.argv.slice(2).reduce<Index<boolean>>((accum, arg) => ({
+  const options: Options = process.argv.slice(2).reduce<Index<boolean>>((accum, arg) => ({
+    ...accum,
     ...arg.startsWith('--') ? { [arg.slice(2)]: true } : null,
   }), {})
 
@@ -186,7 +212,7 @@ const main = () => {
   // const fileInFormatted = `${fileIn.slice(0, -'.json'.length)}.formatted.json`
   // const fileFormatted = JSON.stringify(state, null, 2)
 
-  restoreChildren(state)
+  restoreChildren(state, options)
 
   console.log('')
   console.log('Lexemes:', Object.values(state.thoughtIndex).length)
