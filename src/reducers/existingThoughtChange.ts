@@ -76,7 +76,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     : parentOf(path).concat({ value: newValue, rank })) as SimplePath
   // find exact thought from thoughtIndex
   const exactThought = thoughtOld.contexts.find(thought => equalArrays(thought.context, context) && thought.rank === rank)
-  const id = headId(path) || exactThought!.id as string
+  const id = headId(path) || exactThought!.id || null
   const archived = exactThought ? exactThought.archived : null
   const cursorNew = cursor && parentOf(cursor).concat(head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
     ? { ...head(cursor), value: newValue }
@@ -137,8 +137,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
       ...thoughtParentOld,
       contexts: removeContext(thoughtParentOld!, parentOf(pathToContext(pathLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
-        id,
         rank,
+        ...id ? { id } : null,
         ...archived ? { archived } : {}
       }),
       created: thoughtParentOld?.created || timestamp(),
@@ -159,8 +159,8 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     .concat({
       value: showContexts ? value : newValue,
       rank,
-      id,
       lastUpdated: timestamp(),
+      ...id ? { id } : null,
       ...archived ? { archived } : {},
     })
 
@@ -184,9 +184,9 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     // do not add floating thought to context
     .concat(thoughtOld.contexts.length > 0 ? {
       value: newValue,
-      id,
       rank: headRank(rootedParentOf(state, pathLiveOld)),
       lastUpdated: timestamp(),
+      ...id ? { id } : null,
       ...archived ? { archived } : {}
     } : [])
     : []

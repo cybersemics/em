@@ -80,14 +80,19 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   const exactThought = oldThought.contexts.find(thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank)
 
   // find id of head thought from exact thought if not available in oldPath
-  const id = headId(oldSimplePath) || exactThought?.id
+  const id = headId(oldSimplePath) || exactThought?.id || null
+  if (!id) {
+    console.warn(`existingThoughtMove: oldSimplePath does not have an id and exactThought was not found.`)
+    console.warn('oldSimplePath', oldSimplePath)
+    console.warn('oldThought', oldThought)
+  }
 
   // if move is used for archive then update the archived field to latest timestamp
   const archived = isArchived || !exactThought
     ? timestamp()
     : exactThought.archived as Timestamp
 
-  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id as string, archived as Timestamp)
+  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id, archived as Timestamp)
 
   const newThought = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = state.cursor && isDescendantPath(state.cursor, oldPath)
@@ -118,8 +123,8 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     .concat({
       value,
       rank: newRank,
-      id,
       lastUpdated: timestamp(),
+      ...id ? { id } : null,
       ...archived ? { archived } : {},
     })
 
@@ -187,7 +192,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
         }
 
       // New lexeme
-      const childNewThought = removeDuplicatedContext(addContext(childOldThoughtContextRemoved, contextNew, movedRank, child.id as string, archived), contextNew)
+      const childNewThought = removeDuplicatedContext(addContext(childOldThoughtContextRemoved, contextNew, movedRank, child.id || null, archived), contextNew)
 
       // update local thoughtIndex so that we do not have to wait for firebase
       thoughtIndexNew[hashedKey] = childNewThought
