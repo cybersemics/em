@@ -315,6 +315,18 @@ const ModalExport = () => {
         </div>
       }
 
+      {/* Preview */}
+      <textarea readOnly style={{
+        backgroundColor: '#111',
+        border: 'none',
+        borderRadius: '10px',
+        color: '#aaa',
+        fontSize: '1em',
+        height: '120px',
+        marginBottom: '20px',
+        width: '300px',
+      }} value={exportContent || ''}></textarea>
+
       {/* Download button */}
       <div className='modal-export-btns-wrapper'>
 
