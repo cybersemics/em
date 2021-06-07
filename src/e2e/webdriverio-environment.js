@@ -66,7 +66,7 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
   }
 
   startBrowserStackLocal() {
-    if (config.capabilities['browserstack.localIdentifier'].startsWith('local')) {
+    if (config.capabilities['browserstack.localIdentifier'] && config.capabilities['browserstack.localIdentifier'].startsWith('local')) {
       this.bsLocal = new browserstack.Local()
       this.bsLocal.start({ localIdentifier: config.capabilities['browserstack.localIdentifier'] }, function (e) {
         console.log('Started BrowserStackLocal')
