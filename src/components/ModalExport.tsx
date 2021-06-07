@@ -287,36 +287,6 @@ const ModalExport = () => {
         </span>
       </div>
 
-      {/* Advanced Settings */}
-      <div className='advance-setting-wrapper'>
-        <span><a className='advance-setting-link no-select' onClick={onAdvancedClick} style={{ opacity: advancedSettings ? 1 : 0.5 }}>Advanced</a></span>
-        <span className='advance-setting-chevron'>
-          <ChevronImg
-            dark={dark}
-            onClickHandle={onAdvancedClick}
-            className={advancedSettings ? 'rotate180' : ''}
-            additonalStyle={{ opacity: advancedSettings ? 1 : 0.5 }}
-          />
-        </span>
-      </div>
-
-      {advancedSettings &&
-        <div className='advance-setting-section'>
-          {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, checked, title, description }) => {
-            return (
-              <label className='checkbox-container' key={`${id}-key-${title}`}>
-                <div>
-                  <p className='advance-setting-label'>{title}</p>
-                  <p className='advance-setting-description dim'>{description}</p>
-                </div>
-                <input type='checkbox' id={id} checked={checked} onChange={onChangeFunc} defaultChecked={defaultChecked} />
-                <span className='checkmark'></span>
-              </label>
-            )
-          })}
-        </div>
-      }
-
       {/* Preview */}
       <textarea readOnly style={{
         backgroundColor: '#111',
@@ -350,6 +320,36 @@ const ModalExport = () => {
           : <LoadingEllipsis />
         }
       </div>
+
+      {/* Advanced Settings */}
+      <div className='advance-setting-wrapper'>
+        <span><a className='advance-setting-link no-select' onClick={onAdvancedClick} style={{ opacity: advancedSettings ? 1 : 0.5 }}>Advanced</a></span>
+        <span className='advance-setting-chevron'>
+          <ChevronImg
+            dark={dark}
+            onClickHandle={onAdvancedClick}
+            className={advancedSettings ? 'rotate180' : ''}
+            additonalStyle={{ opacity: advancedSettings ? 1 : 0.5 }}
+          />
+        </span>
+      </div>
+
+      {advancedSettings &&
+        <div className='advance-setting-section'>
+          {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, checked, title, description }) => {
+            return (
+              <label className='checkbox-container' key={`${id}-key-${title}`}>
+                <div>
+                  <p className='advance-setting-label'>{title}</p>
+                  <p className='advance-setting-description dim'>{description}</p>
+                </div>
+                <input type='checkbox' id={id} checked={checked} onChange={onChangeFunc} defaultChecked={defaultChecked} />
+                <span className='checkmark'></span>
+              </label>
+            )
+          })}
+        </div>
+      }
 
       {/* Publish */}
 
