@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { CSSProperties } from 'react'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
 import { ExportOption } from '../types'
@@ -9,13 +9,15 @@ interface DropDownMenuProps {
   onSelect?: (option: ExportOption) => void,
   options: ExportOption[],
   selected?: ExportOption,
+  style?: CSSProperties,
 }
 
 /** A custom drop down menu. */
 // eslint-disable-next-line react/display-name
-const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(({ isOpen, onSelect, selected, options, dark }, ref) => {
+const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(({ isOpen, onSelect, selected, options, dark, style }, ref) => {
   return isOpen ? <div ref={ref} className='drop-down-wrapper' style={{
     border: '1px solid ' + (dark ? 'white' : 'black'),
+    ...style,
   }}>
     {options.map((option, index) =>
       <div

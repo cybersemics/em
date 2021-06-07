@@ -71,18 +71,6 @@ const ModalExport = () => {
     value: title,
   })
 
-  /** A message that describes which thoughts will be exported and presents a mime type dropdown. */
-  const ExportMessage = () =>
-    <span>
-      {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>
-      <span> as <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a></span>
-      .
-    </span>
-
-  /** A message that describes which thoughts will be published. */
-  const PublishMessage = () =>
-    <span>Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>.</span>
-
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
     const exported = exportContext(store.getState(), context, selected.type, {
@@ -94,12 +82,12 @@ const ModalExport = () => {
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
 
-  const closeModal = useCallback(() => {
+  const closeDropdown = useCallback(() => {
     setIsOpen(false)
   }, [])
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
-  useOnClickOutside(dropDownRef, closeModal)
+  useOnClickOutside(dropDownRef, closeDropdown)
 
   // fetch all pending descendants of the cursor once before they are exported
   useEffect(() => {
@@ -268,22 +256,35 @@ const ModalExport = () => {
 
       {/* Export message */}
       <div className='modal-export-wrapper'>
-        <span className='modal-content-to-export'><ExportMessage /></span>
-        <span className='modal-drop-down-holder'>
-          <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} />
-          <div ref={setWrapper}>
-            <DropDownMenu
-              isOpen={isOpen}
-              selected={selected}
-              onSelect={(option: ExportOption) => {
-                setSelected(option)
-                setIsOpen(false)
-              }}
-              options={exportOptions}
-              dark={dark}
-              ref={dropDownRef}
-            />
-          </div>
+        <span className='modal-content-to-export'>
+          <span>
+            {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>
+            <span> as <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
+              <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a>
+              <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
+                <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? 'rotate180' : ''} />
+                <span ref={setWrapper}>
+                  <DropDownMenu
+                    isOpen={isOpen}
+                    selected={selected}
+                    onSelect={(option: ExportOption) => {
+                      setSelected(option)
+                      setIsOpen(false)
+                    }}
+                    options={exportOptions}
+                    dark={dark}
+
+                    style={{
+                      top: '120%',
+                      left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
+                      display: 'table', // the only value that seems to overflow properly within the inline-flex element
+                      padding: 0,
+                    }}
+                  />
+                </span>
+              </span>
+            </span></span>
+          </span>
         </span>
       </div>
 
@@ -362,7 +363,7 @@ const ModalExport = () => {
               )}
             </div>
             : <div>
-              <p>{publishing ? 'Publishing...' : <PublishMessage />}</p>
+              <p>{publishing ? 'Publishing...' : <span>Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>.</span>}</p>
               <p className='dim'><i>Note: These thoughts are published permanently. <br/>
               This action cannot be undone.</i></p>
             </div>
