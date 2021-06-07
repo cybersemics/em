@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import ClipboardJS from 'clipboard'
+import { and } from 'fp-and-or'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
 import { download, ellipsize, getExportPhrase, getPublishUrl, hashContext, headValue, isDocumentEditable, isFunction, isRoot, pathToContext, removeHome, timestamp, unroot } from '../util'
@@ -11,9 +12,9 @@ import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { State } from '../util/initialState'
-import { ExportOption } from '../types'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
+import { Child, ExportOption } from '../types'
 
 interface AdvancedSetting {
   id: string,
@@ -63,9 +64,10 @@ const ModalExport = () => {
   const exportWord = isTouch ? 'Share' : 'Download'
 
   const exportThoughtsPhrase = getExportPhrase(state, simplePath, {
-    filterFunction: !shouldIncludeMetaAttributes
-      ? child => !isFunction(child.value)
-      : !shouldIncludeArchived ? child => child.value !== '=archive' : undefined,
+    filterFunction: and(
+      shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
+      shouldIncludeArchived || ((child: Child) => child.value !== '=archive')
+    ),
     value: title,
   })
 
