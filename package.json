@@ -39,6 +39,9 @@
     "test:puppeteer": "react-scripts test ./src/e2e/puppeteer"
   },
   "dependencies": {
+    "expo": "~41.0.1",
+    "expo-status-bar": "~1.0.4",
+    "react-native": "https://github.com/expo/react-native/archive/sdk-41.0.0.tar.gz",
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "algoliasearch": "^4.9.2",
     "axios": "^0.21.1",
