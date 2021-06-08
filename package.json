@@ -19,7 +19,9 @@
       "last 1 safari version"
     ]
   },
+  "main": "mobile/index.tsx",
   "scripts": {
+    "start:expo": "expo start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "clean": "rm -rf ./node_modules/.cache/eslint-loader",
@@ -39,6 +41,10 @@
     "test:e2e:prod": "npm run servebuild & npm run test:e2e; kill $!"
   },
   "dependencies": {
+    "expo": "~41.0.1",
+    "expo-status-bar": "~1.0.4",
+    "react-native": "https://github.com/expo/react-native/archive/sdk-41.0.0.tar.gz",
+    "react-native-web": "~0.13.12",
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "algoliasearch": "^4.9.1",
     "axios": "^0.21.1",
@@ -69,7 +75,6 @@
     "react-error-boundary": "^3.1.1",
     "react-gravatar": "^2.6.3",
     "react-hamburger-menu": "^1.2.1",
-    "react-native-web": "0.16.1",
     "react-redux": "^7.2.4",
     "react-scripts": "4.0.3",
     "react-split-pane": "^0.1.92",
@@ -84,6 +89,7 @@
     "xhtml-purifier": "^0.4.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.9.0",
     "@sinonjs/fake-timers": "^6.0.1",
     "@testing-library/dom": "^7.30.4",
     "@testing-library/jest-dom": "^5.12.0",
