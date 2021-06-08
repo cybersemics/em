@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import xhtmlPurifier from 'xhtml-purifier'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
@@ -24,14 +23,8 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path, splitR
   // split the value into left and right parts
   const value = headValue(path)
 
-  /*
-    Note: Splitting a value with formatting tags may cause splitted values to be dirty html string.
-          So xhtmlPurifier takes badly formatted html, and returns a pretty printed valid XHTML string.
-          Since xhtmlPurifier adds unwanted <p> tags too, so strip is used to remove such tags while preserving formatting tags.
-          issue: https://github.com/cybersemics/em/issues/742
-  */
-  const valueLeft = strip(xhtmlPurifier.purify(splitResult.left), { preserveFormatting: true })
-  const valueRight = strip(xhtmlPurifier.purify(splitResult.right), { preserveFormatting: true })
+  const valueLeft = strip(splitResult.left, { preserveFormatting: true })
+  const valueRight = strip(splitResult.right, { preserveFormatting: true })
 
   const pathLeft = parentOf(path).concat({ value: valueLeft, rank: headRank(path) })
 

@@ -8,7 +8,8 @@ import { Block, Path, SimplePath, Timestamp } from '../types'
 import { State } from '../util/initialState'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
-import { REGEXP_CONTAINS_META_TAG } from '../constants'
+import sanitize from 'sanitize-html'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, REGEXP_CONTAINS_META_TAG } from '../constants'
 // import { HOME_TOKEN } from '../constants'
 
 // a list item tag
@@ -200,7 +201,14 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
   }
   else {
 
-    const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText)) : convertHTMLtoJSON(convertedText)
+    // Closed incomplete tags, preserve only allowed tags and attributes and decode the html.
+    const sanitizedConvertedText = unescape(sanitize(convertedText, {
+      allowedTags: ALLOWED_TAGS,
+      allowedAttributes: ALLOWED_ATTRIBUTES,
+      disallowedTagsMode: 'recursiveEscape'
+    }))
+
+    const json = isRoam ? roamJsonToBlocks(JSON.parse(sanitizedConvertedText)) : convertHTMLtoJSON(sanitizedConvertedText)
 
     const uuid = createId()
 

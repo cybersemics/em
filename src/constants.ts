@@ -320,3 +320,11 @@ export enum DROP_TARGET {
 export const EMOJI_REGEX = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/u
 
 export const IGNORED_PREFIXES = ['the ']
+
+export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span']
+
+export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
+
+export const ALLOWED_ATTRIBUTES = {
+  span: ['class', 'style']
+}
