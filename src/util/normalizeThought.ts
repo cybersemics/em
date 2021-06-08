@@ -16,7 +16,10 @@ export const stripEmojiFromText = (s: string) => {
 }
 
 /** Strips all html tags. */
-export const stripTags = (s: string) => s.replace(REGEXP_TAGS, '')
+export const stripTags = (s: string | {value: string, rank: number, id: string, lastUpdated: string}) => {
+  const str = typeof s === 'string' ? s : s.value
+  return str.replace(REGEXP_TAGS, '')
+}
 
 /**
  * Making character 's' will just become an empty value ''.
