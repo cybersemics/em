@@ -976,3 +976,25 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 `)
   })
 })
+
+it('allow formatting tags', () => {
+
+  const text = `
+    - guardians <b>of the </b><b>galaxy </b>
+    - guardians <i>of the </i><i>universe </i>
+    - guardians <u>of the </u><u>sandbox </u>
+    - guardians <strong>of the </strong><strong>teacup </strong>
+    - guardians <em>of the </em><em>pricky pear </em>
+  `
+
+  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported)
+    .toBe(`- ${HOME_TOKEN}
+  - guardians <b>of the </b><b>galaxy </b>
+  - guardians <i>of the </i><i>universe </i>
+  - guardians <u>of the </u><u>sandbox </u>
+  - guardians <strong>of the </strong><strong>teacup </strong>
+  - guardians <em>of the </em><em>pricky pear </em>`)
+})
