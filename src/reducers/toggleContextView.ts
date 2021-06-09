@@ -5,6 +5,7 @@ import { expandThoughts, getContexts, getSetting } from '../selectors'
 import { hashContext, headValue, pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 import { Context } from '../types'
+import globals from '../globals'
 
 /** Returns a new contextViews object with the given context toggled to the opposite of its previous value. */
 const toggleContext = (state: State, context: Context) => immer.produce(state.contextViews, draft => {
@@ -44,7 +45,7 @@ const toggleContextView = (state: State) => {
     // update context views and expanded
     state => ({
       ...state,
-      expanded: expandThoughts(state, state.cursor)
+      expanded: globals.suppressExpansion ? {} : expandThoughts(state, state.cursor)
     }),
 
     // advance tutorial from context view toggle step

@@ -2,6 +2,7 @@ import { HOME_PATH } from '../../constants'
 import { cursorPrev, importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import globals from '../../globals'
 
 describe('normal view', () => {
 
@@ -123,4 +124,90 @@ describe('normal view', () => {
 
   })
 
+})
+
+describe('global suppress expansion', () => {
+
+  beforeEach(() => {
+    globals.suppressExpansion = false
+  })
+
+  it('suppress expansion path on cursor prev', async () => {
+    const text = `
+    - a
+      - c
+        - k
+      - d
+        - e
+        - f`
+
+    jest.useFakeTimers()
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        text,
+      }),
+      setCursorFirstMatchActionCreator(['a', 'd']),
+      cursorPrev()
+    ])
+
+    expect(globals.suppressExpansion)
+      .toBe(true)
+  })
+
+  it('do not activate suppress expansion on cursorPrev if new cursor is pinned', async () => {
+    const text = `
+    - a
+      - c
+        - =pin
+          - true
+        - k
+      - d
+        - e
+        - f`
+
+    jest.useFakeTimers()
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        text,
+      }),
+      setCursorFirstMatchActionCreator(['a', 'd']),
+      cursorPrev()
+    ])
+
+    expect(globals.suppressExpansion)
+      .toBe(false)
+  })
+
+  it('do not activate suppress expansion on cursorPrev if new cursor parent has pinned children', async () => {
+    const text = `
+    - a
+      - =pinChildren
+        - true
+      - c
+        - k
+      - d
+        - e
+        - f`
+
+    jest.useFakeTimers()
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        path: HOME_PATH,
+        text,
+      }),
+      setCursorFirstMatchActionCreator(['a', 'd']),
+      cursorPrev()
+    ])
+
+    expect(globals.suppressExpansion)
+      .toBe(false)
+  })
 })
