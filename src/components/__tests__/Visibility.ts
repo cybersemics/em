@@ -3,7 +3,7 @@ import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { HOME_PATH } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
-import { importText } from '../../action-creators'
+import { importText, setCursor } from '../../action-creators'
 import Subthoughts from '../Subthoughts'
 import { Context, Path, SimplePath } from '../../types'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
@@ -53,7 +53,7 @@ afterEach(cleanupTestApp)
   Note: This doesn't fully account for the visibility. There are other factors that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
 */
 
-it('ancestors should be visible only upto allowed distance from cursor', () => {
+it('ancestors should be visible only up to allowed distance from cursor', () => {
 
   const text = `
   - a
@@ -148,4 +148,35 @@ it('when the cursor is on a table grandchild leaf (column 2), other grandchildre
 
   expect(childrenB.hasClass('distance-from-cursor-1')).toBe(true)
   expect(childrenK.hasClass('distance-from-cursor-1')).toBe(true)
+})
+
+it('when the cursor is null, all thoughts should be visible and not dimmed', () => {
+
+  const text = `
+  - a
+    - b
+      - c
+        - d
+          - e
+            - f`
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      path: HOME_PATH,
+      text,
+    }),
+    setCursor({ path: null }),
+  ])
+
+  // update DOM
+  wrapper.update()
+
+  const childrenC = getChildrenComponent(['a', 'b', 'c'])
+  const childrenB = getChildrenComponent(['a', 'b'])
+  const childrenA = getChildrenComponent(['a'])
+
+  expect(childrenC.hasClass('distance-from-cursor-0')).toBe(true)
+  expect(childrenB.hasClass('distance-from-cursor-0')).toBe(true)
+  expect(childrenA.hasClass('distance-from-cursor-0')).toBe(true)
 })

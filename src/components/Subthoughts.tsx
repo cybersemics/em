@@ -444,7 +444,7 @@ export const SubthoughtsComponent = ({
   /*
     The thoughts that are the not cursor nor descendants of the cursor should be dimmed.
   */
-  const shouldDim = isDescendantOfFirstVisiblePath && !isCursor && !isDescendantOfCursor
+  const shouldDim = cursor && isDescendantOfFirstVisiblePath && !isCursor && !isDescendantOfCursor
 
   /*
     Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
