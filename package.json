@@ -57,7 +57,6 @@
     "himalaya": "^1.1.0",
     "html-escaper": "^3.0.3",
     "immer": "^9.0.2",
-    "indexeddbshim": "^7.1.0",
     "ipfs-http-client": "^43.0.1",
     "jex-block-parser": "^1.0.0",
     "lodash": "^4.17.21",
