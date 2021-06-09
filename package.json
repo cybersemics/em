@@ -72,7 +72,7 @@
     "react-gravatar": "^2.6.3",
     "react-hamburger-menu": "^1.2.1",
     "react-native-web": "^0.16.5",
-    "react-native": "https://github.com/expo/react-native/archive/sdk-41.0.0.tar.gz",
+    "react-native": "git+https://github.com/expo/react-native/archive/sdk-41.0.0.tar.gz",
     "react-native-get-random-values": "^1.7.0",
     "react-native-sqlite-2": "^3.3.0",
     "react-redux": "^7.2.4",
