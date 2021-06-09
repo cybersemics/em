@@ -467,8 +467,8 @@ export const SubthoughtsComponent = ({
 
   const context = pathToContext(simplePath)
 
-  const contextChildren = context.concat('=children') // children of parent with =children
-  const contextGrandchildren = parentOf(context).concat('=grandchildren') // context of grandparent with =grandchildren
+  const contextChildren = [...unroot(context), '=children'] // children of parent with =children
+  const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
   const styleChildren = getStyle(state, contextChildren)
   const styleGrandChildren = getStyle(state, contextGrandchildren)
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
