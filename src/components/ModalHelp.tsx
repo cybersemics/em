@@ -106,42 +106,42 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
 
     <h2 className='modal-subtitle modal-subtitle-compact'>Metaprogramming</h2>
 
-    <code>=hidden</code>
-    <p>Hide the thought.</p>
-
     <code>=bullets</code>
     <p>Options: Bullets, None<br/>
-    Hide the bullets of a context.</p>
+    Hide the bullets of a context. For a less bullety look.</p>
 
     <code>=drop</code>
     <p>Options: top, bottom<br/>
-    Controls where in a context an item is placed after drag-and-drop.</p>
+    Controls where in a context an item is placed after drag-and-drop. Default: bottom.</p>
 
     <code>=focus</code>
     <p>Options: Normal, Zoom<br/>
-    When the cursor is on this thought, hide parent and sibliings for additional focus.</p>
+    When the cursor is on this thought, hide its parent and sibliings for additional focus. Excellent for study time or when you have had too much coffee.</p>
+
+    <code>=hidden</code>
+    <p>Hide the thought.</p>
 
     <code>=immovable</code>
-    <p>The thought cannot be moved.</p>
+    <p>The thought cannot be moved. Not very useful.</p>
 
     <code>=label</code>
-    <p>Display alternative text, but continue using the real text when linking contexts. Hide the real text unless editing.</p>
+    <p>Display alternative text for a thought, but continue using the real text when linking contexts and sorting. The real text is hidden unless editing. Useful for nuisance words like "The", "A", and "Chrysanthemum".</p>
 
     <code>=note</code>
-    <p>Display a note in smaller text underneath the thought.</p>
+    <p>Display a note in smaller text underneath the thought. How pretty.</p>
 
     <code>=options</code>
-    <p>A list of allowed subthoughts.</p>
+    <p>A list of allowed subthoughts. We all have times when we need to be strict.</p>
 
     <code>=pin</code>
-    <p>Keep a thought expanded.</p>
+    <p>Keep a thought expanded, forever. Or at least until you unpin it.</p>
 
     <code>=pinChildren</code>
     <p>Options: true, false<br/>
-    Keep all of a thought's subthoughts expanded.</p>
+    Keep all of a thought's subthoughts expanded. A lot of pins.</p>
 
     <code>=publish</code>
-    <p>Specify meta data for publishing.</p>
+    <p>Specify meta data for publishing the context as an article.</p>
     <ul>
       <li>
         <code>Byline</code>
@@ -149,7 +149,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
       </li>
       <li>
         <code>Email</code>
-        <p>A gravatar email to display as a small avatar next to the Byline.</p>
+        <p>A gravatar email to display as a small avatar next to the Byline. Something professional, or perhaps something sexy?</p>
       </li>
       <li>
         <code>Title</code>
@@ -158,23 +158,23 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
     </ul>
 
     <code>=readonly</code>
-    <p>The thought cannot be edited, moved, or extended.</p>
+    <p>The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.</p>
 
     <code>=src</code>
-    <p>Import thoughts from a given URL. Accepts plaintext, markdown, and HTML.</p>
+    <p>Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.</p>
 
     <code>=style</code>
-    <p>Set CSS styles on the thought. May also use =styleContainer, =children/=style, =grandchildren/=style.</p>
+    <p>Set CSS styles on the thought. You might also consider =styleContainer, =children/=style, =grandchildren/=style.</p>
 
     <code>=uneditable</code>
-    <p>The thought cannot be edited.</p>
+    <p>The thought cannot be edited. How depressing.</p>
 
     <code>=unextendable</code>
     <p>New subthoughts may not be added to the thought.</p>
 
     <code>=view</code>
     <p>Options: Article, List, Table, Prose<br />
-    Controls how the thought and its subthoughts are displayed.</p>
+    Controls how the thought and its subthoughts are displayed. Use "Table" to create two columns, and "Prose" for longform writing. Default: List.</p>
 
     <h2 className='modal-subtitle'>Development Settings</h2>
 
