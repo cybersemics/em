@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
-import { Path } from '../types'
+import { Path, SimplePath } from '../types'
 
 // constants
 import {
@@ -26,6 +26,7 @@ import {
   getTextContentFromHTML,
   head,
   headValue,
+  once,
   parentOf,
   pathToContext,
   reducerFlow,
@@ -34,12 +35,14 @@ import {
 
 // selectors
 import {
+  getChildrenSorted,
   getNextRank,
   getPrevRank,
   getRankAfter,
   getRankBefore,
   getRootPath,
   getSetting,
+  getSortPreference,
   hasChild,
   isContextViewActive,
   rootedParentOf,
@@ -115,6 +118,14 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const showContexts = isContextViewActive(state, thoughts)
   const showContextsParent = isContextViewActive(state, pathToContext(parentOf(simplePath)))
 
+  /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
+  const getLastSortedChildPath = once((): SimplePath | null => {
+    const lastChild = _.last(getChildrenSorted(state, thoughts))
+    return lastChild
+      ? [...simplePath, lastChild] as SimplePath
+      : null
+  })
+
   // use the live-edited value
   // const thoughtsLive = showContextsParent
   //   ? parentOf(parentOf(thoughts)).concat().concat(head(thoughts))
@@ -132,7 +143,11 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
         ? getPrevRank(state, thoughts, { aboveMeta })
         : getRankBefore(state, simplePath)
       : insertNewSubthought || !simplePath
-        ? getNextRank(state, thoughts)
+        // if inserting an empty thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
+        // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
+        ? value === '' && getSortPreference(state, thoughts).type === 'Alphabetical' && getLastSortedChildPath()
+          ? getRankAfter(state, getLastSortedChildPath()!)
+          : getNextRank(state, thoughts)
         : getRankAfter(state, simplePath)
 
   const id = createId()

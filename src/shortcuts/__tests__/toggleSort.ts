@@ -704,6 +704,62 @@ describe('DOM', () => {
       expect(childrenString).toMatch('abc__def')
     })
 
+    it('except with insertNewSubthought', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+            - a
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - c
+              - b
+              - e
+          `
+        }),
+        setCursorFirstMatchActionCreator(['a']),
+        newThought({ value: '', insertNewSubthought: true }),
+      ])
+
+      const thought = await findThoughtByText('d')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('bcdef_')
+    })
+
+    it('except with insertNewSubthought and insertBefore', async () => {
+      store.dispatch([
+        importText({
+          path: HOME_PATH,
+          text: `
+            - a
+              - =sort
+                - Alphabetical
+              - d
+              - f
+              - c
+              - b
+              - e
+          `
+        }),
+        setCursorFirstMatchActionCreator(['a']),
+        newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
+      ])
+
+      const thought = await findThoughtByText('d')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_bcdef')
+    })
+
   })
 
 })
