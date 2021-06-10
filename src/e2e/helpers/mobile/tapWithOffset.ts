@@ -2,20 +2,20 @@ import { Browser } from 'webdriverio'
 import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
-  // Where in the horizontal line (inside) of the target node should the mouse be clicked
-  horizontalClickLine?: 'left' | 'right',
-  // Specify specific node on editable to click on. Overrides horizontalClickLine
+  // Where in the horizontal line (inside) of the target node should be tapped
+  horizontalTapLine?: 'left' | 'right',
+  // Specify specific node on editable to tap. Overrides horizontalClickLine
   offset?: number,
-  // Number of pixels of x offset to add to the click coordinates
+  // Number of pixels of x offset to add to the tap coordinates
   x?: number,
-  // Number of pixels of y offset to add to the click coordinates
+  // Number of pixels of y offset to add to the tap coordinates
   y?: number,
 }
 
 /**
- * Click the given node with offset.
+ * Tap the given node with offset.
  */
-const clickEditable = async (browser: Browser<'async'>, nodeHandle: any, { horizontalClickLine = 'left', offset, x = 0, y = 0 }: Options) => {
+const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: any, { horizontalTapLine = 'left', offset, x = 0, y = 0 }: Options) => {
   const boundingBox = await browser.getElementRect(nodeHandle.elementId)
   if (!boundingBox) throw new Error('Bouding box of editable not found.')
 
@@ -39,8 +39,8 @@ const clickEditable = async (browser: Browser<'async'>, nodeHandle: any, { horiz
 
   const coordinate = !offset ? {
     x: boundingBox.x + (
-      horizontalClickLine === 'left' ? 0
-      : horizontalClickLine === 'right' ? boundingBox.width - 1
+      horizontalTapLine === 'left' ? 0
+      : horizontalTapLine === 'right' ? boundingBox.width - 1
       : boundingBox.width / 2
     ),
     y: boundingBox.y + (boundingBox.height / 2)
@@ -58,4 +58,4 @@ const clickEditable = async (browser: Browser<'async'>, nodeHandle: any, { horiz
 
 }
 
-export default clickEditable
+export default tapWithOffset
