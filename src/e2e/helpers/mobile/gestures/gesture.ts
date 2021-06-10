@@ -29,6 +29,8 @@ const gesture = async (browser: Browser<'async'>, path: Direction[], { xStart = 
     { action: 'release' }
   ] as TouchAction[]
 
+  // webdriverio has some problem about type for TouchAction[] that is why we add @ts-ignore
+  // We didn't use touchPerform here because webdriverio calls touchPerform in the background. https://github.com/webdriverio/webdriverio/blob/aea3d797ab1970309a60c43629f74154453597e9/packages/webdriverio/src/commands/constant.ts#L100
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   await browser.touchAction(actions)
