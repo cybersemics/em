@@ -1,4 +1,4 @@
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -84,7 +84,6 @@ it('subcategorize within alphabteically sorted context', () => {
 
   const steps = [
     importText({
-      path: HOME_PATH,
       text: `
       - A
         - =sort
@@ -125,7 +124,7 @@ it('subcategorize within alphabteically sorted context', () => {
 //       - b`
 
 //   const steps = [
-//     importText({ path: HOME_PATH, text }),
+//     importText({ text }),
 //     setCursorFirstMatch(['a']),
 //     subCategorizeOne,
 //   ]
@@ -151,7 +150,7 @@ it('subcategorize within alphabteically sorted context', () => {
 //       - note`
 
 //   const steps = [
-//     importText({ path: HOME_PATH, text }),
+//     importText({ text }),
 //     setCursorFirstMatch(['a']),
 //     subCategorizeOne,
 //   ]

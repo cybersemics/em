@@ -1,4 +1,3 @@
-import { HOME_PATH } from '../../constants'
 import initDB, * as db from '../../data-providers/dexie'
 import { importText } from '../../reducers'
 import { Context } from '../../types'
@@ -7,7 +6,7 @@ import * as localSearch from '../localSearch'
 
 /** Import text into the root of a blank initial state. */
 const importThoughts = (text: string) => {
-  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const stateNew = importText(initialState(), { text })
   return {
     contextIndex: stateNew.thoughts.contextIndex,
     thoughtIndex: stateNew.thoughts.thoughtIndex,

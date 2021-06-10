@@ -1,5 +1,4 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
-import { HOME_PATH } from '../../constants'
 import { cursorUp, importText, newSubthought, newThought, setCursor, toggleContextView, toggleHiddenThoughts } from '../../reducers'
 import { rankThoughtsFirstMatch } from '../../selectors'
 import { State } from '../../util/initialState'
@@ -92,7 +91,7 @@ describe('context view', () => {
         - y`
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
       (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a']) }),

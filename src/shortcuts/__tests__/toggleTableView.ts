@@ -1,4 +1,3 @@
-import { HOME_PATH } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
 import { importText } from '../../action-creators'
@@ -12,7 +11,6 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - b
@@ -35,7 +33,6 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =view
@@ -61,7 +58,6 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =view

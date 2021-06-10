@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { clear, existingThoughtChange, existingThoughtDelete, existingThoughtMove, importText, newThought, setCursor } from '../../action-creators'
 import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
@@ -100,7 +100,6 @@ it('load buffered thoughts', async () => {
   fakeTimer.useFakeTimer()
 
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - a
         - b
@@ -140,7 +139,6 @@ it('delete thought with buffered descendants', async () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - x
         - a
@@ -192,7 +190,6 @@ it('move thought with buffered descendants', async () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - x
         - a
@@ -256,7 +253,6 @@ it('edit thought with buffered descendants', async () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - x
         - a
@@ -319,7 +315,6 @@ it.only('export thought with buffered descendants', async () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - x
         - a

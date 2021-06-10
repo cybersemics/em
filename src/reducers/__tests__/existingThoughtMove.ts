@@ -1,4 +1,4 @@
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked, getRankAfter, getChildren, isPending } from '../../selectors'
 import { existingThoughtMove, importText, newSubthought, newThought, setCursor } from '../../reducers'
@@ -251,7 +251,7 @@ it('move root thought into another root thought', () => {
      - c`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'a', rank: 1 }],
       newPath: [{ value: 'x', rank: 0 }, { value: 'a', rank: 0 }],
@@ -296,7 +296,7 @@ it('move descendants with siblings', () => {
      - d`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
       newPath: [{ value: 'b', rank: 1 }],
@@ -343,7 +343,7 @@ it('merge duplicate with new rank', () => {
    - y`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'm', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
@@ -383,7 +383,7 @@ it('merge with duplicate with duplicate rank', () => {
     - y`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'm', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
@@ -423,7 +423,7 @@ it('move with duplicate descendant', () => {
       - x`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
@@ -460,7 +460,7 @@ it('move with hash matched descendant', () => {
       - note`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
@@ -495,7 +495,7 @@ it('move with nested duplicate thoughts', () => {
       - b`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'c', rank: 1 }, { value: 'a', rank: 0 }],
       newPath: [{ value: 'a', rank: 0 }],
@@ -533,7 +533,7 @@ it('move with nested duplicate thoughts and merge their children', () => {
         -d`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'p', rank: 1 }, { value: 'a', rank: 0 }],
       newPath: [{ value: 'a', rank: 0 }],
@@ -582,7 +582,7 @@ it('data integrity test', () => {
   - m`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     existingThoughtMove({
       oldPath: [{ value: 'k', rank: 0 }, { value: 'a', rank: 0 }],
       newPath: [{ value: 'm', rank: 0 }],
@@ -608,7 +608,7 @@ it('consitent rank between thoughtIndex and contextIndex on duplicate merge', ()
   - b`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     (state: State) =>
       existingThoughtMove(state, {
         oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
@@ -645,13 +645,7 @@ it('pending destination should be merged correctly (fetch pending before move)',
 
   timer.useFakeTimer()
 
-  appStore.dispatch([
-    importTextAction({
-      path: HOME_PATH,
-      text
-    }),
-  ]
-  )
+  appStore.dispatch(importTextAction({ text }))
   await timer.runAllAsync()
 
   timer.useFakeTimer()
@@ -710,12 +704,7 @@ it('only fetch the descendants upto the possible conflicting path', async () => 
 
   timer.useFakeTimer()
 
-  appStore.dispatch([
-    importTextAction({
-      path: HOME_PATH,
-      text
-    }),
-  ])
+  appStore.dispatch(importTextAction({ text }))
   await timer.runAllAsync()
 
   timer.useFakeTimer()

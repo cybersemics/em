@@ -1,4 +1,4 @@
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, setCursor } from '../../action-creators'
 
@@ -31,7 +31,6 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
 
   // import thoughts
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - a
         - b
@@ -58,7 +57,6 @@ it('do not outdent thought with siblings', () => {
 
   // import thoughts
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - a
         - b
