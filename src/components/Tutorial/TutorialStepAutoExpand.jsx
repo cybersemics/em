@@ -45,7 +45,7 @@ const TutorialStepAutoExpand = ({ cursor } = {}) => {
             <Fragment>
               <Fragment> Try {isTouch ? 'tapping' : 'clicking'} on </Fragment>
               <Fragment>thought "{ellipsize(subThoughtNotCursor(ancestorThoughtChildren).value)}" {ancestorThought.length !== 0 && `or "${ellipsize(head(ancestorThought))}"`} </Fragment>
-              <Fragment> to hide{(isCursorLeaf ? headValue(cursor) : cursorChildren[0].value).length === 0 && ' the empty '} subthought{isCursorLeaf ? headValue(cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.</Fragment>
+              <Fragment> to hide{(isCursorLeaf ? headValue(cursor) : cursorChildren[0].value).length === 0 && ' the empty '} subthought {isCursorLeaf ? headValue(cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.</Fragment>
             </Fragment>
 
             :
