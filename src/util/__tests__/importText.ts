@@ -9,7 +9,7 @@ import { SimplePath } from '../../types'
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = (text: string) => {
 
-  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
@@ -31,7 +31,7 @@ it('basic import with proper thought structure', () => {
 
   const now = timestamp()
 
-  const stateNew = importText(initialState(now), { path: HOME_PATH, text, lastUpdated: now })
+  const stateNew = importText(initialState(now), { text, lastUpdated: now })
   const { contextIndex, thoughtIndex } = stateNew.thoughts
 
   const childAId = getParent(stateNew, [HOME_TOKEN])?.children[0]?.id
@@ -146,7 +146,7 @@ it('import and merge descendants', () => {
   const now = timestamp()
 
   const newState = reducerFlow([
-    importText({ text: initialText, path: HOME_PATH, lastUpdated: now }),
+    importText({ text: initialText, lastUpdated: now }),
     newThought({ at: HOME_PATH, value: '' }),
     (state: State) => importText(state, {
       path: rankThoughtsFirstMatch(state, ['']),
@@ -331,7 +331,7 @@ it('skip root token', () => {
   - c
     - d`
 
-  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
@@ -350,7 +350,7 @@ it('skip em token', () => {
   - c
     - d`
 
-  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
@@ -371,7 +371,7 @@ it('duplicate thoughts', () => {
   `
 
   const now = timestamp()
-  const imported = importText(initialState(), { path: HOME_PATH, text, lastUpdated: now })
+  const imported = importText(initialState(), { text, lastUpdated: now })
   const lexeme = imported.thoughts.thoughtIndex[hashThought('m')]
 
   const childAId = lexeme.contexts[0]?.id
@@ -498,7 +498,7 @@ it('replace empty cursor', () => {
 
   const stateNew = reducerFlow([
 
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
 
     // manually change `b` to empty thought since importText skips empty thoughts
     existingThoughtChange({
@@ -539,7 +539,7 @@ it('replace empty cursor without affecting siblings', () => {
 
   const stateNew = reducerFlow([
 
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
 
     // manually change `c` to empty thought since importText skips empty thoughts
     existingThoughtChange({
@@ -603,11 +603,7 @@ it('decode HTML entities', () => {
   - three &lt; four
   `
 
-  const stateNew = importText({
-    path: HOME_PATH,
-    text: paste,
-  })(initialState())
-
+  const stateNew = importText({ text: paste })(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)
@@ -643,7 +639,7 @@ it('import single-line nested html tags', () => {
   const stateNew = reducerFlow([
 
     // importing single-line needs an existing thought
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
 
     // manually change `b` to empty thought to not see 'b' end of the new value.
     existingThoughtChange({
@@ -693,7 +689,7 @@ it('export note as a normal thought if lossless not selected', () => {
      - b
    - c`
 
-  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
 
   expect(exported)
@@ -987,7 +983,7 @@ it('allow formatting tags', () => {
     - guardians <em>of the </em><em>pricky pear </em>
   `
 
-  const stateNew = importText(initialState(), { path: HOME_PATH, text })
+  const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported)

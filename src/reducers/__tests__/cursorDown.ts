@@ -1,5 +1,4 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
-import { HOME_PATH } from '../../constants'
 import { rankThoughtsFirstMatch } from '../../selectors'
 import { State } from '../../util/initialState'
 
@@ -147,7 +146,7 @@ describe('context view', () => {
     - y`
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
       toggleContextView,
       cursorDown,
@@ -167,7 +166,7 @@ describe('context view', () => {
     - n`
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       setCursorFirstMatch(['a', 'm']),
       toggleContextView,
       cursorDown
@@ -189,7 +188,7 @@ describe('context view', () => {
     - y`
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       setCursorFirstMatch(['a', 'm']),
       toggleContextView,
       setCursorFirstMatch(['a', 'm', 'a']),
@@ -212,7 +211,7 @@ describe('context view', () => {
   - m`
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }] }),
       toggleContextView,
       setCursor({ path: [{ value: 'a', rank: 0 }, { value: 'm', rank: 1 }, { value: 'a', rank: 0 }] }),
@@ -237,7 +236,7 @@ describe('context view', () => {
     - y`
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       setCursorFirstMatch(['a', 'm']),
       toggleContextView,
       setCursorFirstMatch(['a', 'm', 'a', 'x']),
@@ -263,7 +262,7 @@ describe('context view', () => {
     - z`
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
       (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
@@ -288,7 +287,7 @@ describe('context view', () => {
     - y`
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
       (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
@@ -317,7 +316,7 @@ describe('context view', () => {
     `
 
     const steps = [
-      importText({ path: HOME_PATH, text }),
+      importText({ text }),
       (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
       toggleContextView,
       (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a', 'x']) }),

@@ -1,4 +1,3 @@
-import { HOME_PATH } from '../../constants'
 import { cursorPrev, importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
@@ -11,7 +10,6 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch(importText({
-      path: HOME_PATH,
       text: `
         - a
           - a1
@@ -32,7 +30,6 @@ describe('normal view', () => {
 
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - a
           - b`
@@ -52,7 +49,6 @@ describe('normal view', () => {
 
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - a
           - b`
@@ -82,7 +78,6 @@ describe('normal view', () => {
 
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - SORT
             - a
@@ -110,7 +105,6 @@ describe('normal view', () => {
     const store = createTestStore()
 
     store.dispatch(importText({
-      path: HOME_PATH,
       text: `
           - a
             - a1
@@ -146,7 +140,6 @@ describe('global suppress expansion', () => {
 
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text,
       }),
       setCursorFirstMatchActionCreator(['a', 'd']),
@@ -173,7 +166,6 @@ describe('global suppress expansion', () => {
 
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text,
       }),
       setCursorFirstMatchActionCreator(['a', 'd']),
@@ -200,7 +192,6 @@ describe('global suppress expansion', () => {
 
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text,
       }),
       setCursorFirstMatchActionCreator(['a', 'd']),

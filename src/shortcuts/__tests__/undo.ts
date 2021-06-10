@@ -1,5 +1,5 @@
 import { store as appStore } from '../../store'
-import { MODALS, HOME_PATH, HOME_TOKEN } from '../../constants'
+import { MODALS, HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -49,7 +49,6 @@ it('undo thought change', () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
         - b`
@@ -86,7 +85,6 @@ it('persists undo thought change', async () => {
 
   appStore.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
         - b`
@@ -121,7 +119,6 @@ it('group all navigation actions following an undoable(non-navigation) action an
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
         - b
@@ -180,7 +177,6 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - b
@@ -217,7 +213,6 @@ it('state remains unchanged if there are no inverse patches', () => {
   const store = createTestStore()
 
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - a
        - b
@@ -239,7 +234,6 @@ it('newThought action should be merged with the succeeding patch', () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
           - a
           - b`
@@ -279,7 +273,6 @@ it('undo contiguous changes', () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - A
         - B`
@@ -316,7 +309,6 @@ it('state.alert is omitted from the undo patch', () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
           - A
           - B`
@@ -340,7 +332,6 @@ it('clear patches when any undoable action is dispatched', () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - A
         - B`,

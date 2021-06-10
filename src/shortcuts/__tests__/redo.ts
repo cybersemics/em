@@ -1,4 +1,4 @@
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -10,7 +10,6 @@ it('redo thought change', () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
         - b`
@@ -53,7 +52,6 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
         - b
@@ -110,7 +108,6 @@ it('redo contiguous changes', () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - A
         - B`

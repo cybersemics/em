@@ -1,4 +1,4 @@
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getAllChildren } from '../../selectors'
 import { existingThoughtChange, newThought, setCursor, importText } from '../../reducers'
@@ -261,7 +261,6 @@ it('data integrity test', () => {
 
   const steps = [
     importText({
-      path: HOME_PATH,
       text
     }),
     setCursor({
@@ -301,7 +300,6 @@ it('data integrity test after editing a parent with multiple descendants with sa
 
   const steps = [
     importText({
-      path: HOME_PATH,
       text
     }),
     setCursor({

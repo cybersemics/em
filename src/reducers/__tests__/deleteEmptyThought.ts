@@ -4,7 +4,7 @@ import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -71,7 +71,6 @@ it(`archive thought with hidden children - arvhive all children in cursor's pare
 
   const steps = [
     importTextReducer({
-      path: HOME_PATH,
       text: `
         -
           - =a
@@ -267,7 +266,6 @@ describe('mount', () => {
   it('after merging siblings, caret should be in between', async () => {
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - apple
           - banana`
