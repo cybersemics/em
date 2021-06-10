@@ -180,3 +180,56 @@ it('when the cursor is null, all thoughts should be visible and not dimmed', () 
   expect(childrenB.hasClass('distance-from-cursor-0')).toBe(true)
   expect(childrenA.hasClass('distance-from-cursor-0')).toBe(true)
 })
+
+it('siblings of the leaf cursor should not be dimmed', () => {
+
+  const text = `
+  - a
+    - b
+    - c
+    - d
+      - e`
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      path: HOME_PATH,
+      text,
+    }),
+    setCursorFirstMatchActionCreator(['a', 'b']),
+  ])
+
+  // update DOM
+  wrapper.update()
+
+  const childrenA = getChildrenComponent(['a'])
+
+  expect(childrenA.hasClass('distance-from-cursor-0')).toBe(true)
+})
+
+it('siblings of the non leaf cursor should be dimmed', () => {
+
+  const text = `
+  - a
+    - b
+      - 1
+    - c
+    - d
+      - e`
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      path: HOME_PATH,
+      text,
+    }),
+    setCursorFirstMatchActionCreator(['a', 'b']),
+  ])
+
+  // update DOM
+  wrapper.update()
+
+  const childrenA = getChildrenComponent(['a'])
+
+  expect(childrenA.hasClass('distance-from-cursor-1')).toBe(true)
+})
