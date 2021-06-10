@@ -39,7 +39,7 @@ export const exportContext = (state: State, context: Context, format: MimeType =
 
   const childrenFiltered = children.filter(and(
     excludeSrc && attribute(state, context, '=src') ? (child: Child) => isFunction(child.value) : true,
-    !excludeMeta && excludeArchived && attribute(state, context, '=archive') ? (child: Child) => isFunction(child.value) : true,
+    !excludeMeta && excludeArchived ? (child: Child) => child.value !== '=archive' : true,
     excludeMeta ? (child: Child) => !isFunction(child.value) || child.value === '=note' : true
   ))
 
