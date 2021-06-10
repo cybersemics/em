@@ -136,7 +136,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
   const childrenPinned = isOnlyChildNoUrl || isTable(state, simpleContext) || pinChildren(state, simpleContext) || publishPinChildren(state, simpleContext)
     ? visibleChildren
     : visibleChildren.filter(child => {
-      const value = strip(childValue(child, showContexts))
+      const value = childValue(child, showContexts)
 
       const childPath = [...path || [], { ...child, value }]
 
@@ -157,7 +157,9 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
        */
       const isEitherMetaAncestorOrCursor = () => !state.showHiddenThoughts && isFunction(value)
 
-      return value[value.length - 1] === EXPAND_THOUGHT_CHAR || isChildPinned || isEitherMetaAncestorOrCursor() || isExpansionBasePath() || isAncestor()
+      const strippedValue = strip(value)
+
+      return strippedValue[strippedValue.length - 1] === EXPAND_THOUGHT_CHAR || isChildPinned || isEitherMetaAncestorOrCursor() || isExpansionBasePath() || isAncestor()
     })
 
   const initialExpanded = {
