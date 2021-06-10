@@ -25,6 +25,9 @@ Dependency notes:
     // https://github.com/jsdom/whatwg-encoding/pull/11
     "ipfs-http-client",
 
+    // jest-puppeteer requires puppeteer <v10
+    "puppeteer",
+
     // Enzyme v3.11.0 doesn't work with React v17
     // https://github.com/enzymejs/enzyme/issues/2429
     "react",
