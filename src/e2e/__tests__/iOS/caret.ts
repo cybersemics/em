@@ -6,9 +6,10 @@ import { Browser } from 'webdriverio'
 import waitForElement from '../../helpers/mobile/waitForElement'
 import waitForEditable from '../../helpers/mobile/waitForEditable'
 import gesture from '../../helpers/mobile/gestures/gesture'
-import { NEW_THOUGHT_GESTURE } from '../../helpers/constants'
+import { NEW_SUB_THOUGHT_GESTURE, NEW_THOUGHT_GESTURE } from '../../helpers/constants'
 import hideKeyboardByTappingDone from '../../helpers/mobile/hideKeyboardByTappingDone'
 import tapWithOffset from '../../helpers/mobile/tapWithOffset'
+import getEditingText from '../../helpers/mobile/getEditingText'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
@@ -42,6 +43,21 @@ describe('Caret & Cursor Test', () => {
     await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
 
     await mobileBrowser.waitUntil(() => mobileBrowser.isKeyboardShown())
+    const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+    expect(selectionTextContent).toBe('foo')
+  })
+
+  it('Preserve Editing: true', async () => {
+    await gesture(mobileBrowser, NEW_THOUGHT_GESTURE)
+    await mobileBrowser.sendKeys(['foo'])
+    await gesture(mobileBrowser, NEW_SUB_THOUGHT_GESTURE)
+    await mobileBrowser.sendKeys(['bar'])
+
+    await waitForEditable(mobileBrowser, 'bar')
+    const editableNodeHandle = await waitForEditable(mobileBrowser, 'foo')
+    await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+
+    await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'foo')
     const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
     expect(selectionTextContent).toBe('foo')
   })
