@@ -1,4 +1,3 @@
-import { HOME_PATH } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import proseViewShortcut from '../proseView'
 import { attribute } from '../../selectors'
@@ -13,7 +12,6 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - b
@@ -35,7 +33,6 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =view
@@ -59,7 +56,6 @@ it('toggle off prose view of parent of cursor', () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =view

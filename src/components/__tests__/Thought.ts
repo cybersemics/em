@@ -1,6 +1,6 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
 import { importText, render } from '../../action-creators'
 import windowEvent from '../../test-helpers/windowEvent'
@@ -97,7 +97,6 @@ it.skip('caret is set on new subthought', async () => {
 it('do not allow edit to duplicate thought', async () => {
 
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - a
       - b

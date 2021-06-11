@@ -1,7 +1,6 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { HOME_PATH } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { importText, setCursor } from '../../action-creators'
 import Subthoughts from '../Subthoughts'
@@ -66,7 +65,6 @@ it('ancestors should be visible only up to allowed distance from cursor', () => 
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text,
     }),
     setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd'])
@@ -100,7 +98,6 @@ it('descendants of hidden ancestor must be hidden too', () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text,
     }),
     setCursorFirstMatchActionCreator(['a', 'b', 'c'])
@@ -134,7 +131,6 @@ it('when the cursor is on a table grandchild leaf (column 2), other grandchildre
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text,
     }),
     setCursorFirstMatchActionCreator(['a', 'e', 'f'])
@@ -163,7 +159,6 @@ it('when the cursor is null, all thoughts should be visible and not dimmed', () 
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text,
     }),
     setCursor({ path: null }),
@@ -179,4 +174,55 @@ it('when the cursor is null, all thoughts should be visible and not dimmed', () 
   expect(childrenC.hasClass('distance-from-cursor-0')).toBe(true)
   expect(childrenB.hasClass('distance-from-cursor-0')).toBe(true)
   expect(childrenA.hasClass('distance-from-cursor-0')).toBe(true)
+})
+
+it('siblings of the leaf cursor should not be dimmed', () => {
+
+  const text = `
+  - a
+    - b
+    - c
+    - d
+      - e`
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      text,
+    }),
+    setCursorFirstMatchActionCreator(['a', 'b']),
+  ])
+
+  // update DOM
+  wrapper.update()
+
+  const childrenA = getChildrenComponent(['a'])
+
+  expect(childrenA.hasClass('distance-from-cursor-0')).toBe(true)
+})
+
+it('siblings of the non leaf cursor should be dimmed', () => {
+
+  const text = `
+  - a
+    - b
+      - 1
+    - c
+    - d
+      - e`
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      text,
+    }),
+    setCursorFirstMatchActionCreator(['a', 'b']),
+  ])
+
+  // update DOM
+  wrapper.update()
+
+  const childrenA = getChildrenComponent(['a'])
+
+  expect(childrenA.hasClass('distance-from-cursor-1')).toBe(true)
 })

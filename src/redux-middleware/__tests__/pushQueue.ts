@@ -1,5 +1,4 @@
 import { store } from '../../store'
-import { HOME_PATH } from '../../constants'
 import { importText, existingThoughtChange } from '../../action-creators'
 import { getThought as getThoughtSelector } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
@@ -28,7 +27,6 @@ it('editing thoughts to new value with related pending lexeme', async () => {
   fakeTimer.useFakeTimer()
 
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - g
         - h

@@ -435,6 +435,7 @@ export const SubthoughtsComponent = ({
   const isDescendantOfCursor = cursor && cursor.length === (cursorSubcontextIndex + 1) && resolvedPath.length > cursor?.length
 
   const isCursor = cursor && resolvedPath.length === (cursorSubcontextIndex + 1) && resolvedPath.length === cursor?.length
+  const isCursorParent = cursor && isAncestorOfCursor && (cursor.length - resolvedPath.length) === 1
 
   /*
     The thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
@@ -442,9 +443,18 @@ export const SubthoughtsComponent = ({
   const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
 
   /*
-    The thoughts that are the not cursor nor descendants of the cursor should be dimmed.
+    Note:
+
+    # Thoughts that should not be dimmed
+      - Cursor and its descendants.
+      - Thoughts that are both descendant of the first visible thought and ancestor of the cursor.
+      - Siblings of the cursor if the cursor is a leaf thought.
+
+    # Thoughts that should be dimmed
+      - first visible thought should be dimmed if it is not direct parent of the cursor.
+      - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
   */
-  const shouldDim = cursor && isDescendantOfFirstVisiblePath && !isCursor && !isDescendantOfCursor
+  const shouldDim = cursor && isDescendantOfFirstVisiblePath && !(isCursorParent && isCursorLeaf) && !isCursor && !isDescendantOfCursor
 
   /*
     Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.

@@ -3,7 +3,6 @@ import { store } from '../../store'
 import { deleteThought, importText } from '../../action-creators'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
-import { HOME_PATH } from '../../constants'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
@@ -19,7 +18,6 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
   expect(wrapper.find(NewThoughtInstructions)).toHaveLength(1)
 
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - a
       - b

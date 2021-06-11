@@ -1,4 +1,4 @@
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -14,7 +14,6 @@ it('empty thought should outdent when hit enter', () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - b

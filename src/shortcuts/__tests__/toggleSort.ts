@@ -1,4 +1,4 @@
-import { EM_TOKEN, HOME_PATH } from '../../constants'
+import { EM_TOKEN } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute, rankThoughtsFirstMatch } from '../../selectors'
 import { existingThoughtChange, importText, newThought, setCursor, toggleAttribute, setFirstSubthought } from '../../action-creators'
@@ -18,7 +18,6 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - d
@@ -41,7 +40,6 @@ it('toggle sort preference descending of cursor (initial state with =sort/Alphab
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =sort
@@ -68,7 +66,6 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =sort
@@ -94,7 +91,6 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical 
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =sort
@@ -132,7 +128,6 @@ it('toggle off sort preference of cursor (initial state without =sort attribute 
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - d
@@ -167,7 +162,6 @@ it('toggle on sort preference of home context when cursor is null (initial state
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - b
           - 1
@@ -192,7 +186,6 @@ it('toggle sort preference descending of home context when cursor is null (initi
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - =sort
           - Alphabetical
@@ -216,7 +209,6 @@ it('override global Alphabetical with local Alphabetical/desc', () => {
   store.dispatch([
 
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - d
@@ -446,7 +438,6 @@ describe('DOM', () => {
     it('after first thought', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -474,7 +465,6 @@ describe('DOM', () => {
     it('after middle thought', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -502,7 +492,6 @@ describe('DOM', () => {
     it('after last thought', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -530,7 +519,6 @@ describe('DOM', () => {
     it('before first thought', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -558,7 +546,6 @@ describe('DOM', () => {
     it('before middle thought', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -586,7 +573,6 @@ describe('DOM', () => {
     it('before last thought', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -614,7 +600,6 @@ describe('DOM', () => {
     it('multiple empty thoughts', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -648,7 +633,6 @@ describe('DOM', () => {
     it('only one empty subthought', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -678,7 +662,6 @@ describe('DOM', () => {
     it.skip('multiple contiguous empty thoughts', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
               - =sort
                 - Alphabetical
@@ -707,7 +690,6 @@ describe('DOM', () => {
     it('except with insertNewSubthought', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
             - a
               - =sort
@@ -735,7 +717,6 @@ describe('DOM', () => {
     it('except with insertNewSubthought and insertBefore', async () => {
       store.dispatch([
         importText({
-          path: HOME_PATH,
           text: `
             - a
               - =sort

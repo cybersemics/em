@@ -1,6 +1,5 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
-import { HOME_PATH } from '../../constants'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { importText } from '../../action-creators'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
@@ -21,7 +20,6 @@ it('reset content editable inner html on thought bump', async () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - b`

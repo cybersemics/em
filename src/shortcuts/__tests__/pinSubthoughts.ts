@@ -1,4 +1,3 @@
-import { HOME_PATH } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute } from '../../selectors'
 import { importText } from '../../action-creators'
@@ -13,7 +12,6 @@ it('toggle on when there is no =pinChildren', () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - b
@@ -39,7 +37,6 @@ it('toggle on when =pinChildren is false', () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =pinChildren
@@ -67,7 +64,6 @@ it('remove =pinChildren when toggling off from true', () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - =pinChildren

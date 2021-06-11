@@ -5,7 +5,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
@@ -76,7 +76,6 @@ const simulateDragAndDrop = ({ source, drop, type }: { source: Context, drop: Co
 
 it('drop as sibling', () => {
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - a
       - b
@@ -105,7 +104,6 @@ it('drop as sibling', () => {
 
 it('drop as child (Drop end)', () => {
   store.dispatch(importText({
-    path: HOME_PATH,
     text: `
       - a
       - b
@@ -136,7 +134,6 @@ it('prevent drop into descendants', () => {
 
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `
         - a
           - b

@@ -1,6 +1,6 @@
 import { initialState, reducerFlow, removeHome } from '../../util'
 import { join } from '../../reducers'
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import importText from '../importText'
 import { exportContext, getChildrenRanked } from '../../selectors'
@@ -11,7 +11,7 @@ it('joins two simple thoughts', () => {
   - n
 - b`
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     setCursorFirstMatch(['a', 'm']),
     join()
   ]
@@ -40,7 +40,7 @@ it('joins two thoughts and merges their children', () => {
     - f
 - b`
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     setCursorFirstMatch(['a', 'o']),
     join()
   ]
@@ -74,7 +74,7 @@ it('generates unique & non-conflicting ranks', () => {
     - d
 - b`
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     setCursorFirstMatch(['a', 'n']),
     join()
   ]

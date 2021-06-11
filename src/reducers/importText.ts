@@ -9,8 +9,7 @@ import { State } from '../util/initialState'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, REGEXP_CONTAINS_META_TAG } from '../constants'
-// import { HOME_TOKEN } from '../constants'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH, REGEXP_CONTAINS_META_TAG } from '../constants'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
@@ -132,7 +131,7 @@ const rawTextToHtml = (text: string) => {
 }
 
 interface Options {
-  path: Path,
+  path?: Path,
   text: string,
   lastUpdated?: Timestamp,
   preventSetCursor?: boolean,
@@ -151,6 +150,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
   const isRoam = validateRoam(text)
 
+  path = path || HOME_PATH
   const simplePath = simplifyPath(state, path)
   const context = pathToContext(simplePath)
   const convertedText = isRoam ? text : rawTextToHtml(text)

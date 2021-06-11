@@ -1,7 +1,6 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { HOME_PATH } from '../../constants'
 import { equalArrays, pathToContext, timestamp } from '../../util'
 import { importText, setCursor, toggleAttribute } from '../../action-creators'
 import Editable from '../Editable'
@@ -43,7 +42,6 @@ it('normal view', () => {
   // import thoughts
   store.dispatch([
     importText({
-      path: HOME_PATH,
       text: `- a
         - b
         - c`
@@ -77,7 +75,6 @@ describe('context view', () => {
     // import thoughts
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - a
             - m
@@ -134,7 +131,6 @@ describe('context view', () => {
     // import thoughts
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - a
             - one
@@ -210,7 +206,6 @@ describe('context view', () => {
     // import thoughts
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - a
             - b
@@ -255,7 +250,6 @@ describe('context view', () => {
     // import thoughts
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - a
           - b
@@ -285,7 +279,6 @@ describe('context view', () => {
     // import thoughts
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
         - a
           - m
@@ -320,7 +313,6 @@ describe('hidden thoughts', () => {
 
     // import thoughts
     store.dispatch(importText({
-      path: HOME_PATH,
       preventSetCursor: true,
       text: `
         - a
@@ -391,7 +383,6 @@ describe('hidden thoughts', () => {
     // import thoughts
     store.dispatch([
       importText({
-        path: HOME_PATH,
         text: `
           - a
             - d
@@ -464,7 +455,6 @@ describe('hidden thoughts', () => {
 
     // import thoughts
     store.dispatch(importText({
-      path: HOME_PATH,
       preventSetCursor: true,
       text: `
         - a
@@ -496,7 +486,6 @@ describe('hidden thoughts', () => {
     // import thoughts
     store.dispatch([
       importText({
-        path: HOME_PATH,
         preventSetCursor: true,
         text: `
         - a
@@ -577,7 +566,6 @@ describe('expand thoughts', () => {
     // import thoughts
     store.dispatch([
       importText({
-        path: HOME_PATH,
         preventSetCursor: true,
         text: `
         - a

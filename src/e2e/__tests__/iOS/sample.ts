@@ -8,8 +8,7 @@ import waitForElement from '../../helpers/mobile/waitForElement'
 import paste from '../../helpers/mobile/paste'
 import waitForEditable from '../../helpers/mobile/waitForEditable'
 import clickThought from '../../helpers/mobile/clickThought'
-import clickWithOffset from '../../helpers/mobile/clickWithOffset'
-// import execute from '../../../test-helpers/e2e-helpers/mobile/execute'
+import tapWithOffset from '../../helpers/mobile/tapWithOffset'
 import tapReturnKey from '../../helpers/mobile/tapReturnKey'
 import gesture from '../../helpers/mobile/gestures/gesture'
 import { NEW_THOUGHT_GESTURE } from '../../helpers/constants'
@@ -41,6 +40,8 @@ describe('Sample Test', () => {
       - rest api`
 
     await gesture(mobileBrowser, NEW_THOUGHT_GESTURE)
+    const focusNode = await mobileBrowser.execute(() => window.getSelection()?.focusNode)
+    expect(focusNode).toBeTruthy()
     await paste(mobileBrowser, [''], importText)
 
     await waitForEditable(mobileBrowser, 'puppeteer')
@@ -50,7 +51,7 @@ describe('Sample Test', () => {
     await clickThought(mobileBrowser, 'web scrapping')
 
     const editableNodeHandle = await waitForEditable(mobileBrowser, 'web scrapping')
-    await clickWithOffset(mobileBrowser, editableNodeHandle, { offset: 3 })
+    await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 3 })
 
     await tapReturnKey(mobileBrowser)
 
