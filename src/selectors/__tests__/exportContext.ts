@@ -1,9 +1,8 @@
 import { initialState, reducerFlow } from '../../util'
 import { setCursor, importText } from '../../reducers'
-import { HOME_PATH } from '../../constants'
 import exportContext from '../exportContext'
 
-it('test when meta and archived thoughts are included', () => {
+it('meta and archived thoughts are included', () => {
   const text = `- a
   - =archive
     - c
@@ -12,7 +11,7 @@ it('test when meta and archived thoughts are included', () => {
   - b`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     setCursor({ path: [{ value: 'a', rank: 0 }] })
   ]
 
@@ -29,7 +28,7 @@ it('test when meta and archived thoughts are included', () => {
   - b`)
 })
 
-it('test when meta is included but archived thoughts are excluded', () => {
+it('meta is included but archived thoughts are excluded', () => {
   const text = `- a
   - =archive
     - c
@@ -38,7 +37,7 @@ it('test when meta is included but archived thoughts are excluded', () => {
   - b`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     setCursor({ path: [{ value: 'a', rank: 0 }] })
   ]
 
@@ -53,7 +52,7 @@ it('test when meta is included but archived thoughts are excluded', () => {
   - b`)
 })
 
-it('test when meta is excluded', () => {
+it('meta is excluded', () => {
   const text = `- a
   - =archive
     - c
@@ -62,7 +61,7 @@ it('test when meta is excluded', () => {
   - b`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     setCursor({ path: [{ value: 'a', rank: 0 }] })
   ]
 
@@ -77,7 +76,7 @@ it('test when meta is excluded', () => {
   - b`)
 })
 
-it('test when meta is excluded but archived is included', () => {
+it('meta is excluded but archived is included', () => {
   const text = `- a
   - =archive
     - c
@@ -86,7 +85,7 @@ it('test when meta is excluded but archived is included', () => {
   - b`
 
   const steps = [
-    importText({ path: HOME_PATH, text }),
+    importText({ text }),
     setCursor({ path: [{ value: 'a', rank: 0 }] })
   ]
 
