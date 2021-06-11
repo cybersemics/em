@@ -28,14 +28,6 @@ Dependency notes:
     // jest-puppeteer requires puppeteer <v10
     "puppeteer",
 
-    // Enzyme v3.11.0 doesn't work with React v17
-    // https://github.com/enzymejs/enzyme/issues/2429
-    "react",
-    "react-dom",
-    // peer react@">=17.0.1"
-    // introduced in v0.15.0 at https://github.com/necolas/react-native-web/commit/744b61972fe5771ec2c861957f2008a76c53bbfb
-    "react-native-web",
-
     // Broken:  ^6.0.1 → ^7.0.5
     // InstalledClock not exported; need to troubleshoot
     "@sinonjs/fake-timers",

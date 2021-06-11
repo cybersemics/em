@@ -37,9 +37,6 @@ const gesture = (p1: Point, p2: Point, threshold: number) =>
   p1.x - p2.x > threshold ? 'l' :
   null
 
-/** Returns true if no text is selected. */
-const noTextSelected = () => !window.getSelection()?.toString()
-
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
 
@@ -72,10 +69,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     })
 
     this.panResponder = PanResponder.create({
-
-      // TODO: remove after upgrade to 0.14.6
-      onStartShouldSetPanResponder: noTextSelected,
-      onStartShouldSetPanResponderCapture: noTextSelected,
 
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
