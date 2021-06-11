@@ -16,6 +16,7 @@ import {
   timestamp,
   unroot,
 } from '../util'
+import { getSessionId } from '../util/sessionManager'
 
 interface Payload {
   context: Context,
@@ -198,7 +199,8 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
       id: contextEncoded,
       context,
       children: subthoughts,
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     } as Parent : null,
     // descendants
     ...descendantUpdatesResult.contextIndex

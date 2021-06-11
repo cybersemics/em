@@ -8,6 +8,7 @@ import { getSetting } from '../selectors'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../types'
+import { getSessionId } from '../util/sessionManager'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup
@@ -109,6 +110,7 @@ const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
         })),
         created: thought.created || timestamp(),
         lastUpdated: thought.lastUpdated || timestamp(),
+        updatedBy: getSessionId()
       }
       : thought
   }, {} as Index<Lexeme | null>)
@@ -132,6 +134,7 @@ const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
           }))
           : children,
         lastUpdated: parentContext!.lastUpdated || timestamp(),
+        updatedBy: getSessionId()
       }
       : null
   }, {} as Index<Parent | null>)

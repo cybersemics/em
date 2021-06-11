@@ -5,6 +5,7 @@ import _ from 'lodash'
 import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
 import { getSessionId } from '../util/sessionManager'
+import { IDatabaseChange } from 'dexie-observable/api'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -223,5 +224,32 @@ export const fullTextSearch = async (value: string) => {
 /** Logs a message. */
 export const log = async ({ message, stack }: { message: string, stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
+
+export enum dbChangeType {
+  created = 1,
+  updated = 2,
+  deleted = 3,
+}
+interface ChangeHandlers<T> {
+  [dbChangeType.created]: (change: IDatabaseChange) => T,
+  [dbChangeType.updated]: (change: IDatabaseChange) => Promise<T>,
+  [dbChangeType.deleted]: (change: IDatabaseChange) => T,
+}
+
+export const dbTables = {
+  thoughtIndex: 'thoughtIndex',
+  contextIndex: 'contextIndex'
+}
+
+/** Subscribe to dexie updates. */
+export const subscribe = <T>(update: (updates: T) => void, dbChangeHandlers: ChangeHandlers<T>) => {
+  db.on('changes', changes => {
+    changes.forEach(async change => {
+      const updates = await dbChangeHandlers[change.type](change)
+      update(updates)
+    })
+  })
+
+}
 
 export default initDB

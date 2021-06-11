@@ -1,8 +1,27 @@
-import { Index, Lexeme, Parent, Snapshot } from '../types'
+import { Index, Lexeme, Parent, Ref, Snapshot } from '../types'
 import { keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
 import { State } from '../util/initialState'
 import { Dispatch } from 'react'
+
+export enum firebaseChangeTypes {
+  create = 'child_added',
+  update = 'child_changed',
+  delete = 'child_removed',
+}
+
+interface FirebaseChangeHandlers<T> {
+  contextIndex: {
+    [firebaseChangeTypes.create]: (change: Parent) => T,
+    [firebaseChangeTypes.update]: (change: Parent) => T,
+    [firebaseChangeTypes.delete]: (change: Parent) => T,
+  },
+  thoughtIndex: {
+    [firebaseChangeTypes.create]: (change: Lexeme) => T,
+    [firebaseChangeTypes.update]: (change: Lexeme) => T,
+    [firebaseChangeTypes.delete]: (change: Lexeme) => T,
+  },
+}
 
 /**
  * Get all firebase related functions as an object.
@@ -92,5 +111,29 @@ const getFirebaseProvider = (state:State, dispatch: Dispatch<any>) => ({
     })))
   }
 })
+
+/** Subscribe to firebase. */
+export const subscribe = <T>(userId: string, callback: (updates: T) => void, firebaseChangeHandlers: FirebaseChangeHandlers<T>) => {
+  const contextIndexListener:Ref<Parent> = window.firebase?.database().ref(`users/${userId}/contextIndex`)
+  const thoughtIndexListener:Ref<Lexeme> = window.firebase?.database().ref(`users/${userId}/thoughtIndex`)
+
+  const { contextIndex: contextIndexChangeHandlers, thoughtIndex: thoughtIndexChangeHandlers } = firebaseChangeHandlers
+
+  Object.keys(contextIndexChangeHandlers).forEach(key => {
+    const changeType = key as firebaseChangeTypes
+    contextIndexListener.on(changeType, snapshot => {
+      const updates = contextIndexChangeHandlers[changeType](snapshot.val())
+      callback(updates)
+    })
+  })
+
+  Object.keys(thoughtIndexChangeHandlers).forEach(key => {
+    const changeType = key as firebaseChangeTypes
+    thoughtIndexListener.on(changeType, snapshot => {
+      const updates = thoughtIndexChangeHandlers[changeType](snapshot.val())
+      callback(updates)
+    })
+  })
+}
 
 export default getFirebaseProvider

@@ -26,6 +26,7 @@ import {
   isDescendantPath,
   timestamp,
 } from '../util'
+import { getSessionId } from '../util/sessionManager'
 
 type ChildUpdate = {
   archived?: Timestamp,
@@ -188,7 +189,8 @@ const moveThought = (state: State, { oldPath, newPath, offset }: {
           contexts: [],
           value: child.value,
           created: timestamp(),
-          lastUpdated: timestamp()
+          lastUpdated: timestamp(),
+          updatedBy: getSessionId(),
         }
 
       // New lexeme
@@ -297,6 +299,7 @@ const moveThought = (state: State, { oldPath, newPath, offset }: {
             context: contextOld,
             children: childrenOld,
             lastUpdated: timestamp(),
+            updatedBy: getSessionId(),
             ...childUpdate.pending ? { pending: true } : null,
           } : null } : {},
           ...!isNewContextPendingDescendant ? { [contextEncodedNew]: {
@@ -304,6 +307,7 @@ const moveThought = (state: State, { oldPath, newPath, offset }: {
             context: contextNew,
             children: childrenNew,
             lastUpdated: timestamp(),
+            updatedBy: getSessionId(),
             ...childUpdate.pending ? { pending: true } : null,
           } } : {},
         },
@@ -331,12 +335,14 @@ const moveThought = (state: State, { oldPath, newPath, offset }: {
       context: oldContext,
       children: subthoughtsOld,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     } : null,
     [contextEncodedNew]: {
       id: contextEncodedNew,
       context: newContext,
       children: subthoughtsNew,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     },
     ...contextIndexDescendantUpdates.contextIndex,
   }

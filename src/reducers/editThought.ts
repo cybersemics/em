@@ -107,6 +107,7 @@ const editThought = (state: State, { oldValue, newValue, context, showContexts, 
 
   // do not add floating thought to context
   const newThoughtWithoutContext = thoughtCollision || {
+    updatedBy: getSessionId(),
     value: newValue,
     contexts: [],
     created: timestamp(),
@@ -314,7 +315,7 @@ const editThought = (state: State, { oldValue, newValue, context, showContexts, 
   const thoughtIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
     [oldKey]: newOldThought,
-    [newKey]: thoughtNew,
+    [newKey]: { ...thoughtNew, updatedBy: getSessionId() },
     ...descendantUpdates
   }
 

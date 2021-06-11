@@ -110,8 +110,8 @@ export const initEvents = (store: Store<State, any>) => {
   /** Update local storage sessions used for managing subscriptions. */
   const onTabVisibilityChanged = () => {
     if (!isTabHidden()) {
-      updateLocalStorageSessionIdThrottled()
       clearStaleLocalStorageSessionIds()
+      updateLocalStorageSessionIdThrottled()
     }
   }
 

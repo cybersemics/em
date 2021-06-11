@@ -2,11 +2,16 @@ import { throttle } from 'lodash'
 import { v4 as uuid } from 'uuid'
 import { Index } from '../types'
 
+export enum SessionType {
+  LOCAL = 'local',
+  REMOTE = 'remote',
+}
+
 let sessionId: string | null = null
 
 const SESSION_ID_KEY = 'EM_SESSION_ID'
 const LOCALSTORAGE_SESSIONIDS = 'EM_SESSION_IDS'
-const throttleTimeout = 60000
+const throttleTimeout = 5000
 const sessionInvalidationTimeout = 360000
 
 /** Get current session id. */
@@ -16,6 +21,20 @@ export const getSessionId = () => {
     sessionStorage.setItem(SESSION_ID_KEY, sessionId)
   }
   return sessionId
+}
+
+/** Check if the current session is local/remote. */
+export const getSessionType = (): SessionType | undefined => {
+  const sessionId = getSessionId()
+  const localStorageSessions = window.localStorage.getItem(LOCALSTORAGE_SESSIONIDS)
+  if (!localStorageSessions) return
+  try {
+    const localStorageSessionsIndex: Index = JSON.parse(localStorageSessions)
+    return localStorageSessionsIndex[sessionId] ? SessionType.LOCAL : SessionType.REMOTE
+  }
+  catch (err) {
+    console.warn(err)
+  }
 }
 
 /** Add session to local storage list of sessions, or update timestamp if already present. */
@@ -48,7 +67,13 @@ export const clearStaleLocalStorageSessionIds = () => {
   if (!localStorageSessions) return
   try {
     const localStorageSessionsIndex: Index = JSON.parse(localStorageSessions)
-    const sessionsToKeep = Object.keys(localStorageSessionsIndex).filter(sessionKey => localStorageSessionsIndex[sessionKey] - Date.now() < sessionInvalidationTimeout)
+    const sessionsToKeep = Object.keys(localStorageSessionsIndex).reduce((acc, key) => ({
+      ...acc,
+      ...(Date.now() - localStorageSessionsIndex[key]) < sessionInvalidationTimeout
+        ? { [key]: localStorageSessionsIndex[key] }
+        : {}
+
+    }), {})
     window.localStorage.setItem(LOCALSTORAGE_SESSIONIDS, JSON.stringify(sessionsToKeep))
   }
   catch (err) {
