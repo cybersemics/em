@@ -40,6 +40,8 @@ describe('Sample Test', () => {
       - rest api`
 
     await gesture(mobileBrowser, NEW_THOUGHT_GESTURE)
+    const focusNode = await mobileBrowser.execute(() => window.getSelection()?.focusNode)
+    expect(focusNode).toBeTruthy()
     await paste(mobileBrowser, [''], importText)
 
     await waitForEditable(mobileBrowser, 'puppeteer')
