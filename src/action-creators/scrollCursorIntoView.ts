@@ -1,4 +1,4 @@
-import { editableNode, scrollIntoViewIfNeeded } from '../util'
+import { editableNode, getScrollableContainer, scrollIntoViewIfNeeded } from '../util'
 import { Thunk } from '../types'
 
 /** Scrolls the cursor into view if needed. If there is no cursor, scroll to top. */
@@ -6,7 +6,8 @@ const scrollCursorIntoView = (delay?: number): Thunk => (dispatch, getState) => 
   setTimeout(() => {
     const { cursor } = getState()
     if (!cursor) {
-      window.scrollTo(0, 0)
+      const scrollableContainer = getScrollableContainer()
+      scrollableContainer.scrollTo(0, 0)
     }
     else {
       const editable = editableNode(cursor)

@@ -25,8 +25,7 @@ body, textarea {
 }
 
 body {
-  /* Disables pull-to-refresh but allows overscroll glow effects. */
-  overscroll-behavior-y: contain;
+  overflow: hidden;
 }
 
 button {
@@ -141,6 +140,16 @@ textarea {
 .left { text-align: left; }
 .hidden { display: none !important; }
 .shown { display: inline-block; }
+
+#scrollable-container {
+  height: 100vh;
+  width: 100vw;
+  overflow-y: scroll;
+}
+
+.safari.mobile #scrollable-container {
+  height: -webkit-fill-available
+}
 
 @media screen and (min-width: 600px) {
   .center-desktop { text-align: center; }
@@ -1716,9 +1725,10 @@ h1 .num-contexts {
   opacity: 0;
 }
 
-/* overflow:hidden breaks sticky header */
 .container {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 /* Footer styles - START */
@@ -1788,8 +1798,14 @@ h1 .num-contexts {
   line-height: 1.5;
   width: calc(100% - 100px);
   z-index: 10;
-  animation: fademostlyin 0.4s;
+  animation: fadein 0.4s;
   min-width: 200px;
+  height: 100vh;
+  overflow: scroll;
+}
+
+.safari.mobile .modal {
+  height: -webkit-fill-available
 }
 
 .modal.opaque {
@@ -1799,11 +1815,6 @@ h1 .num-contexts {
 @keyframes fadein {
   from { opacity: 0; }
   to { opacity: 0.99; }
-}
-
-@keyframes fademostlyin {
-  from { opacity: 0; }
-  to { opacity: 0.85; }
 }
 
 .modal p {

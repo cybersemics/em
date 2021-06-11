@@ -1,8 +1,8 @@
-import React, { FC, Suspense, useEffect, useLayoutEffect, useState } from 'react'
+import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
-import { isAndroid, isTouch } from '../browser'
+import { isAndroid, isSafari, isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import { inputHandlers } from '../shortcuts'
 import { isDocumentEditable } from '../util'
@@ -29,6 +29,7 @@ import HamburgerMenu from './HamburgerMenu'
 import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
+import { Index } from '../types'
 
 const Content = React.lazy(() => import('./Content'))
 
@@ -53,7 +54,7 @@ interface DispatchProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
-  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShorcutsDiagram } = state
+  const { dragInProgress, isLoading, splitPosition, showSplitView, enableLatestShorcutsDiagram } = state
   const dark = theme(state) !== 'Light'
   const scale = state.fontSize / BASE_FONT_SIZE
   return {
@@ -61,7 +62,6 @@ const mapStateToProps = (state: State): StateProps => {
     dragInProgress,
     isLoading,
     scale,
-    showModal,
     splitPosition,
     showSplitView,
     fontSize: state.fontSize,
@@ -70,6 +70,8 @@ const mapStateToProps = (state: State): StateProps => {
 }
 
 const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
+
+const addSpaceOnKeybordUp = isSafari() && isTouch && window.visualViewport
 
 type Props = StateProps & DispatchProps
 
@@ -83,11 +85,51 @@ const MultiGestureIfTouch: FC = ({ children }) => isTouch
   ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd} shouldCancelGesture={shouldCancelGesture}>{children}</MultiGesture>
   : <>{children}</>
 
+const modalIndex: Index<FC> = {
+  welcome: ModalWelcome,
+  help: ModalHelp,
+  export: ModalExport,
+  feedback: ModalFeedback,
+  auth: ModalAuth,
+}
+
+/** Render active modal. */
+const ModalGroup = () => {
+  const showModal = useSelector((state: State) => state.showModal)
+  const Modal = showModal && modalIndex[showModal]
+  return <>
+    {Modal && <Modal/>}
+  </>
+}
+
+/**
+ * Add space at the bottom of the scrollable container to allow footer to be seen when the keyboard is up on ios safari.
+ */
+const IOSKeyboardUpSpace = () => {
+
+  const [isKeyboardUp, setIsKeyboardUp] = useState(false)
+
+  const handleChange = useCallback(() => {
+    if (window.visualViewport.height <= 480) setIsKeyboardUp(true)
+    if (window.visualViewport.height > 480) setIsKeyboardUp(false)
+  }, [])
+
+  useEffect(() => {
+    window.visualViewport.addEventListener('resize', handleChange)
+
+    return () => {
+      window.removeEventListener('resize', handleChange)
+    }
+  }, [])
+
+  return isKeyboardUp ? <div style={{ width: '100%', height: '230px' }}></div> : null
+}
+
 /**
  * The main app component.
  */
 const AppComponent: FC<Props> = props => {
-  const { dark, dragInProgress, enableLatestShorcutsDiagram, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos, fontSize } = props
+  const { dark, dragInProgress, enableLatestShorcutsDiagram, isLoading, scale, showSplitView, splitPosition, updateSplitPos, fontSize } = props
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
@@ -117,39 +159,27 @@ const AppComponent: FC<Props> = props => {
     android: isAndroid,
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
-    safari: /Safari/.test(navigator.userAgent),
+    safari: isSafari(),
   })
 
   return (
     <div className={componentClassNames}>
-
       <Alert />
       <ErrorMessage />
       { enableLatestShorcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
 
-      {isDocumentEditable() && !tutorial && !showModal && <>
+      {isDocumentEditable() && !tutorial && <>
         <Sidebar />
         <HamburgerMenu />
       </>}
 
-      {!showModal && !tutorial && <Toolbar />}
+      {!tutorial && <Toolbar />}
 
-      <MultiGestureIfTouch>
-
-        {showModal
-
-          // modals
-          // eslint-disable-next-line @typescript-eslint/no-extra-parens
-          ? showModal === 'welcome' ? <ModalWelcome />
-          : showModal === 'help' ? <ModalHelp />
-          : showModal === 'export' ? <ModalExport />
-          : showModal === 'feedback' ? <ModalFeedback />
-          : showModal === 'auth' ? <ModalAuth />
-          : 'Invalid showModal'
-
-          // navigation, content, and footer
-          : <>
-            {tutorial && !isLoading ? <Tutorial /> : null}
+      <ModalGroup/>
+      <div id='scrollable-container'>
+        <MultiGestureIfTouch>
+          {tutorial && !isLoading ? <Tutorial /> : null}
+          <div style={{ minHeight: '100%' }}>
             <SplitPane
               style={{ position: 'relative', fontSize }}
               className={isSplitting ? 'animating' : ''}
@@ -173,15 +203,13 @@ const AppComponent: FC<Props> = props => {
                 <NavBar position='bottom' />
               </Scale>
             </div>
-
-          </>
-        }
-
-        {!showModal && isDocumentEditable() && <div style={{ fontSize }}>
-          <Footer />
-        </div>}
-
-      </MultiGestureIfTouch>
+            {isDocumentEditable() && <div style={{ fontSize }}>
+              <Footer />
+            </div>}
+            {addSpaceOnKeybordUp && <IOSKeyboardUpSpace/>}
+          </div>
+        </MultiGestureIfTouch>
+      </div>
     </div>
   )
 }

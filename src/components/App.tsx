@@ -7,6 +7,9 @@ import AppComponent from './AppComponent'
 import ErrorBoundaryContainer from './ErrorBoundaryContainer'
 import TouchMonitor from './TouchMonitor'
 import { DragAndDropContext } from './DragAndDropContext'
+import smoothscroll from 'smoothscroll-polyfill'
+
+smoothscroll.polyfill()
 
 /**
  * App.

@@ -44,10 +44,12 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   animateAndClose: ((duration?: number) => void) | null = null;
   escapeListener: ((e: KeyboardEvent) => void) | null = null;
   ref: React.RefObject<HTMLDivElement>;
+  scrollRef: React.MutableRefObject<number | null>;
 
   constructor(props: Connected<ModalProps>) {
     super(props)
     this.ref = React.createRef()
+    this.scrollRef = React.createRef()
   }
 
   componentDidMount() {
@@ -88,6 +90,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   close = (duration?: number) => this.animateAndClose!(duration)
 
   componentWillUnmount() {
+
     modalCleanup()
     window.removeEventListener('keydown', this.escapeListener!, true)
   }
