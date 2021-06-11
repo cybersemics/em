@@ -465,3 +465,17 @@ describe('expand with : char', () => {
     expect(isContextExpanded(stateNew, ['b', 'c'])).toBeTruthy()
   })
 })
+
+// Related issue: https://github.com/cybersemics/em/issues/1238
+it('thought with html value should be expanded', () => {
+
+  const text = `
+  - <i>a</i>
+    - b
+  - c`
+
+  const stateNew = importText(initialState(), { text })
+
+  const stateNew1 = setCursorFirstMatch(stateNew, ['<i>a</i>'])
+  expect(isContextExpanded(stateNew1, ['<i>a</i>'])).toBeTruthy()
+})
