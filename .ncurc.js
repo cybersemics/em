@@ -9,7 +9,7 @@ Dependency notes:
 
 */
 
-{
+module.exports = {
   "reject": [
 
     "typedoc",
