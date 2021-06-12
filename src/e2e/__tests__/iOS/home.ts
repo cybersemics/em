@@ -13,43 +13,40 @@ import { gestures } from '../../helpers/constants'
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
 let isFirstTest = true
-describe('Home', () => {
 
-  beforeEach(async() => {
-    // Don't reload session for the first test. webdriverio already creates a session on init.
-    if (!isFirstTest) {
-      await mobileBrowser.reloadSession()
-    }
-    else {
-      isFirstTest = false
-    }
+beforeEach(async() => {
+  // Don't reload session for the first test. webdriverio already creates a session on init.
+  if (!isFirstTest) {
+    await mobileBrowser.reloadSession()
+  }
+  else {
+    isFirstTest = false
+  }
 
-    await mobileBrowser.url('http://bs-local.com:3000')
-    const skipElement = await waitForElement(mobileBrowser, '#skip-tutorial')
-    await skipElement.click()
-  })
+  await mobileBrowser.url('http://bs-local.com:3000')
+  const skipElement = await waitForElement(mobileBrowser, '#skip-tutorial')
+  await skipElement.click()
+})
 
-  it('click home link to set the cursor to null', async () => {
+it('click home link to set the cursor to null', async () => {
 
-    const text = `
-    - a
-      - b`
-    await gesture(mobileBrowser, gestures.newThought)
-    await paste(mobileBrowser, [''], text)
+  const text = `
+  - a
+    - b`
+  await gesture(mobileBrowser, gestures.newThought)
+  await paste(mobileBrowser, [''], text)
 
-    await waitForEditable(mobileBrowser, 'b')
-    await clickThought(mobileBrowser, 'b')
+  await waitForEditable(mobileBrowser, 'b')
+  await clickThought(mobileBrowser, 'b')
 
-    const editingBefore = await mobileBrowser.$('.editing')
-    expect(editingBefore.elementId).toBeTruthy()
+  const editingBefore = await mobileBrowser.$('.editing')
+  expect(editingBefore.elementId).toBeTruthy()
 
-    const homeLink = await mobileBrowser.$('.home a')
-    expect(homeLink).toBeTruthy()
-    await homeLink.click()
+  const homeLink = await mobileBrowser.$('.home a')
+  expect(homeLink).toBeTruthy()
+  await homeLink.click()
 
-    const editingAfter = await mobileBrowser.$('.editing')
-    expect(editingAfter.elementId).toBeFalsy()
-
-  })
+  const editingAfter = await mobileBrowser.$('.editing')
+  expect(editingAfter.elementId).toBeFalsy()
 
 })
