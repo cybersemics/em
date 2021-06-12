@@ -9,7 +9,7 @@ import gesture from '../../helpers/mobile/gestures/gesture'
 import hideKeyboardByTappingDone from '../../helpers/mobile/hideKeyboardByTappingDone'
 import tapWithOffset from '../../helpers/mobile/tapWithOffset'
 import getEditingText from '../../helpers/mobile/getEditingText'
-import sendKeysForThought from '../../helpers/mobile/sendKeysForThought'
+import editThought from '../../helpers/mobile/editThought'
 import getEditable from '../../helpers/mobile/getEditable'
 import { gestures } from '../../helpers/constants'
 
@@ -51,9 +51,9 @@ describe('Caret & Cursor Test', () => {
 
   it('Preserve Editing: true', async () => {
     await gesture(mobileBrowser, gestures.newThought)
-    await sendKeysForThought(mobileBrowser, ['foo'])
+    await editThought(mobileBrowser, 'foo')
     await gesture(mobileBrowser, gestures.newSubThought)
-    await sendKeysForThought(mobileBrowser, ['bar'])
+    await editThought(mobileBrowser, 'bar')
 
     const editableNodeHandle = await getEditable(mobileBrowser, 'foo')
     await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
