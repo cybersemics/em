@@ -1,3 +1,4 @@
+import { CSSProperties } from 'react'
 import _ from 'lodash'
 import { getAllChildren } from '../selectors'
 import { State } from '../util/initialState'
@@ -5,7 +6,7 @@ import { Context } from '../types'
 import { keyValueBy } from '../util/keyValueBy'
 
 /** Parses the =style attribute of a given context into an object that can be passed to React styles. Returns null if there are no styles. */
-const getStyle = (state: State, context: Context, { container }: { container?: boolean } = {}) => {
+const getStyle = (state: State, context: Context, { container }: { container?: boolean } = {}): CSSProperties | null => {
 
   const styleContext = [...context, container ? '=styleContainer' : '=style']
   const children = getAllChildren(state, styleContext)
