@@ -3,33 +3,20 @@
  */
 
 import { Browser } from 'webdriverio'
-import waitForElement from '../../helpers/mobile/waitForElement'
 import waitForEditable from '../../helpers/mobile/waitForEditable'
-import gesture from '../../helpers/mobile/gestures/gesture'
+import gesture from '../../helpers/mobile/gesture'
 import hideKeyboardByTappingDone from '../../helpers/mobile/hideKeyboardByTappingDone'
 import tapWithOffset from '../../helpers/mobile/tapWithOffset'
 import getEditingText from '../../helpers/mobile/getEditingText'
 import editThought from '../../helpers/mobile/editThought'
 import getEditable from '../../helpers/mobile/getEditable'
+import initSession from '../../helpers/mobile/initSession'
 import { gestures } from '../../helpers/constants'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
-let isFirstTest = true
 
-beforeEach(async() => {
-  // Don't reload session for the first test. webdriverio already creates a session on init.
-  if (!isFirstTest) {
-    await mobileBrowser.reloadSession()
-  }
-  else {
-    isFirstTest = false
-  }
-
-  await mobileBrowser.url('http://bs-local.com:3000')
-  const skipElement = await waitForElement(mobileBrowser, '#skip-tutorial')
-  await skipElement.click()
-})
+beforeEach(initSession())
 
 it('Enter edit mode', async () => {
   await gesture(mobileBrowser, gestures.newThought)

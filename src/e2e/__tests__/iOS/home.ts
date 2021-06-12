@@ -3,30 +3,17 @@
  */
 
 import { Browser } from 'webdriverio'
-import waitForElement from '../../helpers/mobile/waitForElement'
 import paste from '../../helpers/mobile/paste'
 import waitForEditable from '../../helpers/mobile/waitForEditable'
 import clickThought from '../../helpers/mobile/clickThought'
-import gesture from '../../helpers/mobile/gestures/gesture'
+import gesture from '../../helpers/mobile/gesture'
+import initSession from '../../helpers/mobile/initSession'
 import { gestures } from '../../helpers/constants'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
-let isFirstTest = true
 
-beforeEach(async() => {
-  // Don't reload session for the first test. webdriverio already creates a session on init.
-  if (!isFirstTest) {
-    await mobileBrowser.reloadSession()
-  }
-  else {
-    isFirstTest = false
-  }
-
-  await mobileBrowser.url('http://bs-local.com:3000')
-  const skipElement = await waitForElement(mobileBrowser, '#skip-tutorial')
-  await skipElement.click()
-})
+beforeEach(initSession())
 
 it('click home link to set the cursor to null', async () => {
 
