@@ -63,4 +63,18 @@ describe('Caret & Cursor Test', () => {
     expect(selectionTextContent).toBe('foo')
   })
 
+  it('Preserve Editing: false', async () => {
+    await gesture(mobileBrowser, gestures.newThought)
+    await editThought(mobileBrowser, 'foo')
+    await gesture(mobileBrowser, gestures.newSubThought)
+    await editThought(mobileBrowser, 'bar')
+    await hideKeyboardByTappingDone(mobileBrowser)
+
+    const editableNodeHandle = await waitForEditable(mobileBrowser, 'foo')
+    await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+
+    const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+    expect(selectionTextContent).toBe(null)
+  })
+
 })
