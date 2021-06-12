@@ -18,6 +18,7 @@ class PuppeteerEnvironment extends JsDomEnvironment {
 
     await super.setup()
 
+    // Note: this.global is not global to all test suites; it is sandboxed to a single test module, e.g. caret.ts
     this.global.browser = await puppeteer.launch({
       headless: true,
     })

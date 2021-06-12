@@ -1,8 +1,15 @@
-const user = process.env.BROWSERSTACK_USERNAME || 'username'
+if (!process.env.BROWSERSTACK_USERNAME) {
+  throw new Error('process.env.BROWSERSTACK_USERNAME not defined')
+}
+else if (!process.env.BROWSERSTACK_ACCESS_KEY) {
+  throw new Error('process.env.BROWSERSTACK_ACCESS_KEY not defined')
+}
+
+const user = process.env.BROWSERSTACK_USERNAME
 
 const config = {
-  user: user,
-  key: process.env.BROWSERSTACK_ACCESS_KEY || 'access_key',
+  user,
+  key: process.env.BROWSERSTACK_ACCESS_KEY,
 
   capabilities: {
     platformName: 'iOS',
@@ -14,7 +21,7 @@ const config = {
     project: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
     'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || 'local-' + new Date().getTime(),
     'browserstack.local': 'true',
-
+    'browserstack.idleTimeout': 30,
   },
 
   logLevel: 'warn',
