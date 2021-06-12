@@ -21,7 +21,7 @@ const config = {
     project: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
     'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || 'local-' + new Date().getTime(),
     'browserstack.local': 'true',
-
+    'browserstack.idleTimeout': 30,
   },
 
   logLevel: 'warn',
