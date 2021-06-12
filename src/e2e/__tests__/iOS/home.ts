@@ -8,7 +8,7 @@ import paste from '../../helpers/mobile/paste'
 import waitForEditable from '../../helpers/mobile/waitForEditable'
 import clickThought from '../../helpers/mobile/clickThought'
 import gesture from '../../helpers/mobile/gestures/gesture'
-import { NEW_THOUGHT_GESTURE } from '../../helpers/constants'
+import { gestures } from '../../helpers/constants'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
@@ -34,7 +34,7 @@ describe('Home', () => {
     const text = `
     - a
       - b`
-    await gesture(mobileBrowser, NEW_THOUGHT_GESTURE)
+    await gesture(mobileBrowser, gestures.newThought)
     await paste(mobileBrowser, [''], text)
 
     await waitForEditable(mobileBrowser, 'b')

@@ -1,3 +1,6 @@
-import { Direction } from '../../types'
+import { Direction, Index } from '../../types'
 
-export const NEW_THOUGHT_GESTURE: Direction[] = ['r', 'd']
+export const gestures: Index<Direction[]> = {
+  newSubThought: ['r', 'd', 'r'],
+  newThought: ['r', 'd'],
+}
