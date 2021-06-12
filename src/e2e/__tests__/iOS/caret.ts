@@ -6,12 +6,12 @@ import { Browser } from 'webdriverio'
 import waitForElement from '../../helpers/mobile/waitForElement'
 import waitForEditable from '../../helpers/mobile/waitForEditable'
 import gesture from '../../helpers/mobile/gestures/gesture'
-import { NEW_SUB_THOUGHT_GESTURE, NEW_THOUGHT_GESTURE } from '../../helpers/constants'
 import hideKeyboardByTappingDone from '../../helpers/mobile/hideKeyboardByTappingDone'
 import tapWithOffset from '../../helpers/mobile/tapWithOffset'
 import getEditingText from '../../helpers/mobile/getEditingText'
 import sendKeysForThought from '../../helpers/mobile/sendKeysForThought'
 import getEditable from '../../helpers/mobile/getEditable'
+import { gestures } from '../../helpers/constants'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
@@ -33,7 +33,7 @@ describe('Caret & Cursor Test', () => {
   })
 
   it('Enter edit mode', async () => {
-    await gesture(mobileBrowser, NEW_THOUGHT_GESTURE)
+    await gesture(mobileBrowser, gestures.newThought)
     await mobileBrowser.sendKeys(['foo'])
 
     await hideKeyboardByTappingDone(mobileBrowser)
@@ -50,9 +50,9 @@ describe('Caret & Cursor Test', () => {
   })
 
   it('Preserve Editing: true', async () => {
-    await gesture(mobileBrowser, NEW_THOUGHT_GESTURE)
+    await gesture(mobileBrowser, gestures.newThought)
     await sendKeysForThought(mobileBrowser, ['foo'])
-    await gesture(mobileBrowser, NEW_SUB_THOUGHT_GESTURE)
+    await gesture(mobileBrowser, gestures.newSubThought)
     await sendKeysForThought(mobileBrowser, ['bar'])
 
     const editableNodeHandle = await getEditable(mobileBrowser, 'foo')
