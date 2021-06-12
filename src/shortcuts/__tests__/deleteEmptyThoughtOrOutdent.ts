@@ -1,10 +1,12 @@
 import { HOME_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
-import { importText, setCursor } from '../../action-creators'
-
+import { importText, setCursor, newThought } from '../../action-creators'
+import { store } from '../../store'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import clearThoughtShortcut from '../clearThought'
 
 it('do nothing when there is no cursor', () => {
 
@@ -77,32 +79,35 @@ it('do not outdent thought with siblings', () => {
   expect(exported).toEqual(expectedOutput)
 })
 
-it('delete the thought when user triggered clearThought and then hit back', () => {
-  const container = document.createElement('div')
-  container.setAttribute('class', 'editing')
-  container.innerHTML = `<div class="preventAutoscroll editable" placeholder="c" contenteditable="true"></div>`
-  document.body.appendChild(container)
+describe('DOM', () => {
+  beforeEach(async () => {
+    await createTestApp()
+  })
 
-  const store = createTestStore()
+  afterEach(cleanupTestApp)
 
-  // import thoughts
-  store.dispatch(importText({
-    path: HOME_PATH,
-    text: `
-      - a
-        - b
-          - c
-  ` }))
+  it('delete the thought when user triggered clearThought and then hit back', async () => {
+    store.dispatch([
+      newThought({ value: 'a' }),
+      newThought({ value: 'b', insertNewSubthought: true }),
+      setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b']) })
+    ])
 
-  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) }))
-
-  executeShortcut(deleteEmptyThoughtOrOutdent, { store })
-
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-  const expectedOutput = `- ${HOME_TOKEN}
+    // This ensures that the thought b exists so we can confirm later that it is deleted.
+    const initialExportedData = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(initialExportedData).toBe(`- __ROOT__
   - a
-    - b`
+    - b`)
 
-  expect(exported).toEqual(expectedOutput)
+    executeShortcut(clearThoughtShortcut, { store })
+
+    jest.runOnlyPendingTimers()
+
+    executeShortcut(deleteEmptyThoughtOrOutdent, { store })
+
+    // This ensures that the thought b doesn't exist now.
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - a`)
+  })
 })
