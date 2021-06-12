@@ -54,7 +54,6 @@ import {
   attributeEquals,
   getContexts,
   getSetting,
-  getStyle,
   getThought,
   getAllChildren,
   hasChild,
@@ -197,9 +196,6 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   if (contentRef.current) {
     contentRef.current.style.opacity = '1.0'
   }
-
-  // =style attribute on the thought itself
-  const styleAttr = getStyle(state, thoughts)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
@@ -684,10 +680,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     onChange={onChangeHandler}
     onPaste={onPaste}
     onKeyDown={onKeyDownAction ? onKeyDown : undefined}
-    style={{
-      ...style, // style prop
-      ...styleAttr, // style attribute
-    }}
+    style={style || {}}
   />
 }
 

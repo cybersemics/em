@@ -524,6 +524,7 @@ const ThoughtContainer = ({
 
   const isLeaf = !hasChildren(state, thoughtsLive)
 
+  const styleSelf = getStyle(state, thoughts)
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
 
@@ -599,7 +600,10 @@ const ThoughtContainer = ({
         minContexts={allowSingleContext ? 0 : 2}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
-        style={style}
+        style={{
+          ...styleSelf,
+          ...style,
+        }}
         simplePath={simplePath}
       />
 
@@ -617,7 +621,10 @@ const ThoughtContainer = ({
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
-        style={style}
+        style={{
+          ...styleSelf,
+          ...style,
+        }}
         simplePath={simplePath}
         toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
         view={view}
