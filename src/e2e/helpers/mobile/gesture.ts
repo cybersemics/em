@@ -1,4 +1,4 @@
-import { Direction } from '../../../../types'
+import { Direction } from '../../../types'
 import { Browser, TouchAction } from 'webdriverio'
 
 export interface GestureOptions {
