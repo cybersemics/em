@@ -9,7 +9,7 @@ const paste = async (browser: Browser<'async'>, unrankedPath: string[], text: st
   // Note: This helper is exposed because copy paste seemed impossible in headless mode. With headless false copy paste with ctrl + v seems to work. ??
   await browser.execute((unrankedPath, text) => {
     const testHelpers = em.testHelpers
-    testHelpers.importTextFirstMatch(unrankedPath, text)
+    testHelpers.importToContext(unrankedPath, text)
   }, unrankedPath, text)
 }
 

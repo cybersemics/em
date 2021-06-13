@@ -11,7 +11,7 @@ const paste = async (page: Page, unrankedPath: string[], text: string) => {
   // Note: This helper is exposed because copy paste seemed impossible in headless mode. With headless false copy paste with ctrl + v seems to work. ??
   await page.evaluate((unrankedPath, text) => {
     const testHelpers = em.testHelpers
-    testHelpers.importTextFirstMatch(unrankedPath, text)
+    testHelpers.importToContext(unrankedPath, text)
   }, unrankedPath, text)
 }
 

@@ -6,7 +6,7 @@ import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import { Thunk } from './types'
-import importOnFirstMatchPath from './test-helpers/importOnFirstMatchPath'
+import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './e2e/helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
@@ -54,7 +54,7 @@ const withDispatch = <T extends any[], R extends Thunk>(f: (...args: T) => R) =>
 
 const testHelpers = {
   setSelection,
-  importTextFirstMatch: withDispatch(importOnFirstMatchPath),
+  importToContext: withDispatch(importToContext),
   getLexemeFromDB,
   getState: store.getState,
   subscribe: store.subscribe,
