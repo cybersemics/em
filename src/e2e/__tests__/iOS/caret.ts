@@ -12,6 +12,8 @@ import editThought from '../../helpers/mobile/editThought'
 import getEditable from '../../helpers/mobile/getEditable'
 import initSession from '../../helpers/mobile/initSession'
 import { gestures } from '../../helpers/constants'
+import paste from '../../helpers/mobile/paste'
+import clickThought from '../../helpers/mobile/clickThought'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
@@ -61,4 +63,24 @@ it('Preserve Editing: false', async () => {
 
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe(null)
+})
+
+it('No uncle loop', async () => {
+  const importText = `
+    - a
+      - b
+      - c`
+  await gesture(mobileBrowser, gestures.newThought)
+  await paste(mobileBrowser, [''], importText)
+
+  await clickThought(mobileBrowser, 'b')
+  await gesture(mobileBrowser, gestures.newSubThought)
+  await editThought(mobileBrowser, 'd')
+
+  const editableNodeHandle = await waitForEditable(mobileBrowser, 'c')
+  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'c')
+
+  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  expect(selectionTextContent).toBe('c')
 })
