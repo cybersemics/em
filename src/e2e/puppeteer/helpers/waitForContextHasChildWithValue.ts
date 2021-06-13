@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer'
-import { Context } from '../../types'
+import { Context } from '../../../types'
 
 /**
  * Wait until given context has a child with given value.

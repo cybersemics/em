@@ -33,7 +33,7 @@ jobs:
         run: npm run build
 
       - name: Serve
-        run: npm run servebuild
+        run: npm run servebuild &
 
       - name: Test
-        run: npm run test:e2e
+        run: npm run test:puppeteer

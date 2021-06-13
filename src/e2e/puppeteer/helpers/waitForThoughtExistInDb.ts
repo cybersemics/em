@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer'
-import { WindowEm } from '../../initialize'
+import { WindowEm } from '../../../initialize'
 
 const em = window.em as WindowEm
 

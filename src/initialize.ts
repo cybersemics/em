@@ -7,7 +7,7 @@ import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import { Thunk } from './types'
 import importToContext from './test-helpers/importToContext'
-import getLexemeFromDB from './e2e/helpers/getLexemeFromDB'
+import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
 

@@ -1,5 +1,5 @@
 import { Browser } from 'webdriverio'
-import waitForElement from '../../helpers/mobile/waitForElement'
+import waitForElement from '../helpers/waitForElement'
 
 /** Returns a function that starts a new browserstack session and skips the tutorial. The function will reload the session after the first test. */
 const initSession = () => {

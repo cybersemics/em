@@ -3,10 +3,10 @@
  */
 
 import { Browser } from 'webdriverio'
-import paste from '../../helpers/mobile/paste'
-import waitForEditable from '../../helpers/mobile/waitForEditable'
-import clickThought from '../../helpers/mobile/clickThought'
-import initSession from '../../helpers/mobile/initSession'
+import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
+import clickThought from '../helpers/clickThought'
+import initSession from '../helpers/initSession'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
