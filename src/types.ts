@@ -249,10 +249,7 @@ export type Direction = 'u' | 'd' | 'l' | 'r'
 export type DirectionMap<T> = (dir: Direction) => T
 
 // allow string explicitly since Typescript will not allow Direction[] to be specified as a string
-export type GesturePath = string | (Direction[] & {
-  map: DirectionMap<Direction>,
-  split: (s: string) => Direction[],
-})
+export type GesturePath = string | Direction[]
 
 export type Alert = {
   alertType?: string,
