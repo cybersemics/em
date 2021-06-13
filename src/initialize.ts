@@ -5,6 +5,7 @@ import { getContexts, getParent, getThought, getAllChildren, getChildrenRanked, 
 import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
+import { Thunk } from './types'
 import importOnFirstMatchPath from './test-helpers/importOnFirstMatchPath'
 import getLexemeFromDB from './e2e/helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
@@ -47,12 +48,13 @@ export const initialize = async () => {
 const withState = <T, R>(f: (state: State, ...args: T[]) => R) =>
   (...args: T[]) => f(store.getState(), ...args)
 
-/** Imports text on given unranked path. Used in puppeteer testing. */
-const importTextFirstMatch = (unrankedPath: string[], text: string) => store.dispatch(importOnFirstMatchPath(unrankedPath, text))
+/** Partially dispatches an action to the store. */
+const withDispatch = <T extends any[], R extends Thunk>(f: (...args: T) => R) =>
+  (...args: T) => store.dispatch(f(...args))
 
 const testHelpers = {
   setSelection,
-  importTextFirstMatch,
+  importTextFirstMatch: withDispatch(importOnFirstMatchPath),
   getLexemeFromDB,
   getState: store.getState,
   subscribe: store.subscribe,
