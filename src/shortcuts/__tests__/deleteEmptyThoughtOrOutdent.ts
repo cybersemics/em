@@ -1,10 +1,12 @@
 import { HOME_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
-import { importText, setCursor } from '../../action-creators'
-
+import { importText, setCursor, newThought } from '../../action-creators'
+import { store } from '../../store'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import clearThoughtShortcut from '../clearThought'
 
 it('do nothing when there is no cursor', () => {
 
@@ -26,7 +28,6 @@ it('do nothing when there is no cursor', () => {
 })
 
 it('outdent on pressing backspace at the beginning of the thought', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -76,4 +77,37 @@ it('do not outdent thought with siblings', () => {
       - cd`
 
   expect(exported).toEqual(expectedOutput)
+})
+
+describe('DOM', () => {
+  beforeEach(async () => {
+    await createTestApp()
+  })
+
+  afterEach(cleanupTestApp)
+
+  it('delete the thought when user triggered clearThought and then hit back', async () => {
+    store.dispatch([
+      newThought({ value: 'a' }),
+      newThought({ value: 'b', insertNewSubthought: true }),
+      setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b']) })
+    ])
+
+    // This ensures that the thought b exists so we can confirm later that it is deleted.
+    const initialExportedData = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(initialExportedData).toBe(`- __ROOT__
+  - a
+    - b`)
+
+    executeShortcut(clearThoughtShortcut, { store })
+
+    jest.runOnlyPendingTimers()
+
+    executeShortcut(deleteEmptyThoughtOrOutdent, { store })
+
+    // This ensures that the thought b doesn't exist now.
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- __ROOT__
+  - a`)
+  })
 })
