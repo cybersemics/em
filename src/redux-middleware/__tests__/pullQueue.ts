@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { clear, editThought, existingThoughtDelete, moveThought, importText, newThought, setCursor } from '../../action-creators'
+import { clear, editThought, deleteThought, moveThought, importText, newThought, setCursor } from '../../action-creators'
 import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
@@ -76,12 +76,12 @@ it('do not repopulate deleted thought', async () => {
   store.dispatch([
     { type: 'newThought', value: '' },
     {
-      type: 'existingThoughtDelete',
+      type: 'deleteThought',
       context: [HOME_TOKEN],
       thoughtRanked: { value: '', rank: 0 },
     },
     // Need to setCursor to trigger the pullQueue
-    // Must set cursor manually since existingThoughtDelete does not.
+    // Must set cursor manually since deleteThought does not.
     // (The cursor is normally set after deleting via the deleteThoughtWithCursor reducer).
     setCursor({ path: null })
   ])
@@ -166,7 +166,7 @@ it('delete thought with buffered descendants', async () => {
   fakeTimer.useFakeTimer()
 
   // delete thought with buffered descendants
-  store.dispatch(existingThoughtDelete({
+  store.dispatch(deleteThought({
     context: [HOME_TOKEN],
     thoughtRanked: { value: 'a', rank: 1 }
   }))
@@ -341,15 +341,15 @@ it.only('export thought with buffered descendants', async () => {
   fakeTimer.useFakeTimer()
 
   // delete thought with buffered descendants
-  store.dispatch(existingThoughtDelete({
+  store.dispatch(deleteThought({
     context: [HOME_TOKEN],
     thoughtRanked: { value: 'a', rank: 1 }
   }))
 
   await fakeTimer.runAllAsync()
 
-  // wait until thoughts are buffered in and then deleted in a separate existingThoughtDelete call
-  // existingThoughtDelete -> pushQueue -> thoughtCache -> existingThoughtDelete
+  // wait until thoughts are buffered in and then deleted in a separate deleteThought call
+  // deleteThought -> pushQueue -> thoughtCache -> deleteThought
 
   fakeTimer.useRealTimer()
 

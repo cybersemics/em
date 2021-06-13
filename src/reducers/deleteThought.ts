@@ -29,8 +29,8 @@ interface ThoughtUpdates {
   pendingDeletes?: { context: Context, child: Child }[],
 }
 
-/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. */
-const existingThoughtDelete = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
+/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions. */
+const deleteThought = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
 
   const { value, rank } = thoughtRanked
 
@@ -65,7 +65,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
     recentlyEdited = treeDelete(state.recentlyEdited, oldRankedThoughts)
   }
   catch (e) {
-    console.error('existingThoughtDelete: treeDelete immer error')
+    console.error('deleteThought: treeDelete immer error')
     console.error(e)
   }
 
@@ -136,7 +136,7 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
         return {
           ...accum,
           ...accumRecursive,
-          // do not delete the pending thought yet since the second call to existingThoughtDelete needs a starting point
+          // do not delete the pending thought yet since the second call to deleteThought needs a starting point
           pendingDeletes: [...accumRecursive.pendingDeletes || [], {
             context: thoughts,
             child,
@@ -219,4 +219,4 @@ const existingThoughtDelete = (state: State, { context, thoughtRanked, showConte
   ])(state)
 }
 
-export default _.curryRight(existingThoughtDelete)
+export default _.curryRight(deleteThought)

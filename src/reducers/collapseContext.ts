@@ -3,7 +3,7 @@ import { State } from '../util/initialState'
 import { getAllChildren, getChildren, getRankBefore, isChildVisible, rootedParentOf, simplifyPath } from '../selectors'
 import { archiveThought, moveThought, setCursor } from '../reducers'
 import _ from 'lodash'
-import existingThoughtDelete from './existingThoughtDelete'
+import deleteThought from './deleteThought'
 import { Path } from '../types'
 
 interface Options {
@@ -53,7 +53,7 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
       ),
       !deleteCursor
         ? archiveThought({ path }) :
-        existingThoughtDelete({
+        deleteThought({
           context: parentOf(context),
           thoughtRanked: head(simpleCursor)
         }),

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { clearPushQueue, editThought, existingThoughtDelete, moveThought, isPushing, pull, pullLexemes, push, updateThoughts } from '../action-creators'
+import { clearPushQueue, editThought, deleteThought, moveThought, isPushing, pull, pullLexemes, push, updateThoughts } from '../action-creators'
 import { hasPushes } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
 import { PushBatch, State } from '../util/initialState'
@@ -61,10 +61,10 @@ const pushBatch = (batch: PushBatch) =>
     }
   )
 
-/** Pull all descendants of pending deletes and dispatch existingThoughtDelete to fully delete. */
+/** Pull all descendants of pending deletes and dispatch deleteThought to fully delete. */
 const flushDeletes = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (dispatch, getState) => {
 
-  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
   const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
   if (pendingDeletes?.length) {
 
@@ -75,7 +75,7 @@ const flushDeletes = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (di
     await dispatch(pull(pending, { maxDepth: Infinity }))
 
     pendingDeletes.forEach(({ context, child }) => {
-      dispatch(existingThoughtDelete({
+      dispatch(deleteThought({
         context,
         thoughtRanked: child,
       }))
@@ -87,7 +87,7 @@ const flushDeletes = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (di
 /** Pull all descendants of pending edits and dispatch editThought to edit descendant contexts. */
 const flushEdits = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (dispatch, getState) => {
 
-  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtDelete
+  // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
   const pendingEdits = pushQueue.map(batch => batch.pendingEdits || []).flat()
 
   if (pendingEdits?.length) {

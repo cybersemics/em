@@ -35,7 +35,7 @@ import {
 // reducers
 import {
   alert,
-  existingThoughtDelete,
+  deleteThought,
   moveThought,
   newThought,
   setCursor,
@@ -108,7 +108,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     }
   }
 
-  // prev must be calculated before dispatching existingThoughtDelete
+  // prev must be calculated before dispatching deleteThought
   const prev = showContexts
     ? prevContext()
     : prevSibling(state, value, context, rank)
@@ -134,7 +134,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     ...isDeletable
 
       ? [
-        existingThoughtDelete({
+        deleteThought({
           context: showContexts ? context : parentOf(pathToContext(simplePath)),
           showContexts,
           thoughtRanked: head(simplePath),
