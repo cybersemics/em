@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { pathToContext, reducerFlow } from '../util'
 import { getAllChildren, getChildrenRanked, rootedParentOf } from '../selectors'
-import { alert, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
+import { alert, existingThoughtDelete, moveThought, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { Path } from '../types'
 
@@ -21,7 +21,7 @@ const undoArchive = (state: State, { originalPath, currPath, offset }: { origina
     }),
 
     // move thought out of archive
-    existingThoughtMove({
+    moveThought({
       oldPath: currPath,
       newPath: originalPath,
       offset

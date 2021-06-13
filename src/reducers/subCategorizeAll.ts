@@ -1,5 +1,5 @@
 import { HOME_PATH } from '../constants'
-import { alert, existingThoughtMove, newThought } from '../reducers'
+import { alert, moveThought, newThought } from '../reducers'
 import { State } from '../util/initialState'
 import { parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
 import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
@@ -62,7 +62,7 @@ const subCategorizeAll = (state: State) => {
 
     // move children
     ...children.map(child =>
-      (state: State) => existingThoughtMove(state, {
+      (state: State) => moveThought(state, {
         oldPath: cursorParent.concat(child),
         newPath: cursorParent.concat(getThoughtNew(state), child)
       })

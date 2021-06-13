@@ -115,7 +115,7 @@ it('subcategorize within alphabteically sorted context', () => {
 
 })
 
-// Duplicate test: existingThoughtMove - "move with duplicate descendant"
+// Duplicate test: moveThought - "move with duplicate descendant"
 // it('subcategorize a thought with duplicate descendants', () => {
 
 //   const text = `
@@ -141,7 +141,7 @@ it('subcategorize within alphabteically sorted context', () => {
 
 // })
 
-// Duplicate test: existingThoughtMove - "move with duplicate descendant"
+// Duplicate test: moveThought - "move with duplicate descendant"
 // it('subcategorize a thought with hash matched descendants', () => {
 
 //   const text = `

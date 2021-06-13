@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { getTextContentFromHTML, head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow } from '../util'
 import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath, rootedParentOf } from '../selectors'
-import { deleteThought, editThought, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
+import { deleteThought, editThought, existingThoughtDelete, moveThought, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 import archiveThought from './archiveThought'
@@ -33,7 +33,7 @@ const deleteEmptyThought = (state: State): State => {
       ...allChildren.map(child => archiveThought({ path: [...cursor, child] })),
       state => {
         const archivedChild = getChildrenRanked(state, context)[0]
-        return existingThoughtMove(state, { oldPath: [...cursor, archivedChild], newPath: [...parentOf(cursor), archivedChild] })
+        return moveThought(state, { oldPath: [...cursor, archivedChild], newPath: [...parentOf(cursor), archivedChild] })
       },
       state => existingThoughtDelete(state, {
         context: parentOf(context),
@@ -72,7 +72,7 @@ const deleteEmptyThought = (state: State): State => {
 
         // merge children
         ...allChildren.map((child, i) =>
-          (state: State) => existingThoughtMove(state, {
+          (state: State) => moveThought(state, {
             oldPath: simplePath.concat(child),
             newPath: pathPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(pathPrevNew)) + i })
           })

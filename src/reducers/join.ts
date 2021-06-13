@@ -3,7 +3,7 @@ import editThought from './editThought'
 import { getAllChildren, getChildPath, getNextRank, simplifyPath } from '../selectors'
 import { head, parentOf, pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
-import existingThoughtMove from './existingThoughtMove'
+import moveThought from './moveThought'
 import existingThoughtDelete from './existingThoughtDelete'
 import { SimplePath } from '../types'
 
@@ -32,7 +32,7 @@ const join = (state: State) => {
     return children.map((child, j) => {
       const oldPath = getChildPath(state, child, pathToSibling)
       const newPath = [...path, { ...child, rank: minNextRank += 1 }]
-      return existingThoughtMove({ oldPath, newPath })
+      return moveThought({ oldPath, newPath })
     })
 
   }).flat()

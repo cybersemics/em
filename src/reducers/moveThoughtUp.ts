@@ -1,4 +1,4 @@
-import { alert, existingThoughtMove } from '../reducers'
+import { alert, moveThought } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 import { parentOf, ellipsize, head, headRank, headValue, pathToContext } from '../util'
@@ -55,7 +55,7 @@ const moveThoughtUp = (state: State) => {
     })
   }
 
-  // get selection offset before existingThoughtMove is dispatched
+  // get selection offset before moveThought is dispatched
   const offset = window.getSelection()?.focusOffset
 
   const rankNew = prevThought && !isSorted
@@ -73,7 +73,7 @@ const moveThoughtUp = (state: State) => {
     }
   ]
 
-  return existingThoughtMove(state, {
+  return moveThought(state, {
     oldPath: cursor,
     newPath,
     offset,

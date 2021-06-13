@@ -1,4 +1,4 @@
-import { alert, existingThoughtMove } from '../reducers'
+import { alert, moveThought } from '../reducers'
 import { getNextRank, hasChild, rootedParentOf, prevSibling } from '../selectors'
 import { State } from '../util/initialState'
 
@@ -36,7 +36,7 @@ const indent = (state: State) => {
     return alert(state, { value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.` })
   }
 
-  // store selection offset before existingThoughtMove is dispatched
+  // store selection offset before moveThought is dispatched
   const offset = window.getSelection()?.focusOffset
 
   const cursorNew = [
@@ -48,7 +48,7 @@ const indent = (state: State) => {
     }
   ]
 
-  return existingThoughtMove(state, {
+  return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
     offset

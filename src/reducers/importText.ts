@@ -221,7 +221,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
     const shouldImportIntoDummy = destEmpty ? !isDestParentContextEmpty() : !isDestContextEmpty
 
-    // Note: Create a dummy thought and then import new thoughts into its context and then collpase it . Since collapse uses existingThoughtMove it merges imported thoughts.
+    // Note: Create a dummy thought and then import new thoughts into its context and then collpase it . Since collapse uses moveThought it merges imported thoughts.
     const updatedState = shouldImportIntoDummy ? newThought(state, {
       at: simplePath,
       insertNewSubthought: true,
