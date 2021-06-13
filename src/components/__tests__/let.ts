@@ -32,7 +32,7 @@ it('define =style in a =let expressions and apply it to a child of the parent co
 
 })
 
-it('=let/=style is not applied to descendants of the context it is applied to', async () => {
+it('=let/x/=style is not applied to siblings and sibling descendants', async () => {
 
   store.dispatch([
     importText({
@@ -57,7 +57,45 @@ it('=let/=style is not applied to descendants of the context it is applied to', 
 
 })
 
-it('=let/=style is available to all descendants', async () => {
+it('=let/x/=style is applied to x as a preview', async () => {
+
+  store.dispatch([
+    importText({
+      text: `
+        - =let
+          - =dazzle
+            - =style
+              - color
+                - pink
+      `
+    }),
+  ])
+
+  const thoughtNuzzle = await findThoughtByText('=dazzle')
+  expect(thoughtNuzzle).toHaveStyle({ color: 'pink' })
+
+})
+
+it('=let/x/=style is not applied to =let itself', async () => {
+
+  store.dispatch([
+    importText({
+      text: `
+        - =let
+          - =dazzle
+            - =style
+              - color
+                - pink
+      `
+    }),
+  ])
+
+  const thoughtNuzzle = await findThoughtByText('=let')
+  expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
+
+})
+
+it('=let/x/=style is available to all descendants', async () => {
 
   store.dispatch([
     importText({

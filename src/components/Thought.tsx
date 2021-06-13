@@ -530,7 +530,12 @@ const ThoughtContainer = ({
 
   /** Load styles from child expressions that are found in the environment. */
   const styleEnv = children
-    .filter(child => isFunction(child.value) && child.value in (env || {}))
+    .filter(child =>
+      // children that have an entry in the environment
+      child.value in (env || {}) &&
+      // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+      !equalArrays([...thoughts, child.value], env![child.value])
+    )
     .map(child => getStyle(state, env![child.value]))
     .reduce<React.CSSProperties>((accum, style) => ({
       ...accum,
