@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { clear, existingThoughtChange, existingThoughtDelete, existingThoughtMove, importText, newThought, setCursor } from '../../action-creators'
+import { clear, editThought, existingThoughtDelete, existingThoughtMove, importText, newThought, setCursor } from '../../action-creators'
 import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
@@ -281,7 +281,7 @@ it('edit thought with buffered descendants', async () => {
   fakeTimer.useFakeTimer()
 
   // delete thought with buffered descendants
-  store.dispatch(existingThoughtChange({
+  store.dispatch(editThought({
     oldValue: 'a',
     newValue: 'k',
     context: [HOME_TOKEN],

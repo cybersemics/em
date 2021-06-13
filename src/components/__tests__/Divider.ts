@@ -21,7 +21,7 @@ it('convert "---" to divider', async () => {
   const editable = wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: '---' } })
 
-  // cursor back to trigger existingThoughtChange
+  // cursor back to trigger editThought
   windowEvent('keydown', { key: 'Escape' })
 
   jest.runOnlyPendingTimers()
@@ -40,7 +40,7 @@ it('convert "–-" (emdash + dash) to divider', async () => {
   const editable = wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: '—-' } })
 
-  // cursor back to trigger existingThoughtChange
+  // cursor back to trigger editThought
   windowEvent('keydown', { key: 'Escape' })
 
   jest.runOnlyPendingTimers()
@@ -59,7 +59,7 @@ it('do not convert "-" to divider', async () => {
   const editable = wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: '-' } })
 
-  // cursor back to trigger existingThoughtChange
+  // cursor back to trigger editThought
   windowEvent('keydown', { key: 'Escape' })
 
   jest.runOnlyPendingTimers()
@@ -84,7 +84,7 @@ it('do not convert "—" (emdash) to divider', async () => {
   const editable = wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: '—' } })
 
-  // cursor back to trigger existingThoughtChange
+  // cursor back to trigger editThought
   windowEvent('keydown', { key: 'Escape' })
 
   jest.runOnlyPendingTimers()

@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getAllChildren } from '../../selectors'
-import { existingThoughtChange, newThought, setCursor, importText } from '../../reducers'
+import { editThought, newThought, setCursor, importText } from '../../reducers'
 import { SimplePath } from '../../types'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
@@ -11,7 +11,7 @@ it('edit a thought', () => {
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
     setCursor({ path: [{ value: 'a', rank: 0 }] }),
-    existingThoughtChange({
+    editThought({
       newValue: 'aa',
       oldValue: 'a',
       context: [HOME_TOKEN],
@@ -46,7 +46,7 @@ it('edit a descendant', () => {
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    existingThoughtChange({
+    editThought({
       newValue: 'aa1',
       oldValue: 'a1',
       context: ['a'],
@@ -79,7 +79,7 @@ it('edit a thought with descendants', () => {
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a2' }),
-    existingThoughtChange({
+    editThought({
       newValue: 'aa',
       oldValue: 'a',
       context: [HOME_TOKEN],
@@ -113,7 +113,7 @@ it('edit a thought existing in mutliple contexts', () => {
     newThought({ value: 'ab', insertNewSubthought: true }),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    existingThoughtChange({
+    editThought({
       newValue: 'abc',
       oldValue: 'ab',
       context: ['a'],
@@ -148,7 +148,7 @@ it('edit a thought that exists in another context', () => {
     newThought({ value: 'ab', insertNewSubthought: true }),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    existingThoughtChange({
+    editThought({
       newValue: 'ab',
       oldValue: 'a',
       context: ['b'],
@@ -192,7 +192,7 @@ it('edit a child with the same value as its parent', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    existingThoughtChange({
+    editThought({
       newValue: 'ab',
       oldValue: 'a',
       context: ['a'],
@@ -228,13 +228,13 @@ it('do not duplicate children when new and old context are same', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b', insertNewSubthought: true }),
-    existingThoughtChange({
+    editThought({
       newValue: 'as',
       oldValue: 'a',
       context: [HOME_TOKEN],
       path: [{ value: 'a', rank: 0 }] as SimplePath
     }),
-    existingThoughtChange({
+    editThought({
       newValue: 'a',
       oldValue: 'as',
       context: [HOME_TOKEN],
@@ -269,7 +269,7 @@ it('data integrity test', () => {
         rank: 0
       }]
     }),
-    existingThoughtChange({
+    editThought({
       newValue: 'azkaban',
       oldValue: 'a',
       context: [HOME_TOKEN],
@@ -308,7 +308,7 @@ it('data integrity test after editing a parent with multiple descendants with sa
         rank: 0
       }]
     }),
-    existingThoughtChange({
+    editThought({
       newValue: 'x',
       oldValue: '',
       context: [HOME_TOKEN],

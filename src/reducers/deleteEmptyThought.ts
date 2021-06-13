@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { getTextContentFromHTML, head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow } from '../util'
 import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath, rootedParentOf } from '../selectors'
-import { deleteThought, existingThoughtChange, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
+import { deleteThought, editThought, existingThoughtDelete, existingThoughtMove, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 import archiveThought from './archiveThought'
@@ -63,7 +63,7 @@ const deleteEmptyThought = (state: State): State => {
       return reducerFlow([
 
         // change first thought value to concatenated value
-        existingThoughtChange({
+        editThought({
           oldValue: prev.value,
           newValue: valueNew,
           context: parentContext,

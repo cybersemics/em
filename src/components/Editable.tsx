@@ -4,7 +4,7 @@ import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { unescape } from 'html-escaper'
 import classNames from 'classnames'
-import { alert, cursorBack, editing, error, existingThoughtChange, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext, newThought } from '../action-creators'
+import { alert, cursorBack, editing, error, editThought, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext, newThought } from '../action-creators'
 import { isTouch, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
@@ -248,7 +248,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   }
 
   /**
-   * Dispatches existingThoughtChange and has tutorial logic.
+   * Dispatches editThought and has tutorial logic.
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
@@ -273,7 +273,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     if (thought) {
 
-      dispatch(existingThoughtChange({
+      dispatch(editThought({
         context,
         showContexts,
         oldValue,

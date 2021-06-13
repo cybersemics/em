@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { State, PushBatch } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts, getThought } from '../selectors'
-import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
+import { editThoughtPayload } from '../reducers/editThought'
 import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
 import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtsInterface } from '../types'
@@ -11,7 +11,7 @@ export interface UpdateThoughtsOptions {
   contextIndexUpdates: Index<Parent | null>,
   recentlyEdited?: Index,
   pendingDeletes?: { context: Context, child: Child }[],
-  pendingEdits?: ExistingThoughtChangePayload[],
+  pendingEdits?: editThoughtPayload[],
   pendingPulls?: { path: Path }[],
   descendantMoves?: { pathOld: Path, pathNew: Path }[],
   contextChain?: SimplePath[],

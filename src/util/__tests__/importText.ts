@@ -3,7 +3,7 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants
 import { hashContext, hashThought, never, reducerFlow, timestamp } from '../../util'
 import { initialState, State } from '../../util/initialState'
 import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
-import { importText, existingThoughtChange, newThought } from '../../reducers'
+import { importText, editThought, newThought } from '../../reducers'
 import { SimplePath } from '../../types'
 
 /** Helper function that imports html and exports it as plaintext. */
@@ -501,7 +501,7 @@ it('replace empty cursor', () => {
     importText({ text }),
 
     // manually change `b` to empty thought since importText skips empty thoughts
-    existingThoughtChange({
+    editThought({
       newValue: '',
       oldValue: 'b',
       context: ['a'],
@@ -542,7 +542,7 @@ it('replace empty cursor without affecting siblings', () => {
     importText({ text }),
 
     // manually change `c` to empty thought since importText skips empty thoughts
-    existingThoughtChange({
+    editThought({
       newValue: '',
       oldValue: 'c',
       context: ['a'],
@@ -642,7 +642,7 @@ it('single-line nested html tags', () => {
     importText({ text }),
 
     // manually change `b` to empty thought to not see 'b' end of the new value.
-    existingThoughtChange({
+    editThought({
       newValue: '',
       oldValue: 'b',
       context: ['a'],
