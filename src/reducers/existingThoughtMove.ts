@@ -16,7 +16,7 @@ import {
   headId,
   headRank,
   isDescendant,
-  moveThought,
+  moveLexemeThought,
   normalizeThought,
   parentOf,
   pathToContext,
@@ -92,7 +92,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     ? timestamp()
     : exactThought.archived as Timestamp
 
-  const movedThought = moveThought(oldThought, oldContext, newContext, oldRank, newRank, id, archived as Timestamp)
+  const movedThought = moveLexemeThought(oldThought, oldContext, newContext, oldRank, newRank, id, archived as Timestamp)
 
   const newThought = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = state.cursor && isDescendantPath(state.cursor, oldPath)
