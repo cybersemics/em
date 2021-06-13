@@ -2,7 +2,7 @@ import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import { unescape } from 'html-escaper'
 import { getTextContentFromHTML, parentOf, convertHTMLtoJSON, head, importJSON, isRoot, pathToContext, reducerFlow, roamJsonToBlocks, strip, validateRoam, createId } from '../util'
-import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
+import { editThought, setCursor, updateThoughts } from '../reducers'
 import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
 import { Block, Path, SimplePath, Timestamp } from '../types'
 import { State } from '../util/initialState'
@@ -184,7 +184,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
     return reducerFlow([
 
-      existingThoughtChange({
+      editThought({
         oldValue: destValue,
         newValue,
         context: rootedParentOf(state, pathToContext(path)),

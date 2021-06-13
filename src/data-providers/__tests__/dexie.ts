@@ -69,14 +69,14 @@ describe('integration', () => {
     })
   })
 
-  it('persist existingThoughtChange', async () => {
+  it('persist editThought', async () => {
 
     fakeTimer.useFakeTimer()
 
     store.dispatch([
       { type: 'newThought', value: '' },
       {
-        type: 'existingThoughtChange',
+        type: 'editThought',
         context: [HOME_TOKEN],
         oldValue: '',
         newValue: 'a',

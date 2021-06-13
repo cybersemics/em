@@ -3,7 +3,7 @@ import globals from '../globals'
 import { canShowModal } from '../selectors'
 import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User, Shortcut } from '../types'
-import { ExistingThoughtChangePayload } from '../reducers/existingThoughtChange'
+import { editThoughtPayload } from '../reducers/editThought'
 
 interface ModalProperties {
   complete: boolean,
@@ -29,7 +29,7 @@ export interface PushBatch {
   remote?: boolean,
   recentlyEdited: RecentlyEditedTree,
   pendingDeletes?: { context: Context, child: Child }[],
-  pendingEdits?: ExistingThoughtChangePayload[],
+  pendingEdits?: editThoughtPayload[],
   descendantMoves?: { pathOld: Path, pathNew: Path, pathToPull?: Path }[],
   pendingPulls?: { path: Path }[],
   updates?: Index<string>,

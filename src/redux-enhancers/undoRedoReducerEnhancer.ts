@@ -51,9 +51,9 @@ const compareWithOmit = <T>(newValue: Index<T>, value: Index<T>): Patch =>
   compare(_.omit(newValue, stateSectionsToOmit), _.omit(value, stateSectionsToOmit)) as Patch
 
 /**
- * Checks if the action type is existingThoughtChange.
+ * Checks if the action type is editThought.
  */
-const isExistingThoughtChange = (actionType: string) => actionType === 'existingThoughtChange'
+const iseditThought = (actionType: string) => actionType === 'editThought'
 
 /**
  * Append actions to all operations of a patch.
@@ -169,7 +169,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> = (createStore: StoreEnhancerS
     }
 
     // combine navigation and thoughtChange actions
-    if ((NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) || (isExistingThoughtChange(lastActionType) && isExistingThoughtChange(actionType)) || actionType === 'closeAlert') {
+    if ((NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) || (iseditThought(lastActionType) && iseditThought(actionType)) || actionType === 'closeAlert') {
       lastActionType = actionType
       const lastInversePatch = nthLast(state.inversePatches, 1)
       const lastState = lastInversePatch && lastInversePatch.length > 0

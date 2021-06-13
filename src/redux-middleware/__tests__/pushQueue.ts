@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { importText, existingThoughtChange } from '../../action-creators'
+import { importText, editThought } from '../../action-creators'
 import { getThought as getThoughtSelector } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getThought from '../../data-providers/data-helpers/getThought'
@@ -52,7 +52,7 @@ it('editing thoughts to new value with related pending lexeme', async () => {
   // lexeme for 'f; should not be loaded into the state yet.
   expect(getThoughtSelector(store.getState(), 'f')).toBeFalsy()
 
-  store.dispatch(existingThoughtChange({
+  store.dispatch(editThought({
     oldValue: 'h',
     newValue: 'f',
     context: ['g'],

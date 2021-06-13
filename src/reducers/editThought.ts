@@ -25,7 +25,7 @@ import {
   unroot,
 } from '../util'
 
-export interface ExistingThoughtChangePayload {
+export interface editThoughtPayload {
   oldValue: string,
   newValue: string,
   context: Context,
@@ -42,7 +42,7 @@ interface RecursiveUpdateResult {
 }
 
 /** Changes the text of an existing thought. */
-const existingThoughtChange = (state: State, { oldValue, newValue, context, showContexts, path, rankInContext }: ExistingThoughtChangePayload) => {
+const editThought = (state: State, { oldValue, newValue, context, showContexts, path, rankInContext }: editThoughtPayload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   const { cursor } = state
@@ -89,7 +89,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
   }
   catch (e) {
-    console.error('existingThoughtChange: treeChange immer error')
+    console.error('editThought: treeChange immer error')
     console.error(e)
   }
 
@@ -258,7 +258,7 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
     accum[key] = lexemeNew
   }, {} as Index<Lexeme>)
 
-  /* Unlike delete and move where we can resume on the pending thought, existingThoughtChange should bail immediately if a pending thought is encountered and re-sync from the beginning after the pending descendants are loaded. This is because the existingThoughtChange logic only works when starting on the edited thought itself; it won't work if it starts on a pending thought whose ancestor was edited. */
+  /* Unlike delete and move where we can resume on the pending thought, editThought should bail immediately if a pending thought is encountered and re-sync from the beginning after the pending descendants are loaded. This is because the editThought logic only works when starting on the edited thought itself; it won't work if it starts on a pending thought whose ancestor was edited. */
   let hitPending = false // eslint-disable-line fp/no-let
 
   const contextIndexDescendantUpdates = _.transform(descendantUpdatesResult, (accum, result) => {
@@ -360,4 +360,4 @@ const existingThoughtChange = (state: State, { oldValue, newValue, context, show
   })
 }
 
-export default _.curryRight(existingThoughtChange)
+export default _.curryRight(editThought)

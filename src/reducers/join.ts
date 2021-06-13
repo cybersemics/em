@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import existingThoughtChange from './existingThoughtChange'
+import editThought from './editThought'
 import { getAllChildren, getChildPath, getNextRank, simplifyPath } from '../selectors'
 import { head, parentOf, pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
@@ -39,7 +39,7 @@ const join = (state: State) => {
 
   const newValue = contextChildren.reduce((acc, { value }) => `${acc} ${value}`, '').trim()
 
-  const updateThoughtReducer = existingThoughtChange({
+  const updateThoughtReducer = editThought({
     oldValue: value,
     newValue,
     context,

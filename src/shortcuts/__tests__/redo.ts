@@ -16,7 +16,7 @@ it('redo thought change', () => {
     }),
     { type: 'cursorUp' },
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'aa',
       oldValue: 'a',
       context: [HOME_TOKEN],
@@ -62,7 +62,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'indent' },
     { type: 'cursorUp' },
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'arizona',
       oldValue: 'a',
       context: [HOME_TOKEN],
@@ -73,7 +73,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'cursorUp' },
     { type: 'cursorDown' },
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'boston',
       oldValue: 'b',
       context: ['arizona'],
@@ -113,21 +113,21 @@ it('redo contiguous changes', () => {
         - B`
     }),
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [HOME_TOKEN],
       path: [{ value: 'A', rank: 0 }]
     },
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'Atlantic ',
       oldValue: 'Atlantic',
       context: [HOME_TOKEN],
       path: [{ value: 'Atlantic', rank: 0 }]
     },
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'Atlantic City',
       oldValue: 'Atlantic ',
       context: [HOME_TOKEN],

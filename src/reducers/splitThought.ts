@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
-import { editableRender, existingThoughtChange, existingThoughtMove, newThought, render } from '../reducers'
+import { editableRender, editThought, existingThoughtMove, newThought, render } from '../reducers'
 import { State } from '../util/initialState'
 import { Path, SplitResult } from '../types'
 
@@ -31,7 +31,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path, splitR
   return reducerFlow([
 
     // set the thought's text to the left of the selection
-    existingThoughtChange({
+    editThought({
       oldValue: value,
       newValue: valueLeft,
       context,

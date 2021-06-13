@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { clearPushQueue, existingThoughtChange, existingThoughtDelete, existingThoughtMove, isPushing, pull, pullLexemes, push, updateThoughts } from '../action-creators'
+import { clearPushQueue, editThought, existingThoughtDelete, existingThoughtMove, isPushing, pull, pullLexemes, push, updateThoughts } from '../action-creators'
 import { hasPushes } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
 import { PushBatch, State } from '../util/initialState'
@@ -84,7 +84,7 @@ const flushDeletes = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (di
 
 }
 
-/** Pull all descendants of pending edits and dispatch existingThoughtChange to edit descendant contexts. */
+/** Pull all descendants of pending edits and dispatch editThought to edit descendant contexts. */
 const flushEdits = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (dispatch, getState) => {
 
   // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtDelete
@@ -99,7 +99,7 @@ const flushEdits = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (disp
     await dispatch(pull(pending, { maxDepth: Infinity }))
 
     pendingEdits.forEach(payload => {
-      dispatch(existingThoughtChange(payload))
+      dispatch(editThought(payload))
     })
   }
 

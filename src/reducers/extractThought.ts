@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { State } from '../util/initialState'
 import { headRank, headValue, pathToContext, reducerFlow } from '../util'
-import existingThoughtChange from './existingThoughtChange'
+import editThought from './editThought'
 import newThought from './newThought'
 import { rootedParentOf, simplifyPath } from '../selectors'
 import alert from './alert'
@@ -31,7 +31,7 @@ const extractThought = (state: State) => {
   const rank = headRank(cursor)
 
   const reducers = [
-    existingThoughtChange({
+    editThought({
       oldValue: value,
       newValue,
       context: cursorContext,

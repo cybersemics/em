@@ -1,7 +1,7 @@
 import { EM_TOKEN } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute, rankThoughtsFirstMatch } from '../../selectors'
-import { existingThoughtChange, importText, newThought, setCursor, toggleAttribute, setFirstSubthought } from '../../action-creators'
+import { editThought, importText, newThought, setCursor, toggleAttribute, setFirstSubthought } from '../../action-creators'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
@@ -102,7 +102,7 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical 
           - e`
     }),
 
-    ((dispatch, getState) => dispatch(existingThoughtChange({
+    ((dispatch, getState) => dispatch(editThought({
       context: [EM_TOKEN, 'Settings', 'Global Sort'],
       oldValue: 'None',
       newValue: 'Alphabetical',
@@ -136,7 +136,7 @@ it('toggle off sort preference of cursor (initial state without =sort attribute 
           - e`
     }),
 
-    ((dispatch, getState) => dispatch(existingThoughtChange({
+    ((dispatch, getState) => dispatch(editThought({
       context: [EM_TOKEN, 'Settings', 'Global Sort'],
       oldValue: 'None',
       newValue: 'Alphabetical',
@@ -217,7 +217,7 @@ it('override global Alphabetical with local Alphabetical/desc', () => {
           - e
     ` }),
 
-    ((dispatch, getState) => dispatch(existingThoughtChange({
+    ((dispatch, getState) => dispatch(editThought({
       context: [EM_TOKEN, 'Settings', 'Global Sort'],
       oldValue: 'None',
       newValue: 'Alphabetical',
@@ -296,7 +296,7 @@ describe('DOM', () => {
         newThought({ value: 'a' }),
         setCursor({ path: null }),
 
-        ((dispatch, getState) => dispatch(existingThoughtChange({
+        ((dispatch, getState) => dispatch(editThought({
           context: [EM_TOKEN, 'Settings', 'Global Sort'],
           oldValue: 'None',
           newValue: 'Alphabetical',
@@ -321,7 +321,7 @@ describe('DOM', () => {
         newThought({ value: '1' }),
         newThought({ value: '2' }),
         setCursorFirstMatchActionCreator(['a']),
-        ((dispatch, getState) => dispatch(existingThoughtChange({
+        ((dispatch, getState) => dispatch(editThought({
           context: [EM_TOKEN, 'Settings', 'Global Sort'],
           oldValue: 'None',
           newValue: 'Alphabetical',
@@ -348,7 +348,7 @@ describe('DOM', () => {
 
         setCursorFirstMatchActionCreator(['a']),
 
-        ((dispatch, getState) => dispatch(existingThoughtChange({
+        ((dispatch, getState) => dispatch(editThought({
           context: [EM_TOKEN, 'Settings', 'Global Sort'],
           oldValue: 'None',
           newValue: 'Alphabetical',

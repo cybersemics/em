@@ -55,7 +55,7 @@ it('undo thought change', () => {
     }),
     setCursorFirstMatchActionCreator(['a']),
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'aa',
       oldValue: 'a',
       context: [HOME_TOKEN],
@@ -128,7 +128,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
     setCursorFirstMatchActionCreator(['b']),
     { type: 'indent' },
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'b1',
       oldValue: 'b',
       context: ['a'],
@@ -155,7 +155,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
   - d`
 
   expect(exportedAfterFirstUndo).toEqual(expectedOutputAfterFirstUndo)
-  // undo 'cursorBack' and 'existingThoughtChange'
+  // undo 'cursorBack' and 'editThought'
   store.dispatch({ type: 'undoAction' })
 
   const cursorAfterSecondUndo = store.getState().cursor
@@ -185,7 +185,7 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
     }),
     setCursor({ path: null }),
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       context: ['a'],
       oldValue: 'b',
       newValue: 'bd',
@@ -241,7 +241,7 @@ it('newThought action should be merged with the succeeding patch', () => {
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       context: [HOME_TOKEN],
       oldValue: 'd',
       newValue: 'd1',
@@ -278,14 +278,14 @@ it('undo contiguous changes', () => {
         - B`
     }),
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [HOME_TOKEN],
       path: [{ value: 'A', rank: 0 }]
     },
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'Atlantic City',
       oldValue: 'Atlantic',
       context: [HOME_TOKEN],
@@ -338,7 +338,7 @@ it('clear patches when any undoable action is dispatched', () => {
       preventSetCursor: true,
     }),
     {
-      type: 'existingThoughtChange',
+      type: 'editThought',
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [HOME_TOKEN],
