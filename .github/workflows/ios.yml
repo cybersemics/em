@@ -1,4 +1,4 @@
-name: iOS Safari Tests
+name: BrowserStack
 
 on:
   push:
@@ -13,7 +13,7 @@ env:
 
 jobs:
   run:
-    name: iOS Safari Tests
+    name: BrowserStack
     runs-on: ubuntu-latest
 
     steps:

@@ -1,3 +1,5 @@
+name: Puppeteer
+
 on:
   push:
     branches:
@@ -12,7 +14,7 @@ env:
 
 jobs:
   run:
-    name: Puppeteer Tests
+    name: Puppeteer
     runs-on: ubuntu-latest
 
     steps:
