@@ -1,18 +1,23 @@
 import { Page } from 'puppeteer'
 import { WindowEm } from '../../initialize'
+import { HOME_TOKEN } from '../../constants'
 
 const em = window.em as WindowEm
 
-/**
- * Import text on given unranked path using exposed testHelpers.
- */
-const paste = async (page: Page, unrankedPath: string[], text: string) => {
+async function paste(page: Page, text: string): Promise<void>
+async function paste(page: Page, pathUnranked: string[], text: string): Promise<void>
+
+/** Import text on given unranked path using exposed testHelpers. */
+async function paste(page: Page, pathUnranked: string | string[], text?: string): Promise<void> {
+
+  const _pathUnranked = typeof pathUnranked === 'string' ? [HOME_TOKEN] : pathUnranked as string[]
+  const _text = typeof pathUnranked === 'string' ? pathUnranked : text!
 
   // Note: This helper is exposed because copy paste seemed impossible in headless mode. With headless false copy paste with ctrl + v seems to work. ??
-  await page.evaluate((unrankedPath, text) => {
+  await page.evaluate((_pathUnranked, text) => {
     const testHelpers = em.testHelpers
-    testHelpers.importToContext(unrankedPath, text)
-  }, unrankedPath, text)
+    testHelpers.importToContext(_pathUnranked, text)
+  }, _pathUnranked, _text)
 }
 
 export default paste

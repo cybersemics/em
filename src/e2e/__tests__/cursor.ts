@@ -27,7 +27,7 @@ describe('cursor testing', () => {
     const importText = `
     - A
     - B`
-    await paste(page, [''], importText)
+    await paste(page, importText)
     await waitForEditable(page, 'B')
 
     await clickThought(page, 'B')
@@ -50,7 +50,7 @@ describe('cursor testing', () => {
     - B
       - Y
       - Z`
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     await waitForEditable(page, 'Z')
     await clickThought(page, 'Z')

@@ -9,9 +9,7 @@ import waitForEditable from '../../helpers/mobile/waitForEditable'
 import clickThought from '../../helpers/mobile/clickThought'
 import tapWithOffset from '../../helpers/mobile/tapWithOffset'
 import tapReturnKey from '../../helpers/mobile/tapReturnKey'
-import gesture from '../../helpers/mobile/gesture'
 import initSession from '../../helpers/mobile/initSession'
-import { gestures } from '../../helpers/constants'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
@@ -25,10 +23,7 @@ it('split a thought when the caret is in the middle', async () => {
   - insomnia
     - rest api`
 
-  await gesture(mobileBrowser, gestures.newThought)
-  const focusNode = await mobileBrowser.execute(() => window.getSelection()?.focusNode)
-  expect(focusNode).toBeTruthy()
-  await paste(mobileBrowser, [''], importText)
+  await paste(mobileBrowser, importText)
 
   await waitForEditable(mobileBrowser, 'puppeteer')
   await clickThought(mobileBrowser, 'puppeteer')
