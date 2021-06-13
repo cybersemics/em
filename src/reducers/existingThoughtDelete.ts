@@ -29,7 +29,7 @@ interface ThoughtUpdates {
   pendingDeletes?: { context: Context, child: Child }[],
 }
 
-/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. */
+/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. */
 const existingThoughtDelete = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
 
   const { value, rank } = thoughtRanked
