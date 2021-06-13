@@ -82,7 +82,7 @@ it('do not repopulate deleted thought', async () => {
     },
     // Need to setCursor to trigger the pullQueue
     // Must set cursor manually since existingThoughtDelete does not.
-    // (The cursor is normally set after deleting via the deleteThought reducer).
+    // (The cursor is normally set after deleting via the deleteThoughtWithCursor reducer).
     setCursor({ path: null })
   ])
 

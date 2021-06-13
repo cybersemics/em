@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { cursorBack, deleteThought, newThought } from '../../action-creators'
+import { cursorBack, deleteThoughtWithCursor, newThought } from '../../action-creators'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { Index } from '../../types'
 
@@ -41,7 +41,7 @@ it('set url to home after deleting last empty thought', () => {
   store.dispatch(newThought({}))
   expect(window.location.pathname).toBe('/~/')
 
-  store.dispatch(deleteThought())
+  store.dispatch(deleteThoughtWithCursor())
   expect(window.location.pathname).toBe('/')
 
 })

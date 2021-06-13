@@ -7,7 +7,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 // reducers
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
-import deleteThought from '../deleteThought'
+import deleteThoughtWithCursor from '../deleteThoughtWithCursor'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
@@ -17,7 +17,7 @@ it('delete thought within root', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    deleteThought({}),
+    deleteThoughtWithCursor({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -35,7 +35,7 @@ it('delete thought with no cursor should do nothing ', () => {
     newThought('a'),
     newThought('b'),
     setCursor({ path: null }),
-    deleteThought({}),
+    deleteThoughtWithCursor({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -53,7 +53,7 @@ it('delete thought within context', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    deleteThought({}),
+    deleteThoughtWithCursor({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -72,7 +72,7 @@ it('delete descendants', () => {
     newSubthought('a1'),
     newSubthought('a1.1'),
     cursorBack,
-    deleteThought({}),
+    deleteThoughtWithCursor({}),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -91,7 +91,7 @@ it('cursor should move to prev sibling', () => {
     newSubthought('a1'),
     newThought('a2'),
     newThought('a3'),
-    deleteThought({}),
+    deleteThoughtWithCursor({}),
   ]
 
   // run steps through reducer flow
@@ -111,7 +111,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
     newThought('a3'),
     cursorUp,
     cursorUp,
-    deleteThought({}),
+    deleteThoughtWithCursor({}),
   ]
 
   // run steps through reducer flow
@@ -127,7 +127,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    deleteThought({}),
+    deleteThoughtWithCursor({}),
   ]
 
   // run steps through reducer flow
@@ -142,7 +142,7 @@ it('cursor should be removed if the last thought is deleted', () => {
 
   const steps = [
     newThought('a'),
-    deleteThought({}),
+    deleteThoughtWithCursor({}),
   ]
 
   // run steps through reducer flow
@@ -163,7 +163,7 @@ describe('mount', () => {
       { type: 'newThought', value: 'apple' },
       { type: 'newThought', value: 'banana' },
       { type: 'cursorUp' },
-      { type: 'deleteThought' },
+      { type: 'deleteThoughtWithCursor' },
     ])
     jest.runOnlyPendingTimers()
     expect(window.getSelection()?.focusOffset).toBe(0)
@@ -173,7 +173,7 @@ describe('mount', () => {
     store.dispatch([
       { type: 'newThought', value: 'apple' },
       { type: 'newThought', value: 'banana' },
-      { type: 'deleteThought' },
+      { type: 'deleteThoughtWithCursor' },
     ])
     jest.runOnlyPendingTimers()
 

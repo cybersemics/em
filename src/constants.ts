@@ -271,7 +271,7 @@ export const UNDOABLE_ACTIONS: Index<string> = {
   deleteAttribute: 'deleteAttribute',
   deleteData: 'deleteData',
   deleteEmptyThought: 'deleteEmptyThought',
-  deleteThought: 'deleteThought',
+  deleteThoughtWithCursor: 'deleteThoughtWithCursor',
   editThought: 'editThought',
   existingThoughtDelete: 'existingThoughtDelete',
   moveThought: 'moveThought',

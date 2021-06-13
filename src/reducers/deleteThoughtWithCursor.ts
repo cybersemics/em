@@ -28,8 +28,8 @@ import {
   thoughtsEditingFromChain,
 } from '../selectors'
 
-/** Deletes a thought. */
-const deleteThought = (state: State, payload: { path?: Path }) => {
+/** Deletes a thought and moves the cursor to a nearby valid thought. */
+const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   if (!state.cursor && !payload.path) return state
 
@@ -118,4 +118,4 @@ const deleteThought = (state: State, payload: { path?: Path }) => {
 
 }
 
-export default _.curryRight(deleteThought)
+export default _.curryRight(deleteThoughtWithCursor)
