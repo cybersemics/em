@@ -1,4 +1,4 @@
-import { alert, moveThought, newThoughtSubmit, setCursor } from '../reducers'
+import { alert, moveThought, createThought, setCursor } from '../reducers'
 import { getRankBefore, hasChild, rootedParentOf, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Child } from '../types'
@@ -54,7 +54,7 @@ const subCategorizeOne = (state: State) => {
   }
 
   return reducerFlow([
-    newThoughtSubmit({
+    createThought({
       context: pathToContext(rootedParentOf(state, simplePath)),
       ...child
     }),

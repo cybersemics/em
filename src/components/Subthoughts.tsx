@@ -228,7 +228,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
   store.dispatch(props.showContexts
     ? {
-      type: 'newThoughtSubmit',
+      type: 'createThought',
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
       rank: getNextRank(state, pathToContext(thoughtsFrom))

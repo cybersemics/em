@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { getPrevRank, getAllChildren } from '../selectors'
-import { newThoughtSubmit, setFirstSubthought } from '../reducers'
+import { createThought, setFirstSubthought } from '../reducers'
 import { pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 import { Context } from '../types'
@@ -11,7 +11,7 @@ const setAttribute = (state: State, { context, key, value }: { context: Context,
   reducerFlow([
 
     !pathToContext(getAllChildren(state, context)).includes(key)
-      ? state => newThoughtSubmit(state, {
+      ? state => createThought(state, {
         context,
         value: key,
         rank: getPrevRank(state, context),

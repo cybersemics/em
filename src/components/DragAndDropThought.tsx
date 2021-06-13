@@ -4,7 +4,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isTouch } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, dragHold, dragInProgress, error, existingThoughtMove, newThoughtSubmit } from '../action-creators'
+import { alert, dragHold, dragInProgress, error, moveThought, createThought } from '../action-creators'
 import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
 
 // util
@@ -143,12 +143,12 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   })
 
   store.dispatch(props.showContexts
-    ? newThoughtSubmit({
+    ? createThought({
       value: headValue(thoughtsTo),
       context: pathToContext(thoughtsFrom),
       rank: getNextRank(state, thoughtsFrom)
     })
-    : existingThoughtMove({
+    : moveThought({
       oldPath: thoughtsFrom,
       newPath
     })

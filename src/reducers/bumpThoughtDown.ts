@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { editThought, moveThought, newThoughtSubmit, setCursor, subCategorizeOne, editableRender } from '../reducers'
+import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
 import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
 import { parentOf, headValue, pathToContext, reducerFlow, unroot } from '../util'
 import { State } from '../util/initialState'
@@ -50,7 +50,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     state => {
       // the context of the new empty thought
       const contextEmpty = pathToContext(simplePathWithNewRankAndValue as Path)
-      return newThoughtSubmit(state, {
+      return createThought(state, {
         context: contextEmpty,
         rank: getPrevRank(state, contextEmpty),
         value,
