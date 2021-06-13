@@ -5,7 +5,7 @@ import { getContexts, getParent, getThought, getAllChildren, getChildrenRanked, 
 import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
-import importOnFirstMatchPathActionCreator from './test-helpers/importOnFirstMatchPath'
+import importOnFirstMatchPath from './test-helpers/importOnFirstMatchPath'
 import getLexemeFromDB from './e2e/helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
@@ -48,22 +48,24 @@ const withState = <T, R>(f: (state: State, ...args: T[]) => R) =>
   (...args: T[]) => f(store.getState(), ...args)
 
 /** Imports text on given unranked path. Used in puppeteer testing. */
-const importTextFirstMatch = (unrankedPath: string[], text: string) => store.dispatch(importOnFirstMatchPathActionCreator(unrankedPath, text))
+const importTextFirstMatch = (unrankedPath: string[], text: string) => store.dispatch(importOnFirstMatchPath(unrankedPath, text))
+
+const testHelpers = {
+  setSelection,
+  importTextFirstMatch,
+  getLexemeFromDB,
+  getState: store.getState,
+  subscribe: store.subscribe,
+  _: _,
+  clearAll: db.clearAll
+}
 
 // add em object to window for debugging
-window.em = {
+const windowEm = {
   db,
   store,
   // helper functions that will be used by puppeteer tests
-  testHelpers: {
-    setSelection,
-    importTextFirstMatch,
-    getLexemeFromDB,
-    getState: store.getState,
-    subscribe: store.subscribe,
-    _: _,
-    clearAll: db.clearAll
-  },
+  testHelpers,
   getContexts: withState(getContexts),
   getThought: withState(getThought),
   getParent: withState(getParent),
@@ -75,8 +77,13 @@ window.em = {
   checkDataIntegrity: withState(checkDataIntegrity)
 }
 
+window.em = windowEm
+
 /** Logs debugging information to a fixed position debug window. Useful for PWA debugging. */
 window.debug = (message: string) => {
   const debugEl = document.getElementById('debug')!
   debugEl.innerHTML = `${new Date()}: ${message}\n${debugEl.innerHTML}`
 }
+
+export type TestHelpers = typeof windowEm.testHelpers
+export type WindowEm = typeof windowEm
