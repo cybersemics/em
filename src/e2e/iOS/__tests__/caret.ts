@@ -15,8 +15,8 @@ import paste from '../helpers/paste'
 import clickThought from '../helpers/clickThought'
 import { gestures } from '../../../test-helpers/constants'
 
-jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
+jest.setTimeout(90000)
 
 beforeEach(initSession())
 

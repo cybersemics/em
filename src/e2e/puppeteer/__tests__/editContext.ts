@@ -15,60 +15,58 @@ const getFirstSubthought = (editable: JSHandle) =>
     el.parentElement?.parentElement?.nextElementSibling?.querySelector('.editable')
   )
 
-describe('Context view: edit context testing', () => {
-  let page: Page
-  jest.setTimeout(10000)
+let page: Page
+jest.setTimeout(20000)
 
-  beforeEach(async () => {
-    page = await initPage()
-  })
+beforeEach(async () => {
+  page = await initPage()
+})
 
-  afterEach(async () => {
-    await page.browserContext().close()
-  })
+afterEach(async () => {
+  await page.browserContext().close()
+})
 
-  it.skip('edit context value', async () => {
+it.skip('edit context value', async () => {
 
-    const importText = `
-    - a
-      - m
-        - x
-    - b
-      - m`
-    await paste(page, importText)
+  const importText = `
+  - a
+    - m
+      - x
+  - b
+    - m`
+  await paste(page, importText)
 
-    await waitForEditable(page, 'b')
-    await clickThought(page, 'b')
+  await waitForEditable(page, 'b')
+  await clickThought(page, 'b')
 
-    // click on b/m
-    const editableB = (await getEditable(page, 'b')).asElement()
-    const editableBM = await getFirstSubthought(editableB!)
-    const editableBMTextContent = await editableBM.getProperty('textContent')
-    expect(await editableBMTextContent?.jsonValue()).toBe('m')
-    await editableBM.asElement()!.click()
+  // click on b/m
+  const editableB = (await getEditable(page, 'b')).asElement()
+  const editableBM = await getFirstSubthought(editableB!)
+  const editableBMTextContent = await editableBM.getProperty('textContent')
+  expect(await editableBMTextContent?.jsonValue()).toBe('m')
+  await editableBM.asElement()!.click()
 
-    // toggle context view
-    const toggleContextView = await page.$('#toggleContextView')
-    await toggleContextView!.click()
+  // toggle context view
+  const toggleContextView = await page.$('#toggleContextView')
+  await toggleContextView!.click()
 
-    // click on b/m~/a
-    const editableBMA = await getFirstSubthought(editableBM)
-    const editableBMATextContent = await editableBMA.getProperty('textContent')
-    expect(await editableBMATextContent?.jsonValue()).toBe('a')
-    await editableBMA.asElement()!.click()
+  // click on b/m~/a
+  const editableBMA = await getFirstSubthought(editableBM)
+  const editableBMATextContent = await editableBMA.getProperty('textContent')
+  expect(await editableBMATextContent?.jsonValue()).toBe('a')
+  await editableBMA.asElement()!.click()
 
-    // edit b/m~/a to "apple"
-    await page.keyboard.press('ArrowRight')
-    await page.keyboard.type('pple')
+  // edit b/m~/a to "apple"
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.type('pple')
 
-    // move to home
-    await page.keyboard.press('Escape', { delay: 10 })
-    await page.keyboard.press('Escape', { delay: 10 })
-    await page.keyboard.press('Escape', { delay: 10 })
+  // move to home
+  await page.keyboard.press('Escape', { delay: 10 })
+  await page.keyboard.press('Escape', { delay: 10 })
+  await page.keyboard.press('Escape', { delay: 10 })
 
-    // assert that "a" in the root has changed to "apple"
-    const editableApple = (await getEditable(page, 'apple')).asElement()
-    expect(editableApple).toBeTruthy()
+  // assert that "a" in the root has changed to "apple"
+  const editableApple = (await getEditable(page, 'apple')).asElement()
+  expect(editableApple).toBeTruthy()
 
-  })
 })

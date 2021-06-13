@@ -13,7 +13,9 @@ import getEditingText from '../helpers/getEditingText'
 import waitForThoughtToExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 
-describe('caret testing', () => {
+jest.setTimeout(20000)
+
+describe('mobile and desktop', () => {
   let page: Page
 
   beforeEach(async () => {
@@ -196,7 +198,7 @@ describe('caret testing', () => {
 
 })
 
-describe('caret testing for mobile platform', () => {
+describe('mobile', () => {
   let page: Page
 
   beforeEach(async () => {

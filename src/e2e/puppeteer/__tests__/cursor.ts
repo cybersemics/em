@@ -13,6 +13,7 @@ import { Page } from 'puppeteer'
 
 describe('cursor testing', () => {
   let page: Page
+  jest.setTimeout(20000)
 
   beforeEach(async () => {
     page = await initPage()
