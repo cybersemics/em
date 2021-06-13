@@ -3,17 +3,17 @@
  */
 
 import { Browser } from 'webdriverio'
-import waitForEditable from '../../helpers/mobile/waitForEditable'
-import gesture from '../../helpers/mobile/gesture'
-import hideKeyboardByTappingDone from '../../helpers/mobile/hideKeyboardByTappingDone'
-import tapWithOffset from '../../helpers/mobile/tapWithOffset'
-import getEditingText from '../../helpers/mobile/getEditingText'
-import editThought from '../../helpers/mobile/editThought'
-import getEditable from '../../helpers/mobile/getEditable'
-import initSession from '../../helpers/mobile/initSession'
-import { gestures } from '../../helpers/constants'
-import paste from '../../helpers/mobile/paste'
-import clickThought from '../../helpers/mobile/clickThought'
+import waitForEditable from '../helpers/waitForEditable'
+import gesture from '../helpers/gesture'
+import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
+import tapWithOffset from '../helpers/tapWithOffset'
+import getEditingText from '../helpers/getEditingText'
+import editThought from '../helpers/editThought'
+import getEditable from '../helpers/getEditable'
+import initSession from '../helpers/initSession'
+import paste from '../helpers/paste'
+import clickThought from '../helpers/clickThought'
+import { gestures } from '../../../test-helpers/constants'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>

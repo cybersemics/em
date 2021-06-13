@@ -35,7 +35,7 @@ describe('Context view: edit context testing', () => {
         - x
     - b
       - m`
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     await waitForEditable(page, 'b')
     await clickThought(page, 'b')

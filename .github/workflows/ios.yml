@@ -1,4 +1,4 @@
-name: iOS Safari Tests
+name: BrowserStack
 
 on:
   push:
@@ -13,7 +13,7 @@ env:
 
 jobs:
   run:
-    name: iOS Safari Tests
+    name: BrowserStack
     runs-on: ubuntu-latest
 
     steps:
@@ -49,8 +49,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test IOS on browserstack
-        run: npm run test:e2e:ios
+      - name: Test iOS on BrowserStack
+        run: npm run test:ios
 
       - name: 'Stop BrowserStackLocal'
         uses: 'browserstack/github-actions/setup-local@master'

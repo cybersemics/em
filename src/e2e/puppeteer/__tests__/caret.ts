@@ -9,8 +9,9 @@ import waitForState from '../helpers/waitForState'
 import { devices, Page } from 'puppeteer'
 import initPage from '../helpers/initPage'
 import clickThought from '../helpers/clickThought'
+import getEditingText from '../helpers/getEditingText'
 import waitForThoughtToExistInDb from '../helpers/waitForThoughtExistInDb'
-import waitForElementBecomeHidden from '../helpers/waitForElementBecomeHidden'
+import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 
 describe('caret testing', () => {
   let page: Page
@@ -30,8 +31,7 @@ describe('caret testing', () => {
       - web scrapping
     - insomnia
       - rest api`
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     await waitForEditable(page, 'puppeteer')
     await clickThought(page, 'puppeteer')
@@ -54,8 +54,7 @@ describe('caret testing', () => {
     - Don't stay awake for too long
       - I don't wanna fall asleep`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     const editableNodeHandle = await waitForEditable(page, 'I don\'t wanna fall asleep')
     await clickWithOffset(page, editableNodeHandle, { offset: 10 })
@@ -70,8 +69,7 @@ describe('caret testing', () => {
     const importText = `
     - Purple Rain`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     const editableNodeHandle = await waitForEditable(page, 'Purple Rain')
 
@@ -88,8 +86,7 @@ describe('caret testing', () => {
     const importText = `
     - Purple Rain`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     const editableNodeHandle = await waitForEditable(page, 'Purple Rain')
 
@@ -106,8 +103,7 @@ describe('caret testing', () => {
     const importText = `
     - Richard Feynman`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     const editableNodeHandle = await waitForEditable(page, 'Richard Feynman')
 
@@ -125,7 +121,7 @@ describe('caret testing', () => {
     // - Richard Feynman`
 
     // await page.keyboard.press('Enter')
-    // await paste(page, [''], importText)
+    // await paste(page, importText)
     // await setCursor(page, ['Richard Feynman'], { offset: 0 })
     // const editableNodeHandle = await getEditable(page, 'Richard Feynman')
     // await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
@@ -139,8 +135,7 @@ describe('caret testing', () => {
     const importText = `
     - Freddie Mercury`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     const editableNodeHandle = await waitForEditable(page, 'Freddie Mercury')
 
@@ -159,8 +154,7 @@ describe('caret testing', () => {
       - Labrador
       - Golden Retriever`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     const editableNodeHandle = await waitForEditable(page, 'Husky')
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
@@ -180,8 +174,7 @@ describe('caret testing', () => {
     - a
     - b`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     await clickThought(page, 'a')
 
@@ -219,8 +212,7 @@ describe('caret testing for mobile platform', () => {
     - A
       - B`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     const editableNodeHandle = await waitForEditable(page, 'B')
     await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
@@ -247,15 +239,15 @@ describe('caret testing for mobile platform', () => {
         -C
     - D`
 
-    await page.keyboard.press('Enter')
-    await paste(page, [''], importText)
+    await paste(page, importText)
 
     await clickThought(page, 'A')
     await clickThought(page, 'C')
-    await waitForElementBecomeHidden(page, 'D')
+    await waitForHiddenEditable(page, 'D')
     await clickThought(page, 'D')
+    await waitForEditable(page, 'A')
 
-    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
-    expect(textContext).toBe('B')
+    const cursorText = await getEditingText(page)
+    expect(cursorText).toBe('B')
   })
 })

@@ -3,12 +3,10 @@
  */
 
 import { Browser } from 'webdriverio'
-import paste from '../../helpers/mobile/paste'
-import waitForEditable from '../../helpers/mobile/waitForEditable'
-import clickThought from '../../helpers/mobile/clickThought'
-import gesture from '../../helpers/mobile/gesture'
-import initSession from '../../helpers/mobile/initSession'
-import { gestures } from '../../helpers/constants'
+import paste from '../helpers/paste'
+import waitForEditable from '../helpers/waitForEditable'
+import clickThought from '../helpers/clickThought'
+import initSession from '../helpers/initSession'
 
 jest.setTimeout(90000)
 const mobileBrowser = browser as unknown as Browser<'async'>
@@ -20,11 +18,10 @@ it('click home link to set the cursor to null', async () => {
   const text = `
   - a
     - b`
-  await gesture(mobileBrowser, gestures.newThought)
-  await paste(mobileBrowser, [''], text)
-
+  await paste(mobileBrowser, text)
   await waitForEditable(mobileBrowser, 'b')
-  await clickThought(mobileBrowser, 'b')
+  await clickThought(mobileBrowser, 'b') // set cursor
+  await clickThought(mobileBrowser, 'b') // open keyboard
 
   const editingBefore = await mobileBrowser.$('.editing')
   expect(editingBefore.elementId).toBeTruthy()

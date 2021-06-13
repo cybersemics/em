@@ -1,4 +1,4 @@
-name: Puppeteer Tests
+name: Puppeteer
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   run:
-    name: Puppeteer Tests
+    name: Puppeteer
     runs-on: ubuntu-latest
 
     steps:
@@ -32,5 +32,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Serve
+        run: npm run servebuild &
+
       - name: Test
-        run: npm run test:e2e:prod
+        run: npm run test:puppeteer

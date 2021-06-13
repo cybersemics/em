@@ -1,4 +1,4 @@
-name: Tests
+name: Test
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   run:
-    name: Tests
+    name: Test
     runs-on: ubuntu-latest
 
     steps:
