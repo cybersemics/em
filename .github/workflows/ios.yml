@@ -1,4 +1,4 @@
-name: E2E Tests
+name: iOS Safari Tests
 
 on:
   push:
@@ -13,7 +13,7 @@ env:
 
 jobs:
   run:
-    name: E2E Tests
+    name: iOS Safari Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -49,9 +49,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test
-        run: npm run test:e2e:prod
-
       - name: Test IOS on browserstack
         run: npm run test:e2e:ios
 
@@ -59,3 +56,4 @@ jobs:
         uses: 'browserstack/github-actions/setup-local@master'
         with:
           local-testing: 'stop'
+

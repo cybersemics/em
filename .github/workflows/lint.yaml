@@ -1,4 +1,4 @@
-name: Tests
+name: Lint
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   run:
-    name: Tests
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -29,5 +29,5 @@ jobs:
       - name: Install npm dependencies
         run: npm ci && cd functions && npm ci
 
-      - name: Test
-        run: npm run test
+      - name: Lint
+        run: npm run lint
