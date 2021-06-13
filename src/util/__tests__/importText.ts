@@ -126,7 +126,7 @@ it('basic import with proper thought structure', () => {
 
 })
 
-it('import and merge descendants', () => {
+it('merge descendants', () => {
 
   const initialText = `
   - a
@@ -628,7 +628,7 @@ it('do not parse as html when value has tags inside indented text', () => {
 `)
 })
 
-it('import single-line nested html tags', () => {
+it('single-line nested html tags', () => {
 
   const text = `- ${HOME_TOKEN}
   - a
@@ -664,7 +664,7 @@ it('import single-line nested html tags', () => {
     - <b><i>A</i></b>`)
 })
 
-it('import multi-line nested html tags', () => {
+it('multi-line nested html tags', () => {
   const paste = `
   <li><i><b>A</b></i></li>
   <li><i><b>B</b></i></li>
@@ -699,7 +699,7 @@ it('export note as a normal thought if lossless not selected', () => {
     - c`)
 })
 
-it('import text that contains em tag', () => {
+it('text that contains em tag', () => {
   const text = `
   - a
     - b
@@ -712,7 +712,7 @@ it('import text that contains em tag', () => {
   - <em>c</em>`)
 })
 
-it('import text that contains non closed span tag', () => {
+it('text that contains non closed span tag', () => {
   const paste = `
 - a
 - b
@@ -731,7 +731,7 @@ it('import text that contains non closed span tag', () => {
     )
 })
 
-it('import text that contains br tag that does not have children', () => {
+it('text that contains br tag that does not have children', () => {
   const text = `
   - a
   - b
@@ -744,7 +744,7 @@ it('import text that contains br tag that does not have children', () => {
 - c`)
 })
 
-it('import text that contains br tag that has note children', () => {
+it('text that contains br tag that has note children', () => {
   const text = `
   - a
   - b
@@ -993,4 +993,58 @@ it('allow formatting tags', () => {
   - guardians <u>of the </u><u>sandbox </u>
   - guardians <strong>of the </strong><strong>teacup </strong>
   - guardians <em>of the </em><em>pricky pear </em>`)
+})
+
+it('import single thought into empty home context', () => {
+
+  const text = `a`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported)
+    .toBe(`- ${HOME_TOKEN}
+  - a`)
+})
+
+it('import multiple thoughts to empty home context', () => {
+
+  const text = `
+  - a
+    - b
+  - c
+    - d`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported)
+    .toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+  - c
+    - d`)
+})
+
+it('import multiple thoughts to end of home context with other thoughts', () => {
+
+  const text = `
+  - a
+    - b
+  - c
+    - d`
+
+  const stateNew = reducerFlow([
+    importText({ text }),
+    importText({ text: 'e' }),
+  ])(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported)
+    .toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+  - c
+    - d
+  - e`)
 })
