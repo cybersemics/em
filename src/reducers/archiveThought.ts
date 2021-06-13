@@ -36,7 +36,7 @@ import {
 import {
   alert,
   existingThoughtDelete,
-  existingThoughtMove,
+  moveThought,
   newThought,
   setCursor,
 } from '../reducers'
@@ -160,8 +160,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           showCloseLink: true,
         }),
 
-        // execute existingThoughtMove after newThought has updated the state
-        (state: State) => existingThoughtMove(state, {
+        // execute moveThought after newThought has updated the state
+        (state: State) => moveThought(state, {
           oldPath: path,
           // TODO: Are we sure pathToArchive cannot return null?
           newPath: pathToArchive(state, showContexts ? simplePath : path!, context)!,

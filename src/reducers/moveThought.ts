@@ -43,7 +43,7 @@ type RecursiveMoveResult = {
 }
 
 /** Moves a thought from one context to another, or within the same context. */
-const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
+const moveThought = (state: State, { oldPath, newPath, offset }: {
   oldPath: Path,
   newPath: Path,
   offset?: number,
@@ -82,7 +82,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   // find id of head thought from exact thought if not available in oldPath
   const id = headId(oldSimplePath) || exactThought?.id || null
   if (!id) {
-    console.warn(`existingThoughtMove: oldSimplePath does not have an id and exactThought was not found.`)
+    console.warn(`moveThought: oldSimplePath does not have an id and exactThought was not found.`)
     console.warn('oldSimplePath', oldSimplePath)
     console.warn('oldThought', oldThought)
   }
@@ -106,7 +106,7 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
     recentlyEdited = treeMove(state.recentlyEdited, oldPath, newPath)
   }
   catch (e) {
-    console.error('existingThoughtMove: treeMove immer error')
+    console.error('moveThought: treeMove immer error')
     console.error(e)
   }
 
@@ -391,4 +391,4 @@ const existingThoughtMove = (state: State, { oldPath, newPath, offset }: {
   ])(state)
 }
 
-export default _.curryRight(existingThoughtMove, 2)
+export default _.curryRight(moveThought, 2)

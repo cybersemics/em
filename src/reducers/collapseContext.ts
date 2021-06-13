@@ -1,7 +1,7 @@
 import { head, normalizeThought, parentOf, pathToContext, reducerFlow, unroot } from '../util'
 import { State } from '../util/initialState'
 import { getAllChildren, getChildren, getRankBefore, isChildVisible, rootedParentOf, simplifyPath } from '../selectors'
-import { archiveThought, existingThoughtMove, setCursor } from '../reducers'
+import { archiveThought, moveThought, setCursor } from '../reducers'
 import _ from 'lodash'
 import existingThoughtDelete from './existingThoughtDelete'
 import { Path } from '../types'
@@ -45,7 +45,7 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
   return reducerFlow(
     children.length > 0 ? [
       ...children.map(child => {
-        return (updatedState: State) => existingThoughtMove(updatedState, {
+        return (updatedState: State) => moveThought(updatedState, {
           oldPath: unroot([...path, child]),
           newPath: unroot([...parentOf(path), { ...child, rank: getRankBefore(updatedState, simpleCursor) }]),
         })

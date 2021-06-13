@@ -1,4 +1,4 @@
-import { alert, existingThoughtMove, newThoughtSubmit, setCursor } from '../reducers'
+import { alert, moveThought, newThoughtSubmit, setCursor } from '../reducers'
 import { getRankBefore, hasChild, rootedParentOf, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Child } from '../types'
@@ -63,7 +63,7 @@ const subCategorizeOne = (state: State) => {
       offset: 0,
       editing: true
     }),
-    state => existingThoughtMove(state, {
+    state => moveThought(state, {
       oldPath: cursor,
       newPath: cursorParent.concat(child, head(cursor))
     })

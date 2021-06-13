@@ -234,7 +234,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
       rank: getNextRank(state, pathToContext(thoughtsFrom))
     }
     : {
-      type: 'existingThoughtMove',
+      type: 'moveThought',
       oldPath: thoughtsFrom,
       newPath
     }

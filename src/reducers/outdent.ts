@@ -1,4 +1,4 @@
-import { alert, existingThoughtMove } from '../reducers'
+import { alert, moveThought } from '../reducers'
 import { getRankAfter, hasChild, rootedParentOf, simplifyPath } from '../selectors'
 import { State } from '../util/initialState'
 import { Path } from '../types'
@@ -27,7 +27,7 @@ const outdent = (state: State) => {
     })
   }
 
-  // store selection offset before existingThoughtMove is dispatched
+  // store selection offset before moveThought is dispatched
   const offset = window.getSelection()?.focusOffset
 
   const cursorNew: Path = [
@@ -38,7 +38,7 @@ const outdent = (state: State) => {
     }
   ]
 
-  return existingThoughtMove(state, {
+  return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
     offset

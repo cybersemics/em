@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { clear, editThought, existingThoughtDelete, existingThoughtMove, importText, newThought, setCursor } from '../../action-creators'
+import { clear, editThought, existingThoughtDelete, moveThought, importText, newThought, setCursor } from '../../action-creators'
 import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
@@ -220,7 +220,7 @@ it('move thought with buffered descendants', async () => {
   // delete thought with buffered descendants
   const aPath = rankThoughtsFirstMatch(store.getState(), ['a'])
   const xPath = rankThoughtsFirstMatch(store.getState(), ['x'])
-  store.dispatch(existingThoughtMove({
+  store.dispatch(moveThought({
     oldPath: aPath,
     newPath: [...xPath, ...aPath],
   }))

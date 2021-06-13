@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { clearPushQueue, editThought, existingThoughtDelete, existingThoughtMove, isPushing, pull, pullLexemes, push, updateThoughts } from '../action-creators'
+import { clearPushQueue, editThought, existingThoughtDelete, moveThought, isPushing, pull, pullLexemes, push, updateThoughts } from '../action-creators'
 import { hasPushes } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
 import { PushBatch, State } from '../util/initialState'
@@ -105,11 +105,11 @@ const flushEdits = (pushQueue: PushBatch[]): Thunk<Promise<void>> => async (disp
 
 }
 
-/** Pull all descendants of pending moves and dispatch existingThoughtMove to fully move. */
+/** Pull all descendants of pending moves and dispatch moveThought to fully move. */
 const flushMoves = (pushQueue: PushBatch[]): Thunk => async (dispatch, getState) => {
 
   const state = getState()
-  // if there are pending thoughts that need to be moved, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another existingThoughtMove
+  // if there are pending thoughts that need to be moved, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another moveThought
   const descendantMoves = pushQueue.map(batch => batch.descendantMoves || []).flat()
   const pendingPulls = pushQueue.map(batch => batch.pendingPulls || []).flat()
 
@@ -140,7 +140,7 @@ const flushMoves = (pushQueue: PushBatch[]): Thunk => async (dispatch, getState)
   }
 
   descendantMoves.forEach(({ pathOld, pathNew }) => {
-    dispatch(existingThoughtMove({
+    dispatch(moveThought({
       oldPath: pathOld,
       newPath: pathNew,
     }))
