@@ -89,7 +89,7 @@ const dataIntegrityCheck = (path: Path): Thunk => (dispatch, getState) => {
       if (!childExists) {
         console.warn('Recreating missing thought in thoughtIndex:', child.value)
         dispatch({
-          type: 'newThoughtSubmit',
+          type: 'createThought',
           context,
           // guard against undefined
           rank: child.rank || 0,
@@ -108,7 +108,7 @@ const dataIntegrityCheck = (path: Path): Thunk => (dispatch, getState) => {
       if (!matchingThoughtInContexts) {
         console.warn('Recreating missing thought in thought.contexts:', path)
         dispatch({
-          type: 'newThoughtSubmit',
+          type: 'createThought',
           context: pathContext,
           rank,
           value,

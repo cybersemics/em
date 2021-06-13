@@ -13,11 +13,11 @@ interface Payload {
   addAsContext?: boolean,
 }
 /**
- * Creates a new thought in the given context.
+ * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-const newThoughtSubmit = (state: State, { context, value, rank, id, addAsContext }: Payload) => {
+const createThought = (state: State, { context, value, rank, id, addAsContext }: Payload) => {
 
   id = id || createId()
 
@@ -96,4 +96,4 @@ const newThoughtSubmit = (state: State, { context, value, rank, id, addAsContext
   return updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates })
 }
 
-export default _.curryRight(newThoughtSubmit)
+export default _.curryRight(createThought)

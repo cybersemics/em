@@ -280,7 +280,7 @@ export const UNDOABLE_ACTIONS: Index<string> = {
   moveThoughtDown: 'moveThoughtDown',
   moveThoughtUp: 'moveThoughtUp',
   newThought: 'newThought',
-  newThoughtSubmit: 'newThoughtSubmit',
+  createThought: 'createThought',
   outdent: 'outdent',
   searchLimit: 'searchLimit',
   setAttribute: 'setAttribute',

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { deleteThought, newThoughtSubmit, setFirstSubthought } from '../reducers'
+import { deleteThought, createThought, setFirstSubthought } from '../reducers'
 import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head, reducerFlow, unroot } from '../util'
 import { State } from '../util/initialState'
@@ -23,7 +23,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
 
       // create attribute if it does not exist
       !hasChild(state, context, key)
-        ? state => newThoughtSubmit(state, {
+        ? state => createThought(state, {
           context,
           value: key,
           rank: getPrevRank(state, context),

@@ -52,7 +52,7 @@ import {
 // reducers
 import {
   alert,
-  newThoughtSubmit,
+  createThought,
   setCursor,
   tutorialNext,
   tutorialStep as tutorialStepReducer,
@@ -68,7 +68,7 @@ export interface NewThoughtPayload {
   preventSetCursor?: boolean,
 }
 
-/** Adds a new thought to the cursor. NOOP if the cursor is not set.
+/** Adds a new thought to the cursor. Calculates the rank to add the new thought above, below, or within a thought.
  *
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
  */
@@ -154,8 +154,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   const reducers = [
 
-    // newThoughtSubmit
-    newThoughtSubmit({
+    // createThought
+    createThought({
       context: insertNewSubthought
         ? thoughts
         : context,

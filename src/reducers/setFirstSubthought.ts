@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { getPrevRank, getAllChildren, rankThoughtsFirstMatch } from '../selectors'
-import { editThought, newThoughtSubmit } from '../reducers'
+import { editThought, createThought } from '../reducers'
 import { State } from '../util/initialState'
 import { Context, SimplePath } from '../types'
 
@@ -23,7 +23,7 @@ const setFirstSubthoughts = (state: State, { context, value }: { context: Contex
 
     // context is empty and so first thought must be created
     // assume context exists
-    : newThoughtSubmit(state, {
+    : createThought(state, {
       context,
       value,
       rank: getPrevRank(state, context),
