@@ -1,6 +1,12 @@
-import { Direction, Index } from '../../types'
+import { GesturePath } from '../../types'
 
-export const gestures: Index<Direction[]> = {
-  newSubThought: ['r', 'd', 'r'],
-  newThought: ['r', 'd'],
+enum gestureEnum {
+  newSubThought = 'rdr',
+  newThought = 'rd',
+}
+
+// widen the type of the gestureEnum values to GesturePath using a mapped type
+// https://www.typescriptlang.org/docs/handbook/2/mapped-types.html
+export const gestures = gestureEnum as {
+  [key in keyof typeof gestureEnum]: GesturePath
 }
