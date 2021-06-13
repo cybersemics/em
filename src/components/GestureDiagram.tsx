@@ -84,7 +84,7 @@ const GestureDiagram = ({ path, size = 50, flexibleSize, strokeWidth = 1.5, arro
   }
 
   // eslint-disable-next-line no-extra-parens
-  const pathSegments = (path.split('') as Direction[]).map(pathSegmentDelta)
+  const pathSegments = (Array.from(path) as Direction[]).map(pathSegmentDelta)
   const pathString = pathSegments.map(segment => `l ${segment.dx} ${segment.dy}`).join(' ')
   const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))

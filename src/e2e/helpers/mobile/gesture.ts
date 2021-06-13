@@ -1,4 +1,4 @@
-import { Direction } from '../../../types'
+import { Direction, GesturePath } from '../../../types'
 import { Browser, TouchAction } from 'webdriverio'
 
 export interface GestureOptions {
@@ -11,9 +11,9 @@ export interface GestureOptions {
 const WAIT_ACTION = { action: 'wait', ms: 50 } as TouchAction
 
 /** Apply gesture action for the given path. */
-const gesture = async (browser: Browser<'async'>, path: Direction[], { xStart = 70, yStart = 300, segmentLength = 70 }: GestureOptions = {}) => {
+const gesture = async (browser: Browser<'async'>, path: GesturePath, { xStart = 70, yStart = 300, segmentLength = 70 }: GestureOptions = {}) => {
 
-  const moveActions = path.reduce<TouchAction[]>((acc, cur) => {
+  const moveActions = (Array.from(path) as Direction[]).reduce<TouchAction[]>((acc, cur) => {
     const { x: previousX, y: previousY } = acc.length > 0
       ? acc[acc.length - 1]
       : { x: xStart, y: yStart }
