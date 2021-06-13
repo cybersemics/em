@@ -1,7 +1,7 @@
 import { parse } from 'jex-block-parser'
 import _ from 'lodash'
 import { unescape } from 'html-escaper'
-import { getTextContentFromHTML, parentOf, convertHTMLtoJSON, head, importJSON, pathToContext, reducerFlow, roamJsonToBlocks, strip, validateRoam, createId } from '../util'
+import { getTextContentFromHTML, parentOf, convertHTMLtoJSON, head, importJSON, isRoot, pathToContext, reducerFlow, roamJsonToBlocks, strip, validateRoam, createId } from '../util'
 import { existingThoughtChange, setCursor, updateThoughts } from '../reducers'
 import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
 import { Block, Path, SimplePath, Timestamp } from '../types'
@@ -159,7 +159,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
   const destValue = rawDestValue || destThought.value
 
   // if we are only importing a single line of html, then simply modify the current thought
-  if (numLines <= 1 && !isRoam) {
+  if (numLines <= 1 && !isRoam && !isRoot(path)) {
     const textNormalized = strip(convertedText, { preserveFormatting: true })
 
     // get the range if there is one so that we can import over the selected html
