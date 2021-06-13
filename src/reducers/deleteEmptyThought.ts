@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { getTextContentFromHTML, head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow } from '../util'
 import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath, rootedParentOf } from '../selectors'
-import { deleteThoughtWithCursor, editThought, existingThoughtDelete, moveThought, setCursor } from '../reducers'
+import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 import archiveThought from './archiveThought'
@@ -35,7 +35,7 @@ const deleteEmptyThought = (state: State): State => {
         const archivedChild = getChildrenRanked(state, context)[0]
         return moveThought(state, { oldPath: [...cursor, archivedChild], newPath: [...parentOf(cursor), archivedChild] })
       },
-      state => existingThoughtDelete(state, {
+      state => deleteThought(state, {
         context: parentOf(context),
         thoughtRanked: head(cursor)
       })
@@ -79,7 +79,7 @@ const deleteEmptyThought = (state: State): State => {
         ),
 
         // delete second thought
-        existingThoughtDelete({
+        deleteThought({
           context: parentContext,
           thoughtRanked: head(simplePath)
         }),

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { cursorBack, existingThoughtDelete, setCursor } from '../reducers'
+import { cursorBack, deleteThought, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { Child, Path, SimplePath, ThoughtContext } from '../types'
 
@@ -68,7 +68,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     } as Child : null
   }
 
-  // prev must be calculated before dispatching existingThoughtDelete
+  // prev must be calculated before dispatching deleteThought
   const prev = showContexts
     ? prevContext()
     : prevSibling(state, value, context, rank)
@@ -85,7 +85,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   return reducerFlow([
 
     // delete thought
-    existingThoughtDelete({
+    deleteThought({
       context: parentOf(pathToContext(simplePath)),
       showContexts,
       thoughtRanked: head(simplePath)

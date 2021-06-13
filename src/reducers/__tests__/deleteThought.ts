@@ -1,14 +1,14 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { getContexts, getAllChildren, getParent } from '../../selectors'
-import { existingThoughtDelete, newSubthought, newThought } from '../../reducers'
+import { deleteThought, newSubthought, newThought } from '../../reducers'
 
 it('delete from root', () => {
 
   const steps = [
     newThought('a'),
     newThought('b'),
-    existingThoughtDelete({
+    deleteThought({
       context: [HOME_TOKEN],
       thoughtRanked: { value: 'b', rank: 1 },
     }),
@@ -43,7 +43,7 @@ it('delete descendants of root thought', () => {
     newThought('a'),
     newSubthought('b'),
     newSubthought('c'),
-    existingThoughtDelete({
+    deleteThought({
       context: [HOME_TOKEN],
       thoughtRanked: { value: 'a', rank: 0 },
     }),
@@ -69,7 +69,7 @@ it('delete thought with duplicate child', () => {
   const steps = [
     newThought('a'),
     newSubthought('a'),
-    existingThoughtDelete({
+    deleteThought({
       context: [HOME_TOKEN],
       thoughtRanked: { value: 'a', rank: 0 },
     }),

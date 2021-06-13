@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { existingThoughtDelete, newThoughtSubmit, setFirstSubthought } from '../reducers'
+import { deleteThought, newThoughtSubmit, setFirstSubthought } from '../reducers'
 import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head, reducerFlow, unroot } from '../util'
 import { State } from '../util/initialState'
@@ -14,7 +14,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
 
   return attributeEquals(state, context, key, value)
     // delete existing attribute
-    ? existingThoughtDelete(state, {
+    ? deleteThought(state, {
       context,
       thoughtRanked: head(path)
     })

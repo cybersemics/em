@@ -4,7 +4,7 @@ import { getAllChildren, getChildPath, getNextRank, simplifyPath } from '../sele
 import { head, parentOf, pathToContext, reducerFlow } from '../util'
 import { State } from '../util/initialState'
 import moveThought from './moveThought'
-import existingThoughtDelete from './existingThoughtDelete'
+import deleteThought from './deleteThought'
 import { SimplePath } from '../types'
 
 /** Join two or more thoughts split by spaces. */
@@ -46,7 +46,7 @@ const join = (state: State) => {
     path: simplePath,
   })
 
-  const removalReducers = siblings.map(sibling => existingThoughtDelete({
+  const removalReducers = siblings.map(sibling => deleteThought({
     context,
     thoughtRanked: sibling
   }))

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { existingThoughtDelete } from '../reducers'
+import { deleteThought } from '../reducers'
 import { hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head } from '../util'
 import { State } from '../util/initialState'
@@ -13,7 +13,7 @@ const deleteAtribute = (state: State, { context, key }: { context: Context, key:
   const path = rankThoughtsFirstMatch(state, [...context, key])
 
   return hasChild(state, context, key)
-    ? existingThoughtDelete(state, {
+    ? deleteThought(state, {
       context,
       showContexts: false,
       thoughtRanked: head(path),
