@@ -9,8 +9,9 @@ import waitForState from '../helpers/waitForState'
 import { devices, Page } from 'puppeteer'
 import initPage from '../helpers/initPage'
 import clickThought from '../helpers/clickThought'
+import getEditingText from '../helpers/getEditingText'
 import waitForThoughtToExistInDb from '../helpers/waitForThoughtExistInDb'
-import waitForElementBecomeHidden from '../helpers/waitForElementBecomeHidden'
+import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 
 describe('caret testing', () => {
   let page: Page
@@ -242,10 +243,11 @@ describe('caret testing for mobile platform', () => {
 
     await clickThought(page, 'A')
     await clickThought(page, 'C')
-    await waitForElementBecomeHidden(page, 'D')
+    await waitForHiddenEditable(page, 'D')
     await clickThought(page, 'D')
+    await waitForEditable(page, 'A')
 
-    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
-    expect(textContext).toBe('B')
+    const cursorText = await getEditingText(page)
+    expect(cursorText).toBe('B')
   })
 })
