@@ -3,6 +3,8 @@
  */
 
 import initPage from '../helpers/initPage'
+import newThought from '../helpers/newThought'
+import waitForAlert from '../helpers/waitForAlert'
 import { Page } from 'puppeteer'
 
 let page: Page
@@ -17,39 +19,32 @@ afterEach(async () => {
 })
 
 it('do not allow duplicate thought on edit', async () => {
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.keyboard.type('ab', { delay: 20 })
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.keyboard.type('a', { delay: 20 })
-  await page.keyboard.type('b', { delay: 20 })
-  await page.waitForXPath('//*[contains(text(), "Duplicate thought")]')
+  await newThought(page, 'ab')
+  await newThought(page, 'a')
+  await page.keyboard.type('b')
+  await waitForAlert(page, 'Duplicate thought')
 })
 
 it('do not allow duplicate thought after split (left half)', async () => {
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.keyboard.type('a', { delay: 20 })
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.keyboard.type('ab', { delay: 20 })
-  await page.keyboard.press('ArrowLeft', { delay: 20 })
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.waitForXPath('//*[contains(text(), "Duplicate thought")]')
+  await newThought(page, 'a')
+  await newThought(page, 'ab')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('Enter')
+  await waitForAlert(page, 'Duplicate thought')
 })
 
 it('do not allow duplicate thought after split (right half)', async () => {
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.keyboard.type('a', { delay: 20 })
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.keyboard.type('ba', { delay: 20 })
-  await page.keyboard.press('ArrowLeft', { delay: 20 })
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.waitForXPath('//*[contains(text(), "Duplicate thought")]')
+  await newThought(page, 'a')
+  await newThought(page, 'ba')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('Enter')
+  await waitForAlert(page, 'Duplicate thought')
 })
 
 it('do not allow duplicate thought after split symmetric', async () => {
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.keyboard.type('haha', { delay: 20 })
-  await page.keyboard.press('ArrowLeft', { delay: 20 })
-  await page.keyboard.press('ArrowLeft', { delay: 20 })
-  await page.keyboard.press('Enter', { delay: 20 })
-  await page.waitForXPath('//*[contains(text(), "Duplicate thought")]')
+  await newThought(page, 'haha')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('Enter')
+  await waitForAlert(page, 'Duplicate thought')
 })

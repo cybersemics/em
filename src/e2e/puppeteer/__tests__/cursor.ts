@@ -29,8 +29,6 @@ describe('cursor testing', () => {
     - A
     - B`
     await paste(page, importText)
-    await waitForEditable(page, 'B')
-
     await clickThought(page, 'B')
 
     await waitForState(page, 'isPushing', false)
@@ -53,7 +51,6 @@ describe('cursor testing', () => {
       - Z`
     await paste(page, importText)
 
-    await waitForEditable(page, 'Z')
     await clickThought(page, 'Z')
 
     await waitForState(page, 'isPushing', false)

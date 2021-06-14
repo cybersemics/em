@@ -15,7 +15,7 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 
 jest.setTimeout(20000)
 
-describe('mobile and desktop', () => {
+describe('all platforms', () => {
   let page: Page
 
   beforeEach(async () => {
@@ -34,11 +34,7 @@ describe('mobile and desktop', () => {
     - insomnia
       - rest api`
     await paste(page, importText)
-
-    await waitForEditable(page, 'puppeteer')
     await clickThought(page, 'puppeteer')
-
-    await waitForEditable(page, 'web scrapping')
     await clickThought(page, 'web scrapping')
 
     const editableNodeHandle = await waitForEditable(page, 'web scrapping')
@@ -172,12 +168,12 @@ describe('mobile and desktop', () => {
   })
 
   it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
+
     const importText = `
     - a
     - b`
 
     await paste(page, importText)
-
     await clickThought(page, 'a')
 
     // Set cursor to null
@@ -198,7 +194,7 @@ describe('mobile and desktop', () => {
 
 })
 
-describe('mobile', () => {
+describe('mobile only', () => {
   let page: Page
 
   beforeEach(async () => {
@@ -242,11 +238,12 @@ describe('mobile', () => {
     - D`
 
     await paste(page, importText)
-
     await clickThought(page, 'A')
     await clickThought(page, 'C')
+
     await waitForHiddenEditable(page, 'D')
     await clickThought(page, 'D')
+
     await waitForEditable(page, 'A')
 
     const cursorText = await getEditingText(page)

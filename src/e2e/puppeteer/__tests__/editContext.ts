@@ -3,7 +3,6 @@
  */
 
 import paste from '../helpers/paste'
-import waitForEditable from '../helpers/waitForEditable'
 import clickThought from '../helpers/clickThought'
 import getEditable from '../helpers/getEditable'
 import initPage from '../helpers/initPage'
@@ -36,7 +35,6 @@ it.skip('edit context value', async () => {
     - m`
   await paste(page, importText)
 
-  await waitForEditable(page, 'b')
   await clickThought(page, 'b')
 
   // click on b/m
