@@ -2,13 +2,11 @@ import React, { useEffect } from 'react'
 import { ThunkDispatch } from 'redux-thunk'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
-import { getEmptyImage } from 'react-dnd-html5-backend'
-import { isTouch } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, dragHold, dragInProgress, error, existingThoughtMove, newThoughtSubmit, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { compareReasonable } from '../util/compareThought'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
 
@@ -19,75 +17,48 @@ import Note from './Note'
 import StaticThought from './StaticThought'
 import Subthoughts from './Subthoughts'
 import ThoughtAnnotation from './ThoughtAnnotation'
+import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
+
+// hooks
+import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
 
 // util
 import {
-  parentOf,
-  ellipsize,
   equalArrays,
   equalPath,
   hashContext,
   head,
   headValue,
+  isDescendantPath,
   isDivider,
-  isDocumentEditable,
-  isEM,
   isFunction,
+  isRoot,
+  parentOf,
   parseJsonSafe,
   pathToContext,
   publishMode,
-  isDescendantPath,
-  isRoot,
-  unroot,
 } from '../util'
 
 // selectors
 import {
   attribute,
-  getNextRank,
-  getRankBefore,
+  getAllChildren,
+  getChildren,
+  getChildrenRanked,
   getSortPreference,
   getStyle,
   getThought,
-  getAllChildren,
-  getChildrenRanked,
-  hasChild,
   hasChildren,
-  isBefore,
   isContextViewActive,
   rootedParentOf,
-  getChildren,
-  visibleDistanceAboveCursor,
 } from '../selectors'
-import useIsChildHovering from '../hooks/useIsChildHovering'
-import { compareReasonable } from '../util/compareThought'
 
 /**********************************************************************
  * Redux
  **********************************************************************/
 
-interface ThoughtProps {
-  cursorOffset?: number | null,
-  env?: Index<Context>,
-  hideBullet?: boolean,
-  homeContext?: boolean,
-  isDraggable?: boolean,
-  isDragging?: boolean,
-  isPublishChild?: boolean,
-  isEditing?: boolean,
-  isLeaf?: boolean,
-  path: Path,
-  publish?: boolean,
-  rank: number,
-  showContextBreadcrumbs?: boolean,
-  showContexts?: boolean,
-  style?: React.CSSProperties,
-  simplePath: SimplePath,
-  view?: string | null,
-}
-
-interface ThoughtContainerProps {
+export interface ThoughtContainerProps {
   allowSingleContext?: boolean,
   childrenForced?: Child[],
   contextBinding?: Path,
@@ -119,6 +90,35 @@ interface ThoughtContainerProps {
   simplePathLive?: SimplePath,
   view?: string | null,
 }
+
+export interface ThoughtProps {
+  cursorOffset?: number | null,
+  env?: Index<Context>,
+  hideBullet?: boolean,
+  homeContext?: boolean,
+  isDraggable?: boolean,
+  isDragging?: boolean,
+  isPublishChild?: boolean,
+  isEditing?: boolean,
+  isLeaf?: boolean,
+  path: Path,
+  publish?: boolean,
+  rank: number,
+  showContextBreadcrumbs?: boolean,
+  showContexts?: boolean,
+  style?: React.CSSProperties,
+  simplePath: SimplePath,
+  view?: string | null,
+}
+
+export type ConnectedThoughtProps = ThoughtProps &
+  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
+
+export type ConnectedThoughtContainerProps =
+  ThoughtContainerProps &
+  ReturnType<typeof mapStateToProps>
+
+export type ConnectedThoughtDispatchProps = ReturnType<typeof mapDispatchToProps>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
@@ -202,164 +202,6 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>) => ({
     noteFocus: true
   })),
 })
-
-/**********************************************************************
- * Drag and Drop
- **********************************************************************/
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const canDrag = (props: ConnectedThoughtContainerProps) => {
-  const state = store.getState()
-  const thoughts = pathToContext(props.simplePathLive!)
-  const context = parentOf(pathToContext(props.simplePathLive!))
-  const isDraggable = props.isDraggable || props.isCursorParent
-
-  return isDocumentEditable() &&
-    !!isDraggable &&
-    (!isTouch || globals.touched) &&
-    !hasChild(state, thoughts, '=immovable') &&
-    !hasChild(state, thoughts, '=readonly') &&
-    !hasChild(state, context, '=immovable') &&
-    !hasChild(state, context, '=readonly')
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
-  store.dispatch(dragInProgress({
-    value: true,
-    draggingThought: simplePathLive,
-    offset: document.getSelection()?.focusOffset,
-  }))
-  return { simplePath: simplePathLive }
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const endDrag = () => {
-  store.dispatch([
-    dragInProgress({ value: false }),
-    dragHold({ value: false }),
-    alert(null)
-  ])
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
-  dragSource: connect.dragSource(),
-  dragPreview: connect.dragPreview(),
-  isDragging: monitor.isDragging()
-})
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonitor) => {
-
-  const state = store.getState()
-  const { cursor, expandHoverTopPath } = state
-  const { path } = props
-  const { simplePath: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.simplePathLive!
-  const simpleThoughts = pathToContext(props.simplePathLive!)
-  const context = parentOf(simpleThoughts)
-  const isSorted = getSortPreference(state, context).type !== 'None'
-
-  const distance = cursor ? cursor?.length - thoughtsTo.length : 0
-
-  /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
-  const isExpandedTop = () => expandHoverTopPath && path.length > expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
-
-  const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
-
-  const isSelf = equalPath(thoughtsTo, thoughtsFrom)
-  const isDescendantOfFrom = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
-  const oldContext = rootedParentOf(state, thoughtsFrom)
-  const newContext = rootedParentOf(state, thoughtsTo)
-  const sameContext = equalArrays(oldContext, newContext)
-
-  // do not drop on descendants (exclusive) or thoughts hidden by autofocus
-  // allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
-  // allow drop if thought is the nearest visible though to the root
-  // allow drop if the thought is the active expanded top context or it's direct children
-  return !isHidden && !isDescendantOfFrom && (!isSorted || !sameContext)
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
-
-  // no bubbling
-  if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
-
-  const state = store.getState()
-
-  const { simplePath: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.simplePathLive!
-  const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(state, thoughtsFrom)
-  const newContext = rootedParentOf(state, thoughtsTo)
-  const sameContext = equalArrays(oldContext, newContext)
-
-  // cannot move root or em context
-  if (isRootOrEM && !sameContext) {
-    store.dispatch(error({ value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` }))
-    return
-  }
-
-  // drop on itself or after itself is a noop
-  if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
-
-  const newPath = unroot(parentOf(thoughtsTo)).concat({
-    value: headValue(thoughtsFrom),
-    rank: getRankBefore(state, thoughtsTo)
-  })
-
-  store.dispatch(props.showContexts
-    ? newThoughtSubmit({
-      value: headValue(thoughtsTo),
-      context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
-    })
-    : existingThoughtMove({
-      oldPath: thoughtsFrom,
-      newPath
-    })
-  )
-
-  // alert user of move to another context
-  if (!sameContext) {
-
-    // wait until after MultiGesture has cleared the error so this alert does not get cleared
-    setTimeout(() => {
-      const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
-      const alertTo = isRoot(newContext)
-        ? 'home'
-        : '"' + ellipsize(headValue(parentOf(thoughtsTo))) + '"'
-
-      store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
-      clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
-    }, 100)
-  }
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
-  dropTarget: connect.dropTarget(),
-  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
-  // is being hovered over current thought irrespective of whether the given item is droppable
-  isBeingHoveredOver: monitor.isOver({ shallow: true }),
-  isDeepHovering: monitor.isOver()
-})
-
-export type ConnectedThoughtProps = ThoughtProps &
-  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
-
-type ConnectedThoughtContainerProps =
-  ThoughtContainerProps &
-  ReturnType<typeof mapStateToProps>
-
-type ConnectedDraggableThoughtContainerProps =
-  ConnectedThoughtContainerProps &
-  ReturnType<typeof dragCollect> &
-  ReturnType<typeof dropCollect> &
-  ReturnType<typeof mapDispatchToProps>
 
 /**********************************************************************
  * Components
@@ -536,7 +378,7 @@ const ThoughtContainer = ({
     'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(path)),
   })} ref={el => {
     if (el) {
-      dragPreview(getEmptyImage())
+      dragPreview()
     }
   }}
     // disable to test if this solves the app switch touch issue on mobile PWA
@@ -623,6 +465,6 @@ const ThoughtContainer = ({
 ThoughtContainer.displayName = 'ThoughtContainer'
 
 // export connected, drag and drop higher order thought component
-const ThoughtComponent = connect(mapStateToProps, mapDispatchToProps)(DragSource('thought', { canDrag, beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(ThoughtContainer)))
+const ThoughtComponent = connect(mapStateToProps, mapDispatchToProps)(DragAndDropThought(ThoughtContainer))
 
 export default ThoughtComponent
