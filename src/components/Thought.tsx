@@ -10,7 +10,7 @@ import globals from '../globals'
 import { alert, dragHold, dragInProgress, error, existingThoughtMove, expandContextThought, newThoughtSubmit, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
-import { Child, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, Context, Index, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -74,6 +74,7 @@ import { compareReasonable } from '../util/compareThought'
 
 interface ThoughtProps {
   cursorOffset?: number | null,
+  env?: Index<Context>,
   hideBullet?: boolean,
   homeContext?: boolean,
   isDraggable?: boolean,
@@ -99,6 +100,7 @@ interface ThoughtContainerProps {
   count?: number,
   cursor?: Path | null,
   depth?: number,
+  env?: Index<Context>,
   expandedContextThought?: Path,
   hideBullet?: boolean,
   isDeepHovering?: boolean,
@@ -371,11 +373,12 @@ type ConnectedDraggableThoughtContainerProps =
 /** A single thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const Thought = ({
   cursorOffset,
+  env,
+  hideBullet,
   homeContext,
   isDragging,
   isEditing,
   isLeaf,
-  hideBullet,
   path,
   publish,
   rank,
@@ -435,6 +438,7 @@ const ThoughtContainer = ({
   dragPreview,
   dragSource,
   dropTarget,
+  env,
   expandedContextThought,
   hideBullet,
   isDeepHovering,
@@ -524,6 +528,16 @@ const ThoughtContainer = ({
 
   const isLeaf = !hasChildren(state, thoughtsLive)
 
+  /** Load styles from child expressions that are found in the environment. */
+  const styleEnv = children
+    .filter(child => isFunction(child.value) && child.value in (env || {}))
+    .map(child => getStyle(state, env![child.value]))
+    .reduce<React.CSSProperties>((accum, style) => ({
+      ...accum,
+      ...style,
+    }), {})
+
+  const styleSelf = getStyle(state, thoughts)
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true }) : null
 
@@ -594,16 +608,22 @@ const ThoughtContainer = ({
       }}></span>
 
       <ThoughtAnnotation
+        env={env}
         path={path}
         homeContext={homeContext}
         minContexts={allowSingleContext ? 0 : 2}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
-        style={style}
+        style={{
+          ...style,
+          ...styleEnv,
+          ...styleSelf,
+        }}
         simplePath={simplePath}
       />
 
       <Thought
+        env={env}
         path={path}
         cursorOffset={cursorOffset}
         hideBullet={hideBullet}
@@ -617,7 +637,11 @@ const ThoughtContainer = ({
         rank={rank}
         showContextBreadcrumbs={showContextBreadcrumbs}
         showContexts={showContexts}
-        style={style}
+        style={{
+          ...style,
+          ...styleEnv,
+          ...styleSelf,
+        }}
         simplePath={simplePath}
         toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
         view={view}
@@ -636,6 +660,7 @@ const ThoughtContainer = ({
     <Subthoughts
       allowSingleContext={allowSingleContext}
       childrenForced={childrenForced}
+      env={env}
       path={path}
       count={count}
       depth={depth}

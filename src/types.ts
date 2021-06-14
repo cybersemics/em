@@ -318,3 +318,6 @@ export interface SplitResult {
   left: string,
   right: string,
 }
+
+/** An environment for evaluating expressions defined by lazily loaded Contexts. */
+export type LazyEnv = Index<Context>

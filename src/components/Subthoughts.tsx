@@ -26,6 +26,7 @@ import {
   isDivider,
   isEM,
   parseJsonSafe,
+  parseLet,
   pathToContext,
   isDescendantPath,
   sumSubthoughtsLength,
@@ -63,6 +64,7 @@ interface SubthoughtsProps {
   childrenForced?: Child[],
   count?: number,
   depth?: number,
+  env?: Index<Context>,
   expandable?: boolean,
   isParentHovering?: boolean,
   showContexts?: boolean,
@@ -332,6 +334,7 @@ export const SubthoughtsComponent = ({
   depth = 0,
   distance,
   dropTarget,
+  env,
   isDragInProgress,
   isEditingAncestor,
   isHovering,
@@ -484,6 +487,7 @@ export const SubthoughtsComponent = ({
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
+  const envSelf = parseLet(state, context)
 
   return <>
 
@@ -549,6 +553,10 @@ export const SubthoughtsComponent = ({
             allowSingleContext={allowSingleContextParent}
             count={count + sumSubthoughtsLength(children)}
             depth={depth + 1}
+            env={{
+              ...env,
+              ...envSelf,
+            }}
             hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
             key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
             rank={child.rank}

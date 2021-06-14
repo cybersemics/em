@@ -6,7 +6,7 @@ import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
 import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
 import { State } from '../util/initialState'
-import { Connected, Context, SimplePath, ThoughtContext, Path } from '../types'
+import { Connected, Context, Index, SimplePath, ThoughtContext, Path } from '../types'
 import { ellipsizeUrl, equalPath, hashContext, head, headValue, isURL, once, parentOf, pathToContext, publishMode } from '../util'
 
 // components
@@ -18,6 +18,7 @@ import UrlIcon from './icons/UrlIcon'
 interface ThoughtAnnotationProps {
   dark?: boolean,
   editingValue?: string | null,
+  env?: Index<any>,
   focusOffset?: number,
   homeContext?: boolean,
   invalidState?: boolean,
