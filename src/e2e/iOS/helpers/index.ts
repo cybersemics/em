@@ -35,6 +35,6 @@ const helpers = {
   waitForElementNotExist,
 }
 
-const index = (browserRef: RefObject<Browser<'async'>>) => testDriver(browserRef, helpers)
+const index = testDriver(helpers)
 
 export default index

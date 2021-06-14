@@ -1,4 +1,3 @@
-import { RefObject } from 'react'
 import { Page } from 'puppeteer'
 import testDriver from '../../../test-helpers/testDriver'
 import { Index } from '../../../types'
@@ -12,6 +11,8 @@ import getEditingText from './getEditingText'
 import newThought from './newThought'
 import paste from './paste'
 import press from './press'
+import refresh from './refresh'
+import selection from './selection'
 import type from './type'
 import waitForAlert from './waitForAlert'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
@@ -22,7 +23,7 @@ import waitForThoughtExistInDb from './waitForThoughtExistInDb'
 
 // TODO: Implement webdriver helpers or throw 'Not Implemented'
 // TODO: Why do the args need to be declared as any[]? testDriver type is off.
-const helpers: Index<(page: Page, ...args: any[]) => unknown> = {
+const helpers = {
   clickBullet,
   clickThought,
   clickWithOffset,
@@ -35,6 +36,8 @@ const helpers: Index<(page: Page, ...args: any[]) => unknown> = {
   newThought,
   paste,
   press,
+  refresh,
+  selection,
   type,
   // tapReturnKey,
   // tapWithOffset,
@@ -48,6 +51,15 @@ const helpers: Index<(page: Page, ...args: any[]) => unknown> = {
   waitForThoughtExistInDb,
 }
 
-const index = (pageRef: RefObject<Page>) => testDriver(pageRef, helpers)
+const index = testDriver(helpers)
 
-export default index
+// Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting
+async function pasteOverload(text: string): Promise<void>
+async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
+async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> {}
+
+const indexWithProperPaste = index as typeof index & {
+  paste: typeof pasteOverload
+}
+
+export default indexWithProperPaste

@@ -3,30 +3,31 @@
  */
 
 import initPage from '../helpers/initPage'
-import testDriver from '../helpers'
+import helpers from '../helpers'
 import { Page } from 'puppeteer'
 
-let page: { current: Page } = {} as { current: Page }
 jest.setTimeout(20000)
 
 const {
   newThought,
   press,
+  ref,
+  type,
   waitForAlert,
-} = testDriver(page)
+} = helpers
 
 beforeEach(async () => {
-  page.current = await initPage()
+  ref.current = await initPage()
 })
 
 afterEach(async () => {
-  await page.current.browserContext().close()
+  await ref.current.browserContext().close()
 })
 
 it('do not allow duplicate thought on edit', async () => {
   await newThought('ab')
   await newThought('a')
-  await page.current.keyboard.type('b')
+  await type('b')
   await waitForAlert('Duplicate thought')
 })
 

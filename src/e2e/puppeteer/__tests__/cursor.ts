@@ -2,25 +2,30 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 
-import paste from '../helpers/paste'
-import getEditingText from '../helpers/getEditingText'
-import waitForEditable from '../helpers/waitForEditable'
-import waitForThoughtToExistInDb from '../helpers/waitForThoughtExistInDb'
-import waitForState from '../helpers/waitForState'
-import clickThought from '../helpers/clickThought'
-import initPage from '../helpers/initPage'
 import { Page } from 'puppeteer'
+import initPage from '../helpers/initPage'
+import helpers from '../helpers'
+
+const {
+  paste,
+  ref: pageRef,
+  getEditingText,
+  refresh,
+  waitForEditable,
+  waitForThoughtExistInDb,
+  waitForState,
+  clickThought,
+} = helpers
 
 describe('cursor testing', () => {
-  let page: Page
   jest.setTimeout(20000)
 
   beforeEach(async () => {
-    page = await initPage()
+    pageRef.current = await initPage()
   })
 
   afterEach(async () => {
-    await page.browserContext().close()
+    await pageRef.current!.browserContext().close()
   })
 
   it('cursor on a home thought', async () => {
@@ -28,17 +33,17 @@ describe('cursor testing', () => {
     const importText = `
     - A
     - B`
-    await paste(page, importText)
-    await waitForEditable(page, 'B')
-    await clickThought(page, 'B')
+    await paste(importText)
+    await waitForEditable('B')
+    await clickThought('B')
 
-    await waitForState(page, 'isPushing', false)
-    await waitForThoughtToExistInDb(page, 'B')
-    await waitForThoughtToExistInDb(page, 'A')
-    await page.evaluate(() => window.location.reload())
+    await waitForState('isPushing', false)
+    await waitForThoughtExistInDb('B')
+    await waitForThoughtExistInDb('A')
+    await refresh()
 
-    await waitForEditable(page, 'B')
-    const thoughtValue = await getEditingText(page)
+    await waitForEditable('B')
+    const thoughtValue = await getEditingText()
     expect(thoughtValue).toBe('B')
   })
 
@@ -50,20 +55,21 @@ describe('cursor testing', () => {
     - B
       - Y
       - Z`
-    await paste(page, importText)
-    await waitForEditable(page, 'B')
-    await clickThought(page, 'B')
-    await clickThought(page, 'Z')
+    await paste(importText)
+    await waitForEditable('B')
+    await clickThought('B')
+    await waitForEditable('Z')
+    await clickThought('Z')
 
-    await waitForState(page, 'isPushing', false)
-    await waitForThoughtToExistInDb(page, 'B')
-    await waitForThoughtToExistInDb(page, 'Z')
-    await waitForThoughtToExistInDb(page, 'A')
+    await waitForState('isPushing', false)
+    await waitForThoughtExistInDb('B')
+    await waitForThoughtExistInDb('Z')
+    await waitForThoughtExistInDb('A')
 
-    await page.evaluate(() => window.location.reload())
+    await refresh()
 
-    await waitForEditable(page, 'Z')
-    const thoughtValue = await getEditingText(page)
+    await waitForEditable('Z')
+    const thoughtValue = await getEditingText()
     expect(thoughtValue).toBe('Z')
   })
 })
