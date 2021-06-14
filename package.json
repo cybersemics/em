@@ -55,6 +55,7 @@
     "himalaya": "^1.1.0",
     "html-escaper": "^3.0.3",
     "immer": "^9.0.3",
+    "indexeddbshim": "^7.1.0",
     "ipfs-http-client": "^43.0.1",
     "jex-block-parser": "^1.0.0",
     "lodash": "^4.17.21",
@@ -86,7 +87,9 @@
     "truncate-html": "^1.0.3",
     "ts-key-enum": "^2.0.6",
     "use-onclickoutside": "^0.3.2",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "xhtml-purifier": "^0.4.1",
+    "react-native-svg": "12.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

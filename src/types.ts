@@ -35,8 +35,8 @@ interface Firebase {
     currentUser: User,
     onAuthStateChanged: (f: (user: User) => void) => void,
     signInWithRedirect: (provider: any) => void,
-    createUserWithEmailAndPassword: (email: string, password: string) => Promise<{user: User}>,
-    signInWithEmailAndPassword: (email: string, password: string) => Promise<{user: User}>,
+    createUserWithEmailAndPassword: (email: string, password: string) => Promise<{ user: User }>,
+    signInWithEmailAndPassword: (email: string, password: string) => Promise<{ user: User }>,
     sendPasswordResetEmail: (email: string, passwordResetOptions: { url: string }) => Promise<void>,
     signOut: () => void,
   }) & { GoogleAuthProvider: any },
@@ -88,7 +88,7 @@ export type ComparatorFunction<T> = (a: T, b: T) => ComparatorValue
 export type MimeType = 'text/plain' | 'text/html'
 
 /** A very generic object. */
-export type Index<T = any> = {[key: string]: T}
+export type Index<T = any> = { [key: string]: T }
 
 /** An option that can selected to set the export format. */
 export interface ExportOption {
@@ -151,7 +151,7 @@ export interface Parent {
 }
 
 /** Sort Preferences with type and direction. */
-export interface SortPreference{
+export interface SortPreference {
   type: string,
   direction: SortDirection | null,
 }
@@ -241,7 +241,7 @@ export interface Shortcut {
   },
   svg?: (icon: Icon) => ReactNode,
   canExecute?: (getState: () => State, e: Event) => boolean,
-  exec: (dispatch: Dispatch, getState: () => State, e: Event | GestureResponderEvent | React.MouseEvent, { type }: { type: string }) => void,
+  exec?: (dispatch: Dispatch, getState: () => State, e: Event | GestureResponderEvent | React.MouseEvent, { type }: { type: string }) => void,
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'
