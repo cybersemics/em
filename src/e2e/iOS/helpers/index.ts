@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { RefObject } from 'react'
 import { Browser } from 'webdriverio'
 import clickThought from './clickThought'
 import editThought from './editThought'
@@ -16,23 +17,29 @@ import waitForElement from './waitForElement'
 import waitForElementNotExist from './waitForElementNotExist'
 
 
-const device = (browser: Browser<'async'>) => ({
+const device = (browser: RefObject<Browser<'async'>>) => {
 
-  clickThought: _.partial(clickThought, browser),
-  editThought: _.partial(editThought, browser),
-  gesture: _.partial(gesture, browser),
-  getEditable: _.partial(getEditable, browser),
-  getEditingText: _.partial(getEditingText, browser),
-  getNativeElementRect: _.partial(getNativeElementRect, browser),
-  hideKeyboardByTappingDone: _.partial(hideKeyboardByTappingDone, browser),
-  init,
-  paste: _.partial(paste, browser),
-  tapReturnKey: _.partial(tapReturnKey, browser),
-  tapWithOffset: _.partial(tapWithOffset, browser),
-  waitForEditable: _.partial(waitForEditable, browser),
-  waitForElement: _.partial(waitForElement, browser),
-  waitForElementNotExist: _.partial(waitForElementNotExist, browser),
+  /** Partially apply the device driver in the ref as the first argument to the helper function. Gets the current driver from the ref object at call time. */
+  const withDriver = <U extends [], R>(f: (driver: Browser<'async'>, ...rest: U) => R): (...args: U) => R =>
+    (...args: U) => f(browser.current!, ...args)
 
-})
+  return {
+    clickThought: withDriver(clickThought),
+    editThought: withDriver(editThought),
+    gesture: withDriver(gesture),
+    getEditable: withDriver(getEditable),
+    getEditingText: withDriver(getEditingText),
+    getNativeElementRect: withDriver(getNativeElementRect),
+    hideKeyboardByTappingDone: withDriver(hideKeyboardByTappingDone),
+    init,
+    paste: withDriver(paste),
+    tapReturnKey: withDriver(tapReturnKey),
+    tapWithOffset: withDriver(tapWithOffset),
+    waitForEditable: withDriver(waitForEditable),
+    waitForElement: withDriver(waitForElement),
+    waitForElementNotExist: withDriver(waitForElementNotExist),
+  }
+
+}
 
 export default device

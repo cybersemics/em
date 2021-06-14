@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { RefObject } from 'react'
 import { Page } from 'puppeteer'
 import clickBullet from './clickBullet'
 import clickThought from './clickThought'
@@ -8,6 +8,8 @@ import getEditingText from './getEditingText'
 import init from './initPage'
 import newThought from './newThought'
 import paste from './paste'
+import press from './press'
+import type from './type'
 import waitForAlert from './waitForAlert'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 import waitForEditable from './waitForEditable'
@@ -15,33 +17,42 @@ import waitForHiddenEditable from './waitForHiddenEditable'
 import waitForState from './waitForState'
 import waitForThoughtExistInDb from './waitForThoughtExistInDb'
 
+const device = (page: RefObject<Page>) => {
+
+  /** Partially apply the page in the ref as the first argument to the helper function. Gets the current page from the ref object at call time. */
+  const withDriver = <U extends [], R>(f: (page: Page, ...rest: U) => R): (...args: U) => R =>
+    (...args: U) => f(page.current!, ...args)
+
 // TODO: Implement webdriver helpers or throw 'Not Implemented'
 
-const device = (page: Page) => ({
+  return {
 
-  clickBullet: _.partial(clickBullet, page),
-  clickThought: _.partial(clickThought, page),
-  clickWithOffset: _.partial(clickWithOffset, page),
-  // editThought: _.partial(editThought, page),
-  // gesture: _.partial(gesture, page),
-  getEditable: _.partial(getEditable, page),
-  getEditingText: _.partial(getEditingText, page),
-  // getNativeElementRect: _.partial(getNativeElementRect, page),
-  // hideKeyboardByTappingDone: _.partial(hideKeyboardByTappingDone, page),
-  init,
-  newThought: _.partial(newThought, page),
-  paste: _.partial(paste, page),
-  // tapReturnKey: _.partial(tapReturnKey, page),
-  // tapWithOffset: _.partial(tapWithOffset, page),
-  waitForAlert: _.partial(waitForAlert, page),
-  waitForContextHasChildWithValue: _.partial(waitForContextHasChildWithValue, page),
-  waitForEditable: _.partial(waitForEditable, page),
-  // waitForElement: _.partial(waitForElement, page),
-  // waitForElementNotExist: _.partial(waitForElementNotExist, page),
-  waitForHiddenEditable: _.partial(waitForHiddenEditable, page),
-  waitForState: _.partial(waitForState, page),
-  waitForThoughtExistInDb: _.partial(waitForThoughtExistInDb, page),
+    clickBullet: withDriver(clickBullet),
+    clickThought: withDriver(clickThought),
+    clickWithOffset: withDriver(clickWithOffset),
+    // editThought: withDriver(editThought),
+    // gesture: withDriver(gesture),
+    getEditable: withDriver(getEditable),
+    getEditingText: withDriver(getEditingText),
+    // getNativeElementRect: withDriver(getNativeElementRect),
+    // hideKeyboardByTappingDone: withDriver(hideKeyboardByTappingDone),
+    init,
+    newThought: withDriver(newThought),
+    paste: withDriver(paste),
+    press: withDriver(press),
+    type: withDriver(type),
+    // tapReturnKey: withDriver(tapReturnKey),
+    // tapWithOffset: withDriver(tapWithOffset),
+    waitForAlert: withDriver(waitForAlert),
+    waitForContextHasChildWithValue: withDriver(waitForContextHasChildWithValue),
+    waitForEditable: withDriver(waitForEditable),
+    // waitForElement: withDriver(waitForElement),
+    // waitForElementNotExist: withDriver(waitForElementNotExist),
+    waitForHiddenEditable: withDriver(waitForHiddenEditable),
+    waitForState: withDriver(waitForState),
+    waitForThoughtExistInDb: withDriver(waitForThoughtExistInDb),
+  }
 
-})
+}
 
 export default device
