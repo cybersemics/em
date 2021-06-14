@@ -1,3 +1,4 @@
+import 'react-native-get-random-values'
 import { validate as uuidValidate } from 'uuid'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { hashContext, hashThought, never, reducerFlow, timestamp } from '../../util'
@@ -290,7 +291,7 @@ it('increment duplicates', () => {
       - c
       - c
       - d
-    - b 
+    - b
   - a
     - b
       - d
