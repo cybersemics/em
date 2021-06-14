@@ -4,6 +4,7 @@
 /coverage
 /build
 /docs
+.expo/*
 
 # misc
 .DS_Store
