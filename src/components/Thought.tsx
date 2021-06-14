@@ -7,22 +7,17 @@ import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isTouch } from '../browser'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, dragHold, dragInProgress, error, existingThoughtMove, expandContextThought, newThoughtSubmit, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { alert, dragHold, dragInProgress, error, existingThoughtMove, newThoughtSubmit, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
-import BulletCursorOverlay from './BulletCursorOverlay'
 import Byline from './Byline'
-import ContextBreadcrumbs from './ContextBreadcrumbs'
-import Divider from './Divider'
-import Editable from './Editable'
-import HomeLink from './HomeLink'
 import Note from './Note'
+import StaticThought from './StaticThought'
 import Subthoughts from './Subthoughts'
-import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import useLongPress from '../hooks/useLongPress'
 
@@ -353,7 +348,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
   isDeepHovering: monitor.isOver()
 })
 
-type ConnectedThoughtProps = ThoughtProps &
+export type ConnectedThoughtProps = ThoughtProps &
   Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
 
 type ConnectedThoughtContainerProps =
@@ -369,58 +364,6 @@ type ConnectedDraggableThoughtContainerProps =
 /**********************************************************************
  * Components
  **********************************************************************/
-
-/** A single thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
-const Thought = ({
-  cursorOffset,
-  env,
-  hideBullet,
-  homeContext,
-  isDragging,
-  isEditing,
-  isLeaf,
-  path,
-  publish,
-  rank,
-  showContextBreadcrumbs,
-  showContexts,
-  style,
-  simplePath,
-  toggleTopControlsAndBreadcrumbs
-}: ConnectedThoughtProps) => {
-  const isRoot = simplePath.length === 1
-  const isRootChildLeaf = simplePath.length === 2 && isLeaf
-
-  const state = store.getState()
-
-  return <div className='thought'>
-
-    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
-
-    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, simplePath))} homeContext={homeContext} />
-    : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-      store.dispatch(expandContextThought(path))
-    }}>... </a></span>
-    : null}
-
-    {homeContext ? <HomeLink />
-    : isDivider(headValue(simplePath)) ? <Divider path={simplePath} />
-    // cannot use simplePathLive here else Editable gets re-rendered during editing
-    : <Editable
-      path={path}
-      cursorOffset={cursorOffset}
-      disabled={!isDocumentEditable()}
-      isEditing={isEditing}
-      rank={rank}
-      showContexts={showContexts}
-      style={style}
-      simplePath={simplePath}
-      onKeyDownAction={isTouch ? undefined : toggleTopControlsAndBreadcrumbs}
-    />}
-
-    <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />
-  </div>
-}
 
 /** A thought container with bullet, thought annotation, thought, and subthoughts.
  *
@@ -627,7 +570,7 @@ const ThoughtContainer = ({
         simplePath={simplePath}
       />
 
-      <Thought
+      <StaticThought
         env={env}
         path={path}
         cursorOffset={cursorOffset}
