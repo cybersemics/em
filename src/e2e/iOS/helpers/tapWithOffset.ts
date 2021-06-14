@@ -15,7 +15,7 @@ interface Options {
 /**
  * Tap the given node with offset.
  */
-const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: Element<'async'>, { horizontalTapLine = 'left', offset, x = 0, y = 0 }: Options) => {
+const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: Element<'async'>, { horizontalTapLine = 'left', offset, x = 0, y = 0 }: Options = {}) => {
   const boundingBox = await browser.getElementRect(nodeHandle.elementId)
   if (!boundingBox) throw new Error('Bouding box of editable not found.')
 

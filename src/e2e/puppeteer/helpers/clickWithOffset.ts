@@ -14,7 +14,7 @@ interface Options {
 /**
  * Click the given node with offset.
  */
-const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClickLine = 'left', offset, x = 0, y = 0 }: Options) => {
+const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClickLine = 'left', offset, x = 0, y = 0 }: Options = {}) => {
 
   const boundingBox = await nodeHandle.asElement()?.boundingBox()
 

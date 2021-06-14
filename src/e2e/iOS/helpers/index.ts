@@ -1,6 +1,9 @@
-import _ from 'lodash'
 import { RefObject } from 'react'
 import { Browser } from 'webdriverio'
+import testDriver from '../../../test-helpers/testDriver'
+import { Index } from '../../../types'
+
+// helpers
 import clickThought from './clickThought'
 import editThought from './editThought'
 import gesture from './gesture'
@@ -16,30 +19,22 @@ import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitForElementNotExist from './waitForElementNotExist'
 
-
-const device = (browser: RefObject<Browser<'async'>>) => {
-
-  /** Partially apply the device driver in the ref as the first argument to the helper function. Gets the current driver from the ref object at call time. */
-  const withDriver = <U extends [], R>(f: (driver: Browser<'async'>, ...rest: U) => R): (...args: U) => R =>
-    (...args: U) => f(browser.current!, ...args)
-
-  return {
-    clickThought: withDriver(clickThought),
-    editThought: withDriver(editThought),
-    gesture: withDriver(gesture),
-    getEditable: withDriver(getEditable),
-    getEditingText: withDriver(getEditingText),
-    getNativeElementRect: withDriver(getNativeElementRect),
-    hideKeyboardByTappingDone: withDriver(hideKeyboardByTappingDone),
-    init,
-    paste: withDriver(paste),
-    tapReturnKey: withDriver(tapReturnKey),
-    tapWithOffset: withDriver(tapWithOffset),
-    waitForEditable: withDriver(waitForEditable),
-    waitForElement: withDriver(waitForElement),
-    waitForElementNotExist: withDriver(waitForElementNotExist),
-  }
-
+const helpers = {
+  clickThought,
+  editThought,
+  gesture,
+  getEditable,
+  getEditingText,
+  getNativeElementRect,
+  hideKeyboardByTappingDone,
+  paste,
+  tapReturnKey,
+  tapWithOffset,
+  waitForEditable,
+  waitForElement,
+  waitForElementNotExist,
 }
 
-export default device
+const index = (browserRef: RefObject<Browser<'async'>>) => testDriver(browserRef, helpers)
+
+export default index

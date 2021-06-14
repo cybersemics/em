@@ -1,5 +1,5 @@
-import { Page } from 'puppeteer'
+import { KeyInput, Page } from 'puppeteer'
 
-const press = (page: Page, key: string) => page.keyboard.press(key)
+const press = (page: Page, key: KeyInput) => page.keyboard.press(key)
 
 export default press
