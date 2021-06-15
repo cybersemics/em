@@ -5,14 +5,13 @@ import React from 'react'
 // import { store } from '../store'
 // import { isDocumentEditable, publishMode } from '../util'
 // import { isTutorial } from '../selectors'
-// import HomeLink from './HomeLink'
+import HomeLink from './HomeLink'
 // import { State } from '../util/initialState'
 import { Path } from '../types'
 // import ContextBreadcrumbs from './ContextBreadcrumbs'
-// import QuickAddButton from './QuickAddButton'
-// import FeedbackButton from './FeedbackButton'
-import { View } from 'react-native'
-import HomeLink from './HomeLink'
+import QuickAddButton from './QuickAddButton'
+import FeedbackButton from './FeedbackButton'
+import { View, Text } from 'react-native'
 // eslint-disable-next-line jsdoc/require-jsdoc
 // const mapStateToProps = (state: State) => {
 //   const { cursor, showBreadcrumbs } = state
@@ -28,8 +27,15 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor?: Path | null, p
   //  const isTutorialOn = isTutorial(store.getState())
   //  const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path
 
-  return <View style={{ bottom: 0, width: '100%', backgroundColor: 'red', padding: 20, flexDirection: 'row' }}>
+  return <View style={{ paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center' }}>
     <HomeLink />
+
+    <Text style={{ color: 'white', flex: 1, flexWrap: 'wrap' }}>{'bread > crumbs > will go > here > thoughts > ua'}</Text>
+
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <FeedbackButton />
+      <QuickAddButton />
+    </View>
   </View>
   // return <div className={classNames({
   //   nav: true,
