@@ -8,9 +8,7 @@ import { TouchableOpacity } from 'react-native'
 const FeedbackButton: React.FC = () => {
 
   return (
-    <TouchableOpacity
-      onPress={() => console.log('dispatch show feedback modal')}
-    >
+    <TouchableOpacity>
       <FeedbackIcon size={40} />
     </TouchableOpacity>
   )

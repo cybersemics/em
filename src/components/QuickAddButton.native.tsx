@@ -15,7 +15,7 @@ const QuickAddButton: React.FC = () => {
   // const dispatch = useDispatch()
 
   return (
-    <TouchableOpacity onPress={() => console.log('toggleAbsoluteContext()')}>
+    <TouchableOpacity>
       <AddIcon size={30} />
     </TouchableOpacity>
   )

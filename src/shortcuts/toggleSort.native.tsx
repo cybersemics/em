@@ -3,7 +3,7 @@ import React from 'react'
 // import { simplifyPath, getSortPreference } from '../selectors'
 // import { deleteAttribute, setCursor, toggleAttribute } from '../action-creators'
 // import { pathToContext, unroot } from '../util'
-import { Icon as IconType, Shortcut, SortPreference } from '../types'
+import { Icon as IconType, Shortcut } from '../types'
 // import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 // import { useSelector } from 'react-redux'
 // import { State } from '../util/initialState'
@@ -33,23 +33,23 @@ const IconAsc = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size}
 </Svg>
 
 /** Descending Icon Component. */
-const IconDesc = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size} height={size} viewBox='0 0 24 24'>
-  <G translateY={4}>
-    <Polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
-    <Rect x='10' y='16' width='3' height='2' />
-    <Rect x='10' y='12' width='5' height='2' />
-    <Rect x='10' y='8' width='7' height='2' />
-    <Rect x='10' y='4' width='9' height='2' />
-    <Rect x='10' y='0' width='11' height='2' />
-  </G>
-</Svg>
+// const IconDesc = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size} height={size} viewBox='0 0 24 24'>
+//   <G translateY={4}>
+//     <Polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
+//     <Rect x='10' y='16' width='3' height='2' />
+//     <Rect x='10' y='12' width='5' height='2' />
+//     <Rect x='10' y='8' width='7' height='2' />
+//     <Rect x='10' y='4' width='9' height='2' />
+//     <Rect x='10' y='0' width='11' height='2' />
+//   </G>
+// </Svg>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Icon = ({ size = 20, style }: IconType) => {
-  const direction = 'Desc' // useSelector(getCursorSortDirection)
-  const Component = direction === 'Desc' ? IconDesc : IconAsc
-  return <Component size={size} style={style} />
-}
+// const Icon = ({ size = 20, style }: IconType) => {
+//   const direction = 'Desc' // useSelector(getCursorSortDirection)
+//   const Component = direction === 'Desc' ? IconDesc : IconAsc
+//   return <Component size={size} style={style} />
+// }
 
 /** Decide next sort preference.
  None → Alphabetical
