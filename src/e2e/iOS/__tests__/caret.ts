@@ -14,6 +14,7 @@ import initSession from '../helpers/initSession'
 import paste from '../helpers/paste'
 import clickThought from '../helpers/clickThought'
 import { gestures } from '../../../test-helpers/constants'
+import getElementRectByScreen from '../helpers/getElementRectByScreen'
 
 const mobileBrowser = browser as unknown as Browser<'async'>
 jest.setTimeout(90000)
@@ -103,4 +104,31 @@ it('Tap hidden root thought', async () => {
 
   const editingText = await getEditingText(mobileBrowser)
   expect(editingText).toBe('b')
+})
+
+it('Tap hidden uncle', async () => {
+  const importText = `
+    - a
+      - b
+        - c
+      - d`
+  await gesture(mobileBrowser, gestures.newThought)
+  await paste(mobileBrowser, [''], importText)
+  await clickThought(mobileBrowser, 'a')
+  await clickThought(mobileBrowser, 'b')
+  await clickThought(mobileBrowser, 'c')
+
+  const editableNodeHandle = await waitForEditable(mobileBrowser, 'c')
+  const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandle)
+
+  // click near uncle. see: https://github.com/cybersemics/em/pull/1128#issuecomment-837427219
+  await mobileBrowser.touchAction({
+    action: 'tap',
+    x: elementRect.x + (elementRect.width / 2),
+    y: elementRect.y + elementRect.height + 10,
+  })
+
+  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'd')
+  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  expect(selectionTextContent).toBe('d')
 })
