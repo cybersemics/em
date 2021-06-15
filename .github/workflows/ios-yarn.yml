@@ -1,4 +1,4 @@
-name: BrowserStack
+name: BrowserStack Yarn
 
 on:
   push:
