@@ -30,4 +30,4 @@ jobs:
         run: yarn && cd functions && yarn
 
       - name: Lint
-        run: yarn install lint
+        run: yarn lint
