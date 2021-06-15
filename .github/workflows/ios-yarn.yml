@@ -13,7 +13,7 @@ env:
 
 jobs:
   run:
-    name: BrowserStack
+    name: BrowserStack Yarn
     runs-on: ubuntu-latest
 
     steps:
