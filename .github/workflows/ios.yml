@@ -43,7 +43,7 @@ jobs:
           local-logging-level: "all-logs"
           local-identifier: "random"
 
-      - name: Install npm dependencies
+      - name: Install dependencies
         run: yarn
 
       - name: Build
