@@ -14,6 +14,7 @@ import initSession from '../helpers/initSession'
 import paste from '../helpers/paste'
 import clickThought from '../helpers/clickThought'
 import { gestures } from '../../../test-helpers/constants'
+import getElementRectByScreen from '../helpers/getElementRectByScreen'
 
 const mobileBrowser = browser as unknown as Browser<'async'>
 jest.setTimeout(90000)
