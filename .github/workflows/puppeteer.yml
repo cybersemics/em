@@ -27,13 +27,13 @@ jobs:
           node-version: 14
 
       - name: Install npm dependencies
-        run: npm ci
+        run: yarn
 
       - name: Build
-        run: npm run build
+        run: yarn build
 
       - name: Serve
-        run: npm run servebuild &
+        run: yarn servebuild &
 
       - name: Test
-        run: npm run test:puppeteer
+        run: yarn test:puppeteer

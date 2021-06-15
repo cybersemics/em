@@ -16,10 +16,10 @@ jobs:
           persist-credentials: false
 
       - name: Install npm dependencies 🛠
-        run: npm ci
+        run: yarn
 
       - name: Build 🔧
-        run: npm run docs
+        run: yarn docs
 
       - name: NoJekyll 🎃
         run: touch docs/.nojekyll
