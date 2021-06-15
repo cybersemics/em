@@ -9,10 +9,10 @@ Test:
 
 */
 
-import React, { useState, useCallback } from 'react'
+import React, { useCallback } from 'react'
 import { shortcutById } from '../shortcuts'
 import { FlatList, ListRenderItem, TouchableOpacity, View } from 'react-native'
-import { store } from '../store'
+// import { store } from '../store'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { Icon } from '../types'
 import HamburgerMenu from './HamburgerMenu'
@@ -26,7 +26,7 @@ const Toolbar = ({ dark = true, fontSize = 12, toolbarOverlay = null, scrollPrio
 
   const keyExtractor = useCallback((item: string) => item, [])
   const renderItem: ListRenderItem<string> = useCallback(({ item: id, index }) => {
-    const { name, svg, exec, isActive } = shortcutById(id)! ?? {}
+    const { name, svg } = shortcutById(id)! ?? {}
 
     const SVG = svg as React.FC<Icon>
 

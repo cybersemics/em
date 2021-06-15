@@ -6241,7 +6241,7 @@ css-select-base-adapter@^0.1.1:
   resolved "https://registry.yarnpkg.com/css-select-base-adapter/-/css-select-base-adapter-0.1.1.tgz#3b2ff4972cc362ab88561507a95408a1432135d7"
   integrity sha512-jQVeeRG70QI08vSTwf1jHxp74JoZsr2XSgETae8/xC8ovSnL2WF87GTLO86Sbwdt2lK4Umg4HnnwMO4YF3Ce7w==
 
-css-select@^2.0.0:
+css-select@^2.0.0, css-select@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/css-select/-/css-select-2.1.0.tgz#6a34653356635934a81baca68d0255432105dbef"
   integrity sha512-Dqk7LQKpwLoH3VovzZnkzegqNSuAziQyNZUcrdDM401iY+R5NkGBXGmtO05/yaXQziALuPogeG0b7UAgjnTJTQ==
@@ -6285,7 +6285,7 @@ css-tree@1.0.0-alpha.37:
     mdn-data "2.0.4"
     source-map "^0.6.1"
 
-css-tree@^1.1.2:
+css-tree@^1.0.0-alpha.39, css-tree@^1.1.2:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/css-tree/-/css-tree-1.1.3.tgz#eb4870fb6fd7707327ec95c2ff2ab09b5e8db91d"
   integrity sha512-tRpdppF7TRazZrjJ6v3stzv93qxRcSsFmW6cX0Zm2NVKpxE1WV1HblnghVv9TreireHkqI/VDEsfolRF1p6y7Q==
@@ -7718,6 +7718,11 @@ eventsource@^1.0.7:
   integrity sha512-VSJjT5oCNrFvCS6igjzPAt5hBzQ2qPBFIbJ03zLI9SE0mxwZpMw6BfJrbFHm1a141AavMEB8JHmBhWAd66PfCg==
   dependencies:
     original "^1.0.0"
+
+eventtargeter@0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/eventtargeter/-/eventtargeter-0.8.0.tgz#ca23a8c465bca44f7e5aa00efe365a699bb44915"
+  integrity sha512-ldFAonAo7vyXeBDcTTOoxTtdibw1JvADllLkldxxdqb4+8LPoibU+e9XGQkD98l5wavImIab1jNwuzMtnR2MAg==
 
 evp_bytestokey@^1.0.0, evp_bytestokey@^1.0.3:
   version "1.0.3"
@@ -9440,6 +9445,17 @@ indent-string@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/indent-string/-/indent-string-4.0.0.tgz#624f8f4497d619b2d9768531d58f4122854d7251"
   integrity sha512-EdDDZu4A2OyIK7Lr/2zG+w5jmbuk1DVBnEwREQvBzspBJkCEbRa8GxU1lghYcaGJCnRWibjDXlq779X1/y5xwg==
+
+indexeddbshim@^7.1.0:
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/indexeddbshim/-/indexeddbshim-7.1.0.tgz#6b105ef5503b611f7d11176c94cbf4275757a973"
+  integrity sha512-sYXq2pGzvcNTjJw4YJwqkF5smBejEk2MDKAmPLTuElNat53+n4PIVdVCxK9HlGFjioLVWEHB0zFJYCNbbC0INA==
+  dependencies:
+    eventtargeter "0.8.0"
+    sync-promise "git+https://github.com/brettz9/sync-promise.git#full-sync-missing-promise-features"
+    typeson "6.0.0"
+    typeson-registry "1.0.0-alpha.39"
+    websql "git+https://github.com/brettz9/node-websql.git#configurable-secure2"
 
 indexes-of@^1.0.1:
   version "1.0.1"
@@ -14889,6 +14905,14 @@ react-native-sqlite-2@^3.3.0:
     lodash.zipobject "^4.1.3"
     websql "^2.0.0"
 
+react-native-svg@12.1.0:
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/react-native-svg/-/react-native-svg-12.1.0.tgz#acfe48c35cd5fca3d5fd767abae0560c36cfc03d"
+  integrity sha512-1g9qBRci7man8QsHoXn6tP3DhCDiypGgc6+AOWq+Sy+PmP6yiyf8VmvKuoqrPam/tf5x+ZaBT2KI0gl7bptZ7w==
+  dependencies:
+    css-select "^2.1.0"
+    css-tree "^1.0.0-alpha.39"
+
 react-native-web@^0.16.5:
   version "0.16.5"
   resolved "https://registry.yarnpkg.com/react-native-web/-/react-native-web-0.16.5.tgz#859e95cae21e63330a1dabbce8cd0d953b2239f2"
@@ -16363,6 +16387,14 @@ sprintf-js@~1.0.2:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=
 
+sqlite3@^4.0.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/sqlite3/-/sqlite3-4.2.0.tgz#49026d665e9fc4f922e56fb9711ba5b4c85c4901"
+  integrity sha512-roEOz41hxui2Q7uYnWsjMOTry6TcNUNmp8audCx18gF10P2NknwdpF+E+HKvz/F2NvPKGGBF4NGc+ZPQ+AABwg==
+  dependencies:
+    nan "^2.12.1"
+    node-pre-gyp "^0.11.0"
+
 sqlite3@^5.0.2:
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/sqlite3/-/sqlite3-5.0.2.tgz#00924adcc001c17686e0a6643b6cbbc2d3965083"
@@ -16783,6 +16815,10 @@ symbol-tree@^3.2.2, symbol-tree@^3.2.4:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
   integrity sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==
+
+"sync-promise@git+https://github.com/brettz9/sync-promise.git#full-sync-missing-promise-features":
+  version "1.0.1"
+  resolved "git+https://github.com/brettz9/sync-promise.git#25845a49a00aa2d2c985a5149b97c86a1fcdc75a"
 
 table@^6.0.9:
   version "6.7.1"
@@ -17371,7 +17407,7 @@ typescript@^4.3.2:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.3.2.tgz#399ab18aac45802d6f2498de5054fcbbe716a805"
   integrity sha512-zZ4hShnmnoVnAHpVHWpTcxdv7dWP60S2FsydQLV8V5PbS3FifjWFFRiHSWpDJahly88PRyV5teTSLoq4eG7mKw==
 
-typeson-registry@^1.0.0-alpha.20:
+typeson-registry@1.0.0-alpha.39, typeson-registry@^1.0.0-alpha.20:
   version "1.0.0-alpha.39"
   resolved "https://registry.yarnpkg.com/typeson-registry/-/typeson-registry-1.0.0-alpha.39.tgz#9e0f5aabd5eebfcffd65a796487541196f4b1211"
   integrity sha512-NeGDEquhw+yfwNhguLPcZ9Oj0fzbADiX4R0WxvoY8nGhy98IbzQy1sezjoEFWOywOboj/DWehI+/aUlRVrJnnw==
@@ -17379,6 +17415,11 @@ typeson-registry@^1.0.0-alpha.20:
     base64-arraybuffer-es6 "^0.7.0"
     typeson "^6.0.0"
     whatwg-url "^8.4.0"
+
+typeson@6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/typeson/-/typeson-6.0.0.tgz#a1e8465028376565f9efed96fef6879a9a844c10"
+  integrity sha512-WFgL4bEdyyfH6VfzC39AcSfeGqTFycW8TvWQy/hbtN8ssbuXSrkSdW2OCt0bUmUZdmFR0wrszyr0CIhvvs4RQw==
 
 typeson@^5.8.2:
   version "5.18.2"
@@ -18030,6 +18071,16 @@ websql@^2.0.0:
   optionalDependencies:
     sqlite3 "^5.0.2"
 
+"websql@git+https://github.com/brettz9/node-websql.git#configurable-secure2":
+  version "1.0.0"
+  resolved "git+https://github.com/brettz9/node-websql.git#5149bc0763376ca757fc32dc74345ada0467bfbb"
+  dependencies:
+    argsarray "^0.0.1"
+    immediate "^3.2.2"
+    noop-fn "^1.0.0"
+    sqlite3 "^4.0.0"
+    tiny-queue "^0.2.1"
+
 whatwg-encoding@^1.0.1, whatwg-encoding@^1.0.3, whatwg-encoding@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/whatwg-encoding/-/whatwg-encoding-1.0.5.tgz#5abacf777c32166a51d085d6b4f3e7d27113ddb0"
@@ -18398,6 +18449,11 @@ xhr@^2.0.1:
     is-function "^1.0.1"
     parse-headers "^2.0.0"
     xtend "^4.0.0"
+
+xhtml-purifier@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/xhtml-purifier/-/xhtml-purifier-0.4.1.tgz#e18852fc40791f2acc7843b982d775a4abfa91db"
+  integrity sha512-sNc2QGevaqgzyHlxgKD7CirqR8yM2faK4bAVDEg9YrlcGVB+5MnMNLFXiJuy5yLxVp8jd5uEEA00YYifccjRrA==
 
 xml-js@^1.6.11:
   version "1.6.11"
