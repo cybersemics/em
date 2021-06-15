@@ -1,4 +1,4 @@
-import { Browser } from 'webdriverio'
+import { Browser, Element } from 'webdriverio'
 import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
@@ -15,7 +15,7 @@ interface Options {
 /**
  * Tap the given node with offset.
  */
-const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: any, { horizontalTapLine = 'left', offset, x = 0, y = 0 }: Options) => {
+const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: Element<'async'>, { horizontalTapLine = 'left', offset, x = 0, y = 0 }: Options) => {
   const boundingBox = await browser.getElementRect(nodeHandle.elementId)
   if (!boundingBox) throw new Error('Bouding box of editable not found.')
 
@@ -23,7 +23,11 @@ const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: any, { horiz
   const offsetCoordinates = async () => {
     return await browser.execute(
       function(ele, offset) {
-        const textNode = ele.firstChild
+
+        // Element<'async'> does not contain native properties like nodeName, textContent, etc
+        // Not sure what the actual WebDriverIO type that is returned by findElement
+        // Node does not contain property elementId; it is only a Node inside browser.execute, so we cannot change the typeo of the nodeHandle argument
+        const textNode = (ele as unknown as Node).firstChild
         if (!textNode || textNode.nodeName !== '#text') return
         const range = document.createRange()
         range.setStart(textNode, offset ?? 0)
