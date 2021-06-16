@@ -4,6 +4,7 @@ import { Index } from '../../../types'
 
 // helpers
 import $ from './$'
+import click from './click'
 import clickBullet from './clickBullet'
 import clickThought from './clickThought'
 import clickWithOffset from './clickWithOffset'
@@ -27,6 +28,7 @@ import waitForThoughtExistInDb from './waitForThoughtExistInDb'
 const helpers = {
   $,
   clickBullet,
+  click,
   clickThought,
   clickWithOffset,
   // editThought,

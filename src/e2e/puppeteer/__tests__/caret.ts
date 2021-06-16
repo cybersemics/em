@@ -8,6 +8,7 @@ import helpers from '../helpers'
 jest.setTimeout(20000)
 
 const {
+  click,
   clickBullet,
   clickThought,
   clickWithOffset,
@@ -15,6 +16,7 @@ const {
   paste,
   press,
   ref: pageRef,
+  refresh,
   selection,
   waitForEditable,
   waitForHiddenEditable,
@@ -183,13 +185,13 @@ describe('all platforms', () => {
     await clickThought('a')
 
     // Set cursor to null
-    await pageRef.current!.click('#content')
+    await click('#content')
 
     await waitForState('isPushing', false)
     await waitForThoughtExistInDb('a')
     await waitForThoughtExistInDb('b')
 
-    await pageRef.current!.evaluate(() => window.location.reload())
+    await refresh()
 
     await waitForEditable('b')
     await clickThought('b')
@@ -223,7 +225,7 @@ describe('mobile only', () => {
     // to close keyboard
     await clickBullet('B')
 
-    await pageRef.current!.click('#subcategorizeOne')
+    await click('#subcategorizeOne')
 
     await waitForState('editing', true)
 
