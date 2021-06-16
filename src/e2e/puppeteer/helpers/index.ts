@@ -19,7 +19,7 @@ import type from './type'
 import waitForAlert from './waitForAlert'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 import waitForEditable from './waitForEditable'
-import waitForFunction from './waitForFunction'
+import waitUntil from './waitUntil'
 import waitForHiddenEditable from './waitForHiddenEditable'
 import waitForState from './waitForState'
 import waitForThoughtExistInDb from './waitForThoughtExistInDb'
@@ -46,7 +46,7 @@ const helpers = {
   waitForAlert,
   waitForContextHasChildWithValue,
   waitForEditable,
-  waitForFunction,
+  waitUntil,
   waitForHiddenEditable,
   waitForState,
   waitForThoughtExistInDb,

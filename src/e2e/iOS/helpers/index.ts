@@ -13,9 +13,11 @@ import hideKeyboardByTappingDone from './hideKeyboardByTappingDone'
 import paste from './paste'
 import tapReturnKey from './tapReturnKey'
 import tapWithOffset from './tapWithOffset'
+import type from './type'
 import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitForElementNotExist from './waitForElementNotExist'
+import waitUntil from './waitUntil'
 
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
@@ -35,9 +37,11 @@ const helpers = {
   paste,
   tapReturnKey,
   tapWithOffset,
+  type,
   waitForEditable,
   waitForElement,
   waitForElementNotExist,
+  waitUntil,
 }
 
 /** Setup up the Browser instance for all helpers and returns an index of test helpers with the Browser instance partially applied. */

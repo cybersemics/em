@@ -3,64 +3,67 @@
  */
 
 import { Browser } from 'webdriverio'
-import waitForEditable from '../helpers/waitForEditable'
-import gesture from '../helpers/gesture'
-import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
-import tapWithOffset from '../helpers/tapWithOffset'
-import getEditingText from '../helpers/getEditingText'
-import editThought from '../helpers/editThought'
-import getEditable from '../helpers/getEditable'
-import initSession from '../helpers/initSession'
-import paste from '../helpers/paste'
-import clickThought from '../helpers/clickThought'
 import { gestures } from '../../../test-helpers/constants'
-import getElementRectByScreen from '../helpers/getElementRectByScreen'
+import helpers from '../helpers'
 
 const mobileBrowser = browser as unknown as Browser<'async'>
 jest.setTimeout(90000)
 
-beforeEach(initSession())
+const {
+  clickThought,
+  gesture,
+  editThought ,
+  getEditable,
+  getEditingText,
+  getElementRectByScreen,
+  hideKeyboardByTappingDone,
+  paste,
+  type,
+  tapWithOffset,
+  waitForEditable,
+  waitUntil,
+} = helpers()
 
 it('Enter edit mode', async () => {
-  await gesture(mobileBrowser, gestures.newThought)
-  await mobileBrowser.sendKeys(['foo'])
+  await gesture(gestures.newThought)
+  await type('foo')
 
-  await hideKeyboardByTappingDone(mobileBrowser)
+  await hideKeyboardByTappingDone()
   const selection = await mobileBrowser.execute(() => window.getSelection())
   expect(selection?.focusOffset).toBe(0)
   expect(selection?.focusNode).toBe(null)
 
-  const editableNodeHandle = await waitForEditable(mobileBrowser, 'foo')
-  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+  const editableNodeHandle = await waitForEditable('foo')
+  await tapWithOffset(editableNodeHandle, { offset: 0 })
 
-  await mobileBrowser.waitUntil(() => mobileBrowser.isKeyboardShown())
+  await waitUntil(() => mobileBrowser.isKeyboardShown())
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe('foo')
 })
 
 it('Preserve Editing: true', async () => {
-  await gesture(mobileBrowser, gestures.newThought)
-  await editThought(mobileBrowser, 'foo')
-  await gesture(mobileBrowser, gestures.newSubThought)
-  await editThought(mobileBrowser, 'bar')
+  await gesture(gestures.newThought)
+  await editThought('foo')
+  await gesture(gestures.newSubThought)
+  await editThought('bar')
 
-  const editableNodeHandle = await getEditable(mobileBrowser, 'foo')
-  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+  const editableNodeHandle = await getEditable('foo')
+  await tapWithOffset(editableNodeHandle, { offset: 0 })
 
-  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'foo')
+  await waitUntil(async () => await getEditingText() === 'foo')
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe('foo')
 })
 
 it('Preserve Editing: false', async () => {
-  await gesture(mobileBrowser, gestures.newThought)
-  await editThought(mobileBrowser, 'foo')
-  await gesture(mobileBrowser, gestures.newSubThought)
-  await editThought(mobileBrowser, 'bar')
-  await hideKeyboardByTappingDone(mobileBrowser)
+  await gesture(gestures.newThought)
+  await editThought('foo')
+  await gesture(gestures.newSubThought)
+  await editThought('bar')
+  await hideKeyboardByTappingDone()
 
-  const editableNodeHandle = await waitForEditable(mobileBrowser, 'foo')
-  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+  const editableNodeHandle = await waitForEditable('foo')
+  await tapWithOffset(editableNodeHandle, { offset: 0 })
 
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe(null)
@@ -71,16 +74,16 @@ it('No uncle loop', async () => {
     - a
       - b
       - c`
-  await gesture(mobileBrowser, gestures.newThought)
-  await paste(mobileBrowser, [''], importText)
+  await gesture(gestures.newThought)
+  await paste([''], importText)
 
-  await clickThought(mobileBrowser, 'b')
-  await gesture(mobileBrowser, gestures.newSubThought)
-  await editThought(mobileBrowser, 'd')
+  await clickThought('b')
+  await gesture(gestures.newSubThought)
+  await editThought('d')
 
-  const editableNodeHandle = await waitForEditable(mobileBrowser, 'c')
-  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
-  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'c')
+  const editableNodeHandle = await waitForEditable('c')
+  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await waitUntil(async () => await getEditingText() === 'c')
 
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe('c')
@@ -92,17 +95,17 @@ it('Tap hidden root thought', async () => {
     - b
       - c
   - d`
-  await gesture(mobileBrowser, gestures.newThought)
-  await paste(mobileBrowser, [''], importText)
-  await clickThought(mobileBrowser, 'a')
-  await clickThought(mobileBrowser, 'b')
-  await clickThought(mobileBrowser, 'c')
+  await gesture(gestures.newThought)
+  await paste([''], importText)
+  await clickThought('a')
+  await clickThought('b')
+  await clickThought('c')
 
-  const editableNodeHandle = await waitForEditable(mobileBrowser, 'd')
-  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
-  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) !== 'c')
+  const editableNodeHandle = await waitForEditable('d')
+  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await waitUntil(async () => await getEditingText() !== 'c')
 
-  const editingText = await getEditingText(mobileBrowser)
+  const editingText = await getEditingText()
   expect(editingText).toBe('b')
 })
 
@@ -112,16 +115,16 @@ it('Tap hidden uncle', async () => {
       - b
         - c
       - d`
-  await gesture(mobileBrowser, gestures.newThought)
-  await paste(mobileBrowser, [''], importText)
-  await clickThought(mobileBrowser, 'a')
-  await clickThought(mobileBrowser, 'b')
-  await clickThought(mobileBrowser, 'c')
+  await gesture(gestures.newThought)
+  await paste([''], importText)
+  await clickThought('a')
+  await clickThought('b')
+  await clickThought('c')
 
-  const editableNodeHandle = await waitForEditable(mobileBrowser, 'd')
-  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+  const editableNodeHandle = await waitForEditable('d')
+  await tapWithOffset(editableNodeHandle, { offset: 0 })
 
-  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'd')
+  await mobileBrowser.waitUntil(async () => await getEditingText() === 'd')
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe('d')
 })
@@ -133,16 +136,16 @@ it('Tap empty content while keyboard up', async () => {
         - c
       - d`
 
-  await gesture(mobileBrowser, gestures.newThought)
-  await paste(mobileBrowser, [''], importText)
-  await clickThought(mobileBrowser, 'b')
-  await clickThought(mobileBrowser, 'c')
+  await gesture(gestures.newThought)
+  await paste([''], importText)
+  await clickThought('b')
+  await clickThought('c')
 
-  const editableNodeHandleD = await waitForEditable(mobileBrowser, 'd')
-  await tapWithOffset(mobileBrowser, editableNodeHandleD, { x: 20, y: 200 })
+  const editableNodeHandleD = await waitForEditable('d')
+  await tapWithOffset(editableNodeHandleD, { x: 20, y: 200 })
 
   // Wait until cursor change
-  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
+  await mobileBrowser.waitUntil(async () => await getEditingText() === 'b')
   expect(await mobileBrowser.isKeyboardShown()).toBeTruthy()
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe('b')
@@ -155,30 +158,30 @@ it('Tap empty content while keyboard down', async () => {
         - c
       - d`
 
-  await gesture(mobileBrowser, gestures.newThought)
-  await paste(mobileBrowser, [''], importText)
-  await clickThought(mobileBrowser, 'b')
-  await clickThought(mobileBrowser, 'c')
-  await hideKeyboardByTappingDone(mobileBrowser)
+  await gesture(gestures.newThought)
+  await paste([''], importText)
+  await clickThought('b')
+  await clickThought('c')
+  await hideKeyboardByTappingDone()
 
-  const editableNodeHandleD = await waitForEditable(mobileBrowser, 'd')
-  await tapWithOffset(mobileBrowser, editableNodeHandleD, { x: 20, y: 200 })
+  const editableNodeHandleD = await waitForEditable('d')
+  await tapWithOffset(editableNodeHandleD, { x: 20, y: 200 })
 
   // Wait until cursor change
-  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
+  await mobileBrowser.waitUntil(async () => await getEditingText() === 'b')
   expect(await mobileBrowser.isKeyboardShown()).toBeFalsy()
 })
 
 it('Swipe over cursor', async () => {
-  await gesture(mobileBrowser, gestures.newThought)
-  await editThought(mobileBrowser, 'foo')
-  await hideKeyboardByTappingDone(mobileBrowser)
+  await gesture(gestures.newThought)
+  await editThought('foo')
+  await hideKeyboardByTappingDone()
 
-  const editableNodeHandle = await waitForEditable(mobileBrowser, 'foo')
-  const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandle)
+  const editableNodeHandle = await waitForEditable('foo')
+  const elementRect = await getElementRectByScreen(editableNodeHandle)
 
   // swipe right on thought
-  await gesture(mobileBrowser, ['r'],
+  await gesture(['r'],
     {
       xStart: elementRect.x + 5,
       yStart: elementRect.y + (elementRect.height / 2),
@@ -186,9 +189,9 @@ it('Swipe over cursor', async () => {
       waitMs: 60 // It looks like default 50ms is not enough for swiping.
     })
 
-  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+  await tapWithOffset(editableNodeHandle, { offset: 0 })
 
-  const editingText = await getEditingText(mobileBrowser)
+  const editingText = await getEditingText()
   expect(editingText).toBe('foo')
 
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
@@ -209,24 +212,24 @@ it('Swipe over hidden thought', async () => {
     - h
     - i`
 
-  await gesture(mobileBrowser, gestures.newThought)
-  await paste(mobileBrowser, [''], importText)
-  await waitForEditable(mobileBrowser, 'i')
-  await clickThought(mobileBrowser, 'a')
-  await clickThought(mobileBrowser, 'x')
-  await clickThought(mobileBrowser, 'y')
+  await gesture(gestures.newThought)
+  await paste([''], importText)
+  await waitForEditable('i')
+  await clickThought('a')
+  await clickThought('x')
+  await clickThought('y')
 
-  const editableNodeHandle = await waitForEditable(mobileBrowser, 'y')
-  const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandle)
+  const editableNodeHandle = await waitForEditable('y')
+  const elementRect = await getElementRectByScreen(editableNodeHandle)
 
-  await gesture(mobileBrowser, gestures.newThought,
+  await gesture(gestures.newThought,
     {
       xStart: elementRect.x + 5,
       yStart: elementRect.y + elementRect.height + 10,
     })
 
-  await editThought(mobileBrowser, 'this-is-new-thought')
-  const newThoughtEditable = await waitForEditable(mobileBrowser, 'this-is-new-thought')
+  await editThought('this-is-new-thought')
+  const newThoughtEditable = await waitForEditable('this-is-new-thought')
 
   // get first child of parent thought
   const previousSibling = await mobileBrowser.execute((newThoughtEditable: any) => {

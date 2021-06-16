@@ -18,7 +18,7 @@ describe('all platforms', () => {
     refresh,
     selection,
     waitForEditable,
-    waitForFunction,
+    waitUntil,
     waitForState,
     waitForThoughtExistInDb,
   } = helpers()
@@ -69,7 +69,7 @@ describe('all platforms', () => {
     const editableNodeHandle = await waitForEditable('Purple Rain')
 
     await clickWithOffset(editableNodeHandle, { offset: 5 })
-    await waitForFunction(() => window.getSelection()?.focusOffset === 5)
+    await waitUntil(() => window.getSelection()?.focusOffset === 5)
     await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left' })
 
     const offset = await selection().focusOffset
@@ -86,7 +86,7 @@ describe('all platforms', () => {
     const editableNodeHandle = await waitForEditable('Purple Rain')
 
     await clickWithOffset(editableNodeHandle, { offset: 5 })
-    await waitForFunction(() => window.getSelection()?.focusOffset === 5)
+    await waitUntil(() => window.getSelection()?.focusOffset === 5)
     await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
 
     const offset = await selection().focusOffset
@@ -103,7 +103,7 @@ describe('all platforms', () => {
     const editableNodeHandle = await waitForEditable('Richard Feynman')
 
     await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left' })
-    await waitForFunction(() => window.getSelection()?.focusOffset === 0)
+    await waitUntil(() => window.getSelection()?.focusOffset === 0)
     await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'right' })
 
     const offset = await selection().focusOffset
