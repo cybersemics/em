@@ -6,17 +6,19 @@ import { Browser } from 'webdriverio'
 import { gestures } from '../../../test-helpers/constants'
 import helpers from '../helpers'
 
-const mobileBrowser = browser as unknown as Browser<'async'>
 jest.setTimeout(90000)
+const mobileBrowser = browser as unknown as Browser<'async'>
 
 const {
   clickThought,
   gesture,
-  editThought ,
+  editThought,
   getEditable,
   getEditingText,
   getElementRectByScreen,
+  getSelection,
   hideKeyboardByTappingDone,
+  isKeyboardShown,
   paste,
   type,
   tapWithOffset,
@@ -29,15 +31,15 @@ it('Enter edit mode', async () => {
   await type('foo')
 
   await hideKeyboardByTappingDone()
-  const selection = await mobileBrowser.execute(() => window.getSelection())
+  const selection = await getSelection()
   expect(selection?.focusOffset).toBe(0)
   expect(selection?.focusNode).toBe(null)
 
   const editableNodeHandle = await waitForEditable('foo')
   await tapWithOffset(editableNodeHandle, { offset: 0 })
 
-  await waitUntil(() => mobileBrowser.isKeyboardShown())
-  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  await waitUntil(isKeyboardShown)
+  const selectionTextContent = (await getSelection())?.focusNode?.textContent
   expect(selectionTextContent).toBe('foo')
 })
 
@@ -51,7 +53,7 @@ it('Preserve Editing: true', async () => {
   await tapWithOffset(editableNodeHandle, { offset: 0 })
 
   await waitUntil(async () => await getEditingText() === 'foo')
-  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  const selectionTextContent = (await getSelection())?.focusNode?.textContent
   expect(selectionTextContent).toBe('foo')
 })
 
@@ -65,7 +67,7 @@ it('Preserve Editing: false', async () => {
   const editableNodeHandle = await waitForEditable('foo')
   await tapWithOffset(editableNodeHandle, { offset: 0 })
 
-  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  const selectionTextContent = (await getSelection())?.focusNode?.textContent
   expect(selectionTextContent).toBe(null)
 })
 
@@ -85,7 +87,7 @@ it('No uncle loop', async () => {
   await tapWithOffset(editableNodeHandle, { offset: 0 })
   await waitUntil(async () => await getEditingText() === 'c')
 
-  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  const selectionTextContent = (await getSelection())?.focusNode?.textContent
   expect(selectionTextContent).toBe('c')
 })
 
@@ -124,8 +126,8 @@ it('Tap hidden uncle', async () => {
   const editableNodeHandle = await waitForEditable('d')
   await tapWithOffset(editableNodeHandle, { offset: 0 })
 
-  await mobileBrowser.waitUntil(async () => await getEditingText() === 'd')
-  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  await waitUntil(async () => await getEditingText() === 'd')
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('d')
 })
 
@@ -145,9 +147,9 @@ it('Tap empty content while keyboard up', async () => {
   await tapWithOffset(editableNodeHandleD, { x: 20, y: 200 })
 
   // Wait until cursor change
-  await mobileBrowser.waitUntil(async () => await getEditingText() === 'b')
-  expect(await mobileBrowser.isKeyboardShown()).toBeTruthy()
-  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  await waitUntil(async () => await getEditingText() === 'b')
+  expect(await isKeyboardShown()).toBeTruthy()
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('b')
 })
 
@@ -168,8 +170,8 @@ it('Tap empty content while keyboard down', async () => {
   await tapWithOffset(editableNodeHandleD, { x: 20, y: 200 })
 
   // Wait until cursor change
-  await mobileBrowser.waitUntil(async () => await getEditingText() === 'b')
-  expect(await mobileBrowser.isKeyboardShown()).toBeFalsy()
+  await waitUntil(async () => await getEditingText() === 'b')
+  expect(await isKeyboardShown()).toBeFalsy()
 })
 
 it('Swipe over cursor', async () => {
@@ -194,7 +196,7 @@ it('Swipe over cursor', async () => {
   const editingText = await getEditingText()
   expect(editingText).toBe('foo')
 
-  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe(null)
 })
 
