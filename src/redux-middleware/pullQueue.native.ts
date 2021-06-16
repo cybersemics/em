@@ -28,7 +28,7 @@ const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Ind
 
   // if there is no cursor, decode the url so the cursor can be loaded
   // after loading the ranks will be inferred to update the cursor
-  const contextUrl = 'hello' //decodeContextUrl(state, window.location.pathname)
+  const contextUrl = decodeContextUrl(state, window.location.pathname)
 
   const contextCursor = cursor ? pathToContext(cursor) : contextUrl
 
@@ -145,11 +145,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     const visibleContexts = getVisibleContexts(state, expandedContexts)
 
-    console.log({ visibleContexts })
+    // console.log({ visibleContexts })
 
     if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts)) && isSearchSame) return
 
-    console.log("dude")
+    // console.log("dude")
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
 
@@ -171,7 +171,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
   return next => async action => {
 
-
     next(action)
 
     // reset internal state variables when clear action is dispatched
@@ -188,7 +187,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // do not updatePullQueue if there are syncs queued or in progress
     // this gets checked again in updatePullQueue, but short circuit here if possible
     else if (!hasPushes(getState())) {
-      console.log('yiy', { action })
+      // console.log('yiy', { action })
       updatePullQueueDebounced()
     }
   }
