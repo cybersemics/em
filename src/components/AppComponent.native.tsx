@@ -3,6 +3,7 @@ import { SafeAreaView, Text, StyleSheet, ScrollView } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
 import NavBar from './NavBar'
+import ModalFeedback from './ModalFeedback'
 
 /**
  * AppComponent container.
@@ -17,6 +18,7 @@ const AppComponent: React.FC = () => {
           <Text style={styles.text}>hello World - em thoughts</Text>
         </ScrollView>
         <NavBar />
+        <ModalFeedback />
       </SafeAreaView>
     </>
   )
