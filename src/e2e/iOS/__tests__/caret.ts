@@ -126,7 +126,7 @@ it('Tap hidden uncle', async () => {
   expect(selectionTextContent).toBe('d')
 })
 
-it('Tap empty content', async () => {
+it('Tap empty content while keyboard up', async () => {
   const importText = `
     - a
       - b
@@ -137,6 +137,32 @@ it('Tap empty content', async () => {
   await paste(mobileBrowser, [''], importText)
   await clickThought(mobileBrowser, 'b')
   await clickThought(mobileBrowser, 'c')
+
+  const editableNodeHandleD = await waitForEditable(mobileBrowser, 'd')
+  const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandleD)
+
+  await mobileBrowser.touchAction({
+    action: 'tap',
+    x: elementRect.x + (elementRect.width / 2),
+    y: elementRect.y + elementRect.height + 200, // Tap 200px below of the thought d
+  })
+
+  const editingText = await getEditingText(mobileBrowser)
+  expect(editingText).toBe('b')
+})
+
+it('Tap empty content while keyboard down', async () => {
+  const importText = `
+    - a
+      - b
+        - c
+      - d`
+
+  await gesture(mobileBrowser, gestures.newThought)
+  await paste(mobileBrowser, [''], importText)
+  await clickThought(mobileBrowser, 'b')
+  await clickThought(mobileBrowser, 'c')
+  await hideKeyboardByTappingDone(mobileBrowser)
 
   const editableNodeHandleD = await waitForEditable(mobileBrowser, 'd')
   const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandleD)
