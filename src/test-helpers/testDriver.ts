@@ -1,5 +1,5 @@
-interface Options<Device> {
-  setup?: <T extends any[]>(...args: T) => Promise<Device>,
+interface Options<Device, SetupArgs extends any[] = any> {
+  setup?: (...args: SetupArgs) => Promise<Device>,
   teardown?: (device: Device) => void,
 }
 
@@ -29,21 +29,21 @@ type MethodMapTail<T extends { [Key in keyof T]: (first: any, ...args: any) => a
  * })
  *
  **/
-const testDriver = <T extends ObjectWithInstanceMethods>(helpers: { [Key in keyof T]: T[Key] }, options: Options<Parameters<T[keyof T]>[0]> = {}) => {
+const testDriver = <HelperObject extends ObjectWithInstanceMethods>(helpers: { [Key in keyof HelperObject]: HelperObject[Key] }, options: Options<Parameters<HelperObject[keyof HelperObject]>[0]> = {}) => {
 
-  type Device = Parameters<T[keyof T]>[0]
+  type Device = Parameters<HelperObject[keyof HelperObject]>[0]
   const ref = {} as { current: Device }
 
   // partially apply the driver to each of the helpers
   // get the current device at call-time
-  const helpersWithDriver = (Object.keys(helpers) as (keyof T)[])
+  const helpersWithDriver = (Object.keys(helpers) as (keyof HelperObject)[])
     .reduce((accum, key) => ({
       ...accum,
-      [key]: (...args: Parameters<T[typeof key]>) => helpers[key](ref.current, ...args)
+      [key]: (...args: Parameters<HelperObject[typeof key]>) => helpers[key](ref.current, ...args)
     }), {} as MethodMapTail<typeof helpers>)
 
   /** Setup and teardown the ref. */
-  const setup = <V extends any[]>(...args: V) => {
+  const setup = <SetupArgs extends any[]>(...args: SetupArgs) => {
     if (options.setup) {
       beforeEach(async () => {
         ref.current = await options.setup?.(...args)
@@ -63,7 +63,7 @@ const testDriver = <T extends ObjectWithInstanceMethods>(helpers: { [Key in keyo
   }
 }
 
-// type return type
+// TYPE TEST
 // type FakeDevice = { __type: 'FakeDevice' }
 // const helpers = testDriver({
 //   tapReturn: (device: FakeDevice) => 'a',

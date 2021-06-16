@@ -21,7 +21,7 @@ const skipTutorialScreen = async (page: Page) => {
 /**
  * Create a new incognito context and page.
  */
-const setup = async ({ puppeteerBrowser = browser, url = 'http://localhost:3000', emulatedDevice, skipTutorial = true }: InitPageOptions = {}) => {
+const setup = async ({ puppeteerBrowser = browser, url = 'http://localhost:3000', emulatedDevice, skipTutorial = true }: InitPageOptions = {}): Promise<Page> => {
   const context = await puppeteerBrowser.createIncognitoBrowserContext()
   const page: Page = await context.newPage()
 
