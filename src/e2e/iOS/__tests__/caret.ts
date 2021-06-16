@@ -104,3 +104,23 @@ it('Tap hidden root thought', async () => {
   const editingText = await getEditingText(mobileBrowser)
   expect(editingText).toBe('b')
 })
+
+it('Tap hidden uncle', async () => {
+  const importText = `
+    - a
+      - b
+        - c
+      - d`
+  await gesture(mobileBrowser, gestures.newThought)
+  await paste(mobileBrowser, [''], importText)
+  await clickThought(mobileBrowser, 'a')
+  await clickThought(mobileBrowser, 'b')
+  await clickThought(mobileBrowser, 'c')
+
+  const editableNodeHandle = await waitForEditable(mobileBrowser, 'd')
+  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+
+  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'd')
+  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  expect(selectionTextContent).toBe('d')
+})
