@@ -14,7 +14,6 @@ import initSession from '../helpers/initSession'
 import paste from '../helpers/paste'
 import clickThought from '../helpers/clickThought'
 import { gestures } from '../../../test-helpers/constants'
-import getElementRectByScreen from '../helpers/getElementRectByScreen'
 
 const mobileBrowser = browser as unknown as Browser<'async'>
 jest.setTimeout(90000)
@@ -139,14 +138,10 @@ it('Tap empty content while keyboard up', async () => {
   await clickThought(mobileBrowser, 'c')
 
   const editableNodeHandleD = await waitForEditable(mobileBrowser, 'd')
-  const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandleD)
+  await tapWithOffset(mobileBrowser, editableNodeHandleD, { x: 20, y: 200 })
 
-  await mobileBrowser.touchAction({
-    action: 'tap',
-    x: elementRect.x + (elementRect.width / 2),
-    y: elementRect.y + elementRect.height + 200, // Tap 200px below of the thought d
-  })
-
+  // Wait until cursor change
+  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
   const editingText = await getEditingText(mobileBrowser)
   expect(editingText).toBe('b')
 })
@@ -165,14 +160,10 @@ it('Tap empty content while keyboard down', async () => {
   await hideKeyboardByTappingDone(mobileBrowser)
 
   const editableNodeHandleD = await waitForEditable(mobileBrowser, 'd')
-  const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandleD)
+  await tapWithOffset(mobileBrowser, editableNodeHandleD, { x: 20, y: 200 })
 
-  await mobileBrowser.touchAction({
-    action: 'tap',
-    x: elementRect.x + (elementRect.width / 2),
-    y: elementRect.y + elementRect.height + 200, // Tap 200px below of the thought d
-  })
-
+  // Wait until cursor change
+  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
   const editingText = await getEditingText(mobileBrowser)
   expect(editingText).toBe('b')
 })
