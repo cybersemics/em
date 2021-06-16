@@ -124,3 +124,46 @@ it('Tap hidden uncle', async () => {
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe('d')
 })
+
+it('Tap empty content while keyboard up', async () => {
+  const importText = `
+    - a
+      - b
+        - c
+      - d`
+
+  await gesture(mobileBrowser, gestures.newThought)
+  await paste(mobileBrowser, [''], importText)
+  await clickThought(mobileBrowser, 'b')
+  await clickThought(mobileBrowser, 'c')
+
+  const editableNodeHandleD = await waitForEditable(mobileBrowser, 'd')
+  await tapWithOffset(mobileBrowser, editableNodeHandleD, { x: 20, y: 200 })
+
+  // Wait until cursor change
+  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
+  expect(await mobileBrowser.isKeyboardShown()).toBeTruthy()
+  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  expect(selectionTextContent).toBe('b')
+})
+
+it('Tap empty content while keyboard down', async () => {
+  const importText = `
+    - a
+      - b
+        - c
+      - d`
+
+  await gesture(mobileBrowser, gestures.newThought)
+  await paste(mobileBrowser, [''], importText)
+  await clickThought(mobileBrowser, 'b')
+  await clickThought(mobileBrowser, 'c')
+  await hideKeyboardByTappingDone(mobileBrowser)
+
+  const editableNodeHandleD = await waitForEditable(mobileBrowser, 'd')
+  await tapWithOffset(mobileBrowser, editableNodeHandleD, { x: 20, y: 200 })
+
+  // Wait until cursor change
+  await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
+  expect(await mobileBrowser.isKeyboardShown()).toBeFalsy()
+})
