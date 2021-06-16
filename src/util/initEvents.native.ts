@@ -1,11 +1,11 @@
 import _ from 'lodash'
 import { Store } from 'redux'
-import { inputHandlers, isGestureHint } from '../shortcuts'
+import { inputHandlers /* isGestureHint */ } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { clearSelection, isRoot, pathToContext } from '.'
 import { State } from './initialState'
 import { decodeThoughtsUrl, pathExists } from '../selectors'
-import { alert, error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { /* alert */ error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { Path } from '../types'
 import { equalPath } from './equalPath'
 // import lifecycle from 'page-lifecycle'
@@ -92,15 +92,15 @@ export const initEvents = (store: Store<State, any>) => {
   }
 
   /** Handle a page lifecycle state change. */
-  const onStateChange = ({ oldState, newState }: { oldState: string, newState: string }) => {
-    if (newState === 'hidden') {
-      // dismiss the gesture alert if active
-      if (isGestureHint(store.getState())) {
-        store.dispatch(alert(null))
-      }
-      // we could also persist unsaved data here
-    }
-  }
+  // const onStateChange = ({ oldState, newState }: { oldState: string, newState: string }) => {
+  //   if (newState === 'hidden') {
+  //     // dismiss the gesture alert if active
+  //     if (isGestureHint(store.getState())) {
+  //       store.dispatch(alert(null))
+  //     }
+  //     // we could also persist unsaved data here
+  //   }
+  // }
 
   // store input handlers so they can be removed on cleanup
   const { keyDown, keyUp } = window.__inputHandlers = inputHandlers(store)

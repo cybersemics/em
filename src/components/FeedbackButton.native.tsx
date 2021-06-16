@@ -15,7 +15,7 @@ const FeedbackButton: React.FC = () => {
   const modal = useSelector((state: State) => state.showModal)
 
   React.useEffect(() => {
-    console.log({ modal })
+    // console.log({ modal })
   }, [modal])
 
   return (
