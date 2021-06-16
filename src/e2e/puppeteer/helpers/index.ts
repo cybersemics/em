@@ -1,6 +1,5 @@
 import { Page } from 'puppeteer'
 import testDriver from '../../../test-helpers/testDriver'
-import { Index } from '../../../types'
 
 // helpers
 import $ from './$'
@@ -15,6 +14,7 @@ import paste from './paste'
 import press from './press'
 import refresh from './refresh'
 import selection from './selection'
+import setup from './setup'
 import type from './type'
 import waitForAlert from './waitForAlert'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
@@ -57,15 +57,20 @@ const helpers = {
   waitForThoughtExistInDb,
 }
 
-const index = testDriver(helpers)
+const index = testDriver(helpers, {
+  setup,
+  teardown: async (page: Page) => {
+    await page.browserContext().close()
+  },
+})
 
-// Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
-async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> {}
+/** Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting. */
+async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> { /** */ }
 
 const indexWithProperPaste = index as typeof index & {
-  paste: typeof pasteOverload
+  paste: typeof pasteOverload,
 }
 
 export default indexWithProperPaste

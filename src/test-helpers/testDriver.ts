@@ -1,4 +1,7 @@
-import _ from 'lodash'
+interface Options<Device> {
+  setup?: <T extends any[]>(...args: T) => Promise<Device>,
+  teardown?: (device: Device) => void,
+}
 
 /** An object with methods whose first arguments are the same. */
 type ObjectWithInstanceMethods<T = any, U = any>= {
@@ -6,6 +9,7 @@ type ObjectWithInstanceMethods<T = any, U = any>= {
 }
 
 /** Removes the first item in an array type. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type Tail<T extends any[]> = T extends [infer A, ...infer R] ? R : never;
 
 /** Removes the first parameter from each method on an object. */
@@ -14,33 +18,49 @@ type MethodMapTail<T extends { [Key in keyof T]: (first: any, ...args: any) => a
 }
 
 /** Wraps a collection of driver-specific test helpers.
+ *
  * @example
-
-  const { click, press, type } = testDriver({ click, press, type })
-
-  ...
-
-  it('test', () => {
-    await press('Enter')
-    await type('Hello')
-  })
-
+ *
+ * const { click, press, type } = testDriver({ click, press, type })
+ *
+ * it('test', () => {
+ * await press('Enter')
+ * await type('Hello')
+ * })
+ *
  **/
-// const testDriver = <Device, K extends string, T extends any[], R>(helpers: { [K]: (device: Device, ...args: T) => R }) => {
-const testDriver = <T extends ObjectWithInstanceMethods>(helpers: { [Key in keyof T]: T[Key] }) => {
+const testDriver = <T extends ObjectWithInstanceMethods>(helpers: { [Key in keyof T]: T[Key] }, options: Options<Parameters<T[keyof T]>[0]> = {}) => {
 
   type Device = Parameters<T[keyof T]>[0]
   const ref = {} as { current: Device }
 
   // partially apply the driver to each of the helpers
   // get the current device at call-time
-  const helpersWithDriver = (Object.keys(helpers) as Array<keyof T>)
+  const helpersWithDriver = (Object.keys(helpers) as (keyof T)[])
     .reduce((accum, key) => ({
       ...accum,
       [key]: (...args: Parameters<T[typeof key]>) => helpers[key](ref.current, ...args)
     }), {} as MethodMapTail<typeof helpers>)
 
-  return { ...helpersWithDriver, ref }
+  /** Setup and teardown the ref. */
+  const setup = <V extends any[]>(...args: V) => {
+    if (options.setup) {
+      beforeEach(async () => {
+        ref.current = await options.setup?.(...args)
+      })
+    }
+    if (options.teardown) {
+      afterEach(async () => {
+        await options.teardown?.(ref.current)
+      })
+    }
+  }
+
+  return {
+    ...helpersWithDriver,
+    ref,
+    setup,
+  }
 }
 
 // type return type

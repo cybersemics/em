@@ -1,39 +1,30 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
-import { devices, Page } from 'puppeteer'
-import initPage from '../helpers/initPage'
+import { devices } from 'puppeteer'
 import helpers from '../helpers'
 
 jest.setTimeout(20000)
 
-const {
-  click,
-  clickBullet,
-  clickThought,
-  clickWithOffset,
-  getEditingText,
-  paste,
-  press,
-  ref: pageRef,
-  refresh,
-  selection,
-  waitForEditable,
-  waitForFunction,
-  waitForHiddenEditable,
-  waitForState,
-  waitForThoughtExistInDb,
-} = helpers
-
 describe('all platforms', () => {
 
-  beforeEach(async () => {
-    pageRef.current = await initPage()
-  })
+  const {
+    click,
+    clickBullet,
+    clickThought,
+    clickWithOffset,
+    paste,
+    press,
+    refresh,
+    selection,
+    setup,
+    waitForEditable,
+    waitForFunction,
+    waitForState,
+    waitForThoughtExistInDb,
+  } = helpers
 
-  afterEach(async () => {
-    await pageRef.current!.browserContext().close()
-  })
+  setup()
 
   it('caret should be at the beginning of thought after split on enter', async () => {
 
@@ -205,13 +196,21 @@ describe('all platforms', () => {
 
 describe('mobile only', () => {
 
-  beforeEach(async () => {
-    pageRef.current = await initPage({ emulatedDevice: devices['iPhone 11'] })
-  })
+  const {
+    click,
+    clickBullet,
+    clickWithOffset,
+    paste,
+    getEditingText,
+    selection,
+    setup,
+    waitForEditable,
+    waitForHiddenEditable,
+    waitForState,
+    clickThought,
+  } = helpers
 
-  afterEach(async () => {
-    await pageRef.current.browserContext().close()
-  })
+  setup({ emulatedDevice: devices['iPhone 11'] })
 
   it('when subCategorizeOne, caret should be on new thought', async () => {
     const importText = `

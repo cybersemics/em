@@ -2,31 +2,23 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 
-import { Page } from 'puppeteer'
-import initPage from '../helpers/initPage'
 import helpers from '../helpers'
-
-const {
-  paste,
-  ref: pageRef,
-  getEditingText,
-  refresh,
-  waitForEditable,
-  waitForThoughtExistInDb,
-  waitForState,
-  clickThought,
-} = helpers
 
 describe('cursor testing', () => {
   jest.setTimeout(20000)
 
-  beforeEach(async () => {
-    pageRef.current = await initPage()
-  })
+  const {
+    paste,
+    getEditingText,
+    refresh,
+    setup,
+    waitForEditable,
+    waitForThoughtExistInDb,
+    waitForState,
+    clickThought,
+  } = helpers
 
-  afterEach(async () => {
-    await pageRef.current!.browserContext().close()
-  })
+  setup()
 
   it('cursor on a home thought', async () => {
 

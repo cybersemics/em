@@ -2,27 +2,19 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 
-import initPage from '../helpers/initPage'
 import helpers from '../helpers'
-import { Page } from 'puppeteer'
 
 jest.setTimeout(20000)
 
 const {
   newThought,
   press,
-  ref,
+  setup,
   type,
   waitForAlert,
 } = helpers
 
-beforeEach(async () => {
-  ref.current = await initPage()
-})
-
-afterEach(async () => {
-  await ref.current.browserContext().close()
-})
+setup()
 
 it('do not allow duplicate thought on edit', async () => {
   await newThought('ab')

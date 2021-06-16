@@ -3,8 +3,7 @@
  */
 
 import helpers from '../helpers'
-import initPage from '../helpers/initPage'
-import { JSHandle, Page } from 'puppeteer'
+import { JSHandle } from 'puppeteer'
 
 /** Gets the first subthought of an editable. */
 const getFirstSubthought = (editable: JSHandle) =>
@@ -20,17 +19,11 @@ const {
   getEditable,
   paste,
   press,
-  ref: pageRef,
+  setup,
   type,
 } = helpers
 
-beforeEach(async () => {
-  pageRef.current = await initPage()
-})
-
-afterEach(async () => {
-  await pageRef.current.browserContext().close()
-})
+setup()
 
 it.skip('edit context value', async () => {
 
