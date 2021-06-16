@@ -15,6 +15,7 @@ const getFirstSubthought = (editable: JSHandle) =>
 jest.setTimeout(20000)
 
 const {
+  $,
   clickThought,
   getEditable,
   paste,
@@ -51,7 +52,7 @@ it.skip('edit context value', async () => {
   await editableBM.asElement()!.click()
 
   // toggle context view
-  const toggleContextView = await pageRef.current.$('#toggleContextView')
+  const toggleContextView = await $('#toggleContextView')
   await toggleContextView!.click()
 
   // click on b/m~/a

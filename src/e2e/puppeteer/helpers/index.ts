@@ -3,6 +3,7 @@ import testDriver from '../../../test-helpers/testDriver'
 import { Index } from '../../../types'
 
 // helpers
+import $ from './$'
 import clickBullet from './clickBullet'
 import clickThought from './clickThought'
 import clickWithOffset from './clickWithOffset'
@@ -24,6 +25,7 @@ import waitForThoughtExistInDb from './waitForThoughtExistInDb'
 // TODO: Implement webdriver helpers or throw 'Not Implemented'
 // TODO: Why do the args need to be declared as any[]? testDriver type is off.
 const helpers = {
+  $,
   clickBullet,
   clickThought,
   clickWithOffset,
