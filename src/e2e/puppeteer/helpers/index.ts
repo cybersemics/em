@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer'
-import testDriver from '../../../test-helpers/testDriver'
+import partialWithRef from '../../../test-helpers/partialWithRef'
 
 // helpers
 import $ from './$'
@@ -24,53 +24,51 @@ import waitForHiddenEditable from './waitForHiddenEditable'
 import waitForState from './waitForState'
 import waitForThoughtExistInDb from './waitForThoughtExistInDb'
 
-// TODO: Implement webdriver helpers or throw 'Not Implemented'
-// TODO: Why do the args need to be declared as any[]? testDriver type is off.
+async function pasteOverload(text: string): Promise<void>
+async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
+/** Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting. */
+async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> { /** */ }
+
 const helpers = {
   $,
   clickBullet,
   click,
   clickThought,
   clickWithOffset,
-  // editThought,
-  // gesture,
   getEditable,
   getEditingText,
-  // getNativeElementRect,
-  // hideKeyboardByTappingDone,
   newThought,
   paste,
   press,
   refresh,
   selection,
   type,
-  // tapReturnKey,
-  // tapWithOffset,
   waitForAlert,
   waitForContextHasChildWithValue,
   waitForEditable,
-  // waitForElement,
-  // waitForElementNotExist,
   waitForFunction,
   waitForHiddenEditable,
   waitForState,
   waitForThoughtExistInDb,
 }
 
-const index = testDriver(helpers, {
-  setup,
-  teardown: async (page: Page) => {
-    await page.browserContext().close()
-  },
-})
+/** Setup up the Page instance for all helpers and returns an index of test helpers with the Page instance partially applied. Passes arguments to the setup function. */
+const index = <T extends any[]>(...setupArgs: T) => {
 
-async function pasteOverload(text: string): Promise<void>
-async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
-/** Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting. */
-async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> { /** */ }
+  const pageRef = {} as { current?: Page }
+  const index = partialWithRef(pageRef, helpers)
 
-const indexWithProperPaste = index as typeof index & {
-  paste: typeof pasteOverload,
+  beforeEach(async () => {
+    pageRef.current = await setup(...setupArgs)
+  })
+
+  afterEach(async () => {
+    await pageRef.current!.browserContext().close()
+  })
+
+  return index as typeof index & {
+    paste: typeof pasteOverload,
+  }
 }
 
-export default indexWithProperPaste
+export default index

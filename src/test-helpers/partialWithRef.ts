@@ -1,7 +1,4 @@
-interface Options<Device, SetupArgs extends any[] = any> {
-  setup?: (...args: SetupArgs) => Promise<Device>,
-  teardown?: (device: Device) => void,
-}
+type Ref<T> = { current?: T }
 
 /** An object with methods whose first arguments are the same. */
 type ObjectWithInstanceMethods<T = any, U = any>= {
@@ -21,7 +18,7 @@ type MethodMapTail<T extends { [Key in keyof T]: (first: any, ...args: any) => a
  *
  * @example
  *
- * const { click, press, type } = testDriver({ click, press, type })
+ * const { click, press, type } = partialWithRef(ref, { click, press, type })
  *
  * it('test', () => {
  * await press('Enter')
@@ -29,49 +26,26 @@ type MethodMapTail<T extends { [Key in keyof T]: (first: any, ...args: any) => a
  * })
  *
  **/
-const testDriver = <HelperObject extends ObjectWithInstanceMethods>(helpers: { [Key in keyof HelperObject]: HelperObject[Key] }, options: Options<Parameters<HelperObject[keyof HelperObject]>[0]> = {}) => {
-
-  type Device = Parameters<HelperObject[keyof HelperObject]>[0]
-  const ref = {} as { current: Device }
+const partialWithRef = <HelperObject extends ObjectWithInstanceMethods>(ref: Ref<Parameters<HelperObject[keyof HelperObject]>[0]>, helpers: { [Key in keyof HelperObject]: HelperObject[Key] }) => {
 
   // partially apply the driver to each of the helpers
   // get the current device at call-time
-  const helpersWithDriver = (Object.keys(helpers) as (keyof HelperObject)[])
+  return (Object.keys(helpers) as (keyof HelperObject)[])
     .reduce((accum, key) => ({
       ...accum,
-      [key]: (...args: Parameters<HelperObject[typeof key]>) => helpers[key](ref.current, ...args)
+      [key]: (...args: Parameters<HelperObject[typeof key]>) => helpers[key](ref.current!, ...args)
     }), {} as MethodMapTail<typeof helpers>)
-
-  /** Setup and teardown the ref. */
-  const setup = <SetupArgs extends any[]>(...args: SetupArgs) => {
-    if (options.setup) {
-      beforeEach(async () => {
-        ref.current = await options.setup?.(...args)
-      })
-    }
-    if (options.teardown) {
-      afterEach(async () => {
-        await options.teardown?.(ref.current)
-      })
-    }
-  }
-
-  return {
-    ...helpersWithDriver,
-    ref,
-    setup,
-  }
 }
 
 // TYPE TEST
 // type FakeDevice = { __type: 'FakeDevice' }
-// const helpers = testDriver({
+// const ref = {} as { current?: FakeDevice }
+// const helpers = partialWithRef(ref, {
 //   tapReturn: (device: FakeDevice) => 'a',
 //   type: (device: FakeDevice, text: string) => true,
 //   wait: (device: FakeDevice, element: number, options: { timeout?: number } = {}) => true,
 // })
 // const helpersExpected: {
-//   ref: { current: FakeDevice },
 //   tapReturn: () => string,
 //   type: (text: string) => boolean,
 //   wait: (element: number, options: { timeout?: number }) => boolean,
@@ -79,4 +53,4 @@ const testDriver = <HelperObject extends ObjectWithInstanceMethods>(helpers: { [
 // helpers.wait(1)
 // helpers.wait(1, { timeout: 1000 })
 
-export default testDriver
+export default partialWithRef

@@ -17,14 +17,11 @@ describe('all platforms', () => {
     press,
     refresh,
     selection,
-    setup,
     waitForEditable,
     waitForFunction,
     waitForState,
     waitForThoughtExistInDb,
-  } = helpers
-
-  setup()
+  } = helpers()
 
   it('caret should be at the beginning of thought after split on enter', async () => {
 
@@ -203,14 +200,11 @@ describe('mobile only', () => {
     paste,
     getEditingText,
     selection,
-    setup,
     waitForEditable,
     waitForHiddenEditable,
     waitForState,
     clickThought,
-  } = helpers
-
-  setup({ emulatedDevice: devices['iPhone 11'] })
+  } = helpers({ emulatedDevice: devices['iPhone 11'] })
 
   it('when subCategorizeOne, caret should be on new thought', async () => {
     const importText = `

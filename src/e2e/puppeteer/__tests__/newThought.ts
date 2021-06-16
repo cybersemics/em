@@ -9,12 +9,9 @@ jest.setTimeout(20000)
 const {
   newThought,
   press,
-  setup,
   type,
   waitForAlert,
-} = helpers
-
-setup()
+} = helpers()
 
 it('do not allow duplicate thought on edit', async () => {
   await newThought('ab')

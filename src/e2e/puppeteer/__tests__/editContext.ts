@@ -19,11 +19,8 @@ const {
   getEditable,
   paste,
   press,
-  setup,
   type,
-} = helpers
-
-setup()
+} = helpers()
 
 it.skip('edit context value', async () => {
 

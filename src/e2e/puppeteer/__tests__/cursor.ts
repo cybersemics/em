@@ -11,14 +11,11 @@ describe('cursor testing', () => {
     paste,
     getEditingText,
     refresh,
-    setup,
     waitForEditable,
     waitForThoughtExistInDb,
     waitForState,
     clickThought,
-  } = helpers
-
-  setup()
+  } = helpers()
 
   it('cursor on a home thought', async () => {
 
