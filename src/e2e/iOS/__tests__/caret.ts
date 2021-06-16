@@ -142,8 +142,9 @@ it('Tap empty content while keyboard up', async () => {
 
   // Wait until cursor change
   await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
-  const editingText = await getEditingText(mobileBrowser)
-  expect(editingText).toBe('b')
+  expect(await mobileBrowser.isKeyboardShown()).toBeTruthy()
+  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  expect(selectionTextContent).toBe('b')
 })
 
 it('Tap empty content while keyboard down', async () => {
@@ -164,6 +165,5 @@ it('Tap empty content while keyboard down', async () => {
 
   // Wait until cursor change
   await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
-  const editingText = await getEditingText(mobileBrowser)
-  expect(editingText).toBe('b')
+  expect(await mobileBrowser.isKeyboardShown()).toBeFalsy()
 })
