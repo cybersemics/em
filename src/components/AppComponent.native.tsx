@@ -1,13 +1,13 @@
 import React from 'react'
 import { SafeAreaView, Text, StyleSheet, ScrollView } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import Toolbar from '../../../src/components/Toolbar'
-import NavBar from '../../../src/components/NavBar'
+import Toolbar from './Toolbar'
+import NavBar from './NavBar'
 
 /**
- * App container.
+ * AppComponent container.
  */
-const App: React.FC = () => {
+const AppComponent: React.FC = () => {
   return (
     <>
       <StatusBar style='light' />
@@ -38,4 +38,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export { App }
+export default AppComponent
