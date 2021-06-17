@@ -1,15 +1,15 @@
 /* eslint-disable fp/no-get-set */
 import { Page } from 'puppeteer'
 
-/** Returns a proxy selection object with async getters for selection properties. */
-const selection = (page: Page) => {
+/** Returns a proxy getSelection object with async getters for selection properties. */
+const getSelection = (page: Page) => {
   return {
-    get focusOffset() {
+    get focusOffset(): Promise<number | undefined> {
       return page.evaluate(() => window.getSelection()?.focusOffset)
     },
     get focusNode() {
       return {
-        get textContent() {
+        get textContent(): Promise<string | undefined | null> {
           return page.evaluate(() => window.getSelection()?.focusNode?.textContent)
         }
       }
@@ -17,4 +17,4 @@ const selection = (page: Page) => {
   }
 }
 
-export default selection
+export default getSelection

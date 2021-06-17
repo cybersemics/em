@@ -9,11 +9,11 @@ import clickThought from './clickThought'
 import clickWithOffset from './clickWithOffset'
 import getEditable from './getEditable'
 import getEditingText from './getEditingText'
+import getSelection from './getSelection'
 import newThought from './newThought'
 import paste from './paste'
 import press from './press'
 import refresh from './refresh'
-import selection from './selection'
 import setup from './setup'
 import type from './type'
 import waitForAlert from './waitForAlert'
@@ -37,11 +37,11 @@ const helpers = {
   clickWithOffset,
   getEditable,
   getEditingText,
+  getSelection,
   newThought,
   paste,
   press,
   refresh,
-  selection,
   type,
   waitForAlert,
   waitForContextHasChildWithValue,

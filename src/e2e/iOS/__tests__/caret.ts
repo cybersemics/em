@@ -29,17 +29,13 @@ const {
 it('Enter edit mode', async () => {
   await gesture(gestures.newThought)
   await type('foo')
-
   await hideKeyboardByTappingDone()
-  const selection = await getSelection()
-  expect(selection?.focusOffset).toBe(0)
-  expect(selection?.focusNode).toBe(null)
 
   const editableNodeHandle = await waitForEditable('foo')
   await tapWithOffset(editableNodeHandle, { offset: 0 })
 
   await waitUntil(isKeyboardShown)
-  const selectionTextContent = (await getSelection())?.focusNode?.textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('foo')
 })
 
@@ -53,7 +49,7 @@ it('Preserve Editing: true', async () => {
   await tapWithOffset(editableNodeHandle, { offset: 0 })
 
   await waitUntil(async () => await getEditingText() === 'foo')
-  const selectionTextContent = (await getSelection())?.focusNode?.textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('foo')
 })
 
@@ -67,7 +63,7 @@ it('Preserve Editing: false', async () => {
   const editableNodeHandle = await waitForEditable('foo')
   await tapWithOffset(editableNodeHandle, { offset: 0 })
 
-  const selectionTextContent = (await getSelection())?.focusNode?.textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe(null)
 })
 
@@ -87,7 +83,7 @@ it('No uncle loop', async () => {
   await tapWithOffset(editableNodeHandle, { offset: 0 })
   await waitUntil(async () => await getEditingText() === 'c')
 
-  const selectionTextContent = (await getSelection())?.focusNode?.textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('c')
 })
 

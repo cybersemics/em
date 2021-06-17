@@ -36,7 +36,7 @@ it('split a thought when the caret is in the middle', async () => {
 
   await tapReturnKey()
 
-  const offset = (await getSelection())?.focusOffset
+  const offset = await getSelection()?.focusOffset
   expect(offset).toBe(0)
 
   const editingText = await getEditingText()

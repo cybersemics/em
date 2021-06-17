@@ -13,10 +13,10 @@ describe('all platforms', () => {
     clickBullet,
     clickThought,
     clickWithOffset,
+    getSelection,
     paste,
     press,
     refresh,
-    selection,
     waitForEditable,
     waitUntil,
     waitForState,
@@ -39,7 +39,7 @@ describe('all platforms', () => {
 
     await press('Enter')
 
-    const offset = await selection().focusOffset
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -55,7 +55,7 @@ describe('all platforms', () => {
     await clickWithOffset(editableNodeHandle, { offset: 10 })
 
     await clickBullet('Don\'t stay awake for too long')
-    const offset = await selection().focusOffset
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -72,7 +72,7 @@ describe('all platforms', () => {
     await waitUntil(() => window.getSelection()?.focusOffset === 5)
     await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left' })
 
-    const offset = await selection().focusOffset
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -89,7 +89,7 @@ describe('all platforms', () => {
     await waitUntil(() => window.getSelection()?.focusOffset === 5)
     await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
 
-    const offset = await selection().focusOffset
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -106,7 +106,7 @@ describe('all platforms', () => {
     await waitUntil(() => window.getSelection()?.focusOffset === 0)
     await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'right' })
 
-    const offset = await selection().focusOffset
+    const offset = await getSelection().focusOffset
     expect(offset).toBe('Richard Feynman'.length)
   })
 
@@ -121,7 +121,7 @@ describe('all platforms', () => {
     // const editableNodeHandle = await getEditable('Richard Feynman')
     // await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
 
-    // const offset = await selection().focusOffset
+    // const offset = await getSelection().focusOffset
     // expect(offset).toBe('Richard Feynman'.length)
   })
 
@@ -137,7 +137,7 @@ describe('all platforms', () => {
     // click on the given offset node of the editable using mouse click
     await clickWithOffset(editableNodeHandle, { offset: 7 })
 
-    const offset = await selection().focusOffset
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(7)
   })
 
@@ -157,10 +157,10 @@ describe('all platforms', () => {
     await press('ArrowDown')
 
     // the focus must be in Dogs/Labrador after cursor down
-    const textContext = await selection().focusNode?.textContent
+    const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('Labrador')
 
-    const offset = await selection().focusOffset
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -185,7 +185,7 @@ describe('all platforms', () => {
     await waitForEditable('b')
     await clickThought('b')
 
-    const textContext = await selection().focusNode?.textContent
+    const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('b')
   })
 
@@ -199,7 +199,7 @@ describe('mobile only', () => {
     clickWithOffset,
     paste,
     getEditingText,
-    selection,
+    getSelection,
     waitForEditable,
     waitForHiddenEditable,
     waitForState,
@@ -223,10 +223,10 @@ describe('mobile only', () => {
 
     await waitForState('editing', true)
 
-    const textContext = await selection().focusNode?.textContent
+    const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('')
 
-    const offset = await selection().focusOffset
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
 
   })
