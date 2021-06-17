@@ -24,7 +24,7 @@ const ModalFeedback = () => {
   const dispatch = useDispatch()
   const uid = useSelector((state: State) => state.user?.uid)
   const showModal = useSelector((state: State) => state.showModal)
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false)
 
   /** On text area change handler. */
   const onChange = (e: ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)
@@ -65,6 +65,10 @@ const ModalFeedback = () => {
       }
     }
   }, [feedback])
+
+  useEffect(() => {
+    console.log({ showModal })
+  }, [showModal])
 
   return <Modal
     animationType='slide'
