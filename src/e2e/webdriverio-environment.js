@@ -47,7 +47,7 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
       })
     }
     try {
-      this.startBrowserStackLocal()
+      await this.startBrowserStackLocal()
       // Note: this.global is not global to all test suites; it is sandboxed to a single test module, e.g. caret.ts
       this.global.browser = await wdio.remote(config)
     }
@@ -60,7 +60,7 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
 
   async teardown() {
     console.info(chalk.yellow('Teardown Test Environment for webdriverio.'))
-    this.stopBrowserStackLocal()
+    await this.stopBrowserStackLocal()
     if (this.global.browser) {
       await this.global.browser.deleteSession()
     }
@@ -72,23 +72,39 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
   }
 
   startBrowserStackLocal() {
-    if (config.capabilities['browserstack.localIdentifier'] && config.capabilities['browserstack.localIdentifier'].startsWith('local')) {
-      console.info('BrowserstackLocal: Starting')
+    if (!config.capabilities['browserstack.localIdentifier'] || !config.capabilities['browserstack.localIdentifier'].startsWith('local')) {
+      return
+    }
+
+    return new Promise((resolve, reject) => {
+      console.info(chalk.yellow('BrowserstackLocal: Starting'))
       this.bsLocal = new browserstack.Local()
       this.bsLocal.start({
         localIdentifier: config.capabilities['browserstack.localIdentifier'],
       }, e => {
-        console.info('BrowserStackLocal: Running')
+        if (e) {
+          reject(e)
+        }
+        else {
+          console.info(chalk.green('BrowserStackLocal: Running'))
+          resolve()
+        }
       })
-    }
+    })
+
   }
 
-  stopBrowserStackLocal() {
-    if (this.bsLocal && this.bsLocal.isRunning()) {
-      this.bsLocal.stop(() => {
-        console.info(chalk.green('BrowserStackLocal: Stop'))
-      })
+  async stopBrowserStackLocal() {
+    if (!this.bsLocal || !this.bsLocal.isRunning()) {
+      return
     }
+
+    return new Promise(resolve => {
+      this.bsLocal.stop(() => {
+        console.info(chalk.gray('BrowserStackLocal: Stop'))
+        resolve()
+      })
+    })
   }
 }
 
