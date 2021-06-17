@@ -28,9 +28,9 @@ const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Ind
 
   // if there is no cursor, decode the url so the cursor can be loaded
   // after loading the ranks will be inferred to update the cursor
-  const contextUrl = decodeContextUrl(state, window.location.pathname)
+  const contextUrl = ['__ROOT__'] // decodeContextUrl(state, window.location.pathname)
 
-  const contextCursor = cursor ? pathToContext(cursor) : contextUrl
+  const contextCursor = contextUrl // cursor ? pathToContext(cursor) : contextUrl
 
   return {
     ...expandedContexts,
@@ -104,7 +104,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
+    console.log({ pullQueue: 'pullQueue' })
+
     const hasMorePending = await dispatch(pull(extendedPullQueue))
+
+    console.log({ hasMorePending })
 
     const { user } = getState()
     if (!user && hasMorePending) {
@@ -168,6 +172,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
   const updatePullQueueDebounced = _.debounce(updatePullQueue, updatePullQueueDelay)
   const flushPullQueueThrottled = _.throttle(flushPullQueue, flushPullQueueDelay)
+  console.log({ updatePullQueueDebounced })
 
   return next => async action => {
 
