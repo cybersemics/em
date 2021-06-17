@@ -194,3 +194,44 @@ it('Swipe over cursor', async () => {
   const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
   expect(selectionTextContent).toBe(null)
 })
+
+it('Swipe over hidden thought', async () => {
+  const importText = `
+    - a
+      - x
+        - y
+    - b
+    - c
+    - d
+    - e
+    - f
+    - g
+    - h
+    - i`
+
+  await gesture(mobileBrowser, gestures.newThought)
+  await paste(mobileBrowser, [''], importText)
+  await waitForEditable(mobileBrowser, 'i')
+  await clickThought(mobileBrowser, 'a')
+  await clickThought(mobileBrowser, 'x')
+  await clickThought(mobileBrowser, 'y')
+
+  const editableNodeHandle = await waitForEditable(mobileBrowser, 'y')
+  const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandle)
+
+  await gesture(mobileBrowser, gestures.newThought,
+    {
+      xStart: elementRect.x + 5,
+      yStart: elementRect.y + elementRect.height + 10,
+    })
+
+  await editThought(mobileBrowser, 'this-is-new-thought')
+  const newThoughtEditable = await waitForEditable(mobileBrowser, 'this-is-new-thought')
+
+  // get first child of parent thought
+  const previousSibling = await mobileBrowser.execute((newThoughtEditable: any) => {
+    return newThoughtEditable.closest('ul.children').firstElementChild.getElementsByClassName('editable')[0].innerText
+  }, newThoughtEditable)
+
+  expect(previousSibling).toBe('y')
+})
