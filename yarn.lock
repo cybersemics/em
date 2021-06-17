@@ -6761,6 +6761,11 @@ devtools@7.7.3:
     ua-parser-js "^0.7.21"
     uuid "^8.0.0"
 
+dexie-observable@^3.0.0-beta.10:
+  version "3.0.0-beta.11"
+  resolved "https://registry.yarnpkg.com/dexie-observable/-/dexie-observable-3.0.0-beta.11.tgz#2ab39e81f0fd2a8a040e014279d07b4c13c9100f"
+  integrity sha512-mKwSYy54Kj73Njp3Rs+GoldLxyDJK1LF7niBkZxSenGAlBCXB5RxafH2Mg6Ay0B1pLlDYvJCWH31s88/Uz0WSg==
+
 dexie@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.0.3.tgz#ede63849dfe5f07e13e99bb72a040e8ac1d29dab"

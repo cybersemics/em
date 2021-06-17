@@ -24,8 +24,8 @@ export const getSessionId = () => {
 }
 
 /** Check if the current session is local/remote. */
-export const getSessionType = (): SessionType | undefined => {
-  const sessionId = getSessionId()
+export const getSessionType = (sessionId?: string): SessionType | undefined => {
+  if (!sessionId) return
   const localStorageSessions = window.localStorage.getItem(LOCALSTORAGE_SESSIONIDS)
   if (!localStorageSessions) return
   try {

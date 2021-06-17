@@ -23,7 +23,7 @@ const dbChangeHandlers = {
     /** Get thought merged with updates. */
     const getThoughtUpdates = async (id: string, updates: Index) => {
       const thought = await getThoughtById(id)
-      if (shouldIncludeUpdate({ ...thought || {}, updatedBy: updates?.updatedBy || thought?.updatedBy }, SessionType.LOCAL)) {
+      if (shouldIncludeUpdate({ ...thought || updates as Lexeme }, SessionType.LOCAL)) {
         const updatedThought = thought ? getUpdatedObject(thought, updates as Lexeme) : null
         return updatedThought ? { [key]: updatedThought } : {}
       }
@@ -32,7 +32,7 @@ const dbChangeHandlers = {
     /** Get context merged with updates. */
     const getContextUpdates = async (id: string, updates: Index) => {
       const context = await getContextById(id)
-      if (shouldIncludeUpdate({ ...context || {}, updatedBy: updates?.updatedBy || context?.updatedBy }, SessionType.LOCAL)) {
+      if (shouldIncludeUpdate({ ...context || updates as Parent }, SessionType.LOCAL)) {
         const updatedContext = context ? getUpdatedObject(context, updates as Parent) : null
         return updatedContext ? { [key]: filterInvalidUpdates(updatedContext) } : {}
       }

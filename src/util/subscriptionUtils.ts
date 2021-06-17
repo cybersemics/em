@@ -4,16 +4,39 @@ import { store } from '../store'
 import { getSessionId, getSessionType, SessionType } from './sessionManager'
 import { updateThoughts } from '../action-creators'
 
-import { Parent, Index, Lexeme } from '../types'
+import { Parent, Index, Lexeme, Context } from '../types'
+import { expandThoughts } from '../selectors'
+import { getVisibleContexts } from './getVisibleContexts'
+import { equalArrays } from './equalArrays'
 
+/** If given object is of parent type. */
+const isParent = (thoughtOrContext: Parent | Lexeme): thoughtOrContext is Parent => {
+  return (thoughtOrContext as Parent).context !== undefined
+}
+
+/** Checks if the context is visible. */
+const isContextVisible = (context: Context): boolean => {
+  const state = store.getState()
+  const expandedContexts = expandThoughts(state, state.cursor, {
+    returnContexts: true,
+  })
+
+  const visibleContexts = getVisibleContexts(state, expandedContexts)
+  return !!Object.keys(visibleContexts).find(c => equalArrays(visibleContexts[c], context))
+}
+
+const mergeAndApplyUpdatesDelay = 1000
 export interface Updates {
   thoughtIndexUpdates?: Index<Lexeme | null>,
   contextIndexUpdates?: Index<Parent | null>,
 }
 
 /** Filter self triggered updates. */
-export const shouldIncludeUpdate = (thoughtOrContext: any, updateType: SessionType) => {
-  return thoughtOrContext.updatedBy !== getSessionId() && getSessionType() === updateType
+export const shouldIncludeUpdate = (thoughtOrContext?: Parent | Lexeme, updateType?: SessionType) => {
+  if (!thoughtOrContext) return true
+  if (isParent(thoughtOrContext) && !isContextVisible(thoughtOrContext.context)) return false
+  else if ('contexts' in thoughtOrContext && !thoughtOrContext.contexts.find(c => isContextVisible(c.context))) return false
+  return thoughtOrContext.updatedBy !== getSessionId() && getSessionType(thoughtOrContext.updatedBy) === updateType
 }
 
 /** Get object merged with path updates. */
@@ -71,7 +94,7 @@ export const getMergeAndApplyUpdates = () => {
       }
       reset()
     }
-    mergeAndApplyUpdates = mergeUpdates(debounce(filterAndUpdateThoughts, 2000))
+    mergeAndApplyUpdates = mergeUpdates(debounce(filterAndUpdateThoughts, mergeAndApplyUpdatesDelay))
   }
 
   return mergeAndApplyUpdates

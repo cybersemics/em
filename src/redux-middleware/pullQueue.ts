@@ -1,13 +1,11 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { decodeContextUrl, expandThoughts, getAllChildrenByContextHash, getContexts, hasPushes, isContextViewActive } from '../selectors'
-import { equalArrays, hashContext, head, keyValueBy, pathToContext, unroot } from '../util'
+import { EM_TOKEN, HOME_TOKEN, NAVIGATION_ACTIONS } from '../constants'
+import { expandThoughts, getAllChildrenByContextHash, getContexts, hasPushes, isContextViewActive } from '../selectors'
+import { equalArrays, getVisibleContexts, hashContext, head, keyValueBy, unroot } from '../util'
 import { pull } from '../action-creators'
 import { State } from '../util/initialState'
 import { Child, Context, ContextHash, Index, ThoughtContext } from '../types'
-
-const ROOT_ENCODED = hashContext([HOME_TOKEN])
 
 /** Debounce visible thought checks to avoid checking on every action. */
 const updatePullQueueDelay = 10
@@ -20,27 +18,6 @@ const initialPullQueue = (): Index<Context> => ({
   [hashContext([EM_TOKEN])]: [EM_TOKEN],
   [hashContext([HOME_TOKEN])]: [HOME_TOKEN],
 })
-
-/** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
-const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Index<Context> => {
-
-  const { cursor } = state
-
-  // if there is no cursor, decode the url so the cursor can be loaded
-  // after loading the ranks will be inferred to update the cursor
-  const contextUrl = decodeContextUrl(state, window.location.pathname)
-  const contextCursor = cursor ? pathToContext(cursor) : contextUrl
-
-  return {
-    ...expandedContexts,
-    // generate the cursor and all its ancestors
-    // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
-    ...keyValueBy(contextCursor, (value, i) => {
-      const subcontext = contextCursor.slice(0, contextCursor.length - i)
-      return subcontext.length > 0 ? { [hashContext(subcontext)]: subcontext } : null
-    }),
-  }
-}
 
 /** Appends all visible contexts and their children to the pullQueue. */
 const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleContexts: Index<Context>) => {
@@ -64,7 +41,7 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
       ...keyValueBy(children, child => {
         const contextChild = showContexts ? (child as ThoughtContext).context : unroot([...context, (child as Child).value])
         const keyChild = hashContext(contextChild)
-        return contextIndex[keyChild] && contextIndex[keyChild].pending ? { [keyChild]: contextChild } : null
+        return { [keyChild]: contextChild }
       })
     }
   }, pullQueue)
@@ -103,8 +80,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
-    // hack to run pull only on boot | pullQueue middleware would probably not be needed after subscriptions
-    if (Object.keys(extendedPullQueue).length !== 0 && (ROOT_ENCODED in extendedPullQueue)) {
+    if (Object.keys(extendedPullQueue).length !== 0) {
       const hasMorePending = await dispatch(pull(extendedPullQueue))
 
       const { user } = getState()
@@ -185,7 +161,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     }
     // do not updatePullQueue if there are syncs queued or in progress
     // this gets checked again in updatePullQueue, but short circuit here if possible
-    else if (!hasPushes(getState())) {
+    else if (!hasPushes(getState()) && (NAVIGATION_ACTIONS[action.type] || action.type === 'loadLocalState')) {
       updatePullQueueDebounced()
     }
   }
