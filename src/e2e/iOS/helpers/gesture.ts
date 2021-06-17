@@ -5,13 +5,14 @@ export interface GestureOptions {
   xStart?: number,
   yStart?: number,
   segmentLength?: number,
+  waitMs?: number,
 }
 
-// Appium needs wait action before 'move' actions. If we don't add 'wait' actions none of the touch event is triggered.
-const WAIT_ACTION = { action: 'wait', ms: 50 } as TouchAction
-
 /** Apply gesture action for the given path. */
-const gesture = async (browser: Browser<'async'>, path: GesturePath, { xStart = 70, yStart = 300, segmentLength = 70 }: GestureOptions = {}) => {
+const gesture = async (browser: Browser<'async'>, path: GesturePath, { xStart = 70, yStart = 300, segmentLength = 70, waitMs = 50 }: GestureOptions = {}) => {
+
+  // Appium needs wait action before 'move' actions. If we don't add 'wait' actions none of the touch event is triggered.
+  const WAIT_ACTION = { action: 'wait', ms: waitMs } as TouchAction
 
   const moveActions = (Array.from(path) as Direction[]).reduce<TouchAction[]>((acc, cur) => {
     const { x: previousX, y: previousY } = acc.length > 0

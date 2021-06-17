@@ -14,6 +14,7 @@ import initSession from '../helpers/initSession'
 import paste from '../helpers/paste'
 import clickThought from '../helpers/clickThought'
 import { gestures } from '../../../test-helpers/constants'
+import getElementRectByScreen from '../helpers/getElementRectByScreen'
 
 const mobileBrowser = browser as unknown as Browser<'async'>
 jest.setTimeout(90000)
@@ -166,4 +167,30 @@ it('Tap empty content while keyboard down', async () => {
   // Wait until cursor change
   await mobileBrowser.waitUntil(async () => await getEditingText(mobileBrowser) === 'b')
   expect(await mobileBrowser.isKeyboardShown()).toBeFalsy()
+})
+
+it('Swipe over cursor', async () => {
+  await gesture(mobileBrowser, gestures.newThought)
+  await editThought(mobileBrowser, 'foo')
+  await hideKeyboardByTappingDone(mobileBrowser)
+
+  const editableNodeHandle = await waitForEditable(mobileBrowser, 'foo')
+  const elementRect = await getElementRectByScreen(mobileBrowser, editableNodeHandle)
+
+  // swipe right on thought
+  await gesture(mobileBrowser, ['r'],
+    {
+      xStart: elementRect.x + 5,
+      yStart: elementRect.y + (elementRect.height / 2),
+      segmentLength: elementRect.width,
+      waitMs: 60 // It looks like default 50ms is not enough for swiping.
+    })
+
+  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 0 })
+
+  const editingText = await getEditingText(mobileBrowser)
+  expect(editingText).toBe('foo')
+
+  const selectionTextContent = await mobileBrowser.execute(() => window.getSelection()?.focusNode?.textContent)
+  expect(selectionTextContent).toBe(null)
 })
