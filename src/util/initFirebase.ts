@@ -6,6 +6,7 @@ import { owner, initFirebaseSubscriptions } from '../util'
 import { State } from '../util/initialState'
 import { Snapshot, User } from '../types'
 import initAlgoliaSearch from '../search/algoliaSearch'
+import { getSubscriptionUtils } from './subscriptionUtils'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
@@ -18,7 +19,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
     firebase.auth().onAuthStateChanged((user: User) => {
       if (user) {
         store.dispatch(userAuthenticated(user))
-        initFirebaseSubscriptions(user.uid)
+        initFirebaseSubscriptions(user.uid, getSubscriptionUtils(store))
 
         const { applicationId, index } = ALGOLIA_CONFIG
         const hasRemoteConfig = applicationId && index

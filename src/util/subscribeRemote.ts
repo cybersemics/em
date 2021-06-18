@@ -3,9 +3,10 @@ import { Lexeme, Parent } from '../types'
 import { hashContext } from './hashContext'
 import { hashThought } from './hashThought'
 import { SessionType } from './sessionManager'
-import { getMergeAndApplyUpdates, shouldIncludeUpdate, Updates } from './subscriptionUtils'
+import { getSubscriptionUtils, Updates } from './subscriptionUtils'
 
-const firebaseChangeHandlers = {
+/** Get Firebase change Handlers. */
+const getFirebaseChangeHandlers = ({ shouldIncludeUpdate }: ReturnType<typeof getSubscriptionUtils>) => ({
   contextIndex: {
     [firebaseChangeTypes.create]: (change: Parent) => {
       return { contextIndexUpdates: change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashContext(change.context)]: change } : {} }
@@ -29,9 +30,9 @@ const firebaseChangeHandlers = {
     }
   },
 
-}
+})
 
 /** Setup firebase subscriptions to handle local sync. */
-export const initFirebaseSubscriptions = (userId: string) => {
-  subscribe<Updates>(userId, getMergeAndApplyUpdates(), firebaseChangeHandlers)
+export const initFirebaseSubscriptions = (userId: string, subscritpionUtils: ReturnType<typeof getSubscriptionUtils>) => {
+  subscribe<Updates>(userId, subscritpionUtils.getMergeAndApplyUpdates(), getFirebaseChangeHandlers(subscritpionUtils))
 }

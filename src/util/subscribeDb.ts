@@ -2,9 +2,10 @@ import { ICreateChange, IDeleteChange, IUpdateChange, IDatabaseChange } from 'de
 import { dbChangeType, dbTables, getContextById, getThoughtById, subscribe } from '../data-providers/dexie'
 import { Parent, Index, Lexeme } from '../types'
 import { SessionType } from './sessionManager'
-import { getContextLocal, getMergeAndApplyUpdates, getThoughtLocal, getUpdatedObject, shouldIncludeUpdate, Updates } from './subscriptionUtils'
+import { getSubscriptionUtils, Updates } from './subscriptionUtils'
 
-const dbChangeHandlers = {
+/** Get db change handlers. */
+const getDbChangeHandlers = ({ getContextLocal, getThoughtLocal, getUpdatedObject, shouldIncludeUpdate }: ReturnType<typeof getSubscriptionUtils>) => ({
   [dbChangeType.created]: (change: IDatabaseChange) => {
     const { table, key, obj } = change as ICreateChange
     return {
@@ -52,9 +53,9 @@ const dbChangeHandlers = {
       contextIndexUpdates: table === dbTables.contextIndex && oldObj && oldObj.id && shouldIncludeUpdate(oldObj, SessionType.LOCAL) && getContextLocal(key) ? { [key as string]: null } : {}
     }
   }
-}
+})
 
 /** Setup db(dexie) subscriptions to handle local sync. */
-export const initDbSubscription = () => {
-  subscribe<Updates>(getMergeAndApplyUpdates(), dbChangeHandlers)
+export const initDbSubscription = (subscriptionUtils: ReturnType<typeof getSubscriptionUtils>) => {
+  subscribe<Updates>(subscriptionUtils.getMergeAndApplyUpdates(), getDbChangeHandlers(subscriptionUtils))
 }
