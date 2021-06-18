@@ -1,20 +1,8 @@
-/* eslint-disable fp/no-get-set */
 import { Page } from 'puppeteer'
+import asBrowserEnvironment from './asBrowserEnvironment'
+import getSelectionWebdriver from '../../iOS/helpers/getSelection'
 
 /** Returns a proxy getSelection object with async getters for selection properties. */
-const getSelection = (page: Page) => {
-  return {
-    get focusOffset(): Promise<number | undefined> {
-      return page.evaluate(() => window.getSelection()?.focusOffset)
-    },
-    get focusNode() {
-      return {
-        get textContent(): Promise<string | undefined | null> {
-          return page.evaluate(() => window.getSelection()?.focusNode?.textContent)
-        }
-      }
-    },
-  }
-}
+const getSelection = (page: Page) => getSelectionWebdriver(asBrowserEnvironment(page))
 
 export default getSelection
