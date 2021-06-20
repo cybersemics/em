@@ -2,19 +2,19 @@
  * @jest-environment ./src/e2e/webdriverio-environment.js
  */
 
-import { Browser } from 'webdriverio'
-import getEditingText from '../helpers/getEditingText'
-import paste from '../helpers/paste'
-import waitForEditable from '../helpers/waitForEditable'
-import clickThought from '../helpers/clickThought'
-import tapWithOffset from '../helpers/tapWithOffset'
-import tapReturnKey from '../helpers/tapReturnKey'
-import initSession from '../helpers/initSession'
+import helpers from '../helpers'
 
 jest.setTimeout(90000)
-const mobileBrowser = browser as unknown as Browser<'async'>
 
-beforeEach(initSession())
+const {
+  clickThought,
+  getEditingText,
+  getSelection,
+  paste,
+  tapReturnKey,
+  tap,
+  waitForEditable,
+} = helpers()
 
 it('split a thought when the caret is in the middle', async () => {
   const importText = `
@@ -23,22 +23,22 @@ it('split a thought when the caret is in the middle', async () => {
   - insomnia
     - rest api`
 
-  await paste(mobileBrowser, importText)
+  await paste(importText)
 
-  await waitForEditable(mobileBrowser, 'puppeteer')
-  await clickThought(mobileBrowser, 'puppeteer')
+  await waitForEditable('puppeteer')
+  await clickThought('puppeteer')
 
-  await waitForEditable(mobileBrowser, 'web scraping')
-  await clickThought(mobileBrowser, 'web scraping')
+  await waitForEditable('web scraping')
+  await clickThought('web scraping')
 
-  const editableNodeHandle = await waitForEditable(mobileBrowser, 'web scraping')
-  await tapWithOffset(mobileBrowser, editableNodeHandle, { offset: 3 })
+  const editableNodeHandle = await waitForEditable('web scraping')
+  await tap(editableNodeHandle, { offset: 3 })
 
-  await tapReturnKey(mobileBrowser)
+  await tapReturnKey()
 
-  const offset = await mobileBrowser.execute(() => window.getSelection()?.focusOffset)
+  const offset = await getSelection()?.focusOffset
   expect(offset).toBe(0)
 
-  const editingText = await getEditingText(mobileBrowser)
+  const editingText = await getEditingText()
   expect(editingText).toBe('scraping')
 })

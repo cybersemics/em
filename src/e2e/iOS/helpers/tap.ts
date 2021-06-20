@@ -13,15 +13,15 @@ interface Options {
 }
 
 /**
- * Tap the given node with offset.
+ * Tap a node with an optional text offset or x,y offset.
  */
-const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: Element<'async'>, { horizontalTapLine = 'left', offset, x = 0, y = 0 }: Options) => {
+const tap = async (browser: Browser<'async'>, nodeHandle: Element<'async'>, { horizontalTapLine = 'left', offset, x = 0, y = 0 }: Options = {}) => {
   const boundingBox = await browser.getElementRect(nodeHandle.elementId)
   if (!boundingBox) throw new Error('Bouding box of editable not found.')
 
   /** Get cordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = async () => {
-    return await browser.execute(
+  const offsetCoordinates = () =>
+    browser.execute(
       function(ele, offset) {
 
         // Element<'async'> does not contain native properties like nodeName, textContent, etc
@@ -39,7 +39,6 @@ const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: Element<'asy
       },
       nodeHandle, offset
     )
-  }
 
   const coordinate = !offset ? {
     x: boundingBox.x + (
@@ -62,4 +61,4 @@ const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: Element<'asy
 
 }
 
-export default tapWithOffset
+export default tap

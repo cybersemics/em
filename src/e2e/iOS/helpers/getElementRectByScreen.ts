@@ -1,10 +1,10 @@
 import getNativeElementRect from './getNativeElementRect'
-import { Browser } from 'webdriverio'
+import { Browser, Element } from 'webdriverio'
 
 /**
  * Get element's rect by device screen.
  */
-const getElementRectByScreen = async (browser: Browser<'async'>, element: any) => {
+const getElementRectByScreen = async (browser: Browser<'async'>, element: Element<'async'>) => {
   const { x: safariContentX, y: safariContentY } = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="em"]')
   const elementRect = await browser.getElementRect(element.elementId)
   return {

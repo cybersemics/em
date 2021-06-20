@@ -2,11 +2,8 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 
-import paste from '../helpers/paste'
-import clickThought from '../helpers/clickThought'
-import getEditable from '../helpers/getEditable'
-import initPage from '../helpers/initPage'
-import { JSHandle, Page } from 'puppeteer'
+import helpers from '../helpers'
+import { JSHandle } from 'puppeteer'
 
 /** Gets the first subthought of an editable. */
 const getFirstSubthought = (editable: JSHandle) =>
@@ -14,16 +11,16 @@ const getFirstSubthought = (editable: JSHandle) =>
     el.parentElement?.parentElement?.nextElementSibling?.querySelector('.editable')
   )
 
-let page: Page
 jest.setTimeout(20000)
 
-beforeEach(async () => {
-  page = await initPage()
-})
-
-afterEach(async () => {
-  await page.browserContext().close()
-})
+const {
+  $,
+  clickThought,
+  getEditable,
+  paste,
+  press,
+  type,
+} = helpers()
 
 it.skip('edit context value', async () => {
 
@@ -33,19 +30,19 @@ it.skip('edit context value', async () => {
       - x
   - b
     - m`
-  await paste(page, importText)
+  await paste(importText)
 
-  await clickThought(page, 'b')
+  await clickThought('b')
 
   // click on b/m
-  const editableB = (await getEditable(page, 'b')).asElement()
+  const editableB = (await getEditable('b')).asElement()
   const editableBM = await getFirstSubthought(editableB!)
   const editableBMTextContent = await editableBM.getProperty('textContent')
   expect(await editableBMTextContent?.jsonValue()).toBe('m')
   await editableBM.asElement()!.click()
 
   // toggle context view
-  const toggleContextView = await page.$('#toggleContextView')
+  const toggleContextView = await $('#toggleContextView')
   await toggleContextView!.click()
 
   // click on b/m~/a
@@ -55,16 +52,16 @@ it.skip('edit context value', async () => {
   await editableBMA.asElement()!.click()
 
   // edit b/m~/a to "apple"
-  await page.keyboard.press('ArrowRight')
-  await page.keyboard.type('pple')
+  await press('ArrowRight')
+  await type('pple')
 
   // move to home
-  await page.keyboard.press('Escape', { delay: 10 })
-  await page.keyboard.press('Escape', { delay: 10 })
-  await page.keyboard.press('Escape', { delay: 10 })
+  await press('Escape', { delay: 10 })
+  await press('Escape', { delay: 10 })
+  await press('Escape', { delay: 10 })
 
   // assert that "a" in the root has changed to "apple"
-  const editableApple = (await getEditable(page, 'apple')).asElement()
+  const editableApple = (await getEditable('apple')).asElement()
   expect(editableApple).toBeTruthy()
 
 })

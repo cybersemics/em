@@ -1,30 +1,26 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
-import clickBullet from '../helpers/clickBullet'
-import clickWithOffset from '../helpers/clickWithOffset'
-import paste from '../helpers/paste'
-import waitForEditable from '../helpers/waitForEditable'
-import waitForState from '../helpers/waitForState'
-import { devices, Page } from 'puppeteer'
-import initPage from '../helpers/initPage'
-import clickThought from '../helpers/clickThought'
-import getEditingText from '../helpers/getEditingText'
-import waitForThoughtToExistInDb from '../helpers/waitForThoughtExistInDb'
-import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
+import { devices } from 'puppeteer'
+import helpers from '../helpers'
 
 jest.setTimeout(20000)
 
 describe('all platforms', () => {
-  let page: Page
 
-  beforeEach(async () => {
-    page = await initPage()
-  })
-
-  afterEach(async () => {
-    await page.browserContext().close()
-  })
+  const {
+    click,
+    clickBullet,
+    clickThought,
+    getSelection,
+    paste,
+    press,
+    refresh,
+    waitForEditable,
+    waitUntil,
+    waitForState,
+    waitForThoughtExistInDb,
+  } = helpers()
 
   it('caret should be at the beginning of thought after split on enter', async () => {
 
@@ -33,16 +29,16 @@ describe('all platforms', () => {
       - web scrapping
     - insomnia
       - rest api`
-    await paste(page, importText)
-    await clickThought(page, 'puppeteer')
-    await clickThought(page, 'web scrapping')
+    await paste(importText)
+    await clickThought('puppeteer')
+    await clickThought('web scrapping')
 
-    const editableNodeHandle = await waitForEditable(page, 'web scrapping')
-    await clickWithOffset(page, editableNodeHandle, { offset: 3 })
+    const editableNodeHandle = await waitForEditable('web scrapping')
+    await click(editableNodeHandle, { offset: 3 })
 
-    await page.keyboard.press('Enter')
+    await press('Enter')
 
-    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -52,13 +48,13 @@ describe('all platforms', () => {
     - Don't stay awake for too long
       - I don't wanna fall asleep`
 
-    await paste(page, importText)
+    await paste(importText)
 
-    const editableNodeHandle = await waitForEditable(page, 'I don\'t wanna fall asleep')
-    await clickWithOffset(page, editableNodeHandle, { offset: 10 })
+    const editableNodeHandle = await waitForEditable('I don\'t wanna fall asleep')
+    await click(editableNodeHandle, { offset: 10 })
 
-    await clickBullet(page, 'Don\'t stay awake for too long')
-    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    await clickBullet('Don\'t stay awake for too long')
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -67,15 +63,15 @@ describe('all platforms', () => {
     const importText = `
     - Purple Rain`
 
-    await paste(page, importText)
+    await paste(importText)
 
-    const editableNodeHandle = await waitForEditable(page, 'Purple Rain')
+    const editableNodeHandle = await waitForEditable('Purple Rain')
 
-    await clickWithOffset(page, editableNodeHandle, { offset: 5 })
-    await page.waitForFunction(() => window.getSelection()?.focusOffset === 5)
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { offset: 5 })
+    await waitUntil(() => window.getSelection()?.focusOffset === 5)
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
 
-    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -84,15 +80,15 @@ describe('all platforms', () => {
     const importText = `
     - Purple Rain`
 
-    await paste(page, importText)
+    await paste(importText)
 
-    const editableNodeHandle = await waitForEditable(page, 'Purple Rain')
+    const editableNodeHandle = await waitForEditable('Purple Rain')
 
-    await clickWithOffset(page, editableNodeHandle, { offset: 5 })
-    await page.waitForFunction(() => window.getSelection()?.focusOffset === 5)
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
+    await click(editableNodeHandle, { offset: 5 })
+    await waitUntil(() => window.getSelection()?.focusOffset === 5)
+    await click(editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
 
-    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -101,15 +97,15 @@ describe('all platforms', () => {
     const importText = `
     - Richard Feynman`
 
-    await paste(page, importText)
+    await paste(importText)
 
-    const editableNodeHandle = await waitForEditable(page, 'Richard Feynman')
+    const editableNodeHandle = await waitForEditable('Richard Feynman')
 
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
-    await page.waitForFunction(() => window.getSelection()?.focusOffset === 0)
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'right' })
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
+    await waitUntil(() => window.getSelection()?.focusOffset === 0)
+    await click(editableNodeHandle, { horizontalClickLine: 'right' })
 
-    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    const offset = await getSelection().focusOffset
     expect(offset).toBe('Richard Feynman'.length)
   })
 
@@ -118,13 +114,13 @@ describe('all platforms', () => {
     // const importText = `
     // - Richard Feynman`
 
-    // await page.keyboard.press('Enter')
-    // await paste(page, importText)
-    // await setCursor(page, ['Richard Feynman'], { offset: 0 })
-    // const editableNodeHandle = await getEditable(page, 'Richard Feynman')
-    // await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
+    // await press('Enter')
+    // await paste(importText)
+    // await setCursor(['Richard Feynman'], { offset: 0 })
+    // const editableNodeHandle = await getEditable('Richard Feynman')
+    // await click(editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
 
-    // const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    // const offset = await getSelection().focusOffset
     // expect(offset).toBe('Richard Feynman'.length)
   })
 
@@ -133,14 +129,14 @@ describe('all platforms', () => {
     const importText = `
     - Freddie Mercury`
 
-    await paste(page, importText)
+    await paste(importText)
 
-    const editableNodeHandle = await waitForEditable(page, 'Freddie Mercury')
+    const editableNodeHandle = await waitForEditable('Freddie Mercury')
 
     // click on the given offset node of the editable using mouse click
-    await clickWithOffset(page, editableNodeHandle, { offset: 7 })
+    await click(editableNodeHandle, { offset: 7 })
 
-    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(7)
   })
 
@@ -152,18 +148,18 @@ describe('all platforms', () => {
       - Labrador
       - Golden Retriever`
 
-    await paste(page, importText)
+    await paste(importText)
 
-    const editableNodeHandle = await waitForEditable(page, 'Husky')
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
+    const editableNodeHandle = await waitForEditable('Husky')
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
 
-    await page.keyboard.press('ArrowDown')
+    await press('ArrowDown')
 
     // the focus must be in Dogs/Labrador after cursor down
-    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
+    const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('Labrador')
 
-    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
@@ -173,59 +169,62 @@ describe('all platforms', () => {
     - a
     - b`
 
-    await paste(page, importText)
-    await clickThought(page, 'a')
+    await paste(importText)
+    await clickThought('a')
 
     // Set cursor to null
-    await page.click('#content')
+    await click('#content')
 
-    await waitForState(page, 'isPushing', false)
-    await waitForThoughtToExistInDb(page, 'a')
-    await waitForThoughtToExistInDb(page, 'b')
+    await waitForState('isPushing', false)
+    await waitForThoughtExistInDb('a')
+    await waitForThoughtExistInDb('b')
 
-    await page.evaluate(() => window.location.reload())
+    await refresh()
 
-    await waitForEditable(page, 'b')
-    await clickThought(page, 'b')
+    await waitForEditable('b')
+    await clickThought('b')
 
-    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
+    const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('b')
   })
 
 })
 
 describe('mobile only', () => {
-  let page: Page
 
-  beforeEach(async () => {
-    page = await initPage({ emulatedDevice: devices['iPhone 11'] })
-  })
-
-  afterEach(async () => {
-    await page.browserContext().close()
-  })
+  const {
+    click,
+    clickBullet,
+    paste,
+    getEditingText,
+    getSelection,
+    waitForEditable,
+    waitForHiddenEditable,
+    waitForState,
+    clickThought,
+  } = helpers({ emulatedDevice: devices['iPhone 11'] })
 
   it('when subCategorizeOne, caret should be on new thought', async () => {
     const importText = `
     - A
       - B`
 
-    await paste(page, importText)
+    await paste(importText)
 
-    const editableNodeHandle = await waitForEditable(page, 'B')
-    await clickWithOffset(page, editableNodeHandle, { horizontalClickLine: 'left' })
+    const editableNodeHandle = await waitForEditable('B')
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
 
     // to close keyboard
-    await clickBullet(page, 'B')
+    await clickBullet('B')
 
-    await page.click('#subcategorizeOne')
+    await click('#subcategorizeOne')
 
-    await waitForState(page, 'editing', true)
+    await waitForState('editing', true)
 
-    const textContext = await page.evaluate(() => window.getSelection()?.focusNode?.textContent)
+    const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('')
 
-    const offset = await page.evaluate(() => window.getSelection()?.focusOffset)
+    const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
 
   })
@@ -237,16 +236,16 @@ describe('mobile only', () => {
         -C
     - D`
 
-    await paste(page, importText)
-    await clickThought(page, 'A')
-    await clickThought(page, 'C')
+    await paste(importText)
+    await clickThought('A')
+    await clickThought('C')
 
-    await waitForHiddenEditable(page, 'D')
-    await clickThought(page, 'D')
+    await waitForHiddenEditable('D')
+    await clickThought('D')
 
-    await waitForEditable(page, 'A')
+    await waitForEditable('A')
 
-    const cursorText = await getEditingText(page)
+    const cursorText = await getEditingText()
     expect(cursorText).toBe('B')
   })
 })

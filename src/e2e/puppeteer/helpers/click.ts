@@ -12,11 +12,20 @@ interface Options {
 }
 
 /**
- * Click the given node with offset.
+ * Click a node with an optional text offset or x,y offset.
  */
-const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClickLine = 'left', offset, x = 0, y = 0 }: Options) => {
+const click = async (page: Page, nodeHandleOrSelector: JSHandle | string, { horizontalClickLine = 'left', offset, x = 0, y = 0 }: Options = {}) => {
 
-  const boundingBox = await nodeHandle.asElement()?.boundingBox()
+  // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click
+  if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y) {
+    return page.click(nodeHandleOrSelector)
+  }
+
+  // otherwise if nodeHandleOrSelector is a selector, fetch the node handle
+  const nodeHandle = typeof nodeHandleOrSelector === 'string'
+    ? (await page.$(nodeHandleOrSelector as string))!
+    : (nodeHandleOrSelector as JSHandle).asElement()!
+  const boundingBox = await nodeHandle.boundingBox()
 
   if (!boundingBox) throw new Error('Bouding box of editable not found.')
 
@@ -47,4 +56,4 @@ const clickEditable = async (page: Page, nodeHandle: JSHandle, { horizontalClick
   await page.mouse.click(coordinate.x + x, coordinate.y + y)
 }
 
-export default clickEditable
+export default click
