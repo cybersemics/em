@@ -3,6 +3,7 @@
  */
 
 import { gestures } from '../../../test-helpers/constants'
+import { Element } from 'webdriverio'
 import helpers from '../helpers'
 
 jest.setTimeout(90000)
@@ -229,10 +230,10 @@ it('Swipe over hidden thought', async () => {
   const newThoughtEditable = await waitForEditable('this-is-new-thought')
 
   // get first child of parent thought
-  const previousSibling = await ref().execute((newThoughtEditable: Element) => {
-    const editable = newThoughtEditable.closest('ul.children')?.firstElementChild?.getElementsByClassName('editable')[0] as HTMLElement
+  const previousSibling = await ref().execute((newThoughtEditable: Element<'async'>) => {
+    const editable = (newThoughtEditable as unknown as HTMLElement).closest('ul.children')?.firstElementChild?.getElementsByClassName('editable')[0] as HTMLElement
     return editable?.innerText
-  }, newThoughtEditable as unknown as Element)
+  }, newThoughtEditable)
 
   expect(previousSibling).toBe('y')
 })
