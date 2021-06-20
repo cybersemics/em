@@ -27,7 +27,8 @@ const gesture = async (browser: Browser<'async'>, path: GesturePath, { xStart = 
   const actions = [
     { action: 'press', x: xStart, y: yStart },
     ...moveActions,
-    { action: 'release' }
+    { action: 'release' },
+    WAIT_ACTION,
   ] as TouchAction[]
 
   // webdriverio has some problem about type for TouchAction[] that is why we add @ts-ignore
