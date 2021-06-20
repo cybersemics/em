@@ -328,3 +328,5 @@ export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 export const ALLOWED_ATTRIBUTES = {
   span: ['class', 'style']
 }
+
+export const EMPTY_SPACE = '  '
