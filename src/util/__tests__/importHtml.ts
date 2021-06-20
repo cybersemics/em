@@ -1,11 +1,11 @@
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { importHtml, mergeUpdates, removeHome } from '../../util'
 import { exportContext } from '../../selectors'
 import { initialState, State } from '../../util/initialState'
 import { SimplePath } from '../../types'
 
 /** Imports the given html and exports it as plaintext. */
-const importExport = (html: string) => {
+const importExport = (html: string, isHTML = true) => {
   const state = initialState()
   const {
     contextIndexUpdates: contextIndex,
@@ -19,35 +19,35 @@ const importExport = (html: string) => {
       thoughtIndex,
     }
   }
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], isHTML ? 'text/html' : 'text/plain')
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   return removeHome(exported)
 }
 
 it('simple', () => {
-  expect(importExport('test'))
+  expect(importExport('test', false))
     .toBe(`
 - test
 `)
 })
 
 it('simple li', () => {
-  expect(importExport('<li>test</li>'))
+  expect(importExport('<li>test</li>', false))
     .toBe(`
 - test
 `)
 })
 
 it('simple ul', () => {
-  expect(importExport('<ul><li>test</li></ul>'))
+  expect(importExport('<ul><li>test</li></ul>', false))
     .toBe(`
 - test
 `)
 })
 
 it('whitespace', () => {
-  expect(importExport('  test  '))
+  expect(importExport('  test  ', false))
     .toBe(`
 - test
 `)
@@ -57,7 +57,7 @@ it('multiple li\'s', () => {
   expect(importExport(`
 <li>one</li>
 <li>two</li>
-`))
+`, false))
     .toBe(`
 - one
 - two
@@ -65,7 +65,7 @@ it('multiple li\'s', () => {
 })
 
 it('items separated by <br>', () => {
-  expect(importExport('<p>a<br>b<br>c<br></p>'))
+  expect(importExport('<p>a<br>b<br>c<br></p>', false))
     .toBe(`
 - a
 - b
@@ -80,7 +80,7 @@ it('nested lines separated by <br>', () => {
     <li>a<br>b<br>c<br></li>
   </ul>
 </li>
-`))
+`, false))
     .toBe(`
 - x
   - a
@@ -95,7 +95,7 @@ it('nested li\'s', () => {
   <li>x</li>
   <li>y</li>
 </ul></li>
-`))
+`, false))
     .toBe(`
 - a
   - x
@@ -111,9 +111,9 @@ it('<i> with nested li\'s', () => {
     <li>y</li>
   </ul>
 </li>
-`))
+`, false))
     .toBe(`
-- <i>a</i>
+- a
   - x
   - y
 `)
@@ -127,7 +127,7 @@ it('<span> with nested li\'s', () => {
     <li>y</li>
   </ul>
 </li>
-`))
+`, false))
     .toBe(`
 - a
   - x
@@ -143,7 +143,7 @@ it('empty thought with nested li\'s', () => {
     <li>y</li>
   </ul>
 </li>
-`))
+`, false))
     .toBe(`
 - ${''/* prevent trim_trailing_whitespace */}
   - x
@@ -162,11 +162,11 @@ it('do not add empty parent thought when empty li node has no nested li\'s', () 
     </li>
   </ul>
 </li>
-`))
+`, false))
     .toBe(`
 - a
   - b
-  - <b>c</b>
+  - c
 `)
 })
 
@@ -182,7 +182,7 @@ it('multiple nested lists', () => {
     <li>d</li>
   </ul>
 </li>
-`))
+`, false))
     .toBe(`
 - a
   - b
@@ -192,14 +192,14 @@ it('multiple nested lists', () => {
 })
 
 it('strip wrapping tag', () => {
-  expect(importExport('<span>test</span>'))
+  expect(importExport('<span>test</span>', false))
     .toBe(`
 - test
 `)
 })
 
 it('strip inline tag', () => {
-  expect(importExport('a <span>b</span> c'))
+  expect(importExport('a <span>b</span> c', false))
     .toBe(`
 - a b c
 `)
@@ -211,7 +211,7 @@ it('strip inline tag in nested list', () => {
   <li>one <span>and</span> two</li>
   <li>y</li>
 </ul></li>
-`))
+`, false))
     .toBe(`
 - afterword
   - one and two
@@ -220,10 +220,15 @@ it('strip inline tag in nested list', () => {
 })
 
 it('preserve formatting tags', () => {
+  const expectedText = `<ul>
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
+    <ul>
+      <li><b>one</b> and <i>two</i></li>
+    </ul>
+  </li>
+</ul>`
   expect(importExport('<b>one</b> and <i>two</i>'))
-    .toBe(`
-- <b>one</b> and <i>two</i>
-`)
+    .toBe(expectedText)
 })
 
 it('WorkFlowy import with notes', () => {
@@ -242,7 +247,7 @@ z
       <li>d</li>
     </ul>
   </li>
-</ul>`))
+</ul>`, false))
     .toBe(`
 - z
   - a
@@ -290,7 +295,7 @@ it('blank thoughts with subthoughts', () => {
     </li>
   </ul>
 </li>
-`))
+`, false))
     .toBe(`
 - a
   - b

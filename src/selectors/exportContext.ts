@@ -12,6 +12,13 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
     : text
 }
 
+/** Strips out HTML tage when exporting as plain text. */
+const stripHTMLTag = (str: string) => {
+  const tmp = document.createElement('div')
+  tmp.innerHTML = str
+  return tmp.textContent || tmp.innerText || ''
+}
+
 interface Options {
   indent?: number,
   title?: string,
@@ -69,8 +76,11 @@ export const exportContext = (state: State, context: Context, format: MimeType =
     ? `${childrenPrefix}\n${childrenFiltered.map(exportChild).join('\n')}${childrenPostfix}${format === 'text/html' ? indent === 0 ? tab0 : tab1 : ''}`
     : ''
 
-  const text = `${tab0}${linePrefix}${head(context)}${exportedChildren && format === 'text/html' ? tab1 : ''}${exportedChildren}${linePostfix}`
+  let text = `${tab0}${linePrefix}${head(context)}${exportedChildren && format === 'text/html' ? tab1 : ''}${exportedChildren}${linePostfix}`
 
+  if (format === 'text/plain') {
+    text = stripHTMLTag(text)
+  }
   const output = indent === 0 && format === 'text/html'
     ? `<ul>\n  ${text}\n</ul>`
     : text
