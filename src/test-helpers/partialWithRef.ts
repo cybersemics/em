@@ -14,8 +14,6 @@ type MethodMapTail<T extends { [Key in keyof T]: (first: any, ...args: any) => a
   [Key in keyof T]: (...args: Tail<Parameters<T[Key]>>) => ReturnType<T[Key]>
 }
 
-type ObjectParam<T extends ObjectWithInstanceMethods> = Parameters<T[keyof T]>[0]
-
 /** Takes an object of instance methods and returns an object of the same methods with the current ref partially applied.
  *
  * @example
@@ -28,7 +26,7 @@ type ObjectParam<T extends ObjectWithInstanceMethods> = Parameters<T[keyof T]>[0
  * })
  *
  **/
-const partialWithRef = <T extends ObjectWithInstanceMethods>(ref: Ref<ObjectParam<T>>, helpers: { [Key in keyof T]: T[Key] }) => {
+const partialWithRef = <T extends ObjectWithInstanceMethods>(ref: Ref<Parameters<T[keyof T]>[0]>, helpers: { [Key in keyof T]: T[Key] }) => {
 
   const keys = Object.keys(helpers) as (keyof T)[]
 
