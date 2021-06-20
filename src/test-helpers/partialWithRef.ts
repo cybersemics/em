@@ -14,7 +14,7 @@ type MethodMapTail<T extends { [Key in keyof T]: (first: any, ...args: any) => a
   [Key in keyof T]: (...args: Tail<Parameters<T[Key]>>) => ReturnType<T[Key]>
 }
 
-/** Wraps a collection of driver-specific test helpers.
+/** Takes an object of instance methods and returns an object of the same methods with the current ref partially applied.
  *
  * @example
  *
@@ -26,15 +26,26 @@ type MethodMapTail<T extends { [Key in keyof T]: (first: any, ...args: any) => a
  * })
  *
  **/
-const partialWithRef = <HelperObject extends ObjectWithInstanceMethods>(ref: Ref<Parameters<HelperObject[keyof HelperObject]>[0]>, helpers: { [Key in keyof HelperObject]: HelperObject[Key] }) => {
+const partialWithRef = <T extends ObjectWithInstanceMethods>(ref: Ref<Parameters<T[keyof T]>[0]>, helpers: { [Key in keyof T]: T[Key] }) => {
+
+  const keys = Object.keys(helpers) as (keyof T)[]
+
+  if (keys.includes('ref')) {
+    console.warn('partialWithRef: "ref" key is reserved')
+  }
 
   // partially apply the driver to each of the helpers
   // get the current device at call-time
-  return (Object.keys(helpers) as (keyof HelperObject)[])
+  const functions = keys
     .reduce((accum, key) => ({
       ...accum,
-      [key]: (...args: Parameters<HelperObject[typeof key]>) => helpers[key](ref.current!, ...args)
+      [key]: (...args: Parameters<T[typeof key]>) => helpers[key](ref.current!, ...args)
     }), {} as MethodMapTail<typeof helpers>)
+
+  return {
+    ...functions,
+    ref: () => ref.current
+  }
 }
 
 // TYPE TEST

@@ -2,12 +2,10 @@
  * @jest-environment ./src/e2e/webdriverio-environment.js
  */
 
-import { Browser } from 'webdriverio'
 import { gestures } from '../../../test-helpers/constants'
 import helpers from '../helpers'
 
 jest.setTimeout(90000)
-const mobileBrowser = browser as unknown as Browser<'async'>
 
 const {
   clickThought,
@@ -20,6 +18,7 @@ const {
   hideKeyboardByTappingDone,
   isKeyboardShown,
   paste,
+  ref,
   type,
   tap,
   waitForEditable,
@@ -230,8 +229,9 @@ it('Swipe over hidden thought', async () => {
   const newThoughtEditable = await waitForEditable('this-is-new-thought')
 
   // get first child of parent thought
-  const previousSibling = await mobileBrowser.execute((newThoughtEditable: any) => {
-    return newThoughtEditable.closest('ul.children').firstElementChild.getElementsByClassName('editable')[0].innerText
+  const previousSibling = await ref().execute((newThoughtEditable: Element) => {
+    const editable = newThoughtEditable.closest('ul.children')?.firstElementChild?.getElementsByClassName('editable')[0] as HTMLElement
+    return editable?.innerText
   }, newThoughtEditable)
 
   expect(previousSibling).toBe('y')
