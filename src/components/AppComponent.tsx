@@ -4,11 +4,11 @@ import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import { isAndroid, isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
-import { inputHandlers } from '../shortcuts'
+import { inputHandlers, isGestureHint } from '../shortcuts'
 import { isDocumentEditable } from '../util'
 import { isTutorial, theme } from '../selectors'
 import { State } from '../util/initialState'
-import { updateSplitPosition } from '../action-creators'
+import { alert, updateSplitPosition } from '../action-creators'
 import { store } from '../store'
 
 // components
@@ -76,11 +76,18 @@ type Props = StateProps & DispatchProps
 /** Cancel gesture if there is an active text selection on active drag. */
 const shouldCancelGesture = () => !!window.getSelection()?.toString() || store.getState().dragInProgress
 
+/** Dismiss gesture hint that is shown by alert. */
+const handleGestureCancel = () => {
+  if (isGestureHint(store.getState())) {
+    store.dispatch(alert(null))
+  }
+}
+
 /**
- * Wrap an element in the MultiGesture componentt if the user has a touch screen.
+ * Wrap an element in the MultiGesture component if the user has a touch screen.
  */
 const MultiGestureIfTouch: FC = ({ children }) => isTouch
-  ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd} shouldCancelGesture={shouldCancelGesture}>{children}</MultiGesture>
+  ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd} shouldCancelGesture={shouldCancelGesture} onCancel={handleGestureCancel}>{children}</MultiGesture>
   : <>{children}</>
 
 /**

@@ -3,9 +3,6 @@ import React from 'react'
 import { noop } from 'lodash'
 import { Direction, GesturePath } from '../types'
 import { GestureResponderEvent } from 'react-native'
-import { store } from '../store'
-import { isGestureHint } from '../shortcuts'
-import { alert } from '../action-creators'
 
 // expects peer dependencies react-dom and react-native-web
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -27,6 +24,7 @@ interface MultiGestureProps {
   onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void,
   onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void,
   onStart?: () => void,
+  onCancel?: () => void,
   shouldCancelGesture?: () => boolean,
   scrollThreshold?: number,
   threshold?: number,
@@ -40,14 +38,7 @@ const gesture = (p1: Point, p2: Point, threshold: number) =>
   p1.x - p2.x > threshold ? 'l' :
   null
 
-/** Dismiss gesture hint that is shown by alert. */
-const dismissGestureHint = () => {
-  if (isGestureHint(store.getState())) {
-    store.dispatch(alert(null))
-  }
-}
-
-/** A component that h4andles touch gestures composed of sequential swipes. */
+/** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false;
   currentStart: Point | null = null;
@@ -91,6 +82,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
 
         if (this.abandon) {
+          if (this.props.onCancel) {
+            this.props.onCancel()
+          }
           return
         }
 
@@ -116,7 +110,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // because scrolling cannot be disabled after it has begin
         // effectively only allows sequences to start with left or right
         if (this.scrolling && Math.abs(this.scrollYStart! - window.scrollY) > this.props.scrollThreshold!) {
-          dismissGestureHint()
           this.sequence = ''
           this.abandon = true
           return
