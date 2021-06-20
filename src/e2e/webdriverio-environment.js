@@ -24,7 +24,6 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
   handleTestEvent(event, state) {
     if (event.name === 'test_fn_failure') {
       this.global.browser.executeScript(`browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed","reason": "Failed"}}`)
-      console.log(event, state)
     }
   }
 
