@@ -12,7 +12,6 @@ describe('all platforms', () => {
     click,
     clickBullet,
     clickThought,
-    clickWithOffset,
     getSelection,
     paste,
     press,
@@ -35,7 +34,7 @@ describe('all platforms', () => {
     await clickThought('web scrapping')
 
     const editableNodeHandle = await waitForEditable('web scrapping')
-    await clickWithOffset(editableNodeHandle, { offset: 3 })
+    await click(editableNodeHandle, { offset: 3 })
 
     await press('Enter')
 
@@ -52,7 +51,7 @@ describe('all platforms', () => {
     await paste(importText)
 
     const editableNodeHandle = await waitForEditable('I don\'t wanna fall asleep')
-    await clickWithOffset(editableNodeHandle, { offset: 10 })
+    await click(editableNodeHandle, { offset: 10 })
 
     await clickBullet('Don\'t stay awake for too long')
     const offset = await getSelection().focusOffset
@@ -68,9 +67,9 @@ describe('all platforms', () => {
 
     const editableNodeHandle = await waitForEditable('Purple Rain')
 
-    await clickWithOffset(editableNodeHandle, { offset: 5 })
+    await click(editableNodeHandle, { offset: 5 })
     await waitUntil(() => window.getSelection()?.focusOffset === 5)
-    await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
@@ -85,9 +84,9 @@ describe('all platforms', () => {
 
     const editableNodeHandle = await waitForEditable('Purple Rain')
 
-    await clickWithOffset(editableNodeHandle, { offset: 5 })
+    await click(editableNodeHandle, { offset: 5 })
     await waitUntil(() => window.getSelection()?.focusOffset === 5)
-    await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
+    await click(editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
@@ -102,9 +101,9 @@ describe('all platforms', () => {
 
     const editableNodeHandle = await waitForEditable('Richard Feynman')
 
-    await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
     await waitUntil(() => window.getSelection()?.focusOffset === 0)
-    await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'right' })
+    await click(editableNodeHandle, { horizontalClickLine: 'right' })
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe('Richard Feynman'.length)
@@ -119,7 +118,7 @@ describe('all platforms', () => {
     // await paste(importText)
     // await setCursor(['Richard Feynman'], { offset: 0 })
     // const editableNodeHandle = await getEditable('Richard Feynman')
-    // await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
+    // await click(editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
 
     // const offset = await getSelection().focusOffset
     // expect(offset).toBe('Richard Feynman'.length)
@@ -135,7 +134,7 @@ describe('all platforms', () => {
     const editableNodeHandle = await waitForEditable('Freddie Mercury')
 
     // click on the given offset node of the editable using mouse click
-    await clickWithOffset(editableNodeHandle, { offset: 7 })
+    await click(editableNodeHandle, { offset: 7 })
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(7)
@@ -152,7 +151,7 @@ describe('all platforms', () => {
     await paste(importText)
 
     const editableNodeHandle = await waitForEditable('Husky')
-    await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
 
     await press('ArrowDown')
 
@@ -196,7 +195,6 @@ describe('mobile only', () => {
   const {
     click,
     clickBullet,
-    clickWithOffset,
     paste,
     getEditingText,
     getSelection,
@@ -214,7 +212,7 @@ describe('mobile only', () => {
     await paste(importText)
 
     const editableNodeHandle = await waitForEditable('B')
-    await clickWithOffset(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
 
     // to close keyboard
     await clickBullet('B')

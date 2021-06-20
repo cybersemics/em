@@ -12,7 +12,7 @@ const {
   getSelection,
   paste,
   tapReturnKey,
-  tapWithOffset,
+  tap,
   waitForEditable,
 } = helpers()
 
@@ -32,7 +32,7 @@ it('split a thought when the caret is in the middle', async () => {
   await clickThought('web scraping')
 
   const editableNodeHandle = await waitForEditable('web scraping')
-  await tapWithOffset(editableNodeHandle, { offset: 3 })
+  await tap(editableNodeHandle, { offset: 3 })
 
   await tapReturnKey()
 

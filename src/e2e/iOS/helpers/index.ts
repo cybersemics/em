@@ -16,7 +16,7 @@ import hideKeyboardByTappingDone from './hideKeyboardByTappingDone'
 import paste from './paste'
 import getSelection from './getSelection'
 import tapReturnKey from './tapReturnKey'
-import tapWithOffset from './tapWithOffset'
+import tap from './tap'
 import type from './type'
 import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
@@ -42,7 +42,7 @@ const helpers = {
   isKeyboardShown,
   paste,
   tapReturnKey,
-  tapWithOffset,
+  tap,
   type,
   waitForEditable,
   waitForElement,

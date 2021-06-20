@@ -6,7 +6,6 @@ import $ from './$'
 import click from './click'
 import clickBullet from './clickBullet'
 import clickThought from './clickThought'
-import clickWithOffset from './clickWithOffset'
 import getEditable from './getEditable'
 import getEditingText from './getEditingText'
 import getSelection from './getSelection'
@@ -31,10 +30,9 @@ async function pasteOverload(pathUnranked: string | string[], text?: string): Pr
 
 const helpers = {
   $,
-  clickBullet,
   click,
+  clickBullet,
   clickThought,
-  clickWithOffset,
   getEditable,
   getEditingText,
   getSelection,
