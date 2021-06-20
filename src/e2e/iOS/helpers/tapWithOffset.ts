@@ -20,8 +20,8 @@ const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: Element<'asy
   if (!boundingBox) throw new Error('Bouding box of editable not found.')
 
   /** Get cordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = async () => {
-    return await browser.execute(
+  const offsetCoordinates = () =>
+    browser.execute(
       function(ele, offset) {
 
         // Element<'async'> does not contain native properties like nodeName, textContent, etc
@@ -39,7 +39,6 @@ const tapWithOffset = async (browser: Browser<'async'>, nodeHandle: Element<'asy
       },
       nodeHandle, offset
     )
-  }
 
   const coordinate = !offset ? {
     x: boundingBox.x + (

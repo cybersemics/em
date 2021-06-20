@@ -32,7 +32,7 @@ it('Enter edit mode', async () => {
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
-  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await tapWithOffset(editableNodeHandle)
 
   await waitUntil(isKeyboardShown)
   const selectionTextContent = await getSelection().focusNode?.textContent
@@ -46,7 +46,7 @@ it('Preserve Editing: true', async () => {
   await editThought('bar')
 
   const editableNodeHandle = await getEditable('foo')
-  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await tapWithOffset(editableNodeHandle)
 
   await waitUntil(async () => await getEditingText() === 'foo')
   const selectionTextContent = await getSelection().focusNode?.textContent
@@ -61,7 +61,7 @@ it('Preserve Editing: false', async () => {
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
-  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await tapWithOffset(editableNodeHandle)
 
   const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe(null)
@@ -80,7 +80,7 @@ it('No uncle loop', async () => {
   await editThought('d')
 
   const editableNodeHandle = await waitForEditable('c')
-  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await tapWithOffset(editableNodeHandle)
   await waitUntil(async () => await getEditingText() === 'c')
 
   const selectionTextContent = await getSelection().focusNode?.textContent
@@ -100,7 +100,7 @@ it('Tap hidden root thought', async () => {
   await clickThought('c')
 
   const editableNodeHandle = await waitForEditable('d')
-  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await tapWithOffset(editableNodeHandle)
   await waitUntil(async () => await getEditingText() !== 'c')
 
   const editingText = await getEditingText()
@@ -120,7 +120,7 @@ it('Tap hidden uncle', async () => {
   await clickThought('c')
 
   const editableNodeHandle = await waitForEditable('d')
-  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await tapWithOffset(editableNodeHandle)
 
   await waitUntil(async () => await getEditingText() === 'd')
   const selectionTextContent = await getSelection().focusNode?.textContent
@@ -187,7 +187,7 @@ it('Swipe over cursor', async () => {
       waitMs: 60 // It looks like default 50ms is not enough for swiping.
     })
 
-  await tapWithOffset(editableNodeHandle, { offset: 0 })
+  await tapWithOffset(editableNodeHandle)
 
   const editingText = await getEditingText()
   expect(editingText).toBe('foo')
