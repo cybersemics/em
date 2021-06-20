@@ -1,5 +1,5 @@
 import { Browser } from 'webdriverio'
-import { BrowserEnvironment } from '../../test-types'
+import { BrowserEnvironment } from '../../browserEnvironment/types'
 
 /** Converts a Page to a BrowserEnvironment. */
 const asBrowserEnvironment = (browser: Browser<'async'>): BrowserEnvironment => ({

@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer'
-import { BrowserEnvironment } from '../../test-types'
+import { BrowserEnvironment } from '../../browserEnvironment/types'
 
 /** Converts a Page to a BrowserEnvironment. */
 const asBrowserEnvironment = (page: Page): BrowserEnvironment => ({
