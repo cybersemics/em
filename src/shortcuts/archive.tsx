@@ -21,10 +21,10 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   if (cursor) {
     const context = pathToContext(cursor)
     if (isEM(cursor) || isRoot(cursor)) {
-      dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))
+      dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
     }
     else if (hasChild(state, context, '=readonly')) {
-      dispatch(error({ value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` }))
+      dispatch(error({ value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be archived.` }))
     }
     else if (noteFocus) {
       const editable = e.target ? editableOfNote(e.target as HTMLElement) : null
@@ -66,7 +66,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
   </g>
 </svg>
 
-const deleteShortcut: Shortcut = {
+const archiveShortcut: Shortcut = {
   id: 'delete',
   name: 'Archive',
   description: 'Archive the current thought.',
@@ -78,8 +78,8 @@ const deleteShortcut: Shortcut = {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const deleteAliases: Shortcut = {
-  id: 'deleteAliases',
+export const archiveAliases: Shortcut = {
+  id: 'archiveAliases',
   name: 'Archive',
   hideFromInstructions: true,
   gesture: [
@@ -89,4 +89,4 @@ export const deleteAliases: Shortcut = {
   exec
 }
 
-export default deleteShortcut
+export default archiveShortcut
