@@ -29,7 +29,6 @@ const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Ind
   const contextUrl = decodeContextUrl(state, window.location.pathname)
   const contextCursor = cursor ? pathToContext(cursor) : contextUrl
 
-  console.log({ contextUrl, contextCursor, cursor })
   return {
     ...expandedContexts,
     // generate the cursor and all its ancestors

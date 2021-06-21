@@ -1,15 +1,14 @@
-import React, { ChangeEvent, useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { submitFeedback } from '../util'
-import { ActionButton } from './ActionButton'
+// import { ActionButton } from './ActionButton'
 
-import { alert, modalComplete } from '../action-creators'
+import { alert } from '../action-creators'
 import { AxiosError } from 'axios'
 import { State } from '../util/initialState'
-import { StyleSheet, Text, Pressable, View, TextInput, NativeSyntheticEvent, TextInputChangeEventData } from 'react-native'
-import { MODALS } from '../constants'
+import { StyleSheet, TextInput, NativeSyntheticEvent, TextInputChangeEventData, View, Text, TouchableOpacity } from 'react-native'
+// import { MODALS } from '../constants'
 import Modal from './Modal'
-
 
 const FEEDBACK_MIN_LENGTH = 10
 
@@ -20,8 +19,8 @@ interface FeedbackResponse {
 /** Modal to leave feedback. */
 const ModalFeedback = () => {
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isDisabled, setIsDisabled] = useState(false)
+  const [, setIsSubmitting] = useState(false)
+  const [, setIsDisabled] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [submitAttempts, setSubmitAttempts] = useState(0)
   const dispatch = useDispatch()
@@ -57,15 +56,15 @@ const ModalFeedback = () => {
     }
   }
 
-  useEffect(() => {
-    if (submitAttempts > 0) {
-      const disable = feedback.length < FEEDBACK_MIN_LENGTH
-      setIsDisabled(disable)
-      if (!disable) {
-        dispatch(alert(null, { alertType: 'modalFeedback' }))
-      }
-    }
-  }, [feedback])
+  /*  useEffect(() => {
+     if (submitAttempts > 0) {
+       const disable = feedback.length < FEEDBACK_MIN_LENGTH
+       setIsDisabled(disable)
+       if (!disable) {
+         dispatch(alert(null, { alertType: 'modalFeedback' }))
+       }
+     }
+   }, [feedback]) */
 
   return <Modal
     id='feedback' title='Feedback'
@@ -77,6 +76,7 @@ const ModalFeedback = () => {
         style={{ borderWidth: StyleSheet.hairlineWidth, height: 250, borderRadius: 8, borderColor: '#fff', padding: 5, color: '#fff' }}
         multiline={true}
       />
+      <TouchableOpacity onPress={() => onSubmit}></TouchableOpacity>
     </View>
 
   </Modal>

@@ -1,43 +1,43 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
-import classNames from 'classnames'
+/* import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
 import { modalCleanup } from '../util'
-import { Connected } from '../types'
-import { modalRemindMeLater, modalComplete, tutorial } from '../action-creators'
+import { Connected } from '../types' */
+import { /* modalRemindMeLater */ modalComplete /* tutorial */ } from '../action-creators'
 import { useDispatch } from 'react-redux'
 import { Modal, Text, View, StyleSheet } from 'react-native'
 
-interface ModalActionHelpers {
+/* interface ModalActionHelpers {
   close: (duration?: number) => void,
-  remindMeLater: ModalComponent['remindMeLater'],
+ /*  remindMeLater: ModalComponent['remindMeLater'],
   complete: ModalComponent['complete'],
-}
+} */
 
 export interface ModalProps {
   hideModalActions?: boolean,
   id: string,
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
   show?: boolean,
-  actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode,
+  // actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode,
   title: string,
 }
 
 /** A generic modal component. */
-const ModalComponent: React.FC<ModalProps> = (props) => {
+const ModalComponent: React.FC<ModalProps> = props => {
 
   const dispatch = useDispatch()
 
   /** Dispatches a remindMeLater action for the modal. */
-  const remindMeLater = () => dispatch(modalRemindMeLater({ id: props.id }))
+  // const remindMeLater = () => dispatch(modalRemindMeLater({ id: props.id }))
 
   /** Dispatches a modalComplete action for the modal. */
   const complete = () => dispatch(modalComplete(props.id))
 
   /** Dispatches a tutorial action that ends the tutorial. */
-  const endTutorial = () => dispatch(tutorial({ value: false }))
+  // const endTutorial = () => dispatch(tutorial({ value: false }))
 
-  const { show, id, title, actions, children, onSubmit } = props
+  const { show, id, title, /* actions */ children /* onSubmit */ } = props
 
   if (!show) return null
 
