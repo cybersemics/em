@@ -3,10 +3,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import { submitFeedback } from '../util'
 import { ActionButton } from './ActionButton'
 
-import { alert } from '../action-creators'
+import { alert, modalComplete } from '../action-creators'
 import { AxiosError } from 'axios'
 import { State } from '../util/initialState'
-import { Alert, Modal, StyleSheet, Text, Pressable, View } from 'react-native'
+import { StyleSheet, Text, Pressable, View, TextInput, NativeSyntheticEvent, TextInputChangeEventData } from 'react-native'
+import { MODALS } from '../constants'
+import Modal from './Modal'
+
 
 const FEEDBACK_MIN_LENGTH = 10
 
@@ -23,11 +26,9 @@ const ModalFeedback = () => {
   const [submitAttempts, setSubmitAttempts] = useState(0)
   const dispatch = useDispatch()
   const uid = useSelector((state: State) => state.user?.uid)
-  const showModal = useSelector((state: State) => state.showModal)
-  const [modalVisible, setModalVisible] = useState(false)
 
   /** On text area change handler. */
-  const onChange = (e: ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)
+  const onChange = (e: NativeSyntheticEvent<TextInputChangeEventData>) => setFeedback(e.nativeEvent.text)
 
   /** Submit handler. */
   const onSubmit = async ({ remindMeLater }: { remindMeLater: () => void }) => {
@@ -66,74 +67,37 @@ const ModalFeedback = () => {
     }
   }, [feedback])
 
-  useEffect(() => {
-    console.log({ showModal })
-  }, [showModal])
-
   return <Modal
-    animationType='slide'
-    transparent={true}
-    visible={false}
-    onRequestClose={() => {
-      Alert.alert('Modal has been closed.')
-
-    }}
+    id='feedback' title='Feedback'
   >
-    <View style={styles.centeredView}>
-      <View style={styles.modalView}>
-        <Text style={styles.modalText}>Hello World!</Text>
-        <Pressable
-          style={[styles.button, styles.buttonClose]}
-        // onPress={() => setModalVisible(!modalVisible)}
-        >
-          <Text style={styles.textStyle}>Hide Modal</Text>
-        </Pressable>
-      </View>
+    <View style={styles.modalView}>
+      <Text style={styles.modalText}>Send us your bugs, hopes, and dreams!</Text>
+      <TextInput
+        onChange={onChange}
+        style={{ borderWidth: StyleSheet.hairlineWidth, height: 250, borderRadius: 8, borderColor: '#fff', padding: 5, color: '#fff' }}
+        multiline={true}
+      />
     </View>
+
   </Modal>
 }
 
 const styles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22
-  },
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
     borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5
+    justifyContent: 'center',
   },
   button: {
     borderRadius: 20,
     padding: 10,
     elevation: 2
   },
-  buttonOpen: {
-    backgroundColor: '#F194FF',
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
-  },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center'
-  },
   modalText: {
     marginBottom: 15,
-    textAlign: 'center'
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#fff'
   }
 })
 

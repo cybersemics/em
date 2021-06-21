@@ -239,9 +239,9 @@ export const initialState = (created: Timestamp = timestamp()) => {
   })
 
   // welcome modal
-  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
-    state.showModal = 'welcome'
-  }
+  /*  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
+     state.showModal = 'welcome'
+   } */
 
   return state
 }
