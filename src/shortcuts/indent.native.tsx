@@ -1,7 +1,7 @@
 import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 // import { isDocumentEditable } from '../util'
-// import { indent } from '../action-creators'
+import { indent } from '../action-creators'
 import Svg, { Path } from 'react-native-svg'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -19,8 +19,9 @@ const indentShortcut: Shortcut = {
   name: 'Indent',
   description: `Move the current thought "in" (to the end of the previous thought). No surprises here.`,
   svg: Icon,
+  exec: dispatch => dispatch(indent()),
   // canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  // exec: dispatch => dispatch(indent()),
+  //
 }
 
 export default indentShortcut

@@ -2,6 +2,7 @@ import React from 'react'
 // import { toggleContextView } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 import Svg, { Path } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <Svg width={size} height={size} fill={fill} viewBox='0 0 24 24'>
@@ -15,6 +16,7 @@ const toggleContextViewShortcut: Shortcut = {
   gesture: 'ru',
   keyboard: { key: 's', shift: true, alt: true },
   svg: Icon,
+  exec: () => Alert.alert('toggleContextViewShortcut')
   // exec: dispatch => dispatch(toggleContextView())
 }
 

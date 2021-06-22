@@ -7,6 +7,7 @@ import React from 'react'
 // import { HOME_TOKEN } from '../constants'
 import { Icon as IconType, Shortcut } from '../types'
 import Svg, { Path, G } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <Svg width={size} height={size} fill={fill} viewBox='0 0 110 115'>
@@ -21,6 +22,7 @@ const splitSentencesShortcut: Shortcut = {
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
   svg: Icon,
+  exec: () => Alert.alert('splitSentencesShortcut')
   /* canExecute: getState => getState().cursor !== null,
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()

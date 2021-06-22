@@ -8,6 +8,7 @@ import { Icon as IconType, Shortcut } from '../types'
 // import { useSelector } from 'react-redux'
 // import { State } from '../util/initialState'
 import Svg, { Polygon, Rect, G } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 /* Available sort preferences */
 // const sortPreferences = ['None', 'Alphabetical']
@@ -78,6 +79,7 @@ const toggleSortShortcut: Shortcut = {
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', meta: true, alt: true },
   svg: IconAsc,
+  exec: () => Alert.alert('toggleSortShortcut')
   // exec: (dispatch, getState) => {
   //   const state = getState()
   //   const { cursor } = state

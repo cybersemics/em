@@ -3,6 +3,7 @@ import React from 'react'
 // import subCategorizeAll from '../action-creators/subCategorizeAll'
 import { Icon as IconType, Shortcut } from '../types'
 import Svg, { Path } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <Svg width={size} height={size} fill={fill} viewBox='0 0 24 24'>
@@ -16,6 +17,7 @@ const subCategorizeAllShortcut: Shortcut = {
   gesture: 'ldr',
   keyboard: { key: 'a', meta: true, alt: true },
   svg: Icon,
+  exec: () => Alert.alert('subCategorizeAllShortcut')
   /*  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: subCategorizeAll() */
 }

@@ -5,6 +5,7 @@ import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 // import { HOME_PATH } from '../constants'
 import Svg, { Path, G } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size} height={size} viewBox='0 0 20 20' >
@@ -21,6 +22,7 @@ const pinOpenShortcut: Shortcut = {
   description: 'Pin and expand the current thought.',
   // keyboard: { key: 'p', meta: true, alt: true },
   svg: Icon,
+  exec: () => Alert.alert('pinOpenShortcut')
   // exec: (dispatch, getState) => {
   //   const state = getState()
   //   const { cursor } = state

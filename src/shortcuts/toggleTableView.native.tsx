@@ -5,6 +5,7 @@ import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 // import { HOME_PATH } from '../constants'
 import Svg, { Path, G } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size} height={size} viewBox='-2 -2 28 28'>
@@ -22,6 +23,7 @@ const toggleTableViewShortcut: Shortcut = {
   // gesture: 'rdlu',
   // keyboard: { key: 't', alt: true, shift: true },
   svg: Icon,
+  exec: () => Alert.alert('toggleTableViewShortcut')
   /* exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
