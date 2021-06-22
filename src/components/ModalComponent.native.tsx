@@ -54,16 +54,6 @@ const ModalComponent: React.FC<ModalProps> = props => {
       <View>{children}</View>
     </View>
 
-    {/* {!hideModalActions && actions &&
-      <div className='modal-actions'>
-        {actions({
-          remindMeLater: remindMeLater,
-          complete: complete,
-        })}
-      </div>
-    }
-    <a className='modal-close' onClick={() => complete()}><span>✕</span></a> */}
-
   </Modal>
 
 }

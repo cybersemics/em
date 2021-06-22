@@ -13,7 +13,7 @@ import {
 import SQLite from 'react-native-sqlite-2'
 import setGlobalVars from 'indexeddbshim/dist/indexeddbshim-noninvasive'
 
-const win = {}
+const win: { indexedDB?: any, IDBKeyRange?: any } = {}
 setGlobalVars(win, {
   checkOrigin: false,
   win: SQLite,
@@ -37,8 +37,8 @@ class EM extends Dexie {
 
   constructor() {
     super('Database', {
-      // indexedDB: win?.indexedDB,
-      // IDBKeyRange: win?.IDBKeyRange,
+      indexedDB: win?.indexedDB,
+      IDBKeyRange: win?.IDBKeyRange,
     })
 
     this.version(1).stores({
