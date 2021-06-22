@@ -170,6 +170,7 @@ const pushRemote = (thoughtIndexUpdates: Index<Lexeme | null> = {}, contextIndex
 
 /** Syncs updates to local database and Firebase. */
 const push = (thoughtIndexUpdates = {}, contextIndexUpdates = {}, { local = true, remote = true, updates = {}, recentlyEdited = {} } = {}): Thunk => (dispatch, getState) => {
+
   if (!local && !remote) {
     throw new Error('Invalid push. local and remote cannot both be false.')
   }

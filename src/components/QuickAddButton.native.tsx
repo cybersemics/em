@@ -1,9 +1,8 @@
 import React from 'react'
 import AddIcon from './AddIcon'
-// import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 // import { State } from '../util/initialState'
-// import classNames from 'classnames'
-// import { toggleAbsoluteContext } from '../action-creators'
+import { toggleAbsoluteContext } from '../action-creators'
 // import { isAbsolute } from '../util'
 import { TouchableOpacity } from 'react-native'
 
@@ -12,10 +11,10 @@ import { TouchableOpacity } from 'react-native'
  */
 const QuickAddButton: React.FC = () => {
   // const rootContext = useSelector((state: State) => state.rootContext)
-  // const dispatch = useDispatch()
+  const dispatch = useDispatch()
 
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={() => dispatch(toggleAbsoluteContext())}>
       <AddIcon size={30} />
     </TouchableOpacity>
   )
