@@ -1,7 +1,7 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, DROP_TARGET } from '../constants'
 import globals from '../globals'
-import { canShowModal } from '../selectors'
-import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
+// import { canShowModal } from '../selectors'
+import { hashContext, hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from '.'
 import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User, Shortcut } from '../types'
 import { editThoughtPayload } from '../reducers/editThought'
 
@@ -239,9 +239,9 @@ export const initialState = (created: Timestamp = timestamp()) => {
   })
 
   // welcome modal
-  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
-    state.showModal = 'welcome'
-  }
+  /*  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
+     state.showModal = 'welcome'
+   } */
 
   return state
 }
