@@ -6,6 +6,7 @@ import React from 'react'
 // import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 import Svg, { G, Path } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // let undoArchiveTimer: number // eslint-disable-line fp/no-let
 
@@ -74,9 +75,10 @@ const deleteShortcut: Shortcut = {
   description: 'Archive the current thought.',
   gesture: 'ldl',
   svg: Icon,
+  exec: () => Alert.alert('deleteShortcut')
   /* keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: () => isDocumentEditable(),
-  exec */
+canExecute: () => isDocumentEditable(), */
+
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
@@ -87,8 +89,8 @@ export const deleteAliases: Shortcut = {
   gesture: [
     'ldlr', 'ldldr', 'ldldlr', 'ldldldr', 'lrdl', 'lrdrl', 'lrdldr', 'lrdldlr', 'ldru', 'ldrlru', 'ldldlru', 'ldldrlru', 'ldllru', 'ldldrld', 'ldldldld', 'ldld', 'ldldld', 'ldlru', 'ldldru', 'ldldldru', 'lrdru', 'lrdlru', 'lrdldru', 'lrdldlru'
   ],
+  exec: () => Alert.alert('deleteShortcut')
   // canExecute: () => isDocumentEditable(),
-  // exec
 }
 
 export default deleteShortcut

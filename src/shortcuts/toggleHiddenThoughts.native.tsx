@@ -2,6 +2,7 @@ import React from 'react'
 // import { toggleHiddenThoughts } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 import Svg, { G, Path } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => <Svg width={size} height={size} fill={fill} viewBox='0 0 100 100'>
@@ -18,6 +19,7 @@ const toggleHiddenThoughtsShortcut: Shortcut = {
   description: 'Show or hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
   svg: Icon,
+  exec: () => Alert.alert('toggleHiddenThoughtsShortcut')
   // exec: dispatch => dispatch(toggleHiddenThoughts()),
   // isActive: getState => getState().showHiddenThoughts
 }

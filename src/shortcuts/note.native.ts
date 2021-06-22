@@ -1,5 +1,6 @@
 // import { isTouch } from '../browser'
 // import { attribute, hasChild, simplifyPath } from '../selectors'
+import { Alert } from 'react-native'
 import PencilIcon from '../components/icons/PencilIcon'
 // import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
 // import { setAttribute, setNoteFocus } from '../action-creators'
@@ -10,9 +11,8 @@ const noteShortcut: Shortcut = {
   id: 'note',
   name: 'Note',
   description: 'Add a small note beneath a thought.',
-  // keyboard: { key: 'n', alt: true, meta: true },
-  // gesture: 'rdlr',
   svg: PencilIcon,
+  exec: () => Alert.alert('noteShortcut')
   // canExecute: () => isDocumentEditable(),
   // exec: (dispatch, getState) => {
   //   const state = getState()

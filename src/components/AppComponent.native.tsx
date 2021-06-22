@@ -17,7 +17,7 @@ const AppComponent: React.FC = () => {
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.text}>hello World - em thoughts</Text>
         </ScrollView>
-        <NavBar />
+        <NavBar position='top' />
         <ModalFeedback />
       </SafeAreaView>
     </>

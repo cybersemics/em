@@ -5,6 +5,7 @@ import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 // import { HOME_PATH } from '../constants'
 import Svg, { Path, G } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => <Svg width={size} height={size} fill={fill} viewBox='0 0 100 100'>
@@ -24,6 +25,7 @@ const proseViewShortcut: Shortcut = {
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, alt: true },
   svg: Icon,
+  exec: () => Alert.alert('proseViewShortcut')
   /* canExecute: () => isDocumentEditable(),
   exec: (dispatch, getState) => {
     const state = getState()
