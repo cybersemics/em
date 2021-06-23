@@ -3,15 +3,9 @@ module.exports = {
     browser: true,
     es6: true,
     mocha: true,
-    jest: true
+    jest: true,
   },
-  extends: [
-    'standard',
-    'react-app',
-    'plugin:react/recommended',
-    'plugin:import/typescript',
-    'raine'
-  ],
+  extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'raine', 'prettier'],
   ignorePatterns: 'scripts',
   overrides: [
     {
@@ -19,16 +13,16 @@ module.exports = {
       env: {
         browser: true,
         es6: true,
-        node: true
+        node: true,
       },
       extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/eslint-recommended',
-        'plugin:@typescript-eslint/recommended'
+        'plugin:@typescript-eslint/recommended',
       ],
       globals: {
         Atomics: 'readonly',
-        SharedArrayBuffer: 'readonly'
+        SharedArrayBuffer: 'readonly',
       },
       plugins: ['@typescript-eslint'],
       rules: {
@@ -38,37 +32,29 @@ module.exports = {
         'no-extra-parens': 0,
         'no-unused-vars': 0,
         'no-use-before-define': 0,
-        '@typescript-eslint/member-delimiter-style': [2,
+        '@typescript-eslint/member-delimiter-style': [
+          2,
           {
             multiline: {
-              delimiter: 'comma'
+              delimiter: 'none',
             },
-            singleline: {
-              delimiter: 'comma'
-            }
-          }
+          },
         ],
         '@typescript-eslint/no-explicit-any': 0,
-        '@typescript-eslint/no-extra-parens': [2,
-          'all',
-          {
-            nestedBinaryExpressions: false
-          }
-        ],
+
         '@typescript-eslint/no-non-null-assertion': 0,
         '@typescript-eslint/no-use-before-define': 2,
         '@typescript-eslint/no-unused-vars': 2,
         '@typescript-eslint/explicit-function-return-type': 0,
         '@typescript-eslint/explicit-module-boundary-types': 0,
-        '@typescript-eslint/array-type': [2,
+        '@typescript-eslint/array-type': [
+          2,
           {
-            'array-type': 'array'
-          }
+            'array-type': 'array',
+          },
         ],
         // jsx
-        'jsx-quotes': [2,
-          'prefer-single'
-        ]
+        'jsx-quotes': [2, 'prefer-single'],
       },
       settings: { react: { version: 'detect' } },
       overrides: [
@@ -80,63 +66,59 @@ module.exports = {
             ecmaVersion: 2018,
             sourceType: 'module',
             project: './tsconfig.json',
-          }
+          },
         },
         {
           files: ['./src/e2e/**/*.ts'],
           rules: {
-            'jsdoc/check-tag-names': 0
-          }
-        }
-      ]
-    }
+            'jsdoc/check-tag-names': 0,
+          },
+        },
+      ],
+    },
   ],
   // to be removed later
   globals: {
     Atomics: 'readonly',
-    SharedArrayBuffer: 'readonly'
+    SharedArrayBuffer: 'readonly',
   },
-  plugins: [
-    'export-default-identifier',
-    'fp',
-    'jsdoc',
-    'react'
-  ],
+  plugins: ['export-default-identifier', 'fp', 'jsdoc', 'react'],
   settings: {
     react: {
-      version: 'detect'
-    }
+      version: 'detect',
+    },
   },
   rules: {
-
     // export-default-identifier
-    'export-default-identifier/export-default-identifier': [2,
+    'export-default-identifier/export-default-identifier': [
+      2,
       {
-        types: ['Identifier', 'CallExpression', 'FunctionDeclaration']
-      }
+        types: ['Identifier', 'CallExpression', 'FunctionDeclaration'],
+      },
     ],
 
     // jsdoc
-    'jsdoc/check-tag-names': [2,
+    'jsdoc/check-tag-names': [
+      2,
       {
-        definedTags: ['packageDocumentation']
-      }
+        definedTags: ['packageDocumentation'],
+      },
     ],
-    'jsdoc/require-description-complete-sentence': [2,
+    'jsdoc/require-description-complete-sentence': [
+      2,
       {
-        abbreviations: ['e.g.', 'i.e.']
-      }
+        abbreviations: ['e.g.', 'i.e.'],
+      },
     ],
-    'jsdoc/require-jsdoc': [2,
+    'jsdoc/require-jsdoc': [
+      2,
       {
-        contexts: [
-          'VariableDeclarator > ArrowFunctionExpression'
-        ],
+        contexts: ['VariableDeclarator > ArrowFunctionExpression'],
         require: {
           ClassDeclaration: true,
-          ClassExpression: true
-        }
-      }
+          ClassExpression: true,
+        },
+      },
     ],
 
     // jsx-a11y
@@ -145,17 +127,20 @@ module.exports = {
     // react
     'react/jsx-curly-spacing': 2,
     'react/jsx-equals-spacing': 2,
-    'react/jsx-tag-spacing': [2,
+    'react/jsx-tag-spacing': [
+      2,
       {
-        beforeSelfClosing: 'allow'
-      }
+        beforeSelfClosing: 'allow',
+      },
     ],
     'react/no-children-prop': 0,
     'react/no-unescaped-entities': 0,
     'react/prop-types': 0,
 
     // react-hooks
-    'react-hooks/exhaustive-deps': 0
+    'react-hooks/exhaustive-deps': 0,
 
-  }
+    // prettier
+    quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: false }],
+  },
 }
