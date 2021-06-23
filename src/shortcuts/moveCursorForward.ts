@@ -5,22 +5,22 @@ import { Dispatch } from 'react'
 import { Shortcut } from '../types'
 
 interface CursorDown {
-  type: 'cursorDown',
+  type: 'cursorDown'
 }
 
 interface NewThought {
-  type: 'newThought',
-  insertNewSubthought: boolean,
+  type: 'newThought'
+  insertNewSubthought: boolean
 }
 
 interface Indent {
-  type: 'indent',
+  type: 'indent'
 }
 
 const moveCursorForward: Shortcut = {
   id: 'moveCursorForward',
   name: 'Move Cursor Forward',
-  description: `Move the current thought to the end of the previous thought or to next column in table view.`,
+  description: 'Move the current thought to the end of the previous thought or to next column in table view.',
   keyboard: { key: Key.Tab },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {

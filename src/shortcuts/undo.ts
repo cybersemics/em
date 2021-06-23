@@ -4,7 +4,7 @@ import { Shortcut } from '../types'
 import { isUndoEnabled } from '../util/isUndoEnabled'
 
 interface UndoAction {
-  type: 'undoAction',
+  type: 'undoAction'
 }
 
 const undoShortcut: Shortcut = {

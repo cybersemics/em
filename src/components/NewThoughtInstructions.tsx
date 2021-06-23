@@ -10,8 +10,8 @@ import { State } from '../util/initialState'
 import { GesturePath } from '../types'
 
 interface NewThoughtInstructionsProps {
-  childrenLength: number,
-  isTutorial: boolean,
+  childrenLength: number
+  isTutorial: boolean
 }
 
 // assert the search shortcut at load time

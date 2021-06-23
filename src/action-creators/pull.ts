@@ -11,7 +11,7 @@ const BUFFER_DEPTH = 2
 const ROOT_ENCODED = hashContext([HOME_TOKEN])
 
 export interface PullOptions {
-  maxDepth?: number,
+  maxDepth?: number
 }
 
 /** Iterate through an async iterable and invoke a callback on each yield. */

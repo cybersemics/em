@@ -21,10 +21,10 @@ type errorCode = keyof typeof firebaseErrorsIndex
 type SubmitAction = (closeModal: () => void, email: string, password?: string) => Promise<void>
 
 interface InputProps {
-  type: 'email' | 'password',
-  placeholder: string,
-  onBlur: (e: ChangeEvent<HTMLInputElement>) => void,
-  value: string,
+  type: 'email' | 'password'
+  placeholder: string
+  onBlur: (e: ChangeEvent<HTMLInputElement>) => void
+  value: string
 }
 /**
  *
@@ -43,9 +43,9 @@ const Input:FC<InputProps> = ({ type, placeholder, value, onBlur }) => {
 }
 
 interface Mode {
-  name: string,
-  modalKey: string,
-  modalTitle: string,
+  name: string
+  modalKey: string
+  modalTitle: string
 }
 
 const modes: Index<Mode> = {

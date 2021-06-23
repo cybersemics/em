@@ -3,8 +3,8 @@ import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
 interface Payload {
-  value: boolean,
-  simplePath?: SimplePath,
+  value: boolean
+  simplePath?: SimplePath
 }
 
 /** Reducer for highlighting a bullet on click and hold. */

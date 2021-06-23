@@ -59,56 +59,56 @@ import {
  **********************************************************************/
 
 export interface ThoughtContainerProps {
-  allowSingleContext?: boolean,
-  childrenForced?: Child[],
-  contextBinding?: Path,
-  path: Path,
-  count?: number,
-  cursor?: Path | null,
-  depth?: number,
-  env?: Index<Context>,
-  expandedContextThought?: Path,
-  hideBullet?: boolean,
-  isDeepHovering?: boolean,
-  isPublishChild?: boolean,
-  isCursorGrandparent?: boolean,
-  isCursorParent?: boolean,
-  isDraggable?: boolean,
-  isDragging?: boolean,
-  isEditing?: boolean,
-  isEditingPath?: boolean,
-  isExpanded?: boolean,
-  isHovering?: boolean,
-  isParentHovering?: boolean,
-  prevChild?: Child | ThoughtContext,
-  publish?: boolean,
-  rank: number,
-  showContexts?: boolean,
-  style?: React.CSSProperties,
-  thought?: Lexeme,
-  simplePath: SimplePath,
-  simplePathLive?: SimplePath,
-  view?: string | null,
+  allowSingleContext?: boolean
+  childrenForced?: Child[]
+  contextBinding?: Path
+  path: Path
+  count?: number
+  cursor?: Path | null
+  depth?: number
+  env?: Index<Context>
+  expandedContextThought?: Path
+  hideBullet?: boolean
+  isDeepHovering?: boolean
+  isPublishChild?: boolean
+  isCursorGrandparent?: boolean
+  isCursorParent?: boolean
+  isDraggable?: boolean
+  isDragging?: boolean
+  isEditing?: boolean
+  isEditingPath?: boolean
+  isExpanded?: boolean
+  isHovering?: boolean
+  isParentHovering?: boolean
+  prevChild?: Child | ThoughtContext
+  publish?: boolean
+  rank: number
+  showContexts?: boolean
+  style?: React.CSSProperties
+  thought?: Lexeme
+  simplePath: SimplePath
+  simplePathLive?: SimplePath
+  view?: string | null
 }
 
 export interface ThoughtProps {
-  cursorOffset?: number | null,
-  env?: Index<Context>,
-  hideBullet?: boolean,
-  homeContext?: boolean,
-  isDraggable?: boolean,
-  isDragging?: boolean,
-  isPublishChild?: boolean,
-  isEditing?: boolean,
-  isLeaf?: boolean,
-  path: Path,
-  publish?: boolean,
-  rank: number,
-  showContextBreadcrumbs?: boolean,
-  showContexts?: boolean,
-  style?: React.CSSProperties,
-  simplePath: SimplePath,
-  view?: string | null,
+  cursorOffset?: number | null
+  env?: Index<Context>
+  hideBullet?: boolean
+  homeContext?: boolean
+  isDraggable?: boolean
+  isDragging?: boolean
+  isPublishChild?: boolean
+  isEditing?: boolean
+  isLeaf?: boolean
+  path: Path
+  publish?: boolean
+  rank: number
+  showContextBreadcrumbs?: boolean
+  showContexts?: boolean
+  style?: React.CSSProperties
+  simplePath: SimplePath
+  view?: string | null
 }
 
 export type ConnectedThoughtProps = ThoughtProps &

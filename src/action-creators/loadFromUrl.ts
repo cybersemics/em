@@ -5,7 +5,7 @@ import { decodeThoughtsUrl, getAllChildren } from '../selectors'
 import { Thunk } from '../types'
 
 interface Options {
-  skipRoot?: boolean,
+  skipRoot?: boolean
 }
 
 /**

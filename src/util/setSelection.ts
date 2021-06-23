@@ -1,6 +1,6 @@
 type SelectionOptionsType = {
-  offset?: number,
-  end?: boolean,
+  offset?: number
+  end?: boolean
 }
 
 /** Set the selection at the desired offset on the given node. Inserts empty text node when element has no children.

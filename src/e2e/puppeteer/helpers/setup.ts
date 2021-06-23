@@ -2,10 +2,10 @@ import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 import { Browser, Device, Page } from 'puppeteer'
 
 export interface InitPageOptions {
-  puppeteerBrowser?: Browser,
-  url?: string,
-  skipTutorial?: boolean,
-  emulatedDevice?: Device,
+  puppeteerBrowser?: Browser
+  url?: string
+  skipTutorial?: boolean
+  emulatedDevice?: Device
 }
 
 /**

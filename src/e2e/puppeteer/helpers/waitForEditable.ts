@@ -1,7 +1,7 @@
 import { Page } from 'puppeteer'
 
 interface Options {
-  timeout?: number,
+  timeout?: number
 }
 
 /**

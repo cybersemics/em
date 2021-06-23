@@ -11,7 +11,7 @@ const regexIgnoredPrefixes = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 
 const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX, '').trim()
 
 /** Remove ignored prefixes from comparator inputs. */
-const removeIgnoredPrefixes = (str: string) => str.replace(regexIgnoredPrefixes, `$2`)
+const removeIgnoredPrefixes = (str: string) => str.replace(regexIgnoredPrefixes, '$2')
 
 /** Make comparator inputs reasonable.  */
 const makeReasonable = (str: string) => {

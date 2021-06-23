@@ -39,19 +39,19 @@ class EM extends Dexie {
 }
 
 export interface Helper {
-  id: string,
-  value?: string,
-  contexts?: Context[],
-  cursor?: string | null,
-  created?: Timestamp,
-  lastUpdated?: Timestamp,
-  recentlyEdited?: Index,
+  id: string
+  value?: string
+  contexts?: Context[]
+  cursor?: string | null
+  created?: Timestamp
+  lastUpdated?: Timestamp
+  recentlyEdited?: Index
 }
 
 export interface Log {
-  created: Timestamp,
-  message: string,
-  stack?: any,
+  created: Timestamp
+  message: string
+  stack?: any
 }
 
 const db = new Dexie('EM') as EM
@@ -217,7 +217,7 @@ export const fullTextSearch = async (value: string) => {
 }
 
 /** Logs a message. */
-export const log = async ({ message, stack }: { message: string, stack: any }) =>
+export const log = async ({ message, stack }: { message: string; stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
 
 export default initDB

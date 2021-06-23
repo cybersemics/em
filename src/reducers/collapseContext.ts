@@ -7,8 +7,8 @@ import deleteThought from './deleteThought'
 import { Path } from '../types'
 
 interface Options {
-  deleteCursor?: boolean,
-  at?: Path | null,
+  deleteCursor?: boolean
+  at?: Path | null
 }
 
 /** Collapses the active thought. */

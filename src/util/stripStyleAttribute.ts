@@ -1,6 +1,6 @@
 interface StyleProperty {
-  name: string,
-  value: string,
+  name: string
+  value: string
 }
 
 const blackColors = ['#000000', '#000', 'rgb(0,0,0)', 'rgba(0,0,0,1)', 'black']

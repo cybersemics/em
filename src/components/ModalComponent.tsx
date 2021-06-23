@@ -7,26 +7,26 @@ import { Connected } from '../types'
 import { modalRemindMeLater, modalComplete, tutorial } from '../action-creators'
 
 interface ModalActionHelpers {
-  close: (duration?: number) => void,
-  remindMeLater: ModalComponent['remindMeLater'],
-  complete: ModalComponent['complete'],
+  close: (duration?: number) => void
+  remindMeLater: ModalComponent['remindMeLater']
+  complete: ModalComponent['complete']
 }
 
 export interface ModalProps {
-  arrow?: string,
-  center?: boolean,
-  children?: React.ReactNode,
-  className?: string,
-  hideModalActions?: boolean,
-  id: string,
-  onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
-  opaque?: boolean,
-  positionAtCursor?: boolean,
-  show?: boolean,
-  style?: React.CSSProperties,
-  actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode,
-  title: string,
-  top?: number,
+  arrow?: string
+  center?: boolean
+  children?: React.ReactNode
+  className?: string
+  hideModalActions?: boolean
+  id: string
+  onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
+  opaque?: boolean
+  positionAtCursor?: boolean
+  show?: boolean
+  style?: React.CSSProperties
+  actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
+  title: string
+  top?: number
 }
 
 /** Retrieves the { x, y } coordinates of the selection range. */
@@ -40,10 +40,9 @@ const getSelectionCoordinates = () => {
 
 /** A generic modal component. */
 class ModalComponent extends React.Component<Connected<ModalProps>> {
-
-  animateAndClose: ((duration?: number) => void) | null = null;
-  escapeListener: ((e: KeyboardEvent) => void) | null = null;
-  ref: React.RefObject<HTMLDivElement>;
+  animateAndClose: ((duration?: number) => void) | null = null
+  escapeListener: ((e: KeyboardEvent) => void) | null = null
+  ref: React.RefObject<HTMLDivElement>
 
   constructor(props: Connected<ModalProps>) {
     super(props)
@@ -51,10 +50,8 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   }
 
   componentDidMount() {
-
     // add a global escape listener
     if (this.props.show) {
-
       /**
        * A handler that closes the modal when the escape key is pressed.
        */
@@ -101,7 +98,21 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   endTutorial = () => this.props.dispatch(tutorial({ value: false }))
 
   render() {
-    const { show, id, title, arrow, center, opaque, className, style, actions, positionAtCursor, hideModalActions, top, children } = this.props
+    const {
+      show,
+      id,
+      title,
+      arrow,
+      center,
+      opaque,
+      className,
+      style,
+      actions,
+      positionAtCursor,
+      hideModalActions,
+      top,
+      children,
+    } = this.props
 
     if (!show) return null
 
@@ -115,35 +126,60 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
     // /** Dispatches a tutorial action that ends the tutorial. */
     // const endTutorial = () => dispatch(tutorial({ value: false }))
 
-    return <div ref={this.ref} style={Object.assign({}, style, top ? { top: 55 } : null, positionAtCursor ? {
-      top: cursorCoords.y,
-      left: cursorCoords.x
-    } : null)} className={className + ' ' + classNames({
-      modal: true,
-      animate: true,
-      [`modal-${id}`]: true,
-      center,
-      opaque
-    })}>
-      {id !== 'welcome' ? <a className='upper-right popup-close-x text-small' onClick={this.remindMeLater}>✕</a> : null}
-      <div className={classNames({
-        'modal-content': true,
-        ...arrow ? { [arrow]: arrow } : null
-      })}>
-        {title ? <h1 className='modal-title'>{title}</h1> : null}
-        <div className='modal-text'>{children}</div>
-        {!hideModalActions && actions &&
-          <div className='modal-actions'>
-            {actions({
-              close: this.close,
-              remindMeLater: this.remindMeLater,
-              complete: this.complete,
-            })}
-          </div>
+    return (
+      <div
+        ref={this.ref}
+        style={Object.assign(
+          {},
+          style,
+          top ? { top: 55 } : null,
+          positionAtCursor
+            ? {
+                top: cursorCoords.y,
+                left: cursorCoords.x,
+              }
+            : null,
+        )}
+        className={
+          className +
+          ' ' +
+          classNames({
+            modal: true,
+            animate: true,
+            [`modal-${id}`]: true,
+            center,
+            opaque,
+          })
         }
-        <a className='modal-close' onClick={() => this.close()}><span>✕</span></a>
+      >
+        {id !== 'welcome' ? (
+          <a className='upper-right popup-close-x text-small' onClick={this.remindMeLater}>
+            ✕
+          </a>
+        ) : null}
+        <div
+          className={classNames({
+            'modal-content': true,
+            ...(arrow ? { [arrow]: arrow } : null),
+          })}
+        >
+          {title ? <h1 className='modal-title'>{title}</h1> : null}
+          <div className='modal-text'>{children}</div>
+          {!hideModalActions && actions && (
+            <div className='modal-actions'>
+              {actions({
+                close: this.close,
+                remindMeLater: this.remindMeLater,
+                complete: this.complete,
+              })}
+            </div>
+          )}
+          <a className='modal-close' onClick={() => this.close()}>
+            <span>✕</span>
+          </a>
+        </div>
       </div>
-    </div>
+    )
   }
 }
 

@@ -2,13 +2,13 @@ import { JSHandle, Page } from 'puppeteer'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should the mouse be clicked
-  horizontalClickLine?: 'left' | 'right',
+  horizontalClickLine?: 'left' | 'right'
   // Specify specific node on editable to click on. Overrides horizontalClickLine
-  offset?: number,
+  offset?: number
   // Number of pixels of x offset to add to the click coordinates
-  x?: number,
+  x?: number
   // Number of pixels of y offset to add to the click coordinates
-  y?: number,
+  y?: number
 }
 
 /**

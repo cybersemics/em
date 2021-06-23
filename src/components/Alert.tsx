@@ -41,7 +41,7 @@ const AlertWithTransition = ({ alert, close }: AlertComponentProps) => {
 }
 
 /** The alert component itself. Separate so that a key property can be used to force a reset of useSwipeToDismissProps. */
-const AlertComponent = ({ alert, onClose }: { alert: NonNullable<Alert>, onClose: () => void }) => {
+const AlertComponent = ({ alert, onClose }: { alert: NonNullable<Alert>; onClose: () => void }) => {
 
   const useSwipeToDismissProps = useSwipeToDismiss({ onDismiss: onClose })
 

@@ -4,12 +4,12 @@ import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
 import { ExportOption } from '../types'
 
 interface DropDownMenuProps {
-  dark?: boolean,
-  isOpen?: boolean,
-  onSelect?: (option: ExportOption) => void,
-  options: ExportOption[],
-  selected?: ExportOption,
-  style?: CSSProperties,
+  dark?: boolean
+  isOpen?: boolean
+  onSelect?: (option: ExportOption) => void
+  options: ExportOption[]
+  selected?: ExportOption
+  style?: CSSProperties
 }
 
 /** A custom drop down menu. */

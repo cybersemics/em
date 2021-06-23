@@ -29,8 +29,8 @@ export const getRemoteSearch = (remoteDataProvider: DataProvider) => {
 }
 
 interface AlgoliaConfig {
-  applicationId: string,
-  index: string,
+  applicationId: string
+  index: string
 }
 
 /**

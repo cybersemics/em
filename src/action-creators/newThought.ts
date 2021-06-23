@@ -29,13 +29,13 @@ const newThought = ({
   preventSplit,
   value = ''
 }: {
-  at?: Path,
-  insertBefore?: boolean,
-  insertNewSubthought?: boolean,
-  splitResult?: SplitResult | null,
-  preventSetCursor?: boolean,
-  preventSplit?: boolean,
-  value?: string,
+  at?: Path
+  insertBefore?: boolean
+  insertNewSubthought?: boolean
+  splitResult?: SplitResult | null
+  preventSetCursor?: boolean
+  preventSplit?: boolean
+  value?: string
 }): Thunk => (dispatch, getState) => {
   const state = getState()
   const { cursor, editingValue } = state

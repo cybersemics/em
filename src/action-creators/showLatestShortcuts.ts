@@ -3,7 +3,7 @@ import { Shortcut, Thunk } from '../types'
 import { LATEST_SHORTCUT_DIAGRAM_DURATION, LATEST_SHORTCUT_LIMIT } from '../constants'
 
 interface Options {
-  clear?: number,
+  clear?: number
 }
 
 let timeoutId: number | null = null

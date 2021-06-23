@@ -9,44 +9,47 @@ import { GestureResponderEvent } from 'react-native'
 const { PanResponder, View } = require('react-native')
 
 interface Point {
-  x: number,
-  y: number,
+  x: number
+  y: number
 }
 
 interface GestureState {
-  dx: number,
-  dy: number,
-  moveX: number,
-  moveY: number,
+  dx: number
+  dy: number
+  moveX: number
+  moveY: number
 }
 
 interface MultiGestureProps {
-  onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void,
-  onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void,
-  onStart?: () => void,
-  shouldCancelGesture?: () => boolean,
-  scrollThreshold?: number,
-  threshold?: number,
+  onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void
+  onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void
+  onStart?: () => void
+  shouldCancelGesture?: () => boolean
+  scrollThreshold?: number
+  threshold?: number
 }
 
 /** Returns u, d, l, r, or null. */
 const gesture = (p1: Point, p2: Point, threshold: number) =>
-  p2.y - p1.y > threshold ? 'd' :
-  p1.y - p2.y > threshold ? 'u' :
-  p2.x - p1.x > threshold ? 'r' :
-  p1.x - p2.x > threshold ? 'l' :
-  null
+  p2.y - p1.y > threshold
+    ? 'd'
+    : p1.y - p2.y > threshold
+    ? 'u'
+    : p2.x - p1.x > threshold
+    ? 'r'
+    : p1.x - p2.x > threshold
+    ? 'l'
+    : null
 
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
-
-  abandon = false;
-  currentStart: Point | null = null;
-  scrollYStart: number | null = null;
-  disableScroll = false;
-  panResponder: { panHandlers: unknown };
-  scrolling = false;
-  sequence: GesturePath = '';
+  abandon = false
+  currentStart: Point | null = null
+  scrollYStart: number | null = null
+  disableScroll = false
+  panResponder: { panHandlers: unknown }
+  scrolling = false
+  sequence: GesturePath = ''
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -54,11 +57,15 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.reset()
 
     // allow enabling/disabling scroll with this.disableScroll
-    document.body.addEventListener('touchmove', e => {
-      if (this.disableScroll) {
-        e.preventDefault()
-      }
-    }, { passive: false })
+    document.body.addEventListener(
+      'touchmove',
+      (e) => {
+        if (this.disableScroll) {
+          e.preventDefault()
+        }
+      },
+      { passive: false },
+    )
 
     document.addEventListener('visibilitychange', () => {
       this.reset()
@@ -69,7 +76,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     })
 
     this.panResponder = PanResponder.create({
-
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: thought it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
@@ -80,7 +86,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // onPanResponderGrant: (e, gestureState) => {},
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
-
         if (this.abandon) {
           return
         }
@@ -94,7 +99,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.scrolling = false
           this.currentStart = {
             x: gestureState.moveX,
-            y: gestureState.moveY
+            y: gestureState.moveY,
           }
           this.scrollYStart = window.scrollY
           if (this.props.onStart) {
@@ -112,16 +117,20 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           return
         }
 
-        const g = gesture(this.currentStart, {
-          x: gestureState.moveX,
-          y: gestureState.moveY
-        }, this.props.threshold!)
+        const g = gesture(
+          this.currentStart,
+          {
+            x: gestureState.moveX,
+            y: gestureState.moveY,
+          },
+          this.props.threshold!,
+        )
 
         if (g) {
           this.disableScroll = true
           this.currentStart = {
             x: gestureState.moveX,
-            y: gestureState.moveY
+            y: gestureState.moveY,
           }
 
           if (g !== this.sequence[this.sequence.length - 1]) {
@@ -158,7 +167,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   }
 
   static defaultProps: MultiGestureProps = {
-
     // the distance threshold for a single gesture
     threshold: 12,
 
@@ -173,7 +181,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     onGesture: noop,
 
     // fired when all gestures have completed
-    onEnd: noop
+    onEnd: noop,
   }
 }
 

@@ -6,13 +6,13 @@ import { Context, Index, Path, Timestamp } from '../types'
 import { isEM } from './isEM'
 
 export interface Leaf {
-  leaf: true,
-  lastUpdated: Timestamp,
-  path: Path,
+  leaf: true
+  lastUpdated: Timestamp
+  path: Path
 }
 
 export type Tree = {
-  [index: string]: Tree | Leaf,
+  [index: string]: Tree | Leaf
 }
 
 /** Encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase). */
@@ -28,7 +28,7 @@ const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendant
  * @param context Array of string representing path (encoded).
  * @returns Common Subcontext.
  */
-const findTreeDeepestSubcontext = (tree: Tree, context: Context, index = 0): { node: Tree, path: Context } => {
+const findTreeDeepestSubcontext = (tree: Tree, context: Context, index = 0): { node: Tree; path: Context } => {
   if (context.length === 0 && index === 0) return { node: tree, path: [] }
   const node = (tree as Index<Tree>)[context[index]]
   return node
@@ -46,7 +46,7 @@ const shouldHide = (context: Context) => isRoot(context) || isEM(context) || con
  * @param startingPath Context of the node whose descendants needs to be returned (encoded).
  * @returns Array of descendant object.
  */
-export const findTreeDescendants = (tree: Tree, { startingPath, showHiddenThoughts }: {startingPath?: Context, showHiddenThoughts?: boolean}): Leaf[] => {
+export const findTreeDescendants = (tree: Tree, { startingPath, showHiddenThoughts }: {startingPath?: Context; showHiddenThoughts?: boolean}): Leaf[] => {
   const node = startingPath && startingPath.length > 0
     ? _.get(tree, startingPath)
     : tree
@@ -66,7 +66,7 @@ export const findTreeDescendants = (tree: Tree, { startingPath, showHiddenThough
  * @param [minChildren=2] Mininum no of children.
  * @returns Closest ancestor node with multiple children.
  */
-const findClosestSharedAncestor = (tree: Tree, context: Context, minChildren = 2, index = 0, closestAncestor: { node: Tree | null, path: Context } = { node: null, path: [] }): { node: Tree | null, path: Context } => {
+const findClosestSharedAncestor = (tree: Tree, context: Context, minChildren = 2, index = 0, closestAncestor: { node: Tree | null; path: Context } = { node: null, path: [] }): { node: Tree | null; path: Context } => {
   const node = (tree as Index<Tree>)[context[index]]
   return node
     ? findClosestSharedAncestor(

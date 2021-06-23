@@ -48,7 +48,7 @@ export const migrate = state => {
     accum[murmurHash3.x64.hash128(key)] = value
   }, {})
 
-  console.info(`Deleting old contextIndex from localStorage...`)
+  console.info('Deleting old contextIndex from localStorage...')
 
   return Promise.resolve({
     thoughtIndexUpdates,

@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 import { Context } from '../types'
 
 /** Toggles the given attribute. */
-const toggleAttribute = (state: State, { context, key, value }: { context: Context, key: string, value: string }) => {
+const toggleAttribute = (state: State, { context, key, value }: { context: Context; key: string; value: string }) => {
 
   if (!context) return state
 

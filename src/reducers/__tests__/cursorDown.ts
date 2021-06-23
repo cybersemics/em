@@ -178,7 +178,7 @@ describe('context view', () => {
       .toMatchObject([{ value: 'a', rank: 0 }, { value: 'n', rank: 1 }])
   })
 
-  it(`move cursor to context's first child, if present`, () => {
+  it('move cursor to context\'s first child, if present', () => {
 
     const text = `- a
   - m
@@ -203,7 +203,7 @@ describe('context view', () => {
 
   })
 
-  it(`move cursor from a context to its sibling, if there aren't any children`, () => {
+  it('move cursor from a context to its sibling, if there aren\'t any children', () => {
 
     const text = `- a
   - m
@@ -226,7 +226,7 @@ describe('context view', () => {
 
   })
 
-  it(`move cursor from context's last child to next uncle thought`, () => {
+  it('move cursor from context\'s last child to next uncle thought', () => {
 
     const text = `- a
   - m
@@ -251,7 +251,7 @@ describe('context view', () => {
 
   })
 
-  it(`move cursor from context's one child to its sibling`, () => {
+  it('move cursor from context\'s one child to its sibling', () => {
 
     const text = `- a
   - m
@@ -277,7 +277,7 @@ describe('context view', () => {
 
   })
 
-  it(`move cursor from context's last descendant to next sibling if there aren't any further contexts`, () => {
+  it('move cursor from context\'s last descendant to next sibling if there aren\'t any further contexts', () => {
 
     const text = `- a
   - m
