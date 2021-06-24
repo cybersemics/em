@@ -25,7 +25,7 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor?: Path | null, p
   return <View style={styles.container}>
     <HomeLink />
 
-    <Text style={styles.buttonsContainer}>{'bread > crumbs > will go > here > thoughts > ua'}</Text>
+    <Text style={styles.breadcrumbs}>{'bread > crumbs > will go > here > thoughts > ua'}</Text>
 
     <View style={styles.buttonsContainer}>
       <FeedbackButton />
