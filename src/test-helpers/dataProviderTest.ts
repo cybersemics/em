@@ -10,6 +10,7 @@ import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
 import { Context, Parent } from '../types'
+import { getSessionId } from '../util/sessionManager'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -85,7 +86,8 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
       contexts: [],
       created: timestamp(),
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     await provider.updateThought('12345', thought)
@@ -123,7 +125,8 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
       contexts: [],
       created: timestamp(),
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     await provider.updateThought(thought.id, thought)
@@ -145,7 +148,8 @@ const dataProviderTest = (provider: DataProvider) => {
         { value: 'b', rank: 1 },
         { value: 'c', rank: 2 },
       ],
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     await provider.updateContext(hashContext(['x']), parentEntry)
@@ -167,14 +171,16 @@ const dataProviderTest = (provider: DataProvider) => {
         { value: 'b', rank: 1 },
         { value: 'c', rank: 2 },
       ],
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     const parentEntryA = {
       id: hashContext(['x', 'a']),
       context: ['x', 'a'],
       children: [],
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     await provider.updateContext(hashContext(['x']), parentEntryX)
@@ -192,7 +198,8 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
       contexts: [],
       created: timestamp(),
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     const thoughtY = {
@@ -201,7 +208,8 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
       contexts: [],
       created: timestamp(),
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     await provider.updateThoughtIndex({
@@ -226,7 +234,8 @@ const dataProviderTest = (provider: DataProvider) => {
         { value: 'b', rank: 1 },
         { value: 'c', rank: 2 },
       ],
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     const parentEntryY = {
@@ -237,7 +246,8 @@ const dataProviderTest = (provider: DataProvider) => {
         { value: 'e', rank: 1 },
         { value: 'f', rank: 2 },
       ],
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId()
     }
 
     await provider.updateContextIndex({
@@ -351,6 +361,7 @@ const dataProviderTest = (provider: DataProvider) => {
           context: ['x', 'y'],
           children: [],
           lastUpdated: never(),
+          updatedBy: getSessionId(),
           pending: true,
         }
       })
@@ -397,6 +408,7 @@ const dataProviderTest = (provider: DataProvider) => {
           context: ['x', 'y', 'z'],
           children: [],
           lastUpdated: never(),
+          updatedBy: getSessionId(),
           pending: true,
         }
       })
@@ -572,12 +584,14 @@ const dataProviderTest = (provider: DataProvider) => {
           children: [],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId()
         },
         [hashContext(['t', 'u', 'v'])]: {
           ...contextIndex[hashContext(['t', 'u', 'v'])],
           children: [],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId()
         },
         // empty contexts are present in local state but not provider state
         // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],
@@ -645,6 +659,7 @@ const dataProviderTest = (provider: DataProvider) => {
           children: [],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId()
         },
         // empty contexts are present in local state but not provider state
         // [hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])],
@@ -689,7 +704,6 @@ const dataProviderTest = (provider: DataProvider) => {
         [hashContext(['t'])]: ['t'],
       }, { maxDepth: 2 }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
-
       expect(thoughts.contextIndex).toEqual({
         ..._.pick(contextIndex, [
           ['x'],
@@ -706,12 +720,14 @@ const dataProviderTest = (provider: DataProvider) => {
           ],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId(),
         },
         [hashContext(['t', 'u', 'v'])]: {
           ...contextIndex[hashContext(['t', 'u', 'v'])],
           children: [],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId(),
         },
         // empty contexts are present in local state but not provider state
         // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],

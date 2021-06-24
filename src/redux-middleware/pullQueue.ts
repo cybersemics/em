@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { EM_TOKEN, HOME_TOKEN, NAVIGATION_ACTIONS } from '../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { expandThoughts, getAllChildrenByContextHash, getContexts, hasPushes, isContextViewActive } from '../selectors'
 import { equalArrays, getVisibleContexts, hashContext, head, keyValueBy, unroot } from '../util'
 import { pull } from '../action-creators'
@@ -19,6 +19,7 @@ const initialPullQueue = (): Index<Context> => ({
   [hashContext([HOME_TOKEN])]: [HOME_TOKEN],
 })
 
+/** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
 /** Appends all visible contexts and their children to the pullQueue. */
 const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleContexts: Index<Context>) => {
 
@@ -41,7 +42,7 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
       ...keyValueBy(children, child => {
         const contextChild = showContexts ? (child as ThoughtContext).context : unroot([...context, (child as Child).value])
         const keyChild = hashContext(contextChild)
-        return { [keyChild]: contextChild }
+        return contextIndex[keyChild] && contextIndex[keyChild].pending ? { [keyChild]: contextChild } : null
       })
     }
   }, pullQueue)
@@ -80,13 +81,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
-    if (Object.keys(extendedPullQueue).length !== 0) {
-      const hasMorePending = await dispatch(pull(extendedPullQueue))
+    const hasMorePending = await dispatch(pull(extendedPullQueue))
 
-      const { user } = getState()
-      if (!user && hasMorePending) {
-        updatePullQueue({ force: true })
-      }
+    const { user } = getState()
+    if (!user && hasMorePending) {
+      updatePullQueue({ force: true })
     }
   }
 
@@ -161,7 +160,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     }
     // do not updatePullQueue if there are syncs queued or in progress
     // this gets checked again in updatePullQueue, but short circuit here if possible
-    else if (!hasPushes(getState()) && (NAVIGATION_ACTIONS[action.type] || action.type === 'loadLocalState')) {
+    else if (!hasPushes(getState())) {
       updatePullQueueDebounced()
     }
   }

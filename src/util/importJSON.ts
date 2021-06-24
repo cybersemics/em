@@ -18,10 +18,12 @@ import {
   timestamp,
   unroot,
 } from '../util'
+import { getSessionId } from './sessionManager'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp,
   skipRoot? : boolean,
+  updatedBy?: string,
 }
 
 interface ThoughtPair {
@@ -43,7 +45,7 @@ const skipRootThought = (blocks: Block[]) => {
 }
 
 /** Generates a Parent and Lexeme for inserting a new thought into a context. */
-const insertThought = (state: State, parentOld: Parent, value: string, context: Context, rank: number, created: Timestamp = timestamp(), lastUpdated: Timestamp = timestamp()): ThoughtPair => {
+const insertThought = (state: State, parentOld: Parent, value: string, context: Context, rank: number, created: Timestamp = timestamp(), lastUpdated: Timestamp = timestamp(), updatedBy = getSessionId()): ThoughtPair => {
   const rootContext = context.length > 0 ? context : [HOME_TOKEN]
   const id = createId()
 
@@ -58,6 +60,7 @@ const insertThought = (state: State, parentOld: Parent, value: string, context: 
     }],
     created: lexemeOld?.created ?? created,
     lastUpdated,
+    updatedBy,
   }
 
   const parentNew: Parent = {
@@ -71,6 +74,7 @@ const insertThought = (state: State, parentOld: Parent, value: string, context: 
       lastUpdated,
     }],
     lastUpdated,
+    updatedBy,
   }
 
   return {
@@ -80,7 +84,7 @@ const insertThought = (state: State, parentOld: Parent, value: string, context: 
 }
 
 /** Recursively iterate through blocks and call insertThought for each block individually to save it. */
-const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtIndexUpdates: Index<Lexeme>, context: Context, blocks: Block[], rankIncrement = 1, startRank = 0, lastUpdated = timestamp()): ThoughtIndices => {
+const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtIndexUpdates: Index<Lexeme>, context: Context, blocks: Block[], rankIncrement = 1, startRank = 0, lastUpdated = timestamp(), updatedBy = getSessionId()): ThoughtIndices => {
 
   const contextEncoded = hashContext(context)
 
@@ -128,7 +132,7 @@ const saveThoughts = (state: State, contextIndexUpdates: Index<Parent>, thoughtI
       const createdInherited = block.created ||
         childCreated ||
         lastUpdated
-      const { lexeme, parent } = insertThought(stateNew, existingParent, nonDuplicateValue, context, rank, createdInherited, lastUpdatedInherited)
+      const { lexeme, parent } = insertThought(stateNew, existingParent, nonDuplicateValue, context, rank, createdInherited, lastUpdatedInherited, updatedBy)
 
       // TODO: remove mutations
       contextIndexUpdates[contextEncoded] = parent
@@ -185,7 +189,7 @@ const getRankIncrement = (state: State, blocks: Block[], context: Context, destT
 }
 
 /** Convert JSON blocks to thoughts update. */
-export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[], { lastUpdated = timestamp(), skipRoot = false }: ImportJSONOptions) => {
+export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[], { lastUpdated = timestamp(), skipRoot = false, updatedBy = getSessionId() }: ImportJSONOptions) => {
   const initialThoughtIndex: Index<Lexeme> = {}
   const initialContextIndex: Index<Parent> = {}
   const context = pathToContext(parentOf(simplePath))
@@ -209,6 +213,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
         children: getAllChildren(state, rootedContext)
           .filter(child => !equalThoughtRanked(child, destThought)),
         lastUpdated,
+        updatedBy,
       }
     }
   }
@@ -217,7 +222,7 @@ export const importJSON = (state: State, simplePath: SimplePath, blocks: Block[]
   const importContext = pathToContext(importPath)
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
 
-  const { contextIndex, thoughtIndex } = saveThoughts(state, { ...initialContextIndex }, { ...initialThoughtIndex }, importContext, blocksNormalized, rankIncrement, rankStart, lastUpdated)
+  const { contextIndex, thoughtIndex } = saveThoughts(state, { ...initialContextIndex }, { ...initialThoughtIndex }, importContext, blocksNormalized, rankIncrement, rankStart, lastUpdated, updatedBy)
 
   // get the last child imported in the first level so the cursor can be set
   const parent = initialContextIndex[contextEncoded]

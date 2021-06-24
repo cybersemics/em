@@ -4,6 +4,7 @@ import { canShowModal } from '../selectors'
 import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 import { Alert, Child, Context, Index, Lexeme, Parent, Patch, Path, SimplePath, Timestamp, ThoughtsInterface, User, Shortcut } from '../types'
 import { editThoughtPayload } from '../reducers/editThought'
+import { getSessionId } from './sessionManager'
 
 interface ModalProperties {
   complete: boolean,
@@ -117,14 +118,16 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
-      lastUpdated: never()
+      lastUpdated: never(),
+      updatedBy: getSessionId()
     },
     [hashContext([ABSOLUTE_TOKEN])]: {
       context: [ABSOLUTE_TOKEN],
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
-      lastUpdated: never()
+      lastUpdated: never(),
+      updatedBy: getSessionId()
     },
     [hashContext([EM_TOKEN])]: {
       id: hashContext([EM_TOKEN]),
@@ -132,7 +135,8 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
-      lastUpdated: never()
+      lastUpdated: never(),
+      updatedBy: getSessionId()
     },
   }
 
@@ -142,14 +146,16 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       contexts: [],
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created,
-      lastUpdated: never()
+      lastUpdated: never(),
+      updatedBy: getSessionId()
     },
     [hashThought(ABSOLUTE_TOKEN)]: {
       value: ABSOLUTE_TOKEN,
       contexts: [],
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created,
-      lastUpdated: never()
+      lastUpdated: never(),
+      updatedBy: getSessionId()
     },
     // this will get populated by importText in loadLocalState
     // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
@@ -157,7 +163,8 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       value: EM_TOKEN,
       contexts: [],
       created,
-      lastUpdated: never()
+      lastUpdated: never(),
+      updatedBy: getSessionId()
     },
   }
 

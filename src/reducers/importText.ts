@@ -10,6 +10,7 @@ import newThought from './newThought'
 import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH, REGEXP_CONTAINS_META_TAG } from '../constants'
+import { getSessionId } from '../util/sessionManager'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gmi
@@ -137,6 +138,7 @@ interface Options {
   preventSetCursor?: boolean,
   rawDestValue?: string,
   skipRoot?: boolean,
+  updatedBy?: string,
 }
 
 /** Imports thoughts from html or raw text.
@@ -146,7 +148,7 @@ interface Options {
  * @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
  * @param skipRoot          See importHtml @param.
  */
-const importText = (state: State, { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot }: Options): State => {
+const importText = (state: State, { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot, updatedBy = getSessionId() }: Options): State => {
 
   const isRoam = validateRoam(text)
 
@@ -239,7 +241,7 @@ const importText = (state: State, { path, text, lastUpdated, preventSetCursor, r
 
     const newDestinationPath = getDestinationPath()
 
-    const imported = importJSON(updatedState, newDestinationPath, json, { lastUpdated, skipRoot })
+    const imported = importJSON(updatedState, newDestinationPath, json, { lastUpdated, skipRoot, updatedBy })
 
     /** Set cursor to the last imported path. */
     const setLastImportedCursor = (state: State) => {

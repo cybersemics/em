@@ -20,13 +20,16 @@ const getDbChangeHandlers = ({ getContextLocal, getThoughtLocal, getUpdatedObjec
      * Dexie falsly sends null as a child value if a thought is removed from a context
      * We need to manually filter out such children that can cause the app to break.
      */
-    const filterInvalidUpdates = (context: Parent):Parent => ({ ...context, children: context.children.filter(child => child !== null) })
+    const removeInvalidContexts = (thought: Lexeme):Lexeme => ({ ...thought, contexts: thought.contexts.filter(c => c !== null) })
+
+    /** Filter thoughts with null contexts. */
+    const filterInvalidContexts = (context: Parent):Parent => ({ ...context, children: context.children.filter(child => child !== null) })
     /** Get thought merged with updates. */
     const getThoughtUpdates = async (id: string, updates: Index) => {
       const thought = await getThoughtById(id)
       if (shouldIncludeUpdate({ ...thought || updates as Lexeme }, SessionType.LOCAL)) {
         const updatedThought = thought ? getUpdatedObject(thought, updates as Lexeme) : null
-        return updatedThought ? { [key]: updatedThought } : {}
+        return updatedThought ? { [key]: removeInvalidContexts(updatedThought) } : {}
       }
       return {}
     }
@@ -35,7 +38,7 @@ const getDbChangeHandlers = ({ getContextLocal, getThoughtLocal, getUpdatedObjec
       const context = await getContextById(id)
       if (shouldIncludeUpdate({ ...context || updates as Parent }, SessionType.LOCAL)) {
         const updatedContext = context ? getUpdatedObject(context, updates as Parent) : null
-        return updatedContext ? { [key]: filterInvalidUpdates(updatedContext) } : {}
+        return updatedContext ? { [key]: filterInvalidContexts(updatedContext) } : {}
       }
       return {}
     }

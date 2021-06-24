@@ -243,7 +243,7 @@ export const dbTables = {
 
 /** Subscribe to dexie updates. */
 export const subscribe = <T>(update: (updates: T) => void, dbChangeHandlers: ChangeHandlers<T>) => {
-  db.on('changes', changes => {
+  Object.prototype.hasOwnProperty.call(db, 'observable') && db.on('changes', changes => {
     changes.forEach(async change => {
       const updates = await dbChangeHandlers[change.type](change)
       update(updates)
