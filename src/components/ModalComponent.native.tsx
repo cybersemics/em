@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     paddingVertical: 40,
-    backgroundColor: 'red',
+    backgroundColor: '#000',
     paddingHorizontal: 15
   },
   close: {

@@ -73,7 +73,7 @@ const ModalFeedback = () => {
       <Text style={styles.modalText}>Send us your bugs, hopes, and dreams!</Text>
       <TextInput
         onChange={onChange}
-        style={{ borderWidth: StyleSheet.hairlineWidth, height: 250, borderRadius: 8, borderColor: '#fff', padding: 5, color: '#fff' }}
+        style={styles.input}
         multiline={true}
       />
       <TouchableOpacity onPress={() => onSubmit}></TouchableOpacity>
@@ -97,6 +97,14 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
     fontSize: 16,
+    color: '#fff'
+  },
+  input: {
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 250,
+    borderRadius: 8,
+    borderColor: '#fff',
+    padding: 5,
     color: '#fff'
   }
 })
