@@ -26,6 +26,9 @@ const Toolbar = ({ dark = true, fontSize = 12, toolbarOverlay = null, scrollPrio
 
   const keyExtractor = useCallback((item: string) => item, [])
   const renderItem: ListRenderItem<string> = useCallback(({ item: id, index }) => {
+
+    if (id === 'delete') return null
+
     const { name, svg } = shortcutById(id)! ?? {}
 
     const SVG = svg as React.FC<Icon>
