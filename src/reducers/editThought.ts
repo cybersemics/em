@@ -253,7 +253,23 @@ const editThought = (state: State, { oldValue, newValue, context, showContexts, 
     }, {} as Index<RecursiveUpdateResult>)
   }
 
-  const descendantUpdatesResult = recursiveUpdates(pathLiveOld, pathLiveNew)
+  // the lexeme updates made to the edited thought needs to be passed to the recursiveUdpates.
+  const initialRecursiveUpdateIndex: Index<RecursiveUpdateResult> = {
+    ...newOldThought ? { [oldKey]: {
+      lexemeNew: newOldThought,
+      contextsOld: [],
+      contextsNew: [],
+      pending: isPending(state, contextOld),
+    } } : {},
+    [newKey]: {
+      lexemeNew: thoughtNew,
+      contextsOld: [],
+      contextsNew: [],
+      pending: isPending(state, contextNew),
+    }
+  }
+
+  const descendantUpdatesResult = recursiveUpdates(pathLiveOld, pathLiveNew, [], initialRecursiveUpdateIndex)
   const descendantUpdates = _.transform(descendantUpdatesResult, (accum, { lexemeNew }, key) => {
     accum[key] = lexemeNew
   }, {} as Index<Lexeme>)
