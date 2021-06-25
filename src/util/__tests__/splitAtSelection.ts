@@ -4,7 +4,7 @@ import { splitAtSelection } from '../splitAtSelection'
 
 it('split at selecion with nested nodes', () => {
 
-  const thoughtValue = `The <b>rise <i>and fall</i></b> of Nikola Tesla.`
+  const thoughtValue = 'The <b>rise <i>and fall</i></b> of Nikola Tesla.'
   const dummyDiv = document.createElement('div')
 
   dummyDiv.innerHTML = thoughtValue
@@ -23,7 +23,7 @@ it('split at selecion with nested nodes', () => {
   const splitResult = splitAtSelection(dummyDiv)
 
   expect(splitResult).toMatchObject({
-    left: `The <b>rise <i>and</i></b>`,
+    left: 'The <b>rise <i>and</i></b>',
     right: '<b><i> fall</i></b> of Nikola Tesla.'
   })
 })

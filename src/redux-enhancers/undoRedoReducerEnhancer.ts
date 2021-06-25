@@ -13,8 +13,8 @@ const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
  * Manually extract thought and context index updates along with pushQueue.
  */
 const extractUpdates = (newState: State, patch: Patch) => {
-  const thoughtIndexPath = `/thoughts/thoughtIndex/`
-  const contextIndexPath = `/thoughts/contextIndex/`
+  const thoughtIndexPath = '/thoughts/thoughtIndex/'
+  const contextIndexPath = '/thoughts/contextIndex/'
   const thoughtIndexChanges = patch.filter(p => p.path.indexOf(thoughtIndexPath) === 0)
   const contextIndexChanges = patch.filter(p => p.path.indexOf(contextIndexPath) === 0)
 

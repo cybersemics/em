@@ -4,10 +4,10 @@ import { theme } from '../selectors'
 import { State } from '../util/initialState'
 
 interface SearchIconProps {
-  dark?: boolean,
-  fill?: string,
-  size?: number,
-  style?: React.CSSProperties,
+  dark?: boolean
+  fill?: string
+  size?: number
+  style?: React.CSSProperties
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

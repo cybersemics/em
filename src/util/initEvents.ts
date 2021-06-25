@@ -12,7 +12,7 @@ import lifecycle from 'page-lifecycle'
 
 declare global {
   interface Window {
-    __inputHandlers: ReturnType<typeof inputHandlers>,
+    __inputHandlers: ReturnType<typeof inputHandlers>
   }
 }
 
@@ -75,13 +75,13 @@ export const initEvents = (store: Store<State, any>) => {
     if (shouldConfirmReload) {
       // Note: Showing confirmation dialog can vary between browsers. https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
       e.preventDefault()
-      e.returnValue = ``
+      e.returnValue = ''
       return ''
     }
   }
 
   /** Error event listener. NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
-  const onError = (e: { message: string, error: Error }) => {
+  const onError = (e: { message: string; error: Error }) => {
     // ignore generic script error caused by a firebase disconnect (cross-site error)
     // https://blog.sentry.io/2016/05/17/what-is-script-error
     if (e.message === 'Script error.') return
@@ -92,7 +92,7 @@ export const initEvents = (store: Store<State, any>) => {
   }
 
   /** Handle a page lifecycle state change. */
-  const onStateChange = ({ oldState, newState }: { oldState: string, newState: string }) => {
+  const onStateChange = ({ oldState, newState }: { oldState: string; newState: string }) => {
     if (newState === 'hidden') {
       // dismiss the gesture alert if active
       if (isGestureHint(store.getState())) {

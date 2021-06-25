@@ -2,7 +2,7 @@ import { Path } from '../types'
 import { State } from '../util/initialState'
 
 interface Options {
-  path?: Path | null,
+  path?: Path | null
 }
 
 /** Set status of hover expand top. */

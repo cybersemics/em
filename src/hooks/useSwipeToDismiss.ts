@@ -10,19 +10,19 @@ const defaultOptions = {
 const useSwipeToDismiss = (options: {
 
   // y offset at which onDismiss is fired, in px or % (of height)
-  dismissThreshold?: string | number,
+  dismissThreshold?: string | number
 
   // dismiss handler
-  onDismiss?: () => void,
+  onDismiss?: () => void
 
   // dismiss after animating element off screen
-  onDismissEnd?: () => void,
+  onDismissEnd?: () => void
 
   // time in seconds to animate the element back into place after releasing
-  snapbackDuration?: number,
+  snapbackDuration?: number
 
   // easing function to animate the element back into place after releasing
-  snapbackEasing?: string,
+  snapbackEasing?: string
 
 } = {}) => {
 

@@ -7,7 +7,7 @@ import { State } from '../util/initialState'
 import GestureDiagram from './GestureDiagram'
 
 interface LatestShortcutsDiagramProps {
-  position?: 'middle' | 'bottom',
+  position?: 'middle' | 'bottom'
 }
 
 /**

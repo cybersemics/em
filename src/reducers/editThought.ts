@@ -26,19 +26,19 @@ import {
 } from '../util'
 
 export interface editThoughtPayload {
-  oldValue: string,
-  newValue: string,
-  context: Context,
-  showContexts?: boolean,
-  path: SimplePath,
-  rankInContext?: number,
+  oldValue: string
+  newValue: string
+  context: Context
+  showContexts?: boolean
+  path: SimplePath
+  rankInContext?: number
 }
 
 interface RecursiveUpdateResult {
-  lexemeNew: Lexeme,
-  contextsOld: Context[],
-  contextsNew: Context[],
-  pending?: boolean,
+  lexemeNew: Lexeme
+  contextsOld: Context[]
+  contextsNew: Context[]
+  pending?: boolean
 }
 
 /** Changes the text of an existing thought. */

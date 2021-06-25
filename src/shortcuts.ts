@@ -51,9 +51,9 @@ const hashKeyDown = (e: KeyboardEvent) =>
 
 /** Initializes shortcut indices and stores conflicts. */
 const index = (): {
-  shortcutKeyIndex: Index<Shortcut>,
-  shortcutIdIndex: Index<Shortcut>,
-  shortcutGestureIndex: Index<Shortcut>,
+  shortcutKeyIndex: Index<Shortcut>
+  shortcutIdIndex: Index<Shortcut>
+  shortcutGestureIndex: Index<Shortcut>
   } => {
 
   // index shortcuts for O(1) lookup by keyboard

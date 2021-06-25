@@ -1,8 +1,8 @@
 import React, { CSSProperties } from 'react'
 
 interface LoaderProps {
-  size?: number,
-  style?: CSSProperties,
+  size?: number
+  style?: CSSProperties
 }
 
 /**

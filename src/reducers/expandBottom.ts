@@ -4,7 +4,7 @@ import { hashContext, pathToContext } from '../util'
 import { State } from '../util/initialState'
 
 interface Options {
-  path: Path,
+  path: Path
 }
 
 /**

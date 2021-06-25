@@ -14,11 +14,11 @@ import * as searchLocal from '../search/localSearch'
 import getFirebaseProvider from '../data-providers/firebase'
 
 interface SearchSubthoughtsProps {
-  search?: string | null,
-  archived?: boolean,
-  searchLimit?: number,
-  remoteSearch: boolean,
-  thoughtIndex: Index<Lexeme>,
+  search?: string | null
+  archived?: boolean
+  searchLimit?: number
+  remoteSearch: boolean
+  thoughtIndex: Index<Lexeme>
 }
 /** Number of thoughts to limit the search results to by default. */
 const DEFAULT_SEARCH_LIMIT = 20

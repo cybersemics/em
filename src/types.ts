@@ -10,19 +10,19 @@ import { GestureResponderEvent } from 'react-native'
 
 declare global {
   interface Document {
-    DND: any,
+    DND: any
   }
 
   interface Window {
-    firebase: Firebase,
-    em: unknown,
-    debug: (message: string) => void,
+    firebase: Firebase
+    em: unknown
+    debug: (message: string) => void
     // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.
-    delay: (ms: number) => Promise<boolean>,
+    delay: (ms: number) => Promise<boolean>
   }
 
   interface Navigator {
-    standalone: boolean,
+    standalone: boolean
   }
 }
 
@@ -32,36 +32,36 @@ declare global {
 
 interface Firebase {
   auth: (() => {
-    currentUser: User,
-    onAuthStateChanged: (f: (user: User) => void) => void,
-    signInWithRedirect: (provider: any) => void,
-    createUserWithEmailAndPassword: (email: string, password: string) => Promise<{user: User}>,
-    signInWithEmailAndPassword: (email: string, password: string) => Promise<{user: User}>,
-    sendPasswordResetEmail: (email: string, passwordResetOptions: { url: string }) => Promise<void>,
-    signOut: () => void,
-  }) & { GoogleAuthProvider: any },
+    currentUser: User
+    onAuthStateChanged: (f: (user: User) => void) => void
+    signInWithRedirect: (provider: any) => void
+    createUserWithEmailAndPassword: (email: string, password: string) => Promise<{ user: User }>
+    signInWithEmailAndPassword: (email: string, password: string) => Promise<{ user: User }>
+    sendPasswordResetEmail: (email: string, passwordResetOptions: { url: string }) => Promise<void>
+    signOut: () => void
+  }) & { GoogleAuthProvider: any }
   database: () => {
-    ref: (s: string) => Ref,
-  },
-  initializeApp: (config: Index<string>) => void,
+    ref: (s: string) => Ref
+  }
+  initializeApp: (config: Index<string>) => void
 }
 
 export interface User {
-  uid: string,
-  displayName: string,
-  email: string,
+  uid: string
+  displayName: string
+  email: string
   // see Firebase user for more properties
 }
 
 export interface Ref {
-  child: (name: string) => Ref,
-  once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>,
-  on: (eventName: string, callback: (snapshot: Snapshot) => any) => void,
-  update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>,
+  child: (name: string) => Ref
+  once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>
+  on: (eventName: string, callback: (snapshot: Snapshot) => any) => void
+  update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>
 }
 
 export interface Snapshot<T = any> {
-  val: () => T,
+  val: () => T
 }
 
 /********************************
@@ -73,10 +73,14 @@ export interface Snapshot<T = any> {
  * A "Brand" type is a nominal type that disallows implicit conversion.
  * See: https://spin.atomicobject.com/2018/01/15/typescript-flexible-nominal-typing/.
  */
-interface Flavoring<FlavorT> { _type?: FlavorT }
+interface Flavoring<FlavorT> {
+  _type?: FlavorT
+}
 export type Flavor<T, FlavorT> = T & Flavoring<FlavorT>
 declare const BrandSymbol: unique symbol
-interface Brand<T> { [BrandSymbol]: T }
+interface Brand<T> {
+  [BrandSymbol]: T
+}
 
 /** Possible return values of a sort's comparator function. */
 export type ComparatorValue = 1 | -1 | 0
@@ -88,13 +92,13 @@ export type ComparatorFunction<T> = (a: T, b: T) => ComparatorValue
 export type MimeType = 'text/plain' | 'text/html'
 
 /** A very generic object. */
-export type Index<T = any> = {[key: string]: T}
+export type Index<T = any> = { [key: string]: T }
 
 /** An option that can selected to set the export format. */
 export interface ExportOption {
-  type: MimeType,
-  label: string,
-  extension: string,
+  type: MimeType
+  label: string
+  extension: string
 }
 
 /** A timestamp string. */
@@ -102,34 +106,34 @@ export type Timestamp = string & Brand<'Timestamp'>
 
 /** An entry in thoughtIndex[].contexts. */
 export interface ThoughtContext {
-  context: Context,
-  rank: number,
-  lastUpdated?: Timestamp,
-  id?: string,
-  archived?: Timestamp,
+  context: Context
+  rank: number
+  lastUpdated?: Timestamp
+  id?: string
+  archived?: Timestamp
 }
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
 export interface Lexeme {
-  id?: string, // db only; not the same as Child id
-  value: string,
-  contexts: ThoughtContext[],
-  created: Timestamp,
-  lastUpdated: Timestamp,
+  id?: string // db only; not the same as Child id
+  value: string
+  contexts: ThoughtContext[]
+  created: Timestamp
+  lastUpdated: Timestamp
 }
 
 export interface ThoughtWordsIndex {
-  id: string,
-  words: string[],
+  id: string
+  words: string[]
 }
 
 /** A thought with a specific rank. */
 export interface Child {
-  id?: string,
-  rank: number,
-  value: string,
-  lastUpdated?: Timestamp,
-  archived?: Timestamp,
+  id?: string
+  rank: number
+  value: string
+  lastUpdated?: Timestamp
+  archived?: Timestamp
 }
 
 /** A sequence of children with ranks. */
@@ -143,17 +147,17 @@ export type Context = string[]
 
 /** An object that contains a list of children within a context. */
 export interface Parent {
-  id?: string,
-  context: Context,
-  children: Child[],
-  lastUpdated: Timestamp,
-  pending?: boolean,
+  id?: string
+  context: Context
+  children: Child[]
+  lastUpdated: Timestamp
+  pending?: boolean
 }
 
 /** Sort Preferences with type and direction. */
-export interface SortPreference{
-  type: string,
-  direction: SortDirection | null,
+export interface SortPreference {
+  type: string
+  direction: SortDirection | null
 }
 
 export type SortDirection = 'Asc' | 'Desc'
@@ -176,19 +180,19 @@ export type SortDirection = 'Asc' | 'Desc'
  */
 declare module 'redux' {
   export interface Dispatch {
-    <T = void>(thunks: Thunk<T>[]): T[],
-    <T = void>(thunk: Thunk<T>): T,
-    (actions: (AnyAction | Thunk)[]): void,
-    (action: AnyAction | Thunk): void,
+    <T = void>(thunks: Thunk<T>[]): T[]
+    <T = void>(thunk: Thunk<T>): T
+    (actions: (AnyAction | Thunk)[]): void
+    (action: AnyAction | Thunk): void
   }
 }
 
 // allow explicit import
 export interface Dispatch {
-  <T = void>(thunks: Thunk<T>[]): T[],
-  <T = void>(thunk: Thunk<T>): T,
-  (actions: (AnyAction | Thunk)[]): void,
-  (action: AnyAction | Thunk): void,
+  <T = void>(thunks: Thunk<T>[]): T[]
+  <T = void>(thunk: Thunk<T>): T
+  (actions: (AnyAction | Thunk)[]): void
+  (action: AnyAction | Thunk): void
 }
 
 /** A basic Redux AnyAction creator thunk with no arguments. */
@@ -200,48 +204,53 @@ export type TutorialChoice = 0 | 1 | 2
 
 /** When a component is connected, the dispatch prop is added. */
 export type Connected<T> = T & {
-  dispatch: Dispatch,
+  dispatch: Dispatch
 }
 
 export interface Log {
-  created: Timestamp,
-  message: string,
-  stack?: any,
+  created: Timestamp
+  message: string
+  stack?: any
 }
 
 export interface Icon {
-  dark?: boolean,
-  fill?: string,
-  height?: number,
-  size?: number,
-  style?: React.CSSProperties,
-  width?: number,
+  dark?: boolean
+  fill?: string
+  height?: number
+  size?: number
+  style?: React.CSSProperties
+  width?: number
 }
 
 export interface Key {
-  alt?: boolean, // Mac: Option, Windows: Alt
-  control?: boolean,
-  key: string,
-  meta?: boolean, // Mac: Command, Windows: Control
-  shift?: boolean,
+  alt?: boolean // Mac: Option, Windows: Alt
+  control?: boolean
+  key: string
+  meta?: boolean // Mac: Command, Windows: Control
+  shift?: boolean
 }
 
 export interface Shortcut {
-  id: string,
-  name: string,
-  conflicts?: string[],
-  description?: string,
-  gesture?: GesturePath | GesturePath[],
-  hideFromInstructions?: boolean,
-  keyboard?: Key | string,
-  isActive?: (getState: () => State) => boolean,
+  id: string
+  name: string
+  conflicts?: string[]
+  description?: string
+  gesture?: GesturePath | GesturePath[]
+  hideFromInstructions?: boolean
+  keyboard?: Key | string
+  isActive?: (getState: () => State) => boolean
   overlay?: {
-    gesture?: GesturePath,
-    keyboard?: Key | string,
-  },
-  svg?: (icon: Icon) => ReactNode,
-  canExecute?: (getState: () => State, e: Event) => boolean,
-  exec: (dispatch: Dispatch, getState: () => State, e: Event | GestureResponderEvent | React.MouseEvent, { type }: { type: string }) => void,
+    gesture?: GesturePath
+    keyboard?: Key | string
+  }
+  svg?: (icon: Icon) => ReactNode
+  canExecute?: (getState: () => State, e: Event) => boolean
+  exec: (
+    dispatch: Dispatch,
+    getState: () => State,
+    e: Event | GestureResponderEvent | React.MouseEvent,
+    { type }: { type: string },
+  ) => void
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'
@@ -252,15 +261,15 @@ export type DirectionMap<T> = (dir: Direction) => T
 export type GesturePath = string | Direction[]
 
 export type Alert = {
-  alertType?: string,
-  showCloseLink?: boolean,
-  value: string | null,
+  alertType?: string
+  showCloseLink?: boolean
+  value: string | null
 } | null
 
 // Extend fast-json-patch Operation type to include actions list
 // See fast-json-patch types: https://github.com/Starcounter-Jack/JSON-Patch/blob/89a09e94e0e6500115789e33586a75c8dd1aea13/module/core.d.ts
 interface ExtendedOperation<T = any> extends GetOperation<T> {
-  actions: string[],
+  actions: string[]
 }
 
 export type Patch = ExtendedOperation[]
@@ -271,25 +280,25 @@ export type ThoughtHash = string & Brand<'ThoughtHash'>
 // jex-block-parser type
 // Waiting on PR: https://github.com/reergymerej/block-parser/pull/1
 export interface Block {
-  scope: string,
-  created?: Timestamp,
-  lastUpdated?: Timestamp,
-  children: Block[],
+  scope: string
+  created?: Timestamp
+  lastUpdated?: Timestamp
+  children: Block[]
 }
 
 export type ThoughtCaches = {
-  contextCache: ContextHash[],
-  thoughtCache: ThoughtHash[],
+  contextCache: ContextHash[]
+  thoughtCache: ThoughtHash[]
 }
 
 export interface ThoughtIndices {
-  contextIndex: Index<Parent>,
-  thoughtIndex: Index<Lexeme>,
+  contextIndex: Index<Parent>
+  thoughtIndex: Index<Lexeme>
 }
 
 export interface ThoughtUpdates {
-  contextIndex: Index<Parent | null>,
-  thoughtIndex: Index<Lexeme | null>,
+  contextIndex: Index<Parent | null>
+  thoughtIndex: Index<Lexeme | null>
 }
 
 export type ThoughtsInterface = ThoughtIndices & ThoughtCaches
@@ -315,8 +324,8 @@ export type Timer = ReturnType<typeof setTimeout>
   }
 */
 export interface SplitResult {
-  left: string,
-  right: string,
+  left: string
+  right: string
 }
 
 /** An environment for evaluating expressions defined by lazily loaded Contexts. */

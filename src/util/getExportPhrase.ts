@@ -6,10 +6,10 @@ import { Child, SimplePath } from '../types'
 interface Options {
 
   // function to filter descendants when counting
-  filterFunction?: (child: Child) => boolean,
+  filterFunction?: (child: Child) => boolean
 
   // override the value that is used as the label
-  value?: string,
+  value?: string
 
 }
 

@@ -2,9 +2,9 @@ import { FunctionComponent } from 'react'
 import { Thunk } from '../types'
 
 interface Options {
-  alertType?: string,
-  showCloseLink?: boolean,
-  clearTimeout?: number,
+  alertType?: string
+  showCloseLink?: boolean
+  clearTimeout?: number
 }
 
 let clearAlertTimeoutId: number | null = null// eslint-disable-line fp/no-let

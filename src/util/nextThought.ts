@@ -6,8 +6,8 @@ import { State } from '../util/initialState'
 import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
 
 interface NextThoughtResult {
-  nextThoughts: Path,
-  contextChain: SimplePath[],
+  nextThoughts: Path
+  contextChain: SimplePath[]
 }
 
 /**

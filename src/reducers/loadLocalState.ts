@@ -5,11 +5,11 @@ import { State } from '../util/initialState'
 import { Index, Path, Timestamp } from '../types'
 
 interface Options {
-  contextViews?: any,
-  cursor?: Path,
-  lastUpdated?: Timestamp,
-  recentlyEdited?: Index<any>,
-  schemaVersion?: number,
+  contextViews?: any
+  cursor?: Path
+  lastUpdated?: Timestamp
+  recentlyEdited?: Index<any>
+  schemaVersion?: number
 }
 
 /** Merges recentlyEdited and schemaVersion into state. */

@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 import { Child, Path } from '../types'
 
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */
-const prependRevision = (state: State, { path, cid }: { path: Path, cid: string }) => {
+const prependRevision = (state: State, { path, cid }: { path: Path; cid: string }) => {
 
   const context = pathToContext(path)
 

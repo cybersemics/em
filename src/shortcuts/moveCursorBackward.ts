@@ -7,7 +7,7 @@ import { Shortcut } from '../types'
 const moveCursorBackward: Shortcut = {
   id: 'moveCursorBackward',
   name: 'Move Cursor Backward',
-  description: `Move the current thought to the next sibling of its context or to previous column in table view.`,
+  description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
   keyboard: { key: Key.Tab, shift: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {

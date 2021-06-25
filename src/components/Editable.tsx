@@ -113,26 +113,26 @@ const updateToolbarPositionOnScroll = () => {
 }
 
 interface EditableProps {
-  path: Path,
-  cursorOffset?: number | null,
-  disabled?: boolean,
-  isEditing?: boolean,
-  rank: number,
-  showContexts?: boolean,
-  style?: React.CSSProperties,
-  simplePath: SimplePath,
+  path: Path
+  cursorOffset?: number | null
+  disabled?: boolean
+  isEditing?: boolean
+  rank: number
+  showContexts?: boolean
+  style?: React.CSSProperties
+  simplePath: SimplePath
   /* If transient is true:
     1. Instead of calling exisitingThoughtChange, it calls newThought to add the given child to the state.
     2. It also sets focus to itself on render.
   */
-  transient?: boolean,
-  onKeyDownAction?: () => void,
+  transient?: boolean
+  onKeyDownAction?: () => void
 }
 
 interface Alert {
-  type: 'alert',
-  value: string | null,
-  alertType: string,
+  type: 'alert'
+  value: string | null
+  alertType: string
 }
 
 /** Toggle duplication alert. Use closure for storing timeoutId in order to cancel dispatching alert if it's necessary. */
@@ -252,7 +252,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, simplePath }: { context: Context, showContexts?: boolean, rank: number, simplePath: Path }) => {
+  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, simplePath }: { context: Context; showContexts?: boolean; rank: number; simplePath: Path }) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
 

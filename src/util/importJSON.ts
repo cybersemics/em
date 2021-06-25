@@ -20,18 +20,18 @@ import {
 } from '../util'
 
 export interface ImportJSONOptions {
-  lastUpdated?: Timestamp,
-  skipRoot? : boolean,
+  lastUpdated?: Timestamp
+  skipRoot? : boolean
 }
 
 interface ThoughtPair {
-  lexeme: Lexeme,
-  parent: Parent,
+  lexeme: Lexeme
+  parent: Parent
 }
 
 type SaveThoughtsUpdate = ThoughtIndices & {
   // duplicate index keeps track of number of times a value has appeared in the context
-  duplicateIndex: Index<number>,
+  duplicateIndex: Index<number>
 }
 
 /** Replace head block with its children, or drop it, if head has no children. */

@@ -7,7 +7,7 @@ import { Context, Index, Parent, ThoughtsInterface } from '../../types'
 const MAX_DEPTH = 100
 
 interface Options {
-  maxDepth?: number,
+  maxDepth?: number
 }
 
 /** Returns a getter function that accesses a property on an object. */

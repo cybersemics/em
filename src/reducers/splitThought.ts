@@ -11,7 +11,7 @@ import { Path, SplitResult } from '../types'
  * @param path     The path of the thought to split. Defaults to cursor.
  * @param offset   The index within the thought at which to split. Defaults to the browser selection offset.
  */
-const splitThought = (state: State, { path, splitResult }: { path?: Path, splitResult: SplitResult }) => {
+const splitThought = (state: State, { path, splitResult }: { path?: Path; splitResult: SplitResult }) => {
 
   path = path || state.cursor as Path
 

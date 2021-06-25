@@ -9,9 +9,9 @@ import { Context } from '../types'
 import Modal from './Modal'
 
 interface DepthBarProps {
-  numDescendantCharacters: number,
-  showContexts?: boolean,
-  thoughtsLive: Context,
+  numDescendantCharacters: number
+  showContexts?: boolean
+  thoughtsLive: Context
 }
 
 /** A small horizontal bar that indicates how many descendants a thought has. */

@@ -15,7 +15,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const newUncleShortcut: Shortcut = {
   id: 'newUncle',
   name: 'New Thought After Parent',
-  description: `Add a new thought to the context that immediately follows the current thought's context. It's like creating a new thought and then de-indenting it.`,
+  description: 'Add a new thought to the context that immediately follows the current thought\'s context. It\'s like creating a new thought and then de-indenting it.',
   gesture: 'rdl',
   keyboard: { key: Key.Enter, meta: true, alt: true },
   svg: Icon,

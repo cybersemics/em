@@ -5,8 +5,8 @@ import { Thunk } from '../types'
 let timer: ReturnType<typeof setTimeout> // eslint-disable-line fp/no-let
 
 interface Options {
-  cancel?: boolean,
-  duration?: number,
+  cancel?: boolean
+  duration?: number
 }
 
 /** Supress context expansion for a given duration. */

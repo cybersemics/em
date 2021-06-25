@@ -11,8 +11,8 @@ import { Index } from '../types'
 const delay = 100
 
 interface Options {
-  replace?: boolean,
-  contextViews?: Index<boolean>,
+  replace?: boolean
+  contextViews?: Index<boolean>
 }
 /**
  * Sets the url and history to the given thoughts.

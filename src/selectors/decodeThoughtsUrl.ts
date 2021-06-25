@@ -5,7 +5,7 @@ import { State } from '../util/initialState'
 
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null
-  exists?: boolean,
+  exists?: boolean
 }
 
 /** Parses the thoughts from the url. */

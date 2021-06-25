@@ -1,13 +1,13 @@
 import React, { useRef } from 'react'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
-    style: React.CSSProperties,
-    html: string,
-    disabled?: boolean,
-    innerRef?: React.RefObject<HTMLDivElement>,
-    isEditing?: boolean,
-    forceUpdate: boolean,
-    onChange: (originalEvt: ContentEditableEvent) => void,
+    style: React.CSSProperties
+    html: string
+    disabled?: boolean
+    innerRef?: React.RefObject<HTMLDivElement>
+    isEditing?: boolean
+    forceUpdate: boolean
+    onChange: (originalEvt: ContentEditableEvent) => void
 }
 
 /**
@@ -81,8 +81,8 @@ const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...prop
 
 export declare type ContentEditableEvent = React.SyntheticEvent<HTMLInputElement, Event> & {
   target: {
-    value: string,
-  },
+    value: string
+  }
 }
 
 export default ContentEditable
