@@ -1,7 +1,7 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../types'
-import { isShortcutExecutable } from '../util'
+import { isDocumentEditable } from '../util'
 import { moveThoughtDown } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -17,8 +17,7 @@ const moveThoughtDownShortcut: Shortcut = {
   description: 'Move the current thought down.',
   keyboard: { key: Key.ArrowDown, meta: true, shift: true },
   svg: Icon,
-  isActive: getState => isShortcutExecutable(getState),
-  canExecute: getState => isShortcutExecutable(getState),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(moveThoughtDown()),
 }
 

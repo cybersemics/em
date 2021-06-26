@@ -1,6 +1,6 @@
 import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
-import { isShortcutExecutable } from '../util'
+import { isDocumentEditable } from '../util'
 import { indent } from '../action-creators'
 import moveCursorForward from './moveCursorForward'
 
@@ -22,8 +22,7 @@ const indentShortcut: Shortcut = {
     keyboard: moveCursorForward.keyboard,
   },
   svg: Icon,
-  isActive: getState => isShortcutExecutable(getState),
-  canExecute: getState => isShortcutExecutable(getState),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(indent()),
 }
 

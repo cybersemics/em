@@ -1,5 +1,5 @@
 import React from 'react'
-import { isShortcutExecutable } from '../util'
+import { isDocumentEditable } from '../util'
 import { outdent } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 
@@ -23,8 +23,7 @@ const outdentShortcut: Shortcut = {
     keyboard: moveCursorBackward.keyboard,
   },
   svg: Icon,
-  isActive: getState => isShortcutExecutable(getState),
-  canExecute: getState => isShortcutExecutable(getState),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

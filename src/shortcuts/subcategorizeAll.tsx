@@ -1,5 +1,5 @@
 import React from 'react'
-import { isShortcutExecutable } from '../util'
+import { isDocumentEditable } from '../util'
 import subCategorizeAll from '../action-creators/subCategorizeAll'
 import { Icon as IconType, Shortcut } from '../types'
 
@@ -15,8 +15,7 @@ const subCategorizeAllShortcut: Shortcut = {
   gesture: 'ldr',
   keyboard: { key: 'a', meta: true, alt: true },
   svg: Icon,
-  isActive: getState => isShortcutExecutable(getState),
-  canExecute: getState => isShortcutExecutable(getState),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: subCategorizeAll()
 }
 

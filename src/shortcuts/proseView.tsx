@@ -1,6 +1,6 @@
 import React from 'react'
 import { attributeEquals, simplifyPath } from '../selectors'
-import { isShortcutExecutable, pathToContext } from '../util'
+import { isDocumentEditable, pathToContext } from '../util'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 import { HOME_PATH } from '../constants'
@@ -23,7 +23,7 @@ const proseViewShortcut: Shortcut = {
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, alt: true },
   svg: Icon,
-  canExecute: getState => isShortcutExecutable(getState),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
@@ -42,7 +42,7 @@ const proseViewShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
-    return attributeEquals(state, context, '=view', 'Prose') || isShortcutExecutable(getState)
+    return attributeEquals(state, context, '=view', 'Prose')
   }
 }
 
