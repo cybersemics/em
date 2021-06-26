@@ -1,5 +1,5 @@
 import React from 'react'
-import { isDocumentEditable, pathToContext } from '../util'
+import { isShortcutExecutable, pathToContext } from '../util'
 import { isContextViewActive, lastThoughtsFromContextChain, rootedParentOf, splitChain } from '../selectors'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
@@ -18,7 +18,8 @@ const bindContextShortcut: Shortcut = {
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, alt: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  isActive: getState => isShortcutExecutable(getState),
+  canExecute: getState => isShortcutExecutable(getState),
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

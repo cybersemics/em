@@ -1,4 +1,4 @@
-import { isDocumentEditable, setSelection } from '../util'
+import { isShortcutExecutable, setSelection } from '../util'
 import { REGEXP_TAGS } from '../constants'
 import { Shortcut } from '../types'
 
@@ -7,7 +7,8 @@ const clearThoughtShortcut: Shortcut = {
   label: 'Clear Thought',
   description: 'Clear the text of the current thought.',
   gesture: 'rl',
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  isActive: getState => isShortcutExecutable(getState),
+  canExecute: getState => isShortcutExecutable(getState),
   exec: () => {
     const editable = document.querySelector('.editing .editable') as HTMLElement
     if (editable) {

@@ -76,14 +76,15 @@ export const exportContext = (state: State, context: Context, format: MimeType =
     ? `${childrenPrefix}\n${childrenFiltered.map(exportChild).join('\n')}${childrenPostfix}${format === 'text/html' ? indent === 0 ? tab0 : tab1 : ''}`
     : ''
 
-  let text = `${tab0}${linePrefix}${head(context)}${exportedChildren && format === 'text/html' ? tab1 : ''}${exportedChildren}${linePostfix}`
+  const text = `${tab0}${linePrefix}${head(context)}${exportedChildren && format === 'text/html' ? tab1 : ''}${exportedChildren}${linePostfix}`
 
-  if (format === 'text/plain') {
-    text = stripHTMLTag(text)
-  }
+  const strippedHTMLText = stripHTMLTag(text)
+
+  const finalizedText = format === 'text/plain' ? strippedHTMLText : text
+
   const output = indent === 0 && format === 'text/html'
-    ? `<ul>\n  ${text}\n</ul>`
-    : text
+    ? `<ul>\n  ${finalizedText}\n</ul>`
+    : finalizedText
 
   /** Replaces the title of the output. */
   const outputReplaceTitle = (output: string) => title

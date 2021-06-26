@@ -1,5 +1,5 @@
 import React from 'react'
-import { isDocumentEditable } from '../util'
+import { isShortcutExecutable } from '../util'
 import subCategorizeOne from '../action-creators/subCategorizeOne'
 import { Icon as IconType, Shortcut } from '../types'
 
@@ -16,7 +16,8 @@ const subCategorizeOneShortcut: Shortcut = {
   gesture: 'lu',
   keyboard: { key: 'o', meta: true, alt: true },
   svg: Icon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  isActive: getState => isShortcutExecutable(getState),
+  canExecute: getState => isShortcutExecutable(getState),
   exec: dispatch => dispatch(subCategorizeOne())
 }
 
@@ -27,7 +28,8 @@ export const subCategorizeOneShortcutAlias: Shortcut = {
   hideFromInstructions: true,
   keyboard: { key: ']', meta: true },
   svg: Icon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  isActive: getState => isShortcutExecutable(getState),
+  canExecute: getState => isShortcutExecutable(getState),
   exec: dispatch => dispatch(subCategorizeOne())
 }
 

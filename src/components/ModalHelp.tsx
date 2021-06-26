@@ -116,7 +116,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
 
     <code>=focus</code>
     <p>Options: Normal, Zoom<br/>
-    When the cursor is on this thought, hide its parent and sibliings for additional focus. Excellent for study time or when you have had too much coffee.</p>
+    When the cursor is on this thought, hide its parent and siblings for additional focus. Excellent for study time or when you have had too much coffee.</p>
 
     <code>=hidden</code>
     <p>Hide the thought.</p>

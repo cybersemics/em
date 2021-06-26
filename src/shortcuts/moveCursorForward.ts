@@ -1,6 +1,6 @@
 import { Key } from 'ts-key-enum'
 import { attributeEquals, getAllChildren, simplifyPath } from '../selectors'
-import { parentOf, isDocumentEditable, pathToContext } from '../util'
+import { parentOf, isShortcutExecutable, pathToContext } from '../util'
 import { Dispatch } from 'react'
 import { Shortcut } from '../types'
 
@@ -22,7 +22,8 @@ const moveCursorForward: Shortcut = {
   label: 'Move Cursor Forward',
   description: 'Move the current thought to the end of the previous thought or to next column in table view.',
   keyboard: { key: Key.Tab },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  isActive: getState => isShortcutExecutable(getState),
+  canExecute: getState => isShortcutExecutable(getState),
   exec: (dispatch: Dispatch<CursorDown | NewThought | Indent>, getState) => {
     const state = getState()
     const { cursor } = state

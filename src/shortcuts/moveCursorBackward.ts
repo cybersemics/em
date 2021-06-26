@@ -1,6 +1,6 @@
 import { Key } from 'ts-key-enum'
 import { attributeEquals, simplifyPath } from '../selectors'
-import { parentOf, isDocumentEditable, pathToContext } from '../util'
+import { parentOf, isShortcutExecutable, pathToContext } from '../util'
 import { cursorBack, outdent } from '../action-creators'
 import { Shortcut } from '../types'
 
@@ -9,7 +9,8 @@ const moveCursorBackward: Shortcut = {
   label: 'Move Cursor Backward',
   description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
   keyboard: { key: Key.Tab, shift: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  isActive: getState => isShortcutExecutable(getState),
+  canExecute: getState => isShortcutExecutable(getState),
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

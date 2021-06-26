@@ -1,7 +1,7 @@
 import { isTouch } from '../browser'
 import { attribute, hasChild, simplifyPath } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
-import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { asyncFocus, editableNode, isShortcutExecutable, pathToContext, setSelection } from '../util'
 import { setAttribute, setNoteFocus } from '../action-creators'
 import { Shortcut } from '../types'
 import { HOME_PATH } from '../constants'
@@ -13,7 +13,7 @@ const noteShortcut: Shortcut = {
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
   svg: PencilIcon,
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => isShortcutExecutable(getState),
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor, noteFocus } = state
@@ -69,7 +69,7 @@ const noteShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
-    return attribute(state, context, '=note') != null
+    return attribute(state, context, '=note') != null || isShortcutExecutable(getState)
   }
 }
 
