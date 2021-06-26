@@ -20,6 +20,7 @@ const pinOpenShortcut: Shortcut = {
   description: 'Pin and expand the current thought.',
   keyboard: { key: 'p', meta: true, alt: true },
   svg: Icon,
+  canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

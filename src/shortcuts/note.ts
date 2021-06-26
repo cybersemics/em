@@ -13,7 +13,7 @@ const noteShortcut: Shortcut = {
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
   svg: PencilIcon,
-  canExecute: () => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor, noteFocus } = state

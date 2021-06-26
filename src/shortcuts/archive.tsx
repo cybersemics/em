@@ -73,7 +73,7 @@ const archiveShortcut: Shortcut = {
   gesture: 'ldl',
   svg: Icon,
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: () => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec
 }
 
@@ -85,7 +85,7 @@ export const archiveAliases: Shortcut = {
   gesture: [
     'ldlr', 'ldldr', 'ldldlr', 'ldldldr', 'lrdl', 'lrdrl', 'lrdldr', 'lrdldlr', 'ldru', 'ldrlru', 'ldldlru', 'ldldrlru', 'ldllru', 'ldldrld', 'ldldldld', 'ldld', 'ldldld', 'ldlru', 'ldldru', 'ldldldru', 'lrdru', 'lrdlru', 'lrdldru', 'lrdldlru'
   ],
-  canExecute: () => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec
 }
 

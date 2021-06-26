@@ -7,7 +7,7 @@ const clearThoughtShortcut: Shortcut = {
   name: 'Clear Thought',
   description: 'Clear the text of the current thought.',
   gesture: 'rl',
-  canExecute: () => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: () => {
     const editable = document.querySelector('.editing .editable') as HTMLElement
     if (editable) {
