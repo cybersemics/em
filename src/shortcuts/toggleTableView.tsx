@@ -21,6 +21,7 @@ const toggleTableViewShortcut: Shortcut = {
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true, shift: true },
   svg: Icon,
+  canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

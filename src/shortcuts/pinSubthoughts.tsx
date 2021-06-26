@@ -22,6 +22,7 @@ const pinSubthoughtsShortcut: Shortcut = {
   description: 'Pin open the current thought\'s subthoughts.',
   keyboard: { key: 'p', meta: true, shift: true },
   svg: Icon,
+  canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
