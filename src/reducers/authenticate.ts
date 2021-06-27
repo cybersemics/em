@@ -3,8 +3,8 @@ import { State } from '../util/initialState'
 import { User } from '../types'
 
 interface Options {
-  value: boolean,
-  user?: User,
+  value: boolean
+  user?: User
 }
 
 /** Sets the authenticated, autologin, loading, and user when the user has been authenticated. */

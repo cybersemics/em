@@ -3,12 +3,12 @@ import classNames from 'classnames'
 import Loader from './Loader'
 
 interface ActionButtonProps {
-  title: string,
-  active?: boolean,
-  inActive?: boolean,
-  small?: boolean,
-  isLoading?: boolean,
-  isDisabled?: boolean,
+  title: string
+  active?: boolean
+  inActive?: boolean
+  small?: boolean
+  isLoading?: boolean
+  isDisabled?: boolean
 }
 
 /**

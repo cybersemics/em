@@ -4,11 +4,11 @@ import { Path, SimplePath } from '../types'
 import { DROP_TARGET } from '../constants'
 
 interface Payload {
-  value: boolean,
-  draggingThought?: SimplePath,
-  hoveringPath?: Path,
-  hoverId?: DROP_TARGET,
-  offset?: number,
+  value: boolean
+  draggingThought?: SimplePath
+  hoveringPath?: Path
+  hoverId?: DROP_TARGET
+  offset?: number
 }
 
 /** Sets dragInProgress. */

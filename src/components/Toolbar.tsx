@@ -31,7 +31,7 @@ const ARROW_SCROLL_BUFFER = 20
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
 
-  const { cursor, fontSize, thoughts, isLoading, toolbarOverlay, scrollPrioritized, showTopControls } = state
+  const { cursor, fontSize, thoughts, isLoading, toolbarOverlay, scrollPrioritized, showTopControls, showHiddenThoughts } = state
 
   return {
     dark: theme(state) !== 'Light',
@@ -42,7 +42,9 @@ const mapStateToProps = (state: State) => {
     // We cannot know if any one the shortcut's active status,has changed, so we re-render everytime thoughts or cursor is changed
     thoughts,
     cursor,
-    showTopControls
+    showTopControls,
+    // Needed to add this to re-render Toolbar when hidden thought is toggled.
+    showHiddenThoughts
   }
 }
 
@@ -206,9 +208,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                     startOverlayTimer(id)
                     setPressingToolbarId(id)
                   }}
-                  onClick={e => {
-                    exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-                  }}
+                  onClick={e => exec(store.dispatch, store.getState, e, { type: 'toolbar' })}
                 >
                   <SVG
                     style={{

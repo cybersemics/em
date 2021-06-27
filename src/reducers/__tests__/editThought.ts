@@ -1,6 +1,6 @@
-import { HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getAllChildren } from '../../selectors'
+import { exportContext, getContexts, getAllChildren, getThought } from '../../selectors'
 import { editThought, newThought, setCursor, importText } from '../../reducers'
 import { SimplePath } from '../../types'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
@@ -325,4 +325,72 @@ it('data integrity test after editing a parent with multiple descendants with sa
 
   expect(thoughtUpdates).toBe(0)
   expect(contextUpdates).toBe(0)
+})
+
+describe('changing thought with duplicate descendent', () => {
+
+  it('adding', () => {
+
+    const steps = [
+      importText({
+        path: HOME_PATH,
+        text: `
+      - a
+        - b
+          - ac`
+      }),
+      editThought({
+        newValue: 'ac',
+        oldValue: 'a',
+        context: [HOME_TOKEN],
+        path: [{ value: 'a', rank: 0 }] as SimplePath
+      })
+    ]
+
+    // run steps through reducer flow and export as plaintext for readable test
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - ac
+    - b
+      - ac`)
+
+    const lexeme = getThought(stateNew, 'ac')
+
+    // Lexeme should be properly updated
+    expect(lexeme?.contexts).toHaveLength(2)
+  })
+
+  it('removing', () => {
+
+    const steps = [
+      importText({
+        path: HOME_PATH,
+        text: `
+      - a
+        - b
+          - a`
+      }),
+      editThought({
+        newValue: 'ac',
+        oldValue: 'a',
+        context: [HOME_TOKEN],
+        path: [{ value: 'a', rank: 0 }] as SimplePath
+      })
+    ]
+
+    // run steps through reducer flow and export as plaintext for readable test
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - ac
+    - b
+      - a`)
+
+    const lexeme = getThought(stateNew, 'a')
+    // Lexeme should be properly updated
+    expect(lexeme?.contexts).toHaveLength(1)
+  })
 })

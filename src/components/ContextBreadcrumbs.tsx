@@ -13,16 +13,16 @@ import Superscript from './Superscript'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 export interface ContextBreadcrumbProps {
-  homeContext?: boolean,
-  path: Path,
-  thoughtsLimit?: number,
-  charLimit?: number,
-  classNamesObject?: Index<boolean>,
+  homeContext?: boolean
+  path: Path
+  thoughtsLimit?: number
+  charLimit?: number
+  classNamesObject?: Index<boolean>
 }
 
 type OverflowChild = Child & {
-  label?: string,
-  isOverflow?: boolean,
+  label?: string
+  isOverflow?: boolean
 }
 
 type OverflowPath = OverflowChild[]

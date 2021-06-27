@@ -17,12 +17,12 @@ import useOnClickOutside from 'use-onclickoutside'
 import { Child, ExportOption } from '../types'
 
 interface AdvancedSetting {
-  id: string,
-  onChangeFunc: () => void,
-  defaultChecked: boolean,
-  checked: boolean,
-  title: string,
-  description: string,
+  id: string
+  onChangeFunc: () => void
+  defaultChecked: boolean
+  checked: boolean
+  title: string
+  description: string
 }
 
 const exportOptions: ExportOption[] = [

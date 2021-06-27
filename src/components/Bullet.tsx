@@ -9,19 +9,19 @@ import { Context } from '../types'
 // •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
-  glyph?: string | null,
-  isEditing?: boolean,
-  leaf?: boolean,
-  onClick: (event: React.MouseEvent) => void,
-  showContexts?: boolean,
-  context: Context,
+  glyph?: string | null
+  isEditing?: boolean
+  leaf?: boolean
+  onClick: (event: React.MouseEvent) => void
+  showContexts?: boolean
+  context: Context
 }
 
 interface MapStateToProps {
-  invalidOption: boolean,
-  isLeaf: boolean,
-  pending: boolean,
-  showContexts: boolean,
+  invalidOption: boolean
+  isLeaf: boolean
+  pending: boolean
+  showContexts: boolean
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

@@ -15,24 +15,24 @@ import { State } from '../util/initialState'
 import { Path, SimplePath } from '../types'
 
 interface NewThoughtProps {
-  show?: boolean,
-  path: SimplePath,
-  cursor?: Path | null,
-  showContexts?: boolean,
-  label?: string,
-  value?: string,
-  type?: string,
+  show?: boolean
+  path: SimplePath
+  cursor?: Path | null
+  showContexts?: boolean
+  label?: string
+  value?: string
+  type?: string
 }
 
 interface OnClickOptions {
-  distance: number,
-  path: SimplePath,
-  showContexts?: boolean,
-  value: string,
+  distance: number
+  path: SimplePath
+  showContexts?: boolean
+  value: string
 }
 
 interface NewThoughtDispatchProps {
-  onClick?: (options: OnClickOptions) => void,
+  onClick?: (options: OnClickOptions) => void
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

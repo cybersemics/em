@@ -36,19 +36,19 @@ const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
 const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 interface StateProps {
-  dark?: boolean,
-  dragInProgress?: boolean,
-  isLoading?: boolean,
-  showModal?: string | null,
-  scale?: number,
-  showSplitView?: boolean,
-  splitPosition?: number,
-  fontSize: number,
-  enableLatestShorcutsDiagram: boolean,
+  dark?: boolean
+  dragInProgress?: boolean
+  isLoading?: boolean
+  showModal?: string | null
+  scale?: number
+  showSplitView?: boolean
+  splitPosition?: number
+  fontSize: number
+  enableLatestShorcutsDiagram: boolean
 }
 
 interface DispatchProps {
-  updateSplitPos: (splitPos: number) => void,
+  updateSplitPos: (splitPos: number) => void
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

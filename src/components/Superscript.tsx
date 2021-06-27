@@ -7,17 +7,17 @@ import { State } from '../util/initialState'
 import { Child, Context, Index, SimplePath } from '../types'
 
 interface SuperscriptProps {
-  contextViews?: Index<boolean>,
-  empty?: boolean,
-  numContexts?: number,
-  showContexts?: boolean,
-  showModal?: string | null,
-  showSingle?: boolean,
-  superscript?: boolean,
-  thoughts?: Context,
-  simplePath: SimplePath,
-  simplePathLive?: SimplePath,
-  thoughtRaw?: Child,
+  contextViews?: Index<boolean>
+  empty?: boolean
+  numContexts?: number
+  showContexts?: boolean
+  showModal?: string | null
+  showSingle?: boolean
+  superscript?: boolean
+  thoughts?: Context
+  simplePath: SimplePath
+  simplePathLive?: SimplePath
+  thoughtRaw?: Child
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

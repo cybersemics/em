@@ -3,13 +3,13 @@ import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped
-  horizontalTapLine?: 'left' | 'right',
+  horizontalTapLine?: 'left' | 'right'
   // Specify specific node on editable to tap. Overrides horizontalClickLine
-  offset?: number,
+  offset?: number
   // Number of pixels of x offset to add to the tap coordinates
-  x?: number,
+  x?: number
   // Number of pixels of y offset to add to the tap coordinates
-  y?: number,
+  y?: number
 }
 
 /**

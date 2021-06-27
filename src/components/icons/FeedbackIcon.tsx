@@ -5,10 +5,10 @@ import { Index } from '../../types'
 import { State } from '../../util/initialState'
 
 interface ChatIconProps {
-  dark?: boolean,
-  fill?: string,
-  size: number,
-  style?: Index<string>,
+  dark?: boolean
+  fill?: string
+  size: number
+  style?: Index<string>
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

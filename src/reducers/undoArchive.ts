@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 import { Path } from '../types'
 
 /** Moves the archived thought back to its original location. */
-const undoArchive = (state: State, { originalPath, currPath, offset }: { originalPath: Path, currPath: Path, offset?: number }) => {
+const undoArchive = (state: State, { originalPath, currPath, offset }: { originalPath: Path; currPath: Path; offset?: number }) => {
 
   const context = rootedParentOf(state, pathToContext(currPath))
   const archiveContext = rootedParentOf(state, pathToContext(originalPath))

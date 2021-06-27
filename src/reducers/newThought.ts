@@ -59,13 +59,13 @@ import {
 } from '../reducers'
 
 export interface NewThoughtPayload {
-  at?: Path,
-  insertNewSubthought?: boolean,
-  insertBefore?: boolean,
-  value?: string,
-  offset?: number,
-  aboveMeta?: boolean,
-  preventSetCursor?: boolean,
+  at?: Path
+  insertNewSubthought?: boolean
+  insertBefore?: boolean
+  value?: string
+  offset?: number
+  aboveMeta?: boolean
+  preventSetCursor?: boolean
 }
 
 /** Adds a new thought to the cursor. Calculates the rank to add the new thought above, below, or within a thought.

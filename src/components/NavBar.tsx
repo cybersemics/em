@@ -22,7 +22,7 @@ const mapStateToProps = (state: State) => {
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null, position: string, showBreadcrumbs: boolean }) => {
+const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor: Path | null; position: string; showBreadcrumbs: boolean }) => {
 
   const isTutorialOn = isTutorial(store.getState())
   const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path

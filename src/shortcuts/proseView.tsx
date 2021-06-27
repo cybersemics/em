@@ -23,7 +23,7 @@ const proseViewShortcut: Shortcut = {
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, alt: true },
   svg: Icon,
-  canExecute: () => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state

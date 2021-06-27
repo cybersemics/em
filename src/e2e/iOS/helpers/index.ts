@@ -14,7 +14,7 @@ import initSession from './initSession'
 import isKeyboardShown from './isKeyboardShown'
 import hideKeyboardByTappingDone from './hideKeyboardByTappingDone'
 import paste from './paste'
-import getSelection from '../../browserEnvironment/helpers/getSelection'
+import getSelection from './getSelection'
 import tapReturnKey from './tapReturnKey'
 import tap from './tap'
 import type from './type'
@@ -62,7 +62,7 @@ const index = () => {
   })
 
   return index as typeof index & {
-    paste: typeof pasteOverload,
+    paste: typeof pasteOverload
   }
 }
 

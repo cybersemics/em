@@ -16,20 +16,20 @@ import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  dark?: boolean,
-  editingValue?: string | null,
-  env?: Index<any>,
-  focusOffset?: number,
-  homeContext?: boolean,
-  invalidState?: boolean,
-  isEditing?: boolean,
-  minContexts?: number,
-  path: Path,
-  showContextBreadcrumbs?: boolean,
-  showContexts?: boolean,
-  showHiddenThoughts?: boolean,
-  simplePath: SimplePath,
-  style?: React.CSSProperties,
+  dark?: boolean
+  editingValue?: string | null
+  env?: Index<any>
+  focusOffset?: number
+  homeContext?: boolean
+  invalidState?: boolean
+  isEditing?: boolean
+  minContexts?: number
+  path: Path
+  showContextBreadcrumbs?: boolean
+  showContexts?: boolean
+  showHiddenThoughts?: boolean
+  simplePath: SimplePath
+  style?: React.CSSProperties
 }
 
 /** Sets the innerHTML of the subthought text. */

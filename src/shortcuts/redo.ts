@@ -4,7 +4,7 @@ import { Shortcut } from '../types'
 import { isRedoEnabled } from '../util/isRedoEnabled'
 
 interface RedoAction {
-  type: 'redoAction',
+  type: 'redoAction'
 }
 
 const redoShortcut: Shortcut = {

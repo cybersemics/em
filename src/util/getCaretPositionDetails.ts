@@ -1,6 +1,6 @@
 interface CaretPositionDetails {
-  focusNode: Node | null,
-  offset: number,
+  focusNode: Node | null
+  offset: number
 }
 
 /**

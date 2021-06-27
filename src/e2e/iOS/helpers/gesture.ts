@@ -2,10 +2,10 @@ import { Direction, GesturePath } from '../../../types'
 import { Browser, TouchAction } from 'webdriverio'
 
 export interface GestureOptions {
-  xStart?: number,
-  yStart?: number,
-  segmentLength?: number,
-  waitMs?: number,
+  xStart?: number
+  yStart?: number
+  segmentLength?: number
+  waitMs?: number
 }
 
 /** Apply gesture action for the given path. */

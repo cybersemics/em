@@ -20,14 +20,14 @@ const setCursor = (state: State, {
   path,
   noteFocus = false
 }: {
-  contextChain?: SimplePath[],
-  cursorHistoryClear?: boolean,
-  cursorHistoryPop?: boolean,
-  editing?: boolean | null,
-  noteFocus?: boolean,
-  offset?: number | null,
-  replaceContextViews?: Index<boolean>,
-  path: Path | null,
+  contextChain?: SimplePath[]
+  cursorHistoryClear?: boolean
+  cursorHistoryPop?: boolean
+  editing?: boolean | null
+  noteFocus?: boolean
+  offset?: number | null
+  replaceContextViews?: Index<boolean>
+  path: Path | null
 }): State => {
 
   if (path && path.length > 1 && equalThoughtRanked(path[0], HOME_PATH[0])) {

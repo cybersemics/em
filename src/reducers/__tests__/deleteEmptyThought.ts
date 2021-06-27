@@ -67,7 +67,7 @@ it('do not delete thought with children', () => {
 
 })
 
-it(`archive thought with hidden children - arvhive all children in cursor's parent`, () => {
+it('archive thought with hidden children - arvhive all children in cursor\'s parent', () => {
 
   const steps = [
     importTextReducer({

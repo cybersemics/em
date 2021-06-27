@@ -6,8 +6,8 @@ import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
 interface BulletCursorOverlayProps {
-  isDragging?: boolean,
-  simplePath: SimplePath,
+  isDragging?: boolean
+  simplePath: SimplePath
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

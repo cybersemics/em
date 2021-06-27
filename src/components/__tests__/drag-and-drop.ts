@@ -15,14 +15,14 @@ import { Context, SimplePath } from '../../types'
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {
   props: () => {
-    simplePath: SimplePath,
-  },
+    simplePath: SimplePath
+  }
 }
 
 // react-dnd adds getHandlerId to Component
 declare module 'react' {
   interface Component {
-    getHandlerId: () => number,
+    getHandlerId: () => number
   }
 }
 
@@ -53,7 +53,7 @@ const findDropEndTarget = (context: Context) => wrapper.find(Subthoughts).filter
  * @param drop - Context which will be used to select drop target.
  * @param type - Type of drop target i.e child or sibling.
  */
-const simulateDragAndDrop = ({ source, drop, type }: { source: Context, drop: Context, type: 'child' | 'sibling' }) => {
+const simulateDragAndDrop = ({ source, drop, type }: { source: Context; drop: Context; type: 'child' | 'sibling' }) => {
 
   const backend = document.DND.getManager().getBackend()
   const sourceId = findThoughtSource(source).instance().getHandlerId()

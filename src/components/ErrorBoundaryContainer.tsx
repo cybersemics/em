@@ -3,7 +3,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import * as db from '../data-providers/dexie'
 
 /** A fallback component for a global error boundary that the main App component is wrapped in. */
-const ErrorFallback = ({ error, componentStack }: { error?: Error, componentStack?: any }) => <div style={{ margin: 50 }}>
+const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStack?: any }) => <div style={{ margin: 50 }}>
   <p>Oops, there was an error.</p>
   <div style={{ fontSize: 14 }}>
     {error && <pre className='error'>{error.message}</pre>}

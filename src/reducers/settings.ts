@@ -7,7 +7,7 @@ import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 
 /** Sets a setting thought. */
-const settings = (state: State, { key, value }: { key: string, value: string }) => {
+const settings = (state: State, { key, value }: { key: string; value: string }) => {
 
   const newValue = value.toString()
   const context = [EM_TOKEN, 'Settings', key]

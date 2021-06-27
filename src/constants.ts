@@ -1,5 +1,5 @@
 /** Defines app-wide constants. */
-
+import { emojiRegex } from './emojiRegex'
 import { Index, SimplePath } from './types'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
@@ -316,8 +316,12 @@ export enum DROP_TARGET {
   ThoughtDrop = 'ThoughtDrop'
 }
 
-// eslint-disable-next-line no-useless-escape
-export const EMOJI_REGEX = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/u
+export const EMOJI_REGEX = emojiRegex
+/*
+  Note: Use string.match instead of regex.test when using regex with global modifier. Regex with global modifier  keeps state of it's previous match causing unwanted results.
+        Explaination: https://stackoverflow.com/a/30887581/10168748
+ */
+export const EMOJI_REGEX_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
 export const IGNORED_PREFIXES = ['the ']
 
@@ -328,3 +332,5 @@ export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 export const ALLOWED_ATTRIBUTES = {
   span: ['class', 'style']
 }
+
+export const EMPTY_SPACE = '  '

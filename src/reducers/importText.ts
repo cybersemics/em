@@ -131,12 +131,12 @@ const rawTextToHtml = (text: string) => {
 }
 
 interface Options {
-  path?: Path,
-  text: string,
-  lastUpdated?: Timestamp,
-  preventSetCursor?: boolean,
-  rawDestValue?: string,
-  skipRoot?: boolean,
+  path?: Path
+  text: string
+  lastUpdated?: Timestamp
+  preventSetCursor?: boolean
+  rawDestValue?: string
+  skipRoot?: boolean
 }
 
 /** Imports thoughts from html or raw text.

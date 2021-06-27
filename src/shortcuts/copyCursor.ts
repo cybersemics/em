@@ -40,7 +40,7 @@ const copyCursorShortcut: Shortcut = {
       }
     })
     if (hasPending) {
-      dispatch(alert(`Loading thoughts...`, { alertType: 'clipboard' }))
+      dispatch(alert('Loading thoughts...', { alertType: 'clipboard' }))
       await dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
     }
 
