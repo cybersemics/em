@@ -8,7 +8,7 @@ import { Connected } from '../types'
 // import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
 
 import Svg, { Path } from 'react-native-svg'
-import { TouchableOpacity } from 'react-native'
+import { TouchableOpacity, StyleSheet } from 'react-native'
 
 interface HomeLinkProps {
   color?: string
@@ -27,7 +27,7 @@ interface HomeLinkProps {
 /** A link to the home screen. */
 const HomeLink = ({ dark = true, color, showModal, size = 60, style, dispatch }: Connected<HomeLinkProps>) => {
   return (
-    <TouchableOpacity style={{ marginTop: 15 }}>
+    <TouchableOpacity style={styles.container}>
       <Svg width={size || 35} height={size || 35} viewBox='0 0 35 35' fill={color || (dark ? '#FFF' : '#000')}>
         <Path d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z' />
         <Path d='M0 0h24v24H0z' fill='none' />
@@ -35,5 +35,9 @@ const HomeLink = ({ dark = true, color, showModal, size = 60, style, dispatch }:
     </TouchableOpacity>
   )
 }
+
+const styles = StyleSheet.create({
+  container: { marginTop: 15 },
+})
 
 export default HomeLink
