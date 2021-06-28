@@ -335,26 +335,3 @@ export const ALLOWED_ATTRIBUTES = {
 }
 
 export const EMPTY_SPACE = '  '
-
-export enum SHORTCUTS_ID {
-  // disable undo/redo until deepClone is optimized
-  // 'undo',
-  // 'redo',
-  // 'search',
-  OUTDENT = 'outdent',
-  INDENT = 'indent',
-  TOGGLE_TABLE_VIEW = 'toggleTableView',
-  TOGGLE_SORT = 'toggleSort',
-  PIN_OPEN = 'pinOpen',
-  PIN_SUB_THOUGHTS = 'pinSubthoughts',
-  NOTE = 'note',
-  DELETE = 'delete',
-  TOGGLE_CONTEXT_VIEW = 'toggleContextView',
-  PROSE_VIEW = 'proseView',
-  // TOGGLESPLITVIEW = // 'toggleSplitView',
-  SPLIT_SENTENCES = 'splitSentences',
-  SUBCATEGORIZE_ONE = 'subcategorizeOne',
-  SUBCATEGORIZE_ALL = 'subcategorizeAll',
-  TOGGLE_HIDDEN_THOUGHTS = 'toggleHiddenThoughts',
-  EXPORT_CONTEXT = 'exportContext',
-}
