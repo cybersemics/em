@@ -3,6 +3,7 @@ import Dexie from 'dexie'
 import _ from 'lodash'
 import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
+import win from './win'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -19,7 +20,14 @@ class EM extends Dexie {
   logs: Dexie.Table<Log, number>
 
   constructor() {
-    super('Database')
+    if (!document) {
+      super('Database', {
+        indexedDB: win?.indexedDB,
+        IDBKeyRange: win?.IDBKeyRange,
+      })
+    } else {
+      super('Database')
+    }
 
     this.version(1).stores({
       contextIndex: 'id, context, *children, lastUpdated',
