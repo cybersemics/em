@@ -140,7 +140,7 @@ export const FIREBASE_REDIRECT_URL = process.env.REACT_APP_FIREBASE_REDIRECT_URL
 export const ALGOLIA_CONFIG = {
   applicationId: process.env.REACT_APP_ALGOLIA_APPPLICATION_ID as string,
   index: process.env.REACT_APP_ALGOLIA_INDEX as string,
-  searchKeyEndpoint: process.env.REACT_APP_ALGOLIA_SEARCH_KEY_ENDPOINT as string
+  searchKeyEndpoint: process.env.REACT_APP_ALGOLIA_SEARCH_KEY_ENDPOINT as string,
 }
 
 // if (!ALGOLIA_CONFIG.applicationId) {
@@ -157,7 +157,7 @@ export const FEEDBACK_URL = process.env.REACT_APP_FEEDBACK_URL as string
 export const ID = <T = any>(x: T): T => x
 
 /** A void function that does nothing. NOOP means "no operation". */
-export const NOOP = () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+export const NOOP = () => {} // eslint-disable-line @typescript-eslint/no-empty-function
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
@@ -223,13 +223,14 @@ export const EDIT_THROTTLE = 1000
 
 export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
 
-export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
+export const REGEXP_URL =
+  /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
 
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 
 export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
 
-export const REGEXP_TAGS = /(<([^>]+)>)/ig
+export const REGEXP_TAGS = /(<([^>]+)>)/gi
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
@@ -255,7 +256,7 @@ export const NAVIGATION_ACTIONS: Index<string> = {
   cursorForward: 'cursorForward',
   cursorHistory: 'cursorHistory',
   cursorUp: 'cursorUp',
-  setCursor: 'setCursor'
+  setCursor: 'setCursor',
 }
 
 // a list of all undoable/reversible actions (stored as object for indexing)
@@ -296,7 +297,7 @@ export const UNDOABLE_ACTIONS: Index<string> = {
   toggleContextView: 'toggleContextView',
   toggleHiddenThoughts: 'toggleHiddenThoughts',
   toggleSplitView: 'toggleSplitView',
-  toolbarOverlay: 'toolbarOverlay'
+  toolbarOverlay: 'toolbarOverlay',
 }
 
 // modal states
@@ -306,14 +307,14 @@ export const MODALS: Index<string> = {
   home: 'home',
   export: 'export',
   feedback: 'feedback',
-  auth: 'auth'
+  auth: 'auth',
 }
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'
 
 export enum DROP_TARGET {
   EmptyDrop = 'EmptyDrop',
-  ThoughtDrop = 'ThoughtDrop'
+  ThoughtDrop = 'ThoughtDrop',
 }
 
 export const EMOJI_REGEX = emojiRegex
@@ -330,7 +331,7 @@ export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span']
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
 export const ALLOWED_ATTRIBUTES = {
-  span: ['class', 'style']
+  span: ['class', 'style'],
 }
 
 export const EMPTY_SPACE = '  '

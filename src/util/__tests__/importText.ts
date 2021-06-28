@@ -1,3 +1,4 @@
+import 'react-native-get-random-values'
 import { validate as uuidValidate } from 'uuid'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { hashContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
