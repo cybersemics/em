@@ -13,7 +13,7 @@ import React, { useCallback } from 'react'
 import { shortcutById } from '../shortcuts'
 import { FlatList, ListRenderItem, TouchableOpacity, View, StyleSheet } from 'react-native'
 // import { store } from '../store'
-import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { SHORTCUTS_ID, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { Icon } from '../types'
 import HamburgerMenu from './HamburgerMenu'
 
@@ -33,7 +33,7 @@ const Toolbar = (
 
   const keyExtractor = useCallback((item: string) => item, [])
   const renderItem: ListRenderItem<string> = useCallback(({ item: id, index }) => {
-    if (id === 'delete') return null
+    if (id === SHORTCUTS_ID.DELETE) return null
 
     const { name, svg } = shortcutById(id)! ?? {}
 
