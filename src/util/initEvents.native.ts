@@ -12,19 +12,17 @@ import { equalPath } from './equalPath'
 
 declare global {
   interface Window {
-    __inputHandlers: ReturnType<typeof inputHandlers>,
+    __inputHandlers: ReturnType<typeof inputHandlers>
   }
 }
 
 /** Add window event handlers. */
 export const initEvents = (store: Store<State, any>) => {
-
   let lastState: number // eslint-disable-line fp/no-let
   let lastPath: Path | null // eslint-disable-line fp/no-let
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
-
     const state = store.getState()
 
     const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
@@ -51,37 +49,31 @@ export const initEvents = (store: Store<State, any>) => {
     const cursor = toRoot ? null : path
 
     store.dispatch([
-
       // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
       setCursor({ path: cursor, replaceContextViews: contextViews }),
 
       // scroll cursor into view
       scrollCursorIntoView(),
-
     ])
-
   }
 
   /** MouseMove event listener. */
-  const onMouseMove = _.debounce(() =>
-    store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true }
-  )
+  const onMouseMove = _.debounce(() => store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true })
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
-
     const shouldConfirmReload = store.getState().isPushing
 
     if (shouldConfirmReload) {
       // Note: Showing confirmation dialog can vary between browsers. https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
       e.preventDefault()
-      e.returnValue = ``
+      e.returnValue = ''
       return ''
     }
   }
 
   /** Error event listener. NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
-  const onError = (e: { message: string, error: Error }) => {
+  const onError = (e: { message: string; error: Error }) => {
     // ignore generic script error caused by a firebase disconnect (cross-site error)
     // https://blog.sentry.io/2016/05/17/what-is-script-error
     if (e.message === 'Script error.') return
@@ -103,7 +95,7 @@ export const initEvents = (store: Store<State, any>) => {
   // }
 
   // store input handlers so they can be removed on cleanup
-  const { keyDown, keyUp } = window.__inputHandlers = inputHandlers(store)
+  const { keyDown, keyUp } = (window.__inputHandlers = inputHandlers(store))
 
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'

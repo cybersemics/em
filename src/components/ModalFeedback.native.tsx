@@ -6,19 +6,26 @@ import { submitFeedback } from '../util'
 import { alert } from '../action-creators'
 import { AxiosError } from 'axios'
 import { State } from '../util/initialState'
-import { StyleSheet, TextInput, NativeSyntheticEvent, TextInputChangeEventData, View, Text, TouchableOpacity } from 'react-native'
+import {
+  StyleSheet,
+  TextInput,
+  NativeSyntheticEvent,
+  TextInputChangeEventData,
+  View,
+  Text,
+  TouchableOpacity,
+} from 'react-native'
 // import { MODALS } from '../constants'
 import Modal from './Modal'
 
 const FEEDBACK_MIN_LENGTH = 10
 
 interface FeedbackResponse {
-  message: string,
+  message: string
 }
 
 /** Modal to leave feedback. */
 const ModalFeedback = () => {
-
   const [, setIsSubmitting] = useState(false)
   const [, setIsDisabled] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -31,12 +38,16 @@ const ModalFeedback = () => {
 
   /** Submit handler. */
   const onSubmit = async ({ remindMeLater }: { remindMeLater: () => void }) => {
-
     setSubmitAttempts(submitAttempts + 1)
 
     // minimum characters
     if (feedback.length < FEEDBACK_MIN_LENGTH) {
-      dispatch(alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, { alertType: 'modalFeedback', clearTimeout: 5000 }))
+      dispatch(
+        alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, {
+          alertType: 'modalFeedback',
+          clearTimeout: 5000,
+        }),
+      )
       setIsDisabled(true)
       return
     }
@@ -46,8 +57,7 @@ const ModalFeedback = () => {
       await submitFeedback(feedback, uid)
       dispatch(alert('Feedback sent!'))
       // remindMeLater()
-    }
-    catch (err) {
+    } catch (err) {
       console.error('Error sending feedback', err)
       const { response } = err as AxiosError
       const message = (response?.data as FeedbackResponse)?.message ?? 'Error sending feedback'
@@ -66,20 +76,15 @@ const ModalFeedback = () => {
      }
    }, [feedback]) */
 
-  return <Modal
-    id='feedback' title='Feedback'
-  >
-    <View style={styles.modalView}>
-      <Text style={styles.modalText}>Send us your bugs, hopes, and dreams!</Text>
-      <TextInput
-        onChange={onChange}
-        style={styles.input}
-        multiline={true}
-      />
-      <TouchableOpacity onPress={() => onSubmit}></TouchableOpacity>
-    </View>
-
-  </Modal>
+  return (
+    <Modal id='feedback' title='Feedback'>
+      <View style={styles.modalView}>
+        <Text style={styles.modalText}>Send us your bugs, hopes, and dreams!</Text>
+        <TextInput onChange={onChange} style={styles.input} multiline={true} />
+        <TouchableOpacity onPress={() => onSubmit}></TouchableOpacity>
+      </View>
+    </Modal>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -91,13 +96,13 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: 20,
     padding: 10,
-    elevation: 2
+    elevation: 2,
   },
   modalText: {
     marginBottom: 15,
     textAlign: 'center',
     fontSize: 16,
-    color: '#fff'
+    color: '#fff',
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -105,8 +110,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderColor: '#fff',
     padding: 5,
-    color: '#fff'
-  }
+    color: '#fff',
+  },
 })
 
 export default ModalFeedback

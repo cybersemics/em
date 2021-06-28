@@ -6,10 +6,10 @@ import { Index } from '../../types'
 import Svg, { Path, Rect } from 'react-native-svg'
 
 interface ChatIconProps {
-  dark?: boolean,
-  fill?: string,
-  size: number,
-  style?: Index<string>,
+  dark?: boolean
+  fill?: string
+  size: number
+  style?: Index<string>
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -19,7 +19,7 @@ interface ChatIconProps {
  */
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const FeedbackIcon: FC<ChatIconProps> = ({ dark = true, fill, size = 20, style }) =>
+const FeedbackIcon: FC<ChatIconProps> = ({ dark = true, fill, size = 20, style }) => (
   <Svg
     x='0px'
     y='0px'
@@ -35,5 +35,6 @@ const FeedbackIcon: FC<ChatIconProps> = ({ dark = true, fill, size = 20, style }
     <Path d='M20.889,22.228H8.5v2h11.814c0.016-0.077,0.027-0.153,0.051-0.229L20.889,22.228z' />
     <Path d='M33.166,32.628c0,0.884-0.719,1.604-1.604,1.604H13.592c-0.248,0-0.486,0.092-0.672,0.259l-3.67,3.327v-2.586  c0-0.553-0.447-1-1-1H6.686c-0.883,0-1.604-0.72-1.604-1.604V13.826c0-0.884,0.721-1.604,1.604-1.604h22.006l2-2H6.686  c-1.986,0-3.604,1.616-3.604,3.604v18.802c0,1.986,1.617,3.604,3.604,3.604H7.25v3.843c0,0.396,0.232,0.754,0.594,0.914  c0.131,0.058,0.27,0.086,0.406,0.086c0.242,0,0.484-0.089,0.672-0.259l5.057-4.584h17.584c1.986,0,3.604-1.617,3.604-3.604V19.603  l-2,2V32.628z' />
   </Svg>
+)
 
 export default FeedbackIcon

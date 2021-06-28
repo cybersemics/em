@@ -11,12 +11,11 @@ export const shortcutEmitter = new Emitter()
 
 /** Initializes shortcut indices and stores conflicts. */
 const index = (): {
-  shortcutIdIndex: Index<Shortcut>,
+  shortcutIdIndex: Index<Shortcut>
 } => {
-
   // index shortcuts for O(1) lookup by id
   const shortcutIdIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
-    shortcut.id ? { [shortcut.id]: shortcut } : null
+    shortcut.id ? { [shortcut.id]: shortcut } : null,
   )
 
   return { shortcutIdIndex }

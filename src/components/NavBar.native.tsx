@@ -15,29 +15,38 @@ const mapStateToProps = (state: State) => {
   const { cursor, showBreadcrumbs } = state
   return {
     cursor,
-    showBreadcrumbs
+    showBreadcrumbs,
   }
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
-const NavBar = ({ cursor, position, showBreadcrumbs }: { cursor?: Path | null, position?: string, showBreadcrumbs?: boolean }) => {
+const NavBar = ({
+  cursor,
+  position,
+  showBreadcrumbs,
+}: {
+  cursor?: Path | null
+  position?: string
+  showBreadcrumbs?: boolean
+}) => {
+  return (
+    <View style={styles.container}>
+      <HomeLink />
 
-  return <View style={styles.container}>
-    <HomeLink />
+      <Text style={styles.breadcrumbs}>{'bread > crumbs > will go > here > thoughts > ua'}</Text>
 
-    <Text style={styles.breadcrumbs}>{'bread > crumbs > will go > here > thoughts > ua'}</Text>
-
-    <View style={styles.buttonsContainer}>
-      <FeedbackButton />
-      <QuickAddButton />
+      <View style={styles.buttonsContainer}>
+        <FeedbackButton />
+        <QuickAddButton />
+      </View>
     </View>
-  </View>
+  )
 }
 
 const styles = StyleSheet.create({
   container: { paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center' },
   breadcrumbs: { color: 'white', flex: 1, flexWrap: 'wrap' },
-  buttonsContainer: { flexDirection: 'row', alignItems: 'center' }
+  buttonsContainer: { flexDirection: 'row', alignItems: 'center' },
 })
 
 export default connect(mapStateToProps)(NavBar)

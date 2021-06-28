@@ -15,17 +15,16 @@ import { Modal, Text, View, StyleSheet } from 'react-native'
 } */
 
 export interface ModalProps {
-  hideModalActions?: boolean,
-  id: string,
-  onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void,
-  show?: boolean,
+  hideModalActions?: boolean
+  id: string
+  onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
+  show?: boolean
   // actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode,
-  title: string,
+  title: string
 }
 
 /** A generic modal component. */
 const ModalComponent: React.FC<ModalProps> = props => {
-
   const dispatch = useDispatch()
 
   /** Dispatches a remindMeLater action for the modal. */
@@ -41,21 +40,20 @@ const ModalComponent: React.FC<ModalProps> = props => {
 
   if (!show) return null
 
-  return <Modal
-    animationType='slide'
+  return (
+    <Modal animationType='slide' visible={show} onRequestClose={complete}>
+      <View style={styles.centeredView}>
+        {id !== 'welcome' ? (
+          <Text style={styles.close} onPress={complete}>
+            ✕
+          </Text>
+        ) : null}
 
-    visible={show}
-    onRequestClose={complete}
-  >
-    <View style={styles.centeredView}>
-      {id !== 'welcome' ? <Text style={styles.close} onPress={complete}>✕</Text> : null}
-
-      {title ? <Text style={styles.title}>{title}</Text> : null}
-      <View>{children}</View>
-    </View>
-
-  </Modal>
-
+        {title ? <Text style={styles.title}>{title}</Text> : null}
+        <View>{children}</View>
+      </View>
+    </Modal>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -63,20 +61,20 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 40,
     backgroundColor: '#000',
-    paddingHorizontal: 15
+    paddingHorizontal: 15,
   },
   close: {
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'right',
-    fontSize: 20
+    fontSize: 20,
   },
   title: {
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 32
-  }
+    fontSize: 32,
+  },
 })
 
 export default ModalComponent

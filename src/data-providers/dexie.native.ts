@@ -2,18 +2,11 @@
 import Dexie from 'dexie'
 import _ from 'lodash'
 import { hashThought, timestamp } from '../util'
-import {
-  Context,
-  Index,
-  Lexeme,
-  Parent,
-  ThoughtWordsIndex,
-  Timestamp,
-} from '../types'
+import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
 import SQLite from 'react-native-sqlite-2'
 import setGlobalVars from 'indexeddbshim/dist/indexeddbshim-noninvasive'
 
-const win: { indexedDB?: any, IDBKeyRange?: any } = {}
+const win: { indexedDB?: any; IDBKeyRange?: any } = {}
 setGlobalVars(win, {
   checkOrigin: false,
   win: SQLite,
@@ -29,11 +22,11 @@ setGlobalVars(win, {
 /** Extend Dexie class for proper typing. See https://dexie.org/docs/Typescript. */
 // eslint-disable-next-line fp/no-class
 class EM extends Dexie {
-  contextIndex: Dexie.Table<Parent, string>;
-  thoughtIndex: Dexie.Table<Lexeme, string>;
-  thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>;
-  helpers: Dexie.Table<Helper, string>;
-  logs: Dexie.Table<Log, number>;
+  contextIndex: Dexie.Table<Parent, string>
+  thoughtIndex: Dexie.Table<Lexeme, string>
+  thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>
+  helpers: Dexie.Table<Helper, string>
+  logs: Dexie.Table<Log, number>
 
   constructor() {
     super('Database', {
@@ -58,19 +51,19 @@ class EM extends Dexie {
 }
 
 export interface Helper {
-  id: string,
-  value?: string,
-  contexts?: Context[],
-  cursor?: string | null,
-  created?: Timestamp,
-  lastUpdated?: Timestamp,
-  recentlyEdited?: Index,
+  id: string
+  value?: string
+  contexts?: Context[]
+  cursor?: string | null
+  created?: Timestamp
+  lastUpdated?: Timestamp
+  recentlyEdited?: Index
 }
 
 export interface Log {
-  created: Timestamp,
-  message: string,
-  stack?: any,
+  created: Timestamp
+  message: string
+  stack?: any
 }
 
 const db = new Dexie('EM') as EM
@@ -106,22 +99,16 @@ const initDB = async () => {
       })
     })
 
-    db.thoughtIndex.hook(
-      'updating',
-      (modificationObject, primaryKey, lexeme, transaction) => {
-        transaction.on('complete', () => {
-          // eslint-disable-next-line no-prototype-builtins
-          if (modificationObject.hasOwnProperty('value')) {
-            db.thoughtWordsIndex.update(hashThought(lexeme.value), {
-              words:
-                lexeme.value.trim().length > 0
-                  ? _.uniq(lexeme.value.trim().split(' '))
-                  : [],
-            })
-          }
-        })
-      }
-    )
+    db.thoughtIndex.hook('updating', (modificationObject, primaryKey, lexeme, transaction) => {
+      transaction.on('complete', () => {
+        // eslint-disable-next-line no-prototype-builtins
+        if (modificationObject.hasOwnProperty('value')) {
+          db.thoughtWordsIndex.update(hashThought(lexeme.value), {
+            words: lexeme.value.trim().length > 0 ? _.uniq(lexeme.value.trim().split(' ')) : [],
+          })
+        }
+      })
+    })
 
     db.thoughtIndex.hook('deleting', (primaryKey, lexeme, transaction) => {
       transaction.on('complete', () => {
@@ -135,21 +122,13 @@ const initDB = async () => {
 }
 
 /** Clears all thoughts and contexts from the indices. */
-export const clearAll = () =>
-  Promise.all([
-    db.thoughtIndex.clear(),
-    db.contextIndex.clear(),
-    db.helpers.clear(),
-  ])
+export const clearAll = () => Promise.all([db.thoughtIndex.clear(), db.contextIndex.clear(), db.helpers.clear()])
 
 /** Updates a single thought in the thoughtIndex. */
-export const updateThought = async (id: string, thought: Lexeme) =>
-  db.thoughtIndex.put({ id, ...thought })
+export const updateThought = async (id: string, thought: Lexeme) => db.thoughtIndex.put({ id, ...thought })
 
 /** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async (
-  thoughtIndexMap: Index<Lexeme | null>
-) => {
+export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) => {
   const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
     ...(thoughtIndexMap[key] as Lexeme),
     id: key,
@@ -173,17 +152,12 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
-export const updateContext = async (
-  id: string,
-  { context, children, lastUpdated }: Parent
-) => {
+export const updateContext = async (id: string, { context, children, lastUpdated }: Parent) => {
   return db.contextIndex.put({ id, context, children, lastUpdated })
 }
 
 /** Updates multiple thoughts in the contextIndex. */
-export const updateContextIndex = async (
-  contextIndexMap: Index<Parent | null>
-) => {
+export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) => {
   const contextsArray = Object.keys(contextIndexMap).map(key => ({
     ...(contextIndexMap[key] as Parent),
     id: key,
@@ -198,8 +172,7 @@ export const deleteContext = async (id: string) => db.contextIndex.delete(id)
 export const getContextById = async (id: string) => db.contextIndex.get(id)
 
 /** Gets multiple contexts from the contextIndex by ids. */
-export const getContextsByIds = async (ids: string[]) =>
-  db.contextIndex.bulkGet(ids)
+export const getContextsByIds = async (ids: string[]) => db.contextIndex.bulkGet(ids)
 
 /** Gets the entire contextIndex. DEPRECATED. Use data-helpers/getDescendantThoughts. */
 export const getContextIndex = async () => {
@@ -209,27 +182,22 @@ export const getContextIndex = async () => {
 }
 
 /** Updates the recentlyEdited helper. */
-export const updateRecentlyEdited = async (recentlyEdited: Index) =>
-  db.helpers.update('EM', { recentlyEdited })
+export const updateRecentlyEdited = async (recentlyEdited: Index) => db.helpers.update('EM', { recentlyEdited })
 
 /** Updates the schema version helper. */
-export const updateSchemaVersion = async (schemaVersion: number) =>
-  db.helpers.update('EM', { schemaVersion })
+export const updateSchemaVersion = async (schemaVersion: number) => db.helpers.update('EM', { schemaVersion })
 
 /** Updates the lastUpdates helper. */
-export const updateLastUpdated = async (lastUpdated: Timestamp) =>
-  db.helpers.update('EM', { lastUpdated })
+export const updateLastUpdated = async (lastUpdated: Timestamp) => db.helpers.update('EM', { lastUpdated })
 
 /** Gets all the helper values. */
 export const getHelpers = async () => db.helpers.get({ id: 'EM' })
 
 /** Updates the cursor helper. */
-export const updateCursor = async (cursor: string | null) =>
-  db.helpers.update('EM', { cursor })
+export const updateCursor = async (cursor: string | null) => db.helpers.update('EM', { cursor })
 
 /** Deletes the cursor helper. */
-export const deleteCursor = async () =>
-  db.helpers.update('EM', { cursor: null })
+export const deleteCursor = async () => db.helpers.update('EM', { cursor: null })
 
 /** Gets the full logs. */
 export const getLogs = async () => db.logs.toArray()
@@ -241,36 +209,19 @@ export const fullTextSearch = async (value: string) => {
   // Related resource: https://github.com/dfahlander/Dexie.js/issues/281
   const words = _.uniq(value.split(' '))
 
-  const lexemes = await db.transaction(
-    'r',
-    db.thoughtWordsIndex,
-    db.thoughtIndex,
-    async () => {
-      const matchedKeysArray = await Dexie.Promise.all(
-        words.map(word =>
-          db.thoughtWordsIndex
-            .where('words')
-            .startsWithIgnoreCase(word)
-            .primaryKeys()
-        )
-      )
-      const intersectionKeys = matchedKeysArray.reduce((acc, keys) =>
-        acc.filter(key => keys.includes(key))
-      )
-      return db.thoughtIndex.bulkGet(intersectionKeys)
-    }
-  )
+  const lexemes = await db.transaction('r', db.thoughtWordsIndex, db.thoughtIndex, async () => {
+    const matchedKeysArray = await Dexie.Promise.all(
+      words.map(word => db.thoughtWordsIndex.where('words').startsWithIgnoreCase(word).primaryKeys()),
+    )
+    const intersectionKeys = matchedKeysArray.reduce((acc, keys) => acc.filter(key => keys.includes(key)))
+    return db.thoughtIndex.bulkGet(intersectionKeys)
+  })
 
   return lexemes
 }
 
 /** Logs a message. */
-export const log = async ({
-  message,
-  stack,
-}: {
-  message: string,
-  stack: any,
-}) => db.logs.add({ created: timestamp(), message, stack })
+export const log = async ({ message, stack }: { message: string; stack: any }) =>
+  db.logs.add({ created: timestamp(), message, stack })
 
 export default initDB
