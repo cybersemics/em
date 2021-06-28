@@ -17,7 +17,7 @@ const moveThoughtDownShortcut: Shortcut = {
   description: 'Move the current thought down.',
   keyboard: { key: Key.ArrowDown, meta: true, shift: true },
   svg: Icon,
-  canExecute: () => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(moveThoughtDown()),
 }
 

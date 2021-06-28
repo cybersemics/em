@@ -5,7 +5,7 @@ import { ALLOWED_ATTRIBUTES, ALLOWED_FORMATTING_TAGS } from '../constants'
 const regexNbsp = /&nbsp;/gmi
 const regexDecimalSpace = /&#32;/gmi
 const regexBrTag = /<br.*?>/gmi
-type StripOptions = { preserveFormatting?: boolean, preventTrim?: boolean }
+type StripOptions = { preserveFormatting?: boolean; preventTrim?: boolean }
 
 const regexSpanTagOnlyContainsWhitespaces = /<span[^>]*>([\s]+)<\/span>/gmi
 

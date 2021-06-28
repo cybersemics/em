@@ -59,18 +59,18 @@ import {
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
-  allowSingleContext?: boolean,
-  allowSingleContextParent?: boolean,
-  childrenForced?: Child[],
-  count?: number,
-  depth?: number,
-  env?: Index<Context>,
-  expandable?: boolean,
-  isParentHovering?: boolean,
-  showContexts?: boolean,
-  sort?: SortPreference,
-  simplePath: SimplePath,
-  path?: Path,
+  allowSingleContext?: boolean
+  allowSingleContextParent?: boolean
+  childrenForced?: Child[]
+  count?: number
+  depth?: number
+  env?: Index<Context>
+  expandable?: boolean
+  isParentHovering?: boolean
+  showContexts?: boolean
+  sort?: SortPreference
+  simplePath: SimplePath
+  path?: Path
 }
 
 // assert shortcuts at load time
@@ -269,7 +269,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
  ********************************************************************/
 
 /** A message that says there are no children in this context. */
-const NoChildren = ({ allowSingleContext, children, simplePath }: { allowSingleContext?: boolean, children: Child[], simplePath: SimplePath }) =>
+const NoChildren = ({ allowSingleContext, children, simplePath }: { allowSingleContext?: boolean; children: Child[]; simplePath: SimplePath }) =>
   <div className='children-subheading text-note text-small'>
 
     This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.<br /><br />
@@ -290,7 +290,7 @@ const NoChildren = ({ allowSingleContext, children, simplePath }: { allowSingleC
   </div>
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
-const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number, dropTarget: ConnectDropTarget, isDragInProgress?: boolean, isHovering?: boolean, isThoughtDivider?: boolean }) =>
+const EmptyChildrenDropTarget = ({ depth, dropTarget, isDragInProgress, isHovering, isThoughtDivider }: { depth?: number; dropTarget: ConnectDropTarget; isDragInProgress?: boolean; isHovering?: boolean; isThoughtDivider?: boolean }) =>
   <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
     {dropTarget(
       <li className={classNames({

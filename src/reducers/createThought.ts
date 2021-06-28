@@ -6,11 +6,11 @@ import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent } from '../types'
 
 interface Payload {
-  context: Context,
-  value: string,
-  rank: number,
-  id?: string,
-  addAsContext?: boolean,
+  context: Context
+  value: string
+  rank: number
+  id?: string
+  addAsContext?: boolean
 }
 /**
  * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.

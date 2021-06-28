@@ -8,11 +8,11 @@ import Modal from './Modal'
 import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
 
 interface HomeLinkProps {
-  color?: string,
-  dark?: boolean,
-  showModal?: string | null,
-  size?: number,
-  style?: React.CSSProperties,
+  color?: string
+  dark?: boolean
+  showModal?: string | null
+  size?: number
+  style?: React.CSSProperties
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

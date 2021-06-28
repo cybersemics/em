@@ -13,10 +13,10 @@ import { getAllChildren } from '../../selectors'
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ThoughtOrSubthoughtsComponent {
   props: () => {
-    path?: Path,
-    simplePath: SimplePath,
-    showContexts?: boolean,
-  },
+    path?: Path
+    simplePath: SimplePath
+    showContexts?: boolean
+  }
 }
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts path. */

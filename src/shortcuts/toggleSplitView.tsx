@@ -16,6 +16,7 @@ const toggleSplitViewShortcut: Shortcut = {
   name: 'Toggle Split View',
   description: 'Render two independent views for side-by-side editing.',
   svg: Icon,
+  canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState) => {
     dispatch(toggleSplitView({ value: !getState().showSplitView }))
   },

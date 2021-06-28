@@ -11,7 +11,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 const subCategorizeAllShortcut: Shortcut = {
   id: 'subcategorizeAll',
   name: 'Subcategorize All',
-  description: `Insert all thoughts in the current context into a new context.`,
+  description: 'Insert all thoughts in the current context into a new context.',
   gesture: 'ldr',
   keyboard: { key: 'a', meta: true, alt: true },
   svg: Icon,

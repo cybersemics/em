@@ -62,7 +62,7 @@ const index = () => {
   })
 
   return index as typeof index & {
-    paste: typeof pasteOverload,
+    paste: typeof pasteOverload
   }
 }
 

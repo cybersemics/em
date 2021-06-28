@@ -16,6 +16,7 @@ const collapseContextShortcut: Shortcut = {
   gesture: 'ldu',
   svg: Icon,
   keyboard: { key: 'c', meta: true, alt: true },
+  canExecute: getState => !!getState().cursor,
   exec: dispatch => {
     dispatch(collapseContext({}))
   }

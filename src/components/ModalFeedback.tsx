@@ -10,7 +10,7 @@ import { State } from '../util/initialState'
 const FEEDBACK_MIN_LENGTH = 10
 
 interface FeedbackResponse {
-  message: string,
+  message: string
 }
 
 /** Modal to leave feedback. */
@@ -68,7 +68,7 @@ const ModalFeedback = () => {
     <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => remindMeLater()}>Cancel</a></div>
   </div>}>
     <p style={{ fontSize: 18, marginBottom: 30 }}>Send us your bugs, hopes, and dreams!</p>
-    <textarea placeholder={`Enter your message`} rows={1} value={feedback} onChange={onChange} style={{ borderRadius: 5 }} />
+    <textarea placeholder={'Enter your message'} rows={1} value={feedback} onChange={onChange} style={{ borderRadius: 5 }} />
   </Modal>
 }
 

@@ -6,7 +6,7 @@ import { render } from '../reducers'
 import { State } from '../util/initialState'
 
 /** Deletes the value from the thoughtIndex. */
-const deleteData = (state: State, { value, forceRender }: { value: string, forceRender?: boolean }) => {
+const deleteData = (state: State, { value, forceRender }: { value: string; forceRender?: boolean }) => {
 
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const thought = getThought(state, value)

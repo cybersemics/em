@@ -20,12 +20,12 @@ const stripHTMLTag = (str: string) => {
 }
 
 interface Options {
-  indent?: number,
-  title?: string,
-  excludeSrc?: boolean,
-  excludeMeta?: boolean,
-  depth?: number,
-  excludeArchived?: boolean,
+  indent?: number
+  title?: string
+  excludeSrc?: boolean
+  excludeMeta?: boolean
+  depth?: number
+  excludeArchived?: boolean
 }
 
 /** Exports the navigable subtree of the given context.

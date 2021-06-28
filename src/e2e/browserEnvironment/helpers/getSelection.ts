@@ -26,7 +26,7 @@ const getSelection = (browser: BrowserEnvironment) => {
       // add the textContent property
       // add undefined to match the native browser api
       return focusNodePromise as typeof focusNodePromise & {
-        textContent: Promise<string | null | undefined>,
+        textContent: Promise<string | null | undefined>
       } | undefined
     },
   }

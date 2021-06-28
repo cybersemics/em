@@ -9,12 +9,12 @@ import { Dispatch, Icon as IconType, Shortcut } from '../types'
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
 
 interface SelectionAttributes {
-   rangeY: number,
-   rangeHeight: number,
-   baseNodeY: number,
-   baseNodeHeight: number,
-   paddingTop: number,
-   paddingBottom: number,
+   rangeY: number
+   rangeHeight: number
+   baseNodeY: number
+   baseNodeHeight: number
+   paddingTop: number
+   paddingBottom: number
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

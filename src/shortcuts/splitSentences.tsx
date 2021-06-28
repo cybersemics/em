@@ -20,7 +20,7 @@ const splitSentencesShortcut: Shortcut = {
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
   svg: Icon,
-  canExecute: getState => getState().cursor !== null,
+  canExecute: getState => !!getState().cursor,
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state

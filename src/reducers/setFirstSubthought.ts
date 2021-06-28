@@ -5,7 +5,7 @@ import { State } from '../util/initialState'
 import { Context, SimplePath } from '../types'
 
 /** Sets the value of the first subthought in the given context. */
-const setFirstSubthoughts = (state: State, { context, value }: { context: Context, value: string }) => {
+const setFirstSubthoughts = (state: State, { context, value }: { context: Context; value: string }) => {
 
   const oldFirstThoughtRanked = getAllChildren(state, context)[0]
   return oldFirstThoughtRanked

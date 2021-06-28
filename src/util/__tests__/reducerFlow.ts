@@ -29,9 +29,9 @@ it('initialState', () => {
 
 it('no initialState', () => {
   interface State {
-    a: number,
-    b: number,
-    z: number,
+    a: number
+    b: number
+    z: number
   }
   expect(reducerFlow<State>([
     state => ({ a: 0, b: 0, z: 100 }),

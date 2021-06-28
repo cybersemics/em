@@ -8,9 +8,9 @@ import { Connected, SimplePath } from '../types'
 import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
 
 interface LinkProps {
-  charLimit?: number,
-  label?: string,
-  simplePath: SimplePath,
+  charLimit?: number
+  label?: string
+  simplePath: SimplePath
 }
 
 /** Renders a link with the appropriate label to the given context. */

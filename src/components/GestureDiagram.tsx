@@ -5,15 +5,15 @@ import { State } from '../util/initialState'
 import { Direction, GesturePath } from '../types'
 
 interface GestureDiagramProps {
-  arrowSize?: number,
-  className?: string,
-  color?: string,
-  flexibleSize?: number,
-  path: GesturePath,
-  reversalOffset?: number,
-  size?: number,
-  strokeWidth?: number,
-  style?: React.CSSProperties,
+  arrowSize?: number
+  className?: string
+  color?: string
+  flexibleSize?: number
+  path: GesturePath
+  reversalOffset?: number
+  size?: number
+  strokeWidth?: number
+  style?: React.CSSProperties
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */

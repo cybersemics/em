@@ -4,11 +4,11 @@ import expandOnHoverTop from './expandOnHoverTop'
 import expandOnHoverBottom from './expandOnHoverBottom'
 
 interface Payload {
-  value: boolean,
-  draggingThought?: SimplePath,
-  hoveringPath?: Path,
-  hoverId?: DROP_TARGET,
-  offset?: number,
+  value: boolean
+  draggingThought?: SimplePath
+  hoveringPath?: Path
+  hoverId?: DROP_TARGET
+  offset?: number
 }
 
 /** Drag in progress. */

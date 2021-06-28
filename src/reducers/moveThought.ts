@@ -28,25 +28,25 @@ import {
 } from '../util'
 
 type ChildUpdate = {
-  archived?: Timestamp,
-  id: string,
-  pathNew: Path,
-  pathOld: Path,
-  pending?: boolean,
-  rank: number,
-  value: string,
+  archived?: Timestamp
+  id: string
+  pathNew: Path
+  pathOld: Path
+  pending?: boolean
+  rank: number
+  value: string
 }
 
 type RecursiveMoveResult = {
-  lexemeUpdates: Index<Lexeme>,
-  childUpdates: Index<ChildUpdate>,
+  lexemeUpdates: Index<Lexeme>
+  childUpdates: Index<ChildUpdate>
 }
 
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (state: State, { oldPath, newPath, offset }: {
-  oldPath: Path,
-  newPath: Path,
-  offset?: number,
+  oldPath: Path
+  newPath: Path
+  offset?: number
 }) => {
   const oldSimplePath = simplifyPath(state, oldPath)
   const newSimplePath = simplifyPath(state, newPath)
@@ -82,7 +82,7 @@ const moveThought = (state: State, { oldPath, newPath, offset }: {
   // find id of head thought from exact thought if not available in oldPath
   const id = headId(oldSimplePath) || exactThought?.id || null
   if (!id) {
-    console.warn(`moveThought: oldSimplePath does not have an id and exactThought was not found.`)
+    console.warn('moveThought: oldSimplePath does not have an id and exactThought was not found.')
     console.warn('oldSimplePath', oldSimplePath)
     console.warn('oldThought', oldThought)
   }
@@ -249,9 +249,9 @@ const moveThought = (state: State, { oldPath, newPath, offset }: {
 
   const contextIndexDescendantUpdates = sameContext
     ? {} as {
-      contextIndex: Index<Parent | null>,
-      pendingPulls: {path: Path}[],
-      descendantMoves: { pathOld: Path, pathNew: Path }[],
+      contextIndex: Index<Parent | null>
+      pendingPulls: {path: Path}[]
+      descendantMoves: { pathOld: Path; pathNew: Path }[]
     }
     : Object.values(childUpdates).reduce((accum, childUpdate) => {
 
@@ -318,11 +318,11 @@ const moveThought = (state: State, { oldPath, newPath, offset }: {
     , {
       contextIndex: {},
       pendingPulls: [] as {path: Path}[],
-      descendantMoves: [] as { pathOld: Path, pathNew: Path }[],
+      descendantMoves: [] as { pathOld: Path; pathNew: Path }[],
     } as {
-      contextIndex: Index<Parent | null>,
-      pendingPulls: { path: Path }[],
-      descendantMoves: { pathOld: Path, pathNew: Path }[],
+      contextIndex: Index<Parent | null>
+      pendingPulls: { path: Path }[]
+      descendantMoves: { pathOld: Path; pathNew: Path }[]
     })
 
   const contextIndexUpdates: Index<Parent | null> = {

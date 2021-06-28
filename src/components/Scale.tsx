@@ -2,9 +2,9 @@ import React, { FC } from 'react'
 import { publishMode } from '../util'
 
 interface ScaleProps {
-  amount: number,
-  origin?: string,
-  scaleWidth?: boolean,
+  amount: number
+  origin?: string
+  scaleWidth?: boolean
 }
 
 /** A container that scales its children by the given amount. */

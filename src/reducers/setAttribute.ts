@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 import { Context } from '../types'
 
 /** Sets an attribute on the given context. */
-const setAttribute = (state: State, { context, key, value }: { context: Context, key: string, value: string }) =>
+const setAttribute = (state: State, { context, key, value }: { context: Context; key: string; value: string }) =>
 
   reducerFlow([
 

@@ -18,15 +18,15 @@ import {
 } from '../util'
 
 interface Payload {
-  context: Context,
-  thoughtRanked: Child,
-  showContexts?: boolean,
+  context: Context
+  thoughtRanked: Child
+  showContexts?: boolean
 }
 
 interface ThoughtUpdates {
-  contextIndex: Index<Parent | null>,
-  thoughtIndex: Index<Lexeme | null>,
-  pendingDeletes?: { context: Context, child: Child }[],
+  contextIndex: Index<Parent | null>
+  thoughtIndex: Index<Lexeme | null>
+  pendingDeletes?: { context: Context; child: Child }[]
 }
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions. */

@@ -7,18 +7,18 @@ import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '..
 import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtsInterface } from '../types'
 
 export interface UpdateThoughtsOptions {
-  thoughtIndexUpdates: Index<Lexeme | null>,
-  contextIndexUpdates: Index<Parent | null>,
-  recentlyEdited?: Index,
-  pendingDeletes?: { context: Context, child: Child }[],
-  pendingEdits?: editThoughtPayload[],
-  pendingPulls?: { path: Path }[],
-  descendantMoves?: { pathOld: Path, pathNew: Path }[],
-  contextChain?: SimplePath[],
-  updates?: Index<string>,
-  local?: boolean,
-  remote?: boolean,
-  isLoading?: boolean,
+  thoughtIndexUpdates: Index<Lexeme | null>
+  contextIndexUpdates: Index<Parent | null>
+  recentlyEdited?: Index
+  pendingDeletes?: { context: Context; child: Child }[]
+  pendingEdits?: editThoughtPayload[]
+  pendingPulls?: { path: Path }[]
+  descendantMoves?: { pathOld: Path; pathNew: Path }[]
+  contextChain?: SimplePath[]
+  updates?: Index<string>
+  local?: boolean
+  remote?: boolean
+  isLoading?: boolean
 }
 
 const rootEncoded = hashContext([HOME_TOKEN])

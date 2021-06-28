@@ -9,8 +9,8 @@ import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { Context } from '../types'
 
 interface NoteProps {
-  context: Context,
-  onFocus: (e: React.FocusEvent) => void,
+  context: Context
+  onFocus: (e: React.FocusEvent) => void
 }
 
 /** Gets the editable node for the given note element. */

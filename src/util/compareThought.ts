@@ -1,6 +1,8 @@
 import { lower } from './lower'
 import { Child, ComparatorFunction, ComparatorValue } from '../types'
-import { EMOJI_REGEX, IGNORED_PREFIXES } from '../constants'
+import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL, IGNORED_PREFIXES } from '../constants'
+
+const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
@@ -8,10 +10,10 @@ const regexShortDateWithSlash = /\d{1,2}\/\d{1,2}/
 const regexIgnoredPrefixes = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gm')
 
 /** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
-const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX, '').trim()
+const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX_GLOBAL, '').trim()
 
 /** Remove ignored prefixes from comparator inputs. */
-const removeIgnoredPrefixes = (str: string) => str.replace(regexIgnoredPrefixes, `$2`)
+const removeIgnoredPrefixes = (str: string) => str.replace(regexIgnoredPrefixes, '$2')
 
 /** Make comparator inputs reasonable.  */
 const makeReasonable = (str: string) => {
@@ -33,8 +35,8 @@ export const compare = <T>(a: T, b: T): ComparatorValue => a > b ? 1 : a < b ? -
 
 /** A comparator that sorts emojis above non-emojis. */
 export const compareStringsWithEmoji = (a: string, b: string) => {
-  const aStartsWithEmoji = EMOJI_REGEX.test(a)
-  const bStartsWithEmoji = EMOJI_REGEX.test(b)
+  const aStartsWithEmoji = !!a.match(STARTS_WITH_EMOJI_REGEX)
+  const bStartsWithEmoji = !!b.match(STARTS_WITH_EMOJI_REGEX)
   return aStartsWithEmoji && !bStartsWithEmoji ? -1
     : bStartsWithEmoji && !aStartsWithEmoji ? 1
     : 0
