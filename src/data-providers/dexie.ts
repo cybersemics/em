@@ -3,16 +3,6 @@ import Dexie from 'dexie'
 import _ from 'lodash'
 import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
-import SQLite from 'react-native-sqlite-2'
-import setGlobalVars from 'indexeddbshim/dist/indexeddbshim-noninvasive'
-
-const win: { indexedDB?: any; IDBKeyRange?: any } = {}
-setGlobalVars(win, {
-  checkOrigin: false,
-  win: SQLite,
-  deleteDatabaseFiles: false,
-  useSQLiteIndexes: true,
-})
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -29,14 +19,7 @@ class EM extends Dexie {
   logs: Dexie.Table<Log, number>
 
   constructor() {
-    if (!document) {
-      super('Database', {
-        indexedDB: win?.indexedDB,
-        IDBKeyRange: win?.IDBKeyRange,
-      })
-    } else {
-      super('Database')
-    }
+    super('Database')
 
     this.version(1).stores({
       contextIndex: 'id, context, *children, lastUpdated',
