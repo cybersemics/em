@@ -19,16 +19,14 @@ const mapStateToProps = (state: State) => {
   }
 }
 
-/** A navigation bar that contains a link to home and breadcrumbs. */
-const NavBar = ({
-  cursor,
-  position,
-  showBreadcrumbs,
-}: {
+interface IComponentProps {
   cursor?: Path | null
   position?: string
   showBreadcrumbs?: boolean
-}) => {
+}
+
+/** A navigation bar that contains a link to home and breadcrumbs. */
+const NavBar = ({ cursor, position, showBreadcrumbs }: IComponentProps) => {
   return (
     <View style={styles.container}>
       <HomeLink />
