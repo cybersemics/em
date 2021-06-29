@@ -1,7 +1,4 @@
-import _ from 'lodash'
-import { IStorage } from '../types'
-
-let storage: IStorage = {
+const storage = {
   clear(): void {
     localStorage.clear()
   },
@@ -11,12 +8,10 @@ let storage: IStorage = {
   },
 
   removeItem(key: string): void {
-    storage = _.omit(storage, key)
     localStorage.removeItem(key)
   },
 
   setItem(key: string, value: string): void {
-    storage[`${key}`] = value
     localStorage.setItem(key, value)
   },
 }

@@ -18,7 +18,7 @@ const userAuthenticated =
 
     // login automatically on page load
     setTimeout(() => {
-      storage.autologin = true
+      storage.setItem('autologin', 'true')
     })
 
     // update user information

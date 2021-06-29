@@ -68,7 +68,7 @@ const onRef = (el: HTMLDivElement) => {
 
 /** A modal that welcomes the user to em. */
 const ModalWelcome = () => {
-  const [inviteCode, setInviteCode] = useState(storage.inviteCode || '')
+  const [inviteCode, setInviteCode] = useState(storage.getItem('inviteCode') || '')
   const [loading, setLoading] = useState(false)
   const [invited, setInvited] = useState(isLocalNetwork || validateInviteCode(inviteCode))
   const [inviteTransition, setInviteTransition] = useState(false)
@@ -96,7 +96,7 @@ const ModalWelcome = () => {
       return
     }
 
-    storage.inviteCode = inviteCode
+    storage.setItem('inviteCode', inviteCode)
 
     // wait for fade animation to complete
     setInviteTransition(true)

@@ -8,7 +8,7 @@ import { State } from '../util/initialState'
 import { CSSTransition } from 'react-transition-group'
 import { storage } from '../util/storage'
 
-const tutorialLocal = storage['Settings/Tutorial'] !== 'Off'
+const tutorialLocal = storage.getItem('Settings/Tutorial') !== 'Off'
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = () => {

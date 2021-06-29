@@ -22,8 +22,8 @@ import Editable from './Editable'
 import { SimplePath } from '../types'
 import { storage } from '../util/storage'
 
-const tutorialLocal = storage['Settings/Tutorial'] === 'On'
-const tutorialStepLocal = +(storage['Settings/Tutorial Step'] || 1)
+const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
+const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
 
 const transientChildPath = [
   {

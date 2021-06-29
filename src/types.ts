@@ -330,5 +330,3 @@ export interface SplitResult {
 
 /** An environment for evaluating expressions defined by lazily loaded Contexts. */
 export type LazyEnv = Index<Context>
-
-export type IStorage = Omit<Storage, 'length'>

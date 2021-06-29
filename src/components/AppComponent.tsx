@@ -33,7 +33,7 @@ import { storage } from '../util/storage'
 
 const Content = React.lazy(() => import('./Content'))
 
-const tutorialLocal = storage['Settings/Tutorial'] === 'On'
+const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 interface StateProps {

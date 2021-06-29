@@ -7,7 +7,7 @@ const fontSize =
   (dispatch, getState) => {
     dispatch({ type: 'fontSize', value })
     setTimeout(() => {
-      storage.setItem('fontSize', value)
+      storage.setItem('fontSize', String(value))
     })
   }
 
