@@ -6,12 +6,12 @@ import { isTutorial } from '../selectors'
 import { toggleSidebar } from '../action-creators'
 import { State } from '../util/initialState'
 import { CSSTransition } from 'react-transition-group'
+import { storage } from '../util/localStorage'
 
-const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
+const tutorialLocal = storage['Settings/Tutorial'] !== 'Off'
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = () => {
-
   const isLoading = useSelector((state: State) => state.isLoading)
   const showModal = useSelector((state: State) => state.showModal)
   const tutorialSettings = useSelector(isTutorial)

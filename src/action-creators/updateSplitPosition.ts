@@ -1,13 +1,16 @@
 import { Thunk } from '../types'
+import { storage } from '../util/localStorage'
 
 /** Updates the position of the Split View splitter. */
-const updateSplitPosition = (splitPosition: number): Thunk => dispatch => {
-  localStorage.setItem('splitPosition', splitPosition.toString())
+const updateSplitPosition =
+  (splitPosition: number): Thunk =>
+  dispatch => {
+    storage.setItem('splitPosition', splitPosition.toString())
 
-  dispatch({
-    type: 'updateSplitPosition',
-    value: splitPosition
-  })
-}
+    dispatch({
+      type: 'updateSplitPosition',
+      value: splitPosition,
+    })
+  }
 
 export default updateSplitPosition
