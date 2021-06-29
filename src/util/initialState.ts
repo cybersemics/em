@@ -18,7 +18,7 @@ import {
   Shortcut,
 } from '../types'
 import { editThoughtPayload } from '../reducers/editThought'
-import { storage } from './localStorage'
+import { storage } from './storage'
 
 interface ModalProperties {
   complete: boolean

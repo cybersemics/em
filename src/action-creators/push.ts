@@ -8,7 +8,7 @@ import { getSetting } from '../selectors'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../types'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
 // settings that are propagated to localStorage for faster load on startup

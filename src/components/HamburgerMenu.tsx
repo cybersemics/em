@@ -6,7 +6,7 @@ import { isTutorial } from '../selectors'
 import { toggleSidebar } from '../action-creators'
 import { State } from '../util/initialState'
 import { CSSTransition } from 'react-transition-group'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 const tutorialLocal = storage['Settings/Tutorial'] !== 'Off'
 

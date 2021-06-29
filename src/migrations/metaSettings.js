@@ -2,7 +2,7 @@ import { EM_TOKEN, INITIAL_SETTINGS, SCHEMA_HASHKEYS as SCHEMA_FROM, SCHEMA_META
 import { store } from '../store'
 import { push } from '../util'
 import { importText } from '../action-creators'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO

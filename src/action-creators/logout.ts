@@ -3,7 +3,7 @@ import { never } from '../util'
 import { clear, importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Thunk } from '../types'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 /** Logs the user out of Firebase and clears the state. */
 const logout = (): Thunk => dispatch => {

@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { tutorial } from '../action-creators'
 import { getAllChildren } from '../selectors'
 import { State } from '../util/initialState'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 const isLocalNetwork = Boolean(
   window.location.hostname === 'localhost' ||

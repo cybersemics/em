@@ -1,7 +1,7 @@
 import { publishMode } from '../util'
 import { getSetting } from '../selectors'
 import { State } from '../util/initialState'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 // eslint-disable-next-line no-mixed-operators
 const themeLocal = (typeof storage !== 'undefined' && storage['Settings/Theme']) || 'Dark'

@@ -4,7 +4,7 @@ import { keyValueBy } from '../util/keyValueBy'
 import { getChildrenRanked } from '../selectors'
 import { State } from '../util/initialState'
 import { Context } from '../types'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 /** Cache localStorage settings. */
 const localStorageSettingsCache = keyValueBy(['Tutorial', 'Tutorial Step'], value => ({

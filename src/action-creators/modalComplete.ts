@@ -1,5 +1,5 @@
 import { Thunk } from '../types'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 /** Closes a modal permanently. */
 const modalComplete =

@@ -14,7 +14,7 @@ import { Await } from '../types'
 import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 /**
  * Test App.

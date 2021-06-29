@@ -20,7 +20,7 @@ import Subthoughts from './Subthoughts'
 import { childrenFilterPredicate } from '../selectors/getChildren'
 import Editable from './Editable'
 import { SimplePath } from '../types'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 const tutorialLocal = storage['Settings/Tutorial'] === 'On'
 const tutorialStepLocal = +(storage['Settings/Tutorial Step'] || 1)

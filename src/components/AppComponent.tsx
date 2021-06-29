@@ -29,7 +29,7 @@ import HamburgerMenu from './HamburgerMenu'
 import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
-import { storage } from '../util/localStorage'
+import { storage } from '../util/storage'
 
 const Content = React.lazy(() => import('./Content'))
 
