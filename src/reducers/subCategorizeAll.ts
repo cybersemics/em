@@ -4,6 +4,16 @@ import { State } from '../util/initialState'
 import { parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
 import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 
+const SUBCATEGORIZE_ALL_META_EXCEPTIONS = [
+  '=archive',
+  '=bullet',
+  '=focus',
+  '=label',
+  '=note',
+  '=pin',
+  '=publish',
+]
+
 /** Inserts a new thought as a parent of all thoughts in the given context. */
 const subCategorizeAll = (state: State) => {
 
@@ -42,6 +52,9 @@ const subCategorizeAll = (state: State) => {
   const children = getChildrenRanked(state, pathToContext(simplifyPath(state, path)))
   const pathParent = cursor.length > 1 ? cursorParent : HOME_PATH
 
+  // filter out meta children that should not be moved
+  const filteredChildren = children.filter(child => !SUBCATEGORIZE_ALL_META_EXCEPTIONS.includes(child.value))
+
   // get newly created thought
   // use fresh state
   const getThoughtNew = once((state: State) => {
@@ -61,7 +74,7 @@ const subCategorizeAll = (state: State) => {
     }),
 
     // move children
-    ...children.map(child =>
+    ...filteredChildren.map(child =>
       (state: State) => moveThought(state, {
         oldPath: cursorParent.concat(child),
         newPath: cursorParent.concat(getThoughtNew(state), child)
