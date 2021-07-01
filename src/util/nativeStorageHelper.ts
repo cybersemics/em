@@ -12,9 +12,9 @@ class SyncStorage {
   loading = true
 
   async init(): Promise<void> {
-    const keys = await AsyncStorage.getAllKeys();
-    const data = await AsyncStorage.multiGet(keys) as string[][];
-    data.forEach(this.saveItem.bind(this));
+    const keys = await AsyncStorage.getAllKeys()
+    const data = await AsyncStorage.multiGet(keys) as string[][]
+    data.forEach(this.saveItem.bind(this))
   }
 
   getItem(key: string): string | undefined {
@@ -57,5 +57,7 @@ class SyncStorage {
   }
 }
 
-// eslint-disable-next-line export-default-identifier/export-default-identifier
-export default new SyncStorage()
+const syncStorage = new SyncStorage()
+
+export default syncStorage
+
