@@ -24,8 +24,9 @@ const getNgrams = (state: State, text: string, numWords: number) => {
   const pushUnlinkedNgrams = (wordIndex: number) => {
     if (unlinkedStart < wordIndex) {
       const ngram = words.slice(unlinkedStart, wordIndex).join(' ')
+      // eslint-disable-next-line fp/no-mutating-methods
       ngrams.push(
-        numWords > 1 // eslint-disable-line fp/no-mutating-methods
+        numWords > 1
           ? // RECURSION
             getNgrams(state, ngram, numWords - 1)
           : {
@@ -38,9 +39,8 @@ const getNgrams = (state: State, text: string, numWords: number) => {
   }
 
   // loop through each ngram of the given phrase size (numWords)
+  // eslint-disable-next-line fp/no-loops, fp/no-let
   for (let i = 0; i < words.length - numWords; i++) {
-    // eslint-disable-line fp/no-loops, fp/no-let
-
     const ngram = words.slice(i, i + numWords).join(' ')
     if (ngram.length > 0) {
       const contexts = getContexts(state, stripPunctuation(ngram))
@@ -50,8 +50,8 @@ const getNgrams = (state: State, text: string, numWords: number) => {
         pushUnlinkedNgrams(i)
 
         // ngram with other contexts
+        // eslint-disable-next-line fp/no-mutating-methods
         ngrams.push({
-          // eslint-disable-line fp/no-mutating-methods
           text: ngram,
           contexts,
           index: charIndex,

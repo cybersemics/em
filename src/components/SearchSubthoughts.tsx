@@ -117,7 +117,8 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
   /** Sets the leaf classname dynamically. */
   const onRef = (el: HTMLElement | null) => {
     if (el) {
-      ;(el.parentNode as HTMLElement).classList.toggle('leaf', children.length === 0)
+      const parentNode = el.parentNode as HTMLElement
+      parentNode.classList.toggle('leaf', children.length === 0)
     }
   }
 

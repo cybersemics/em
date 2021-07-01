@@ -48,7 +48,7 @@ class SyncStorage {
     try {
       value = JSON.parse(item[1])
     } catch (e) {
-      ;[, value] = item
+      value = item[1]
     }
 
     this.data.set(item[0], value)

@@ -6,7 +6,7 @@ module.exports = {
     node: true,
   },
   ignorePatterns: ['.eslintrc.js'],
-  extends: ['plugin:import/errors', 'plugin:import/warnings', 'plugin:import/typescript', 'raine'],
+  extends: ['plugin:import/errors', 'plugin:import/warnings', 'plugin:import/typescript', 'raine', 'prettier'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     project: 'tsconfig.json',

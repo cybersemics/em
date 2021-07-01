@@ -178,10 +178,10 @@ function expandThoughtsRecursive(
           const isChildPinned = isPinned(child) === 'true'
 
           /**
-        Only meta thoughts that are ancestor of expansionBasePath or expansionBasePath itself are visible when shouldHiddenThoughts is false. They are also automatically expanded.
-        If state.showHiddenThoughts is false then for calculating visibleChildren those conditions are always checked for meta child.
-        So this predicate prevents from recalculating isAncestor or isexpansionBasePath again by checking if those calculations are already done in visibleChildren logic.
-       */
+            Only meta thoughts that are ancestor of expansionBasePath or expansionBasePath itself are visible when shouldHiddenThoughts is false. They are also automatically expanded.
+            If state.showHiddenThoughts is false then for calculating visibleChildren those conditions are always checked for meta child.
+            So this predicate prevents from recalculating isAncestor or isexpansionBasePath again by checking if those calculations are already done in visibleChildren logic.
+           */
           const isEitherMetaAncestorOrCursor = () => !state.showHiddenThoughts && isFunction(value)
 
           const strippedValue = strip(value)

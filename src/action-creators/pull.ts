@@ -35,8 +35,8 @@ const pull =
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
     const thoughtsLocalIterable = getManyDescendants(db, contextMap, { maxDepth: maxDepth || BUFFER_DEPTH })
+    // eslint-disable-next-line fp/no-loops
     for await (const thoughts of thoughtsLocalIterable) {
-      // eslint-disable-line fp/no-loops
 
       // eslint-disable-next-line fp/no-mutating-methods
       thoughtLocalChunks.push(thoughts)

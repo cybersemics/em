@@ -26,7 +26,8 @@ const Icon = ({ size = 20 }: IconType) => (
 /** Removes the browser selection. */
 const blur = () => {
   if (document.activeElement) {
-    ;(document.activeElement as HTMLInputElement).blur()
+    const el = document.activeElement as HTMLInputElement
+    el.blur()
     clearSelection()
   }
 }

@@ -407,13 +407,12 @@ export const SubthoughtsComponent = ({
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
-  const children = childrenForced
-    ? childrenForced // eslint-disable-line no-unneeded-ternary
-    : showContexts
-    ? getContextsSortedAndRanked(state, value)
-    : sortPreference?.type !== 'None'
-    ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
-    : (getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[])
+  const children =
+    childrenForced || showContexts
+      ? getContextsSortedAndRanked(state, headValue(simplePath))
+      : sortPreference?.type !== 'None'
+      ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
+      : (getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[])
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -477,8 +476,11 @@ export const SubthoughtsComponent = ({
     (attribute(state, pathToContext(parentOf(cursor)), '=focus') === 'Zoom' ||
       attribute(state, pathToContext(parentOf(parentOf(cursor))).concat('=children'), '=focus') === 'Zoom' ||
       findFirstEnvContextWithZoom(pathToContext(rootedParentOf(state, cursor))))
+
+  /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
   const zoomParentEditing = () =>
-    cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath) // eslint-disable-line jsdoc/require-jsdoc
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath)
 
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 

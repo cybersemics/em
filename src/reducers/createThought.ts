@@ -69,18 +69,19 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
       lastUpdated: timestamp(),
     })
   } else {
-    if (!thought.contexts) {
-      thought.contexts = []
-    }
-    // floating thought (no context)
-    if (context.length > 0) {
-      thought.contexts.push({
-        // eslint-disable-line fp/no-mutating-methods
-        context,
-        id,
-        rank,
-      })
-    }
+    thought.contexts = !thought.contexts
+      ? []
+      : // floating thought (no context)
+      context.length > 0
+      ? [
+          ...thought.contexts,
+          {
+            context,
+            id,
+            rank,
+          },
+        ]
+      : thought.contexts
   }
 
   const thoughtIndexUpdates = {

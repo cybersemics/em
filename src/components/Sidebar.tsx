@@ -17,9 +17,10 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
 const RecentEdited = () => {
   const recentlyEditedTree = useSelector((state: State) => state.recentlyEdited)
   const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
+  // eslint-disable-next-line fp/no-mutating-methods
   const recentlyEdited = _.reverse(
     _.sortBy(findTreeDescendants(recentlyEditedTree, { startingPath: [], showHiddenThoughts }), 'lastUpdated'),
-  ) // eslint-disable-line fp/no-mutating-methods
+  )
 
   return (
     <div className='recently-edited-sidebar'>
