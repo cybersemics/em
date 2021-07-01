@@ -78,9 +78,11 @@ const shouldCancelGesture = () => !!window.getSelection()?.toString() || store.g
 
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {
-  if (isGestureHint(store.getState())) {
-    store.dispatch(alert(null))
-  }
+  store.dispatch((dispatch, getState) => {
+    if (isGestureHint(getState())) {
+      dispatch(alert(null))
+    }
+  })
 }
 
 /**
