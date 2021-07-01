@@ -192,13 +192,18 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
             {shortcutIds.map(id => {
               const { svg, exec, isActive, canExecute } = shortcutById(id)!
               const isButtonActive = isActive?.(store.getState) || !canExecute || canExecute(store.getState)
+
               // TODO: type svg correctly
               const SVG = svg as React.FC<Icon>
               return (
                 <div
                   key={id}
                   id={id}
-                  style={pressingToolbarId === id ? { paddingTop: '10px' } : {}}
+                  style={{
+                    paddingTop: pressingToolbarId === id ? '10px' : '',
+                    cursor: isButtonActive ? 'pointer' : 'default',
+                    pointerEvents: isButtonActive ? 'auto' : 'none',
+                  }}
                   className='toolbar-icon'
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}
