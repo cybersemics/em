@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState , FocusEventHandler } from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { unescape } from 'html-escaper'
@@ -68,11 +68,6 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
 const asyncFocusThrottled = _.throttle(asyncFocus, 100)
-
-// track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
-// otherwise it can trigger unnecessary re-renders
-// intended to be global, not local state
-let blurring = false
 
 /** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
 const makeToolbarPositionFixed = () => {
@@ -160,6 +155,11 @@ const duplicateAlertToggler = () => {
 }
 
 const showDuplicationAlert = duplicateAlertToggler()
+
+// track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
+// otherwise it can trigger unnecessary re-renders
+// intended to be global, not local state
+let blurring = false
 
 /**
  * An editable thought with throttled editing.
@@ -543,7 +543,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   }
 
   /** Flushes edits and updates certain state variables on blur. */
-  const onBlur = () => {
+  const onBlur: FocusEventHandler<HTMLElement> = (e) => {
 
     blurring = true
 
@@ -568,7 +568,13 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       contentRef.current!.innerHTML = oldValueRef.current
     }
 
-    // wait until the next render to determine if we have really blurred
+    // if we know that the focus is changing to another editable or note then do not set editing to false
+
+    const isRelatedTargetEditableOrNote = e.relatedTarget && ((e.relatedTarget as Element).classList.contains('editable') || (e.relatedTarget as Element).classList.contains('note-editable'))
+    
+    if (isRelatedTargetEditableOrNote) return
+
+    // if related target is not editable wait until the next render to determine if we have really blurred
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
     setTimeout(() => {
 
@@ -608,7 +614,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       setCursorOnThought({ editing: true })
       dispatch(setEditingValue(value))
     }
-  }
+  } 
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = (e: React.MouseEvent | React.TouchEvent) => {

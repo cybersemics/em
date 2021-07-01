@@ -1,8 +1,7 @@
 /**
  * Split given root node into two different ranges at the given selection.
  */
-function splitNode(selection: Selection, root: HTMLElement) {
-  const range = selection.getRangeAt(0)
+function splitNode(root: HTMLElement, range: Range) {
   const { firstChild, lastChild } = root
 
   if (!firstChild || !lastChild) return
@@ -24,11 +23,8 @@ function splitNode(selection: Selection, root: HTMLElement) {
 /**
  * Splits the given element into two proper html value at the current selection.
  */
-export const splitAtSelection = (el: HTMLElement) => {
-  const sel = document.getSelection()
-  if (!sel || sel.rangeCount === 0) return null
-
-  const splitNodesResult = splitNode(sel, el)
+export const splitAtSelection = (el: HTMLElement, range: Range) => {
+  const splitNodesResult = splitNode(el, range)
 
   if (!splitNodesResult) return null
 
