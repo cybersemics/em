@@ -27,8 +27,8 @@ const splitSentencesShortcut: Shortcut = {
     const value = headValue(cursor!)
     const sentences = splitSentence(value)
 
-    if (!sentences || sentences.length === 1) {
-      dispatch(alert('Cannot split sentences: thought has only one sentence.', { alertType: 'splitSentencesErr2', clearTimeout: 3000 }))
+    if (!sentences || sentences.length <= 1) {
+      dispatch(alert('Cannot split sentences: thought is an empty thought or has only one sentence.', { alertType: 'splitSentencesErr2', clearTimeout: 3000 }))
       return
     }
     // check if splitSentences creates duplicates

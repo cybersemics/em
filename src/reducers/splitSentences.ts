@@ -15,7 +15,7 @@ const splitSentences = (state: State) => {
 
   const sentences = splitSentence(value)
 
-  if (sentences.length === 1) {
+  if (sentences.length <= 1) {
     return state
   }
 
