@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
+    "@react-native-async-storage/async-storage": "^1.13.0",
     "algoliasearch": "^4.9.2",
     "axios": "^0.21.1",
     "classnames": "^2.3.1",
@@ -55,6 +56,7 @@
     "himalaya": "^1.1.0",
     "html-escaper": "^3.0.3",
     "immer": "^9.0.3",
+    "indexeddbshim": "^7.1.0",
     "ipfs-http-client": "^43.0.1",
     "jex-block-parser": "^1.0.0",
     "lodash": "^4.17.21",
@@ -74,6 +76,7 @@
     "react-native": "https://github.com/expo/react-native/archive/sdk-41.0.0.tar.gz",
     "react-native-get-random-values": "^1.7.0",
     "react-native-sqlite-2": "^3.3.0",
+    "react-native-svg": "12.1.0",
     "react-native-web": "^0.16.5",
     "react-redux": "^7.2.4",
     "react-scripts": "4.0.3",
@@ -86,7 +89,8 @@
     "truncate-html": "^1.0.3",
     "ts-key-enum": "^2.0.6",
     "use-onclickoutside": "^0.3.2",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "xhtml-purifier": "^0.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
@@ -140,6 +144,7 @@
     "eslint-plugin-promise": "^5.1.0",
     "eslint-plugin-react": "^7.24.0",
     "eslint-plugin-react-hooks": "^4.2.0",
+    "eslint-plugin-react-native": "^3.11.0",
     "fake-indexeddb": "^3.1.2",
     "husky": "^6.0.0",
     "it-all": "^1.0.5",

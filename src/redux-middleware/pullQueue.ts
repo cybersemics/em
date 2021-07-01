@@ -133,7 +133,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // return if expanded is the same, unless force is specified or expanded is empty
     if (!force && Object.keys(state.expanded).length > 0
-    && equalArrays(Object.keys(expandedContexts), Object.keys(lastExpanded)) && isSearchSame) return
+      && equalArrays(Object.keys(expandedContexts), Object.keys(lastExpanded)) && isSearchSame) return
 
     // TODO: Can we use only lastExpanded and get rid of lastVisibleContexts?
     // if (!force && equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded))) return

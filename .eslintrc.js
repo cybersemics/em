@@ -4,8 +4,9 @@ module.exports = {
     es6: true,
     mocha: true,
     jest: true,
+    'react-native/react-native': true
   },
-  extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'raine', 'prettier'],
+  extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'raine', 'prettier',],
   ignorePatterns: 'scripts',
   overrides: [
     {
@@ -26,6 +27,7 @@ module.exports = {
       },
       plugins: ['@typescript-eslint'],
       rules: {
+        'semi': ['error', 'never'],
         'import/prefer-default-export': 0,
         // temporary fix from 'typescript-eslint' docs
         // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
@@ -74,6 +76,12 @@ module.exports = {
             'jsdoc/check-tag-names': 0,
           },
         },
+        {
+          files: ['./src/**/*.native.tsx'],
+          rules: {
+            'react-native/no-inline-styles': 2,
+          },
+        },
       ],
     },
   ],
@@ -82,7 +90,7 @@ module.exports = {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
-  plugins: ['export-default-identifier', 'fp', 'jsdoc', 'react'],
+  plugins: ['export-default-identifier', 'fp', 'jsdoc', 'react', 'react-native'],
   settings: {
     react: {
       version: 'detect',

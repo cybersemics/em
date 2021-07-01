@@ -2,7 +2,12 @@ import React, { FC, MouseEvent, useMemo, useRef, useState } from 'react'
 import { connect, useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import { isTouch } from '../browser'
-import { cursorBack as cursorBackActionCreator, expandContextThought, modalRemindMeLater, toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
+import {
+  cursorBack as cursorBackActionCreator,
+  expandContextThought,
+  modalRemindMeLater,
+  toggleSidebar as toggleSidebarActionCreator,
+} from '../action-creators'
 import { MODAL_CLOSE_DURATION, ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
@@ -15,26 +20,26 @@ import Subthoughts from './Subthoughts'
 import { childrenFilterPredicate } from '../selectors/getChildren'
 import Editable from './Editable'
 import { SimplePath } from '../types'
+import { storage } from '../util/storage'
 
-const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
-const tutorialStepLocal = +(localStorage['Settings/Tutorial Step'] || 1)
+const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
+const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
 
-const transientChildPath = [{
-  value: '',
-  rank: 0,
-}] as SimplePath
+const transientChildPath = [
+  {
+    value: '',
+    rank: 0,
+  },
+] as SimplePath
 
 /*
   Transient Editable represents a child that is yet not in the state.
   But as soon as user types it adds the child to the state with the new value and vanishes.
   However removing the transient editable should be handled by some business logic by parent components.
 */
-const TransientEditable = <Editable
-  transient={true}
-  path={transientChildPath}
-  simplePath={transientChildPath}
-  rank={0}
-/>
+const TransientEditable = (
+  <Editable transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
+)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -87,7 +92,16 @@ const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const { search, isTutorialLocal, tutorialStep, showModal, rootThoughtsLength, noteFocus, rootSort, isAbsoluteContext } = props
+  const {
+    search,
+    isTutorialLocal,
+    tutorialStep,
+    showModal,
+    rootThoughtsLength,
+    noteFocus,
+    rootSort,
+    isAbsoluteContext,
+  } = props
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
@@ -108,45 +122,61 @@ const Content: ContentComponent = props => {
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (showModal) {
       dispatch(modalRemindMeLater({ duration: MODAL_CLOSE_DURATION }))
-    }
-    else if (!noteFocus) {
+    } else if (!noteFocus) {
       dispatch(cursorBackActionCreator())
       expandContextThought(null)
     }
   }
 
   /** Generate class names. */
-  const contentClassNames = useMemo(() => classNames({
-    content: true,
-    'content-tutorial': isTouch && isTutorialLocal && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
-    publish: publishMode(),
-  }), [tutorialStep, isTutorialLocal])
+  const contentClassNames = useMemo(
+    () =>
+      classNames({
+        content: true,
+        'content-tutorial': isTouch && isTutorialLocal && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
+        publish: publishMode(),
+      }),
+    [tutorialStep, isTutorialLocal],
+  )
 
-  return <div id='content-wrapper' onClick={e => {
-    if (!showModal && isLeftSpaceClick(e, contentRef.current!)) {
-      dispatch(toggleSidebarActionCreator({}))
-    }
-  }}>
+  return (
     <div
-      id='content'
-      ref={contentRef}
-      className={contentClassNames}
-      onClick={clickOnEmptySpace}
-      onMouseDown={() => setIsPressed(true)}
+      id='content-wrapper'
+      onClick={e => {
+        if (!showModal && isLeftSpaceClick(e, contentRef.current!)) {
+          dispatch(toggleSidebarActionCreator({}))
+        }
+      }}
     >
-      {search != null
-        ? <Search />
-        : <>
-          {rootThoughtsLength === 0 ?
-            isAbsoluteContext ? TransientEditable : <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} /> : <Subthoughts
-              simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH}
-              expandable={true}
-              sort={rootSort}
-            />}
-        </>
-      }
+      <div
+        id='content'
+        ref={contentRef}
+        className={contentClassNames}
+        onClick={clickOnEmptySpace}
+        onMouseDown={() => setIsPressed(true)}
+      >
+        {search != null ? (
+          <Search />
+        ) : (
+          <>
+            {rootThoughtsLength === 0 ? (
+              isAbsoluteContext ? (
+                TransientEditable
+              ) : (
+                <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} />
+              )
+            ) : (
+              <Subthoughts
+                simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH}
+                expandable={true}
+                sort={rootSort}
+              />
+            )}
+          </>
+        )}
+      </div>
     </div>
-  </div>
+  )
 }
 
 export default connect(mapStateToProps)(Content)

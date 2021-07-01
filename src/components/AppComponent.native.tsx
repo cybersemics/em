@@ -1,18 +1,24 @@
 import React from 'react'
-import { SafeAreaView, View, Text, StyleSheet } from 'react-native'
+import { SafeAreaView, Text, StyleSheet, ScrollView } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
+import Toolbar from './Toolbar'
+import NavBar from './NavBar'
+import ModalFeedback from './ModalFeedback'
 
 /**
- * App container.
+ * AppComponent container.
  */
-const App: React.FC = () => {
+const AppComponent: React.FC = () => {
   return (
     <>
       <StatusBar style='light' />
       <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
+        <Toolbar />
+        <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.text}>hello World - em thoughts</Text>
-        </View>
+        </ScrollView>
+        <NavBar position='top' />
+        <ModalFeedback />
       </SafeAreaView>
     </>
   )
@@ -34,4 +40,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export { App }
+export default AppComponent

@@ -3,6 +3,7 @@ import Dexie from 'dexie'
 import _ from 'lodash'
 import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
+import win from './win'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -12,15 +13,21 @@ import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '..
 /** Extend Dexie class for proper typing. See https://dexie.org/docs/Typescript. */
 // eslint-disable-next-line fp/no-class
 class EM extends Dexie {
+  contextIndex: Dexie.Table<Parent, string>
+  thoughtIndex: Dexie.Table<Lexeme, string>
+  thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>
+  helpers: Dexie.Table<Helper, string>
+  logs: Dexie.Table<Log, number>
 
-  contextIndex: Dexie.Table<Parent, string>;
-  thoughtIndex: Dexie.Table<Lexeme, string>;
-  thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>;
-  helpers: Dexie.Table<Helper, string>;
-  logs: Dexie.Table<Log, number>;
-
-  constructor () {
-    super('Database')
+  constructor() {
+    if (!document) {
+      super('Database', {
+        indexedDB: win?.indexedDB,
+        IDBKeyRange: win?.IDBKeyRange,
+      })
+    } else {
+      super('Database')
+    }
 
     this.version(1).stores({
       contextIndex: 'id, context, *children, lastUpdated',
@@ -66,7 +73,6 @@ const initHelpers = async () => {
 
 /** Initializes the database tables. */
 const initDB = async () => {
-
   if (!db.isOpen()) {
     await db.version(1).stores({
       thoughtIndex: 'id, value, *contexts, created, lastUpdated',
@@ -83,7 +89,7 @@ const initDB = async () => {
       transaction.on('complete', () => {
         db.thoughtWordsIndex.put({
           id: hashThought(lexeme.value),
-          words: _.uniq(lexeme.value.split(' '))
+          words: _.uniq(lexeme.value.split(' ')),
         })
       })
     })
@@ -93,7 +99,7 @@ const initDB = async () => {
         // eslint-disable-next-line no-prototype-builtins
         if (modificationObject.hasOwnProperty('value')) {
           db.thoughtWordsIndex.update(hashThought(lexeme.value), {
-            words: lexeme.value.trim().length > 0 ? _.uniq(lexeme.value.trim().split(' ')) : []
+            words: lexeme.value.trim().length > 0 ? _.uniq(lexeme.value.trim().split(' ')) : [],
           })
         }
       })
@@ -111,20 +117,15 @@ const initDB = async () => {
 }
 
 /** Clears all thoughts and contexts from the indices. */
-export const clearAll = () => Promise.all([
-  db.thoughtIndex.clear(),
-  db.contextIndex.clear(),
-  db.helpers.clear()
-])
+export const clearAll = () => Promise.all([db.thoughtIndex.clear(), db.contextIndex.clear(), db.helpers.clear()])
 
 /** Updates a single thought in the thoughtIndex. */
-export const updateThought = async (id: string, thought: Lexeme) =>
-  db.thoughtIndex.put({ id, ...thought })
+export const updateThought = async (id: string, thought: Lexeme) => db.thoughtIndex.put({ id, ...thought })
 
 /** Updates multiple thoughts in the thoughtIndex. */
 export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) => {
   const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
-    ...thoughtIndexMap[key] as Lexeme,
+    ...(thoughtIndexMap[key] as Lexeme),
     id: key,
   }))
   return db.thoughtIndex.bulkPut(thoughtsArray)
@@ -153,7 +154,7 @@ export const updateContext = async (id: string, { context, children, lastUpdated
 /** Updates multiple thoughts in the contextIndex. */
 export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) => {
   const contextsArray = Object.keys(contextIndexMap).map(key => ({
-    ...contextIndexMap[key] as Parent,
+    ...(contextIndexMap[key] as Parent),
     id: key,
   }))
   return db.contextIndex.bulkPut(contextsArray)
@@ -200,15 +201,13 @@ export const getLogs = async () => db.logs.toArray()
  * Full text search and returns lexeme.
  */
 export const fullTextSearch = async (value: string) => {
-
   // Related resource: https://github.com/dfahlander/Dexie.js/issues/281
   const words = _.uniq(value.split(' '))
 
   const lexemes = await db.transaction('r', db.thoughtWordsIndex, db.thoughtIndex, async () => {
     const matchedKeysArray = await Dexie.Promise.all(
-      words.map(word =>
-        db.thoughtWordsIndex.where('words').startsWithIgnoreCase(word).primaryKeys()
-      ))
+      words.map(word => db.thoughtWordsIndex.where('words').startsWithIgnoreCase(word).primaryKeys()),
+    )
     const intersectionKeys = matchedKeysArray.reduce((acc, keys) => acc.filter(key => keys.includes(key)))
     return db.thoughtIndex.bulkGet(intersectionKeys)
   })

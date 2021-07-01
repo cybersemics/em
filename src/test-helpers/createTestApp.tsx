@@ -15,12 +15,13 @@ import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
 import testTimer from './testTimer'
+import { storage } from '../util/storage'
 
 /**
  * Test App.
  */
 // eslint-disable-next-line
-export const App = React.forwardRef(() =>
+export const App = React.forwardRef(() => (
   <Provider store={store}>
     <ErrorBoundaryContainer>
       <TouchMonitor>
@@ -28,7 +29,7 @@ export const App = React.forwardRef(() =>
       </TouchMonitor>
     </ErrorBoundaryContainer>
   </Provider>
-)
+))
 
 // eslint-disable-next-line fp/no-let
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
@@ -39,7 +40,6 @@ const fakeTimer = testTimer()
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
-
   // store wrapper using closure since act cannot return
   let wrapper: ReactWrapper | null = null // eslint-disable-line fp/no-let
 
@@ -55,7 +55,6 @@ const createTestApp = async () => {
   await fakeTimer.runAllAsync()
 
   await act(async () => {
-
     const root = document.body.appendChild(document.createElement('div'))
 
     // using test drag and drop backend and context
@@ -63,7 +62,7 @@ const createTestApp = async () => {
     const dndRef = createRef<HTMLElement>()
     fakeTimer.useFakeTimer()
 
-    wrapper = await mount(<TestApp ref={dndRef}/>, { attachTo: root })
+    wrapper = await mount(<TestApp ref={dndRef} />, { attachTo: root })
     wrapper.update()
     // dismiss the tutorial
     const skipTutorial = wrapper.find('#skip-tutorial')
@@ -79,7 +78,6 @@ const createTestApp = async () => {
     await import('../components/Content')
 
     wrapper.update()
-
   })
 
   fakeTimer.useRealTimer()
@@ -94,9 +92,8 @@ const createTestApp = async () => {
 /** Clear store, localStorage, local db, and window event handlers. */
 export const cleanupTestApp = async () => {
   await act(async () => {
-
     // clear localStorage before dispatching clear action, since initialState reads from localStorage
-    localStorage.clear()
+    storage.clear()
 
     // cleanup initEvents which is called in initialize
     if (cleanup) {
@@ -109,12 +106,7 @@ export const cleanupTestApp = async () => {
     document.body.innerHTML = ''
 
     // set url back to home
-    window.history.pushState(
-      {},
-      '',
-      '/'
-    )
-
+    window.history.pushState({}, '', '/')
   })
 }
 
