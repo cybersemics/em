@@ -29,10 +29,11 @@ import HamburgerMenu from './HamburgerMenu'
 import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
+import { storage } from '../util/storage'
 
 const Content = React.lazy(() => import('./Content'))
 
-const tutorialLocal = localStorage['Settings/Tutorial'] === 'On'
+const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 interface StateProps {
@@ -65,7 +66,7 @@ const mapStateToProps = (state: State): StateProps => {
     splitPosition,
     showSplitView,
     fontSize: state.fontSize,
-    enableLatestShorcutsDiagram
+    enableLatestShorcutsDiagram,
   }
 }
 
@@ -79,15 +80,31 @@ const shouldCancelGesture = () => !!window.getSelection()?.toString() || store.g
 /**
  * Wrap an element in the MultiGesture componentt if the user has a touch screen.
  */
-const MultiGestureIfTouch: FC = ({ children }) => isTouch
-  ? <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd} shouldCancelGesture={shouldCancelGesture}>{children}</MultiGesture>
-  : <>{children}</>
+const MultiGestureIfTouch: FC = ({ children }) =>
+  isTouch ? (
+    <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd} shouldCancelGesture={shouldCancelGesture}>
+      {children}
+    </MultiGesture>
+  ) : (
+    <>{children}</>
+  )
 
 /**
  * The main app component.
  */
 const AppComponent: FC<Props> = props => {
-  const { dark, dragInProgress, enableLatestShorcutsDiagram, isLoading, showModal, scale, showSplitView, splitPosition, updateSplitPos, fontSize } = props
+  const {
+    dark,
+    dragInProgress,
+    enableLatestShorcutsDiagram,
+    isLoading,
+    showModal,
+    scale,
+    showSplitView,
+    splitPosition,
+    updateSplitPos,
+    fontSize,
+  } = props
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
@@ -122,33 +139,39 @@ const AppComponent: FC<Props> = props => {
 
   return (
     <div className={componentClassNames}>
-
       <Alert />
       <ErrorMessage />
-      { enableLatestShorcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
+      {enableLatestShorcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
 
-      {isDocumentEditable() && !tutorial && !showModal && <>
-        <Sidebar />
-        <HamburgerMenu />
-      </>}
+      {isDocumentEditable() && !tutorial && !showModal && (
+        <>
+          <Sidebar />
+          <HamburgerMenu />
+        </>
+      )}
 
       {!showModal && !tutorial && <Toolbar />}
 
       <MultiGestureIfTouch>
-
-        {showModal
-
+        {showModal ? (
           // modals
           // eslint-disable-next-line @typescript-eslint/no-extra-parens
-          ? showModal === 'welcome' ? <ModalWelcome />
-          : showModal === 'help' ? <ModalHelp />
-          : showModal === 'export' ? <ModalExport />
-          : showModal === 'feedback' ? <ModalFeedback />
-          : showModal === 'auth' ? <ModalAuth />
-          : 'Invalid showModal'
-
+          showModal === 'welcome' ? (
+            <ModalWelcome />
+          ) : showModal === 'help' ? (
+            <ModalHelp />
+          ) : showModal === 'export' ? (
+            <ModalExport />
+          ) : showModal === 'feedback' ? (
+            <ModalFeedback />
+          ) : showModal === 'auth' ? (
+            <ModalAuth />
+          ) : (
+            'Invalid showModal'
+          )
+        ) : (
           // navigation, content, and footer
-          : <>
+          <>
             {tutorial && !isLoading ? <Tutorial /> : null}
             <SplitPane
               style={{ position: 'relative', fontSize }}
@@ -161,11 +184,12 @@ const AppComponent: FC<Props> = props => {
               <Suspense fallback={<ContentFallback />}>
                 <Content />
               </Suspense>
-              {showSplitView
-                ?
+              {showSplitView ? (
                 <Content />
-              // children required by SplitPane
-                : <div />}
+              ) : (
+                // children required by SplitPane
+                <div />
+              )}
             </SplitPane>
 
             <div className='nav-bottom-wrapper'>
@@ -173,14 +197,14 @@ const AppComponent: FC<Props> = props => {
                 <NavBar position='bottom' />
               </Scale>
             </div>
-
           </>
-        }
+        )}
 
-        {!showModal && isDocumentEditable() && <div style={{ fontSize }}>
-          <Footer />
-        </div>}
-
+        {!showModal && isDocumentEditable() && (
+          <div style={{ fontSize }}>
+            <Footer />
+          </div>
+        )}
       </MultiGestureIfTouch>
     </div>
   )

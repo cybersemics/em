@@ -2,6 +2,7 @@ import { EM_TOKEN, INITIAL_SETTINGS, SCHEMA_HASHKEYS as SCHEMA_FROM, SCHEMA_META
 import { store } from '../store'
 import { push } from '../util'
 import { importText } from '../action-creators'
+import { storage } from '../util/storage'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO
@@ -21,19 +22,19 @@ export const migrate = async state => {
       settings: null
     }
   }).then(() => {
-    localStorage.removeItem('settings-dark')
-    localStorage.removeItem('settings-scaleSize')
-    localStorage.removeItem('settings-tutorial')
-    localStorage.removeItem('settings-tutorialStep')
+    storage.removeItem('settings-dark')
+    storage.removeItem('settings-scaleSize')
+    storage.removeItem('settings-tutorial')
+    storage.removeItem('settings-tutorialStep')
 
     if (state.settings && state.settings.dark != null) {
-      localStorage.setItem('Settings/Theme', state.settings.dark ? 'Dark' : 'Light')
+      storage.setItem('Settings/Theme', state.settings.dark ? 'Dark' : 'Light')
     }
     if (state.settings && state.settings.tutorial != null) {
-      localStorage.setItem('Settings/Tutorial', state.settings.tutorial ? 'On' : 'Off')
+      storage.setItem('Settings/Tutorial', state.settings.tutorial ? 'On' : 'Off')
     }
     if (state.settings && state.settings.tutorialStep) {
-      localStorage.setItem('Settings/Tutorial Step', state.settings.tutorialStep)
+      storage.setItem('Settings/Tutorial Step', state.settings.tutorialStep)
     }
   })
 
