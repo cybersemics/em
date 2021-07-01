@@ -1,22 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable fp/no-class */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-/**
- *
- */
-function handleError(func: string, param?: string): Promise<string> {
-  let message
-  if (!param) {
-    message = func
-  } else {
-    message = `${func}() requires at least ${param} as its first parameter.`
-  }
-  console.warn(message) // eslint-disable-line no-console
-  return Promise.reject(message)
-}
 
 /**
- *
+ * Class SyncStorage - used to made async store sync an
+ * prevent changing to async call the whole app.
  */
 class SyncStorage {
   data: Map<string, string> = new Map()
@@ -24,14 +13,12 @@ class SyncStorage {
   loading = true
 
   async init(): Promise<void> {
-    await AsyncStorage.getAllKeys().then((keys: string[]) =>
-      AsyncStorage.multiGet(keys).then((data: any): any[] => {
-        data.forEach(this.saveItem.bind(this))
+    const keys = await AsyncStorage.getAllKeys();
+    const data = await AsyncStorage.multiGet(keys) as string[][];
+    data.forEach(this.saveItem.bind(this));
 
-        return [...this.data]
-      }),
-    )
-
+    // eslint-disable-next-line no-unused-expressions
+    [...this.data];
   }
 
   getItem(key: string): string | undefined {
@@ -39,14 +26,14 @@ class SyncStorage {
   }
 
   setItem(key: string, value: any): Promise<any> {
-    if (!key) return handleError('set', 'a key')
+    if (!key) throw new Error('set key')
 
     this.data.set(key, value)
     return AsyncStorage.setItem(key, JSON.stringify(value))
   }
 
   removeItem(key: string): Promise<any> {
-    if (!key) return handleError('remove', 'a key')
+    if (!key) throw new Error('remove key')
 
     this.data.delete(key)
     return AsyncStorage.removeItem(key)
