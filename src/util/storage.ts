@@ -1,4 +1,4 @@
-const storage = {
+export const storage = {
   clear(): void {
     localStorage.clear()
   },
@@ -15,5 +15,3 @@ const storage = {
     localStorage.setItem(key, value)
   },
 }
-
-export { storage }

@@ -1,21 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import syncStorage from './nativeStorageHelper'
 
-const storage = {
-  async clear(): Promise<void> {
-    await AsyncStorage.clear()
+export const storage = {
+  clear(): void {
+    syncStorage.clear()
   },
 
-  async getItem(key: string): Promise<string | null> {
-    return AsyncStorage.getItem(key)
+  getItem(key: string): string | null {
+    return syncStorage.getItem(key) ?? null
   },
 
-  async removeItem(key: string): Promise<void> {
-    await AsyncStorage.removeItem(key)
+  removeItem(key: string): void {
+    syncStorage.removeItem(key)
   },
 
-  async setItem(key: string, value: string): Promise<void> {
-    await AsyncStorage.setItem(key, value)
+  setItem(key: string, value: string): void {
+    syncStorage.setItem(key, value)
   },
 }
-
-export { storage }
