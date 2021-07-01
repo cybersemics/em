@@ -24,6 +24,10 @@ const splitSentencesShortcut: Shortcut = {
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state
+    if (!cursor) {
+      dispatch(alert('Cannot split sentences: no cursor is found.', { alertType: 'splitSentencesErr1', clearTimeout: 3000 }))
+      return
+    }
     const value = headValue(cursor!)
     const sentences = splitSentence(value)
 
