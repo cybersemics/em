@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable fp/no-class */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
@@ -16,9 +15,6 @@ class SyncStorage {
     const keys = await AsyncStorage.getAllKeys();
     const data = await AsyncStorage.multiGet(keys) as string[][];
     data.forEach(this.saveItem.bind(this));
-
-    // eslint-disable-next-line no-unused-expressions
-    [...this.data];
   }
 
   getItem(key: string): string | undefined {
