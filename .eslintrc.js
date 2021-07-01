@@ -27,6 +27,7 @@ module.exports = {
       },
       plugins: ['@typescript-eslint'],
       rules: {
+        'semi': ['error', 'never'],
         'import/prefer-default-export': 0,
         // temporary fix from 'typescript-eslint' docs
         // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
