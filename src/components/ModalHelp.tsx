@@ -4,7 +4,7 @@ import { isTouch } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { makeCompareByProp, sort } from '../util'
-import { modalRemindMeLater, toggleShortcutsDiagram, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
+import { closeModal, toggleShortcutsDiagram, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
 import { getSetting } from '../selectors'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import { State } from '../util/initialState'
@@ -73,7 +73,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
   }
 
   return <Modal id='help' title='Help' className='popup' actions={
-    ({ remindMeLater }) => <ActionButton key='close' title='Close' onClick={() => remindMeLater()} />
+    ({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />
   }>
 
     <section className='popup-section'>
@@ -86,7 +86,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
             // allow resume
             // TODO: Allow resume for both tutorials
             setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
-            modalRemindMeLater({ id: 'help' }),
+            closeModal({ id: 'help' }),
           ])
         }}>Part I: Intro</a></div>
         <div><a className='button' onClick={() => {
@@ -94,7 +94,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
             tutorial({ value: true }),
             // allow resume
             setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
-            modalRemindMeLater({ id: 'help' })
+            closeModal({ id: 'help' })
           ])
         }}>Part II: Contexts</a></div>
       </div>

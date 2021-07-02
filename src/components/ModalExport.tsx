@@ -5,7 +5,7 @@ import { and } from 'fp-and-or'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
 import { download, ellipsize, getExportPhrase, getPublishUrl, hashContext, headValue, isDocumentEditable, isFunction, isRoot, pathToContext, removeHome, timestamp, unroot } from '../util'
-import { alert, error, modalRemindMeLater, pull } from '../action-creators'
+import { alert, error, closeModal, pull } from '../action-creators'
 import { exportContext, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
@@ -125,7 +125,7 @@ const ModalExport = () => {
       if (document.getSelection()?.toString()) document.getSelection()?.removeAllRanges()
 
       dispatch([
-        modalRemindMeLater({ id: 'help' }),
+        closeModal({ id: 'help' }),
         alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 })
       ])
 
@@ -179,7 +179,7 @@ const ModalExport = () => {
       }
     }
 
-    dispatch(modalRemindMeLater({ id: 'export' }))
+    dispatch(closeModal({ id: 'export' }))
   }
 
   /** Publishes the thoughts to IPFS. */
@@ -386,7 +386,7 @@ const ModalExport = () => {
             onClick={() => {
               dispatch([
                 alert(null),
-                modalRemindMeLater({ id: 'help' })
+                closeModal({ id: 'help' })
               ])
             }}
             style={{

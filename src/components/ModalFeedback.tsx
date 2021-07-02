@@ -27,7 +27,7 @@ const ModalFeedback = () => {
   const onChange = (e: ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)
 
   /** Submit handler. */
-  const onSubmit = async ({ remindMeLater }: { remindMeLater: () => void }) => {
+  const onSubmit = async ({ close }: { close: () => void }) => {
 
     setSubmitAttempts(submitAttempts + 1)
 
@@ -42,7 +42,7 @@ const ModalFeedback = () => {
     try {
       await submitFeedback(feedback, uid)
       dispatch(alert('Feedback sent!'))
-      remindMeLater()
+      close()
     }
     catch (err) {
       console.error('Error sending feedback', err)
@@ -63,9 +63,9 @@ const ModalFeedback = () => {
     }
   }, [feedback])
 
-  return <Modal id='feedback' title='Feedback' className='popup' center actions={({ remindMeLater }) => <div>
-    <ActionButton key='send' title='Send' active={true} isLoading={isSubmitting} isDisabled={isDisabled} onClick={() => onSubmit({ remindMeLater })} />
-    <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => remindMeLater()}>Cancel</a></div>
+  return <Modal id='feedback' title='Feedback' className='popup' center actions={({ close }) => <div>
+    <ActionButton key='send' title='Send' active={true} isLoading={isSubmitting} isDisabled={isDisabled} onClick={() => onSubmit({ close })} />
+    <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => close()}>Cancel</a></div>
   </div>}>
     <p style={{ fontSize: 18, marginBottom: 30 }}>Send us your bugs, hopes, and dreams!</p>
     <textarea placeholder={'Enter your message'} rows={1} value={feedback} onChange={onChange} style={{ borderRadius: 5 }} />

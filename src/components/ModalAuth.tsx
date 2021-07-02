@@ -166,7 +166,7 @@ const ModalAuth = () => {
   /** Show Password recovery assistance. */
   const showForgotPassword = () => updateActiveMode(modes.resetPassword)
 
-  return <Modal id='auth' title={activeMode.modalTitle} className='popup' center actions={({ remindMeLater: closeModal }) => <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
+  return <Modal id='auth' title={activeMode.modalTitle} className='popup' center actions={({ close: closeModal }) => <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
 
     <ActionButton key={activeMode.modalKey} title={activeMode.modalTitle} active={true} isLoading={isSubmitting} onClick={() => submitAction(closeModal, email, password)} />
 
