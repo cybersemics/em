@@ -201,7 +201,12 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                   className='toolbar-icon'
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}
-                  onMouseDown={() => setPressingToolbarId(id)}
+                  onMouseDown={e => {
+                    setPressingToolbarId(id)
+
+                    // prevents editable blur
+                    e.preventDefault()
+                  }}
                   onMouseOut={clearHoldTimer}
                   onTouchEnd={clearHoldTimer}
                   onTouchStart={() => {

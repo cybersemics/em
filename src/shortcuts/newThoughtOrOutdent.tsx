@@ -37,7 +37,10 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
     // Note: e.target should be a HTMLElement and a content editable node
     const isTargetAnEditable = isTargetHTMLElement && target.hasAttribute('contenteditable')
 
-    const splitResult = cursor && isTargetAnEditable ? splitAtSelection(target) : null
+    const currentSelection = document.getSelection() 
+    const currentSelectionRange = currentSelection && (currentSelection.rangeCount > 0) ? document.getSelection()?.getRangeAt(0) : null
+  
+    const splitResult = cursor && isTargetAnEditable && currentSelectionRange? splitAtSelection(target, currentSelectionRange) : null
 
     // prevent split on gesture
     dispatch(newThought({ value: '', splitResult, preventSplit: type === 'gesture' }))

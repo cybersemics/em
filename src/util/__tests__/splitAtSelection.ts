@@ -20,7 +20,9 @@ it('split at selecion with nested nodes', () => {
     offset: caretPositionDetails?.offset
   })
 
-  const splitResult = splitAtSelection(dummyDiv)
+  const selectionRange = document.getSelection()?.getRangeAt(0)
+
+  const splitResult = splitAtSelection(dummyDiv, selectionRange!)
 
   expect(splitResult).toMatchObject({
     left: 'The <b>rise <i>and</i></b>',
