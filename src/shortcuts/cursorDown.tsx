@@ -58,7 +58,7 @@ const isSelectionOnLastLine = ({ rangeY, rangeHeight, baseNodeY, baseNodeHeight,
 
 const cursorDownShortcut: Shortcut = {
   id: 'cursorDown',
-  name: 'Cursor Down',
+  label: 'Cursor Down',
   keyboard: { key: Key.ArrowDown },
   hideFromInstructions: true,
   svg: Icon,

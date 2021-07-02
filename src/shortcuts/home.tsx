@@ -13,7 +13,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const homeShortcut: Shortcut = {
   id: 'home',
-  name: 'Home',
+  label: 'Home',
   description: 'Navigate to Home.',
   keyboard: { key: 'h', meta: true, alt: true },
   svg: Icon,

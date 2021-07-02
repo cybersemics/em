@@ -13,7 +13,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const moveThoughtDownShortcut: Shortcut = {
   id: 'moveThoughtDown',
-  name: 'Move Thought Down',
+  label: 'Move Thought Down',
   description: 'Move the current thought down.',
   keyboard: { key: Key.ArrowDown, meta: true, shift: true },
   svg: Icon,

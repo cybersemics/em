@@ -8,7 +8,7 @@ import { HOME_PATH } from '../constants'
 
 const noteShortcut: Shortcut = {
   id: 'note',
-  name: 'Note',
+  label: 'Note',
   description: 'Add a small note beneath a thought.',
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',

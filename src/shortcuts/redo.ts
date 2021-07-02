@@ -9,7 +9,7 @@ interface RedoAction {
 
 const redoShortcut: Shortcut = {
   id: 'redo',
-  name: 'Redo',
+  label: 'Redo',
   description: 'Redo',
   svg: RedoIcon,
   exec: (dispatch: Dispatch<RedoAction>, getState) => {

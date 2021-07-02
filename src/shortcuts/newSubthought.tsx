@@ -16,7 +16,7 @@ const exec = newThought({ insertNewSubthought: true })
 
 const newSubthoughtShortcut: Shortcut = {
   id: 'newSubthought',
-  name: 'New Subthought',
+  label: 'New Subthought',
   description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
   keyboard: { key: Key.Enter, meta: true },
@@ -28,7 +28,7 @@ const newSubthoughtShortcut: Shortcut = {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const newSubthoughtAliases = {
   id: 'newSubthoughtAliases',
-  name: 'New Subthought',
+  label: 'New Subthought',
   hideFromInstructions: true,
   gesture: [
     'rdldr', 'rdldlr', 'rdldldr', 'rldr', 'rldlr', 'rldldr', 'rldldlr', 'rdru', 'rdrdru', 'rdrdrru', 'rdrdrdru', 'rlru', 'rdrlru', 'rdrdlru', 'rdrdrlru', 'rdllru', 'rdrdrd', 'rdrdrrd', 'rdrdrdrd', 'rdlrd', 'rdldrd', 'rdldlrd', 'rdlru', 'rdldru', 'rdldlru', 'rdldldru', 'rldru', 'rldlru', 'rldldru', 'rldldlru'

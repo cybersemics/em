@@ -13,7 +13,7 @@ const Icon = ({ fill, size = 20, style }: IconType) => <svg version='1.1' classN
 
 const toggleHiddenThoughtsShortcut: Shortcut = {
   id: 'toggleHiddenThoughts',
-  name: 'Toggle Hidden Thoughts',
+  label: 'Toggle Hidden Thoughts',
   description: 'Show or hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
   svg: Icon,

@@ -13,7 +13,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const newSubthoughtTopShortcut: Shortcut = {
   id: 'newSubthoughtTop',
-  name: 'New Subthought (top)',
+  label: 'New Subthought (top)',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
   gesture: 'rdu',
   keyboard: { key: Key.Enter, shift: true, meta: true },

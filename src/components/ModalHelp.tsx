@@ -30,7 +30,7 @@ const mapStateToProps = (state: State) => {
 const ShortcutRows = (shortcut: Shortcut, i: number) =>
   <tr key={i}>
     <th>
-      <b>{shortcut.name}</b>
+      <b>{shortcut.label}</b>
       <p>{shortcut.description}</p>
     </th>
     <td>{isTouch && shortcut.gesture

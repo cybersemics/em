@@ -190,12 +190,12 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
           >
             <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
             {shortcutIds.map(id => {
-              const { name, svg, exec, isActive } = shortcutById(id)!
+              const { svg, exec, isActive } = shortcutById(id)!
               // TODO: type svg correctly
               const SVG = svg as React.FC<Icon>
               return (
                 <div
-                  key={name}
+                  key={id}
                   id={id}
                   style={pressingToolbarId === id ? { paddingTop: '10px' } : {}}
                   className='toolbar-icon'
@@ -230,7 +230,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
             {shortcut && toolbarOverlay ?
               <CSSTransition timeout={800} classNames='fade'>
                 <div className={isTouch ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                  <div className='overlay-name'>{shortcut.name}</div>
+                  <div className='overlay-name'>{shortcut.label}</div>
                   {shortcut.gesture || shortcut.keyboard || shortcut.overlay
                     ? <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>
                     : null

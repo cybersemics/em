@@ -23,7 +23,7 @@ const blur = () => {
 
 const cursorBackShortcut: Shortcut = {
   id: 'cursorBack',
-  name: 'Back',
+  label: 'Back',
   gesture: 'r',
   svg: Icon,
   keyboard: 'Escape',

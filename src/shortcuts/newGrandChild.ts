@@ -4,7 +4,7 @@ import { Shortcut } from '../types'
 
 const newGrandChildShortcut: Shortcut = {
   id: 'newGrandChild',
-  name: 'New Grand Child',
+  label: 'New Grand Child',
   description: 'Create a new grand child in the current thought. Add it to the first visible subthought.',
   gesture: 'rdrd',
   canExecute: () => isDocumentEditable(),

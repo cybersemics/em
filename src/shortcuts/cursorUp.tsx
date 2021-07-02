@@ -43,7 +43,7 @@ const isSelectionOnMultiLine = () => {
 
 const cursorUpShortcut: Shortcut = {
   id: 'cursorUp',
-  name: 'Cursor Up',
+  label: 'Cursor Up',
   keyboard: { key: Key.ArrowUp },
   hideFromInstructions: true,
   svg: Icon,

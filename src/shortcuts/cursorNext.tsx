@@ -15,7 +15,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const cursorNextShortcut: Shortcut = {
   id: 'cursorNext',
-  name: 'Cursor Next Thought',
+  label: 'Cursor Next Thought',
   description: 'Move the cursor to the next thought, skipping expanded children.',
   keyboard: { key: Key.ArrowDown, meta: true },
   svg: Icon,

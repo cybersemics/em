@@ -33,13 +33,13 @@ const Toolbar = (
 
   const keyExtractor = useCallback((item: string) => item, [])
   const renderItem: ListRenderItem<string> = useCallback(({ item: id, index }) => {
-    const { name, svg } = shortcutById(id)! ?? {}
+    const { svg } = shortcutById(id)! ?? {}
 
     const SVG = svg as React.FC<Icon>
 
     return (
       <TouchableOpacity style={styles.button}>
-        <SVG key={name} fill={fillColor} size={35} />
+        <SVG key={id} fill={fillColor} size={35} />
       </TouchableOpacity>
     )
   }, [])

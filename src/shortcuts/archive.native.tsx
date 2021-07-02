@@ -77,7 +77,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const archiveShortcut: Shortcut = {
   id: 'delete',
-  name: 'Archive',
+  label: 'Archive',
   description: 'Archive the current thought.',
   gesture: 'ldl',
   svg: Icon,
@@ -89,7 +89,7 @@ const archiveShortcut: Shortcut = {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const archiveAliases: Shortcut = {
   id: 'archiveAliases',
-  name: 'Archive',
+  label: 'Archive',
   hideFromInstructions: true,
   gesture: [
     'ldlr',

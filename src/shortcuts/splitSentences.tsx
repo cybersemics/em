@@ -16,7 +16,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const splitSentencesShortcut: Shortcut = {
   id: 'splitSentences',
-  name: 'Split Sentences',
+  label: 'Split Sentences',
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
   svg: Icon,

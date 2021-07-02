@@ -128,7 +128,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     handleGestureSegmentTimeout = window.setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
-        store.dispatch(alert(shortcut ? shortcut.name
+        store.dispatch(alert(shortcut ? shortcut.label
           : isGestureHint(state) ? '✗ Invalid gesture'
           : null, { alertType: 'gestureHint', showCloseLink: false }))
       },

@@ -135,7 +135,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const deleteEmptyThoughtOrOutdent: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdent',
-  name: 'Delete Empty Thought Or Outdent',
+  label: 'Delete Empty Thought Or Outdent',
   keyboard: { key: Key.Backspace },
   hideFromInstructions: true,
   svg: Icon,
@@ -146,7 +146,7 @@ const deleteEmptyThoughtOrOutdent: Shortcut = {
 // also match Shift + Backspace
 export const deleteEmptyThoughtOrOutdentAlias: Shortcut = {
   id: 'deleteEmptyThoughtOrOutdentAlias',
-  name: 'Delete Empty Thought Or Outdent (alias)',
+  label: 'Delete Empty Thought Or Outdent (alias)',
   keyboard: { key: Key.Backspace, shift: true },
   hideFromInstructions: true,
   canExecute,

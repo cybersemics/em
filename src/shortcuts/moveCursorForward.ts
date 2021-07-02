@@ -19,7 +19,7 @@ interface Indent {
 
 const moveCursorForward: Shortcut = {
   id: 'moveCursorForward',
-  name: 'Move Cursor Forward',
+  label: 'Move Cursor Forward',
   description: 'Move the current thought to the end of the previous thought or to next column in table view.',
   keyboard: { key: Key.Tab },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

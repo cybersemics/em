@@ -18,7 +18,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const proseViewShortcut: Shortcut = {
   id: 'proseView',
-  name: 'Prose View',
+  label: 'Prose View',
   description: 'Display the current context as indented paragraphs.',
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, alt: true },

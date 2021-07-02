@@ -11,7 +11,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const cursorForwardShortcut: Shortcut = {
   id: 'cursorForward',
-  name: 'Forward',
+  label: 'Forward',
   gesture: 'l',
   svg: Icon,
   // must wrap in anonymous function since exit is defined at run time

@@ -13,7 +13,7 @@ const Icon = ({ fill, size = 20, style }: IconType) => <svg className='icon' wid
 
 const toggleSplitViewShortcut: Shortcut = {
   id: 'toggleSplitView',
-  name: 'Toggle Split View',
+  label: 'Toggle Split View',
   description: 'Render two independent views for side-by-side editing.',
   svg: Icon,
   canExecute: getState => !!getState().cursor,

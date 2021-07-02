@@ -11,7 +11,7 @@ const Icon = ({ size = 20 }: IconType) => <svg version='1.1' className='icon' xm
 
 const collapseContextShortcut: Shortcut = {
   id: 'collapseContext',
-  name: 'Collapse',
+  label: 'Collapse',
   description: 'Archives the current thought and moves its subthoughts to its parent.',
   gesture: 'ldu',
   svg: Icon,

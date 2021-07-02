@@ -18,7 +18,7 @@ const Icon = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size} he
 
 const pinOpenShortcut: Shortcut = {
   id: 'pinOpen',
-  name: 'Pin Open',
+  label: 'Pin Open',
   description: 'Pin and expand the current thought.',
   // keyboard: { key: 'p', meta: true, alt: true },
   svg: Icon,
