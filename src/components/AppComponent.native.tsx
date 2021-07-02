@@ -10,8 +10,10 @@ import ModalFeedback from './ModalFeedback'
  */
 const AppComponent: React.FC = () => {
   return (
-    <>
-      <StatusBar style='light' />
+    <><StatusBar
+        // eslint-disable-next-line react/style-prop-object
+        style='light'
+      />
       <SafeAreaView style={styles.container}>
         <Toolbar />
         <ScrollView contentContainerStyle={styles.content}>
