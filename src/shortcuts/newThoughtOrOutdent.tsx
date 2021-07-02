@@ -49,7 +49,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
 
 const newThoughtOrOutdent: Shortcut = {
   id: 'newThoughtOrOutdent',
-  name: 'newThoughtOrOutdent',
+  name: 'New Thought',
   description: 'Create a new thought or outdent if focused thought is empty.',
   keyboard: { key: Key.Enter },
   gesture: 'rd',
@@ -61,7 +61,7 @@ const newThoughtOrOutdent: Shortcut = {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const newThoughtAliases: Shortcut = {
   id: 'newThoughtAliases',
-  name: 'newThought',
+  name: 'New Thought',
   hideFromInstructions: true,
   gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
