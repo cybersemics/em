@@ -86,7 +86,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
             // allow resume
             // TODO: Allow resume for both tutorials
             setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
-            closeModal({ id: 'help' }),
+            closeModal(),
           ])
         }}>Part I: Intro</a></div>
         <div><a className='button' onClick={() => {
@@ -94,7 +94,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
             tutorial({ value: true }),
             // allow resume
             setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
-            closeModal({ id: 'help' })
+            closeModal()
           ])
         }}>Part II: Contexts</a></div>
       </div>

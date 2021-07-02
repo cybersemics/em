@@ -5,19 +5,13 @@ import { State } from '../util/initialState'
 /**
  * Closes a modal temporarily.
  */
-const closeModal = (state: State, { id }: { id?: string }) => {
+const closeModal = (state: State) => {
 
   modalCleanup()
 
   return {
     ...state,
-    showModal: null,
-    modals: {
-      ...state.modals,
-      [id ?? state.showModal!]: {
-        ...state.modals[id ?? state.showModal!]
-      }
-    }
+    showModal: null
   }
 }
 

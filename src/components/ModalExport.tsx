@@ -125,7 +125,7 @@ const ModalExport = () => {
       if (document.getSelection()?.toString()) document.getSelection()?.removeAllRanges()
 
       dispatch([
-        closeModal({ id: 'help' }),
+        closeModal(),
         alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 })
       ])
 
@@ -179,7 +179,7 @@ const ModalExport = () => {
       }
     }
 
-    dispatch(closeModal({ id: 'export' }))
+    dispatch(closeModal())
   }
 
   /** Publishes the thoughts to IPFS. */
@@ -386,7 +386,7 @@ const ModalExport = () => {
             onClick={() => {
               dispatch([
                 alert(null),
-                closeModal({ id: 'help' })
+                closeModal()
               ])
             }}
             style={{

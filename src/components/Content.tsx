@@ -6,6 +6,7 @@ import {
   cursorBack as cursorBackActionCreator,
   expandContextThought,
   toggleSidebar as toggleSidebarActionCreator,
+  closeModal
 } from '../action-creators'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
@@ -119,7 +120,9 @@ const Content: ContentComponent = props => {
     if (focusNode && focusNode.nodeType === Node.TEXT_NODE) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    if (!showModal && !noteFocus) {
+    if (showModal) {
+      dispatch(closeModal())
+    } else if (!noteFocus) {
       dispatch(cursorBackActionCreator())
       expandContextThought(null)
     }
