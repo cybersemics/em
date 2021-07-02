@@ -191,7 +191,8 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
             <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
             {shortcutIds.map(id => {
               const { svg, exec, isActive, canExecute } = shortcutById(id)!
-              const isButtonActive = isActive?.(store.getState) || !canExecute || canExecute(store.getState)
+              const isButtonExecutable = !canExecute || canExecute(store.getState)
+              const isButtonActive = isActive?.(store.getState) || isButtonExecutable
 
               // TODO: type svg correctly
               const SVG = svg as React.FC<Icon>
@@ -201,15 +202,14 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                   id={id}
                   style={{
                     paddingTop: pressingToolbarId === id ? '10px' : '',
-                    cursor: isButtonActive ? 'pointer' : 'default',
-                    pointerEvents: isButtonActive ? 'auto' : 'none',
+                    cursor: isButtonExecutable ? 'pointer' : 'default',
+                    pointerEvents: isButtonExecutable ? 'auto' : 'none',
                   }}
                   className='toolbar-icon'
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}
                   onMouseDown={e => {
                     setPressingToolbarId(id)
-
                     // prevents editable blur
                     e.preventDefault()
                   }}
