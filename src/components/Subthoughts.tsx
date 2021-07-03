@@ -412,34 +412,8 @@ export const SubthoughtsComponent = ({
   const isPaginated = show && filteredChildren.length > proposedPageSize
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
-  /** Loads =focus/Zoom from env. */
-  // TODO: Handle ThoughtContext[]
-  const isZoomedByEnv = (context: Context): boolean => {
-    const children = getAllChildren(state, context)
-    const envNew = { ...env, ...envSelf }
-    return children.some(child =>
-      isFunction(child.value) &&
-      (child.value in envNew) &&
-      attribute(state, envNew[child.value], '=focus') === 'Zoom'
-    )
-  }
-
-  /** Loads style from the first env variable in scope with =focus/Zoom. */
-  const styleZoomByEnv = (context: Context): React.CSSProperties | null => {
-    const children = getAllChildren(state, context)
-    const envNew = { ...env, ...envSelf }
-    const child = children.find(child =>
-      isFunction(child.value) &&
-      (child.value in envNew) &&
-      attribute(state, envNew[child.value], '=focus') === 'Zoom'
-    )
-    return child
-      ? getStyle(state, [...envNew[child.value], '=focus', 'Zoom'])
-      : null
-  }
-
-  /** Loads style from the first env variable in scope with =focus/Zoom. */
-  const contextLetFocusZoom = (context: Context): Context | null => {
+  /** Finds the the first env context with =focus/Zoom. */
+  const findFirstEnvContextWithZoom = (context: Context): Context | null => {
     const children = getAllChildren(state, context)
     const envNew = { ...env, ...envSelf }
     const child = children.find(child =>
@@ -459,10 +433,10 @@ export const SubthoughtsComponent = ({
   */
   const zoomCursor = cursor && (attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
     || attribute(state, pathToContext(parentOf(cursor)).concat('=children'), '=focus') === 'Zoom'
-    || isZoomedByEnv(pathToContext(cursor)))
+    || findFirstEnvContextWithZoom(pathToContext(cursor)))
   const zoomParent = cursor && (attribute(state, pathToContext(parentOf(cursor)), '=focus') === 'Zoom'
     || attribute(state, pathToContext(parentOf(parentOf(cursor))).concat('=children'), '=focus') === 'Zoom'
-    || isZoomedByEnv(pathToContext(rootedParentOf(state, cursor))))
+    || findFirstEnvContextWithZoom(pathToContext(rootedParentOf(state, cursor))))
   const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath) // eslint-disable-line jsdoc/require-jsdoc
 
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
@@ -567,6 +541,7 @@ export const SubthoughtsComponent = ({
           // figure out what is incorrectly depending on childPath being rooted
           const childPath = getChildPath(state, child, simplePath, showContexts)
           const childContext = pathToContext(childPath)
+          const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(childContext))
 
           /** Returns true if the cursor in in the child path. */
           const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
@@ -574,25 +549,28 @@ export const SubthoughtsComponent = ({
           /** Gets the =focus/Zoom/=style of the child path. */
           const styleZoom = () => getStyle(state, [...childContext, '=focus', 'Zoom'])
 
+          /** Gets the style of the Zoom applied via env. */
+          const styleEnvZoom = () => childContextEnvZoom()
+            ? getStyle(state, childContextEnvZoom()!)
+            : null
+
           const style = {
             ...styleGrandChildren,
             ...styleChildren,
             ...isEditingChildPath() ? {
               ...styleZoom(),
-              ...styleZoomByEnv(childContext),
+              ...styleEnvZoom(),
             } : null,
           }
 
           /** Returns true if the bullet should be hidden. */
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
 
-          const contextLetFocusZoomChildContext = once(() => contextLetFocusZoom(childContext))
-
           /** Returns true if the bullet should be hidden if zoomed. */
           const hideBulletZoom = (): boolean =>
             isEditingChildPath() &&
             (attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None' ||
-             !!contextLetFocusZoomChildContext() && attribute(state, contextLetFocusZoomChildContext()!, '=bullet') === 'None'
+             !!childContextEnvZoom() && attribute(state, childContextEnvZoom()!, '=bullet') === 'None'
             )
 
           /*
