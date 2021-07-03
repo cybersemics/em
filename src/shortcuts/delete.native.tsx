@@ -71,7 +71,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <Svg width={siz
 
 const deleteShortcut: Shortcut = {
   id: 'delete',
-  name: 'Archive',
+  label: 'Archive',
   description: 'Archive the current thought.',
   gesture: 'ldl',
   svg: Icon,
@@ -84,7 +84,7 @@ canExecute: () => isDocumentEditable(), */
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const deleteAliases: Shortcut = {
   id: 'deleteAliases',
-  name: 'Archive',
+  label: 'Archive',
   hideFromInstructions: true,
   gesture: [
     'ldlr', 'ldldr', 'ldldlr', 'ldldldr', 'lrdl', 'lrdrl', 'lrdldr', 'lrdldlr', 'ldru', 'ldrlru', 'ldldlru', 'ldldrlru', 'ldllru', 'ldldrld', 'ldldldld', 'ldld', 'ldldld', 'ldlru', 'ldldru', 'ldldldru', 'lrdru', 'lrdlru', 'lrdldru', 'lrdldlru'

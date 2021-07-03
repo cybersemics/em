@@ -75,7 +75,7 @@ const IconAsc = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size}
 
 const toggleSortShortcut: Shortcut = {
   id: 'toggleSort',
-  name: 'Toggle Sort',
+  label: 'Toggle Sort',
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', meta: true, alt: true },
   svg: IconAsc,

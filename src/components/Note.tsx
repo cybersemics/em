@@ -97,6 +97,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
     <ContentEditable
       html={note || ''}
       innerRef={noteRef}
+      className={'note-editable'}
       placeholder='Enter a note'
       onKeyDown={onKeyDown}
       onChange={onChange}

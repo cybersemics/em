@@ -9,7 +9,7 @@ interface UndoAction {
 
 const undoShortcut: Shortcut = {
   id: 'undo',
-  name: 'Undo',
+  label: 'Undo',
   description: 'Undo.',
   svg: UndoIcon,
   exec: (dispatch: Dispatch<UndoAction>, getState) => {

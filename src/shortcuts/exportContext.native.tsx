@@ -21,7 +21,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <Svg width={siz
 
 const exportContextShortcut: Shortcut = {
   id: 'exportContext',
-  name: 'Export Context',
+  label: 'Export Context',
   description: 'Export the current context as plaintext or html',
   svg: Icon,
   exec: dispatch => dispatch(showModal({ id: 'export' }))

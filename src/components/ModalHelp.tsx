@@ -4,7 +4,7 @@ import { isTouch } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { makeCompareByProp, sort } from '../util'
-import { modalRemindMeLater, toggleShortcutsDiagram, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
+import { closeModal, toggleShortcutsDiagram, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
 import { getSetting } from '../selectors'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import { State } from '../util/initialState'
@@ -30,7 +30,7 @@ const mapStateToProps = (state: State) => {
 const ShortcutRows = (shortcut: Shortcut, i: number) =>
   <tr key={i}>
     <th>
-      <b>{shortcut.name}</b>
+      <b>{shortcut.label}</b>
       <p>{shortcut.description}</p>
     </th>
     <td>{isTouch && shortcut.gesture
@@ -73,7 +73,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
   }
 
   return <Modal id='help' title='Help' className='popup' actions={
-    ({ remindMeLater }) => <ActionButton key='close' title='Close' onClick={() => remindMeLater()} />
+    ({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />
   }>
 
     <section className='popup-section'>
@@ -86,7 +86,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
             // allow resume
             // TODO: Allow resume for both tutorials
             setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
-            modalRemindMeLater({ id: 'help' }),
+            closeModal(),
           ])
         }}>Part I: Intro</a></div>
         <div><a className='button' onClick={() => {
@@ -94,7 +94,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
             tutorial({ value: true }),
             // allow resume
             setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
-            modalRemindMeLater({ id: 'help' })
+            closeModal()
           ])
         }}>Part II: Contexts</a></div>
       </div>
@@ -116,7 +116,7 @@ const ModalHelp = ({ tutorialStep, showQueue, dispatch, enableLatestShorcutsDiag
 
     <code>=focus</code>
     <p>Options: Normal, Zoom<br/>
-    When the cursor is on this thought, hide its parent and sibliings for additional focus. Excellent for study time or when you have had too much coffee.</p>
+    When the cursor is on this thought, hide its parent and siblings for additional focus. Excellent for study time or when you have had too much coffee.</p>
 
     <code>=hidden</code>
     <p>Hide the thought.</p>

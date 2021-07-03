@@ -190,18 +190,29 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
           >
             <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
             {shortcutIds.map(id => {
-              const { name, svg, exec, isActive } = shortcutById(id)!
+              const { svg, exec, isActive, canExecute } = shortcutById(id)!
+              const isButtonActive = !isActive || isActive(store.getState)
+              const isButtonExecutable = !canExecute || canExecute(store.getState)
+
               // TODO: type svg correctly
               const SVG = svg as React.FC<Icon>
               return (
                 <div
-                  key={name}
+                  key={id}
                   id={id}
-                  style={pressingToolbarId === id ? { paddingTop: '10px' } : {}}
+                  style={{
+                    paddingTop: pressingToolbarId === id ? '10px' : '',
+                    cursor: isButtonExecutable ? 'pointer' : 'default',
+                    pointerEvents: isButtonExecutable ? 'auto' : 'none',
+                  }}
                   className='toolbar-icon'
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}
-                  onMouseDown={() => setPressingToolbarId(id)}
+                  onMouseDown={e => {
+                    setPressingToolbarId(id)
+                    // prevents editable blur
+                    e.preventDefault()
+                  }}
                   onMouseOut={clearHoldTimer}
                   onTouchEnd={clearHoldTimer}
                   onTouchStart={() => {
@@ -212,7 +223,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                 >
                   <SVG
                     style={{
-                      fill: !isActive || isActive(store.getState) ? fg : 'gray',
+                      fill: isButtonExecutable && isButtonActive ? fg : 'gray',
                       width: fontSize + 4,
                       height: fontSize + 4,
                     }} />
@@ -225,7 +236,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
             {shortcut && toolbarOverlay ?
               <CSSTransition timeout={800} classNames='fade'>
                 <div className={isTouch ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                  <div className='overlay-name'>{shortcut.name}</div>
+                  <div className='overlay-name'>{shortcut.label}</div>
                   {shortcut.gesture || shortcut.keyboard || shortcut.overlay
                     ? <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>
                     : null

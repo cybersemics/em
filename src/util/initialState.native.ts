@@ -21,7 +21,6 @@ import { editThoughtPayload } from '../reducers/editThought'
 
 interface ModalProperties {
   complete: boolean
-  hideuntil: number
 }
 
 // Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed
@@ -245,8 +244,6 @@ export const initialState = (created: Timestamp = timestamp()) => {
     state.modals[MODALS[key]] = {
       // eslint-disable-next-line no-mixed-operators
       complete: globals.disableTutorial || JSON.parse(getLocal('modal-complete-' + MODALS[key]) || 'false'),
-      // eslint-disable-next-line no-mixed-operators
-      hideuntil: JSON.parse(getLocal('modal-hideuntil-' + MODALS[key]) || '0'),
     }
   })
 

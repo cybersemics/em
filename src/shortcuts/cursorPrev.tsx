@@ -15,7 +15,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const cursorPrevShortcut: Shortcut = {
   id: 'cursorPrev',
-  name: 'Cursor Previous Thought',
+  label: 'Cursor Previous Thought',
   description: 'Move cursor to previous thought, skipping expanded children.',
   gesture: 'lur',
   svg: Icon,

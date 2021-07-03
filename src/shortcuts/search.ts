@@ -4,7 +4,7 @@ import { Shortcut } from '../types'
 
 const searchShortcut: Shortcut = {
   id: 'search',
-  name: 'Search',
+  label: 'Search',
   description: 'Open the Search input. Use the same shortcut to close.',
   svg: SearchIcon,
   keyboard: { key: 'f', meta: true, alt: true },

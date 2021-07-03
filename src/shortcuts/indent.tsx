@@ -16,7 +16,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const indentShortcut: Shortcut = {
   id: 'indent',
-  name: 'Indent',
+  label: 'Indent',
   description: 'Move the current thought "in" (to the end of the previous thought). No surprises here.',
   overlay: {
     keyboard: moveCursorForward.keyboard,

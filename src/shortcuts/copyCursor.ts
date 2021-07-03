@@ -14,7 +14,7 @@ const copy = (s: string): void => {
 
 const copyCursorShortcut: Shortcut = {
   id: 'copyCursor',
-  name: 'Copy Cursor',
+  label: 'Copy Cursor',
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },
   canExecute: getState =>

@@ -16,7 +16,7 @@ const Icon = ({ size = 20, style }: IconType) => <svg xmlns='http://www.w3.org/2
 
 const pinOpenShortcut: Shortcut = {
   id: 'pinOpen',
-  name: 'Pin Open',
+  label: 'Pin Open',
   description: 'Pin and expand the current thought.',
   keyboard: { key: 'p', meta: true, alt: true },
   svg: Icon,

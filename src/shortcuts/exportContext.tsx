@@ -17,7 +17,7 @@ const ShareIcon = ({ fill = 'black', size = 20, style }: IconType) => <svg class
 
 const exportContextShortcut: Shortcut = {
   id: 'exportContext',
-  name: 'Export Context',
+  label: 'Export Context',
   description: 'Export the current context as plaintext or html',
   svg: isTouch ? ShareIcon : Icon,
   exec: dispatch => dispatch(showModal({ id: 'export' }))

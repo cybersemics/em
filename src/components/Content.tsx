@@ -5,10 +5,10 @@ import { isTouch } from '../browser'
 import {
   cursorBack as cursorBackActionCreator,
   expandContextThought,
-  modalRemindMeLater,
   toggleSidebar as toggleSidebarActionCreator,
+  closeModal
 } from '../action-creators'
-import { MODAL_CLOSE_DURATION, ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
 import { State } from '../util/initialState'
@@ -121,7 +121,7 @@ const Content: ContentComponent = props => {
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (showModal) {
-      dispatch(modalRemindMeLater({ duration: MODAL_CLOSE_DURATION }))
+      dispatch(closeModal())
     } else if (!noteFocus) {
       dispatch(cursorBackActionCreator())
       expandContextThought(null)

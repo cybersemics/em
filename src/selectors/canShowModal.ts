@@ -5,7 +5,6 @@ import { State } from '../util/initialState'
  */
 const canShowModal = (state: State, id: string): boolean => state &&
   (!state.showModal || state.showModal === id) &&
-  !state.modals[id].complete &&
-  state.modals[id].hideuntil < Date.now()
+  !state.modals[id].complete
 
 export default canShowModal

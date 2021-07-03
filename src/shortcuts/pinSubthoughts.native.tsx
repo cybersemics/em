@@ -20,7 +20,7 @@ const Icon = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size} he
 
 const pinSubthoughtsShortcut: Shortcut = {
   id: 'pinSubthoughts',
-  name: 'Pin Open Subthoughts',
+  label: 'Pin Open Subthoughts',
   description: 'Pin open the current thought\'s subthoughts.',
   // keyboard: { key: 'p', meta: true, shift: true },
   svg: Icon,

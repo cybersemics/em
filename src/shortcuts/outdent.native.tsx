@@ -19,7 +19,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <Svg width={siz
 
 const outdentShortcut: Shortcut = {
   id: 'outdent',
-  name: 'De-indent',
+  label: 'De-indent',
   description: 'De-indent? Outdent? Whatever the opposite of indent is. Move the current thought "out" a level (immediately after its parent).',
   svg: Icon,
   exec: () => Alert.alert('noteShortcut')

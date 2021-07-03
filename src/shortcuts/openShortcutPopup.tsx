@@ -12,7 +12,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const openShortcutPopupShortcut: Shortcut = {
   id: 'openShortcutPopup',
-  name: 'Open Shortcut Popup',
+  label: 'Open Shortcut Popup',
   description: `Open the help screen which contains the tutorials and a list of all ${isTouch ? 'gestures' : 'keyboard shortcuts'}.`,
   keyboard: { key: '/', meta: true },
   svg: Icon,

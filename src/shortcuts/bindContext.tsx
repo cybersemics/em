@@ -13,7 +13,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1
 
 const bindContextShortcut: Shortcut = {
   id: 'bindContext',
-  name: 'Bind Context',
+  label: 'Bind Context',
   svg: Icon,
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',

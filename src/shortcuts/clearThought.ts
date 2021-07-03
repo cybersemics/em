@@ -4,7 +4,7 @@ import { Shortcut } from '../types'
 
 const clearThoughtShortcut: Shortcut = {
   id: 'clearThought',
-  name: 'Clear Thought',
+  label: 'Clear Thought',
   description: 'Clear the text of the current thought.',
   gesture: 'rl',
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

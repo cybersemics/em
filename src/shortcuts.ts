@@ -130,7 +130,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         // only show "Invalid gesture" if hint is already being shown
         store.dispatch((dispatch, getState) => {
           dispatch(
-            alert(shortcut ? shortcut.name
+            alert(shortcut ? shortcut.label
               : isGestureHint(getState()) ? '✗ Invalid gesture'
               : null, { alertType: 'gestureHint', showCloseLink: false })
           )
@@ -205,7 +205,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
       shortcutEmitter.trigger('shortcut', shortcut)
 
-      if (!shortcut.canExecute || shortcut.canExecute(store.getState, e)) {
+      if (!shortcut.canExecute || shortcut.canExecute(store.getState)) {
         e.preventDefault()
 
         // dispatch action to hide toolbar and breadcrumbs
