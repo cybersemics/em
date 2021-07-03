@@ -4,15 +4,16 @@ import { State } from '../util/initialState'
 import { parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
 import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 
-const SUBCATEGORIZE_ALL_META_EXCEPTIONS = [
-  '=archive',
-  '=bullet',
-  '=focus',
-  '=label',
-  '=note',
-  '=pin',
-  '=publish',
-]
+// attributes that apply to the parent and should not be moved with subCategorizeAll
+const stationaryMetaAttributes = {
+  '=archive': true,
+  '=bullet': true,
+  '=focus': true,
+  '=label': true,
+  '=note': true,
+  '=pin': true,
+  '=publish': true,
+}
 
 /** Inserts a new thought as a parent of all thoughts in the given context. */
 const subCategorizeAll = (state: State) => {
@@ -53,7 +54,7 @@ const subCategorizeAll = (state: State) => {
   const pathParent = cursor.length > 1 ? cursorParent : HOME_PATH
 
   // filter out meta children that should not be moved
-  const filteredChildren = children.filter(child => !SUBCATEGORIZE_ALL_META_EXCEPTIONS.includes(child.value))
+  const filteredChildren = children.filter(child => !(child.value in stationaryMetaAttributes))
 
   // get newly created thought
   // use fresh state
