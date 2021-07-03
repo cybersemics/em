@@ -29,6 +29,7 @@ import {
   isEM,
   isFunction,
   isRoot,
+  once,
   parentOf,
   parseJsonSafe,
   parseLet,
@@ -437,6 +438,20 @@ export const SubthoughtsComponent = ({
       : null
   }
 
+  /** Loads style from the first env variable in scope with =focus/Zoom. */
+  const contextLetFocusZoom = (context: Context): Context | null => {
+    const children = getAllChildren(state, context)
+    const envNew = { ...env, ...envSelf }
+    const child = children.find(child =>
+      isFunction(child.value) &&
+      (child.value in envNew) &&
+      attribute(state, envNew[child.value], '=focus') === 'Zoom'
+    )
+    return child
+      ? [...envNew[child.value], '=focus', 'Zoom']
+      : null
+  }
+
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
     1. Force actualDistance to 2 to hide thoughts.
@@ -571,8 +586,14 @@ export const SubthoughtsComponent = ({
           /** Returns true if the bullet should be hidden. */
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
 
+          const contextLetFocusZoomChildContext = once(() => contextLetFocusZoom(childContext))
+
           /** Returns true if the bullet should be hidden if zoomed. */
-          const hideBulletZoom = () => isEditingChildPath() && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
+          const hideBulletZoom = (): boolean =>
+            isEditingChildPath() &&
+            (attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None' ||
+             !!contextLetFocusZoomChildContext() && attribute(state, contextLetFocusZoomChildContext()!, '=bullet') === 'None'
+            )
 
           /*
             simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
