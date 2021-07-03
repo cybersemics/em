@@ -233,7 +233,7 @@ export interface Key {
 export interface Shortcut {
 
   // a function that returns true if the shortcut can be executed with the current state
-  canExecute?: (getState: () => State, e: Event) => boolean
+  canExecute?: (getState: () => State) => boolean
 
   // an ad hoc property to track conflicting shortcuts
   // this should not be in the main Shortcut type
@@ -276,7 +276,6 @@ export interface Shortcut {
 
   // an icon that represents the shortcut in the Toolbar
   svg?: (icon: Icon) => ReactNode
-
 }
 
 export type Direction = 'u' | 'd' | 'l' | 'r'

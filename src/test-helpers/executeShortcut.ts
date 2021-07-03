@@ -18,7 +18,7 @@ const executeShortcut = (shortcut: Shortcut, { store, type, event }: Options = {
   type = type ?? 'keyboard'
   event = event ?? eventNoop
 
-  const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState, event)
+  const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState)
   if (canExecute) shortcut.exec(store.dispatch, store.getState, event, { type })
 }
 

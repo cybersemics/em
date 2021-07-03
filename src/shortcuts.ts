@@ -199,7 +199,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
       shortcutEmitter.trigger('shortcut', shortcut)
 
-      if (!shortcut.canExecute || shortcut.canExecute(store.getState, e)) {
+      if (!shortcut.canExecute || shortcut.canExecute(store.getState)) {
         e.preventDefault()
 
         // dispatch action to hide toolbar and breadcrumbs

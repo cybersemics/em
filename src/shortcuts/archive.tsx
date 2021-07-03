@@ -2,7 +2,7 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { isTouch } from '../browser'
 import { hasChild } from '../selectors'
-import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
+import { asyncFocus, ellipsize, isDocumentEditable, headValue, isEM, isRoot, pathToContext, setSelection } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../types'
 
