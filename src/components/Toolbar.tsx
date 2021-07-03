@@ -191,8 +191,8 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
             <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
             {shortcutIds.map(id => {
               const { svg, exec, isActive, canExecute } = shortcutById(id)!
+              const isButtonActive = !isActive || isActive(store.getState)
               const isButtonExecutable = !canExecute || canExecute(store.getState)
-              const isButtonActive = isActive?.(store.getState) || isButtonExecutable
 
               // TODO: type svg correctly
               const SVG = svg as React.FC<Icon>
@@ -223,7 +223,7 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
                 >
                   <SVG
                     style={{
-                      fill: isButtonActive ? fg : 'gray',
+                      fill: isButtonExecutable && isButtonActive ? fg : 'gray',
                       width: fontSize + 4,
                       height: fontSize + 4,
                     }} />
