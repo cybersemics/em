@@ -24,6 +24,7 @@ interface MultiGestureProps {
   onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void
   onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void
   onStart?: () => void
+  onCancel?: () => void
   shouldCancelGesture?: () => boolean
   scrollThreshold?: number
   threshold?: number
@@ -59,13 +60,30 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // allow enabling/disabling scroll with this.disableScroll
     document.body.addEventListener(
       'touchmove',
-      (e) => {
+      e => {
         if (this.disableScroll) {
           e.preventDefault()
         }
       },
       { passive: false },
     )
+
+    // Listen to touchend directly to catch unterminated gestures.
+    // In order to make the gesture system more forgiving, we allow a tiny bit of scroll without abandoning the gesture.
+    // Unfortunately, there are some rare cases (difficult to reproduce, but consistent) where onPanResponderRelease is not called, even after touchend. Neither is onPanResponderReject or onPanResponderEnd.
+    // onPanResponderTerminate is called consistently, but it is also called for any any scroll event. I am not aware of a way to differentiate when onPanResponderTerminate is called from a scroll event vs a final termination where release it never called.
+    // So instead of eliminating the scroll lenience, we can touchend manually and ensure onEnd or onCancel is called appropriately.
+    // https://github.com/cybersemics/em/issues/1242
+    document.body.addEventListener('touchend', e => {
+      if (this.sequence) {
+        setTimeout(() => {
+          if (!this.abandon && this.sequence) {
+            this.props.onEnd?.(this.sequence, e as unknown as GestureResponderEvent)
+            this.reset()
+          }
+        })
+      }
+    })
 
     document.addEventListener('visibilitychange', () => {
       this.reset()
@@ -91,10 +109,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         }
 
         if (this.props.shouldCancelGesture?.()) {
+          this.props.onCancel?.()
           this.abandon = true
           return
         }
 
+        // use the first trigger of the move event to initialize this.currentStart
+        // onPanResponderStart does not work (why?)
         if (!this.currentStart) {
           this.scrolling = false
           this.currentStart = {
@@ -113,6 +134,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // effectively only allows sequences to start with left or right
         if (this.scrolling && Math.abs(this.scrollYStart! - window.scrollY) > this.props.scrollThreshold!) {
           this.sequence = ''
+          this.props.onCancel?.()
           this.abandon = true
           return
         }
@@ -135,17 +157,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
           if (g !== this.sequence[this.sequence.length - 1]) {
             this.sequence += g
-            if (this.props.onGesture) {
-              this.props.onGesture(g, this.sequence, e)
-            }
+            this.props.onGesture?.(g, this.sequence, e)
           }
         }
       },
 
+      // In rare cases release won't be called. See touchend above.
       onPanResponderRelease: (e: GestureResponderEvent) => {
-        if (this.props.onEnd) {
-          this.props.onEnd(this.sequence, e)
-        }
+        this.props.onEnd?.(this.sequence, e)
         this.reset()
       },
 
