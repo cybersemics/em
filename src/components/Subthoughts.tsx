@@ -423,6 +423,20 @@ export const SubthoughtsComponent = ({
     )
   }
 
+  /** Loads style from the first env variable in scope with =focus/Zoom. */
+  const styleZoomByEnv = (context: Context): React.CSSProperties | null => {
+    const children = getAllChildren(state, context)
+    const envNew = { ...env, ...envSelf }
+    const child = children.find(child =>
+      isFunction(child.value) &&
+      (child.value in envNew) &&
+      attribute(state, envNew[child.value], '=focus') === 'Zoom'
+    )
+    return child
+      ? getStyle(state, [...envNew[child.value], '=focus', 'Zoom'])
+      : null
+  }
+
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
     1. Force actualDistance to 2 to hide thoughts.
@@ -541,11 +555,17 @@ export const SubthoughtsComponent = ({
 
           /** Returns true if the cursor in in the child path. */
           const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
-          const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
+
+          /** Gets the =focus/Zoom/=style of the child path. */
+          const styleZoom = () => getStyle(state, [...childContext, '=focus', 'Zoom'])
+
           const style = {
             ...styleGrandChildren,
             ...styleChildren,
-            ...isEditingChildPath() ? styleZoom : null,
+            ...isEditingChildPath() ? {
+              ...styleZoom(),
+              ...styleZoomByEnv(childContext),
+            } : null,
           }
 
           /** Returns true if the bullet should be hidden. */

@@ -33,3 +33,26 @@ it('define =focus/Zoom in a =let expression and apply it to a thought', async ()
   expect(subthoughts).toHaveClass('zoomCursor')
 
 })
+
+it('=focus/Zoom/=style', async () => {
+
+  paste(`
+    - =let
+      - =foo
+        - =focus
+          - Zoom
+            - =style
+              - color
+                - pink
+    - apple
+      - =foo
+    - bear
+  `)
+
+  const thoughtA = await findThoughtByText('apple') as HTMLElement
+  expect(thoughtA).not.toHaveStyle({ color: 'pink' })
+
+  userEvent.click(thoughtA)
+  expect(thoughtA).toHaveStyle({ color: 'pink' })
+
+})
