@@ -1,4 +1,4 @@
-import { HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -7,7 +7,8 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import subCategorizeAll from '../subCategorizeAll'
 import setCursor from '../setCursor'
-import cursorBack from '../cursorBack'
+import importText from '../importText'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('subcategorize multiple thoughts', () => {
 
@@ -89,28 +90,50 @@ it('set cursor on new empty thought', () => {
 
 })
 
-it('move all visible and hidden thoughts into a new empty thought after subcategorizeAll', () => {
+it('move all non meta thoughts and only allowed meta thoughts into new empty thought after subCategorizeAll', () => {
+
+  const text = `
+  - a
+    - =archive
+    - =bullet
+    - =focus
+    - =label
+    - =note
+    - =pin
+    - =publish
+    - =style
+    - =view
+    - c
+    - d
+    - e`
 
   const steps = [
-    newThought('b'),
-    newSubthought('=archive'),
-    newThought('c'),
-    newSubthought('d'),
-    cursorBack,
-    subCategorizeAll
+    importText({
+      text,
+      path: HOME_PATH
+    }),
+    setCursorFirstMatch(['a', 'c']),
+    subCategorizeAll,
   ]
 
-  // run steps through reducer flow
+  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${HOME_TOKEN}
-  - b
-    -${' '}
-      - =archive
-      - c
-        - d`
 
-  expect(exported).toEqual(expectedOutput)
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - ${''/* prevent trim_trailing_whitespace */}
+      - =style
+      - =view
+      - c
+      - d
+      - e
+    - =archive
+    - =bullet
+    - =focus
+    - =label
+    - =note
+    - =pin
+    - =publish`)
 })
