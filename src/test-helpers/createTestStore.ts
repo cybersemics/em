@@ -12,17 +12,9 @@ import { State } from '../util/initialState'
  * Returns new store for test.
  */
 export const createTestStore = () => {
-
-  const store = createStore(
-    appReducer,
-    compose(applyMiddleware(
-      multi,
-      thunk
-    ), undoRedoReducerEnhancer)
-  )
+  const store = createStore(appReducer, compose(applyMiddleware(multi, thunk), undoRedoReducerEnhancer))
 
   store.dispatch([
-
     importText({
       path: [{ value: EM_TOKEN, rank: 0 }],
       text: INITIAL_SETTINGS,
@@ -35,7 +27,6 @@ export const createTestStore = () => {
 
     // close welcome modal
     { type: 'tutorial', value: false },
-
   ])
 
   return store as Store<State, any>

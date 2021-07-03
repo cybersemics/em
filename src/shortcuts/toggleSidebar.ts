@@ -6,8 +6,7 @@ const toggleSidebarShortcut: Shortcut = {
   label: 'Toggle Recently Edited',
   keyboard: { key: 'r', alt: true },
   hideFromInstructions: true,
-  exec: (dispatch, getState) =>
-    dispatch(toggleSidebar({ value: !getState().showSidebar }))
+  exec: (dispatch, getState) => dispatch(toggleSidebar({ value: !getState().showSidebar })),
 }
 
 export default toggleSidebarShortcut

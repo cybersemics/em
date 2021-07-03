@@ -6,7 +6,7 @@ const asBrowserEnvironment = (browser: Browser<'async'>): BrowserEnvironment => 
   // 'function' is required here because webdriverio uses 'this'
   execute: function (...args) {
     return browser.execute(...args)
-  }
+  },
 })
 
 export default asBrowserEnvironment

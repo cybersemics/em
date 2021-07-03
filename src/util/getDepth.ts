@@ -8,8 +8,10 @@ export const getDepth = (state: State, context: Context): number => {
   const children = getAllChildren(state, context) ?? []
   return children.length === 0
     ? 0
-    : Math.max(...children.map(child => {
-      const contextNew = [...unroot(context), child.value]
-      return getDepth(state, contextNew)
-    })) + 1
+    : Math.max(
+        ...children.map(child => {
+          const contextNew = [...unroot(context), child.value]
+          return getDepth(state, contextNew)
+        }),
+      ) + 1
 }

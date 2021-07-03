@@ -11,10 +11,7 @@ it('meta and archived thoughts are included', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -37,10 +34,7 @@ it('meta is included but archived thoughts are excluded', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -61,16 +55,14 @@ it('meta is excluded', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', {
-    excludeMeta: true, excludeArchived: true
+    excludeMeta: true,
+    excludeArchived: true,
   })
 
   expect(exported).toBe(`- a
@@ -85,10 +77,7 @@ it('meta is excluded but archived is included', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -103,10 +92,7 @@ it('exported as plain text', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -121,10 +107,7 @@ it('exported as html', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())

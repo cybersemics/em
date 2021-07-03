@@ -14,11 +14,14 @@ const QuickAddButton: React.FC = () => {
   const dispatch = useDispatch()
 
   return (
-    <div className={classNames({
-      'quick-add-button': true,
-      rotate: isAbsolute(rootContext)
-    })} onClick={() => dispatch(toggleAbsoluteContext())}>
-      <AddIcon size={20}/>
+    <div
+      className={classNames({
+        'quick-add-button': true,
+        rotate: isAbsolute(rootContext),
+      })}
+      onClick={() => dispatch(toggleAbsoluteContext())}
+    >
+      <AddIcon size={20} />
     </div>
   )
 }

@@ -9,13 +9,9 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestA
 import clearThoughtShortcut from '../clearThought'
 
 it('do nothing when there is no cursor', () => {
-
   const store = createTestStore()
 
-  store.dispatch([
-    { type: 'newThought', value: 'a' },
-    setCursor({ path: null }),
-  ])
+  store.dispatch([{ type: 'newThought', value: 'a' }, setCursor({ path: null })])
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
@@ -31,12 +27,15 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText({
-    text: `
+  store.dispatch(
+    importText({
+      text: `
       - a
         - b
           - c
-  ` }))
+  `,
+    }),
+  )
 
   store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) }))
 
@@ -53,17 +52,18 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
 })
 
 it('do not outdent thought with siblings', () => {
-
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(importText({
-    text: `
+  store.dispatch(
+    importText({
+      text: `
       - a
         - b
           - c
-          - d`
-  }))
+          - d`,
+    }),
+  )
 
   store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
 
@@ -90,7 +90,7 @@ describe('DOM', () => {
     store.dispatch([
       newThought({ value: 'a' }),
       newThought({ value: 'b', insertNewSubthought: true }),
-      setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b']) })
+      setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b']) }),
     ])
 
     // This ensures that the thought b exists so we can confirm later that it is deleted.

@@ -4,7 +4,6 @@
 
 /** Iterates through each lexeme in thoughtIndex, identifies lexeme.contexts that are not replicated in contextIndex, and generates contextIndexUpdates that are dispatched to restore them. */
 let fixContextIndex = (max = 100000) => {
-
   const { contextIndex, thoughtIndex } = em.store.getState().thoughts
   const contextIndexUpdates = {}
 
@@ -15,13 +14,12 @@ let fixContextIndex = (max = 100000) => {
       if (!lexeme.contexts) return
 
       // check that each of the lexeme's contexts and its ancestors exist in contextIndex
-      lexeme.contexts.forEach((cx) => {
+      lexeme.contexts.forEach(cx => {
         if (!cx.context) return
 
         // subcontexts
         // Note: Concat lexeme value too else it won't check for it's ancestor io contextIndex
-        [...cx.context, lexeme.value].forEach((value, i) => {
-
+        ;[...cx.context, lexeme.value].forEach((value, i) => {
           // don't check root
           if (i === 0) return
 
@@ -30,11 +28,11 @@ let fixContextIndex = (max = 100000) => {
           const encoded = em.hashContext(context)
           const parentEntry = contextIndex[encoded]
           const parentEntryAccum = contextIndexUpdates[encoded]
-          const children = (parentEntryAccum && parentEntryAccum.children) ||
-            (parentEntry && parentEntry.children) ||
-            []
-          const isInContextIndex = children
-            .some(child => em.hashThought(child.value) === em.hashThought(value)/* && child.rank === cx.rank*/)
+          const children =
+            (parentEntryAccum && parentEntryAccum.children) || (parentEntry && parentEntry.children) || []
+          const isInContextIndex = children.some(
+            child => em.hashThought(child.value) === em.hashThought(value) /* && child.rank === cx.rank*/,
+          )
 
           // if the lexeme context is not in the contextIndex it is supposed to be, then generate an update to add it
           if (!isInContextIndex) {
@@ -52,7 +50,7 @@ let fixContextIndex = (max = 100000) => {
                   lastUpdated,
                   rank,
                   value: valueNew,
-                }
+                },
               ],
               lastUpdated: lastUpdated,
             }
@@ -68,8 +66,7 @@ let fixContextIndex = (max = 100000) => {
       type: 'updateThoughts',
       contextIndexUpdates,
     })
-  }
-  else {
+  } else {
     console.info('All lexemes have a contextIndex entry.')
   }
 }

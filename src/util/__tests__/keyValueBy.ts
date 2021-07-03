@@ -17,7 +17,7 @@ test('pass index if input is an array', () => {
 })
 
 test('omit entries by returning null', () => {
-  const result = keyValueBy(['a', 'b'], (item, i) => i === 0 ? { [item]: i } : null)
+  const result = keyValueBy(['a', 'b'], (item, i) => (i === 0 ? { [item]: i } : null))
   expect(result).toEqual({
     a: 0,
   })

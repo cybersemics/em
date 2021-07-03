@@ -6,7 +6,7 @@ import {
   cursorBack as cursorBackActionCreator,
   expandContextThought,
   toggleSidebar as toggleSidebarActionCreator,
-  closeModal
+  closeModal,
 } from '../action-creators'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'

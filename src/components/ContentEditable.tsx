@@ -1,13 +1,13 @@
 import React, { useRef } from 'react'
 
-interface ContentEditableProps extends React.HTMLProps<HTMLDivElement>{
-    style: React.CSSProperties
-    html: string
-    disabled?: boolean
-    innerRef?: React.RefObject<HTMLDivElement>
-    isEditing?: boolean
-    forceUpdate: boolean
-    onChange: (originalEvt: ContentEditableEvent) => void
+interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
+  style: React.CSSProperties
+  html: string
+  disabled?: boolean
+  innerRef?: React.RefObject<HTMLDivElement>
+  isEditing?: boolean
+  forceUpdate: boolean
+  onChange: (originalEvt: ContentEditableEvent) => void
 }
 
 /**
@@ -40,43 +40,43 @@ const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...prop
 
     const event = Object.assign({}, originalEvent, {
       target: {
-        value: innerHTML
-      }
+        value: innerHTML,
+      },
     })
 
     props.onChange(event)
   }
 
-  return <div
-    {...props}
-    onPaste={
-      (e: React.ClipboardEvent<HTMLDivElement>) => {
+  return (
+    <div
+      {...props}
+      onPaste={(e: React.ClipboardEvent<HTMLDivElement>) => {
         allowInnerHTMLChange.current = true
         if (props.onPaste) props.onPaste(e)
-      }
-    }
-    ref={contentRef}
-    contentEditable={!disabled}
-    style={style}
-    onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
-      const innerHTML = contentRef!.current!.innerHTML
+      }}
+      ref={contentRef}
+      contentEditable={!disabled}
+      style={style}
+      onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
+        const innerHTML = contentRef!.current!.innerHTML
 
-      // allow innerHTML updates after blur
-      allowInnerHTMLChange.current = true
+        // allow innerHTML updates after blur
+        allowInnerHTMLChange.current = true
 
-      const event = Object.assign({}, originalEvent, {
-        target: {
-          value: innerHTML
-        }
-      })
+        const event = Object.assign({}, originalEvent, {
+          target: {
+            value: innerHTML,
+          },
+        })
 
-      if (props.onBlur) props.onBlur(event)
-    }}
-    onInput={handleInput}
-    onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (props.onKeyDown) props.onKeyDown(e)
-    }}
-  />
+        if (props.onBlur) props.onBlur(event)
+      }}
+      onInput={handleInput}
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (props.onKeyDown) props.onKeyDown(e)
+      }}
+    />
+  )
 }
 
 export declare type ContentEditableEvent = React.SyntheticEvent<HTMLInputElement, Event> & {

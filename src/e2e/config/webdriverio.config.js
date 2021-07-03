@@ -1,7 +1,6 @@
 if (!process.env.BROWSERSTACK_USERNAME) {
   throw new Error('process.env.BROWSERSTACK_USERNAME not defined')
-}
-else if (!process.env.BROWSERSTACK_ACCESS_KEY) {
+} else if (!process.env.BROWSERSTACK_ACCESS_KEY) {
   throw new Error('process.env.BROWSERSTACK_ACCESS_KEY not defined')
 }
 

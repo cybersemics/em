@@ -8,11 +8,14 @@ interface Options {
  * Wait for editable div that contains the given value.
  */
 const waitForEditable = async (page: Page, value: string, { timeout }: Options = { timeout: 3000 }) =>
-  await page.waitForFunction((value: string) => {
-    return Array.from(document.getElementsByClassName('editable'))
-      .find(element => element.innerHTML === value)
-  }, {
-    timeout
-  }, value)
+  await page.waitForFunction(
+    (value: string) => {
+      return Array.from(document.getElementsByClassName('editable')).find(element => element.innerHTML === value)
+    },
+    {
+      timeout,
+    },
+    value,
+  )
 
 export default waitForEditable

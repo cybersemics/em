@@ -6,7 +6,6 @@ import { newThought, splitSentences } from '../../reducers'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 describe('split by comma', () => {
-
   it('split single thought on comma when there are no periods', () => {
     const thought = 'One, Two, Three'
     const exported = splitThought(thought)
@@ -17,7 +16,7 @@ describe('split by comma', () => {
   - Three`)
   })
 
-  it('split single thought on comma if a thought with a mix of commas and periods has only one period and it\'s the last character', () => {
+  it("split single thought on comma if a thought with a mix of commas and periods has only one period and it's the last character", () => {
     const thought = 'One, Two, Three.'
     const exported = splitThought(thought)
 
@@ -101,7 +100,7 @@ describe('simple split', () => {
       newThought('One. Two. Three.'),
       newThought('b'),
       setCursorFirstMatch(['One. Two. Three.']),
-      splitSentences()
+      splitSentences(),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -137,7 +136,6 @@ describe('simple split', () => {
 
 // When it ends with .", .), !), ?"), ;), etc.
 describe('brackets or quotations', () => {
-
   it('split single thought on the way that the closed bracket goes with the previous sentence if a splitter is immediately followed by a closed bracket', () => {
     const thought = 'One. (Two.)Three.'
     const exported = splitThought(thought)
@@ -220,7 +218,6 @@ describe('brackets or quotations', () => {
 })
 
 describe('abbreviations', () => {
-
   it('thought should not be split if the dot comes from an abbreviation', () => {
     const thought = 'Mr. Smith went out'
     const exported = splitThought(thought)
@@ -328,7 +325,6 @@ describe('abbreviations', () => {
 })
 
 describe('decimal numbers', () => {
-
   it('thought should not be split if the dot comes from a decimal number', () => {
     const thought = 'paid bill $30.25.'
     const exported = splitThought(thought)
@@ -483,7 +479,6 @@ describe('email address', () => {
 })
 
 describe('url address', () => {
-
   it('thought should not be split if the dot is a url address with www', () => {
     const thought = 'www.xyz.com'
     const exported = splitThought(thought)
@@ -579,7 +574,6 @@ describe('url address', () => {
 })
 
 describe('complicated cases', () => {
-
   it('split single thought by commas if there are multiple cases in one sentence, but they are separated by commas', () => {
     const thought = 'www.xyz.com,  abc@email.com, $3.4'
     const exported = splitThought(thought)
@@ -645,11 +639,8 @@ describe('complicated cases', () => {
  * @param thought The thought that needs to be split.
  * @returns The thought string after being split.
  */
-function splitThought (thought : string) {
-  const steps = [
-    newThought(thought),
-    splitSentences()
-  ]
+function splitThought(thought: string) {
+  const steps = [newThought(thought), splitSentences()]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')

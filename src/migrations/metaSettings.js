@@ -1,4 +1,9 @@
-import { EM_TOKEN, INITIAL_SETTINGS, SCHEMA_HASHKEYS as SCHEMA_FROM, SCHEMA_META_SETTINGS as SCHEMA_TO } from '../constants'
+import {
+  EM_TOKEN,
+  INITIAL_SETTINGS,
+  SCHEMA_HASHKEYS as SCHEMA_FROM,
+  SCHEMA_META_SETTINGS as SCHEMA_TO,
+} from '../constants'
 import { store } from '../store'
 import { push } from '../util'
 import { importText } from '../action-creators'
@@ -9,19 +14,24 @@ export const schemaVersionTo = SCHEMA_TO
 
 /** Migrates the settings to metaprogramming attributes. */
 export const migrate = async state => {
-
-  const { thoughtIndexUpdates, contextIndexUpdates } = store.dispatch(importText({
-    path: [{ value: EM_TOKEN, rank: 0 }],
-    text: INITIAL_SETTINGS,
-    preventSync: true
-  }))
+  const { thoughtIndexUpdates, contextIndexUpdates } = store.dispatch(
+    importText({
+      path: [{ value: EM_TOKEN, rank: 0 }],
+      text: INITIAL_SETTINGS,
+      preventSync: true,
+    }),
+  )
 
   // remove old settings from state, local, and remote
-  push({}, {}, {
-    updates: {
-      settings: null
-    }
-  }).then(() => {
+  push(
+    {},
+    {},
+    {
+      updates: {
+        settings: null,
+      },
+    },
+  ).then(() => {
     storage.removeItem('settings-dark')
     storage.removeItem('settings-scaleSize')
     storage.removeItem('settings-tutorial')
@@ -39,7 +49,6 @@ export const migrate = async state => {
   })
 
   const stateUpdated = {
-
     // may only contains state from remote
     ...state,
 
@@ -54,7 +63,7 @@ export const migrate = async state => {
         ...state.thoughts.thoughtIndex,
         ...thoughtIndexUpdates,
       },
-    }
+    },
   }
 
   return {

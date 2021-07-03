@@ -7,11 +7,23 @@ import { alert, newThought, outdent } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
-  <g>
-    <path d='m10.201,.758l2.478,5.865 6.344,.545c0.44,0.038 0.619,0.587 0.285,0.876l-4.812,4.169 1.442,6.202c0.1,0.431-0.367,0.77-0.745,0.541l-5.452-3.288-5.452,3.288c-0.379,0.228-0.845-0.111-0.745-0.541l1.442-6.202-4.813-4.17c-0.334-0.289-0.156-0.838 0.285-0.876l6.344-.545 2.478-5.864c0.172-0.408 0.749-0.408 0.921,0z' />
-  </g>
-</svg>
+const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
+  <svg
+    version='1.1'
+    className='icon'
+    xmlns='http://www.w3.org/2000/svg'
+    width={size}
+    height={size}
+    fill={fill}
+    style={style}
+    viewBox='0 0 19.481 19.481'
+    enableBackground='new 0 0 19.481 19.481'
+  >
+    <g>
+      <path d='m10.201,.758l2.478,5.865 6.344,.545c0.44,0.038 0.619,0.587 0.285,0.876l-4.812,4.169 1.442,6.202c0.1,0.431-0.367,0.77-0.745,0.541l-5.452-3.288-5.452,3.288c-0.379,0.228-0.845-0.111-0.745-0.541l1.442-6.202-4.813-4.17c-0.334-0.289-0.156-0.838 0.285-0.876l6.344-.545 2.478-5.864c0.172-0.408 0.749-0.408 0.921,0z' />
+    </g>
+  </svg>
+)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string }) => {
@@ -25,7 +37,12 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   }
 
   // when Enter is pressed on a last empty thought, outdent it
-  if (type === 'keyboard' && cursor && headValue(cursor).length === 0 && isLastVisibleChild(state, simplifyPath(state, cursor))) {
+  if (
+    type === 'keyboard' &&
+    cursor &&
+    headValue(cursor).length === 0 &&
+    isLastVisibleChild(state, simplifyPath(state, cursor))
+  ) {
     dispatch(outdent())
   }
   // otherwise, create a new thought
@@ -37,10 +54,12 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
     // Note: e.target should be a HTMLElement and a content editable node
     const isTargetAnEditable = isTargetHTMLElement && target.hasAttribute('contenteditable')
 
-    const currentSelection = document.getSelection() 
-    const currentSelectionRange = currentSelection && (currentSelection.rangeCount > 0) ? document.getSelection()?.getRangeAt(0) : null
-  
-    const splitResult = cursor && isTargetAnEditable && currentSelectionRange? splitAtSelection(target, currentSelectionRange) : null
+    const currentSelection = document.getSelection()
+    const currentSelectionRange =
+      currentSelection && currentSelection.rangeCount > 0 ? document.getSelection()?.getRangeAt(0) : null
+
+    const splitResult =
+      cursor && isTargetAnEditable && currentSelectionRange ? splitAtSelection(target, currentSelectionRange) : null
 
     // prevent split on gesture
     dispatch(newThought({ value: '', splitResult, preventSplit: type === 'gesture' }))
@@ -55,7 +74,7 @@ const newThoughtOrOutdent: Shortcut = {
   gesture: 'rd',
   svg: Icon,
   canExecute: () => isDocumentEditable(),
-  exec
+  exec,
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
@@ -66,9 +85,9 @@ export const newThoughtAliases: Shortcut = {
   gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases
-  ...isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null,
+  ...(isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),
   canExecute: () => isDocumentEditable(),
-  exec
+  exec,
 }
 
 export default newThoughtOrOutdent

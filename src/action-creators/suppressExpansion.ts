@@ -10,36 +10,36 @@ interface Options {
 }
 
 /** Supress context expansion for a given duration. */
-const suppressExpansion = ({ cancel, duration }: Options = {}): Thunk => (dispatch, getState) => {
+const suppressExpansion =
+  ({ cancel, duration }: Options = {}): Thunk =>
+  (dispatch, getState) => {
+    /** Cancels suppressExpansion and sets the cursor to re-trigger expandThoughts. */
+    const disableSuppressExpansion = () => {
+      globals.suppressExpansion = false
+      const { cursor, noteFocus } = getState()
+      dispatch(setCursor({ path: cursor, noteFocus: noteFocus })) // preserve noteFocus
+    }
 
-  /** Cancels suppressExpansion and sets the cursor to re-trigger expandThoughts. */
-  const disableSuppressExpansion = () => {
-    globals.suppressExpansion = false
-    const { cursor, noteFocus } = getState()
-    dispatch(setCursor({ path: cursor, noteFocus: noteFocus })) // preserve noteFocus
-  }
+    /** Enables the global suppressExpansion flag. */
+    const enableSuppressExpansion = () => {
+      globals.suppressExpansion = true
+    }
 
-  /** Enables the global suppressExpansion flag. */
-  const enableSuppressExpansion = () => {
-    globals.suppressExpansion = true
-  }
+    clearTimeout(timer)
+    if (cancel) {
+      disableSuppressExpansion()
+    } else {
+      enableSuppressExpansion()
 
-  clearTimeout(timer)
-  if (cancel) {
-    disableSuppressExpansion()
-  }
-  else {
-    enableSuppressExpansion()
-
-    // if a duration was specified, re-enable expansion after short delay
-    if (duration) {
-      timer = setTimeout(() => {
-        if (globals.suppressExpansion) {
-          disableSuppressExpansion()
-        }
-      }, duration)
+      // if a duration was specified, re-enable expansion after short delay
+      if (duration) {
+        timer = setTimeout(() => {
+          if (globals.suppressExpansion) {
+            disableSuppressExpansion()
+          }
+        }, duration)
+      }
     }
   }
-}
 
 export default suppressExpansion

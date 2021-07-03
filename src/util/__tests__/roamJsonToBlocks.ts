@@ -7,7 +7,7 @@ import { importJSON } from '../importJSON'
 import { SimplePath } from '../../types'
 
 jest.mock('../timestamp', () => ({
-  timestamp: () => '2020-11-02T01:11:58.869Z'
+  timestamp: () => '2020-11-02T01:11:58.869Z',
 }))
 
 const testData = [
@@ -37,7 +37,7 @@ const testData = [
         'create-time': 1600111383911,
         'edit-time': 1600111383910,
         uid: 'HMN_YQtZZ',
-      }
+      },
     ],
   },
   {
@@ -58,20 +58,21 @@ const testData = [
         'create-time': 1600111389054,
         'edit-time': 1600111389050,
         uid: 'BK11233',
-      }
+      },
     ],
-  }
+  },
 ]
 
 /** Imports the given Roam's JSON format and exports it as plaintext. */
 const importExport = (roamJson: RoamPage[]) => {
-
   const thoughtsJSON = roamJsonToBlocks(roamJson)
   const state = initialState()
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importJSON(state, HOME_PATH as SimplePath, thoughtsJSON, { skipRoot: false })
+  const { contextIndexUpdates: contextIndex, thoughtIndexUpdates: thoughtIndex } = importJSON(
+    state,
+    HOME_PATH as SimplePath,
+    thoughtsJSON,
+    { skipRoot: false },
+  )
 
   const stateNew: State = {
     ...initialState(),
@@ -79,7 +80,7 @@ const importExport = (roamJson: RoamPage[]) => {
       ...state.thoughts,
       contextIndex,
       thoughtIndex,
-    }
+    },
   }
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   return removeHome(exported)
@@ -87,8 +88,7 @@ const importExport = (roamJson: RoamPage[]) => {
 
 test('it should convert a flat Roam json into a list of thoughts', () => {
   const res = importExport(testData)
-  expect(res)
-    .toBe(`
+  expect(res).toBe(`
 - Fruits
   - Apple
     - =create-email
@@ -139,11 +139,14 @@ test('it should convert a Roam json into a list of thoughts and subthoughts with
                   'create-email': 'test_create@gmail.com',
                   'create-time': 1600111383911,
                   uid: 'HMN_YQtZZ',
-                }],
+                },
+              ],
               uid: 'JBXKlMcxh',
-            }],
+            },
+          ],
           uid: '0VQBPmUiy',
-        }],
+        },
+      ],
     },
     {
       title: 'September 5th, 2020',
@@ -163,15 +166,18 @@ test('it should convert a Roam json into a list of thoughts and subthoughts with
                   'create-email': 'test_create@gmail.com',
                   'create-time': 1600111458385,
                   uid: 'Wt5NR3b56',
-                }],
+                },
+              ],
               uid: 'obXRTMWqJ',
-            }],
+            },
+          ],
           uid: 'Pu444IoIi',
-        }],
-    }]
+        },
+      ],
+    },
+  ]
   const res = importExport(testData)
-  expect(res)
-    .toBe(`
+  expect(res).toBe(`
 - September 4th, 2020
   - A
     - B
@@ -200,10 +206,12 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
 
   const blocks = roamJsonToBlocks(testData)
 
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importJSON(initialState(), HOME_PATH as SimplePath, blocks, { skipRoot: false })
+  const { contextIndexUpdates: contextIndex, thoughtIndexUpdates: thoughtIndex } = importJSON(
+    initialState(),
+    HOME_PATH as SimplePath,
+    blocks,
+    { skipRoot: false },
+  )
 
   /** Gets the edit-time of a RoamBlock. */
   const editTimeOf = (value: string) => {
@@ -247,5 +255,4 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
     [hashThought('Broccoli')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
     [hashThought('Spinach')]: { created: createTime('Spinach'), lastUpdated: editTimeOf('Spinach') },
   })
-
 })

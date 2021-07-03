@@ -49,4 +49,17 @@ export { default as subtree } from './subtree'
 export { default as theme } from './theme'
 export { default as thoughtsEditingFromChain } from './thoughtsEditingFromChain'
 export { default as visibleDistanceAboveCursor } from './visibleDistanceAboveCursor'
-export { firstVisibleChild, getAllChildren, getAllChildrenByContextHash, getChildren, getChildrenRanked, getAllChildrenSorted, getChildrenSorted, getParent, hasChildren, isChildVisible, childrenFilterPredicate, firstVisibleChildWithCursorCheck } from './getChildren'
+export {
+  firstVisibleChild,
+  getAllChildren,
+  getAllChildrenByContextHash,
+  getChildren,
+  getChildrenRanked,
+  getAllChildrenSorted,
+  getChildrenSorted,
+  getParent,
+  hasChildren,
+  isChildVisible,
+  childrenFilterPredicate,
+  firstVisibleChildWithCursorCheck,
+} from './getChildren'

@@ -10,7 +10,8 @@ import ModalFeedback from './ModalFeedback'
  */
 const AppComponent: React.FC = () => {
   return (
-    <><StatusBar
+    <>
+      <StatusBar
         // eslint-disable-next-line react/style-prop-object
         style='light'
       />
@@ -29,17 +30,17 @@ const AppComponent: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000'
+    backgroundColor: '#000',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   text: {
     color: '#fff',
-    fontSize: 20
-  }
+    fontSize: 20,
+  },
 })
 
 export default AppComponent

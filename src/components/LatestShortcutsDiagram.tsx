@@ -14,7 +14,6 @@ interface LatestShortcutsDiagramProps {
  * Shows latest activated shorcuts diagram.
  */
 const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'middle' }) => {
-
   const latestShortcuts = useSelector((state: State) => state.latestShortcuts)
 
   const latestShortcutsRef = useRef(latestShortcuts)
@@ -28,16 +27,23 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
 
   return (
     <div className='latest-shortcuts-wrapper'>
-      <CSSTransition in={latestShortcuts.length > 0} classNames={'latest-shortcuts-transition'} timeout={400} unmountOnExit={true}>
-        <div className={classNames({
-          'latest-shortcuts': true,
-          [position]: true
-        })}>
+      <CSSTransition
+        in={latestShortcuts.length > 0}
+        classNames={'latest-shortcuts-transition'}
+        timeout={400}
+        unmountOnExit={true}
+      >
+        <div
+          className={classNames({
+            'latest-shortcuts': true,
+            [position]: true,
+          })}
+        >
           {shortcutsList.map((shortcut, index) => {
             return (
               <div key={index} className='shortcut-tab-wrapper'>
                 <div className='shortcut-tab'>
-                  <GestureDiagram path={shortcut.gesture as GesturePath} size={30} color='white' strokeWidth={2}/>
+                  <GestureDiagram path={shortcut.gesture as GesturePath} size={30} color='white' strokeWidth={2} />
                 </div>
               </div>
             )

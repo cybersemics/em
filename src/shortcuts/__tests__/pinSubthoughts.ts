@@ -6,7 +6,6 @@ import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on when there is no =pinChildren', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -20,7 +19,8 @@ it('toggle on when there is no =pinChildren', () => {
           - e
             - f
             - g
-    ` }),
+    `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -31,7 +31,6 @@ it('toggle on when there is no =pinChildren', () => {
 })
 
 it('toggle on when =pinChildren is false', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -47,7 +46,8 @@ it('toggle on when =pinChildren is false', () => {
           - e
             - f
             - g
-    ` }),
+    `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -58,7 +58,6 @@ it('toggle on when =pinChildren is false', () => {
 })
 
 it('remove =pinChildren when toggling off from true', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -74,7 +73,8 @@ it('remove =pinChildren when toggling off from true', () => {
           - e
             - f
             - g
-    ` }),
+    `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 

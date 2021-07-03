@@ -8,7 +8,7 @@ const newGrandChildShortcut: Shortcut = {
   description: 'Create a new grand child in the current thought. Add it to the first visible subthought.',
   gesture: 'rdrd',
   canExecute: () => isDocumentEditable(),
-  exec: dispatch => dispatch(newGrandChild())
+  exec: dispatch => dispatch(newGrandChild()),
 }
 
 export default newGrandChildShortcut

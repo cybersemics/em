@@ -4,28 +4,25 @@ import { initialState, reducerFlow } from '../../util'
 import { importText, setCursor, toggleContextView } from '../../reducers'
 
 it('set the cursor to a SimplePath', () => {
-
   const text = `
     - a
       - b
         - c`
 
-  const cursor = [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }, { value: 'c', rank: 0 }]
-
-  const steps = [
-    importText({ text }),
-    setCursor({ path: cursor }),
-    toggleContextView,
+  const cursor = [
+    { value: 'a', rank: 0 },
+    { value: 'b', rank: 0 },
+    { value: 'c', rank: 0 },
   ]
+
+  const steps = [importText({ text }), setCursor({ path: cursor }), toggleContextView]
 
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toMatchObject(cursor)
-
 })
 
 it('set the cursor to a Path across a context view', () => {
-
   const text = `
     - a
       - m
@@ -42,14 +39,9 @@ it('set the cursor to a Path across a context view', () => {
     { value: 'y', rank: 0 },
   ]
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: cursor }),
-    toggleContextView,
-  ]
+  const steps = [importText({ text }), setCursor({ path: cursor }), toggleContextView]
 
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toMatchObject(cursor)
-
 })

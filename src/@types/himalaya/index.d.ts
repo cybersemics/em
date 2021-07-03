@@ -26,5 +26,4 @@ declare module 'himalaya' {
 
   // eslint-disable-next-line
   export function parse(str: String, options?: Index<string>): HimalayaNode[]
-
 }

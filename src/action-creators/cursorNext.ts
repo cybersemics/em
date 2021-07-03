@@ -25,7 +25,9 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
 
   const path = parentOf(cursor).concat(next)
 
-  const isCursorPinned = attributeEquals(state, pathToContext(path), '=pin', 'true') || attributeEquals(state, pathToContext(parentOf(path)), '=pinChildren', 'true')
+  const isCursorPinned =
+    attributeEquals(state, pathToContext(path), '=pin', 'true') ||
+    attributeEquals(state, pathToContext(parentOf(path)), '=pinChildren', 'true')
 
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession
   if (!isCursorPinned) dispatch(suppressExpansion({ duration: 100 }))

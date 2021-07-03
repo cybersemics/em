@@ -9,7 +9,6 @@ import { SimplePath } from '../types'
 
 /** Join two or more thoughts split by spaces. */
 const join = (state: State) => {
-
   const { cursor } = state
 
   if (!cursor) return state
@@ -23,19 +22,19 @@ const join = (state: State) => {
 
   let minNextRank = getNextRank(state, context)
 
-  const reducers = contextChildren.map((sibling, i) => {
+  const reducers = contextChildren
+    .map((sibling, i) => {
+      const pathToSibling = [...parentOf(simplePath), sibling] as SimplePath
+      const siblingContext = [...context, sibling.value]
+      const children = getAllChildren(state, siblingContext)
 
-    const pathToSibling = [...parentOf(simplePath), sibling] as SimplePath
-    const siblingContext = [...context, sibling.value]
-    const children = getAllChildren(state, siblingContext)
-
-    return children.map((child, j) => {
-      const oldPath = getChildPath(state, child, pathToSibling)
-      const newPath = [...path, { ...child, rank: minNextRank += 1 }]
-      return moveThought({ oldPath, newPath })
+      return children.map((child, j) => {
+        const oldPath = getChildPath(state, child, pathToSibling)
+        const newPath = [...path, { ...child, rank: (minNextRank += 1) }]
+        return moveThought({ oldPath, newPath })
+      })
     })
-
-  }).flat()
+    .flat()
 
   const newValue = contextChildren.reduce((acc, { value }) => `${acc} ${value}`, '').trim()
 
@@ -46,10 +45,12 @@ const join = (state: State) => {
     path: simplePath,
   })
 
-  const removalReducers = siblings.map(sibling => deleteThought({
-    context,
-    thoughtRanked: sibling
-  }))
+  const removalReducers = siblings.map(sibling =>
+    deleteThought({
+      context,
+      thoughtRanked: sibling,
+    }),
+  )
 
   return reducerFlow([...reducers, updateThoughtReducer, ...removalReducers])(state)
 }

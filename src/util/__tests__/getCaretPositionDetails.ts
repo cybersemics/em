@@ -9,19 +9,17 @@ const createDummyDiv = (htmlValue: string) => {
 }
 
 it('get caret position details at the beginning of the thought', () => {
-
   const thoughtValue = 'tanjiro <b> sword </b>'
   const dummyEditable = createDummyDiv(thoughtValue)
 
   const caretPositionDetails = getCaretPositionDetails(dummyEditable, 0)
   expect(caretPositionDetails).toMatchObject({
     focusNode: dummyEditable,
-    offset: 0
+    offset: 0,
   })
 })
 
 it('get caret position details at the end of the thought', () => {
-
   const thoughtValue = 'Itadori <b>Jujutsu</b>'
 
   const dummyEditable = createDummyDiv(thoughtValue)
@@ -31,12 +29,11 @@ it('get caret position details at the end of the thought', () => {
   const caretPositionDetails = getCaretPositionDetails(dummyEditable, textContent.length)
   expect(caretPositionDetails).toMatchObject({
     focusNode: dummyEditable,
-    offset: 2
+    offset: 2,
   })
 })
 
 it('get caret position details at relative offset of the thought', () => {
-
   const thoughtValue = 'This is a <b> nested <i>html</i> value.</b>'
 
   const dummyEditable = createDummyDiv(thoughtValue)
@@ -59,7 +56,7 @@ it('get caret position details at relative offset of the thought', () => {
 
   expect(caretPositionDetailsFirst).toMatchObject({
     focusNode: dummyEditable.getElementsByTagName('i')[0].childNodes[0],
-    offset: 2
+    offset: 2,
   })
 
   const caretPositionDetailsSecond = getCaretPositionDetails(dummyEditable, 26)
@@ -78,6 +75,6 @@ it('get caret position details at relative offset of the thought', () => {
 
   expect(caretPositionDetailsSecond).toMatchObject({
     focusNode: dummyEditable.getElementsByTagName('b')[0].childNodes[2],
-    offset: 4
+    offset: 4,
   })
 })

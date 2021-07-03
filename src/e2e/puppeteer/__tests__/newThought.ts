@@ -6,12 +6,7 @@ import helpers from '../helpers'
 
 jest.setTimeout(20000)
 
-const {
-  newThought,
-  press,
-  type,
-  waitForAlert,
-} = helpers()
+const { newThought, press, type, waitForAlert } = helpers()
 
 it('do not allow duplicate thought on edit', async () => {
   await newThought('ab')

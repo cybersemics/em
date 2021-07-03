@@ -10,8 +10,10 @@ type SelectionOptionsType = {
   @param offset    Character offset of selection.
   @param end       If true, sets the offset to the end of the text.
  */
-export const setSelection = (focusNode: Node, { offset = 0, end = false }: SelectionOptionsType = { offset: 0, end: false }) => {
-
+export const setSelection = (
+  focusNode: Node,
+  { offset = 0, end = false }: SelectionOptionsType = { offset: 0, end: false },
+) => {
   /** Returns end offset based on the type of node. */
   const getEndOffset = () => {
     const isTextNode = focusNode.nodeType === Node.TEXT_NODE
@@ -25,8 +27,7 @@ export const setSelection = (focusNode: Node, { offset = 0, end = false }: Selec
   if (focusNode !== null) {
     try {
       range.setStart(focusNode, end ? getEndOffset() : offset)
-    }
-    catch (e) {
+    } catch (e) {
       console.warn(e)
     }
   }

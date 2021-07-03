@@ -20,7 +20,7 @@ const clearThoughtShortcut: Shortcut = {
         editable.setAttribute('placeholder', text)
       })
     }
-  }
+  },
 }
 
 export default clearThoughtShortcut

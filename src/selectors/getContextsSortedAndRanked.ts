@@ -8,7 +8,7 @@ const getContextsSortedAndRanked = (state: State, value: string): ThoughtContext
   sort(
     getContexts(state, value).filter(({ context }) => isAncestorsVisible(state, unroot(context.concat(value)))),
     // sort
-    makeCompareByProp('context')
+    makeCompareByProp('context'),
   )
     // generate dynamic ranks
     .map((thought, i) => ({

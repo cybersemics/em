@@ -11,13 +11,16 @@ jest.mock('../../util/getAlgoliaApiKey')
 jest.mock('algoliasearch', () => () => {
   return {
     initIndex: () => ({
-      search: (value: string) => Promise.resolve({
-        hits: [{
-          thoughtHash: value,
-          value
-        }]
-      })
-    })
+      search: (value: string) =>
+        Promise.resolve({
+          hits: [
+            {
+              thoughtHash: value,
+              value,
+            },
+          ],
+        }),
+    }),
   }
 })
 
@@ -26,14 +29,17 @@ describe('remote search', () => {
     const mockStore = createMockStore()
     const store = mockStore(initialState())
 
-    await initAlgoliaSearch('userId', {
-      applicationId: 'test_application_id',
-      index: 'test_index'
-    }, store)
+    await initAlgoliaSearch(
+      'userId',
+      {
+        applicationId: 'test_application_id',
+        index: 'test_index',
+      },
+      store,
+    )
   })
 
   it('return context map from the remote search hits', async () => {
-
     const firebaseProvider = getFirebaseProvider(initialState(), NOOP)
     firebaseProvider.getThoughtsByIds = jest.fn().mockReturnValue([
       {
@@ -43,13 +49,18 @@ describe('remote search', () => {
             context: ['a', 'b', 'c'],
           },
           {
-            context: ['k', 'm', 'n']
-          }
-        ]
-      }
+            context: ['k', 'm', 'n'],
+          },
+        ],
+      },
     ] as Lexeme[])
 
     const contextMap = await getRemoteSearch(firebaseProvider).searchAndGenerateContextMap('test')
-    expect(Object.values(contextMap)).toEqual(expect.arrayContaining([['a', 'b', 'c'], ['k', 'm', 'n']]))
+    expect(Object.values(contextMap)).toEqual(
+      expect.arrayContaining([
+        ['a', 'b', 'c'],
+        ['k', 'm', 'n'],
+      ]),
+    )
   })
 })

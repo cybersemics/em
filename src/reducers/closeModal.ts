@@ -6,12 +6,11 @@ import { State } from '../util/initialState'
  * Closes a modal temporarily.
  */
 const closeModal = (state: State) => {
-
   modalCleanup()
 
   return {
     ...state,
-    showModal: null
+    showModal: null,
   }
 }
 

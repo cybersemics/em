@@ -8,12 +8,10 @@ import { SimplePath } from '../types'
 
 /** Sets a setting thought. */
 const settings = (state: State, { key, value }: { key: string; value: string }) => {
-
   const newValue = value.toString()
   const context = [EM_TOKEN, 'Settings', key]
 
-  const oldThoughtRanked = getChildrenRanked(state, context)
-    .find(child => !isFunction(child.value))
+  const oldThoughtRanked = getChildrenRanked(state, context).find(child => !isFunction(child.value))
 
   if (!oldThoughtRanked) {
     console.warn('Missing oldThoughtRanked in Settings update:', key, value)
@@ -25,7 +23,7 @@ const settings = (state: State, { key, value }: { key: string; value: string }) 
     {
       ...oldThoughtRanked,
       value: newValue,
-    }
+    },
   ] as SimplePath
 
   return editThought(state, {

@@ -16,7 +16,7 @@ const redoShortcut: Shortcut = {
     if (!isRedoEnabled(getState())) return
     dispatch({ type: 'redoAction' })
   },
-  isActive: getState => isRedoEnabled(getState())
+  isActive: getState => isRedoEnabled(getState()),
 }
 
 export default redoShortcut

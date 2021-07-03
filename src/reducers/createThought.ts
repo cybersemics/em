@@ -18,17 +18,16 @@ interface Payload {
  * @param addAsContext Adds the given context to the new thought.
  */
 const createThought = (state: State, { context, value, rank, id, addAsContext }: Payload) => {
-
   id = id || createId()
 
   // create thought if non-existent
   const thought: Lexeme = {
-    ...getThought(state, value) || {
+    ...(getThought(state, value) || {
       value,
       contexts: [],
       created: timestamp(),
-      lastUpdated: timestamp()
-    }
+      lastUpdated: timestamp(),
+    }),
   }
 
   const contextActual = addAsContext ? [value] : context
@@ -43,7 +42,7 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
       rank: addAsContext ? getNextRank(state, [value]) : rank,
       created: timestamp(),
       id,
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
     }
     const children = getAllChildren(state, contextActual)
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
@@ -52,7 +51,7 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
       ...contextIndexUpdates[contextEncoded],
       context: contextActual,
       children,
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
     }
   }
 
@@ -64,33 +63,34 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
       contexts: (subthoughtOld?.contexts || []).concat({
         context: [value],
         id,
-        rank: getNextRank(state, [value])
+        rank: getNextRank(state, [value]),
       }),
       created: subthoughtOld?.created || timestamp(),
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
     })
-  }
-  else {
-    if (!thought.contexts) {
-      thought.contexts = []
-    }
-    // floating thought (no context)
-    if (context.length > 0) {
-      thought.contexts.push({ // eslint-disable-line fp/no-mutating-methods
-        context,
-        id,
-        rank
-      })
-    }
+  } else {
+    thought.contexts = !thought.contexts
+      ? []
+      : // floating thought (no context)
+      context.length > 0
+      ? [
+          ...thought.contexts,
+          {
+            context,
+            id,
+            rank,
+          },
+        ]
+      : thought.contexts
   }
 
   const thoughtIndexUpdates = {
     [hashThought(thought.value)]: thought,
-    ...subthoughtNew
+    ...(subthoughtNew
       ? {
-        [hashThought(subthoughtNew.value)]: subthoughtNew
-      }
-      : null
+          [hashThought(subthoughtNew.value)]: subthoughtNew,
+        }
+      : null),
   }
 
   return updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates })

@@ -10,11 +10,13 @@ interface Options {
 /** Set an alert with an optional close link. */
 const alert = (state: State, { alertType, showCloseLink, value }: Options) => ({
   ...state,
-  alert: value ? {
-    alertType,
-    showCloseLink: showCloseLink !== false,
-    value,
-  } : null
+  alert: value
+    ? {
+        alertType,
+        showCloseLink: showCloseLink !== false,
+        value,
+      }
+    : null,
 })
 
 export default _.curryRight(alert)

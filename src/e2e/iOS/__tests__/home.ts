@@ -6,15 +6,9 @@ import helpers from '../helpers'
 
 jest.setTimeout(90000)
 
-const {
-  $,
-  clickThought,
-  paste,
-  waitForEditable,
-} = helpers()
+const { $, clickThought, paste, waitForEditable } = helpers()
 
 it('click home link to set the cursor to null', async () => {
-
   const text = `
   - a
     - b`
@@ -32,5 +26,4 @@ it('click home link to set the cursor to null', async () => {
 
   const editingAfter = await $('.editing')
   expect(editingAfter.elementId).toBeFalsy()
-
 })

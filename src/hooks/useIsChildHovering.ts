@@ -13,9 +13,13 @@ const useIsChildHovering = (thoughts: Context, isHovering: boolean, isDeepHoveri
   */
   const hoveringPath = useSelector((state: State) => state.hoveringPath)
   const hoveringThought = hoveringPath && pathToContext(hoveringPath)
-  return isDeepHovering && !isHovering && hoveringThought
-  && thoughts.length === hoveringThought.length
-  && hoveringThought.every((thought: string, index: number) => thought === thoughts[index])
+  return (
+    isDeepHovering &&
+    !isHovering &&
+    hoveringThought &&
+    thoughts.length === hoveringThought.length &&
+    hoveringThought.every((thought: string, index: number) => thought === thoughts[index])
+  )
 }
 
 export default useIsChildHovering

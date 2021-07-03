@@ -11,7 +11,7 @@ jest.mock('lodash', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { debounce, throttle } = require('../../test-helpers/mock-debounce-throttle')
   return {
-    ...jest.requireActual('lodash') as Index<any>,
+    ...(jest.requireActual('lodash') as Index<any>),
     debounce,
     throttle,
   }
@@ -21,7 +21,6 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('set url to cursor', () => {
-
   store.dispatch(newThought({ value: 'a' }))
   expect(window.location.pathname).toBe('/~/a')
 
@@ -33,15 +32,12 @@ it('set url to cursor', () => {
 
   store.dispatch(cursorBack())
   expect(window.location.pathname).toBe('/')
-
 })
 
 it('set url to home after deleting last empty thought', () => {
-
   store.dispatch(newThought({}))
   expect(window.location.pathname).toBe('/~/')
 
   store.dispatch(deleteThoughtWithCursor())
   expect(window.location.pathname).toBe('/')
-
 })

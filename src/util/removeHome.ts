@@ -9,9 +9,9 @@ export const removeHome = (exported: string) => {
 
   return isHome([firstThought])
     ? exported
-      .slice(firstLineBreakIndex)
-      .split('\n')
-      .map(line => line.slice(2))
-      .join('\n') + '\n'
+        .slice(firstLineBreakIndex)
+        .split('\n')
+        .map(line => line.slice(2))
+        .join('\n') + '\n'
     : exported
 }

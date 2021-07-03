@@ -1,7 +1,14 @@
 import { EM_TOKEN } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { attribute, rankThoughtsFirstMatch } from '../../selectors'
-import { editThought, importText, newThought, setCursor, toggleAttribute, setFirstSubthought } from '../../action-creators'
+import {
+  editThought,
+  importText,
+  newThought,
+  setCursor,
+  toggleAttribute,
+  setFirstSubthought,
+} from '../../action-creators'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
@@ -12,7 +19,6 @@ import { findAllByPlaceholderText } from '@testing-library/react'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -23,7 +29,7 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
           - d
           - b
           - c
-          - e`
+          - e`,
     }),
     setCursorFirstMatchActionCreator(['a']),
   ])
@@ -34,7 +40,6 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
 })
 
 it('toggle sort preference descending of cursor (initial state with =sort/Alphabetical)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -48,7 +53,7 @@ it('toggle sort preference descending of cursor (initial state with =sort/Alphab
           - d
           - b
           - c
-          - e`
+          - e`,
     }),
     setCursorFirstMatchActionCreator(['a']),
   ])
@@ -60,7 +65,6 @@ it('toggle sort preference descending of cursor (initial state with =sort/Alphab
 })
 
 it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/desc)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -74,7 +78,7 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/
           - d
           - b
           - c
-          - e`
+          - e`,
     }),
     setCursorFirstMatchActionCreator(['a']),
   ])
@@ -85,7 +89,6 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/
 })
 
 it('toggle off sort preference of cursor (initial state with =sort/Alphabetical and Global Sort Alphabetical/desc)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -99,20 +102,26 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical 
           - d
           - b
           - c
-          - e`
+          - e`,
     }),
 
-    ((dispatch, getState) => dispatch(editThought({
-      context: [EM_TOKEN, 'Settings', 'Global Sort'],
-      oldValue: 'None',
-      newValue: 'Alphabetical',
-      path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
-    }))) as Thunk,
+    ((dispatch, getState) =>
+      dispatch(
+        editThought({
+          context: [EM_TOKEN, 'Settings', 'Global Sort'],
+          oldValue: 'None',
+          newValue: 'Alphabetical',
+          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+        }),
+      )) as Thunk,
 
-    ((dispatch, getState) => dispatch(setFirstSubthought({
-      context: [EM_TOKEN, 'Settings', 'Global Sort', 'Alphabetical'],
-      value: 'Desc',
-    }))) as Thunk,
+    ((dispatch, getState) =>
+      dispatch(
+        setFirstSubthought({
+          context: [EM_TOKEN, 'Settings', 'Global Sort', 'Alphabetical'],
+          value: 'Desc',
+        }),
+      )) as Thunk,
 
     setCursorFirstMatchActionCreator(['a']),
   ])
@@ -122,7 +131,6 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical 
 })
 
 it('toggle off sort preference of cursor (initial state without =sort attribute and Global Sort Alphabetical/desc)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -133,20 +141,26 @@ it('toggle off sort preference of cursor (initial state without =sort attribute 
           - d
           - b
           - c
-          - e`
+          - e`,
     }),
 
-    ((dispatch, getState) => dispatch(editThought({
-      context: [EM_TOKEN, 'Settings', 'Global Sort'],
-      oldValue: 'None',
-      newValue: 'Alphabetical',
-      path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
-    }))) as Thunk,
+    ((dispatch, getState) =>
+      dispatch(
+        editThought({
+          context: [EM_TOKEN, 'Settings', 'Global Sort'],
+          oldValue: 'None',
+          newValue: 'Alphabetical',
+          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+        }),
+      )) as Thunk,
 
-    ((dispatch, getState) => dispatch(setFirstSubthought({
-      context: [EM_TOKEN, 'Settings', 'Global Sort', 'Alphabetical'],
-      value: 'Desc',
-    }))) as Thunk,
+    ((dispatch, getState) =>
+      dispatch(
+        setFirstSubthought({
+          context: [EM_TOKEN, 'Settings', 'Global Sort', 'Alphabetical'],
+          value: 'Desc',
+        }),
+      )) as Thunk,
 
     setCursorFirstMatchActionCreator(['a']),
   ])
@@ -156,7 +170,6 @@ it('toggle off sort preference of cursor (initial state without =sort attribute 
 })
 
 it('toggle on sort preference of home context when cursor is null (initial state without =sort attribute)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -168,7 +181,7 @@ it('toggle on sort preference of home context when cursor is null (initial state
           - 2
         - a
           - 3
-          - 4`
+          - 4`,
     }),
 
     setCursor({ path: null }),
@@ -180,7 +193,6 @@ it('toggle on sort preference of home context when cursor is null (initial state
 })
 
 it('toggle sort preference descending of home context when cursor is null (initial state with =sort/Alphabetical)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -190,7 +202,7 @@ it('toggle sort preference descending of home context when cursor is null (initi
         - =sort
           - Alphabetical
         -a
-        -b`
+        -b`,
     }),
 
     setCursor({ path: null }),
@@ -203,11 +215,9 @@ it('toggle sort preference descending of home context when cursor is null (initi
 })
 
 it('override global Alphabetical with local Alphabetical/desc', () => {
-
   const store = createTestStore()
 
   store.dispatch([
-
     importText({
       text: `
         - a
@@ -215,17 +225,20 @@ it('override global Alphabetical with local Alphabetical/desc', () => {
           - b
           - c
           - e
-    ` }),
+    `,
+    }),
 
-    ((dispatch, getState) => dispatch(editThought({
-      context: [EM_TOKEN, 'Settings', 'Global Sort'],
-      oldValue: 'None',
-      newValue: 'Alphabetical',
-      path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
-    }))) as Thunk,
+    ((dispatch, getState) =>
+      dispatch(
+        editThought({
+          context: [EM_TOKEN, 'Settings', 'Global Sort'],
+          oldValue: 'None',
+          newValue: 'Alphabetical',
+          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+        }),
+      )) as Thunk,
 
     setCursorFirstMatchActionCreator(['a']),
-
   ])
 
   executeShortcut(toggleSortShortcut, { store })
@@ -251,7 +264,7 @@ describe('DOM', () => {
         context: ['__ROOT__'],
         key: '=sort',
         value: 'Alphabetical',
-      })
+      }),
     ])
 
     const thought = await findThoughtByText('c')
@@ -264,7 +277,6 @@ describe('DOM', () => {
   })
 
   it('subthoughts are sorted alphabetically', async () => {
-
     store.dispatch([
       newThought({ value: 'a' }),
       newThought({ value: '3', insertNewSubthought: true }),
@@ -276,7 +288,7 @@ describe('DOM', () => {
         context: ['a'],
         key: '=sort',
         value: 'Alphabetical',
-      })
+      }),
     ])
 
     const thought = await findThoughtByText('a')
@@ -296,12 +308,15 @@ describe('DOM', () => {
         newThought({ value: 'a' }),
         setCursor({ path: null }),
 
-        ((dispatch, getState) => dispatch(editThought({
-          context: [EM_TOKEN, 'Settings', 'Global Sort'],
-          oldValue: 'None',
-          newValue: 'Alphabetical',
-          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
-        }))) as Thunk,
+        ((dispatch, getState) =>
+          dispatch(
+            editThought({
+              context: [EM_TOKEN, 'Settings', 'Global Sort'],
+              oldValue: 'None',
+              newValue: 'Alphabetical',
+              path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+            }),
+          )) as Thunk,
       ])
 
       const thought = await findThoughtByText('c')
@@ -314,19 +329,21 @@ describe('DOM', () => {
     })
 
     it('subthoughts are sorted alphabetically when "Global Sort" settings is Alphabetical', async () => {
-
       store.dispatch([
         newThought({ value: 'a' }),
         newThought({ value: '3', insertNewSubthought: true }),
         newThought({ value: '1' }),
         newThought({ value: '2' }),
         setCursorFirstMatchActionCreator(['a']),
-        ((dispatch, getState) => dispatch(editThought({
-          context: [EM_TOKEN, 'Settings', 'Global Sort'],
-          oldValue: 'None',
-          newValue: 'Alphabetical',
-          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
-        }))) as Thunk,
+        ((dispatch, getState) =>
+          dispatch(
+            editThought({
+              context: [EM_TOKEN, 'Settings', 'Global Sort'],
+              oldValue: 'None',
+              newValue: 'Alphabetical',
+              path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+            }),
+          )) as Thunk,
       ])
 
       const thought = await findThoughtByText('a')
@@ -339,7 +356,6 @@ describe('DOM', () => {
     })
 
     it('subthoughts are not sorted alphabetically when context sort is None and "Global Sort" settings is Alphabetical', async () => {
-
       store.dispatch([
         newThought({ value: 'a' }),
         newThought({ value: '3', insertNewSubthought: true }),
@@ -348,19 +364,21 @@ describe('DOM', () => {
 
         setCursorFirstMatchActionCreator(['a']),
 
-        ((dispatch, getState) => dispatch(editThought({
-          context: [EM_TOKEN, 'Settings', 'Global Sort'],
-          oldValue: 'None',
-          newValue: 'Alphabetical',
-          path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath
-        }))) as Thunk,
+        ((dispatch, getState) =>
+          dispatch(
+            editThought({
+              context: [EM_TOKEN, 'Settings', 'Global Sort'],
+              oldValue: 'None',
+              newValue: 'Alphabetical',
+              path: rankThoughtsFirstMatch(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
+            }),
+          )) as Thunk,
 
         toggleAttribute({
           context: ['a'],
           key: '=sort',
           value: 'None',
-        })
-
+        }),
       ])
 
       const thought = await findThoughtByText('a')
@@ -391,7 +409,7 @@ describe('DOM', () => {
         setFirstSubthought({
           context: ['=sort', 'Alphabetical'],
           value: 'Desc',
-        })
+        }),
       ])
 
       const thought = await findThoughtByText('c')
@@ -404,24 +422,25 @@ describe('DOM', () => {
     })
 
     it('subthoughts are sorted alphabetically in descending order', async () => {
-
       store.dispatch([
         newThought({ value: 'a' }),
         newThought({ value: '3', insertNewSubthought: true }),
         newThought({ value: '1' }),
         newThought({ value: '2' }),
-        setCursorFirstMatchActionCreator(['a'])
+        setCursorFirstMatchActionCreator(['a']),
       ])
 
-      store.dispatch([toggleAttribute({
-        context: ['a'],
-        key: '=sort',
-        value: 'Alphabetical',
-      }),
-      setFirstSubthought({
-        context: ['a', '=sort', 'Alphabetical'],
-        value: 'Desc',
-      })])
+      store.dispatch([
+        toggleAttribute({
+          context: ['a'],
+          key: '=sort',
+          value: 'Alphabetical',
+        }),
+        setFirstSubthought({
+          context: ['a', '=sort', 'Alphabetical'],
+          value: 'Desc',
+        }),
+      ])
 
       const thought = await findThoughtByText('a')
       expect(thought).toBeTruthy()
@@ -434,7 +453,6 @@ describe('DOM', () => {
   })
 
   describe('empty thought ordering is preserved at the point of creation', () => {
-
     it('after first thought', async () => {
       store.dispatch([
         importText({
@@ -447,7 +465,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['a']),
         newThought({ value: '' }),
@@ -456,7 +474,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('a')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('a_bcdef')
@@ -474,7 +493,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['c']),
         newThought({ value: '' }),
@@ -483,7 +502,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('a')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('abc_def')
@@ -501,7 +521,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['f']),
         newThought({ value: '' }),
@@ -510,7 +530,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('a')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('abcdef_')
@@ -528,7 +549,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['a']),
         newThought({ value: '', insertBefore: true }),
@@ -537,7 +558,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('a')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('_abcdef')
@@ -555,7 +577,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['c']),
         newThought({ value: '', insertBefore: true }),
@@ -564,7 +586,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('a')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('ab_cdef')
@@ -582,7 +605,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['f']),
         newThought({ value: '', insertBefore: true }),
@@ -591,7 +614,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('a')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('abcde_f')
@@ -609,7 +633,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['a']),
         newThought({ value: '', insertBefore: true }),
@@ -624,7 +648,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('a')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('_a_bc_def_')
@@ -642,7 +667,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['a']),
         newThought({ value: '', insertNewSubthought: true }),
@@ -652,7 +677,8 @@ describe('DOM', () => {
 
       const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
       const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
-      const childrenString = thoughtChildren.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughtChildren
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('_')
@@ -671,7 +697,7 @@ describe('DOM', () => {
               - c
               - e
               - b
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['c']),
         newThought({ value: '' }),
@@ -681,7 +707,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('a')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('abc__def')
@@ -699,7 +726,7 @@ describe('DOM', () => {
               - c
               - b
               - e
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['a']),
         newThought({ value: '', insertNewSubthought: true }),
@@ -708,7 +735,8 @@ describe('DOM', () => {
       const thought = await findThoughtByText('d')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('bcdef_')
@@ -726,7 +754,7 @@ describe('DOM', () => {
               - c
               - b
               - e
-          `
+          `,
         }),
         setCursorFirstMatchActionCreator(['a']),
         newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
@@ -735,12 +763,11 @@ describe('DOM', () => {
       const thought = await findThoughtByText('d')
       const thoughtsWrapper = thought!.closest('ul') as HTMLElement
       const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
-      const childrenString = thoughts.map((child: HTMLElement) => child.textContent)
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('_bcdef')
     })
-
   })
-
 })

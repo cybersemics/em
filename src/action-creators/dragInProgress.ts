@@ -12,16 +12,17 @@ interface Payload {
 }
 
 /** Drag in progress. */
-const dragInProgress = (payload: Payload): Thunk => dispatch => {
+const dragInProgress =
+  (payload: Payload): Thunk =>
+  dispatch => {
+    dispatch({
+      type: 'dragInProgress',
+      ...payload,
+    })
 
-  dispatch({
-    type: 'dragInProgress',
-    ...payload
-  })
+    dispatch(expandOnHoverTop())
 
-  dispatch(expandOnHoverTop())
-
-  dispatch(expandOnHoverBottom())
-}
+    dispatch(expandOnHoverBottom())
+  }
 
 export default dragInProgress

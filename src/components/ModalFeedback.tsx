@@ -15,7 +15,6 @@ interface FeedbackResponse {
 
 /** Modal to leave feedback. */
 const ModalFeedback = () => {
-
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDisabled, setIsDisabled] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -28,12 +27,16 @@ const ModalFeedback = () => {
 
   /** Submit handler. */
   const onSubmit = async ({ close }: { close: () => void }) => {
-
     setSubmitAttempts(submitAttempts + 1)
 
     // minimum characters
     if (feedback.length < FEEDBACK_MIN_LENGTH) {
-      dispatch(alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, { alertType: 'modalFeedback', clearTimeout: 5000 }))
+      dispatch(
+        alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, {
+          alertType: 'modalFeedback',
+          clearTimeout: 5000,
+        }),
+      )
       setIsDisabled(true)
       return
     }
@@ -43,8 +46,7 @@ const ModalFeedback = () => {
       await submitFeedback(feedback, uid)
       dispatch(alert('Feedback sent!'))
       close()
-    }
-    catch (err) {
+    } catch (err) {
       console.error('Error sending feedback', err)
       const { response } = err as AxiosError
       const message = (response?.data as FeedbackResponse)?.message ?? 'Error sending feedback'
@@ -63,13 +65,40 @@ const ModalFeedback = () => {
     }
   }, [feedback])
 
-  return <Modal id='feedback' title='Feedback' className='popup' center actions={({ close }) => <div>
-    <ActionButton key='send' title='Send' active={true} isLoading={isSubmitting} isDisabled={isDisabled} onClick={() => onSubmit({ close })} />
-    <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}><a id='skip-tutorial' onClick={() => close()}>Cancel</a></div>
-  </div>}>
-    <p style={{ fontSize: 18, marginBottom: 30 }}>Send us your bugs, hopes, and dreams!</p>
-    <textarea placeholder={'Enter your message'} rows={1} value={feedback} onChange={onChange} style={{ borderRadius: 5 }} />
-  </Modal>
+  return (
+    <Modal
+      id='feedback'
+      title='Feedback'
+      className='popup'
+      center
+      actions={({ close }) => (
+        <div>
+          <ActionButton
+            key='send'
+            title='Send'
+            active={true}
+            isLoading={isSubmitting}
+            isDisabled={isDisabled}
+            onClick={() => onSubmit({ close })}
+          />
+          <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}>
+            <a id='skip-tutorial' onClick={() => close()}>
+              Cancel
+            </a>
+          </div>
+        </div>
+      )}
+    >
+      <p style={{ fontSize: 18, marginBottom: 30 }}>Send us your bugs, hopes, and dreams!</p>
+      <textarea
+        placeholder={'Enter your message'}
+        rows={1}
+        value={feedback}
+        onChange={onChange}
+        style={{ borderRadius: 5 }}
+      />
+    </Modal>
+  )
 }
 
 export default ModalFeedback

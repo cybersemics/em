@@ -16,7 +16,6 @@ import { Context } from '../types'
  * returns false
  */
 export const isDescendant = (contextA: Context, contextB: Context) => {
-
   // ancestor context cannot have length greater that it's descendant context
   if (contextA.length >= contextB.length) return false
 

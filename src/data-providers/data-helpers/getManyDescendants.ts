@@ -11,15 +11,20 @@ const emContextEncoded = hashContext([EM_TOKEN])
  *
  * @param maxDepth    Maximum number of levels to fetch.
  */
-const getManyDescendants = async function* getManyDescendants(provider: DataProvider, contextMap: Index<Context>, { maxDepth = 100 } = {}): AsyncIterable<ThoughtsInterface> {
-
+const getManyDescendants = async function* getManyDescendants(
+  provider: DataProvider,
+  contextMap: Index<Context>,
+  { maxDepth = 100 } = {},
+): AsyncIterable<ThoughtsInterface> {
   // fetch descendant thoughts for each context in contextMap
-  yield* yieldAll((Object.keys(contextMap) as ContextHash[]).map(key =>
-    getDescendantThoughts(provider, contextMap[key], {
-      // do not limit the depth of the em context
-      maxDepth: key === emContextEncoded ? Infinity : maxDepth
-    })
-  ))
+  yield* yieldAll(
+    (Object.keys(contextMap) as ContextHash[]).map(key =>
+      getDescendantThoughts(provider, contextMap[key], {
+        // do not limit the depth of the em context
+        maxDepth: key === emContextEncoded ? Infinity : maxDepth,
+      }),
+    ),
+  )
 }
 
 export default getManyDescendants

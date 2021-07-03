@@ -4,8 +4,11 @@ import { Thunk } from '../types'
 import * as reducers from '../reducers'
 
 /** Wraps a static action in a thunk. */
-const reducerToThunk = <T extends (state: State, payload: any) => Record<string, any>>(name: string) =>
-  (payload?: Parameters<T>[1]): Thunk<void> => dispatch => dispatch({ type: name, ...payload })
+const reducerToThunk =
+  <T extends (state: State, payload: any) => Record<string, any>>(name: string) =>
+  (payload?: Parameters<T>[1]): Thunk<void> =>
+  dispatch =>
+    dispatch({ type: name, ...payload })
 
 // export all reducers as properly typed thunks
 export const addLatestShortcuts = reducerToThunk<typeof reducers.addLatestShortcuts>('addLatestShortcuts')
@@ -26,7 +29,8 @@ export const cursorUp = reducerToThunk<typeof reducers.cursorUp>('cursorUp')
 export const deleteAttribute = reducerToThunk<typeof reducers.deleteAttribute>('deleteAttribute')
 export const deleteData = reducerToThunk<typeof reducers.deleteData>('deleteData')
 export const deleteEmptyThought = reducerToThunk<typeof reducers.deleteEmptyThought>('deleteEmptyThought')
-export const deleteThoughtWithCursor = reducerToThunk<typeof reducers.deleteThoughtWithCursor>('deleteThoughtWithCursor')
+export const deleteThoughtWithCursor =
+  reducerToThunk<typeof reducers.deleteThoughtWithCursor>('deleteThoughtWithCursor')
 export const dragHold = reducerToThunk<typeof reducers.dragHold>('dragHold')
 export const editableRender = reducerToThunk<typeof reducers.editableRender>('editableRender')
 export const editing = reducerToThunk<typeof reducers.editing>('editing')

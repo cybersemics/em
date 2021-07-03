@@ -9,7 +9,7 @@ const extractThought: Shortcut = {
   canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState) => {
     dispatch(extract())
-  }
+  },
 }
 
 export default extractThought

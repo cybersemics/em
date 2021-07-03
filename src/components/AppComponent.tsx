@@ -91,7 +91,12 @@ const handleGestureCancel = () => {
  */
 const MultiGestureIfTouch: FC = ({ children }) =>
   isTouch ? (
-    <MultiGesture onGesture={handleGestureSegment} onEnd={handleGestureEnd} shouldCancelGesture={shouldCancelGesture} onCancel={handleGestureCancel}>
+    <MultiGesture
+      onGesture={handleGestureSegment}
+      onEnd={handleGestureEnd}
+      shouldCancelGesture={shouldCancelGesture}
+      onCancel={handleGestureCancel}
+    >
       {children}
     </MultiGesture>
   ) : (

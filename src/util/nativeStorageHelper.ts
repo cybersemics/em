@@ -1,7 +1,6 @@
 /* eslint-disable fp/no-class */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-
 /**
  * Class SyncStorage - used to made async store sync an
  * prevent changing to async call the whole app.
@@ -13,7 +12,7 @@ class SyncStorage {
 
   async init(): Promise<void> {
     const keys = await AsyncStorage.getAllKeys()
-    const data = await AsyncStorage.multiGet(keys) as string[][]
+    const data = (await AsyncStorage.multiGet(keys)) as string[][]
     data.forEach(this.saveItem.bind(this))
   }
 
@@ -49,7 +48,7 @@ class SyncStorage {
     try {
       value = JSON.parse(item[1])
     } catch (e) {
-      [, value] = item
+      value = item[1]
     }
 
     this.data.set(item[0], value)
@@ -60,4 +59,3 @@ class SyncStorage {
 const syncStorage = new SyncStorage()
 
 export default syncStorage
-
