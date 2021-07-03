@@ -16,45 +16,47 @@ import { Child, Context, GesturePath, Index, Path, SimplePath, SortPreference, T
 // util
 import {
   checkIfPathShareSubcontext,
-  parentOf,
   ellipsize,
   equalArrays,
   equalPath,
   hashContext,
   head,
   headValue,
+  isAbsolute,
+  isDescendant,
+  isDescendantPath,
   isDivider,
   isEM,
+  isFunction,
+  isRoot,
+  once,
+  parentOf,
   parseJsonSafe,
   parseLet,
   pathToContext,
-  isDescendantPath,
   sumSubthoughtsLength,
-  isRoot,
   unroot,
-  isAbsolute,
-  isDescendant,
 } from '../util'
 
 // selectors
 import {
+  appendChildPath,
   attribute,
   childrenFilterPredicate,
+  getAllChildren,
+  getAllChildrenSorted,
   getChildPath,
-  appendChildPath,
+  getChildren,
+  getChildrenRanked,
   getContextsSortedAndRanked,
   getEditingPath,
+  getGlobalSortPreference,
   getNextRank,
   getPrevRank,
+  getSortPreference,
   getStyle,
-  getAllChildren,
-  getChildrenRanked,
-  getAllChildrenSorted,
   isContextViewActive,
   rootedParentOf,
-  getGlobalSortPreference,
-  getSortPreference,
-  getChildren,
 } from '../selectors'
 
 /** The type of the exported Subthoughts. */
@@ -351,7 +353,9 @@ export const SubthoughtsComponent = ({
   const globalSort = getGlobalSortPreference(state)
   const sortPreference = contextSort || globalSort
   const { cursor } = state
-
+  const context = pathToContext(simplePath)
+  const value = headValue(simplePath)
+  const envSelf = parseLet(state, context)
   const resolvedPath = path ?? simplePath
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
@@ -371,7 +375,7 @@ export const SubthoughtsComponent = ({
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
   const children = childrenForced ? childrenForced // eslint-disable-line no-unneeded-ternary
     : showContexts ?
-      getContextsSortedAndRanked(state, headValue(simplePath))
+      getContextsSortedAndRanked(state, value)
       : sortPreference?.type !== 'None' ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
       : getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[]
 
@@ -408,16 +412,33 @@ export const SubthoughtsComponent = ({
   const isPaginated = show && filteredChildren.length > proposedPageSize
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
+  /** Finds the the first env context with =focus/Zoom. */
+  const findFirstEnvContextWithZoom = (context: Context): Context | null => {
+    const children = getAllChildren(state, context)
+    const envNew = { ...env, ...envSelf }
+    const child = children.find(child =>
+      isFunction(child.value) &&
+      (child.value in envNew) &&
+      attribute(state, envNew[child.value], '=focus') === 'Zoom'
+    )
+    return child
+      ? [...envNew[child.value], '=focus', 'Zoom']
+      : null
+  }
+
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
     1. Force actualDistance to 2 to hide thoughts.
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
   const zoomCursor = cursor && (attribute(state, pathToContext(cursor), '=focus') === 'Zoom'
-    || attribute(state, pathToContext(parentOf(cursor)).concat('=children'), '=focus') === 'Zoom')
+    || attribute(state, pathToContext(parentOf(cursor)).concat('=children'), '=focus') === 'Zoom'
+    || findFirstEnvContextWithZoom(pathToContext(cursor)))
   const zoomParent = cursor && (attribute(state, pathToContext(parentOf(cursor)), '=focus') === 'Zoom'
-    || attribute(state, pathToContext(parentOf(parentOf(cursor))).concat('=children'), '=focus') === 'Zoom')
+    || attribute(state, pathToContext(parentOf(parentOf(cursor))).concat('=children'), '=focus') === 'Zoom'
+    || findFirstEnvContextWithZoom(pathToContext(rootedParentOf(state, cursor))))
   const zoomParentEditing = () => cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath) // eslint-disable-line jsdoc/require-jsdoc
+
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   const cursorContext = pathToContext(cursor || [])
@@ -478,8 +499,6 @@ export const SubthoughtsComponent = ({
   : shouldDim ? 1
   : distance
 
-  const context = pathToContext(simplePath)
-
   const contextChildren = [...unroot(context), '=children'] // children of parent with =children
   const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
   const styleChildren = getStyle(state, contextChildren)
@@ -487,7 +506,6 @@ export const SubthoughtsComponent = ({
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
-  const envSelf = parseLet(state, context)
 
   return <>
 
@@ -523,21 +541,37 @@ export const SubthoughtsComponent = ({
           // figure out what is incorrectly depending on childPath being rooted
           const childPath = getChildPath(state, child, simplePath, showContexts)
           const childContext = pathToContext(childPath)
+          const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(childContext))
 
           /** Returns true if the cursor in in the child path. */
           const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
-          const styleZoom = getStyle(state, [...childContext, '=focus', 'Zoom'])
+
+          /** Gets the =focus/Zoom/=style of the child path. */
+          const styleZoom = () => getStyle(state, [...childContext, '=focus', 'Zoom'])
+
+          /** Gets the style of the Zoom applied via env. */
+          const styleEnvZoom = () => childContextEnvZoom()
+            ? getStyle(state, childContextEnvZoom()!)
+            : null
+
           const style = {
             ...styleGrandChildren,
             ...styleChildren,
-            ...isEditingChildPath() ? styleZoom : null,
+            ...isEditingChildPath() ? {
+              ...styleZoom(),
+              ...styleEnvZoom(),
+            } : null,
           }
 
           /** Returns true if the bullet should be hidden. */
           const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
 
           /** Returns true if the bullet should be hidden if zoomed. */
-          const hideBulletZoom = () => isEditingChildPath() && attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None'
+          const hideBulletZoom = (): boolean =>
+            isEditingChildPath() &&
+            (attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None' ||
+             !!childContextEnvZoom() && attribute(state, childContextEnvZoom()!, '=bullet') === 'None'
+            )
 
           /*
             simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
@@ -577,7 +611,7 @@ export const SubthoughtsComponent = ({
         <span className='drop-hover' style={{ display: (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none' }}></span>
       </li>)}
     </ul> : <EmptyChildrenDropTarget
-      isThoughtDivider={isDivider(headValue(simplePath))}
+      isThoughtDivider={isDivider(value)}
       depth={depth}
       dropTarget={dropTarget}
       isDragInProgress={isDragInProgress}
