@@ -5,7 +5,7 @@ import ModalComponent, { ModalProps } from './ModalComponent'
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ isLoading, showModal }: State, props: ModalProps) => ({
   isLoading,
-  show: showModal === props.id
+  show: showModal === props.id,
 })
 
 /** A generic modal component. */

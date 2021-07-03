@@ -28,8 +28,8 @@ The project uses 2 spaces for tabs. Please make sure your editor settings match.
 
 All contributions must be submitted through public pull requests on the repo at https://github.com/cybersemics/em. This is typically done by forking the repo, creating a new branch, making your changes, pushing your branch to your fork, and then opening a Pull Request against `dev` from the GitHub interface. All pull requests will be reviewed and feedback will be provided.
 
-- Enter a descriptive title for all PR's. 
-- Add the issue number to the description (not the title). 
+- Enter a descriptive title for all PR's.
+- Add the issue number to the description (not the title).
 - Commit messages should be a succinct and provide a relevant summary of the contained changes.
 - Each commit should correspond to a single, unified set of changes for a single purpose.
 - Resolve, respond, and/or inquire about all requested changes before requesting another review.

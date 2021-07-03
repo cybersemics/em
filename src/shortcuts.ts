@@ -25,18 +25,18 @@ export const shortcutEmitter = new Emitter()
  * }
  */
 const letters = keyValueBy(Array(26).fill(0), (n, i) => ({
-  [65 + i]: String.fromCharCode(65 + i).toUpperCase()
+  [65 + i]: String.fromCharCode(65 + i).toUpperCase(),
 }))
 
 /** Hash all the properties of a shortcut into a string. */
 const hashShortcut = (shortcut: Shortcut): string => {
-  const keyboard = typeof shortcut.keyboard === 'string'
-    ? { key: shortcut.keyboard }
-    : shortcut.keyboard || {} as Key
-  return (keyboard.meta ? 'META_' : '') +
+  const keyboard = typeof shortcut.keyboard === 'string' ? { key: shortcut.keyboard } : shortcut.keyboard || ({} as Key)
+  return (
+    (keyboard.meta ? 'META_' : '') +
     (keyboard.alt ? 'ALT_' : '') +
     (keyboard.shift ? 'SHIFT_' : '') +
     keyboard.key?.toUpperCase()
+  )
 }
 
 /** Hash all the properties of a keydown event into a string that matches hashShortcut. */
@@ -54,54 +54,54 @@ const index = (): {
   shortcutKeyIndex: Index<Shortcut>
   shortcutIdIndex: Index<Shortcut>
   shortcutGestureIndex: Index<Shortcut>
-  } => {
-
+} => {
   // index shortcuts for O(1) lookup by keyboard
   const shortcutKeyIndex: Index<Shortcut> = keyValueBy(globalShortcuts, (shortcut, i, accum) => {
-
     if (!shortcut.keyboard) return null
 
     const hash = hashShortcut(shortcut)
     const conflict = !!accum[hash]
 
     if (conflict) {
-      console.error(`"${shortcut.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(shortcut.keyboard)}"`)
+      console.error(
+        `"${shortcut.id}" uses the same shortcut as "${accum[hash].id}": ${formatKeyboardShortcut(shortcut.keyboard)}"`,
+      )
     }
 
     return {
       // if there is a conflict, append the shortcut id to the conflicts property so that the conflicts can be displayed to the user
       [hash]: conflict
         ? {
-          ...shortcut,
-          conflicts: [...shortcut.conflicts || [accum[hash].id], shortcut.id]
-        }
-        : shortcut
+            ...shortcut,
+            conflicts: [...(shortcut.conflicts || [accum[hash].id]), shortcut.id],
+          }
+        : shortcut,
     }
   })
 
   // index shortcuts for O(1) lookup by id
   const shortcutIdIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
-    shortcut.id ? { [shortcut.id]: shortcut } : null
+    shortcut.id ? { [shortcut.id]: shortcut } : null,
   )
 
   // index shortcuts for O(1) lookup by gesture
-  const shortcutGestureIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut => shortcut.gesture
-    ? {
-      // shortcut.gesture may be a string or array of strings
-      // normalize intro array of strings
-      ...keyValueBy(Array.prototype.concat([], shortcut.gesture), gesture => ({
-        [gesture]: shortcut
-      }))
-    }
-    : null
+  const shortcutGestureIndex: Index<Shortcut> = keyValueBy(globalShortcuts, shortcut =>
+    shortcut.gesture
+      ? {
+          // shortcut.gesture may be a string or array of strings
+          // normalize intro array of strings
+          ...keyValueBy(Array.prototype.concat([], shortcut.gesture), gesture => ({
+            [gesture]: shortcut,
+          })),
+        }
+      : null,
   )
 
   return { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex }
 }
 
 /** Returns true if the current alert is a gestureHint. */
-export const isGestureHint = ({ alert }: State) =>
-  alert && alert.alertType === 'gestureHint'
+export const isGestureHint = ({ alert }: State) => alert && alert.alertType === 'gestureHint'
 
 let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no-let
 
@@ -109,10 +109,8 @@ let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no
  * Keyboard handlers factory function.
  */
 export const inputHandlers = (store: Store<State, any>) => ({
-
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: (g: Direction | null, path: GesturePath) => {
-
     const state = store.getState()
     const { toolbarOverlay, scrollPrioritized } = state
 
@@ -130,14 +128,15 @@ export const inputHandlers = (store: Store<State, any>) => ({
         // only show "Invalid gesture" if hint is already being shown
         store.dispatch((dispatch, getState) => {
           dispatch(
-            alert(shortcut ? shortcut.label
-              : isGestureHint(getState()) ? '✗ Invalid gesture'
-              : null, { alertType: 'gestureHint', showCloseLink: false })
+            alert(shortcut ? shortcut.label : isGestureHint(getState()) ? '✗ Invalid gesture' : null, {
+              alertType: 'gestureHint',
+              showCloseLink: false,
+            }),
           )
         })
       },
       // if the hint is already being shown, do not wait to change the value
-      isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT
+      isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT,
     )
   },
 
@@ -196,13 +195,18 @@ export const inputHandlers = (store: Store<State, any>) => ({
     if (toolbarOverlay || scrollPrioritized) return
 
     // disable when welcome, shortcuts, or feeback modals are displayed
-    if (state.showModal === 'welcome' || state.showModal === 'help' || state.showModal === 'feedback' || state.showModal === 'auth') return
+    if (
+      state.showModal === 'welcome' ||
+      state.showModal === 'help' ||
+      state.showModal === 'feedback' ||
+      state.showModal === 'auth'
+    )
+      return
 
     const shortcut = shortcutKeyIndex[hashKeyDown(e)]
 
     // execute the shortcut if it exists
     if (shortcut) {
-
       shortcutEmitter.trigger('shortcut', shortcut)
 
       if (!shortcut.canExecute || shortcut.canExecute(store.getState)) {
@@ -217,28 +221,31 @@ export const inputHandlers = (store: Store<State, any>) => ({
         shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
       }
     }
-  }
+  },
 })
 
 /** Converts a gesture letter or event key of an arrow key to an arrow utf8 character. Defaults to input. */
 // eslint-disable-next-line @typescript-eslint/no-extra-parens
-const arrowTextToArrowCharacter = (s: string) => (({
-  ArrowLeft: '←',
-  ArrowRight: '→',
-  ArrowUp: '↑',
-  ArrowDown: '↓'
-} as Index)[s] || s)
+const arrowTextToArrowCharacter = (s: string) =>
+  ((
+    {
+      ArrowLeft: '←',
+      ArrowRight: '→',
+      ArrowUp: '↑',
+      ArrowDown: '↓',
+    } as Index
+  )[s] || s)
 
 /** Formats a keyboard shortcut to display to the user. */
 export const formatKeyboardShortcut = (keyboardOrString: Key | string): string => {
-  const keyboard = typeof keyboardOrString === 'string'
-    ? { key: keyboardOrString as string }
-    : keyboardOrString
-  return (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
+  const keyboard = typeof keyboardOrString === 'string' ? { key: keyboardOrString as string } : keyboardOrString
+  return (
+    (keyboard.meta ? (isMac ? 'Command' : 'Ctrl') + ' + ' : '') +
     (keyboard.alt ? (isMac ? 'Option' : 'Alt') + ' + ' : '') +
     (keyboard.control ? 'Control + ' : '') +
     (keyboard.shift ? 'Shift + ' : '') +
     arrowTextToArrowCharacter(keyboard.shift && keyboard.key.length === 1 ? keyboard.key.toUpperCase() : keyboard.key)
+  )
 }
 
 /** Finds a shortcut by its id. */

@@ -29,11 +29,13 @@ const noteShortcut: Shortcut = {
     }
 
     if (!hasNote) {
-      dispatch(setAttribute({
-        context,
-        key: '=note',
-        value: ''
-      }))
+      dispatch(
+        setAttribute({
+          context,
+          key: '=note',
+          value: '',
+        }),
+      )
     }
 
     // focus selection on note
@@ -59,8 +61,7 @@ const noteShortcut: Shortcut = {
           noteEl.focus()
           setSelection(noteEl, { end: true })
         }
-      }
-      catch (e) {
+      } catch (e) {
         console.warn('Note element not found in DOM.', context)
       }
     }, 0)
@@ -70,7 +71,7 @@ const noteShortcut: Shortcut = {
     const { cursor } = state
     const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
     return attribute(state, context, '=note') != null
-  }
+  },
 }
 
 export default noteShortcut

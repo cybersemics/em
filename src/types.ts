@@ -231,7 +231,6 @@ export interface Key {
 }
 
 export interface Shortcut {
-
   // a function that returns true if the shortcut can be executed with the current state
   canExecute?: (getState: () => State) => boolean
 

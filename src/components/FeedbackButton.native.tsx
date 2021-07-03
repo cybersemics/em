@@ -7,13 +7,12 @@ import { useDispatch } from 'react-redux'
  * Button that opens feedback model.
  */
 const FeedbackButton: React.FC = () => {
-
   const dispatch = useDispatch()
 
   return (
     <TouchableOpacity onPress={() => dispatch(showModal({ id: 'feedback' }))}>
       <FeedbackIcon size={40} />
-    </TouchableOpacity >
+    </TouchableOpacity>
   )
 }
 

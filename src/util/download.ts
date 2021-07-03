@@ -23,6 +23,5 @@ export const download = (data: string, filename: string, type: MimeType = 'text/
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
     }, 0)
-
   }
 }

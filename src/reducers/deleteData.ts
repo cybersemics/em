@@ -7,7 +7,6 @@ import { State } from '../util/initialState'
 
 /** Deletes the value from the thoughtIndex. */
 const deleteData = (state: State, { value, forceRender }: { value: string; forceRender?: boolean }) => {
-
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const thought = getThought(state, value)
   delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
@@ -18,15 +17,15 @@ const deleteData = (state: State, { value, forceRender }: { value: string; force
   const contextIndex = { ...state.thoughts.contextIndex }
   if (thought && thought.contexts && thought.contexts.length > 0) {
     thought.contexts.forEach(parent => {
-
       if (!parent || !parent.context) {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.stringify(parent)}`)
         return state
       }
 
       const contextEncoded = hashContext(parent.context)
-      const childrenNew = getAllChildren(state, parent.context)
-        .filter(child => hashThought(child.value) !== hashThought(value))
+      const childrenNew = getAllChildren(state, parent.context).filter(
+        child => hashThought(child.value) !== hashThought(value),
+      )
 
       // delete the entry if there are no more children
       if (childrenNew.length === 0) {
@@ -45,7 +44,7 @@ const deleteData = (state: State, { value, forceRender }: { value: string; force
   }
 
   return {
-    ...forceRender ? render(state) : state,
+    ...(forceRender ? render(state) : state),
     thoughtIndex,
     contextIndex,
     lastUpdated: timestamp(),

@@ -7,18 +7,10 @@ import helpers from '../helpers'
 describe('cursor testing', () => {
   jest.setTimeout(20000)
 
-  const {
-    paste,
-    getEditingText,
-    refresh,
-    waitForEditable,
-    waitForThoughtExistInDb,
-    waitForState,
-    clickThought,
-  } = helpers()
+  const { paste, getEditingText, refresh, waitForEditable, waitForThoughtExistInDb, waitForState, clickThought } =
+    helpers()
 
   it('cursor on a home thought', async () => {
-
     const importText = `
     - A
     - B`
@@ -37,7 +29,6 @@ describe('cursor testing', () => {
   })
 
   it('cursor on a subthought', async () => {
-
     const importText = `
     - A
       - X

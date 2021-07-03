@@ -9,7 +9,7 @@ const joinThoughts: Shortcut = {
   canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState) => {
     dispatch(join())
-  }
+  },
 }
 
 export default joinThoughts

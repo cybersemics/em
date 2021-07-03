@@ -14,11 +14,11 @@ const getDescendants = (state: State, simplePath: SimplePath, { recur, filterFun
   const context = pathToContext(simplePath)
   const children = getChildrenRanked(state, context)
   const filteredChildren = filterFunction
-    ? children.filter((child) => filterFunction(child, context, simplePath))
+    ? children.filter(child => filterFunction(child, context, simplePath))
     : children
   // only append current thought in recursive calls
   return (recur ? [head(simplePath)] : []).concat(
-    _.flatMap(filteredChildren, (child) =>
+    _.flatMap(filteredChildren, child =>
       getDescendants(state, unroot([...simplePath, child] as SimplePath), {
         recur: true,
         filterFunction,

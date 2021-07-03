@@ -4,7 +4,18 @@ import { decodeThoughtsUrl, expandThoughts, getThought } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
-import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtsInterface } from '../types'
+import {
+  Child,
+  Context,
+  ContextHash,
+  Index,
+  Lexeme,
+  Parent,
+  Path,
+  SimplePath,
+  ThoughtHash,
+  ThoughtsInterface,
+} from '../types'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>
@@ -29,8 +40,22 @@ const rootEncoded = hashContext([HOME_TOKEN])
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, pendingDeletes, pendingEdits, descendantMoves, pendingPulls, local = true, remote = true, isLoading }: UpdateThoughtsOptions) => {
-
+const updateThoughts = (
+  state: State,
+  {
+    thoughtIndexUpdates,
+    contextIndexUpdates,
+    recentlyEdited,
+    updates,
+    pendingDeletes,
+    pendingEdits,
+    descendantMoves,
+    pendingPulls,
+    local = true,
+    remote = true,
+    isLoading,
+  }: UpdateThoughtsOptions,
+) => {
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
@@ -39,12 +64,20 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
   const thoughtCacheAppended = [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)] as ThoughtHash[]
   const contextCacheNumInvalid = Math.max(0, contextCacheAppended.length - CONTEXT_CACHE_SIZE)
   const thoughtCacheNumInvalid = Math.max(0, thoughtCacheAppended.length - THOUGHT_CACHE_SIZE)
-  const contextCacheUnique = contextCacheNumInvalid === 0 ? null : _.uniq(contextCacheAppended) as ContextHash[]
-  const thoughtCacheUnique = thoughtCacheNumInvalid === 0 ? null : _.uniq(thoughtCacheAppended) as ThoughtHash[]
-  const contextCache = contextCacheNumInvalid === 0 ? contextCacheAppended : contextCacheUnique!.slice(contextCacheNumInvalid) as ContextHash[]
-  const thoughtCache = thoughtCacheNumInvalid === 0 ? thoughtCacheAppended : thoughtCacheUnique!.slice(thoughtCacheNumInvalid) as ThoughtHash[]
-  const contextCacheInvalidated = contextCacheNumInvalid === 0 ? [] : contextCacheUnique!.slice(0, contextCacheNumInvalid) as ContextHash[]
-  const thoughtCacheInvalidated = thoughtCacheNumInvalid === 0 ? [] : thoughtCacheUnique!.slice(0, thoughtCacheNumInvalid) as ThoughtHash[]
+  const contextCacheUnique = contextCacheNumInvalid === 0 ? null : (_.uniq(contextCacheAppended) as ContextHash[])
+  const thoughtCacheUnique = thoughtCacheNumInvalid === 0 ? null : (_.uniq(thoughtCacheAppended) as ThoughtHash[])
+  const contextCache =
+    contextCacheNumInvalid === 0
+      ? contextCacheAppended
+      : (contextCacheUnique!.slice(contextCacheNumInvalid) as ContextHash[])
+  const thoughtCache =
+    thoughtCacheNumInvalid === 0
+      ? thoughtCacheAppended
+      : (thoughtCacheUnique!.slice(thoughtCacheNumInvalid) as ThoughtHash[])
+  const contextCacheInvalidated =
+    contextCacheNumInvalid === 0 ? [] : (contextCacheUnique!.slice(0, contextCacheNumInvalid) as ContextHash[])
+  const thoughtCacheInvalidated =
+    thoughtCacheNumInvalid === 0 ? [] : (thoughtCacheUnique!.slice(0, thoughtCacheNumInvalid) as ThoughtHash[])
 
   contextCacheInvalidated.forEach(key => {
     if (!getWhitelistedThoughts().contextIndex[key]) {
@@ -68,7 +101,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     const lexemeInState = state.thoughts.thoughtIndex[thoughtId]
     return {
       ...acc,
-      ...lexemeInState ? {} : { [thoughtId]: true }
+      ...(lexemeInState ? {} : { [thoughtId]: true }),
     }
   }, {})
 
@@ -98,12 +131,14 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   /** Returns true if the root is no longer pending or the contextIndex has at least one non-EM thought. */
   const cursorParent = thoughts.contextIndex[rootEncoded] as Parent | null
-  const thoughtsLoaded = !cursorParent?.pending ||
-    Object.keys(thoughts.contextIndex).some(key => key !== rootEncoded && thoughts.contextIndex[key].context[0] !== EM_TOKEN)
+  const thoughtsLoaded =
+    !cursorParent?.pending ||
+    Object.keys(thoughts.contextIndex).some(
+      key => key !== rootEncoded && thoughts.contextIndex[key].context[0] !== EM_TOKEN,
+    )
   const stillLoading = state.isLoading ? isLoading ?? !thoughtsLoaded : false
 
   return reducerFlow([
-
     // update recentlyEdited, pushQueue, and thoughts
     state => ({
       ...state,
@@ -112,35 +147,36 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
       isLoading: stillLoading,
       recentlyEdited: recentlyEditedNew,
       // only push the batch to the pushQueue if syncing at least local or remote
-      ...batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null,
+      ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
       thoughts,
     }),
 
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
     !state.cursorInitialized
       ? state => {
-        const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
-        const cursorNew = !path || isRoot(path) ? null : path
-        const isCursorLoaded = cursorNew?.every(child => getThought(state, child.value))
+          const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
+          const cursorNew = !path || isRoot(path) ? null : path
+          const isCursorLoaded = cursorNew?.every(child => getThought(state, child.value))
 
-        return isCursorLoaded || !cursorNew ? {
-          ...state,
-          contextViews,
-          cursor: cursorNew,
-          cursorInitialized: true,
-        } : {
-          ...state,
-          cursor: cursorNew
+          return isCursorLoaded || !cursorNew
+            ? {
+                ...state,
+                contextViews,
+                cursor: cursorNew,
+                cursorInitialized: true,
+              }
+            : {
+                ...state,
+                cursor: cursorNew,
+              }
         }
-      }
       : null,
 
     // calculate expanded using fresh thoughts and cursor
     state => ({
       ...state,
       expanded: expandThoughts(state, state.cursor),
-    })
-
+    }),
   ])(state)
 }
 

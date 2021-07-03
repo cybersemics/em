@@ -11,7 +11,7 @@ import { DragAndDropContext } from './DragAndDropContext'
 /**
  * App.
  */
-export const App = () =>
+export const App = () => (
   <DragAndDropContext>
     <Provider store={store}>
       <ErrorBoundaryContainer>
@@ -21,3 +21,4 @@ export const App = () =>
       </ErrorBoundaryContainer>
     </Provider>
   </DragAndDropContext>
+)

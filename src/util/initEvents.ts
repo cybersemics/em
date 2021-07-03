@@ -18,13 +18,11 @@ declare global {
 
 /** Add window event handlers. */
 export const initEvents = (store: Store<State, any>) => {
-
   let lastState: number // eslint-disable-line fp/no-let
   let lastPath: Path | null // eslint-disable-line fp/no-let
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
-
     const state = store.getState()
 
     const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
@@ -51,25 +49,19 @@ export const initEvents = (store: Store<State, any>) => {
     const cursor = toRoot ? null : path
 
     store.dispatch([
-
       // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
       setCursor({ path: cursor, replaceContextViews: contextViews }),
 
       // scroll cursor into view
       scrollCursorIntoView(),
-
     ])
-
   }
 
   /** MouseMove event listener. */
-  const onMouseMove = _.debounce(() =>
-    store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true }
-  )
+  const onMouseMove = _.debounce(() => store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true })
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
-
     const shouldConfirmReload = store.getState().isPushing
 
     if (shouldConfirmReload) {
@@ -103,7 +95,7 @@ export const initEvents = (store: Store<State, any>) => {
   }
 
   // store input handlers so they can be removed on cleanup
-  const { keyDown, keyUp } = window.__inputHandlers = inputHandlers(store)
+  const { keyDown, keyUp } = (window.__inputHandlers = inputHandlers(store))
 
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'

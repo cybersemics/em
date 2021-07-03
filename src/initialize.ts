@@ -13,17 +13,15 @@ import _ from 'lodash'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
-
   // load local state unless loading a public context or source url
   await initDB()
   const src = urlDataSource()
-  const thoughtsLocalPromise = owner() === '~'
-    // authenticated or offline user
-    ? store.dispatch(src
-      ? loadFromUrl(src)
-      : loadLocalState())
-    // other user context
-    : Promise.resolve()
+  const thoughtsLocalPromise =
+    owner() === '~'
+      ? // authenticated or offline user
+        store.dispatch(src ? loadFromUrl(src) : loadLocalState())
+      : // other user context
+        Promise.resolve()
 
   // load =preload sources
   thoughtsLocalPromise.then(() => {
@@ -41,16 +39,19 @@ export const initialize = async () => {
     thoughtsLocalPromise,
     ...initEvents(store),
   }
-
 }
 
 /** Partially apply state to a function. */
-const withState = <T, R>(f: (state: State, ...args: T[]) => R) =>
-  (...args: T[]) => f(store.getState(), ...args)
+const withState =
+  <T, R>(f: (state: State, ...args: T[]) => R) =>
+  (...args: T[]) =>
+    f(store.getState(), ...args)
 
 /** Partially dispatches an action to the store. */
-const withDispatch = <T extends any[], R extends Thunk>(f: (...args: T) => R) =>
-  (...args: T) => store.dispatch(f(...args))
+const withDispatch =
+  <T extends any[], R extends Thunk>(f: (...args: T) => R) =>
+  (...args: T) =>
+    store.dispatch(f(...args))
 
 const testHelpers = {
   setSelection,
@@ -59,7 +60,7 @@ const testHelpers = {
   getState: store.getState,
   subscribe: store.subscribe,
   _: _,
-  clearAll: db.clearAll
+  clearAll: db.clearAll,
 }
 
 // add em object to window for debugging
@@ -76,7 +77,7 @@ const windowEm = {
   hashContext,
   hashThought,
   isPending: withState(isPending),
-  checkDataIntegrity: withState(checkDataIntegrity)
+  checkDataIntegrity: withState(checkDataIntegrity),
 }
 
 window.em = windowEm

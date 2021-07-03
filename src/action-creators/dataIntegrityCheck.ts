@@ -37,160 +37,173 @@ const recreateMissingThoughtContexts = true
 const syncDivergentRanks = true
 
 /** Performs a data integrity check and is able to fix minor problems with thoughtIndex and contextIndex being out of sync. */
-const dataIntegrityCheck = (path: Path): Thunk => (dispatch, getState) => {
+const dataIntegrityCheck =
+  (path: Path): Thunk =>
+  (dispatch, getState) => {
+    if (disableAll) return
 
-  if (disableAll) return
+    const state = getState()
 
-  const state = getState()
+    if (getSetting(state, 'Data Integrity Check') !== 'On' || !path) return
 
-  if (getSetting(state, 'Data Integrity Check') !== 'On' || !path) return
+    // do not perform Data Integrity Check within context view otherwise chaos will ensue
+    if (splitChain(state, path).length > 1) return
 
-  // do not perform Data Integrity Check within context view otherwise chaos will ensue
-  if (splitChain(state, path).length > 1) return
+    const contextIndex = state.thoughts.contextIndex ?? {}
+    const thoughtRanked = head(path)
+    const value = headValue(path)
+    const rank = headRank(path)
+    const context = pathToContext(path)
+    const encoded = hashContext(context)
+    const thought = getThought(state, value)
+    const pathContext = parentOf(context)
+    const simplePath = simplifyPath(state, path)
 
-  const contextIndex = state.thoughts.contextIndex ?? {}
-  const thoughtRanked = head(path)
-  const value = headValue(path)
-  const rank = headRank(path)
-  const context = pathToContext(path)
-  const encoded = hashContext(context)
-  const thought = getThought(state, value)
-  const pathContext = parentOf(context)
-  const simplePath = simplifyPath(state, path)
-
-  // delete duplicate thoughts in contextIndex
-  if (deleteDuplicateContextIndex) {
-    const parentEntry = contextIndex[encoded]
-    const children = (parentEntry || {}).children || []
-    const childrenUnique = _.uniqBy(children, child => child.value + '__SEP' + child.rank)
-    if (parentEntry && childrenUnique.length < children.length) {
-      console.warn('Deleting duplicate thoughts in contextIndex:', value)
-      dispatch({
-        type: 'updateThoughts',
-        contextIndexUpdates: {
-          [encoded]: {
-            context,
-            children: childrenUnique,
-            lastUpdated: parentEntry.lastUpdated,
-          }
-        },
-        forceRender: true
-      })
-
-      return
-    }
-  }
-
-  // recreate thoughts missing in thoughtIndex
-  if (recreateMissingThoughtIndex) {
-    const children = (contextIndex[encoded] || {}).children || []
-    for (const child of children) { // eslint-disable-line fp/no-loops,fp/no-let
-      const childExists = exists(state, child.value)
-      if (!childExists) {
-        console.warn('Recreating missing thought in thoughtIndex:', child.value)
+    // delete duplicate thoughts in contextIndex
+    if (deleteDuplicateContextIndex) {
+      const parentEntry = contextIndex[encoded]
+      const children = (parentEntry || {}).children || []
+      const childrenUnique = _.uniqBy(children, child => child.value + '__SEP' + child.rank)
+      if (parentEntry && childrenUnique.length < children.length) {
+        console.warn('Deleting duplicate thoughts in contextIndex:', value)
         dispatch({
-          type: 'createThought',
-          context,
-          // guard against undefined
-          rank: child.rank || 0,
-          value: child.value || ''
+          type: 'updateThoughts',
+          contextIndexUpdates: {
+            [encoded]: {
+              context,
+              children: childrenUnique,
+              lastUpdated: parentEntry.lastUpdated,
+            },
+          },
+          forceRender: true,
         })
+
         return
       }
     }
-  }
 
-  if (thought && thought.contexts) {
-
-    // recreate thoughts missing in thought.contexts
-    if (recreateMissingThoughtContexts) {
-      const matchingThoughtInContexts = thought.contexts.find(cx => cx.context && equalArrays(unroot(cx.context), pathContext))
-      if (!matchingThoughtInContexts) {
-        console.warn('Recreating missing thought in thought.contexts:', path)
-        dispatch({
-          type: 'createThought',
-          context: pathContext,
-          rank,
-          value,
-        })
-      }
-    }
-
-    // recreate thoughts missing in contextIndex
-    // const contextSubthoughts = getChildrenRanked(state, pathContext)
-    if (recreateMissingContextIndex) {
-      const contextIndexUpdates = thought.contexts.reduce((accum: any, cx: ThoughtContext) => {
-        const otherContextChildren = getAllChildren(state, cx.context)
-        const otherContextHasThought = otherContextChildren
-          .some(child => hashThought(child.value) === hashThought(thought.value) && child.rank === cx.rank)
-        const encoded = hashContext(cx.context)
-        const parentEntry = contextIndex[encoded]
-        const parentEntryAccum = accum[encoded]
-        const children = (parentEntryAccum && parentEntryAccum.children) ||
-          (parentEntry && parentEntry.children) ||
-          []
-        const contextIndexUpdatesNew = !otherContextHasThought ? {
-          [encoded]: {
-            context: cx.context,
-            children: [
-              ...children,
-              {
-                // guard against undefined
-                lastUpdated: cx.lastUpdated || timestamp(),
-                rank: cx.rank || 0,
-                value: thought.value || '',
-              }
-            ],
-            lastUpdated: timestamp(),
-          }
-        } : {}
-        return {
-          ...accum,
-          ...contextIndexUpdatesNew,
-        }
-      }, {})
-
-      if (Object.keys(contextIndexUpdates).length > 0) {
-        console.warn('Recreating missing thoughts in contextIndex:', contextIndexUpdates)
-        dispatch({
-          type: 'updateThoughts',
-          contextIndexUpdates,
-          forceRender: true
-        })
-      }
-      return
-    }
-
-    // sync divergent ranks
-    if (syncDivergentRanks) {
-      const contextIndexThoughtsMatchingValue = getChildrenRanked(state, rootedParentOf(state, pathToContext(simplePath)))
-        .filter(equalThoughtValue(value))
-
-      if (contextIndexThoughtsMatchingValue.length > 0) {
-        const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(child => equalThoughtRanked(thoughtRanked, child))
-        if (thoughtsMatchingValueAndRank.length === 0) {
-          const contextIndexRank = contextIndexThoughtsMatchingValue[0].rank
-          const thoughtEncoded = hashThought(value)
-
-          // change rank in thoughtIndex to that from contextIndex
-          console.warn('Syncing divergent ranks:', value)
+    // recreate thoughts missing in thoughtIndex
+    if (recreateMissingThoughtIndex) {
+      const children = (contextIndex[encoded] || {}).children || []
+      for (const child of children) {
+        // eslint-disable-line fp/no-loops,fp/no-let
+        const childExists = exists(state, child.value)
+        if (!childExists) {
+          console.warn('Recreating missing thought in thoughtIndex:', child.value)
           dispatch({
-            type: 'updateThoughts',
-            thoughtIndexUpdates: {
-              [thoughtEncoded]: {
-                ...thought,
-                contexts: thought.contexts.map(parent => equalArrays(unroot(parent.context), pathContext) ? {
-                  ...parent,
-                  rank: contextIndexRank
-                } : parent)
-              }
-            },
-            forceRender: true
+            type: 'createThought',
+            context,
+            // guard against undefined
+            rank: child.rank || 0,
+            value: child.value || '',
+          })
+          return
+        }
+      }
+    }
+
+    if (thought && thought.contexts) {
+      // recreate thoughts missing in thought.contexts
+      if (recreateMissingThoughtContexts) {
+        const matchingThoughtInContexts = thought.contexts.find(
+          cx => cx.context && equalArrays(unroot(cx.context), pathContext),
+        )
+        if (!matchingThoughtInContexts) {
+          console.warn('Recreating missing thought in thought.contexts:', path)
+          dispatch({
+            type: 'createThought',
+            context: pathContext,
+            rank,
+            value,
           })
         }
       }
+
+      // recreate thoughts missing in contextIndex
+      // const contextSubthoughts = getChildrenRanked(state, pathContext)
+      if (recreateMissingContextIndex) {
+        const contextIndexUpdates = thought.contexts.reduce((accum: any, cx: ThoughtContext) => {
+          const otherContextChildren = getAllChildren(state, cx.context)
+          const otherContextHasThought = otherContextChildren.some(
+            child => hashThought(child.value) === hashThought(thought.value) && child.rank === cx.rank,
+          )
+          const encoded = hashContext(cx.context)
+          const parentEntry = contextIndex[encoded]
+          const parentEntryAccum = accum[encoded]
+          const children =
+            (parentEntryAccum && parentEntryAccum.children) || (parentEntry && parentEntry.children) || []
+          const contextIndexUpdatesNew = !otherContextHasThought
+            ? {
+                [encoded]: {
+                  context: cx.context,
+                  children: [
+                    ...children,
+                    {
+                      // guard against undefined
+                      lastUpdated: cx.lastUpdated || timestamp(),
+                      rank: cx.rank || 0,
+                      value: thought.value || '',
+                    },
+                  ],
+                  lastUpdated: timestamp(),
+                },
+              }
+            : {}
+          return {
+            ...accum,
+            ...contextIndexUpdatesNew,
+          }
+        }, {})
+
+        if (Object.keys(contextIndexUpdates).length > 0) {
+          console.warn('Recreating missing thoughts in contextIndex:', contextIndexUpdates)
+          dispatch({
+            type: 'updateThoughts',
+            contextIndexUpdates,
+            forceRender: true,
+          })
+        }
+        return
+      }
+
+      // sync divergent ranks
+      if (syncDivergentRanks) {
+        const contextIndexThoughtsMatchingValue = getChildrenRanked(
+          state,
+          rootedParentOf(state, pathToContext(simplePath)),
+        ).filter(equalThoughtValue(value))
+
+        if (contextIndexThoughtsMatchingValue.length > 0) {
+          const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(child =>
+            equalThoughtRanked(thoughtRanked, child),
+          )
+          if (thoughtsMatchingValueAndRank.length === 0) {
+            const contextIndexRank = contextIndexThoughtsMatchingValue[0].rank
+            const thoughtEncoded = hashThought(value)
+
+            // change rank in thoughtIndex to that from contextIndex
+            console.warn('Syncing divergent ranks:', value)
+            dispatch({
+              type: 'updateThoughts',
+              thoughtIndexUpdates: {
+                [thoughtEncoded]: {
+                  ...thought,
+                  contexts: thought.contexts.map(parent =>
+                    equalArrays(unroot(parent.context), pathContext)
+                      ? {
+                          ...parent,
+                          rank: contextIndexRank,
+                        }
+                      : parent,
+                  ),
+                },
+              },
+              forceRender: true,
+            })
+          }
+        }
+      }
     }
   }
-}
 
 export default dataIntegrityCheck

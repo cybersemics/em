@@ -1,93 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-   <head>
-      <meta charset="UTF-8"/>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-      <title>Document</title>
-      <style type="text/css">
-         @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;1,100;1,200;1,300&display=swap');
-         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-         }
-
-         .main_table {
-            width: 100%;
-         }
-
-         .header {
-            background-color: black;
-            height: 65px;
-         }
-
-         .header_title {
-            color: white;
-            font-size: 25px;
-         }
-
-         .gap-1 {
-            height: 10px;
-         }
-
-         .gap-2 {
-            height: 25px;
-         }
-
-         .text-center {
-            text-align: center;
-         }
-
-         .bold {
-            font-weight: bold;
-         }
-
-         .user_name {
-            font-weight: 600;
-         }
-
-         .content-table {
-            width: 60%;
-         }
-
-         @media screen and (max-width:600px) {
-            .content-table {
-               width: 80%;
-            }
-            .header_title {
-               font-size: 20px;
-            }
-            .header {
-               height: 58px;
-            }
-         }
-      </style>
-   </head>
-   <body>
-      <table class="main_table">
-         <tr class="header">
-            <th class="header_title">em Feedback</th>
-         </tr>
-         <tr class="gap-2"></tr>
-         <tr class="gap-2"></tr>
-         <tr align="center">
-            <td>
-               <table class="content-table">
-                  <tr>
-                     <td class="bold">Feedback from
-                        {{name}}
-                        {{#if email}}
-                           &lt;{{email}}&gt;
-                        {{/if}}
-                  </td>
-                  </tr>
-                  <tr class="gap-1"></tr>
-                  <tr>
-                     <td>{{feedback}}</td>
-                  </tr>
-               </table>
-            </td>
-         </tr>
-      </table>
-   </body>
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Document</title>
+    <style type='text/css'>
+      @import
+      url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;1,100;1,200;1,300&display=swap'); body
+      { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; } .main_table { width: 100%; } .header {
+      background-color: black; height: 65px; } .header_title { color: white; font-size: 25px; } .gap-1 { height: 10px; }
+      .gap-2 { height: 25px; } .text-center { text-align: center; } .bold { font-weight: bold; } .user_name {
+      font-weight: 600; } .content-table { width: 60%; } @media screen and (max-width:600px) { .content-table { width:
+      80%; } .header_title { font-size: 20px; } .header { height: 58px; } }
+    </style>
+  </head>
+  <body>
+    <table class='main_table'>
+      <tr class='header'>
+        <th class='header_title'>em Feedback</th>
+      </tr>
+      <tr class='gap-2'></tr>
+      <tr class='gap-2'></tr>
+      <tr align='center'>
+        <td>
+          <table class='content-table'>
+            <tr>
+              <td class='bold'>Feedback from
+                {{name}}
+                {{#if email}}
+                  &lt;{{email}}&gt;
+                {{/if}}
+              </td>
+            </tr>
+            <tr class='gap-1'></tr>
+            <tr>
+              <td>{{feedback}}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>

@@ -21,7 +21,7 @@ const searchShortcut: Shortcut = {
     else {
       dispatch(restoreCursorBeforeSearch())
     }
-  }
+  },
 }
 
 export default searchShortcut

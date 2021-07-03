@@ -10,12 +10,7 @@ import subCategorizeOne from '../subCategorizeOne'
 import setCursor from '../setCursor'
 
 it('subcategorize a thought', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    subCategorizeOne,
-  ]
+  const steps = [newThought('a'), newSubthought('b'), subCategorizeOne]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -23,36 +18,24 @@ it('subcategorize a thought', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - ${''/* prevent trim_trailing_whitespace */}
+    - ${'' /* prevent trim_trailing_whitespace */}
       - b`)
-
 })
 
 it('subcategorize a thought in the root', () => {
-
-  const steps = [
-    newThought('a'),
-    subCategorizeOne,
-  ]
+  const steps = [newThought('a'), subCategorizeOne]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${''/* prevent trim_trailing_whitespace */}
+  - ${'' /* prevent trim_trailing_whitespace */}
     - a`)
-
 })
 
 it('subcategorize with no cursor should do nothing', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    setCursor({ path: null }),
-    subCategorizeOne,
-  ]
+  const steps = [newThought('a'), newSubthought('b'), setCursor({ path: null }), subCategorizeOne]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -61,27 +44,21 @@ it('subcategorize with no cursor should do nothing', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
-
 })
 
 it('set cursor on new empty thought', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    subCategorizeOne,
-  ]
+  const steps = [newThought('a'), newSubthought('b'), subCategorizeOne]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: '', rank: -1 },
+  ])
 })
 
 it('subcategorize within alphabteically sorted context', () => {
-
   const steps = [
     importText({
       text: `
@@ -91,12 +68,15 @@ it('subcategorize within alphabteically sorted context', () => {
         - D
         - B
         - C
-        - E`
+        - E`,
     }),
     setCursor({
-      path: [{ value: 'A', rank: 0 }, { value: 'E', rank: 4 }]
+      path: [
+        { value: 'A', rank: 0 },
+        { value: 'E', rank: 4 },
+      ],
     }),
-    subCategorizeOne
+    subCategorizeOne,
   ]
 
   // run steps through reducer flow
@@ -110,9 +90,8 @@ it('subcategorize within alphabteically sorted context', () => {
     - D
     - B
     - C
-    - ${''/* prevent trim_trailing_whitespace */}
+    - ${'' /* prevent trim_trailing_whitespace */}
       - E`)
-
 })
 
 // Duplicate test: moveThought - "move with duplicate descendant"

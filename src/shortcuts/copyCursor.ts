@@ -19,9 +19,7 @@ const copyCursorShortcut: Shortcut = {
   keyboard: { key: 'c', meta: true },
   canExecute: getState =>
     // do not copy cursor if there is a browser selection
-    !window.getSelection()?.toString() &&
-    !!getState().cursor &&
-    isDocumentEditable(),
+    !window.getSelection()?.toString() && !!getState().cursor && isDocumentEditable(),
   exec: async (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
@@ -37,7 +35,7 @@ const copyCursorShortcut: Shortcut = {
       filterFunction: (child, context) => {
         if (isPending(state, [...context, child.value])) hasPending = true
         return true
-      }
+      },
     })
     if (hasPending) {
       dispatch(alert('Loading thoughts...', { alertType: 'clipboard' }))
@@ -51,8 +49,13 @@ const copyCursorShortcut: Shortcut = {
     const el = editableNode(cursor!)
     setSelection(el!, { offset })
 
-    dispatch(alert(`Copied ${getExportPhrase(state, simplePath)} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 }))
-  }
+    dispatch(
+      alert(`Copied ${getExportPhrase(state, simplePath)} to the clipboard`, {
+        alertType: 'clipboard',
+        clearTimeout: 3000,
+      }),
+    )
+  },
 }
 
 export default copyCursorShortcut

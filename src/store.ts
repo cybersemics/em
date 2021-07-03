@@ -25,11 +25,8 @@ if (!appReducer) {
 
 export const store = createStore(
   appReducer,
-  composeEnhancers(applyMiddleware(
-    multi,
-    thunk,
-    pushQueue,
-    pullQueue,
-    updateUrlHistory
-  ), /* undoRedoReducerEnhancer, */ cursorChangedEnhancer)
+  composeEnhancers(
+    applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory),
+    /* undoRedoReducerEnhancer, */ cursorChangedEnhancer,
+  ),
 )

@@ -12,18 +12,21 @@ const outdent = (state: State) => {
   // Cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(parentOf(cursor)) || isRoot(parentOf(cursor))) {
     return alert(state, {
-      value: `Subthought of the "${isEM(parentOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`
+      value: `Subthought of the "${isEM(parentOf(cursor)) ? 'em' : 'home'} context" may not be de-indented.`,
     })
   }
   // cancel if parent is readonly or unextendable
   else if (hasChild(state, pathToContext(parentOf(cursor)), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be de-indented.`
+      value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(
+        cursor,
+      )}" may not be de-indented.`,
     })
-  }
-  else if (hasChild(state, pathToContext(parentOf(cursor)), '=unextendable')) {
+  } else if (hasChild(state, pathToContext(parentOf(cursor)), '=unextendable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be de-indented.`
+      value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(
+        cursor,
+      )}" may not be de-indented.`,
     })
   }
 
@@ -34,14 +37,14 @@ const outdent = (state: State) => {
     ...unroot(rootedParentOf(state, parentOf(cursor))),
     {
       ...head(cursor),
-      rank: getRankAfter(state, parentOf(simplifyPath(state, cursor)))
-    }
+      rank: getRankAfter(state, parentOf(simplifyPath(state, cursor))),
+    },
   ]
 
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
-    offset
+    offset,
   })
 }
 

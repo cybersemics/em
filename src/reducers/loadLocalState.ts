@@ -15,7 +15,6 @@ interface Options {
 /** Merges recentlyEdited and schemaVersion into state. */
 const loadLocalState = (state: State, { contextViews, cursor, lastUpdated, recentlyEdited, schemaVersion }: Options) =>
   reducerFlow([
-
     // update recentlyEdited and schemaVersion
     state => ({
       ...state,
@@ -24,14 +23,13 @@ const loadLocalState = (state: State, { contextViews, cursor, lastUpdated, recen
       lastUpdated: lastUpdated || state.lastUpdated,
       recentlyEdited: {
         ...state.recentlyEdited,
-        ...recentlyEdited
+        ...recentlyEdited,
       },
       schemaVersion: schemaVersion || state.schemaVersion,
     }),
 
     // re-render
     render,
-
   ])(state)
 
 export default _.curryRight(loadLocalState)

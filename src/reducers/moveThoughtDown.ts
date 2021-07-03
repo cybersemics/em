@@ -2,11 +2,19 @@ import { alert, moveThought } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
 import { parentOf, ellipsize, head, headRank, headValue, pathToContext } from '../util'
-import { getPrevRank, getRankAfter, getSortPreference, getThoughtAfter, hasChild, nextSibling, rootedParentOf, simplifyPath } from '../selectors'
+import {
+  getPrevRank,
+  getRankAfter,
+  getSortPreference,
+  getThoughtAfter,
+  hasChild,
+  nextSibling,
+  rootedParentOf,
+  simplifyPath,
+} from '../selectors'
 
 /** Swaps the thought with its next siblings. */
 const moveThoughtDown = (state: State) => {
-
   const { cursor } = state
 
   if (!cursor) return state
@@ -30,38 +38,35 @@ const moveThoughtDown = (state: State) => {
 
   if (isSorted && !nextUnclePath) {
     return alert(state, {
-      value: `Cannot move subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" while sort is enabled.`
+      value: `Cannot move subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" while sort is enabled.`,
     })
-  }
-  else if (hasChild(state, thoughts, '=readonly')) {
+  } else if (hasChild(state, thoughts, '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`
+      value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`,
     })
-  }
-  else if (hasChild(state, thoughts, '=immovable')) {
+  } else if (hasChild(state, thoughts, '=immovable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(cursor))}" is immovable.`
+      value: `"${ellipsize(headValue(cursor))}" is immovable.`,
     })
-  }
-  else if (hasChild(state, context, '=readonly')) {
+  } else if (hasChild(state, context, '=readonly')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are read-only and cannot be moved.`
+      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are read-only and cannot be moved.`,
     })
-  }
-  else if (hasChild(state, context, '=immovable')) {
+  } else if (hasChild(state, context, '=immovable')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are immovable.`
+      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are immovable.`,
     })
   }
 
   // store selection offset before moveThought is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const rankNew = nextThought && !isSorted
-    // next thought (unsorted)
-    ? getRankAfter(state, simplifyPath(state, pathParent).concat(nextThought) as SimplePath)
-    // first thought in next uncle
-    : getPrevRank(state, pathToContext(nextUnclePath!))
+  const rankNew =
+    nextThought && !isSorted
+      ? // next thought (unsorted)
+        getRankAfter(state, simplifyPath(state, pathParent).concat(nextThought) as SimplePath)
+      : // first thought in next uncle
+        getPrevRank(state, pathToContext(nextUnclePath!))
 
   const newPathParent = nextThought && !isSorted ? pathParent : nextUnclePath!
   const newPath = [
@@ -69,7 +74,7 @@ const moveThoughtDown = (state: State) => {
     {
       ...head(cursor),
       rank: rankNew,
-    }
+    },
   ]
 
   return moveThought(state, {

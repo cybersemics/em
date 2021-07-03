@@ -23,7 +23,9 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
 
   handleTestEvent(event, state) {
     if (event.name === 'test_fn_failure') {
-      this.global.browser.executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed","reason": "Failed"}}')
+      this.global.browser.executeScript(
+        'browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed","reason": "Failed"}}',
+      )
     }
   }
 
@@ -49,19 +51,17 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
         command: 'npm run servebuild',
         launchTimeout: 300000,
         debug: true,
-        port: 3000
+        port: 3000,
       })
     }
     try {
       await this.startBrowserStackLocal()
       // Note: this.global is not global to all test suites; it is sandboxed to a single test module, e.g. caret.ts
       this.global.browser = await wdio.remote(config)
-    }
-    catch (e) {
+    } catch (e) {
       console.error(e)
       throw e
     }
-
   }
 
   async teardown() {
@@ -69,8 +69,7 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
     await this.stopBrowserStackLocal()
     if (this.global.browser) {
       await this.global.browser.deleteSession()
-    }
-    else {
+    } else {
       console.warn('this.global.browser is undefined in teardown')
     }
     await teardownDevServer()
@@ -78,26 +77,30 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
   }
 
   startBrowserStackLocal() {
-    if (!config.capabilities['browserstack.localIdentifier'] || !config.capabilities['browserstack.localIdentifier'].startsWith('local')) {
+    if (
+      !config.capabilities['browserstack.localIdentifier'] ||
+      !config.capabilities['browserstack.localIdentifier'].startsWith('local')
+    ) {
       return
     }
 
     return new Promise((resolve, reject) => {
       console.info(chalk.yellow('BrowserstackLocal: Starting'))
       this.bsLocal = new browserstack.Local()
-      this.bsLocal.start({
-        localIdentifier: config.capabilities['browserstack.localIdentifier'],
-      }, e => {
-        if (e) {
-          reject(e)
-        }
-        else {
-          console.info(chalk.green('BrowserStackLocal: Running'))
-          resolve()
-        }
-      })
+      this.bsLocal.start(
+        {
+          localIdentifier: config.capabilities['browserstack.localIdentifier'],
+        },
+        e => {
+          if (e) {
+            reject(e)
+          } else {
+            console.info(chalk.green('BrowserStackLocal: Running'))
+            resolve()
+          }
+        },
+      )
     })
-
   }
 
   async stopBrowserStackLocal() {

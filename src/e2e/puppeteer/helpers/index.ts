@@ -26,7 +26,9 @@ import waitForThoughtExistInDb from './waitForThoughtExistInDb'
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
 /** Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting. */
-async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> { /** */ }
+async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> {
+  /** */
+}
 
 const helpers = {
   $,
@@ -52,7 +54,6 @@ const helpers = {
 
 /** Setup up the Page instance for all helpers and returns an index of test helpers with the Page instance partially applied. Passes arguments to the setup function. */
 const index = <T extends any[]>(...setupArgs: T) => {
-
   const pageRef = {} as { current?: Page }
   const index = partialWithRef(pageRef, helpers)
 

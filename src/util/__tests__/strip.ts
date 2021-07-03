@@ -17,8 +17,10 @@ it('tag with attribute', () => {
 })
 
 it('newlines', () => {
-  expect(strip(`<l
-  >b</li>five`)).toBe('bfive')
+  expect(
+    strip(`<l
+  >b</li>five`),
+  ).toBe('bfive')
 })
 
 it('preserve bold', () => {
@@ -38,11 +40,18 @@ it('preserve bold with value-less attribute', () => {
 })
 
 it('preserve bold with attribute', () => {
-  expect(strip('Hello <b style="color: red">red</b> world!', { preserveFormatting: true })).toBe('Hello <b>red</b> world!')
+  expect(strip('Hello <b style="color: red">red</b> world!', { preserveFormatting: true })).toBe(
+    'Hello <b>red</b> world!',
+  )
 })
 
 // This fails here, but succeeds on regex101.com (???)
 it.skip('preserve bold with newlines in attribute', () => {
-  expect(strip(`Hello <b
-  style="color: red">red</b> world!`, { preserveFormatting: true })).toBe('Hello <b>red</b> world!')
+  expect(
+    strip(
+      `Hello <b
+  style="color: red">red</b> world!`,
+      { preserveFormatting: true },
+    ),
+  ).toBe('Hello <b>red</b> world!')
 })

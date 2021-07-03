@@ -22,7 +22,7 @@ const moveCursorBackward: Shortcut = {
     const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
 
     dispatch(isTable ? cursorBack() : outdent())
-  }
+  },
 }
 
 export default moveCursorBackward

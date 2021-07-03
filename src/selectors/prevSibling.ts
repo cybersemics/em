@@ -1,4 +1,12 @@
-import { getContextsSortedAndRanked, getChildrenRanked, getChildrenSorted, isChildVisible, isContextViewActive, isAncestorsVisible, getSortPreference } from '../selectors'
+import {
+  getContextsSortedAndRanked,
+  getChildrenRanked,
+  getChildrenSorted,
+  isChildVisible,
+  isContextViewActive,
+  isAncestorsVisible,
+  getSortPreference,
+} from '../selectors'
 import { head } from '../util'
 import { State } from '../util/initialState'
 import { Child, Context, ThoughtContext } from '../types'
@@ -16,21 +24,21 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   const getContextSiblings = () => getContextsSortedAndRanked(state, head(context))
 
   /** Gets siblings of thought. */
-  const getThoughtSiblings = () => (getSortPreference(state, context).type === 'Alphabetical' ? getChildrenSorted : getChildrenRanked)(state, context)
+  const getThoughtSiblings = () =>
+    (getSortPreference(state, context).type === 'Alphabetical' ? getChildrenSorted : getChildrenRanked)(state, context)
 
-  const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings() as (Child | ThoughtContext)[]
+  const siblings = contextViewActive ? getContextSiblings() : (getThoughtSiblings() as (Child | ThoughtContext)[])
   let prev = null // eslint-disable-line fp/no-let
   siblings.find(child => {
     if (child.rank === rank && (contextViewActive || (child as Child).value === value)) {
       return true
-    }
-    else if (!(contextViewActive
-      ? isAncestorsVisible(state, (child as ThoughtContext).context)
-      : showHiddenThoughts || isChildVisible(state, context, child as Child))
+    } else if (
+      !(contextViewActive
+        ? isAncestorsVisible(state, (child as ThoughtContext).context)
+        : showHiddenThoughts || isChildVisible(state, context, child as Child))
     ) {
       return false
-    }
-    else {
+    } else {
       prev = child
       return false
     }
@@ -38,12 +46,12 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   // redeclare prev to convince typescript that the type changed after `siblings.find`
   // otherwise it assumes that `find` has no side effect`
   const prevChild = prev as ThoughtContext | Child | null
-  return prevChild && {
-    ...prevChild,
-    value: contextViewActive
-      ? head((prevChild as ThoughtContext).context)
-      : (prevChild as Child).value,
-  }
+  return (
+    prevChild && {
+      ...prevChild,
+      value: contextViewActive ? head((prevChild as ThoughtContext).context) : (prevChild as Child).value,
+    }
+  )
 }
 
 export default prevSibling

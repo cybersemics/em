@@ -14,7 +14,6 @@ beforeEach(async () => {
 afterEach(cleanupTestApp)
 
 it('convert "---" to divider', async () => {
-
   // create thought
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
@@ -29,11 +28,9 @@ it('convert "---" to divider', async () => {
 
   const divider = wrapper.find('Divider')
   expect(divider).toHaveLength(1)
-
 })
 
 it('convert "–-" (emdash + dash) to divider', async () => {
-
   // create thought
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
@@ -48,11 +45,9 @@ it('convert "–-" (emdash + dash) to divider', async () => {
 
   const divider = wrapper.find('Divider')
   expect(divider).toHaveLength(1)
-
 })
 
 it('do not convert "-" to divider', async () => {
-
   // create thought
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
@@ -73,11 +68,9 @@ it('do not convert "-" to divider', async () => {
   wrapper.update()
   const aEditable = wrapper.find('div.editable')
   expect(aEditable.at(0).text()).toBe('-')
-
 })
 
 it('do not convert "—" (emdash) to divider', async () => {
-
   // create thought
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
@@ -98,5 +91,4 @@ it('do not convert "—" (emdash) to divider', async () => {
   wrapper.update()
   const aEditable = wrapper.find('div.editable')
   expect(aEditable.at(0).text()).toBe('—')
-
 })

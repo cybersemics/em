@@ -9,8 +9,9 @@ const resolve = (state: State, simplePath: SimplePath) =>
   resolveArray([resolvePath(state.cursor), resolvePath(simplePath)])
 
 /** Swaps the head of a path with the cursor head. */
-const getEditingPath = _.memoize((state: State, simplePath: SimplePath) =>
-  [...parentOf(simplePath), head(state.cursor!)] as SimplePath
-, resolve)
+const getEditingPath = _.memoize(
+  (state: State, simplePath: SimplePath) => [...parentOf(simplePath), head(state.cursor!)] as SimplePath,
+  resolve,
+)
 
 export default getEditingPath

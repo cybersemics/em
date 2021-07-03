@@ -28,20 +28,20 @@ jobs:
         with:
           node-version: 14
 
-      - name: "BrowserStack Env Setup"
-        uses: "browserstack/github-actions/setup-env@master"
+      - name: 'BrowserStack Env Setup'
+        uses: 'browserstack/github-actions/setup-env@master'
         with:
           username: ${{secrets.BROWSERSTACK_USERNAME}}
           access-key: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
-          build-name: "BUILD_INFO"
-          project-name: "REPO_NAME"
+          build-name: 'BUILD_INFO'
+          project-name: 'REPO_NAME'
 
-      - name: "Start BrowserStackLocal Tunnel"
-        uses: "browserstack/github-actions/setup-local@master"
+      - name: 'Start BrowserStackLocal Tunnel'
+        uses: 'browserstack/github-actions/setup-local@master'
         with:
-          local-testing: "start"
-          local-logging-level: "all-logs"
-          local-identifier: "random"
+          local-testing: 'start'
+          local-logging-level: 'all-logs'
+          local-identifier: 'random'
 
       - name: Install npm dependencies
         run: yarn
@@ -52,7 +52,7 @@ jobs:
       - name: Test iOS on BrowserStack
         run: yarn test:ios
 
-      - name: "Stop BrowserStackLocal"
-        uses: "browserstack/github-actions/setup-local@master"
+      - name: 'Stop BrowserStackLocal'
+        uses: 'browserstack/github-actions/setup-local@master'
         with:
-          local-testing: "stop"
+          local-testing: 'stop'

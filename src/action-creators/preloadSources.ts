@@ -5,7 +5,6 @@ import { Thunk } from '../types'
 
 /** Fetch and import all =src attributes with =preload. */
 const preloadSources = (): Thunk => (dispatch, getState) => {
-
   const state = getState()
 
   // get a list of all =src contexts with =preload converted to paths

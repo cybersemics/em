@@ -22,16 +22,18 @@ import { Alert } from 'react-native'
 } */
 
 /** Ascending Icon Component. */
-const IconAsc = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size} height={size} viewBox='0 0 24 24'>
-  <G translateY={4}>
-    <Polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
-    <Rect x='10' y='16' width='11' height='2' />
-    <Rect x='10' y='12' width='9' height='2' />
-    <Rect x='10' y='8' width='7' height='2' />
-    <Rect x='10' y='4' width='5' height='2' />
-    <Rect x='10' y='0' width='3' height='2' />
-  </G>
-</Svg>
+const IconAsc = ({ size = 20, fill }: IconType) => (
+  <Svg fill={fill} width={size} height={size} viewBox='0 0 24 24'>
+    <G translateY={4}>
+      <Polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
+      <Rect x='10' y='16' width='11' height='2' />
+      <Rect x='10' y='12' width='9' height='2' />
+      <Rect x='10' y='8' width='7' height='2' />
+      <Rect x='10' y='4' width='5' height='2' />
+      <Rect x='10' y='0' width='3' height='2' />
+    </G>
+  </Svg>
+)
 
 /** Descending Icon Component. */
 // const IconDesc = ({ size = 20, fill }: IconType) => <Svg fill={fill} width={size} height={size} viewBox='0 0 24 24'>
@@ -79,7 +81,7 @@ const toggleSortShortcut: Shortcut = {
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', meta: true, alt: true },
   svg: IconAsc,
-  exec: () => Alert.alert('toggleSortShortcut')
+  exec: () => Alert.alert('toggleSortShortcut'),
   // exec: (dispatch, getState) => {
   //   const state = getState()
   //   const { cursor } = state

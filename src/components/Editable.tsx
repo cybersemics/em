@@ -1,10 +1,23 @@
 import _ from 'lodash'
-import React, { useEffect, useRef, useState , FocusEventHandler } from 'react'
+import React, { useEffect, useRef, useState, FocusEventHandler } from 'react'
 import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { unescape } from 'html-escaper'
 import classNames from 'classnames'
-import { alert, cursorBack, editing, error, editThought, importText, render, setCursor, setEditingValue, setInvalidState, tutorialNext, newThought } from '../action-creators'
+import {
+  alert,
+  cursorBack,
+  editing,
+  error,
+  editThought,
+  importText,
+  render,
+  setCursor,
+  setEditingValue,
+  setInvalidState,
+  tutorialNext,
+  newThought,
+} from '../action-creators'
 import { isTouch, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
@@ -136,7 +149,9 @@ const duplicateAlertToggler = () => {
   return (show: boolean, dispatch: Dispatch<Alert>) => {
     if (show) {
       timeoutId = window.setTimeout(() => {
-        dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }))
+        dispatch(
+          alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }),
+        )
         timeoutId = undefined
       }, 2000)
       return
@@ -165,19 +180,32 @@ let blurring = false
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showContexts, rank, style, onKeyDownAction, dispatch, transient }: Connected<EditableProps>) => {
+const Editable = ({
+  disabled,
+  isEditing,
+  simplePath,
+  path,
+  cursorOffset,
+  showContexts,
+  rank,
+  style,
+  onKeyDownAction,
+  dispatch,
+  transient,
+}: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
-  const context = showContexts && thoughts.length > 2 ? parentOf(parentOf(thoughts))
-    : !showContexts && thoughts.length > 1 ? parentOf(thoughts)
-    : state.rootContext
+  const context =
+    showContexts && thoughts.length > 2
+      ? parentOf(parentOf(thoughts))
+      : !showContexts && thoughts.length > 1
+      ? parentOf(thoughts)
+      : state.rootContext
   const childrenOptions = getAllChildren(state, [...context, '=options'])
-  const options = childrenOptions.length > 0 ?
-    childrenOptions.map(child => child.value.toLowerCase())
-    : null
+  const options = childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -224,7 +252,6 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   /** Set the cursor on the thought. */
   const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
-
     const { cursor, editing: editingMode } = store.getState() // use fresh state
 
     // do not set cursor if it is unchanged and we are not entering edit mode
@@ -232,19 +259,19 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     const isEditing = equalPath(cursor, path)
 
-    const pathLive = cursor && isEditing
-      ? parentOf(path).concat(head(showContexts ? parentOf(cursor) : cursor))
-      : path
+    const pathLive = cursor && isEditing ? parentOf(path).concat(head(showContexts ? parentOf(cursor) : cursor)) : path
 
-    dispatch(setCursor({
-      cursorHistoryClear: true,
-      editing,
-      // set offset to null to prevent setSelection on next render
-      // to use the existing offset after a user clicks or touches the screent
-      // when cursor is changed through another method, such as cursorDown, offset will be reset
-      offset: null,
-      path: pathLive,
-    }))
+    dispatch(
+      setCursor({
+        cursorHistoryClear: true,
+        editing,
+        // set offset to null to prevent setSelection on next render
+        // to use the existing offset after a user clicks or touches the screent
+        // when cursor is changed through another method, such as cursorDown, offset will be reset
+        offset: null,
+        path: pathLive,
+      }),
+    )
   }
 
   /**
@@ -252,7 +279,15 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (newValue: string, { context, showContexts, rank, simplePath }: { context: Context; showContexts?: boolean; rank: number; simplePath: Path }) => {
+  const thoughtChangeHandler = (
+    newValue: string,
+    {
+      context,
+      showContexts,
+      rank,
+      simplePath,
+    }: { context: Context; showContexts?: boolean; rank: number; simplePath: Path },
+  ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
 
@@ -264,23 +299,26 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const thought = getThought(state, oldValue)
 
     if (transient) {
-      dispatch(newThought({
-        at: rootedParentOf(state, path),
-        value: newValue,
-      }))
+      dispatch(
+        newThought({
+          at: rootedParentOf(state, path),
+          value: newValue,
+        }),
+      )
       return
     }
 
     if (thought) {
-
-      dispatch(editThought({
-        context,
-        showContexts,
-        oldValue,
-        newValue,
-        rankInContext: rank,
-        path: simplePath as SimplePath
-      }))
+      dispatch(
+        editThought({
+          context,
+          showContexts,
+          oldValue,
+          newValue,
+          rankInContext: rank,
+          path: simplePath as SimplePath,
+        }),
+      )
 
       // rerender so that triple dash is converted into divider
       // otherwise nothing would be rerendered because the thought is still being edited
@@ -296,21 +334,16 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
       const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
       const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
-      if (newValue && (
-        (
-          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
-        ) || (
-          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()
-        ) || (
-          (
-            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
-            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2
-          ) &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
-        )
-      )) {
+      if (
+        newValue &&
+        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+          (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+          ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
+            newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()))
+      ) {
         dispatch(tutorialNext({}))
       }
     }
@@ -363,15 +396,16 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     //   })
     // }
     // allow transient editable to have focus on render
-    if (transient || (
-      isEditing &&
-      editMode &&
-      !noteFocus &&
-      contentRef.current &&
-      (cursorWithoutSelection || isAtBeginning) &&
-      !dragHold &&
-      !isTapped
-    )) {
+    if (
+      transient ||
+      (isEditing &&
+        editMode &&
+        !noteFocus &&
+        contentRef.current &&
+        (cursorWithoutSelection || isAtBeginning) &&
+        !dragHold &&
+        !isTapped)
+    ) {
       /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
         On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).
@@ -382,8 +416,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         // asyncFocus needs to be throttled otherwise it causes an infinite loop (#908).
         asyncFocusThrottled()
         setTimeout(setSelectionToCursorOffset)
-      }
-      else {
+      } else {
         setSelectionToCursorOffset()
       }
     }
@@ -406,7 +439,6 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = (e: ContentEditableEvent) => {
-
     // make sure to get updated state
     const state = store.getState()
 
@@ -441,7 +473,9 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     const normalizedNewValue = normalizeThought(newValue)
 
-    const hasDuplicate = newValue !== '' && thoughtsInContext.some(thought => rank !== thought.rank && normalizeThought(thought.value) === normalizedNewValue)
+    const hasDuplicate =
+      newValue !== '' &&
+      thoughtsInContext.some(thought => rank !== thought.rank && normalizeThought(thought.value) === normalizedNewValue)
     if (hasDuplicate) {
       showDuplicationAlert(true, dispatch)
       throttledChangeRef.current.cancel() // see above
@@ -449,8 +483,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
         contentRef.current.style.opacity = '0.5'
       }
       return
-    }
-    else {
+    } else {
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
@@ -461,13 +494,11 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
       throttledChangeRef.current.cancel() // see above
       return
-    }
-    else if (uneditable) {
+    } else if (uneditable) {
       dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
       throttledChangeRef.current.cancel() // see above
       return
-    }
-    else if (options && !options.includes(newValue.toLowerCase())) {
+    } else if (options && !options.includes(newValue.toLowerCase())) {
       invalidStateError(newValue)
       throttledChangeRef.current.cancel() // see above
       return
@@ -476,7 +507,8 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const newNumContext = getContexts(state, newValue).length
     const isNewValueURL = isURL(newValue)
 
-    const contextLengthChange = newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
+    const contextLengthChange =
+      newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
     const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
 
     const isEmpty = newValue.length === 0
@@ -492,13 +524,11 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
       thoughtChangeHandler(newValue, { context, showContexts, rank, simplePath })
-    }
-    else throttledChangeRef.current(newValue, { context, showContexts, rank, simplePath })
+    } else throttledChangeRef.current(newValue, { context, showContexts, rank, simplePath })
   }
 
   /** Imports text that is pasted onto the thought. */
   const onPaste = (e: React.ClipboardEvent) => {
-
     const plainText = e.clipboardData.getData('text/plain')
     const htmlText = e.clipboardData.getData('text/html')
 
@@ -513,9 +543,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       // neither ref.current is set here nor can newValue be stored from onChange
       // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
       const { cursor } = store.getState()
-      const path = cursor && equalPath(cursor, simplePath)
-        ? cursor
-        : simplePath
+      const path = cursor && equalPath(cursor, simplePath) ? cursor : simplePath
 
       // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
       // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
@@ -523,19 +551,21 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
       // If transient first add new thought and then import the text
       if (transient) {
-        dispatch(newThought({
-          at: rootedParentOf(state, path),
-          value: '',
-        }))
+        dispatch(
+          newThought({
+            at: rootedParentOf(state, path),
+            value: '',
+          }),
+        )
       }
 
-      dispatch(importText({
-        path,
-        text: isHTML(plainText)
-          ? plainText
-          : htmlText || plainText,
-        rawDestValue,
-      }))
+      dispatch(
+        importText({
+          path,
+          text: isHTML(plainText) ? plainText : htmlText || plainText,
+          rawDestValue,
+        }),
+      )
 
       // TODO: When importText was converted to a reducer, it no longer reducers newValue
       // if (newValue) oldValueRef.current = newValue
@@ -543,8 +573,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
   }
 
   /** Flushes edits and updates certain state variables on blur. */
-  const onBlur: FocusEventHandler<HTMLElement> = (e) => {
-
+  const onBlur: FocusEventHandler<HTMLElement> = e => {
     blurring = true
 
     if (isTouch && isSafari()) {
@@ -570,14 +599,16 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
     // if we know that the focus is changing to another editable or note then do not set editing to false
 
-    const isRelatedTargetEditableOrNote = e.relatedTarget && ((e.relatedTarget as Element).classList.contains('editable') || (e.relatedTarget as Element).classList.contains('note-editable'))
-    
+    const isRelatedTargetEditableOrNote =
+      e.relatedTarget &&
+      ((e.relatedTarget as Element).classList.contains('editable') ||
+        (e.relatedTarget as Element).classList.contains('note-editable'))
+
     if (isRelatedTargetEditableOrNote) return
 
     // if related target is not editable wait until the next render to determine if we have really blurred
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
     setTimeout(() => {
-
       // only setEditingValue if blur is not immediately followed by focus
       if (blurring) {
         blurring = false
@@ -586,7 +617,10 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
 
       if (isTouch) {
         // Set editing value to false if user exit editing mode by tapping on other elements other than editable.
-        if (!window.getSelection()?.focusNode || !window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')) {
+        if (
+          !window.getSelection()?.focusNode ||
+          !window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')
+        ) {
           dispatch(editing({ value: false }))
         }
       }
@@ -598,7 +632,6 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = () => {
-
     // do not allow blur to setEditingValue when it is followed immediately by a focus
     blurring = false
 
@@ -614,7 +647,7 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
       setCursorOnThought({ editing: true })
       dispatch(setEditingValue(value))
     }
-  } 
+  }
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = (e: React.MouseEvent | React.TouchEvent) => {
@@ -630,20 +663,19 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
-    if (disabled ||
+    if (
+      disabled ||
       // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
       (!globals.touching && !state.dragInProgress && (!editingOrOnCursor || isHiddenByAutofocus))
     ) {
       e.preventDefault()
       if (isHiddenByAutofocus) {
         dispatch(cursorBack())
-      }
-      else {
+      } else {
         // prevent focus to allow navigation with mobile keyboard down
         setCursorOnThought()
       }
-    }
-    else {
+    } else {
       // We need to know that user clicked the editable to not set caret programmatically, because caret will be already set by browser. Issue: #981
       setIsTapped(true)
     }
@@ -656,38 +688,47 @@ const Editable = ({ disabled, isEditing, simplePath, path, cursorOffset, showCon
     if (e.key in MODIFIER_KEYS) return
     onKeyDownAction!()
   }
-  return <ContentEditable
-    disabled={disabled}
-    innerRef={contentRef}
-    className={classNames({
-      preventAutoscroll: true,
-      editable: true,
-      ['editable-' + hashContext(pathToContext(path), rank)]: true,
-      empty: value.length === 0
-    })}
-    forceUpdate={editableNonceRef.current !== state.editableNonce}
-    html={value === EM_TOKEN ? '<b>em</b>'
-    : isEditing ? value
-    : childrenLabel.length > 0
-      ? childrenLabel[0].value
-      : ellipsizeUrl(value)
-    }
-    placeholder={isTableColumn1 ? ''
-    : thought && Date.now() - new Date(thought.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT ? 'This is an empty thought'
-    : 'Add a thought'}
-    // stop propagation to prevent default content onClick (which removes the cursor)
-    onClick={stopPropagation}
-    onTouchEnd={onTap}
-    // must call onMouseDown on mobile since onTap cannot preventDefault
-    // otherwise gestures and scrolling can trigger cursorBack (#1054)
-    onMouseDown={onTap}
-    onFocus={onFocus}
-    onBlur={onBlur}
-    onChange={onChangeHandler}
-    onPaste={onPaste}
-    onKeyDown={onKeyDownAction ? onKeyDown : undefined}
-    style={style || {}}
-  />
+  return (
+    <ContentEditable
+      disabled={disabled}
+      innerRef={contentRef}
+      className={classNames({
+        preventAutoscroll: true,
+        editable: true,
+        ['editable-' + hashContext(pathToContext(path), rank)]: true,
+        empty: value.length === 0,
+      })}
+      forceUpdate={editableNonceRef.current !== state.editableNonce}
+      html={
+        value === EM_TOKEN
+          ? '<b>em</b>'
+          : isEditing
+          ? value
+          : childrenLabel.length > 0
+          ? childrenLabel[0].value
+          : ellipsizeUrl(value)
+      }
+      placeholder={
+        isTableColumn1
+          ? ''
+          : thought && Date.now() - new Date(thought.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
+          ? 'This is an empty thought'
+          : 'Add a thought'
+      }
+      // stop propagation to prevent default content onClick (which removes the cursor)
+      onClick={stopPropagation}
+      onTouchEnd={onTap}
+      // must call onMouseDown on mobile since onTap cannot preventDefault
+      // otherwise gestures and scrolling can trigger cursorBack (#1054)
+      onMouseDown={onTap}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      onChange={onChangeHandler}
+      onPaste={onPaste}
+      onKeyDown={onKeyDownAction ? onKeyDown : undefined}
+      style={style || {}}
+    />
+  )
 }
 
 export default connect()(Editable)

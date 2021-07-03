@@ -8,7 +8,7 @@ const puppeteer = require('puppeteer')
 
 /** Puppeteer Environment for jest. */
 class PuppeteerEnvironment extends JsDomEnvironment {
-  browser;
+  browser
   constructor(config) {
     super(config)
   }
@@ -22,7 +22,6 @@ class PuppeteerEnvironment extends JsDomEnvironment {
     this.global.browser = await puppeteer.launch({
       headless: true,
     })
-
   }
 
   async teardown() {

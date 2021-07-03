@@ -38,18 +38,19 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 }
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
-const Bullet = ({ showContexts, glyph, isLeaf, onClick, invalidOption, pending }: BulletProps & MapStateToProps) =>
-  <span className={classNames({
-    bullet: true,
-    graypulse: pending,
-    'show-contexts': showContexts,
-    'invalid-option': invalidOption
-  })}>
-
-    <span className='glyph' onClick={onClick}>{glyph || (showContexts
-      ? isLeaf ? '◦' : '▹'
-      : isLeaf ? '•' : '▸')
-    }</span>
+const Bullet = ({ showContexts, glyph, isLeaf, onClick, invalidOption, pending }: BulletProps & MapStateToProps) => (
+  <span
+    className={classNames({
+      bullet: true,
+      graypulse: pending,
+      'show-contexts': showContexts,
+      'invalid-option': invalidOption,
+    })}
+  >
+    <span className='glyph' onClick={onClick}>
+      {glyph || (showContexts ? (isLeaf ? '◦' : '▹') : isLeaf ? '•' : '▸')}
+    </span>
   </span>
+)
 
 export default connect(mapStateToProps)(Bullet)

@@ -6,21 +6,20 @@ import { Index } from '../types'
  * @param mergee       The object to merge which may have falsey values.
  */
 export const mergeUpdates = <T>(mergeInto: Index<T | null>, mergee: Index<T | null>): Index<T> => {
-
   // assume an optional pending property
   type pendingType = T & { pending: boolean }
 
   const mergeResult = { ...mergeInto }
 
-  for (const key in mergee) { // eslint-disable-line fp/no-loops
+  for (const key in mergee) {
+    // eslint-disable-line fp/no-loops
     const value = mergee[key] as pendingType
     if (value) {
       // ignore pending objects that would overwrite non-pending objects
       if (!value.pending || !mergeInto[key] || (mergeInto[key] as pendingType).pending) {
         mergeResult[key] = value
       }
-    }
-    else {
+    } else {
       delete mergeResult[key] // eslint-disable-line fp/no-delete
     }
   }

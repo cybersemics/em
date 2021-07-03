@@ -7,8 +7,8 @@ const config = {
     platformName: 'iOS',
     platformVersion: '14.5',
     deviceName: 'iPhone 12 Pro Max',
-    browserName: 'Safari'
-  }
+    browserName: 'Safari',
+  },
 }
 
 module.exports = config

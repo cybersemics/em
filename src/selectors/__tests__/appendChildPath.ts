@@ -8,7 +8,7 @@ it('get child resolved path', () => {
     { value: 'm', rank: 0 },
     { value: 'n', rank: 0 },
     { value: 'o', rank: 0 },
-    { value: 'p', rank: 0 }
+    { value: 'p', rank: 0 },
   ]
 
   const childSimplePath = [
@@ -25,7 +25,6 @@ it('get child resolved path', () => {
 })
 
 it('get child resolved path when parent has active context view', () => {
-
   const parentPath: Path = [
     { value: 'i', rank: 0 },
     { value: 'j', rank: 0 },
@@ -39,10 +38,7 @@ it('get child resolved path when parent has active context view', () => {
     { value: 'k', rank: 0 },
   ] as SimplePath
 
-  const steps = [
-    setCursor({ path: parentPath }),
-    toggleContextView
-  ]
+  const steps = [setCursor({ path: parentPath }), toggleContextView]
 
   const newState = reducerFlow(steps)(initialState())
 

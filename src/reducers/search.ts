@@ -5,7 +5,7 @@ import { State } from '../util/initialState'
 const search = (state: State, { value, archived }: { value: string | null; archived?: boolean }) => ({
   ...state,
   search: value,
-  archived
+  archived,
 })
 
 export default _.curryRight(search)

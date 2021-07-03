@@ -14,27 +14,26 @@ import { Child, Context, Index, Lexeme, Parent } from '../../src/types'
 // so we have to override array types
 // (we could also convert the Firebase State to a proper State instead)
 type FirebaseContext = Index<string>
-type FirebaseLexeme = { contexts: Index<FirebaseThoughtContext>, value: string }
-type FirebaseParent = { children: Index<Child>, context: FirebaseContext }
-type FirebaseThoughtContext = { id?: string, context: FirebaseContext, rank: number }
+type FirebaseLexeme = { contexts: Index<FirebaseThoughtContext>; value: string }
+type FirebaseParent = { children: Index<Child>; context: FirebaseContext }
+type FirebaseThoughtContext = { id?: string; context: FirebaseContext; rank: number }
 
 interface Database {
   users: Index<UserState>
 }
 
 interface UserState {
-  thoughtIndex: Index<FirebaseLexeme>,
-  contextIndex: Index<FirebaseParent>,
-  recentlyEdited: unknown,
+  thoughtIndex: Index<FirebaseLexeme>
+  contextIndex: Index<FirebaseParent>
+  recentlyEdited: unknown
 }
 
 interface Options {
-
   // runs without writing to disk
-  dry?: boolean,
+  dry?: boolean
 
   // prints additional information
-  verbose?: boolean,
+  verbose?: boolean
 }
 
 const userId = 'm9S244ovF7fVrwpAoqoWxcz08s52'
@@ -49,21 +48,19 @@ let limit = Infinity
 const salt = timestamp()
 
 /** Anonymizes a context. */
-const anonymizeContext = (context: FirebaseContext): string[] =>
-  Object.values(context || {}).map(anonymizeValue)
+const anonymizeContext = (context: FirebaseContext): string[] => Object.values(context || {}).map(anonymizeValue)
 
 /** Anonynmizes a string value. Ignores root. */
 const anonymizeValue = (value: string): string => {
-  const anon = value === HOME_TOKEN || value === EM_TOKEN
-    ? value
-    : value + '-' + murmurHash3.x64.hash128(salt + normalizeThought(value)).slice(0, 8)
+  const anon =
+    value === HOME_TOKEN || value === EM_TOKEN
+      ? value
+      : value + '-' + murmurHash3.x64.hash128(salt + normalizeThought(value)).slice(0, 8)
   return anon
 }
 
 const anonymize = {
-
   contextIndex: (contextIndex: Index<FirebaseParent>) => {
-
     const parentEntries = Object.entries(contextIndex)
     parentEntries.forEach(([id, parent]) => {
       if (limit-- <= 0) {
@@ -72,8 +69,7 @@ const anonymize = {
       }
 
       // context
-      const parentIsRoot = isRoot(Object.values(parent.context || {})) ||
-        isEM(Object.values(parent.context || {}))
+      const parentIsRoot = isRoot(Object.values(parent.context || {})) || isEM(Object.values(parent.context || {}))
       const contextNew = anonymizeContext(parent.context)
       parent.context = contextNew as unknown as FirebaseContext
 
@@ -92,13 +88,10 @@ const anonymize = {
         contextIndex[idNew] = parent
         delete contextIndex[id]
       }
-
     })
-
   },
 
   thoughtIndex: (thoughtIndex: Index<FirebaseLexeme>) => {
-
     const lexemeEntries = Object.entries(thoughtIndex)
     lexemeEntries.forEach(([id, lexeme]) => {
       if (limit-- <= 0) {
@@ -110,7 +103,7 @@ const anonymize = {
       lexeme.value = anonymizeValue(lexeme.value)
       lexeme.contexts = Object.values(lexeme.contexts || {}).map(cx => ({
         ...cx,
-        context: anonymizeContext(cx.context)
+        context: anonymizeContext(cx.context),
       })) as unknown as Index<FirebaseThoughtContext>
 
       // value hash
@@ -122,16 +115,12 @@ const anonymize = {
         thoughtIndex[idNew] = lexeme
         delete thoughtIndex[id]
       }
-
     })
-
   },
-
 }
 
 /** Anonymizes all thoughts and user information in user state. Preserves ranks, lastUpdated, and shape. */
 const anonymizeState = (state: UserState, options: Options = {}) => {
-
   anonymize.contextIndex(state.contextIndex)
   anonymize.thoughtIndex(state.thoughtIndex)
 
@@ -142,7 +131,6 @@ const anonymizeState = (state: UserState, options: Options = {}) => {
  * MAIN
  *****************************************************************/
 const main = () => {
-
   // validate
   if (process.argv.length < 3) {
     console.info(helpText)
@@ -150,16 +138,19 @@ const main = () => {
   }
 
   // parse args
-  const [,,fileIn] = process.argv
-  const options: Options = process.argv.slice(2).reduce<Index<boolean>>((accum, arg) => ({
-    ...accum,
-    ...arg.startsWith('--') ? { [arg.slice(2)]: true } : null,
-  }), {})
+  const [, , fileIn] = process.argv
+  const options: Options = process.argv.slice(2).reduce<Index<boolean>>(
+    (accum, arg) => ({
+      ...accum,
+      ...(arg.startsWith('--') ? { [arg.slice(2)]: true } : null),
+    }),
+    {},
+  )
 
   // read
   const input = fs.readFileSync(fileIn, 'utf-8')
   const db = JSON.parse(input) as Database | UserState
-  const state = (db as Database).users?.[userId] || db as UserState
+  const state = (db as Database).users?.[userId] || (db as UserState)
 
   const stateNew = anonymizeState(state, options)
 
@@ -173,13 +164,10 @@ const main = () => {
 
   if (options.dry) {
     console.log('Done')
-  }
-  else
-  {
+  } else {
     fs.writeFileSync(fileOut, JSON.stringify(stateNew, null, 2))
     console.log(`Output state written to: ${fileOut}`)
   }
-
 }
 
 main()

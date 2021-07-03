@@ -13,7 +13,7 @@ export const scaleFontUp = (): Thunk => (dispatch, getState) => {
 /** Decreates the font size. */
 export const scaleFontDown = (): Thunk => (dispatch, getState) => {
   const { fontSize } = getState()
-  if (fontSize > (MIN_FONT_SIZE + FONT_SCALE_INCREMENT)) {
+  if (fontSize > MIN_FONT_SIZE + FONT_SCALE_INCREMENT) {
     dispatch(setFontSize(Math.round((fontSize - FONT_SCALE_INCREMENT) * 10) / 10))
   }
 }

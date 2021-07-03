@@ -6,7 +6,6 @@ import { SimplePath } from '../../types'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 it('edit a thought', () => {
-
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
@@ -15,8 +14,8 @@ it('edit a thought', () => {
       newValue: 'aa',
       oldValue: 'a',
       context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }] as SimplePath
-    })
+      path: [{ value: 'a', rank: 0 }] as SimplePath,
+    }),
   ]
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -27,21 +26,21 @@ it('edit a thought', () => {
   - b`)
 
   // aa should exist in ROOT context
-  expect(getContexts(stateNew, 'aa'))
-    .toMatchObject([{
-      context: [HOME_TOKEN]
-    }])
-  expect(getAllChildren(stateNew, [HOME_TOKEN]))
-    .toMatchObject([{ value: 'b', rank: 1 }, { value: 'aa', rank: 0 }])
+  expect(getContexts(stateNew, 'aa')).toMatchObject([
+    {
+      context: [HOME_TOKEN],
+    },
+  ])
+  expect(getAllChildren(stateNew, [HOME_TOKEN])).toMatchObject([
+    { value: 'b', rank: 1 },
+    { value: 'aa', rank: 0 },
+  ])
 
   // cursor should be at /aa
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'aa', rank: 0 }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'aa', rank: 0 }])
 })
 
 it('edit a descendant', () => {
-
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
@@ -50,8 +49,11 @@ it('edit a descendant', () => {
       newValue: 'aa1',
       oldValue: 'a1',
       context: ['a'],
-      path: [{ value: 'a', rank: 1 }, { value: 'a1', rank: 0 }] as SimplePath
-    })
+      path: [
+        { value: 'a', rank: 1 },
+        { value: 'a1', rank: 0 },
+      ] as SimplePath,
+    }),
   ]
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -63,18 +65,16 @@ it('edit a descendant', () => {
   - b`)
 
   // aa1 should exist in context a
-  expect(getContexts(stateNew, 'aa1'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'aa1')).toMatchObject([
+    {
       context: ['a'],
       rank: 0,
-    }])
-  expect(getAllChildren(stateNew, ['a']))
-    .toMatchObject([{ value: 'aa1', rank: 0 }])
-
+    },
+  ])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'aa1', rank: 0 }])
 })
 
 it('edit a thought with descendants', () => {
-
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
@@ -83,8 +83,8 @@ it('edit a thought with descendants', () => {
       newValue: 'aa',
       oldValue: 'a',
       context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }] as SimplePath
-    })
+      path: [{ value: 'a', rank: 0 }] as SimplePath,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -97,17 +97,18 @@ it('edit a thought with descendants', () => {
     - a2`)
 
   // aa should exist in ROOT context
-  expect(getContexts(stateNew, 'aa'))
-    .toMatchObject([{
-      context: [HOME_TOKEN]
-    }])
-  expect(getAllChildren(stateNew, ['aa']))
-    .toMatchObject([{ value: 'a1', rank: 0 }, { value: 'a2', rank: 1 }])
-
+  expect(getContexts(stateNew, 'aa')).toMatchObject([
+    {
+      context: [HOME_TOKEN],
+    },
+  ])
+  expect(getAllChildren(stateNew, ['aa'])).toMatchObject([
+    { value: 'a1', rank: 0 },
+    { value: 'a2', rank: 1 },
+  ])
 })
 
 it('edit a thought existing in mutliple contexts', () => {
-
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'ab', insertNewSubthought: true }),
@@ -117,8 +118,8 @@ it('edit a thought existing in mutliple contexts', () => {
       newValue: 'abc',
       oldValue: 'ab',
       context: ['a'],
-      path: [{ value: 'a', rank: 0 }] as SimplePath
-    })
+      path: [{ value: 'a', rank: 0 }] as SimplePath,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -132,17 +133,15 @@ it('edit a thought existing in mutliple contexts', () => {
     - ab`)
 
   // abc should exist in context a
-  expect(getContexts(stateNew, 'abc'))
-    .toMatchObject([{
-      context: ['a']
-    }])
-  expect(getAllChildren(stateNew, ['a']))
-    .toMatchObject([{ value: 'abc', rank: 0 }])
-
+  expect(getContexts(stateNew, 'abc')).toMatchObject([
+    {
+      context: ['a'],
+    },
+  ])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'abc', rank: 0 }])
 })
 
 it('edit a thought that exists in another context', () => {
-
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'ab', insertNewSubthought: true }),
@@ -152,8 +151,11 @@ it('edit a thought that exists in another context', () => {
       newValue: 'ab',
       oldValue: 'a',
       context: ['b'],
-      path: [{ value: 'b', rank: 1 }, { value: 'a', rank: 0 }] as SimplePath
-    })
+      path: [
+        { value: 'b', rank: 1 },
+        { value: 'a', rank: 0 },
+      ] as SimplePath,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -167,28 +169,23 @@ it('edit a thought that exists in another context', () => {
     - ab`)
 
   // ab should exist in both contexts a and b
-  expect(getContexts(stateNew, 'ab'))
-    .toMatchObject([
-      {
-        context: ['a'],
-        rank: 0,
-      },
-      {
-        context: ['b'],
-        rank: 0,
-      }
-    ])
+  expect(getContexts(stateNew, 'ab')).toMatchObject([
+    {
+      context: ['a'],
+      rank: 0,
+    },
+    {
+      context: ['b'],
+      rank: 0,
+    },
+  ])
 
-  expect(getAllChildren(stateNew, ['a']))
-    .toMatchObject([{ value: 'ab', rank: 0 }])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0 }])
 
-  expect(getAllChildren(stateNew, ['a']))
-    .toMatchObject([{ value: 'ab', rank: 0 }])
-
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0 }])
 })
 
 it('edit a child with the same value as its parent', () => {
-
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a', insertNewSubthought: true }),
@@ -196,8 +193,11 @@ it('edit a child with the same value as its parent', () => {
       newValue: 'ab',
       oldValue: 'a',
       context: ['a'],
-      path: [{ value: 'a', rank: 0 }, { value: 'a', rank: 0 }] as SimplePath
-    })
+      path: [
+        { value: 'a', rank: 0 },
+        { value: 'a', rank: 0 },
+      ] as SimplePath,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -209,22 +209,22 @@ it('edit a child with the same value as its parent', () => {
     - ab`)
 
   // ab should exist in context a
-  expect(getContexts(stateNew, 'ab'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'ab')).toMatchObject([
+    {
       context: ['a'],
       rank: 0,
-    }])
-  expect(getAllChildren(stateNew, ['a']))
-    .toMatchObject([{ value: 'ab', rank: 0 }])
+    },
+  ])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0 }])
 
   // cursor should be /a/ab
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'ab', rank: 0 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: 'ab', rank: 0 },
+  ])
 })
 
 it('do not duplicate children when new and old context are same', () => {
-
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b', insertNewSubthought: true }),
@@ -232,14 +232,14 @@ it('do not duplicate children when new and old context are same', () => {
       newValue: 'as',
       oldValue: 'a',
       context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }] as SimplePath
+      path: [{ value: 'a', rank: 0 }] as SimplePath,
     }),
     editThought({
       newValue: 'a',
       oldValue: 'as',
       context: [HOME_TOKEN],
-      path: [{ value: 'as', rank: 0 }] as SimplePath
-    })
+      path: [{ value: 'as', rank: 0 }] as SimplePath,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -261,20 +261,22 @@ it('data integrity test', () => {
 
   const steps = [
     importText({
-      text
+      text,
     }),
     setCursor({
-      path: [{
-        value: 'a',
-        rank: 0
-      }]
+      path: [
+        {
+          value: 'a',
+          rank: 0,
+        },
+      ],
     }),
     editThought({
       newValue: 'azkaban',
       oldValue: 'a',
       context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }] as SimplePath
-    })
+      path: [{ value: 'a', rank: 0 }] as SimplePath,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -290,7 +292,6 @@ it('data integrity test', () => {
 
 // Issue: https://github.com/cybersemics/em/issues/1144
 it('data integrity test after editing a parent with multiple descendants with same value and depth', () => {
-
   const text = `
   - ${' '}
     - a
@@ -300,20 +301,22 @@ it('data integrity test after editing a parent with multiple descendants with sa
 
   const steps = [
     importText({
-      text
+      text,
     }),
     setCursor({
-      path: [{
-        value: '',
-        rank: 0
-      }]
+      path: [
+        {
+          value: '',
+          rank: 0,
+        },
+      ],
     }),
     editThought({
       newValue: 'x',
       oldValue: '',
       context: [HOME_TOKEN],
-      path: [{ value: '', rank: 0 }] as SimplePath
-    })
+      path: [{ value: '', rank: 0 }] as SimplePath,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -328,23 +331,21 @@ it('data integrity test after editing a parent with multiple descendants with sa
 })
 
 describe('changing thought with duplicate descendent', () => {
-
   it('adding', () => {
-
     const steps = [
       importText({
         path: HOME_PATH,
         text: `
       - a
         - b
-          - ac`
+          - ac`,
       }),
       editThought({
         newValue: 'ac',
         oldValue: 'a',
         context: [HOME_TOKEN],
-        path: [{ value: 'a', rank: 0 }] as SimplePath
-      })
+        path: [{ value: 'a', rank: 0 }] as SimplePath,
+      }),
     ]
 
     // run steps through reducer flow and export as plaintext for readable test
@@ -363,21 +364,20 @@ describe('changing thought with duplicate descendent', () => {
   })
 
   it('removing', () => {
-
     const steps = [
       importText({
         path: HOME_PATH,
         text: `
       - a
         - b
-          - a`
+          - a`,
       }),
       editThought({
         newValue: 'ac',
         oldValue: 'a',
         context: [HOME_TOKEN],
-        path: [{ value: 'a', rank: 0 }] as SimplePath
-      })
+        path: [{ value: 'a', rank: 0 }] as SimplePath,
+      }),
     ]
 
     // run steps through reducer flow and export as plaintext for readable test

@@ -8,7 +8,6 @@ import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('empty thought should outdent when hit enter', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -20,7 +19,7 @@ it('empty thought should outdent when hit enter', () => {
             - c
               - d
                 - e
-                  - f`
+                  - f`,
     }),
     setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd', 'e', 'f']),
   ])

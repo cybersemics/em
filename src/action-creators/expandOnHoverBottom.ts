@@ -1,4 +1,3 @@
-
 import { Path, Thunk } from '../types'
 import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
 import { hashContext, pathToContext } from '../util'
@@ -12,14 +11,14 @@ let expandBottomTimer: number | null = null
  * Handles expansion of the context due to hover on the thought's empty drop.
  */
 const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
-
   const state = getState()
 
   const { hoveringPath, hoverId, expandHoverBottomPaths, dragInProgress } = state
 
   const hoveringContext = hoveringPath && pathToContext(hoveringPath)
 
-  const shouldExpand = hoverId === DROP_TARGET.EmptyDrop && hoveringPath && getChildren(state, pathToContext(hoveringPath)).length > 0
+  const shouldExpand =
+    hoverId === DROP_TARGET.EmptyDrop && hoveringPath && getChildren(state, pathToContext(hoveringPath)).length > 0
 
   /** Clears active delayed dispatch. */
   const clearTimeout = () => {
@@ -41,9 +40,11 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
   /** Delays dispatch of expandBottom. */
   const delayedDispatch = (path: Path) => {
     expandBottomTimer = setTimeout(() => {
-      dispatch(expandBottom({
-        path,
-      }))
+      dispatch(
+        expandBottom({
+          path,
+        }),
+      )
       expandBottomTimer = null
     }, EXPAND_HOVER_DELAY)
   }

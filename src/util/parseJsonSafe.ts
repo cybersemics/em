@@ -7,8 +7,7 @@ export function parseJsonSafe(value: string | null): unknown
 export function parseJsonSafe<T>(value: string | null, defaultValue?: T): any {
   try {
     return value && JSON.parse(value)
-  }
-  catch (e) {
+  } catch (e) {
     return defaultValue
   }
 }

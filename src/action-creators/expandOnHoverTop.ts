@@ -9,7 +9,6 @@ import { State } from '../util/initialState'
  * Checks if the current hovering thought's parent should expand it's context.
  */
 const shouldAllowActiveHoverTop = (state: State) => {
-
   const { cursor, hoverId, expandHoverTopPath, hoveringPath } = state
 
   if (!hoveringPath) return false
@@ -28,7 +27,10 @@ const shouldAllowActiveHoverTop = (state: State) => {
   // Note: Hover expand top is activated when hovered over one the context's children thought drop target.
 
   // Check if the current thought is the parent of first visible thought nearest to the root.
-  const isParentOfFirstVisibleThought = cursor && (distanceFromCusor - 1) === visibleDistanceAboveCursor(state) && isDescendantPath(cursor, parentOfHoveringThought)
+  const isParentOfFirstVisibleThought =
+    cursor &&
+    distanceFromCusor - 1 === visibleDistanceAboveCursor(state) &&
+    isDescendantPath(cursor, parentOfHoveringThought)
 
   /** Check if current hovering thought is actually the current expanded hover top path and the given path is it's parent. */
   const isParentOfCurrentExpandedTop = () => expandHoverTopPath && equalPath(hoveringPath, expandHoverTopPath)
@@ -44,7 +46,6 @@ let expandTopTimer: number | null = null
  * On expand the context and its hidden children should be visible.
  */
 const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
-
   const state = getState()
 
   const { hoveringPath, expandHoverTopPath, dragInProgress } = state
@@ -69,15 +70,19 @@ const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
   }
 
   /** Delays dispatch of expandHoverTop. */
-  const delayedDispatch = (newExpandTopPath: Path) => setTimeout(() => {
-    dispatch(expandHoverTop({
-      path: newExpandTopPath
-    }))
-    expandTopTimer = null
-  }, EXPAND_HOVER_DELAY)
+  const delayedDispatch = (newExpandTopPath: Path) =>
+    setTimeout(() => {
+      dispatch(
+        expandHoverTop({
+          path: newExpandTopPath,
+        }),
+      )
+      expandTopTimer = null
+    }, EXPAND_HOVER_DELAY)
 
   /** Check if current expand hover top is same as the hovering path. */
-  const isSameExpandHoverTopPath = (newExpandTopPath: Path) => expandHoverTopPath && equalPath(expandHoverTopPath, newExpandTopPath)
+  const isSameExpandHoverTopPath = (newExpandTopPath: Path) =>
+    expandHoverTopPath && equalPath(expandHoverTopPath, newExpandTopPath)
 
   // Note: expandHoverPath is the parent of the hovering path (thought drop)
   const newExpandHoverPath = hoveringPath && parentOf(hoveringPath)

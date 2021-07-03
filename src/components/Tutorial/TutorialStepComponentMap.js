@@ -1,4 +1,3 @@
-
 import TutorialStepStart from './TutorialStepStart'
 import TutorialStepFirstThought from './TutorialStepFirstThought'
 import TutorialStepFirstThoughtEnter from './TutorialStepFirstThoughtEnter'
@@ -51,7 +50,6 @@ import {
 } from '../../constants'
 
 const tutorialStepComponentMap = {
-
   [TUTORIAL_STEP_START]: TutorialStepStart,
 
   [TUTORIAL_STEP_FIRSTTHOUGHT]: TutorialStepFirstThought,
@@ -99,7 +97,6 @@ const tutorialStepComponentMap = {
   [TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES]: Tutorial2StepContextViewExamples,
 
   [TUTORIAL2_STEP_SUCCESS]: Tutorial2StepSuccess,
-
 }
 
 export default tutorialStepComponentMap

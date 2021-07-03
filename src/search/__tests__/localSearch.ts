@@ -18,7 +18,6 @@ describe('local search', () => {
   afterEach(db.clearAll)
 
   it('full text search with single word', async () => {
-
     const { thoughtIndex } = importThoughts(`
     - LP
       - Lost on you
@@ -39,12 +38,7 @@ describe('local search', () => {
 
     const contextMap = await localSearch.searchAndGenerateContextMap('One')
 
-    const expectedContexts: Context[] = [
-      ['LP'],
-      ['Katty Perry'],
-      ['Metallica'],
-      ['Three Dog Night']
-    ]
+    const expectedContexts: Context[] = [['LP'], ['Katty Perry'], ['Metallica'], ['Three Dog Night']]
 
     const contexts = Object.values(contextMap)
 
@@ -53,7 +47,6 @@ describe('local search', () => {
   })
 
   it('full text search with multiple words', async () => {
-
     const { thoughtIndex } = importThoughts(`
     - Tasks
       - Errands
@@ -72,7 +65,10 @@ describe('local search', () => {
 
     const contextMap = await localSearch.searchAndGenerateContextMap('products and')
 
-    const expectedContexts: Context[] = [['Tasks', 'Errands'], ['Tasks', 'Projects', 'Multi vendor project']]
+    const expectedContexts: Context[] = [
+      ['Tasks', 'Errands'],
+      ['Tasks', 'Projects', 'Multi vendor project'],
+    ]
 
     const contexts = Object.values(contextMap)
 
@@ -81,7 +77,6 @@ describe('local search', () => {
   })
 
   it('full text search with ignore case', async () => {
-
     const { thoughtIndex } = importThoughts(`
     - Anime Characters
       - Naruto
@@ -102,7 +97,7 @@ describe('local search', () => {
 
     const expectedContexts: Context[] = [
       ['Anime Characters', 'Naruto'],
-      ['Anime Characters', 'Eren']
+      ['Anime Characters', 'Eren'],
     ]
 
     const contexts = Object.values(contextMap)

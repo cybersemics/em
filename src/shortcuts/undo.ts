@@ -16,7 +16,7 @@ const undoShortcut: Shortcut = {
     if (!isUndoEnabled(getState())) return
     dispatch({ type: 'undoAction' })
   },
-  isActive: getState => isUndoEnabled(getState())
+  isActive: getState => isUndoEnabled(getState()),
 }
 
 export default undoShortcut

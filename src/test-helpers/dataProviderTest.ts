@@ -33,7 +33,7 @@ declare global {
 
 /** Formats an array of stringified objects vertically. */
 const stringifyVertical = <T>(arr: T[]) => {
-  const lines = arr.map((item) => '  ' + JSON.stringify(item)).join('\n')
+  const lines = arr.map(item => '  ' + JSON.stringify(item)).join('\n')
   return `\n${lines}\n`
 }
 
@@ -41,12 +41,12 @@ expect.extend({
   /** Passes if a Context appears before another Context in the Parents array. */
   toHaveOrderedContexts: (parents: Parent[], context1: Context, context2: Context): jest.CustomMatcherResult => {
     /** Finds the index of a context within the contexts array. */
-    const indexOfContext = (context: Context) => parents.findIndex((parent) => equalArrays(parent.context, context))
+    const indexOfContext = (context: Context) => parents.findIndex(parent => equalArrays(parent.context, context))
 
     const index1 = indexOfContext(context1)
     const index2 = indexOfContext(context2)
 
-    const formattedParents = `[${stringifyVertical(parents.map((parent) => parent.context))}]`
+    const formattedParents = `[${stringifyVertical(parents.map(parent => parent.context))}]`
 
     return index1 === -1
       ? {
@@ -373,7 +373,7 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts.contextIndex).toEqual({
         ..._.pick(
           contextIndex,
-          [['x'], ['x', 'y']].map((cx) => hashContext(cx)),
+          [['x'], ['x', 'y']].map(cx => hashContext(cx)),
         ),
         // grandchildren are pending
         [hashContext(['x', 'y', 'z'])]: {
@@ -478,7 +478,7 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts.contextIndex).toEqual(
         _.pick(
           contextIndex,
-          [['x'], ['x', 'y'], ['x', 'y', 'z'], ['t'], ['t', 'u'], ['t', 'u', 'v'], ['t', 'u', 'v', 'm']].map((cx) =>
+          [['x'], ['x', 'y'], ['x', 'y', 'z'], ['t'], ['t', 'u'], ['t', 'u', 'v'], ['t', 'u', 'v', 'm']].map(cx =>
             hashContext(cx),
           ),
         ),
@@ -529,7 +529,7 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts.contextIndex).toEqual({
         ..._.pick(
           contextIndex,
-          [['x'], ['x', 'y'], ['t'], ['t', 'u']].map((cx) => hashContext(cx)),
+          [['x'], ['x', 'y'], ['t'], ['t', 'u']].map(cx => hashContext(cx)),
         ),
         [hashContext(['x', 'y', 'z'])]: {
           ...contextIndex[hashContext(['x', 'y', 'z'])],
@@ -596,7 +596,7 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts.contextIndex).toEqual({
         ..._.pick(
           contextIndex,
-          [['x'], ['x', 'y'], [EM_TOKEN], [EM_TOKEN, 'Settings'], [EM_TOKEN, 'Settings', 'Theme']].map((cx) =>
+          [['x'], ['x', 'y'], [EM_TOKEN], [EM_TOKEN, 'Settings'], [EM_TOKEN, 'Settings', 'Theme']].map(cx =>
             hashContext(cx),
           ),
         ),
@@ -654,13 +654,13 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts.contextIndex).toEqual({
         ..._.pick(
           contextIndex,
-          [['x'], ['x', 'y'], ['x', 'y', 'z', '=note'], ['t'], ['t', 'u']].map((cx) => hashContext(cx)),
+          [['x'], ['x', 'y'], ['x', 'y', 'z', '=note'], ['t'], ['t', 'u']].map(cx => hashContext(cx)),
         ),
         [hashContext(['x', 'y', 'z'])]: {
           ...contextIndex[hashContext(['x', 'y', 'z'])],
           children: [
             // take the =note Child from contextIndex so that ids match
-            contextIndex[hashContext(['x', 'y', 'z'])].children.find((child) => isFunction(child.value)),
+            contextIndex[hashContext(['x', 'y', 'z'])].children.find(child => isFunction(child.value)),
           ],
           pending: true,
           lastUpdated: never(),

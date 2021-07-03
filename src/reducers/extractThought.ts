@@ -36,7 +36,7 @@ const extractThought = (state: State) => {
       newValue,
       context: cursorContext,
       path: simplifyPath(state, cursor),
-      rankInContext: rank
+      rankInContext: rank,
     }),
     newThought({ value: childValue, insertNewSubthought: true, preventSetCursor: true }),
   ]

@@ -9,7 +9,9 @@ const decodeContextUrl = (state: State, pathname: string) => {
   const urlOwner = urlComponents[0] || '~' // ~ represents currently authenticated user
 
   if (urlOwner !== owner()) {
-    console.error(`decodeThoughtsUrl: owner does not match owner(). "${urlOwner}" !== "${owner()}". This is likely a regression, as they should always match.`)
+    console.error(
+      `decodeThoughtsUrl: owner does not match owner(). "${urlOwner}" !== "${owner()}". This is likely a regression, as they should always match.`,
+    )
   }
 
   const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [HOME_TOKEN]

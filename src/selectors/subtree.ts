@@ -6,7 +6,7 @@ import { Child, Context } from '../types'
 const subtree = (state: State, context: Context): Child[] =>
   getChildrenRanked(state, context).map(child => ({
     ...child,
-    subthoughts: subtree(state, context.concat(child.value))
+    subthoughts: subtree(state, context.concat(child.value)),
   }))
 
 export default subtree

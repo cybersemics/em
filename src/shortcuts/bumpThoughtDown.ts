@@ -12,7 +12,7 @@ const bumpThoughtDownShortcut: Shortcut = {
   exec: dispatch => {
     asyncFocus()
     dispatch(bumpThoughtDown())
-  }
+  },
 }
 
 export default bumpThoughtDownShortcut

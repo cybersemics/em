@@ -33,18 +33,18 @@ const moveCursorForward: Shortcut = {
     const isTable = attributeEquals(state, contextParent, '=view', 'Table')
     const hasChildren = getAllChildren(state, context).length > 0
 
-    dispatch(isTable ?
-      // special case for table
-      hasChildren
-        // if column 2 exists, move cursor to column 2
-        ? { type: 'cursorDown' }
-        // otherwise, create a new subthought
-        : { type: 'newThought', insertNewSubthought: true }
-      // normal indent
-      : { type: 'indent' }
+    dispatch(
+      isTable
+        ? // special case for table
+          hasChildren
+          ? // if column 2 exists, move cursor to column 2
+            { type: 'cursorDown' }
+          : // otherwise, create a new subthought
+            { type: 'newThought', insertNewSubthought: true }
+        : // normal indent
+          { type: 'indent' },
     )
-
-  }
+  },
 }
 
 export default moveCursorForward

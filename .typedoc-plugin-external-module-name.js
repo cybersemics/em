@@ -10,23 +10,23 @@
  */
 module.exports = (explicit, implicit, path) => {
   // make index.js files root modules (e.g. action-creators.index.js => action-creators)
-  if (path.includes("index.js") || path.includes("index.ts")) return implicit
+  if (path.includes('index.js') || path.includes('index.ts')) return implicit
 
   // ignore native modules otherwise typedoc crashes
   // https://github.com/christopherthielen/typedoc-plugin-external-module-name/issues/682
   if (path.includes('.native.')) return
 
   // check for files which are placed in subdirectories of src
-  if (implicit !== ".") {
+  if (implicit !== '.') {
     const matches = path.match(RegExp(`${implicit}/.*`))
     if (!matches) return
-    const endIndex = matches[0].lastIndexOf(".")
+    const endIndex = matches[0].lastIndexOf('.')
     // return directoryName.fileName (e.g. "action-creators.alert")
-    return matches[0].slice(0,endIndex).replace(/\//g, ".")
+    return matches[0].slice(0, endIndex).replace(/\//g, '.')
   } else {
     const matches = path.match(/src\/.*\./)[0]
     if (!matches) return
     // return app.fileName (e.g. "app.browser")
-    return matches[0].replace(/src/,"app").replace(".","").replace(/\//g, ".")
+    return matches[0].replace(/src/, 'app').replace('.', '').replace(/\//g, '.')
   }
 }

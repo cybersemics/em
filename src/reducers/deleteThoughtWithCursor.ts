@@ -4,16 +4,7 @@ import { State } from '../util/initialState'
 import { Child, Path, SimplePath, ThoughtContext } from '../types'
 
 // util
-import {
-  parentOf,
-  head,
-  headValue,
-  pathToContext,
-  once,
-  reducerFlow,
-  unroot,
-  getTextContentFromHTML,
-} from '../util'
+import { parentOf, head, headValue, pathToContext, once, reducerFlow, unroot, getTextContentFromHTML } from '../util'
 
 // selectors
 import {
@@ -30,7 +21,6 @@ import {
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
-
   if (!state.cursor && !payload.path) return state
 
   let path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
@@ -41,7 +31,8 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     // Get thought in ContextView
     const thoughtInContextView = head(parentOf(path))
     // Get context from which we are going to delete thought
-    const context = getContexts(state, thoughtInContextView.value).map(({ context }) => context)
+    const context = getContexts(state, thoughtInContextView.value)
+      .map(({ context }) => context)
       .find(context => head(context) === headValue(path))
     if (context) {
       // Convert to path
@@ -62,60 +53,68 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       return contexts[removedContextIndex - 1]
     })
     const context = prevContext()
-    return context ? {
-      value: head(context.context),
-      rank: prevContext().rank
-    } as Child : null
+    return context
+      ? ({
+          value: head(context.context),
+          rank: prevContext().rank,
+        } as Child)
+      : null
   }
 
   // prev must be calculated before dispatching deleteThought
-  const prev = showContexts
-    ? prevContext()
-    : prevSibling(state, value, context, rank)
+  const prev = showContexts ? prevContext() : prevSibling(state, value, context, rank)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
-  const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) => path
-    ? (state: State) => setCursor(state, {
-      path: path,
-      editing: state.editing,
-      offset
-    })
-    : cursorBack
+  const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>
+    path
+      ? (state: State) =>
+          setCursor(state, {
+            path: path,
+            editing: state.editing,
+            offset,
+          })
+      : cursorBack
 
   return reducerFlow([
-
     // delete thought
     deleteThought({
       context: parentOf(pathToContext(simplePath)),
       showContexts,
-      thoughtRanked: head(simplePath)
+      thoughtRanked: head(simplePath),
     }),
 
     // move cursor
     state => {
-
-      const next = once(() => showContexts
-        ? getContextsSortedAndRanked(state, headValue(parentOf(simplePath)))[0]
-        : firstVisibleChild(state, context)
+      const next = once(() =>
+        showContexts
+          ? getContextsSortedAndRanked(state, headValue(parentOf(simplePath)))[0]
+          : firstVisibleChild(state, context),
       )
 
       // Typescript validates with apply but not spread operator here
       // eslint-disable-next-line prefer-spread
-      return setCursorOrBack.apply(null, prev ? [unroot(parentOf(path).concat(prev) as SimplePath), { offset: prev.value.length }] :
-        // Case II: set cursor on next thought
-        next() ? [unroot(showContexts
-          ? parentOf(path).concat({ value: head((next() as ThoughtContext).context), rank: next().rank })
-          : parentOf(path).concat(next() as Child)
-        ), { offset: 0 }] :
-        // Case III: delete last thought in context; set cursor on context
-        thoughts.length > 1 ? [rootedParentOf(state, path), { offset: getTextContentFromHTML(head(context)).length }]
-        // Case IV: delete very last thought; remove cursor
-        : [null]
+      return setCursorOrBack.apply(
+        null,
+        prev
+          ? [unroot(parentOf(path).concat(prev) as SimplePath), { offset: prev.value.length }]
+          : // Case II: set cursor on next thought
+          next()
+          ? [
+              unroot(
+                showContexts
+                  ? parentOf(path).concat({ value: head((next() as ThoughtContext).context), rank: next().rank })
+                  : parentOf(path).concat(next() as Child),
+              ),
+              { offset: 0 },
+            ]
+          : // Case III: delete last thought in context; set cursor on context
+          thoughts.length > 1
+          ? [rootedParentOf(state, path), { offset: getTextContentFromHTML(head(context)).length }]
+          : // Case IV: delete very last thought; remove cursor
+            [null],
       )(state)
-    }
-
+    },
   ])(state)
-
 }
 
 export default _.curryRight(deleteThoughtWithCursor)

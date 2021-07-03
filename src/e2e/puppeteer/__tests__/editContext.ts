@@ -7,23 +7,15 @@ import { JSHandle } from 'puppeteer'
 
 /** Gets the first subthought of an editable. */
 const getFirstSubthought = (editable: JSHandle) =>
-  editable.asElement()!.evaluateHandle(el =>
-    el.parentElement?.parentElement?.nextElementSibling?.querySelector('.editable')
-  )
+  editable
+    .asElement()!
+    .evaluateHandle(el => el.parentElement?.parentElement?.nextElementSibling?.querySelector('.editable'))
 
 jest.setTimeout(20000)
 
-const {
-  $,
-  clickThought,
-  getEditable,
-  paste,
-  press,
-  type,
-} = helpers()
+const { $, clickThought, getEditable, paste, press, type } = helpers()
 
 it.skip('edit context value', async () => {
-
   const importText = `
   - a
     - m
@@ -63,5 +55,4 @@ it.skip('edit context value', async () => {
   // assert that "a" in the root has changed to "apple"
   const editableApple = (await getEditable('apple')).asElement()
   expect(editableApple).toBeTruthy()
-
 })

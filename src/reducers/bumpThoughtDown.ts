@@ -7,7 +7,6 @@ import { Path, SimplePath } from '../types'
 
 /** Clears a thought's text, moving it to its first child. */
 const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath }): State => {
-
   if (!simplePath && !state.cursor) return state
 
   simplePath = simplePath || simplifyPath(state, state.cursor!)
@@ -27,11 +26,13 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
 
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
-  const simplePathWithNewRank: SimplePath = [...parentPath, { value, rank: getRankBefore(state, simplePath) }] as SimplePath
+  const simplePathWithNewRank: SimplePath = [
+    ...parentPath,
+    { value, rank: getRankBefore(state, simplePath) },
+  ] as SimplePath
   const simplePathWithNewRankAndValue: Path = [...parentPath, { value: '', rank: getRankBefore(state, simplePath) }]
 
   return reducerFlow([
-
     // modify the rank to get the thought to re-render (via the Subthoughts child key)
     moveThought({
       oldPath: simplePath,
@@ -43,7 +44,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       oldValue: value,
       newValue: '',
       context: rootedParentOf(state, context),
-      path: simplePathWithNewRank
+      path: simplePathWithNewRank,
     }),
 
     // new thought
@@ -61,7 +62,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     setCursor({
       path: simplePathWithNewRankAndValue,
     }),
-    editableRender
+    editableRender,
   ])(state)
 }
 

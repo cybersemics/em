@@ -9,16 +9,11 @@ export const addThought = (state: State, value: string, rank: number, context: C
   return {
     ...thoughtOld,
     value,
-    contexts: (thoughtOld
-      ? thoughtOld.contexts || []
-      : []
-    ).concat({
+    contexts: (thoughtOld ? thoughtOld.contexts || [] : []).concat({
       context,
       rank,
     }),
-    created: thoughtOld && thoughtOld.created
-      ? thoughtOld.created
-      : lastUpdated,
+    created: thoughtOld && thoughtOld.created ? thoughtOld.created : lastUpdated,
     lastUpdated,
   }
 }

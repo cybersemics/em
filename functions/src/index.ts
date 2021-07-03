@@ -32,7 +32,7 @@ const rateLimiter = FirebaseFunctionsRateLimiter.withRealtimeDbBackend(
     maxCalls: LIMIT_MAX_CALLS,
     periodSeconds: LIMIT_PERIOD,
   },
-  database
+  database,
 )
 
 /** Initialize index and it's settings if index doesn't exist yet. */
@@ -40,7 +40,7 @@ const initializeIndex = async (): Promise<void> => {
   const exists = await index.exists()
   if (exists) console.log('[Algolia Index exists]')
   else {
-    console.info('[Algolia Index doesn\'t exist]')
+    console.info("[Algolia Index doesn't exist]")
     // Set proper facets filters and searchable attributes
     await index.setSettings({
       searchableAttributes: ['value'],
@@ -87,15 +87,17 @@ export const addIndexOnCreateThoughtIndex = functions.database
     const lexeme = snapshot.val() as { value: string }
     const { userId, thoughtHash } = context.params
     try {
-      await index.saveObject({
-        thoughtHash,
-        userId,
-        value: lexeme.value,
-      }, {
-        autoGenerateObjectIDIfNotExist: true,
-      })
-    }
-    catch (err) {
+      await index.saveObject(
+        {
+          thoughtHash,
+          userId,
+          value: lexeme.value,
+        },
+        {
+          autoGenerateObjectIDIfNotExist: true,
+        },
+      )
+    } catch (err) {
       console.warn(err, 'index add error')
     }
   })
@@ -106,8 +108,7 @@ export const deleteIndexOnThoughtIndexDelete = functions.database
     const { thoughtHash } = context.params
     try {
       await index.deleteObject(thoughtHash)
-    }
-    catch (err) {
+    } catch (err) {
       console.warn(err, 'index delete error')
     }
   })
@@ -116,25 +117,24 @@ export const deleteIndexOnThoughtIndexDelete = functions.database
 export const sendFeedbackEmail = functions.https.onRequest(async (request, response) =>
   // TODO: Allow requests from specific origin in production
   cors({ origin: true })(request, response, async () => {
-
     const { userId, feedback } = request.body
 
     if (!feedback) {
       response.status(400).json({
-        message: 'Feedback is required.'
+        message: 'Feedback is required.',
       })
       return
     }
 
-    const ip = request.headers['x-appengine-user-ip'] || request.headers['x-forwarded-for'] || request.connection.remoteAddress
+    const ip =
+      request.headers['x-appengine-user-ip'] || request.headers['x-forwarded-for'] || request.connection.remoteAddress
 
     // rate limit by ip address
     try {
       await rateLimiter.rejectOnQuotaExceededOrRecordUsage(encode(ip as string))
-    }
-    catch (err) {
+    } catch (err) {
       return response.status(429).json({
-        message: 'Your feedback submission has been rate limited.'
+        message: 'Your feedback submission has been rate limited.',
       })
     }
 
@@ -147,7 +147,7 @@ export const sendFeedbackEmail = functions.https.onRequest(async (request, respo
 
       return {
         name: nameSnapshot.val() as string,
-        email: emailSnapshot.val() as string
+        email: emailSnapshot.val() as string,
       }
     }
 
@@ -157,7 +157,7 @@ export const sendFeedbackEmail = functions.https.onRequest(async (request, respo
 
     if (userId && userDetail && !userDetail.name) {
       response.status(400).json({
-        message: 'User id is invalid.'
+        message: 'User id is invalid.',
       })
       return
     }
@@ -177,30 +177,25 @@ export const sendFeedbackEmail = functions.https.onRequest(async (request, respo
     })
 
     try {
-      await mailgunClient.messages.create(
-        MAILGUN_DOMAIN,
-        {
-          from:
-            `Em Feedback <${userDetail?.email ?? MAILGUN_FEEDBACK_EMAIL}>`,
-          to: [MAILGUN_SUPPORT_EMAIL],
-          subject: 'App Feedback',
-          html: template({
-            feedback,
-            name: userDetail?.name ?? 'Anonymous User',
-            email: userDetail?.email
-          }),
-        }
-      )
-    }
-    catch (err) {
+      await mailgunClient.messages.create(MAILGUN_DOMAIN, {
+        from: `Em Feedback <${userDetail?.email ?? MAILGUN_FEEDBACK_EMAIL}>`,
+        to: [MAILGUN_SUPPORT_EMAIL],
+        subject: 'App Feedback',
+        html: template({
+          feedback,
+          name: userDetail?.name ?? 'Anonymous User',
+          email: userDetail?.email,
+        }),
+      })
+    } catch (err) {
       console.error(err, 'Mailgun error')
       return response.status(500).json({
-        message: 'Feedback could not be sent.'
+        message: 'Feedback could not be sent.',
       })
     }
 
     return response.json({
       message: 'Feedback sent successfully.',
     })
-  })
+  }),
 )

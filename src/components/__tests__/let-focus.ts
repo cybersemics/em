@@ -7,7 +7,6 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('define =focus/Zoom in a =let expression and apply it to a thought', async () => {
-
   paste(`
     - =let
       - =foo
@@ -22,20 +21,18 @@ it('define =focus/Zoom in a =let expression and apply it to a thought', async ()
   // instead check the zoomCursor class
 
   // b should initially be visible
-  const thoughtB = await findThoughtByText('b') as HTMLElement
+  const thoughtB = (await findThoughtByText('b')) as HTMLElement
   const subthoughts = thoughtB.closest('.children')
   expect(subthoughts).not.toHaveClass('zoomCursor')
 
   // Set the cursor on `a`, wait for the animation to complete, then `a` should have the zoomCursor
   // TODO: Find a way to detect if b is actually hidden
-  const thoughtA = await findThoughtByText('a') as HTMLElement
+  const thoughtA = (await findThoughtByText('a')) as HTMLElement
   userEvent.click(thoughtA)
   expect(subthoughts).toHaveClass('zoomCursor')
-
 })
 
 it('=focus/Zoom/=style', async () => {
-
   paste(`
     - =let
       - =foo
@@ -49,10 +46,9 @@ it('=focus/Zoom/=style', async () => {
     - bear
   `)
 
-  const thoughtA = await findThoughtByText('apple') as HTMLElement
+  const thoughtA = (await findThoughtByText('apple')) as HTMLElement
   expect(thoughtA).not.toHaveStyle({ color: 'pink' })
 
   userEvent.click(thoughtA)
   expect(thoughtA).toHaveStyle({ color: 'pink' })
-
 })
