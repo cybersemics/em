@@ -1,14 +1,13 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import classNames from 'classnames'
-import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
+import { FADEOUT_DURATION } from '../constants'
 import { modalCleanup } from '../util'
 import { Connected } from '../types'
-import { modalRemindMeLater, modalComplete, tutorial } from '../action-creators'
+import { closeModal, modalComplete, tutorial } from '../action-creators'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
-  remindMeLater: ModalComponent['remindMeLater']
   complete: ModalComponent['complete']
 }
 
@@ -40,7 +39,7 @@ const getSelectionCoordinates = () => {
 
 /** A generic modal component. */
 class ModalComponent extends React.Component<Connected<ModalProps>> {
-  animateAndClose: ((duration?: number) => void) | null = null
+  animateAndClose: (() => void) | null = null
   escapeListener: ((e: KeyboardEvent) => void) | null = null
   ref: React.RefObject<HTMLDivElement>
 
@@ -65,15 +64,15 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
       /**
        * Animate and close the modal.
        */
-      this.animateAndClose = (duration: number = MODAL_CLOSE_DURATION) => {
-        const { id, dispatch } = this.props
+      this.animateAndClose = () => {
+        const { dispatch } = this.props
         window.removeEventListener('keydown', this.escapeListener!, true)
         modalCleanup()
         if (this.ref.current) {
           this.ref.current.classList.add('animate-fadeout')
         }
         setTimeout(() => {
-          dispatch(modalRemindMeLater({ id, duration }))
+          dispatch(closeModal())
         }, FADEOUT_DURATION)
       }
 
@@ -82,14 +81,12 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
     }
   }
 
-  close = (duration?: number) => this.animateAndClose!(duration)
+  close = () => this.animateAndClose!()
 
   componentWillUnmount() {
     modalCleanup()
     window.removeEventListener('keydown', this.escapeListener!, true)
   }
-
-  remindMeLater = () => this.props.dispatch(modalRemindMeLater({ id: this.props.id }))
 
   /** Dispatches a modalComplete action for the modal. */
   complete = () => this.props.dispatch(modalComplete(this.props.id))
@@ -118,7 +115,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
 
     const cursorCoords = getSelectionCoordinates()
 
-    /** Dispatches a modalRemindMeLater action for the modal. */
+    /** Dispatches a closeModal action for the modal. */
 
     // /** Dispatches a modalComplete action for the modal. */
     // const complete = () => dispatch(modalComplete(id))
@@ -153,7 +150,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         }
       >
         {id !== 'welcome' ? (
-          <a className='upper-right popup-close-x text-small' onClick={this.remindMeLater}>
+          <a className='upper-right popup-close-x text-small' onClick={this.close}>
             ✕
           </a>
         ) : null}
@@ -169,7 +166,6 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
             <div className='modal-actions'>
               {actions({
                 close: this.close,
-                remindMeLater: this.remindMeLater,
                 complete: this.complete,
               })}
             </div>

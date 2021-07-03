@@ -4,7 +4,7 @@ import React from 'react'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
 import { modalCleanup } from '../util'
 import { Connected } from '../types' */
-import { /* modalRemindMeLater */ modalComplete /* tutorial */ } from '../action-creators'
+import { /* closeModal */ modalComplete /* tutorial */ } from '../action-creators'
 import { useDispatch } from 'react-redux'
 import { Modal, Text, View, StyleSheet } from 'react-native'
 
@@ -28,7 +28,7 @@ const ModalComponent: React.FC<ModalProps> = props => {
   const dispatch = useDispatch()
 
   /** Dispatches a remindMeLater action for the modal. */
-  // const remindMeLater = () => dispatch(modalRemindMeLater({ id: props.id }))
+  // const remindMeLater = () => dispatch(closeModal({ id: props.id }))
 
   /** Dispatches a modalComplete action for the modal. */
   const complete = () => dispatch(modalComplete(props.id))
