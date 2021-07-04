@@ -6,19 +6,24 @@ import { Icon as IconType, Shortcut } from '../types'
 import { isTouch } from '../browser'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Icon = ({ size = 20 }: IconType) => (
+const Icon = ({ fill, size = 20, style }: IconType) => (
   <svg
     version='1.1'
     className='icon'
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}
+    // override fill since this SVG uses stroke
+    style={{
+      ...style,
+      fill: 'none',
+    }}
     fill='none'
     viewBox='0 0 20 20'
   >
     <path
       d='M1 13.5217V19H18V13.5217M9.5 1V15.087M9.5 15.087L5.08 9.69195M9.5 15.087L13.92 9.69195'
-      stroke='white'
+      stroke={style?.fill || fill}
       strokeLinecap='round'
       strokeLinejoin='round'
     />

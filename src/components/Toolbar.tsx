@@ -222,9 +222,8 @@ const Toolbar = ({
                   key={id}
                   id={id}
                   style={{
-                    paddingTop: pressingToolbarId === id ? '10px' : '',
+                    paddingTop: isButtonExecutable && pressingToolbarId === id ? '10px' : '',
                     cursor: isButtonExecutable ? 'pointer' : 'default',
-                    pointerEvents: isButtonExecutable ? 'auto' : 'none',
                   }}
                   className='toolbar-icon'
                   onMouseOver={() => startOverlayTimer(id)}
@@ -240,10 +239,15 @@ const Toolbar = ({
                     startOverlayTimer(id)
                     setPressingToolbarId(id)
                   }}
-                  onClick={e => exec(store.dispatch, store.getState, e, { type: 'toolbar' })}
+                  onClick={e => {
+                    e.preventDefault()
+                    if (!isButtonExecutable) return
+                    exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+                  }}
                 >
                   <SVG
                     style={{
+                      cursor: isButtonExecutable ? 'pointer' : 'default',
                       fill: isButtonExecutable && isButtonActive ? fg : 'gray',
                       width: fontSize + 4,
                       height: fontSize + 4,
