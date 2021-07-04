@@ -49,6 +49,9 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: Serve
+        run: yarn servebuild &
+
       - name: Test iOS on BrowserStack
         run: yarn test:ios
 
