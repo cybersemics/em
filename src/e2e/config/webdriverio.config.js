@@ -11,8 +11,6 @@ const config = {
   key: process.env.BROWSERSTACK_ACCESS_KEY,
   capabilities: {
     platformName: 'iOS',
-    // platformVersion: '14.4',
-    // deviceName: 'iPhone 12',
     browserName: 'Safari',
     device: 'iPhone 11',
     osVersion: '13.3',
