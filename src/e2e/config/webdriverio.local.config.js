@@ -5,10 +5,12 @@ const config = {
   port: 4723,
   capabilities: {
     platformName: 'iOS',
-    platformVersion: '14.5',
-    deviceName: 'iPhone 12 Pro Max',
-    browserName: 'Safari'
-  }
+    platformVersion: '13.3',
+    deviceName: 'iPhone 11',
+    browserName: 'safari',
+    maxInstances: 1,
+    automationName: 'XCUITest',
+  },
 }
 
 module.exports = config

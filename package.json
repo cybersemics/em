@@ -35,7 +35,7 @@
     "lint:functions": "cd ./functions && npm run lint",
     "servebuild": "serve -s build -l 3000",
     "test": "react-scripts test --testPathIgnorePatterns=./src/e2e",
-    "test:ios": "react-scripts test ./src/e2e/iOS",
+    "test:ios": "react-scripts test ./src/e2e/iOS --verbose",
     "test:puppeteer": "react-scripts test ./src/e2e/puppeteer"
   },
   "dependencies": {
