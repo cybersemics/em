@@ -27,6 +27,12 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
         'browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed","reason": "Failed"}}',
       )
     }
+
+    if (event.name === 'test_fn_start') {
+      this.global.browser.executeScript(
+        `browserstack_executor: {"action": "setSessionName", "arguments": {"name": "${event.test.name}"}}`,
+      )
+    }
   }
 
   async setup() {
