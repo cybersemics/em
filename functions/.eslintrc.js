@@ -6,30 +6,22 @@ module.exports = {
     node: true,
   },
   ignorePatterns: ['.eslintrc.js'],
-  extends: [
-    "plugin:import/errors",
-    "plugin:import/warnings",
-    "plugin:import/typescript",
-    "raine"
-  ],
-  parser: "@typescript-eslint/parser",
+  extends: ['plugin:import/errors', 'plugin:import/warnings', 'plugin:import/typescript', 'raine', 'prettier'],
+  parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: "tsconfig.json",
-    sourceType: "module",
+    project: 'tsconfig.json',
+    sourceType: 'module',
   },
   rules: {
     'no-unused-vars': 0,
     '@typescript-eslint/no-unused-vars': 2,
   },
-  plugins: [
-    "@typescript-eslint",
-    "import",
-  ],
+  plugins: ['@typescript-eslint', 'import'],
   settings: {
     jsdoc: {
       tagNamePreference: {
-        returns: "return",
+        returns: 'return',
       },
     },
   },
-};
+}

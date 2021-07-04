@@ -15,7 +15,7 @@ const authenticate = (state: State, { value, user }: Options) => ({
   authenticated: value,
   autologin: value || state.autologin,
   status: value ? 'loading' : 'disconnected',
-  user
+  user,
 })
 
 export default _.curryRight(authenticate)

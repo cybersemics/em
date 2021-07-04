@@ -9,18 +9,19 @@ import { Connected } from '../types'
 const mapStateToProps = ({ error }: State) => ({ value: error })
 
 /** An error message that can be dismissed with a close button. */
-const ErrorMessage = ({ value, dispatch }: Connected<{ value?: any }>) =>
+const ErrorMessage = ({ value, dispatch }: Connected<{ value?: any }>) => (
   <TransitionGroup>
-    {value
-      ? <CSSTransition key={0} timeout={200} classNames='fade'>
+    {value ? (
+      <CSSTransition key={0} timeout={200} classNames='fade'>
         <div className='error-message'>
           {value.toString()}
-          <a className='upper-right status-close-x text-small' onClick={() =>
-            dispatch(error({ value: null }))
-          }>✕</a>
+          <a className='upper-right status-close-x text-small' onClick={() => dispatch(error({ value: null }))}>
+            ✕
+          </a>
         </div>
       </CSSTransition>
-      : null}
+    ) : null}
   </TransitionGroup>
+)
 
 export default connect(mapStateToProps)(ErrorMessage)

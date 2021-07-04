@@ -4,76 +4,65 @@ import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../tes
 import globals from '../../globals'
 
 describe('normal view', () => {
-
   it('move cursor to previous sibling', () => {
-
     const store = createTestStore()
 
-    store.dispatch(importText({
-      text: `
+    store.dispatch(
+      importText({
+        text: `
         - a
           - a1
-        - b`
-    }))
+        - b`,
+      }),
+    )
 
     setCursorFirstMatch(['b'])(store.getState())
     store.dispatch(cursorPrev())
 
-    expect(store.getState().cursor)
-      .toMatchObject([{ value: 'a' }])
-
+    expect(store.getState().cursor).toMatchObject([{ value: 'a' }])
   })
 
   it('move to first root child when there is no cursor', () => {
-
     const store = createTestStore()
 
     store.dispatch([
       importText({
         text: `
           - a
-          - b`
+          - b`,
       }),
       setCursor({ path: null }),
-      cursorPrev()
+      cursorPrev(),
     ])
 
-    expect(store.getState().cursor)
-      .toMatchObject([{ value: 'a' }])
-
+    expect(store.getState().cursor).toMatchObject([{ value: 'a' }])
   })
 
   it('do nothing when the cursor on the first sibling', () => {
-
     const store = createTestStore()
 
     store.dispatch([
       importText({
         text: `
           - a
-          - b`
+          - b`,
       }),
       setCursorFirstMatchActionCreator(['a']),
-      cursorPrev()
+      cursorPrev(),
     ])
 
-    expect(store.getState().cursor)
-      .toMatchObject([{ value: 'a' }])
-
+    expect(store.getState().cursor).toMatchObject([{ value: 'a' }])
   })
 
   it('do nothing when there are no thoughts', () => {
-
     const store = createTestStore()
 
     store.dispatch(cursorPrev())
 
     expect(store.getState().cursor).toBe(null)
-
   })
 
   it('sorted thoughts', () => {
-
     const store = createTestStore()
 
     store.dispatch([
@@ -83,45 +72,40 @@ describe('normal view', () => {
             - a
             - c
             - b
-              - b1`
+              - b1`,
       }),
       {
         type: 'toggleAttribute',
         context: ['SORT'],
         key: '=sort',
-        value: 'Alphabetical'
+        value: 'Alphabetical',
       },
       setCursorFirstMatchActionCreator(['SORT', 'c']),
-      cursorPrev()
+      cursorPrev(),
     ])
 
-    expect(store.getState().cursor)
-      .toMatchObject([{ value: 'SORT' }, { value: 'b' }])
-
+    expect(store.getState().cursor).toMatchObject([{ value: 'SORT' }, { value: 'b' }])
   })
 
   it('skip descendants', () => {
-
     const store = createTestStore()
 
-    store.dispatch(importText({
-      text: `
+    store.dispatch(
+      importText({
+        text: `
           - a
             - a1
-          - b`
-    }))
+          - b`,
+      }),
+    )
     setCursorFirstMatch(['b'])(store.getState())
     store.dispatch(cursorPrev())
 
-    expect(store.getState().cursor)
-      .toMatchObject([{ value: 'a' }])
-
+    expect(store.getState().cursor).toMatchObject([{ value: 'a' }])
   })
-
 })
 
 describe('global suppress expansion', () => {
-
   beforeEach(() => {
     globals.suppressExpansion = false
   })
@@ -143,11 +127,10 @@ describe('global suppress expansion', () => {
         text,
       }),
       setCursorFirstMatchActionCreator(['a', 'd']),
-      cursorPrev()
+      cursorPrev(),
     ])
 
-    expect(globals.suppressExpansion)
-      .toBe(true)
+    expect(globals.suppressExpansion).toBe(true)
   })
 
   it('do not activate suppress expansion on cursorPrev if new cursor is pinned', async () => {
@@ -169,11 +152,10 @@ describe('global suppress expansion', () => {
         text,
       }),
       setCursorFirstMatchActionCreator(['a', 'd']),
-      cursorPrev()
+      cursorPrev(),
     ])
 
-    expect(globals.suppressExpansion)
-      .toBe(false)
+    expect(globals.suppressExpansion).toBe(false)
   })
 
   it('do not activate suppress expansion on cursorPrev if new cursor parent has pinned children', async () => {
@@ -195,10 +177,9 @@ describe('global suppress expansion', () => {
         text,
       }),
       setCursorFirstMatchActionCreator(['a', 'd']),
-      cursorPrev()
+      cursorPrev(),
     ])
 
-    expect(globals.suppressExpansion)
-      .toBe(false)
+    expect(globals.suppressExpansion).toBe(false)
   })
 })

@@ -16,13 +16,12 @@ beforeEach(async () => {
 afterEach(cleanupTestApp)
 
 it('reset content editable inner html on thought bump', async () => {
-
   // import thoughts
   store.dispatch([
     importText({
       text: `
         - a
-          - b`
+          - b`,
     }),
     setCursorFirstMatchActionCreator(['a']),
   ])

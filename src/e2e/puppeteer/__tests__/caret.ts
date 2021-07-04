@@ -7,7 +7,6 @@ import helpers from '../helpers'
 jest.setTimeout(20000)
 
 describe('all platforms', () => {
-
   const {
     click,
     clickBullet,
@@ -23,7 +22,6 @@ describe('all platforms', () => {
   } = helpers()
 
   it('caret should be at the beginning of thought after split on enter', async () => {
-
     const importText = `
     - puppeteer
       - web scrapping
@@ -43,23 +41,21 @@ describe('all platforms', () => {
   })
 
   it('clicking a bullet, the caret should move to the beginning of the thought', async () => {
-
     const importText = `
     - Don't stay awake for too long
       - I don't wanna fall asleep`
 
     await paste(importText)
 
-    const editableNodeHandle = await waitForEditable('I don\'t wanna fall asleep')
+    const editableNodeHandle = await waitForEditable("I don't wanna fall asleep")
     await click(editableNodeHandle, { offset: 10 })
 
-    await clickBullet('Don\'t stay awake for too long')
+    await clickBullet("Don't stay awake for too long")
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
   })
 
   it('clicking on the left edge of a thought, the caret should move to the beginning of the thought.', async () => {
-
     const importText = `
     - Purple Rain`
 
@@ -76,7 +72,6 @@ describe('all platforms', () => {
   })
 
   it('clicking to the left of a thought, the caret should move to the beginning of the thought.', async () => {
-
     const importText = `
     - Purple Rain`
 
@@ -93,7 +88,6 @@ describe('all platforms', () => {
   })
 
   it('clicking on the right edge of a thought, the caret should move to the end of the thought.', async () => {
-
     const importText = `
     - Richard Feynman`
 
@@ -110,22 +104,18 @@ describe('all platforms', () => {
   })
 
   it.skip('clicking to the right of a thought, the caret should...?', async () => {
-
     // const importText = `
     // - Richard Feynman`
-
     // await press('Enter')
     // await paste(importText)
     // await setCursor(['Richard Feynman'], { offset: 0 })
     // const editableNodeHandle = await getEditable('Richard Feynman')
     // await click(editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
-
     // const offset = await getSelection().focusOffset
     // expect(offset).toBe('Richard Feynman'.length)
   })
 
   it('clicking in the middle of a thought, the caret should be set to the point that is clicked.', async () => {
-
     const importText = `
     - Freddie Mercury`
 
@@ -141,7 +131,6 @@ describe('all platforms', () => {
   })
 
   it('on cursorDown, the caret should move to the beginning of the new cursor.', async () => {
-
     const importText = `
     - Dogs
       - Husky
@@ -164,7 +153,6 @@ describe('all platforms', () => {
   })
 
   it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
-
     const importText = `
     - a
     - b`
@@ -187,11 +175,9 @@ describe('all platforms', () => {
     const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('b')
   })
-
 })
 
 describe('mobile only', () => {
-
   const {
     click,
     clickBullet,
@@ -226,7 +212,6 @@ describe('mobile only', () => {
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
-
   })
 
   it('on clicking the hidden thought, caret should be on the parent thought of editing thought', async () => {

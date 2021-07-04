@@ -9,22 +9,26 @@ import { State } from '../util/initialState'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 
 // extend SwipeableDrawer with classes prop
-const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<SwipeableDrawerProps & { classes: any }>
+const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
+  SwipeableDrawerProps & { classes: any }
+>
 
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {
-
   const recentlyEditedTree = useSelector((state: State) => state.recentlyEdited)
   const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
-  const recentlyEdited = _.reverse(_.sortBy(findTreeDescendants(recentlyEditedTree, { startingPath: [], showHiddenThoughts }), 'lastUpdated')) // eslint-disable-line fp/no-mutating-methods
+  // eslint-disable-next-line fp/no-mutating-methods
+  const recentlyEdited = _.reverse(
+    _.sortBy(findTreeDescendants(recentlyEditedTree, { startingPath: [], showHiddenThoughts }), 'lastUpdated'),
+  )
 
   return (
     <div className='recently-edited-sidebar'>
       <div className='header'>Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
-        {
-          recentlyEdited.map((recentlyEditedThought, i) => <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path} charLimit={32} thoughtsLimit={10} />)
-        }
+        {recentlyEdited.map((recentlyEditedThought, i) => (
+          <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path} charLimit={32} thoughtsLimit={10} />
+        ))}
       </div>
     </div>
   )
@@ -32,7 +36,6 @@ const RecentEdited = () => {
 
 /** The Recently Edited sidebar component. */
 const Sidebar = () => {
-
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const dispatch = useDispatch()
 
@@ -47,11 +50,18 @@ const Sidebar = () => {
      * Therefore instead of using recommended partern of .mobile .drawer-container
      * we are providing different classname to drawer based on isTouch property.
      */
-    <SwipeableDrawerWithClasses classes={{ paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }} swipeAreaWidth={8} anchor='left' onOpen={() => {
-      onToggleSidebar(true)
-    }} onClose={() => {
-      onToggleSidebar(false)
-    }} open={showSidebar} >
+    <SwipeableDrawerWithClasses
+      classes={{ paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
+      swipeAreaWidth={8}
+      anchor='left'
+      onOpen={() => {
+        onToggleSidebar(true)
+      }}
+      onClose={() => {
+        onToggleSidebar(false)
+      }}
+      open={showSidebar}
+    >
       <RecentEdited />
     </SwipeableDrawerWithClasses>
   )

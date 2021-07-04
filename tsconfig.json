@@ -1,15 +1,8 @@
 {
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.js"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js"],
   "compilerOptions": {
     "strict": true,
-    "lib": [
-      "dom",
-      "es2019"
-    ],
+    "lib": ["dom", "es2019"],
     "jsx": "react-jsx",
     "target": "es5",
     "allowJs": true,
@@ -22,7 +15,8 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "downlevelIteration": true
   },
   "extends": "expo/tsconfig.base"
 }

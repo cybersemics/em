@@ -11,19 +11,21 @@ const prettyPrint = false
 const migrate = data => ({
   users: _.mapValues(data.users, userData => ({
     ...userData,
-    contextIndex: _.mapValues(userData.contextIndex, children => children.children
-      // already migrated
-      ? children
-      // need to be migrated
-      : {
-        children,
-        // set lastUpdated to newest child lastUpdated
-        lastUpdated: children.reduce(
-          (accum, child) => child.lastUpdated > accum ? child.lastUpdated : accum,
-          '' // any time stamp will evaluate to newer than empty string
-        )
-      })
-  }))
+    contextIndex: _.mapValues(userData.contextIndex, children =>
+      children.children
+        ? // already migrated
+          children
+        : // need to be migrated
+          {
+            children,
+            // set lastUpdated to newest child lastUpdated
+            lastUpdated: children.reduce(
+              (accum, child) => (child.lastUpdated > accum ? child.lastUpdated : accum),
+              '', // any time stamp will evaluate to newer than empty string
+            ),
+          },
+    ),
+  })),
 })
 
 /**
@@ -47,7 +49,7 @@ const run = () => {
   const migrated = migrate(data)
 
   console.info('Writing migrated data...')
-  fs.writeFileSync('output.json', JSON.stringify(migrated, ...prettyPrint ? [null, 2] : []))
+  fs.writeFileSync('output.json', JSON.stringify(migrated, ...(prettyPrint ? [null, 2] : [])))
 
   console.info('Done')
 }

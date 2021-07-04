@@ -10,11 +10,7 @@ it('joins two simple thoughts', () => {
   - m
   - n
 - b`
-  const steps = [
-    importText({ text }),
-    setCursorFirstMatch(['a', 'm']),
-    join()
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a', 'm']), join()]
 
   const newState = reducerFlow(steps)(initialState())
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
@@ -39,11 +35,7 @@ it('joins two thoughts and merges their children', () => {
     - e
     - f
 - b`
-  const steps = [
-    importText({ text }),
-    setCursorFirstMatch(['a', 'o']),
-    join()
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a', 'o']), join()]
 
   const newState = reducerFlow(steps)(initialState())
 
@@ -60,7 +52,6 @@ it('joins two thoughts and merges their children', () => {
 - b
 `
   expect(removeHome(exported)).toEqual(expectedOutput)
-
 })
 
 it('generates unique & non-conflicting ranks', () => {
@@ -73,16 +64,11 @@ it('generates unique & non-conflicting ranks', () => {
   - o
     - d
 - b`
-  const steps = [
-    importText({ text }),
-    setCursorFirstMatch(['a', 'n']),
-    join()
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a', 'n']), join()]
 
   const newState = reducerFlow(steps)(initialState())
 
   const children = getChildrenRanked(newState, ['a', 'm n o'])
 
   expect(new Set(children.map(child => child.rank)).size).toBe(4)
-
 })

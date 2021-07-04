@@ -90,7 +90,6 @@ it('makeOrderedComparator', () => {
 })
 
 describe('compareReasonable', () => {
-
   it('sort emojis above non-emojis and sort within emoji group', () => {
     expect(compareReasonable('a', 'a')).toBe(0)
     expect(compareReasonable('a', 'b')).toBe(-1)
@@ -113,12 +112,10 @@ describe('compareReasonable', () => {
 })
 
 describe('compareReasonableDescending', () => {
-
   /**
    * Build Child object for tests.
    */
-  const buildChild = (value: string): Child =>
-    ({ id: '0', rank: 0, value: value })
+  const buildChild = (value: string): Child => ({ id: '0', rank: 0, value: value })
 
   it('sort emojis above non-emojis and sort within emoji group in descending order', () => {
     expect(compareThoughtDescending(buildChild('a'), buildChild('a'))).toBe(0)

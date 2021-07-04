@@ -6,7 +6,6 @@ import { State } from '../util/initialState'
 
 /** Moves the cursor forward in the cursorHistory. */
 const cursorForward = (state: State) => {
-
   // pop from cursor history
   if (state.cursorHistory.length > 0) {
     const cursorNew = state.cursorHistory[state.cursorHistory.length - 1]

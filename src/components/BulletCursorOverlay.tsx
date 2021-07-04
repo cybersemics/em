@@ -15,21 +15,23 @@ const mapStateToProps = (state: State, props: BulletCursorOverlayProps) => {
   const { draggedSimplePath, dragHold } = state
   const { simplePath, isDragging } = props
   return {
-    isDragging: isDragging || (dragHold && equalPath(draggedSimplePath!, simplePath))
+    isDragging: isDragging || (dragHold && equalPath(draggedSimplePath!, simplePath)),
   }
 }
 
 /**
  * Circle next to the Thought.
  */
-const BulletCursorOverlay = ({
-  isDragging
-}: BulletCursorOverlayProps) => {
+const BulletCursorOverlay = ({ isDragging }: BulletCursorOverlayProps) => {
   return (
-    <span className={classNames({
-      'bullet-cursor-overlay': true,
-      'bullet-cursor-overlay-highlighted': isDragging
-    })}>•</span>
+    <span
+      className={classNames({
+        'bullet-cursor-overlay': true,
+        'bullet-cursor-overlay-highlighted': isDragging,
+      })}
+    >
+      •
+    </span>
   )
 }
 

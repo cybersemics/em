@@ -20,34 +20,56 @@ const getCursorSortDirection = (state: State) => {
 }
 
 /** Ascending Icon Component. */
-const IconAsc = ({ size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} style={style} viewBox='0 0 24 24' enableBackground='new 0 0 24 24'>
-  <g style={{ transform: 'translateY(4px)' }}>
-    <polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6'/>
-    <rect x='10' y='16' width='11' height='2'/>
-    <rect x='10' y='12' width='9' height='2'/>
-    <rect x='10' y='8' width='7' height='2'/>
-    <rect x='10' y='4' width='5' height='2'/>
-    <rect x='10' y='0' width='3' height='2'/>
-  </g>
-</svg>
+const IconAsc = ({ size = 20, style }: IconType) => (
+  <svg
+    version='1.1'
+    className='icon'
+    xmlns='http://www.w3.org/2000/svg'
+    width={size}
+    height={size}
+    style={style}
+    viewBox='0 0 24 24'
+    enableBackground='new 0 0 24 24'
+  >
+    <g style={{ transform: 'translateY(4px)' }}>
+      <polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
+      <rect x='10' y='16' width='11' height='2' />
+      <rect x='10' y='12' width='9' height='2' />
+      <rect x='10' y='8' width='7' height='2' />
+      <rect x='10' y='4' width='5' height='2' />
+      <rect x='10' y='0' width='3' height='2' />
+    </g>
+  </svg>
+)
 
 /** Descending Icon Component. */
-const IconDesc = ({ size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} style={style} viewBox='0 0 24 24' enableBackground='new 0 0 24 24'>
-  <g style={{ transform: 'translateY(4px)' }}>
-    <polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6'/>
-    <rect x='10' y='16' width='3' height='2'/>
-    <rect x='10' y='12' width='5' height='2'/>
-    <rect x='10' y='8' width='7' height='2'/>
-    <rect x='10' y='4' width='9' height='2'/>
-    <rect x='10' y='0' width='11' height='2'/>
-  </g>
-</svg>
+const IconDesc = ({ size = 20, style }: IconType) => (
+  <svg
+    version='1.1'
+    className='icon'
+    xmlns='http://www.w3.org/2000/svg'
+    width={size}
+    height={size}
+    style={style}
+    viewBox='0 0 24 24'
+    enableBackground='new 0 0 24 24'
+  >
+    <g style={{ transform: 'translateY(4px)' }}>
+      <polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
+      <rect x='10' y='16' width='3' height='2' />
+      <rect x='10' y='12' width='5' height='2' />
+      <rect x='10' y='8' width='7' height='2' />
+      <rect x='10' y='4' width='9' height='2' />
+      <rect x='10' y='0' width='11' height='2' />
+    </g>
+  </svg>
+)
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }: IconType) => {
   const direction = useSelector(getCursorSortDirection)
   const Component = direction === 'Desc' ? IconDesc : IconAsc
-  return <Component size={size} style={style}/>
+  return <Component size={size} style={style} />
 }
 
 /** Decide next sort preference.
@@ -59,21 +81,21 @@ const decideNextSortPreference = (currentSortPreference: SortPreference): SortPr
   if (currentSortPreference.direction === 'Asc') {
     return {
       type: currentSortPreference.type,
-      direction: 'Desc'
+      direction: 'Desc',
     }
-  }
-  else {
-    const nextSortPreferenceType = sortPreferences[(sortPreferences.indexOf(currentSortPreference.type) + 1) % sortPreferences.length]
+  } else {
+    const nextSortPreferenceType =
+      sortPreferences[(sortPreferences.indexOf(currentSortPreference.type) + 1) % sortPreferences.length]
     return {
       type: nextSortPreferenceType,
-      direction: nextSortPreferenceType === 'None' ? null : 'Asc'
+      direction: nextSortPreferenceType === 'None' ? null : 'Asc',
     }
   }
 }
 
 const toggleSortShortcut: Shortcut = {
   id: 'toggleSort',
-  name: 'Toggle Sort',
+  label: 'Toggle Sort',
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', meta: true, alt: true },
   svg: Icon,
@@ -88,39 +110,51 @@ const toggleSortShortcut: Shortcut = {
     const nextSortPreference = decideNextSortPreference(currentSortPreference)
 
     // If next sort preference equals to global sort preference then delete sort attribute.
-    if (globalSortPreference.type === nextSortPreference.type && globalSortPreference.direction === nextSortPreference.direction) {
-      dispatch(deleteAttribute({
-        context: context,
-        key: '=sort',
-      }))
+    if (
+      globalSortPreference.type === nextSortPreference.type &&
+      globalSortPreference.direction === nextSortPreference.direction
+    ) {
+      dispatch(
+        deleteAttribute({
+          context: context,
+          key: '=sort',
+        }),
+      )
     }
     // If next preference type is not equal to current preference type, toggle new sort type.
     // We need to have this control to not remove the sort type when switching between Alphabetical/Asc and Alphabetical/Desc
     else {
-
       // if next sort preference direction is null, toggle off sort direction
-      !nextSortPreference.direction && currentSortPreference.direction &&
-      dispatch(toggleAttribute({
-        context: [...unroot(context), '=sort'],
-        key: currentSortPreference.type,
-        value: currentSortPreference.direction
-      }));
+      !nextSortPreference.direction &&
+        currentSortPreference.direction &&
+        dispatch(
+          toggleAttribute({
+            context: [...unroot(context), '=sort'],
+            key: currentSortPreference.type,
+            value: currentSortPreference.direction,
+          }),
+        )
 
       // If next sort preference type does not equal to current sort  then set =sort attribute.
-      (nextSortPreference.type !== currentSortPreference.type || nextSortPreference.type === globalSortPreference.type) &&
-      dispatch(toggleAttribute({
-        context: context,
-        key: '=sort',
-        value: nextSortPreference.type
-      }))
+      ;(nextSortPreference.type !== currentSortPreference.type ||
+        nextSortPreference.type === globalSortPreference.type) &&
+        dispatch(
+          toggleAttribute({
+            context: context,
+            key: '=sort',
+            value: nextSortPreference.type,
+          }),
+        )
 
       // if next sort preference direction is not null, toggle direction
       nextSortPreference.direction &&
-      dispatch(toggleAttribute({
-        context: [...context, '=sort'],
-        key: nextSortPreference.type,
-        value: nextSortPreference.direction
-      }))
+        dispatch(
+          toggleAttribute({
+            context: [...context, '=sort'],
+            key: nextSortPreference.type,
+            value: nextSortPreference.direction,
+          }),
+        )
     }
 
     if (cursor) {

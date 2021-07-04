@@ -9,14 +9,14 @@ interface RedoAction {
 
 const redoShortcut: Shortcut = {
   id: 'redo',
-  name: 'Redo',
+  label: 'Redo',
   description: 'Redo',
   svg: RedoIcon,
   exec: (dispatch: Dispatch<RedoAction>, getState) => {
     if (!isRedoEnabled(getState())) return
     dispatch({ type: 'redoAction' })
   },
-  isActive: getState => isRedoEnabled(getState())
+  isActive: getState => isRedoEnabled(getState()),
 }
 
 export default redoShortcut

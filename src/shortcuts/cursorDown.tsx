@@ -9,26 +9,37 @@ import { Dispatch, Icon as IconType, Shortcut } from '../types'
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
 
 interface SelectionAttributes {
-   rangeY: number
-   rangeHeight: number
-   baseNodeY: number
-   baseNodeHeight: number
-   paddingTop: number
-   paddingBottom: number
+  rangeY: number
+  rangeHeight: number
+  baseNodeY: number
+  baseNodeHeight: number
+  paddingTop: number
+  paddingBottom: number
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Icon = ({ fill = 'black', size = 20, style }: IconType) => <svg version='1.1' className='icon' xmlns='http://www.w3.org/2000/svg' width={size} height={size} fill={fill} style={style} viewBox='0 0 19.481 19.481' enableBackground='new 0 0 19.481 19.481'>
-  <g>
-    <path d='m10.201,.758l2.478,5.865 6.344,.545c0.44,0.038 0.619,0.587 0.285,0.876l-4.812,4.169 1.442,6.202c0.1,0.431-0.367,0.77-0.745,0.541l-5.452-3.288-5.452,3.288c-0.379,0.228-0.845-0.111-0.745-0.541l1.442-6.202-4.813-4.17c-0.334-0.289-0.156-0.838 0.285-0.876l6.344-.545 2.478-5.864c0.172-0.408 0.749-0.408 0.921,0z' />
-  </g>
-</svg>
+const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
+  <svg
+    version='1.1'
+    className='icon'
+    xmlns='http://www.w3.org/2000/svg'
+    width={size}
+    height={size}
+    fill={fill}
+    style={style}
+    viewBox='0 0 19.481 19.481'
+    enableBackground='new 0 0 19.481 19.481'
+  >
+    <g>
+      <path d='m10.201,.758l2.478,5.865 6.344,.545c0.44,0.038 0.619,0.587 0.285,0.876l-4.812,4.169 1.442,6.202c0.1,0.431-0.367,0.77-0.745,0.541l-5.452-3.288-5.452,3.288c-0.379,0.228-0.845-0.111-0.745-0.541l1.442-6.202-4.813-4.17c-0.334-0.289-0.156-0.838 0.285-0.876l6.344-.545 2.478-5.864c0.172-0.408 0.749-0.408 0.921,0z' />
+    </g>
+  </svg>
+)
 
 /**
  * Returns selection configuration if exists, null otherwise.
  */
 const getSelectionAttributes = (): SelectionAttributes | null => {
-
   const selection = window.getSelection()
   if (!selection) return null
 
@@ -52,13 +63,20 @@ const getSelectionAttributes = (): SelectionAttributes | null => {
 }
 
 /** Returns true if the selection is on the last line of an editable. */
-const isSelectionOnLastLine = ({ rangeY, rangeHeight, baseNodeY, baseNodeHeight, paddingTop, paddingBottom }: SelectionAttributes) => {
+const isSelectionOnLastLine = ({
+  rangeY,
+  rangeHeight,
+  baseNodeY,
+  baseNodeHeight,
+  paddingTop,
+  paddingBottom,
+}: SelectionAttributes) => {
   return rangeY + rangeHeight > baseNodeY + baseNodeHeight - paddingTop - paddingBottom - 5
 }
 
 const cursorDownShortcut: Shortcut = {
   id: 'cursorDown',
-  name: 'Cursor Down',
+  label: 'Cursor Down',
   keyboard: { key: Key.ArrowDown },
   hideFromInstructions: true,
   svg: Icon,
@@ -71,7 +89,7 @@ const cursorDownShortcut: Shortcut = {
     // use default browser behavior in prose mode
     const contextRanked = parentOf(cursor)
     const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
-    const isProseMode = isProseView && window.getSelection()?.focusOffset as number < headValue(cursor).length - 1
+    const isProseMode = isProseView && (window.getSelection()?.focusOffset as number) < headValue(cursor).length - 1
     if (isProseMode) return false
 
     const selectionAttributes = getSelectionAttributes()
@@ -81,7 +99,7 @@ const cursorDownShortcut: Shortcut = {
   exec: throttleByAnimationFrame((dispatch: Dispatch) => {
     dispatch(cursorDown())
     dispatch(scrollCursorIntoView())
-  })
+  }),
 }
 
 export default cursorDownShortcut

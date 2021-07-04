@@ -3,15 +3,14 @@ import { compareByRank, equalArrays, sort } from '../util'
 
 /** Returns a new thought remove duplicated given context. */
 export const removeDuplicatedContext = (thought: Lexeme, context: Context): Lexeme => {
-
-  const topRankContext = sort(thought.contexts || [], compareByRank)
-    .find(parent => equalArrays(parent.context, context))
+  const topRankContext = sort(thought.contexts || [], compareByRank).find(parent =>
+    equalArrays(parent.context, context),
+  )
 
   return {
     ...thought,
-    contexts: (thought.contexts || [])
-      .filter(parent =>
-        parent.rank === topRankContext?.rank || !equalArrays(parent.context, context)
-      )
+    contexts: (thought.contexts || []).filter(
+      parent => parent.rank === topRankContext?.rank || !equalArrays(parent.context, context),
+    ),
   }
 }

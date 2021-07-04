@@ -6,5 +6,4 @@ import { State } from '../util/initialState'
 /**
  * Returns new mock store for tests.
  */
-export const createMockStore = () =>
-  configureStore<State>([multi, thunk])
+export const createMockStore = () => configureStore<State>([multi, thunk])

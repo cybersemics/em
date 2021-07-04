@@ -19,7 +19,7 @@ const useWhyDidYouUpdate = (name: string, props: any) => {
           // Add to changesObj
           changesObj[key] = {
             from: previousProps.current[key],
-            to: props[key]
+            to: props[key],
           }
         }
       })

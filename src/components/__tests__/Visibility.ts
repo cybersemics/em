@@ -18,17 +18,13 @@ interface ThoughtOrSubthoughtsComponent {
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts path. */
 const wherePath = (context: Context) => (node: ThoughtOrSubthoughtsComponent) => {
-
   const path = node.props().path ?? node.props().simplePath
   return !!path && equalArrays(pathToContext(path), context)
 }
 
 /** Returns the children component inside the Subthoughts for the given context. */
 const getChildrenComponent = (context: Context) => {
-  const subthoughtsWrapper = wrapper
-    .find(Subthoughts)
-    .filterWhere(wherePath(context))
-    .first()
+  const subthoughtsWrapper = wrapper.find(Subthoughts).filterWhere(wherePath(context)).first()
 
   return subthoughtsWrapper.find('.children').at(0)
 }
@@ -53,7 +49,6 @@ afterEach(cleanupTestApp)
 */
 
 it('ancestors should be visible only up to allowed distance from cursor', () => {
-
   const text = `
   - a
     - b
@@ -67,7 +62,7 @@ it('ancestors should be visible only up to allowed distance from cursor', () => 
     importText({
       text,
     }),
-    setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd'])
+    setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd']),
   ])
 
   // update DOM
@@ -83,7 +78,6 @@ it('ancestors should be visible only up to allowed distance from cursor', () => 
 })
 
 it('descendants of hidden ancestor must be hidden too', () => {
-
   const text = `
   - a
     - =pinChildren
@@ -100,7 +94,7 @@ it('descendants of hidden ancestor must be hidden too', () => {
     importText({
       text,
     }),
-    setCursorFirstMatchActionCreator(['a', 'b', 'c'])
+    setCursorFirstMatchActionCreator(['a', 'b', 'c']),
   ])
 
   // update DOM
@@ -116,7 +110,6 @@ it('descendants of hidden ancestor must be hidden too', () => {
 })
 
 it('when the cursor is on a table grandchild leaf (column 2), other grandchildren of the table should be visible and dimmed', () => {
-
   const text = `
   - a
     - =view
@@ -133,7 +126,7 @@ it('when the cursor is on a table grandchild leaf (column 2), other grandchildre
     importText({
       text,
     }),
-    setCursorFirstMatchActionCreator(['a', 'e', 'f'])
+    setCursorFirstMatchActionCreator(['a', 'e', 'f']),
   ])
 
   // update DOM
@@ -147,7 +140,6 @@ it('when the cursor is on a table grandchild leaf (column 2), other grandchildre
 })
 
 it('when the cursor is null, all thoughts should be visible and not dimmed', () => {
-
   const text = `
   - a
     - b
@@ -177,7 +169,6 @@ it('when the cursor is null, all thoughts should be visible and not dimmed', () 
 })
 
 it('siblings of the leaf cursor should not be dimmed', () => {
-
   const text = `
   - a
     - b
@@ -202,7 +193,6 @@ it('siblings of the leaf cursor should not be dimmed', () => {
 })
 
 it('siblings of the non leaf cursor should be dimmed', () => {
-
   const text = `
   - a
     - b

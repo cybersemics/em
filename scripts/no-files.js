@@ -8,7 +8,7 @@ const path = require('path')
 
 const files = process.argv.slice(2)
 files.forEach(file => {
-  if(fs.existsSync(path.resolve(file))) {
+  if (fs.existsSync(path.resolve(file))) {
     console.error(`${file} is not allowed in this project.`)
     process.exit(1)
   }

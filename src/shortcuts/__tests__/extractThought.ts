@@ -32,7 +32,7 @@ describe('Extract thought', () => {
     store.dispatch([
       newThought({ value: thoughtValue }),
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
-      setCursorFirstMatchActionCreator([thoughtValue])
+      setCursorFirstMatchActionCreator([thoughtValue]),
     ])
 
     store.dispatch([extractThought()])
@@ -45,12 +45,11 @@ describe('Extract thought', () => {
   })
 
   it('the selected part of a thought is extracted as a child thought', async () => {
-
     const thoughtValue = 'this is a thought'
     store.dispatch([
       newThought({ value: thoughtValue }),
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
-      setCursorFirstMatchActionCreator([thoughtValue])
+      setCursorFirstMatchActionCreator([thoughtValue]),
     ])
 
     const thought = await findThoughtByText(thoughtValue)
@@ -69,15 +68,11 @@ describe('Extract thought', () => {
     const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
 
     expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['sub-thought', 'thought'])
-
   })
 
   it('the cursor does not get updated on child creation', async () => {
     const thoughtValue = 'this is a test thought'
-    store.dispatch([
-      newThought({ value: thoughtValue }),
-      setCursorFirstMatchActionCreator([thoughtValue])
-    ])
+    store.dispatch([newThought({ value: thoughtValue }), setCursorFirstMatchActionCreator([thoughtValue])])
 
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
@@ -89,6 +84,5 @@ describe('Extract thought', () => {
     expect(createdThought).toBeTruthy()
 
     expect(store.getState().cursor).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
-
   })
 })

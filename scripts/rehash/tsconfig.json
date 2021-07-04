@@ -1,11 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "include": [
-    "../../src/**/*.ts",
-    "../../src/**/*.tsx",
-    "../../src/**/*.js",
-    "index.ts"
-  ],
+  "include": ["../../src/**/*.ts", "../../src/**/*.tsx", "../../src/**/*.js", "index.ts"],
   "compilerOptions": {
     "module": "commonjs",
     "noEmit": false,

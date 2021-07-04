@@ -2,7 +2,7 @@ import React from 'react'
 import { Icon } from '../types'
 
 /** A left-facing svg triangle. */
-const TriangleLeft = ({ fill = 'black', size = 20, width, height }: Icon) =>
+const TriangleLeft = ({ fill = 'black', size = 20, width, height }: Icon) => (
   <svg
     xmlns=''
     version='1.1'
@@ -13,5 +13,6 @@ const TriangleLeft = ({ fill = 'black', size = 20, width, height }: Icon) =>
   >
     <polygon points='0,5 5,0 5,10' />
   </svg>
+)
 
 export default TriangleLeft

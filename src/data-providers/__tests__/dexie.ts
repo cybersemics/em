@@ -23,7 +23,6 @@ describe('dexie', () => {
 })
 
 describe('integration', () => {
-
   beforeEach(async () => {
     fakeTimer.useFakeTimer()
     initialize()
@@ -52,7 +51,6 @@ describe('integration', () => {
   })
 
   it('persist newThought', async () => {
-
     fakeTimer.useFakeTimer()
 
     store.dispatch(newThought({ value: 'a' }))
@@ -65,12 +63,11 @@ describe('integration', () => {
     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
-      children: [{ value: 'a', rank: 0 }]
+      children: [{ value: 'a', rank: 0 }],
     })
   })
 
   it('persist editThought', async () => {
-
     fakeTimer.useFakeTimer()
 
     store.dispatch([
@@ -81,7 +78,7 @@ describe('integration', () => {
         oldValue: '',
         newValue: 'a',
         path: [{ value: '', rank: 0 }],
-      }
+      },
     ])
 
     await fakeTimer.runAllAsync()
@@ -91,8 +88,7 @@ describe('integration', () => {
     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
-      children: [{ value: 'a', rank: 0 }]
+      children: [{ value: 'a', rank: 0 }],
     })
-
   })
 })

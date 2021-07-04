@@ -8,7 +8,6 @@ import { State } from '../util/initialState'
  * @param numWords Maximum number of words in a subphrase.
  */
 const getNgrams = (state: State, text: string, numWords: number) => {
-
   const words = text.split(' ')
 
   // the list of ngrams that are recursively decomposed
@@ -25,35 +24,37 @@ const getNgrams = (state: State, text: string, numWords: number) => {
   const pushUnlinkedNgrams = (wordIndex: number) => {
     if (unlinkedStart < wordIndex) {
       const ngram = words.slice(unlinkedStart, wordIndex).join(' ')
-      ngrams.push(numWords > 1 // eslint-disable-line fp/no-mutating-methods
-        // RECURSION
-        ? getNgrams(state, ngram, numWords - 1)
-        : {
-          text: ngram,
-          contexts: [],
-          index: charIndex - ngram.length - 1
-        }
+      // eslint-disable-next-line fp/no-mutating-methods
+      ngrams.push(
+        numWords > 1
+          ? // RECURSION
+            getNgrams(state, ngram, numWords - 1)
+          : {
+              text: ngram,
+              contexts: [],
+              index: charIndex - ngram.length - 1,
+            },
       )
     }
   }
 
   // loop through each ngram of the given phrase size (numWords)
-  for (let i = 0; i < words.length - numWords; i++) { // eslint-disable-line fp/no-loops, fp/no-let
-
+  // eslint-disable-next-line fp/no-loops, fp/no-let
+  for (let i = 0; i < words.length - numWords; i++) {
     const ngram = words.slice(i, i + numWords).join(' ')
     if (ngram.length > 0) {
       const contexts = getContexts(state, stripPunctuation(ngram))
 
       if (contexts.length > 0) {
-
         // decompose previous unlinked ngram
         pushUnlinkedNgrams(i)
 
         // ngram with other contexts
-        ngrams.push({ // eslint-disable-line fp/no-mutating-methods
+        // eslint-disable-next-line fp/no-mutating-methods
+        ngrams.push({
           text: ngram,
           contexts,
-          index: charIndex
+          index: charIndex,
         })
 
         i += numWords - 1

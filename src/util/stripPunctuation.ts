@@ -1,8 +1,7 @@
 const regexpPunctuation = /[;:.?!\-—,'"]/gi
 
 /** Strips all punctuation from the given string. */
-export const stripPunctuation = (text: string) => text
-  .replace(regexpPunctuation, '')
+export const stripPunctuation = (text: string) => text.replace(regexpPunctuation, '')
 
 /* Proof:
 

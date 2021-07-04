@@ -6,8 +6,8 @@ const setResourceCache = (state: State, { key, value }: { key: string; value: bo
   ...state,
   resourceCache: {
     ...state.resourceCache,
-    [key]: value
-  }
+    [key]: value,
+  },
 })
 
 export default _.curryRight(setResourceCache)

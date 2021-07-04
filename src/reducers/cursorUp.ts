@@ -21,16 +21,16 @@ const cursorUp = (state: State) => {
 
   const prevPath =
     // select prev sibling
-    thoughtBefore ? pathBefore
-    // select parent
-    : !isRoot(context) ? contextRanked
-    // previous niece
-    // prevNiece ? unroot(pathBefore.concat(prevNiece))
-    : null // see TODO
+    thoughtBefore
+      ? pathBefore
+      : // select parent
+      !isRoot(context)
+      ? contextRanked
+      : // previous niece
+        // prevNiece ? unroot(pathBefore.concat(prevNiece))
+        null // see TODO
 
-  return prevPath
-    ? setCursor(state, { path: prevPath })
-    : state
+  return prevPath ? setCursor(state, { path: prevPath }) : state
 }
 
 export default cursorUp

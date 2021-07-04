@@ -12,10 +12,11 @@ export const getWhitelistedThoughts = () => {
   if (whitelistedThoughts) return whitelistedThoughts
   const state = initialState()
 
-  const {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
-  } = importHtml(state, [{ value: EM_TOKEN, rank: 0 }] as SimplePath, INITIAL_SETTINGS)
+  const { contextIndexUpdates: contextIndex, thoughtIndexUpdates: thoughtIndex } = importHtml(
+    state,
+    [{ value: EM_TOKEN, rank: 0 }] as SimplePath,
+    INITIAL_SETTINGS,
+  )
 
   whitelistedThoughts = {
     contextIndex: {

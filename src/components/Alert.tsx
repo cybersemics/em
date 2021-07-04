@@ -30,25 +30,32 @@ const AlertWithTransition = ({ alert, close }: AlertComponentProps) => {
   }
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
-  return <TransitionGroup childFactory={child => !isDismissed ? child : React.cloneElement(child, { timeout: 0 })}>
-    {alert
-      ? <CSSTransition key={0} timeout={800} classNames='fade' onEntering={() => setDismiss(false)}>
-        { /* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */ }
-        <AlertComponent alert={alert} onClose={handleClose} key={alert.value} />
-      </CSSTransition>
-      : null}
-  </TransitionGroup>
+  return (
+    <TransitionGroup childFactory={child => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}>
+      {alert ? (
+        <CSSTransition key={0} timeout={800} classNames='fade' onEntering={() => setDismiss(false)}>
+          {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
+          <AlertComponent alert={alert} onClose={handleClose} key={alert.value} />
+        </CSSTransition>
+      ) : null}
+    </TransitionGroup>
+  )
 }
 
 /** The alert component itself. Separate so that a key property can be used to force a reset of useSwipeToDismissProps. */
 const AlertComponent = ({ alert, onClose }: { alert: NonNullable<Alert>; onClose: () => void }) => {
-
   const useSwipeToDismissProps = useSwipeToDismiss({ onDismiss: onClose })
 
-  return <div className='alert' {...useSwipeToDismissProps}>
-    <span className='alert-text' dangerouslySetInnerHTML={{ __html: alert.value || '' }}/>
-    {alert.showCloseLink ? <a className='upper-right status-close-x text-small' onClick={onClose}>✕</a> : null}
-  </div>
+  return (
+    <div className='alert' {...useSwipeToDismissProps}>
+      <span className='alert-text' dangerouslySetInnerHTML={{ __html: alert.value || '' }} />
+      {alert.showCloseLink ? (
+        <a className='upper-right status-close-x text-small' onClick={onClose}>
+          ✕
+        </a>
+      ) : null}
+    </div>
+  )
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(AlertWithTransition)

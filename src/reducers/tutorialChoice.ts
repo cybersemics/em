@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 const tutorialChoice = (state: State, { value }: { value: string }) =>
   settings(state, {
     key: 'Tutorial Choice',
-    value
+    value,
   })
 
 export default _.curryRight(tutorialChoice)

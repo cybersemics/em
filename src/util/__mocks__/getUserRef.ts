@@ -6,7 +6,7 @@ let firebaseStore = {}
 
 /** Returns a snapshot that returns the given value. */
 const wrapSnapshot = <T>(val: T): Snapshot<T> => ({
-  val: () => val
+  val: () => val,
 })
 
 /** Expose a function to clear the mock firebase store. */
@@ -27,7 +27,7 @@ const ref = (path: string) => ({
     })
     cb(null)
   },
-  on: noop
+  on: noop,
 })
 
 /**

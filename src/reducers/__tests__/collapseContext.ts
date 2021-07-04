@@ -4,12 +4,7 @@ import { collapseContext, cursorBack, cursorUp, newSubthought, newThought } from
 import { exportContext } from '../../selectors'
 
 it('do nothing on leaf', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    collapseContext({}),
-  ]
+  const steps = [newThought('a'), newSubthought('b'), collapseContext({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const state = initialState()
@@ -19,18 +14,10 @@ it('do nothing on leaf', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
-
 })
 
 it('collapse context with single child', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    newSubthought('c'),
-    cursorBack,
-    collapseContext({}),
-  ]
+  const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), cursorBack, collapseContext({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -42,13 +29,10 @@ it('collapse context with single child', () => {
       - b
     - c`)
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a' }, { value: 'c' }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'a' }, { value: 'c' }])
 })
 
 it('collapse context with multiple children', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('k'),
@@ -71,13 +55,10 @@ it('collapse context with multiple children', () => {
     - c
     - d`)
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a' }, { value: 'c' }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'a' }, { value: 'c' }])
 })
 
 it('merge children', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('b'),
@@ -101,13 +82,10 @@ it('merge children', () => {
     - d
     - x`)
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a' }, { value: 'c' }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'a' }, { value: 'c' }])
 })
 
 it('merge duplicate children', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('b'),
@@ -130,13 +108,10 @@ it('merge duplicate children', () => {
     - c
     - d`)
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a' }, { value: 'c' }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'a' }, { value: 'c' }])
 })
 
 it('after collapse context set cursor to the first visible children.', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('b'),
@@ -153,14 +128,7 @@ it('after collapse context set cursor to the first visible children.', () => {
 })
 
 it('after collapse context set cursor to the parent if there are no visible children.', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    newSubthought('=x'),
-    cursorBack,
-    collapseContext({}),
-  ]
+  const steps = [newThought('a'), newSubthought('b'), newSubthought('=x'), cursorBack, collapseContext({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())

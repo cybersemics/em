@@ -10,7 +10,6 @@ import { BrowserEnvironment } from '../types'
  *
  **/
 const getSelection = (browser: BrowserEnvironment) => {
-
   return {
     get focusOffset(): Promise<number | undefined> {
       return browser.execute(() => window.getSelection()?.focusOffset)
@@ -19,18 +18,19 @@ const getSelection = (browser: BrowserEnvironment) => {
       const focusNodePromise = browser.execute(() => window.getSelection()?.focusNode)
       // eslint-disable-next-line fp/no-mutating-methods
       Object.defineProperty(focusNodePromise, 'textContent', {
-        get: function(): Promise<string | undefined | null> {
+        get: function (): Promise<string | undefined | null> {
           return browser.execute(() => window.getSelection()?.focusNode?.textContent)
-        }
+        },
       })
       // add the textContent property
       // add undefined to match the native browser api
-      return focusNodePromise as typeof focusNodePromise & {
-        textContent: Promise<string | null | undefined>
-      } | undefined
+      return focusNodePromise as
+        | (typeof focusNodePromise & {
+            textContent: Promise<string | null | undefined>
+          })
+        | undefined
     },
   }
-
 }
 
 export default getSelection

@@ -5,8 +5,7 @@ export const componentToThought = (component: string): string => {
   let value = '' // eslint-disable-line fp/no-let
   try {
     value = window.decodeURIComponent(window.decodeURIComponent(component.replace(/~|%25$/, '')))
-  }
-  catch (e) {
+  } catch (e) {
     console.error(e)
   }
   return value

@@ -6,16 +6,18 @@ import indentOnSpace from '../indentOnSpace'
 import executeShortcut from '../../test-helpers/executeShortcut'
 
 it('indent on adding space at the beginning of the thought', () => {
-
   const store = createTestStore()
 
-  store.dispatch(importText({
-    text: `
+  store.dispatch(
+    importText({
+      text: `
         - a
           - b
             - c
             - d
-  ` }))
+  `,
+    }),
+  )
 
   store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
 
@@ -33,17 +35,19 @@ it('indent on adding space at the beginning of the thought', () => {
 })
 
 it('prevent indent on adding space at the beginning of the immovable thought', () => {
-
   const store = createTestStore()
 
-  store.dispatch(importText({
-    text: `
+  store.dispatch(
+    importText({
+      text: `
         - a
           - b
             - c
             - d
               - =immovable
-  ` }))
+  `,
+    }),
+  )
 
   store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
 

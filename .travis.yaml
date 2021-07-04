@@ -3,7 +3,7 @@ sudo: false
 language: node_js
 
 node_js:
-  - "node"
+  - 'node'
 
 notifications:
   email: false
@@ -14,4 +14,4 @@ branches:
 
 cache:
   directories:
-    - "$HOME/.npm"
+    - '$HOME/.npm'

@@ -12,8 +12,7 @@ import { Path, SplitResult } from '../types'
  * @param offset   The index within the thought at which to split. Defaults to the browser selection offset.
  */
 const splitThought = (state: State, { path, splitResult }: { path?: Path; splitResult: SplitResult }) => {
-
-  path = path || state.cursor as Path
+  path = path || (state.cursor as Path)
 
   const simplePath = simplifyPath(state, path)
 
@@ -29,7 +28,6 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   const pathLeft = parentOf(path).concat({ value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([
-
     // set the thought's text to the left of the selection
     editThought({
       oldValue: value,
@@ -43,7 +41,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
       value: valueRight,
       at: pathLeft,
       // selection offset
-      offset: 0
+      offset: 0,
     }),
 
     // move children
@@ -52,17 +50,19 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
       const pathRight = parentOf(simplePath).concat({ value: valueRight, rank: thoughtNew!.rank })
       const children = getChildrenRanked(state, pathToContext(pathLeft))
 
-      return reducerFlow(children.map(child =>
-        moveThought({
-          oldPath: pathLeft.concat(child),
-          newPath: pathRight.concat(child)
-        })
-      ))(state)
+      return reducerFlow(
+        children.map(child =>
+          moveThought({
+            oldPath: pathLeft.concat(child),
+            newPath: pathRight.concat(child),
+          }),
+        ),
+      )(state)
     },
 
     // render
     render,
-    editableRender
+    editableRender,
   ])(state)
 }
 

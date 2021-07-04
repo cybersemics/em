@@ -9,10 +9,10 @@ import { Shortcut } from '../types'
 
 const noteShortcut: Shortcut = {
   id: 'note',
-  name: 'Note',
+  label: 'Note',
   description: 'Add a small note beneath a thought.',
   svg: PencilIcon,
-  exec: () => Alert.alert('noteShortcut')
+  exec: () => Alert.alert('noteShortcut'),
   // canExecute: () => isDocumentEditable(),
   // exec: (dispatch, getState) => {
   //   const state = getState()

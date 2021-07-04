@@ -9,7 +9,7 @@ const cursorHistory = (state: State, { cursor }: { cursor: Path }) => ({
   cursorHistory: state.cursorHistory
     // shift first entry if history has exceeded its maximum size
     .slice(state.cursorHistory.length >= MAX_CURSOR_HISTORY ? 1 : 0)
-    .concat([cursor])
+    .concat([cursor]),
 })
 
 export default _.curryRight(cursorHistory)

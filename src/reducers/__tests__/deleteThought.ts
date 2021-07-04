@@ -4,7 +4,6 @@ import { getContexts, getAllChildren, getParent } from '../../selectors'
 import { deleteThought, newSubthought, newThought } from '../../reducers'
 
 it('delete from root', () => {
-
   const steps = [
     newThought('a'),
     newThought('b'),
@@ -22,23 +21,21 @@ it('delete from root', () => {
   const rootParent = getParent(stateNew, [HOME_TOKEN])
 
   // contextIndex
-  expect(rootParent)
-    .toMatchObject({
-      context: [HOME_TOKEN],
-      children: [{
+  expect(rootParent).toMatchObject({
+    context: [HOME_TOKEN],
+    children: [
+      {
         value: 'a',
         rank: 0,
-      }],
-    })
+      },
+    ],
+  })
 
   // thoughtIndex
-  expect(getContexts(stateNew, 'b'))
-    .toEqual([])
-
+  expect(getContexts(stateNew, 'b')).toEqual([])
 })
 
 it('delete descendants of root thought', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('b'),
@@ -61,11 +58,9 @@ it('delete descendants of root thought', () => {
   expect(getContexts(stateNew, 'a')).toEqual([])
   expect(getContexts(stateNew, 'b')).toEqual([])
   expect(getContexts(stateNew, 'c')).toEqual([])
-
 })
 
 it('delete thought with duplicate child', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('a'),
@@ -84,5 +79,4 @@ it('delete thought with duplicate child', () => {
 
   // thoughtIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
-
 })

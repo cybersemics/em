@@ -15,8 +15,7 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
         onLongPressStart()
         setStartCallbackDispatched(true)
       }, ms)
-    }
-    else clearTimeout(timerIdRef.current)
+    } else clearTimeout(timerIdRef.current)
 
     return () => clearTimeout(timerIdRef.current)
   }, [startLongPress])
@@ -44,7 +43,7 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
     onTouchStart: start,
     onTouchEnd: stop,
     onTouchMove: scroll,
-    onTouchCancel: stop
+    onTouchCancel: stop,
   }
 }
 

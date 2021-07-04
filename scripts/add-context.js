@@ -11,13 +11,14 @@ const appendContext = (context, child) => unroot([...context, child])
 const escapeRegExp = s => s.replace(/[-[\]{}()*+?.\\^$|#\s]/g, '\\$&')
 const escapeSelector = s => '_' + s.replace(regExpEscapeSelector, s => `_${s.charCodeAt(0)}`)
 const regExpEscapeSelector = new RegExp('[' + escapeRegExp(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')
-const unroot = context => context[0] === HOME_TOKEN ? context.slice(1) : context
+const unroot = context => (context[0] === HOME_TOKEN ? context.slice(1) : context)
 
 /** Encode the thoughts (and optionally rank) as a string. */
-const hashContext = (thoughts, rank) => murmurHash3.x64.hash128(thoughts
-  .map(thought => thought ? escapeSelector(thought) : '')
-  .join(SEPARATOR_TOKEN)
-  + (typeof rank === 'number' ? SEPARATOR_TOKEN + rank : ''))
+const hashContext = (thoughts, rank) =>
+  murmurHash3.x64.hash128(
+    thoughts.map(thought => (thought ? escapeSelector(thought) : '')).join(SEPARATOR_TOKEN) +
+      (typeof rank === 'number' ? SEPARATOR_TOKEN + rank : ''),
+  )
 
 /** Traverses the contextIndex, calling a function for each context. */
 const traverseContext = (state, context, f) => {
@@ -35,8 +36,7 @@ const setContext = (context, parent) => {
 }
 
 const cli = () => {
-
-  const [,,inputPath] = process.argv
+  const [, , inputPath] = process.argv
 
   if (!inputPath) {
     console.error('ERROR: input json path required')

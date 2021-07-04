@@ -5,9 +5,10 @@ const spawn = require('child_process').spawn
 /**
  * Read config data from stdin.
  */
-const readInput = () => new Promise(resolve => {
-  stdin.addListener('data', data => resolve(data.toString().trim()))
-})
+const readInput = () =>
+  new Promise(resolve => {
+    stdin.addListener('data', data => resolve(data.toString().trim()))
+  })
 
 /**
  * Check if  given value is an object.
@@ -20,14 +21,13 @@ function isObject(x) {
  * Generate key value pair from given object.
  */
 const parse = tree =>
-  Object.keys(tree)
-    .reduce((acc, key) =>
-      [...acc,
-        ...isObject(tree[key])
-          ? parse(tree[key]).map(child => `${key}.${child}`)
-          : [`${key}="${tree[key]}"`]
-      ],
-    [])
+  Object.keys(tree).reduce(
+    (acc, key) => [
+      ...acc,
+      ...(isObject(tree[key]) ? parse(tree[key]).map(child => `${key}.${child}`) : [`${key}="${tree[key]}"`]),
+    ],
+    [],
+  )
 
 /**
  * Run firebase config set.

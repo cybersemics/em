@@ -1,4 +1,4 @@
-import { HOME_TOKEN } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
@@ -7,17 +7,11 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import subCategorizeAll from '../subCategorizeAll'
 import setCursor from '../setCursor'
-import cursorBack from '../cursorBack'
+import importText from '../importText'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('subcategorize multiple thoughts', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    newThought('c'),
-    subCategorizeAll,
-
-  ]
+  const steps = [newThought('a'), newSubthought('b'), newThought('c'), subCategorizeAll]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -25,41 +19,26 @@ it('subcategorize multiple thoughts', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - ${''/* prevent trim_trailing_whitespace */}
+    - ${'' /* prevent trim_trailing_whitespace */}
       - b
       - c`)
-
 })
 
 it('subcategorize multiple thoughts in the root', () => {
-
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    subCategorizeAll,
-
-  ]
+  const steps = [newThought('a'), newThought('b'), subCategorizeAll]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${''/* prevent trim_trailing_whitespace */}
+  - ${'' /* prevent trim_trailing_whitespace */}
     - a
     - b`)
-
 })
 
 it('should do nothing with no cursor', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    setCursor({ path: null }),
-    subCategorizeAll,
-
-  ]
+  const steps = [newThought('a'), newSubthought('b'), setCursor({ path: null }), subCategorizeAll]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -68,49 +47,62 @@ it('should do nothing with no cursor', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
-
 })
 
 it('set cursor on new empty thought', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('a1'),
-    newThought('a2'),
-    subCategorizeAll,
-
-  ]
+  const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), subCategorizeAll]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: '', rank: -1 },
+  ])
 })
 
-it('move all visible and hidden thoughts into a new empty thought after subcategorizeAll', () => {
+it('move all non meta thoughts and only allowed meta thoughts into new empty thought after subCategorizeAll', () => {
+  const text = `
+  - a
+    - =archive
+    - =bullet
+    - =focus
+    - =label
+    - =note
+    - =pin
+    - =publish
+    - =style
+    - =view
+    - c
+    - d
+    - e`
 
   const steps = [
-    newThought('b'),
-    newSubthought('=archive'),
-    newThought('c'),
-    newSubthought('d'),
-    cursorBack,
-    subCategorizeAll
+    importText({
+      text,
+      path: HOME_PATH,
+    }),
+    setCursorFirstMatch(['a', 'c']),
+    subCategorizeAll,
   ]
 
-  // run steps through reducer flow
+  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  const expectedOutput = `- ${HOME_TOKEN}
-  - b
-    -${' '}
-      - =archive
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - =style
+      - =view
       - c
-        - d`
-
-  expect(exported).toEqual(expectedOutput)
+      - d
+      - e
+    - =archive
+    - =bullet
+    - =focus
+    - =label
+    - =note
+    - =pin
+    - =publish`)
 })

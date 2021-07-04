@@ -4,7 +4,7 @@ import { Shortcut } from '../types'
 
 const bumpThoughtDownShortcut: Shortcut = {
   id: 'bumpThought',
-  name: 'Bump Thought Down',
+  label: 'Bump Thought Down',
   description: 'Bump the current thought down to its children and replace with empty text.',
   gesture: 'rld',
   keyboard: { key: 'd', meta: true, alt: true },
@@ -12,7 +12,7 @@ const bumpThoughtDownShortcut: Shortcut = {
   exec: dispatch => {
     asyncFocus()
     dispatch(bumpThoughtDown())
-  }
+  },
 }
 
 export default bumpThoughtDownShortcut

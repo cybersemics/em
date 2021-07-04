@@ -7,7 +7,6 @@ import { SimplePath } from '../types'
  * Assumes they have the same context.
  */
 const isBefore = (state: State, simplePathA: SimplePath, simplePathB: SimplePath) => {
-
   const valueA = headValue(simplePathA)
   const rankA = headRank(simplePathA)
   const valueB = headValue(simplePathB)

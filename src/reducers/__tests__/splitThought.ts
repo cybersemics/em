@@ -7,13 +7,14 @@ import newThought from '../newThought'
 import splitThought from '../splitThought'
 
 it('split thought', () => {
-
   const steps = [
     newThought('apple'),
-    splitThought({ splitResult: {
-      left: 'ap',
-      right: 'ple'
-    } }),
+    splitThought({
+      splitResult: {
+        left: 'ap',
+        right: 'ple',
+      },
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -23,23 +24,21 @@ it('split thought', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - ap
   - ple`)
-
 })
 
 it('cursor moves to second thought', () => {
-
   const steps = [
     newThought('apple'),
-    splitThought({ splitResult: {
-      left: 'ap',
-      right: 'ple'
-    } })
+    splitThought({
+      splitResult: {
+        left: 'ap',
+        right: 'ple',
+      },
+    }),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'ple', rank: 1 }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'ple', rank: 1 }])
 })

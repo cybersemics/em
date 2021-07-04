@@ -9,14 +9,13 @@ import setCursor from '../setCursor'
 import setAttribute from '../setAttribute'
 
 it('set', () => {
-
   const steps = [
     newThought('a'),
     setAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
-    })
+      value: 'hello',
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -27,23 +26,21 @@ it('set', () => {
   - a
     - =test
       - hello`)
-
 })
 
 it('different value should override existing value', () => {
-
   const steps = [
     newThought('a'),
     setAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
+      value: 'hello',
     }),
     setAttribute({
       context: ['a'],
       key: '=test',
-      value: 'goodbye'
-    })
+      value: 'goodbye',
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -54,11 +51,9 @@ it('different value should override existing value', () => {
   - a
     - =test
       - goodbye`)
-
 })
 
 it('add attribute if key has already been created', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('=test'),
@@ -66,13 +61,13 @@ it('add attribute if key has already been created', () => {
     setAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
+      value: 'hello',
     }),
     setAttribute({
       context: ['a'],
       key: '=test',
-      value: 'goodbye'
-    })
+      value: 'goodbye',
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -83,5 +78,4 @@ it('add attribute if key has already been created', () => {
   - a
     - =test
       - goodbye`)
-
 })

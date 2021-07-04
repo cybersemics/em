@@ -9,14 +9,14 @@ interface UndoAction {
 
 const undoShortcut: Shortcut = {
   id: 'undo',
-  name: 'Undo',
+  label: 'Undo',
   description: 'Undo.',
   svg: UndoIcon,
   exec: (dispatch: Dispatch<UndoAction>, getState) => {
     if (!isUndoEnabled(getState())) return
     dispatch({ type: 'undoAction' })
   },
-  isActive: getState => isUndoEnabled(getState())
+  isActive: getState => isUndoEnabled(getState()),
 }
 
 export default undoShortcut

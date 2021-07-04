@@ -4,7 +4,7 @@ import { State } from '../util/initialState'
 const clearExpandBottom = (state: State): State => ({
   ...state,
   expandedBottom: {},
-  expandHoverBottomPaths: {}
+  expandHoverBottomPaths: {},
 })
 
 export default clearExpandBottom

@@ -4,12 +4,7 @@ import { exportContext } from '../../selectors'
 import { bumpThoughtDown, cursorBack, newSubthought, newThought } from '../index'
 
 it('bump leaf', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    bumpThoughtDown({}),
-  ]
+  const steps = [newThought('a'), newSubthought('b'), bumpThoughtDown({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -19,34 +14,22 @@ it('bump leaf', () => {
   - a
     - ${''}
       - b`)
-
 })
 
 it('cursor should stay in empty thought', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    bumpThoughtDown({}),
-  ]
+  const steps = [newThought('a'), newSubthought('b'), bumpThoughtDown({})]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: '', rank: -1 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: '', rank: -1 },
+  ])
 })
 
 it('bump thought with children', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    newSubthought('c'),
-    cursorBack,
-    bumpThoughtDown({}),
-  ]
+  const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), cursorBack, bumpThoughtDown({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -57,11 +40,9 @@ it('bump thought with children', () => {
     - ${''}
       - b
       - c`)
-
 })
 
 it('bump thought with children multiple times', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('b'),
@@ -81,15 +62,10 @@ it('bump thought with children multiple times', () => {
       - ${''}
       - b
       - c`)
-
 })
 
 it('bump root leaf', () => {
-
-  const steps = [
-    newThought('a'),
-    bumpThoughtDown({}),
-  ]
+  const steps = [newThought('a'), bumpThoughtDown({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -98,17 +74,10 @@ it('bump root leaf', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - ${''}
     - a`)
-
 })
 
 it('bump root thought with children', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    cursorBack,
-    bumpThoughtDown({}),
-  ]
+  const steps = [newThought('a'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -118,5 +87,4 @@ it('bump root thought with children', () => {
   - ${''}
     - a
     - b`)
-
 })

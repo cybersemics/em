@@ -3,7 +3,6 @@ import { State } from '../util/initialState'
 
 /** Return true if the context view is active for the given key, including selected subthoughts. */
 const isContextViewActive = (state: State, unrankedPath: string[]) => {
-
   if (unrankedPath.length === 0) return false
 
   return !!state.contextViews[hashContext(unrankedPath)]

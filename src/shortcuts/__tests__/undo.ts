@@ -40,18 +40,16 @@ describe('undo shortcut', () => {
 
     expect(store.getActions()).toEqual([])
   })
-
 })
 
 it('undo thought change', () => {
-
   const store = createTestStore()
 
   store.dispatch([
     importText({
       text: `
         - a
-        - b`
+        - b`,
     }),
     setCursorFirstMatchActionCreator(['a']),
     {
@@ -59,9 +57,9 @@ it('undo thought change', () => {
       newValue: 'aa',
       oldValue: 'a',
       context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }],
     },
-    { type: 'undoAction' }
+    { type: 'undoAction' },
   ])
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -74,7 +72,6 @@ it('undo thought change', () => {
 })
 
 it('persists undo thought change', async () => {
-
   /**
    * Note: we can't use await with initialize as that results in a timeout error due to dexie. It's handled using the usetestTimer from Sinon.
    * More on that here - https://github.com/cybersemics/em/issues/919#issuecomment-739135971.
@@ -87,12 +84,12 @@ it('persists undo thought change', async () => {
     importText({
       text: `
         - a
-        - b`
+        - b`,
     }),
     setCursorFirstMatchActionCreator(['a']),
-    newThought({ value: 'alpha', insertNewSubthought: true }), { type: 'undoAction' }
-  ]
-  )
+    newThought({ value: 'alpha', insertNewSubthought: true }),
+    { type: 'undoAction' },
+  ])
   await timer.runAllAsync()
 
   timer.useRealTimer()
@@ -110,11 +107,9 @@ it('persists undo thought change', async () => {
   - b`
 
   expect(exported).toEqual(expectedOutput)
-
 })
 
 it('group all navigation actions following an undoable(non-navigation) action and undo them together', () => {
-
   const store = createTestStore()
 
   store.dispatch([
@@ -123,7 +118,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
         - a
         - b
         - c
-        - d`
+        - d`,
     }),
     setCursorFirstMatchActionCreator(['b']),
     { type: 'indent' },
@@ -133,19 +128,21 @@ it('group all navigation actions following an undoable(non-navigation) action an
       oldValue: 'b',
       context: ['a'],
       rankInContext: 0,
-      path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
+      path: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ],
     },
     { type: 'cursorBack' },
     { type: 'moveThoughtDown' },
     { type: 'cursorDown' },
     setCursorFirstMatchActionCreator(['a', 'b1']),
     // undo 'moveThoughtDown', 'cursorDown' and 'setCursor'
-    { type: 'undoAction' }
+    { type: 'undoAction' },
   ])
 
   const cursorAfterFirstUndo = store.getState().cursor
-  expect(cursorAfterFirstUndo).toMatchObject([
-    { value: 'a' }])
+  expect(cursorAfterFirstUndo).toMatchObject([{ value: 'a' }])
 
   const exportedAfterFirstUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   const expectedOutputAfterFirstUndo = `- ${HOME_TOKEN}
@@ -159,8 +156,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
   store.dispatch({ type: 'undoAction' })
 
   const cursorAfterSecondUndo = store.getState().cursor
-  expect(cursorAfterSecondUndo).toMatchObject([
-    { value: 'a' }, { value: 'b' }])
+  expect(cursorAfterSecondUndo).toMatchObject([{ value: 'a' }, { value: 'b' }])
 
   const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   const expectedOutputAfterSecondUndo = `- ${HOME_TOKEN}
@@ -181,7 +177,7 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
         - a
           - b
           - c
-          - d`
+          - d`,
     }),
     setCursor({ path: null }),
     {
@@ -190,12 +186,15 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
       oldValue: 'b',
       newValue: 'bd',
       rankInContext: 0,
-      path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }]
+      path: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ],
     },
     // dispensible set cursor (which only updates datanonce)
     setCursor({ path: null }),
     // undo setCursor and thoughtChange in a sinle action
-    { type: 'undoAction' }
+    { type: 'undoAction' },
   ])
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -212,14 +211,16 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
 it('state remains unchanged if there are no inverse patches', () => {
   const store = createTestStore()
 
-  store.dispatch(importText({
-    text: `
+  store.dispatch(
+    importText({
+      text: `
       - a
        - b
        - c
        - d`,
-    preventSetCursor: true
-  }))
+      preventSetCursor: true,
+    }),
+  )
 
   const prevState = store.getState()
   expect(prevState.inversePatches.length).toEqual(0)
@@ -236,7 +237,7 @@ it('newThought action should be merged with the succeeding patch', () => {
     importText({
       text: `
           - a
-          - b`
+          - b`,
     }),
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
@@ -250,11 +251,11 @@ it('newThought action should be merged with the succeeding patch', () => {
         {
           value: 'd',
           rank: 3,
-        }
-      ]
+        },
+      ],
     },
     // undo thought change and preceding newThought action
-    { type: 'undoAction' }
+    { type: 'undoAction' },
   ])
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -265,7 +266,6 @@ it('newThought action should be merged with the succeeding patch', () => {
   - c`
 
   expect(exported).toEqual(expectedOutput)
-
 })
 
 it('undo contiguous changes', () => {
@@ -275,23 +275,23 @@ it('undo contiguous changes', () => {
     importText({
       text: `
         - A
-        - B`
+        - B`,
     }),
     {
       type: 'editThought',
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [HOME_TOKEN],
-      path: [{ value: 'A', rank: 0 }]
+      path: [{ value: 'A', rank: 0 }],
     },
     {
       type: 'editThought',
       newValue: 'Atlantic City',
       oldValue: 'Atlantic',
       context: [HOME_TOKEN],
-      path: [{ value: 'Atlantic', rank: 0 }]
+      path: [{ value: 'Atlantic', rank: 0 }],
     },
-    { type: 'undoAction' }
+    { type: 'undoAction' },
   ])
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -301,7 +301,6 @@ it('undo contiguous changes', () => {
   - B`
 
   expect(exported).toEqual(expectedOutput)
-
 })
 
 it('state.alert is omitted from the undo patch', () => {
@@ -311,7 +310,7 @@ it('state.alert is omitted from the undo patch', () => {
     importText({
       text: `
           - A
-          - B`
+          - B`,
     }),
     setCursorFirstMatchActionCreator(['a']),
     { type: 'archiveThought' },
@@ -324,7 +323,6 @@ it('state.alert is omitted from the undo patch', () => {
 
   const alertExists = lastPatch.some(({ path }) => path.includes('/alert'))
   expect(alertExists).toEqual(false)
-
 })
 
 it('clear patches when any undoable action is dispatched', () => {
@@ -342,11 +340,11 @@ it('clear patches when any undoable action is dispatched', () => {
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [HOME_TOKEN],
-      path: [{ value: 'A', rank: 0 }]
+      path: [{ value: 'A', rank: 0 }],
     },
     { type: 'newThought', value: 'New Jersey' },
     { type: 'undoAction' },
-    { type: 'undoAction' }
+    { type: 'undoAction' },
   ])
 
   expect(store.getState().patches.length).toEqual(2)
@@ -355,7 +353,6 @@ it('clear patches when any undoable action is dispatched', () => {
   store.dispatch(newThought({ value: 'Atlantic City' }))
 
   expect(store.getState().patches.length).toEqual(0)
-
 })
 
 it('non-undoable actions are ignored', () => {
@@ -363,9 +360,8 @@ it('non-undoable actions are ignored', () => {
   store.dispatch([
     { type: 'search', value: 'New' },
     { type: 'showModal', id: MODALS.welcome },
-    { type: 'toggleSidebar' }
+    { type: 'toggleSidebar' },
   ])
 
   expect(store.getState().inversePatches.length).toEqual(0)
-
 })

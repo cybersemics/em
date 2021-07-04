@@ -18,7 +18,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const indentShortcut: Shortcut = {
   id: 'indent',
-  name: 'Indent',
+  label: 'Indent',
   description: 'Move the current thought "in" (to the end of the previous thought). No surprises here.',
   svg: Icon,
   exec: dispatch => dispatch(indent()),
