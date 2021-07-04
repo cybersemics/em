@@ -14,7 +14,7 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
     : text
 }
 
-/** Strips out HTML tage when exporting as plain text. */
+/** Strips out HTML tags when exporting as plain text. */
 const stripHTMLTag = (str: string) => {
   const tmp = document.createElement('div')
   tmp.innerHTML = str
@@ -85,15 +85,21 @@ export const exportContext = (
         }`
       : ''
 
-  const text = `${tab0}${linePrefix}${head(context)}${
+  // Handle newlines in thoughts.
+  // This should never happen (newlines are converted to separate thoughts on import) but guard against newlines just in case.
+  // Otherwise re-importing is disastrous (additional lines of text in a thought are moved to the root).
+  const lines = head(context).split('\n')
+  const firstLine = `${tab0}${linePrefix}${lines[0]}`
+   const otherLines = lines.slice(1)
+    .map(line => `\n${tab1}${linePrefix}${line}`)
+    .join('')
+  const textWithChildren = `${firstLine}${otherLines}${
     exportedChildren && format === 'text/html' ? tab1 : ''
   }${exportedChildren}${linePostfix}`
 
-  const strippedHTMLText = stripHTMLTag(text)
+  const textFinal = format === 'text/plain' ? stripHTMLTag(textWithChildren) : textWithChildren
 
-  const finalizedText = format === 'text/plain' ? strippedHTMLText : text
-
-  const output = indent === 0 && format === 'text/html' ? `<ul>\n  ${finalizedText}\n</ul>` : finalizedText
+  const output = indent === 0 && format === 'text/html' ? `<ul>\n  ${textFinal}\n</ul>` : textFinal
 
   /** Replaces the title of the output. */
   const outputReplaceTitle = (output: string) => (title ? replaceTitle(output, title, format) : output)
