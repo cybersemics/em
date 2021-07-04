@@ -39,6 +39,7 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
     console.info(chalk.yellow('Setup Test Environment for webdriverio.'))
     await super.setup()
 
+    // Below codes that related to serving will be removed after the changes in the ios.yml merged to dev.
     // use existing app if already running
     if (await portUsed.check(3000, 'localhost')) {
       console.info(chalk.yellow('Using the currently running app on http://localhost:3000'))
