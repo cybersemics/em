@@ -29,7 +29,7 @@ const config = {
   baseUrl: '',
   waitforTimeout: 10000,
   connectionRetryTimeout: 90000,
-  connectionRetryCount: 3,
+  connectionRetryCount: 100,
   hostname: 'hub.browserstack.com',
 }
 
