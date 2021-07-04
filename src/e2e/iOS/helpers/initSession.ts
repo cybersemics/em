@@ -20,7 +20,7 @@ const initSession = (): (() => Promise<Browser<'async'>>) => {
     await mobileBrowser.waitUntil(async () => await skipElement.isClickable())
     await tap(mobileBrowser, skipElement)
     // await skipElement.click()
-    await waitForElement(mobileBrowser, '.new-thought-instructions')
+    await waitForElement(mobileBrowser, '.new-thought-instructions', { timeout: 90000 })
     return mobileBrowser
   }
 }
