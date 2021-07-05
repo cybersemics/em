@@ -183,11 +183,8 @@ const ThoughtAnnotation = ({
                   // do not render url icon on root thoughts in publish mode
                   url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
                 }
-                {REGEXP_PUNCTUATIONS.test(
-                  subthought.text,
-                ) ? null : // with the default minContexts of 2, do not count the whole thought
-                // with real time context update we increase context length by 1
-                minContexts === 0 || numContexts > (subthought.text === value ? 1 : 0) ? (
+                {REGEXP_PUNCTUATIONS.test(subthought.text) ? null : minContexts === 0 || // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+                  numContexts > (subthought.text === value ? 1 : 0) ? (
                   <StaticSuperscript n={numContexts} />
                 ) : null}
               </div>
