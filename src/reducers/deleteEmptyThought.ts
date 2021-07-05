@@ -47,6 +47,9 @@ const deleteEmptyThought = (state: State): State => {
   // archive an empty thought with hidden children
   else if (isEmpty && visibleChildren.length === 0) {
     return reducerFlow([
+      // trying to archive child =archive causes an error when it is no longer available to be moved
+      // filter out child =archive to avoid
+      // https://github.com/cybersemics/em/issues/1282
       ...allChildren.map(child => (child.value === '=archive' ? null : archiveThought({ path: [...cursor, child] }))),
       state => {
         const archivedChild = getChildrenRanked(state, context)[0]
