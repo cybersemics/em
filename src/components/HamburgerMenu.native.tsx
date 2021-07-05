@@ -1,11 +1,14 @@
 import React from 'react'
 import { TouchableOpacity } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
+import { useDrawerLayoutContext, IDrawerLayoutContext } from '../context/DrawerLayoutContext.native'
 
 //  const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = ({ fill = '#fff', size = 45 }) => {
+  const { openDrawer } = useDrawerLayoutContext() as IDrawerLayoutContext
+
   /** Icon. */
   const Icon = () => (
     <Svg x='0px' y='0px' width={size} height={size} viewBox='0 0 50 50'>
@@ -16,7 +19,7 @@ const HamburgerMenu = ({ fill = '#fff', size = 45 }) => {
   )
 
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={openDrawer}>
       <Icon />
     </TouchableOpacity>
   )
