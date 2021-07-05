@@ -1,9 +1,10 @@
 import React from 'react'
-import { SafeAreaView, Text, StyleSheet, ScrollView } from 'react-native'
+import { Text, StyleSheet, ScrollView } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
 import NavBar from './NavBar'
 import ModalFeedback from './ModalFeedback'
+import { DrawerLayoutProvider } from '../context/DrawerLayoutContext.native'
 
 /**
  * AppComponent container.
@@ -15,23 +16,19 @@ const AppComponent: React.FC = () => {
         // eslint-disable-next-line react/style-prop-object
         style='light'
       />
-      <SafeAreaView style={styles.container}>
+      <DrawerLayoutProvider>
         <Toolbar />
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.text}>hello World - em thoughts</Text>
         </ScrollView>
         <NavBar position='top' />
         <ModalFeedback />
-      </SafeAreaView>
+      </DrawerLayoutProvider>
     </>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
   content: {
     flex: 1,
     justifyContent: 'center',
