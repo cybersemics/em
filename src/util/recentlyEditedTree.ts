@@ -194,7 +194,7 @@ const nodeChange = (tree: Tree, oldPath: Path, newPath: Path) => {
             _.unset(tree, descendantContext)
             _.set(tree, newContext, { leaf: true, lastUpdated: timestamp(), path: newPath })
           } else if (!(notMergeableDepthDiff || isDirectCousin)) {
-          /*
+            /*
             restricting merge of direct cousins like A.B.C.F and A.B.D.E
             but merging distant relation A.B.C and A.B.D.E.F.G.H ---> A.B.D.E.F.G.H
           */
@@ -256,7 +256,7 @@ const nodeDelete = (tree: Tree, oldPath: Path, timestampUpdate = true) => {
         })
       })
     } else {
-    /*
+      /*
      if cannot be merged to either parent or grandParent then just making parent path as the leaf node
 
       For example:
