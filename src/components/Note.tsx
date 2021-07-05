@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { attribute, hasChild, isContextViewActive } from '../selectors'
+import { attribute, getParent, hasChild, isContextViewActive } from '../selectors'
 import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
@@ -27,7 +27,14 @@ const Note = ({ context, onFocus }: NoteProps) => {
   const [justPasted, setJustPasted] = useState(false)
 
   const hasNote = hasChild(state, context, '=note')
-  if (!hasNote || isContextViewActive(state, context)) return null
+
+  /** Check if the note thought is pending or not. */
+  const isNotePending = () => {
+    const noteThought = getParent(state, [...context, '=note'])
+    return !noteThought || noteThought.pending
+  }
+
+  if (!hasNote || isNotePending() || isContextViewActive(state, context)) return null
 
   const note = attribute(state, context, '=note')
 
