@@ -47,7 +47,7 @@ const deleteEmptyThought = (state: State): State => {
   // archive an empty thought with hidden children
   else if (isEmpty && visibleChildren.length === 0) {
     return reducerFlow([
-      ...allChildren.map(child => archiveThought({ path: [...cursor, child] })),
+      ...allChildren.map(child => (child.value === '=archive' ? null : archiveThought({ path: [...cursor, child] }))),
       state => {
         const archivedChild = getChildrenRanked(state, context)[0]
         return moveThought(state, {
