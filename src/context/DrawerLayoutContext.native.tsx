@@ -24,13 +24,7 @@ export const DrawerLayoutProvider: React.FC = ({ children }) => {
   return (
     <DrawerLayoutContext.Provider value={{ openDrawer }}>
       <SafeAreaView style={styles.container}>
-        <DrawerLayout
-          ref={drawerRef}
-          drawerWidth={300}
-          drawerType='front'
-          drawerBackgroundColor='#ddd'
-          renderNavigationView={Sidebar}
-        >
+        <DrawerLayout ref={drawerRef} drawerWidth={300} drawerType='front' renderNavigationView={Sidebar}>
           {children}
         </DrawerLayout>
       </SafeAreaView>
