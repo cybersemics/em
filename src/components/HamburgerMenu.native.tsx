@@ -1,11 +1,15 @@
 import React from 'react'
 import { TouchableOpacity } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
+import { useDispatch } from 'react-redux'
+import { toggleSidebar } from '../action-creators'
 
 //  const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = ({ fill = '#fff', size = 45 }) => {
+  const dispatch = useDispatch()
+
   /** Icon. */
   const Icon = () => (
     <Svg x='0px' y='0px' width={size} height={size} viewBox='0 0 50 50'>
@@ -16,7 +20,7 @@ const HamburgerMenu = ({ fill = '#fff', size = 45 }) => {
   )
 
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={() => dispatch(toggleSidebar({ value: true }))}>
       <Icon />
     </TouchableOpacity>
   )
