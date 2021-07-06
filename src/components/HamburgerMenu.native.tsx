@@ -1,13 +1,14 @@
 import React from 'react'
 import { TouchableOpacity } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
-import { useDrawerLayoutContext, IDrawerLayoutContext } from '../context/DrawerLayoutContext.native'
+import { useDispatch } from 'react-redux'
+import { toggleSidebar } from '../action-creators'
 
 //  const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = ({ fill = '#fff', size = 45 }) => {
-  const { openDrawer } = useDrawerLayoutContext() as IDrawerLayoutContext
+  const dispatch = useDispatch()
 
   /** Icon. */
   const Icon = () => (
@@ -19,7 +20,7 @@ const HamburgerMenu = ({ fill = '#fff', size = 45 }) => {
   )
 
   return (
-    <TouchableOpacity onPress={openDrawer}>
+    <TouchableOpacity onPress={() => dispatch(toggleSidebar({ value: true }))}>
       <Icon />
     </TouchableOpacity>
   )
