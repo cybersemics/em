@@ -10,33 +10,38 @@ import { State } from '../util/initialState'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
 import FeedbackButton from './FeedbackButton'
-import { Path, SimplePath } from '../types'
+import { Path } from '../types'
+
+// avoid changing object reference
+const navBreadcrumbsClass = {
+  'nav-breadcrumbs': true
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
   const { cursor, showBreadcrumbs } = state
-  const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path
-  const breadcrumbSimplePath = simplifyPath(state, breadcrumbPath)
   return {
     cursor,
     showBreadcrumbs,
-    breadcrumbSimplePath,
   }
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
 const NavBar = ({
-  breadcrumbSimplePath,
   cursor,
   position,
   showBreadcrumbs,
 }: {
-  breadcrumbSimplePath: SimplePath
   cursor: Path | null
   position: string
   showBreadcrumbs: boolean
 }) => {
+
   const isTutorialOn = isTutorial(store.getState())
+
+  // avoid re-rendering from simplePath's new object reference
+  const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path
+  const breadcrumbSimplePath = simplifyPath(store.getState(), breadcrumbPath)
 
   return (
     <div
@@ -55,7 +60,7 @@ const NavBar = ({
                 <div style={{ flexGrow: 1 }}>
                   <ContextBreadcrumbs
                     simplePath={breadcrumbSimplePath}
-                    classNamesObject={{ 'nav-breadcrumbs': true }}
+                    classNamesObject={navBreadcrumbsClass}
                   />
                 </div>
               </CSSTransition>
