@@ -187,10 +187,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
   static defaultProps: MultiGestureProps = {
     // the distance threshold for a single gesture
-    threshold: 12,
+    // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
+    // related: https://github.com/cybersemics/em/issues/1268
+    threshold: 3,
 
     // the distance to allow scrolling before abandoning the gesture
-    scrollThreshold: 12,
+    scrollThreshold: 15,
 
     // fired at the start of a gesture
     // includes false starts
