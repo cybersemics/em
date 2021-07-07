@@ -8,7 +8,7 @@ const config = {
     platformVersion: '13.3',
     deviceName: 'iPhone 11',
     browserName: 'safari',
-    maxInstances: 1,
+    maxInstances: 1, // Parallel test count
     automationName: 'XCUITest',
   },
 }

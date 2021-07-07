@@ -12,7 +12,7 @@ const config = {
   capabilities: {
     platformName: 'iOS',
     browserName: 'Safari',
-    device: 'iPhone 11',
+    device: 'iPhone 11', // The device that tests run on. iPhone 11 seems more stable for appium.
     osVersion: '13.3',
     unicodeKeyboard: true,
     build: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${new Date().toISOString().slice(0, 10)}`,
@@ -20,7 +20,7 @@ const config = {
     'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || 'local-' + new Date().getTime(),
     'browserstack.local': 'true',
     'browserstack.idleTimeout': 30,
-    'browserstack.debug': 'true', // for enabling visual logs
+    'browserstack.debug': 'true',
     'browserstack.console': 'verbose',
     'browserstack.networkLogs': 'true',
   },

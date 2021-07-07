@@ -1,6 +1,8 @@
 import { Browser, Element } from 'webdriverio'
 
-/** Reset safari format settings. */
+/** Reset safari format settings.
+ * BrowseStack has some issues for now. 'em' is loaded %200 zoomed in safari browser sometimes, and with this util function we reset safari zoom setting.
+ */
 const resetSafariFormatSettings = async (browser: Browser<'async'>) => {
   const oldContext = (await browser.getContext()) || 'NATIVE_APP'
   await browser.switchContext('NATIVE_APP')
@@ -9,15 +11,13 @@ const resetSafariFormatSettings = async (browser: Browser<'async'>) => {
   const resetButton = await browser.$('//XCUIElementTypeButton[@name="Reset"]')
   await resetButton.click()
 
-  // const element = await browser.$('//XCUIElementTypeOther[@name="em"]')
-  // const elementRect = await browser.getElementRect(element.elementId)
+  const windowSize = await browser.getWindowSize()
 
+  // Focus web content by tapping center of the screen
   await browser.touchAction({
     action: 'tap',
-    // x: elementRect.x + elementRect.width / 2,
-    // y: elementRect.y + elementRect.height / 2,
-    x: 300,
-    y: 300,
+    x: windowSize.width / 2,
+    y: windowSize!.height / 2,
   })
 
   await browser.switchContext(oldContext)

@@ -20,15 +20,14 @@ const {
   isKeyboardShown,
   paste,
   ref,
-  type,
   tap,
   waitForEditable,
   waitUntil,
+  newThought,
 } = helpers()
 
 it('Enter edit mode', async () => {
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
-  await type('foo')
+  await newThought('foo')
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
@@ -40,10 +39,8 @@ it('Enter edit mode', async () => {
 })
 
 it('Preserve Editing: true', async () => {
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
-  await editThought('foo')
-  await gesture(gestures.newSubThought, { waitForEditableAfterGesture: '' })
-  await editThought('bar')
+  await newThought('foo')
+  await newThought('bar', true)
 
   const editableNodeHandle = await getEditable('foo')
   await tap(editableNodeHandle)
@@ -54,11 +51,8 @@ it('Preserve Editing: true', async () => {
 })
 
 it('Preserve Editing: false', async () => {
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
-  await editThought('foo')
-  await waitForEditable('foo')
-  await gesture(gestures.newSubThought, { waitForEditableAfterGesture: '' })
-  await editThought('bar')
+  await newThought('foo')
+  await newThought('bar', true)
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
@@ -73,12 +67,11 @@ it('No uncle loop', async () => {
     - a
       - b
       - c`
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
+  await newThought()
   await paste([''], importText)
 
   await clickThought('b')
-  await gesture(gestures.newSubThought, { waitForEditableAfterGesture: '' })
-  await editThought('d')
+  await newThought('d', true)
 
   const editableNodeHandle = await waitForEditable('c')
   await tap(editableNodeHandle)
@@ -94,7 +87,7 @@ it('Tap hidden root thought', async () => {
     - b
       - c
   - d`
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
+  await newThought()
   await paste([''], importText)
   await clickThought('a')
   await clickThought('b')
@@ -114,7 +107,7 @@ it('Tap hidden uncle', async () => {
       - b
         - c
       - d`
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
+  await newThought()
   await paste([''], importText)
   await clickThought('a')
   await clickThought('b')
@@ -135,7 +128,7 @@ it('Tap empty content while keyboard up', async () => {
         - c
       - d`
 
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
+  await newThought()
   await paste([''], importText)
   await clickThought('b')
   await clickThought('c')
@@ -157,7 +150,7 @@ it('Tap empty content while keyboard down', async () => {
         - c
       - d`
 
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
+  await newThought()
   await paste([''], importText)
   await clickThought('b')
   await clickThought('c')
@@ -172,8 +165,7 @@ it('Tap empty content while keyboard down', async () => {
 })
 
 it('Swipe over cursor', async () => {
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
-  await editThought('foo')
+  await newThought('foo')
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
@@ -209,7 +201,7 @@ it('Swipe over hidden thought', async () => {
     - h
     - i`
 
-  await gesture(gestures.newThought, { waitForEditableAfterGesture: '' })
+  await newThought()
   await paste([''], importText)
   await waitForEditable('i')
   await clickThought('a')
@@ -222,8 +214,8 @@ it('Swipe over hidden thought', async () => {
   await gesture(gestures.newThought, {
     xStart: elementRect.x + 5,
     yStart: elementRect.y + elementRect.height + 10,
-    waitForEditableAfterGesture: '',
   })
+  await waitForEditable('')
 
   await editThought('this-is-new-thought')
   const newThoughtEditable = await waitForEditable('this-is-new-thought')

@@ -1,20 +1,18 @@
 import { Direction, GesturePath } from '../../../types'
 import { Browser, TouchAction } from 'webdriverio'
-import waitForEditable from './waitForEditable'
 
 export interface GestureOptions {
   xStart?: number
   yStart?: number
   segmentLength?: number
   waitMs?: number
-  waitForEditableAfterGesture?: string
 }
 
 /** Apply gesture action for the given path. */
 const gesture = async (
   browser: Browser<'async'>,
   path: GesturePath,
-  { xStart, yStart, segmentLength = 60, waitMs = 200, waitForEditableAfterGesture }: GestureOptions = {},
+  { xStart, yStart, segmentLength = 60, waitMs = 200 }: GestureOptions = {},
 ) => {
   if (!xStart || !yStart) {
     const windowSize = await browser.getWindowSize()
@@ -40,10 +38,6 @@ const gesture = async (
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   await browser.touchAction(actions)
-
-  if (waitForEditableAfterGesture !== undefined) {
-    await waitForEditable(browser, waitForEditableAfterGesture)
-  }
 }
 
 export default gesture

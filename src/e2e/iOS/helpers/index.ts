@@ -22,6 +22,7 @@ import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitForElementNotExist from './waitForElementNotExist'
 import waitUntil from './waitUntil'
+import newThought from './newThought'
 
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
@@ -50,6 +51,7 @@ const helpers = {
   waitForElement,
   waitForElementNotExist,
   waitUntil,
+  newThought,
 }
 
 /** Setup up the Browser instance for all helpers and returns an index of test helpers with the Browser instance partially applied. */
