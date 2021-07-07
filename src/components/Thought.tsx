@@ -352,6 +352,11 @@ const ThoughtContainer = ({
     : // if alphabetical sort is disabled just check if current thought is hovering
       globals.simulateDropHover || isHovering
 
+  const { direction: sortDirection, type: sortType } = getSortPreference(
+    store.getState(),
+    pathToContext(simplePathLive!),
+  )
+
   return thought
     ? dropTarget(
         dragSource(
@@ -468,7 +473,8 @@ const ThoughtContainer = ({
               isParentHovering={isAnyChildHovering}
               showContexts={allowSingleContext}
               simplePath={simplePath}
-              sort={getSortPreference(store.getState(), pathToContext(simplePathLive!))}
+              sortType={sortType}
+              sortDirection={sortDirection}
             />
           </li>,
         ),

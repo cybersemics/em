@@ -11,7 +11,7 @@ import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
-import { Child, Context, GesturePath, Index, Path, SimplePath, SortPreference, ThoughtContext } from '../types'
+import { Child, Context, GesturePath, Index, Path, SimplePath, SortDirection, ThoughtContext } from '../types'
 
 // util
 import {
@@ -70,7 +70,8 @@ interface SubthoughtsProps {
   expandable?: boolean
   isParentHovering?: boolean
   showContexts?: boolean
-  sort?: SortPreference
+  sortType?: string
+  sortDirection?: SortDirection | null
   simplePath: SimplePath
   path?: Path
 }
@@ -375,7 +376,8 @@ export const SubthoughtsComponent = ({
   isHovering,
   isParentHovering,
   showContexts,
-  sort: contextSort,
+  sortDirection: contextSortDirection,
+  sortType: contextSortType,
   simplePath,
   isExpanded,
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
@@ -383,7 +385,12 @@ export const SubthoughtsComponent = ({
   const state = store.getState()
   const [page, setPage] = useState(1)
   const globalSort = getGlobalSortPreference(state)
-  const sortPreference = contextSort || globalSort
+  const sortPreference =
+    (contextSortType && {
+      type: contextSortType,
+      direction: contextSortDirection,
+    }) ||
+    globalSort
   const { cursor } = state
   const context = pathToContext(simplePath)
   const value = headValue(simplePath)
