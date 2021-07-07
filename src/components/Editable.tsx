@@ -651,9 +651,15 @@ const Editable = ({
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = (e: React.MouseEvent | React.TouchEvent) => {
-    // Stop propagation to not trigger onMouseDown event of Content.
+    // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
     if (e.nativeEvent instanceof MouseEvent) {
       e.stopPropagation()
+    }
+    // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
+    // in this case, we need to prevent onTap from being called a second time via onMouseDown
+    // https://github.com/cybersemics/em/issues/1268
+    else if (globals.touching) {
+      e.preventDefault()
     }
 
     const state = store.getState()
