@@ -335,3 +335,90 @@ export const ALLOWED_ATTRIBUTES = {
 }
 
 export const EMPTY_SPACE = '  '
+
+export const META_PROGRAMMING_HELP = [
+  {
+    code: 'bullets',
+    description: 'Options: Bullets, None\nHide the bullets of a context. For a less bullety look.',
+  },
+  {
+    code: 'drop',
+    description:
+      'Options: top, bottom\nControls where in a context an item is placed after drag-and-drop. Default: bottom.',
+  },
+  {
+    code: 'focus',
+    description:
+      'Options: Normal, Zoom\nWhen the cursor is on this thought, hide its parent and siblings for additional focus. Excellent for study time or when you have had too much coffee.',
+  },
+  {
+    code: 'hidden',
+    description: 'Hide the thought.',
+  },
+  {
+    code: 'immovable',
+    description: 'The thought cannot be moved. Not very useful.',
+  },
+  {
+    code: 'label',
+    description: 'Display a note in smaller text underneath the thought. How pretty.',
+  },
+  {
+    code: 'options',
+    description: 'A list of allowed subthoughts. We all have times when we need to be strict.',
+  },
+  {
+    code: 'pin',
+    description: 'Keep a thought expanded, forever. Or at least until you unpin it.',
+  },
+  {
+    code: 'pinChildren',
+    description: "Options: true, false\nKeep all of a thought's subthoughts expanded. A lot of pins.",
+  },
+  {
+    code: 'publish',
+    description: 'Specify meta data for publishing the context as an article.',
+    hasChildren: true,
+    children: [
+      {
+        code: 'Byline',
+        description: 'A small byline of one or more lines to be displayed under the title.',
+      },
+      {
+        code: 'Email',
+        description:
+          'A gravatar email to display as a small avatar next to the Byline. Something professional, or perhaps something sexy?',
+      },
+      {
+        code: 'Title',
+        description: 'Override the title of the article when exported.',
+      },
+    ],
+  },
+  {
+    code: 'readonly',
+    description: 'The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.',
+  },
+  {
+    code: 'src',
+    description: 'Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.',
+  },
+  {
+    code: 'style',
+    description:
+      'Set CSS styles on the thought. You might also consider =styleContainer, =children/=style, =grandchildren/=style.',
+  },
+  {
+    code: 'uneditable',
+    description: 'The thought cannot be edited. How depressing.',
+  },
+  {
+    code: 'unextendable',
+    description: 'New subthoughts may not be added to the thought.',
+  },
+  {
+    code: 'view',
+    description:
+      'Options: Article, List, Table, Prose\n Controls how the thought and its subthoughts are displayed. Use "Table" to create two columns, and "Prose" forlongform writing. Default: List.',
+  },
+]
