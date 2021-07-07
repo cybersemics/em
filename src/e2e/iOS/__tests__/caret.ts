@@ -6,29 +6,28 @@ import { gestures } from '../../../test-helpers/constants'
 import { Element } from 'webdriverio'
 import helpers from '../helpers'
 
-jest.setTimeout(90000)
+jest.setTimeout(100000)
 
 const {
   clickThought,
-  gesture,
   editThought,
+  gesture,
   getEditable,
   getEditingText,
   getElementRectByScreen,
   getSelection,
   hideKeyboardByTappingDone,
   isKeyboardShown,
+  newThought,
   paste,
   ref,
-  type,
   tap,
   waitForEditable,
   waitUntil,
 } = helpers()
 
 it('Enter edit mode', async () => {
-  await gesture(gestures.newThought)
-  await type('foo')
+  await newThought('foo')
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
@@ -40,10 +39,8 @@ it('Enter edit mode', async () => {
 })
 
 it('Preserve Editing: true', async () => {
-  await gesture(gestures.newThought)
-  await editThought('foo')
-  await gesture(gestures.newSubThought)
-  await editThought('bar')
+  await newThought('foo')
+  await newThought('bar', { insertNewSubthought: true })
 
   const editableNodeHandle = await getEditable('foo')
   await tap(editableNodeHandle)
@@ -54,10 +51,8 @@ it('Preserve Editing: true', async () => {
 })
 
 it('Preserve Editing: false', async () => {
-  await gesture(gestures.newThought)
-  await editThought('foo')
-  await gesture(gestures.newSubThought)
-  await editThought('bar')
+  await newThought('foo')
+  await newThought('bar', { insertNewSubthought: true })
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
@@ -72,12 +67,11 @@ it('No uncle loop', async () => {
     - a
       - b
       - c`
-  await gesture(gestures.newThought)
+  await newThought()
   await paste([''], importText)
 
   await clickThought('b')
-  await gesture(gestures.newSubThought)
-  await editThought('d')
+  await newThought('d', { insertNewSubthought: true })
 
   const editableNodeHandle = await waitForEditable('c')
   await tap(editableNodeHandle)
@@ -93,7 +87,7 @@ it('Tap hidden root thought', async () => {
     - b
       - c
   - d`
-  await gesture(gestures.newThought)
+  await newThought()
   await paste([''], importText)
   await clickThought('a')
   await clickThought('b')
@@ -113,7 +107,7 @@ it('Tap hidden uncle', async () => {
       - b
         - c
       - d`
-  await gesture(gestures.newThought)
+  await newThought()
   await paste([''], importText)
   await clickThought('a')
   await clickThought('b')
@@ -134,7 +128,7 @@ it('Tap empty content while keyboard up', async () => {
         - c
       - d`
 
-  await gesture(gestures.newThought)
+  await newThought()
   await paste([''], importText)
   await clickThought('b')
   await clickThought('c')
@@ -156,7 +150,7 @@ it('Tap empty content while keyboard down', async () => {
         - c
       - d`
 
-  await gesture(gestures.newThought)
+  await newThought()
   await paste([''], importText)
   await clickThought('b')
   await clickThought('c')
@@ -171,8 +165,7 @@ it('Tap empty content while keyboard down', async () => {
 })
 
 it('Swipe over cursor', async () => {
-  await gesture(gestures.newThought)
-  await editThought('foo')
+  await newThought('foo')
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
@@ -183,7 +176,6 @@ it('Swipe over cursor', async () => {
     xStart: elementRect.x + 5,
     yStart: elementRect.y + elementRect.height / 2,
     segmentLength: elementRect.width,
-    waitMs: 60, // It looks like default 50ms is not enough for swiping.
   })
 
   await tap(editableNodeHandle)
@@ -209,7 +201,7 @@ it('Swipe over hidden thought', async () => {
     - h
     - i`
 
-  await gesture(gestures.newThought)
+  await newThought()
   await paste([''], importText)
   await waitForEditable('i')
   await clickThought('a')
@@ -223,6 +215,7 @@ it('Swipe over hidden thought', async () => {
     xStart: elementRect.x + 5,
     yStart: elementRect.y + elementRect.height + 10,
   })
+  await waitForEditable('')
 
   await editThought('this-is-new-thought')
   const newThoughtEditable = await waitForEditable('this-is-new-thought')
