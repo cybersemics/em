@@ -6,11 +6,12 @@ import { State } from '../util/initialState'
 // components
 import Link from './Link'
 import Superscript from './Superscript'
-import { UnconnectedContextBreadcrumbs, ContextBreadcrumbProps } from './ContextBreadcrumbs'
+import { ContextBreadcrumbs, ContextBreadcrumbProps } from './ContextBreadcrumbs'
 import { headValue, parentOf } from '../util'
+import { Path } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: ContextBreadcrumbProps) => ({
+const mapStateToProps = (state: State, props: Omit<ContextBreadcrumbProps, 'simplePath'> & { path: Path }) => ({
   simplePath: simplifyPath(state, props.path),
 })
 
@@ -24,7 +25,7 @@ const RecentlyEditedBreadcrumbs = connect(mapStateToProps)(
 
     return (
       <div className='recently-edited-breadcrumbs'>
-        <UnconnectedContextBreadcrumbs {...props} simplePath={parentSimplePath} />
+        <ContextBreadcrumbs {...props} simplePath={parentSimplePath} />
         <Link simplePath={simplePath} label={headValue(simplePath)} />
         <Superscript simplePath={simplePath} />
       </div>
