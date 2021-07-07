@@ -50,6 +50,7 @@
     "emoji-strip": "^1.0.1",
     "expo": "^41.0.1",
     "expo-status-bar": "^1.0.4",
+    "expo-web-browser": "^9.1.0",
     "fast-json-patch": "^3.0.0-1",
     "firebase-encode": "0.0.5",
     "fp-and-or": "^0.1.3",
