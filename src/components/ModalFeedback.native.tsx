@@ -17,7 +17,7 @@ import {
 } from 'react-native'
 // import { MODALS } from '../constants'
 import Modal from './Modal'
-import { ActionButton } from './ActionButton.native'
+import { ActionButton } from './ActionButton'
 
 const FEEDBACK_MIN_LENGTH = 10
 
@@ -83,7 +83,7 @@ const ModalFeedback = () => {
       title='Feedback'
       actions={({ close }) => (
         <View style={styles.actionButtonContainer}>
-          <ActionButton key='send' title='Send' onPress={() => close()} />
+          <ActionButton key='send' title='Send' onClick={() => close()} />
         </View>
       )}
     >

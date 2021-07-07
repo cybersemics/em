@@ -16,7 +16,7 @@ import * as WebBrowser from 'expo-web-browser'
 // import Logs from './Logs'
 import Modal from './Modal'
 import { Text, TouchableOpacity, View, StyleSheet, Platform } from 'react-native'
-import { ActionButton } from './ActionButton.native'
+import { ActionButton } from './ActionButton'
 
 interface IMetaprogramming {
   code: string
@@ -109,7 +109,7 @@ const ModalHelp = ({
     <Modal
       id='help'
       title='Help'
-      actions={({ close }) => <ActionButton key='close' title='Close' onPress={() => close()} />}
+      actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
     >
       <View>
         <View style={styles.dividerContainer}>

@@ -8,7 +8,7 @@ interface ActionButtonProps {
   small?: boolean
   isLoading?: boolean
   isDisabled?: boolean
-  onPress: () => void
+  onClick: () => void
   style?: StyleProp<ViewStyle>
 }
 
@@ -22,11 +22,11 @@ export const ActionButton = ({
   small,
   isLoading,
   isDisabled,
-  onPress,
+  onClick,
   style = {},
   ...restProps
 }: ActionButtonProps) => (
-  <TouchableOpacity onPress={!isDisabled ? onPress : undefined} style={[styles.defaultStyle, style]}>
+  <TouchableOpacity onPress={!isDisabled ? onClick : undefined} style={[styles.defaultStyle, style]}>
     {isLoading ? <ActivityIndicator size={35} /> : <Text style={styles.title}>{title}</Text>}
   </TouchableOpacity>
 )
