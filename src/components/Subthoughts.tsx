@@ -387,8 +387,12 @@ export const SubthoughtsComponent = ({
   const { cursor } = state
   const context = pathToContext(simplePath)
   const value = headValue(simplePath)
-  const envSelf = parseLet(state, context)
   const resolvedPath = path ?? simplePath
+  const envSelf = parseLet(state, context)
+
+  // only update the env object reference if there are new additions to the environment
+  // otherwise props changes and causes unnecessary re-renders
+  const envNew = Object.keys(envSelf).length > 0 ? { ...env, ...envSelf } : env
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
@@ -631,10 +635,7 @@ export const SubthoughtsComponent = ({
                 allowSingleContext={allowSingleContextParent}
                 count={count + sumSubthoughtsLength(children)}
                 depth={depth + 1}
-                env={{
-                  ...env,
-                  ...envSelf,
-                }}
+                env={envNew}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
                 key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
                 rank={child.rank}
