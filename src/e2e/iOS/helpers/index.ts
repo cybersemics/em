@@ -43,15 +43,15 @@ const helpers = {
   getSelection,
   hideKeyboardByTappingDone,
   isKeyboardShown,
+  newThought,
   paste,
-  tapReturnKey,
   tap,
+  tapReturnKey,
   type,
   waitForEditable,
   waitForElement,
   waitForElementNotExist,
   waitUntil,
-  newThought,
 }
 
 /** Setup up the Browser instance for all helpers and returns an index of test helpers with the Browser instance partially applied. */

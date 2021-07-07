@@ -10,20 +10,20 @@ jest.setTimeout(100000)
 
 const {
   clickThought,
-  gesture,
   editThought,
+  gesture,
   getEditable,
   getEditingText,
   getElementRectByScreen,
   getSelection,
   hideKeyboardByTappingDone,
   isKeyboardShown,
+  newThought,
   paste,
   ref,
   tap,
   waitForEditable,
   waitUntil,
-  newThought,
 } = helpers()
 
 it('Enter edit mode', async () => {
@@ -40,7 +40,7 @@ it('Enter edit mode', async () => {
 
 it('Preserve Editing: true', async () => {
   await newThought('foo')
-  await newThought('bar', true)
+  await newThought('bar', { insertNewSubthought: true })
 
   const editableNodeHandle = await getEditable('foo')
   await tap(editableNodeHandle)
@@ -52,7 +52,7 @@ it('Preserve Editing: true', async () => {
 
 it('Preserve Editing: false', async () => {
   await newThought('foo')
-  await newThought('bar', true)
+  await newThought('bar', { insertNewSubthought: true })
   await hideKeyboardByTappingDone()
 
   const editableNodeHandle = await waitForEditable('foo')
@@ -71,7 +71,7 @@ it('No uncle loop', async () => {
   await paste([''], importText)
 
   await clickThought('b')
-  await newThought('d', true)
+  await newThought('d', { insertNewSubthought: true })
 
   const editableNodeHandle = await waitForEditable('c')
   await tap(editableNodeHandle)
