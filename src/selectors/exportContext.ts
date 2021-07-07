@@ -90,7 +90,8 @@ export const exportContext = (
   // Otherwise re-importing is disastrous (additional lines of text in a thought are moved to the root).
   const lines = head(context).split('\n')
   const firstLine = `${tab0}${linePrefix}${lines[0]}`
-   const otherLines = lines.slice(1)
+  const otherLines = lines
+    .slice(1)
     .map(line => `\n${tab1}${linePrefix}${line}`)
     .join('')
   const textWithChildren = `${firstLine}${otherLines}${

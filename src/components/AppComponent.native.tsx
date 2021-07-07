@@ -11,6 +11,7 @@ import { DrawerLayout } from 'react-native-gesture-handler'
 import Sidebar from './Sidebar'
 import ModalHelp from './ModalHelp'
 
+
 /**
  * AppComponent container.
  */
@@ -55,7 +56,9 @@ const AppComponent: React.FC = () => {
           </ScrollView>
           <NavBar position='top' />
           <ModalFeedback />
+
           <ModalHelp />
+
         </DrawerLayout>
       </SafeAreaView>
     </>

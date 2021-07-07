@@ -90,7 +90,7 @@ module.exports = {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
-  plugins: ['export-default-identifier', 'fp', 'jsdoc', 'react', 'react-native'],
+  plugins: ['export-default-identifier', 'fp', 'jsdoc', 'react', 'react-native', 'prettier'],
   settings: {
     react: {
       version: 'detect',
@@ -149,6 +149,8 @@ module.exports = {
     'react-hooks/exhaustive-deps': 0,
 
     // prettier
-    quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: false }],
+    'prettier/prettier': 2,
+    'arrow-body-style': 'off',
+    'prefer-arrow-callback': 'off',
   },
 }
