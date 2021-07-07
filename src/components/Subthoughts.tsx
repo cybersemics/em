@@ -152,7 +152,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     // re-render if children change
     __render: getAllChildren(state, pathToContext(simplePathLive)),
     // expand thought due to cursor and hover expansion
-    isExpanded: store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isExpanded: !!store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
     isAbsoluteContext,
   }
 }
