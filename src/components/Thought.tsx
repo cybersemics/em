@@ -357,6 +357,16 @@ const ThoughtContainer = ({
     pathToContext(simplePathLive!),
   )
 
+  // avoid re-renders from object reference change
+  const styleNew = Object.keys(styleSelf || {}).length > 0
+    || Object.keys(styleEnv || {}).length > 0 && Object.keys(style || {}).length > 0
+  ? {
+    ...style,
+    ...styleEnv,
+    ...styleSelf,
+  } : Object.keys(styleEnv || {}).length > 0 ? styleEnv
+  : style
+
   return thought
     ? dropTarget(
         dragSource(
@@ -424,11 +434,7 @@ const ThoughtContainer = ({
                 minContexts={allowSingleContext ? 0 : 2}
                 showContextBreadcrumbs={showContextBreadcrumbs}
                 showContexts={showContexts}
-                style={{
-                  ...style,
-                  ...styleEnv,
-                  ...styleSelf,
-                }}
+                style={styleNew}
                 simplePath={simplePath}
               />
 
@@ -447,11 +453,7 @@ const ThoughtContainer = ({
                 rank={rank}
                 showContextBreadcrumbs={showContextBreadcrumbs}
                 showContexts={showContexts}
-                style={{
-                  ...style,
-                  ...styleEnv,
-                  ...styleSelf,
-                }}
+                style={styleNew}
                 simplePath={simplePath}
                 toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
                 view={view}
