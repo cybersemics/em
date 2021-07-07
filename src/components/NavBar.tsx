@@ -14,7 +14,7 @@ import { Path } from '../types'
 
 // avoid changing object reference
 const navBreadcrumbsClass = {
-  'nav-breadcrumbs': true
+  'nav-breadcrumbs': true,
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -36,7 +36,6 @@ const NavBar = ({
   position: string
   showBreadcrumbs: boolean
 }) => {
-
   const isTutorialOn = isTutorial(store.getState())
 
   // avoid re-rendering from simplePath's new object reference
@@ -58,10 +57,7 @@ const NavBar = ({
               {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
               <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
                 <div style={{ flexGrow: 1 }}>
-                  <ContextBreadcrumbs
-                    simplePath={breadcrumbSimplePath}
-                    classNamesObject={navBreadcrumbsClass}
-                  />
+                  <ContextBreadcrumbs simplePath={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
                 </div>
               </CSSTransition>
 

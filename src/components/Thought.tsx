@@ -358,14 +358,17 @@ const ThoughtContainer = ({
   )
 
   // avoid re-renders from object reference change
-  const styleNew = Object.keys(styleSelf || {}).length > 0
-    || Object.keys(styleEnv || {}).length > 0 && Object.keys(style || {}).length > 0
-  ? {
-    ...style,
-    ...styleEnv,
-    ...styleSelf,
-  } : Object.keys(styleEnv || {}).length > 0 ? styleEnv
-  : style
+  const styleNew =
+    Object.keys(styleSelf || {}).length > 0 ||
+    (Object.keys(styleEnv || {}).length > 0 && Object.keys(style || {}).length > 0)
+      ? {
+          ...style,
+          ...styleEnv,
+          ...styleSelf,
+        }
+      : Object.keys(styleEnv || {}).length > 0
+      ? styleEnv
+      : style
 
   return thought
     ? dropTarget(
