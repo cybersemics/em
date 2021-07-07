@@ -59,7 +59,7 @@ const tap = async (
 
   if (!coordinate) throw new Error('Coordinate not found.')
 
-  const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="TopBrowserBar"]')
+  const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
 
   await browser.touchAction({
     action: 'tap',

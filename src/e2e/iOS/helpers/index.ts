@@ -22,6 +22,7 @@ import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitForElementNotExist from './waitForElementNotExist'
 import waitUntil from './waitUntil'
+import newThought from './newThought'
 
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
@@ -42,9 +43,10 @@ const helpers = {
   getSelection,
   hideKeyboardByTappingDone,
   isKeyboardShown,
+  newThought,
   paste,
-  tapReturnKey,
   tap,
+  tapReturnKey,
   type,
   waitForEditable,
   waitForElement,

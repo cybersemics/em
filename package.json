@@ -35,7 +35,7 @@
     "lint:functions": "cd ./functions && npm run lint",
     "servebuild": "serve -s build -l 3000",
     "test": "react-scripts test --testPathIgnorePatterns=./src/e2e",
-    "test:ios": "react-scripts test ./src/e2e/iOS",
+    "test:ios": "react-scripts test ./src/e2e/iOS --verbose",
     "test:puppeteer": "react-scripts test ./src/e2e/puppeteer"
   },
   "dependencies": {
@@ -150,7 +150,6 @@
     "fake-indexeddb": "^3.1.2",
     "husky": "^6.0.0",
     "it-all": "^1.0.5",
-    "jest-dev-server": "^5.0.3",
     "jest-environment-node": "^27.0.3",
     "jest-environment-puppeteer-jsdom": "^4.3.1",
     "jest-localstorage-mock": "^2.4.14",
