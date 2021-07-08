@@ -335,3 +335,41 @@ export const ALLOWED_ATTRIBUTES = {
 }
 
 export const EMPTY_SPACE = '  '
+
+export const GLOBAL_STYLE_ENV = {
+  '=heading1': {
+    style: {
+      fontSize: '2em',
+      fontWeight: 700,
+    },
+    bullet: 'None',
+  },
+  '=heading2': {
+    style: {
+      fontSize: '1.75em',
+      fontWeight: 700,
+    },
+    bullet: 'None',
+  },
+  '=heading3': {
+    style: {
+      fontSize: '1.5em',
+      fontWeight: 700,
+    },
+    bullet: 'None',
+  },
+  '=heading4': {
+    style: {
+      fontSize: '1.25em',
+      fontWeight: 700,
+    },
+    bullet: 'None',
+  },
+  '=heading5': {
+    style: {
+      fontSize: '1.1em',
+      fontWeight: 700,
+    },
+    bullet: 'None',
+  },
+}
