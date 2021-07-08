@@ -13,6 +13,7 @@ const rerank = (state: State, simplePath: SimplePath): State => {
       moveThought({
         oldPath: unroot([...simplePath, child]),
         newPath: [...simplePath, { ...child, rank: i }],
+        skipRerank: true,
       }),
     ),
   )(state)
