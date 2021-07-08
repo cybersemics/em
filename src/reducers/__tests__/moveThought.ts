@@ -614,7 +614,10 @@ it('data integrity test', () => {
         { value: 'k', rank: 0 },
         { value: 'a', rank: 0 },
       ],
-      newPath: [{ value: 'm', rank: 0 }],
+      newPath: [
+        { value: 'm', rank: 1 },
+        { value: 'a', rank: 0 },
+      ],
     }),
   ]
 
