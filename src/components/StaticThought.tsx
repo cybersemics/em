@@ -44,7 +44,10 @@ const StaticThought = ({
       )}
 
       {showContextBreadcrumbs && !isRoot ? (
-        <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, simplePath))} homeContext={homeContext} />
+        <ContextBreadcrumbs
+          simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}
+          homeContext={homeContext}
+        />
       ) : showContexts && simplePath.length > 2 ? (
         <span className='ellipsis'>
           <a

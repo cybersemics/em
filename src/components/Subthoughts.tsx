@@ -11,7 +11,7 @@ import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
-import { Child, Context, GesturePath, Index, Path, SimplePath, SortPreference, ThoughtContext } from '../types'
+import { Child, Context, GesturePath, Index, Path, SimplePath, SortDirection, ThoughtContext } from '../types'
 
 // util
 import {
@@ -70,7 +70,8 @@ interface SubthoughtsProps {
   expandable?: boolean
   isParentHovering?: boolean
   showContexts?: boolean
-  sort?: SortPreference
+  sortType?: string
+  sortDirection?: SortDirection | null
   simplePath: SimplePath
   path?: Path
 }
@@ -151,7 +152,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     // re-render if children change
     __render: getAllChildren(state, pathToContext(simplePathLive)),
     // expand thought due to cursor and hover expansion
-    isExpanded: store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isExpanded: !!store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
     isAbsoluteContext,
   }
 }
@@ -375,7 +376,8 @@ export const SubthoughtsComponent = ({
   isHovering,
   isParentHovering,
   showContexts,
-  sort: contextSort,
+  sortDirection: contextSortDirection,
+  sortType: contextSortType,
   simplePath,
   isExpanded,
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
@@ -383,12 +385,21 @@ export const SubthoughtsComponent = ({
   const state = store.getState()
   const [page, setPage] = useState(1)
   const globalSort = getGlobalSortPreference(state)
-  const sortPreference = contextSort || globalSort
+  const sortPreference =
+    (contextSortType && {
+      type: contextSortType,
+      direction: contextSortDirection,
+    }) ||
+    globalSort
   const { cursor } = state
   const context = pathToContext(simplePath)
   const value = headValue(simplePath)
-  const envSelf = parseLet(state, context)
   const resolvedPath = path ?? simplePath
+  const envSelf = parseLet(state, context)
+
+  // only update the env object reference if there are new additions to the environment
+  // otherwise props changes and causes unnecessary re-renders
+  const envNew = Object.keys(envSelf).length > 0 ? { ...env, ...envSelf } : env
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
@@ -631,10 +642,7 @@ export const SubthoughtsComponent = ({
                 allowSingleContext={allowSingleContextParent}
                 count={count + sumSubthoughtsLength(children)}
                 depth={depth + 1}
-                env={{
-                  ...env,
-                  ...envSelf,
-                }}
+                env={envNew}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
                 key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
                 rank={child.rank}

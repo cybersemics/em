@@ -5,7 +5,7 @@ import classNames from 'classnames'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
@@ -118,6 +118,14 @@ export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<
 
 export type ConnectedThoughtDispatchProps = ReturnType<typeof mapDispatchToProps>
 
+const EMPTY_OBJECT = {}
+
+/** Gets a globally defined style. */
+const getGlobalStyle = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.style
+
+/** Gets a globally defined bullet. */
+const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath } = state
@@ -217,7 +225,7 @@ const ThoughtContainer = ({
   dropTarget,
   env,
   expandedContextThought,
-  hideBullet,
+  hideBullet: hideBulletProp,
   isDeepHovering,
   isPublishChild,
   isCursorGrandparent,
@@ -306,19 +314,38 @@ const ThoughtContainer = ({
   const styleEnv = children
     .filter(
       child =>
+        child.value in GLOBAL_STYLE_ENV ||
         // children that have an entry in the environment
-        child.value in (env || {}) &&
-        // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-        !equalArrays([...thoughts, child.value], env![child.value]),
+        (child.value in { ...env } &&
+          // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+          !equalArrays([...thoughts, child.value], env![child.value])),
     )
-    .map(child => getStyle(state, env![child.value]))
+    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {}))
     .reduce<React.CSSProperties>(
       (accum, style) => ({
         ...accum,
         ...style,
       }),
-      {},
+      // use stable object reference
+      EMPTY_OBJECT,
     )
+
+  /** Load =bullet from child expressions that are found in the environment. */
+  const bulletEnv = () =>
+    children
+      .filter(
+        child =>
+          child.value in GLOBAL_STYLE_ENV ||
+          // children that have an entry in the environment
+          (child.value in { ...env } &&
+            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+            !equalArrays([...thoughts, child.value], env![child.value])),
+      )
+      .map(child =>
+        child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
+      )
+
+  const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
   const styleSelf = getStyle(state, thoughts)
   const styleContainer = getStyle(state, thoughts, { container: true })
@@ -351,6 +378,24 @@ const ThoughtContainer = ({
       (!prevChild || compareReasonable(draggingThoughtValue, (prevChild as Child).value) === 1)
     : // if alphabetical sort is disabled just check if current thought is hovering
       globals.simulateDropHover || isHovering
+
+  const { direction: sortDirection, type: sortType } = getSortPreference(
+    store.getState(),
+    pathToContext(simplePathLive!),
+  )
+
+  // avoid re-renders from object reference change
+  const styleNew =
+    Object.keys(styleSelf || {}).length > 0 ||
+    (Object.keys(styleEnv || {}).length > 0 && Object.keys(style || {}).length > 0)
+      ? {
+          ...style,
+          ...styleEnv,
+          ...styleSelf,
+        }
+      : Object.keys(styleEnv || {}).length > 0
+      ? styleEnv
+      : style
 
   return thought
     ? dropTarget(
@@ -419,11 +464,7 @@ const ThoughtContainer = ({
                 minContexts={allowSingleContext ? 0 : 2}
                 showContextBreadcrumbs={showContextBreadcrumbs}
                 showContexts={showContexts}
-                style={{
-                  ...style,
-                  ...styleEnv,
-                  ...styleSelf,
-                }}
+                style={styleNew}
                 simplePath={simplePath}
               />
 
@@ -442,11 +483,7 @@ const ThoughtContainer = ({
                 rank={rank}
                 showContextBreadcrumbs={showContextBreadcrumbs}
                 showContexts={showContexts}
-                style={{
-                  ...style,
-                  ...styleEnv,
-                  ...styleSelf,
-                }}
+                style={styleNew}
                 simplePath={simplePath}
                 toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
                 view={view}
@@ -468,7 +505,8 @@ const ThoughtContainer = ({
               isParentHovering={isAnyChildHovering}
               showContexts={allowSingleContext}
               simplePath={simplePath}
-              sort={getSortPreference(store.getState(), pathToContext(simplePathLive!))}
+              sortType={sortType}
+              sortDirection={sortDirection}
             />
           </li>,
         ),

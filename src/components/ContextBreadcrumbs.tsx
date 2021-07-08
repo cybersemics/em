@@ -1,9 +1,6 @@
 import React from 'react'
-import { connect } from 'react-redux'
-import { simplifyPath } from '../selectors'
 import { ancestors, isRoot, strip } from '../util'
-import { State } from '../util/initialState'
-import { Child, Index, Path, SimplePath } from '../types'
+import { Child, Index, SimplePath } from '../types'
 import classNames from 'classnames'
 
 // components
@@ -14,7 +11,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 export interface ContextBreadcrumbProps {
   homeContext?: boolean
-  path: Path
+  simplePath: SimplePath
   thoughtsLimit?: number
   charLimit?: number
   classNamesObject?: Index<boolean>
@@ -27,19 +24,14 @@ type OverflowChild = Child & {
 
 type OverflowPath = OverflowChild[]
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: ContextBreadcrumbProps) => ({
-  simplePath: simplifyPath(state, props.path),
-})
-
 /** Breadcrumbs for contexts within the context views. */
-export const UnconnectedContextBreadcrumbs = ({
+export const ContextBreadcrumbs = ({
   homeContext,
   simplePath,
   thoughtsLimit,
   charLimit,
   classNamesObject,
-}: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
+}: ContextBreadcrumbProps) => {
   // if thoughtsLimit or charLimit is not passed , the default value of ellipsize will be false and component will have default behaviour
   const [ellipsize, setEllipsize] = React.useState(thoughtsLimit !== undefined && charLimit !== undefined)
 
@@ -123,4 +115,4 @@ export const UnconnectedContextBreadcrumbs = ({
   )
 }
 
-export default connect(mapStateToProps)(UnconnectedContextBreadcrumbs)
+export default ContextBreadcrumbs

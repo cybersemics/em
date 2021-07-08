@@ -422,3 +422,46 @@ export const META_PROGRAMMING_HELP = [
       'Options: Article, List, Table, Prose\n Controls how the thought and its subthoughts are displayed. Use "Table" to create two columns, and "Prose" forlongform writing. Default: List.',
   },
 ]
+
+export const GLOBAL_STYLE_ENV = {
+  '=heading1': {
+    style: {
+      fontSize: '2em',
+      fontWeight: 700,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+  '=heading2': {
+    style: {
+      fontSize: '1.75em',
+      fontWeight: 700,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+  '=heading3': {
+    style: {
+      fontSize: '1.5em',
+      fontWeight: 700,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+  '=heading4': {
+    style: {
+      fontSize: '1.25em',
+      fontWeight: 600,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+  '=heading5': {
+    style: {
+      fontSize: '1.1em',
+      fontWeight: 600,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+}

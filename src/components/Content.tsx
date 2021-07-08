@@ -55,9 +55,9 @@ const mapStateToProps = (state: State) => {
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, [], false)).length
 
-  // pass rootSort to allow root Subthoughts ro render on toggleSort
-
-  const rootSort = getSortPreference(state, rootContext)
+  // pass rootSort to allow root Subthoughts to render on toggleSort
+  // pass scalar components to avoid re-render from object reference change
+  const { type: rootSortType, direction: rootSortDirection } = getSortPreference(state, rootContext)
 
   return {
     search,
@@ -66,7 +66,8 @@ const mapStateToProps = (state: State) => {
     tutorialStep,
     rootThoughtsLength,
     noteFocus,
-    rootSort,
+    rootSortDirection,
+    rootSortType,
     isAbsoluteContext,
     rootContext,
   }
@@ -99,7 +100,8 @@ const Content: ContentComponent = props => {
     showModal,
     rootThoughtsLength,
     noteFocus,
-    rootSort,
+    rootSortDirection,
+    rootSortType,
     isAbsoluteContext,
   } = props
   const dispatch = useDispatch()
@@ -169,7 +171,8 @@ const Content: ContentComponent = props => {
               <Subthoughts
                 simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH}
                 expandable={true}
-                sort={rootSort}
+                sortDirection={rootSortDirection}
+                sortType={rootSortType}
               />
             )}
           </>

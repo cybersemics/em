@@ -16,7 +16,7 @@ export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]
 
 export const shortcutEmitter = new Emitter()
 
-/* A mapping of uppercase letters to char codes. Use with e.keyCode.
+/* A mapping of key codes to uppercase letters.
  * {
  *   65: 'A',
  *   66: 'B',
@@ -26,6 +26,18 @@ export const shortcutEmitter = new Emitter()
  */
 const letters = keyValueBy(Array(26).fill(0), (n, i) => ({
   [65 + i]: String.fromCharCode(65 + i).toUpperCase(),
+}))
+
+/* A mapping of key codes to digits.
+ * {
+ *   48: '0',
+ *   49: '1',
+ *   50: '2',
+ *   ...
+ * }
+ */
+const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
+  [48 + i]: i.toString(),
 }))
 
 /** Hash all the properties of a shortcut into a string. */
@@ -40,14 +52,14 @@ const hashShortcut = (shortcut: Shortcut): string => {
 }
 
 /** Hash all the properties of a keydown event into a string that matches hashShortcut. */
-const hashKeyDown = (e: KeyboardEvent) =>
+const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
   // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
   // e.g. alt + meta + n
   // use e.keyCode if available instead
-  (letters[e.keyCode] || e.key).toUpperCase()
+  (letters[e.keyCode] || digits[e.keyCode] || e.key).toUpperCase()
 
 /** Initializes shortcut indices and stores conflicts. */
 const index = (): {

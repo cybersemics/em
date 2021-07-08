@@ -7,9 +7,9 @@ import {
   DropTargetConnector,
   DropTargetMonitor,
 } from 'react-dnd'
-import { getEmptyImage } from 'react-dnd-html5-backend'
 import { isTouch } from '../browser'
 import { store } from '../store'
+import { NOOP } from '../constants'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, error, moveThought, createThought } from '../action-creators'
 import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
@@ -83,7 +83,7 @@ const endDrag = () => {
 /** Collects props from the DragSource. */
 const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
   dragSource: connect.dragSource(),
-  dragPreview: () => connect.dragPreview()(getEmptyImage()),
+  dragPreview: NOOP,
   isDragging: monitor.isDragging(),
 })
 

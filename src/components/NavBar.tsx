@@ -4,13 +4,18 @@ import { CSSTransition } from 'react-transition-group'
 import classNames from 'classnames'
 import { store } from '../store'
 import { isDocumentEditable, publishMode } from '../util'
-import { isTutorial } from '../selectors'
+import { isTutorial, simplifyPath } from '../selectors'
 import HomeLink from './HomeLink'
 import { State } from '../util/initialState'
-import { Path } from '../types'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
 import FeedbackButton from './FeedbackButton'
+import { Path } from '../types'
+
+// avoid changing object reference
+const navBreadcrumbsClass = {
+  'nav-breadcrumbs': true,
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -32,7 +37,10 @@ const NavBar = ({
   showBreadcrumbs: boolean
 }) => {
   const isTutorialOn = isTutorial(store.getState())
+
+  // avoid re-rendering from simplePath's new object reference
   const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path
+  const breadcrumbSimplePath = simplifyPath(store.getState(), breadcrumbPath)
 
   return (
     <div
@@ -49,7 +57,7 @@ const NavBar = ({
               {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
               <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
                 <div style={{ flexGrow: 1 }}>
-                  <ContextBreadcrumbs path={breadcrumbPath} classNamesObject={{ 'nav-breadcrumbs': true }} />
+                  <ContextBreadcrumbs simplePath={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
                 </div>
               </CSSTransition>
 
