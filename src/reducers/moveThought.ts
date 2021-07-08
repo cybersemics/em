@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
-import { render, updateThoughts } from '../reducers'
+import { render, rerank, updateThoughts } from '../reducers'
 import {
   getNextRank,
   getThought,
@@ -58,10 +58,13 @@ const moveThought = (
     oldPath,
     newPath,
     offset,
+    skipRerank,
   }: {
     oldPath: Path
     newPath: Path
     offset?: number
+    // skip the auto rerank to prevent infinite loop
+    skipRerank?: boolean
   },
 ) => {
   const oldSimplePath = simplifyPath(state, oldPath)
@@ -455,6 +458,20 @@ const moveThought = (
         ? contextIndexDescendantUpdates.descendantMoves
         : [{ pathNew: newPath, pathOld: oldPath }],
     }),
+
+    // rerank context if ranks are too close
+    // skip if this moveThought originated from a rerank
+    // otherwise we get an infinite loop
+    !skipRerank
+      ? state => {
+          const rankPrecision = 10e-8
+          const children = getChildrenRanked(state, newContext)
+          const ranksTooClose = children.some(
+            (child, i) => i > 0 && Math.abs(child.rank - children[i - 1].rank) < rankPrecision,
+          )
+          return ranksTooClose ? rerank(state, rootedParentOf(state, newSimplePath)) : state
+        }
+      : null,
 
     render,
   ])(state)
