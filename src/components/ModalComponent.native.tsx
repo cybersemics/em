@@ -6,20 +6,19 @@ import { modalCleanup } from '../util'
 import { Connected } from '../types' */
 import { /* closeModal */ modalComplete /* tutorial */ } from '../action-creators'
 import { useDispatch } from 'react-redux'
-import { Modal, Text, View, StyleSheet } from 'react-native'
+import { Modal, Text, View, StyleSheet, ScrollView } from 'react-native'
 
-/* interface ModalActionHelpers {
-  close: (duration?: number) => void,
- /*  remindMeLater: ModalComponent['remindMeLater'],
-  complete: ModalComponent['complete'],
-} */
+interface ModalActionHelpers {
+  close: (duration?: number) => void
+  // complete: typeof ModalComponent,
+}
 
 export interface ModalProps {
   hideModalActions?: boolean
   id: string
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
   show?: boolean
-  // actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode,
+  actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
   title: string
 }
 
@@ -31,26 +30,30 @@ const ModalComponent: React.FC<ModalProps> = props => {
   // const remindMeLater = () => dispatch(closeModal({ id: props.id }))
 
   /** Dispatches a modalComplete action for the modal. */
-  const complete = () => dispatch(modalComplete(props.id))
+  const close = () => dispatch(modalComplete(props.id))
 
   /** Dispatches a tutorial action that ends the tutorial. */
   // const endTutorial = () => dispatch(tutorial({ value: false }))
 
-  const { show, id, title, /* actions */ children /* onSubmit */ } = props
+  const { show, id, title, actions, children, hideModalActions /* onSubmit */ } = props
 
   if (!show) return null
 
   return (
-    <Modal animationType='slide' visible={show} onRequestClose={complete}>
+    <Modal animationType='slide' visible={show} onRequestClose={close}>
       <View style={styles.centeredView}>
         {id !== 'welcome' ? (
-          <Text style={styles.close} onPress={complete}>
+          <Text style={styles.close} onPress={close}>
             ✕
           </Text>
         ) : null}
 
-        {title ? <Text style={styles.title}>{title}</Text> : null}
-        <View>{children}</View>
+        <ScrollView>
+          {title ? <Text style={styles.title}>{title}</Text> : null}
+          <View>{children}</View>
+
+          <View>{!hideModalActions && actions && actions({ close })}</View>
+        </ScrollView>
       </View>
     </Modal>
   )

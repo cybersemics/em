@@ -17,6 +17,7 @@ import {
 } from 'react-native'
 // import { MODALS } from '../constants'
 import Modal from './Modal'
+import { ActionButton } from './ActionButton'
 
 const FEEDBACK_MIN_LENGTH = 10
 
@@ -77,7 +78,15 @@ const ModalFeedback = () => {
    }, [feedback]) */
 
   return (
-    <Modal id='feedback' title='Feedback'>
+    <Modal
+      id='feedback'
+      title='Feedback'
+      actions={({ close }) => (
+        <View style={styles.actionButtonContainer}>
+          <ActionButton key='send' title='Send' onClick={() => close()} />
+        </View>
+      )}
+    >
       <View style={styles.modalView}>
         <Text style={styles.modalText}>Send us your bugs, hopes, and dreams!</Text>
         <TextInput onChange={onChange} style={styles.input} multiline={true} />
@@ -93,6 +102,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
   },
+  actionButtonContainer: { alignItems: 'center' },
   button: {
     borderRadius: 20,
     padding: 10,

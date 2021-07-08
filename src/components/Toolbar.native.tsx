@@ -11,11 +11,12 @@ Test:
 
 import React, { useCallback } from 'react'
 import { shortcutById } from '../shortcuts'
-import { FlatList, ListRenderItem, TouchableOpacity, View, StyleSheet } from 'react-native'
+import { FlatList, ListRenderItem, TouchableOpacity, View, StyleSheet, GestureResponderEvent } from 'react-native'
 // import { store } from '../store'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { Icon } from '../types'
 import HamburgerMenu from './HamburgerMenu'
+import { store } from '../store'
 
 /** Toolbar component mobile. */
 const Toolbar = (
@@ -33,12 +34,15 @@ const Toolbar = (
 
   const keyExtractor = useCallback((item: string) => item, [])
   const renderItem: ListRenderItem<string> = useCallback(({ item: id, index }) => {
-    const { svg } = shortcutById(id)! ?? {}
+    const { svg, exec } = shortcutById(id)! ?? {}
 
     const SVG = svg as React.FC<Icon>
 
     return (
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity
+        onPress={(e: GestureResponderEvent) => exec(store.dispatch, store.getState, e, { type: 'toolbar' })}
+        style={styles.button}
+      >
         <SVG key={id} fill={fillColor} size={35} />
       </TouchableOpacity>
     )
