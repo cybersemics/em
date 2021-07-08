@@ -9,6 +9,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import { State } from '../util/initialState'
 import { DrawerLayout } from 'react-native-gesture-handler'
 import Sidebar from './Sidebar'
+import ModalHelp from './ModalHelp'
+import ModalWelcome from './ModalWelcome'
+import ModalExport from './ModalExport'
 
 /**
  * AppComponent container.
@@ -16,6 +19,7 @@ import Sidebar from './Sidebar'
 const AppComponent: React.FC = () => {
   const drawerRef = useRef<DrawerLayout>(null)
   const dispatch = useDispatch()
+
   const showSidebar = useSelector((state: State) => state.showSidebar)
 
   /** Open drawer menu. */
@@ -53,6 +57,10 @@ const AppComponent: React.FC = () => {
           </ScrollView>
           <NavBar position='top' />
           <ModalFeedback />
+
+          <ModalHelp />
+          <ModalWelcome />
+          <ModalExport />
         </DrawerLayout>
       </SafeAreaView>
     </>
