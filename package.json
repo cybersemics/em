@@ -49,7 +49,7 @@
     "emitter20": "^2.0.0",
     "emoji-strip": "^1.0.1",
     "expo": "^41.0.1",
-    "expo-clipboard": "~1.0.2",
+    "expo-clipboard": "^1.0.2",
     "expo-status-bar": "^1.0.4",
     "expo-web-browser": "^9.1.0",
     "fast-json-patch": "^3.0.0-1",
