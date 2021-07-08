@@ -361,14 +361,14 @@ export const GLOBAL_STYLE_ENV = {
   '=heading4': {
     style: {
       fontSize: '1.25em',
-      fontWeight: 700,
+      fontWeight: 600,
     },
     bullet: 'None',
   },
   '=heading5': {
     style: {
       fontSize: '1.1em',
-      fontWeight: 700,
+      fontWeight: 600,
     },
     bullet: 'None',
   },
