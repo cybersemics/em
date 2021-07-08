@@ -15,6 +15,7 @@ export { default as deleteEmptyThoughtOrOutdent, deleteEmptyThoughtOrOutdentAlia
 export { default as deleteThoughtWithCursor, archiveAliases } from './archive'
 export { default as exportContext } from './exportContext'
 export { default as extractThought } from './extractThought'
+export { heading0, heading1, heading2, heading3, heading4, heading5 } from './headings'
 export { default as home } from './home'
 export { default as indent } from './indent'
 export { default as indentOnSpace, indentOnSpaceAlias } from './indentOnSpace'
