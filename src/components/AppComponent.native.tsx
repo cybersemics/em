@@ -11,6 +11,7 @@ import { DrawerLayout } from 'react-native-gesture-handler'
 import Sidebar from './Sidebar'
 import ModalHelp from './ModalHelp'
 import ModalWelcome from './ModalWelcome'
+import ModalExport from './ModalExport'
 
 /**
  * AppComponent container.
@@ -59,6 +60,7 @@ const AppComponent: React.FC = () => {
 
           <ModalHelp />
           <ModalWelcome />
+          <ModalExport />
         </DrawerLayout>
       </SafeAreaView>
     </>
