@@ -341,6 +341,7 @@ export const GLOBAL_STYLE_ENV = {
     style: {
       fontSize: '2em',
       fontWeight: 700,
+      marginTop: '0.5em',
     },
     bullet: 'None',
   },
@@ -348,6 +349,7 @@ export const GLOBAL_STYLE_ENV = {
     style: {
       fontSize: '1.75em',
       fontWeight: 700,
+      marginTop: '0.5em',
     },
     bullet: 'None',
   },
@@ -355,6 +357,7 @@ export const GLOBAL_STYLE_ENV = {
     style: {
       fontSize: '1.5em',
       fontWeight: 700,
+      marginTop: '0.5em',
     },
     bullet: 'None',
   },
@@ -362,6 +365,7 @@ export const GLOBAL_STYLE_ENV = {
     style: {
       fontSize: '1.25em',
       fontWeight: 600,
+      marginTop: '0.5em',
     },
     bullet: 'None',
   },
@@ -369,6 +373,7 @@ export const GLOBAL_STYLE_ENV = {
     style: {
       fontSize: '1.1em',
       fontWeight: 600,
+      marginTop: '0.5em',
     },
     bullet: 'None',
   },
