@@ -14,6 +14,7 @@ import {
   getNextRank,
   getChildren,
   getChildrenRanked,
+  getAllChildren,
   isContextViewActive,
   prevSibling,
   simplifyPath,
@@ -49,7 +50,7 @@ const deleteEmptyThought = (state: State): State => {
   else if (isEmpty && visibleChildren.length === 0) {
     return reducerFlow([
       // archive all children
-      // if a child is already archived, move it to the parent instead
+      // if a child is already archived, move it to the parent
       // https://github.com/cybersemics/em/issues/864
       // https://github.com/cybersemics/em/issues/1282
       ...allChildren.map(child => {
@@ -61,13 +62,13 @@ const deleteEmptyThought = (state: State): State => {
             })
       }),
 
-      // move the archive up a level so it does not get permanently deleted
+      // move the child archive up a level so it does not get permanently deleted
       state => {
-        const archivedChild = getChildrenRanked(state, context)[0]
-        return archivedChild
+        const childArchive = getAllChildren(state, context).find(child => child.value === '=archive')
+        return childArchive
           ? moveThought(state, {
-              oldPath: [...cursor, archivedChild],
-              newPath: [...parentOf(cursor), archivedChild],
+              oldPath: [...cursor, childArchive],
+              newPath: [...parentOf(cursor), childArchive],
             })
           : state
       },
