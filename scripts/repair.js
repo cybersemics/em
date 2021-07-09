@@ -95,7 +95,7 @@ let repair = (maxDepth = 100) => {
       }
 
       const thoughtEncoded = em.hashThought(child.value)
-      const lexeme = thoughtIndexUpdates[thoughtEncoded] || em.getThought(child.value)
+      const lexeme = thoughtIndexUpdates[thoughtEncoded] || em.getLexeme(child.value)
 
       // recreate missing lexeme
       if (!lexeme) {

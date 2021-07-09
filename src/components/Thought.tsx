@@ -48,7 +48,7 @@ import {
   getChildrenRanked,
   getSortPreference,
   getStyle,
-  getThought,
+  getLexeme,
   hasChildren,
   isContextViewActive,
   rootedParentOf,
@@ -167,7 +167,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isExpanded = !!expanded[hashContext(pathToContext(path))]
 
-  const lexeme = getThought(state, value)
+  const lexeme = getLexeme(state, value)
 
   return {
     contextBinding,

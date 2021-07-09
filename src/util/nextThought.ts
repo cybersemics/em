@@ -5,7 +5,7 @@ import {
   firstVisibleChildWithCursorCheck,
   getContexts,
   getContextsSortedAndRanked,
-  getThought,
+  getLexeme,
   isContextViewActive,
   splitChain,
   nextSibling as thoughtNextSibling,
@@ -26,7 +26,7 @@ const contextWithThoughtRank = (state: State, contextInfo: ThoughtContext | null
   return (
     contextInfo &&
     (contextInfo.context.map((value, index) => {
-      const thought = getThought(state, value)!
+      const thought = getLexeme(state, value)!
 
       /** Returns the matching context. */
       const matchedContext = () => {

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
-import { getThought, getAllChildren, getChildrenRanked, isPending, rootedParentOf } from '../selectors'
+import { getLexeme, getAllChildren, getChildrenRanked, isPending, rootedParentOf } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
@@ -56,9 +56,9 @@ const editThought = (
   const rank = headRank(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
-  const thoughtOld = getThought(state, oldValue)
-  const thoughtCollision = getThought(state, newValue)
-  const thoughtParentOld = getThought(state, value)
+  const thoughtOld = getLexeme(state, oldValue)
+  const thoughtCollision = getLexeme(state, newValue)
+  const thoughtParentOld = getLexeme(state, value)
 
   // guard against missing lexeme (although this should never happen)
   if (!thoughtOld) {
@@ -242,7 +242,7 @@ const editThought = (
 
       const hashedKey = hashThought(child.value)
       // use updated thoughtIndex if available
-      const childLexeme = updatedAccum[hashedKey]?.lexemeNew || getThought(state, child.value)
+      const childLexeme = updatedAccum[hashedKey]?.lexemeNew || getLexeme(state, child.value)
       const childOldPath = [...pathOld, child]
       const childNewPath = [...(pathNew || pathOld), child]
       const childContext = [...context, child.value]

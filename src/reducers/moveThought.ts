@@ -3,7 +3,7 @@ import { treeMove } from '../util/recentlyEditedTree'
 import { render, rerank, updateThoughts } from '../reducers'
 import {
   getNextRank,
-  getThought,
+  getLexeme,
   getChildrenRanked,
   isPending,
   simplifyPath,
@@ -78,7 +78,7 @@ const moveThought = (
   const oldContext = rootedParentOf(state, oldThoughts)
   const newContext = rootedParentOf(state, newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldThought = getThought(state, value) || {
+  const oldThought = getLexeme(state, value) || {
     // guard against missing lexeme (data integrity issue)
     contexts: [],
     value,
@@ -181,7 +181,7 @@ const moveThought = (
         // lexeme of the moved thought value
         // NOTE: thoughtIndex is updated on the fly
         // @thoughtIndex
-        const thoughtAccum = getThought(
+        const thoughtAccum = getLexeme(
           { ...state, thoughts: { ...state.thoughts, thoughtIndex: thoughtIndexNew } },
           child.value,
         )

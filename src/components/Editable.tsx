@@ -67,7 +67,7 @@ import {
   attributeEquals,
   getContexts,
   getSetting,
-  getThought,
+  getLexeme,
   getAllChildren,
   hasChild,
   isContextViewActive,
@@ -216,7 +216,7 @@ const Editable = ({
     editableNonceRef.current = state.editableNonce
   }, [state.editableNonce])
 
-  const thought = getThought(state, value)
+  const thought = getLexeme(state, value)
   const childrenLabel = getAllChildren(state, [...thoughts, '=label'])
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
@@ -296,7 +296,7 @@ const Editable = ({
 
     const oldValue = oldValueRef.current
 
-    const thought = getThought(state, oldValue)
+    const thought = getLexeme(state, oldValue)
 
     if (transient) {
       dispatch(

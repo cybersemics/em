@@ -1,12 +1,12 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
-import { getThought } from '../../selectors'
+import { getLexeme } from '../../selectors'
 import { clear, newThought } from '../../action-creators'
 import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
-import dbGetThought from '../data-helpers/getThought'
+import dbGetThought from '../data-helpers/getLexeme'
 import testTimer from '../../test-helpers/testTimer'
 
 /*
@@ -37,7 +37,7 @@ describe('integration', () => {
   })
 
   it('load settings into indexedDB on initialization', async () => {
-    const thoughtState = getThought(store.getState(), 'Settings')
+    const thoughtState = getLexeme(store.getState(), 'Settings')
 
     expect(thoughtState).not.toBeUndefined()
     expect(thoughtState!.contexts).toHaveLength(1)

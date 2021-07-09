@@ -1,14 +1,14 @@
 import _ from 'lodash'
 import { deleteThought, updateLastUpdated } from '../data-providers/dexie'
 import { hashContext, hashThought, timestamp } from '../util'
-import { getThought, getAllChildren } from '../selectors'
+import { getLexeme, getAllChildren } from '../selectors'
 import { render } from '../reducers'
 import { State } from '../util/initialState'
 
 /** Deletes the value from the thoughtIndex. */
 const deleteData = (state: State, { value, forceRender }: { value: string; forceRender?: boolean }) => {
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
-  const thought = getThought(state, value)
+  const thought = getLexeme(state, value)
   delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
   deleteThought(hashThought(value))
   updateLastUpdated(timestamp())

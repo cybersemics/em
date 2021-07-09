@@ -1,4 +1,4 @@
-import { getThought, rankThoughtsFirstMatch } from '../selectors'
+import { getLexeme, rankThoughtsFirstMatch } from '../selectors'
 import { parentOf, head, headValue, splice } from '../util'
 import { State } from '../util/initialState'
 import { SimplePath, ThoughtContext } from '../types'
@@ -7,7 +7,7 @@ import { SimplePath, ThoughtContext } from '../types'
 const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]): SimplePath => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
-  const thought = getThought(state, headValue(penult))
+  const thought = getLexeme(state, headValue(penult))
 
   // guard against missing lexeme (although this should never happen)
   if (!thought) {

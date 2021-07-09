@@ -1,6 +1,6 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getAllChildren, getThought } from '../../selectors'
+import { exportContext, getContexts, getAllChildren, getLexeme } from '../../selectors'
 import { editThought, newThought, setCursor, importText } from '../../reducers'
 import { SimplePath } from '../../types'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
@@ -357,7 +357,7 @@ describe('changing thought with duplicate descendent', () => {
     - b
       - ac`)
 
-    const lexeme = getThought(stateNew, 'ac')
+    const lexeme = getLexeme(stateNew, 'ac')
 
     // Lexeme should be properly updated
     expect(lexeme?.contexts).toHaveLength(2)
@@ -389,7 +389,7 @@ describe('changing thought with duplicate descendent', () => {
     - b
       - a`)
 
-    const lexeme = getThought(stateNew, 'a')
+    const lexeme = getLexeme(stateNew, 'a')
     // Lexeme should be properly updated
     expect(lexeme?.contexts).toHaveLength(1)
   })

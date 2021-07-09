@@ -3,7 +3,7 @@ import { render, updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
 import {
   exists,
-  getThought,
+  getLexeme,
   getAllChildren,
   getChildrenRanked,
   isPending,
@@ -46,7 +46,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const thoughts = unroot(context.concat(value))
   context = rootedParentOf(state, thoughts)
   const key = hashThought(value)
-  const thought = getThought(state, value)
+  const thought = getLexeme(state, value)
 
   // guard against missing lexeme (although this should never happen)
   if (!thought) {
@@ -107,7 +107,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
     return getChildrenRanked(stateNew, thoughts).reduce(
       (accum, child) => {
         const hashedKey = hashThought(child.value)
-        const childThought = getThought(stateNew, child.value)
+        const childThought = getLexeme(stateNew, child.value)
         const childNew =
           childThought && childThought.contexts && childThought.contexts.length > 1
             ? // update child with deleted context removed

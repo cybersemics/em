@@ -21,7 +21,7 @@ import {
 import {
   exists,
   getSetting,
-  getThought,
+  getLexeme,
   getAllChildren,
   getChildrenRanked,
   simplifyPath,
@@ -55,7 +55,7 @@ const dataIntegrityCheck =
     const rank = headRank(path)
     const context = pathToContext(path)
     const encoded = hashContext(context)
-    const thought = getThought(state, value)
+    const thought = getLexeme(state, value)
     const pathContext = parentOf(context)
     const simplePath = simplifyPath(state, path)
 
