@@ -19,7 +19,7 @@ export const Text: FC<React.ComponentProps<typeof RNText>> = ({ style = {}, ...p
         )
       : style
     const currentFontSize = mergedStyle.fontSize || originalFontSize
-    console.log({ currentFontSize, factor, fontSize: currentFontSize + factor })
+
     return { ...mergedStyle, fontSize: currentFontSize + factor }
   }
 
