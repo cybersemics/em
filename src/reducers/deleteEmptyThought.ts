@@ -45,9 +45,13 @@ const deleteEmptyThought = (state: State): State => {
   if ((isEmpty && allChildren.length === 0) || isDivider(headValue(cursor))) {
     return deleteThoughtWithCursor(state, {})
   }
-  // archive an empty thought with hidden children
+  // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {
     return reducerFlow([
+      // archive all children
+      // if a child is already archived, move it to the parent instead
+      // https://github.com/cybersemics/em/issues/864
+      // https://github.com/cybersemics/em/issues/1282
       ...allChildren.map(child => {
         return !isThoughtArchived([...cursor, child])
           ? archiveThought({ path: [...cursor, child] })
@@ -56,6 +60,8 @@ const deleteEmptyThought = (state: State): State => {
               newPath: [...parentOf(cursor), child],
             })
       }),
+
+      // move the archive up a level so it does not get permanently deleted
       state => {
         const archivedChild = getChildrenRanked(state, context)[0]
         return archivedChild
@@ -65,11 +71,12 @@ const deleteEmptyThought = (state: State): State => {
             })
           : state
       },
-      state =>
-        deleteThought(state, {
-          context: parentOf(context),
-          thoughtRanked: head(cursor),
-        }),
+
+      // permanently delete the empty thought
+      deleteThought({
+        context: parentOf(context),
+        thoughtRanked: head(cursor),
+      }),
     ])(state)
   }
   // delete from beginning and merge with previous sibling
