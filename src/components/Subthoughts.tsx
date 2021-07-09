@@ -11,7 +11,7 @@ import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import { State } from '../util/initialState'
-import { Child, Context, GesturePath, Index, Path, SimplePath, SortDirection, ThoughtContext } from '../types'
+import { Child, Context, GesturePath, Index, LazyEnv, Path, SimplePath, SortDirection, ThoughtContext } from '../types'
 
 // util
 import {
@@ -42,6 +42,7 @@ import {
 import {
   appendChildPath,
   attribute,
+  attributeEquals,
   childrenFilterPredicate,
   getAllChildren,
   getAllChildrenSorted,
@@ -83,9 +84,22 @@ if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
 if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
 const PAGINATION_SIZE = 100
+const EMPTY_OBJECT = {}
 
 /** Check if the given path is a leaf. */
 const isLeaf = (state: State, context: Context) => getChildren(state, context).length === 0
+
+/** Finds the the first env context with =focus/Zoom. */
+const findFirstEnvContextWithZoom = (
+  state: State,
+  { context, env }: { context: Context; env: LazyEnv },
+): Context | null => {
+  const children = getAllChildren(state, context)
+  const child = children.find(
+    child => isFunction(child.value) && child.value in env && attribute(state, env[child.value], '=focus') === 'Zoom',
+  )
+  return child ? [...env[child.value], '=focus', 'Zoom'] : null
+}
 
 /********************************************************************
  * mapStateToProps
@@ -116,17 +130,18 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
+  const contextLive = pathToContext(simplePathLive)
+  const cursorContext = cursor ? pathToContext(cursor) : null
 
-  const contextBinding = parseJsonSafe(
-    attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '',
-    undefined,
-  ) as Path | undefined
+  const contextBinding = parseJsonSafe(attribute(state, contextLive, '=bindContext') ?? '', undefined) as
+    | Path
+    | undefined
 
   // If the cursor is a leaf, use cursorDepth of cursor.length - 1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
   // TODO: Resolve cursor to a simplePath
-  const isCursorLeaf = cursor && isLeaf(state, pathToContext(cursor))
+  const isCursorLeaf = cursorContext && isLeaf(state, cursorContext)
 
   const cursorDepth = cursor ? cursor.length - (isCursorLeaf ? 1 : 0) : 0
 
@@ -141,19 +156,47 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const contextHash = hashContext(pathToContext(resolvedPath))
 
+  const children = getAllChildren(state, contextLive)
+
+  // merge ancestor env into self env
+  // only update the env object reference if there are new additions to the environment
+  // otherwise props changes and causes unnecessary re-renders
+  const envSelf = parseLet(state, pathToContext(simplePath))
+  const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
+
+  /*
+    When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
+    1. Force actualDistance to 2 to hide thoughts.
+    2. Set zoomCursor and zoomParent CSS classes to handle siblings.
+  */
+  const zoomCursor =
+    cursorContext &&
+    (attributeEquals(state, cursorContext, '=focus', 'Zoom') ||
+      attributeEquals(state, parentOf(cursorContext).concat('=children'), '=focus', 'Zoom') ||
+      findFirstEnvContextWithZoom(state, { context: cursorContext, env }))
+
+  const zoomParent =
+    cursorContext &&
+    (attributeEquals(state, parentOf(cursorContext), '=focus', 'Zoom') ||
+      attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
+      findFirstEnvContextWithZoom(state, { context: pathToContext(rootedParentOf(state, cursor!)), env }))
+
   return {
     contextBinding,
     dataNonce,
     distance,
+    env,
     isEditingAncestor: isEditingPath && !isEditing,
     showContexts,
     showHiddenThoughts,
     simplePath: simplePathLive,
-    // re-render if children change
-    __render: getAllChildren(state, pathToContext(simplePathLive)),
     // expand thought due to cursor and hover expansion
     isExpanded: !!store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
     isAbsoluteContext,
+    zoomCursor,
+    zoomParent,
+    // re-render if children change
+    __render: children,
   }
 }
 
@@ -380,6 +423,8 @@ export const SubthoughtsComponent = ({
   sortType: contextSortType,
   simplePath,
   isExpanded,
+  zoomCursor,
+  zoomParent,
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
@@ -395,11 +440,6 @@ export const SubthoughtsComponent = ({
   const context = pathToContext(simplePath)
   const value = headValue(simplePath)
   const resolvedPath = path ?? simplePath
-  const envSelf = parseLet(state, context)
-
-  // only update the env object reference if there are new additions to the environment
-  // otherwise props changes and causes unnecessary re-renders
-  const envNew = Object.keys(envSelf).length > 0 ? { ...env, ...envSelf } : env
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
@@ -460,33 +500,6 @@ export const SubthoughtsComponent = ({
   }
   const isPaginated = show && filteredChildren.length > proposedPageSize
   // expand root, editing path, and contexts previously marked for expansion in setCursor
-
-  /** Finds the the first env context with =focus/Zoom. */
-  const findFirstEnvContextWithZoom = (context: Context): Context | null => {
-    const children = getAllChildren(state, context)
-    const envNew = { ...env, ...envSelf }
-    const child = children.find(
-      child =>
-        isFunction(child.value) && child.value in envNew && attribute(state, envNew[child.value], '=focus') === 'Zoom',
-    )
-    return child ? [...envNew[child.value], '=focus', 'Zoom'] : null
-  }
-
-  /*
-    When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
-    1. Force actualDistance to 2 to hide thoughts.
-    2. Set zoomCursor and zoomParent CSS classes to handle siblings.
-  */
-  const zoomCursor =
-    cursor &&
-    (attribute(state, pathToContext(cursor), '=focus') === 'Zoom' ||
-      attribute(state, pathToContext(parentOf(cursor)).concat('=children'), '=focus') === 'Zoom' ||
-      findFirstEnvContextWithZoom(pathToContext(cursor)))
-  const zoomParent =
-    cursor &&
-    (attribute(state, pathToContext(parentOf(cursor)), '=focus') === 'Zoom' ||
-      attribute(state, pathToContext(parentOf(parentOf(cursor))).concat('=children'), '=focus') === 'Zoom' ||
-      findFirstEnvContextWithZoom(pathToContext(rootedParentOf(state, cursor))))
 
   /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
   const zoomParentEditing = () =>
@@ -596,7 +609,7 @@ export const SubthoughtsComponent = ({
             // figure out what is incorrectly depending on childPath being rooted
             const childPath = getChildPath(state, child, simplePath, showContexts)
             const childContext = pathToContext(childPath)
-            const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(childContext))
+            const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(state, { context: childContext, env }))
 
             /** Returns true if the cursor in in the child path. */
             const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
@@ -642,7 +655,7 @@ export const SubthoughtsComponent = ({
                 allowSingleContext={allowSingleContextParent}
                 count={count + sumSubthoughtsLength(children)}
                 depth={depth + 1}
-                env={envNew}
+                env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
                 key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
                 rank={child.rank}
