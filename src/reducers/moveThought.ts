@@ -78,12 +78,16 @@ const moveThought = (
   const oldContext = rootedParentOf(state, oldThoughts)
   const newContext = rootedParentOf(state, newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldThought = getThought(state, value)
+  const oldThought = getThought(state, value) || {
+    // guard against missing lexeme (data integrity issue)
+    contexts: [],
+    value,
+    created: timestamp(),
+    lastUpdated: timestamp(),
+  }
 
-  // guard against missing lexeme (although this should never happen)
   if (!oldThought) {
     console.error('Lexeme not found', oldPath)
-    return state
   }
 
   const duplicateSubthought = getChildrenRanked(state, newContext).find(
