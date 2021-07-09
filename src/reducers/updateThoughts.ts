@@ -4,18 +4,7 @@ import { decodeThoughtsUrl, expandThoughts, getThought } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
-import {
-  Child,
-  Context,
-  ContextHash,
-  Index,
-  Lexeme,
-  Parent,
-  Path,
-  SimplePath,
-  ThoughtHash,
-  ThoughtsInterface,
-} from '../types'
+import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash } from '../types'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>
@@ -122,20 +111,11 @@ const updateThoughts = (
 
   logWithTime('updateThoughts: merge pushQueue')
 
-  const thoughts: ThoughtsInterface = {
-    contextCache,
-    contextIndex,
-    thoughtCache,
-    thoughtIndex,
-  }
-
   /** Returns true if the root is no longer pending or the contextIndex has at least one non-EM thought. */
-  const cursorParent = thoughts.contextIndex[rootEncoded] as Parent | null
+  const cursorParent = contextIndex[rootEncoded] as Parent | null
   const thoughtsLoaded =
     !cursorParent?.pending ||
-    Object.keys(thoughts.contextIndex).some(
-      key => key !== rootEncoded && thoughts.contextIndex[key].context[0] !== EM_TOKEN,
-    )
+    Object.keys(contextIndex).some(key => key !== rootEncoded && contextIndex[key].context[0] !== EM_TOKEN)
   const stillLoading = state.isLoading ? isLoading ?? !thoughtsLoaded : false
 
   return reducerFlow([
@@ -148,7 +128,12 @@ const updateThoughts = (
       recentlyEdited: recentlyEditedNew,
       // only push the batch to the pushQueue if syncing at least local or remote
       ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
-      thoughts,
+      thoughts: {
+        contextCache,
+        contextIndex,
+        thoughtCache,
+        thoughtIndex,
+      },
     }),
 
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
