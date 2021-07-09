@@ -9,7 +9,7 @@ import {
 } from '../constants'
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { equalPath, equalThoughtRanked, hashContext, headValue, isDescendant, pathToContext } from '../util'
-import { render, settings } from '../reducers'
+import { settings } from '../reducers'
 import { State } from '../util/initialState'
 import { Index, Path, SimplePath, TutorialChoice } from '../types'
 import globals from '../globals'
@@ -108,25 +108,10 @@ const setCursor = (
   const updatedOffset = offset ?? (state.editingValue !== null ? 0 : null)
 
   // only change editing status and expanded but do not move the cursor if cursor has not changed
-  const stateNew =
-    equalPath(thoughtsResolved, state.cursor) && state.contextViews === newContextViews
-      ? // must re-render even if cursor has not moved
-        // e.g. blurring due to closing the keyboard
-        // otherwise something goes wrong and the cursor or subthoughts may disappear
-        // See https://github.com/cybersemics/em/issues/674.
-        // However this does create a lot of extra re-renders.
-        render({
-          ...state,
-          // this is needed in particular for creating a new note, otherwise the cursor will disappear
-          editing: editing != null ? editing : state.editing,
-          cursorOffset: updatedOffset,
-          expanded,
-          noteFocus,
-        })
-      : render({
-          ...state,
-          // re-render so that <Subthoughts> are re-rendered
-          // otherwise the cursor gets lost when changing focus from an edited thought
+  const stateNew = {
+    ...state,
+    ...(!equalPath(thoughtsResolved, state.cursor) || state.contextViews !== newContextViews
+      ? {
           ...(tutorialNext
             ? settings(
                 { ...state, cursor: thoughtsResolved },
@@ -144,12 +129,15 @@ const setCursor = (
             : state.cursorHistory,
           // set cursorOffset to null if editingValue is null
           // (prevents Editable from calling setSelection on click since we want the default cursor placement in that case)
-          cursorOffset: updatedOffset,
           contextViews: newContextViews,
-          editing: editing != null ? editing : state.editing,
-          expanded,
-          noteFocus,
-        })
+        }
+      : null),
+    // this is needed in particular for creating a new note, otherwise the cursor will disappear
+    editing: editing != null ? editing : state.editing,
+    cursorOffset: updatedOffset,
+    expanded,
+    noteFocus,
+  }
 
   return stateNew
 }

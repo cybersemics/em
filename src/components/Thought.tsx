@@ -89,7 +89,7 @@ export interface ThoughtContainerProps {
   view?: string | null
 }
 
-export interface ThoughtProps {
+interface ThoughtProps {
   cursorOffset?: number | null
   env?: Index<Context>
   hideBullet?: boolean
@@ -139,6 +139,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const simplePathLive = isEditing
     ? (parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath)
     : simplePath
+  const contextLive = pathToContext(simplePathLive)
 
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
 
@@ -154,14 +155,13 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
       : // parent
         equalPath(parentOf(cursor || []), path))
 
-  const contextBinding = parseJsonSafe(attribute(state, pathToContext(simplePathLive), '=bindContext') ?? '') as
-    | SimplePath
-    | undefined
+  const contextBinding = parseJsonSafe(attribute(state, contextLive, '=bindContext') ?? '') as SimplePath | undefined
 
   // Note: An active expand hover top thought cannot be a cusor's grandparent as it is already treated as cursor's parent.
   const isCursorGrandparent = !isExpandedHoverTopPath && equalPath(rootedParentOf(state, parentOf(cursor || [])), path)
 
   const isExpanded = !!expanded[hashContext(pathToContext(path))]
+  const isLeaf = !hasChildren(state, contextLive)
 
   return {
     contextBinding,
@@ -174,9 +174,10 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isEditing,
     isEditingPath,
     isExpanded,
+    isLeaf,
     publish: !search && publishMode(),
     simplePathLive,
-    view: attribute(state, pathToContext(simplePathLive), '=view'),
+    view: attribute(state, contextLive, '=view'),
   }
 }
 
@@ -230,6 +231,7 @@ const ThoughtContainer = ({
   isBeingHoveredOver,
   isExpanded,
   isHovering,
+  isLeaf,
   isParentHovering,
   prevChild,
   publish,
@@ -299,8 +301,6 @@ const ThoughtContainer = ({
   const childrenOptions = getAllChildren(state, [...context, '=options'])
   const options =
     !isFunction(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
-
-  const isLeaf = !hasChildren(state, thoughtsLive)
 
   /** Load styles from child expressions that are found in the environment. */
   const styleEnv = children
