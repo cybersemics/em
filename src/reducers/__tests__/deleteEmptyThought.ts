@@ -14,6 +14,7 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 import importTextReducer from '../importText'
+import archiveThought from '../archiveThought'
 
 it('delete empty thought', () => {
   const steps = [newThought('a'), newThought(''), deleteEmptyThought]
@@ -70,6 +71,33 @@ it("archive thought with hidden children - arvhive all children in cursor's pare
   - =archive
     - =a
     - =b`)
+})
+
+it("archive thought with archived and hidden children - arvhive all children in cursor's parent", () => {
+  const steps = [
+    importTextReducer({
+      text: `
+        -
+          - =a
+          - b
+          - =c`,
+    }),
+    setCursorFirstMatch(['', 'b']),
+    archiveThought({}),
+    setCursorFirstMatch(['']),
+    deleteEmptyThought,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =archive
+    - =a
+    - b
+    - =c`)
 })
 
 it('do nothing if there is no cursor', () => {

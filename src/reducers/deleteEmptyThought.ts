@@ -5,6 +5,7 @@ import {
   headRank,
   headValue,
   isDivider,
+  isThoughtArchived,
   parentOf,
   pathToContext,
   reducerFlow,
@@ -13,6 +14,7 @@ import {
   getNextRank,
   getChildren,
   getChildrenRanked,
+  getAllChildren,
   isContextViewActive,
   prevSibling,
   simplifyPath,
@@ -44,25 +46,38 @@ const deleteEmptyThought = (state: State): State => {
   if ((isEmpty && allChildren.length === 0) || isDivider(headValue(cursor))) {
     return deleteThoughtWithCursor(state, {})
   }
-  // archive an empty thought with hidden children
+  // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {
     return reducerFlow([
-      // trying to archive child =archive causes an error when it is no longer available to be moved
-      // filter out child =archive to avoid
+      // archive all children
+      // if a child is already archived, move it to the parent
+      // https://github.com/cybersemics/em/issues/864
       // https://github.com/cybersemics/em/issues/1282
-      ...allChildren.map(child => (child.value === '=archive' ? null : archiveThought({ path: [...cursor, child] }))),
+      ...allChildren.map(child => {
+        return !isThoughtArchived([...cursor, child])
+          ? archiveThought({ path: [...cursor, child] })
+          : moveThought({
+              oldPath: [...cursor, child],
+              newPath: [...parentOf(cursor), child],
+            })
+      }),
+
+      // move the child archive up a level so it does not get permanently deleted
       state => {
-        const archivedChild = getChildrenRanked(state, context)[0]
-        return moveThought(state, {
-          oldPath: [...cursor, archivedChild],
-          newPath: [...parentOf(cursor), archivedChild],
-        })
+        const childArchive = getAllChildren(state, context).find(child => child.value === '=archive')
+        return childArchive
+          ? moveThought(state, {
+              oldPath: [...cursor, childArchive],
+              newPath: [...parentOf(cursor), childArchive],
+            })
+          : state
       },
-      state =>
-        deleteThought(state, {
-          context: parentOf(context),
-          thoughtRanked: head(cursor),
-        }),
+
+      // permanently delete the empty thought
+      deleteThought({
+        context: parentOf(context),
+        thoughtRanked: head(cursor),
+      }),
     ])(state)
   }
   // delete from beginning and merge with previous sibling
