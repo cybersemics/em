@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
-import { editableRender, editThought, moveThought, newThought, render } from '../reducers'
+import { editableRender, editThought, moveThought, newThought } from '../reducers'
 import { State } from '../util/initialState'
 import { Path, SplitResult } from '../types'
 
@@ -61,7 +61,6 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
     },
 
     // render
-    render,
     editableRender,
   ])(state)
 }

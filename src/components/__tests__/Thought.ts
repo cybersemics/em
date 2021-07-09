@@ -2,7 +2,7 @@ import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
-import { importText, render } from '../../action-creators'
+import { importText } from '../../action-creators'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
@@ -80,7 +80,6 @@ it.skip('caret is set on new subthought', async () => {
   const editableSubthought = wrapper.find('.children .children div.editable')
   await editableSubthought.simulate('change', { target: { value: 'a1' } })
 
-  store.dispatch(render())
   jest.runOnlyPendingTimers()
   wrapper.update()
 
