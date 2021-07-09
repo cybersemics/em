@@ -48,7 +48,6 @@ import {
   getChildrenRanked,
   getSortPreference,
   getStyle,
-  getLexeme,
   hasChildren,
   isContextViewActive,
   rootedParentOf,
@@ -162,11 +161,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   // Note: An active expand hover top thought cannot be a cusor's grandparent as it is already treated as cursor's parent.
   const isCursorGrandparent = !isExpandedHoverTopPath && equalPath(rootedParentOf(state, parentOf(cursor || [])), path)
 
-  const value = headValue(simplePathLive)
-
   const isExpanded = !!expanded[hashContext(pathToContext(path))]
-
-  const lexeme = getLexeme(state, value)
 
   return {
     contextBinding,
@@ -180,7 +175,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isEditingPath,
     isExpanded,
     publish: !search && publishMode(),
-    lexeme,
     simplePathLive,
     view: attribute(state, pathToContext(simplePathLive), '=view'),
   }
@@ -243,7 +237,6 @@ const ThoughtContainer = ({
   setCursorOnNote,
   showContexts,
   style,
-  lexeme,
   simplePath,
   simplePathLive,
   view,
@@ -405,7 +398,7 @@ const ThoughtContainer = ({
         }}
         className={classNames({
           child: true,
-          'child-divider': isDivider(lexeme?.value ?? ''),
+          'child-divider': isDivider(value),
           'cursor-parent': isCursorParent,
           'cursor-grandparent': isCursorGrandparent,
           // used so that the autofocus can properly highlight the immediate parent of the cursor
@@ -436,7 +429,6 @@ const ThoughtContainer = ({
         <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
           {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
-              invalid={!lexeme}
               isEditing={isEditing}
               context={pathToContext(simplePath)}
               leaf={isLeaf}

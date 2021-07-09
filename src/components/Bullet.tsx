@@ -1,7 +1,8 @@
 import React, { MouseEvent } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { hasChildren, isContextViewActive, isPending } from '../selectors'
+import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
+import { head } from '../util'
 import { State } from '../util/initialState'
 import { Context } from '../types'
 
@@ -10,8 +11,6 @@ import { Context } from '../types'
 
 interface BulletProps {
   glyph?: string | null
-  // indicates the bullet with an error style
-  invalid?: boolean
   isEditing?: boolean
   leaf?: boolean
   onClick: (event: React.MouseEvent) => void
@@ -22,9 +21,10 @@ interface BulletProps {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
+  const lexeme = getLexeme(state, head(props.context))
   return {
     // if being edited and meta validation error has occured
-    invalid: props.invalid || (!!props.isEditing && invalidState),
+    invalid: !lexeme || (!!props.isEditing && invalidState),
     // re-render when leaf status changes
     isLeaf: !hasChildren(state, props.context),
     pending: isPending(state, props.context),
