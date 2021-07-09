@@ -75,7 +75,6 @@ const dataIntegrityCheck =
               lastUpdated: parentEntry.lastUpdated,
             },
           },
-          forceRender: true,
         })
 
         return
@@ -160,7 +159,6 @@ const dataIntegrityCheck =
           dispatch({
             type: 'updateThoughts',
             contextIndexUpdates,
-            forceRender: true,
           })
         }
         return
@@ -198,7 +196,6 @@ const dataIntegrityCheck =
                   ),
                 },
               },
-              forceRender: true,
             })
           }
         }

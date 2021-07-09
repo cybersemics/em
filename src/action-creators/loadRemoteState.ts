@@ -132,7 +132,6 @@ const loadRemoteState =
 //     const updateThoughtsArgs = {
 //       contextIndexUpdates,
 //       thoughtIndexUpdates,
-//       forceRender: true,
 //       remote: false,
 //       updates: { schemaVersion },
 //     }

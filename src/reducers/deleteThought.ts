@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { render, updateThoughts } from '../reducers'
+import { updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
 import {
   exists,
@@ -227,7 +227,6 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
       recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
     }),
-    render,
   ])(state)
 }
 

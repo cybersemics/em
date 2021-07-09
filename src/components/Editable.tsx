@@ -11,7 +11,6 @@ import {
   error,
   editThought,
   importText,
-  render,
   setCursor,
   setEditingValue,
   setInvalidState,
@@ -320,11 +319,7 @@ const Editable = ({
         }),
       )
 
-      // rerender so that triple dash is converted into divider
-      // otherwise nothing would be rerendered because the thought is still being edited
       if (isDivider(newValue)) {
-        dispatch(render())
-
         // remove selection so that the focusOffset does not cause a split false positive in newThought
         clearSelection()
       }

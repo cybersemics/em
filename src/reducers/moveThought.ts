@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
-import { render, rerank, updateThoughts } from '../reducers'
+import { rerank, updateThoughts } from '../reducers'
 import {
   getNextRank,
   getLexeme,
@@ -468,8 +468,6 @@ const moveThought = (
           return ranksTooClose ? rerank(state, rootedParentOf(state, newSimplePath)) : state
         }
       : null,
-
-    render,
   ])(state)
 }
 
