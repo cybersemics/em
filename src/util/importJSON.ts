@@ -205,7 +205,7 @@ const saveThoughts = (
 /** Return number of contexts in blocks array. */
 const getContextsNum = (blocks: Block[]): number => {
   return blocks
-    .map(thought => (thought.children.length > 0 ? 1 + getContextsNum(thought.children) : 1))
+    .map(block => (block.children.length > 0 ? 1 + getContextsNum(block.children) : 1))
     .reduce((acc, val) => acc + val, 0)
 }
 
@@ -238,9 +238,9 @@ export const importJSON = (
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
-    const thought = getLexeme(state, '')
-    if (thought) {
-      initialThoughtIndex[hashThought('')] = removeContext(thought, context, headRank(simplePath))
+    const lexeme = getLexeme(state, '')
+    if (lexeme) {
+      initialThoughtIndex[hashThought('')] = removeContext(lexeme, context, headRank(simplePath))
       initialContextIndex[contextEncoded] = {
         id: contextEncoded,
         ...initialContextIndex[contextEncoded],

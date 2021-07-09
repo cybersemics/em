@@ -31,7 +31,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
   let prevParentContext = [HOME_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((value, i) => {
-    const thought = getLexeme(state, value)
+    const lexeme = getLexeme(state, value)
     const contextPathUnranked = i === 0 ? [HOME_TOKEN] : pathUnranked.slice(0, i)
     const contextChain = splitChain(state, pathResult)
     const path = contextChainToPath(contextChain)
@@ -44,7 +44,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
 
     const parents = inContextView
       ? contexts.filter(child => head(child.context) === value)
-      : ((thought && thought.contexts) || []).filter(p => equalArrays(p.context, context))
+      : ((lexeme && lexeme.contexts) || []).filter(p => equalArrays(p.context, context))
 
     const contextThoughts = parents.length > 1 ? getChildrenRanked(state, pathToContext(path)) : []
 

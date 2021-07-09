@@ -46,10 +46,10 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const thoughts = unroot(context.concat(value))
   context = rootedParentOf(state, thoughts)
   const key = hashThought(value)
-  const thought = getLexeme(state, value)
+  const lexeme = getLexeme(state, value)
 
   // guard against missing lexeme (although this should never happen)
-  if (!thought) {
+  if (!lexeme) {
     console.error('Lexeme not found', value)
     return state
   }
@@ -58,7 +58,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
-  const isValidThought = thought.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
+  const isValidThought = lexeme.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
 
   // if thought is not valid then just stop further execution
   if (!isValidThought) {
@@ -77,7 +77,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
 
   // the old thought less the context
   const newOldThought =
-    thought.contexts && thought.contexts.length > 1 ? removeContext(thought, context, showContexts ? 0 : rank) : null
+    lexeme.contexts && lexeme.contexts.length > 1 ? removeContext(lexeme, context, showContexts ? 0 : rank) : null
 
   // update state so that we do not have to wait for firebase
   if (newOldThought) {
