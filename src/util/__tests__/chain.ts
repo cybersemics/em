@@ -3,8 +3,7 @@ import { chain } from '../../selectors'
 import { SimplePath } from '../../types'
 
 /** Ranks the thoughts from 0 to n in the given array order. */
-export const rankThoughtsSequential = (thoughts: string[]) =>
-  thoughts.map((thought, i) => ({ value: thought, rank: i }))
+export const rankThoughtsSequential = (thoughts: string[]) => thoughts.map((value, i) => ({ value, rank: i }))
 
 it('single chain', () => {
   expect(

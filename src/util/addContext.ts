@@ -5,15 +5,15 @@ import { Context, Lexeme, ThoughtContext, Timestamp } from '../types'
 
 /** Returns a new thought plus the given context. Does not add duplicates. */
 export const addContext = (
-  thought: Lexeme,
+  lexeme: Lexeme,
   context: Context,
   rank: number,
   id: string | null,
   archived: Timestamp,
 ): Lexeme => ({
-  ...thought,
+  ...lexeme,
   ...notNull({
-    contexts: (thought.contexts || [])
+    contexts: (lexeme.contexts || [])
       .filter((parent: ThoughtContext) => !(equalArrays(parent.context, context) && parent.rank === rank))
       .concat({
         context,
@@ -21,7 +21,7 @@ export const addContext = (
         ...(id ? { id } : null),
         ...(archived ? { archived } : {}),
       }),
-    created: thought.created || timestamp(),
+    created: lexeme.created || timestamp(),
     lastUpdated: timestamp(),
   }),
 })

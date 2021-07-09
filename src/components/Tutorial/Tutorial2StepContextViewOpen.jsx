@@ -15,10 +15,10 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) 
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
   return !cursor ||
     !cursor.some(
-      thought =>
-        thought.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||
-        thought.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase() ||
-        thought.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+      child =>
+        child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||
+        child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase() ||
+        child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
     ) ? (
     <p>
       Oops, "{caseSensitiveValue}" is hidden because the selection changed. Select "

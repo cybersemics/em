@@ -19,11 +19,11 @@ export const migrate = state => {
   // TODO: Handle collisions
   const thoughtIndexUpdates = _.transform(
     thoughtIndex,
-    (accum, thought, key) => {
+    (accum, lexeme, key) => {
       const hash = hashThought(key)
 
       /** The property lastUpdated is currently stored on the thought object, but not on each individual context in thought.contexts. Rather than losing the lastUpdated for the merged context, inject it into the context object for possible restoration. */
-      const addLastUpdatedCurrent = parent => ({ ...parent, lastUpdated: thought.lastUpdated })
+      const addLastUpdatedCurrent = parent => ({ ...parent, lastUpdated: lexeme.lastUpdated })
 
       /** Accumulate lastUpdated. */
       const addLastUpdatedAccum = parent => ({ ...parent, lastUpdated: accum[hash].lastUpdated })
@@ -32,9 +32,9 @@ export const migrate = state => {
       if (hash === key) {
         accum[key] = null
         accum[hash] = {
-          ...thought,
+          ...lexeme,
           // inject lastUpdated into context object (as described above)
-          contexts: (thought.contexts || [])
+          contexts: (lexeme.contexts || [])
             .map(addLastUpdatedCurrent)
             .concat(((accum[hash] || {}).contexts || []).map(addLastUpdatedAccum) || []),
         }

@@ -29,9 +29,9 @@ const pushLocal = (
 ): Promise<any> => {
   // thoughtIndex
   const thoughtIndexPromises = [
-    ...Object.entries(thoughtIndexUpdates).map(([key, thought]) => {
-      if (thought != null) {
-        return db.updateThought(key, thought)
+    ...Object.entries(thoughtIndexUpdates).map(([key, lexeme]) => {
+      if (lexeme != null) {
+        return db.updateThought(key, lexeme)
       }
       return db.deleteThought(key)
     }),
@@ -93,18 +93,18 @@ const pushRemote =
     // prepend thoughtIndex/ and encode key
     const prependedDataUpdates = _.transform(
       thoughtIndexUpdates,
-      (accum: Index<Lexeme | null>, thought: Lexeme | null, key: string) => {
+      (accum: Index<Lexeme | null>, lexeme: Lexeme | null, key: string) => {
         if (!key) {
-          console.error('Unescaped empty key', thought, new Error())
+          console.error('Unescaped empty key', lexeme, new Error())
           return
         }
 
         // fix undefined/NaN rank
         accum['thoughtIndex/' + (key || EMPTY_TOKEN)] =
-          thought && getSetting(state, 'Data Integrity Check') === 'On'
+          lexeme && getSetting(state, 'Data Integrity Check') === 'On'
             ? {
-                value: thought.value,
-                contexts: thought.contexts.map(cx => ({
+                value: lexeme.value,
+                contexts: lexeme.contexts.map(cx => ({
                   context: cx.context || null, // guard against NaN or undefined
                   rank: cx.rank || 0, // guard against NaN or undefined
                   ...(cx.lastUpdated
@@ -113,10 +113,10 @@ const pushRemote =
                       }
                     : null),
                 })),
-                created: thought.created || timestamp(),
-                lastUpdated: thought.lastUpdated || timestamp(),
+                created: lexeme.created || timestamp(),
+                lastUpdated: lexeme.lastUpdated || timestamp(),
               }
-            : thought
+            : lexeme
       },
       {} as Index<Lexeme | null>,
     )

@@ -100,14 +100,14 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
     ? sort(
         Object.values(thoughtIndex)
           .filter(
-            thought =>
-              (archived || !isArchived(thought)) &&
-              thought.value !== HOME_TOKEN &&
-              thought.value !== EM_TOKEN &&
-              searchRegexp.test(thought.value),
+            lexeme =>
+              (archived || !isArchived(lexeme)) &&
+              lexeme.value !== HOME_TOKEN &&
+              lexeme.value !== EM_TOKEN &&
+              searchRegexp.test(lexeme.value),
           )
           .map(
-            (thought, i) => ({ id: thought.id, value: thought.value, rank: i }),
+            (lexeme, i) => ({ id: lexeme.id, value: lexeme.value, rank: i }),
             // cannot group cases by return value because conditionals must be checked in order of precedence
             comparator,
           ),

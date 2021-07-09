@@ -89,7 +89,7 @@ const dataProviderTest = (provider: DataProvider) => {
     const nothought = await provider.getThoughtById('12345')
     expect(nothought).toBeUndefined()
 
-    const thought = {
+    const lexeme = {
       id: '12345',
       value: 'x',
       rank: 0,
@@ -98,10 +98,10 @@ const dataProviderTest = (provider: DataProvider) => {
       lastUpdated: timestamp(),
     }
 
-    await provider.updateThought('12345', thought)
+    await provider.updateThought('12345', lexeme)
 
     const dbThought = await provider.getThoughtById('12345')
-    expect(dbThought).toEqual(thought)
+    expect(dbThought).toEqual(lexeme)
   })
 
   test('getThoughtsByIds', async () => {
@@ -124,7 +124,7 @@ const dataProviderTest = (provider: DataProvider) => {
     const nothought = await getLexeme(provider, 'x')
     expect(nothought).toBeUndefined()
 
-    const thought = {
+    const lexeme = {
       id: hashThought('x'),
       value: 'x',
       rank: 0,
@@ -133,10 +133,10 @@ const dataProviderTest = (provider: DataProvider) => {
       lastUpdated: timestamp(),
     }
 
-    await provider.updateThought(thought.id, thought)
+    await provider.updateThought(lexeme.id, lexeme)
 
     const remoteThought = await getLexeme(provider, 'x')
-    expect(remoteThought).toEqual(thought)
+    expect(remoteThought).toEqual(lexeme)
   })
 
   test('getContext', async () => {

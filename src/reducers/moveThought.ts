@@ -78,7 +78,7 @@ const moveThought = (
   const oldContext = rootedParentOf(state, oldThoughts)
   const newContext = rootedParentOf(state, newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
-  const oldThought = getLexeme(state, value) || {
+  const lexemeOld = getLexeme(state, value) || {
     // guard against missing lexeme (data integrity issue)
     contexts: [],
     value,
@@ -86,12 +86,12 @@ const moveThought = (
     lastUpdated: timestamp(),
   }
 
-  if (!oldThought) {
+  if (!lexemeOld) {
     console.error('Lexeme not found', oldPath)
   }
 
   const duplicateSubthought = getChildrenRanked(state, newContext).find(
-    thought => normalizeThought(thought.value) === normalizeThought(value),
+    child => normalizeThought(child.value) === normalizeThought(value),
   )
 
   const isDuplicateMerge = duplicateSubthought && !sameContext
@@ -101,8 +101,8 @@ const moveThought = (
 
   const isArchived = newThoughts.indexOf('=archive') !== -1
   // find exact thought from thoughtIndex
-  const exactThought = oldThought.contexts.find(
-    thought => equalArrays(thought.context, oldContext) && thought.rank === oldRank,
+  const exactThought = lexemeOld.contexts.find(
+    thoughtContext => equalArrays(thoughtContext.context, oldContext) && thoughtContext.rank === oldRank,
   )
 
   // find id of head thought from exact thought if not available in oldPath
@@ -110,27 +110,19 @@ const moveThought = (
   if (!id) {
     console.warn('moveThought: oldSimplePath does not have an id and exactThought was not found.')
     console.warn('oldSimplePath', oldSimplePath)
-    console.warn('oldThought', oldThought)
+    console.warn('lexemeOld', lexemeOld)
   }
 
   // if move is used for archive then update the archived field to latest timestamp
   const archived = isArchived || !exactThought ? timestamp() : (exactThought.archived as Timestamp)
 
-  const movedThought = moveLexemeThought(
-    oldThought,
-    oldContext,
-    newContext,
-    oldRank,
-    newRank,
-    id,
-    archived as Timestamp,
-  )
+  const movedThought = moveLexemeThought(lexemeOld, oldContext, newContext, oldRank, newRank, id, archived as Timestamp)
 
-  const newThought = removeDuplicatedContext(movedThought, newContext)
+  const lexemeNew = removeDuplicatedContext(movedThought, newContext)
   const isPathInCursor = state.cursor && isDescendantPath(state.cursor, oldPath)
 
   // update thoughtIndex here since recursive updates may have to update same lexeme
-  thoughtIndexNew[key] = newThought
+  thoughtIndexNew[key] = lexemeNew
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
@@ -222,13 +214,13 @@ const moveThought = (
             }
 
         // New lexeme
-        const childNewThought = removeDuplicatedContext(
+        const childLexemeNew = removeDuplicatedContext(
           addContext(childOldThoughtContextRemoved, contextNew, movedRank, child.id || null, archived),
           contextNew,
         )
 
         // update local thoughtIndex so that we do not have to wait for firebase
-        thoughtIndexNew[hashedKey] = childNewThought
+        thoughtIndexNew[hashedKey] = childLexemeNew
 
         const childOldContextHash = hashContext(pathToContext(childPathOld))
 
@@ -236,7 +228,7 @@ const moveThought = (
           // child.id is undefined sometimes. Unable to reproduce.
           id: child.id ?? '',
           // TODO: Confirm that find will always succeed
-          rank: (childNewThought.contexts || []).find(context => equalArrays(context.context, contextNew))!.rank,
+          rank: (childLexemeNew.contexts || []).find(context => equalArrays(context.context, contextNew))!.rank,
           pending: isPending(state, childContext),
           archived,
           pathOld: childPathOld,
@@ -253,7 +245,7 @@ const moveThought = (
         return {
           lexemeUpdates: {
             ...accum.lexemeUpdates,
-            [hashedKey]: childNewThought,
+            [hashedKey]: childLexemeNew,
             ...recursiveLexemeUpdates,
           },
           childUpdates: {
@@ -281,8 +273,8 @@ const moveThought = (
 
   const descendantUpdates = _.transform(
     lexemeUpdates,
-    (accum, newThought, key: string) => {
-      accum[key] = newThought
+    (accum, lexemeNew, key: string) => {
+      accum[key] = lexemeNew
     },
     {} as Index<Lexeme>,
   )
@@ -417,7 +409,7 @@ const moveThought = (
   }
 
   const thoughtIndexUpdates = {
-    [key]: newThought,
+    [key]: lexemeNew,
     ...descendantUpdates,
   }
 

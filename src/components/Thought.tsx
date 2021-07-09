@@ -8,7 +8,7 @@ import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcr
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, Context, Index, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -85,7 +85,6 @@ export interface ThoughtContainerProps {
   rank: number
   showContexts?: boolean
   style?: React.CSSProperties
-  thought?: Lexeme
   simplePath: SimplePath
   simplePathLive?: SimplePath
   view?: string | null

@@ -56,12 +56,12 @@ const editThought = (
   const rank = headRank(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
-  const thoughtOld = getLexeme(state, oldValue)
+  const lexemeOld = getLexeme(state, oldValue)
   const thoughtCollision = getLexeme(state, newValue)
   const thoughtParentOld = getLexeme(state, value)
 
   // guard against missing lexeme (although this should never happen)
-  if (!thoughtOld) {
+  if (!lexemeOld) {
     console.error(`Lexeme not found: "${oldValue}"`)
     return state
   }
@@ -86,8 +86,8 @@ const editThought = (
       : parentOf(path).concat({ value: newValue, rank })
   ) as SimplePath
   // find exact thought from thoughtIndex
-  const exactThought = thoughtOld.contexts.find(
-    thought => equalArrays(thought.context, context) && thought.rank === rank,
+  const exactThought = lexemeOld.contexts.find(
+    thoughtContext => equalArrays(thoughtContext.context, context) && thoughtContext.rank === rank,
   )
   const id = headId(path) || exactThought!.id || null
   const archived = exactThought ? exactThought.archived : null
@@ -111,14 +111,14 @@ const editThought = (
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   // eslint-disable-next-line jsdoc/require-jsdoc
-  const isThoughtOldOrphan = () => !thoughtOld.contexts || thoughtOld.contexts.length < 2
+  const isThoughtOldOrphan = () => !lexemeOld.contexts || lexemeOld.contexts.length < 2
   // eslint-disable-next-line jsdoc/require-jsdoc
   const isThoughtOldSubthoughtless = () => getAllChildren(state, [oldValue]).length < 2
 
   // the old thought less the context
   const newOldThought =
     !isThoughtOldOrphan() || (showContexts && !isThoughtOldSubthoughtless())
-      ? removeContext(thoughtOld, context, rank)
+      ? removeContext(lexemeOld, context, rank)
       : null
 
   // do not add floating thought to context
@@ -128,8 +128,8 @@ const editThought = (
     created: timestamp(),
     lastUpdated: timestamp(),
   }
-  const thoughtNew =
-    thoughtOld.contexts.length > 0
+  const lexemeNew =
+    lexemeOld.contexts.length > 0
       ? addContext(
           newThoughtWithoutContext,
           context,
@@ -140,7 +140,7 @@ const editThought = (
       : newThoughtWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
-  thoughtIndex[newKey] = thoughtNew
+  thoughtIndex[newKey] = lexemeNew
 
   // do not do anything with old thoughtIndex if hashes match, as the above line already took care of it
   if (oldKey !== newKey) {
@@ -206,7 +206,7 @@ const editThought = (
         )
         // do not add floating thought to context
         .concat(
-          thoughtOld.contexts.length > 0
+          lexemeOld.contexts.length > 0
             ? {
                 value: newValue,
                 rank: headRank(rootedParentOf(state, pathLiveOld)),
@@ -302,7 +302,7 @@ const editThought = (
         }
       : {}),
     [newKey]: {
-      lexemeNew: thoughtNew,
+      lexemeNew: lexemeNew,
       contextsOld: [],
       contextsNew: [],
       pending: isPending(state, contextNew),
@@ -376,9 +376,9 @@ const editThought = (
   }
 
   const thoughtIndexUpdates = {
-    // if the hashes of oldValue and newValue are equal, thoughtNew takes precedence since it contains the updated thought
+    // if the hashes of oldValue and newValue are equal, lexemeNew takes precedence since it contains the updated thought
     [oldKey]: newOldThought,
-    [newKey]: thoughtNew,
+    [newKey]: lexemeNew,
     ...descendantUpdates,
   }
 

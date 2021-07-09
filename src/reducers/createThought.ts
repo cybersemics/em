@@ -21,7 +21,7 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
   id = id || createId()
 
   // create thought if non-existent
-  const thought: Lexeme = {
+  const lexeme: Lexeme = {
     ...(getLexeme(state, value) || {
       value,
       contexts: [],
@@ -69,23 +69,23 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
       lastUpdated: timestamp(),
     })
   } else {
-    thought.contexts = !thought.contexts
+    lexeme.contexts = !lexeme.contexts
       ? []
       : // floating thought (no context)
       context.length > 0
       ? [
-          ...thought.contexts,
+          ...lexeme.contexts,
           {
             context,
             id,
             rank,
           },
         ]
-      : thought.contexts
+      : lexeme.contexts
   }
 
   const thoughtIndexUpdates = {
-    [hashThought(thought.value)]: thought,
+    [hashThought(lexeme.value)]: lexeme,
     ...(subthoughtNew
       ? {
           [hashThought(subthoughtNew.value)]: subthoughtNew,

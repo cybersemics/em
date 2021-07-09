@@ -113,7 +113,7 @@ const isMergedThoughtDuplicate = (state: State) => {
       : HOME_PATH,
   )
   const siblings = getAllChildren(state, context)
-  const isDuplicate = !siblings.every(thought => thought.value !== mergedThoughtValue)
+  const isDuplicate = !siblings.every(child => child.value !== mergedThoughtValue)
   return isDuplicate
 }
 
