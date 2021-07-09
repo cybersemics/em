@@ -43,18 +43,18 @@ interface ThoughtAnnotationProps {
   style?: React.CSSProperties
 }
 
-/** Sets the innerHTML of the subthought text. */
-const getSubThoughtTextMarkup = (state: State, isEditing: boolean, subthought: { text: string }, thoughts: Context) => {
+/** Sets the innerHTML of the ngram text. */
+const getTextMarkup = (state: State, isEditing: boolean, value: string, thoughts: Context) => {
   const labelChildren = getAllChildren(state, [...thoughts, '=label'])
   const { editingValue } = state
   return {
     __html: isEditing
-      ? editingValue && subthought.text !== editingValue
+      ? editingValue && value !== editingValue
         ? editingValue
-        : subthought.text
+        : value
       : labelChildren.length > 0
       ? labelChildren[0].value
-      : ellipsizeUrl(subthought.text),
+      : ellipsizeUrl(value),
   }
 }
 
@@ -120,7 +120,7 @@ const ThoughtAnnotation = ({
   showHiddenThoughts,
 }: Connected<ThoughtAnnotationProps>) => {
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // get all subthoughts and the subthought under the selection
+  // get all ngrams and the ngram under the selection
 
   // only show real time update if being edited while having meta validation error
   // do not increase numContexts when in an invalid state since the thought has not been updated in state
@@ -128,15 +128,9 @@ const ThoughtAnnotation = ({
 
   const value = headValue(showContexts ? parentOf(simplePath) : simplePath)
   const state = store.getState()
-  const subthoughts = /* getNgrams(value, 3) */ value
-    ? [
-        {
-          text: value,
-          contexts: getContexts(state, isRealTimeContextUpdate ? editingValue! : value),
-        },
-      ]
-    : []
-  // const subthoughtUnderSelection = once(() => findSubthoughtByIndex(subthoughts, focusOffset))
+  // TODO: Get contexts of all ngrams
+  // const subthoughtUnderSelection = once(() => findSubthoughtByIndex(ngrams, focusOffset))
+  const contexts = getContexts(state, isRealTimeContextUpdate ? editingValue! : value)
   const thoughts = pathToContext(simplePath)
 
   const isExpanded = !!state.expanded[hashContext(thoughts)]
@@ -153,6 +147,8 @@ const ThoughtAnnotation = ({
     // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
     showHiddenThoughts || !thoughtContext.context || thoughtContext.context.indexOf('=archive') === -1
 
+  const numContexts = contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
+
   return (
     <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
       {showContextBreadcrumbs && simplePath.length > 1 && (
@@ -162,35 +158,27 @@ const ThoughtAnnotation = ({
       {homeContext ? (
         <HomeLink />
       ) : (
-        subthoughts.map((subthought, i) => {
-          const numContexts = subthought.contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
-          return (
-            <React.Fragment key={i}>
-              {i > 0 ? ' ' : null}
-              <div
-                className={classNames({
-                  subthought: true,
-                  // disable intrathought linking until add, edit, delete, and expansion can be implemented
-                  // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
-                })}
-              >
-                <span
-                  className='subthought-text'
-                  style={style}
-                  dangerouslySetInnerHTML={getSubThoughtTextMarkup(state, !!isEditing, subthought, thoughts)}
-                />
-                {
-                  // do not render url icon on root thoughts in publish mode
-                  url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
-                }
-                {REGEXP_PUNCTUATIONS.test(subthought.text) ? null : minContexts === 0 || // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-                  numContexts > (subthought.text === value ? 1 : 0) ? (
-                  <StaticSuperscript n={numContexts} />
-                ) : null}
-              </div>
-            </React.Fragment>
-          )
-        })
+        <div
+          className={classNames({
+            subthought: true,
+            // disable intrathought linking until add, edit, delete, and expansion can be implemented
+            // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+          })}
+        >
+          <span
+            className='subthought-text'
+            style={style}
+            dangerouslySetInnerHTML={getTextMarkup(state, !!isEditing, value, thoughts)}
+          />
+          {
+            // do not render url icon on root thoughts in publish mode
+            url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+          }
+          {REGEXP_PUNCTUATIONS.test(value) ? null : minContexts === 0 || // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+            numContexts > 1 ? (
+            <StaticSuperscript n={numContexts} />
+          ) : null}
+        </div>
       )}
     </div>
   )
