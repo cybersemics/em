@@ -119,22 +119,19 @@ const ThoughtAnnotation = ({
   style,
   showHiddenThoughts,
 }: Connected<ThoughtAnnotationProps>) => {
-  // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // get all ngrams and the ngram under the selection
-
   // only show real time update if being edited while having meta validation error
   // do not increase numContexts when in an invalid state since the thought has not been updated in state
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
-  const value = headValue(showContexts ? parentOf(simplePath) : simplePath)
   const state = store.getState()
-  // TODO: Get contexts of all ngrams
-  // const subthoughtUnderSelection = once(() => findSubthoughtByIndex(ngrams, focusOffset))
-  const contexts = getContexts(state, isRealTimeContextUpdate ? editingValue! : value)
+  const value = headValue(showContexts ? parentOf(simplePath) : simplePath)
   const thoughts = pathToContext(simplePath)
-
   const isExpanded = !!state.expanded[hashContext(thoughts)]
   const childrenUrls = once(() => getAllChildren(state, thoughts).filter(child => isURL(child.value)))
+
+  // no contexts if thought is empty
+  const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []
+
   const url = isURL(value)
     ? value
     : // if the only subthought is a url and the thought is not expanded, link the thought
