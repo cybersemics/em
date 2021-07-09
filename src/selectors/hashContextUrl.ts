@@ -11,8 +11,8 @@ const hashContextUrl = (state: State, context: Context) => {
   const queryString = window.location.search
   const thoughtsEncoded = context
     .map(
-      (thought, i) =>
-        window.encodeURIComponent(thought).replace(/~/g, '%257e') +
+      (thoughtContext, i) =>
+        window.encodeURIComponent(thoughtContext).replace(/~/g, '%257e') +
         (isContextViewActive(state, context.slice(0, i + 1)) ? '~' : ''),
     )
     .join('/')

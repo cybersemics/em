@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { State, PushBatch } from '../util/initialState'
-import { decodeThoughtsUrl, expandThoughts, getThought } from '../selectors'
+import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
@@ -141,7 +141,7 @@ const updateThoughts = (
       ? state => {
           const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
           const cursorNew = !path || isRoot(path) ? null : path
-          const isCursorLoaded = cursorNew?.every(child => getThought(state, child.value))
+          const isCursorLoaded = cursorNew?.every(child => getLexeme(state, child.value))
 
           return isCursorLoaded || !cursorNew
             ? {

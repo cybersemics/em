@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getThought, getAllChildren } from '../selectors'
+import { getNextRank, getLexeme, getAllChildren } from '../selectors'
 import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
 import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent } from '../types'
@@ -21,8 +21,8 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
   id = id || createId()
 
   // create thought if non-existent
-  const thought: Lexeme = {
-    ...(getThought(state, value) || {
+  const lexeme: Lexeme = {
+    ...(getLexeme(state, value) || {
       value,
       contexts: [],
       created: timestamp(),
@@ -58,7 +58,7 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
   // if adding as the context of an existing thought
   let subthoughtNew // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const subthoughtOld = getThought(state, head(context))
+    const subthoughtOld = getLexeme(state, head(context))
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: (subthoughtOld?.contexts || []).concat({
         context: [value],
@@ -69,23 +69,23 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
       lastUpdated: timestamp(),
     })
   } else {
-    thought.contexts = !thought.contexts
+    lexeme.contexts = !lexeme.contexts
       ? []
       : // floating thought (no context)
       context.length > 0
       ? [
-          ...thought.contexts,
+          ...lexeme.contexts,
           {
             context,
             id,
             rank,
           },
         ]
-      : thought.contexts
+      : lexeme.contexts
   }
 
   const thoughtIndexUpdates = {
-    [hashThought(thought.value)]: thought,
+    [hashThought(lexeme.value)]: lexeme,
     ...(subthoughtNew
       ? {
           [hashThought(subthoughtNew.value)]: subthoughtNew,

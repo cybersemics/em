@@ -1,7 +1,7 @@
 import './App.css'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
-import { getContexts, getParent, getThought, getAllChildren, getChildrenRanked, isPending } from './selectors'
+import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
@@ -70,7 +70,7 @@ const windowEm = {
   // helper functions that will be used by puppeteer tests
   testHelpers,
   getContexts: withState(getContexts),
-  getThought: withState(getThought),
+  getLexeme: withState(getLexeme),
   getParent: withState(getParent),
   getAllChildren: withState(getAllChildren),
   getChildrenRanked: withState(getChildrenRanked),

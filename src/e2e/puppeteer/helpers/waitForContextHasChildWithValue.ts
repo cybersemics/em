@@ -9,7 +9,7 @@ const waitForContextHasChildWithValue = async (page: Page, context: Context, chi
   await page.waitForFunction(
     (context: [], childValue: string) =>
       (window.em as WindowEm).getAllChildren(context).some((child: Child) => child.value === childValue) &&
-      (window.em as WindowEm).getThought(childValue),
+      (window.em as WindowEm).getLexeme(childValue),
     {},
     context,
     childValue,

@@ -3,7 +3,7 @@ import { equalArrays, initialState, reducerFlow } from '../../util'
 import {
   exportContext,
   getContexts,
-  getThought,
+  getLexeme,
   getAllChildren,
   getChildrenRanked,
   getRankAfter,
@@ -53,7 +53,7 @@ it('persist id on move', () => {
   const steps1 = [newThought('a'), newSubthought('a1'), newSubthought('a2')]
 
   const stateNew1 = reducerFlow(steps1)(initialState())
-  const oldExactThought = getThought(stateNew1, 'a2')!.contexts.find(
+  const oldExactThought = getLexeme(stateNew1, 'a2')!.contexts.find(
     thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0,
   )
   const oldId = oldExactThought?.id
@@ -69,7 +69,7 @@ it('persist id on move', () => {
   ]
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
-  const newExactThought = getThought(stateNew2, 'a2')!.contexts.find(
+  const newExactThought = getLexeme(stateNew2, 'a2')!.contexts.find(
     thought => equalArrays(thought.context, ['a1']) && thought.rank === 0,
   )
   const newId = newExactThought?.id

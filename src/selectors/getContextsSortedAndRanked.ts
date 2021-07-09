@@ -11,8 +11,8 @@ const getContextsSortedAndRanked = (state: State, value: string): ThoughtContext
     makeCompareByProp('context'),
   )
     // generate dynamic ranks
-    .map((thought, i) => ({
-      ...thought,
+    .map((thoughtContext, i) => ({
+      ...thoughtContext,
       rank: i,
     }))
 

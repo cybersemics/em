@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { getNextRank, getThought, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
+import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
 import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, Timestamp, ThoughtIndices } from '../types'
 import { State } from '../util/initialState'
 
@@ -55,7 +55,7 @@ const insertThought = (
   const rootContext = context.length > 0 ? context : [HOME_TOKEN]
   const id = createId()
 
-  const lexemeOld = getThought(state, value)
+  const lexemeOld = getLexeme(state, value)
   const lexemeNew = {
     ...lexemeOld,
     value,
@@ -205,7 +205,7 @@ const saveThoughts = (
 /** Return number of contexts in blocks array. */
 const getContextsNum = (blocks: Block[]): number => {
   return blocks
-    .map(thought => (thought.children.length > 0 ? 1 + getContextsNum(thought.children) : 1))
+    .map(block => (block.children.length > 0 ? 1 + getContextsNum(block.children) : 1))
     .reduce((acc, val) => acc + val, 0)
 }
 
@@ -238,9 +238,9 @@ export const importJSON = (
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
-    const thought = getThought(state, '')
-    if (thought) {
-      initialThoughtIndex[hashThought('')] = removeContext(thought, context, headRank(simplePath))
+    const lexeme = getLexeme(state, '')
+    if (lexeme) {
+      initialThoughtIndex[hashThought('')] = removeContext(lexeme, context, headRank(simplePath))
       initialContextIndex[contextEncoded] = {
         id: contextEncoded,
         ...initialContextIndex[contextEncoded],

@@ -5,21 +5,21 @@ import { Context, Lexeme, Timestamp } from '../types'
 
 /** Returns a new thought less the given context. */
 export const removeContext = (
-  thought: Lexeme,
+  lexeme: Lexeme,
   context: Context,
   rank: number,
   lastUpdated: Timestamp = timestamp(),
 ): Lexeme => {
   return Object.assign(
     {},
-    thought,
+    lexeme,
     notNull({
-      contexts: thought.contexts
-        ? thought.contexts.filter(
+      contexts: lexeme.contexts
+        ? lexeme.contexts.filter(
             parent => !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank)),
           )
         : [],
-      created: thought.created || lastUpdated,
+      created: lexeme.created || lastUpdated,
       lastUpdated: lastUpdated,
     }),
   )

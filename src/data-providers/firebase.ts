@@ -72,9 +72,9 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     })
   },
   /** Updates a thought in the thoughtIndex. */
-  async updateThought(id: string, thought: Lexeme): Promise<unknown> {
+  async updateThought(id: string, lexeme: Lexeme): Promise<unknown> {
     return this.update({
-      ['thoughtIndex/' + id]: thought,
+      ['thoughtIndex/' + id]: lexeme,
     })
   },
   /** Updates the contextIndex. */

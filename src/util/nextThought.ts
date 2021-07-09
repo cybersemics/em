@@ -5,7 +5,7 @@ import {
   firstVisibleChildWithCursorCheck,
   getContexts,
   getContextsSortedAndRanked,
-  getThought,
+  getLexeme,
   isContextViewActive,
   splitChain,
   nextSibling as thoughtNextSibling,
@@ -26,14 +26,14 @@ const contextWithThoughtRank = (state: State, contextInfo: ThoughtContext | null
   return (
     contextInfo &&
     (contextInfo.context.map((value, index) => {
-      const thought = getThought(state, value)!
+      const lexeme = getLexeme(state, value)!
 
       /** Returns the matching context. */
       const matchedContext = () => {
         const contextToMatch = contextInfo.context.slice(0, index + 1)
         // const filterRoot = context => context.filter(item => item !== HOME_TOKEN)
-        return thought.contexts.find(thoughtContext =>
-          equalArrays([...unroot(thoughtContext.context), thought.value], contextToMatch),
+        return lexeme.contexts.find(thoughtContext =>
+          equalArrays([...unroot(thoughtContext.context), lexeme.value], contextToMatch),
         )!
       }
       // the root thought doesn't have a rank

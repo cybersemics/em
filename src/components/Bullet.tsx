@@ -10,6 +10,8 @@ import { Context } from '../types'
 
 interface BulletProps {
   glyph?: string | null
+  // indicates the bullet with an error style
+  invalid?: boolean
   isEditing?: boolean
   leaf?: boolean
   onClick: (event: React.MouseEvent) => void
@@ -17,19 +19,12 @@ interface BulletProps {
   context: Context
 }
 
-interface MapStateToProps {
-  invalidOption: boolean
-  isLeaf: boolean
-  pending: boolean
-  showContexts: boolean
-}
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
   return {
     // if being edited and meta validation error has occured
-    invalidOption: !!props.isEditing && invalidState,
+    invalid: props.invalid || (!!props.isEditing && invalidState),
     // re-render when leaf status changes
     isLeaf: !hasChildren(state, props.context),
     pending: isPending(state, props.context),
@@ -38,13 +33,20 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 }
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
-const Bullet = ({ showContexts, glyph, isLeaf, onClick, invalidOption, pending }: BulletProps & MapStateToProps) => (
+const Bullet = ({
+  showContexts,
+  glyph,
+  isLeaf,
+  onClick,
+  invalid,
+  pending,
+}: BulletProps & ReturnType<typeof mapStateToProps>) => (
   <span
     className={classNames({
       bullet: true,
       graypulse: pending,
       'show-contexts': showContexts,
-      'invalid-option': invalidOption,
+      'invalid-option': invalid,
     })}
   >
     <span className='glyph' onClick={onClick}>

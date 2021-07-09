@@ -8,7 +8,7 @@ import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcr
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
 import { State } from '../util/initialState'
-import { Child, Context, Index, Lexeme, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, Context, Index, Path, SimplePath, ThoughtContext } from '../types'
 
 // components
 import Bullet from './Bullet'
@@ -48,7 +48,7 @@ import {
   getChildrenRanked,
   getSortPreference,
   getStyle,
-  getThought,
+  getLexeme,
   hasChildren,
   isContextViewActive,
   rootedParentOf,
@@ -85,7 +85,6 @@ export interface ThoughtContainerProps {
   rank: number
   showContexts?: boolean
   style?: React.CSSProperties
-  thought?: Lexeme
   simplePath: SimplePath
   simplePathLive?: SimplePath
   view?: string | null
@@ -167,7 +166,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const isExpanded = !!expanded[hashContext(pathToContext(path))]
 
-  const thought = getThought(state, value)
+  const lexeme = getLexeme(state, value)
 
   return {
     contextBinding,
@@ -181,7 +180,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isEditingPath,
     isExpanded,
     publish: !search && publishMode(),
-    thought,
+    lexeme,
     simplePathLive,
     view: attribute(state, pathToContext(simplePathLive), '=view'),
   }
@@ -244,7 +243,7 @@ const ThoughtContainer = ({
   setCursorOnNote,
   showContexts,
   style,
-  thought,
+  lexeme,
   simplePath,
   simplePathLive,
   view,
@@ -397,121 +396,120 @@ const ThoughtContainer = ({
       ? styleEnv
       : style
 
-  return thought
-    ? dropTarget(
-        dragSource(
-          <li
-            style={{
-              ...styleContainer,
-              ...styleContainerZoom,
-            }}
-            className={classNames({
-              child: true,
-              'child-divider': isDivider(thought!.value ?? ''),
-              'cursor-parent': isCursorParent,
-              'cursor-grandparent': isCursorGrandparent,
-              // used so that the autofocus can properly highlight the immediate parent of the cursor
-              editing: isEditing,
-              expanded: isExpanded,
-              function: isFunction(value), // eslint-disable-line quote-props
-              'has-only-child': children.length === 1,
-              'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
-              // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
-              // this is a bit of a hack since the bullet transform checks leaf instead of expanded
-              // TODO: Consolidate with isLeaf if possible
-              leaf: isLeaf || (isEditing && globals.suppressExpansion),
-              // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
-              prose: view === 'Prose',
-              'show-contexts': showContexts,
-              'show-contexts-no-breadcrumbs': simplePath.length === 2,
-              // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
-              'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(path)),
-            })}
-            ref={el => {
-              if (el) {
-                dragPreview()
-              }
-            }}
-            // disable to test if this solves the app switch touch issue on mobile PWA
-            // { ...longPressHandlerProps }
-          >
-            <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
-              {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
-                <Bullet
-                  isEditing={isEditing}
-                  context={pathToContext(simplePath)}
-                  leaf={isLeaf}
-                  onClick={(e: React.MouseEvent) => {
-                    if (!isEditing || children.length === 0) {
-                      e.stopPropagation()
-                      store.dispatch(setCursor({ path: simplePath }))
-                    }
-                  }}
-                />
-              )}
-
-              <span
-                className='drop-hover'
-                style={{
-                  display: shouldDisplayHover ? 'inline' : 'none',
-                }}
-              ></span>
-
-              <ThoughtAnnotation
-                env={env}
-                path={path}
-                homeContext={homeContext}
-                minContexts={allowSingleContext ? 0 : 2}
-                showContextBreadcrumbs={showContextBreadcrumbs}
-                showContexts={showContexts}
-                style={styleNew}
-                simplePath={simplePath}
-              />
-
-              <StaticThought
-                env={env}
-                path={path}
-                cursorOffset={cursorOffset}
-                hideBullet={hideBullet}
-                homeContext={homeContext}
-                isDraggable={isDraggable}
-                isDragging={isDragging}
-                isPublishChild={isPublishChild}
-                isEditing={isEditing}
-                isLeaf={isLeaf}
-                publish={publish}
-                rank={rank}
-                showContextBreadcrumbs={showContextBreadcrumbs}
-                showContexts={showContexts}
-                style={styleNew}
-                simplePath={simplePath}
-                toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
-                view={view}
-              />
-
-              <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
-            </div>
-
-            {publish && context.length === 0 && <Byline context={thoughts} />}
-
-            {/* Recursive Subthoughts */}
-            <Subthoughts
-              allowSingleContext={allowSingleContext}
-              childrenForced={childrenForced}
-              env={env}
-              path={path}
-              count={count}
-              depth={depth}
-              isParentHovering={isAnyChildHovering}
-              showContexts={allowSingleContext}
-              simplePath={simplePath}
-              sortType={sortType}
-              sortDirection={sortDirection}
+  return dropTarget(
+    dragSource(
+      <li
+        style={{
+          ...styleContainer,
+          ...styleContainerZoom,
+        }}
+        className={classNames({
+          child: true,
+          'child-divider': isDivider(lexeme?.value ?? ''),
+          'cursor-parent': isCursorParent,
+          'cursor-grandparent': isCursorGrandparent,
+          // used so that the autofocus can properly highlight the immediate parent of the cursor
+          editing: isEditing,
+          expanded: isExpanded,
+          function: isFunction(value), // eslint-disable-line quote-props
+          'has-only-child': children.length === 1,
+          'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
+          // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
+          // this is a bit of a hack since the bullet transform checks leaf instead of expanded
+          // TODO: Consolidate with isLeaf if possible
+          leaf: isLeaf || (isEditing && globals.suppressExpansion),
+          // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
+          prose: view === 'Prose',
+          'show-contexts': showContexts,
+          'show-contexts-no-breadcrumbs': simplePath.length === 2,
+          // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
+          'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(path)),
+        })}
+        ref={el => {
+          if (el) {
+            dragPreview()
+          }
+        }}
+        // disable to test if this solves the app switch touch issue on mobile PWA
+        // { ...longPressHandlerProps }
+      >
+        <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
+          {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
+            <Bullet
+              invalid={!lexeme}
+              isEditing={isEditing}
+              context={pathToContext(simplePath)}
+              leaf={isLeaf}
+              onClick={(e: React.MouseEvent) => {
+                if (!isEditing || children.length === 0) {
+                  e.stopPropagation()
+                  store.dispatch(setCursor({ path: simplePath }))
+                }
+              }}
             />
-          </li>,
-        ),
-      )
-    : null
+          )}
+
+          <span
+            className='drop-hover'
+            style={{
+              display: shouldDisplayHover ? 'inline' : 'none',
+            }}
+          ></span>
+
+          <ThoughtAnnotation
+            env={env}
+            path={path}
+            homeContext={homeContext}
+            minContexts={allowSingleContext ? 0 : 2}
+            showContextBreadcrumbs={showContextBreadcrumbs}
+            showContexts={showContexts}
+            style={styleNew}
+            simplePath={simplePath}
+          />
+
+          <StaticThought
+            env={env}
+            path={path}
+            cursorOffset={cursorOffset}
+            hideBullet={hideBullet}
+            homeContext={homeContext}
+            isDraggable={isDraggable}
+            isDragging={isDragging}
+            isPublishChild={isPublishChild}
+            isEditing={isEditing}
+            isLeaf={isLeaf}
+            publish={publish}
+            rank={rank}
+            showContextBreadcrumbs={showContextBreadcrumbs}
+            showContexts={showContexts}
+            style={styleNew}
+            simplePath={simplePath}
+            toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
+            view={view}
+          />
+
+          <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
+        </div>
+
+        {publish && context.length === 0 && <Byline context={thoughts} />}
+
+        {/* Recursive Subthoughts */}
+        <Subthoughts
+          allowSingleContext={allowSingleContext}
+          childrenForced={childrenForced}
+          env={env}
+          path={path}
+          count={count}
+          depth={depth}
+          isParentHovering={isAnyChildHovering}
+          showContexts={allowSingleContext}
+          simplePath={simplePath}
+          sortType={sortType}
+          sortDirection={sortDirection}
+        />
+      </li>,
+    ),
+  )
 }
 
 ThoughtContainer.displayName = 'ThoughtContainer'

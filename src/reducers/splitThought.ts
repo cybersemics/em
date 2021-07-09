@@ -46,8 +46,8 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
 
     // move children
     state => {
-      const thoughtNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
-      const pathRight = parentOf(simplePath).concat({ value: valueRight, rank: thoughtNew!.rank })
+      const childNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
+      const pathRight = parentOf(simplePath).concat({ value: valueRight, rank: childNew!.rank })
       const children = getChildrenRanked(state, pathToContext(pathLeft))
 
       return reducerFlow(

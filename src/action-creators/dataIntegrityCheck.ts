@@ -21,7 +21,7 @@ import {
 import {
   exists,
   getSetting,
-  getThought,
+  getLexeme,
   getAllChildren,
   getChildrenRanked,
   simplifyPath,
@@ -55,7 +55,7 @@ const dataIntegrityCheck =
     const rank = headRank(path)
     const context = pathToContext(path)
     const encoded = hashContext(context)
-    const thought = getThought(state, value)
+    const lexeme = getLexeme(state, value)
     const pathContext = parentOf(context)
     const simplePath = simplifyPath(state, path)
 
@@ -89,7 +89,7 @@ const dataIntegrityCheck =
       for (const child of children) {
         const childExists = exists(state, child.value)
         if (!childExists) {
-          console.warn('Recreating missing thought in thoughtIndex:', child.value)
+          console.warn('Recreating missing lexeme in thoughtIndex:', child.value)
           dispatch({
             type: 'createThought',
             context,
@@ -102,14 +102,14 @@ const dataIntegrityCheck =
       }
     }
 
-    if (thought && thought.contexts) {
-      // recreate thoughts missing in thought.contexts
+    if (lexeme && lexeme.contexts) {
+      // recreate thoughts missing in lexeme.contexts
       if (recreateMissingThoughtContexts) {
-        const matchingThoughtInContexts = thought.contexts.find(
+        const matchingThoughtInContexts = lexeme.contexts.find(
           cx => cx.context && equalArrays(unroot(cx.context), pathContext),
         )
         if (!matchingThoughtInContexts) {
-          console.warn('Recreating missing thought in thought.contexts:', path)
+          console.warn('Recreating missing lexeme in lexeme.contexts:', path)
           dispatch({
             type: 'createThought',
             context: pathContext,
@@ -122,10 +122,10 @@ const dataIntegrityCheck =
       // recreate thoughts missing in contextIndex
       // const contextSubthoughts = getChildrenRanked(state, pathContext)
       if (recreateMissingContextIndex) {
-        const contextIndexUpdates = thought.contexts.reduce((accum: any, cx: ThoughtContext) => {
+        const contextIndexUpdates = lexeme.contexts.reduce((accum: any, cx: ThoughtContext) => {
           const otherContextChildren = getAllChildren(state, cx.context)
           const otherContextHasThought = otherContextChildren.some(
-            child => hashThought(child.value) === hashThought(thought.value) && child.rank === cx.rank,
+            child => hashThought(child.value) === hashThought(lexeme.value) && child.rank === cx.rank,
           )
           const encoded = hashContext(cx.context)
           const parentEntry = contextIndex[encoded]
@@ -142,7 +142,7 @@ const dataIntegrityCheck =
                       // guard against undefined
                       lastUpdated: cx.lastUpdated || timestamp(),
                       rank: cx.rank || 0,
-                      value: thought.value || '',
+                      value: lexeme.value || '',
                     },
                   ],
                   lastUpdated: timestamp(),
@@ -187,8 +187,8 @@ const dataIntegrityCheck =
               type: 'updateThoughts',
               thoughtIndexUpdates: {
                 [thoughtEncoded]: {
-                  ...thought,
-                  contexts: thought.contexts.map(parent =>
+                  ...lexeme,
+                  contexts: lexeme.contexts.map(parent =>
                     equalArrays(unroot(parent.context), pathContext)
                       ? {
                           ...parent,

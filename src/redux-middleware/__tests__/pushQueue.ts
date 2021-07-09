@@ -1,8 +1,8 @@
 import { store } from '../../store'
 import { importText, editThought } from '../../action-creators'
-import { getThought as getThoughtSelector } from '../../selectors'
+import { getLexeme as getThoughtSelector } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
-import getThought from '../../data-providers/data-helpers/getThought'
+import getLexeme from '../../data-providers/data-helpers/getLexeme'
 import { DataProvider } from '../../data-providers/DataProvider'
 import testTimer from '../../test-helpers/testTimer'
 import { SimplePath } from '../../types'
@@ -43,7 +43,7 @@ it('editing thoughts to new value with related pending lexeme', async () => {
 
   await fakeTimer.useRealTimer()
 
-  expect((await getThought(db, 'f'))?.contexts).toHaveLength(1)
+  expect((await getLexeme(db, 'f'))?.contexts).toHaveLength(1)
 
   // refresh test app
   await refreshTestApp()
@@ -75,5 +75,5 @@ it('editing thoughts to new value with related pending lexeme', async () => {
 
   expect(getThoughtSelector(store.getState(), 'f')?.contexts).toMatchObject(expectedContexts)
 
-  expect((await getThought(db, 'f'))?.contexts).toMatchObject(expectedContexts)
+  expect((await getLexeme(db, 'f'))?.contexts).toMatchObject(expectedContexts)
 })

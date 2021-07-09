@@ -4,7 +4,7 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
 import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
-import getThought from '../data-providers/data-helpers/getThought'
+import getLexeme from '../data-providers/data-helpers/getLexeme'
 import {
   equalArrays,
   hashContext,
@@ -89,7 +89,7 @@ const dataProviderTest = (provider: DataProvider) => {
     const nothought = await provider.getThoughtById('12345')
     expect(nothought).toBeUndefined()
 
-    const thought = {
+    const lexeme = {
       id: '12345',
       value: 'x',
       rank: 0,
@@ -98,10 +98,10 @@ const dataProviderTest = (provider: DataProvider) => {
       lastUpdated: timestamp(),
     }
 
-    await provider.updateThought('12345', thought)
+    await provider.updateThought('12345', lexeme)
 
     const dbThought = await provider.getThoughtById('12345')
-    expect(dbThought).toEqual(thought)
+    expect(dbThought).toEqual(lexeme)
   })
 
   test('getThoughtsByIds', async () => {
@@ -121,10 +121,10 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('updateThought', async () => {
-    const nothought = await getThought(provider, 'x')
+    const nothought = await getLexeme(provider, 'x')
     expect(nothought).toBeUndefined()
 
-    const thought = {
+    const lexeme = {
       id: hashThought('x'),
       value: 'x',
       rank: 0,
@@ -133,10 +133,10 @@ const dataProviderTest = (provider: DataProvider) => {
       lastUpdated: timestamp(),
     }
 
-    await provider.updateThought(thought.id, thought)
+    await provider.updateThought(lexeme.id, lexeme)
 
-    const remoteThought = await getThought(provider, 'x')
-    expect(remoteThought).toEqual(thought)
+    const remoteThought = await getLexeme(provider, 'x')
+    expect(remoteThought).toEqual(lexeme)
   })
 
   test('getContext', async () => {
@@ -213,10 +213,10 @@ const dataProviderTest = (provider: DataProvider) => {
       [hashThought(thoughtY.value)]: thoughtY,
     })
 
-    const dbThought1 = await getThought(provider, thoughtX.value)
+    const dbThought1 = await getLexeme(provider, thoughtX.value)
     expect(dbThought1).toEqual(thoughtX)
 
-    const dbThought2 = await getThought(provider, thoughtY.value)
+    const dbThought2 = await getLexeme(provider, thoughtY.value)
     expect(dbThought2).toEqual(thoughtY)
   })
 

@@ -67,7 +67,7 @@ import {
   attributeEquals,
   getContexts,
   getSetting,
-  getThought,
+  getLexeme,
   getAllChildren,
   hasChild,
   isContextViewActive,
@@ -216,7 +216,7 @@ const Editable = ({
     editableNonceRef.current = state.editableNonce
   }, [state.editableNonce])
 
-  const thought = getThought(state, value)
+  const lexeme = getLexeme(state, value)
   const childrenLabel = getAllChildren(state, [...thoughts, '=label'])
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
@@ -296,7 +296,7 @@ const Editable = ({
 
     const oldValue = oldValueRef.current
 
-    const thought = getThought(state, oldValue)
+    const lexeme = getLexeme(state, oldValue)
 
     if (transient) {
       dispatch(
@@ -308,7 +308,7 @@ const Editable = ({
       return
     }
 
-    if (thought) {
+    if (lexeme) {
       dispatch(
         editThought({
           context,
@@ -717,7 +717,7 @@ const Editable = ({
       placeholder={
         isTableColumn1
           ? ''
-          : thought && Date.now() - new Date(thought.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
+          : lexeme && Date.now() - new Date(lexeme.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
           ? 'This is an empty thought'
           : 'Add a thought'
       }

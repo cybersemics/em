@@ -24,6 +24,12 @@ describe('cursor testing', () => {
     await refresh()
 
     await waitForEditable('B')
+
+    // wait for a re-render in case the lexeme was loaded after the parent
+    // getEditingText will return undefined if we don't wait
+    // we don't currently have a way to tell if a lexeme is missing or just loading
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     const thoughtValue = await getEditingText()
     expect(thoughtValue).toBe('B')
   })
@@ -49,6 +55,12 @@ describe('cursor testing', () => {
     await refresh()
 
     await waitForEditable('Z')
+
+    // wait for a re-render in case the lexeme was loaded after the parent
+    // getEditingText will return undefined if we don't wait
+    // we don't currently have a way to tell if a lexeme is missing or just loading
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     const thoughtValue = await getEditingText()
     expect(thoughtValue).toBe('Z')
   })

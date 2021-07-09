@@ -3,7 +3,7 @@ import { concatOne, equalArrays, timestamp } from '../util'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. Changed rank). Removes duplicates with the same { value, rank }. */
 export const moveLexemeThought = (
-  thought: Lexeme,
+  lexeme: Lexeme,
   oldContext: Context,
   newContext: Context,
   oldRank: number,
@@ -11,9 +11,9 @@ export const moveLexemeThought = (
   id: string | null,
   archived: Timestamp,
 ) => ({
-  ...thought,
+  ...lexeme,
   contexts: concatOne(
-    (thought.contexts || []).filter(
+    (lexeme.contexts || []).filter(
       parent =>
         // remove old context
         (parent.rank !== oldRank || !equalArrays(parent.context, oldContext)) &&
@@ -28,6 +28,6 @@ export const moveLexemeThought = (
       ...(archived ? { archived } : {}),
     },
   ),
-  created: thought.created || timestamp(),
+  created: lexeme.created || timestamp(),
   lastUpdated: timestamp(),
 })
