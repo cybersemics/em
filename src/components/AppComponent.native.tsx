@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native'
+import { StyleSheet, ScrollView, SafeAreaView, View, Dimensions } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
 import NavBar from './NavBar'
@@ -12,6 +12,8 @@ import Sidebar from './Sidebar'
 import ModalHelp from './ModalHelp'
 import ModalWelcome from './ModalWelcome'
 import ModalExport from './ModalExport'
+import Footer from './Footer'
+import { Text } from './Text.native'
 
 /**
  * AppComponent container.
@@ -52,12 +54,26 @@ const AppComponent: React.FC = () => {
           renderNavigationView={Sidebar}
         >
           <Toolbar />
-          <ScrollView contentContainerStyle={styles.content}>
-            <Text style={styles.text}>hello World - em thoughts</Text>
-          </ScrollView>
-          <NavBar position='top' />
-          <ModalFeedback />
+          <ScrollView style={styles.flexOne}>
+            <View style={styles.content}>
+              <ScrollView style={styles.flexOne}>
+                {Array(50)
+                  .fill(1)
+                  .map((_, index) => {
+                    return (
+                      <>
+                        <Text style={styles.text}>hello World - em thoughts {index}</Text>
+                      </>
+                    )
+                  })}
+              </ScrollView>
+              <NavBar position='top' />
+            </View>
 
+            <Footer />
+          </ScrollView>
+
+          <ModalFeedback />
           <ModalHelp />
           <ModalWelcome />
           <ModalExport />
@@ -72,14 +88,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  flexOne: { flex: 1 },
   content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: Dimensions.get('screen').height - 120,
   },
   text: {
     color: '#fff',
-    fontSize: 20,
   },
 })
 
