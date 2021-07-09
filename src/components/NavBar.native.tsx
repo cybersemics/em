@@ -9,7 +9,9 @@ import { Path } from '../types'
 // import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
 import FeedbackButton from './FeedbackButton'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, StyleSheet } from 'react-native'
+import { Text } from './Text.native'
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
   const { cursor, showBreadcrumbs } = state

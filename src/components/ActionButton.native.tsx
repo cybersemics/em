@@ -1,5 +1,6 @@
 import React from 'react'
-import { ActivityIndicator, StyleProp, TouchableOpacity, ViewStyle, Text, StyleSheet } from 'react-native'
+import { ActivityIndicator, StyleProp, TouchableOpacity, ViewStyle, StyleSheet } from 'react-native'
+import { Text } from './Text.native'
 
 interface ActionButtonProps {
   title: string
@@ -40,5 +41,5 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: '50%',
   },
-  title: { fontSize: 18 },
+  title: { fontSize: 2 },
 })

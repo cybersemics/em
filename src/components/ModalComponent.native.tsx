@@ -6,7 +6,8 @@ import { modalCleanup } from '../util'
 import { Connected } from '../types' */
 import { /* closeModal */ modalComplete /* tutorial */ } from '../action-creators'
 import { useDispatch } from 'react-redux'
-import { Modal, Text, View, StyleSheet, ScrollView } from 'react-native'
+import { Modal, View, StyleSheet, ScrollView } from 'react-native'
+import { Text } from './Text.native'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
@@ -70,13 +71,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'right',
-    fontSize: 20,
+    fontSize: 16,
   },
   title: {
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 32,
+    fontSize: 10,
   },
 })
 
