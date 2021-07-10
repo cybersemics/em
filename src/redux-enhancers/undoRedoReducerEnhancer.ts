@@ -1,11 +1,12 @@
 import _ from 'lodash'
-import { applyPatch, compare, deepClone } from 'fast-json-patch'
+import { applyPatch, compare } from 'fast-json-patch'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import { State } from '../util/initialState'
 import { Index, Patch } from '../types'
 import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
+import { produce } from 'immer'
 
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 
@@ -76,7 +77,7 @@ const undoReducer = (state: State) => {
   const { patches, inversePatches } = state
   const lastInversePatch = nthLast(inversePatches, 1)
   if (!lastInversePatch) return state
-  const newState = applyPatch(deepClone(state) as State, lastInversePatch).newDocument
+  const newState = produce(state, (state: State) => applyPatch(state, lastInversePatch).newDocument)
   const correspondingPatch = addActionsToPatch(compareWithOmit(newState as Index, state), [
     ...lastInversePatch[0].actions,
   ])
@@ -94,7 +95,7 @@ const redoReducer = (state: State) => {
   const { patches, inversePatches } = state
   const lastPatch = nthLast(patches, 1)
   if (!lastPatch) return state
-  const newState = applyPatch(deepClone(state), lastPatch).newDocument
+  const newState = produce(state, (state: State) => applyPatch(state, lastPatch).newDocument)
   const correspondingInversePatch = addActionsToPatch(compareWithOmit(newState as Index, state), [
     ...lastPatch[0].actions,
   ])
@@ -198,7 +199,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         const lastInversePatch = nthLast(state.inversePatches, 1)
         const lastState =
           lastInversePatch && lastInversePatch.length > 0
-            ? applyPatch(deepClone(state), lastInversePatch).newDocument
+            ? produce(state, (state: State) => applyPatch(state, lastInversePatch).newDocument)
             : state
         const combinedInversePatch = compareWithOmit(newState as Index, lastState)
         return {

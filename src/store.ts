@@ -13,9 +13,7 @@ import pullQueue from './redux-middleware/pullQueue'
 import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
-
-// disabled until deepClone performance can be fixed
-// import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
+import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -27,6 +25,7 @@ export const store = createStore(
   appReducer,
   composeEnhancers(
     applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory),
-    /* undoRedoReducerEnhancer, */ cursorChangedEnhancer,
+    undoRedoReducerEnhancer,
+    cursorChangedEnhancer,
   ),
 )
