@@ -19,14 +19,14 @@ import {
 
 // selectors
 import {
-  exists,
-  getSetting,
-  getLexeme,
   getAllChildren,
   getChildrenRanked,
+  getLexeme,
+  getSetting,
+  hasLexeme,
+  rootedParentOf,
   simplifyPath,
   splitChain,
-  rootedParentOf,
 } from '../selectors'
 
 const disableAll = true
@@ -86,7 +86,7 @@ const dataIntegrityCheck =
       const children = (contextIndex[encoded] || {}).children || []
       // eslint-disable-next-line fp/no-loops,fp/no-let
       for (const child of children) {
-        const childExists = exists(state, child.value)
+        const childExists = hasLexeme(state, child.value)
         if (!childExists) {
           console.warn('Recreating missing lexeme in thoughtIndex:', child.value)
           dispatch({

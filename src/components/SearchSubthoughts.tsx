@@ -2,7 +2,7 @@ import React, { FC, useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
-import { exists } from '../selectors'
+import { hasLexeme } from '../selectors'
 import { searchContexts, searchLimit as setSearchLimit, error } from '../action-creators'
 import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, sort } from '../util'
 import Subthoughts from './Subthoughts'
@@ -128,7 +128,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
       // must go into DOM to modify the parent li classname since we do not want the li to re-render
       ref={onRef}
     >
-      {!exists(store.getState(), search) && isDocumentEditable() ? (
+      {!hasLexeme(store.getState(), search) && isDocumentEditable() ? (
         <NewThought path={[] as unknown as SimplePath} label={`Create "${search}"`} value={search} type='button' />
       ) : null}
       <span className='text-note text-small'>

@@ -1,6 +1,6 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-import { exists, getContexts, rootedParentOf } from '../selectors'
+import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
 import { State } from '../util/initialState'
@@ -26,7 +26,7 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
   const cursorContext = cursor ? pathToContext(cursor) : [HOME_TOKEN]
 
   const editing =
-    equalArrays(cursorContext, pathToContext(props.simplePath || [])) && exists(state, headValue(cursor || []))
+    equalArrays(cursorContext, pathToContext(props.simplePath || [])) && hasLexeme(state, headValue(cursor || []))
 
   const simplePath = props.showContexts && props.simplePath ? rootedParentOf(state, props.simplePath) : props.simplePath
 
@@ -52,7 +52,7 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
     // thoughtRaw is the head that is removed when showContexts is true
     thoughtRaw: props.showContexts ? head(props.simplePath) : head(simplePathLive),
     empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
-    numContexts: exists(state, head(thoughtsLive)) ? numContexts() : 0,
+    numContexts: hasLexeme(state, head(thoughtsLive)) ? numContexts() : 0,
     showModal,
   }
 }

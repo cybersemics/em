@@ -2,10 +2,10 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
 import {
-  exists,
-  getLexeme,
   getAllChildren,
   getChildrenRanked,
+  getLexeme,
+  hasLexeme,
   isPending,
   rankThoughtsFirstMatch,
   rootedParentOf,
@@ -41,7 +41,7 @@ interface ThoughtUpdates {
 const deleteThought = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
   const { value, rank } = thoughtRanked
 
-  if (!exists(state, value)) return state
+  if (!hasLexeme(state, value)) return state
 
   const thoughts = unroot(context.concat(value))
   context = rootedParentOf(state, thoughts)
