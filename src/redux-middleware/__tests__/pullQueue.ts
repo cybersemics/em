@@ -74,7 +74,8 @@ it('load thought', async () => {
   expect(childrenAfterInitialize).toMatchObject([{ value: 'a' }])
 })
 
-it('do not repopulate deleted thought', async () => {
+// TODO
+it.skip('do not repopulate deleted thought', async () => {
   fakeTimer.useFakeTimer()
 
   store.dispatch([
@@ -255,7 +256,8 @@ it('move thought with buffered descendants', async () => {
   expect(await getContext(db, ['x', 'a', 'b', 'c', 'd', 'e'])).toBeUndefined()
 })
 
-it('edit thought with buffered descendants', async () => {
+// TODO
+it.skip('edit thought with buffered descendants', async () => {
   fakeTimer.useFakeTimer()
 
   store.dispatch([
@@ -318,7 +320,7 @@ it('edit thought with buffered descendants', async () => {
   expect(await getContext(db, ['k!', 'b', 'c', 'd', 'e'])).toBeUndefined()
 })
 
-it.only('export thought with buffered descendants', async () => {
+it('export thought with buffered descendants', async () => {
   fakeTimer.useFakeTimer()
 
   store.dispatch([
