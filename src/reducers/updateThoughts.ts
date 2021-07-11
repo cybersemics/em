@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { State, PushBatch } from '../util/initialState'
+import { State, PushBatch, initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
-import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
-import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
+import { hashContext, importHtml, logWithTime, once, mergeUpdates, reducerFlow, isRoot } from '../util'
+import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS, THOUGHT_CACHE_SIZE } from '../constants'
 import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash } from '../types'
 
 export interface UpdateThoughtsOptions {
@@ -22,6 +22,30 @@ export interface UpdateThoughtsOptions {
 }
 
 const rootEncoded = hashContext([HOME_TOKEN])
+
+/**
+ * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants so they are never deleted from the thought cache when not present on the remote data source.
+ */
+export const getWhitelistedThoughts = once(() => {
+  const state = initialState()
+
+  const { contextIndexUpdates: contextIndex, thoughtIndexUpdates: thoughtIndex } = importHtml(
+    state,
+    [{ value: EM_TOKEN, rank: 0 }] as SimplePath,
+    INITIAL_SETTINGS,
+  )
+
+  return {
+    contextIndex: {
+      ...state.thoughts.contextIndex,
+      ...contextIndex,
+    },
+    thoughtIndex: {
+      ...state.thoughts.thoughtIndex,
+      ...thoughtIndex,
+    },
+  }
+})
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
@@ -48,6 +72,9 @@ const updateThoughts = (
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
+  // The contextIndex and thoughtIndex can consume more and more memory as thoughts are pulled from the db.
+  // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and thoughtIndex.
+  // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
   // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and thoughtIndex
   const contextCacheAppended = [...state.thoughts.contextCache, ...Object.keys(contextIndexUpdates)] as ContextHash[]
   const thoughtCacheAppended = [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)] as ThoughtHash[]
