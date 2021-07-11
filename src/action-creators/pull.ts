@@ -99,10 +99,8 @@ const pull =
           reconcile({
             thoughtsResults: [
               {
-                contextCache: [],
                 contextIndex: thoughtsLocalContextIndexChunk,
                 thoughtIndex: thoughtsLocalThoughtIndexChunk,
-                thoughtCache: [],
               },
               thoughtsRemoteChunk,
             ],
