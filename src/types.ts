@@ -310,11 +310,6 @@ export interface Block {
   children: Block[]
 }
 
-export type ThoughtCaches = {
-  contextCache: ContextHash[]
-  thoughtCache: ThoughtHash[]
-}
-
 export interface ThoughtIndices {
   contextIndex: Index<Parent>
   thoughtIndex: Index<Lexeme>
@@ -325,7 +320,7 @@ export interface ThoughtUpdates {
   thoughtIndex: Index<Lexeme | null>
 }
 
-export type ThoughtsInterface = ThoughtIndices & ThoughtCaches
+export type ThoughtsInterface = ThoughtIndices
 
 // type to unpack a Promise
 export type Await<T> = T extends PromiseLike<infer U> ? U : T

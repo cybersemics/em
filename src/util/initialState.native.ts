@@ -174,9 +174,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   }
 
   return {
-    contextCache: [],
     contextIndex,
-    thoughtCache: [],
     thoughtIndex,
   }
 }

@@ -94,7 +94,8 @@
     "ts-key-enum": "^2.0.6",
     "use-onclickoutside": "^0.3.2",
     "uuid": "^8.3.2",
-    "xhtml-purifier": "^0.4.1"
+    "xhtml-purifier": "^0.4.1",
+    "yallist": "^4.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
@@ -128,6 +129,7 @@
     "@types/sanitize-html": "^2.3.1",
     "@types/sinonjs__fake-timers": "^6.0.2",
     "@types/uuid": "^8.3.0",
+    "@types/yallist": "^4.0.1",
     "@typescript-eslint/eslint-plugin": "^4.26.1",
     "@typescript-eslint/parser": "^4.26.1",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.2",

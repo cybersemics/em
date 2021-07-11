@@ -44,15 +44,11 @@ const pullLexemes =
     }, {})
 
     const thoughtsLocal: ThoughtsInterface = {
-      contextCache: [],
-      thoughtCache: [],
       contextIndex: {},
       thoughtIndex: localLexemesIndex,
     }
 
     const thoughtsRemote: ThoughtsInterface = {
-      contextCache: [],
-      thoughtCache: [],
       contextIndex: {},
       thoughtIndex: remoteLexemesIndex,
     }

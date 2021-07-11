@@ -3,8 +3,9 @@ import { State, PushBatch, initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import { hashContext, importHtml, logWithTime, once, mergeUpdates, reducerFlow, isRoot } from '../util'
+import fifoCache from '../util/fifoCache'
 import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS, THOUGHT_CACHE_SIZE } from '../constants'
-import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash } from '../types'
+import { Child, Context, Index, Lexeme, Parent, Path, SimplePath } from '../types'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>
@@ -22,6 +23,9 @@ export interface UpdateThoughtsOptions {
 }
 
 const rootEncoded = hashContext([HOME_TOKEN])
+
+const contextCache = fifoCache<string>(CONTEXT_CACHE_SIZE)
+const lexemeCache = fifoCache<string>(THOUGHT_CACHE_SIZE)
 
 /**
  * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants so they are never deleted from the thought cache when not present on the remote data source.
@@ -76,32 +80,17 @@ const updateThoughts = (
   // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and thoughtIndex.
   // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
   // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and thoughtIndex
-  const contextCacheAppended = [...state.thoughts.contextCache, ...Object.keys(contextIndexUpdates)] as ContextHash[]
-  const thoughtCacheAppended = [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)] as ThoughtHash[]
-  const contextCacheNumInvalid = Math.max(0, contextCacheAppended.length - CONTEXT_CACHE_SIZE)
-  const thoughtCacheNumInvalid = Math.max(0, thoughtCacheAppended.length - THOUGHT_CACHE_SIZE)
-  const contextCacheUnique = contextCacheNumInvalid === 0 ? null : (_.uniq(contextCacheAppended) as ContextHash[])
-  const thoughtCacheUnique = thoughtCacheNumInvalid === 0 ? null : (_.uniq(thoughtCacheAppended) as ThoughtHash[])
-  const contextCache =
-    contextCacheNumInvalid === 0
-      ? contextCacheAppended
-      : (contextCacheUnique!.slice(contextCacheNumInvalid) as ContextHash[])
-  const thoughtCache =
-    thoughtCacheNumInvalid === 0
-      ? thoughtCacheAppended
-      : (thoughtCacheUnique!.slice(thoughtCacheNumInvalid) as ThoughtHash[])
-  const contextCacheInvalidated =
-    contextCacheNumInvalid === 0 ? [] : (contextCacheUnique!.slice(0, contextCacheNumInvalid) as ContextHash[])
-  const thoughtCacheInvalidated =
-    thoughtCacheNumInvalid === 0 ? [] : (thoughtCacheUnique!.slice(0, thoughtCacheNumInvalid) as ThoughtHash[])
 
-  contextCacheInvalidated.forEach(key => {
+  const contextIndexInvalidated = contextCache.addMany(Object.keys(contextIndexUpdates))
+  const thoughtIndexInvalidated = lexemeCache.addMany(Object.keys(thoughtIndexUpdates))
+
+  contextIndexInvalidated.forEach(key => {
     if (!getWhitelistedThoughts().contextIndex[key]) {
       delete contextIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
 
-  thoughtCacheInvalidated.forEach(key => {
+  thoughtIndexInvalidated.forEach(key => {
     if (!getWhitelistedThoughts().thoughtIndex[key]) {
       delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
     }
@@ -156,9 +145,7 @@ const updateThoughts = (
       // only push the batch to the pushQueue if syncing at least local or remote
       ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
       thoughts: {
-        contextCache,
         contextIndex,
-        thoughtCache,
         thoughtIndex,
       },
     }),

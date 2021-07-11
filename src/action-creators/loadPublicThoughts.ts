@@ -31,11 +31,9 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
     const remoteState: State = {
       ...state,
       thoughts: {
-        contextCache: [],
         contextIndex: {
           [hashContext([HOME_TOKEN])]: parentEntry,
         },
-        thoughtCache: parentEntry.children.map(child => hashThought(child.value)),
         thoughtIndex: parentEntry.children.reduce(
           (accum, child) => ({
             ...accum,

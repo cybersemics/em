@@ -3482,6 +3482,11 @@
   resolved "https://registry.yarnpkg.com/@types/which/-/which-1.3.2.tgz#9c246fc0c93ded311c8512df2891fb41f6227fdf"
   integrity sha512-8oDqyLC7eD4HM307boe2QWKyuzdzWBj56xI/imSl2cpL+U3tCMaTAkMJ4ee5JBZ/FsOJlvRGeIShiZDAl1qERA==
 
+"@types/yallist@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@types/yallist/-/yallist-4.0.1.tgz#f10e7bdc591bf28297720d08cfeba0f018f929cf"
+  integrity sha512-G3FNJfaYtN8URU6wd6+uwFI62KO79j7n3XTYcwcFncP8gkfoi0b821GoVVt0oqKVnCqKYOMNKIGpakPoFhzAGA==
+
 "@types/yargs-parser@*":
   version "20.2.0"
   resolved "https://registry.yarnpkg.com/@types/yargs-parser/-/yargs-parser-20.2.0.tgz#dd3e6699ba3237f0348cd085e4698780204842f9"

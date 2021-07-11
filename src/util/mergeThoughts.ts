@@ -8,12 +8,10 @@ export const mergeThoughts = (...thoughtsArgs: ThoughtsInterface[]): ThoughtsInt
         {
           ...thoughtsArgs[0],
           ...thoughtsArgs[1],
-          contextCache: [...thoughtsArgs[0].contextCache, ...thoughtsArgs[1].contextCache],
           contextIndex: {
             ...thoughtsArgs[0].contextIndex,
             ...thoughtsArgs[1].contextIndex,
           },
-          thoughtCache: [...thoughtsArgs[0].thoughtCache, ...thoughtsArgs[1].thoughtCache],
           thoughtIndex: {
             ...thoughtsArgs[0].thoughtIndex,
             ...thoughtsArgs[1].thoughtIndex,

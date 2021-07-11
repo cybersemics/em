@@ -82,9 +82,7 @@ async function* getDescendantThoughts(
     const thoughtIndex = keyValueBy(thoughtIds, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
     const thoughts = {
-      contextCache: contextIds,
       contextIndex,
-      thoughtCache: thoughtIds,
       thoughtIndex,
     }
 
