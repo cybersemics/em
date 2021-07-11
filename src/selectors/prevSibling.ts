@@ -7,7 +7,7 @@ import {
   isAncestorsVisible,
   getSortPreference,
 } from '../selectors'
-import { head } from '../util'
+import { createId, head } from '../util'
 import { Child, Context, State, ThoughtContext } from '../@types'
 
 /**
@@ -48,6 +48,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   return (
     prevChild && {
       ...prevChild,
+      id: createId(),
       value: contextViewActive ? head((prevChild as ThoughtContext).context) : (prevChild as Child).value,
     }
   )

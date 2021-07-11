@@ -17,6 +17,7 @@ import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtC
 // util
 import {
   appendToPath,
+  createId,
   ellipsize,
   equalArrays,
   equalPath,
@@ -145,6 +146,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
   const newPath = appendToPath(parentOf(thoughtsTo), {
+    id: createId(),
     value: headValue(thoughtsFrom),
     rank: getRankBefore(state, thoughtsTo),
   })

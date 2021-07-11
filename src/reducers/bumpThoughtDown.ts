@@ -2,7 +2,7 @@
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
 import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
-import { appendToPath, parentOf, headValue, pathToContext, reducerFlow } from '../util'
+import { appendToPath, createId, parentOf, headValue, pathToContext, reducerFlow } from '../util'
 import { Path, SimplePath, State } from '../@types'
 
 /** Clears a thought's text, moving it to its first child. */
@@ -28,6 +28,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   // this should be fixed
   const simplePathWithNewRank: SimplePath = appendToPath(parentPath, { value, rank: getRankBefore(state, simplePath) })
   const simplePathWithNewRankAndValue: Path = appendToPath(parentPath, {
+    id: createId(),
     value: '',
     rank: getRankBefore(state, simplePath),
   })

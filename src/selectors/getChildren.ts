@@ -15,6 +15,7 @@ import {
   headValue,
   isDescendant,
   splice,
+  createId,
 } from '../util'
 import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path, State } from '../@types'
 
@@ -162,6 +163,7 @@ const isChildInCursor = (state: State, path: Path, showContexts: boolean, child:
     ...path,
     showContexts
       ? {
+          id: createId(),
           value: pathHeadValue(state, path, child, showContexts),
           rank: (child as ThoughtContext).rank,
           lastUpdated: (child as ThoughtContext).lastUpdated,
@@ -194,7 +196,7 @@ const isChildVisibleWithCursorCheck = _.curry(
 
     return (
       state.showHiddenThoughts ||
-      isChildVisible(state, context, { value, rank: child.rank }) ||
+      isChildVisible(state, context, { id: createId(), value, rank: child.rank }) ||
       isChildInCursor(state, path, showContexts, child) ||
       isDescendantOfMetaCursor(state, childContext)
     )

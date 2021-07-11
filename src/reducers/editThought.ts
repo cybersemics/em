@@ -23,6 +23,7 @@ import {
   removeContext,
   timestamp,
   unroot,
+  createId,
 } from '../util'
 
 export interface editThoughtPayload {
@@ -74,16 +75,16 @@ const editThought = (
   const pathLiveOld = (
     showContexts
       ? parentOf(parentOf(path))
-          .concat({ value: oldValue, rank: headRank(parentOf(path)) })
+          .concat({ id: createId(), value: oldValue, rank: headRank(parentOf(path)) })
           .concat(head(path))
-      : parentOf(path).concat({ value: oldValue, rank })
+      : parentOf(path).concat({ id: createId(), value: oldValue, rank })
   ) as SimplePath
   const pathLiveNew = (
     showContexts
       ? parentOf(parentOf(path))
-          .concat({ value: newValue, rank: headRank(parentOf(path)) })
+          .concat({ id: createId(), value: newValue, rank: headRank(parentOf(path)) })
           .concat(head(path))
-      : parentOf(path).concat({ value: newValue, rank })
+      : parentOf(path).concat({ id: createId(), value: newValue, rank })
   ) as SimplePath
   // find exact thought from thoughtIndex
   const exactThought = lexemeOld.contexts.find(
@@ -99,7 +100,9 @@ const editThought = (
         ? { ...head(cursor), value: newValue }
         : head(cursor),
     )
-  const newPath = path.slice(0, path.length - 1).concat({ value: newValue, rank: rankInContext || rank })
+  const newPath = path
+    .slice(0, path.length - 1)
+    .concat({ id: createId(), value: newValue, rank: rankInContext || rank })
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
@@ -177,9 +180,11 @@ const editThought = (
   const thoughtNewSubthoughts = getAllChildren(state, contextNew)
     .filter(
       child =>
-        !equalThoughtRanked(child, { value: oldValue, rank }) && !equalThoughtRanked(child, { value: newValue, rank }),
+        !equalThoughtRanked(child, { id: createId(), value: oldValue, rank }) &&
+        !equalThoughtRanked(child, { id: createId(), value: newValue, rank }),
     )
     .concat({
+      id: createId(),
       value: showContexts ? value : newValue,
       rank,
       lastUpdated: timestamp(),
@@ -202,13 +207,22 @@ const editThought = (
         .filter(
           child =>
             (newOldThought ||
-              !equalThoughtRanked(child, { value: oldValue, rank: headRank(rootedParentOf(state, pathLiveOld)) })) &&
-            !equalThoughtRanked(child, { value: newValue, rank: headRank(rootedParentOf(state, pathLiveOld)) }),
+              !equalThoughtRanked(child, {
+                id: createId(),
+                value: oldValue,
+                rank: headRank(rootedParentOf(state, pathLiveOld)),
+              })) &&
+            !equalThoughtRanked(child, {
+              id: createId(),
+              value: newValue,
+              rank: headRank(rootedParentOf(state, pathLiveOld)),
+            }),
         )
         // do not add floating thought to context
         .concat(
           lexemeOld.contexts.length > 0
             ? {
+                id: createId(),
                 value: newValue,
                 rank: headRank(rootedParentOf(state, pathLiveOld)),
                 lastUpdated: timestamp(),

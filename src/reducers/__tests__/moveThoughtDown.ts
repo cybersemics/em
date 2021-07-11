@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
+import { createId, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
@@ -11,7 +11,12 @@ import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
 
 it('move within root', () => {
-  const steps = [newThought('a'), newThought('b'), setCursor({ path: [{ value: 'a', rank: 0 }] }), moveThoughtDown]
+  const steps = [
+    newThought('a'),
+    newThought('b'),
+    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+    moveThoughtDown,
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -29,8 +34,8 @@ it('move within context', () => {
     newThought('a2'),
     setCursor({
       path: [
-        { value: 'a', rank: 0 },
-        { value: 'a1', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'a1', rank: 0 },
       ],
     }),
     moveThoughtDown,
@@ -50,12 +55,12 @@ it('move to next uncle', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     setCursor({
       path: [
-        { value: 'a', rank: 0 },
-        { value: 'a1', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'a1', rank: 0 },
       ],
     }),
     moveThoughtDown,
@@ -78,7 +83,7 @@ it('move to next uncle in sorted list', () => {
     toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
     newSubthought('a1'),
     newThought('a2'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
     setCursorFirstMatch(['a', 'a1']),
     moveThoughtDown,
   ]
@@ -122,10 +127,10 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
     moveThoughtDown,
   ]
 
@@ -158,7 +163,7 @@ it('trying to move last thought of context with no next uncle should do nothing'
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
     newSubthought('a1'),
     newSubthought('a1.1'),
     moveThoughtDown,
@@ -194,8 +199,8 @@ it('move cursor thought should update cursor', () => {
     newThought('a2'),
     setCursor({
       path: [
-        { value: 'a', rank: 0 },
-        { value: 'a1', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'a1', rank: 0 },
       ],
     }),
     moveThoughtDown,

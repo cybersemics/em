@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
+import { createId, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import newThought from '../newThought'
 
@@ -52,7 +52,12 @@ it('new subthought top', () => {
     newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     newThought('c'),
-    newThought({ value: 'd', at: [{ value: 'a', rank: 0 }], insertNewSubthought: true, insertBefore: true }),
+    newThought({
+      value: 'd',
+      at: [{ id: createId(), value: 'a', rank: 0 }],
+      insertNewSubthought: true,
+      insertBefore: true,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

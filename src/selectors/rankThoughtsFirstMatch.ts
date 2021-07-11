@@ -2,6 +2,7 @@ import { HOME_PATH, HOME_TOKEN } from '../constants'
 import {
   appendToPath,
   contextChainToPath,
+  createId,
   equalArrays,
   equalThoughtRanked,
   head,
@@ -56,6 +57,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
         : parents.find(parent =>
             contextThoughts.some((child: Child) =>
               equalThoughtRanked(child, {
+                id: createId(),
                 value,
                 rank: parent.rank,
               }),

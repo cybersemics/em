@@ -1,4 +1,4 @@
-import { initialState, reducerFlow } from '../../util'
+import { createId, initialState, reducerFlow } from '../../util'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -23,7 +23,7 @@ it('move to first child if there is no history', () => {
     newThought('a'),
     newSubthought('b'),
     newThought('c'),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
     cursorForward,
   ]
 

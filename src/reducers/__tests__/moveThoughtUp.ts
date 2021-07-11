@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
+import { createId, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
@@ -38,7 +38,7 @@ it('move to prev uncle', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     moveThoughtUp,
   ]
@@ -58,7 +58,7 @@ it('move to prev uncle in sorted list', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
     toggleAttribute({ context: ['b'], key: '=sort', value: 'Alphabetical' }),
     newSubthought('b1'),
     moveThoughtUp,
@@ -103,10 +103,10 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ path: [{ value: 'b', rank: 1 }] }),
+    setCursor({ path: [{ id: createId(), value: 'b', rank: 1 }] }),
     moveThoughtUp,
   ]
 
@@ -124,7 +124,12 @@ it('move descendants', () => {
 })
 
 it('trying to move last thought of root should do nothing', () => {
-  const steps = [newThought('a'), newThought('b'), setCursor({ path: [{ value: 'a', rank: 0 }] }), moveThoughtUp]
+  const steps = [
+    newThought('a'),
+    newThought('b'),
+    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+    moveThoughtUp,
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())

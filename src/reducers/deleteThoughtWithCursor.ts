@@ -5,14 +5,15 @@ import { Child, Path, State, ThoughtContext } from '../@types'
 // util
 import {
   appendToPath,
-  parentOf,
+  createId,
+  getTextContentFromHTML,
   head,
   headValue,
-  pathToContext,
   once,
+  parentOf,
+  pathToContext,
   reducerFlow,
   unroot,
-  getTextContentFromHTML,
 } from '../util'
 
 // selectors
@@ -111,7 +112,11 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
           ? [
               unroot(
                 showContexts
-                  ? appendToPath(parentOf(path), { value: head((next() as ThoughtContext).context), rank: next().rank })
+                  ? appendToPath(parentOf(path), {
+                      id: createId(),
+                      value: head((next() as ThoughtContext).context),
+                      rank: next().rank,
+                    })
                   : appendToPath(parentOf(path), next() as Child),
               ),
               { offset: 0 },

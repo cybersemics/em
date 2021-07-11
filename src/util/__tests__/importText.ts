@@ -6,6 +6,7 @@ import { initialState } from '../../util/initialState'
 import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, editThought, newThought } from '../../reducers'
 import { SimplePath, State } from '../../@types'
+import { createId } from '../createId'
 
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = (text: string, isHTML = true) => {
@@ -514,8 +515,8 @@ it('replace empty cursor', () => {
 
     importText({
       path: [
-        { value: 'a', rank: 0 },
-        { value: '', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: '', rank: 0 },
       ],
       text: paste,
     }),
@@ -557,8 +558,8 @@ it('replace empty cursor without affecting siblings', () => {
 
     importText({
       path: [
-        { value: 'a', rank: 0 },
-        { value: '', rank: 1 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: '', rank: 1 },
       ],
       text: paste,
     }),
@@ -585,7 +586,7 @@ it('import as subthoughts of non-empty cursor', () => {
   const stateNew = reducerFlow([
     newThought('a'),
     importText({
-      path: [{ value: 'a', rank: 0 }],
+      path: [{ id: createId(), value: 'a', rank: 0 }],
       text: paste,
     }),
   ])(initialState())
@@ -661,8 +662,8 @@ it('single-line nested html tags', () => {
 
     importText({
       path: [
-        { value: 'a', rank: 0 },
-        { value: '', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: '', rank: 0 },
       ],
       text: paste,
     }),

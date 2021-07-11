@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
 
 // TODO: Why does util have to be imported before selectors and reducers?
-import { initialState, reducerFlow } from '../../util'
+import { createId, initialState, reducerFlow } from '../../util'
 
 import { exportContext, getContexts } from '../../selectors'
 import { archiveThought, cursorUp, newSubthought, newThought, setCursor, toggleContextView } from '../../reducers'
@@ -111,7 +111,7 @@ it('permanently delete archive with descendants', () => {
   const steps = [
     newThought('a'),
     newSubthought('b'),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
     archiveThought({}),
     setCursorFirstMatch(['=archive']),
     archiveThought({}),
@@ -186,7 +186,7 @@ it('empty thought should be archived if it has descendants', () => {
     newThought(''),
     newSubthought('b'),
     setCursor({
-      path: [{ value: '', rank: 1 }],
+      path: [{ id: createId(), value: '', rank: 1 }],
     }),
     archiveThought({}),
   ]

@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { equalArrays, initialState, reducerFlow } from '../../util'
+import { createId, equalArrays, initialState, reducerFlow } from '../../util'
 import {
   exportContext,
   getContexts,
@@ -27,8 +27,8 @@ it('move within root', () => {
     newThought('a'),
     newThought('b'),
     moveThought({
-      oldPath: [{ value: 'b', rank: 1 }],
-      newPath: [{ value: 'b', rank: -1 }],
+      oldPath: [{ id: createId(), value: 'b', rank: 1 }],
+      newPath: [{ id: createId(), value: 'b', rank: -1 }],
     }),
   ]
 
@@ -61,10 +61,10 @@ it('persist id on move', () => {
   const steps2 = [
     moveThought({
       oldPath: [
-        { value: 'a', rank: 0 },
-        { value: 'a1', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'a1', rank: 0 },
       ],
-      newPath: [{ value: 'a1', rank: 1 }],
+      newPath: [{ id: createId(), value: 'a1', rank: 1 }],
     }),
   ]
 
@@ -84,12 +84,12 @@ it('move within context', () => {
     newThought('a2'),
     moveThought({
       oldPath: [
-        { value: 'a', rank: 0 },
-        { value: 'a2', rank: 1 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'a2', rank: 1 },
       ],
       newPath: [
-        { value: 'a', rank: 0 },
-        { value: 'a2', rank: -1 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'a2', rank: -1 },
       ],
     }),
   ]
@@ -116,16 +116,16 @@ it('move across contexts', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     moveThought({
       oldPath: [
-        { value: 'b', rank: 0 },
-        { value: 'b1', rank: 0 },
+        { id: createId(), value: 'b', rank: 0 },
+        { id: createId(), value: 'b1', rank: 0 },
       ],
       newPath: [
-        { value: 'a', rank: 0 },
-        { value: 'b1', rank: 1 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'b1', rank: 1 },
       ],
     }),
   ]
@@ -154,12 +154,12 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     newSubthought('b1.1'),
     moveThought({
-      oldPath: [{ value: 'b', rank: 1 }],
-      newPath: [{ value: 'b', rank: -1 }],
+      oldPath: [{ id: createId(), value: 'b', rank: 1 }],
+      newPath: [{ id: createId(), value: 'b', rank: -1 }],
     }),
   ]
 
@@ -205,12 +205,12 @@ it('moving cursor thought should update cursor', () => {
     newThought('a2'),
     moveThought({
       oldPath: [
-        { value: 'a', rank: 0 },
-        { value: 'a2', rank: 1 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'a2', rank: 1 },
       ],
       newPath: [
-        { value: 'a', rank: 0 },
-        { value: 'a2', rank: -1 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'a2', rank: -1 },
       ],
     }),
   ]
@@ -231,8 +231,8 @@ it('moving ancestor of cursor should update cursor', () => {
     newSubthought('b1'),
     newSubthought('b1.1'),
     moveThought({
-      oldPath: [{ value: 'b', rank: 1 }],
-      newPath: [{ value: 'b', rank: -1 }],
+      oldPath: [{ id: createId(), value: 'b', rank: 1 }],
+      newPath: [{ id: createId(), value: 'b', rank: -1 }],
     }),
   ]
 
@@ -252,10 +252,10 @@ it('moving unrelated thought should not update cursor', () => {
     newThought('b'),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
     moveThought({
-      oldPath: [{ value: 'b', rank: 1 }],
-      newPath: [{ value: 'b', rank: -1 }],
+      oldPath: [{ id: createId(), value: 'b', rank: 1 }],
+      newPath: [{ id: createId(), value: 'b', rank: -1 }],
     }),
   ]
 
@@ -275,10 +275,10 @@ it('move root thought into another root thought', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'a', rank: 1 }],
+      oldPath: [{ id: createId(), value: 'a', rank: 1 }],
       newPath: [
-        { value: 'x', rank: 0 },
-        { value: 'a', rank: 0 },
+        { id: createId(), value: 'x', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
       ],
     }),
   ]
@@ -325,10 +325,10 @@ it('move descendants with siblings', () => {
     importText({ text }),
     moveThought({
       oldPath: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'b', rank: 0 },
       ],
-      newPath: [{ value: 'b', rank: 1 }],
+      newPath: [{ id: createId(), value: 'b', rank: 1 }],
     }),
   ]
 
@@ -375,10 +375,10 @@ it('merge duplicate with new rank', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'm', rank: 1 }],
+      oldPath: [{ id: createId(), value: 'm', rank: 1 }],
       newPath: [
-        { value: 'a', rank: 0 },
-        { value: 'm', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'm', rank: 0 },
       ],
     }),
   ]
@@ -416,10 +416,10 @@ it('merge with duplicate with duplicate rank', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'm', rank: 1 }],
+      oldPath: [{ id: createId(), value: 'm', rank: 1 }],
       newPath: [
-        { value: 'a', rank: 0 },
-        { value: 'm', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'm', rank: 0 },
       ],
     }),
   ]
@@ -457,10 +457,10 @@ it('move with duplicate descendant', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'b', rank: 1 }],
+      oldPath: [{ id: createId(), value: 'b', rank: 1 }],
       newPath: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'b', rank: 0 },
       ],
     }),
   ]
@@ -494,10 +494,10 @@ it('move with hash matched descendant', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'b', rank: 1 }],
+      oldPath: [{ id: createId(), value: 'b', rank: 1 }],
       newPath: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'b', rank: 0 },
       ],
     }),
   ]
@@ -530,10 +530,10 @@ it('move with nested duplicate thoughts', () => {
     importText({ text }),
     moveThought({
       oldPath: [
-        { value: 'c', rank: 1 },
-        { value: 'a', rank: 0 },
+        { id: createId(), value: 'c', rank: 1 },
+        { id: createId(), value: 'a', rank: 0 },
       ],
-      newPath: [{ value: 'a', rank: 0 }],
+      newPath: [{ id: createId(), value: 'a', rank: 0 }],
     }),
   ]
 
@@ -566,10 +566,10 @@ it('move with nested duplicate thoughts and merge their children', () => {
     importText({ text }),
     moveThought({
       oldPath: [
-        { value: 'p', rank: 1 },
-        { value: 'a', rank: 0 },
+        { id: createId(), value: 'p', rank: 1 },
+        { id: createId(), value: 'a', rank: 0 },
       ],
-      newPath: [{ value: 'a', rank: 0 }],
+      newPath: [{ id: createId(), value: 'a', rank: 0 }],
     }),
   ]
 
@@ -611,12 +611,12 @@ it('data integrity test', () => {
     importText({ text }),
     moveThought({
       oldPath: [
-        { value: 'k', rank: 0 },
-        { value: 'a', rank: 0 },
+        { id: createId(), value: 'k', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
       ],
       newPath: [
-        { value: 'm', rank: 1 },
-        { value: 'a', rank: 0 },
+        { id: createId(), value: 'm', rank: 1 },
+        { id: createId(), value: 'a', rank: 0 },
       ],
     }),
   ]
@@ -643,11 +643,11 @@ it('consitent rank between thoughtIndex and contextIndex on duplicate merge', ()
     (state: State) =>
       moveThought(state, {
         oldPath: [
-          { value: 'a', rank: 0 },
-          { value: 'b', rank: 0 },
+          { id: createId(), value: 'a', rank: 0 },
+          { id: createId(), value: 'b', rank: 0 },
         ],
         // Note: Here new rank will be 0.5 because it's calculated between a (0) and b (1)
-        newPath: [{ value: 'b', rank: getRankAfter(state, [{ value: 'a', rank: 0 }] as SimplePath) }],
+        newPath: [{ id: createId(), value: 'b', rank: getRankAfter(state, [{ value: 'a', rank: 0 }] as SimplePath) }],
       }),
   ]
 
@@ -701,12 +701,12 @@ it('pending destination should be merged correctly (fetch pending before move)',
   appStore.dispatch([
     existingThoughtMoveAction({
       oldPath: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'b', rank: 0 },
       ],
       newPath: [
-        { value: 'd', rank: 1 },
-        { value: 'b', rank: 1 },
+        { id: createId(), value: 'd', rank: 1 },
+        { id: createId(), value: 'b', rank: 1 },
       ],
     }),
   ])
@@ -766,12 +766,12 @@ it('only fetch the descendants upto the possible conflicting path', async () => 
   appStore.dispatch([
     existingThoughtMoveAction({
       oldPath: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
+        { id: createId(), value: 'a', rank: 0 },
+        { id: createId(), value: 'b', rank: 0 },
       ],
       newPath: [
-        { value: 'p', rank: 1 },
-        { value: 'b', rank: 1 },
+        { id: createId(), value: 'p', rank: 1 },
+        { id: createId(), value: 'b', rank: 1 },
       ],
     }),
   ])

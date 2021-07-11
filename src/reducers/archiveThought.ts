@@ -5,6 +5,7 @@ import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@typ
 // util
 import {
   appendToPath,
+  createId,
   ellipsize,
   equalThoughtValue,
   head,
@@ -82,6 +83,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     const prevContext = contextsFiltered[removedContextIndex - 1]
     return (
       prevContext && {
+        id: createId(),
         value: head(prevContext.context),
         rank: removedContextIndex - 1,
       }
@@ -120,7 +122,11 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       ? [
           unroot(
             showContexts
-              ? appendToPath(parentOf(path), { value: head((next as ThoughtContext).context), rank: next.rank })
+              ? appendToPath(parentOf(path), {
+                  id: createId(),
+                  value: head((next as ThoughtContext).context),
+                  rank: next.rank,
+                })
               : appendToPath(parentOf(path), next as Child),
           ),
           0,

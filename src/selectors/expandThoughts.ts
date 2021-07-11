@@ -11,6 +11,7 @@ import {
 import { Child, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   appendToPath,
+  createId,
   equalArrays,
   equalThoughtRanked,
   hashContext,
@@ -171,7 +172,7 @@ function expandThoughtsRecursive(
       : visibleChildren.filter(child => {
           const value = childValue(child, showContexts)
 
-          const childNew = { ...child, value }
+          const childNew = { ...child, value, id: createId() }
           const childPath = path ? appendToPath(path, childNew) : ([childNew] as Path)
 
           const childContext = unroot(pathToContext(childPath))
@@ -214,7 +215,7 @@ function expandThoughtsRecursive(
         ...(path || []),
         (childOrContext as Child).value != null
           ? (childOrContext as Child)
-          : { ...childOrContext, value: head((childOrContext as ThoughtContext).context) },
+          : { ...childOrContext, value: head((childOrContext as ThoughtContext).context), id: createId() },
       ])
       // RECURSIVE
       // passing contextChain here creates an infinite loop

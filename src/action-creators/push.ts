@@ -5,7 +5,7 @@ import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
-import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
+import { createId, getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../@types'
 import { storage } from '../util/storage'
@@ -132,9 +132,11 @@ const pushRemote =
         accum['contextIndex/' + key] =
           children && children.length > 0
             ? {
+                id: createId(),
                 context: parentContext!.context,
                 children: dataIntegrityCheck
                   ? children.map(subthought => ({
+                      id: createId(),
                       value: subthought.value || '', // guard against NaN or undefined,
                       rank: subthought.rank || 0, // guard against NaN or undefined
                       ...(subthought.lastUpdated

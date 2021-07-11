@@ -14,6 +14,7 @@ import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
 
 // util
 import {
+  createId,
   equalArrays,
   equalThoughtRanked,
   hashContext,
@@ -89,7 +90,9 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getAllChildren(state, context).filter(child => !equalThoughtRanked(child, { value, rank }))
+  const subthoughts = getAllChildren(state, context).filter(
+    child => !equalThoughtRanked(child, { id: createId(), value, rank }),
+  )
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts: Context, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {

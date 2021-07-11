@@ -17,6 +17,7 @@ import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFi
 import { SimplePath } from '../../@types'
 import testTimer from '../../test-helpers/testTimer'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
+import { createId } from '../../util'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
@@ -175,7 +176,7 @@ it('delete thought with buffered descendants', async () => {
   store.dispatch(
     deleteThought({
       context: [HOME_TOKEN],
-      thoughtRanked: { value: 'a', rank: 1 },
+      thoughtRanked: { id: createId(), value: 'a', rank: 1 },
     }),
   )
   await fakeTimer.runAllAsync()
@@ -355,7 +356,7 @@ it('export thought with buffered descendants', async () => {
   store.dispatch(
     deleteThought({
       context: [HOME_TOKEN],
-      thoughtRanked: { value: 'a', rank: 1 },
+      thoughtRanked: { id: createId(), value: 'a', rank: 1 },
     }),
   )
 

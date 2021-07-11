@@ -4,7 +4,7 @@ import { store } from '../store'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import { hasLexeme } from '../selectors'
 import { searchContexts, searchLimit as setSearchLimit, error } from '../action-creators'
-import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, sort } from '../util'
+import { createId, escapeRegExp, formatNumber, isArchived, isDocumentEditable, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 import { Connected, Index, Lexeme, SimplePath, State } from '../@types'
@@ -106,7 +106,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
               searchRegexp.test(lexeme.value),
           )
           .map(
-            (lexeme, i) => ({ id: lexeme.id, value: lexeme.value, rank: i }),
+            (lexeme, i) => ({ id: lexeme.id || createId(), value: lexeme.value, rank: i }),
             // cannot group cases by return value because conditionals must be checked in order of precedence
             comparator,
           ),

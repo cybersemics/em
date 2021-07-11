@@ -35,6 +35,7 @@ import {
   removeDuplicatedContext,
   isDescendantPath,
   timestamp,
+  createId,
 } from '../util'
 
 type ChildUpdate = {
@@ -140,12 +141,13 @@ const moveThought = (
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const subthoughtsOld = getAllChildren(state, oldContext).filter(
-    child => !equalThoughtRanked(child, { value, rank: oldRank }),
+    child => !equalThoughtRanked(child, { id: createId(), value, rank: oldRank }),
   )
 
   const subthoughtsNew = getAllChildren(state, newContext)
     .filter(child => normalizeThought(child.value) !== normalizeThought(value))
     .concat({
+      id: createId(),
       value,
       rank: newRank,
       lastUpdated: timestamp(),

@@ -1,7 +1,7 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { equalArrays, pathToContext, timestamp } from '../../util'
+import { createId, equalArrays, pathToContext, timestamp } from '../../util'
 import { importText, setCursor, toggleAttribute } from '../../action-creators'
 import Editable from '../Editable'
 import Thought from '../Thought'
@@ -46,7 +46,7 @@ it('normal view', () => {
         - c`,
     }),
     // set the cursor to expand the subthoughts
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
   ])
 
   // update DOM
