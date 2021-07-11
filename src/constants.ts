@@ -227,8 +227,6 @@ export const REGEXP_URL =
 
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 
-export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
-
 export const REGEXP_TAGS = /(<([^>]+)>)/gi
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
@@ -241,9 +239,6 @@ export const MODIFIER_KEYS = {
   Meta: 1,
   Shift: 1,
 }
-
-export const CONTEXT_CACHE_SIZE = 10000
-export const THOUGHT_CACHE_SIZE = 10000
 
 // actions representing any cursor movements.
 // These need to be differentiated from the other actions because

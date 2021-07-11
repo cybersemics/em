@@ -2,9 +2,19 @@ import _ from 'lodash'
 import { State, PushBatch, initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
-import { hashContext, importHtml, logWithTime, once, mergeUpdates, reducerFlow, isRoot } from '../util'
+import {
+  htmlToJson,
+  hashContext,
+  importJSON,
+  isRoot,
+  logWithTime,
+  mergeUpdates,
+  once,
+  textToHtml,
+  reducerFlow,
+} from '../util'
 import fifoCache from '../util/fifoCache'
-import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS, THOUGHT_CACHE_SIZE } from '../constants'
+import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Child, Context, Index, Lexeme, Parent, Path, SimplePath } from '../types'
 
 export interface UpdateThoughtsOptions {
@@ -24,8 +34,8 @@ export interface UpdateThoughtsOptions {
 
 const rootEncoded = hashContext([HOME_TOKEN])
 
-const contextCache = fifoCache<string>(CONTEXT_CACHE_SIZE)
-const lexemeCache = fifoCache<string>(THOUGHT_CACHE_SIZE)
+const contextCache = fifoCache<string>(10000)
+const lexemeCache = fifoCache<string>(10000)
 
 /**
  * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants so they are never deleted from the thought cache when not present on the remote data source.
@@ -33,20 +43,18 @@ const lexemeCache = fifoCache<string>(THOUGHT_CACHE_SIZE)
 export const getWhitelistedThoughts = once(() => {
   const state = initialState()
 
-  const { contextIndexUpdates: contextIndex, thoughtIndexUpdates: thoughtIndex } = importHtml(
-    state,
-    [{ value: EM_TOKEN, rank: 0 }] as SimplePath,
-    INITIAL_SETTINGS,
-  )
+  const htmlSettings = textToHtml(INITIAL_SETTINGS)
+  const jsonSettings = htmlToJson(htmlSettings)
+  const settingsImported = importJSON(state, [{ value: EM_TOKEN, rank: 0 }] as SimplePath, jsonSettings)
 
   return {
     contextIndex: {
       ...state.thoughts.contextIndex,
-      ...contextIndex,
+      ...settingsImported.contextIndexUpdates,
     },
     thoughtIndex: {
       ...state.thoughts.thoughtIndex,
-      ...thoughtIndex,
+      ...settingsImported.thoughtIndexUpdates,
     },
   }
 })
@@ -85,13 +93,13 @@ const updateThoughts = (
   const thoughtIndexInvalidated = lexemeCache.addMany(Object.keys(thoughtIndexUpdates))
 
   contextIndexInvalidated.forEach(key => {
-    if (!getWhitelistedThoughts().contextIndex[key]) {
+    if (!getWhitelistedThoughts().contextIndex[key] && !state.expanded[key]) {
       delete contextIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
 
   thoughtIndexInvalidated.forEach(key => {
-    if (!getWhitelistedThoughts().thoughtIndex[key]) {
+    if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
       delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })

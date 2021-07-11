@@ -1,4 +1,4 @@
-import { convertHTMLtoJSON } from './convertHTMLtoJSON'
+import { htmlToJson } from './htmlToJson'
 import { ImportJSONOptions, importJSON } from './importJSON'
 import { State } from './initialState'
 import { SimplePath } from '../types'
@@ -10,6 +10,6 @@ import { SimplePath } from '../types'
  * @param options.skipRoot Instead of importing the root into the importCursor, skip it and import all its children.
  */
 export const importHtml = (state: State, simplePath: SimplePath, html: string, options: ImportJSONOptions = {}) => {
-  const thoughtsJSON = convertHTMLtoJSON(html)
+  const thoughtsJSON = htmlToJson(html)
   return importJSON(state, simplePath, thoughtsJSON, options)
 }

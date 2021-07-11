@@ -223,7 +223,7 @@ export const importJSON = (
   state: State,
   simplePath: SimplePath,
   blocks: Block[],
-  { lastUpdated = timestamp(), skipRoot = false }: ImportJSONOptions,
+  { lastUpdated = timestamp(), skipRoot = false }: ImportJSONOptions = {},
 ) => {
   const initialThoughtIndex: Index<Lexeme> = {}
   const initialContextIndex: Index<Parent> = {}

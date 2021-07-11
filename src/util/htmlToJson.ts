@@ -201,7 +201,7 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 }
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
-export const convertHTMLtoJSON = (html: string) => {
+export const htmlToJson = (html: string) => {
   const nodes = parse(html)
   const blocks = himalayaToBlock(removeEmptyNodesAndComments(nodes))
   return Array.isArray(blocks) ? blocks : [blocks]
