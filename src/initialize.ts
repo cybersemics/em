@@ -3,16 +3,7 @@ import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { State } from './util/initialState'
-import {
-  hashContext,
-  hashThought,
-  initEvents,
-  initFirebase,
-  owner,
-  setSelection,
-  urlDataSource,
-  initDbSubscription,
-} from './util'
+import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import { Thunk } from './types'
 import importToContext from './test-helpers/importToContext'
@@ -45,7 +36,7 @@ export const initialize = async () => {
 
   await thoughtsLocalPromise
 
-  initDbSubscription(getSubscriptionUtils(store))
+  db.initDbSubscription(getSubscriptionUtils(store))
 
   return {
     thoughtsLocalPromise,
