@@ -1,11 +1,9 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
-// import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { logout, showModal } from '../action-creators'
-// import { getSetting, isTutorial } from '../selectors'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
-// import { State } from '../util/initialState'
+
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { Text } from './Text.native'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
@@ -14,13 +12,6 @@ import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 const Footer = () => {
   const dispatch = useDispatch()
   const { authenticated, user, status, pushQueueLength } = useFooterUseSelectors()
-  // const authenticated = useSelector((state: State) => state.authenticated)
-  // const user = useSelector((state: State) => state.user)
-  // const status = useSelector((state: State) => state.status)
-  // // const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 1))
-  // // const isPushing = useSelector((state: State) => state.isPushing)
-  // // const isTutorialOn = useSelector(isTutorial)
-  // const pushQueueLength = useSelector((state: State) => state.pushQueue.length)
 
   // if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
