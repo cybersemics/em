@@ -1,4 +1,4 @@
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 import { storage } from '../util/storage'
 
 /** Closes a modal permanently. */

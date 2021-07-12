@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { State } from '../types'
+import { State } from '../@types'
 
 /** Closes a modal permanently. */
 const modalComplete = (state: State, { id }: { id: string }) => ({

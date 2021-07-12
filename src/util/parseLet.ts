@@ -1,6 +1,6 @@
 import { getAllChildren } from '../selectors'
 import { unroot } from '../util'
-import { Context, Index, LazyEnv, State } from '../types'
+import { Context, Index, LazyEnv, State } from '../@types'
 
 /** Parses all of the children of a context's =let into a LazyEnv. */
 export const parseLet = (state: State, context: Context): LazyEnv => {

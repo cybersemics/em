@@ -1,5 +1,5 @@
 import React from 'react'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import { isDocumentEditable } from '../util'
 import { indent } from '../action-creators'
 import moveCursorForward from './moveCursorForward'

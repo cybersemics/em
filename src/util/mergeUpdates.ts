@@ -1,4 +1,4 @@
-import { Index } from '../types'
+import { Index } from '../@types'
 
 /** Merge two objects together, deleting falsey values. Does not overwrite non-pending objects with pending objects.
  *

@@ -14,7 +14,7 @@ import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import { DataProvider } from '../../data-providers/DataProvider'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { SimplePath } from '../../types'
+import { SimplePath } from '../../@types'
 import testTimer from '../../test-helpers/testTimer'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 

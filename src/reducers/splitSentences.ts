@@ -11,7 +11,7 @@ import {
 } from '../util'
 import { editableRender, editingValue, editThought, newThought, setCursor } from '../reducers'
 import { rootedParentOf, simplifyPath } from '../selectors'
-import { State } from '../types'
+import { State } from '../@types'
 
 /** Split thought by sentences. Create new thought for each sentence. Thought value, on which cursor is on, replace with first sentence. */
 const splitSentences = (state: State) => {

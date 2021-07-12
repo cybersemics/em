@@ -1,4 +1,4 @@
-import { Context, Index, Lexeme } from '../types'
+import { Context, Index, Lexeme } from '../@types'
 import { hashContext } from '.'
 
 /**

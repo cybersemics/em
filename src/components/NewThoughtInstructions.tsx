@@ -6,7 +6,7 @@ import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import { getSetting } from '../selectors'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
-import { GesturePath, State } from '../types'
+import { GesturePath, State } from '../@types'
 
 interface NewThoughtInstructionsProps {
   childrenLength: number

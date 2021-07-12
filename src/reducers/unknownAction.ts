@@ -1,5 +1,5 @@
 import { Action } from 'redux'
-import { State } from '../types'
+import { State } from '../@types'
 
 /** Handles an unknown action by printing an error if it is not a @@ Redux action. Returns state as-is. */
 const unknownAction = (state: State, action: Action) => {

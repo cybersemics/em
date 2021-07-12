@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import { toggleAbsoluteContext } from '../action-creators'
 import { isAbsolute } from '../util'
-import { State } from '../types'
+import { State } from '../@types'
 
 /**
  * Quick Add Button.

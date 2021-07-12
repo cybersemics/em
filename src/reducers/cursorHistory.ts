@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { MAX_CURSOR_HISTORY } from '../constants'
-import { Path, State } from '../types'
+import { Path, State } from '../@types'
 
 /** Updates the cursor history for navigating forward/backward. */
 const cursorHistory = (state: State, { cursor }: { cursor: Path }) => ({

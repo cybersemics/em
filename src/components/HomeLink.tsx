@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../selectors'
 import { home, modalComplete } from '../action-creators'
-import { Connected, State } from '../types'
+import { Connected, State } from '../@types'
 import Modal from './Modal'
 import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
 

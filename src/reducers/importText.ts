@@ -17,7 +17,7 @@ import {
 } from '../util'
 import { editThought, setCursor, updateThoughts } from '../reducers'
 import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
-import { Path, SimplePath, State, Timestamp } from '../types'
+import { Path, SimplePath, State, Timestamp } from '../@types'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'

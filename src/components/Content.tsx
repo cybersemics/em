@@ -18,7 +18,7 @@ import Search from './Search'
 import Subthoughts from './Subthoughts'
 import { childrenFilterPredicate } from '../selectors/getChildren'
 import Editable from './Editable'
-import { SimplePath, State } from '../types'
+import { SimplePath, State } from '../@types'
 import { storage } from '../util/storage'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'

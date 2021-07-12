@@ -1,4 +1,4 @@
-import { Context, State } from '../types'
+import { Context, State } from '../@types'
 import { equalThoughtValue, unroot } from '../util'
 import { getAllChildren } from '../selectors'
 

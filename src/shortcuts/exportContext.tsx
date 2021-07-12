@@ -2,7 +2,7 @@ import React from 'react'
 import { showModal } from '../action-creators'
 import { getAllChildren } from '../selectors'
 import { HOME_TOKEN } from '../constants'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

@@ -4,7 +4,7 @@ import { ID } from '../constants'
 
 // util
 import { escapeSelector } from './escapeSelector'
-import { Context, ContextHash } from '../types'
+import { Context, ContextHash } from '../@types'
 import { normalizeThought } from './normalizeThought'
 
 const SEPARATOR_TOKEN = '__SEP__'

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Index, Path, State, Timestamp } from '../types'
+import { Index, Path, State, Timestamp } from '../@types'
 
 interface Options {
   contextViews?: any

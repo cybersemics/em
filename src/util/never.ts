@@ -1,4 +1,4 @@
-import { Timestamp } from '../types'
+import { Timestamp } from '../@types'
 
 /** Returns a timestamp that is older than all other timestamps. */
 export const never = () => '' as Timestamp

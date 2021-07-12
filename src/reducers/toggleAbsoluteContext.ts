@@ -1,6 +1,6 @@
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../constants'
 import { isHome, timestamp } from '../util'
-import { State } from '../types'
+import { State } from '../@types'
 
 /** Toggles starting context. */
 const toggleAbsoluteContext = (state: State): State => ({

@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { deleteThought, createThought, setFirstSubthought } from '../reducers'
 import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head, reducerFlow, unroot } from '../util'
-import { Context, State } from '../types'
+import { Context, State } from '../@types'
 
 /** Toggles the given attribute. */
 const toggleAttribute = (state: State, { context, key, value }: { context: Context; key: string; value: string }) => {

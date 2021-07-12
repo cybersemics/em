@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { Text as RNText, TextStyle } from 'react-native'
 import { useSelector } from 'react-redux'
-import { State } from '../types'
+import { State } from '../@types'
 
 /** Custom text component. */
 export const Text: FC<React.ComponentProps<typeof RNText>> = ({ style = {}, ...props }) => {

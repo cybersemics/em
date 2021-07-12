@@ -15,7 +15,7 @@ import Footer from './Footer'
 import { Text } from './Text.native'
 import { useDimensions } from '@react-native-community/hooks'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { State } from '../types'
+import { State } from '../@types'
 
 /**
  * AppComponent container.

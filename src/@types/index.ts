@@ -2,8 +2,8 @@ import { GetOperation } from 'fast-json-patch'
 import { ReactNode } from 'react'
 import { AnyAction } from 'redux'
 import { GestureResponderEvent } from 'react-native'
-import { DROP_TARGET } from './constants'
-import { editThoughtPayload } from './reducers/editThought'
+import { DROP_TARGET } from '../constants'
+import { editThoughtPayload } from '../reducers/editThought'
 
 /********************************
  * Global

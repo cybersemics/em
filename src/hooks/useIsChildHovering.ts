@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux'
-import { Context, State } from '../types'
+import { Context, State } from '../@types'
 import { pathToContext } from '../util'
 
 /**

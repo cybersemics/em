@@ -1,6 +1,6 @@
 import appendChildPath from '../appendChildPath'
 import { initialState, reducerFlow, pathToContext } from '../../util'
-import { Path, SimplePath } from '../../types'
+import { Path, SimplePath } from '../../@types'
 import { toggleContextView, setCursor } from '../../reducers'
 
 it('get child resolved path', () => {

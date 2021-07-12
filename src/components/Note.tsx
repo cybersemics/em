@@ -6,7 +6,7 @@ import { attribute, getParent, hasChild, isContextViewActive } from '../selector
 import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
-import { Context } from '../types'
+import { Context } from '../@types'
 
 interface NoteProps {
   context: Context

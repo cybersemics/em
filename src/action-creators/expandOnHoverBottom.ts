@@ -2,7 +2,7 @@ import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
 import { hashContext, pathToContext } from '../util'
 import { getChildren } from '../selectors'
 import { clearExpandBottom, expandBottom } from '.'
-import { Path, Thunk, Timer } from '../types'
+import { Path, Thunk, Timer } from '../@types'
 
 // eslint-disable-next-line prefer-const
 let expandBottomTimer: Timer | null = null

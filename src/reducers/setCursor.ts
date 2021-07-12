@@ -10,7 +10,7 @@ import {
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { equalPath, equalThoughtRanked, hashContext, headValue, isDescendant, pathToContext } from '../util'
 import { settings } from '../reducers'
-import { Index, Path, SimplePath, State, TutorialChoice } from '../types'
+import { Index, Path, SimplePath, State, TutorialChoice } from '../@types'
 import globals from '../globals'
 
 /**

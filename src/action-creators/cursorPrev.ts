@@ -2,7 +2,7 @@ import { HOME_TOKEN } from '../constants'
 import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
 import { getThoughtBefore, simplifyPath, getChildrenSorted, attributeEquals } from '../selectors'
 import { parentOf, pathToContext } from '../util'
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 
 /** Moves the cursor to the previous sibling, ignoring descendants. */
 const cursorPrev = (): Thunk => (dispatch, getState) => {

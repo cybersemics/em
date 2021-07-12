@@ -12,7 +12,7 @@ import {
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { SimplePath, Thunk } from '../../types'
+import { SimplePath, Thunk } from '../../@types'
 import { store } from '../../store'
 import { findThoughtByText } from '../../test-helpers/queries'
 import { findAllByPlaceholderText } from '@testing-library/react'

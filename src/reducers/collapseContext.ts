@@ -3,7 +3,7 @@ import { getAllChildren, getChildren, getRankBefore, isChildVisible, rootedParen
 import { archiveThought, moveThought, setCursor } from '../reducers'
 import _ from 'lodash'
 import deleteThought from './deleteThought'
-import { Path, State } from '../types'
+import { Path, State } from '../@types'
 
 interface Options {
   deleteCursor?: boolean

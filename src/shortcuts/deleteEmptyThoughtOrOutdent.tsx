@@ -15,7 +15,7 @@ import {
 import { HOME_PATH } from '../constants'
 import { isTouch } from '../browser'
 import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
-import { Icon as IconType, Shortcut, State, Thunk } from '../types'
+import { Icon as IconType, Shortcut, State, Thunk } from '../@types'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = (state: State) => {

@@ -8,7 +8,7 @@ import { Provider } from 'react-redux'
 import { store } from '../store'
 import * as db from '../data-providers/dexie'
 import { clear } from '../action-creators'
-import { Await } from '../types'
+import { Await } from '../@types'
 
 // components
 import AppComponent from '../components/AppComponent'

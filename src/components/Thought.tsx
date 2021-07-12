@@ -7,7 +7,7 @@ import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
-import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../types'
+import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // components
 import Bullet from './Bullet'

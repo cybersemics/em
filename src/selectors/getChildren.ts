@@ -16,7 +16,7 @@ import {
   isDescendant,
   splice,
 } from '../util'
-import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path, State } from '../types'
+import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path, State } from '../@types'
 
 // use global instance of empty array so object reference doesn't change
 const noChildren: Child[] = []

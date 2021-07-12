@@ -9,7 +9,7 @@ import HomeLink from './HomeLink'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
 import FeedbackButton from './FeedbackButton'
-import { Path, State } from '../types'
+import { Path, State } from '../@types'
 
 // avoid changing object reference
 const navBreadcrumbsClass = {

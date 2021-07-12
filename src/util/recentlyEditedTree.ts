@@ -12,7 +12,7 @@ import {
   isFunction,
 } from '../util'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
-import { Context, Index, Path, Timestamp } from '../types'
+import { Context, Index, Path, Timestamp } from '../@types'
 import { isEM } from './isEM'
 
 export interface Leaf {

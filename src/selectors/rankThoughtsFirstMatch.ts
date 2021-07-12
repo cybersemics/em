@@ -17,7 +17,7 @@ import {
   isContextViewActive,
   splitChain,
 } from '../selectors'
-import { Child, Context, Path, State } from '../types'
+import { Child, Context, Path, State } from '../@types'
 import getRootPath from './getRootPath'
 
 /** Ranks the thoughts from their rank in their context. */

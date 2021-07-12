@@ -21,7 +21,7 @@ import {
   SortDirection,
   State,
   ThoughtContext,
-} from '../types'
+} from '../@types'
 
 // util
 import {

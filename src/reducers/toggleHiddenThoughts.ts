@@ -1,4 +1,4 @@
-import { State } from '../types'
+import { State } from '../@types'
 
 /** Shows or hides all hidden and metaprogramming thoughts. */
 const toggleHiddenThoughts = (state: State) => ({

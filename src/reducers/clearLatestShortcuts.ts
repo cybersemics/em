@@ -1,4 +1,4 @@
-import { State } from '../types'
+import { State } from '../@types'
 
 /**
  * Clear all the latest shortcuts to show on the screen.

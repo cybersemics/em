@@ -1,5 +1,5 @@
 import { clearLatestShortcuts, addLatestShortcuts } from '.'
-import { Shortcut, Thunk, Timer } from '../types'
+import { Shortcut, Thunk, Timer } from '../@types'
 import { LATEST_SHORTCUT_DIAGRAM_DURATION, LATEST_SHORTCUT_LIMIT } from '../constants'
 
 interface Options {

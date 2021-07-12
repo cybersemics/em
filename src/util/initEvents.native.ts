@@ -5,7 +5,7 @@ import * as db from '../data-providers/dexie'
 import { clearSelection, isRoot, pathToContext } from '.'
 import { decodeThoughtsUrl, pathExists } from '../selectors'
 import { /* alert */ error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { Path, State } from '../types'
+import { Path, State } from '../@types'
 import { equalPath } from './equalPath'
 // import lifecycle from 'page-lifecycle'
 

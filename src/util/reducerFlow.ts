@@ -1,4 +1,4 @@
-import { State } from '../types'
+import { State } from '../@types'
 
 type UnaryReducer<S> = (state: S) => S | null
 

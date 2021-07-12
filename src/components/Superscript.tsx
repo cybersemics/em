@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
-import { Child, Context, Index, SimplePath, State } from '../types'
+import { Child, Context, Index, SimplePath, State } from '../@types'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>

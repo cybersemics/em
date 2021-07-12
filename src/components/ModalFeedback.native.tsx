@@ -17,7 +17,7 @@ import {
 import Modal from './Modal'
 import { ActionButton } from './ActionButton'
 import { Text } from './Text.native'
-import { State } from '../types'
+import { State } from '../@types'
 
 const FEEDBACK_MIN_LENGTH = 10
 

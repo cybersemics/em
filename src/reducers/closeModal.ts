@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { modalCleanup } from '../util'
-import { State } from '../types'
+import { State } from '../@types'
 
 /**
  * Closes a modal temporarily.

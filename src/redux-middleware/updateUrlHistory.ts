@@ -4,7 +4,7 @@ import { HOME_PATH, HOME_TOKEN } from '../constants'
 import { equalArrays, hashContext, pathToContext } from '../util'
 import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 import { deleteCursor, updateCursor } from '../data-providers/dexie'
-import { Index, State } from '../types'
+import { Index, State } from '../@types'
 
 /** Delay with which to debounce browser history update. */
 const delay = 100

@@ -2,7 +2,7 @@
 
 import Emitter from 'emitter20'
 import { keyValueBy } from './util/keyValueBy'
-import { Index, Shortcut } from './types'
+import { Index, Shortcut } from './@types'
 
 import * as shortcutObject from './shortcuts/index'
 export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]

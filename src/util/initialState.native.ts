@@ -16,7 +16,7 @@ import {
   ThoughtsInterface,
   User,
   Shortcut,
-} from '../types'
+} from '../@types'
 import { editThoughtPayload } from '../reducers/editThought'
 
 interface ModalProperties {

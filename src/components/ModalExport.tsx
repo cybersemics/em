@@ -27,7 +27,7 @@ import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
-import { Child, ExportOption, State } from '../types'
+import { Child, ExportOption, State } from '../@types'
 
 interface AdvancedSetting {
   id: string

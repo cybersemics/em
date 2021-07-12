@@ -7,7 +7,7 @@ import { makeCompareByProp, sort } from '../util'
 import { closeModal, toggleShortcutsDiagram, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
 import { getSetting } from '../selectors'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
-import { Connected, GesturePath, Shortcut, State } from '../types'
+import { Connected, GesturePath, Shortcut, State } from '../@types'
 
 // components
 import GestureDiagram from './GestureDiagram'

@@ -22,7 +22,7 @@ import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
-import { Connected, Context, Path, SimplePath, TutorialChoice } from '../types'
+import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
 
 // constants
 import {

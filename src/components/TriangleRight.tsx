@@ -1,5 +1,5 @@
 import React from 'react'
-import { Icon } from '../types'
+import { Icon } from '../@types'
 
 /** A right-facing triangle component. */
 const TriangleRight = ({ fill = 'black', size = 20, width, height }: Icon) => (

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { HOME_PATH } from '../constants'
-import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../types'
+import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {

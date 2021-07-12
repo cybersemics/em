@@ -2,7 +2,7 @@ import { expandHoverTop } from '../action-creators'
 import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
 import { visibleDistanceAboveCursor } from '../selectors'
 import { equalPath, isDescendantPath, parentOf } from '../util'
-import { Path, Thunk, Timer, State } from '../types'
+import { Path, Thunk, Timer, State } from '../@types'
 
 /**
  * Checks if the current hovering thought's parent should expand it's context.

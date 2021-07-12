@@ -2,7 +2,7 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../
 import globals from '../globals'
 import { canShowModal } from '../selectors'
 import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
-import { State, Timestamp, ThoughtsInterface } from '../types'
+import { State, Timestamp, ThoughtsInterface } from '../@types'
 import { storage } from './storage'
 
 /** Safely gets a value from localStorage if it is in the environment. */

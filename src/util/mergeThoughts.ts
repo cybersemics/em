@@ -1,4 +1,4 @@
-import { ThoughtsInterface } from '../types'
+import { ThoughtsInterface } from '../@types'
 
 /** Merges multiple thought interfaces, preserving extraneous keys. */
 export const mergeThoughts = (...thoughtsArgs: ThoughtsInterface[]): ThoughtsInterface =>

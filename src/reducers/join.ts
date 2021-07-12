@@ -4,7 +4,7 @@ import { getAllChildren, getChildPath, getNextRank, simplifyPath } from '../sele
 import { head, parentOf, pathToContext, reducerFlow } from '../util'
 import moveThought from './moveThought'
 import deleteThought from './deleteThought'
-import { SimplePath, State } from '../types'
+import { SimplePath, State } from '../@types'
 
 /** Join two or more thoughts split by spaces. */
 const join = (state: State) => {

@@ -1,6 +1,6 @@
 import globals from '../globals'
 import { setCursor } from '../action-creators'
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 
 let timer: ReturnType<typeof setTimeout> // eslint-disable-line fp/no-let
 

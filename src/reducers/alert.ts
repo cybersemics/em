@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { State } from '../types'
+import { State } from '../@types'
 
 interface Options {
   alertType?: string

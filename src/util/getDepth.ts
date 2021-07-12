@@ -1,6 +1,6 @@
 import { getAllChildren } from '../selectors'
 import { unroot } from './unroot'
-import { Context, State } from '../types'
+import { Context, State } from '../@types'
 
 /** Get max depth of a visible context. */
 export const getDepth = (state: State, context: Context): number => {

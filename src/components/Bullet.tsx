@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
 import { head } from '../util'
-import { Context, State } from '../types'
+import { Context, State } from '../@types'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥

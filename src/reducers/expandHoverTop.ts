@@ -1,4 +1,4 @@
-import { Path, State } from '../types'
+import { Path, State } from '../@types'
 
 interface Options {
   path?: Path | null

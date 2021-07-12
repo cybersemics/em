@@ -9,7 +9,7 @@ import {
 } from '../action-creators'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
-import { Snapshot, State, User } from '../types'
+import { Snapshot, State, User } from '../@types'
 import initAlgoliaSearch from '../search/algoliaSearch'
 
 /** Initialize firebase and event handlers. */

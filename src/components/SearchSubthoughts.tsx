@@ -7,7 +7,7 @@ import { searchContexts, searchLimit as setSearchLimit, error } from '../action-
 import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
-import { Connected, Index, Lexeme, SimplePath, State } from '../types'
+import { Connected, Index, Lexeme, SimplePath, State } from '../@types'
 import { getRemoteSearch } from '../search/algoliaSearch'
 import * as searchLocal from '../search/localSearch'
 import getFirebaseProvider from '../data-providers/firebase'

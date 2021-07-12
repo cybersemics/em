@@ -1,4 +1,4 @@
-import { Index } from '../types'
+import { Index } from '../@types'
 
 type KeyValueGenerator<K, V, R> = (key: K, value: V, accum: Index<R>) => Index<R> | null
 

@@ -8,7 +8,7 @@ import {
   isContextViewActive,
   simplifyPath,
 } from '../selectors'
-import { Child, Context, Index, Path, State, ThoughtContext } from '../types'
+import { Child, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   equalArrays,
   equalThoughtRanked,

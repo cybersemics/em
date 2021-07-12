@@ -1,6 +1,6 @@
 import { getUserRef } from '../util'
 import { authenticate, error, status } from '../action-creators'
-import { Thunk, User } from '../types'
+import { Thunk, User } from '../@types'
 import { storage } from '../util/storage'
 
 /** Updates local state with newly authenticated user. */

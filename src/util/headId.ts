@@ -1,4 +1,4 @@
-import { Path } from '../types'
+import { Path } from '../@types'
 import { head } from '../util'
 
 /** Returns the uuid of the last thought in a path. */

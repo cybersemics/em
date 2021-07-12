@@ -5,7 +5,7 @@ import { alert, splitSentences } from '../action-creators'
 import { Action } from 'redux'
 import { getAllChildren, isContextViewActive } from '../selectors'
 import { HOME_TOKEN } from '../constants'
-import { Thunk, Icon as IconType, Shortcut } from '../types'
+import { Thunk, Icon as IconType, Shortcut } from '../@types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

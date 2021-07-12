@@ -8,7 +8,7 @@ import { alert, suppressExpansion, showLatestShortcuts, toggleTopControlsAndBrea
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
 import { keyValueBy } from './util/keyValueBy'
 import { GestureResponderEvent } from 'react-native'
-import { Direction, GesturePath, Index, Key, Shortcut, State } from './types'
+import { Direction, GesturePath, Index, Key, Shortcut, State } from './@types'
 
 import * as shortcutObject from './shortcuts/index'
 export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]

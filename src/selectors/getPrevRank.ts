@@ -1,6 +1,6 @@
 import { getChildrenRanked } from '../selectors'
 import { isFunction } from '../util'
-import { Context, State } from '../types'
+import { Context, State } from '../@types'
 
 /** Gets a rank that comes before all visible thoughts in a context. */
 // TODO: Take context not path

@@ -1,4 +1,4 @@
-import { Shortcut } from '../types'
+import { Shortcut } from '../@types'
 import { extractThought as extract } from '../action-creators'
 
 const extractThought: Shortcut = {

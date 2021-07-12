@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
-import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, State, Timestamp, ThoughtIndices } from '../types'
+import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, State, Timestamp, ThoughtIndices } from '../@types'
 
 // util
 import {

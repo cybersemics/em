@@ -1,5 +1,5 @@
 import { alert, moveThought } from '../reducers'
-import { SimplePath, State } from '../types'
+import { SimplePath, State } from '../@types'
 import { parentOf, ellipsize, head, headRank, headValue, pathToContext } from '../util'
 import {
   getPrevRank,

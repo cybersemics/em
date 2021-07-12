@@ -2,7 +2,7 @@ import React from 'react'
 import { attributeEquals, simplifyPath } from '../selectors'
 import { isDocumentEditable, pathToContext } from '../util'
 import { toggleAttribute } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import { HOME_PATH } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

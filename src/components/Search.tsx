@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import _ from 'lodash'
 import { store } from '../store'
 import { selectNextEditable, strip } from '../util'
-import { Connected } from '../types'
+import { Connected } from '../@types'
 import { search, setCursor } from '../action-creators'
 
 // components

@@ -19,7 +19,7 @@ import { alert, error, closeModal } from '../action-creators'
 import { exportContext, getAllChildren, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
-import { Child, ExportOption, State } from '../types'
+import { Child, ExportOption, State } from '../@types'
 import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
 import RNPickerSelect from 'react-native-picker-select'
 import { FontAwesome5 } from '@expo/vector-icons'

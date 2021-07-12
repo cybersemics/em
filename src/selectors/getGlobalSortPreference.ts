@@ -1,5 +1,5 @@
 import { getSetting } from '../selectors'
-import { SortPreference, State } from '../types'
+import { SortPreference, State } from '../@types'
 import { parseSortDirection } from '../util'
 
 /**

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import { cursorForward, scrollCursorIntoView } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

@@ -29,7 +29,7 @@ import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import { storage } from '../util/storage'
-import { State } from '../types'
+import { State } from '../@types'
 
 const Content = React.lazy(() => import('./Content'))
 

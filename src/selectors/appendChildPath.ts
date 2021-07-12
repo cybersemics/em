@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { SimplePath, Path, State } from '../types'
+import { SimplePath, Path, State } from '../@types'
 import { parentOf, head, pathToContext, unroot } from '../util'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import isContextViewActive from './isContextViewActive'

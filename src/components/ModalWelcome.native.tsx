@@ -10,7 +10,7 @@ import { getAllChildren } from '../selectors'
 import { storage } from '../util/storage'
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from './Text.native'
-import { State } from '../types'
+import { State } from '../@types'
 
 const isLocalNetwork = Boolean(__DEV__)
 

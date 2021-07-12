@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Thunk, Path, ThoughtContext } from '../types'
+import { Thunk, Path, ThoughtContext } from '../@types'
 
 // util
 import {

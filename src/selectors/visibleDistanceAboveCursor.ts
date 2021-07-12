@@ -1,7 +1,7 @@
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { pathToContext } from '../util'
 import { getChildren } from './getChildren'
-import { State } from '../types'
+import { State } from '../@types'
 
 /**
  * Distance between the first visible thought nearest to the root and the cursor.

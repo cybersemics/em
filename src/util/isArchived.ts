@@ -1,4 +1,4 @@
-import { Lexeme } from '../types'
+import { Lexeme } from '../@types'
 
 /** Determines whether an indexed thought is archived or not. */
 export const isArchived = (indexedThought: Lexeme) =>

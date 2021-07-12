@@ -1,6 +1,6 @@
 import { isDocumentEditable } from '../util'
 import { newGrandChild } from '../action-creators'
-import { Shortcut } from '../types'
+import { Shortcut } from '../@types'
 
 const newGrandChildShortcut: Shortcut = {
   id: 'newGrandChild',

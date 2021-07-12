@@ -1,4 +1,4 @@
-import { SortDirection } from '../types'
+import { SortDirection } from '../@types'
 
 /** Parse given sort direction string. */
 export const parseSortDirection = (sortDirectionString: string): SortDirection => {

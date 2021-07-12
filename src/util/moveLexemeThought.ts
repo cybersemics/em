@@ -1,4 +1,4 @@
-import { Context, Lexeme, Timestamp } from '../types'
+import { Context, Lexeme, Timestamp } from '../@types'
 import { concatOne, equalArrays, timestamp } from '../util'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. Changed rank). Removes duplicates with the same { value, rank }. */

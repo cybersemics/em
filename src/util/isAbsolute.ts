@@ -1,5 +1,5 @@
 import { ABSOLUTE_TOKEN } from '../constants'
-import { Child, ThoughtContext } from '../types'
+import { Child, ThoughtContext } from '../@types'
 
 /** Returns true if the thoughts or path is the absolute context. */
 export const isAbsolute = (thoughts: (string | Child | ThoughtContext)[]): boolean => {

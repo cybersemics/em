@@ -7,7 +7,7 @@ import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
-import { Thunk, Index, Lexeme, Parent } from '../types'
+import { Thunk, Index, Lexeme, Parent } from '../@types'
 import { storage } from '../util/storage'
 
 // store the hashes of the localStorage Settings contexts for quick lookup

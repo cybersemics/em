@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { getChildrenRanked } from '../selectors'
 import { moveThought } from '../reducers'
 import { pathToContext, reducerFlow, unroot } from '../util'
-import { SimplePath, State } from '../types'
+import { SimplePath, State } from '../@types'
 
 /** Recalculate absolute ranks while preserving relative order to avoid rank precision errors. */
 const rerank = (state: State, simplePath: SimplePath): State => {

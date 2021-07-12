@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
 import { getLexeme, getAllChildren, getChildrenRanked, isPending, rootedParentOf } from '../selectors'
 import updateThoughts from './updateThoughts'
-import { Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../types'
+import { Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
 
 // util
 import {

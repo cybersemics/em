@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { Element, HimalayaNode, parse, Text } from 'himalaya'
-import { Block } from '../types'
+import { Block } from '../@types'
 import stripStyleAttribute from './stripStyleAttribute'
 
 /** Retrieve attribute from Element node by key. */

@@ -1,6 +1,6 @@
 import { lastThoughtsFromContextChain, splitChain } from '../selectors'
 import { isRoot } from '../util'
-import { Path, SimplePath, State } from '../types'
+import { Path, SimplePath, State } from '../@types'
 
 /** Infers the path from a path that may cross one or more context views. */
 const simplifyPath = (state: State, path: Path) => {

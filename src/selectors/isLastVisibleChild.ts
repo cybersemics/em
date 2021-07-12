@@ -1,6 +1,6 @@
 import { getChildrenSorted } from '../selectors'
 import { parentOf, equalThoughtRanked, head, pathToContext } from '../util'
-import { SimplePath, State } from '../types'
+import { SimplePath, State } from '../@types'
 
 /**
  * Finds if a thought is the last visible child in its context.
