@@ -61,9 +61,9 @@ const AppComponent: React.FC = () => {
                   .fill(1)
                   .map((_, index) => {
                     return (
-                      <>
-                        <Text style={styles.text}>hello World - em thoughts {index}</Text>
-                      </>
+                      <Text key={index} style={styles.text}>
+                        hello World - em thoughts {index}
+                      </Text>
                     )
                   })}
               </ScrollView>
