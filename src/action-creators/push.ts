@@ -133,6 +133,7 @@ const pushRemote =
           children && children.length > 0
             ? {
                 id: createId(),
+                value: parentContext!.value,
                 context: parentContext!.context,
                 children: dataIntegrityCheck
                   ? children.map(subthought => ({

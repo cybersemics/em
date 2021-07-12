@@ -26,10 +26,9 @@ const noChildren: Child[] = []
 type GetThoughts = (state: State, context: Context) => Child[]
 
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-export const isChildVisible = _.curry(
-  (state: State, context: Context, child: Child) =>
-    !isFunction(child.value) && !hasChild(state, unroot([...context, child.value]), '=hidden'),
-)
+export const isChildVisible = _.curry((state: State, context: Context, child: Child) => {
+  return !isFunction(child.value) && !hasChild(state, unroot([...context, child.value]), '=hidden')
+})
 
 /** Gets a Parent from the contextIndex. */
 export const getParent = ({ thoughts: { contextIndex } }: State, context: Context): Parent | null =>

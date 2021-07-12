@@ -72,6 +72,7 @@ const insertThought = (
   const parentNew: Parent = {
     // TODO: merging parentOld results in pending: true when importing into initialState. Is that correct?
     id: hashContext(rootContext),
+    value: head(rootContext),
     context: rootContext,
     children: [
       ...parentOld.children,
@@ -240,7 +241,6 @@ export const importJSON = (
     if (lexeme) {
       initialThoughtIndex[hashThought('')] = removeContext(lexeme, context, headRank(simplePath))
       initialContextIndex[contextEncoded] = {
-        id: contextEncoded,
         ...initialContextIndex[contextEncoded],
         context: rootedContext,
         children: getAllChildren(state, rootedContext).filter(child => !equalThoughtRanked(child, destThought)),

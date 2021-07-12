@@ -1,4 +1,4 @@
-import { initialState, reducerFlow } from '../../util'
+import { createId, initialState, reducerFlow } from '../../util'
 import { cursorDown, deleteThoughtWithCursor, moveThought, newThought, rerank } from '../../reducers'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
@@ -42,7 +42,10 @@ it('rerank on moveThought if rnaks are too close', () => {
     newThought({ value: 'b', insertBefore: true }),
 
     // move any thought to trigger a rerank
-    moveThought({ oldPath: [{ value: 'a', rank: 0 }], newPath: [{ value: 'a', rank: 99 }] }),
+    moveThought({
+      oldPath: [{ id: createId(), value: 'a', rank: 0 }],
+      newPath: [{ id: createId(), value: 'a', rank: 99 }],
+    }),
   ]
 
   const state = reducerFlow(steps)(initialState())

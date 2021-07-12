@@ -30,7 +30,7 @@ class EM extends Dexie {
     }
 
     this.version(1).stores({
-      contextIndex: 'id, context, *children, lastUpdated',
+      contextIndex: 'id, value, context, *children, lastUpdated',
       thoughtIndex: 'id, value, *contexts, created, lastUpdated, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
@@ -147,8 +147,8 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
-export const updateContext = async (id: string, { context, children, lastUpdated }: Parent) => {
-  return db.contextIndex.put({ id, context, children, lastUpdated })
+export const updateContext = async (id: string, { value, context, children, lastUpdated }: Parent) => {
+  return db.contextIndex.put({ id, value, context, children, lastUpdated })
 }
 
 /** Updates multiple thoughts in the contextIndex. */

@@ -56,6 +56,7 @@ async function* getDescendantThoughts(
         ...parent,
         // fill in context if not defined
         context: parent?.context || contexts[i] || context,
+        value: head(contexts[i]),
       }))
 
     const parents =

@@ -146,6 +146,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const parentEntry = {
       id: hashContext(['x']),
+      value: 'x',
       context: ['x'],
       children: [
         { id: createId(), value: 'a', rank: 0 },
@@ -167,6 +168,7 @@ const dataProviderTest = (provider: DataProvider) => {
   test('getContextsByIds', async () => {
     const parentEntryX = {
       id: hashContext(['x']),
+      value: 'x',
       context: ['x'],
       children: [
         { id: createId(), value: 'a', rank: 0 },
@@ -178,6 +180,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const parentEntryA = {
       id: hashContext(['x', 'a']),
+      value: 'a',
       context: ['x', 'a'],
       children: [],
       lastUpdated: timestamp(),
@@ -224,6 +227,7 @@ const dataProviderTest = (provider: DataProvider) => {
   test('updateContextIndex', async () => {
     const parentEntryX = {
       id: hashContext(['x']),
+      value: 'x',
       context: ['x'],
       children: [
         { id: createId(), value: 'a', rank: 0 },
@@ -235,6 +239,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const parentEntryY = {
       id: hashContext(['y']),
+      value: 'y',
       context: ['y'],
       children: [
         { id: createId(), value: 'd', rank: 0 },
@@ -344,6 +349,7 @@ const dataProviderTest = (provider: DataProvider) => {
           children: [],
           lastUpdated: never(),
           pending: true,
+          value: 'y',
         },
       })
 
@@ -383,6 +389,7 @@ const dataProviderTest = (provider: DataProvider) => {
           children: [],
           lastUpdated: never(),
           pending: true,
+          value: 'z',
         },
       })
 

@@ -343,6 +343,7 @@ const moveThought = (
                       childrenOld.length > 0
                         ? {
                             id: contextEncodedOld,
+                            value: head(contextOld),
                             context: contextOld,
                             children: childrenOld,
                             lastUpdated: timestamp(),
@@ -355,6 +356,7 @@ const moveThought = (
                 ? {
                     [contextEncodedNew]: {
                       id: contextEncodedNew,
+                      value: head(contextNew),
                       context: contextNew,
                       children: childrenNew,
                       lastUpdated: timestamp(),
@@ -397,6 +399,7 @@ const moveThought = (
       subthoughtsOld.length > 0
         ? {
             id: contextEncodedOld,
+            value: head(oldContext),
             context: oldContext,
             children: subthoughtsOld,
             lastUpdated: timestamp(),
@@ -404,6 +407,7 @@ const moveThought = (
         : null,
     [contextEncodedNew]: {
       id: contextEncodedNew,
+      value: head(newContext),
       context: newContext,
       children: subthoughtsNew,
       lastUpdated: timestamp(),

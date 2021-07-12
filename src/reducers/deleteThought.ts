@@ -19,6 +19,7 @@ import {
   equalThoughtRanked,
   hashContext,
   hashThought,
+  head,
   reducerFlow,
   removeContext,
   timestamp,
@@ -209,6 +210,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
       subthoughts.length > 0
         ? ({
             id: contextEncoded,
+            value: head(context),
             context,
             children: subthoughts,
             lastUpdated: timestamp(),

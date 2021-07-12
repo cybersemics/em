@@ -13,23 +13,32 @@ const getLocal = (key: string) => {
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
 export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
+  const HOME_TOKEN_HASH = hashContext([HOME_TOKEN])
+  const ABSOLUTE_TOKEN_HASH = hashContext([ABSOLUTE_TOKEN])
+  const EM_TOKEN_HASH = hashContext([EM_TOKEN])
+
   const contextIndex = {
-    [hashContext([HOME_TOKEN])]: {
+    [HOME_TOKEN_HASH]: {
+      id: HOME_TOKEN_HASH,
+      value: HOME_TOKEN,
       context: [HOME_TOKEN],
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
     },
-    [hashContext([ABSOLUTE_TOKEN])]: {
+    [ABSOLUTE_TOKEN_HASH]: {
+      id: ABSOLUTE_TOKEN_HASH,
+      value: ABSOLUTE_TOKEN,
       context: [ABSOLUTE_TOKEN],
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
     },
-    [hashContext([EM_TOKEN])]: {
-      id: hashContext([EM_TOKEN]),
+    [EM_TOKEN_HASH]: {
+      id: EM_TOKEN_HASH,
+      value: EM_TOKEN,
       context: [EM_TOKEN],
       children: [],
       // start pending to trigger pullQueue fetch

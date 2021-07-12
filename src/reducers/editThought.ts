@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
-import { getLexeme, getAllChildren, getChildrenRanked, isPending, rootedParentOf } from '../selectors'
+import { getLexeme, getAllChildren, getChildrenRanked, isPending, rootedParentOf, getParent } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
 
@@ -397,8 +397,22 @@ const editThought = (
     ...descendantUpdates,
   }
 
+  // @MIGRATION-FIX (Making Parent.id required)
+  // The context will not be needed anymore to identify parent after independent editing. This is fix for migration.
+  // Also way to handle thoughts edit inside context view will change later.
+  const parentNew = getParent(state, contextNew)
+  const parentOld = getParent(state, contextOld)
+  const parent = getParent(state, contextParent)
+
+  if (!parentNew || !parentOld || !parent) {
+    console.error('Parent not found')
+    return state
+  }
+
   const contextIndexUpdates = {
     [contextNewEncoded]: {
+      id: parentNew.id,
+      value: head(contextNew),
       context: contextNew,
       children: thoughtNewSubthoughts,
       lastUpdated: timestamp(),
@@ -406,11 +420,15 @@ const editThought = (
     ...(showContexts
       ? {
           [contextOldEncoded]: {
+            id: parentOld.id,
+            value: head(contextOld),
             context: contextOld,
             children: thoughtOldSubthoughts,
             lastUpdated: timestamp(),
           },
           [contextParentEncoded]: {
+            id: parent.id,
+            value: head(contextParent),
             context: contextParent,
             children: thoughtParentSubthoughts,
             lastUpdated: timestamp(),
