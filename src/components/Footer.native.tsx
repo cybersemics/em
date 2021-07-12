@@ -1,39 +1,24 @@
 import React from 'react'
-import { connect, useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import * as pkg from '../../package.json'
 // import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { logout, showModal } from '../action-creators'
-import { getSetting, isTutorial } from '../selectors'
+// import { getSetting, isTutorial } from '../selectors'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import { State } from '../util/initialState'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { Text } from './Text.native'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { authenticated, isPushing, pushQueue, status, user } = state
-  return {
-    authenticated,
-    isPushing,
-    isTutorialOn: isTutorial(state),
-    pushQueueLength: pushQueue.length,
-    status,
-    tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
-    user,
-  }
-}
-
 /** A footer component with some useful links. */
-const Footer = ({
-  authenticated,
-  isPushing,
-  isTutorialOn,
-  pushQueueLength,
-  tutorialStep,
-  user,
-  status,
-}: ReturnType<typeof mapStateToProps>) => {
+const Footer = () => {
   const dispatch = useDispatch()
+  const authenticated = useSelector((state: State) => state.authenticated)
+  const user = useSelector((state: State) => state.user)
+  const status = useSelector((state: State) => state.status)
+  // const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 1))
+  // const isPushing = useSelector((state: State) => state.isPushing)
+  // const isTutorialOn = useSelector(isTutorial)
+  const pushQueueLength = useSelector((state: State) => state.pushQueue.length)
 
   // if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
@@ -115,4 +100,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default connect(mapStateToProps)(Footer)
+export default Footer
