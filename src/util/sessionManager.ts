@@ -31,8 +31,7 @@ export const getSessionType = (sessionId?: string): SessionType | undefined => {
   try {
     const localStorageSessionsIndex: Index = JSON.parse(localStorageSessions)
     return localStorageSessionsIndex[sessionId] ? SessionType.LOCAL : SessionType.REMOTE
-  }
-  catch (err) {
+  } catch (err) {
     console.warn(err)
   }
 }
@@ -50,11 +49,10 @@ export const updateLocalStorageSessionId = () => {
     const localStorageSessionsIndex: Index = JSON.parse(localStorageSessions)
     const updatedValue = {
       ...localStorageSessionsIndex,
-      [sessionId || getSessionId()]: Date.now()
+      [sessionId || getSessionId()]: Date.now(),
     }
     window.localStorage.setItem(LOCALSTORAGE_SESSIONIDS, JSON.stringify(updatedValue))
-  }
-  catch (err) {
+  } catch (err) {
     console.warn(err)
   }
 }
@@ -67,16 +65,17 @@ export const clearStaleLocalStorageSessionIds = () => {
   if (!localStorageSessions) return
   try {
     const localStorageSessionsIndex: Index = JSON.parse(localStorageSessions)
-    const sessionsToKeep = Object.keys(localStorageSessionsIndex).reduce((acc, key) => ({
-      ...acc,
-      ...(Date.now() - localStorageSessionsIndex[key]) < sessionInvalidationTimeout
-        ? { [key]: localStorageSessionsIndex[key] }
-        : {}
-
-    }), {})
+    const sessionsToKeep = Object.keys(localStorageSessionsIndex).reduce(
+      (acc, key) => ({
+        ...acc,
+        ...(Date.now() - localStorageSessionsIndex[key] < sessionInvalidationTimeout
+          ? { [key]: localStorageSessionsIndex[key] }
+          : {}),
+      }),
+      {},
+    )
     window.localStorage.setItem(LOCALSTORAGE_SESSIONIDS, JSON.stringify(sessionsToKeep))
-  }
-  catch (err) {
+  } catch (err) {
     console.warn(err)
   }
 }

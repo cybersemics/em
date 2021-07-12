@@ -5,7 +5,6 @@ import { State } from './initialState'
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
 export const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Index<Context> => {
-
   const { cursor } = state
 
   // if there is no cursor, decode the url so the cursor can be loaded

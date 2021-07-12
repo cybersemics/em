@@ -8,7 +8,6 @@ import { getSetting } from '../selectors'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../types'
-import { getSessionId } from '../util/sessionManager'
 import { storage } from '../util/storage'
 
 // store the hashes of the localStorage Settings contexts for quick lookup
@@ -190,7 +189,7 @@ const pushRemote =
   }
 
 /** Syncs updates to local database and Firebase. */
-const push = 
+const push =
   (
     thoughtIndexUpdates = {},
     contextIndexUpdates = {},

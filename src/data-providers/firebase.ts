@@ -12,15 +12,15 @@ export enum firebaseChangeTypes {
 
 interface FirebaseChangeHandlers<T> {
   contextIndex: {
-    [firebaseChangeTypes.create]: (change: Parent) => T,
-    [firebaseChangeTypes.update]: (change: Parent) => T,
-    [firebaseChangeTypes.delete]: (change: Parent) => T,
-  },
+    [firebaseChangeTypes.create]: (change: Parent) => T
+    [firebaseChangeTypes.update]: (change: Parent) => T
+    [firebaseChangeTypes.delete]: (change: Parent) => T
+  }
   thoughtIndex: {
-    [firebaseChangeTypes.create]: (change: Lexeme) => T,
-    [firebaseChangeTypes.update]: (change: Lexeme) => T,
-    [firebaseChangeTypes.delete]: (change: Lexeme) => T,
-  },
+    [firebaseChangeTypes.create]: (change: Lexeme) => T
+    [firebaseChangeTypes.update]: (change: Lexeme) => T
+    [firebaseChangeTypes.delete]: (change: Lexeme) => T
+  }
 }
 
 /**
@@ -115,9 +115,13 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
 })
 
 /** Subscribe to firebase. */
-export const subscribe = <T>(userId: string, callback: (updates: T) => void, firebaseChangeHandlers: FirebaseChangeHandlers<T>) => {
-  const contextIndexListener:Ref<Parent> = window.firebase?.database().ref(`users/${userId}/contextIndex`)
-  const thoughtIndexListener:Ref<Lexeme> = window.firebase?.database().ref(`users/${userId}/thoughtIndex`)
+export const subscribe = <T>(
+  userId: string,
+  callback: (updates: T) => void,
+  firebaseChangeHandlers: FirebaseChangeHandlers<T>,
+) => {
+  const contextIndexListener: Ref<Parent> = window.firebase?.database().ref(`users/${userId}/contextIndex`)
+  const thoughtIndexListener: Ref<Lexeme> = window.firebase?.database().ref(`users/${userId}/thoughtIndex`)
 
   const { contextIndex: contextIndexChangeHandlers, thoughtIndex: thoughtIndexChangeHandlers } = firebaseChangeHandlers
 

@@ -9,30 +9,50 @@ import { getSubscriptionUtils, Updates } from './subscriptionUtils'
 const getFirebaseChangeHandlers = ({ shouldIncludeUpdate }: ReturnType<typeof getSubscriptionUtils>) => ({
   contextIndex: {
     [firebaseChangeTypes.create]: (change: Parent) => {
-      return { contextIndexUpdates: change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashContext(change.context)]: change } : {} }
+      return {
+        contextIndexUpdates:
+          change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashContext(change.context)]: change } : {},
+      }
     },
     [firebaseChangeTypes.update]: (change: Parent) => {
-      return { contextIndexUpdates: change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashContext(change.context)]: change } : {} }
+      return {
+        contextIndexUpdates:
+          change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashContext(change.context)]: change } : {},
+      }
     },
     [firebaseChangeTypes.delete]: (change: Parent) => {
-      return { contextIndexUpdates: change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashContext(change.context)]: null } : {} }
-    }
+      return {
+        contextIndexUpdates:
+          change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashContext(change.context)]: null } : {},
+      }
+    },
   },
   thoughtIndex: {
     [firebaseChangeTypes.create]: (change: Lexeme) => {
-      return { thoughtIndexUpdates: change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashThought(change.value)]: change } : {} }
+      return {
+        thoughtIndexUpdates:
+          change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashThought(change.value)]: change } : {},
+      }
     },
     [firebaseChangeTypes.update]: (change: Lexeme) => {
-      return { thoughtIndexUpdates: change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashThought(change.value)]: change } : {} }
+      return {
+        thoughtIndexUpdates:
+          change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashThought(change.value)]: change } : {},
+      }
     },
     [firebaseChangeTypes.delete]: (change: Lexeme) => {
-      return { thoughtIndexUpdates: change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashThought(change.value)]: null } : {} }
-    }
+      return {
+        thoughtIndexUpdates:
+          change && shouldIncludeUpdate(change, SessionType.REMOTE) ? { [hashThought(change.value)]: null } : {},
+      }
+    },
   },
-
 })
 
 /** Setup firebase subscriptions to handle local sync. */
-export const initFirebaseSubscriptions = (userId: string, subscritpionUtils: ReturnType<typeof getSubscriptionUtils>) => {
+export const initFirebaseSubscriptions = (
+  userId: string,
+  subscritpionUtils: ReturnType<typeof getSubscriptionUtils>,
+) => {
   subscribe<Updates>(userId, subscritpionUtils.getMergeAndApplyUpdates(), getFirebaseChangeHandlers(subscritpionUtils))
 }

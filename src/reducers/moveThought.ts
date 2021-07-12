@@ -39,11 +39,14 @@ import { getSessionId } from '../util/sessionManager'
 
 type ChildUpdate = {
   archived?: Timestamp
+  created: Timestamp
   id: string
+  lastUpdated: Timestamp
   pathNew: Path
   pathOld: Path
   pending?: boolean
   rank: number
+  updatedBy: string
   value: string
 }
 
@@ -328,7 +331,7 @@ const moveThought = (
               // childUpdate.id is undefined sometimes. Unable to reproduce.
               id: childUpdate.id ?? '',
               ...(childUpdate.archived ? { archived: childUpdate.archived } : null),
-            })
+            } as Child)
 
           const conflictedPath = pathExists(state, contextNew) ? newPathParent : null
           const isNewContextPending = conflictedPath && isPending(state, contextNew)
