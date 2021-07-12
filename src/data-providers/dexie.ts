@@ -226,20 +226,17 @@ export const fullTextSearch = async (value: string) => {
 export const log = async ({ message, stack }: { message: string; stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
 
-export enum dbChangeType {
+// maps to dexie-observable's DatabaseChangeType which cannot be imported
+export enum DatabaseChangeType {
   created = 1,
   updated = 2,
   deleted = 3,
 }
-interface ChangeHandlers {
-  [dbChangeType.created]: (change: IDatabaseChange) => Updates
-  [dbChangeType.updated]: (change: IDatabaseChange) => Promise<Updates>
-  [dbChangeType.deleted]: (change: IDatabaseChange) => Updates
-}
 
-export const dbTables = {
-  thoughtIndex: 'thoughtIndex',
-  contextIndex: 'contextIndex',
+interface ChangeHandlers {
+  [DatabaseChangeType.created]: (change: IDatabaseChange) => Updates
+  [DatabaseChangeType.updated]: (change: IDatabaseChange) => Promise<Updates>
+  [DatabaseChangeType.deleted]: (change: IDatabaseChange) => Updates
 }
 
 /** Subscribe to dexie updates. */
@@ -260,20 +257,20 @@ const getDbChangeHandlers = ({
   getUpdatedObject,
   shouldIncludeUpdate,
 }: ReturnType<typeof getSubscriptionUtils>) => ({
-  [dbChangeType.created]: (change: IDatabaseChange) => {
+  [DatabaseChangeType.created]: (change: IDatabaseChange) => {
     const { table, key, obj } = change as ICreateChange
     return {
       thoughtIndexUpdates:
-        table === dbTables.thoughtIndex && shouldIncludeUpdate(obj, SessionType.LOCAL)
+        table === 'thoughtIndex' && shouldIncludeUpdate(obj, SessionType.LOCAL)
           ? { [key as string]: obj as Lexeme }
           : {},
       contextIndexUpdates:
-        table === dbTables.contextIndex && shouldIncludeUpdate(obj, SessionType.LOCAL)
+        table === 'contextIndex' && shouldIncludeUpdate(obj, SessionType.LOCAL)
           ? { [key as string]: obj as Parent }
           : {},
     }
   },
-  [dbChangeType.updated]: async (change: IDatabaseChange) => {
+  [DatabaseChangeType.updated]: async (change: IDatabaseChange) => {
     const { key, table, mods: updates } = change as IUpdateChange
 
     /**
@@ -310,15 +307,15 @@ const getDbChangeHandlers = ({
     }
 
     return {
-      thoughtIndexUpdates: table === dbTables.thoughtIndex ? await getThoughtUpdates(key, updates) : {},
-      contextIndexUpdates: table === dbTables.contextIndex ? await getContextUpdates(key, updates) : {},
+      thoughtIndexUpdates: table === 'thoughtIndex' ? await getThoughtUpdates(key, updates) : {},
+      contextIndexUpdates: table === 'contextIndex' ? await getContextUpdates(key, updates) : {},
     }
   },
-  [dbChangeType.deleted]: (change: IDatabaseChange) => {
+  [DatabaseChangeType.deleted]: (change: IDatabaseChange) => {
     const { key, table, oldObj } = change as IDeleteChange
     return {
       thoughtIndexUpdates:
-        table === dbTables.thoughtIndex &&
+        table === 'thoughtIndex' &&
         oldObj &&
         oldObj.id &&
         shouldIncludeUpdate(oldObj, SessionType.LOCAL) &&
@@ -326,7 +323,7 @@ const getDbChangeHandlers = ({
           ? { [key as string]: null }
           : {},
       contextIndexUpdates:
-        table === dbTables.contextIndex &&
+        table === 'contextIndex' &&
         oldObj &&
         oldObj.id &&
         shouldIncludeUpdate(oldObj, SessionType.LOCAL) &&
