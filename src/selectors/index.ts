@@ -7,7 +7,6 @@ export { default as canShowModal } from './canShowModal'
 export { default as chain } from './chain'
 export { default as decodeContextUrl } from './decodeContextUrl'
 export { default as decodeThoughtsUrl } from './decodeThoughtsUrl'
-export { default as exists } from './exists'
 export { default as expandThoughts } from './expandThoughts'
 export { default as exportContext } from './exportContext'
 export { default as getChildPath } from './getChildPath'
@@ -25,10 +24,11 @@ export { default as getSetting } from './getSetting'
 export { default as getSortPreference } from './getSortPreference'
 export { default as getGlobalSortPreference } from './getGlobalSortPreference'
 export { default as getStyle } from './getStyle'
-export { default as getThought } from './getThought'
+export { default as getLexeme } from './getLexeme'
 export { default as getThoughtAfter } from './getThoughtAfter'
 export { default as getThoughtBefore } from './getThoughtBefore'
 export { default as hasChild } from './hasChild'
+export { default as hasLexeme } from './hasLexeme'
 export { default as hashContextUrl } from './hashContextUrl'
 export { default as hasPushes } from './hasPushes'
 export { default as isAncestorsVisible } from './isAncestorsVisible'
@@ -49,4 +49,17 @@ export { default as subtree } from './subtree'
 export { default as theme } from './theme'
 export { default as thoughtsEditingFromChain } from './thoughtsEditingFromChain'
 export { default as visibleDistanceAboveCursor } from './visibleDistanceAboveCursor'
-export { firstVisibleChild, getAllChildren, getAllChildrenByContextHash, getChildren, getChildrenRanked, getAllChildrenSorted, getChildrenSorted, getParent, hasChildren, isChildVisible, childrenFilterPredicate, firstVisibleChildWithCursorCheck } from './getChildren'
+export {
+  firstVisibleChild,
+  getAllChildren,
+  getAllChildrenByContextHash,
+  getChildren,
+  getChildrenRanked,
+  getAllChildrenSorted,
+  getChildrenSorted,
+  getParent,
+  hasChildren,
+  isChildVisible,
+  childrenFilterPredicate,
+  firstVisibleChildWithCursorCheck,
+} from './getChildren'

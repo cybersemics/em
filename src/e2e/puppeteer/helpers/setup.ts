@@ -2,10 +2,10 @@ import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 import { Browser, Device, Page } from 'puppeteer'
 
 export interface InitPageOptions {
-  puppeteerBrowser?: Browser,
-  url?: string,
-  skipTutorial?: boolean,
-  emulatedDevice?: Device,
+  puppeteerBrowser?: Browser
+  url?: string
+  skipTutorial?: boolean
+  emulatedDevice?: Device
 }
 
 /**
@@ -21,7 +21,12 @@ const skipTutorialScreen = async (page: Page) => {
 /**
  * Create a new incognito context and page.
  */
-const setup = async ({ puppeteerBrowser = browser, url = 'http://localhost:3000', emulatedDevice, skipTutorial = true }: InitPageOptions = {}): Promise<Page> => {
+const setup = async ({
+  puppeteerBrowser = browser,
+  url = 'http://localhost:3000',
+  emulatedDevice,
+  skipTutorial = true,
+}: InitPageOptions = {}): Promise<Page> => {
   const context = await puppeteerBrowser.createIncognitoBrowserContext()
   const page: Page = await context.newPage()
 
@@ -34,9 +39,8 @@ const setup = async ({ puppeteerBrowser = browser, url = 'http://localhost:3000'
 
   await page.goto(url)
 
-  skipTutorial && await skipTutorialScreen(page)
+  skipTutorial && (await skipTutorialScreen(page))
 
   return page
-
 }
 export default setup

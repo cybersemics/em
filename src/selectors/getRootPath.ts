@@ -4,7 +4,7 @@ import { State } from '../util/initialState'
 
 const rootPathMap: Record<string, SimplePath> = {
   [HOME_TOKEN]: HOME_PATH,
-  [ABSOLUTE_TOKEN]: ABSOLUTE_PATH
+  [ABSOLUTE_TOKEN]: ABSOLUTE_PATH,
 }
 
 /**

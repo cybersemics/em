@@ -9,9 +9,9 @@ const modalComplete = (state: State, { id }: { id: string }) => ({
     ...state.modals,
     [id]: {
       ...state.modals[id],
-      complete: true
-    }
-  }
+      complete: true,
+    },
+  },
 })
 
 export default _.curryRight(modalComplete)

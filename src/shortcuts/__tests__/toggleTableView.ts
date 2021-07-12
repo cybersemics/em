@@ -6,7 +6,6 @@ import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
-
   const store = createTestStore()
 
   store.dispatch([
@@ -17,7 +16,8 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
             - c
           - d
             - e
-    ` }),
+    `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -28,7 +28,6 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
 })
 
 it('toggle on table view of parent of cursor (initial state =view attribute set to Prose)', () => {
-
   const store = createTestStore()
 
   store.dispatch([
@@ -41,7 +40,8 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
             - c
           - d
             - e
-    ` }),
+    `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -52,7 +52,6 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
 })
 
 it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -66,7 +65,8 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
             - c
           - d
             - e
-      ` }),
+      `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 

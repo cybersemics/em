@@ -1,12 +1,12 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
-import { getThought } from '../../selectors'
+import { getLexeme } from '../../selectors'
 import { clear, newThought } from '../../action-creators'
 import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
-import dbGetThought from '../data-helpers/getThought'
+import dbGetThought from '../data-helpers/getLexeme'
 import testTimer from '../../test-helpers/testTimer'
 
 /*
@@ -23,7 +23,6 @@ describe('dexie', () => {
 })
 
 describe('integration', () => {
-
   beforeEach(async () => {
     fakeTimer.useFakeTimer()
     initialize()
@@ -38,7 +37,7 @@ describe('integration', () => {
   })
 
   it('load settings into indexedDB on initialization', async () => {
-    const thoughtState = getThought(store.getState(), 'Settings')
+    const thoughtState = getLexeme(store.getState(), 'Settings')
 
     expect(thoughtState).not.toBeUndefined()
     expect(thoughtState!.contexts).toHaveLength(1)
@@ -52,7 +51,6 @@ describe('integration', () => {
   })
 
   it('persist newThought', async () => {
-
     fakeTimer.useFakeTimer()
 
     store.dispatch(newThought({ value: 'a' }))
@@ -65,12 +63,11 @@ describe('integration', () => {
     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
-      children: [{ value: 'a', rank: 0 }]
+      children: [{ value: 'a', rank: 0 }],
     })
   })
 
   it('persist editThought', async () => {
-
     fakeTimer.useFakeTimer()
 
     store.dispatch([
@@ -81,7 +78,7 @@ describe('integration', () => {
         oldValue: '',
         newValue: 'a',
         path: [{ value: '', rank: 0 }],
-      }
+      },
     ])
 
     await fakeTimer.runAllAsync()
@@ -91,8 +88,7 @@ describe('integration', () => {
     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
-      children: [{ value: 'a', rank: 0 }]
+      children: [{ value: 'a', rank: 0 }],
     })
-
   })
 })

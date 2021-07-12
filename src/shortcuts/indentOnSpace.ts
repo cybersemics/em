@@ -29,7 +29,7 @@ const exec: Shortcut['exec'] = dispatch => dispatch(indent())
 
 const indentOnSpace: Shortcut = {
   id: 'indentOnSpace',
-  name: 'indentOnSpace',
+  label: 'indentOnSpace',
   description: 'Indent thought if cursor is at the begining of the thought',
   keyboard: { key: ' ' },
   hideFromInstructions: true,
@@ -40,7 +40,7 @@ const indentOnSpace: Shortcut = {
 // also match Shift + Space
 export const indentOnSpaceAlias: Shortcut = {
   id: 'indentOnSpaceAlias',
-  name: 'indentOnSpaceAlias',
+  label: 'indentOnSpaceAlias',
   keyboard: { key: ' ', shift: true },
   hideFromInstructions: true,
   canExecute,

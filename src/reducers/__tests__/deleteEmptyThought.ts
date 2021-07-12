@@ -14,14 +14,10 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
 import importTextReducer from '../importText'
+import archiveThought from '../archiveThought'
 
 it('delete empty thought', () => {
-
-  const steps = [
-    newThought('a'),
-    newThought(''),
-    deleteEmptyThought,
-  ]
+  const steps = [newThought('a'), newThought(''), deleteEmptyThought]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -29,15 +25,10 @@ it('delete empty thought', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
-
 })
 
 it('do not delete non-empty thought', () => {
-
-  const steps = [
-    newThought('a'),
-    deleteEmptyThought,
-  ]
+  const steps = [newThought('a'), deleteEmptyThought]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -45,39 +36,30 @@ it('do not delete non-empty thought', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
-
 })
 
 it('do not delete thought with children', () => {
-
-  const steps = [
-    newThought(''),
-    newSubthought('1'),
-    cursorBack,
-    deleteEmptyThought,
-  ]
+  const steps = [newThought(''), newSubthought('1'), cursorBack, deleteEmptyThought]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - ${''/* prevent trim_trailing_whitespace */}
+  - ${'' /* prevent trim_trailing_whitespace */}
     - 1`)
-
 })
 
-it(`archive thought with hidden children - arvhive all children in cursor's parent`, () => {
-
+it("archive thought with hidden children - arvhive all children in cursor's parent", () => {
   const steps = [
     importTextReducer({
       text: `
         -
           - =a
-          - =b`
+          - =b`,
     }),
     setCursorFirstMatch(['']),
-    deleteEmptyThought
+    deleteEmptyThought,
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -89,17 +71,37 @@ it(`archive thought with hidden children - arvhive all children in cursor's pare
   - =archive
     - =a
     - =b`)
+})
 
+it("archive thought with archived and hidden children - arvhive all children in cursor's parent", () => {
+  const steps = [
+    importTextReducer({
+      text: `
+        -
+          - =a
+          - b
+          - =c`,
+    }),
+    setCursorFirstMatch(['', 'b']),
+    archiveThought({}),
+    setCursorFirstMatch(['']),
+    deleteEmptyThought,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =archive
+    - =a
+    - b
+    - =c`)
 })
 
 it('do nothing if there is no cursor', () => {
-
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    setCursor({ path: null }),
-    deleteEmptyThought,
-  ]
+  const steps = [newThought('a'), newThought('b'), setCursor({ path: null }), deleteEmptyThought]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -108,16 +110,10 @@ it('do nothing if there is no cursor', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - b`)
-
 })
 
 it('merge thoughts', () => {
-
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    deleteEmptyThought,
-  ]
+  const steps = [newThought('a'), newThought('b'), deleteEmptyThought]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -125,11 +121,9 @@ it('merge thoughts', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - ab`)
-
 })
 
-it('insert second thought\'s children', () => {
-
+it("insert second thought's children", () => {
   const steps = [
     newThought('a'),
     newThought('b'),
@@ -147,11 +141,9 @@ it('insert second thought\'s children', () => {
   - ab
     - b1
     - b2`)
-
 })
 
-it('do not change first thought\'s children', () => {
-
+it("do not change first thought's children", () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
@@ -169,30 +161,21 @@ it('do not change first thought\'s children', () => {
   - ab
     - a1
     - a2`)
-
 })
 
 it('cursor should move to prev sibling', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('a1'),
-    newThought(''),
-    newThought('a3'),
-    cursorUp,
-    deleteEmptyThought,
-  ]
+  const steps = [newThought('a'), newSubthought('a1'), newThought(''), newThought('a3'), cursorUp, deleteEmptyThought]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: 'a1', rank: 0 },
+  ])
 })
 
 it('cursor should move to next sibling if there is no prev sibling', () => {
-
   const steps = [
     newThought('a'),
     newSubthought(''),
@@ -206,53 +189,37 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: 'a2', rank: 1 },
+  ])
 })
 
 it('cursor should move to parent if the deleted thought has no siblings', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought(''),
-    deleteEmptyThought,
-  ]
+  const steps = [newThought('a'), newSubthought(''), deleteEmptyThought]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
 })
 
 it('cursor should be removed if the last thought is deleted', () => {
-
-  const steps = [
-    newThought(''),
-    deleteEmptyThought,
-  ]
+  const steps = [newThought(''), deleteEmptyThought]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
-
 })
 
 /** Mount tests required for caret. */
 describe('mount', () => {
-
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
   it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
-    store.dispatch([
-      { type: 'newThought', value: 'apple' },
-      { type: 'newThought' },
-      { type: 'deleteEmptyThought' }
-    ])
+    store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
     jest.runOnlyPendingTimers()
 
     const dummyEditable = document.createElement('div')
@@ -268,7 +235,7 @@ describe('mount', () => {
       importText({
         text: `
           - apple
-          - banana`
+          - banana`,
       }),
       setCursorFirstMatchActionCreator(['banana']),
       { type: 'deleteEmptyThought' },

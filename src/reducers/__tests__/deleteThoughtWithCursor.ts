@@ -13,12 +13,7 @@ import newThought from '../newThought'
 import setCursor from '../setCursor'
 
 it('delete thought within root', () => {
-
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    deleteThoughtWithCursor({}),
-  ]
+  const steps = [newThought('a'), newThought('b'), deleteThoughtWithCursor({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -26,17 +21,10 @@ it('delete thought within root', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
-
 })
 
 it('delete thought with no cursor should do nothing ', () => {
-
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    setCursor({ path: null }),
-    deleteThoughtWithCursor({}),
-  ]
+  const steps = [newThought('a'), newThought('b'), setCursor({ path: null }), deleteThoughtWithCursor({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -45,16 +33,10 @@ it('delete thought with no cursor should do nothing ', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
   - b`)
-
 })
 
 it('delete thought within context', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('a1'),
-    deleteThoughtWithCursor({}),
-  ]
+  const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -62,18 +44,10 @@ it('delete thought within context', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
-
 })
 
 it('delete descendants', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('a1'),
-    newSubthought('a1.1'),
-    cursorBack,
-    deleteThoughtWithCursor({}),
-  ]
+  const steps = [newThought('a'), newSubthought('a1'), newSubthought('a1.1'), cursorBack, deleteThoughtWithCursor({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -81,29 +55,21 @@ it('delete descendants', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
-
 })
 
 it('cursor should move to prev sibling', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('a1'),
-    newThought('a2'),
-    newThought('a3'),
-    deleteThoughtWithCursor({}),
-  ]
+  const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), newThought('a3'), deleteThoughtWithCursor({})]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: 'a2', rank: 1 },
+  ])
 })
 
 it('cursor should move to next sibling if there is no prev sibling', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('a1'),
@@ -117,44 +83,32 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: 'a2', rank: 1 },
+  ])
 })
 
 it('cursor should move to parent if the deleted thought has no siblings', () => {
-
-  const steps = [
-    newThought('a'),
-    newSubthought('a1'),
-    deleteThoughtWithCursor({}),
-  ]
+  const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor({})]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
 })
 
 it('cursor should be removed if the last thought is deleted', () => {
-
-  const steps = [
-    newThought('a'),
-    deleteThoughtWithCursor({}),
-  ]
+  const steps = [newThought('a'), deleteThoughtWithCursor({})]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
-
 })
 
 /** Mount tests required for caret. */
 describe('mount', () => {
-
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
@@ -187,5 +141,4 @@ describe('mount', () => {
 
     expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
   })
-
 })

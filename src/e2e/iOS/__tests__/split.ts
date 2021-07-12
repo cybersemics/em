@@ -6,15 +6,7 @@ import helpers from '../helpers'
 
 jest.setTimeout(90000)
 
-const {
-  clickThought,
-  getEditingText,
-  getSelection,
-  paste,
-  tapReturnKey,
-  tap,
-  waitForEditable,
-} = helpers()
+const { clickThought, getEditingText, getSelection, paste, tapReturnKey, tap, waitForEditable } = helpers()
 
 it('split a thought when the caret is in the middle', async () => {
   const importText = `

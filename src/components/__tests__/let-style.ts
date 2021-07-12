@@ -8,7 +8,6 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('define =style in a =let expressions and apply it to a child of the parent context', async () => {
-
   store.dispatch([
     importText({
       text: `
@@ -20,7 +19,7 @@ it('define =style in a =let expressions and apply it to a child of the parent co
         - Razzle
           - =dazzle
         - Nuzzle
-      `
+      `,
     }),
   ])
 
@@ -29,11 +28,9 @@ it('define =style in a =let expressions and apply it to a child of the parent co
 
   const thoughtNuzzle = await findThoughtByText('Nuzzle')
   expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
-
 })
 
 it('=let/x/=style is not applied to siblings and sibling descendants', async () => {
-
   store.dispatch([
     importText({
       text: `
@@ -45,7 +42,7 @@ it('=let/x/=style is not applied to siblings and sibling descendants', async () 
         - Razzle
           - =dazzle
           - Roo
-      `
+      `,
     }),
   ])
 
@@ -54,11 +51,9 @@ it('=let/x/=style is not applied to siblings and sibling descendants', async () 
 
   const thoughtNuzzle = await findThoughtByText('Roo')
   expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
-
 })
 
 it('=let/x/=style is applied to x as a preview', async () => {
-
   store.dispatch([
     importText({
       text: `
@@ -67,17 +62,15 @@ it('=let/x/=style is applied to x as a preview', async () => {
             - =style
               - color
                 - pink
-      `
+      `,
     }),
   ])
 
   const thoughtNuzzle = await findThoughtByText('=dazzle')
   expect(thoughtNuzzle).toHaveStyle({ color: 'pink' })
-
 })
 
 it('=let/x/=style is not applied to =let itself', async () => {
-
   store.dispatch([
     importText({
       text: `
@@ -86,17 +79,15 @@ it('=let/x/=style is not applied to =let itself', async () => {
             - =style
               - color
                 - pink
-      `
+      `,
     }),
   ])
 
   const thoughtNuzzle = await findThoughtByText('=let')
   expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
-
 })
 
 it('=let/x/=style is available to all descendants', async () => {
-
   store.dispatch([
     importText({
       text: `
@@ -109,7 +100,7 @@ it('=let/x/=style is available to all descendants', async () => {
           - Razzle
             - =dazzle
         - Nuzzle
-      `
+      `,
     }),
     setCursorFirstMatchActionCreator(['Shoozle']),
   ])
@@ -122,11 +113,9 @@ it('=let/x/=style is available to all descendants', async () => {
 
   const thoughtNuzzle = await findThoughtByText('Nuzzle')
   expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
-
 })
 
 it('multiple definitions in same =let', async () => {
-
   store.dispatch([
     importText({
       text: `
@@ -142,7 +131,7 @@ it('multiple definitions in same =let', async () => {
         - Razzle
           - =dazzle
           - =fizzle
-      `
+      `,
     }),
     setCursorFirstMatchActionCreator(['Shoozle']),
   ])
@@ -152,11 +141,9 @@ it('multiple definitions in same =let', async () => {
     color: 'pink',
     fontStyle: 'italic',
   })
-
 })
 
 it('deep let > shallow let', async () => {
-
   store.dispatch([
     importText({
       text: `
@@ -173,12 +160,11 @@ it('deep let > shallow let', async () => {
                   - champagne
           - Razzle
             - =dazzle
-      `
+      `,
     }),
     setCursorFirstMatchActionCreator(['Shoozle']),
   ])
 
   const thoughtRazzle = await findThoughtByText('Razzle')
   expect(thoughtRazzle).toHaveStyle({ color: 'champagne' })
-
 })

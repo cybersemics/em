@@ -6,7 +6,6 @@ import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -16,7 +15,8 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
         - a
           - b
             - c
-    ` }),
+    `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -27,7 +27,6 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
 })
 
 it('toggle on prose view of parent of cursor (inital state with =view attribute set to Table)', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -39,7 +38,8 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
             - table
           - b
             - c
-    ` }),
+    `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 
@@ -50,7 +50,6 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
 })
 
 it('toggle off prose view of parent of cursor', () => {
-
   const store = createTestStore()
 
   // import thoughts
@@ -62,7 +61,8 @@ it('toggle off prose view of parent of cursor', () => {
             - Prose
           - b
             - c
-    ` }),
+    `,
+    }),
     setCursorFirstMatchActionCreator(['a']),
   ])
 

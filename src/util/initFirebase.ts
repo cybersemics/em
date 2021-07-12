@@ -1,6 +1,12 @@
 import { Store } from 'redux'
 import globals from '../globals'
-import { authenticate, loadPublicThoughts, setRemoteSearch, status as statusActionCreator, userAuthenticated } from '../action-creators'
+import {
+  authenticate,
+  loadPublicThoughts,
+  setRemoteSearch,
+  status as statusActionCreator,
+  userAuthenticated,
+} from '../action-creators'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner, initFirebaseSubscriptions } from '../util'
 import { State } from '../util/initialState'
@@ -9,7 +15,7 @@ import initAlgoliaSearch from '../search/algoliaSearch'
 import { getSubscriptionUtils } from './subscriptionUtils'
 
 /** Initialize firebase and event handlers. */
-export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
+export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
   if (window.firebase) {
     const firebase = window.firebase
     firebase.initializeApp(FIREBASE_CONFIG)
@@ -26,8 +32,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
 
         if (!hasRemoteConfig) console.warn('Algolia configs not found. Remote search is not enabled.')
         else initAlgoliaSearch(user.uid, { applicationId, index }, store)
-      }
-      else {
+      } else {
         store.dispatch(authenticate({ value: false }))
         store.dispatch(setRemoteSearch({ value: false }))
       }
@@ -47,7 +52,6 @@ export const initFirebase = async ({ store }: { store: Store<State, any>}) => {
 
       // either connect with authenticated user or go to connected state until they login
       if (connected) {
-
         // once connected, disable offline mode timer
         window.clearTimeout(globals.offlineTimer)
 

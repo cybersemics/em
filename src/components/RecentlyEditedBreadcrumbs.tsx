@@ -6,27 +6,31 @@ import { State } from '../util/initialState'
 // components
 import Link from './Link'
 import Superscript from './Superscript'
-import { UnconnectedContextBreadcrumbs, ContextBreadcrumbProps } from './ContextBreadcrumbs'
+import { ContextBreadcrumbs, ContextBreadcrumbProps } from './ContextBreadcrumbs'
 import { headValue, parentOf } from '../util'
+import { Path } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: ContextBreadcrumbProps) => ({
-  simplePath: simplifyPath(state, props.path)
+const mapStateToProps = (state: State, props: Omit<ContextBreadcrumbProps, 'simplePath'> & { path: Path }) => ({
+  simplePath: simplifyPath(state, props.path),
 })
 
 /**
  * Varaint of ContextBreadcrumbs for recently edited with collapsing overflow.
  */
-const RecentlyEditedBreadcrumbs = connect(mapStateToProps)((props: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
+const RecentlyEditedBreadcrumbs = connect(mapStateToProps)(
+  (props: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
+    const parentSimplePath = parentOf(props.simplePath)
+    const simplePath = props.simplePath
 
-  const parentSimplePath = parentOf(props.simplePath)
-  const simplePath = props.simplePath
-
-  return <div className='recently-edited-breadcrumbs'>
-    <UnconnectedContextBreadcrumbs {...props} simplePath={parentSimplePath}/>
-    <Link simplePath={simplePath} label={headValue(simplePath)} />
-    <Superscript simplePath={simplePath} />
-  </div>
-})
+    return (
+      <div className='recently-edited-breadcrumbs'>
+        <ContextBreadcrumbs {...props} simplePath={parentSimplePath} />
+        <Link simplePath={simplePath} label={headValue(simplePath)} />
+        <Superscript simplePath={simplePath} />
+      </div>
+    )
+  },
+)
 
 export default RecentlyEditedBreadcrumbs

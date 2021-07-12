@@ -9,14 +9,13 @@ import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
 
 it('toggle on', () => {
-
   const steps = [
     newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
-    })
+      value: 'hello',
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -27,23 +26,21 @@ it('toggle on', () => {
   - a
     - =test
       - hello`)
-
 })
 
 it('toggle off', () => {
-
   const steps = [
     newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
+      value: 'hello',
     }),
     toggleAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
-    })
+      value: 'hello',
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -52,23 +49,21 @@ it('toggle off', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
-
 })
 
 it('different value should override existing value', () => {
-
   const steps = [
     newThought('a'),
     toggleAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
+      value: 'hello',
     }),
     toggleAttribute({
       context: ['a'],
       key: '=test',
-      value: 'goodbye'
-    })
+      value: 'goodbye',
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -79,11 +74,9 @@ it('different value should override existing value', () => {
   - a
     - =test
       - goodbye`)
-
 })
 
 it('add attribute if key has already been created', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('=test'),
@@ -91,7 +84,7 @@ it('add attribute if key has already been created', () => {
     toggleAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
+      value: 'hello',
     }),
   ]
 
@@ -103,5 +96,4 @@ it('add attribute if key has already been created', () => {
   - a
     - =test
       - hello`)
-
 })

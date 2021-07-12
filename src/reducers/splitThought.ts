@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
-import { editableRender, editThought, moveThought, newThought, render } from '../reducers'
+import { editableRender, editThought, moveThought, newThought } from '../reducers'
 import { State } from '../util/initialState'
 import { Path, SplitResult } from '../types'
 
@@ -11,9 +11,8 @@ import { Path, SplitResult } from '../types'
  * @param path     The path of the thought to split. Defaults to cursor.
  * @param offset   The index within the thought at which to split. Defaults to the browser selection offset.
  */
-const splitThought = (state: State, { path, splitResult }: { path?: Path, splitResult: SplitResult }) => {
-
-  path = path || state.cursor as Path
+const splitThought = (state: State, { path, splitResult }: { path?: Path; splitResult: SplitResult }) => {
+  path = path || (state.cursor as Path)
 
   const simplePath = simplifyPath(state, path)
 
@@ -29,7 +28,6 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path, splitR
   const pathLeft = parentOf(path).concat({ value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([
-
     // set the thought's text to the left of the selection
     editThought({
       oldValue: value,
@@ -43,26 +41,27 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path, splitR
       value: valueRight,
       at: pathLeft,
       // selection offset
-      offset: 0
+      offset: 0,
     }),
 
     // move children
     state => {
-      const thoughtNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
-      const pathRight = parentOf(simplePath).concat({ value: valueRight, rank: thoughtNew!.rank })
+      const childNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
+      const pathRight = parentOf(simplePath).concat({ value: valueRight, rank: childNew!.rank })
       const children = getChildrenRanked(state, pathToContext(pathLeft))
 
-      return reducerFlow(children.map(child =>
-        moveThought({
-          oldPath: pathLeft.concat(child),
-          newPath: pathRight.concat(child)
-        })
-      ))(state)
+      return reducerFlow(
+        children.map(child =>
+          moveThought({
+            oldPath: pathLeft.concat(child),
+            newPath: pathRight.concat(child),
+          }),
+        ),
+      )(state)
     },
 
     // render
-    render,
-    editableRender
+    editableRender,
   ])(state)
 }
 

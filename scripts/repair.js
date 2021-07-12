@@ -38,11 +38,12 @@ let repair = (maxDepth = 100) => {
   /** Equality for lists. */
   const equalArrays = (a, b) =>
     a === b ||
-    (a && b &&
-    a.length === b.length &&
-    a.find &&
-    // compare with null to avoid false positive for ''
-    a.find((thought, i) => b[i] !== thought)) == null
+    (a &&
+      b &&
+      a.length === b.length &&
+      a.find &&
+      // compare with null to avoid false positive for ''
+      a.find((thought, i) => b[i] !== thought)) == null
 
   const generateUpdates = (context, depth = 0) => {
     if (depth >= maxDepth) return
@@ -52,15 +53,18 @@ let repair = (maxDepth = 100) => {
     const children = parentEntry?.children ?? []
 
     children.forEach((child, i) => {
-
       // use contextIndexUpdates since children may have been updated
       const parentEntry = contextIndexUpdates[contextEncoded] || contextIndex[contextEncoded]
       const rankRandom = Math.floor(Math.random() * 100000000000)
       const idRandom = Math.floor(Math.random() * 100000000000).toString()
       const noRank = child.rank == null
       const noId = child.id == null
-      const hasDuplicateRank = parentEntry.children.some(childInner => childInner !== child && childInner.rank === child.rank)
-      const hasDuplicateValue = parentEntry.children.some(childInner => childInner !== child && childInner.value === child.value)
+      const hasDuplicateRank = parentEntry.children.some(
+        childInner => childInner !== child && childInner.rank === child.rank,
+      )
+      const hasDuplicateValue = parentEntry.children.some(
+        childInner => childInner !== child && childInner.value === child.value,
+      )
       const updateContextIndex = noId || noRank || hasDuplicateRank
 
       if (noId) missingChildIds++
@@ -82,8 +86,7 @@ let repair = (maxDepth = 100) => {
                 lastUpdated: timestamp(),
               }
               return child
-            }
-            else {
+            } else {
               return childInner
             }
           }),
@@ -92,22 +95,23 @@ let repair = (maxDepth = 100) => {
       }
 
       const thoughtEncoded = em.hashThought(child.value)
-      const lexeme = thoughtIndexUpdates[thoughtEncoded] || em.getThought(child.value)
+      const lexeme = thoughtIndexUpdates[thoughtEncoded] || em.getLexeme(child.value)
 
       // recreate missing lexeme
       if (!lexeme) {
-
         missingLexemes++
         thoughtIndexUpdates[thoughtEncoded] = {
           value: child.value,
           created: parentEntry.lastUpdated,
           lastUpdated: timestamp(),
-          contexts: [{
-            context,
-            id: child.id,
-            rank: child.rank,
-            lastUpdated: timestamp()
-          }]
+          contexts: [
+            {
+              context,
+              id: child.id,
+              rank: child.rank,
+              lastUpdated: timestamp(),
+            },
+          ],
         }
       }
       // repair existing lexeme
@@ -118,7 +122,6 @@ let repair = (maxDepth = 100) => {
         let hasLexemeContext = false
 
         const contextsNew = lexeme.contexts.reduce((accum, thoughtContext) => {
-
           const matchingContext = equalArrays(thoughtContext.context, context)
 
           if (!matchingContext) return [...accum, thoughtContext]
@@ -140,7 +143,6 @@ let repair = (maxDepth = 100) => {
             // if the contextIndex child was updated, then we need to set the thoughtIndex rank and id to match even if the lexeme is otherwise correct
             updateContextIndex
           ) {
-
             // flag shouldUpdate so the lexeme is replaced
             shouldUpdate = true
 
@@ -151,41 +153,41 @@ let repair = (maxDepth = 100) => {
             }
 
             // add new lexeme context with correct id and rank
-            return [...accum, {
-              ...thoughtContext,
-              id: child.id,
-              rank: child.rank,
-              lastUpdated: timestamp()
-            }]
-          }
-          else {
+            return [
+              ...accum,
+              {
+                ...thoughtContext,
+                id: child.id,
+                rank: child.rank,
+                lastUpdated: timestamp(),
+              },
+            ]
+          } else {
             return [...accum, thoughtContext]
           }
         }, [])
 
         // if any of the contexts within the lexeme have changed, update the lexeme
         if (shouldUpdate) {
-
-
           thoughtIndexUpdates[thoughtEncoded] = {
             value: lexeme.value || child.value,
             created: parentEntry.lastUpdated,
             lastUpdated: timestamp(),
-            contexts: contextsNew
+            contexts: contextsNew,
           }
-        }
-        else if (!hasLexemeContext) {
-
-
+        } else if (!hasLexemeContext) {
           missingLexemeContext++
           const lexemeNew = {
             ...lexeme,
-            contexts: [...lexeme.contexts, {
-              context,
-              id: child.id,
-              rank: child.rank,
-              lastUpdated: timestamp()
-            }],
+            contexts: [
+              ...lexeme.contexts,
+              {
+                context,
+                id: child.id,
+                rank: child.rank,
+                lastUpdated: timestamp(),
+              },
+            ],
             lastUpdated: timestamp(),
           }
           thoughtIndexUpdates[thoughtEncoded] = lexemeNew
@@ -195,7 +197,6 @@ let repair = (maxDepth = 100) => {
       const contextNew = [...unroot(context), child.value]
       generateUpdates(contextNew, depth + 1) // RECURSION
     })
-
   }
 
   // start recursion
@@ -225,8 +226,7 @@ let repair = (maxDepth = 100) => {
     //   contextIndexUpdates,
     //   thoughtIndexUpdates,
     // })
-  }
-  else {
+  } else {
     console.info('No updates.')
   }
 }

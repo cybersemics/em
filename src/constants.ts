@@ -1,5 +1,5 @@
 /** Defines app-wide constants. */
-
+import { emojiRegex } from './emojiRegex'
 import { Index, SimplePath } from './types'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
@@ -140,7 +140,7 @@ export const FIREBASE_REDIRECT_URL = process.env.REACT_APP_FIREBASE_REDIRECT_URL
 export const ALGOLIA_CONFIG = {
   applicationId: process.env.REACT_APP_ALGOLIA_APPPLICATION_ID as string,
   index: process.env.REACT_APP_ALGOLIA_INDEX as string,
-  searchKeyEndpoint: process.env.REACT_APP_ALGOLIA_SEARCH_KEY_ENDPOINT as string
+  searchKeyEndpoint: process.env.REACT_APP_ALGOLIA_SEARCH_KEY_ENDPOINT as string,
 }
 
 // if (!ALGOLIA_CONFIG.applicationId) {
@@ -157,7 +157,7 @@ export const FEEDBACK_URL = process.env.REACT_APP_FEEDBACK_URL as string
 export const ID = <T = any>(x: T): T => x
 
 /** A void function that does nothing. NOOP means "no operation". */
-export const NOOP = () => { } // eslint-disable-line @typescript-eslint/no-empty-function
+export const NOOP = () => {} // eslint-disable-line @typescript-eslint/no-empty-function
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200
@@ -197,9 +197,8 @@ export const MAX_EXPAND_DEPTH = 5
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
 export const TOOLBAR_DEFAULT_SHORTCUTS = [
-  // disable undo/redo until deepClone is optimized
-  // 'undo',
-  // 'redo',
+  'undo',
+  'redo',
   // 'search',
   'outdent',
   'indent',
@@ -223,13 +222,12 @@ export const EDIT_THROTTLE = 1000
 
 export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
 
-export const REGEXP_URL = /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
+export const REGEXP_URL =
+  /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
 
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 
-export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
-
-export const REGEXP_TAGS = /(<([^>]+)>)/ig
+export const REGEXP_TAGS = /(<([^>]+)>)/gi
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
@@ -242,9 +240,6 @@ export const MODIFIER_KEYS = {
   Shift: 1,
 }
 
-export const CONTEXT_CACHE_SIZE = 10000
-export const THOUGHT_CACHE_SIZE = 10000
-
 // actions representing any cursor movements.
 // These need to be differentiated from the other actions because
 // any two or more such consecutive actions are merged together
@@ -255,7 +250,7 @@ export const NAVIGATION_ACTIONS: Index<string> = {
   cursorForward: 'cursorForward',
   cursorHistory: 'cursorHistory',
   cursorUp: 'cursorUp',
-  setCursor: 'setCursor'
+  setCursor: 'setCursor',
 }
 
 // a list of all undoable/reversible actions (stored as object for indexing)
@@ -296,7 +291,7 @@ export const UNDOABLE_ACTIONS: Index<string> = {
   toggleContextView: 'toggleContextView',
   toggleHiddenThoughts: 'toggleHiddenThoughts',
   toggleSplitView: 'toggleSplitView',
-  toolbarOverlay: 'toolbarOverlay'
+  toolbarOverlay: 'toolbarOverlay',
 }
 
 // modal states
@@ -306,18 +301,22 @@ export const MODALS: Index<string> = {
   home: 'home',
   export: 'export',
   feedback: 'feedback',
-  auth: 'auth'
+  auth: 'auth',
 }
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'
 
 export enum DROP_TARGET {
   EmptyDrop = 'EmptyDrop',
-  ThoughtDrop = 'ThoughtDrop'
+  ThoughtDrop = 'ThoughtDrop',
 }
 
-// eslint-disable-next-line no-useless-escape
-export const EMOJI_REGEX = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/u
+export const EMOJI_REGEX = emojiRegex
+/*
+  Note: Use string.match instead of regex.test when using regex with global modifier. Regex with global modifier  keeps state of it's previous match causing unwanted results.
+        Explaination: https://stackoverflow.com/a/30887581/10168748
+ */
+export const EMOJI_REGEX_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
 export const IGNORED_PREFIXES = ['the ']
 
@@ -326,7 +325,137 @@ export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span']
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
 export const ALLOWED_ATTRIBUTES = {
-  span: ['class', 'style']
+  span: ['class', 'style'],
 }
 
 export const EMPTY_SPACE = '  '
+
+export const META_PROGRAMMING_HELP = [
+  {
+    code: 'bullets',
+    description: 'Options: Bullets, None\nHide the bullets of a context. For a less bullety look.',
+  },
+  {
+    code: 'drop',
+    description:
+      'Options: top, bottom\nControls where in a context an item is placed after drag-and-drop. Default: bottom.',
+  },
+  {
+    code: 'focus',
+    description:
+      'Options: Normal, Zoom\nWhen the cursor is on this thought, hide its parent and siblings for additional focus. Excellent for study time or when you have had too much coffee.',
+  },
+  {
+    code: 'hidden',
+    description: 'Hide the thought.',
+  },
+  {
+    code: 'immovable',
+    description: 'The thought cannot be moved. Not very useful.',
+  },
+  {
+    code: 'label',
+    description: 'Display a note in smaller text underneath the thought. How pretty.',
+  },
+  {
+    code: 'options',
+    description: 'A list of allowed subthoughts. We all have times when we need to be strict.',
+  },
+  {
+    code: 'pin',
+    description: 'Keep a thought expanded, forever. Or at least until you unpin it.',
+  },
+  {
+    code: 'pinChildren',
+    description: "Options: true, false\nKeep all of a thought's subthoughts expanded. A lot of pins.",
+  },
+  {
+    code: 'publish',
+    description: 'Specify meta data for publishing the context as an article.',
+    hasChildren: true,
+    children: [
+      {
+        code: 'Byline',
+        description: 'A small byline of one or more lines to be displayed under the title.',
+      },
+      {
+        code: 'Email',
+        description:
+          'A gravatar email to display as a small avatar next to the Byline. Something professional, or perhaps something sexy?',
+      },
+      {
+        code: 'Title',
+        description: 'Override the title of the article when exported.',
+      },
+    ],
+  },
+  {
+    code: 'readonly',
+    description: 'The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.',
+  },
+  {
+    code: 'src',
+    description: 'Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.',
+  },
+  {
+    code: 'style',
+    description:
+      'Set CSS styles on the thought. You might also consider =styleContainer, =children/=style, =grandchildren/=style.',
+  },
+  {
+    code: 'uneditable',
+    description: 'The thought cannot be edited. How depressing.',
+  },
+  {
+    code: 'unextendable',
+    description: 'New subthoughts may not be added to the thought.',
+  },
+  {
+    code: 'view',
+    description:
+      'Options: Article, List, Table, Prose\n Controls how the thought and its subthoughts are displayed. Use "Table" to create two columns, and "Prose" forlongform writing. Default: List.',
+  },
+]
+
+export const GLOBAL_STYLE_ENV = {
+  '=heading1': {
+    style: {
+      fontSize: '2em',
+      fontWeight: 700,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+  '=heading2': {
+    style: {
+      fontSize: '1.75em',
+      fontWeight: 700,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+  '=heading3': {
+    style: {
+      fontSize: '1.5em',
+      fontWeight: 700,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+  '=heading4': {
+    style: {
+      fontSize: '1.25em',
+      fontWeight: 600,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+  '=heading5': {
+    style: {
+      fontSize: '1.1em',
+      fontWeight: 600,
+      marginTop: '0.5em',
+    },
+    bullet: 'None',
+  },
+}

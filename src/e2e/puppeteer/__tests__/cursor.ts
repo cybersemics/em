@@ -7,18 +7,10 @@ import helpers from '../helpers'
 describe('cursor testing', () => {
   jest.setTimeout(20000)
 
-  const {
-    paste,
-    getEditingText,
-    refresh,
-    waitForEditable,
-    waitForThoughtExistInDb,
-    waitForState,
-    clickThought,
-  } = helpers()
+  const { paste, getEditingText, refresh, waitForEditable, waitForThoughtExistInDb, waitForState, clickThought } =
+    helpers()
 
   it('cursor on a home thought', async () => {
-
     const importText = `
     - A
     - B`
@@ -32,12 +24,17 @@ describe('cursor testing', () => {
     await refresh()
 
     await waitForEditable('B')
+
+    // wait for a re-render in case the lexeme was loaded after the parent
+    // getEditingText will return undefined if we don't wait
+    // we don't currently have a way to tell if a lexeme is missing or just loading
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     const thoughtValue = await getEditingText()
     expect(thoughtValue).toBe('B')
   })
 
   it('cursor on a subthought', async () => {
-
     const importText = `
     - A
       - X
@@ -58,6 +55,12 @@ describe('cursor testing', () => {
     await refresh()
 
     await waitForEditable('Z')
+
+    // wait for a re-render in case the lexeme was loaded after the parent
+    // getEditingText will return undefined if we don't wait
+    // we don't currently have a way to tell if a lexeme is missing or just loading
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     const thoughtValue = await getEditingText()
     expect(thoughtValue).toBe('Z')
   })

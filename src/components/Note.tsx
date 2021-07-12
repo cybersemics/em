@@ -2,33 +2,39 @@ import React, { useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { attribute, hasChild, isContextViewActive } from '../selectors'
+import { attribute, getParent, hasChild, isContextViewActive } from '../selectors'
 import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { Context } from '../types'
 
 interface NoteProps {
-  context: Context,
-  onFocus: (e: React.FocusEvent) => void,
+  context: Context
+  onFocus: (e: React.FocusEvent) => void
 }
 
 /** Gets the editable node for the given note element. */
 const editableOfNote = (noteEl: HTMLElement) => {
   // To prevent incorrect compilation, we need an explict return statement here (https://github.com/cybersemics/em/issues/923#issuecomment-738103132)
-  return (noteEl.parentNode?.previousSibling as HTMLElement)?.querySelector('.editable') as (HTMLElement | null)
+  return (noteEl.parentNode?.previousSibling as HTMLElement)?.querySelector('.editable') as HTMLElement | null
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ context, onFocus }: NoteProps) => {
-
   const state = store.getState()
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
   const [justPasted, setJustPasted] = useState(false)
 
   const hasNote = hasChild(state, context, '=note')
-  if (!hasNote || isContextViewActive(state, context)) return null
+
+  /** Check if the note thought is pending or not. */
+  const isNotePending = () => {
+    const noteThought = getParent(state, [...context, '=note'])
+    return !noteThought || noteThought.pending
+  }
+
+  if (!hasNote || isNotePending() || isContextViewActive(state, context)) return null
 
   const note = attribute(state, context, '=note')
 
@@ -62,8 +68,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
 
       dispatch(deleteAttribute({ context, key: '=note' }))
       dispatch(setNoteFocus({ value: false }))
-    }
-    else if (e.key === 'ArrowDown') {
+    } else if (e.key === 'ArrowDown') {
       e.stopPropagation()
       e.preventDefault()
       selectNextEditable(editable)
@@ -73,17 +78,19 @@ const Note = ({ context, onFocus }: NoteProps) => {
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
     const value = justPasted
-      // if just pasted, strip all HTML from value
-      ? (setJustPasted(false), strip(e.target.value))
-      // Mobile Safari inserts <br> when all text is deleted
-      // Strip <br> from beginning and end of text
-      : e.target.value.replace(/^<br>|<br>$/gi, '')
+      ? // if just pasted, strip all HTML from value
+        (setJustPasted(false), strip(e.target.value))
+      : // Mobile Safari inserts <br> when all text is deleted
+        // Strip <br> from beginning and end of text
+        e.target.value.replace(/^<br>|<br>$/gi, '')
 
-    dispatch(setAttribute({
-      context,
-      key: '=note',
-      value
-    }))
+    dispatch(
+      setAttribute({
+        context,
+        key: '=note',
+        value,
+      }),
+    )
   }
 
   /** Set editing to false onBlur, if keyboard is closed. */
@@ -93,22 +100,25 @@ const Note = ({ context, onFocus }: NoteProps) => {
     }
   }
 
-  return <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
-    <ContentEditable
-      html={note || ''}
-      innerRef={noteRef}
-      placeholder='Enter a note'
-      onKeyDown={onKeyDown}
-      onChange={onChange}
-      onPaste={() => {
-        // set justPasted so onChange can strip HTML from the new value
-        // the default onPaste behavior is maintained for easier caret and selection management
-        setJustPasted(true)
-      }}
-      onBlur={onBlur}
-      onFocus={onFocus}
-    />
-  </div>
+  return (
+    <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
+      <ContentEditable
+        html={note || ''}
+        innerRef={noteRef}
+        className={'note-editable'}
+        placeholder='Enter a note'
+        onKeyDown={onKeyDown}
+        onChange={onChange}
+        onPaste={() => {
+          // set justPasted so onChange can strip HTML from the new value
+          // the default onPaste behavior is maintained for easier caret and selection management
+          setJustPasted(true)
+        }}
+        onBlur={onBlur}
+        onFocus={onFocus}
+      />
+    </div>
+  )
 }
 
 export default Note

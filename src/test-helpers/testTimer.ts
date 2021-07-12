@@ -15,7 +15,7 @@ const testTimer = () => {
     if (!clock) {
       clock = FakeTimer.install({
         now: Date.now(),
-        shouldAdvanceTime: true
+        shouldAdvanceTime: true,
       })
     }
   }

@@ -30,8 +30,16 @@ const ARROW_SCROLL_BUFFER = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-
-  const { cursor, fontSize, thoughts, isLoading, toolbarOverlay, scrollPrioritized, showTopControls, showHiddenThoughts } = state
+  const {
+    cursor,
+    fontSize,
+    thoughts,
+    isLoading,
+    toolbarOverlay,
+    scrollPrioritized,
+    showTopControls,
+    showHiddenThoughts,
+  } = state
 
   return {
     dark: theme(state) !== 'Light',
@@ -44,12 +52,18 @@ const mapStateToProps = (state: State) => {
     cursor,
     showTopControls,
     // Needed to add this to re-render Toolbar when hidden thought is toggled.
-    showHiddenThoughts
+    showHiddenThoughts,
   }
 }
 
 /** Toolbar component. */
-const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopControls }: ReturnType<typeof mapStateToProps>) => {
+const Toolbar = ({
+  dark,
+  fontSize,
+  toolbarOverlay,
+  scrollPrioritized,
+  showTopControls,
+}: ReturnType<typeof mapStateToProps>) => {
   const [holdTimer, setHoldTimer] = useState<Timer>(0 as unknown as Timer)
   const [holdTimer2, setHoldTimer2] = useState<Timer>(0 as unknown as Timer)
   const [lastScrollLeft, setLastScrollLeft] = useState<number | undefined>()
@@ -79,7 +93,11 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
     const toolbarElement = document.getElementById('toolbar')
     if (toolbarElement) {
       setLeftArrowElementClassName(toolbarElement.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
-      setRightArrowElementClassName(toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+      setRightArrowElementClassName(
+        toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER
+          ? 'shown'
+          : 'hidden',
+      )
     }
   }
 
@@ -96,20 +114,20 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
   const startOverlayTimer = (id: string) => {
     // on chrome setTimeout doesn't seem to work on the first click, clearing it before hand fixes the problem
     clearTimeout(holdTimer!)
-    setHoldTimer(setTimeout(() => {
-      if (!scrollPrioritized) {
-        store.dispatch(overlayReveal(id))
-      }
-    }, SHORTCUT_HINT_OVERLAY_TIMEOUT))
+    setHoldTimer(
+      setTimeout(() => {
+        if (!scrollPrioritized) {
+          store.dispatch(overlayReveal(id))
+        }
+      }, SHORTCUT_HINT_OVERLAY_TIMEOUT),
+    )
   }
 
   // fallback to defaults if user does not have Settings defined
   const userShortcutIds = subtree(store.getState(), ['Settings', 'Toolbar', 'Visible:'])
     .map(subthought => subthought.value)
     .filter(shortcutById)
-  const shortcutIds = userShortcutIds.length > 0
-    ? userShortcutIds
-    : TOOLBAR_DEFAULT_SHORTCUTS
+  const shortcutIds = userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS
 
   /**********************************************************************
    * Event Handlers
@@ -148,9 +166,8 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
 
   /** Handles toolbar scroll event. */
   const onScroll = (e: React.UIEvent<HTMLElement>) => {
-    const scrollDifference = lastScrollLeft != null && e.target
-      ? Math.abs(lastScrollLeft - (e.target as HTMLElement).scrollLeft)
-      : 0
+    const scrollDifference =
+      lastScrollLeft != null && e.target ? Math.abs(lastScrollLeft - (e.target as HTMLElement).scrollLeft) : 0
 
     if (scrollDifference >= 5) {
       store.dispatch(scrollPrioritize(true))
@@ -163,12 +180,14 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
 
     // detect scrolling stop and removing scroll prioritization 100ms after end of scroll
     clearTimeout(holdTimer2)
-    setHoldTimer2(setTimeout(() => {
-      if (e.target) {
-        setLastScrollLeft((e.target as HTMLElement).scrollLeft)
-      }
-      store.dispatch(scrollPrioritize(false))
-    }, SCROLL_PRIORITIZATION_TIMEOUT))
+    setHoldTimer2(
+      setTimeout(() => {
+        if (e.target) {
+          setLastScrollLeft((e.target as HTMLElement).scrollLeft)
+        }
+        store.dispatch(scrollPrioritize(false))
+      }, SCROLL_PRIORITIZATION_TIMEOUT),
+    )
   }
 
   /**********************************************************************
@@ -188,51 +207,73 @@ const Toolbar = ({ dark, fontSize, toolbarOverlay, scrollPrioritized, showTopCon
             onTouchMove={onTouchMove}
             onScroll={onScroll}
           >
-            <span id='left-arrow' className={leftArrowElementClassName}><TriangleLeft width={arrowWidth} height={fontSize} fill='gray' /></span>
+            <span id='left-arrow' className={leftArrowElementClassName}>
+              <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
+            </span>
             {shortcutIds.map(id => {
-              const { name, svg, exec, isActive } = shortcutById(id)!
+              const { svg, exec, isActive, canExecute } = shortcutById(id)!
+              const isButtonActive = !isActive || isActive(store.getState)
+              const isButtonExecutable = !canExecute || canExecute(store.getState)
+
               // TODO: type svg correctly
               const SVG = svg as React.FC<Icon>
               return (
                 <div
-                  key={name}
+                  key={id}
                   id={id}
-                  style={pressingToolbarId === id ? { paddingTop: '10px' } : {}}
+                  style={{
+                    paddingTop: isButtonExecutable && pressingToolbarId === id ? '10px' : '',
+                    cursor: isButtonExecutable ? 'pointer' : 'default',
+                  }}
                   className='toolbar-icon'
                   onMouseOver={() => startOverlayTimer(id)}
                   onMouseUp={clearHoldTimer}
-                  onMouseDown={() => setPressingToolbarId(id)}
+                  onMouseDown={e => {
+                    setPressingToolbarId(id)
+                    // prevents editable blur
+                    e.preventDefault()
+                  }}
                   onMouseOut={clearHoldTimer}
                   onTouchEnd={clearHoldTimer}
                   onTouchStart={() => {
                     startOverlayTimer(id)
                     setPressingToolbarId(id)
                   }}
-                  onClick={e => exec(store.dispatch, store.getState, e, { type: 'toolbar' })}
+                  onClick={e => {
+                    e.preventDefault()
+                    if (!isButtonExecutable) return
+                    exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+                  }}
                 >
                   <SVG
                     style={{
-                      fill: !isActive || isActive(store.getState) ? fg : 'gray',
+                      cursor: isButtonExecutable ? 'pointer' : 'default',
+                      fill: isButtonExecutable && isButtonActive ? fg : 'gray',
                       width: fontSize + 4,
                       height: fontSize + 4,
-                    }} />
+                    }}
+                  />
                 </div>
               )
             })}
-            <span id='right-arrow' className={rightArrowElementClassName}><TriangleRight width={arrowWidth} height={fontSize} fill='gray' /></span>
+            <span id='right-arrow' className={rightArrowElementClassName}>
+              <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
+            </span>
           </div>
           <TransitionGroup>
-            {shortcut && toolbarOverlay ?
+            {shortcut && toolbarOverlay ? (
               <CSSTransition timeout={800} classNames='fade'>
                 <div className={isTouch ? 'touch-toolbar-overlay' : 'toolbar-overlay'}>
-                  <div className='overlay-name'>{shortcut.name}</div>
-                  {shortcut.gesture || shortcut.keyboard || shortcut.overlay
-                    ? <div className='overlay-shortcut'><Shortcut {...shortcut} /></div>
-                    : null
-                  }
+                  <div className='overlay-name'>{shortcut.label}</div>
+                  {shortcut.gesture || shortcut.keyboard || shortcut.overlay ? (
+                    <div className='overlay-shortcut'>
+                      <Shortcut {...shortcut} />
+                    </div>
+                  ) : null}
                   <div className='overlay-body'>{shortcut.description}</div>
                 </div>
-              </CSSTransition> : null}
+              </CSSTransition>
+            ) : null}
           </TransitionGroup>
         </div>
       </div>

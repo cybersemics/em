@@ -30,40 +30,59 @@ const StaticThought = ({
   showContexts,
   style,
   simplePath,
-  toggleTopControlsAndBreadcrumbs
+  toggleTopControlsAndBreadcrumbs,
 }: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
   const state = store.getState()
 
-  return <div className='thought'>
+  return (
+    <div className='thought'>
+      {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && (
+        <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging} />
+      )}
 
-    {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging}/>}
+      {showContextBreadcrumbs && !isRoot ? (
+        <ContextBreadcrumbs
+          simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}
+          homeContext={homeContext}
+        />
+      ) : showContexts && simplePath.length > 2 ? (
+        <span className='ellipsis'>
+          <a
+            tabIndex={-1}
+            /* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
+              store.dispatch(expandContextThought(path))
+            }}
+          >
+            ...{' '}
+          </a>
+        </span>
+      ) : null}
 
-    {showContextBreadcrumbs && !isRoot ? <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, simplePath))} homeContext={homeContext} />
-    : showContexts && simplePath.length > 2 ? <span className='ellipsis'><a tabIndex={-1}/* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
-      store.dispatch(expandContextThought(path))
-    }}>... </a></span>
-    : null}
+      {homeContext ? (
+        <HomeLink />
+      ) : isDivider(headValue(simplePath)) ? (
+        <Divider path={simplePath} />
+      ) : (
+        // cannot use simplePathLive here else Editable gets re-rendered during editing
+        <Editable
+          path={path}
+          cursorOffset={cursorOffset}
+          disabled={!isDocumentEditable()}
+          isEditing={isEditing}
+          rank={rank}
+          showContexts={showContexts}
+          style={style}
+          simplePath={simplePath}
+          onKeyDownAction={isTouch ? undefined : toggleTopControlsAndBreadcrumbs}
+        />
+      )}
 
-    {homeContext ? <HomeLink />
-    : isDivider(headValue(simplePath)) ? <Divider path={simplePath} />
-    // cannot use simplePathLive here else Editable gets re-rendered during editing
-    : <Editable
-      path={path}
-      cursorOffset={cursorOffset}
-      disabled={!isDocumentEditable()}
-      isEditing={isEditing}
-      rank={rank}
-      showContexts={showContexts}
-      style={style}
-      simplePath={simplePath}
-      onKeyDownAction={isTouch ? undefined : toggleTopControlsAndBreadcrumbs}
-    />}
-
-    <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />
-  </div>
+      <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />
+    </div>
+  )
 }
 
 export default StaticThought

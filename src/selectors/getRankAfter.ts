@@ -7,7 +7,6 @@ import rootedParentOf from './rootedParentOf'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 const getRankAfter = (state: State, simplePath: SimplePath) => {
-
   const value = headValue(simplePath)
   const rank = headRank(simplePath)
   const parentPath = rootedParentOf(state, simplePath)
@@ -40,16 +39,16 @@ const getRankAfter = (state: State, simplePath: SimplePath) => {
   const nextSubthought = children[i + 1]
 
   const newRank = nextSubthought
-    // provide a safeguard if the rank doesn't change
-    // this *should* never happen, but it will occur if prev and next thought end up with the same rank due to a data integrity isuse
-    ? prevSubthought.rank === nextSubthought.rank
+    ? // provide a safeguard if the rank doesn't change
+      // this *should* never happen, but it will occur if prev and next thought end up with the same rank due to a data integrity isuse
+      prevSubthought.rank === nextSubthought.rank
       ? (console.warn('Duplicate ranks detected', prevSubthought, nextSubthought), prevSubthought.rank - Math.random()) // nudge into non-conflicting rank
-      // default case set the rank halfway between the prev and next thoughts
-      // set slightly closer to prev thought to allow sorting empty thoughts at the point of creation in alphabetically sorted contexts
-      // use a fraction of prevSubthought.rank in order to maintain a nearby order of magnitude without forcing the halving function to jump an order of magnitude
-      : (prevSubthought.rank + nextSubthought.rank) / 2 - prevSubthought.rank * 0.001
-    // if there is no next thought (i.e. the thought is the last child) then simply increment the rank
-    : prevSubthought.rank + 1
+      : // default case set the rank halfway between the prev and next thoughts
+        // set slightly closer to prev thought to allow sorting empty thoughts at the point of creation in alphabetically sorted contexts
+        // use a fraction of prevSubthought.rank in order to maintain a nearby order of magnitude without forcing the halving function to jump an order of magnitude
+        (prevSubthought.rank + nextSubthought.rank) / 2 - prevSubthought.rank * 10e-8
+    : // if there is no next thought (i.e. the thought is the last child) then simply increment the rank
+      prevSubthought.rank + 1
 
   // guard against NaN/undefined
   return newRank || 0

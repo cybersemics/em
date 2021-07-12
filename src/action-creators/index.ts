@@ -4,8 +4,11 @@ import { Thunk } from '../types'
 import * as reducers from '../reducers'
 
 /** Wraps a static action in a thunk. */
-const reducerToThunk = <T extends (state: State, payload: any) => Record<string, any>>(name: string) =>
-  (payload?: Parameters<T>[1]): Thunk<void> => dispatch => dispatch({ type: name, ...payload })
+const reducerToThunk =
+  <T extends (state: State, payload: any) => Record<string, any>>(name: string) =>
+  (payload?: Parameters<T>[1]): Thunk<void> =>
+  dispatch =>
+    dispatch({ type: name, ...payload })
 
 // export all reducers as properly typed thunks
 export const addLatestShortcuts = reducerToThunk<typeof reducers.addLatestShortcuts>('addLatestShortcuts')
@@ -26,7 +29,8 @@ export const cursorUp = reducerToThunk<typeof reducers.cursorUp>('cursorUp')
 export const deleteAttribute = reducerToThunk<typeof reducers.deleteAttribute>('deleteAttribute')
 export const deleteData = reducerToThunk<typeof reducers.deleteData>('deleteData')
 export const deleteEmptyThought = reducerToThunk<typeof reducers.deleteEmptyThought>('deleteEmptyThought')
-export const deleteThoughtWithCursor = reducerToThunk<typeof reducers.deleteThoughtWithCursor>('deleteThoughtWithCursor')
+export const deleteThoughtWithCursor =
+  reducerToThunk<typeof reducers.deleteThoughtWithCursor>('deleteThoughtWithCursor')
 export const dragHold = reducerToThunk<typeof reducers.dragHold>('dragHold')
 export const editableRender = reducerToThunk<typeof reducers.editableRender>('editableRender')
 export const editing = reducerToThunk<typeof reducers.editing>('editing')
@@ -36,12 +40,13 @@ export const expandHoverTop = reducerToThunk<typeof reducers.expandHoverTop>('ex
 export const expandBottom = reducerToThunk<typeof reducers.expandBottom>('expandBottom')
 export const editThought = reducerToThunk<typeof reducers.editThought>('editThought')
 export const deleteThought = reducerToThunk<typeof reducers.deleteThought>('deleteThought')
-export const moveThought = reducerToThunk<typeof reducers.moveThought>('moveThought')
 export const extractThought = reducerToThunk<typeof reducers.extractThought>('extractThought')
+export const heading = reducerToThunk<typeof reducers.heading>('heading')
 export const indent = reducerToThunk<typeof reducers.indent>('indent')
 export const isPushing = reducerToThunk<typeof reducers.isPushing>('isPushing')
 export const join = reducerToThunk<typeof reducers.join>('join')
-export const modalRemindMeLater = reducerToThunk<typeof reducers.modalRemindMeLater>('modalRemindMeLater')
+export const closeModal = reducerToThunk<typeof reducers.closeModal>('closeModal')
+export const moveThought = reducerToThunk<typeof reducers.moveThought>('moveThought')
 export const moveThoughtDown = reducerToThunk<typeof reducers.moveThoughtDown>('moveThoughtDown')
 export const moveThoughtUp = reducerToThunk<typeof reducers.moveThoughtUp>('moveThoughtUp')
 export const newGrandChild = reducerToThunk<typeof reducers.newGrandChild>('newGrandChild')
@@ -50,7 +55,6 @@ export const createThought = reducerToThunk<typeof reducers.createThought>('crea
 export const outdent = reducerToThunk<typeof reducers.outdent>('outdent')
 export const prependRevision = reducerToThunk<typeof reducers.prependRevision>('prependRevision')
 export const reconcile = reducerToThunk<typeof reducers.reconcile>('reconcile')
-export const render = reducerToThunk<typeof reducers.render>('render')
 export const search = reducerToThunk<typeof reducers.search>('search')
 export const setRemoteSearch = reducerToThunk<typeof reducers.setRemoteSearch>('setRemoteSearch')
 export const searchContexts = reducerToThunk<typeof reducers.searchContexts>('searchContexts')

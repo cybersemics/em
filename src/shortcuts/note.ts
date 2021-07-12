@@ -8,12 +8,12 @@ import { HOME_PATH } from '../constants'
 
 const noteShortcut: Shortcut = {
   id: 'note',
-  name: 'Note',
+  label: 'Note',
   description: 'Add a small note beneath a thought.',
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
   svg: PencilIcon,
-  canExecute: () => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor, noteFocus } = state
@@ -29,11 +29,13 @@ const noteShortcut: Shortcut = {
     }
 
     if (!hasNote) {
-      dispatch(setAttribute({
-        context,
-        key: '=note',
-        value: ''
-      }))
+      dispatch(
+        setAttribute({
+          context,
+          key: '=note',
+          value: '',
+        }),
+      )
     }
 
     // focus selection on note
@@ -59,8 +61,7 @@ const noteShortcut: Shortcut = {
           noteEl.focus()
           setSelection(noteEl, { end: true })
         }
-      }
-      catch (e) {
+      } catch (e) {
         console.warn('Note element not found in DOM.', context)
       }
     }, 0)
@@ -70,7 +71,7 @@ const noteShortcut: Shortcut = {
     const { cursor } = state
     const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
     return attribute(state, context, '=note') != null
-  }
+  },
 }
 
 export default noteShortcut

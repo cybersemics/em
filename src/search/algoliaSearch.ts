@@ -18,19 +18,19 @@ export const getRemoteSearch = (remoteDataProvider: DataProvider) => {
   const searchAndGenerateContextMap = async (value: string): Promise<Index<Context>> => {
     if (!searchIndex) throw new Error('Algolia search index has not be initiated.')
     const result = await searchIndex.search(value)
-    const hits = (result.hits as any) as Record<'thoughtHash' | 'value', string>[]
+    const hits = result.hits as any as Record<'thoughtHash' | 'value', string>[]
     const lexemes = await remoteDataProvider.getThoughtsByIds(hits.map(hit => hit.thoughtHash))
     return getContextMap(lexemes)
   }
 
   return {
-    searchAndGenerateContextMap
+    searchAndGenerateContextMap,
   }
 }
 
 interface AlgoliaConfig {
-  applicationId: string,
-  index: string,
+  applicationId: string
+  index: string
 }
 
 /**

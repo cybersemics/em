@@ -1,7 +1,15 @@
 import _ from 'lodash'
-import { render, updateThoughts } from '../reducers'
+import { updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
-import { exists, getThought, getAllChildren, getChildrenRanked, isPending, rankThoughtsFirstMatch, rootedParentOf } from '../selectors'
+import {
+  getAllChildren,
+  getChildrenRanked,
+  getLexeme,
+  hasLexeme,
+  isPending,
+  rankThoughtsFirstMatch,
+  rootedParentOf,
+} from '../selectors'
 import { State } from '../util/initialState'
 import { Child, Context, Index, Lexeme, Parent } from '../types'
 
@@ -19,31 +27,30 @@ import {
 import { getSessionId } from '../util/sessionManager'
 
 interface Payload {
-  context: Context,
-  thoughtRanked: Child,
-  showContexts?: boolean,
+  context: Context
+  thoughtRanked: Child
+  showContexts?: boolean
 }
 
 interface ThoughtUpdates {
-  contextIndex: Index<Parent | null>,
-  thoughtIndex: Index<Lexeme | null>,
-  pendingDeletes?: { context: Context, child: Child }[],
+  contextIndex: Index<Parent | null>
+  thoughtIndex: Index<Lexeme | null>
+  pendingDeletes?: { context: Context; child: Child }[]
 }
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions. */
 const deleteThought = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
-
   const { value, rank } = thoughtRanked
 
-  if (!exists(state, value)) return state
+  if (!hasLexeme(state, value)) return state
 
   const thoughts = unroot(context.concat(value))
   context = rootedParentOf(state, thoughts)
   const key = hashThought(value)
-  const thought = getThought(state, value)
+  const lexeme = getLexeme(state, value)
 
   // guard against missing lexeme (although this should never happen)
-  if (!thought) {
+  if (!lexeme) {
     console.error('Lexeme not found', value)
     return state
   }
@@ -52,7 +59,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
-  const isValidThought = thought.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
+  const isValidThought = lexeme.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
 
   // if thought is not valid then just stop further execution
   if (!isValidThought) {
@@ -64,22 +71,19 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
     recentlyEdited = treeDelete(state.recentlyEdited, oldRankedThoughts)
-  }
-  catch (e) {
+  } catch (e) {
     console.error('deleteThought: treeDelete immer error')
     console.error(e)
   }
 
   // the old thought less the context
-  const newOldThought = thought.contexts && thought.contexts.length > 1
-    ? removeContext(thought, context, showContexts ? 0 : rank)
-    : null
+  const newOldThought =
+    lexeme.contexts && lexeme.contexts.length > 1 ? removeContext(lexeme, context, showContexts ? 0 : rank) : null
 
   // update state so that we do not have to wait for firebase
   if (newOldThought) {
     thoughtIndexNew[key] = newOldThought
-  }
-  else {
+  } else {
     delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
   }
 
@@ -87,8 +91,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getAllChildren(state, context)
-    .filter(child => !equalThoughtRanked(child, { value, rank }))
+  const subthoughts = getAllChildren(state, context).filter(child => !equalThoughtRanked(child, { value, rank }))
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts: Context, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
@@ -98,94 +101,100 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
       ...state,
       thoughts: {
         ...state.thoughts,
-        thoughtIndex: thoughtIndexNew
-      }
+        thoughtIndex: thoughtIndexNew,
+      },
     }
 
-    return getChildrenRanked(stateNew, thoughts).reduce((accum, child) => {
-      const hashedKey = hashThought(child.value)
-      const childThought = getThought(stateNew, child.value)
-      const childNew = childThought && childThought.contexts && childThought.contexts.length > 1
-        // update child with deleted context removed
-        ? removeContext(childThought, thoughts, child.rank)
-        // if this was the only context of the child, delete the child
-        : null
+    return getChildrenRanked(stateNew, thoughts).reduce(
+      (accum, child) => {
+        const hashedKey = hashThought(child.value)
+        const childThought = getLexeme(stateNew, child.value)
+        const childNew =
+          childThought && childThought.contexts && childThought.contexts.length > 1
+            ? // update child with deleted context removed
+              removeContext(childThought, thoughts, child.rank)
+            : // if this was the only context of the child, delete the child
+              null
 
-      // update local thoughtIndex so that we do not have to wait for firebase
-      if (childNew) {
-        thoughtIndexNew[hashedKey] = childNew
-      }
-      else {
-        delete thoughtIndexNew[hashedKey] // eslint-disable-line fp/no-delete
-      }
+        // update local thoughtIndex so that we do not have to wait for firebase
+        if (childNew) {
+          thoughtIndexNew[hashedKey] = childNew
+        } else {
+          delete thoughtIndexNew[hashedKey] // eslint-disable-line fp/no-delete
+        }
 
-      const thoughtIndexMerged = {
-        ...accumRecursive.thoughtIndex,
-        ...accum.thoughtIndex,
-        [hashedKey]: childNew
-      }
+        const thoughtIndexMerged = {
+          ...accumRecursive.thoughtIndex,
+          ...accum.thoughtIndex,
+          [hashedKey]: childNew,
+        }
 
-      const contextIndexMerged = {
-        ...accumRecursive.contextIndex,
-        ...accum.contextIndex,
-      }
+        const contextIndexMerged = {
+          ...accumRecursive.contextIndex,
+          ...accum.contextIndex,
+        }
 
-      const childContext = [...thoughts, child.value]
+        const childContext = [...thoughts, child.value]
 
-      // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
-      if (isPending(stateNew, childContext)) {
+        // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
+        if (isPending(stateNew, childContext)) {
+          return {
+            ...accum,
+            ...accumRecursive,
+            // do not delete the pending thought yet since the second call to deleteThought needs a starting point
+            pendingDeletes: [
+              ...(accumRecursive.pendingDeletes || []),
+              {
+                context: thoughts,
+                child,
+              },
+            ],
+          }
+        }
+
+        // RECURSION
+        const recursiveResults = recursiveDeletes(childContext, {
+          ...accum,
+          ...accumRecursive,
+          contextIndex: contextIndexMerged,
+          thoughtIndex: thoughtIndexMerged,
+        })
+
         return {
           ...accum,
           ...accumRecursive,
-          // do not delete the pending thought yet since the second call to deleteThought needs a starting point
-          pendingDeletes: [...accumRecursive.pendingDeletes || [], {
-            context: thoughts,
-            child,
-          }],
+          pendingDeletes: [
+            ...(accum.pendingDeletes || []),
+            ...(accumRecursive.pendingDeletes || []),
+            ...(recursiveResults.pendingDeletes || []),
+          ],
+          thoughtIndex: {
+            ...thoughtIndexMerged,
+            ...recursiveResults.thoughtIndex,
+          },
+          contextIndex: {
+            ...contextIndexMerged,
+            ...recursiveResults.contextIndex,
+          },
         }
-      }
-
-      // RECURSION
-      const recursiveResults = recursiveDeletes(childContext, {
-        ...accum,
-        ...accumRecursive,
-        contextIndex: contextIndexMerged,
-        thoughtIndex: thoughtIndexMerged,
-      })
-
-      return {
-        ...accum,
-        ...accumRecursive,
-        pendingDeletes: [
-          ...accum.pendingDeletes || [],
-          ...accumRecursive.pendingDeletes || [],
-          ...recursiveResults.pendingDeletes || [],
-        ],
-        thoughtIndex: {
-          ...thoughtIndexMerged,
-          ...recursiveResults.thoughtIndex
-        },
-        contextIndex: {
-          ...contextIndexMerged,
-          ...recursiveResults.contextIndex
-        }
-      }
-    }, {
-      thoughtIndex: {},
-      contextIndex: {
-        [hashContext(thoughts)]: null
       },
-    } as ThoughtUpdates)
+      {
+        thoughtIndex: {},
+        contextIndex: {
+          [hashContext(thoughts)]: null,
+        },
+      } as ThoughtUpdates,
+    )
   }
 
   // do not delete descendants when the thought has a duplicate sibling
   const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value || '') === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(thoughts)
-    : {
-      thoughtIndex: {},
-      contextIndex: {}
-    } as ThoughtUpdates
+    : ({
+        thoughtIndex: {},
+        contextIndex: {},
+      } as ThoughtUpdates)
 
   const thoughtIndexUpdates = {
     [key]: newOldThought,
@@ -195,15 +204,18 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
 
   const contextIndexUpdates = {
     // current thought's Parent
-    [contextEncoded]: subthoughts.length > 0 ? {
-      id: contextEncoded,
-      context,
-      children: subthoughts,
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId()
-    } as Parent : null,
+    [contextEncoded]:
+      subthoughts.length > 0
+        ? ({
+            id: contextEncoded,
+            context,
+            children: subthoughts,
+            lastUpdated: timestamp(),
+            updatedBy: getSessionId(),
+          } as Parent)
+        : null,
     // descendants
-    ...descendantUpdatesResult.contextIndex
+    ...descendantUpdatesResult.contextIndex,
   }
 
   return reducerFlow([
@@ -217,7 +229,6 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
       recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
     }),
-    render,
   ])(state)
 }
 

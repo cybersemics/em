@@ -1,6 +1,7 @@
 import { initialState, reducerFlow } from '../../util'
-import { setCursor, importText } from '../../reducers'
-import { EMPTY_SPACE } from '../../constants'
+import { editThought, importText, setCursor } from '../../reducers'
+import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
+import { SimplePath } from '../../types'
 import exportContext from '../exportContext'
 
 it('meta and archived thoughts are included', () => {
@@ -11,10 +12,7 @@ it('meta and archived thoughts are included', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -37,10 +35,7 @@ it('meta is included but archived thoughts are excluded', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -61,16 +56,14 @@ it('meta is excluded', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', {
-    excludeMeta: true, excludeArchived: true
+    excludeMeta: true,
+    excludeArchived: true,
   })
 
   expect(exported).toBe(`- a
@@ -85,10 +78,7 @@ it('meta is excluded but archived is included', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -103,10 +93,7 @@ it('exported as plain text', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -121,10 +108,7 @@ it('exported as html', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [
-    importText({ text }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] })
-  ]
+  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -138,4 +122,33 @@ it('exported as html', () => {
     </ul>
   </li>
 </ul>`)
+})
+
+// This should never happen (newlines are converted to new thoughts on import) but guard against newlines just in case.
+// Otherwise re-importing is disastrous (text after the newline are moved to the root)
+it('export multi-line thoughts as separate thoughts', () => {
+  const text = `- a
+  - b
+    - Hello`
+
+  const steps = [
+    importText({ text }),
+    editThought({
+      oldValue: 'Hello',
+      newValue: 'Hello\nworld',
+      context: ['a', 'b'],
+      path: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ] as SimplePath,
+    }),
+  ]
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - Hello
+      - world`)
 })

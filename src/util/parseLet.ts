@@ -11,7 +11,7 @@ export const parseLet = (state: State, context: Context): LazyEnv => {
     const contextChild = unroot([...contextLet, child.value])
     return {
       ...accum,
-      [child.value]: contextChild
+      [child.value]: contextChild,
     }
   }, {})
 }

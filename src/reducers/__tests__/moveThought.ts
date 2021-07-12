@@ -1,6 +1,15 @@
 import { HOME_TOKEN } from '../../constants'
 import { equalArrays, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getThought, getAllChildren, getChildrenRanked, getRankAfter, getChildren, isPending } from '../../selectors'
+import {
+  exportContext,
+  getContexts,
+  getLexeme,
+  getAllChildren,
+  getChildrenRanked,
+  getRankAfter,
+  getChildren,
+  isPending,
+} from '../../selectors'
 import { moveThought, importText, newSubthought, newThought, setCursor } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import { State } from '../../util/initialState'
@@ -14,7 +23,6 @@ import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFi
 const timer = testTimer()
 
 it('move within root', () => {
-
   const steps = [
     newThought('a'),
     newThought('b'),
@@ -33,49 +41,56 @@ it('move within root', () => {
   - a`)
 
   // b should exist in the ROOT context
-  expect(getContexts(stateNew, 'b'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'b')).toMatchObject([
+    {
       context: [HOME_TOKEN],
       rank: -1,
-    }])
-
+    },
+  ])
 })
 
 it('persist id on move', () => {
-
-  const steps1 = [
-    newThought('a'),
-    newSubthought('a1'),
-    newSubthought('a2'),
-  ]
+  const steps1 = [newThought('a'), newSubthought('a1'), newSubthought('a2')]
 
   const stateNew1 = reducerFlow(steps1)(initialState())
-  const oldExactThought = getThought(stateNew1, 'a2')!.contexts.find(thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0)
+  const oldExactThought = getLexeme(stateNew1, 'a2')!.contexts.find(
+    thought => equalArrays(thought.context, ['a', 'a1']) && thought.rank === 0,
+  )
   const oldId = oldExactThought?.id
 
   const steps2 = [
     moveThought({
-      oldPath: [{ value: 'a', rank: 0 }, { value: 'a1', rank: 0 }],
+      oldPath: [
+        { value: 'a', rank: 0 },
+        { value: 'a1', rank: 0 },
+      ],
       newPath: [{ value: 'a1', rank: 1 }],
     }),
   ]
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
-  const newExactThought = getThought(stateNew2, 'a2')!.contexts.find(thought => equalArrays(thought.context, ['a1']) && thought.rank === 0)
+  const newExactThought = getLexeme(stateNew2, 'a2')!.contexts.find(
+    thought => equalArrays(thought.context, ['a1']) && thought.rank === 0,
+  )
   const newId = newExactThought?.id
 
   expect(oldId).toEqual(newId)
 })
 
 it('move within context', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('a1'),
     newThought('a2'),
     moveThought({
-      oldPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }],
+      oldPath: [
+        { value: 'a', rank: 0 },
+        { value: 'a2', rank: 1 },
+      ],
+      newPath: [
+        { value: 'a', rank: 0 },
+        { value: 'a2', rank: -1 },
+      ],
     }),
   ]
 
@@ -89,24 +104,29 @@ it('move within context', () => {
     - a1`)
 
   // context of a2 should remain unchanged
-  expect(getContexts(stateNew, 'a2'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'a2')).toMatchObject([
+    {
       context: ['a'],
       rank: -1,
-    }])
-
+    },
+  ])
 })
 
 it('move across contexts', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('a1'),
     newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     moveThought({
-      oldPath: [{ value: 'b', rank: 0 }, { value: 'b1', rank: 0 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'b1', rank: 1 }],
+      oldPath: [
+        { value: 'b', rank: 0 },
+        { value: 'b1', rank: 0 },
+      ],
+      newPath: [
+        { value: 'a', rank: 0 },
+        { value: 'b1', rank: 1 },
+      ],
     }),
   ]
 
@@ -121,16 +141,15 @@ it('move across contexts', () => {
   - b`)
 
   // b1 should exist in context a
-  expect(getContexts(stateNew, 'b1'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'b1')).toMatchObject([
+    {
       context: ['a'],
       rank: 1,
-    }])
-
+    },
+  ])
 })
 
 it('move descendants', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('a1'),
@@ -157,48 +176,55 @@ it('move descendants', () => {
       - a1.1`)
 
   // context of b should remain to be ROOT
-  expect(getContexts(stateNew, 'b'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'b')).toMatchObject([
+    {
       context: [HOME_TOKEN],
       rank: -1,
-    }])
+    },
+  ])
 
   // contexts of both the descendants of b should change
-  expect(getContexts(stateNew, 'b1'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'b1')).toMatchObject([
+    {
       context: ['b'],
       rank: 0,
-    }])
-  expect(getContexts(stateNew, 'b1.1'))
-    .toMatchObject([{
+    },
+  ])
+  expect(getContexts(stateNew, 'b1.1')).toMatchObject([
+    {
       context: ['b', 'b1'],
       rank: 0,
-    }])
-
+    },
+  ])
 })
 
 it('moving cursor thought should update cursor', () => {
-
   const steps = [
     newThought('a'),
     newSubthought('a1'),
     newThought('a2'),
     moveThought({
-      oldPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: 1 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }],
+      oldPath: [
+        { value: 'a', rank: 0 },
+        { value: 'a2', rank: 1 },
+      ],
+      newPath: [
+        { value: 'a', rank: 0 },
+        { value: 'a2', rank: -1 },
+      ],
     }),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }, { value: 'a2', rank: -1 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: 'a2', rank: -1 },
+  ])
 })
 
 it('moving ancestor of cursor should update cursor', () => {
-
   const steps = [
     newThought('a'),
     newThought('b'),
@@ -208,19 +234,19 @@ it('moving ancestor of cursor should update cursor', () => {
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
     }),
-
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'b', rank: -1 }, { value: 'b1', rank: 0 }, { value: 'b1.1', rank: 0 }])
-
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'b', rank: -1 },
+    { value: 'b1', rank: 0 },
+    { value: 'b1.1', rank: 0 },
+  ])
 })
 
 it('moving unrelated thought should not update cursor', () => {
-
   const steps = [
     newThought('a'),
     newThought('b'),
@@ -231,19 +257,15 @@ it('moving unrelated thought should not update cursor', () => {
       oldPath: [{ value: 'b', rank: 1 }],
       newPath: [{ value: 'b', rank: -1 }],
     }),
-
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor)
-    .toMatchObject([{ value: 'a', rank: 0 }])
-
+  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
 })
 
 it('move root thought into another root thought', () => {
-
   const text = `
   - x
   - a
@@ -254,7 +276,10 @@ it('move root thought into another root thought', () => {
     importText({ text }),
     moveThought({
       oldPath: [{ value: 'a', rank: 1 }],
-      newPath: [{ value: 'x', rank: 0 }, { value: 'a', rank: 0 }],
+      newPath: [
+        { value: 'x', rank: 0 },
+        { value: 'a', rank: 0 },
+      ],
     }),
   ]
 
@@ -267,28 +292,29 @@ it('move root thought into another root thought', () => {
       - b
         - c`)
 
-  expect(getContexts(stateNew, 'a'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'a')).toMatchObject([
+    {
       context: ['x'],
       rank: 0,
-    }])
+    },
+  ])
 
-  expect(getContexts(stateNew, 'b'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'b')).toMatchObject([
+    {
       context: ['x', 'a'],
       rank: 0,
-    }])
-  expect(getContexts(stateNew, 'c'))
-    .toMatchObject([{
+    },
+  ])
+  expect(getContexts(stateNew, 'c')).toMatchObject([
+    {
       context: ['x', 'a', 'b'],
       rank: 0,
-    }])
-
+    },
+  ])
 })
 
 // ensure that siblings of descendants are properly merged into final result
 it('move descendants with siblings', () => {
-
   const text = `
   - a
     - b
@@ -298,7 +324,10 @@ it('move descendants with siblings', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+      oldPath: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ],
       newPath: [{ value: 'b', rank: 1 }],
     }),
   ]
@@ -313,28 +342,29 @@ it('move descendants with siblings', () => {
     - d`)
 
   // b should exist in the ROOT context
-  expect(getContexts(stateNew, 'b'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'b')).toMatchObject([
+    {
       context: [HOME_TOKEN],
       rank: 1,
-    }])
+    },
+  ])
 
   // context for both the descendants of b should change
-  expect(getContexts(stateNew, 'c'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'c')).toMatchObject([
+    {
       context: ['b'],
       rank: 0,
-    }])
-  expect(getContexts(stateNew, 'd'))
-    .toMatchObject([{
+    },
+  ])
+  expect(getContexts(stateNew, 'd')).toMatchObject([
+    {
       context: ['b'],
       rank: 1,
-    }])
-
+    },
+  ])
 })
 
 it('merge duplicate with new rank', () => {
-
   const text = `
   - a
     - m
@@ -346,7 +376,10 @@ it('merge duplicate with new rank', () => {
     importText({ text }),
     moveThought({
       oldPath: [{ value: 'm', rank: 1 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
+      newPath: [
+        { value: 'a', rank: 0 },
+        { value: 'm', rank: 0 },
+      ],
     }),
   ]
 
@@ -361,20 +394,18 @@ it('merge duplicate with new rank', () => {
       - y`)
 
   // use destinate rank of duplicate thoughts
-  expect(getAllChildren(stateNew, ['a']))
-    .toMatchObject([{ value: 'm', rank: 0 }])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'm', rank: 0 }])
 
   // merged thought should only exist in destination context
-  expect(getContexts(stateNew, 'm'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'm')).toMatchObject([
+    {
       context: ['a'],
       rank: 0,
-    }])
-
+    },
+  ])
 })
 
 it('merge with duplicate with duplicate rank', () => {
-
   const text = `
   - a
     - m
@@ -386,7 +417,10 @@ it('merge with duplicate with duplicate rank', () => {
     importText({ text }),
     moveThought({
       oldPath: [{ value: 'm', rank: 1 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'm', rank: 0 }],
+      newPath: [
+        { value: 'a', rank: 0 },
+        { value: 'm', rank: 0 },
+      ],
     }),
   ]
 
@@ -401,20 +435,18 @@ it('merge with duplicate with duplicate rank', () => {
       - y`)
 
   // use destinate rank of duplicate thoughts
-  expect(getAllChildren(stateNew, ['a']))
-    .toMatchObject([{ value: 'm', rank: 0 }])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'm', rank: 0 }])
 
   // merged thought should only exist in destination context
-  expect(getContexts(stateNew, 'm'))
-    .toMatchObject([{
+  expect(getContexts(stateNew, 'm')).toMatchObject([
+    {
       context: ['a'],
       rank: 0,
-    }])
-
+    },
+  ])
 })
 
 it('move with duplicate descendant', () => {
-
   const text = `
   - a
   - b
@@ -426,7 +458,10 @@ it('move with duplicate descendant', () => {
     importText({ text }),
     moveThought({
       oldPath: [{ value: 'b', rank: 1 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+      newPath: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ],
     }),
   ]
 
@@ -443,16 +478,13 @@ it('move with duplicate descendant', () => {
         - x`)
 
   // x should have contexts a/b and a/b/y
-  expect(getContexts(stateNew, 'x'))
-    .toMatchObject([
-      { context: ['a', 'b'], rank: 0 },
-      { context: ['a', 'b', 'y'], rank: 0 }
-    ])
-
+  expect(getContexts(stateNew, 'x')).toMatchObject([
+    { context: ['a', 'b'], rank: 0 },
+    { context: ['a', 'b', 'y'], rank: 0 },
+  ])
 })
 
 it('move with hash matched descendant', () => {
-
   const text = `
   - a
   - b
@@ -463,7 +495,10 @@ it('move with hash matched descendant', () => {
     importText({ text }),
     moveThought({
       oldPath: [{ value: 'b', rank: 1 }],
-      newPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+      newPath: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ],
     }),
   ]
 
@@ -477,16 +512,13 @@ it('move with hash matched descendant', () => {
         - note`)
 
   // note should have contexts a/b and a/b/=note
-  expect(getContexts(stateNew, 'note'))
-    .toMatchObject([
-      { context: ['a', 'b'], rank: 0 },
-      { context: ['a', 'b', '=note'], rank: 0 }
-    ])
-
+  expect(getContexts(stateNew, 'note')).toMatchObject([
+    { context: ['a', 'b'], rank: 0 },
+    { context: ['a', 'b', '=note'], rank: 0 },
+  ])
 })
 
 it('move with nested duplicate thoughts', () => {
-
   const text = `
   - a
     - b
@@ -497,7 +529,10 @@ it('move with nested duplicate thoughts', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'c', rank: 1 }, { value: 'a', rank: 0 }],
+      oldPath: [
+        { value: 'c', rank: 1 },
+        { value: 'a', rank: 0 },
+      ],
       newPath: [{ value: 'a', rank: 0 }],
     }),
   ]
@@ -511,15 +546,10 @@ it('move with nested duplicate thoughts', () => {
   - c`)
 
   // b should be in in the context of a
-  expect(getContexts(stateNew, 'b'))
-    .toMatchObject([
-      { context: ['a'], rank: 0 },
-    ])
-
+  expect(getContexts(stateNew, 'b')).toMatchObject([{ context: ['a'], rank: 0 }])
 })
 
 it('move with nested duplicate thoughts and merge their children', () => {
-
   const text = `
   - a
     - b
@@ -535,7 +565,10 @@ it('move with nested duplicate thoughts and merge their children', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'p', rank: 1 }, { value: 'a', rank: 0 }],
+      oldPath: [
+        { value: 'p', rank: 1 },
+        { value: 'a', rank: 0 },
+      ],
       newPath: [{ value: 'a', rank: 0 }],
     }),
   ]
@@ -553,19 +586,13 @@ it('move with nested duplicate thoughts and merge their children', () => {
   - p`)
 
   // b should only be in context ['a']
-  expect(getContexts(stateNew, 'b'))
-    .toMatchObject([
-      { context: ['a'], rank: 0 },
-    ])
+  expect(getContexts(stateNew, 'b')).toMatchObject([{ context: ['a'], rank: 0 }])
 
   // context ['p', 'a'] should not have any garbage children
   expect(getChildrenRanked(stateNew, ['p', 'a'])).toHaveLength(0)
 
   // c should only be in context ['a', 'b']
-  expect(getContexts(stateNew, 'c'))
-    .toMatchObject([
-      { context: ['a', 'b'], rank: 0 },
-    ])
+  expect(getContexts(stateNew, 'c')).toMatchObject([{ context: ['a', 'b'], rank: 0 }])
 
   // context ['p', 'a', 'b'] should not have any garbage children
   expect(getChildrenRanked(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
@@ -573,7 +600,6 @@ it('move with nested duplicate thoughts and merge their children', () => {
 
 // Issue: https://github.com/cybersemics/em/issues/1096
 it('data integrity test', () => {
-
   const text = `
   - k
     - a
@@ -584,8 +610,14 @@ it('data integrity test', () => {
   const steps = [
     importText({ text }),
     moveThought({
-      oldPath: [{ value: 'k', rank: 0 }, { value: 'a', rank: 0 }],
-      newPath: [{ value: 'm', rank: 0 }],
+      oldPath: [
+        { value: 'k', rank: 0 },
+        { value: 'a', rank: 0 },
+      ],
+      newPath: [
+        { value: 'm', rank: 1 },
+        { value: 'a', rank: 0 },
+      ],
     }),
   ]
 
@@ -601,7 +633,6 @@ it('data integrity test', () => {
 })
 
 it('consitent rank between thoughtIndex and contextIndex on duplicate merge', () => {
-
   const text = `
   - a
     - b
@@ -611,10 +642,13 @@ it('consitent rank between thoughtIndex and contextIndex on duplicate merge', ()
     importText({ text }),
     (state: State) =>
       moveThought(state, {
-        oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
+        oldPath: [
+          { value: 'a', rank: 0 },
+          { value: 'b', rank: 0 },
+        ],
         // Note: Here new rank will be 0.5 because it's calculated between a (0) and b (1)
         newPath: [{ value: 'b', rank: getRankAfter(state, [{ value: 'a', rank: 0 }] as SimplePath) }],
-      })
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -666,9 +700,15 @@ it('pending destination should be merged correctly (fetch pending before move)',
 
   appStore.dispatch([
     existingThoughtMoveAction({
-      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
-      newPath: [{ value: 'd', rank: 1 }, { value: 'b', rank: 1 }],
-    })
+      oldPath: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ],
+      newPath: [
+        { value: 'd', rank: 1 },
+        { value: 'b', rank: 1 },
+      ],
+    }),
   ])
   await timer.runAllAsync()
 
@@ -681,7 +721,6 @@ it('pending destination should be merged correctly (fetch pending before move)',
     { value: 'one', rank: 2 },
     { value: 'two', rank: 3 },
   ])
-
 })
 
 it('only fetch the descendants upto the possible conflicting path', async () => {
@@ -726,11 +765,16 @@ it('only fetch the descendants upto the possible conflicting path', async () => 
 
   appStore.dispatch([
     existingThoughtMoveAction({
-      oldPath: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }],
-      newPath: [{ value: 'p', rank: 1 }, { value: 'b', rank: 1 }],
-    })
-  ]
-  )
+      oldPath: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ],
+      newPath: [
+        { value: 'p', rank: 1 },
+        { value: 'b', rank: 1 },
+      ],
+    }),
+  ])
   await timer.runAllAsync()
 
   timer.useRealTimer()

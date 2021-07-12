@@ -6,5 +6,4 @@ import { Child } from '../types'
       // finds the thought with value 'test'
       path.map(equalThoughtValue('test')).
  */
-export const equalThoughtValue = (value: string) => (thought: Child) =>
-  thought && thought.value === value
+export const equalThoughtValue = (value: string) => (thought: Child) => thought && thought.value === value

@@ -1,3 +1,4 @@
+import 'react-native-get-random-values'
 import { validate as uuidValidate } from 'uuid'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { hashContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
@@ -8,7 +9,6 @@ import { SimplePath } from '../../types'
 
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = (text: string, isHTML = true) => {
-
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], isHTML ? 'text/html' : 'text/plain')
 
@@ -16,7 +16,6 @@ const importExport = (text: string, isHTML = true) => {
 }
 
 it('basic import with proper thought structure', () => {
-
   const text = `
   - a
     - b
@@ -42,30 +41,34 @@ it('basic import with proper thought structure', () => {
     [hashContext([HOME_TOKEN])]: {
       id: hashContext([HOME_TOKEN]),
       context: [HOME_TOKEN],
-      children: [{
-        // tautological; full assertion below
-        id: childAId,
-        value: 'a',
-        rank: 0,
-      }],
+      children: [
+        {
+          // tautological; full assertion below
+          id: childAId,
+          value: 'a',
+          rank: 0,
+        },
+      ],
     },
     [hashContext([ABSOLUTE_TOKEN])]: {
       // id: hashContext([ABSOLUTE_TOKEN]),
       context: [ABSOLUTE_TOKEN],
       children: [],
       lastUpdated: never(),
-      pending: true
+      pending: true,
     },
     [hashContext(['a'])]: {
       id: hashContext(['a']),
       context: ['a'],
-      children: [{
-        // tautological; full assertion below
-        id: childBId,
-        value: 'b',
-        rank: 0,
-      }],
-    }
+      children: [
+        {
+          // tautological; full assertion below
+          id: childBId,
+          value: 'b',
+          rank: 0,
+        },
+      ],
+    },
   })
 
   // Note: Jest doesn't have lexicographic string comparison yet :(
@@ -95,20 +98,24 @@ it('basic import with proper thought structure', () => {
     },
     [hashThought('a')]: {
       value: 'a',
-      contexts: [{
-        id: childAId,
-        context: [HOME_TOKEN],
-        rank: 0,
-      }],
+      contexts: [
+        {
+          id: childAId,
+          context: [HOME_TOKEN],
+          rank: 0,
+        },
+      ],
       created: now,
     },
     [hashThought('b')]: {
       value: 'b',
-      contexts: [{
-        id: childBId,
-        context: ['a'],
-        rank: 0,
-      }],
+      contexts: [
+        {
+          id: childBId,
+          context: ['a'],
+          rank: 0,
+        },
+      ],
       created: now,
     },
   })
@@ -116,11 +123,9 @@ it('basic import with proper thought structure', () => {
   // Note: Jest doesn't have lexicographic string comparison yet :(
   expect(thoughtIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
   expect(thoughtIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
-
 })
 
 it('merge descendants', () => {
-
   const initialText = `
   - a
     - b
@@ -141,11 +146,12 @@ it('merge descendants', () => {
   const newState = reducerFlow([
     importText({ text: initialText, lastUpdated: now }),
     newThought({ at: HOME_PATH, value: '' }),
-    (state: State) => importText(state, {
-      path: rankThoughtsFirstMatch(state, ['']),
-      text: mergeText,
-      lastUpdated: now
-    })
+    (state: State) =>
+      importText(state, {
+        path: rankThoughtsFirstMatch(state, ['']),
+        text: mergeText,
+        lastUpdated: now,
+      }),
   ])(initialState(now))
 
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
@@ -166,51 +172,59 @@ it('merge descendants', () => {
   expect(contextIndex).toMatchObject({
     [hashContext([HOME_TOKEN])]: {
       context: [HOME_TOKEN],
-      children: [{
-        value: 'a',
-        rank: 0,
-      },
-      {
-        value: 'j',
-      }
+      children: [
+        {
+          value: 'a',
+          rank: 0,
+        },
+        {
+          value: 'j',
+        },
       ],
     },
     [hashContext(['a'])]: {
       context: ['a'],
-      children: [{
-        value: 'b',
-        rank: 0,
-      },
-      {
-        value: 'x',
-        // Note: x has rank two because exisitingThoughtMove doesn't account for duplicate merges for calualting rank. In this case b value is a duplicate merge in the context of ['a']
-        rank: 2,
-      }],
+      children: [
+        {
+          value: 'b',
+          rank: 0,
+        },
+        {
+          value: 'x',
+          // Note: x has rank two because exisitingThoughtMove doesn't account for duplicate merges for calualting rank. In this case b value is a duplicate merge in the context of ['a']
+          rank: 2,
+        },
+      ],
     },
     [hashContext(['a', 'b'])]: {
       context: ['a', 'b'],
-      children: [{
-        value: 'c',
-        rank: 0,
-      },
-      {
-        value: 'q',
-        rank: 1,
-      }],
+      children: [
+        {
+          value: 'c',
+          rank: 0,
+        },
+        {
+          value: 'q',
+          rank: 1,
+        },
+      ],
     },
     [hashContext(['a', 'x'])]: {
       context: ['a', 'x'],
-      children: [{
-        value: 'y',
-        rank: 0,
-      }],
-    }
+      children: [
+        {
+          value: 'y',
+          rank: 0,
+        },
+      ],
+    },
   })
-
 })
 
 it('initialSettings', () => {
-  expect(importExport(`
+  expect(
+    importExport(
+      `
 <ul>
   <li>Settings
     <ul>
@@ -254,8 +268,10 @@ it('initialSettings', () => {
     </ul>
   </li>
 </ul>
-`, false))
-    .toBe(`
+`,
+      false,
+    ),
+  ).toBe(`
 - Settings
   - =readonly
   - Theme
@@ -302,8 +318,7 @@ it('increment duplicates', () => {
     - e`
   const exported = importExport(text, false)
 
-  expect(exported.trim())
-    .toBe(expectedExport.trim())
+  expect(exported.trim()).toBe(expectedExport.trim())
 })
 
 it('two root thoughts', () => {
@@ -312,12 +327,10 @@ it('two root thoughts', () => {
 - c
   - d`
   const exported = importExport(text, false)
-  expect(exported.trim())
-    .toBe(text)
+  expect(exported.trim()).toBe(text)
 })
 
 it('skip root token', () => {
-
   const text = `- ${HOME_TOKEN}
   - a
     - b
@@ -327,8 +340,7 @@ it('skip root token', () => {
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c
@@ -336,7 +348,6 @@ it('skip root token', () => {
 })
 
 it('skip em token', () => {
-
   const text = `- ${EM_TOKEN}
   - a
     - b
@@ -346,8 +357,7 @@ it('skip em token', () => {
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c
@@ -355,7 +365,6 @@ it('skip em token', () => {
 })
 
 it('duplicate thoughts', () => {
-
   const text = `
   - a
     - m
@@ -375,20 +384,22 @@ it('duplicate thoughts', () => {
 
   expect(lexeme).toMatchObject({
     value: 'm',
-    contexts: [{
-      id: childAId,
-      context: ['a'],
-      rank: 0,
-    }, {
-      id: childBId,
-      context: ['b'],
-      rank: 0,
-    }],
+    contexts: [
+      {
+        id: childAId,
+        context: ['a'],
+        rank: 0,
+      },
+      {
+        id: childBId,
+        context: ['b'],
+        rank: 0,
+      },
+    ],
     created: now,
   })
 
   expect(lexeme.lastUpdated >= now).toBeTruthy()
-
 })
 
 it('imports Roam json', () => {
@@ -419,7 +430,7 @@ it('imports Roam json', () => {
           'create-time': 1600111383911,
           'edit-time': 1600111383910,
           uid: 'HMN_YQtZZ',
-        }
+        },
       ],
     },
     {
@@ -440,14 +451,13 @@ it('imports Roam json', () => {
           'create-time': 1600111389054,
           'edit-time': 1600111389050,
           uid: 'BK11233',
-        }
+        },
       ],
-    }
+    },
   ])
 
   const exported = importExport(roamString, false)
-  expect(exported)
-    .toBe(`
+  expect(exported).toBe(`
 - Fruits
   - Apple
     - =create-email
@@ -479,7 +489,6 @@ it('imports Roam json', () => {
 })
 
 it('replace empty cursor', () => {
-
   const text = `- ${HOME_TOKEN}
   - a
     - b`
@@ -490,7 +499,6 @@ it('replace empty cursor', () => {
   `
 
   const stateNew = reducerFlow([
-
     importText({ text }),
 
     // manually change `b` to empty thought since importText skips empty thoughts
@@ -498,27 +506,30 @@ it('replace empty cursor', () => {
       newValue: '',
       oldValue: 'b',
       context: ['a'],
-      path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }] as SimplePath
+      path: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ] as SimplePath,
     }),
 
     importText({
-      path: [{ value: 'a', rank: 0 }, { value: '', rank: 0 }],
+      path: [
+        { value: 'a', rank: 0 },
+        { value: '', rank: 0 },
+      ],
       text: paste,
     }),
-
   ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - x
     - y`)
 })
 
 it('replace empty cursor without affecting siblings', () => {
-
   const text = `- ${HOME_TOKEN}
   - a
     - b
@@ -531,7 +542,6 @@ it('replace empty cursor without affecting siblings', () => {
   `
 
   const stateNew = reducerFlow([
-
     importText({ text }),
 
     // manually change `c` to empty thought since importText skips empty thoughts
@@ -539,20 +549,24 @@ it('replace empty cursor without affecting siblings', () => {
       newValue: '',
       oldValue: 'c',
       context: ['a'],
-      path: [{ value: 'a', rank: 0 }, { value: 'c', rank: 1 }] as SimplePath
+      path: [
+        { value: 'a', rank: 0 },
+        { value: 'c', rank: 1 },
+      ] as SimplePath,
     }),
 
     importText({
-      path: [{ value: 'a', rank: 0 }, { value: '', rank: 1 }],
+      path: [
+        { value: 'a', rank: 0 },
+        { value: '', rank: 1 },
+      ],
       text: paste,
     }),
-
   ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
     - x
@@ -563,7 +577,6 @@ it('replace empty cursor without affecting siblings', () => {
 })
 
 it('import as subthoughts of non-empty cursor', () => {
-
   const paste = `
   - x
   - y
@@ -575,22 +588,22 @@ it('import as subthoughts of non-empty cursor', () => {
       path: [{ value: 'a', rank: 0 }],
       text: paste,
     }),
-
   ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - x
     - y`)
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }, { value: 'y', rank: 1 }])
+  expect(stateNew.cursor).toMatchObject([
+    { value: 'a', rank: 0 },
+    { value: 'y', rank: 1 },
+  ])
 })
 
 it('decode HTML entities', () => {
-
   const paste = `
   - one &amp; two
   - three &lt; four
@@ -599,38 +612,39 @@ it('decode HTML entities', () => {
   const stateNew = importText({ text: paste })(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - one & two
   - three < four`)
 })
 
 // related: https://github.com/cybersemics/em/issues/1008
 it('do not parse as html when value has tags inside indented text', () => {
-
-  expect(importExport(`
+  expect(
+    importExport(
+      `
   - a
     - b
     - <li>c</li>
-  `, false))
-    .toBe(
-      `
+  `,
+      false,
+    ),
+  ).toBe(
+    `
 - a
   - b
   - c
-`)
+`,
+  )
 })
 
 it('single-line nested html tags', () => {
-
   const text = `- ${HOME_TOKEN}
   - a
     - b`
 
-  const paste = `<b><i>A</i></b>`
+  const paste = '<b><i>A</i></b>'
 
   const stateNew = reducerFlow([
-
     // importing single-line needs an existing thought
     importText({ text }),
 
@@ -639,20 +653,24 @@ it('single-line nested html tags', () => {
       newValue: '',
       oldValue: 'b',
       context: ['a'],
-      path: [{ value: 'a', rank: 0 }, { value: 'b', rank: 0 }] as SimplePath
+      path: [
+        { value: 'a', rank: 0 },
+        { value: 'b', rank: 0 },
+      ] as SimplePath,
     }),
 
     importText({
-      path: [{ value: 'a', rank: 0 }, { value: '', rank: 0 }],
+      path: [
+        { value: 'a', rank: 0 },
+        { value: '', rank: 0 },
+      ],
       text: paste,
     }),
-
   ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
-  expect(exported)
-    .toBe(`<ul>
+  expect(exported).toBe(`<ul>
   <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>a${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
@@ -686,7 +704,6 @@ it('multi-line nested html tags', () => {
 })
 
 it('export note as a normal thought if lossless not selected', () => {
-
   const text = `- ${HOME_TOKEN}
   - a
    - =note
@@ -696,8 +713,7 @@ it('export note as a normal thought if lossless not selected', () => {
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
     - c`)
@@ -709,9 +725,8 @@ it('text that contains em tag', () => {
     - b
     - <em>c</em>`
   const exported = importExport(text)
-  expect(exported.trim())
-    .toBe(
-      `<ul>
+  expect(exported.trim()).toBe(
+    `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
       <li>a${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
@@ -722,7 +737,8 @@ it('text that contains em tag', () => {
       </li>
     </ul>
   </li>
-</ul>`)
+</ul>`,
+  )
 })
 
 it('text that contains non closed span tag', () => {
@@ -733,15 +749,14 @@ it('text that contains non closed span tag', () => {
 - d
   `
   const actual = importExport(paste, false)
-  expect(actual)
-    .toBe(
-      `
+  expect(actual).toBe(
+    `
 - a
 - b
 - c
 - d
-`
-    )
+`,
+  )
 })
 
 it('text that contains br tag that does not have children', () => {
@@ -750,11 +765,11 @@ it('text that contains br tag that does not have children', () => {
   - b
   - c<br>`
   const exported = importExport(text, false)
-  expect(exported.trim())
-    .toBe(
-      `- a
+  expect(exported.trim()).toBe(
+    `- a
 - b
-- c`)
+- c`,
+  )
 })
 
 it('text that contains br tag that has note children', () => {
@@ -763,36 +778,34 @@ it('text that contains br tag that has note children', () => {
   - b
   - c<br><span class="note">This is c!</span>`
   const exported = importExport(text, false)
-  expect(exported.trim())
-    .toBe(
-      `- a
+  expect(exported.trim()).toBe(
+    `- a
 - b
 - c
   - =note
-    - This is c!`)
+    - This is c!`,
+  )
 })
 
 describe('HTML content', () => {
   it('should paste plain text that contains formatting', () => {
-    const paste =
-      `<b>a</b>
+    const paste = `<b>a</b>
 <b>b</b>`
     const actual = importExport(paste)
-    expect(actual)
-      .toBe(
-        `<ul>
+    expect(actual).toBe(
+      `<ul>
   <li>__ROOT__${EMPTY_SPACE}
     <ul>
       <li><b>a</b></li>
       <li><b>b</b></li>
     </ul>
   </li>
-</ul>`)
+</ul>`,
+    )
   })
 
   it('should paste plain text that contains formatting and bullet indicator is inside of formatting tags', () => {
-    const paste =
-      `<b>a</b>
+    const paste = `<b>a</b>
 <b> -b</b>`
     const actual = importExport(paste)
     const expectedHTML = `<ul>
@@ -878,7 +891,8 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 
   it('should paste text properly that is copied from IOS notes.app', () => {
     /* eslint-disable no-irregular-whitespace */
-    const paste = `<meta charset="UTF-8"><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;">A</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- B</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- C</span></p>`
+    const paste =
+      '<meta charset="UTF-8"><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;">A</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- B</span></p><p class="p1" style="margin: 0px; font-style: normal; font-variant-caps: normal; font-weight: normal; font-stretch: normal; font-size: 14px; line-height: normal; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); letter-spacing: normal; orphans: auto; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: auto; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none;"><span class="s1" style="font-weight: normal; font-style: normal; font-size: 14px;"><span class="Apple-converted-space"> </span>- C</span></p>'
     /* eslint-enable no-irregular-whitespace */
 
     const actual = importExport(paste)
@@ -1037,7 +1051,6 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
 })
 
 it('allow formatting tags', () => {
-
   const text = `
     - guardians <b>of the </b><b>galaxy </b>
     - guardians <i>of the </i><i>universe </i>
@@ -1064,19 +1077,16 @@ it('allow formatting tags', () => {
 })
 
 it('import single thought into empty home context', () => {
-
-  const text = `a`
+  const text = 'a'
 
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
 })
 
 it('import multiple thoughts to empty home context', () => {
-
   const text = `
   - a
     - b
@@ -1086,8 +1096,7 @@ it('import multiple thoughts to empty home context', () => {
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c
@@ -1095,21 +1104,16 @@ it('import multiple thoughts to empty home context', () => {
 })
 
 it('import multiple thoughts to end of home context with other thoughts', () => {
-
   const text = `
   - a
     - b
   - c
     - d`
 
-  const stateNew = reducerFlow([
-    importText({ text }),
-    importText({ text: 'e' }),
-  ])(initialState())
+  const stateNew = reducerFlow([importText({ text }), importText({ text: 'e' })])(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported)
-    .toBe(`- ${HOME_TOKEN}
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c

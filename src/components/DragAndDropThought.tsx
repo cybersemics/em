@@ -1,8 +1,15 @@
 import { FC } from 'react'
-import { DragSource, DragSourceConnector, DragSourceMonitor, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
-import { getEmptyImage } from 'react-dnd-html5-backend'
+import {
+  DragSource,
+  DragSourceConnector,
+  DragSourceMonitor,
+  DropTarget,
+  DropTargetConnector,
+  DropTargetMonitor,
+} from 'react-dnd'
 import { isTouch } from '../browser'
 import { store } from '../store'
+import { NOOP } from '../constants'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, error, moveThought, createThought } from '../action-creators'
 import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
@@ -33,8 +40,7 @@ import {
   visibleDistanceAboveCursor,
 } from '../selectors'
 
-export type ConnectedDraggableThoughtContainerProps =
-  ConnectedThoughtContainerProps &
+export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerProps &
   ReturnType<typeof dragCollect> &
   ReturnType<typeof dropCollect> &
   ConnectedThoughtDispatchProps
@@ -46,44 +52,43 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
   const context = parentOf(pathToContext(props.simplePathLive!))
   const isDraggable = props.isDraggable || props.isCursorParent
 
-  return isDocumentEditable() &&
+  return (
+    isDocumentEditable() &&
     !!isDraggable &&
     (!isTouch || globals.touched) &&
     !hasChild(state, thoughts, '=immovable') &&
     !hasChild(state, thoughts, '=readonly') &&
     !hasChild(state, context, '=immovable') &&
     !hasChild(state, context, '=readonly')
+  )
 }
 
 /** Handles drag start. */
 const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
-  store.dispatch(dragInProgress({
-    value: true,
-    draggingThought: simplePathLive,
-    offset: document.getSelection()?.focusOffset,
-  }))
+  store.dispatch(
+    dragInProgress({
+      value: true,
+      draggingThought: simplePathLive,
+      offset: document.getSelection()?.focusOffset,
+    }),
+  )
   return { simplePath: simplePathLive }
 }
 
 /** Handles drag end. */
 const endDrag = () => {
-  store.dispatch([
-    dragInProgress({ value: false }),
-    dragHold({ value: false }),
-    alert(null)
-  ])
+  store.dispatch([dragInProgress({ value: false }), dragHold({ value: false }), alert(null)])
 }
 
 /** Collects props from the DragSource. */
 const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
   dragSource: connect.dragSource(),
-  dragPreview: () => connect.dragPreview()(getEmptyImage()),
-  isDragging: monitor.isDragging()
+  dragPreview: NOOP,
+  isDragging: monitor.isDragging(),
 })
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
 const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonitor) => {
-
   const state = store.getState()
   const { cursor, expandHoverTopPath } = state
   const { path } = props
@@ -96,7 +101,8 @@ const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonit
   const distance = cursor ? cursor?.length - thoughtsTo.length : 0
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
-  const isExpandedTop = () => expandHoverTopPath && path.length > expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
+  const isExpandedTop = () =>
+    expandHoverTopPath && path.length > expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
 
   const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
 
@@ -115,7 +121,6 @@ const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonit
 
 /** Handles dropping a thought on a DropTarget. */
 const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
-
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
@@ -130,7 +135,9 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   // cannot move root or em context
   if (isRootOrEM && !sameContext) {
-    store.dispatch(error({ value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` }))
+    store.dispatch(
+      error({ value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` }),
+    )
     return
   }
 
@@ -139,30 +146,28 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const newPath = unroot(parentOf(thoughtsTo)).concat({
     value: headValue(thoughtsFrom),
-    rank: getRankBefore(state, thoughtsTo)
+    rank: getRankBefore(state, thoughtsTo),
   })
 
-  store.dispatch(props.showContexts
-    ? createThought({
-      value: headValue(thoughtsTo),
-      context: pathToContext(thoughtsFrom),
-      rank: getNextRank(state, thoughtsFrom)
-    })
-    : moveThought({
-      oldPath: thoughtsFrom,
-      newPath
-    })
+  store.dispatch(
+    props.showContexts
+      ? createThought({
+          value: headValue(thoughtsTo),
+          context: pathToContext(thoughtsFrom),
+          rank: getNextRank(state, thoughtsFrom),
+        })
+      : moveThought({
+          oldPath: thoughtsFrom,
+          newPath,
+        }),
   )
 
   // alert user of move to another context
   if (!sameContext) {
-
     // wait until after MultiGesture has cleared the error so this alert does not get cleared
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
-      const alertTo = isRoot(newContext)
-        ? 'home'
-        : '"' + ellipsize(headValue(parentOf(thoughtsTo))) + '"'
+      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(headValue(parentOf(thoughtsTo))) + '"'
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
       clearTimeout(globals.errorTimer)
@@ -177,15 +182,15 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
   // is being hovered over current thought irrespective of whether the given item is droppable
   isBeingHoveredOver: monitor.isOver({ shallow: true }),
-  isDeepHovering: monitor.isOver()
+  isDeepHovering: monitor.isOver(),
 })
 
 /** A draggable and droppable Thought component. */
 const DragAndDropThought = (thoughtContainer: FC<ConnectedDraggableThoughtContainerProps>) =>
-  DragSource('thought', { canDrag, beginDrag, endDrag }, dragCollect)(
-    DropTarget('thought', { canDrop, drop }, dropCollect)(
-      thoughtContainer
-    )
-  )
+  DragSource(
+    'thought',
+    { canDrag, beginDrag, endDrag },
+    dragCollect,
+  )(DropTarget('thought', { canDrop, drop }, dropCollect)(thoughtContainer))
 
 export default DragAndDropThought

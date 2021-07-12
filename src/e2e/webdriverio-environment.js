@@ -3,10 +3,7 @@
 /* eslint-disable no-console */
 
 const JsDomEnvironment = require('jest-environment-jsdom')
-const { setup: setupDevServer, teardown: teardownDevServer } = require('jest-dev-server')
 const portUsed = require('tcp-port-used')
-const fs = require('fs')
-const path = require('path')
 const chalk = require('chalk')
 const wdio = require('webdriverio')
 const browserstack = require('browserstack-local')
@@ -23,7 +20,15 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
 
   handleTestEvent(event, state) {
     if (event.name === 'test_fn_failure') {
-      this.global.browser.executeScript(`browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed","reason": "Failed"}}`)
+      this.global.browser.executeScript(
+        'browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed","reason": "Failed"}}',
+      )
+    }
+
+    if (event.name === 'test_fn_start') {
+      this.global.browser.executeScript(
+        `browserstack_executor: {"action": "setSessionName", "arguments": {"name": "${event.test.name}"}}`,
+      )
     }
   }
 
@@ -31,37 +36,20 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
     console.info(chalk.yellow('Setup Test Environment for webdriverio.'))
     await super.setup()
 
-    // use existing app if already running
     if (await portUsed.check(3000, 'localhost')) {
       console.info(chalk.yellow('Using the currently running app on http://localhost:3000'))
+    } else {
+      throw new Error('No running application found on port 3000')
     }
-    // otherwise serve up the build folder
-    else {
-      const buildPath = path.join(__dirname, '..', '..', 'build')
-      const doesBuildExist = fs.existsSync(buildPath)
 
-      if (!doesBuildExist) {
-        console.error(chalk.red('App build not found.'))
-        throw new Error('App build not found.')
-      }
-
-      await setupDevServer({
-        command: 'npm run servebuild',
-        launchTimeout: 300000,
-        debug: true,
-        port: 3000
-      })
-    }
     try {
       await this.startBrowserStackLocal()
       // Note: this.global is not global to all test suites; it is sandboxed to a single test module, e.g. caret.ts
       this.global.browser = await wdio.remote(config)
-    }
-    catch (e) {
+    } catch (e) {
       console.error(e)
       throw e
     }
-
   }
 
   async teardown() {
@@ -69,35 +57,37 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
     await this.stopBrowserStackLocal()
     if (this.global.browser) {
       await this.global.browser.deleteSession()
-    }
-    else {
+    } else {
       console.warn('this.global.browser is undefined in teardown')
     }
-    await teardownDevServer()
     await super.teardown()
   }
 
   startBrowserStackLocal() {
-    if (!config.capabilities['browserstack.localIdentifier'] || !config.capabilities['browserstack.localIdentifier'].startsWith('local')) {
+    if (
+      !config.capabilities['browserstack.localIdentifier'] ||
+      !config.capabilities['browserstack.localIdentifier'].startsWith('local')
+    ) {
       return
     }
 
     return new Promise((resolve, reject) => {
       console.info(chalk.yellow('BrowserstackLocal: Starting'))
       this.bsLocal = new browserstack.Local()
-      this.bsLocal.start({
-        localIdentifier: config.capabilities['browserstack.localIdentifier'],
-      }, e => {
-        if (e) {
-          reject(e)
-        }
-        else {
-          console.info(chalk.green('BrowserStackLocal: Running'))
-          resolve()
-        }
-      })
+      this.bsLocal.start(
+        {
+          localIdentifier: config.capabilities['browserstack.localIdentifier'],
+        },
+        e => {
+          if (e) {
+            reject(e)
+          } else {
+            console.info(chalk.green('BrowserStackLocal: Running'))
+            resolve()
+          }
+        },
+      )
     })
-
   }
 
   async stopBrowserStackLocal() {

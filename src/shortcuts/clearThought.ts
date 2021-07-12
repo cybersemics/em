@@ -4,10 +4,10 @@ import { Shortcut } from '../types'
 
 const clearThoughtShortcut: Shortcut = {
   id: 'clearThought',
-  name: 'Clear Thought',
+  label: 'Clear Thought',
   description: 'Clear the text of the current thought.',
   gesture: 'rl',
-  canExecute: () => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: () => {
     const editable = document.querySelector('.editing .editable') as HTMLElement
     if (editable) {
@@ -20,7 +20,7 @@ const clearThoughtShortcut: Shortcut = {
         editable.setAttribute('placeholder', text)
       })
     }
-  }
+  },
 }
 
 export default clearThoughtShortcut

@@ -3,8 +3,8 @@ import { State } from '../util/initialState'
 import { User } from '../types'
 
 interface Options {
-  value: boolean,
-  user?: User,
+  value: boolean
+  user?: User
 }
 
 /** Sets the authenticated, autologin, loading, and user when the user has been authenticated. */
@@ -15,7 +15,7 @@ const authenticate = (state: State, { value, user }: Options) => ({
   authenticated: value,
   autologin: value || state.autologin,
   status: value ? 'loading' : 'disconnected',
-  user
+  user,
 })
 
 export default _.curryRight(authenticate)

@@ -1,7 +1,7 @@
 import './App.css'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
-import { getContexts, getParent, getThought, getAllChildren, getChildrenRanked, isPending } from './selectors'
+import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource, initDbSubscription } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
@@ -14,17 +14,15 @@ import { getSubscriptionUtils } from './util/subscriptionUtils'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
-
   // load local state unless loading a public context or source url
   await initDB()
   const src = urlDataSource()
-  const thoughtsLocalPromise = owner() === '~'
-    // authenticated or offline user
-    ? store.dispatch(src
-      ? loadFromUrl(src)
-      : loadLocalState())
-    // other user context
-    : Promise.resolve()
+  const thoughtsLocalPromise =
+    owner() === '~'
+      ? // authenticated or offline user
+        store.dispatch(src ? loadFromUrl(src) : loadLocalState())
+      : // other user context
+        Promise.resolve()
 
   // load =preload sources
   thoughtsLocalPromise.then(() => {
@@ -44,16 +42,19 @@ export const initialize = async () => {
     thoughtsLocalPromise,
     ...initEvents(store),
   }
-
 }
 
 /** Partially apply state to a function. */
-const withState = <T, R>(f: (state: State, ...args: T[]) => R) =>
-  (...args: T[]) => f(store.getState(), ...args)
+const withState =
+  <T, R>(f: (state: State, ...args: T[]) => R) =>
+  (...args: T[]) =>
+    f(store.getState(), ...args)
 
 /** Partially dispatches an action to the store. */
-const withDispatch = <T extends any[], R extends Thunk>(f: (...args: T) => R) =>
-  (...args: T) => store.dispatch(f(...args))
+const withDispatch =
+  <T extends any[], R extends Thunk>(f: (...args: T) => R) =>
+  (...args: T) =>
+    store.dispatch(f(...args))
 
 const testHelpers = {
   setSelection,
@@ -62,7 +63,7 @@ const testHelpers = {
   getState: store.getState,
   subscribe: store.subscribe,
   _: _,
-  clearAll: db.clearAll
+  clearAll: db.clearAll,
 }
 
 // add em object to window for debugging
@@ -72,14 +73,14 @@ const windowEm = {
   // helper functions that will be used by puppeteer tests
   testHelpers,
   getContexts: withState(getContexts),
-  getThought: withState(getThought),
+  getLexeme: withState(getLexeme),
   getParent: withState(getParent),
   getAllChildren: withState(getAllChildren),
   getChildrenRanked: withState(getChildrenRanked),
   hashContext,
   hashThought,
   isPending: withState(isPending),
-  checkDataIntegrity: withState(checkDataIntegrity)
+  checkDataIntegrity: withState(checkDataIntegrity),
 }
 
 window.em = windowEm

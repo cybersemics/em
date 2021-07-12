@@ -21,54 +21,51 @@ interface Database {
 }
 
 interface UserState {
-  thoughtIndex: State['thoughts']['thoughtIndex'],
-  contextIndex: State['thoughts']['contextIndex'],
+  thoughtIndex: State['thoughts']['thoughtIndex']
+  contextIndex: State['thoughts']['contextIndex']
 }
 
-const appendContext = (context: Context, child: string) =>
-  unroot([...context, child])
+const appendContext = (context: Context, child: string) => unroot([...context, child])
 
 /** Traverses the contextIndex, calling a function for each context. */
-const traverse = (state: UserState, f: (parent: Parent) => void, options: { context: Context } = { context: [HOME_TOKEN] }) => {
+const traverse = (
+  state: UserState,
+  f: (parent: Parent) => void,
+  options: { context: Context } = { context: [HOME_TOKEN] },
+) => {
   const context = options.context
   const parent = state.contextIndex[hashContext(context)]
   if (parent) {
     f(parent)
     ;(parent.children ? Object.values(parent.children) : []).forEach(child =>
-      traverse(state, f, { context: appendContext(context, child.value) })
+      traverse(state, f, { context: appendContext(context, child.value) }),
     )
   }
 }
 
 /** Repeats a string n time. */
-const repeat = (s: string, n: number) =>
-  (new Array(n)).fill(s).join('')
+const repeat = (s: string, n: number) => new Array(n).fill(s).join('')
 
 /** Removes <li> to avoid the importText bug that misinterprets the whole file as HTML. */
-const scrub = (s: string) => s
-  .replace(/\<\/?li\>/gi, '')
-  .replace(/em\>/gi, 'i>') // #1131
-  .replace(/\<br\>$/gi, '') // #1131
-  .replace(/<span.*?>/gi, '') // #1131
+const scrub = (s: string) =>
+  s
+    .replace(/\<\/?li\>/gi, '')
+    .replace(/em\>/gi, 'i>') // #1131
+    .replace(/\<br\>$/gi, '') // #1131
+    .replace(/<span.*?>/gi, '') // #1131
 
 /** Renders a single thought for a context. Does not fill in missing ancestors. */
-const renderContext = (context: Context): string =>
-  `${repeat(' ', context.length)}- ${scrub(head(context))}`
+const renderContext = (context: Context): string => `${repeat(' ', context.length)}- ${scrub(head(context))}`
 
 /** Renders a thought. */
 const renderThought = (parent: Parent): string => {
   const context = Object.values(parent.context)
   const children = Object.values(parent.children)
-  return children.map(child =>
-    renderContextWithAncestors([...context, child.value])
-  )
-    .join('\n')
+  return children.map(child => renderContextWithAncestors([...context, child.value])).join('\n')
 }
-
 
 /** Renders a context as nested thoughts. */
 const renderContextWithAncestors = (context: Context): string => {
-
   // return context.join('/').replace(/\<\/?li\>/gi, '')
 
   const indexDiffersFromPrev = context.findIndex((value: string, i: number) => value !== prevContext[i])
@@ -97,8 +94,7 @@ const renderContextWithAncestors = (context: Context): string => {
  * MAIN
  *****************************************************************/
 const main = () => {
-
-  const [,,file1, file2] = process.argv
+  const [, , file1, file2] = process.argv
 
   // check args
   if (process.argv.length < 4) {
@@ -117,11 +113,11 @@ const main = () => {
   // read
   const input1 = fs.readFileSync(file1, 'utf-8')
   const db1 = JSON.parse(input1) as Database | UserState
-  const state1 = (db1 as Database).users?.[userId] || db1 as UserState
+  const state1 = (db1 as Database).users?.[userId] || (db1 as UserState)
 
   const input2 = fs.readFileSync(file2, 'utf-8')
   const db2 = JSON.parse(input2) as Database | UserState
-  const state2 = (db2 as Database).users?.[userId] || db2 as UserState
+  const state2 = (db2 as Database).users?.[userId] || (db2 as UserState)
 
   // diff
   traverse(state1, (parent1: Parent) => {
@@ -134,9 +130,7 @@ const main = () => {
     if (!parent2) {
       console.log(renderThought(parent1))
     }
-
   })
-
 }
 
 main()

@@ -1,7 +1,8 @@
 import React, { MouseEvent } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { hasChildren, isContextViewActive, isPending } from '../selectors'
+import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
+import { head } from '../util'
 import { State } from '../util/initialState'
 import { Context } from '../types'
 
@@ -9,27 +10,21 @@ import { Context } from '../types'
 // •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
-  glyph?: string | null,
-  isEditing?: boolean,
-  leaf?: boolean,
-  onClick: (event: React.MouseEvent) => void,
-  showContexts?: boolean,
-  context: Context,
-}
-
-interface MapStateToProps {
-  invalidOption: boolean,
-  isLeaf: boolean,
-  pending: boolean,
-  showContexts: boolean,
+  glyph?: string | null
+  isEditing?: boolean
+  leaf?: boolean
+  onClick: (event: React.MouseEvent) => void
+  showContexts?: boolean
+  context: Context
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
+  const lexeme = getLexeme(state, head(props.context))
   return {
     // if being edited and meta validation error has occured
-    invalidOption: !!props.isEditing && invalidState,
+    invalid: !lexeme || (!!props.isEditing && invalidState),
     // re-render when leaf status changes
     isLeaf: !hasChildren(state, props.context),
     pending: isPending(state, props.context),
@@ -38,18 +33,26 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 }
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
-const Bullet = ({ showContexts, glyph, isLeaf, onClick, invalidOption, pending }: BulletProps & MapStateToProps) =>
-  <span className={classNames({
-    bullet: true,
-    graypulse: pending,
-    'show-contexts': showContexts,
-    'invalid-option': invalidOption
-  })}>
-
-    <span className='glyph' onClick={onClick}>{glyph || (showContexts
-      ? isLeaf ? '◦' : '▹'
-      : isLeaf ? '•' : '▸')
-    }</span>
+const Bullet = ({
+  showContexts,
+  glyph,
+  isLeaf,
+  onClick,
+  invalid,
+  pending,
+}: BulletProps & ReturnType<typeof mapStateToProps>) => (
+  <span
+    className={classNames({
+      bullet: true,
+      graypulse: pending,
+      'show-contexts': showContexts,
+      'invalid-option': invalid,
+    })}
+  >
+    <span className='glyph' onClick={onClick}>
+      {glyph || (showContexts ? (isLeaf ? '◦' : '▹') : isLeaf ? '•' : '▸')}
+    </span>
   </span>
+)
 
 export default connect(mapStateToProps)(Bullet)

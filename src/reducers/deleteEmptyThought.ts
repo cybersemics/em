@@ -1,6 +1,25 @@
 import { HOME_TOKEN } from '../constants'
-import { getTextContentFromHTML, head, headRank, headValue, isDivider, parentOf, pathToContext, reducerFlow } from '../util'
-import { getNextRank, getChildren, getChildrenRanked, isContextViewActive, prevSibling, simplifyPath, rootedParentOf } from '../selectors'
+import {
+  getTextContentFromHTML,
+  head,
+  headRank,
+  headValue,
+  isDivider,
+  isThoughtArchived,
+  parentOf,
+  pathToContext,
+  reducerFlow,
+} from '../util'
+import {
+  getNextRank,
+  getChildren,
+  getChildrenRanked,
+  getAllChildren,
+  isContextViewActive,
+  prevSibling,
+  simplifyPath,
+  rootedParentOf,
+} from '../selectors'
 import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCursor } from '../reducers'
 import { State } from '../util/initialState'
 import { SimplePath } from '../types'
@@ -27,18 +46,38 @@ const deleteEmptyThought = (state: State): State => {
   if ((isEmpty && allChildren.length === 0) || isDivider(headValue(cursor))) {
     return deleteThoughtWithCursor(state, {})
   }
-  // archive an empty thought with hidden children
+  // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {
     return reducerFlow([
-      ...allChildren.map(child => archiveThought({ path: [...cursor, child] })),
+      // archive all children
+      // if a child is already archived, move it to the parent
+      // https://github.com/cybersemics/em/issues/864
+      // https://github.com/cybersemics/em/issues/1282
+      ...allChildren.map(child => {
+        return !isThoughtArchived([...cursor, child])
+          ? archiveThought({ path: [...cursor, child] })
+          : moveThought({
+              oldPath: [...cursor, child],
+              newPath: [...parentOf(cursor), child],
+            })
+      }),
+
+      // move the child archive up a level so it does not get permanently deleted
       state => {
-        const archivedChild = getChildrenRanked(state, context)[0]
-        return moveThought(state, { oldPath: [...cursor, archivedChild], newPath: [...parentOf(cursor), archivedChild] })
+        const childArchive = getAllChildren(state, context).find(child => child.value === '=archive')
+        return childArchive
+          ? moveThought(state, {
+              oldPath: [...cursor, childArchive],
+              newPath: [...parentOf(cursor), childArchive],
+            })
+          : state
       },
-      state => deleteThought(state, {
+
+      // permanently delete the empty thought
+      deleteThought({
         context: parentOf(context),
-        thoughtRanked: head(cursor)
-      })
+        thoughtRanked: head(cursor),
+      }),
     ])(state)
   }
   // delete from beginning and merge with previous sibling
@@ -50,47 +89,45 @@ const deleteEmptyThought = (state: State): State => {
 
     // only if there is a previous sibling
     if (prev) {
-
       const valueNew = prev.value + value
       const pathPrevNew = [
         ...parentOf(simplePath),
         {
           ...prev,
           value: valueNew,
-        }
+        },
       ]
 
       return reducerFlow([
-
         // change first thought value to concatenated value
         editThought({
           oldValue: prev.value,
           newValue: valueNew,
           context: parentContext,
-          path: parentOf(simplePath).concat(prev) as SimplePath
+          path: parentOf(simplePath).concat(prev) as SimplePath,
         }),
 
         // merge children
-        ...allChildren.map((child, i) =>
-          (state: State) => moveThought(state, {
-            oldPath: simplePath.concat(child),
-            newPath: pathPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(pathPrevNew)) + i })
-          })
+        ...allChildren.map(
+          (child, i) => (state: State) =>
+            moveThought(state, {
+              oldPath: simplePath.concat(child),
+              newPath: pathPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(pathPrevNew)) + i }),
+            }),
         ),
 
         // delete second thought
         deleteThought({
           context: parentContext,
-          thoughtRanked: head(simplePath)
+          thoughtRanked: head(simplePath),
         }),
 
         // move the cursor to the new thought at the correct offset
         setCursor({
           path: pathPrevNew,
           offset: getTextContentFromHTML(prev.value).length,
-          editing
+          editing,
         }),
-
       ])(state)
     }
   }

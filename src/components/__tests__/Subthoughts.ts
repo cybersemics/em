@@ -13,10 +13,10 @@ import { getAllChildren } from '../../selectors'
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ThoughtOrSubthoughtsComponent {
   props: () => {
-    path?: Path,
-    simplePath: SimplePath,
-    showContexts?: boolean,
-  },
+    path?: Path
+    simplePath: SimplePath
+    showContexts?: boolean
+  }
 }
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts path. */
@@ -38,13 +38,12 @@ beforeEach(async () => {
 afterEach(cleanupTestApp)
 
 it('normal view', () => {
-
   // import thoughts
   store.dispatch([
     importText({
       text: `- a
         - b
-        - c`
+        - c`,
     }),
     // set the cursor to expand the subthoughts
     setCursor({ path: [{ value: 'a', rank: 0 }] }),
@@ -59,17 +58,12 @@ it('normal view', () => {
 
   // assert
   expect(thoughtsWrapper).toHaveLength(2)
-  expect(pathToContext(thoughtsWrapper.first().props().simplePath))
-    .toMatchObject(['a', 'b'])
-  expect(pathToContext(thoughtsWrapper.at(1).props().simplePath))
-    .toMatchObject(['a', 'c'])
-
+  expect(pathToContext(thoughtsWrapper.first().props().simplePath)).toMatchObject(['a', 'b'])
+  expect(pathToContext(thoughtsWrapper.at(1).props().simplePath)).toMatchObject(['a', 'c'])
 })
 
 describe('context view', () => {
-
   it('render contexts of cursor thought when context view is enabled', () => {
-
     const now = timestamp()
 
     // import thoughts
@@ -101,33 +95,35 @@ describe('context view', () => {
     // assert contexts
     const contextsWrapper = subthoughtsWrapper.find(Thought)
     expect(contextsWrapper).toHaveLength(2)
-    expect(contextsWrapper.at(0).props())
-      .toMatchObject({
-        showContexts: true,
-        simplePath: [{
+    expect(contextsWrapper.at(0).props()).toMatchObject({
+      showContexts: true,
+      simplePath: [
+        {
           value: 'a',
           rank: 0,
-        }, {
+        },
+        {
           value: 'm',
           rank: 0,
-        }],
-      })
-    expect(contextsWrapper.at(1).props())
-      .toMatchObject({
-        showContexts: true,
-        simplePath: [{
+        },
+      ],
+    })
+    expect(contextsWrapper.at(1).props()).toMatchObject({
+      showContexts: true,
+      simplePath: [
+        {
           value: 'b',
           rank: 1,
-        }, {
+        },
+        {
           value: 'm',
           rank: 0,
-        }],
-      })
-
+        },
+      ],
+    })
   })
 
   it('render context children of contexts that have different lexeme instances', () => {
-
     // import thoughts
     store.dispatch([
       importText({
@@ -137,20 +133,18 @@ describe('context view', () => {
               - x
           - b
             - ones
-              - y`
+              - y`,
       }),
       // enable Context View on /a/one
       setCursorFirstMatchActionCreator(['a', 'one']),
-      { type: 'toggleContextView' }
+      { type: 'toggleContextView' },
     ])
 
     // update DOM
     wrapper.update()
 
     /** Select /a/one Subthoughts component. Call function after re-render to use new DOM. */
-    const subthoughtsAOne = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(whereSimplePath(['a', 'one']))
+    const subthoughtsAOne = () => wrapper.find(Subthoughts).filterWhere(whereSimplePath(['a', 'one']))
     const subthoughtsAOne1 = subthoughtsAOne()
     expect(subthoughtsAOne1).toHaveLength(2)
 
@@ -172,10 +166,9 @@ describe('context view', () => {
     // assert that child of context is rendered
     const thoughtsAOneA = subthoughtsAOneA.find(Thought)
     expect(thoughtsAOneA).toHaveLength(1)
-    expect(thoughtsAOneA.first().props())
-      .toMatchObject({
-        simplePath: [{ value: 'a' }, { value: 'one' }, { value: 'x' }],
-      })
+    expect(thoughtsAOneA.first().props()).toMatchObject({
+      simplePath: [{ value: 'a' }, { value: 'one' }, { value: 'x' }],
+    })
 
     // select second context (b)
     // focus on a/one~/b to get it to expand
@@ -193,14 +186,12 @@ describe('context view', () => {
     // assert that child of context is rendered
     const thoughtsAOneB = subthoughtsAOneB.find(Thought)
     expect(thoughtsAOneB).toHaveLength(1)
-    expect(thoughtsAOneB.first().props())
-      .toMatchObject({
-        simplePath: [{ value: 'b' }, { value: 'ones' }, { value: 'y' }],
-      })
+    expect(thoughtsAOneB.first().props()).toMatchObject({
+      simplePath: [{ value: 'b' }, { value: 'ones' }, { value: 'y' }],
+    })
   })
 
   it('calculate proper resolved path for a children inside context view with duplicate lexeme', () => {
-
     // Explaination: https://github.com/cybersemics/em/pull/878#issuecomment-717057916
 
     // import thoughts
@@ -211,7 +202,7 @@ describe('context view', () => {
             - b
               - c
                 - d
-                  - c`
+                  - c`,
       }),
       // enable Context View on /a/b/c/d/c
       setCursorFirstMatchActionCreator(['a', 'b', 'c', 'd', 'c']),
@@ -232,19 +223,20 @@ describe('context view', () => {
     // update DOM
     wrapper.update()
 
-    const subthoughtsContextViewChildren = wrapper.find(Subthoughts)
-      .filterWhere(wherePath(['a', 'b', 'c', 'd', 'c'])).childAt(0).find(Subthoughts)
+    const subthoughtsContextViewChildren = wrapper
+      .find(Subthoughts)
+      .filterWhere(wherePath(['a', 'b', 'c', 'd', 'c']))
+      .childAt(0)
+      .find(Subthoughts)
 
     expect(subthoughtsContextViewChildren).toHaveLength(2)
 
     const childrenPathArray = subthoughtsContextViewChildren.map(node => pathToContext(node.props().path!))
     expect(childrenPathArray[0]).toEqual(['a', 'b', 'c', 'd', 'c', 'b'])
     expect(childrenPathArray[1]).toEqual(['a', 'b', 'c', 'd', 'c', 'd'])
-
   })
 
   it('renders EmptyChildrenDrop when no subthought ', () => {
-
     const now = timestamp()
 
     // import thoughts
@@ -273,7 +265,6 @@ describe('context view', () => {
   })
 
   it('do not render EmptyChildrenDrop when subthought present', () => {
-
     const now = timestamp()
 
     // import thoughts
@@ -304,17 +295,15 @@ describe('context view', () => {
 
     expect(subthoughtsWrapper).toHaveLength(0)
   })
-
 })
 
 describe('hidden thoughts', () => {
-
   it('do not hide invisible thought if it lies within cursor path', () => {
-
     // import thoughts
-    store.dispatch(importText({
-      preventSetCursor: true,
-      text: `
+    store.dispatch(
+      importText({
+        preventSetCursor: true,
+        text: `
         - a
           - d
             - =meta2
@@ -322,20 +311,17 @@ describe('hidden thoughts', () => {
         - b
         - =meta1
           - c`,
-    }))
+      }),
+    )
 
     // update DOM
     wrapper.update()
 
     /* eslint-disable jsdoc/require-jsdoc */
-    const metaThought1 = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['=meta1']))
+    const metaThought1 = () => wrapper.find(Subthoughts).filterWhere(wherePath(['=meta1']))
 
     /* eslint-disable jsdoc/require-jsdoc */
-    const metaThought1Child = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['=meta1', 'c']))
+    const metaThought1Child = () => wrapper.find(Subthoughts).filterWhere(wherePath(['=meta1', 'c']))
 
     // meta thoughts should not be visible when it doesn't lie in cursor path and showHiddenThoughts is false
     // expect(metaThought1()).toHaveLength(0)
@@ -356,13 +342,9 @@ describe('hidden thoughts', () => {
     // update DOM
     wrapper.update()
 
-    const metaThought2 = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['a', 'd', '=meta2']))
+    const metaThought2 = () => wrapper.find(Subthoughts).filterWhere(wherePath(['a', 'd', '=meta2']))
 
-    const metaThought2Child = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['a', 'd', '=meta2', 'e']))
+    const metaThought2Child = () => wrapper.find(Subthoughts).filterWhere(wherePath(['a', 'd', '=meta2', 'e']))
 
     // meta thoughts should not be visible when it doesn't lie in cursor path and showHiddenThoughts is false
     expect(metaThought2()).toHaveLength(0)
@@ -379,7 +361,6 @@ describe('hidden thoughts', () => {
   })
 
   it('do not hide invisible thought if it lies within cursor path (Context View)', () => {
-
     // import thoughts
     store.dispatch([
       importText({
@@ -389,7 +370,7 @@ describe('hidden thoughts', () => {
               - =meta2
                 - e
           - b
-            - d`
+            - d`,
       }),
       setCursorFirstMatchActionCreator(['b', 'd']),
       { type: 'toggleContextView' },
@@ -414,13 +395,10 @@ describe('hidden thoughts', () => {
          - e
     */
 
-    const nestedMetaThought2 = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['b', 'd', 'a', '=meta2']))
+    const nestedMetaThought2 = () => wrapper.find(Subthoughts).filterWhere(wherePath(['b', 'd', 'a', '=meta2']))
 
-    const nestedMetaThought2Child = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['b', 'd', 'a', '=meta2', 'e']))
+    const nestedMetaThought2Child = () =>
+      wrapper.find(Subthoughts).filterWhere(wherePath(['b', 'd', 'a', '=meta2', 'e']))
 
     // meta thoughts should not be visible when it doesn't lie in cursor path and showHiddenThoughts is false
     expect(nestedMetaThought2()).toHaveLength(0)
@@ -452,23 +430,22 @@ describe('hidden thoughts', () => {
   })
 
   it('do not hide meta attribute thought when it is the descendant of the meta cursor.', () => {
-
     // import thoughts
-    store.dispatch(importText({
-      preventSetCursor: true,
-      text: `
+    store.dispatch(
+      importText({
+        preventSetCursor: true,
+        text: `
         - a
           - =meta1
             - =meta2`,
-    }))
+      }),
+    )
 
     // update DOM
     wrapper.update()
 
     /* eslint-disable jsdoc/require-jsdoc */
-    const metaThought2 = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['a', '=meta1', '=meta2']))
+    const metaThought2 = () => wrapper.find(Subthoughts).filterWhere(wherePath(['a', '=meta1', '=meta2']))
 
     // meta2 should should not be visible when it doesn't lie in cursor path or is not descendant of meta cursor
     expect(metaThought2()).toHaveLength(0)
@@ -482,7 +459,6 @@ describe('hidden thoughts', () => {
   })
 
   it('do not hide meta attribute thought when it is the descendant of the meta cursor (Context View).', () => {
-
     // import thoughts
     store.dispatch([
       importText({
@@ -498,7 +474,7 @@ describe('hidden thoughts', () => {
       }),
       setCursorFirstMatchActionCreator(['b', 'd']),
       { type: 'toggleContextView' },
-      setCursorFirstMatchActionCreator(['b', 'd', 'a'])
+      setCursorFirstMatchActionCreator(['b', 'd', 'a']),
     ])
 
     /*
@@ -522,9 +498,8 @@ describe('hidden thoughts', () => {
     wrapper.update()
 
     /* eslint-disable jsdoc/require-jsdoc */
-    const metaThought2 = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['b', 'd', 'a', 'e', '=meta1', '=meta2']))
+    const metaThought2 = () =>
+      wrapper.find(Subthoughts).filterWhere(wherePath(['b', 'd', 'a', 'e', '=meta1', '=meta2']))
 
     // meta2 should should not be visible when it doesn't lie in cursor path or is not descendant of meta cursor
     expect(metaThought2()).toHaveLength(0)
@@ -556,9 +531,7 @@ describe('hidden thoughts', () => {
 })
 
 describe('expand thoughts', () => {
-
   it('re-render Subthought if it is expanded', () => {
-
     /* Note: Sometimes children of a Subthought is updated first and then expanded property is updated later.
       This test checks if the Subthought re-renders in this scenario. https://github.com/cybersemics/em/pull/951
     */
@@ -577,7 +550,7 @@ describe('expand thoughts', () => {
         context: ['a'],
         key: '=pin',
         value: 'false',
-      })
+      }),
     ])
 
     // update DOM
@@ -586,18 +559,18 @@ describe('expand thoughts', () => {
     const childrenContextA = getAllChildren(store.getState(), ['a'])
 
     /** */
-    const thoughtB = () => wrapper
-      .find(Subthoughts)
-      .filterWhere(wherePath(['a', 'b']))
+    const thoughtB = () => wrapper.find(Subthoughts).filterWhere(wherePath(['a', 'b']))
 
     // context ['a'] is not yet expanded yet
     expect(thoughtB()).toHaveLength(0)
 
-    store.dispatch(toggleAttribute({
-      context: ['a'],
-      key: '=pin',
-      value: 'true',
-    }))
+    store.dispatch(
+      toggleAttribute({
+        context: ['a'],
+        key: '=pin',
+        value: 'true',
+      }),
+    )
 
     const updatedChildrenContextA = getAllChildren(store.getState(), ['a'])
 
@@ -608,6 +581,5 @@ describe('expand thoughts', () => {
 
     // on change of isExpanded the Subthought should re-render and render it's children
     expect(thoughtB()).toHaveLength(1)
-
   })
 })

@@ -12,31 +12,28 @@ const cursorBack = (state: State) => {
   const cursorNew = cursorOld && parentOf(cursorOld)
 
   return reducerFlow(
-
     // if there is a cursor, move it to its parent
-    cursorOld ? [
+    cursorOld
+      ? [
+          // move cursor back
+          setCursor({ path: cursorNew!.length > 0 ? cursorNew : null, editing }),
 
-      // move cursor back
-      setCursor({ path: cursorNew!.length > 0 ? cursorNew : null, editing }),
+          // append to cursor history to allow 'forward' gesture
+          cursorHistory({ cursor: cursorOld }),
+        ]
+      : // if there is no cursor and isAbsoluteRoot is active, toggle the context
+      // else of search is active, close the search
+      isAbsoluteRoot
+      ? [toggleAbsoluteContext]
+      : search === ''
+      ? [
+          // close the search
+          searchReducer({ value: null }),
 
-      // append to cursor history to allow 'forward' gesture
-      cursorHistory({ cursor: cursorOld }),
-    ]
-
-    // if there is no cursor and isAbsoluteRoot is active, toggle the context
-    // else of search is active, close the search
-    :
-    isAbsoluteRoot ? [toggleAbsoluteContext] : search === '' ? [
-      // close the search
-      searchReducer({ value: null }),
-
-      // restore the cursor
-      state.cursorBeforeSearch
-        ? setCursor({ path: state.cursorBeforeSearch, editing })
-        : null,
-    ]
-    : []
-
+          // restore the cursor
+          state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, editing }) : null,
+        ]
+      : [],
   )(state)
 }
 

@@ -3,8 +3,7 @@ import { setSelection } from '../setSelection'
 import { splitAtSelection } from '../splitAtSelection'
 
 it('split at selecion with nested nodes', () => {
-
-  const thoughtValue = `The <b>rise <i>and fall</i></b> of Nikola Tesla.`
+  const thoughtValue = 'The <b>rise <i>and fall</i></b> of Nikola Tesla.'
   const dummyDiv = document.createElement('div')
 
   dummyDiv.innerHTML = thoughtValue
@@ -17,13 +16,15 @@ it('split at selecion with nested nodes', () => {
   const caretPositionDetails = getCaretPositionDetails(dummyDiv, 12)
 
   setSelection(caretPositionDetails?.focusNode || dummyDiv, {
-    offset: caretPositionDetails?.offset
+    offset: caretPositionDetails?.offset,
   })
 
-  const splitResult = splitAtSelection(dummyDiv)
+  const selectionRange = document.getSelection()?.getRangeAt(0)
+
+  const splitResult = splitAtSelection(dummyDiv, selectionRange!)
 
   expect(splitResult).toMatchObject({
-    left: `The <b>rise <i>and</i></b>`,
-    right: '<b><i> fall</i></b> of Nikola Tesla.'
+    left: 'The <b>rise <i>and</i></b>',
+    right: '<b><i> fall</i></b> of Nikola Tesla.',
   })
 })

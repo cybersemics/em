@@ -1,17 +1,17 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getThought, getAllChildren } from '../selectors'
+import { getNextRank, getLexeme, getAllChildren } from '../selectors'
 import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
 import { State } from '../util/initialState'
 import { Context, Index, Lexeme, Parent } from '../types'
 import { getSessionId } from '../util/sessionManager'
 
 interface Payload {
-  context: Context,
-  value: string,
-  rank: number,
-  id?: string,
-  addAsContext?: boolean,
+  context: Context
+  value: string
+  rank: number
+  id?: string
+  addAsContext?: boolean
 }
 /**
  * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.
@@ -19,18 +19,17 @@ interface Payload {
  * @param addAsContext Adds the given context to the new thought.
  */
 const createThought = (state: State, { context, value, rank, id, addAsContext }: Payload) => {
-
   id = id || createId()
 
   // create thought if non-existent
-  const thought: Lexeme = {
-    ...getThought(state, value) || {
+  const lexeme: Lexeme = {
+    ...(getLexeme(state, value) || {
       value,
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
-    },
-    updatedBy: getSessionId(),
+      updatedBy: getSessionId(),
+    }),
   }
 
   const contextActual = addAsContext ? [value] : context
@@ -63,38 +62,39 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
   // if adding as the context of an existing thought
   let subthoughtNew // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const subthoughtOld = getThought(state, head(context))
+    const subthoughtOld = getLexeme(state, head(context))
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: (subthoughtOld?.contexts || []).concat({
         context: [value],
         id,
-        rank: getNextRank(state, [value])
+        rank: getNextRank(state, [value]),
       }),
       created: subthoughtOld?.created || timestamp(),
-      lastUpdated: timestamp()
+      lastUpdated: timestamp(),
     })
-  }
-  else {
-    if (!thought.contexts) {
-      thought.contexts = []
-    }
-    // floating thought (no context)
-    if (context.length > 0) {
-      thought.contexts.push({ // eslint-disable-line fp/no-mutating-methods
-        context,
-        id,
-        rank
-      })
-    }
+  } else {
+    lexeme.contexts = !lexeme.contexts
+      ? []
+      : // floating thought (no context)
+      context.length > 0
+      ? [
+          ...lexeme.contexts,
+          {
+            context,
+            id,
+            rank,
+          },
+        ]
+      : lexeme.contexts
   }
 
   const thoughtIndexUpdates = {
-    [hashThought(thought.value)]: thought,
-    ...subthoughtNew
+    [hashThought(lexeme.value)]: lexeme,
+    ...(subthoughtNew
       ? {
-        [hashThought(subthoughtNew.value)]: subthoughtNew
-      }
-      : null
+          [hashThought(subthoughtNew.value)]: subthoughtNew,
+        }
+      : null),
   }
 
   return updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates })

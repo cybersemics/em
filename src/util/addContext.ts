@@ -1,23 +1,29 @@
 import { equalArrays } from './equalArrays'
 import { notNull } from './notNull'
 import { timestamp } from './timestamp'
+import { getSessionId } from '../util/sessionManager'
 import { Context, Lexeme, ThoughtContext, Timestamp } from '../types'
 
 /** Returns a new thought plus the given context. Does not add duplicates. */
-export const addContext = (thought: Lexeme, context: Context, rank: number, id: string | null, archived: Timestamp): Lexeme => ({
-  ...thought,
+export const addContext = (
+  lexeme: Lexeme,
+  context: Context,
+  rank: number,
+  id: string | null,
+  archived: Timestamp,
+): Lexeme => ({
+  ...lexeme,
   ...notNull({
-    contexts: (thought.contexts || [])
-      .filter((parent: ThoughtContext) =>
-        !(equalArrays(parent.context, context) && parent.rank === rank)
-      )
+    contexts: (lexeme.contexts || [])
+      .filter((parent: ThoughtContext) => !(equalArrays(parent.context, context) && parent.rank === rank))
       .concat({
         context,
         rank,
-        ...id ? { id } : null,
-        ...archived ? { archived } : {}
+        ...(id ? { id } : null),
+        ...(archived ? { archived } : {}),
       }),
-    created: thought.created || timestamp(),
+    created: lexeme.created || timestamp(),
     lastUpdated: timestamp(),
-  })
+    updatedBy: getSessionId(),
+  }),
 })

@@ -22,11 +22,14 @@ import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitForElementNotExist from './waitForElementNotExist'
 import waitUntil from './waitUntil'
+import newThought from './newThought'
 
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>
 /** Parameter<...> doesn't handle function overload afaik, so we need to fix the types manually before exporting. */
-async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> { /** */ }
+async function pasteOverload(pathUnranked: string | string[], text?: string): Promise<void> {
+  /** */
+}
 
 const helpers = {
   $,
@@ -40,9 +43,10 @@ const helpers = {
   getSelection,
   hideKeyboardByTappingDone,
   isKeyboardShown,
+  newThought,
   paste,
-  tapReturnKey,
   tap,
+  tapReturnKey,
   type,
   waitForEditable,
   waitForElement,
@@ -52,7 +56,6 @@ const helpers = {
 
 /** Setup up the Browser instance for all helpers and returns an index of test helpers with the Browser instance partially applied. */
 const index = () => {
-
   const init = initSession()
   const browserRef = {} as { current?: Browser<'async'> }
   const index = partialWithRef(browserRef, helpers)
@@ -62,7 +65,7 @@ const index = () => {
   })
 
   return index as typeof index & {
-    paste: typeof pasteOverload,
+    paste: typeof pasteOverload
   }
 }
 

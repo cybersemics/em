@@ -8,7 +8,6 @@ import { Dispatch, Thunk, Index, Parent } from '../types'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = async (dispatch: Dispatch, newState: State, oldState: State) => {
-
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (oldState.lastUpdated! <= newState.lastUpdated!) {
@@ -25,10 +24,8 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
   // thoughtIndex
   // keyRaw is firebase encoded
   const thoughtIndexUpdates = keyValueBy(newState.thoughts.thoughtIndex, (keyRaw, lexemeNew) => {
-
-    const key = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)
-      : keyRaw
+    const key =
+      newState.schemaVersion < SCHEMA_HASHKEYS ? (keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)) : keyRaw
     const lexemeOld = oldState.thoughts.thoughtIndex[key]
     const updated = lexemeNew && (!lexemeOld || lexemeNew.lastUpdated > lexemeOld.lastUpdated)
 
@@ -45,21 +42,27 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
   logWithTime('loadRemoteState: updateThoughtIndex')
 
   // contextEncodedRaw is firebase encoded
-  const contextIndexUpdates: Index<Parent | null> = keyValueBy(newState.thoughts.contextIndex || {}, (contextEncodedRaw, parentEntryNew) => {
+  const contextIndexUpdates: Index<Parent | null> = keyValueBy(
+    newState.thoughts.contextIndex || {},
+    (contextEncodedRaw, parentEntryNew) => {
+      const contextEncoded =
+        newState.schemaVersion < SCHEMA_HASHKEYS
+          ? contextEncodedRaw === EMPTY_TOKEN
+            ? ''
+            : firebaseDecode(contextEncodedRaw)
+          : contextEncodedRaw
+      const parentEntryOld = oldState.thoughts.contextIndex[contextEncoded]
+      const updated =
+        !parentEntryOld ||
+        parentEntryNew.lastUpdated > parentEntryOld.lastUpdated ||
+        // root will be empty but have a newer lastUpdated on a fresh start
+        // WARNING: If children are added to the root before the remote state is loaded, they will be overwritten
+        parentEntryOld.children.length === 0
 
-    const contextEncoded = newState.schemaVersion < SCHEMA_HASHKEYS
-      ? contextEncodedRaw === EMPTY_TOKEN ? '' : firebaseDecode(contextEncodedRaw)
-      : contextEncodedRaw
-    const parentEntryOld = oldState.thoughts.contextIndex[contextEncoded]
-    const updated = !parentEntryOld
-      || parentEntryNew.lastUpdated > parentEntryOld.lastUpdated
-      // root will be empty but have a newer lastUpdated on a fresh start
-      // WARNING: If children are added to the root before the remote state is loaded, they will be overwritten
-      || parentEntryOld.children.length === 0
-
-    // update if entry does not exist locally or is newer
-    return updated ? { [contextEncoded]: parentEntryNew } : null
-  })
+      // update if entry does not exist locally or is newer
+      return updated ? { [contextEncoded]: parentEntryNew } : null
+    },
+  )
 
   logWithTime('loadRemoteState: contextIndexUpdates generated')
 
@@ -84,20 +87,24 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
 
   if (Object.keys(thoughtIndexUpdates).length > 0) {
     logWithTime('updateThoughts')
-    dispatch(updateThoughts({
-      thoughtIndexUpdates,
-      contextIndexUpdates,
-      recentlyEdited: newState.recentlyEdited,
-      remote: false,
-    }))
+    dispatch(
+      updateThoughts({
+        thoughtIndexUpdates,
+        contextIndexUpdates,
+        recentlyEdited: newState.recentlyEdited,
+        remote: false,
+      }),
+    )
   }
 
   logWithTime('loadRemoteState: updateThoughts')
 }
 
 /** Loads the new state. */
-const loadRemoteState = (newState: State): Thunk => (dispatch, getState) =>
-  loadState(dispatch, newState, getState())
+const loadRemoteState =
+  (newState: State): Thunk =>
+  (dispatch, getState) =>
+    loadState(dispatch, newState, getState())
 
 // disable migrations since they do not work with iterative loading
 
@@ -125,7 +132,6 @@ const loadRemoteState = (newState: State): Thunk => (dispatch, getState) =>
 //     const updateThoughtsArgs = {
 //       contextIndexUpdates,
 //       thoughtIndexUpdates,
-//       forceRender: true,
 //       remote: false,
 //       updates: { schemaVersion },
 //     }

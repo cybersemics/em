@@ -13,40 +13,40 @@ Outputs to a file with a ".[subcommand]" suffix.
 `
 
 interface RemoteState {
-  thoughtIndex: State['thoughts']['thoughtIndex'],
-  contextIndex: State['thoughts']['contextIndex'],
+  thoughtIndex: State['thoughts']['thoughtIndex']
+  contextIndex: State['thoughts']['contextIndex']
 }
 
 const subcommands = {
-
   contexts: (state: RemoteState) => {
-
     // convert
     let stateNew = null
     let converted = 0
     let missing = 0
 
-    const contextIndexNew = _.transform(state.contextIndex, (accum, parent, contextEncoded) => {
+    const contextIndexNew = _.transform(
+      state.contextIndex,
+      (accum, parent, contextEncoded) => {
+        // missing context is from legacy data and is presumed to already be unreachable
+        if (!parent.context) {
+          accum[contextEncoded] = parent
+          missing++
+          return
+        }
 
-      // missing context is from legacy data and is presumed to already be unreachable
-      if (!parent.context) {
-        accum[contextEncoded] = parent
-        missing++
-        return
-      }
-
-      const contextEncodedNew = hashContext(parent.context)
-      accum[contextEncodedNew] = parent
-      converted++
-
-    }, {} as Index<Parent>)
+        const contextEncodedNew = hashContext(parent.context)
+        accum[contextEncodedNew] = parent
+        converted++
+      },
+      {} as Index<Parent>,
+    )
 
     console.log(`Converted: ${converted}`)
     console.log(`Missing contexts: ${missing}`)
 
     return {
       ...state,
-      contextIndex: contextIndexNew
+      contextIndex: contextIndexNew,
     }
   },
 
@@ -56,12 +56,10 @@ const subcommands = {
     console.error('Not yet implemented')
     process.exit(1)
   },
-
 } as Index<(state: RemoteState) => any>
 
 const main = () => {
-
-  const [,,subcommand, inputPath] = process.argv
+  const [, , subcommand, inputPath] = process.argv
 
   // check args
   if (process.argv.length <= 2) {

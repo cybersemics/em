@@ -8,9 +8,7 @@ import newThought from '../newThought'
 import setAttribute from '../setAttribute'
 
 it('delete attribute', () => {
-
   const steps = [
-
     // new thought
     newThought('a'),
 
@@ -18,14 +16,14 @@ it('delete attribute', () => {
     setAttribute({
       context: ['a'],
       key: '=test',
-      value: 'hello'
+      value: 'hello',
     }),
 
     // delete attribute
     deleteAttribute({
       context: ['a'],
-      key: '=test'
-    })
+      key: '=test',
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -34,5 +32,4 @@ it('delete attribute', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
-
 })

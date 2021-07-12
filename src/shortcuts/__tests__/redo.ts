@@ -5,14 +5,13 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('redo thought change', () => {
-
   const store = createTestStore()
 
   store.dispatch([
     importText({
       text: `
         - a
-        - b`
+        - b`,
     }),
     { type: 'cursorUp' },
     {
@@ -20,9 +19,9 @@ it('redo thought change', () => {
       newValue: 'aa',
       oldValue: 'a',
       context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }],
     },
-    { type: 'undoAction' }
+    { type: 'undoAction' },
   ])
 
   const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -43,11 +42,9 @@ it('redo thought change', () => {
   - b`
 
   expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
-
 })
 
 it('group contiguous navigation actions preceding a thought change on redo', () => {
-
   const store = createTestStore()
 
   store.dispatch([
@@ -55,7 +52,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
       text: `
         - a
         - b
-        - c`
+        - c`,
     }),
     { type: 'cursorDown' },
     { type: 'cursorUp' },
@@ -66,7 +63,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
       newValue: 'arizona',
       oldValue: 'a',
       context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }]
+      path: [{ value: 'a', rank: 0 }],
     },
     setCursorFirstMatchActionCreator(['arizona', 'b']),
     { type: 'cursorBack' },
@@ -77,13 +74,16 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
       newValue: 'boston',
       oldValue: 'b',
       context: ['arizona'],
-      path: [{ value: 'arizona', rank: 0 }, { value: 'b', rank: 0 }]
+      path: [
+        { value: 'arizona', rank: 0 },
+        { value: 'b', rank: 0 },
+      ],
     },
     { type: 'cursorDown' },
     { type: 'undoAction' },
     { type: 'undoAction' },
     // redo all actions preceding a thoughtchange as a single operation
-    { type: 'redoAction' }
+    { type: 'redoAction' },
   ])
 
   const cursorAfterFirstRedo = store.getState().cursor
@@ -110,30 +110,30 @@ it('redo contiguous changes', () => {
     importText({
       text: `
         - A
-        - B`
+        - B`,
     }),
     {
       type: 'editThought',
       newValue: 'Atlantic',
       oldValue: 'A',
       context: [HOME_TOKEN],
-      path: [{ value: 'A', rank: 0 }]
+      path: [{ value: 'A', rank: 0 }],
     },
     {
       type: 'editThought',
       newValue: 'Atlantic ',
       oldValue: 'Atlantic',
       context: [HOME_TOKEN],
-      path: [{ value: 'Atlantic', rank: 0 }]
+      path: [{ value: 'Atlantic', rank: 0 }],
     },
     {
       type: 'editThought',
       newValue: 'Atlantic City',
       oldValue: 'Atlantic ',
       context: [HOME_TOKEN],
-      path: [{ value: 'Atlantic ', rank: 0 }]
+      path: [{ value: 'Atlantic ', rank: 0 }],
     },
-    { type: 'undoAction' }
+    { type: 'undoAction' },
   ])
 
   const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -155,5 +155,4 @@ it('redo contiguous changes', () => {
   - B`
 
   expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
-
 })

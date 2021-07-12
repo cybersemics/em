@@ -3,16 +3,16 @@ import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
 
 interface ChevronImgProps {
-  dark: boolean,
-  onClickHandle: () => void,
-  className?: string,
-  additonalStyle?: CSSProperties,
+  dark: boolean
+  onClickHandle: () => void
+  className?: string
+  additonalStyle?: CSSProperties
 }
 
 /**
  * Loading component.
  */
-const ChevronImg = ({ dark, onClickHandle, className, additonalStyle }: ChevronImgProps) =>
+const ChevronImg = ({ dark, onClickHandle, className, additonalStyle }: ChevronImgProps) => (
   <img
     src={dark ? ArrowDownWhite : ArrowDownBlack}
     alt='Arrow'
@@ -22,5 +22,6 @@ const ChevronImg = ({ dark, onClickHandle, className, additonalStyle }: ChevronI
     onClick={onClickHandle}
     className={className || ''}
   />
+)
 
 export default ChevronImg

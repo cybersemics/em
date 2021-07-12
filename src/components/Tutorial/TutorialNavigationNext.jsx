@@ -24,7 +24,11 @@ import {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
-  const { thoughts: { contextIndex }, cursor, expanded = {} } = state
+  const {
+    thoughts: { contextIndex },
+    cursor,
+    expanded = {},
+  } = state
   return {
     contextIndex,
     cursor,
@@ -37,16 +41,7 @@ const mapStateToProps = state => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationNext = connect(mapStateToProps)(
-  ({
-    contextIndex,
-    cursor,
-    expanded,
-    rootChildren,
-    tutorialChoice,
-    tutorialStep,
-    dispatch,
-  }) => {
-
+  ({ contextIndex, cursor, expanded, rootChildren, tutorialChoice, tutorialStep, dispatch }) => {
     return [
       TUTORIAL_STEP_START,
       TUTORIAL_STEP_SUCCESS,
@@ -58,12 +53,20 @@ const TutorialNavigationNext = connect(mapStateToProps)(
       (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0) ||
       ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
-        tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER
-      ) && (!cursor || headValue(cursor).length > 0)) ||
-      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT && context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
-      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT && context2SubthoughtCreated({ rootChildren, tutorialChoice }))
-      ? <TutorialNavigationButton clickHandler={() => dispatch(tutorialNext({}))} value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'} />
-      : <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
-  })
+        tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
+        (!cursor || headValue(cursor).length > 0)) ||
+      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
+        context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
+      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&
+        context2SubthoughtCreated({ rootChildren, tutorialChoice })) ? (
+      <TutorialNavigationButton
+        clickHandler={() => dispatch(tutorialNext({}))}
+        value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}
+      />
+    ) : (
+      <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
+    )
+  },
+)
 
 export default TutorialNavigationNext

@@ -14,12 +14,13 @@ import { Await } from '../types'
 import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
+import { storage } from '../util/storage'
 
 /**
  * Test App.
  */
 // eslint-disable-next-line
-export const App = React.forwardRef(() =>
+export const App = React.forwardRef(() => (
   <Provider store={store}>
     <ErrorBoundaryContainer>
       <TouchMonitor>
@@ -27,16 +28,14 @@ export const App = React.forwardRef(() =>
       </TouchMonitor>
     </ErrorBoundaryContainer>
   </Provider>
-)
+))
 
 // eslint-disable-next-line fp/no-let
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
-
   await act(async () => {
-
     jest.useFakeTimers()
 
     // calls initEvents, which must be manually cleaned up
@@ -49,16 +48,14 @@ const createTestApp = async () => {
     const TestApp = wrapInTestContext(App)
     const dndRef = createRef<HTMLElement>()
 
-    render(<TestApp ref={dndRef}/>)
+    render(<TestApp ref={dndRef} />)
 
     store.dispatch([
-
       // skip tutorial
       { type: 'modalComplete', id: 'welcome' },
 
       // close welcome modal
       { type: 'tutorial', value: false },
-
     ])
 
     jest.runOnlyPendingTimers()
@@ -66,15 +63,13 @@ const createTestApp = async () => {
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
   })
-
 }
 
 /** Clear store, localStorage, local db, and window event handlers. */
 export const cleanupTestApp = async () => {
   await act(async () => {
-
     // clear localStorage before dispatching clear action, since initialState reads from localStorage
-    localStorage.clear()
+    storage.clear()
 
     // cleanup initEvents which is called in initialize
     if (cleanup) {
@@ -87,11 +82,7 @@ export const cleanupTestApp = async () => {
     document.body.innerHTML = ''
 
     // set url back to home
-    window.history.pushState(
-      {},
-      '',
-      '/'
-    )
+    window.history.pushState({}, '', '/')
 
     jest.runOnlyPendingTimers()
   })

@@ -6,7 +6,7 @@ import { State } from '../util/initialState'
 const tutorial = (state: State, { value }: { value?: boolean }) =>
   settings(state, {
     key: 'Tutorial',
-    value: value ? 'On' : 'Off'
+    value: value ? 'On' : 'Off',
   })
 
 export default _.curryRight(tutorial)

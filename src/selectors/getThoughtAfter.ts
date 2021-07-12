@@ -6,7 +6,6 @@ import rootedParentOf from './rootedParentOf'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 const getThoughtAfter = (state: State, simplePath: SimplePath) => {
-
   const value = headValue(simplePath)
   const rank = headRank(simplePath)
   const parentPath = rootedParentOf(state, simplePath)

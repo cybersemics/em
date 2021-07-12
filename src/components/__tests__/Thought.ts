@@ -2,7 +2,7 @@ import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
-import { importText, render } from '../../action-creators'
+import { importText } from '../../action-creators'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
@@ -15,7 +15,6 @@ beforeEach(async () => {
 afterEach(cleanupTestApp)
 
 it('create, navigate, and edit thoughts', async () => {
-
   // create thought
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
@@ -59,19 +58,16 @@ it('create, navigate, and edit thoughts', async () => {
 //   Expected: ""
 //   Received: "Hit the Enter key to add a new thought.A  AFeedback | HelpVersion: 162.0.0"
 it.skip('caret is set on new thought', async () => {
-
   windowEvent('keydown', { key: 'Enter' })
   jest.runOnlyPendingTimers()
   wrapper.update()
   const { focusNode, focusOffset } = window.getSelection() || {}
   expect(focusNode?.textContent).toEqual('')
   expect(focusOffset).toEqual(0)
-
 })
 
 // Intermittent test failure. Unable to reproduce locally.
 it.skip('caret is set on new subthought', async () => {
-
   // create thought
   windowEvent('keydown', { key: 'Enter' })
   wrapper.update()
@@ -84,24 +80,23 @@ it.skip('caret is set on new subthought', async () => {
   const editableSubthought = wrapper.find('.children .children div.editable')
   await editableSubthought.simulate('change', { target: { value: 'a1' } })
 
-  store.dispatch(render())
   jest.runOnlyPendingTimers()
   wrapper.update()
 
   const { focusNode, focusOffset } = window.getSelection() || {}
   expect(focusNode?.textContent).toEqual('a1')
   expect(focusOffset).toEqual(0)
-
 })
 
 it('do not allow edit to duplicate thought', async () => {
-
-  store.dispatch(importText({
-    text: `
+  store.dispatch(
+    importText({
+      text: `
       - a
       - b
-      - c`
-  }))
+      - c`,
+    }),
+  )
 
   wrapper.update()
 
@@ -123,7 +118,6 @@ it('do not allow edit to duplicate thought', async () => {
 })
 
 it('allow duplicate empty thoughts', async () => {
-
   // create empty thought
   windowEvent('keydown', { key: 'Enter' })
 
@@ -151,5 +145,4 @@ it('allow duplicate empty thoughts', async () => {
     { value: '', rank: 2 },
   ])
   expect(rootSubthoughts).toHaveLength(3)
-
 })

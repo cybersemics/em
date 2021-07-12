@@ -11,8 +11,8 @@ import { Index } from '../types'
 const delay = 100
 
 interface Options {
-  replace?: boolean,
-  contextViews?: Index<boolean>,
+  replace?: boolean
+  contextViews?: Index<boolean>
 }
 /**
  * Sets the url and history to the given thoughts.
@@ -21,7 +21,6 @@ interface Options {
  * @param contextViews   Optional argument can be used during toggleContextViews when the state has not yet been updated. Defaults to URL contextViews.
  */
 const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextViews }: Options = {}) => {
-
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
   const context = path ? pathToContext(path) : [HOME_TOKEN]
   const encoded = hashContext(context)
@@ -30,19 +29,23 @@ const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextView
   const contextDecoded = decoded.path ? pathToContext(decoded.path) : [HOME_TOKEN]
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalArrays(contextDecoded, context) && decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded]) return
+  if (
+    equalArrays(contextDecoded, context) &&
+    decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded]
+  )
+    return
 
-  const stateWithNewContextViews = { ...state, contextViews: contextViews || state.contextViews || decoded.contextViews }
+  const stateWithNewContextViews = {
+    ...state,
+    contextViews: contextViews || state.contextViews || decoded.contextViews,
+  }
 
   // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
   // ensure the location does not change through refreshes in standalone PWA mode
-  const updateCursorPromise = path
-    ? updateCursor(hashContextUrl(stateWithNewContextViews, context))
-    : deleteCursor()
-  updateCursorPromise
-    .catch(err => {
-      throw new Error(err)
-    })
+  const updateCursorPromise = path ? updateCursor(hashContextUrl(stateWithNewContextViews, context)) : deleteCursor()
+  updateCursorPromise.catch(err => {
+    throw new Error(err)
+  })
 
   // if PWA, do not update browser URL as it causes a special browser navigation bar to appear
   // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
@@ -55,10 +58,9 @@ const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextView
       // an incrementing ID to track back or forward browser actions
       (window.history.state || 0) + 1,
       '',
-      hashContextUrl(stateWithNewContextViews, path ? context : [HOME_TOKEN])
+      hashContextUrl(stateWithNewContextViews, path ? context : [HOME_TOKEN]),
     )
-  }
-  catch (e) {
+  } catch (e) {
     // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'
     console.error(e)
   }

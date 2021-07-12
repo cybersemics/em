@@ -15,8 +15,9 @@ import SearchSubthoughts from './SearchSubthoughts'
 const SEARCH_DEBOUNCE_WAIT = 180
 
 const debouncedSearch = _.debounce(
-  (newValue, archived, dispatch) => dispatch(search({ value: newValue, archived }))
-  , SEARCH_DEBOUNCE_WAIT)
+  (newValue, archived, dispatch) => dispatch(search({ value: newValue, archived })),
+  SEARCH_DEBOUNCE_WAIT,
+)
 
 /** Select next editable and prevent default keydown. */
 const onKeyDown = (e: React.KeyboardEvent) => {
@@ -28,7 +29,6 @@ const onKeyDown = (e: React.KeyboardEvent) => {
 
 /** Searches all thoughts. */
 const Search = ({ dispatch }: Connected<any>) => {
-
   const ref = useRef<HTMLElement>()
   const state = store.getState()
 
@@ -64,28 +64,34 @@ const Search = ({ dispatch }: Connected<any>) => {
     }
   }
 
-  return <ul style={{ marginTop: 0 }} >
-    <li className='child'>
-      <div className='search-container'>
-        <span className='bullet-search' role='img' aria-label='Search'><SearchIcon size={16} /></span>
-        <div className='thought'>
-          <ContentEditable
-            className='editable search'
-            html={state.search ?? ''}
-            placeholder='Search'
-            innerRef={focusOnRef}
-            onFocus={onFocus}
-            onKeyDown={onKeyDown}
-            onChange={onChange}
-          />
+  return (
+    <ul style={{ marginTop: 0 }}>
+      <li className='child'>
+        <div className='search-container'>
+          <span className='bullet-search' role='img' aria-label='Search'>
+            <SearchIcon size={16} />
+          </span>
+          <div className='thought'>
+            <ContentEditable
+              className='editable search'
+              html={state.search ?? ''}
+              placeholder='Search'
+              innerRef={focusOnRef}
+              onFocus={onFocus}
+              onKeyDown={onKeyDown}
+              onChange={onChange}
+            />
+          </div>
         </div>
-      </div>
-      <div className='archive-check'>
-        <label><input type='checkbox' onChange={onArchiveChange} defaultChecked={false} /> Archive</label>
-      </div>
-      <SearchSubthoughts/>
-    </li>
-  </ul>
+        <div className='archive-check'>
+          <label>
+            <input type='checkbox' onChange={onArchiveChange} defaultChecked={false} /> Archive
+          </label>
+        </div>
+        <SearchSubthoughts />
+      </li>
+    </ul>
+  )
 }
 
 export default connect()(Search)

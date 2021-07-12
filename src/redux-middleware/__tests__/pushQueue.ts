@@ -1,8 +1,8 @@
 import { store } from '../../store'
 import { importText, editThought } from '../../action-creators'
-import { getThought as getThoughtSelector } from '../../selectors'
+import { getLexeme as getThoughtSelector } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
-import getThought from '../../data-providers/data-helpers/getThought'
+import getLexeme from '../../data-providers/data-helpers/getLexeme'
 import { DataProvider } from '../../data-providers/DataProvider'
 import testTimer from '../../test-helpers/testTimer'
 import { SimplePath } from '../../types'
@@ -21,13 +21,13 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('editing thoughts to new value with related pending lexeme', async () => {
-
   // Related issue: https://github.com/cybersemics/em/issues/1074
 
   fakeTimer.useFakeTimer()
 
-  store.dispatch(importText({
-    text: `
+  store.dispatch(
+    importText({
+      text: `
       - g
         - h
       - a
@@ -35,14 +35,15 @@ it('editing thoughts to new value with related pending lexeme', async () => {
           - c
             - d
               - e
-                - f`
-  }))
+                - f`,
+    }),
+  )
 
   await fakeTimer.runAllAsync()
 
   await fakeTimer.useRealTimer()
 
-  expect((await getThought(db, 'f'))?.contexts).toHaveLength(1)
+  expect((await getLexeme(db, 'f'))?.contexts).toHaveLength(1)
 
   // refresh test app
   await refreshTestApp()
@@ -52,12 +53,17 @@ it('editing thoughts to new value with related pending lexeme', async () => {
   // lexeme for 'f; should not be loaded into the state yet.
   expect(getThoughtSelector(store.getState(), 'f')).toBeFalsy()
 
-  store.dispatch(editThought({
-    oldValue: 'h',
-    newValue: 'f',
-    context: ['g'],
-    path: [{ value: 'g', rank: 0 }, { value: 'h', rank: 0 }] as SimplePath,
-  }))
+  store.dispatch(
+    editThought({
+      oldValue: 'h',
+      newValue: 'f',
+      context: ['g'],
+      path: [
+        { value: 'g', rank: 0 },
+        { value: 'h', rank: 0 },
+      ] as SimplePath,
+    }),
+  )
   await fakeTimer.runAllAsync()
 
   fakeTimer.useRealTimer()
@@ -69,5 +75,5 @@ it('editing thoughts to new value with related pending lexeme', async () => {
 
   expect(getThoughtSelector(store.getState(), 'f')?.contexts).toMatchObject(expectedContexts)
 
-  expect((await getThought(db, 'f'))?.contexts).toMatchObject(expectedContexts)
+  expect((await getLexeme(db, 'f'))?.contexts).toMatchObject(expectedContexts)
 })

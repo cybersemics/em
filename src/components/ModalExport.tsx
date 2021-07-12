@@ -4,8 +4,22 @@ import ClipboardJS from 'clipboard'
 import { and } from 'fp-and-or'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
-import { download, ellipsize, getExportPhrase, getPublishUrl, hashContext, headValue, isDocumentEditable, isFunction, isRoot, pathToContext, removeHome, timestamp, unroot } from '../util'
-import { alert, error, modalRemindMeLater, pull } from '../action-creators'
+import {
+  download,
+  ellipsize,
+  getExportPhrase,
+  getPublishUrl,
+  hashContext,
+  headValue,
+  isDocumentEditable,
+  isFunction,
+  isRoot,
+  pathToContext,
+  removeHome,
+  timestamp,
+  unroot,
+} from '../util'
+import { alert, error, closeModal, pull } from '../action-creators'
 import { exportContext, getAllChildren, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
@@ -17,12 +31,12 @@ import useOnClickOutside from 'use-onclickoutside'
 import { Child, ExportOption } from '../types'
 
 interface AdvancedSetting {
-  id: string,
-  onChangeFunc: () => void,
-  defaultChecked: boolean,
-  checked: boolean,
-  title: string,
-  description: string,
+  id: string
+  onChangeFunc: () => void
+  defaultChecked: boolean
+  checked: boolean
+  title: string
+  description: string
 }
 
 const exportOptions: ExportOption[] = [
@@ -32,7 +46,6 @@ const exportOptions: ExportOption[] = [
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport = () => {
-
   const store = useStore()
   const dispatch = useDispatch()
   const isMounted = useRef(false)
@@ -42,9 +55,7 @@ const ModalExport = () => {
   const context = pathToContext(simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getAllChildren(state, contextTitle)[0]
-  const title = isRoot(cursor) ? 'home'
-    : titleChild ? titleChild.value
-    : headValue(cursor)
+  const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
   const titleShort = ellipsize(title)
   const titleMedium = ellipsize(title, 25)
 
@@ -66,7 +77,7 @@ const ModalExport = () => {
   const exportThoughtsPhrase = getExportPhrase(state, simplePath, {
     filterFunction: and(
       shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
-      shouldIncludeArchived || ((child: Child) => child.value !== '=archive')
+      shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
     ),
     value: title,
   })
@@ -91,18 +102,15 @@ const ModalExport = () => {
 
   // fetch all pending descendants of the cursor once before they are exported
   useEffect(() => {
-
     if (!isMounted.current) {
       // track isMounted so we can cancel the call to setExportContent after unmount
       isMounted.current = true
-      dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
-        .then(() => {
-          if (isMounted.current) {
-            setExportContentFromCursor()
-          }
-        })
-    }
-    else {
+      dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity })).then(() => {
+        if (isMounted.current) {
+          setExportContentFromCursor()
+        }
+      })
+    } else {
       setExportContentFromCursor()
     }
 
@@ -114,26 +122,23 @@ const ModalExport = () => {
   }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
 
   useEffect(() => {
-
     document.addEventListener('click', onClickOutside)
 
     const clipboard = new ClipboardJS('.copy-clipboard-btn')
 
     clipboard.on('success', () => {
-
       // Note: clipboard leaves unwanted text selection after copy operation. so removing it to prevent issue with gesture handler
       if (document.getSelection()?.toString()) document.getSelection()?.removeAllRanges()
 
       dispatch([
-        modalRemindMeLater({ id: 'help' }),
-        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 })
+        closeModal(),
+        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 }),
       ])
 
       clearTimeout(globals.errorTimer)
     })
 
     clipboard.on('error', e => {
-
       console.error(e)
       dispatch(error({ value: 'Error copying thoughts' }))
 
@@ -160,7 +165,6 @@ const ModalExport = () => {
 
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
-
     // use mobile share if it is available
     if (navigator.share) {
       navigator.share({
@@ -172,19 +176,17 @@ const ModalExport = () => {
     else {
       try {
         download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
-      }
-      catch (e) {
+      } catch (e) {
         dispatch(error({ value: e.message }))
         console.error('Download Error', e.message)
       }
     }
 
-    dispatch(modalRemindMeLater({ id: 'export' }))
+    dispatch(closeModal())
   }
 
   /** Publishes the thoughts to IPFS. */
   const publish = async () => {
-
     setPublishing(true)
     setPublishedCIDs([])
     const cids = []
@@ -208,8 +210,7 @@ const ModalExport = () => {
         // dispatch(prependRevision({ path: cursor, cid }))
         cids.push(cid) // eslint-disable-line fp/no-mutating-methods
         setPublishedCIDs(cids)
-      }
-      else {
+      } else {
         setPublishing(false)
         setPublishedCIDs([])
         dispatch(error({ value: 'Publish Error' }))
@@ -239,7 +240,8 @@ const ModalExport = () => {
       defaultChecked: true,
       checked: shouldIncludeMetaAttributes,
       title: 'Lossless',
-      description: 'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or exporting to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.'
+      description:
+        'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or exporting to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.',
     },
     {
       id: 'archived-checkbox',
@@ -247,62 +249,73 @@ const ModalExport = () => {
       defaultChecked: true,
       checked: shouldIncludeArchived,
       title: 'Archived',
-      description: 'When checked, the exported thoughts include archived thoughts.'
-    }
+      description: 'When checked, the exported thoughts include archived thoughts.',
+    },
   ]
 
   return (
     <Modal id='export' title='Export' className='popup'>
-
       {/* Export message */}
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>
           <span>
-            {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>
-            <span> as <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
-              <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>{selected.label}</a>
-              <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-                <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? 'rotate180' : ''} />
-                <span ref={setWrapper}>
-                  <DropDownMenu
-                    isOpen={isOpen}
-                    selected={selected}
-                    onSelect={(option: ExportOption) => {
-                      setSelected(option)
-                      setIsOpen(false)
-                    }}
-                    options={exportOptions}
+            {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />
+            <span>
+              {' '}
+              as{' '}
+              <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
+                <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>
+                  {selected.label}
+                </a>
+                <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
+                  <ChevronImg
                     dark={dark}
-
-                    style={{
-                      top: '120%',
-                      left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
-                      display: 'table', // the only value that seems to overflow properly within the inline-flex element
-                      padding: 0,
-                    }}
+                    onClickHandle={() => setIsOpen(!isOpen)}
+                    className={isOpen ? 'rotate180' : ''}
                   />
+                  <span ref={setWrapper}>
+                    <DropDownMenu
+                      isOpen={isOpen}
+                      selected={selected}
+                      onSelect={(option: ExportOption) => {
+                        setSelected(option)
+                        setIsOpen(false)
+                      }}
+                      options={exportOptions}
+                      dark={dark}
+                      style={{
+                        top: '120%',
+                        left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
+                        display: 'table', // the only value that seems to overflow properly within the inline-flex element
+                        padding: 0,
+                      }}
+                    />
+                  </span>
                 </span>
               </span>
-            </span></span>
+            </span>
           </span>
         </span>
       </div>
 
       {/* Preview */}
-      <textarea readOnly style={{
-        backgroundColor: '#111',
-        border: 'none',
-        borderRadius: '10px',
-        color: '#aaa',
-        fontSize: '1em',
-        height: '120px',
-        marginBottom: '20px',
-        width: '300px',
-      }} value={exportContent || ''}></textarea>
+      <textarea
+        readOnly
+        style={{
+          backgroundColor: '#111',
+          border: 'none',
+          borderRadius: '10px',
+          color: '#aaa',
+          fontSize: '1em',
+          height: '120px',
+          marginBottom: '20px',
+          width: '300px',
+        }}
+        value={exportContent || ''}
+      ></textarea>
 
       {/* Download button */}
       <div className='modal-export-btns-wrapper'>
-
         <button
           className='modal-btn-export'
           disabled={exportContent === null}
@@ -311,20 +324,30 @@ const ModalExport = () => {
         >
           {exportWord}
         </button>
-
       </div>
 
       {/* Copy to clipboard */}
       <div className='cp-clipboard-wrapper'>
-        {exportContent !== null
-          ? <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>Copy to clipboard</a>
-          : <LoadingEllipsis />
-        }
+        {exportContent !== null ? (
+          <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>
+            Copy to clipboard
+          </a>
+        ) : (
+          <LoadingEllipsis />
+        )}
       </div>
 
       {/* Advanced Settings */}
       <div className='advance-setting-wrapper'>
-        <span><a className='advance-setting-link no-select' onClick={onAdvancedClick} style={{ opacity: advancedSettings ? 1 : 0.5 }}>Advanced</a></span>
+        <span>
+          <a
+            className='advance-setting-link no-select'
+            onClick={onAdvancedClick}
+            style={{ opacity: advancedSettings ? 1 : 0.5 }}
+          >
+            Advanced
+          </a>
+        </span>
         <span className='advance-setting-chevron'>
           <ChevronImg
             dark={dark}
@@ -335,7 +358,7 @@ const ModalExport = () => {
         </span>
       </div>
 
-      {advancedSettings &&
+      {advancedSettings && (
         <div className='advance-setting-section'>
           {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, checked, title, description }) => {
             return (
@@ -344,62 +367,86 @@ const ModalExport = () => {
                   <p className='advance-setting-label'>{title}</p>
                   <p className='advance-setting-description dim'>{description}</p>
                 </div>
-                <input type='checkbox' id={id} checked={checked} onChange={onChangeFunc} defaultChecked={defaultChecked} />
+                <input
+                  type='checkbox'
+                  id={id}
+                  checked={checked}
+                  onChange={onChangeFunc}
+                  defaultChecked={defaultChecked}
+                />
                 <span className='checkmark'></span>
               </label>
             )
           })}
         </div>
-      }
+      )}
 
       {/* Publish */}
 
-      {isDocumentEditable() && <>
-        <div className='modal-export-publish'>
-          {publishedCIDs.length > 0
-            ? <div>
-              Published: {publishedCIDs.map(cid =>
-                <a key={cid} target='_blank' rel='noopener noreferrer' href={getPublishUrl(cid)} dangerouslySetInnerHTML={{ __html: titleMedium }}/>
-              )}
-            </div>
-            : <div>
-              <p>{publishing ? 'Publishing...' : <span>Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }}/>.</span>}</p>
-              <p className='dim'><i>Note: These thoughts are published permanently. <br/>
-              This action cannot be undone.</i></p>
-            </div>
-          }
-        </div>
+      {isDocumentEditable() && (
+        <>
+          <div className='modal-export-publish'>
+            {publishedCIDs.length > 0 ? (
+              <div>
+                Published:{' '}
+                {publishedCIDs.map(cid => (
+                  <a
+                    key={cid}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    href={getPublishUrl(cid)}
+                    dangerouslySetInnerHTML={{ __html: titleMedium }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div>
+                <p>
+                  {publishing ? (
+                    'Publishing...'
+                  ) : (
+                    <span>
+                      Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />.
+                    </span>
+                  )}
+                </p>
+                <p className='dim'>
+                  <i>
+                    Note: These thoughts are published permanently. <br />
+                    This action cannot be undone.
+                  </i>
+                </p>
+              </div>
+            )}
+          </div>
 
-        <div className='modal-export-btns-wrapper'>
+          <div className='modal-export-btns-wrapper'>
+            <button
+              className='modal-btn-export'
+              disabled={!exportContent || publishing || publishedCIDs.length > 0}
+              onClick={publish}
+              style={themeColorWithBackground}
+            >
+              Publish
+            </button>
 
-          <button
-            className='modal-btn-export'
-            disabled={!exportContent || publishing || publishedCIDs.length > 0}
-            onClick={publish}
-            style={themeColorWithBackground}
-          >
-            Publish
-          </button>
-
-          {(publishing || publishedCIDs.length > 0) && <button
-            className='modal-btn-cancel'
-            onClick={() => {
-              dispatch([
-                alert(null),
-                modalRemindMeLater({ id: 'help' })
-              ])
-            }}
-            style={{
-              fontSize: '14px',
-              ...themeColor
-            }}
-          >
-            Close
-          </button>}
-
-        </div>
-      </>}
-
+            {(publishing || publishedCIDs.length > 0) && (
+              <button
+                className='modal-btn-cancel'
+                onClick={() => {
+                  dispatch([alert(null), closeModal()])
+                }}
+                style={{
+                  fontSize: '14px',
+                  ...themeColor,
+                }}
+              >
+                Close
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </Modal>
   )
 }

@@ -3,16 +3,7 @@ import { getNextRank, hasChild, rootedParentOf, prevSibling } from '../selectors
 import { State } from '../util/initialState'
 
 // util
-import {
-  ellipsize,
-  head,
-  headRank,
-  headValue,
-  isEM,
-  isRoot,
-  parentOf,
-  pathToContext,
-} from '../util'
+import { ellipsize, head, headRank, headValue, isEM, isRoot, parentOf, pathToContext } from '../util'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
 const indent = (state: State) => {
@@ -30,10 +21,15 @@ const indent = (state: State) => {
   }
   // cancel if parent is readonly or unextendable
   else if (hasChild(state, pathToContext(parentOf(cursor)), '=readonly')) {
-    return alert(state, { value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.` })
-  }
-  else if (hasChild(state, pathToContext(parentOf(cursor)), '=uneditable')) {
-    return alert(state, { value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(cursor)}" may not be indented.` })
+    return alert(state, {
+      value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`,
+    })
+  } else if (hasChild(state, pathToContext(parentOf(cursor)), '=uneditable')) {
+    return alert(state, {
+      value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(
+        cursor,
+      )}" may not be indented.`,
+    })
   }
 
   // store selection offset before moveThought is dispatched
@@ -44,14 +40,14 @@ const indent = (state: State) => {
     prev,
     {
       ...head(cursor),
-      rank: getNextRank(state, pathToContext(parentOf(cursor).concat(prev)))
-    }
+      rank: getNextRank(state, pathToContext(parentOf(cursor).concat(prev))),
+    },
   ]
 
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
-    offset
+    offset,
   })
 }
 

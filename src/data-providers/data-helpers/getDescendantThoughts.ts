@@ -8,11 +8,14 @@ import { getSessionId } from '../../util/sessionManager'
 const MAX_DEPTH = 100
 
 interface Options {
-  maxDepth?: number,
+  maxDepth?: number
 }
 
 /** Returns a getter function that accesses a property on an object. */
-const prop = (name: string) => <T>(x: Index<T>) => x[name]
+const prop =
+  (name: string) =>
+  <T>(x: Index<T>) =>
+    x[name]
 
 /**
  * Returns true if the Parent should not be buffered for any of the following reasons:
@@ -33,15 +36,17 @@ const isUnbuffered = (parent: Parent) =>
  * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
-async function* getDescendantThoughts(provider: DataProvider, context: Context, { maxDepth = MAX_DEPTH }: Options = {}): AsyncIterable<ThoughtsInterface> {
-
+async function* getDescendantThoughts(
+  provider: DataProvider,
+  context: Context,
+  { maxDepth = MAX_DEPTH }: Options = {},
+): AsyncIterable<ThoughtsInterface> {
   // use queue for breadth-first search
   let contexts = [context] // eslint-disable-line fp/no-let
   let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
 
   // eslint-disable-next-line fp/no-loops
   while (contexts.length > 0) {
-
     const contextIds = contexts.map(cx => hashContext(cx))
     const providerParents = (await provider.getContextsByIds(contextIds))
       // eslint-disable-next-line no-loop-func
@@ -55,45 +60,37 @@ async function* getDescendantThoughts(provider: DataProvider, context: Context, 
         context: parent?.context || contexts[i] || context,
       }))
 
-    const parents = currentMaxDepth > 0
-      ? providerParents
-      : providerParents.map(parent => ({
-        ...parent,
-        ...!isUnbuffered(parent) ? {
-          children: parent.children
-            .filter(_.flow(prop('value'), isFunction)),
-          lastUpdated: never(),
-          updatedBy: getSessionId(),
-          pending: true,
-        } : null
-      }))
+    const parents =
+      currentMaxDepth > 0
+        ? providerParents
+        : providerParents.map(parent => ({
+            ...parent,
+            ...(!isUnbuffered(parent)
+              ? {
+                  children: parent.children.filter(_.flow(prop('value'), isFunction)),
+                  lastUpdated: never(),
+                  updatedBy: getSessionId(),
+                  pending: true,
+                }
+              : null),
+          }))
 
     const thoughtIds = contexts.map(cx => hashThought(head(cx)))
     const lexemes = await provider.getThoughtsByIds(thoughtIds)
 
     const contextIndex = keyValueBy(contextIds, (id, i) => {
       // exclude non-pending leaves
-      return parents[i].children?.length > 0 || parents[i].pending
-        ? { [id]: parents[i] }
-        : null
+      return parents[i].children?.length > 0 || parents[i].pending ? { [id]: parents[i] } : null
     })
-    const thoughtIndex = keyValueBy(thoughtIds, (id, i) =>
-      lexemes[i]
-        ? { [id]: lexemes[i]! }
-        : null
-    )
+    const thoughtIndex = keyValueBy(thoughtIds, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
     const thoughts = {
-      contextCache: contextIds,
       contextIndex,
-      thoughtCache: thoughtIds,
       thoughtIndex,
     }
 
     // enqueue children
-    contexts = parents.map(parent =>
-      parent.children.map(child => unroot([...parent.context, child.value]))
-    ).flat()
+    contexts = parents.map(parent => parent.children.map(child => unroot([...parent.context, child.value]))).flat()
 
     // yield thought
     yield thoughts

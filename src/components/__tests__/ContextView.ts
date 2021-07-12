@@ -17,11 +17,10 @@ describe('Extract thought', () => {
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
       setCursorFirstMatchActionCreator(['Thought B', 'sub-thought']),
       { type: 'toggleContextView' },
-      cursorDown()
+      cursorDown(),
     ])
 
     const thoughts = await findAllThoughtsByText('sub-thought')
     expect(thoughts.length).toBe(1)
-
   })
 })

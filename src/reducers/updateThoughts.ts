@@ -1,27 +1,63 @@
 import _ from 'lodash'
-import { State, PushBatch } from '../util/initialState'
-import { decodeThoughtsUrl, expandThoughts, getThought } from '../selectors'
+import { State, PushBatch, initialState } from '../util/initialState'
+import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
-import { hashContext, logWithTime, mergeUpdates, reducerFlow, getWhitelistedThoughts, isRoot } from '../util'
-import { CONTEXT_CACHE_SIZE, EM_TOKEN, HOME_TOKEN, THOUGHT_CACHE_SIZE } from '../constants'
-import { Child, Context, ContextHash, Index, Lexeme, Parent, Path, SimplePath, ThoughtHash, ThoughtsInterface } from '../types'
+import {
+  htmlToJson,
+  hashContext,
+  importJSON,
+  isRoot,
+  logWithTime,
+  mergeUpdates,
+  once,
+  textToHtml,
+  reducerFlow,
+} from '../util'
+import fifoCache from '../util/fifoCache'
+import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { Child, Context, Index, Lexeme, Parent, Path, SimplePath } from '../types'
 
 export interface UpdateThoughtsOptions {
-  thoughtIndexUpdates: Index<Lexeme | null>,
-  contextIndexUpdates: Index<Parent | null>,
-  recentlyEdited?: Index,
-  pendingDeletes?: { context: Context, child: Child }[],
-  pendingEdits?: editThoughtPayload[],
-  pendingPulls?: { path: Path }[],
-  descendantMoves?: { pathOld: Path, pathNew: Path }[],
-  contextChain?: SimplePath[],
-  updates?: Index<string>,
-  local?: boolean,
-  remote?: boolean,
-  isLoading?: boolean,
+  thoughtIndexUpdates: Index<Lexeme | null>
+  contextIndexUpdates: Index<Parent | null>
+  recentlyEdited?: Index
+  pendingDeletes?: { context: Context; child: Child }[]
+  pendingEdits?: editThoughtPayload[]
+  pendingPulls?: { path: Path }[]
+  descendantMoves?: { pathOld: Path; pathNew: Path }[]
+  contextChain?: SimplePath[]
+  updates?: Index<string>
+  local?: boolean
+  remote?: boolean
+  isLoading?: boolean
 }
 
 const rootEncoded = hashContext([HOME_TOKEN])
+
+const contextCache = fifoCache<string>(10000)
+const lexemeCache = fifoCache<string>(10000)
+
+/**
+ * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants so they are never deleted from the thought cache when not present on the remote data source.
+ */
+export const getWhitelistedThoughts = once(() => {
+  const state = initialState()
+
+  const htmlSettings = textToHtml(INITIAL_SETTINGS)
+  const jsonSettings = htmlToJson(htmlSettings)
+  const settingsImported = importJSON(state, [{ value: EM_TOKEN, rank: 0 }] as SimplePath, jsonSettings)
+
+  return {
+    contextIndex: {
+      ...state.thoughts.contextIndex,
+      ...settingsImported.contextIndexUpdates,
+    },
+    thoughtIndex: {
+      ...state.thoughts.thoughtIndex,
+      ...settingsImported.thoughtIndexUpdates,
+    },
+  }
+})
 
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
@@ -29,31 +65,41 @@ const rootEncoded = hashContext([HOME_TOKEN])
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
  */
-const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, pendingDeletes, pendingEdits, descendantMoves, pendingPulls, local = true, remote = true, isLoading }: UpdateThoughtsOptions) => {
-
+const updateThoughts = (
+  state: State,
+  {
+    thoughtIndexUpdates,
+    contextIndexUpdates,
+    recentlyEdited,
+    updates,
+    pendingDeletes,
+    pendingEdits,
+    descendantMoves,
+    pendingPulls,
+    local = true,
+    remote = true,
+    isLoading,
+  }: UpdateThoughtsOptions,
+) => {
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
+  // The contextIndex and thoughtIndex can consume more and more memory as thoughts are pulled from the db.
+  // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and thoughtIndex.
+  // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
   // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and thoughtIndex
-  const contextCacheAppended = [...state.thoughts.contextCache, ...Object.keys(contextIndexUpdates)] as ContextHash[]
-  const thoughtCacheAppended = [...state.thoughts.thoughtCache, ...Object.keys(thoughtIndexUpdates)] as ThoughtHash[]
-  const contextCacheNumInvalid = Math.max(0, contextCacheAppended.length - CONTEXT_CACHE_SIZE)
-  const thoughtCacheNumInvalid = Math.max(0, thoughtCacheAppended.length - THOUGHT_CACHE_SIZE)
-  const contextCacheUnique = contextCacheNumInvalid === 0 ? null : _.uniq(contextCacheAppended) as ContextHash[]
-  const thoughtCacheUnique = thoughtCacheNumInvalid === 0 ? null : _.uniq(thoughtCacheAppended) as ThoughtHash[]
-  const contextCache = contextCacheNumInvalid === 0 ? contextCacheAppended : contextCacheUnique!.slice(contextCacheNumInvalid) as ContextHash[]
-  const thoughtCache = thoughtCacheNumInvalid === 0 ? thoughtCacheAppended : thoughtCacheUnique!.slice(thoughtCacheNumInvalid) as ThoughtHash[]
-  const contextCacheInvalidated = contextCacheNumInvalid === 0 ? [] : contextCacheUnique!.slice(0, contextCacheNumInvalid) as ContextHash[]
-  const thoughtCacheInvalidated = thoughtCacheNumInvalid === 0 ? [] : thoughtCacheUnique!.slice(0, thoughtCacheNumInvalid) as ThoughtHash[]
 
-  contextCacheInvalidated.forEach(key => {
-    if (!getWhitelistedThoughts().contextIndex[key]) {
+  const contextIndexInvalidated = contextCache.addMany(Object.keys(contextIndexUpdates))
+  const thoughtIndexInvalidated = lexemeCache.addMany(Object.keys(thoughtIndexUpdates))
+
+  contextIndexInvalidated.forEach(key => {
+    if (!getWhitelistedThoughts().contextIndex[key] && !state.expanded[key]) {
       delete contextIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
 
-  thoughtCacheInvalidated.forEach(key => {
-    if (!getWhitelistedThoughts().thoughtIndex[key]) {
+  thoughtIndexInvalidated.forEach(key => {
+    if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
       delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
@@ -68,7 +114,7 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
     const lexemeInState = state.thoughts.thoughtIndex[thoughtId]
     return {
       ...acc,
-      ...lexemeInState ? {} : { [thoughtId]: true }
+      ...(lexemeInState ? {} : { [thoughtId]: true }),
     }
   }, {})
 
@@ -89,21 +135,14 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
 
   logWithTime('updateThoughts: merge pushQueue')
 
-  const thoughts: ThoughtsInterface = {
-    contextCache,
-    contextIndex,
-    thoughtCache,
-    thoughtIndex,
-  }
-
   /** Returns true if the root is no longer pending or the contextIndex has at least one non-EM thought. */
-  const cursorParent = thoughts.contextIndex[rootEncoded] as Parent | null
-  const thoughtsLoaded = !cursorParent?.pending ||
-    Object.keys(thoughts.contextIndex).some(key => key !== rootEncoded && thoughts.contextIndex[key].context[0] !== EM_TOKEN)
+  const cursorParent = contextIndex[rootEncoded] as Parent | null
+  const thoughtsLoaded =
+    !cursorParent?.pending ||
+    Object.keys(contextIndex).some(key => key !== rootEncoded && contextIndex[key].context[0] !== EM_TOKEN)
   const stillLoading = state.isLoading ? isLoading ?? !thoughtsLoaded : false
 
   return reducerFlow([
-
     // update recentlyEdited, pushQueue, and thoughts
     state => ({
       ...state,
@@ -112,35 +151,39 @@ const updateThoughts = (state: State, { thoughtIndexUpdates, contextIndexUpdates
       isLoading: stillLoading,
       recentlyEdited: recentlyEditedNew,
       // only push the batch to the pushQueue if syncing at least local or remote
-      ...batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null,
-      thoughts,
+      ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
+      thoughts: {
+        contextIndex,
+        thoughtIndex,
+      },
     }),
 
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
     !state.cursorInitialized
       ? state => {
-        const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
-        const cursorNew = !path || isRoot(path) ? null : path
-        const isCursorLoaded = cursorNew?.every(child => getThought(state, child.value))
+          const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
+          const cursorNew = !path || isRoot(path) ? null : path
+          const isCursorLoaded = cursorNew?.every(child => getLexeme(state, child.value))
 
-        return isCursorLoaded || !cursorNew ? {
-          ...state,
-          contextViews,
-          cursor: cursorNew,
-          cursorInitialized: true,
-        } : {
-          ...state,
-          cursor: cursorNew
+          return isCursorLoaded || !cursorNew
+            ? {
+                ...state,
+                contextViews,
+                cursor: cursorNew,
+                cursorInitialized: true,
+              }
+            : {
+                ...state,
+                cursor: cursorNew,
+              }
         }
-      }
       : null,
 
     // calculate expanded using fresh thoughts and cursor
     state => ({
       ...state,
       expanded: expandThoughts(state, state.cursor),
-    })
-
+    }),
   ])(state)
 }
 
