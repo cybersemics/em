@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native'
+import { StyleSheet, ScrollView, View, Dimensions } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
 import NavBar from './NavBar'
@@ -12,6 +12,10 @@ import Sidebar from './Sidebar'
 import ModalHelp from './ModalHelp'
 import ModalWelcome from './ModalWelcome'
 import ModalExport from './ModalExport'
+import Footer from './Footer'
+import { Text } from './Text.native'
+import { useDimensions } from '@react-native-community/hooks'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 /**
  * AppComponent container.
@@ -19,6 +23,7 @@ import ModalExport from './ModalExport'
 const AppComponent: React.FC = () => {
   const drawerRef = useRef<DrawerLayout>(null)
   const dispatch = useDispatch()
+  const { height } = useDimensions().screen
 
   const showSidebar = useSelector((state: State) => state.showSidebar)
 
@@ -37,6 +42,10 @@ const AppComponent: React.FC = () => {
     if (showSidebar) return openDrawer()
   }, [showSidebar])
 
+  const contentHeight = {
+    height: height - 125,
+  }
+
   return (
     <>
       <StatusBar
@@ -52,12 +61,26 @@ const AppComponent: React.FC = () => {
           renderNavigationView={Sidebar}
         >
           <Toolbar />
-          <ScrollView contentContainerStyle={styles.content}>
-            <Text style={styles.text}>hello World - em thoughts</Text>
-          </ScrollView>
-          <NavBar position='top' />
-          <ModalFeedback />
+          <ScrollView nestedScrollEnabled={true} style={styles.flexOne}>
+            <View style={contentHeight}>
+              <ScrollView nestedScrollEnabled={true} style={styles.flexOne}>
+                {Array(50)
+                  .fill(1)
+                  .map((_, index) => {
+                    return (
+                      <Text key={index} style={styles.text}>
+                        hello World - em thoughts {index}
+                      </Text>
+                    )
+                  })}
+              </ScrollView>
+              <NavBar position='top' />
+            </View>
 
+            <Footer />
+          </ScrollView>
+
+          <ModalFeedback />
           <ModalHelp />
           <ModalWelcome />
           <ModalExport />
@@ -72,14 +95,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  flexOne: { flex: 1 },
   content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    height: Dimensions.get('screen').height - 120,
   },
   text: {
     color: '#fff',
-    fontSize: 20,
   },
 })
 

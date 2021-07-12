@@ -199,7 +199,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     editingValue: null,
     enableLatestShorcutsDiagram: false,
     expanded: {},
-    fontSize: +(getLocal('fontSize') || 18),
+    fontSize: +(getLocal('fontSize') || 10),
     expandedBottom: {},
     expandHoverBottomPaths: {},
     invalidState: false,

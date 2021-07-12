@@ -15,8 +15,9 @@ import * as WebBrowser from 'expo-web-browser'
 // import GestureDiagram from './GestureDiagram'
 // import Logs from './Logs'
 import Modal from './Modal'
-import { Text, TouchableOpacity, View, StyleSheet, Platform } from 'react-native'
+import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native'
 import { ActionButton } from './ActionButton'
+import { Text } from './Text.native'
 
 interface IMetaprogramming {
   code: string
@@ -384,11 +385,11 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     color: 'white',
-    fontSize: 22,
+    fontSize: 6,
   },
   code: {
     color: '#e3e3e3',
-    fontSize: 16,
+    fontSize: 6,
     backgroundColor: '#333333',
     ...Platform.select({
       ios: {
@@ -401,12 +402,12 @@ const styles = StyleSheet.create({
   },
   metaWrapper: { marginVertical: 10 },
   metaChildren: { marginVertical: 10, paddingLeft: 15 },
-  codeDescription: { color: '#e3e3e3', fontSize: 16 },
-  linkText: { fontStyle: 'italic', fontSize: 12, color: 'lightblue', textDecorationLine: 'underline' },
-  devSettingsText: { color: 'white', fontStyle: 'italic', fontSize: 12 },
+  codeDescription: { color: '#e3e3e3' },
+  linkText: { fontStyle: 'italic', color: 'lightblue', fontSize: 1, textDecorationLine: 'underline' },
+  devSettingsText: { color: 'white', fontStyle: 'italic', fontSize: 2 },
   linkBtn: { marginTop: -2 },
   iconProvidersWrapper: { opacity: 0.7 },
-  tutorialButtonText: { fontSize: 18 },
+  tutorialButtonText: { fontSize: 6 },
 })
 
 export default connect(mapStateToProps)(ModalHelp)

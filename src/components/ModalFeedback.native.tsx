@@ -12,12 +12,12 @@ import {
   NativeSyntheticEvent,
   TextInputChangeEventData,
   View,
-  Text,
   TouchableOpacity,
 } from 'react-native'
 // import { MODALS } from '../constants'
 import Modal from './Modal'
 import { ActionButton } from './ActionButton'
+import { Text } from './Text.native'
 
 const FEEDBACK_MIN_LENGTH = 10
 
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   modalText: {
     marginBottom: 15,
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 6,
     color: '#fff',
   },
   input: {
