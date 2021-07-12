@@ -1,8 +1,15 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { expandThoughts, getAllChildrenByContextHash, getContexts, hasPushes, isContextViewActive } from '../selectors'
-import { equalArrays, getVisibleContexts, hashContext, head, keyValueBy, unroot } from '../util'
+import {
+  expandThoughts,
+  getAllChildrenByContextHash,
+  getContexts,
+  getVisibleContexts,
+  hasPushes,
+  isContextViewActive,
+} from '../selectors'
+import { equalArrays, hashContext, head, keyValueBy, unroot } from '../util'
 import { pull } from '../action-creators'
 import { State } from '../util/initialState'
 import { Child, Context, ContextHash, Index, ThoughtContext } from '../types'

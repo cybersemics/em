@@ -1,10 +1,10 @@
-import { pathToContext, keyValueBy, hashContext } from '.'
+import { pathToContext, keyValueBy, hashContext } from '../util'
 import { decodeContextUrl } from '../selectors'
 import { Index, Context } from '../types'
-import { State } from './initialState'
+import { State } from '../util/initialState'
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
-export const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Index<Context> => {
+const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Index<Context> => {
   const { cursor } = state
 
   // if there is no cursor, decode the url so the cursor can be loaded
@@ -22,3 +22,5 @@ export const getVisibleContexts = (state: State, expandedContexts: Index<Context
     }),
   }
 }
+
+export default getVisibleContexts
