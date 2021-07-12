@@ -1,8 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../selectors'
-import { State } from '../util/initialState'
-import { Direction, GesturePath } from '../types'
+import { Direction, GesturePath, State } from '../types'
 
 interface GestureDiagramProps {
   arrowSize?: number

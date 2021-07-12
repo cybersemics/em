@@ -1,7 +1,6 @@
 import { alert, moveThought, createThought, setCursor } from '../reducers'
 import { getRankBefore, hasChild, rootedParentOf, simplifyPath } from '../selectors'
-import { State } from '../util/initialState'
-import { Child } from '../types'
+import { Child, State } from '../types'
 
 // util
 import { createId, parentOf, ellipsize, head, headValue, isEM, pathToContext, reducerFlow, isRoot } from '../util'

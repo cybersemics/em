@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Sets the toolbar overlay id. */
 export const setToolbarOverlay = _.curry((state: State, { id }: { id: string | null }) => ({

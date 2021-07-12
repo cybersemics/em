@@ -1,4 +1,4 @@
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Forces content editable to update inner html if html has not changed. */
 const editableRender = (state: State) => ({

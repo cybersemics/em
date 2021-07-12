@@ -1,4 +1,4 @@
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Set note focus. */
 const setNoteFocus = (state: State, { value }: { value: boolean }): State => ({

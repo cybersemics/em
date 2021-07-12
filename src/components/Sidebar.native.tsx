@@ -4,10 +4,10 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
-import { State } from '../util/initialState'
 // import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 import { View, StyleSheet } from 'react-native'
 import { Text } from './Text.native'
+import { State } from '../types'
 
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {

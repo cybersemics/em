@@ -1,7 +1,6 @@
 import { isRoot } from '../util'
 import { isContextViewActive } from '../selectors'
-import { State } from '../util/initialState'
-import { Context } from '../types'
+import { Context, State } from '../types'
 
 /** Encodes context array into a URL. */
 const hashContextUrl = (state: State, context: Context) => {

@@ -13,8 +13,7 @@ import {
 } from '../action-creators'
 import { hasPushes } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
-import { PushBatch, State } from '../util/initialState'
-import { Thunk, Context, Index, Lexeme } from '../types'
+import { Thunk, Context, Index, Lexeme, PushBatch, State } from '../types'
 import { store } from '../store'
 
 /** Merges multiple push batches into a single batch. Uses last value of local/remote. */

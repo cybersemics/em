@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { settings } from '../reducers'
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Sets the Tutorial Step settings value. */
 const tutorialStep = (state: State, { value }: { value: number }) =>

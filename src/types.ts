@@ -1,8 +1,9 @@
 import { GetOperation } from 'fast-json-patch'
 import { ReactNode } from 'react'
 import { AnyAction } from 'redux'
-import { State } from './util/initialState'
 import { GestureResponderEvent } from 'react-native'
+import { DROP_TARGET } from './constants'
+import { editThoughtPayload } from './reducers/editThought'
 
 /********************************
  * Global
@@ -349,3 +350,95 @@ export interface SplitResult {
 
 /** An environment for evaluating expressions defined by lazily loaded Contexts. */
 export type LazyEnv = Index<Context>
+
+// Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed
+// interface RecentlyEditedLeaf {
+//   leaf: true,
+//   lastUpdated: Timestamp,
+//   path: Path,
+// }
+// type RecentlyEditedTree = Index<RecentlyEditedTree> causes circular reference error
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// export interface RecentlyEditedTree extends Index<RecentlyEditedTree> {}
+type RecentlyEditedTree = Index
+
+/** Defines a single batch of updates added to the push queue. */
+export interface PushBatch {
+  thoughtIndexUpdates: Index<Lexeme | null>
+  contextIndexUpdates: Index<Parent | null>
+  local?: boolean
+  remote?: boolean
+  recentlyEdited: RecentlyEditedTree
+  pendingDeletes?: { context: Context; child: Child }[]
+  pendingEdits?: editThoughtPayload[]
+  descendantMoves?: { pathOld: Path; pathNew: Path; pathToPull?: Path }[]
+  pendingPulls?: { path: Path }[]
+  updates?: Index<string>
+  pendingLexemes?: Index<boolean>
+}
+
+export interface State {
+  alert?: Alert
+  archived?: boolean
+  authenticated: boolean
+  autologin: boolean
+  contextViews: Index<boolean>
+  cursor: Path | null
+  cursorBeforeQuickAdd: Path | null
+  cursorBeforeSearch: Path | null
+  cursorHistory: Path[]
+  cursorInitialized: boolean
+  cursorOffset: number | null
+  dataNonce: number
+  draggedSimplePath?: SimplePath
+  draggingThought?: SimplePath
+  dragHold?: boolean
+  dragInProgress: boolean
+  editableNonce: number
+  editing: boolean | null
+  editingValue: string | null
+  error?: string | null
+  expanded: Index<Path>
+  expandedBottom: Index<Path>
+  expandHoverBottomPaths: Index<Path>
+  expandHoverTopPath?: Path | null
+  expandedContextThought?: Path
+  fontSize: number
+  hoveringPath?: Path
+  hoverId?: DROP_TARGET
+  invalidState: boolean
+  inversePatches: Patch[]
+  isLoading: boolean
+  isPushing?: boolean
+  lastUpdated?: string
+  modals: Index<{ complete?: boolean }>
+  noteFocus: boolean
+  patches: Patch[]
+  pushQueue: PushBatch[]
+  recentlyEdited: RecentlyEditedTree
+  remoteSearch: boolean
+  resourceCache: Index<string>
+  schemaVersion: number
+  scrollPrioritized: boolean
+  search: string | null
+  searchContexts: Index<Context> | null
+  searchLimit?: number
+  showHiddenThoughts: boolean
+  showModal?: string | null
+  showQueue?: boolean | null
+  showSidebar: boolean
+  showSplitView: boolean
+  showTopControls: boolean
+  showBreadcrumbs: boolean
+  splitPosition: number
+  rootContext: Context
+  absoluteContextTime?: Timestamp
+  transientFocus?: boolean
+  status: string
+  thoughts: ThoughtsInterface
+  toolbarOverlay?: string | null
+  tutorialStep?: number
+  user?: User
+  latestShortcuts: Shortcut[]
+  enableLatestShorcutsDiagram: boolean
+}

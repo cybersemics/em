@@ -3,8 +3,7 @@ import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
 import { getSetting, getAllChildren, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, parentOf, ellipsize, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
-import { State } from '../util/initialState'
-import { Thunk, Context, Path, SplitResult } from '../types'
+import { Thunk, Context, Path, SplitResult, State } from '../types'
 
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (splitResult: SplitResult, context: Context | null, state: State) => {

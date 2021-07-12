@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import settings from './settings'
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Sets the Tutorial setting value. */
 const tutorial = (state: State, { value }: { value?: boolean }) =>

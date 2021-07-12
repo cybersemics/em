@@ -2,8 +2,7 @@ import _ from 'lodash'
 import { getPrevRank, getAllChildren } from '../selectors'
 import { createThought, setFirstSubthought } from '../reducers'
 import { pathToContext, reducerFlow } from '../util'
-import { State } from '../util/initialState'
-import { Context } from '../types'
+import { Context, State } from '../types'
 
 /** Sets an attribute on the given context. */
 const setAttribute = (state: State, { context, key, value }: { context: Context; key: string; value?: string }) =>

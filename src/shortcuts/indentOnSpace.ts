@@ -1,8 +1,7 @@
 import { isDocumentEditable, pathToContext } from '../util'
 import { hasChild } from '../selectors'
 import { indent } from '../action-creators'
-import { State } from '../util/initialState'
-import { Shortcut } from '../types'
+import { Shortcut, State } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const canExecute = (getState: () => State) => {

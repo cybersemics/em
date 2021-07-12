@@ -1,6 +1,5 @@
 import { getAllChildren } from '../selectors'
-import { State } from '../util/initialState'
-import { Context, SortPreference } from '../types'
+import { Context, SortPreference, State } from '../types'
 import { parseSortDirection, unroot } from '../util'
 import getGlobalSortPreference from './getGlobalSortPreference'
 

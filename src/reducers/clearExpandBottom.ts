@@ -1,4 +1,4 @@
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Clear expand bottom. */
 const clearExpandBottom = (state: State): State => ({

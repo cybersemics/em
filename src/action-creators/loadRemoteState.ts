@@ -3,8 +3,7 @@ import * as db from '../data-providers/dexie'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
 import { isDocumentEditable, keyValueBy, logWithTime } from '../util'
 import { deleteData, updateThoughts } from '../action-creators'
-import { State } from '../util/initialState'
-import { Dispatch, Thunk, Index, Parent } from '../types'
+import { Dispatch, Thunk, Index, Parent, State } from '../types'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = async (dispatch: Dispatch, newState: State, oldState: State) => {

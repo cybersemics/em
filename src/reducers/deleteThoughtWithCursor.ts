@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import { cursorBack, deleteThought, setCursor } from '../reducers'
-import { State } from '../util/initialState'
-import { Child, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, Path, SimplePath, State, ThoughtContext } from '../types'
 
 // util
 import { parentOf, head, headValue, pathToContext, once, reducerFlow, unroot, getTextContentFromHTML } from '../util'

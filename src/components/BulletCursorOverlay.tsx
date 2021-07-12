@@ -2,8 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { equalPath } from '../util'
-import { State } from '../util/initialState'
-import { SimplePath } from '../types'
+import { SimplePath, State } from '../types'
 
 interface BulletCursorOverlayProps {
   isDragging?: boolean

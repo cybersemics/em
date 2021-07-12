@@ -5,8 +5,7 @@ import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
 import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
-import { State } from '../util/initialState'
-import { Connected, Context, Index, SimplePath, ThoughtContext, Path } from '../types'
+import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } from '../types'
 import {
   ellipsizeUrl,
   equalPath,

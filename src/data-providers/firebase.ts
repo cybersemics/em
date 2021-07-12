@@ -1,7 +1,6 @@
-import { Index, Lexeme, Parent, Snapshot } from '../types'
+import { Index, Lexeme, Parent, Snapshot, State } from '../types'
 import { keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
-import { State } from '../util/initialState'
 import { Dispatch } from 'react'
 
 /**

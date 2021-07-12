@@ -2,8 +2,7 @@ import { EM_TOKEN } from '../constants'
 import { isFunction } from '../util'
 import { keyValueBy } from '../util/keyValueBy'
 import { getChildrenRanked } from '../selectors'
-import { State } from '../util/initialState'
-import { Context } from '../types'
+import { Context, State } from '../types'
 import { storage } from '../util/storage'
 
 /** Cache localStorage settings. */

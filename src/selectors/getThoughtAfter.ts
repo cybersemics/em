@@ -1,7 +1,6 @@
 import { equalThoughtValue, headRank, headValue, pathToContext } from '../util'
 import { getChildrenSorted } from '../selectors'
-import { State } from '../util/initialState'
-import { SimplePath } from '../types'
+import { SimplePath, State } from '../types'
 import rootedParentOf from './rootedParentOf'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */

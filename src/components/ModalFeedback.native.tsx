@@ -5,7 +5,6 @@ import { submitFeedback } from '../util'
 
 import { alert } from '../action-creators'
 import { AxiosError } from 'axios'
-import { State } from '../util/initialState'
 import {
   StyleSheet,
   TextInput,
@@ -18,6 +17,7 @@ import {
 import Modal from './Modal'
 import { ActionButton } from './ActionButton'
 import { Text } from './Text.native'
+import { State } from '../types'
 
 const FEEDBACK_MIN_LENGTH = 10
 

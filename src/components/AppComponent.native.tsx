@@ -6,7 +6,6 @@ import NavBar from './NavBar'
 import ModalFeedback from './ModalFeedback'
 import { toggleSidebar } from '../action-creators'
 import { useDispatch, useSelector } from 'react-redux'
-import { State } from '../util/initialState'
 import { DrawerLayout } from 'react-native-gesture-handler'
 import Sidebar from './Sidebar'
 import ModalHelp from './ModalHelp'
@@ -16,6 +15,7 @@ import Footer from './Footer'
 import { Text } from './Text.native'
 import { useDimensions } from '@react-native-community/hooks'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { State } from '../types'
 
 /**
  * AppComponent container.

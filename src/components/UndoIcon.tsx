@@ -1,8 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../selectors'
-import { State } from '../util/initialState'
-import { Icon } from '../types'
+import { Icon, State } from '../types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => ({

@@ -1,6 +1,5 @@
 import _ from 'lodash'
-import { State } from '../util/initialState'
-import { User } from '../types'
+import { State, User } from '../types'
 
 interface Options {
   value: boolean

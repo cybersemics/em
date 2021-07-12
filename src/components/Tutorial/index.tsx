@@ -7,8 +7,7 @@ import { shortcutById } from '../../shortcuts'
 import { headValue, once } from '../../util'
 import { getParent, getSetting } from '../../selectors'
 import { tutorial } from '../../action-creators'
-import { State } from '../../util/initialState'
-import { Connected, GesturePath } from '../../types'
+import { Connected, GesturePath, State } from '../../types'
 
 // constants
 import {

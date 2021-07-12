@@ -1,6 +1,5 @@
-import { Context } from '../types'
+import { Context, State } from '../types'
 import { isFunction } from '../util'
-import { State } from '../util/initialState'
 import _ from 'lodash'
 import hasChild from './hasChild'
 

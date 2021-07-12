@@ -1,5 +1,4 @@
-import { Shortcut } from '../types'
-import { State } from '../util/initialState'
+import { Shortcut, State } from '../types'
 
 /**
  * Add latest gesture to show on the screen.

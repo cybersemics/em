@@ -1,7 +1,6 @@
 import { ABSOLUTE_PATH, ABSOLUTE_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import { parentOf } from '../util'
-import { Context, Path } from '../types'
-import { State } from '../util/initialState'
+import { Context, Path, State } from '../types'
 
 const RootPathMap: Record<string, Path> = {
   [HOME_TOKEN]: HOME_PATH,

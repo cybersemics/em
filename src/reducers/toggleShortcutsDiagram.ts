@@ -1,4 +1,4 @@
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /**
  * Enable or disable shortcuts diagram.

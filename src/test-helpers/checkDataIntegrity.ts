@@ -1,6 +1,5 @@
 import { hashContext, hashThought } from '../util'
-import { State } from '../util/initialState'
-import { Index, Lexeme, Parent, Timestamp } from '../types'
+import { Index, Lexeme, Parent, State, Timestamp } from '../types'
 
 /** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the updates if indexes are not in sync. */
 const checkDataIntegrity = (state: State, max = 100000) => {

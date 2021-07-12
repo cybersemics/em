@@ -1,6 +1,5 @@
 /** Here's documentation for all action-creators. */
-import { State } from '../util/initialState'
-import { Thunk } from '../types'
+import { Thunk, State } from '../types'
 import * as reducers from '../reducers'
 
 /** Wraps a static action in a thunk. */

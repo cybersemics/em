@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { componentToThought, hashContext, keyValueBy, owner } from '../util'
 import { pathExists, rankThoughtsFirstMatch } from '../selectors'
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null

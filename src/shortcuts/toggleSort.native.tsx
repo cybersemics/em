@@ -6,7 +6,6 @@ import React from 'react'
 import { Icon as IconType, Shortcut } from '../types'
 // import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 // import { useSelector } from 'react-redux'
-// import { State } from '../util/initialState'
 import Svg, { Polygon, Rect, G } from 'react-native-svg'
 import { Alert } from 'react-native'
 

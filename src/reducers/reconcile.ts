@@ -2,8 +2,7 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { hashContext, reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
-import { State } from '../util/initialState'
-import { Index, Lexeme, Parent, ThoughtsInterface } from '../types'
+import { Index, Lexeme, Parent, State, ThoughtsInterface } from '../types'
 
 const emContextEncoded = hashContext([EM_TOKEN])
 

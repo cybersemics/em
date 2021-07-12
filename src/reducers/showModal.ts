@@ -1,6 +1,5 @@
 import _ from 'lodash'
-
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Shows or hides a modal. */
 const showModal = (state: State, { id }: { id: string }) => {

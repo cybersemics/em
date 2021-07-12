@@ -1,7 +1,7 @@
-import { State } from '../util/initialState'
 import { HOME_TOKEN } from '../constants'
 import { hasChild } from '../selectors'
 import { isRoot } from '../util'
+import { State } from '../types'
 
 /** Returns true if every child in the path exists. */
 const pathExists = (state: State, pathUnranked: string[]) =>

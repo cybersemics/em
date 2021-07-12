@@ -6,11 +6,10 @@ import { store } from '../store'
 import { isDocumentEditable, publishMode } from '../util'
 import { isTutorial, simplifyPath } from '../selectors'
 import HomeLink from './HomeLink'
-import { State } from '../util/initialState'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
 import FeedbackButton from './FeedbackButton'
-import { Path } from '../types'
+import { Path, State } from '../types'
 
 // avoid changing object reference
 const navBreadcrumbsClass = {

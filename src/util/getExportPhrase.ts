@@ -1,7 +1,6 @@
 import { getDescendants } from '../selectors'
 import { ellipsize, headValue, isRoot, pathToContext } from '../util'
-import { State } from '../util/initialState'
-import { Child, SimplePath } from '../types'
+import { Child, SimplePath, State } from '../types'
 
 interface Options {
   // function to filter descendants when counting

@@ -1,9 +1,8 @@
-import { Path, Thunk } from '../types'
 import { expandHoverTop } from '../action-creators'
 import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
 import { visibleDistanceAboveCursor } from '../selectors'
 import { equalPath, isDescendantPath, parentOf } from '../util'
-import { State } from '../util/initialState'
+import { Path, Thunk, Timer, State } from '../types'
 
 /**
  * Checks if the current hovering thought's parent should expand it's context.
@@ -39,7 +38,7 @@ const shouldAllowActiveHoverTop = (state: State) => {
 }
 
 // eslint-disable-next-line prefer-const
-let expandTopTimer: number | null = null
+let expandTopTimer: Timer | null = null
 
 /**
  * Handles expansion due to hover on one of its children thought drop.

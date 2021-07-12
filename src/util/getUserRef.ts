@@ -1,5 +1,4 @@
-import { State } from './initialState'
-import { Ref } from '../types'
+import { Ref, State } from '../types'
 
 /**
  * Get the user ref from an authenticated user's details stored in the state.

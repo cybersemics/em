@@ -2,7 +2,7 @@ import { HOME_PATH } from '../constants'
 import { setCursor } from '../reducers'
 import { firstVisibleChild } from '../selectors'
 import { pathToContext, unroot } from '../util'
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Moves the cursor forward in the cursorHistory. */
 const cursorForward = (state: State) => {

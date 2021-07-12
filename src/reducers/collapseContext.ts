@@ -1,10 +1,9 @@
 import { head, normalizeThought, parentOf, pathToContext, reducerFlow, unroot } from '../util'
-import { State } from '../util/initialState'
 import { getAllChildren, getChildren, getRankBefore, isChildVisible, rootedParentOf, simplifyPath } from '../selectors'
 import { archiveThought, moveThought, setCursor } from '../reducers'
 import _ from 'lodash'
 import deleteThought from './deleteThought'
-import { Path } from '../types'
+import { Path, State } from '../types'
 
 interface Options {
   deleteCursor?: boolean

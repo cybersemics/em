@@ -5,7 +5,7 @@ import { ActionButton } from './ActionButton'
 import Modal from './Modal'
 import { alert } from '../action-creators'
 import { AxiosError } from 'axios'
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 const FEEDBACK_MIN_LENGTH = 10
 

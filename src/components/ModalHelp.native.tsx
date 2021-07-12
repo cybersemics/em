@@ -6,8 +6,7 @@ import { connect } from 'react-redux'
 import { closeModal, /* toggleShortcutsDiagram */ tutorial, tutorialStep as setTutorialStep } from '../action-creators'
 import { getSetting } from '../selectors'
 import { META_PROGRAMMING_HELP, TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
-import { State } from '../util/initialState'
-import { Connected /*  GesturePath, Shortcut */ } from '../types'
+import { Connected /*  GesturePath, Shortcut */, State } from '../types'
 
 import * as WebBrowser from 'expo-web-browser'
 

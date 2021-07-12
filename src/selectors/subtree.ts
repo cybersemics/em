@@ -1,6 +1,5 @@
 import { getChildrenRanked } from '../selectors'
-import { State } from '../util/initialState'
-import { Child, Context } from '../types'
+import { Child, Context, State } from '../types'
 
 /** Gets a nested subtree of all of the given context's descendants. */
 const subtree = (state: State, context: Context): Child[] =>

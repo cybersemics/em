@@ -11,8 +11,7 @@ import {
 } from '../selectors'
 import { equalArrays, hashContext, head, keyValueBy, pathToContext, unroot } from '../util'
 import { pull } from '../action-creators'
-import { State } from '../util/initialState'
-import { Child, Context, ContextHash, Index, ThoughtContext } from '../types'
+import { Child, Context, ContextHash, Index, State, ThoughtContext } from '../types'
 
 /** Debounce visible thought checks to avoid checking on every action. */
 const updatePullQueueDelay = 10

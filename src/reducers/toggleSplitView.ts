@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { State } from '../util/initialState'
+import { State } from '../types'
 
 /** Toggles the Split View. */
 const toggleSplitView = (state: State, { value }: { value?: boolean }) => ({

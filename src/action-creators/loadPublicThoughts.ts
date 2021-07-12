@@ -1,8 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
 import { loadRemoteState } from '../action-creators'
-import { Thunk, Parent, Snapshot } from '../types'
-import { State } from '../util/initialState'
+import { Thunk, Parent, Snapshot, State } from '../types'
 
 /**
  * Loads a public context when the url contains a userId of a different user.
