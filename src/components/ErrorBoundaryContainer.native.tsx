@@ -1,6 +1,8 @@
 import React, { FC } from 'react'
 import { TouchableOpacity, View, StyleSheet } from 'react-native'
 import ErrorBoundary from 'react-native-error-boundary'
+import * as Updates from 'expo-updates'
+
 import * as db from '../data-providers/dexie'
 import { Text } from './Text.native'
 
@@ -11,7 +13,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
     <View>
       {error && <Text>{error.message}</Text>}
       <Text style={styles.text}>{componentStack}</Text>
-      <TouchableOpacity onPress={() => window.location.reload()}>
+      <TouchableOpacity onPress={() => Updates.reloadAsync()}>
         <Text style={styles.text}>Refresh</Text>
       </TouchableOpacity>
     </View>
