@@ -15019,6 +15019,11 @@ react-lifecycles-compat@^3.0.4:
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
+react-native-error-boundary@^1.1.10:
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/react-native-error-boundary/-/react-native-error-boundary-1.1.10.tgz#8812a4259694ed9f436f84836f3a033973444e8d"
+  integrity sha512-DDqAcJw3LRDlPImOYX0iEFy1q9aEXjxFFf/s37O8Z/amDnCMogYeeW5hZ/Cb+35rTa4dWh6r53Bov7wBQfy9nA==
+
 react-native-gesture-handler@^1.10.2:
   version "1.10.3"
   resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-1.10.3.tgz#942bbf2963bbf49fa79593600ee9d7b5dab3cfc0"

@@ -76,6 +76,7 @@
     "react-gravatar": "^2.6.3",
     "react-hamburger-menu": "^1.2.1",
     "react-native": "https://github.com/expo/react-native/archive/sdk-41.0.0.tar.gz",
+    "react-native-error-boundary": "^1.1.10",
     "react-native-gesture-handler": "^1.10.2",
     "react-native-get-random-values": "^1.7.0",
     "react-native-picker-select": "^8.0.4",
