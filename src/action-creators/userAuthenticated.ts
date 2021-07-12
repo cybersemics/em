@@ -1,11 +1,11 @@
 import { getUserRef } from '../util'
 import { authenticate, error, status } from '../action-creators'
-import { Thunk, User } from '../@types'
+import { Firebase, Thunk } from '../@types'
 import { storage } from '../util/storage'
 
 /** Updates local state with newly authenticated user. */
 const userAuthenticated =
-  (user: User): Thunk =>
+  (user: Firebase.User): Thunk =>
   (dispatch, getState) => {
     // save the user ref and uid into state
     const userRef = getUserRef({ ...getState(), user })
@@ -27,7 +27,7 @@ const userAuthenticated =
         name: user.displayName,
         email: user.email,
       },
-      err => {
+      (err: Error | null) => {
         if (err) {
           dispatch(error({ value: err.message }))
           console.error(err)

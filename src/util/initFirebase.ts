@@ -9,7 +9,7 @@ import {
 } from '../action-creators'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
-import { Snapshot, State, User } from '../@types'
+import { Firebase, State } from '../@types'
 import initAlgoliaSearch from '../search/algoliaSearch'
 
 /** Initialize firebase and event handlers. */
@@ -20,7 +20,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
 
     // on auth change
     // this is called when the user logs in or the page refreshes when the user is already authenticated
-    firebase.auth().onAuthStateChanged((user: User) => {
+    firebase.auth().onAuthStateChanged((user: Firebase.User) => {
       if (user) {
         store.dispatch(userAuthenticated(user))
 
@@ -43,7 +43,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
     // on connect change
     // this is called when moving from online to offline and vice versa
     const connectedRef = firebase.database().ref('.info/connected')
-    connectedRef.on('value', async (snapshot: Snapshot<boolean>) => {
+    connectedRef.on('value', async (snapshot: Firebase.Snapshot<boolean>) => {
       const connected = snapshot.val()
       const status = store.getState().status
 

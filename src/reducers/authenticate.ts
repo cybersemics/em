@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { State, User } from '../@types'
+import { State, Firebase } from '../@types'
 
 interface Options {
   value: boolean
-  user?: User
+  user?: Firebase.User
 }
 
 /** Sets the authenticated, autologin, loading, and user when the user has been authenticated. */

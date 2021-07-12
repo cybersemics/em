@@ -1,4 +1,4 @@
-import { Index, Lexeme, Parent, Snapshot, State } from '../@types'
+import { Firebase, Index, Lexeme, Parent, State } from '../@types'
 import { keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
 import { Dispatch } from 'react'
@@ -17,7 +17,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     const userRef = getUserRef(state)
     const ref = userRef!.child('thoughtIndex').child(id)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Snapshot<Lexeme>) => {
+      ref.once('value', (snapshot: Firebase.Snapshot<Lexeme>) => {
         resolve(snapshot.val())
       }),
     )
@@ -38,7 +38,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     const userRef = getUserRef(state)
     const ref = userRef!.child('contextIndex').child(id)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Snapshot<Parent>) => {
+      ref.once('value', (snapshot: Firebase.Snapshot<Parent>) => {
         resolve(snapshot.val())
       }),
     )
