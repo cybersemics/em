@@ -14,7 +14,7 @@ import { State } from '../util/initialState'
 import { SessionType } from '../util/sessionManager'
 import { Lexeme, Parent, Snapshot, User } from '../types'
 import initAlgoliaSearch from '../search/algoliaSearch'
-import { getSubscriptionUtils, Updates } from './subscriptionUtils'
+import { getSubscriptionUtils } from './subscriptionUtils'
 
 /** Get Firebase change Handlers. */
 const getFirebaseChangeHandlers = ({ shouldIncludeUpdate }: ReturnType<typeof getSubscriptionUtils>) => ({
@@ -65,7 +65,7 @@ export const initFirebaseSubscriptions = (
   userId: string,
   subscritpionUtils: ReturnType<typeof getSubscriptionUtils>,
 ) => {
-  subscribe<Updates>(userId, subscritpionUtils.getMergeAndApplyUpdates(), getFirebaseChangeHandlers(subscritpionUtils))
+  subscribe(userId, subscritpionUtils.getMergeAndApplyUpdates(), getFirebaseChangeHandlers(subscritpionUtils))
 }
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ store }: { store: Store<State, any> }) => {

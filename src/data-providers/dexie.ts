@@ -231,10 +231,10 @@ export enum dbChangeType {
   updated = 2,
   deleted = 3,
 }
-interface ChangeHandlers<T> {
-  [dbChangeType.created]: (change: IDatabaseChange) => T
-  [dbChangeType.updated]: (change: IDatabaseChange) => Promise<T>
-  [dbChangeType.deleted]: (change: IDatabaseChange) => T
+interface ChangeHandlers {
+  [dbChangeType.created]: (change: IDatabaseChange) => Updates
+  [dbChangeType.updated]: (change: IDatabaseChange) => Promise<Updates>
+  [dbChangeType.deleted]: (change: IDatabaseChange) => Updates
 }
 
 export const dbTables = {
@@ -243,7 +243,7 @@ export const dbTables = {
 }
 
 /** Subscribe to dexie updates. */
-export const subscribe = <T>(update: (updates: T) => void, dbChangeHandlers: ChangeHandlers<T>) => {
+export const subscribe = (update: (updates: Updates) => void, dbChangeHandlers: ChangeHandlers) => {
   Object.prototype.hasOwnProperty.call(db, 'observable') &&
     db.on('changes', changes => {
       changes.forEach(async change => {
@@ -339,7 +339,7 @@ const getDbChangeHandlers = ({
 
 /** Setup db(dexie) subscriptions to handle local sync. */
 export const initDbSubscription = (subscriptionUtils: ReturnType<typeof getSubscriptionUtils>) => {
-  subscribe<Updates>(subscriptionUtils.getMergeAndApplyUpdates(), getDbChangeHandlers(subscriptionUtils))
+  subscribe(subscriptionUtils.getMergeAndApplyUpdates(), getDbChangeHandlers(subscriptionUtils))
 }
 
 export default initDB
