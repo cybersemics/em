@@ -65,3 +65,9 @@ export {
 } from './getChildren'
 
 export { default as userSelector } from './userSelector'
+export { default as authenticatedSelector } from './authenticatedSelector'
+export { default as statusSelector } from './statusSelector'
+export { default as tutorialStepSelector } from './tutorialStepSelector'
+export { default as fontSizeSelector } from './fontSizeSelector'
+export { default as isPushingSelector } from './isPushingSelector'
+export { default as pushQueueLengthSelector } from './pushQueueLengthSelector'
