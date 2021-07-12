@@ -63,9 +63,13 @@ const getFirebaseChangeHandlers = ({ shouldIncludeUpdate }: ReturnType<typeof ge
 /** Setup firebase subscriptions to handle local sync. */
 export const initFirebaseSubscriptions = (
   userId: string,
-  subscritpionUtils: ReturnType<typeof getSubscriptionUtils>,
+  subscriptionUtils: ReturnType<typeof getSubscriptionUtils>,
 ) => {
-  subscribe(userId, subscritpionUtils.getMergeAndApplyUpdates(), getFirebaseChangeHandlers(subscritpionUtils))
+  subscribe(
+    userId,
+    updates => subscriptionUtils.updateThoughtsFromSubscription(updates),
+    getFirebaseChangeHandlers(subscriptionUtils),
+  )
 }
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ store }: { store: Store<State, any> }) => {

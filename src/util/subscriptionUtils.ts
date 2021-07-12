@@ -1,4 +1,4 @@
-import { debounce, clone, setWith } from 'lodash'
+import { clone, setWith } from 'lodash'
 
 import { getSessionId, getSessionType, SessionType } from './sessionManager'
 import { updateThoughts } from '../action-creators'
@@ -9,9 +9,6 @@ import { equalArrays } from './equalArrays'
 import { Action, Store } from 'redux'
 import { State } from './initialState'
 
-const mergeAndApplyUpdatesDelay = 1000
-
-let mergeAndApplyUpdates: (updates: Updates) => void
 export interface Updates {
   thoughtIndexUpdates?: Index<Lexeme | null>
   contextIndexUpdates?: Index<Parent | null>
@@ -60,45 +57,21 @@ export const getSubscriptionUtils = ({ getState, dispatch }: Store<State, Action
     const state = getState()
     return state.thoughts.contextIndex[id]
   },
-  /** Returns the function that merges updates from subscription handlers and applies them to state. */
-  getMergeAndApplyUpdates: () => {
-    if (!mergeAndApplyUpdates) {
-      /** Merge multiple thought and context index updates, batching them for the debounced state updates. */
-      const mergeUpdates = (cb: (updates: Updates, resetMergee: () => void) => void) => {
-        let mergee = {
-          contextIndexUpdates: {},
-          thoughtIndexUpdates: {},
-        }
+  updateThoughtsFromSubscription: (updates: Updates) => {
+    if (
+      Object.keys(updates.thoughtIndexUpdates || {}).length === 0 &&
+      Object.keys(updates.contextIndexUpdates || {}).length === 0
+    )
+      return
 
-        /** Reset mergee after dispatch is complete. */
-        const resetMergee = () => {
-          mergee = {
-            contextIndexUpdates: {},
-            thoughtIndexUpdates: {},
-          }
-        }
-
-        return (updates: Updates) => {
-          mergee = {
-            thoughtIndexUpdates: { ...mergee.thoughtIndexUpdates, ...(updates.thoughtIndexUpdates || {}) },
-            contextIndexUpdates: { ...mergee.contextIndexUpdates, ...(updates.contextIndexUpdates || {}) },
-          }
-          cb(mergee, resetMergee)
-        }
-      }
-      /** Filters and updates thoughtIndexUpdates and contextIndexUpdates. */
-      const filterAndUpdateThoughts = (
-        { thoughtIndexUpdates = {}, contextIndexUpdates = {} }: Updates,
-        reset: () => void,
-      ) => {
-        if (Object.keys({ ...thoughtIndexUpdates, ...contextIndexUpdates }).length !== 0) {
-          dispatch(updateThoughts({ thoughtIndexUpdates, contextIndexUpdates, local: false, remote: false }))
-        }
-        reset()
-      }
-      mergeAndApplyUpdates = mergeUpdates(debounce(filterAndUpdateThoughts, mergeAndApplyUpdatesDelay))
-    }
-
-    return mergeAndApplyUpdates
+    dispatch(
+      updateThoughts({
+        ...updates,
+        contextIndexUpdates: updates.contextIndexUpdates || {},
+        thoughtIndexUpdates: updates.thoughtIndexUpdates || {},
+        local: false,
+        remote: false,
+      }),
+    )
   },
 })

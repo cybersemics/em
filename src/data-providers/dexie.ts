@@ -322,14 +322,13 @@ const getDbChangeHandlers = ({
 /** Subscribe to dexie updates. */
 export const subscribe = (store: Store<State, any>) => {
   const subscriptionUtils = getSubscriptionUtils(store)
-  const update = subscriptionUtils.getMergeAndApplyUpdates()
   const dbChangeHandlers = getDbChangeHandlers(subscriptionUtils)
 
   Object.prototype.hasOwnProperty.call(db, 'observable') &&
     db.on('changes', changes => {
       changes.forEach(async change => {
         const updates = await dbChangeHandlers[change.type](change)
-        update(updates)
+        subscriptionUtils.updateThoughtsFromSubscription(updates)
       })
     })
 }
