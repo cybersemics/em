@@ -63,3 +63,5 @@ export {
   childrenFilterPredicate,
   firstVisibleChildWithCursorCheck,
 } from './getChildren'
+
+export { default as userSelector } from './userSelector'
