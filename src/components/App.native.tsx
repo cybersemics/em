@@ -4,6 +4,7 @@ import { store } from '../store'
 import AppComponent from './AppComponent'
 import syncStorage from '../util/nativeStorageHelper'
 import ErrorBoundaryContainer from './ErrorBoundaryContainer'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 /**
  * App container.
@@ -26,7 +27,9 @@ const App: React.FC = () => {
   return (
     <Provider store={store}>
       <ErrorBoundaryContainer>
-        <AppComponent />
+        <SafeAreaProvider>
+          <AppComponent />
+        </SafeAreaProvider>
       </ErrorBoundaryContainer>
     </Provider>
   )

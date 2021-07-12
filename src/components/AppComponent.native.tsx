@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { StyleSheet, ScrollView, SafeAreaView, View, Dimensions } from 'react-native'
+import { StyleSheet, ScrollView, View, Dimensions } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
 import NavBar from './NavBar'
@@ -14,6 +14,8 @@ import ModalWelcome from './ModalWelcome'
 import ModalExport from './ModalExport'
 import Footer from './Footer'
 import { Text } from './Text.native'
+import { useDimensions } from '@react-native-community/hooks'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 /**
  * AppComponent container.
@@ -21,6 +23,7 @@ import { Text } from './Text.native'
 const AppComponent: React.FC = () => {
   const drawerRef = useRef<DrawerLayout>(null)
   const dispatch = useDispatch()
+  const { height } = useDimensions().screen
 
   const showSidebar = useSelector((state: State) => state.showSidebar)
 
@@ -39,6 +42,10 @@ const AppComponent: React.FC = () => {
     if (showSidebar) return openDrawer()
   }, [showSidebar])
 
+  const contentHeight = {
+    height: height - 125,
+  }
+
   return (
     <>
       <StatusBar
@@ -54,9 +61,9 @@ const AppComponent: React.FC = () => {
           renderNavigationView={Sidebar}
         >
           <Toolbar />
-          <ScrollView style={styles.flexOne}>
-            <View style={styles.content}>
-              <ScrollView style={styles.flexOne}>
+          <ScrollView nestedScrollEnabled={true} style={styles.flexOne}>
+            <View style={contentHeight}>
+              <ScrollView nestedScrollEnabled={true} style={styles.flexOne}>
                 {Array(50)
                   .fill(1)
                   .map((_, index) => {
@@ -87,6 +94,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+    // marginTop: RNStatusBar.currentHeight,
   },
   flexOne: { flex: 1 },
   content: {
