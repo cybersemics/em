@@ -1,12 +1,14 @@
 /* eslint-disable fp/no-this */
 import Dexie from 'dexie'
+import { Store } from 'redux'
 import 'dexie-observable'
 import { ICreateChange, IDeleteChange, IUpdateChange, IDatabaseChange } from 'dexie-observable/api'
 import _ from 'lodash'
 import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
 import { getSessionId, SessionType } from '../util/sessionManager'
-import { getSubscriptionUtils, Updates } from '../util/subscriptionUtils'
+import { getSubscriptionUtils } from '../util/subscriptionUtils'
+import { State } from '../util/initialState'
 import win from './win'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
@@ -233,23 +235,6 @@ export enum DatabaseChangeType {
   deleted = 3,
 }
 
-interface ChangeHandlers {
-  [DatabaseChangeType.created]: (change: IDatabaseChange) => Updates
-  [DatabaseChangeType.updated]: (change: IDatabaseChange) => Promise<Updates>
-  [DatabaseChangeType.deleted]: (change: IDatabaseChange) => Updates
-}
-
-/** Subscribe to dexie updates. */
-export const subscribe = (update: (updates: Updates) => void, dbChangeHandlers: ChangeHandlers) => {
-  Object.prototype.hasOwnProperty.call(db, 'observable') &&
-    db.on('changes', changes => {
-      changes.forEach(async change => {
-        const updates = await dbChangeHandlers[change.type](change)
-        update(updates)
-      })
-    })
-}
-
 /** Get db change handlers. */
 const getDbChangeHandlers = ({
   getContextLocal,
@@ -334,9 +319,19 @@ const getDbChangeHandlers = ({
   },
 })
 
-/** Setup db(dexie) subscriptions to handle local sync. */
-export const initDbSubscription = (subscriptionUtils: ReturnType<typeof getSubscriptionUtils>) => {
-  subscribe(subscriptionUtils.getMergeAndApplyUpdates(), getDbChangeHandlers(subscriptionUtils))
+/** Subscribe to dexie updates. */
+export const subscribe = (store: Store<State, any>) => {
+  const subscriptionUtils = getSubscriptionUtils(store)
+  const update = subscriptionUtils.getMergeAndApplyUpdates()
+  const dbChangeHandlers = getDbChangeHandlers(subscriptionUtils)
+
+  Object.prototype.hasOwnProperty.call(db, 'observable') &&
+    db.on('changes', changes => {
+      changes.forEach(async change => {
+        const updates = await dbChangeHandlers[change.type](change)
+        update(updates)
+      })
+    })
 }
 
 export default initDB

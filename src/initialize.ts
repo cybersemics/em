@@ -10,7 +10,6 @@ import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
-import { getSubscriptionUtils } from './util/subscriptionUtils'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
@@ -36,7 +35,7 @@ export const initialize = async () => {
 
   await thoughtsLocalPromise
 
-  db.initDbSubscription(getSubscriptionUtils(store))
+  db.subscribe(store)
 
   return {
     thoughtsLocalPromise,
