@@ -1,27 +1,16 @@
-import { Index, Lexeme, Parent, Ref, Snapshot } from '../types'
-import { keyValueBy, getUserRef } from '../util'
+import { Dispatch } from 'react'
+import { Store } from 'redux'
+import { hashContext, hashThought, keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
 import { State } from '../util/initialState'
-import { Updates } from '../util/subscriptionUtils'
-import { Dispatch } from 'react'
+import { shouldIncludeUpdate, updateThoughtsFromSubscription } from '../util/subscriptionUtils'
+import { SessionType } from '../util/sessionManager'
+import { Index, Lexeme, Parent, Ref, Snapshot } from '../types'
 
-export enum firebaseChangeTypes {
-  create = 'child_added',
-  update = 'child_changed',
-  delete = 'child_removed',
-}
-
-interface FirebaseChangeHandlers {
-  contextIndex: {
-    [firebaseChangeTypes.create]: (change: Parent) => Updates
-    [firebaseChangeTypes.update]: (change: Parent) => Updates
-    [firebaseChangeTypes.delete]: (change: Parent) => Updates
-  }
-  thoughtIndex: {
-    [firebaseChangeTypes.create]: (change: Lexeme) => Updates
-    [firebaseChangeTypes.update]: (change: Lexeme) => Updates
-    [firebaseChangeTypes.delete]: (change: Lexeme) => Updates
-  }
+enum FirebaseChangeTypes {
+  Create = 'child_added',
+  Update = 'child_changed',
+  Delete = 'child_removed',
 }
 
 /**
@@ -115,30 +104,63 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 })
 
+const changeHandlers = {
+  contextIndex: {
+    [FirebaseChangeTypes.Create]: (state: State, parent: Parent) => ({
+      contextIndexUpdates:
+        parent && shouldIncludeUpdate(state, parent, SessionType.REMOTE)
+          ? { [hashContext(parent.context)]: parent }
+          : {},
+    }),
+    [FirebaseChangeTypes.Update]: (state: State, parent: Parent) => ({
+      contextIndexUpdates:
+        parent && shouldIncludeUpdate(state, parent, SessionType.REMOTE)
+          ? { [hashContext(parent.context)]: parent }
+          : {},
+    }),
+    [FirebaseChangeTypes.Delete]: (state: State, parent: Parent) => ({
+      contextIndexUpdates:
+        parent && shouldIncludeUpdate(state, parent, SessionType.REMOTE) ? { [hashContext(parent.context)]: null } : {},
+    }),
+  },
+  thoughtIndex: {
+    [FirebaseChangeTypes.Create]: (state: State, lexeme: Lexeme) => ({
+      thoughtIndexUpdates:
+        lexeme && shouldIncludeUpdate(state, lexeme, SessionType.REMOTE) ? { [hashThought(lexeme.value)]: lexeme } : {},
+    }),
+    [FirebaseChangeTypes.Update]: (state: State, lexeme: Lexeme) => ({
+      thoughtIndexUpdates:
+        lexeme && shouldIncludeUpdate(state, lexeme, SessionType.REMOTE) ? { [hashThought(lexeme.value)]: lexeme } : {},
+    }),
+    [FirebaseChangeTypes.Delete]: (state: State, lexeme: Lexeme) => ({
+      thoughtIndexUpdates:
+        lexeme && shouldIncludeUpdate(state, lexeme, SessionType.REMOTE) ? { [hashThought(lexeme.value)]: null } : {},
+    }),
+  },
+}
+
 /** Subscribe to firebase. */
-export const subscribe = (
-  userId: string,
-  callback: (updates: Updates) => void,
-  firebaseChangeHandlers: FirebaseChangeHandlers,
-) => {
+export const subscribe = (userId: string, store: Store<State, any>) => {
   const contextIndexListener: Ref<Parent> = window.firebase?.database().ref(`users/${userId}/contextIndex`)
   const thoughtIndexListener: Ref<Lexeme> = window.firebase?.database().ref(`users/${userId}/thoughtIndex`)
 
-  const { contextIndex: contextIndexChangeHandlers, thoughtIndex: thoughtIndexChangeHandlers } = firebaseChangeHandlers
+  const { contextIndex: contextIndexChangeHandlers, thoughtIndex: thoughtIndexChangeHandlers } = changeHandlers
 
   Object.keys(contextIndexChangeHandlers).forEach(key => {
-    const changeType = key as firebaseChangeTypes
-    contextIndexListener.on(changeType, snapshot => {
-      const updates = contextIndexChangeHandlers[changeType](snapshot.val())
-      callback(updates)
+    const changeType = key as keyof typeof contextIndexChangeHandlers
+    contextIndexListener.on(key, snapshot => {
+      const state = store.getState()
+      const updates = contextIndexChangeHandlers[changeType](state, snapshot.val())
+      updateThoughtsFromSubscription(updates)
     })
   })
 
   Object.keys(thoughtIndexChangeHandlers).forEach(key => {
-    const changeType = key as firebaseChangeTypes
-    thoughtIndexListener.on(changeType, snapshot => {
-      const updates = thoughtIndexChangeHandlers[changeType](snapshot.val())
-      callback(updates)
+    const changeType = key as keyof typeof thoughtIndexChangeHandlers
+    thoughtIndexListener.on(key, snapshot => {
+      const state = store.getState()
+      const updates = thoughtIndexChangeHandlers[changeType](state, snapshot.val())
+      updateThoughtsFromSubscription(updates)
     })
   })
 }

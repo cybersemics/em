@@ -1,15 +1,21 @@
 /* eslint-disable fp/no-this */
+import _ from 'lodash'
 import Dexie from 'dexie'
 import { Store } from 'redux'
 import 'dexie-observable'
-import { ICreateChange, IDeleteChange, IUpdateChange, IDatabaseChange } from 'dexie-observable/api'
-import _ from 'lodash'
+import { ICreateChange, IDeleteChange, IUpdateChange } from 'dexie-observable/api'
 import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../types'
 import { getSessionId, SessionType } from '../util/sessionManager'
-import { getSubscriptionUtils } from '../util/subscriptionUtils'
+import { shouldIncludeUpdate, updateThoughtsFromSubscription } from '../util/subscriptionUtils'
 import { State } from '../util/initialState'
 import win from './win'
+
+/** Get object merged with path updates. */
+const getUpdatedObject = <T extends Index>(original: T, pathUpdates: Index) =>
+  Object.keys(pathUpdates).reduce((acc, key) => {
+    return _.setWith(_.clone(acc), key, pathUpdates[key], _.clone)
+  }, original)
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -229,106 +235,108 @@ export const log = async ({ message, stack }: { message: string; stack: any }) =
   db.logs.add({ created: timestamp(), message, stack })
 
 // maps to dexie-observable's DatabaseChangeType which cannot be imported
-export enum DatabaseChangeType {
-  created = 1,
-  updated = 2,
-  deleted = 3,
+const DatabaseChangeType = {
+  Created: 1,
+  Updated: 2,
+  Deleted: 3,
 }
 
-/** Get db change handlers. */
-const getDbChangeHandlers = ({
-  getContextLocal,
-  getThoughtLocal,
-  getUpdatedObject,
-  shouldIncludeUpdate,
-}: ReturnType<typeof getSubscriptionUtils>) => ({
-  [DatabaseChangeType.created]: (change: IDatabaseChange) => {
-    const { table, key, obj } = change as ICreateChange
-    return {
-      thoughtIndexUpdates:
-        table === 'thoughtIndex' && shouldIncludeUpdate(obj, SessionType.LOCAL)
-          ? { [key as string]: obj as Lexeme }
-          : {},
-      contextIndexUpdates:
-        table === 'contextIndex' && shouldIncludeUpdate(obj, SessionType.LOCAL)
-          ? { [key as string]: obj as Parent }
-          : {},
-    }
-  },
-  [DatabaseChangeType.updated]: async (change: IDatabaseChange) => {
-    const { key, table, mods: updates } = change as IUpdateChange
+/** Parse a Created change event and return updates as normalized Updates. */
+const createdChangeUpdates = (state: State, change: ICreateChange) => {
+  const { table, key, obj } = change
+  return {
+    thoughtIndexUpdates:
+      table === 'thoughtIndex' && shouldIncludeUpdate(state, obj, SessionType.LOCAL)
+        ? { [key as string]: obj as Lexeme }
+        : {},
+    contextIndexUpdates:
+      table === 'contextIndex' && shouldIncludeUpdate(state, obj, SessionType.LOCAL)
+        ? { [key as string]: obj as Parent }
+        : {},
+  }
+}
 
-    /**
-     * Dexie falsly sends null as a child value if a thought is removed from a context
-     * We need to manually filter out such children that can cause the app to break.
-     */
-    const removeInvalidContexts = (thought: Lexeme): Lexeme => ({
-      ...thought,
-      contexts: thought.contexts.filter(c => c !== null),
-    })
+/** Parse a Update change event and return updates as normalized Updates.  */
+const updatedChangeUpdates = async (state: State, change: IUpdateChange) => {
+  const { key, table, mods: updates } = change
 
-    /** Filter thoughts with null contexts. */
-    const filterInvalidContexts = (context: Parent): Parent => ({
-      ...context,
-      children: context.children.filter(child => child !== null),
-    })
-    /** Get thought merged with updates. */
-    const getThoughtUpdates = async (id: string, updates: Index) => {
-      const thought = await getThoughtById(id)
-      if (shouldIncludeUpdate({ ...(thought || (updates as Lexeme)) }, SessionType.LOCAL)) {
-        const updatedThought = thought ? getUpdatedObject(thought, updates as Lexeme) : null
-        return updatedThought ? { [key]: removeInvalidContexts(updatedThought) } : {}
-      }
-      return {}
-    }
-    /** Get context merged with updates. */
-    const getContextUpdates = async (id: string, updates: Index) => {
-      const context = await getContextById(id)
-      if (shouldIncludeUpdate({ ...(context || (updates as Parent)) }, SessionType.LOCAL)) {
-        const updatedContext = context ? getUpdatedObject(context, updates as Parent) : null
-        return updatedContext ? { [key]: filterInvalidContexts(updatedContext) } : {}
-      }
-      return {}
-    }
+  /**
+   * Dexie incorrectly sends null as a child value if a thought is removed from a context.
+   * We need to manually filter out such children that can cause the app to break.
+   */
+  const removeInvalidContexts = (thought: Lexeme): Lexeme => ({
+    ...thought,
+    contexts: thought.contexts.filter(c => c !== null),
+  })
 
-    return {
-      thoughtIndexUpdates: table === 'thoughtIndex' ? await getThoughtUpdates(key, updates) : {},
-      contextIndexUpdates: table === 'contextIndex' ? await getContextUpdates(key, updates) : {},
+  /** Filter thoughts with null contexts. */
+  const filterInvalidContexts = (context: Parent): Parent => ({
+    ...context,
+    children: context.children.filter(child => child !== null),
+  })
+  /** Get thought merged with updates. */
+  const getThoughtUpdates = async (id: string, updates: Index) => {
+    const thought = await getThoughtById(id)
+    if (shouldIncludeUpdate(state, { ...(thought || (updates as Lexeme)) }, SessionType.LOCAL)) {
+      const updatedThought = thought ? getUpdatedObject(thought, updates as Lexeme) : null
+      return updatedThought ? { [key]: removeInvalidContexts(updatedThought) } : {}
     }
-  },
-  [DatabaseChangeType.deleted]: (change: IDatabaseChange) => {
-    const { key, table, oldObj } = change as IDeleteChange
-    return {
-      thoughtIndexUpdates:
-        table === 'thoughtIndex' &&
-        oldObj &&
-        oldObj.id &&
-        shouldIncludeUpdate(oldObj, SessionType.LOCAL) &&
-        getThoughtLocal(key)
-          ? { [key as string]: null }
-          : {},
-      contextIndexUpdates:
-        table === 'contextIndex' &&
-        oldObj &&
-        oldObj.id &&
-        shouldIncludeUpdate(oldObj, SessionType.LOCAL) &&
-        getContextLocal(key)
-          ? { [key as string]: null }
-          : {},
+    return {}
+  }
+  /** Get context merged with updates. */
+  const getContextUpdates = async (id: string, updates: Index) => {
+    const context = await getContextById(id)
+    if (shouldIncludeUpdate(state, { ...(context || (updates as Parent)) }, SessionType.LOCAL)) {
+      const updatedContext = context ? getUpdatedObject(context, updates as Parent) : null
+      return updatedContext ? { [key]: filterInvalidContexts(updatedContext) } : {}
     }
-  },
-})
+    return {}
+  }
+
+  return {
+    thoughtIndexUpdates: table === 'thoughtIndex' ? await getThoughtUpdates(key, updates) : {},
+    contextIndexUpdates: table === 'contextIndex' ? await getContextUpdates(key, updates) : {},
+  }
+}
+
+/** Parse a Delete change event and return updates as normalized Updates.  */
+const deletedChangeUpdates = (state: State, change: IDeleteChange) => {
+  const { key, table, oldObj } = change
+  return {
+    thoughtIndexUpdates:
+      table === 'thoughtIndex' &&
+      oldObj &&
+      oldObj.id &&
+      shouldIncludeUpdate(state, oldObj, SessionType.LOCAL) &&
+      state.thoughts.thoughtIndex[key]
+        ? { [key as string]: null }
+        : {},
+    contextIndexUpdates:
+      table === 'contextIndex' &&
+      oldObj &&
+      oldObj.id &&
+      shouldIncludeUpdate(state, oldObj, SessionType.LOCAL) &&
+      state.thoughts.contextIndex[key]
+        ? { [key as string]: null }
+        : {},
+  }
+}
 
 /** Subscribe to dexie updates. */
 export const subscribe = (store: Store<State, any>) => {
-  const subscriptionUtils = getSubscriptionUtils(store)
-  const dbChangeHandlers = getDbChangeHandlers(subscriptionUtils)
-
   Object.prototype.hasOwnProperty.call(db, 'observable') &&
     db.on('changes', changes => {
+      const state = store.getState()
       changes.forEach(async change => {
-        const updates = await dbChangeHandlers[change.type](change)
-        subscriptionUtils.updateThoughtsFromSubscription(updates)
+        updateThoughtsFromSubscription(
+          change.type === DatabaseChangeType.Created
+            ? createdChangeUpdates(state, change as ICreateChange)
+            : change.type === DatabaseChangeType.Created
+            ? await updatedChangeUpdates(state, change as IUpdateChange)
+            : change.type === DatabaseChangeType.Created
+            ? deletedChangeUpdates(state, change as IDeleteChange)
+            : {},
+        )
       })
     })
 }

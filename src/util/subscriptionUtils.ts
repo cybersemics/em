@@ -1,13 +1,10 @@
-import { clone, setWith } from 'lodash'
-
 import { getSessionId, getSessionType, SessionType } from './sessionManager'
 import { updateThoughts } from '../action-creators'
 
-import { Parent, Index, Lexeme, Context } from '../types'
 import { expandThoughts, getVisibleContexts } from '../selectors'
 import { equalArrays } from './equalArrays'
-import { Action, Store } from 'redux'
 import { State } from './initialState'
+import { Parent, Index, Lexeme, Context, Thunk } from '../types'
 
 export interface Updates {
   thoughtIndexUpdates?: Index<Lexeme | null>
@@ -24,40 +21,23 @@ const isContextVisible = (state: State, context: Context): boolean => {
   return !!Object.keys(visibleContexts).find(c => equalArrays(visibleContexts[c], context))
 }
 /** If given object is of parent type. */
-const isParent = (thoughtOrContext: Parent | Lexeme): thoughtOrContext is Parent => {
-  return (thoughtOrContext as Parent).context !== undefined
+const isParent = (parentOrLexeme: Parent | Lexeme): parentOrLexeme is Parent => {
+  return (parentOrLexeme as Parent).context !== undefined
 }
 
-/** Util functions for data-provider subscriptions. */
-export const getSubscriptionUtils = ({ getState, dispatch }: Store<State, Action<string>>) => ({
-  /** Filter self triggered updates. */
-  shouldIncludeUpdate: (thoughtOrContext?: Parent | Lexeme, updateType?: SessionType) => {
-    const state = getState()
-    if (!thoughtOrContext) return true
-    if (isParent(thoughtOrContext) && !isContextVisible(state, thoughtOrContext.context)) return false
-    else if ('contexts' in thoughtOrContext && !thoughtOrContext.contexts.find(c => isContextVisible(state, c.context)))
-      return false
-    return thoughtOrContext.updatedBy !== getSessionId() && getSessionType(thoughtOrContext.updatedBy) === updateType
-  },
+/** Filter self triggered updates. */
+export const shouldIncludeUpdate = (state: State, parentOrLexeme?: Parent | Lexeme, updateType?: SessionType) => {
+  if (!parentOrLexeme) return true
+  if (isParent(parentOrLexeme) && !isContextVisible(state, parentOrLexeme.context)) return false
+  else if ('contexts' in parentOrLexeme && !parentOrLexeme.contexts.find(c => isContextVisible(state, c.context)))
+    return false
+  return parentOrLexeme.updatedBy !== getSessionId() && getSessionType(parentOrLexeme.updatedBy) === updateType
+}
 
-  /** Get object merged with path updates. */
-  getUpdatedObject: <T extends Index>(original: T, pathUpdates: Index) =>
-    Object.keys(pathUpdates).reduce((acc, key) => {
-      return setWith(clone(acc), key, pathUpdates[key], clone)
-    }, original),
-
-  /** Get local value of thought from state. */
-  getThoughtLocal: (id: string) => {
-    const state = getState()
-    return state.thoughts.thoughtIndex[id]
-  },
-
-  /** Get local value of context from state. */
-  getContextLocal: (id: string) => {
-    const state = getState()
-    return state.thoughts.contextIndex[id]
-  },
-  updateThoughtsFromSubscription: (updates: Updates) => {
+/** An action-creator to update the thought from a subscription trigger. */
+export const updateThoughtsFromSubscription =
+  (updates: Updates): Thunk =>
+  (dispatch, getState) => {
     if (
       Object.keys(updates.thoughtIndexUpdates || {}).length === 0 &&
       Object.keys(updates.contextIndexUpdates || {}).length === 0
@@ -73,5 +53,4 @@ export const getSubscriptionUtils = ({ getState, dispatch }: Store<State, Action
         remote: false,
       }),
     )
-  },
-})
+  }
