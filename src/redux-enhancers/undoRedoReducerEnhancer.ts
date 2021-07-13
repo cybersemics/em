@@ -12,7 +12,7 @@ const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 /**
  * Manually extract thought and context index updates along with pushQueue.
  */
-const extractUpdates = (newState: State, patch: Patch) => {
+const extractUpdates = (state: State, newState: State, patch: Patch) => {
   const thoughtIndexPath = '/thoughts/thoughtIndex/'
   const contextIndexPath = '/thoughts/contextIndex/'
   const thoughtIndexChanges = patch.filter(p => p.path.indexOf(thoughtIndexPath) === 0)
@@ -20,13 +20,23 @@ const extractUpdates = (newState: State, patch: Patch) => {
 
   const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
     const [thoughtId] = path.slice(thoughtIndexPath.length).split('/')
-    return { ...acc, [thoughtId]: newState.thoughts.thoughtIndex[thoughtId] ?? null }
+    return {
+      ...acc,
+      ...(state.thoughts.thoughtIndex[thoughtId]
+        ? { [thoughtId]: newState.thoughts.thoughtIndex[thoughtId] || null }
+        : {}),
+    }
   }, {})
   const contextIndexUpdates = contextIndexChanges.reduce((acc, { path }) => {
     const [contextId] = path.slice(contextIndexPath.length).split('/')
-    return { ...acc, [contextId]: newState.thoughts.contextIndex[contextId] ?? null }
+    return {
+      ...acc,
+      ...(state.thoughts.contextIndex[contextId]
+        ? { [contextId]: newState.thoughts.contextIndex[contextId] || null }
+        : {}),
+    }
   }, {})
-  return updateThoughts({ thoughtIndexUpdates, contextIndexUpdates })(newState)
+  return updateThoughts({ thoughtIndexUpdates, contextIndexUpdates })(state)
 }
 
 const deadActionChecks = {
@@ -127,7 +137,7 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
   return reducerFlow([
     undoTwice ? undoReducer : null,
     undoReducer,
-    state => extractUpdates(state, poppedInversePatches.flat()),
+    newState => extractUpdates(state, newState, poppedInversePatches.flat()),
   ])(state)
 }
 
@@ -146,7 +156,7 @@ const redoHandler = (state: State, patches: Patch[]) => {
   return reducerFlow([
     redoTwice ? redoReducer : null,
     redoReducer,
-    state => extractUpdates(state, poppedPatches.flat()),
+    newState => extractUpdates(state, newState, poppedPatches.flat()),
   ])(state)
 }
 
