@@ -5,6 +5,7 @@ import getManyDescendants from '../data-providers/data-helpers/getManyDescendant
 import { HOME_TOKEN } from '../constants'
 import { hashContext, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
+import { isPending } from '../selectors'
 import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../@types'
 
 const BUFFER_DEPTH = 2
@@ -125,6 +126,26 @@ const pull =
     const hasPending = Object.keys(thoughtsLocal.contextIndex || {}).some(
       key => (thoughtsLocal.contextIndex || {})[key].pending,
     )
+
+    // if we are pulling the home context and there are no pending thoughts, but the home parent is marked a pending, it means there are no children and we need to clear the pending status manually
+    // https://github.com/cybersemics/em/issues/1344
+    const state = getState()
+    if (ROOT_ENCODED in contextMap && !hasPending && isPending(state, [HOME_TOKEN])) {
+      dispatch(
+        updateThoughts({
+          contextIndexUpdates: {
+            ...state.thoughts.contextIndex,
+            [ROOT_ENCODED]: {
+              ...state.thoughts.contextIndex[ROOT_ENCODED],
+              pending: false,
+            },
+          },
+          thoughtIndexUpdates: {},
+          local: false,
+          remote: false,
+        }),
+      )
+    }
 
     return hasPending
   }
