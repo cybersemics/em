@@ -6,13 +6,15 @@ import {
   loadPublicThoughts,
   setRemoteSearch,
   status as statusActionCreator,
+  updateThoughtsFromSubscription,
   userAuthenticated,
 } from '../action-creators'
 import { subscribe } from '../data-providers/firebase'
 import { owner } from '../util'
 import { State } from '../util/initialState'
-import { Snapshot, User } from '../types'
 import initAlgoliaSearch from '../search/algoliaSearch'
+import { SessionType } from '../util/sessionManager'
+import { Snapshot, User, ThoughtUpdates } from '../types'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
@@ -25,7 +27,10 @@ export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
     firebase.auth().onAuthStateChanged((user: User) => {
       if (user) {
         store.dispatch(userAuthenticated(user))
-        subscribe(user.uid, store)
+
+        subscribe(user.uid, (updates: ThoughtUpdates) => {
+          store.dispatch(updateThoughtsFromSubscription(updates, SessionType.REMOTE))
+        })
 
         const { applicationId, index } = ALGOLIA_CONFIG
         const hasRemoteConfig = applicationId && index

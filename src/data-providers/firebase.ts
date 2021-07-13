@@ -1,16 +1,26 @@
 import { Dispatch } from 'react'
-import { Store } from 'redux'
 import { hashContext, hashThought, keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
 import { State } from '../util/initialState'
-import { shouldIncludeUpdate, updateThoughtsFromSubscription } from '../util/subscriptionUtils'
-import { SessionType } from '../util/sessionManager'
-import { Index, Lexeme, Parent, Ref, Snapshot } from '../types'
+import { Index, Lexeme, Parent, Ref, Snapshot, ThoughtUpdates } from '../types'
 
-enum FirebaseChangeTypes {
+export enum FirebaseChangeTypes {
   Create = 'child_added',
   Update = 'child_changed',
   Delete = 'child_removed',
+}
+
+export interface FirebaseChangeHandlers {
+  contextIndex?: {
+    [FirebaseChangeTypes.Create]?: (updates: ThoughtUpdates) => void
+    [FirebaseChangeTypes.Update]?: (updates: ThoughtUpdates) => void
+    [FirebaseChangeTypes.Delete]?: (updates: ThoughtUpdates) => void
+  }
+  thoughtIndex?: {
+    [FirebaseChangeTypes.Create]?: (updates: ThoughtUpdates) => void
+    [FirebaseChangeTypes.Update]?: (updates: ThoughtUpdates) => void
+    [FirebaseChangeTypes.Delete]?: (updates: ThoughtUpdates) => void
+  }
 }
 
 /**
@@ -106,41 +116,37 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
 
 const changeHandlers = {
   contextIndex: {
-    [FirebaseChangeTypes.Create]: (state: State, parent: Parent) => ({
-      contextIndexUpdates:
-        parent && shouldIncludeUpdate(state, parent, SessionType.REMOTE)
-          ? { [hashContext(parent.context)]: parent }
-          : {},
+    [FirebaseChangeTypes.Create]: (parent: Parent) => ({
+      contextIndex: parent ? { [hashContext(parent.context)]: parent } : {},
+      thoughtIndex: {},
     }),
-    [FirebaseChangeTypes.Update]: (state: State, parent: Parent) => ({
-      contextIndexUpdates:
-        parent && shouldIncludeUpdate(state, parent, SessionType.REMOTE)
-          ? { [hashContext(parent.context)]: parent }
-          : {},
+    [FirebaseChangeTypes.Update]: (parent: Parent) => ({
+      contextIndex: parent ? { [hashContext(parent.context)]: parent } : {},
+      thoughtIndex: {},
     }),
-    [FirebaseChangeTypes.Delete]: (state: State, parent: Parent) => ({
-      contextIndexUpdates:
-        parent && shouldIncludeUpdate(state, parent, SessionType.REMOTE) ? { [hashContext(parent.context)]: null } : {},
+    [FirebaseChangeTypes.Delete]: (parent: Parent) => ({
+      contextIndex: parent ? { [hashContext(parent.context)]: null } : {},
+      thoughtIndex: {},
     }),
   },
   thoughtIndex: {
-    [FirebaseChangeTypes.Create]: (state: State, lexeme: Lexeme) => ({
-      thoughtIndexUpdates:
-        lexeme && shouldIncludeUpdate(state, lexeme, SessionType.REMOTE) ? { [hashThought(lexeme.value)]: lexeme } : {},
+    [FirebaseChangeTypes.Create]: (lexeme: Lexeme) => ({
+      contextIndex: {},
+      thoughtIndex: lexeme ? { [hashThought(lexeme.value)]: lexeme } : {},
     }),
-    [FirebaseChangeTypes.Update]: (state: State, lexeme: Lexeme) => ({
-      thoughtIndexUpdates:
-        lexeme && shouldIncludeUpdate(state, lexeme, SessionType.REMOTE) ? { [hashThought(lexeme.value)]: lexeme } : {},
+    [FirebaseChangeTypes.Update]: (lexeme: Lexeme) => ({
+      contextIndex: {},
+      thoughtIndex: lexeme ? { [hashThought(lexeme.value)]: lexeme } : {},
     }),
-    [FirebaseChangeTypes.Delete]: (state: State, lexeme: Lexeme) => ({
-      thoughtIndexUpdates:
-        lexeme && shouldIncludeUpdate(state, lexeme, SessionType.REMOTE) ? { [hashThought(lexeme.value)]: null } : {},
+    [FirebaseChangeTypes.Delete]: (lexeme: Lexeme) => ({
+      contextIndex: {},
+      thoughtIndex: lexeme ? { [hashThought(lexeme.value)]: null } : {},
     }),
   },
 }
 
 /** Subscribe to firebase. */
-export const subscribe = (userId: string, store: Store<State, any>) => {
+export const subscribe = (userId: string, onUpdate: (updates: ThoughtUpdates) => void) => {
   const contextIndexListener: Ref<Parent> = window.firebase?.database().ref(`users/${userId}/contextIndex`)
   const thoughtIndexListener: Ref<Lexeme> = window.firebase?.database().ref(`users/${userId}/thoughtIndex`)
 
@@ -149,18 +155,16 @@ export const subscribe = (userId: string, store: Store<State, any>) => {
   Object.keys(contextIndexChangeHandlers).forEach(key => {
     const changeType = key as keyof typeof contextIndexChangeHandlers
     contextIndexListener.on(key, snapshot => {
-      const state = store.getState()
-      const updates = contextIndexChangeHandlers[changeType](state, snapshot.val())
-      updateThoughtsFromSubscription(updates)
+      const updates = contextIndexChangeHandlers[changeType](snapshot.val())
+      onUpdate(updates)
     })
   })
 
   Object.keys(thoughtIndexChangeHandlers).forEach(key => {
     const changeType = key as keyof typeof thoughtIndexChangeHandlers
     thoughtIndexListener.on(key, snapshot => {
-      const state = store.getState()
-      const updates = thoughtIndexChangeHandlers[changeType](state, snapshot.val())
-      updateThoughtsFromSubscription(updates)
+      const updates = thoughtIndexChangeHandlers[changeType](snapshot.val())
+      onUpdate(updates)
     })
   })
 }

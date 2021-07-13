@@ -1,15 +1,16 @@
 import './App.css'
+import _ from 'lodash'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { State } from './util/initialState'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
-import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
-import { Thunk } from './types'
+import { loadFromUrl, loadLocalState, preloadSources, updateThoughtsFromSubscription } from './action-creators'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
-import _ from 'lodash'
+import { SessionType } from './util/sessionManager'
+import { ThoughtUpdates, Thunk } from './types'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
@@ -35,7 +36,9 @@ export const initialize = async () => {
 
   await thoughtsLocalPromise
 
-  db.subscribe(store)
+  db.subscribe((updates: ThoughtUpdates) => {
+    store.dispatch(updateThoughtsFromSubscription(updates, SessionType.LOCAL))
+  })
 
   return {
     thoughtsLocalPromise,
