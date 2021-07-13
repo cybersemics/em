@@ -10,7 +10,7 @@ import { produce } from 'immer'
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 
 /**
- * Manually extract thought and context index updates along with pushQueue.
+ * Manually create the pushQueue for thought and context index updates.
  */
 const extractUpdates = (state: State, newState: State, patch: Patch) => {
   const thoughtIndexPath = '/thoughts/thoughtIndex/'
@@ -36,7 +36,10 @@ const extractUpdates = (state: State, newState: State, patch: Patch) => {
         : {}),
     }
   }, {})
-  return updateThoughts({ thoughtIndexUpdates, contextIndexUpdates })(state)
+  return {
+    ...newState,
+    pushQueue: updateThoughts({ thoughtIndexUpdates, contextIndexUpdates })(state).pushQueue,
+  }
 }
 
 const deadActionChecks = {
