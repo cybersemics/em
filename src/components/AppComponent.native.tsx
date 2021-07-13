@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { StyleSheet, ScrollView, View, Dimensions } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
 import NavBar from './NavBar'
@@ -11,11 +11,15 @@ import Sidebar from './Sidebar'
 import ModalHelp from './ModalHelp'
 import ModalWelcome from './ModalWelcome'
 import ModalExport from './ModalExport'
+import Alert from './Alert'
 import Footer from './Footer'
 import { Text } from './Text.native'
 import { useDimensions } from '@react-native-community/hooks'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { State } from '../@types'
+import { commonStyles } from '../style/commonStyles'
+
+const { flexOne, darkBackground, whiteText } = commonStyles
 
 /**
  * AppComponent container.
@@ -26,6 +30,7 @@ const AppComponent: React.FC = () => {
   const { height } = useDimensions().screen
 
   const showSidebar = useSelector((state: State) => state.showSidebar)
+  const alert = useSelector((state: State) => state.alert)
 
   /** Open drawer menu. */
   const openDrawer = () => {
@@ -52,7 +57,7 @@ const AppComponent: React.FC = () => {
         // eslint-disable-next-line react/style-prop-object
         style='light'
       />
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[flexOne, darkBackground]}>
         <DrawerLayout
           ref={drawerRef}
           drawerWidth={300}
@@ -60,15 +65,16 @@ const AppComponent: React.FC = () => {
           onDrawerClose={onDrawerClose}
           renderNavigationView={Sidebar}
         >
+          {alert && <Alert />}
           <Toolbar />
-          <ScrollView nestedScrollEnabled={true} style={styles.flexOne}>
+          <ScrollView nestedScrollEnabled={true} style={flexOne}>
             <View style={contentHeight}>
-              <ScrollView nestedScrollEnabled={true} style={styles.flexOne}>
+              <ScrollView nestedScrollEnabled={true} style={flexOne}>
                 {Array(50)
                   .fill(1)
                   .map((_, index) => {
                     return (
-                      <Text key={index} style={styles.text}>
+                      <Text key={index} style={whiteText}>
                         hello World - em thoughts {index}
                       </Text>
                     )
@@ -89,19 +95,5 @@ const AppComponent: React.FC = () => {
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  flexOne: { flex: 1 },
-  content: {
-    height: Dimensions.get('screen').height - 120,
-  },
-  text: {
-    color: '#fff',
-  },
-})
 
 export default AppComponent
