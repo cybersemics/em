@@ -10,9 +10,9 @@ import { produce } from 'immer'
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 
 /**
- * Manually create the pushQueue for thought and context index updates.
+ * Manually recreate the pushQueue for thought and context index updates from patches.
  */
-const extractUpdates = (state: State, newState: State, patch: Patch) => {
+const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch) => {
   const thoughtIndexPath = '/thoughts/thoughtIndex/'
   const contextIndexPath = '/thoughts/contextIndex/'
   const thoughtIndexChanges = patch.filter(p => p.path.indexOf(thoughtIndexPath) === 0)
@@ -22,19 +22,19 @@ const extractUpdates = (state: State, newState: State, patch: Patch) => {
     const [thoughtId] = path.slice(thoughtIndexPath.length).split('/')
     return {
       ...acc,
-      [thoughtId]: newState.thoughts.thoughtIndex[thoughtId] || null,
+      [thoughtId]: state.thoughts.thoughtIndex[thoughtId] || null,
     }
   }, {})
   const contextIndexUpdates = contextIndexChanges.reduce((acc, { path }) => {
     const [contextId] = path.slice(contextIndexPath.length).split('/')
     return {
       ...acc,
-      [contextId]: newState.thoughts.contextIndex[contextId] || null,
+      [contextId]: state.thoughts.contextIndex[contextId] || null,
     }
   }, {})
   return {
-    ...newState,
-    pushQueue: updateThoughts({ thoughtIndexUpdates, contextIndexUpdates })(state).pushQueue,
+    ...state,
+    pushQueue: updateThoughts({ thoughtIndexUpdates, contextIndexUpdates })(oldState).pushQueue,
   }
 }
 
@@ -136,7 +136,7 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
   return reducerFlow([
     undoTwice ? undoReducer : null,
     undoReducer,
-    newState => extractUpdates(state, newState, poppedInversePatches.flat()),
+    newState => restorePushQueueFromPatches(newState, state, poppedInversePatches.flat()),
   ])(state)
 }
 
@@ -155,7 +155,7 @@ const redoHandler = (state: State, patches: Patch[]) => {
   return reducerFlow([
     redoTwice ? redoReducer : null,
     redoReducer,
-    newState => extractUpdates(state, newState, poppedPatches.flat()),
+    newState => restorePushQueueFromPatches(newState, state, poppedPatches.flat()),
   ])(state)
 }
 
