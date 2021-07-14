@@ -38,8 +38,8 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
   }
 }
 
-const deadActionChecks = {
-  dataNonce: (patch: Patch) => patch.length === 1 && patch[0].path === '/dataNonce',
+const deadActionChecks: Index<(patch: Patch) => boolean> = {
+  // None
 }
 
 /**
