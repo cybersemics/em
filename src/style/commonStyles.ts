@@ -119,6 +119,7 @@ export const commonStyles = StyleSheet.create({
   halfOpacity: { opacity: 0.5 },
   whiteBackground: { backgroundColor: 'white' },
   darkBackground: { backgroundColor: '#000' },
+  redBackground: { backgroundColor: '#CB2232' },
   shadow: {
     ...Platform.select({
       web: {

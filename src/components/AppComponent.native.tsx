@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { State } from '../@types'
 import { commonStyles } from '../style/commonStyles'
 import ModalAuth from './ModalAuth'
+import ErrorMessage from './ErrorMessage'
 
 const { flexOne, darkBackground, whiteText } = commonStyles
 
@@ -67,6 +68,7 @@ const AppComponent: React.FC = () => {
           renderNavigationView={Sidebar}
         >
           {alert && <Alert />}
+          <ErrorMessage />
           <Toolbar />
           <ScrollView nestedScrollEnabled={true} style={flexOne}>
             <View style={contentHeight}>

@@ -5,7 +5,9 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native'
 import { Alert, State } from '../@types'
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
+import { fadeIn } from '../style/animations'
 
+const { from, animate } = fadeIn
 const { flexEnd, whiteText, centerText } = commonStyles
 
 /** An alert component with an optional closeLink that fades in and out. */
@@ -21,8 +23,8 @@ const AlertComponent = () => {
   return (
     <View
       style={[styles.container]}
-      from={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
+      from={from}
+      animate={animate}
       transition={{
         type: 'timing',
         duration: 350,
