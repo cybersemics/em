@@ -19,8 +19,8 @@ import {
 import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
-import { Context, Parent } from '../types'
 import { getSessionId } from '../util/sessionManager'
+import { Context, Parent } from '../@types'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

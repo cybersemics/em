@@ -2,7 +2,7 @@ import { Key } from 'ts-key-enum'
 import { attributeEquals, getAllChildren, simplifyPath } from '../selectors'
 import { parentOf, isDocumentEditable, pathToContext } from '../util'
 import { Dispatch } from 'react'
-import { Shortcut } from '../types'
+import { Shortcut } from '../@types'
 
 interface CursorDown {
   type: 'cursorDown'

@@ -1,4 +1,4 @@
-import { Index, Lexeme, Parent } from '../types'
+import { Index, Lexeme, Parent } from '../@types'
 
 /** A standard interface for data providers that can sync thoughts. See data-providers/README.md. */
 export interface DataProvider {

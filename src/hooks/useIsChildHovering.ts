@@ -1,7 +1,6 @@
 import { useSelector } from 'react-redux'
-import { Context } from '../types'
+import { Context, State } from '../@types'
 import { pathToContext } from '../util'
-import { State } from '../util/initialState'
 
 /**
  * Returns if any child is being hovered on.

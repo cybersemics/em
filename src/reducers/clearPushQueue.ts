@@ -1,4 +1,4 @@
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /** Clears the push queue. This should only be done after the queued updates are persisted. See redux-middleware/pushQueue. */
 const clearPushQueue = (state: State) => ({

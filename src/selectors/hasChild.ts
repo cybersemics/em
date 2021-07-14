@@ -1,6 +1,5 @@
 import { getAllChildren } from '../selectors'
-import { Context } from '../types'
-import { State } from '../util/initialState'
+import { Context, State } from '../@types'
 
 /** Returns true if the given context has a child with the given value. O(children). */
 const hasChild = (state: State, context: Context, value: string) =>

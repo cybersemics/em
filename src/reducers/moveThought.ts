@@ -11,8 +11,7 @@ import {
   pathExists,
   getAllChildren,
 } from '../selectors'
-import { State } from '../util/initialState'
-import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, Timestamp } from '../types'
+import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
 
 // util
 import {

@@ -1,4 +1,4 @@
-import { Context, Lexeme } from '../types'
+import { Context, Lexeme } from '../@types'
 import { compareByRank, equalArrays, sort } from '../util'
 
 /** Returns a new lexeme remove duplicated given context. */

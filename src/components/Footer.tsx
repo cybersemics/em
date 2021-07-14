@@ -1,39 +1,16 @@
 import React, { useRef, useEffect } from 'react'
-import { connect, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { alert, logout, showModal } from '../action-creators'
-import { getSetting, isTutorial } from '../selectors'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
-import { State } from '../util/initialState'
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { authenticated, fontSize, isPushing, pushQueue, status, user } = state
-  return {
-    authenticated,
-    isPushing,
-    isTutorialOn: isTutorial(state),
-    pushQueueLength: pushQueue.length,
-    status,
-    tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
-    user,
-    fontSize,
-  }
-}
+import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 
 /** A footer component with some useful links. */
-const Footer = ({
-  authenticated,
-  fontSize,
-  isPushing,
-  isTutorialOn,
-  pushQueueLength,
-  tutorialStep,
-  user,
-  status,
-}: ReturnType<typeof mapStateToProps>) => {
+const Footer = () => {
   const dispatch = useDispatch()
+  const { authenticated, user, status, tutorialStep, isPushing, isTutorialOn, pushQueueLength, fontSize } =
+    useFooterUseSelectors()
 
   const firstUpdate = useRef(true)
 
@@ -139,4 +116,4 @@ const Footer = ({
   )
 }
 
-export default connect(mapStateToProps)(Footer)
+export default Footer

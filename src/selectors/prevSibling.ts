@@ -8,8 +8,7 @@ import {
   getSortPreference,
 } from '../selectors'
 import { head } from '../util'
-import { State } from '../util/initialState'
-import { Child, Context, ThoughtContext } from '../types'
+import { Child, Context, State, ThoughtContext } from '../@types'
 
 /**
  * Gets a context's previous sibling with its rank.

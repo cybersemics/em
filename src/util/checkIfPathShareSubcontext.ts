@@ -1,5 +1,5 @@
 import { equalThoughtRanked } from '../util'
-import { Path } from '../types'
+import { Path } from '../@types'
 
 /** Checks if the two paths share a subcontext. */
 export const checkIfPathShareSubcontext = (rankedThoughtsA: Path, rankedThoughtsB: Path): number => {

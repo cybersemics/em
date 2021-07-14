@@ -1,6 +1,6 @@
 import React from 'react'
 import { ancestors, isRoot, strip } from '../util'
-import { Child, Index, SimplePath } from '../types'
+import { Child, Index, SimplePath } from '../@types'
 import classNames from 'classnames'
 
 // components

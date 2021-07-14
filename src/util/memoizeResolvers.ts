@@ -1,4 +1,4 @@
-import { Index, Path } from '../types'
+import { Index, Path } from '../@types'
 
 /** A memoize resolver that encodes an array of objects based on their toString values. */
 export const resolveArray = (items: any[]): string => items.join('__RESOLVE__')

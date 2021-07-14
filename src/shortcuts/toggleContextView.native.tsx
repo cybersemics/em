@@ -1,6 +1,6 @@
 import React from 'react'
 // import { toggleContextView } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { Path } from 'react-native-svg'
 import { Alert } from 'react-native'
 

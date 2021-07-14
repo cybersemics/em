@@ -1,7 +1,7 @@
 import React from 'react'
 // import { isDocumentEditable } from '../util'
 // import subCategorizeOne from '../action-creators/subCategorizeOne'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { Path } from 'react-native-svg'
 import { Alert } from 'react-native'
 

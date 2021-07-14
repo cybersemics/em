@@ -4,7 +4,7 @@ import React from 'react'
 // import { hasChild } from '../selectors'
 // import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
 // import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { G, Path } from 'react-native-svg'
 import { Alert } from 'react-native'
 

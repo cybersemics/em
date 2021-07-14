@@ -17,6 +17,8 @@ module.exports = {
     'react-dnd-multi-backend',
     'react-dnd-touch-backend',
     'react-dnd-test-utils',
+    // Expo requires the expo-clipboard version to be compatible with using SDK version
+    'expo-clipboard',
 
     // TypeError: TextDecoder is not a constructor
     // TextDecoder is not exposed by jsdom v16

@@ -1,7 +1,7 @@
 import { attribute, attributeEquals, getSetting, simplifyPath } from '../selectors'
-import { State } from '../util/initialState'
 import { storage } from '../util/storage'
 import { pathToContext, publishMode, unroot } from '../util'
+import { State } from '../@types'
 
 // eslint-disable-next-line no-mixed-operators
 const themeLocal = (typeof storage !== 'undefined' && storage.getItem('Settings/Theme')) || 'Dark'

@@ -1,4 +1,4 @@
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 
 /** A Thunk that dispatches a 'subCategorizeAll` action. */
 const subCategorizeAllActionCreator = (): Thunk => dispatch => dispatch({ type: 'subCategorizeAll' })

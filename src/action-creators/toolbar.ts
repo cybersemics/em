@@ -1,4 +1,4 @@
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 
 /** Reveals the toolbar overlay. */
 export const overlayReveal =

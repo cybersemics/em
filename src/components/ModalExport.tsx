@@ -25,10 +25,9 @@ import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
-import { State } from '../util/initialState'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
-import { Child, ExportOption } from '../types'
+import { Child, ExportOption, State } from '../@types'
 
 interface AdvancedSetting {
   id: string

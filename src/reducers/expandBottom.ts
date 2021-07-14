@@ -1,7 +1,6 @@
 import { expandThoughts } from '../selectors'
-import { Path } from '../types'
+import { Path, State } from '../@types'
 import { hashContext, pathToContext } from '../util'
-import { State } from '../util/initialState'
 
 interface Options {
   path: Path

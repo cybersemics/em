@@ -1,8 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
 import { loadRemoteState } from '../action-creators'
-import { Thunk, Parent, Snapshot } from '../types'
-import { State } from '../util/initialState'
+import { Firebase, Parent, State, Thunk } from '../@types'
 
 /**
  * Loads a public context when the url contains a userId of a different user.
@@ -24,7 +23,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
   const publicContextRef = window.firebase.database().ref(`users/${urlOwner}/contextIndex/${contextEncoded}`)
 
   // fetch children
-  publicContextRef.once('value', (snapshot: Snapshot<Parent>) => {
+  publicContextRef.once('value', (snapshot: Firebase.Snapshot<Parent>) => {
     const parentEntry: Parent = snapshot.val()
 
     const state = getState()

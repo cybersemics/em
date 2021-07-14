@@ -1,12 +1,12 @@
 import { clearLatestShortcuts, addLatestShortcuts } from '.'
-import { Shortcut, Thunk } from '../types'
+import { Shortcut, Thunk, Timer } from '../@types'
 import { LATEST_SHORTCUT_DIAGRAM_DURATION, LATEST_SHORTCUT_LIMIT } from '../constants'
 
 interface Options {
   clear?: number
 }
 
-let timeoutId: number | null = null
+let timeoutId: Timer | null = null
 
 /** Clear timeout id. */
 const clearTimeout = () => {

@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { Icon } from '../../types'
+import { Icon } from '../../@types'
 
 /** A pencil icon. */
 const PencilIcon = ({ size = 20, style }: Icon) => (

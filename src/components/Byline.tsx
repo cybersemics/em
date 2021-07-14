@@ -2,7 +2,7 @@ import React from 'react'
 import Gravatar from 'react-gravatar'
 import { store } from '../store'
 import { attribute, getChildrenRanked } from '../selectors'
-import { Context } from '../types'
+import { Context } from '../@types'
 
 /** An author byline to a published article. */
 const Byline = ({ context }: { context: Context }) => {

@@ -1,4 +1,4 @@
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /**
  * Returns true if a modal is not completed or suspended, and there is not another modal being shown.

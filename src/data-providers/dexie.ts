@@ -6,7 +6,7 @@ import { ICreateChange, IDeleteChange, IUpdateChange } from 'dexie-observable/ap
 import { hashThought, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import win from './win'
-import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, ThoughtUpdates, Timestamp } from '../types'
+import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, ThoughtUpdates, Timestamp } from '../@types'
 
 /** Get object merged with path updates. */
 const applyUpdates = <T extends Index>(original: T, pathUpdates: Index) =>

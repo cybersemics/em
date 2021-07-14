@@ -2,8 +2,7 @@ import _ from 'lodash'
 import { getAllChildren, rankThoughtsFirstMatch } from '../selectors'
 import { hashThought, head, headValue, unroot } from '../util'
 import { resolveArray, resolvePath, resolveShallow } from '../util/memoizeResolvers'
-import { State } from '../util/initialState'
-import { Child, SimplePath, ThoughtContext } from '../types'
+import { Child, SimplePath, State, ThoughtContext } from '../@types'
 
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */
 const resolve = (state: State, child: Child | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /** Real-time meta validation error status. */
 const invalidState = (state: State, { value }: { value: string }) => ({

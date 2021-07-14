@@ -1,6 +1,6 @@
 import { throttle } from 'lodash'
 import { v4 as uuid } from 'uuid'
-import { Index } from '../types'
+import { Index } from '../@types'
 
 export enum SessionType {
   LOCAL = 'local',

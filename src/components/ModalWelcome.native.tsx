@@ -7,9 +7,10 @@ import { ActionButton } from './ActionButton'
 import { useDispatch, useSelector } from 'react-redux'
 import { tutorial } from '../action-creators'
 import { getAllChildren } from '../selectors'
-import { State } from '../util/initialState'
 import { storage } from '../util/storage'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from './Text.native'
+import { State } from '../@types'
 
 const isLocalNetwork = Boolean(__DEV__)
 
@@ -187,14 +188,14 @@ const styles = StyleSheet.create({
   helperActionButtonText: {
     color: 'white',
     textAlign: 'center',
-    fontSize: 16,
     textDecorationLine: 'underline',
+    fontSize: 4,
   },
   errorText: { color: 'red' },
   uppercaseText: { textTransform: 'uppercase' },
-  welcomeText: { color: 'white', textAlign: 'center', fontSize: 20 },
+  welcomeText: { color: 'white', textAlign: 'center', fontSize: 6 },
   bold: { fontWeight: 'bold' },
-  earlyWelcomeText: { marginBottom: 60, color: 'white', textAlign: 'center', fontSize: 20 },
+  earlyWelcomeText: { marginBottom: 60, color: 'white', textAlign: 'center', fontSize: 6 },
   codeInput: {
     backgroundColor: '#333',
     borderRadius: 999,

@@ -8,7 +8,7 @@ import _ from 'lodash'
 import { HOME_TOKEN } from '../../src/constants'
 import { hashContext, hashThought, head, unroot } from '../../src/util'
 import { State } from '../../src/util/initialState'
-import { Child, Context, Index, Parent } from '../../src/types'
+import { Child, Context, Index, Parent } from '../../src/@types'
 
 const userId = 'm9S244ovF7fVrwpAoqoWxcz08s52'
 

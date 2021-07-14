@@ -2,7 +2,7 @@ import { HOME_PATH } from '../constants'
 import { isRoot, pathToContext } from '../util'
 import { importText, setCursor } from '../action-creators'
 import { decodeThoughtsUrl, getAllChildren } from '../selectors'
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 
 interface Options {
   skipRoot?: boolean

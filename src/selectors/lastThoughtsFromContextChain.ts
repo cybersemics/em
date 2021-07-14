@@ -1,7 +1,6 @@
 import { getLexeme, rankThoughtsFirstMatch } from '../selectors'
 import { parentOf, head, headValue, splice } from '../util'
-import { State } from '../util/initialState'
-import { SimplePath, ThoughtContext } from '../types'
+import { SimplePath, State, ThoughtContext } from '../@types'
 
 /** Generates path from the last segment of a context chain. */
 const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]): SimplePath => {

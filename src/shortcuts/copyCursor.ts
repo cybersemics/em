@@ -2,7 +2,7 @@ import ClipboardJS from 'clipboard'
 import { editableNode, getExportPhrase, hashContext, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { exportContext, getDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
-import { Shortcut } from '../types'
+import { Shortcut } from '../@types'
 
 /** Copies a string directly to the clipboard by simulating a button click with ClipboadJS. */
 const copy = (s: string): void => {

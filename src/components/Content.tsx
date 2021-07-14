@@ -11,7 +11,6 @@ import {
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
-import { State } from '../util/initialState'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
@@ -19,7 +18,7 @@ import Search from './Search'
 import Subthoughts from './Subthoughts'
 import { childrenFilterPredicate } from '../selectors/getChildren'
 import Editable from './Editable'
-import { SimplePath } from '../types'
+import { SimplePath, State } from '../@types'
 import { storage } from '../util/storage'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'

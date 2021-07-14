@@ -6,10 +6,9 @@ import { isMac, isTouch } from './browser'
 import globals from './globals'
 import { alert, suppressExpansion, showLatestShortcuts, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
-import { State } from './util/initialState'
 import { keyValueBy } from './util/keyValueBy'
 import { GestureResponderEvent } from 'react-native'
-import { Direction, GesturePath, Index, Key, Shortcut } from './types'
+import { Direction, GesturePath, Index, Key, Shortcut, State } from './@types'
 
 import * as shortcutObject from './shortcuts/index'
 export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]

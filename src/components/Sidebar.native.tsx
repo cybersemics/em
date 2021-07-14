@@ -4,9 +4,10 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
-import { State } from '../util/initialState'
 // import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, StyleSheet } from 'react-native'
+import { Text } from './Text.native'
+import { State } from '../@types'
 
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {
@@ -38,7 +39,7 @@ const Sidebar = () => {
 
 const styles = StyleSheet.create({
   container: { backgroundColor: '#292a2b', height: '100%', padding: 15 },
-  headerText: { color: '#666', fontWeight: '300', fontSize: 20 },
+  headerText: { color: '#666', fontWeight: '300', fontSize: 12 },
   padding: { padding: 15 },
   text: { color: '#fff' },
 })

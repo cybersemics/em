@@ -2,8 +2,7 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { getNextRank, getLexeme, getAllChildren } from '../selectors'
 import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
-import { State } from '../util/initialState'
-import { Context, Index, Lexeme, Parent } from '../types'
+import { Context, Index, Lexeme, Parent, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 
 interface Payload {

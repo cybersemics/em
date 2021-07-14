@@ -1,5 +1,5 @@
 import React from 'react'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import { clearSelection } from '../util'
 import { cursorBack, scrollCursorIntoView } from '../action-creators'
 

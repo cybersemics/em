@@ -11,8 +11,7 @@ import {
   nextSibling as thoughtNextSibling,
   rootedParentOf,
 } from '../selectors'
-import { State } from '../util/initialState'
-import { Child, Context, Path, SimplePath, ThoughtContext } from '../types'
+import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 interface NextThoughtResult {
   nextThoughts: Path

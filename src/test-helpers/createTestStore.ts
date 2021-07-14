@@ -6,7 +6,7 @@ import { importText } from '../action-creators'
 import appReducer from '../reducers/app'
 import { never } from '../util'
 import undoRedoReducerEnhancer from '../redux-enhancers/undoRedoReducerEnhancer'
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /**
  * Returns new store for test.

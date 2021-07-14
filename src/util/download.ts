@@ -1,4 +1,4 @@
-import { MimeType } from '../types'
+import { MimeType } from '../@types'
 
 /** Download data to a file.
  * See https://stackoverflow.com/a/30832210/480608.

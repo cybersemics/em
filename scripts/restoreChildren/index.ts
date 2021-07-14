@@ -7,7 +7,7 @@ import fs from 'fs'
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../../src/constants'
 import { hashContext, hashThought, head, normalizeThought, timestamp, unroot } from '../../src/util'
-import { Child, Context, Index, Lexeme, Parent, ThoughtContext } from '../../src/types'
+import { Child, Context, Index, Lexeme, Parent, ThoughtContext } from '../../src/@types'
 
 // arrays are stored as objects with a numeric index in Firebase
 // so we have to override array types

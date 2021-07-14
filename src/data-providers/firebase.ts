@@ -1,8 +1,7 @@
 import { Dispatch } from 'react'
 import { hashContext, hashThought, keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
-import { State } from '../util/initialState'
-import { Index, Lexeme, Parent, Ref, Snapshot, ThoughtUpdates } from '../types'
+import { Firebase, Index, Lexeme, Parent, State, ThoughtUpdates } from '../@types'
 
 export enum FirebaseChangeTypes {
   Create = 'child_added',
@@ -22,7 +21,6 @@ export interface FirebaseChangeHandlers {
     [FirebaseChangeTypes.Delete]?: (updates: ThoughtUpdates) => void
   }
 }
-
 /**
  * Get all firebase related functions as an object.
  */
@@ -35,9 +33,9 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   /** Gets the Lexeme object by id. */
   async getThoughtById(id: string): Promise<Lexeme | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('thoughtIndex').child(id)
+    const ref = userRef!.child('thoughtIndex').child<Lexeme>(id)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Snapshot<Lexeme>) => {
+      ref.once('value', (snapshot: Firebase.Snapshot<Lexeme>) => {
         resolve(snapshot.val())
       }),
     )
@@ -45,7 +43,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   /** Gets multiple Lexeme objects by ids. */
   async getThoughtsByIds(ids: string[]): Promise<(Lexeme | undefined)[]> {
     const userRef = getUserRef(state)
-    const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child(id).once('value')))
+    const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child<Lexeme>(id).once('value')))
     return snapshots.map(snapshot => snapshot?.val())
   },
 
@@ -56,9 +54,9 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
    */
   async getContextById(id: string): Promise<Parent | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('contextIndex').child(id)
+    const ref = userRef!.child('contextIndex').child<Parent>(id)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Snapshot<Parent>) => {
+      ref.once('value', (snapshot: Firebase.Snapshot<Parent>) => {
         resolve(snapshot.val())
       }),
     )
@@ -66,7 +64,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   /** Gets multiple PrentEntry objects by ids. */
   getContextsByIds: async (ids: string[]): Promise<(Parent | undefined)[]> => {
     const userRef = getUserRef(state)
-    const snapshots = await Promise.all(ids.map(id => userRef?.child('contextIndex').child(id).once('value')))
+    const snapshots = await Promise.all(ids.map(id => userRef?.child('contextIndex').child<Parent>(id).once('value')))
     return snapshots.map(snapshot => snapshot?.val())
   },
   /** Updates Firebase data. */
@@ -147,8 +145,8 @@ const changeHandlers = {
 
 /** Subscribe to firebase. */
 export const subscribe = (userId: string, onUpdate: (updates: ThoughtUpdates) => void) => {
-  const contextIndexListener: Ref<Parent> = window.firebase?.database().ref(`users/${userId}/contextIndex`)
-  const thoughtIndexListener: Ref<Lexeme> = window.firebase?.database().ref(`users/${userId}/thoughtIndex`)
+  const contextIndexListener: Firebase.Ref<Parent> = window.firebase?.database().ref(`users/${userId}/contextIndex`)
+  const thoughtIndexListener: Firebase.Ref<Lexeme> = window.firebase?.database().ref(`users/${userId}/thoughtIndex`)
 
   const { contextIndex: contextIndexChangeHandlers, thoughtIndex: thoughtIndexChangeHandlers } = changeHandlers
 

@@ -1,6 +1,5 @@
 import { hashThought } from '../util'
-import { State } from '../util/initialState'
-import { Lexeme } from '../types'
+import { Lexeme, State } from '../@types'
 
 /** Gets a single thought with a list of its contexts from the thoughtIndex by id. */
 export const getLexemeById = (state: State, key: string): Lexeme | undefined => state.thoughts.thoughtIndex[key]

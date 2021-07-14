@@ -1,5 +1,5 @@
 import { alert, status } from '../action-creators'
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 
 /** Redirects the user to the Firebase login page. */
 const login = (): Thunk => dispatch => {

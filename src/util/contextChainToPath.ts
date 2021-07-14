@@ -1,4 +1,4 @@
-import { Path, SimplePath } from '../types'
+import { Path, SimplePath } from '../@types'
 
 /** Join the segments of a context chain, eliminating the overlap, and return the resulting path. */
 // how is this different than chain()? Hmmmm... good question...

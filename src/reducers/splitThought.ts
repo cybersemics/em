@@ -3,8 +3,7 @@ import { HOME_TOKEN } from '../constants'
 import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { editableRender, editThought, moveThought, newThought } from '../reducers'
-import { State } from '../util/initialState'
-import { Path, SplitResult } from '../types'
+import { Path, SplitResult, State } from '../@types'
 
 /** Splits a thought into two thoughts.
  *

@@ -13,7 +13,7 @@ import {
   setSelection,
 } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
 

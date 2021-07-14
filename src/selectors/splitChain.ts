@@ -1,7 +1,6 @@
 import { isContextViewActive, getContexts, rankThoughtsFirstMatch } from '../selectors'
 import { pathToContext } from '../util'
-import { State } from '../util/initialState'
-import { Path, SimplePath } from '../types'
+import { Path, SimplePath, State } from '../@types'
 
 /**
  * Splits a path into a contextChain based on contextViews.

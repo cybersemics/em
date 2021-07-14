@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import { equalPath } from '../util'
-import { State } from '../util/initialState'
-import { Path } from '../types'
+import { Path, State } from '../@types'
 
 /** Sets the expanded context thought if it matches the given path. */
 const expandContextThought = (state: State, { path }: { path: Path }): State => ({

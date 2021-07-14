@@ -1,7 +1,6 @@
 import { parentOf, headRank, headValue, pathToContext } from '../util'
 import { getChildrenRanked } from '../selectors'
-import { State } from '../util/initialState'
-import { SimplePath } from '../types'
+import { SimplePath, State } from '../@types'
 
 /** Returns true if thoughtsA comes immediately before thoughtsB.
  * Assumes they have the same context.

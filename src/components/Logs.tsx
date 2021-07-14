@@ -1,5 +1,5 @@
 import React from 'react'
-import { Log } from '../types'
+import { Log } from '../@types'
 
 /** Render the local logs in a readonly textarea. */
 const Logs = ({ logs }: { logs: Log[] }) => {

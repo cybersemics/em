@@ -1,7 +1,6 @@
 import { getChildrenSorted, getSortPreference } from '../selectors'
 import { equalThoughtRanked, equalThoughtSorted } from '../util'
-import { State } from '../util/initialState'
-import { Context } from '../types'
+import { Context, State } from '../@types'
 
 /** Gets thoughts's next sibling with its rank. */
 const nextSibling = (state: State, value: string, context: Context, rank: number) => {

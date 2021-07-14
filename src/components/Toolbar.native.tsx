@@ -14,7 +14,7 @@ import { shortcutById } from '../shortcuts'
 import { FlatList, ListRenderItem, TouchableOpacity, View, StyleSheet, GestureResponderEvent } from 'react-native'
 // import { store } from '../store'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import { Icon } from '../types'
+import { Icon } from '../@types'
 import HamburgerMenu from './HamburgerMenu'
 import { store } from '../store'
 

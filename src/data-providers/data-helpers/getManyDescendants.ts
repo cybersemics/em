@@ -2,7 +2,7 @@ import { DataProvider } from '../DataProvider'
 import { hashContext, yieldAll } from '../../util'
 import { EM_TOKEN } from '../../constants'
 import getDescendantThoughts from './getDescendantThoughts'
-import { Context, ContextHash, Index, ThoughtsInterface } from '../../types'
+import { Context, ContextHash, Index, ThoughtsInterface } from '../../@types'
 
 // hash the EM context once on load
 const emContextEncoded = hashContext([EM_TOKEN])

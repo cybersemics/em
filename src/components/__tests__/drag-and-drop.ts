@@ -10,7 +10,7 @@ import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { Context, SimplePath } from '../../types'
+import { Context, SimplePath } from '../../@types'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {

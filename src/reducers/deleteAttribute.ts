@@ -2,8 +2,7 @@ import _ from 'lodash'
 import { deleteThought } from '../reducers'
 import { hasChild, rankThoughtsFirstMatch } from '../selectors'
 import { head } from '../util'
-import { State } from '../util/initialState'
-import { Context } from '../types'
+import { Context, State } from '../@types'
 
 /** Deletes an attribute. */
 const deleteAtribute = (state: State, { context, key }: { context: Context; key: string }) => {

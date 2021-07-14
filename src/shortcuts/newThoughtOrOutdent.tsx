@@ -1,6 +1,6 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
 import { splitAtSelection, headValue, isDocumentEditable } from '../util'
 import { alert, newThought, outdent } from '../action-creators'

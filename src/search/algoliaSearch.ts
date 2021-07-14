@@ -1,7 +1,7 @@
 import AlgoliaClient, { SearchIndex } from 'algoliasearch'
 import { Store } from 'redux'
 import { setRemoteSearch } from '../action-creators'
-import { Context, Index } from '../types'
+import { Context, Index } from '../@types'
 import { getContextMap, getAlgoliaApiKey } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
 

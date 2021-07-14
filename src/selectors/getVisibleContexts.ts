@@ -1,7 +1,6 @@
 import { pathToContext, keyValueBy, hashContext } from '../util'
 import { decodeContextUrl } from '../selectors'
-import { Index, Context } from '../types'
-import { State } from '../util/initialState'
+import { Index, Context, State } from '../@types'
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
 const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Index<Context> => {

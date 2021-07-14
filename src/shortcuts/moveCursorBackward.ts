@@ -2,7 +2,7 @@ import { Key } from 'ts-key-enum'
 import { attributeEquals, simplifyPath } from '../selectors'
 import { parentOf, isDocumentEditable, pathToContext } from '../util'
 import { cursorBack, outdent } from '../action-creators'
-import { Shortcut } from '../types'
+import { Shortcut } from '../@types'
 
 const moveCursorBackward: Shortcut = {
   id: 'moveCursorBackward',

@@ -1,7 +1,6 @@
 import { attribute, getChildrenRanked } from '../selectors'
 import { head, isFunction, unroot } from '../util'
-import { Child, Context, MimeType } from '../types'
-import { State } from '../util/initialState'
+import { Child, Context, MimeType, State } from '../@types'
 import { and } from 'fp-and-or'
 
 /** Replaces the root value with a given title. */

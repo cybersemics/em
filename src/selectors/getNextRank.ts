@@ -1,6 +1,5 @@
 import { getChildrenRanked } from '../selectors'
-import { State } from '../util/initialState'
-import { Context } from '../types'
+import { Context, State } from '../@types'
 
 /** Gets the next rank at the end of a list. */
 const getNextRank = (state: State, context: Context) => {

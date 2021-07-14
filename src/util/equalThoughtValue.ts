@@ -1,4 +1,4 @@
-import { Child } from '../types'
+import { Child } from '../@types'
 
 /** Makes a comparator with the given value to check a Child's value.
  *

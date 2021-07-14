@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /** Sets the value that is being edited (unthrottled). */
 const editingValue = (state: State, { value }: { value: string }) => ({

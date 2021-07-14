@@ -2,7 +2,7 @@ import { TUTORIAL_STEP_START } from '../constants'
 import { firstVisibleChild, getSetting } from '../selectors'
 import { pathToContext } from '../util'
 import { newThought } from '../reducers'
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /**
  * Creates a new grand child at first visible subthought.

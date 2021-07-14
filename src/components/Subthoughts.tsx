@@ -10,8 +10,18 @@ import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import { State } from '../util/initialState'
-import { Child, Context, GesturePath, Index, LazyEnv, Path, SimplePath, SortDirection, ThoughtContext } from '../types'
+import {
+  Child,
+  Context,
+  GesturePath,
+  Index,
+  LazyEnv,
+  Path,
+  SimplePath,
+  SortDirection,
+  State,
+  ThoughtContext,
+} from '../@types'
 
 // util
 import {

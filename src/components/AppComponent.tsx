@@ -7,7 +7,6 @@ import { BASE_FONT_SIZE } from '../constants'
 import { inputHandlers, isGestureHint } from '../shortcuts'
 import { isDocumentEditable } from '../util'
 import { isTutorial, theme } from '../selectors'
-import { State } from '../util/initialState'
 import { alert, updateSplitPosition } from '../action-creators'
 import { store } from '../store'
 
@@ -30,6 +29,7 @@ import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import { storage } from '../util/storage'
+import { State } from '../@types'
 
 const Content = React.lazy(() => import('./Content'))
 

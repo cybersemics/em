@@ -4,7 +4,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { equalArrays, pathToContext } from '../../util'
 import { importText, setCursor } from '../../action-creators'
 import Subthoughts from '../Subthoughts'
-import { Context, Path, SimplePath } from '../../types'
+import { Context, Path, SimplePath } from '../../@types'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop

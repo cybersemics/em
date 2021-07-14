@@ -1,5 +1,5 @@
 import { hashContext, headRank, pathToContext } from '../util'
-import { Path } from '../types'
+import { Path } from '../@types'
 
 /** Returns the editable DOM node of the given thoughts. */
 export const editableNode = (path: Path): HTMLElement | null => {

@@ -1,5 +1,5 @@
 import { FunctionComponent } from 'react'
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 
 interface Options {
   alertType?: string

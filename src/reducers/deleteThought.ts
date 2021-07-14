@@ -10,8 +10,7 @@ import {
   rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
-import { State } from '../util/initialState'
-import { Child, Context, Index, Lexeme, Parent } from '../types'
+import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
 
 // util
 import {

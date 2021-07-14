@@ -1,4 +1,4 @@
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /** Set availability of remote search. */
 const setRemoteSearch = (state: State, { value }: { value: boolean }): State => ({ ...state, remoteSearch: value })

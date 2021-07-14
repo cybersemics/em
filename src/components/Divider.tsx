@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
 import { setCursor } from '../action-creators'
 import { hashContext, headRank, pathToContext } from '../util'
-import { Path } from '../types'
+import { Path } from '../@types'
 
 /** A custom horizontal rule. */
 const Divider = ({ path }: { path: Path }) => {

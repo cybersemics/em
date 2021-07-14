@@ -3,8 +3,7 @@ import { EM_TOKEN } from '../constants'
 import { isFunction } from '../util'
 import { editThought } from '../reducers'
 import { getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
-import { State } from '../util/initialState'
-import { SimplePath } from '../types'
+import { SimplePath, State } from '../@types'
 
 /** Sets a setting thought. */
 const settings = (state: State, { key, value }: { key: string; value: string }) => {

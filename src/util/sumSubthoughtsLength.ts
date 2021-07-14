@@ -1,5 +1,5 @@
 import { head } from './head'
-import { Child, ThoughtContext } from '../types'
+import { Child, ThoughtContext } from '../@types'
 
 /** Sums the length of all thoughts in the list of thoughts. */
 // works on children with key or context

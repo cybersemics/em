@@ -1,4 +1,4 @@
-import { Context, Lexeme, Timestamp } from '../types'
+import { Context, Lexeme, Timestamp } from '../@types'
 import { concatOne, equalArrays, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 

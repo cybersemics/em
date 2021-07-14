@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { deleteThought, updateLastUpdated } from '../data-providers/dexie'
 import { hashContext, hashThought, timestamp } from '../util'
 import { getLexeme, getAllChildren } from '../selectors'
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /** Deletes the value from the thoughtIndex. */
 const deleteData = (state: State, { value }: { value: string }) => {

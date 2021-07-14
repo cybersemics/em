@@ -2,7 +2,7 @@ import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getAllChildren, getLexeme } from '../../selectors'
 import { editThought, newThought, setCursor, importText } from '../../reducers'
-import { SimplePath } from '../../types'
+import { SimplePath } from '../../@types'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 it('edit a thought', () => {

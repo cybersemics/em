@@ -1,6 +1,5 @@
 import _ from 'lodash'
-import { State } from '../util/initialState'
-import { Path, SimplePath } from '../types'
+import { Path, SimplePath, State } from '../@types'
 
 // constants
 import {

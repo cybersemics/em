@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { getSetting } from '../selectors'
 import { tutorialStep as tutorialStepReducer } from '../reducers'
-import { State } from '../util/initialState'
+import { State } from '../@types'
 
 /** Disaddvances the tutorial one step (whole step by default; optional hint argument for fractional step). */
 const tutorialPrev = (state: State, { hint }: { hint?: boolean } = {}) => {

@@ -6,7 +6,7 @@ import { importText, setCursor, toggleAttribute } from '../../action-creators'
 import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
-import { Context, Path, SimplePath } from '../../types'
+import { Context, Path, SimplePath } from '../../@types'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { getAllChildren } from '../../selectors'
 

@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer'
-import { Child, Context } from '../../../types'
+import { Child, Context } from '../../../@types'
 import { WindowEm } from '../../../initialize'
 
 /**

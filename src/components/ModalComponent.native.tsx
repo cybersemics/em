@@ -3,10 +3,14 @@ import React from 'react'
 /* import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
 import { modalCleanup } from '../util'
-import { Connected } from '../types' */
+import { Connected } from '../@types' */
 import { /* closeModal */ modalComplete /* tutorial */ } from '../action-creators'
 import { useDispatch } from 'react-redux'
-import { Modal, Text, View, StyleSheet, ScrollView } from 'react-native'
+import { Modal, View, StyleSheet, ScrollView } from 'react-native'
+import { Text } from './Text.native'
+import { commonStyles } from '../style/commonStyles'
+
+const { title: titleStyle, flexOne, darkBackground, verticalPadding, horizontalPadding } = commonStyles
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
@@ -41,7 +45,7 @@ const ModalComponent: React.FC<ModalProps> = props => {
 
   return (
     <Modal animationType='slide' visible={show} onRequestClose={close}>
-      <View style={styles.centeredView}>
+      <View style={[flexOne, darkBackground, verticalPadding, horizontalPadding]}>
         {id !== 'welcome' ? (
           <Text style={styles.close} onPress={close}>
             ✕
@@ -49,7 +53,7 @@ const ModalComponent: React.FC<ModalProps> = props => {
         ) : null}
 
         <ScrollView>
-          {title ? <Text style={styles.title}>{title}</Text> : null}
+          {title ? <Text style={titleStyle}>{title}</Text> : null}
           <View>{children}</View>
 
           <View>{!hideModalActions && actions && actions({ close })}</View>
@@ -60,23 +64,11 @@ const ModalComponent: React.FC<ModalProps> = props => {
 }
 
 const styles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    paddingVertical: 40,
-    backgroundColor: '#000',
-    paddingHorizontal: 15,
-  },
   close: {
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'right',
-    fontSize: 20,
-  },
-  title: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 32,
+    fontSize: 16,
   },
 })
 

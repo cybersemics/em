@@ -1,4 +1,4 @@
-import { Context, Index } from '../types'
+import { Context, Index } from '../@types'
 import { getContextMap } from '../util'
 import * as db from '../data-providers/dexie'
 

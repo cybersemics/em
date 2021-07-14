@@ -11,7 +11,7 @@ import {
   pathToContext,
   strip,
 } from '../util'
-import { SimplePath } from '../types'
+import { SimplePath } from '../@types'
 
 interface LinkProps {
   charLimit?: number

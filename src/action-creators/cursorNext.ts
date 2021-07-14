@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
 import { parentOf, pathToContext } from '../util'
-import { Thunk } from '../types'
+import { Thunk } from '../@types'
 
 // must be imported after util (???)
 import { attributeEquals, getChildrenSorted, getThoughtAfter, simplifyPath } from '../selectors'

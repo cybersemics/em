@@ -5,7 +5,7 @@ import getManyDescendants from '../data-providers/data-helpers/getManyDescendant
 import { HOME_TOKEN } from '../constants'
 import { hashContext, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
-import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../types'
+import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../@types'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = hashContext([HOME_TOKEN])

@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { alert, login } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
 import { ActionButton } from './ActionButton'
-import { Index } from '../types'
+import { Index } from '../@types'
 import Modal from './Modal'
 
 const firebaseErrorsIndex = {

@@ -1,6 +1,6 @@
 import { connect } from 'react-redux'
-import { State } from '../util/initialState'
 import ModalComponent, { ModalProps } from './ModalComponent'
+import { State } from '../@types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ isLoading, showModal }: State, props: ModalProps) => ({

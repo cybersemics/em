@@ -5,7 +5,7 @@ import React from 'react'
 // import { Action } from 'redux'
 // import { getAllChildren, isContextViewActive } from '../selectors'
 // import { HOME_TOKEN } from '../constants'
-import { Icon as IconType, Shortcut } from '../types'
+import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { Path, G } from 'react-native-svg'
 import { Alert } from 'react-native'
 

@@ -13,7 +13,7 @@ import {
 import { moveThought, importText, newSubthought, newThought, setCursor } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import { State } from '../../util/initialState'
-import { SimplePath } from '../../types'
+import { SimplePath } from '../../@types'
 import { store as appStore } from '../../store'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'

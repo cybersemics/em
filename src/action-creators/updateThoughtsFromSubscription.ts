@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { updateThoughts } from '../action-creators'
-import { ThoughtUpdates, Thunk } from '../types'
+import { ThoughtUpdates, Thunk } from '../@types'
 import { SessionType, getSessionId, getSessionType } from '../util/sessionManager'
 
 interface Updateable {

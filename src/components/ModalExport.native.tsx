@@ -19,13 +19,13 @@ import { alert, error, closeModal } from '../action-creators'
 import { exportContext, getAllChildren, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
-import { State } from '../util/initialState'
-import { Child, ExportOption } from '../types'
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
+import { Child, ExportOption, State } from '../@types'
+import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
 import RNPickerSelect from 'react-native-picker-select'
 import { FontAwesome5 } from '@expo/vector-icons'
 import { ActionButton } from './ActionButton'
 import Clipboard from 'expo-clipboard'
+import { Text } from './Text.native'
 
 interface AdvancedSetting {
   id: string
@@ -306,14 +306,14 @@ const ModalExport = () => {
 
 const styles = StyleSheet.create({
   exportContentContainer: { alignItems: 'center', marginTop: 40 },
-  noteText: { marginVertical: 15, color: 'white', opacity: 0.5, fontStyle: 'italic', textAlign: 'center' },
-  white: { color: 'white' },
+  noteText: { marginVertical: 15, fontSize: 2, color: 'white', opacity: 0.5, fontStyle: 'italic', textAlign: 'center' },
+  white: { color: 'white', fontSize: 2 },
   opacity: { opacity: 0.5 },
   marginVertical: { marginVertical: 10 },
   alignItemsCentre: { alignItems: 'center' },
   row: { flexDirection: 'row' },
-  clipboard: { color: 'lightblue', textDecorationLine: 'underline' },
-  advanced: { color: 'white', textDecorationLine: 'underline' },
+  clipboard: { color: 'lightblue', textDecorationLine: 'underline', fontSize: 4 },
+  advanced: { color: 'white', textDecorationLine: 'underline', fontSize: 4 },
   pickerInputStyle: {
     paddingVertical: 5,
     paddingHorizontal: 5,
