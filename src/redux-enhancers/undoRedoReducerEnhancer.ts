@@ -22,18 +22,14 @@ const extractUpdates = (state: State, newState: State, patch: Patch) => {
     const [thoughtId] = path.slice(thoughtIndexPath.length).split('/')
     return {
       ...acc,
-      ...(state.thoughts.thoughtIndex[thoughtId]
-        ? { [thoughtId]: newState.thoughts.thoughtIndex[thoughtId] || null }
-        : {}),
+      [thoughtId]: newState.thoughts.thoughtIndex[thoughtId] || null,
     }
   }, {})
   const contextIndexUpdates = contextIndexChanges.reduce((acc, { path }) => {
     const [contextId] = path.slice(contextIndexPath.length).split('/')
     return {
       ...acc,
-      ...(state.thoughts.contextIndex[contextId]
-        ? { [contextId]: newState.thoughts.contextIndex[contextId] || null }
-        : {}),
+      [contextId]: newState.thoughts.contextIndex[contextId] || null,
     }
   }, {})
   return {
