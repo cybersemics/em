@@ -70,12 +70,20 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // Listen to touchend directly to catch unterminated gestures.
     // In order to make the gesture system more forgiving, we allow a tiny bit of scroll without abandoning the gesture.
-    // Unfortunately, there are some rare cases (difficult to reproduce, but consistent) where onPanResponderRelease is not called, even after touchend. Neither is onPanResponderReject or onPanResponderEnd.
+    // Unfortunately, there are some cases (#1242) where onPanResponderRelease is never called. Neither is onPanResponderReject or onPanResponderEnd.
     // onPanResponderTerminate is called consistently, but it is also called for any any scroll event. I am not aware of a way to differentiate when onPanResponderTerminate is called from a scroll event vs a final termination where release it never called.
-    // So instead of eliminating the scroll lenience, we can touchend manually and ensure onEnd or onCancel is called appropriately.
-    // https://github.com/cybersemics/em/issues/1242
+    // So instead of eliminating the scroll lenience, we listen to touchend manually and ensure onEnd is called appropriately.
+    // Fixes https://github.com/cybersemics/em/issues/1242
     document.body.addEventListener('touchend', e => {
+      // manually reset everything except sequence and abandon, in case reset does not get called
+      // Fixes https://github.com/cybersemics/em/issues/1189
+      this.currentStart = null
+      this.scrollYStart = null
+      this.disableScroll = false
+      this.scrolling = false
+
       if (this.sequence) {
+        // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
         setTimeout(() => {
           if (!this.abandon && this.sequence) {
             this.props.onEnd?.(this.sequence, e as unknown as GestureResponderEvent)
@@ -118,6 +126,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // onPanResponderStart does not work (why?)
         if (!this.currentStart) {
           this.scrolling = false
+          // ensure that disableScroll is false when starting in case it wasn't reset properly
+          // may be related to https://github.com/cybersemics/em/issues/1189
+          this.disableScroll = false
           this.currentStart = {
             x: gestureState.moveX,
             y: gestureState.moveY,
