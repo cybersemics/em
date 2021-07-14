@@ -5,6 +5,7 @@ import {
   getAllChildren,
   getChildrenRanked,
   getLexeme,
+  getParent,
   hasLexeme,
   isPending,
   rankThoughtsFirstMatch,
@@ -14,7 +15,6 @@ import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
 
 // util
 import {
-  createId,
   equalArrays,
   equalThoughtRanked,
   hashContext,
@@ -59,6 +59,8 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
+  const parent = getParent(state, context)
+
   const isValidThought = lexeme.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
 
   // if thought is not valid then just stop further execution
@@ -91,9 +93,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getAllChildren(state, context).filter(
-    child => !equalThoughtRanked(child, { id: createId(), value, rank }),
-  )
+  const subthoughts = getAllChildren(state, context).filter(child => !equalThoughtRanked(child, { value, rank }))
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts: Context, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
@@ -209,7 +209,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
     [contextEncoded]:
       subthoughts.length > 0
         ? ({
-            id: contextEncoded,
+            id: parent?.id || contextEncoded,
             value: head(context),
             context,
             children: subthoughts,

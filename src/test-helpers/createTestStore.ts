@@ -4,7 +4,7 @@ import multi from '../redux-middleware/multi'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { importText } from '../action-creators'
 import appReducer from '../reducers/app'
-import { createId, never } from '../util'
+import { hashContext, never } from '../util'
 import undoRedoReducerEnhancer from '../redux-enhancers/undoRedoReducerEnhancer'
 import { State } from '../@types'
 
@@ -16,7 +16,7 @@ export const createTestStore = () => {
 
   store.dispatch([
     importText({
-      path: [{ id: createId(), value: EM_TOKEN, rank: 0 }],
+      path: [{ id: hashContext([EM_TOKEN]), value: EM_TOKEN, rank: 0 }],
       text: INITIAL_SETTINGS,
       lastUpdated: never(),
       preventSetCursor: true,

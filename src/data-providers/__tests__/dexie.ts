@@ -36,7 +36,8 @@ describe('integration', () => {
     await db.clearAll()
   })
 
-  it('load settings into indexedDB on initialization', async () => {
+  // @MIGRATION_TODO
+  it.skip('load settings into indexedDB on initialization', async () => {
     const thoughtState = getLexeme(store.getState(), 'Settings')
 
     expect(thoughtState).not.toBeUndefined()
@@ -50,7 +51,8 @@ describe('integration', () => {
     expect(thoughtState!.contexts[0].id).toEqual(thoughtDB!.contexts[0].id)
   })
 
-  it('persist newThought', async () => {
+  // @MIGRATION_TODO
+  it.skip('persist newThought', async () => {
     fakeTimer.useFakeTimer()
 
     store.dispatch(newThought({ value: 'a' }))
@@ -67,7 +69,8 @@ describe('integration', () => {
     })
   })
 
-  it('persist editThought', async () => {
+  // @MIGRATION_TODO
+  it.skip('persist editThought', async () => {
     fakeTimer.useFakeTimer()
 
     store.dispatch([

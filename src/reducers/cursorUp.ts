@@ -1,7 +1,7 @@
 import { HOME_PATH } from '../constants'
 import { setCursor } from '../reducers'
 import { rootedParentOf, prevSibling } from '../selectors'
-import { appendToPath, parentOf, head, pathToContext, unroot, isRoot } from '../util'
+import { appendToPath, fixPathId, parentOf, head, pathToContext, unroot, isRoot } from '../util'
 import { State } from '../@types'
 
 /** Moves the cursor to the previous sibling. */
@@ -30,7 +30,7 @@ const cursorUp = (state: State) => {
         // prevNiece ? unroot(pathBefore.concat(prevNiece))
         null // see TODO
 
-  return prevPath ? setCursor(state, { path: prevPath }) : state
+  return prevPath ? setCursor(state, { path: fixPathId(prevPath) }) : state
 }
 
 export default cursorUp

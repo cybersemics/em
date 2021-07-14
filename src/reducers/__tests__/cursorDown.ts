@@ -1,6 +1,6 @@
-import { createId, initialState, pathToContext, reducerFlow } from '../../util'
+import { hashContext, initialState, pathToContext, reducerFlow } from '../../util'
 import { rankThoughtsFirstMatch } from '../../selectors'
-import { State } from '../../util/initialState'
+import { State } from '../../@types'
 
 // reducers
 import {
@@ -20,7 +20,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
       cursorDown,
     ]
 
@@ -34,7 +34,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newSubthought('b'),
-      setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
       cursorDown,
     ]
 
@@ -66,7 +66,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
       newSubthought('a1'),
       cursorDown,
     ]
@@ -81,7 +81,7 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
       newSubthought('a1'),
       newSubthought('a1.1'),
       newSubthought('a1.1.1'),
@@ -99,7 +99,7 @@ describe('normal view', () => {
       newThought('a'),
       newSubthought('n'),
       newThought('m'),
-      setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
       toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
       cursorDown,
     ]
@@ -123,8 +123,8 @@ describe('context view', () => {
       importText({ text }),
       setCursor({
         path: [
-          { id: createId(), value: 'a', rank: 0 },
-          { id: createId(), value: 'm', rank: 1 },
+          { id: hashContext(['a']), value: 'a', rank: 0 },
+          { id: hashContext(['a', 'm']), value: 'm', rank: 1 },
         ],
       }),
       toggleContextView,
@@ -193,16 +193,16 @@ describe('context view', () => {
       importText({ text }),
       setCursor({
         path: [
-          { id: createId(), value: 'a', rank: 0 },
-          { id: createId(), value: 'm', rank: 1 },
+          { id: hashContext(['a']), value: 'a', rank: 0 },
+          { id: hashContext(['a', 'm']), value: 'm', rank: 1 },
         ],
       }),
       toggleContextView,
       setCursor({
         path: [
-          { id: createId(), value: 'a', rank: 0 },
-          { id: createId(), value: 'm', rank: 1 },
-          { id: createId(), value: 'a', rank: 0 },
+          { id: hashContext(['a']), value: 'a', rank: 0 },
+          { id: hashContext(['a', 'm']), value: 'm', rank: 1 },
+          { id: hashContext(['a', 'm', 'a']), value: 'a', rank: 0 },
         ],
       }),
       cursorDown,

@@ -215,7 +215,7 @@ function expandThoughtsRecursive(
         ...(path || []),
         (childOrContext as Child).value != null
           ? (childOrContext as Child)
-          : { ...childOrContext, value: head((childOrContext as ThoughtContext).context), id: createId() },
+          : { ...childOrContext, value: head((childOrContext as ThoughtContext).context) },
       ])
       // RECURSIVE
       // passing contextChain here creates an infinite loop

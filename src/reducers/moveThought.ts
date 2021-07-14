@@ -35,7 +35,7 @@ import {
   removeDuplicatedContext,
   isDescendantPath,
   timestamp,
-  createId,
+  unroot,
 } from '../util'
 
 type ChildUpdate = {
@@ -141,17 +141,16 @@ const moveThought = (
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const subthoughtsOld = getAllChildren(state, oldContext).filter(
-    child => !equalThoughtRanked(child, { id: createId(), value, rank: oldRank }),
+    child => !equalThoughtRanked(child, { value, rank: oldRank }),
   )
 
   const subthoughtsNew = getAllChildren(state, newContext)
     .filter(child => normalizeThought(child.value) !== normalizeThought(value))
     .concat({
-      id: createId(),
+      id: hashContext(unroot([...newContext, value])),
       value,
       rank: newRank,
       lastUpdated: timestamp(),
-      ...(id ? { id } : null),
       ...(archived ? { archived } : {}),
     })
 
@@ -229,7 +228,7 @@ const moveThought = (
 
         const childUpdate: ChildUpdate = {
           // child.id is undefined sometimes. Unable to reproduce.
-          id: child.id ?? '',
+          id: hashContext(unroot(pathToContext(childPathNew))),
           // TODO: Confirm that find will always succeed
           rank: (childLexemeNew.contexts || []).find(context => equalArrays(context.context, contextNew))!.rank,
           pending: isPending(state, childContext),

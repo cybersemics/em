@@ -4,7 +4,8 @@ import { Timestamp } from './Timestamp'
 
 /** An object that contains a list of children within a context. */
 export interface Parent {
-  id?: string
+  id: string
+  value: string
   context: Context
   children: Child[]
   lastUpdated: Timestamp

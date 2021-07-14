@@ -21,9 +21,9 @@ import {
 // util
 import {
   appendToPath,
-  createId,
   ellipsize,
   getTextContentFromHTML,
+  hashContext,
   head,
   headValue,
   once,
@@ -149,8 +149,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
         : getNextRank(state, thoughts)
       : getRankAfter(state, simplePath)
 
-  const id = createId()
-
   const reducers = [
     // createThought
     createThought({
@@ -159,18 +157,21 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
       rank: newRank,
       value,
-      id,
     }),
+    (newState: State) => {
+      const parentPath = !preventSetCursor ? unroot(insertNewSubthought ? path : parentOf(path)) : null
 
-    // setCursor
-    !preventSetCursor
-      ? setCursor({
-          editing: true,
-          path: unroot([...(insertNewSubthought ? path : parentOf(path)), { value, rank: newRank, id }]),
-          offset: isMobile() ? 0 : offset != null ? offset : getTextContentFromHTML(value).length,
-        })
-      : null,
-
+      return !preventSetCursor
+        ? setCursor(newState, {
+            editing: true,
+            path: unroot([
+              ...parentPath!,
+              { value, rank: newRank, id: hashContext([...pathToContext(parentPath!), value]) },
+            ]),
+            offset: isMobile() ? 0 : offset != null ? offset : getTextContentFromHTML(value).length,
+          })
+        : null
+    },
     // tutorial step 1
     tutorialStepNewThoughtCompleted
       ? tutorialNext({})

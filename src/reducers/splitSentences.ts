@@ -9,6 +9,7 @@ import {
   pathToContext,
   reducerFlow,
   splitSentence,
+  hashContext,
 } from '../util'
 import { editableRender, editingValue, editThought, newThought, setCursor } from '../reducers'
 import { rootedParentOf, simplifyPath } from '../selectors'
@@ -30,7 +31,11 @@ const splitSentences = (state: State) => {
   }
 
   const [firstSentence, ...otherSentences] = sentences
-  const newCursor = appendToPath(parentOf(cursor), { ...head(cursor), value: firstSentence })
+  const newCursor = appendToPath(parentOf(cursor), {
+    ...head(cursor),
+    value: firstSentence,
+    id: hashContext([...pathToContext(parentOf(cursor)), firstSentence]),
+  })
 
   const reducers = [
     editThought({

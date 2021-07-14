@@ -5,8 +5,8 @@ import { Child, Path, State, ThoughtContext } from '../@types'
 // util
 import {
   appendToPath,
-  createId,
   getTextContentFromHTML,
+  hashContext,
   head,
   headValue,
   once,
@@ -113,7 +113,9 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
               unroot(
                 showContexts
                   ? appendToPath(parentOf(path), {
-                      id: createId(),
+                      id: hashContext(
+                        unroot([...pathToContext(parentOf(path)), head((next() as ThoughtContext).context)]),
+                      ),
                       value: head((next() as ThoughtContext).context),
                       rank: next().rank,
                     })

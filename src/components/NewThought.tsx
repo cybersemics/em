@@ -8,7 +8,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import { appendToPath, asyncFocus, createId, getTextContentFromHTML, pathToContext, unroot } from '../util'
+import { appendToPath, asyncFocus, getTextContentFromHTML, hashContext, pathToContext, unroot } from '../util'
 import { getNextRank, getChildrenRanked } from '../selectors'
 import { cursorBack, createThought, setCursor } from '../action-creators'
 import { Path, SimplePath, State } from '../@types'
@@ -59,11 +59,9 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 
     const context = pathToContext(path)
     const newRank = getNextRank(state, pathToContext(path))
-    const id = createId()
 
     dispatch(
       createThought({
-        id,
         context,
         addAsContext: showContexts,
         rank: newRank,
@@ -75,7 +73,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 
     dispatch(
       setCursor({
-        path: appendToPath(path, { id, rank: newRank, value }),
+        path: appendToPath(path, { id: hashContext(unroot([...pathToContext(path), value])), rank: newRank, value }),
         offset: getTextContentFromHTML(value).length,
       }),
     )

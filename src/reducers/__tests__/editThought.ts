@@ -1,5 +1,5 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { createId, initialState, reducerFlow } from '../../util'
+import { hashContext, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getAllChildren, getLexeme } from '../../selectors'
 import { editThought, newThought, setCursor, importText } from '../../reducers'
 import { SimplePath } from '../../@types'
@@ -9,7 +9,7 @@ it('edit a thought', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
-    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
     editThought({
       newValue: 'aa',
       oldValue: 'a',
@@ -44,14 +44,14 @@ it('edit a descendant', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
     editThought({
       newValue: 'aa1',
       oldValue: 'a1',
       context: ['a'],
       path: [
-        { id: createId(), value: 'a', rank: 1 },
-        { id: createId(), value: 'a1', rank: 0 },
+        { id: hashContext(['a']) as string, value: 'a', rank: 1 },
+        { id: hashContext(['a', 'a1']) as string, value: 'a1', rank: 0 },
       ] as SimplePath,
     }),
   ]
@@ -112,13 +112,13 @@ it('edit a thought existing in mutliple contexts', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
     newThought({ value: 'ab', insertNewSubthought: true }),
     editThought({
       newValue: 'abc',
       oldValue: 'ab',
       context: ['a'],
-      path: [{ id: createId(), value: 'a', rank: 0 }] as SimplePath,
+      path: [{ id: hashContext(['a']) as string, value: 'a', rank: 0 }] as SimplePath,
     }),
   ]
 
@@ -145,7 +145,7 @@ it('edit a thought that exists in another context', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    newThought({ value: 'b', at: [{ id: createId(), value: 'a', rank: 0 }] }),
+    newThought({ value: 'b', at: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
     newThought({ value: 'a', insertNewSubthought: true }),
     editThought({
       newValue: 'ab',
@@ -266,7 +266,7 @@ it('data integrity test', () => {
     setCursor({
       path: [
         {
-          id: createId(),
+          id: hashContext(['a']),
           value: 'a',
           rank: 0,
         },
@@ -307,7 +307,7 @@ it('data integrity test after editing a parent with multiple descendants with sa
     setCursor({
       path: [
         {
-          id: createId(),
+          id: hashContext(['']),
           value: '',
           rank: 0,
         },

@@ -7,8 +7,9 @@ import {
   isAncestorsVisible,
   getSortPreference,
 } from '../selectors'
-import { createId, head } from '../util'
+import { hashContext, head, unroot } from '../util'
 import { Child, Context, State, ThoughtContext } from '../@types'
+import { once } from 'lodash'
 
 /**
  * Gets a context's previous sibling with its rank.
@@ -45,11 +46,16 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   // redeclare prev to convince typescript that the type changed after `siblings.find`
   // otherwise it assumes that `find` has no side effect`
   const prevChild = prev as ThoughtContext | Child | null
+
+  const valueNew = once(() =>
+    contextViewActive ? head((prevChild as ThoughtContext).context) : (prevChild as Child).value,
+  )
+
   return (
     prevChild && {
       ...prevChild,
-      id: createId(),
-      value: contextViewActive ? head((prevChild as ThoughtContext).context) : (prevChild as Child).value,
+      id: hashContext(unroot([...context, valueNew()])),
+      value: valueNew(),
     }
   )
 }

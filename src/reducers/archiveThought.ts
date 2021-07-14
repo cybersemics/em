@@ -5,9 +5,9 @@ import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@typ
 // util
 import {
   appendToPath,
-  createId,
   ellipsize,
   equalThoughtValue,
+  hashContext,
   head,
   headValue,
   isDivider,
@@ -83,7 +83,6 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     const prevContext = contextsFiltered[removedContextIndex - 1]
     return (
       prevContext && {
-        id: createId(),
         value: head(prevContext.context),
         rank: removedContextIndex - 1,
       }
@@ -113,17 +112,26 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       ? nextContext()
       : // get first visible thought
         nextSibling(state, value, context, rank)
+
+  const parentPath = parentOf(path)
+
   const [cursorNew, offset]: [Path | null, number | undefined] =
     // Case I: set cursor on prev thought
     prev
-      ? [appendToPath(parentOf(path), prev), prev.value.length]
+      ? [
+          appendToPath(parentOf(path), {
+            ...prev,
+            id: hashContext(unroot([...pathToContext(parentPath), prev.value])),
+          }),
+          prev.value.length,
+        ]
       : // Case II: set cursor on next thought
       next
       ? [
           unroot(
             showContexts
               ? appendToPath(parentOf(path), {
-                  id: createId(),
+                  id: hashContext(unroot([...pathToContext(parentPath), head((next as ThoughtContext).context)])),
                   value: head((next as ThoughtContext).context),
                   rank: next.rank,
                 })

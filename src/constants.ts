@@ -208,7 +208,8 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'pinSubthoughts',
   'note',
   'delete',
-  'toggleContextView',
+  // @MIGRATION_NOTE: context view is disable for the migration.
+  // 'toggleContextView',
   'proseView',
   // 'toggleSplitView',
   'splitSentences',

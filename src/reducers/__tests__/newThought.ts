@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { createId, initialState, reducerFlow } from '../../util'
+import { hashContext, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import newThought from '../newThought'
 
@@ -54,7 +54,7 @@ it('new subthought top', () => {
     newThought('c'),
     newThought({
       value: 'd',
-      at: [{ id: createId(), value: 'a', rank: 0 }],
+      at: [{ id: hashContext(['a']), value: 'a', rank: 0 }],
       insertNewSubthought: true,
       insertBefore: true,
     }),

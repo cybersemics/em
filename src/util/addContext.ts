@@ -2,6 +2,8 @@ import { equalArrays } from './equalArrays'
 import { notNull } from './notNull'
 import { timestamp } from './timestamp'
 import { Context, Lexeme, ThoughtContext, Timestamp } from '../@types'
+import { hashContext } from './hashContext'
+import { unroot } from './unroot'
 
 /** Returns a new thought plus the given context. Does not add duplicates. */
 export const addContext = (
@@ -18,7 +20,7 @@ export const addContext = (
       .concat({
         context,
         rank,
-        ...(id ? { id } : null),
+        id: hashContext(unroot([...context, lexeme.value])),
         ...(archived ? { archived } : {}),
       }),
     created: lexeme.created || timestamp(),

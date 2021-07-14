@@ -1,6 +1,16 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
-import { appendToPath, createId, parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
+import {
+  appendToPath,
+  fixPathId,
+  parentOf,
+  hashContext,
+  headRank,
+  headValue,
+  pathToContext,
+  reducerFlow,
+  strip,
+} from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { editableRender, editThought, moveThought, newThought } from '../reducers'
 import { Path, SplitResult, State } from '../@types'
@@ -24,7 +34,11 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   const valueLeft = strip(splitResult.left, { preserveFormatting: true })
   const valueRight = strip(splitResult.right, { preserveFormatting: true })
 
-  const pathLeft = appendToPath(parentOf(path), { id: createId(), value: valueLeft, rank: headRank(path) })
+  const pathLeft = appendToPath(parentOf(path), {
+    id: hashContext([...pathToContext(parentOf(path)), valueLeft]),
+    value: valueLeft,
+    rank: headRank(path),
+  })
 
   return reducerFlow([
     // set the thought's text to the left of the selection
@@ -46,14 +60,18 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
     // move children
     state => {
       const childNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
-      const pathRight = appendToPath(parentOf(simplePath), { id: createId(), value: valueRight, rank: childNew!.rank })
+      const pathRight = appendToPath(parentOf(simplePath), {
+        id: hashContext([...pathToContext(parentOf(simplePath)), valueRight]),
+        value: valueRight,
+        rank: childNew!.rank,
+      })
       const children = getChildrenRanked(state, pathToContext(pathLeft))
 
       return reducerFlow(
         children.map(child =>
           moveThought({
-            oldPath: appendToPath(pathLeft, child),
-            newPath: appendToPath(pathRight, child),
+            oldPath: fixPathId(appendToPath(pathLeft, child)),
+            newPath: fixPathId(appendToPath(pathRight, child)),
           }),
         ),
       )(state)

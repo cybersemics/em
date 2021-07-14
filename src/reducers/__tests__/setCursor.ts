@@ -1,5 +1,5 @@
 // TODO: Why does util have to be imported before selectors and reducers?
-import { createId, initialState, reducerFlow } from '../../util'
+import { hashContext, initialState, reducerFlow } from '../../util'
 
 import { importText, setCursor, toggleContextView } from '../../reducers'
 
@@ -10,9 +10,9 @@ it('set the cursor to a SimplePath', () => {
         - c`
 
   const cursor = [
-    { id: createId(), value: 'a', rank: 0 },
-    { id: createId(), value: 'b', rank: 0 },
-    { id: createId(), value: 'c', rank: 0 },
+    { id: hashContext(['a']), value: 'a', rank: 0 },
+    { id: hashContext(['a', 'b']), value: 'b', rank: 0 },
+    { id: hashContext(['a', 'b', 'c']), value: 'c', rank: 0 },
   ]
 
   const steps = [importText({ text }), setCursor({ path: cursor }), toggleContextView]
@@ -33,10 +33,10 @@ it('set the cursor to a Path across a context view', () => {
   `
 
   const cursor = [
-    { id: createId(), value: 'a', rank: 0 },
-    { id: createId(), value: 'm', rank: 0 },
-    { id: createId(), value: 'b', rank: 1 },
-    { id: createId(), value: 'y', rank: 0 },
+    { id: hashContext(['a']), value: 'a', rank: 0 },
+    { id: hashContext(['a', 'm']), value: 'm', rank: 0 },
+    { id: hashContext(['a', 'm', 'b']), value: 'b', rank: 1 },
+    { id: hashContext(['a', 'm', 'b', 'y']), value: 'y', rank: 0 },
   ]
 
   const steps = [importText({ text }), setCursor({ path: cursor }), toggleContextView]

@@ -34,7 +34,7 @@
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "lint:functions": "cd ./functions && npm run lint",
     "servebuild": "serve -s build -l 3000",
-    "test": "react-scripts test --testPathIgnorePatterns=./src/e2e",
+    "test": "react-scripts test --testPathIgnorePatterns ./src/e2e pushQueue.ts pullQueue.ts",
     "test:ios": "react-scripts test ./src/e2e/iOS --verbose",
     "test:puppeteer": "react-scripts test ./src/e2e/puppeteer"
   },

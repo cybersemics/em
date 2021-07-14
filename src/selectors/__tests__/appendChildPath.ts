@@ -1,14 +1,14 @@
 import appendChildPath from '../appendChildPath'
-import { initialState, reducerFlow, pathToContext, createId } from '../../util'
+import { initialState, reducerFlow, pathToContext, hashContext } from '../../util'
 import { Path, SimplePath } from '../../@types'
 import { toggleContextView, setCursor } from '../../reducers'
 
 it('get child resolved path', () => {
   const parentPath: Path = [
-    { id: createId(), value: 'm', rank: 0 },
-    { id: createId(), value: 'n', rank: 0 },
-    { id: createId(), value: 'o', rank: 0 },
-    { id: createId(), value: 'p', rank: 0 },
+    { id: hashContext(['m']), value: 'm', rank: 0 },
+    { id: hashContext(['m', 'n']), value: 'n', rank: 0 },
+    { id: hashContext(['m', 'n', 'o']), value: 'o', rank: 0 },
+    { id: hashContext(['m', 'n', 'o', 'p']), value: 'p', rank: 0 },
   ]
 
   const childSimplePath = [
@@ -26,9 +26,9 @@ it('get child resolved path', () => {
 
 it('get child resolved path when parent has active context view', () => {
   const parentPath: Path = [
-    { id: createId(), value: 'i', rank: 0 },
-    { id: createId(), value: 'j', rank: 0 },
-    { id: createId(), value: 'k', rank: 0 },
+    { id: hashContext(['i']), value: 'i', rank: 0 },
+    { id: hashContext(['i', 'j']), value: 'j', rank: 0 },
+    { id: hashContext(['i', 'j', 'k']), value: 'k', rank: 0 },
   ]
 
   const childSimplePath = [

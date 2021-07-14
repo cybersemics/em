@@ -134,11 +134,13 @@ const dataIntegrityCheck =
           const contextIndexUpdatesNew = !otherContextHasThought
             ? {
                 [encoded]: {
+                  id: encoded,
                   context: cx.context,
                   children: [
                     ...children,
                     {
                       // guard against undefined
+                      id: hashContext(unroot([...cx.context, lexeme.value || ''])),
                       lastUpdated: cx.lastUpdated || timestamp(),
                       rank: cx.rank || 0,
                       value: lexeme.value || '',

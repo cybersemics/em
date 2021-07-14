@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import _, { once } from 'lodash'
 import { getSortPreference, hasChild, isContextViewActive } from '../selectors'
 import {
   compareByRank,
@@ -15,9 +15,18 @@ import {
   headValue,
   isDescendant,
   splice,
-  createId,
 } from '../util'
-import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path, State } from '../@types'
+import {
+  Child,
+  ComparatorFunction,
+  Context,
+  ContextHash,
+  ThoughtContext,
+  Parent,
+  Path,
+  State,
+  PropertyRequired,
+} from '../@types'
 
 // use global instance of empty array so object reference doesn't change
 const noChildren: Child[] = []
@@ -26,7 +35,7 @@ const noChildren: Child[] = []
 type GetThoughts = (state: State, context: Context) => Child[]
 
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-export const isChildVisible = _.curry((state: State, context: Context, child: Child) => {
+export const isChildVisible = _.curry((state: State, context: Context, child: PropertyRequired<Child, 'value'>) => {
   return !isFunction(child.value) && !hasChild(state, unroot([...context, child.value]), '=hidden')
 })
 
@@ -158,12 +167,14 @@ export const firstVisibleChildWithCursorCheck = (state: State, path: Path, conte
 
 /** Checks if a child lies within the cursor path. */
 const isChildInCursor = (state: State, path: Path, showContexts: boolean, child: Child | ThoughtContext) => {
+  const value = once(() => pathHeadValue(state, path, child, showContexts))
+
   const childPath = unroot([
     ...path,
     showContexts
       ? {
-          id: createId(),
-          value: pathHeadValue(state, path, child, showContexts),
+          id: hashContext([...pathToContext(unroot(path)), value()]),
+          value: value(),
           rank: (child as ThoughtContext).rank,
           lastUpdated: (child as ThoughtContext).lastUpdated,
           archived: (child as ThoughtContext).archived,
@@ -195,7 +206,7 @@ const isChildVisibleWithCursorCheck = _.curry(
 
     return (
       state.showHiddenThoughts ||
-      isChildVisible(state, context, { id: createId(), value, rank: child.rank }) ||
+      isChildVisible(state, context, { value }) ||
       isChildInCursor(state, path, showContexts, child) ||
       isDescendantOfMetaCursor(state, childContext)
     )

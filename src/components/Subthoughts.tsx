@@ -90,9 +90,10 @@ interface SubthoughtsProps {
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
-const toggleContextViewShortcut = shortcutById('toggleContextView')
+// const toggleContextViewShortcut = shortcutById('toggleContextView')
 if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
-if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
+// @MIGRATION_NOTE: toogle view is disabled for the migration
+// if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
 const PAGINATION_SIZE = 100
 const EMPTY_OBJECT = {}
@@ -338,21 +339,23 @@ const NoChildren = ({
     {allowSingleContext ? (
       'A floating context... how interesting.'
     ) : (
-      <span>
-        {isTouch ? (
-          <span className='gesture-container'>
-            Swipe{' '}
-            <GestureDiagram
-              path={toggleContextViewShortcut.gesture as GesturePath}
-              size={30}
-              color='darkgray' /* mtach .children-subheading color */
-            />
-          </span>
-        ) : (
-          <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
-        )}{' '}
-        to return to the normal view.
-      </span>
+      // @MIGRATION_NOTE: toogle view is disabled for the migration
+      // <span>
+      //   {isTouch ? (
+      //     <span className='gesture-container'>
+      //       Swipe{' '}
+      //       <GestureDiagram
+      //         path={toggleContextViewShortcut.gesture as GesturePath}
+      //         size={30}
+      //         color='darkgray' /* mtach .children-subheading color */
+      //       />
+      //     </span>
+      //   ) : (
+      //     <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
+      //   )}{' '}
+      //   to return to the normal view.
+      // </span>
+      <></>
     )}
   </div>
 )
@@ -665,7 +668,8 @@ export const SubthoughtsComponent = ({
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
-                key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
+                // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
+                key={`${child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
                 rank={child.rank}
                 isDraggable={actualDistance < 2}
                 showContexts={showContexts}

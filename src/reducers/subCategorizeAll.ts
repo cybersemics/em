@@ -1,6 +1,17 @@
 import { HOME_PATH } from '../constants'
 import { alert, moveThought, newThought } from '../reducers'
-import { appendToPath, parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
+import {
+  appendToPath,
+  parentOf,
+  ellipsize,
+  fixPathId,
+  headValue,
+  isEM,
+  pathToContext,
+  once,
+  reducerFlow,
+  isRoot,
+} from '../util'
 import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 import { State } from '../@types'
 
@@ -78,8 +89,8 @@ const subCategorizeAll = (state: State) => {
     ...filteredChildren.map(
       child => (state: State) =>
         moveThought(state, {
-          oldPath: appendToPath(cursorParent, child),
-          newPath: appendToPath(cursorParent, getThoughtNew(state), child),
+          oldPath: fixPathId(appendToPath(cursorParent, child)),
+          newPath: fixPathId(appendToPath(cursorParent, getThoughtNew(state), child)),
         }),
     ),
   ]

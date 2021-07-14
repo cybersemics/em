@@ -4,7 +4,6 @@ import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf } f
 import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, State, Timestamp, ThoughtIndices } from '../@types'
 import {
   appendToPath,
-  createId,
   equalThoughtRanked,
   hashContext,
   hashThought,
@@ -51,7 +50,6 @@ const insertThought = (
   lastUpdated: Timestamp = timestamp(),
 ): ThoughtPair => {
   const rootContext = context.length > 0 ? context : [HOME_TOKEN]
-  const id = createId()
 
   const lexemeOld = getLexeme(state, value)
   const lexemeNew = {
@@ -60,7 +58,7 @@ const insertThought = (
     contexts: [
       ...(lexemeOld?.contexts || []),
       {
-        id,
+        id: hashContext(unroot([...rootContext, value])),
         context: rootContext,
         rank,
       },
@@ -77,7 +75,7 @@ const insertThought = (
     children: [
       ...parentOld.children,
       {
-        id,
+        id: hashContext(unroot([...rootContext, value])),
         value,
         rank,
         lastUpdated,

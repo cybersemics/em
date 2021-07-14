@@ -1,4 +1,4 @@
-import { createId, hashContext, hashThought, head } from '../util'
+import { createId, hashContext, hashThought, head, unroot } from '../util'
 import { Index, Lexeme, Parent, State, Timestamp } from '../@types'
 
 /** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the updates if indexes are not in sync. */
@@ -51,7 +51,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
                   lastUpdated,
                   rank,
                   value: valueNew,
-                  id: createId(),
+                  id: hashContext(unroot([...context, valueNew])),
                 },
               ],
               lastUpdated: lastUpdated,
@@ -83,6 +83,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
             contexts: [
               ...lexeme.contexts,
               {
+                id: hashContext(unroot([...parent.context, lexeme.value])),
                 context: parent.context,
                 rank: child.rank,
               },

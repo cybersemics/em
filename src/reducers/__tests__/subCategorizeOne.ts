@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { createId, initialState, reducerFlow } from '../../util'
+import { hashContext, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
@@ -72,8 +72,8 @@ it('subcategorize within alphabteically sorted context', () => {
     }),
     setCursor({
       path: [
-        { id: createId(), value: 'A', rank: 0 },
-        { id: createId(), value: 'E', rank: 4 },
+        { id: hashContext(['A']), value: 'A', rank: 0 },
+        { id: hashContext(['A', 'E']), value: 'E', rank: 4 },
       ],
     }),
     subCategorizeOne,

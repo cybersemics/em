@@ -1,14 +1,13 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getLexeme, getAllChildren } from '../selectors'
-import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp } from '../util'
+import { getNextRank, getLexeme, getAllChildren, getParent } from '../selectors'
+import { createId, equalThoughtRanked, hashContext, hashThought, head, timestamp, unroot } from '../util'
 import { Context, Index, Lexeme, Parent, State } from '../@types'
 
 interface Payload {
   context: Context
   value: string
   rank: number
-  id?: string
   addAsContext?: boolean
 }
 /**
@@ -16,9 +15,7 @@ interface Payload {
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-const createThought = (state: State, { context, value, rank, id, addAsContext }: Payload) => {
-  id = id || createId()
-
+const createThought = (state: State, { context, value, rank, addAsContext }: Payload) => {
   // create thought if non-existent
   const lexeme: Lexeme = {
     ...(getLexeme(state, value) || {
@@ -40,7 +37,7 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
       value: addAsContext ? head(context) : value,
       rank: addAsContext ? getNextRank(state, [value]) : rank,
       created: timestamp(),
-      id,
+      id: hashContext([...contextActual, value]),
       lastUpdated: timestamp(),
     }
     const children = getAllChildren(state, contextActual)
@@ -48,7 +45,7 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
       .concat(newContextSubthought)
     contextIndexUpdates[contextEncoded] = {
       ...contextIndexUpdates[contextEncoded],
-      context: contextActual,
+      id: getParent(state, contextActual)?.id || createId(),
       children,
       lastUpdated: timestamp(),
     }
@@ -61,7 +58,7 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: (subthoughtOld?.contexts || []).concat({
         context: [value],
-        id,
+        id: hashContext([value, subthoughtOld?.value || '']),
         rank: getNextRank(state, [value]),
       }),
       created: subthoughtOld?.created || timestamp(),
@@ -76,7 +73,7 @@ const createThought = (state: State, { context, value, rank, id, addAsContext }:
           ...lexeme.contexts,
           {
             context,
-            id,
+            id: hashContext(unroot([...context, lexeme.value])),
             rank,
           },
         ]

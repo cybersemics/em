@@ -6,7 +6,6 @@ import getManyDescendants from '../data-providers/data-helpers/getManyDescendant
 import getContext from '../data-providers/data-helpers/getContext'
 import getLexeme from '../data-providers/data-helpers/getLexeme'
 import {
-  createId,
   equalArrays,
   hashContext,
   hashThought,
@@ -149,9 +148,9 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'x',
       context: ['x'],
       children: [
-        { id: createId(), value: 'a', rank: 0 },
-        { id: createId(), value: 'b', rank: 1 },
-        { id: createId(), value: 'c', rank: 2 },
+        { id: hashContext(['x', 'a']), value: 'a', rank: 0 },
+        { id: hashContext(['x', 'b']), value: 'b', rank: 1 },
+        { id: hashContext(['x', 'c']), value: 'c', rank: 2 },
       ],
       lastUpdated: timestamp(),
     }
@@ -171,9 +170,9 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'x',
       context: ['x'],
       children: [
-        { id: createId(), value: 'a', rank: 0 },
-        { id: createId(), value: 'b', rank: 1 },
-        { id: createId(), value: 'c', rank: 2 },
+        { id: hashContext(['x', 'a']), value: 'a', rank: 0 },
+        { id: hashContext(['x', 'b']), value: 'b', rank: 1 },
+        { id: hashContext(['x', 'c']), value: 'c', rank: 2 },
       ],
       lastUpdated: timestamp(),
     }
@@ -230,9 +229,9 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'x',
       context: ['x'],
       children: [
-        { id: createId(), value: 'a', rank: 0 },
-        { id: createId(), value: 'b', rank: 1 },
-        { id: createId(), value: 'c', rank: 2 },
+        { id: hashContext(['x', 'a']), value: 'a', rank: 0 },
+        { id: hashContext(['x', 'b']), value: 'b', rank: 1 },
+        { id: hashContext(['x', 'c']), value: 'c', rank: 2 },
       ],
       lastUpdated: timestamp(),
     }
@@ -242,9 +241,9 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'y',
       context: ['y'],
       children: [
-        { id: createId(), value: 'd', rank: 0 },
-        { id: createId(), value: 'e', rank: 1 },
-        { id: createId(), value: 'f', rank: 2 },
+        { id: hashContext(['x', 'd']), value: 'd', rank: 0 },
+        { id: hashContext(['x', 'e']), value: 'e', rank: 1 },
+        { id: hashContext(['x', 'f']), value: 'f', rank: 2 },
       ],
       lastUpdated: timestamp(),
     }
@@ -581,7 +580,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const stateNew = reducerFlow([
         importText({ text: rootText }),
-        importText({ path: [{ id: createId(), value: EM_TOKEN, rank: 0 }], text: emText }),
+        importText({ path: [{ id: hashContext([EM_TOKEN]), value: EM_TOKEN, rank: 0 }], text: emText }),
       ])(initialState())
 
       const { contextIndex, thoughtIndex } = stateNew.thoughts

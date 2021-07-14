@@ -3,7 +3,6 @@ import { getRankBefore, hasChild, rootedParentOf, simplifyPath } from '../select
 import { Child, State } from '../@types'
 import {
   appendToPath,
-  createId,
   parentOf,
   ellipsize,
   head,
@@ -12,6 +11,8 @@ import {
   pathToContext,
   reducerFlow,
   isRoot,
+  hashContext,
+  unroot,
 } from '../util'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
@@ -45,16 +46,19 @@ const subCategorizeOne = (state: State) => {
   const simplePath = simplifyPath(state, cursor)
   const newRank = getRankBefore(state, simplePath)
 
+  const value = ''
+
   const child: Child = {
+    value,
     rank: newRank,
-    value: '',
-    id: createId(),
+    id: hashContext(unroot([...pathToContext(cursorParent), value])),
   }
 
   return reducerFlow([
     createThought({
       context: pathToContext(rootedParentOf(state, simplePath)),
-      ...child,
+      value,
+      rank: newRank,
     }),
     setCursor({
       path: appendToPath(cursorParent, child),
@@ -64,7 +68,10 @@ const subCategorizeOne = (state: State) => {
     state =>
       moveThought(state, {
         oldPath: cursor,
-        newPath: appendToPath(cursorParent, child, head(cursor)),
+        newPath: appendToPath(cursorParent, child, {
+          ...head(cursor),
+          id: hashContext(unroot([...pathToContext(cursorParent), value, head(cursor).value])),
+        }),
       }),
   ])(state)
 }

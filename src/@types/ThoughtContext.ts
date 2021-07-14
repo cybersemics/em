@@ -6,6 +6,6 @@ export interface ThoughtContext {
   context: Context
   rank: number
   lastUpdated?: Timestamp
-  id?: string
+  id: string
   archived?: Timestamp
 }

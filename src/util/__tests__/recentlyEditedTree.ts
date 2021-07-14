@@ -1,6 +1,6 @@
 import { Tree, Leaf, findTreeDescendants } from '../recentlyEditedTree'
 import { timestamp } from '../timestamp'
-import { createId } from '../createId'
+import { hashContext } from '../hashContext'
 
 it('Hide meta and ROOT thoughts for recently edited tree', () => {
   const tree: Tree = {
@@ -10,13 +10,13 @@ it('Hide meta and ROOT thoughts for recently edited tree', () => {
         lastUpdated: timestamp(),
         path: [
           {
-            id: createId(),
+            id: hashContext(['ola']),
             lastUpdated: timestamp(),
             value: 'ola',
             rank: 1,
           },
           {
-            id: createId(),
+            id: hashContext(['ola', 'amigo']),
             lastUpdated: timestamp(),
             value: 'amigo',
             rank: 2,
@@ -27,13 +27,13 @@ it('Hide meta and ROOT thoughts for recently edited tree', () => {
         d: {
           path: [
             {
-              id: createId(),
+              id: hashContext(['ola']) as string,
               lastUpdated: timestamp(),
               value: 'ola',
               rank: 1,
             },
             {
-              id: createId(),
+              id: hashContext(['ola', '=hidden']) as string,
               lastUpdated: timestamp(),
               value: '=hidden',
               rank: 2,

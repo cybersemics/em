@@ -1,5 +1,5 @@
 import { clearAll } from '../data-providers/dexie'
-import { createId, never } from '../util'
+import { hashContext, never } from '../util'
 import { clear, importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Thunk } from '../@types'
@@ -24,7 +24,7 @@ const logout = (): Thunk => dispatch => {
   // reset initial settings
   dispatch(
     importText({
-      path: [{ id: createId(), value: EM_TOKEN, rank: 0 }],
+      path: [{ id: hashContext([EM_TOKEN]), value: EM_TOKEN, rank: 0 }],
       text: INITIAL_SETTINGS,
       lastUpdated: never(),
       preventSetCursor: true,

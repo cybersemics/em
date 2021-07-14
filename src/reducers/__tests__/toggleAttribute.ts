@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { createId, initialState, reducerFlow } from '../../util'
+import { hashContext, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 
 // reducers
@@ -80,7 +80,7 @@ it('add attribute if key has already been created', () => {
   const steps = [
     newThought('a'),
     newSubthought('=test'),
-    setCursor({ path: [{ id: createId(), value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
     toggleAttribute({
       context: ['a'],
       key: '=test',
