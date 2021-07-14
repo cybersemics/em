@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext } from '../../selectors'
 import { initialState, reducerFlow } from '../../util'
+import { exportContext } from '../../selectors'
 import newThought from '../newThought'
 
 it('new thought in root', () => {

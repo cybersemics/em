@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react'
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
 import { logout, showModal, alert } from '../action-creators'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
+
+import { View, StyleSheet, TouchableOpacity } from 'react-native'
+import { Text } from './Text.native'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 import { commonStyles } from '../style/commonStyles'
-import { Text } from './Text.native'
 
 const { flexEnd, textOpacityWhite, hyperlink, lightblueText, row, justifyContentEnd, flexItemsEndRow } = commonStyles
 

@@ -1,24 +1,25 @@
-import classNames from 'classnames'
 import React, { FC, MouseEvent, useMemo, useRef, useState } from 'react'
 import { connect, useDispatch } from 'react-redux'
-import { SimplePath, State } from '../@types'
+import classNames from 'classnames'
+import { isTouch } from '../browser'
 import {
   cursorBack as cursorBackActionCreator,
   expandContextThought,
   toggleSidebar as toggleSidebarActionCreator,
   closeModal,
 } from '../action-creators'
-import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
-import { childrenFilterPredicate } from '../selectors/getChildren'
 import { isAbsolute, publishMode } from '../util'
-import { storage } from '../util/storage'
-import Editable from './Editable'
+
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
+import { childrenFilterPredicate } from '../selectors/getChildren'
+import Editable from './Editable'
+import { SimplePath, State } from '../@types'
+import { storage } from '../util/storage'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)

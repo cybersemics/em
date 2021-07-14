@@ -1,6 +1,6 @@
-import { Context, State } from '../@types'
-import { isContextViewActive } from '../selectors'
 import { isRoot } from '../util'
+import { isContextViewActive } from '../selectors'
+import { Context, State } from '../@types'
 
 /** Encodes context array into a URL. */
 const hashContextUrl = (state: State, context: Context) => {

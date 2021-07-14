@@ -1,5 +1,6 @@
 import { Page } from 'puppeteer'
 import partialWithRef from '../../../test-helpers/partialWithRef'
+
 // helpers
 import $ from './$'
 import click from './click'
@@ -17,10 +18,10 @@ import type from './type'
 import waitForAlert from './waitForAlert'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 import waitForEditable from './waitForEditable'
+import waitUntil from './waitUntil'
 import waitForHiddenEditable from './waitForHiddenEditable'
 import waitForState from './waitForState'
 import waitForThoughtExistInDb from './waitForThoughtExistInDb'
-import waitUntil from './waitUntil'
 
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>

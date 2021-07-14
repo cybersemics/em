@@ -1,7 +1,7 @@
-import { and } from 'fp-and-or'
-import { Child, Context, MimeType, State } from '../@types'
 import { attribute, getChildrenRanked } from '../selectors'
 import { head, isFunction, unroot } from '../util'
+import { Child, Context, MimeType, State } from '../@types'
+import { and } from 'fp-and-or'
 
 /** Replaces the root value with a given title. */
 const replaceTitle = (text: string, title: string, format: MimeType) => {

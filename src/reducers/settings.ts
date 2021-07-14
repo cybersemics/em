@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { SimplePath, State } from '../@types'
 import { EM_TOKEN } from '../constants'
+import { isFunction } from '../util'
 import { editThought } from '../reducers'
 import { getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
-import { isFunction } from '../util'
+import { SimplePath, State } from '../@types'
 
 /** Sets a setting thought. */
 const settings = (state: State, { key, value }: { key: string; value: string }) => {

@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { Index, Path, SimplePath, State, TutorialChoice } from '../@types'
 import {
   HOME_PATH,
   HOME_TOKEN,
@@ -8,10 +7,11 @@ import {
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
-import globals from '../globals'
-import { settings } from '../reducers'
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { equalPath, equalThoughtRanked, hashContext, headValue, isDescendant, pathToContext } from '../util'
+import { settings } from '../reducers'
+import { Index, Path, SimplePath, State, TutorialChoice } from '../@types'
+import globals from '../globals'
 
 /**
  * Sets the cursor on a thought.

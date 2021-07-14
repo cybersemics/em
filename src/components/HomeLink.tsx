@@ -1,10 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { Connected, State } from '../@types'
-import { home, modalComplete } from '../action-creators'
-import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
 import { theme } from '../selectors'
+import { home, modalComplete } from '../action-creators'
+import { Connected, State } from '../@types'
 import Modal from './Modal'
+import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
 
 interface HomeLinkProps {
   color?: string

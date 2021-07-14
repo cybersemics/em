@@ -1,8 +1,8 @@
 import React from 'react'
-import { Alert } from 'react-native'
-import Svg, { G, Path } from 'react-native-svg'
 // import { toggleHiddenThoughts } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
+import Svg, { G, Path } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => (

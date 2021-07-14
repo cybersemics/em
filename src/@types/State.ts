@@ -1,7 +1,6 @@
 import { DROP_TARGET } from '../constants'
 import { Alert } from './Alert'
 import { Context } from './Context'
-import { User } from './Firebase'
 import { Index } from './IndexType'
 import { Patch } from './Patch'
 import { Path } from './Path'
@@ -11,6 +10,7 @@ import { Shortcut } from './Shortcut'
 import { SimplePath } from './SimplePath'
 import { ThoughtsInterface } from './ThoughtsInterface'
 import { Timestamp } from './Timestamp'
+import { User } from './Firebase'
 
 export interface State {
   alert?: Alert

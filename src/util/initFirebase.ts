@@ -1,5 +1,5 @@
 import { Store } from 'redux'
-import { Firebase, State } from '../@types'
+import globals from '../globals'
 import {
   authenticate,
   loadPublicThoughts,
@@ -8,9 +8,9 @@ import {
   userAuthenticated,
 } from '../action-creators'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
-import globals from '../globals'
-import initAlgoliaSearch from '../search/algoliaSearch'
 import { owner } from '../util'
+import { Firebase, State } from '../@types'
+import initAlgoliaSearch from '../search/algoliaSearch'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ store }: { store: Store<State, any> }) => {

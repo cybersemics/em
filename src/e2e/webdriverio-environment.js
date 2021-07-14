@@ -12,6 +12,8 @@ const config = require('./config/webdriverio.config')
 
 /** Webdriverio Environment for jest. */
 class WebdriverIOEnvironment extends JsDomEnvironment {
+  bsLocal
+
   constructor(config) {
     super(config)
   }

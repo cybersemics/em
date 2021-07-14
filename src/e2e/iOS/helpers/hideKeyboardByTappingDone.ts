@@ -1,5 +1,5 @@
-import { Browser } from 'webdriverio'
 import waitForElementNotExist from './waitForElementNotExist'
+import { Browser } from 'webdriverio'
 
 /** Hide ios keyboard by tapping done button above the keyboard. */
 const hideKeyboardByTappingDone = async (browser: Browser<'async'>) => {

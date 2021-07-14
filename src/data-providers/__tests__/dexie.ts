@@ -1,13 +1,13 @@
-import { clear, newThought } from '../../action-creators'
+import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { getLexeme } from '../../selectors'
-import { store } from '../../store'
+import { clear, newThought } from '../../action-creators'
+import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
-import testTimer from '../../test-helpers/testTimer'
 import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getLexeme'
-import initDB, * as db from '../dexie'
+import testTimer from '../../test-helpers/testTimer'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.

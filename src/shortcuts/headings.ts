@@ -1,6 +1,6 @@
-import { Shortcut } from '../@types'
-import { heading } from '../action-creators'
 import { isDocumentEditable } from '../util'
+import { heading } from '../action-creators'
+import { Shortcut } from '../@types'
 
 export const headingLabels = {
   1: 'large',

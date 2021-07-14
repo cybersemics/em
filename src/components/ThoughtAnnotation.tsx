@@ -1,11 +1,11 @@
-import classNames from 'classnames'
 import React from 'react'
 import { connect } from 'react-redux'
-import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } from '../@types'
-import { setCursor } from '../action-creators'
-import { REGEXP_PUNCTUATIONS } from '../constants'
-import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
+import classNames from 'classnames'
 import { store } from '../store'
+import { REGEXP_PUNCTUATIONS } from '../constants'
+import { setCursor } from '../action-creators'
+import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
+import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } from '../@types'
 import {
   ellipsizeUrl,
   equalPath,
@@ -18,9 +18,10 @@ import {
   pathToContext,
   publishMode,
 } from '../util'
-import ContextBreadcrumbs from './ContextBreadcrumbs'
+
 // components
 import HomeLink from './HomeLink'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 

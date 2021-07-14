@@ -1,15 +1,8 @@
-// import { canShowModal } from '../selectors'
-import {
-  hashContext,
-  hashThought,
-  /* isDocumentEditable */
-  never,
-  parseJsonSafe,
-  timestamp,
-} from '.'
-import { Timestamp, ThoughtsInterface, State } from '../@types'
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
+// import { canShowModal } from '../selectors'
+import { hashContext, hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from '.'
+import { Timestamp, ThoughtsInterface, State } from '../@types'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 /** Safely gets a value from localStorage if it is in the environment. */

@@ -1,12 +1,12 @@
-import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
-import _ from 'lodash'
 import React from 'react'
+import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
 import { useDispatch, useSelector } from 'react-redux'
-import { State } from '../@types'
-import { toggleSidebar } from '../action-creators'
 import { isTouch } from '../browser'
+import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
+import { toggleSidebar } from '../action-creators'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
+import { State } from '../@types'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<

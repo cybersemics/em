@@ -1,8 +1,11 @@
 import React, { Fragment } from 'react'
 import { isTouch } from '../../browser'
+
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
-import { headValue } from '../../util'
+
 import TutorialHint from './TutorialHint'
+
+import { headValue } from '../../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {

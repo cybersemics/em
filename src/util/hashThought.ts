@@ -1,7 +1,7 @@
-import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
-import { ThoughtHash } from '../@types'
+import _ from 'lodash'
 import globals from '../globals'
+import { ThoughtHash } from '../@types'
 import { normalizeThought } from './normalizeThought'
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
+import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, updateThoughts } from '../reducers'
 import {
   getNextRank,
@@ -11,6 +11,8 @@ import {
   pathExists,
   getAllChildren,
 } from '../selectors'
+import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
+
 // util
 import {
   addContext,
@@ -32,7 +34,6 @@ import {
   isDescendantPath,
   timestamp,
 } from '../util'
-import { treeMove } from '../util/recentlyEditedTree'
 
 type ChildUpdate = {
   archived?: Timestamp

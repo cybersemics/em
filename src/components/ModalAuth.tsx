@@ -1,9 +1,9 @@
 import React, { ChangeEvent, FC, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { Index } from '../@types'
 import { alert, login } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
 import { ActionButton } from './ActionButton'
+import { Index } from '../@types'
 import Modal from './Modal'
 
 const firebaseErrorsIndex = {

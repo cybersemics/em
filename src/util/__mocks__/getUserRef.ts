@@ -1,5 +1,5 @@
-import _, { noop } from 'lodash'
 import { Firebase, Index } from '../../@types'
+import _, { noop } from 'lodash'
 
 // eslint-disable-next-line fp/no-let
 let firebaseStore = {}

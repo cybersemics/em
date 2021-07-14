@@ -1,6 +1,6 @@
-import { store } from '../../store'
-import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getFirebaseProvider from '../firebase'
+import dataProviderTest from '../../test-helpers/dataProviderTest'
+import { store } from '../../store'
 
 jest.useFakeTimers()
 

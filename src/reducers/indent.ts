@@ -1,6 +1,7 @@
-import { State } from '../@types'
 import { alert, moveThought } from '../reducers'
 import { getNextRank, hasChild, rootedParentOf, prevSibling } from '../selectors'
+import { State } from '../@types'
+
 // util
 import { ellipsize, head, headRank, headValue, isEM, isRoot, parentOf, pathToContext } from '../util'
 

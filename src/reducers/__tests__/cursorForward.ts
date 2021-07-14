@@ -1,4 +1,5 @@
 import { initialState, reducerFlow } from '../../util'
+
 // reducers
 import cursorBack from '../cursorBack'
 import cursorForward from '../cursorForward'

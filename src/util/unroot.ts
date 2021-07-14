@@ -1,5 +1,5 @@
-import { Context, Path } from '../@types'
 import { isRoot } from './isRoot'
+import { Context, Path } from '../@types'
 
 /** Removes root tokens from the beginning of a Context or Path. */
 export const unroot = <T extends Context | Path>(thoughts: T): T =>

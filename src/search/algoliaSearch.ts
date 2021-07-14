@@ -1,9 +1,9 @@
 import AlgoliaClient, { SearchIndex } from 'algoliasearch'
 import { Store } from 'redux'
-import { Context, Index } from '../@types'
 import { setRemoteSearch } from '../action-creators'
-import { DataProvider } from '../data-providers/DataProvider'
+import { Context, Index } from '../@types'
 import { getContextMap, getAlgoliaApiKey } from '../util'
+import { DataProvider } from '../data-providers/DataProvider'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let searchIndex: SearchIndex

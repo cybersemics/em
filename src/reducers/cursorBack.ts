@@ -1,7 +1,7 @@
-import { State } from '../@types'
 import { cursorHistory, search as searchReducer, setCursor } from '../reducers'
 import { isAbsolute, parentOf, reducerFlow } from '../util'
 import toggleAbsoluteContext from './toggleAbsoluteContext'
+import { State } from '../@types'
 
 /** Moves the cursor up one level. */
 const cursorBack = (state: State) => {

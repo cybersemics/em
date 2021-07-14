@@ -1,6 +1,9 @@
 import _ from 'lodash'
-import { Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
+import { treeChange } from '../util/recentlyEditedTree'
 import { getLexeme, getAllChildren, getChildrenRanked, isPending, rootedParentOf } from '../selectors'
+import updateThoughts from './updateThoughts'
+import { Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
+
 // util
 import {
   addContext,
@@ -20,8 +23,6 @@ import {
   timestamp,
   unroot,
 } from '../util'
-import { treeChange } from '../util/recentlyEditedTree'
-import updateThoughts from './updateThoughts'
 
 export interface editThoughtPayload {
   oldValue: string

@@ -1,6 +1,6 @@
-import { State } from '../@types'
 import { HOME_TOKEN } from '../constants'
 import { componentToThought, owner } from '../util'
+import { State } from '../@types'
 
 /** Parses the unranked path from the url. */
 const decodeContextUrl = (state: State, pathname: string) => {

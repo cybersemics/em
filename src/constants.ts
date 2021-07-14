@@ -1,6 +1,6 @@
 /** Defines app-wide constants. */
-import { Index, SimplePath } from './@types'
 import { emojiRegex } from './emojiRegex'
+import { Index, SimplePath } from './@types'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
 

@@ -1,6 +1,6 @@
-import { State } from '../@types'
-import { getContexts } from '../selectors'
 import { stripPunctuation } from '../util'
+import { getContexts } from '../selectors'
+import { State } from '../@types'
 
 /** Returns an array of { text, numContexts, charIndex } objects consisting of the largest contiguous linked or unlinked ngrams of the given text.
  *

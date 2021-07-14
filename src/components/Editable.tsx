@@ -1,10 +1,9 @@
-import classNames from 'classnames'
-import { unescape } from 'html-escaper'
 import _ from 'lodash'
 import React, { useEffect, useRef, useState, FocusEventHandler } from 'react'
-import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
-import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
+import { connect } from 'react-redux'
+import { unescape } from 'html-escaper'
+import classNames from 'classnames'
 import {
   alert,
   cursorBack,
@@ -19,6 +18,12 @@ import {
   newThought,
 } from '../action-creators'
 import { isTouch, isSafari } from '../browser'
+import globals from '../globals'
+import { store } from '../store'
+import ContentEditable, { ContentEditableEvent } from './ContentEditable'
+import { shortcutEmitter } from '../shortcuts'
+import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
+
 // constants
 import {
   EDIT_THROTTLE,
@@ -32,20 +37,7 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
-import globals from '../globals'
-// selectors
-import {
-  attributeEquals,
-  getContexts,
-  getSetting,
-  getLexeme,
-  getAllChildren,
-  hasChild,
-  isContextViewActive,
-  rootedParentOf,
-} from '../selectors'
-import { shortcutEmitter } from '../shortcuts'
-import { store } from '../store'
+
 // util
 import {
   addEmojiSpace,
@@ -68,7 +60,18 @@ import {
   normalizeThought,
   getCaretPositionDetails,
 } from '../util'
-import ContentEditable, { ContentEditableEvent } from './ContentEditable'
+
+// selectors
+import {
+  attributeEquals,
+  getContexts,
+  getSetting,
+  getLexeme,
+  getAllChildren,
+  hasChild,
+  isContextViewActive,
+  rootedParentOf,
+} from '../selectors'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000

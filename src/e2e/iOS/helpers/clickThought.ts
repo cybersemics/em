@@ -1,5 +1,5 @@
-import { Browser } from 'webdriverio'
 import getEditable from './getEditable'
+import { Browser } from 'webdriverio'
 
 /** Click the thought for the given thought value. */
 const clickThought = async (browser: Browser<'async'>, value: string) => {

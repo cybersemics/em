@@ -1,7 +1,15 @@
-import classNames from 'classnames'
 import React, { useEffect, useState } from 'react'
-import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { connect } from 'react-redux'
+import classNames from 'classnames'
+import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { store } from '../store'
+import { isTouch } from '../browser'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import globals from '../globals'
+import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { alert, error, dragInProgress } from '../action-creators'
+import Thought from './Thought'
+import GestureDiagram from './GestureDiagram'
 import {
   Child,
   Context,
@@ -14,33 +22,7 @@ import {
   State,
   ThoughtContext,
 } from '../@types'
-import { alert, error, dragInProgress } from '../action-creators'
-import { isTouch } from '../browser'
-import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import globals from '../globals'
-// selectors
-import {
-  appendChildPath,
-  attribute,
-  attributeEquals,
-  childrenFilterPredicate,
-  getAllChildren,
-  getAllChildrenSorted,
-  getChildPath,
-  getChildren,
-  getChildrenRanked,
-  getContextsSortedAndRanked,
-  getEditingPath,
-  getGlobalSortPreference,
-  getNextRank,
-  getPrevRank,
-  getSortPreference,
-  getStyle,
-  isContextViewActive,
-  rootedParentOf,
-} from '../selectors'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
-import { store } from '../store'
+
 // util
 import {
   checkIfPathShareSubcontext,
@@ -65,8 +47,28 @@ import {
   sumSubthoughtsLength,
   unroot,
 } from '../util'
-import GestureDiagram from './GestureDiagram'
-import Thought from './Thought'
+
+// selectors
+import {
+  appendChildPath,
+  attribute,
+  attributeEquals,
+  childrenFilterPredicate,
+  getAllChildren,
+  getAllChildrenSorted,
+  getChildPath,
+  getChildren,
+  getChildrenRanked,
+  getContextsSortedAndRanked,
+  getEditingPath,
+  getGlobalSortPreference,
+  getNextRank,
+  getPrevRank,
+  getSortPreference,
+  getStyle,
+  isContextViewActive,
+  rootedParentOf,
+} from '../selectors'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {

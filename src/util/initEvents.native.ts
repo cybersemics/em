@@ -1,22 +1,12 @@
-import { clearSelection, isRoot, pathToContext } from '.'
 import _ from 'lodash'
 import { Store } from 'redux'
-import { Path, State } from '../@types'
-import {
-  /* alert */
-  error,
-  scrollCursorIntoView,
-  setCursor,
-  toggleTopControlsAndBreadcrumbs,
-} from '../action-creators'
+import { inputHandlers /* isGestureHint */ } from '../shortcuts'
 import * as db from '../data-providers/dexie'
+import { clearSelection, isRoot, pathToContext } from '.'
 import { decodeThoughtsUrl, pathExists } from '../selectors'
-import {
-  inputHandlers,
-  /* isGestureHint */
-} from '../shortcuts'
+import { /* alert */ error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { Path, State } from '../@types'
 import { equalPath } from './equalPath'
-
 // import lifecycle from 'page-lifecycle'
 
 declare global {

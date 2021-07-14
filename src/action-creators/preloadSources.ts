@@ -1,7 +1,7 @@
-import { Thunk } from '../@types'
+import { parentOf, head } from '../util'
 import { loadResource } from '../action-creators'
 import { getContexts, rankThoughtsFirstMatch } from '../selectors'
-import { parentOf, head } from '../util'
+import { Thunk } from '../@types'
 
 /** Fetch and import all =src attributes with =preload. */
 const preloadSources = (): Thunk => (dispatch, getState) => {

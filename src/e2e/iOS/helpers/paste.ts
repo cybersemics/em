@@ -1,6 +1,6 @@
 import { Browser } from 'webdriverio'
-import { HOME_TOKEN } from '../../../constants'
 import { WindowEm } from '../../../initialize'
+import { HOME_TOKEN } from '../../../constants'
 
 const em = window.em as WindowEm
 

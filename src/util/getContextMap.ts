@@ -1,5 +1,5 @@
-import { hashContext } from '.'
 import { Context, Index, Lexeme } from '../@types'
+import { hashContext } from '.'
 
 /**
  * Generates index of context from lexemes.

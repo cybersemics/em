@@ -1,14 +1,14 @@
-import algoliasearch from 'algoliasearch'
-import cors from 'cors'
-import * as admin from 'firebase-admin'
-import { encode } from 'firebase-encode'
 import * as functions from 'firebase-functions'
-import { FirebaseFunctionsRateLimiter } from 'firebase-functions-rate-limiter'
+import * as admin from 'firebase-admin'
+import algoliasearch from 'algoliasearch'
 import formData from 'form-data'
-import { readFileSync } from 'fs'
-import handlebar from 'handlebars'
 import Mailgun from 'mailgun.js'
+import cors from 'cors'
+import { FirebaseFunctionsRateLimiter } from 'firebase-functions-rate-limiter'
+import { encode } from 'firebase-encode'
+import { readFileSync } from 'fs'
 import path from 'path'
+import handlebar from 'handlebars'
 
 admin.initializeApp()
 const database = admin.database()

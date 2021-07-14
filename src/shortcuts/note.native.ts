@@ -1,11 +1,10 @@
 // import { isTouch } from '../browser'
 // import { attribute, hasChild, simplifyPath } from '../selectors'
 import { Alert } from 'react-native'
+import PencilIcon from '../components/icons/PencilIcon'
 // import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
 // import { setAttribute, setNoteFocus } from '../action-creators'
 import { Shortcut } from '../@types'
-import PencilIcon from '../components/icons/PencilIcon'
-
 // import { HOME_PATH } from '../constants'
 
 const noteShortcut: Shortcut = {

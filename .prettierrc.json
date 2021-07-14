@@ -1,13 +1,11 @@
 {
-  "arrowParens": "avoid",
-  "experimentalBabelParserPluginsList": ["jsx"],
-  "importOrder": ["^\\.\\./", "^\\./"],
-  "jsxSingleQuote": true,
-  "overrides": [{ "files": "*.ts", "options": { "parser": "typescript" } }],
-  "printWidth": 120,
+  "trailingComma": "all",
   "semi": false,
   "singleQuote": true,
+  "overrides": [{ "files": "*.ts", "options": { "parser": "typescript" } }],
+  "jsxSingleQuote": true,
+  "useTabs": false,
   "tabWidth": 2,
-  "trailingComma": "all",
-  "useTabs": false
+  "printWidth": 120,
+  "arrowParens": "avoid"
 }

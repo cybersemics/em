@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react'
-import { showModal } from '../../action-creators'
 import { isTouch } from '../../browser'
+import { showModal } from '../../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepSuccess = ({ dispatch }) => (

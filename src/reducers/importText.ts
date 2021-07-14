@@ -1,10 +1,5 @@
-import { unescape } from 'html-escaper'
 import _ from 'lodash'
-import sanitize from 'sanitize-html'
-import { Path, SimplePath, State, Timestamp } from '../@types'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
-import { editThought, setCursor, updateThoughts } from '../reducers'
-import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
+import { unescape } from 'html-escaper'
 import {
   htmlToJson,
   createId,
@@ -20,8 +15,13 @@ import {
   strip,
   validateRoam,
 } from '../util'
-import collapseContext from './collapseContext'
+import { editThought, setCursor, updateThoughts } from '../reducers'
+import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
+import { Path, SimplePath, State, Timestamp } from '../@types'
 import newThought from './newThought'
+import collapseContext from './collapseContext'
+import sanitize from 'sanitize-html'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim

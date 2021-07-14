@@ -1,7 +1,7 @@
-import emojiStrip from 'emoji-strip'
 import _ from 'lodash'
 import * as pluralize from 'pluralize'
 import { REGEXP_TAGS } from '../constants'
+import emojiStrip from 'emoji-strip'
 
 /** Trims a string. */
 export const trim = (s: string) => s.replace(s.length > 0 && s.replace(/\W/g, '').length > 0 ? /\W/g : /s/g, '')

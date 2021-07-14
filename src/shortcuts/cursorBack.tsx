@@ -1,7 +1,8 @@
 import React from 'react'
 import { Icon as IconType, Shortcut } from '../@types'
-import { cursorBack, scrollCursorIntoView } from '../action-creators'
 import { clearSelection } from '../util'
+import { cursorBack, scrollCursorIntoView } from '../action-creators'
+
 // import directly since util/index is not loaded yet when shortcut is initialized
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
 

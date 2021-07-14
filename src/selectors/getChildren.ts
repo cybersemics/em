@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path, State } from '../@types'
 import { getSortPreference, hasChild, isContextViewActive } from '../selectors'
 import {
   compareByRank,
@@ -17,6 +16,7 @@ import {
   isDescendant,
   splice,
 } from '../util'
+import { Child, ComparatorFunction, Context, ContextHash, ThoughtContext, Parent, Path, State } from '../@types'
 
 // use global instance of empty array so object reference doesn't change
 const noChildren: Child[] = []

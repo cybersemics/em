@@ -1,14 +1,14 @@
-import _ from 'lodash'
-import { State, Thunk } from './@types'
 import './App.css'
-import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import initDB, * as db from './data-providers/dexie'
-import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { store } from './store'
-import checkDataIntegrity from './test-helpers/checkDataIntegrity'
-import getLexemeFromDB from './test-helpers/getLexemeFromDB'
-import importToContext from './test-helpers/importToContext'
+import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
+import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
+import { State, Thunk } from './@types'
+import importToContext from './test-helpers/importToContext'
+import getLexemeFromDB from './test-helpers/getLexemeFromDB'
+import checkDataIntegrity from './test-helpers/checkDataIntegrity'
+import _ from 'lodash'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {

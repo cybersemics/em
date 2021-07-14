@@ -1,8 +1,8 @@
-import { Dispatch } from 'react'
 import { Key } from 'ts-key-enum'
-import { Shortcut } from '../@types'
 import { attributeEquals, getAllChildren, simplifyPath } from '../selectors'
 import { parentOf, isDocumentEditable, pathToContext } from '../util'
+import { Dispatch } from 'react'
+import { Shortcut } from '../@types'
 
 interface CursorDown {
   type: 'cursorDown'

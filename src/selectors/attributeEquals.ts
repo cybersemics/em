@@ -1,6 +1,6 @@
 import { Context, State } from '../@types'
-import { getAllChildren } from '../selectors'
 import { equalThoughtValue, unroot } from '../util'
+import { getAllChildren } from '../selectors'
 
 /** Returns true if the given attribute equals the given value. O(1). Use over attribute when possible for performance. */
 const attributeEquals = (state: State, context: Context, attr: string, value: string): boolean => {

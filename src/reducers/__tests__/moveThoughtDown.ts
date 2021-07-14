@@ -1,11 +1,12 @@
 import { HOME_TOKEN } from '../../constants'
+import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import { initialState, reducerFlow } from '../../util'
-import moveThoughtDown from '../moveThoughtDown'
+
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
+import moveThoughtDown from '../moveThoughtDown'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
 

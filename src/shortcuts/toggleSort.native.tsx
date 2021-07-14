@@ -1,13 +1,13 @@
 import React from 'react'
-import { Alert } from 'react-native'
-// import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
-// import { useSelector } from 'react-redux'
-import Svg, { Polygon, Rect, G } from 'react-native-svg'
 // import { HOME_PATH } from '../constants'
 // import { simplifyPath, getSortPreference } from '../selectors'
 // import { deleteAttribute, setCursor, toggleAttribute } from '../action-creators'
 // import { pathToContext, unroot } from '../util'
 import { Icon as IconType, Shortcut } from '../@types'
+// import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
+// import { useSelector } from 'react-redux'
+import Svg, { Polygon, Rect, G } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 /* Available sort preferences */
 // const sortPreferences = ['None', 'Alphabetical']

@@ -1,6 +1,6 @@
-import { HOME_TOKEN } from '../constants'
 import { store } from '../store'
 import importToContext from './importToContext'
+import { HOME_TOKEN } from '../constants'
 
 function paste(text: string): void
 function paste(pathUnranked: string[], text: string): void

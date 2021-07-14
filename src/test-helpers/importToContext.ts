@@ -1,7 +1,7 @@
-import { Thunk } from '../@types'
-import { importText } from '../action-creators'
-import { HOME_TOKEN } from '../constants'
 import { rankThoughtsFirstMatch } from '../selectors'
+import { importText } from '../action-creators'
+import { Thunk } from '../@types'
+import { HOME_TOKEN } from '../constants'
 
 function importToContext(text: string): Thunk
 function importToContext(pathUnranked: string[], text: string): Thunk

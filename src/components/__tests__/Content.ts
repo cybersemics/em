@@ -1,6 +1,6 @@
 import { ReactWrapper } from 'enzyme'
-import { deleteThoughtWithCursor, importText } from '../../action-creators'
 import { store } from '../../store'
+import { deleteThoughtWithCursor, importText } from '../../action-creators'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
 

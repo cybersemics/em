@@ -1,5 +1,5 @@
-import { Thunk } from '../@types'
 import { editableNode, scrollIntoViewIfNeeded } from '../util'
+import { Thunk } from '../@types'
 
 /** Scrolls the cursor into view if needed. If there is no cursor, scroll to top. */
 const scrollCursorIntoView =

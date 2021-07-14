@@ -1,12 +1,13 @@
 import React from 'react'
-import { TouchableOpacity, StyleSheet } from 'react-native'
-// // import Modal from './Modal'
-// import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
-import Svg, { Path } from 'react-native-svg'
 // import { connect } from 'react-redux'
 // import { theme } from '../selectors'
 // import { home, modalComplete } from '../action-creators'
 import { Connected } from '../@types'
+// // import Modal from './Modal'
+// import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
+
+import Svg, { Path } from 'react-native-svg'
+import { TouchableOpacity, StyleSheet } from 'react-native'
 
 interface HomeLinkProps {
   color?: string

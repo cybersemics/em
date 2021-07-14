@@ -1,16 +1,4 @@
-import { SimplePath, State } from '../@types'
 import { HOME_TOKEN } from '../constants'
-import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCursor } from '../reducers'
-import {
-  getNextRank,
-  getChildren,
-  getChildrenRanked,
-  getAllChildren,
-  isContextViewActive,
-  prevSibling,
-  simplifyPath,
-  rootedParentOf,
-} from '../selectors'
 import {
   getTextContentFromHTML,
   head,
@@ -22,6 +10,18 @@ import {
   pathToContext,
   reducerFlow,
 } from '../util'
+import {
+  getNextRank,
+  getChildren,
+  getChildrenRanked,
+  getAllChildren,
+  isContextViewActive,
+  prevSibling,
+  simplifyPath,
+  rootedParentOf,
+} from '../selectors'
+import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCursor } from '../reducers'
+import { SimplePath, State } from '../@types'
 import archiveThought from './archiveThought'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */

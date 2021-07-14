@@ -7,21 +7,13 @@ import {
   DropTargetConnector,
   DropTargetMonitor,
 } from 'react-dnd'
-import { alert, dragHold, dragInProgress, error, moveThought, createThought } from '../action-creators'
 import { isTouch } from '../browser'
+import { store } from '../store'
 import { NOOP } from '../constants'
 import globals from '../globals'
-// selectors
-import {
-  getNextRank,
-  getRankBefore,
-  getSortPreference,
-  hasChild,
-  isBefore,
-  rootedParentOf,
-  visibleDistanceAboveCursor,
-} from '../selectors'
-import { store } from '../store'
+import { alert, dragHold, dragInProgress, error, moveThought, createThought } from '../action-creators'
+import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
+
 // util
 import {
   parentOf,
@@ -36,7 +28,17 @@ import {
   isRoot,
   unroot,
 } from '../util'
-import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
+
+// selectors
+import {
+  getNextRank,
+  getRankBefore,
+  getSortPreference,
+  hasChild,
+  isBefore,
+  rootedParentOf,
+  visibleDistanceAboveCursor,
+} from '../selectors'
 
 export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerProps &
   ReturnType<typeof dragCollect> &

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { shallowEqual, useSelector } from 'react-redux'
-import { State } from '../@types'
 import { isTutorial, getSetting } from '../selectors'
+import { State } from '../@types'
 
 /** Helper hook that allows web and native to share selectors for the footer component. */
 export const useFooterUseSelectors = () => {

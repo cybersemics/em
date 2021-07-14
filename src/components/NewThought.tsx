@@ -2,16 +2,16 @@
  *
  * @param type {button|bullet} Default: bullet.
  */
-import classNames from 'classnames'
 import React from 'react'
-import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
-import { Path, SimplePath, State } from '../@types'
-import { cursorBack, createThought, setCursor } from '../action-creators'
-import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import { getNextRank, getChildrenRanked } from '../selectors'
+import { connect } from 'react-redux'
+import classNames from 'classnames'
 import { store } from '../store'
+import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { asyncFocus, createId, getTextContentFromHTML, pathToContext, unroot } from '../util'
+import { getNextRank, getChildrenRanked } from '../selectors'
+import { cursorBack, createThought, setCursor } from '../action-creators'
+import { Path, SimplePath, State } from '../@types'
 
 interface NewThoughtProps {
   show?: boolean

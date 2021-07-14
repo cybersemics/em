@@ -1,9 +1,11 @@
 import React, { Fragment } from 'react'
+import { store } from '../../store'
+
+import { hashContext } from '../../util'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
+
 // selectors
 import { getContexts } from '../../selectors'
-import { store } from '../../store'
-import { hashContext } from '../../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) => {

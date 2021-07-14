@@ -1,7 +1,7 @@
 import { cursorNext, importText, setCursor } from '../../action-creators'
-import globals from '../../globals'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import globals from '../../globals'
 
 describe('normal view', () => {
   it('move cursor to next sibling', () => {

@@ -1,5 +1,5 @@
-import classNames from 'classnames'
 import React from 'react'
+import classNames from 'classnames'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationButton = ({ classes, clickHandler, value, disabled = false }) => (

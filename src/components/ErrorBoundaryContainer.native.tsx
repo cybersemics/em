@@ -1,7 +1,8 @@
-import * as Updates from 'expo-updates'
 import React, { FC } from 'react'
 import { TouchableOpacity, View, StyleSheet } from 'react-native'
 import ErrorBoundary from 'react-native-error-boundary'
+import * as Updates from 'expo-updates'
+
 import * as db from '../data-providers/dexie'
 import { Text } from './Text.native'
 

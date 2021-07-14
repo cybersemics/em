@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { Provider } from 'react-redux'
 import { store } from '../store'
-import syncStorage from '../util/nativeStorageHelper'
 import AppComponent from './AppComponent'
+import syncStorage from '../util/nativeStorageHelper'
 import ErrorBoundaryContainer from './ErrorBoundaryContainer'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 /**
  * App container.

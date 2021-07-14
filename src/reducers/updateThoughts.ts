@@ -1,8 +1,7 @@
 import _ from 'lodash'
-import { Child, Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
-import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { editThoughtPayload } from '../reducers/editThought'
+import { initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
+import { editThoughtPayload } from '../reducers/editThought'
 import {
   htmlToJson,
   hashContext,
@@ -15,7 +14,8 @@ import {
   reducerFlow,
 } from '../util'
 import fifoCache from '../util/fifoCache'
-import { initialState } from '../util/initialState'
+import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { Child, Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>

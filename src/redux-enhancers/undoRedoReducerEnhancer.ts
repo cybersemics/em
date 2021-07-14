@@ -1,11 +1,11 @@
-import { applyPatch, compare } from 'fast-json-patch'
-import { produce } from 'immer'
 import _ from 'lodash'
+import { applyPatch, compare } from 'fast-json-patch'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
-import { Index, Patch, State } from '../@types'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
+import { Index, Patch, State } from '../@types'
 import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
+import { produce } from 'immer'
 
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 

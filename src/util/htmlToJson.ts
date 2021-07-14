@@ -1,5 +1,5 @@
-import { Element, HimalayaNode, parse, Text } from 'himalaya'
 import _ from 'lodash'
+import { Element, HimalayaNode, parse, Text } from 'himalaya'
 import { Block } from '../@types'
 import stripStyleAttribute from './stripStyleAttribute'
 

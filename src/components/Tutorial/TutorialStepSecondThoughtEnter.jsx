@@ -1,8 +1,8 @@
 import React, { Fragment } from 'react'
 import { isTouch } from '../../browser'
-import { shortcutById } from '../../shortcuts'
 import { headValue } from '../../util'
 import GestureDiagram from '../GestureDiagram'
+import { shortcutById } from '../../shortcuts'
 
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
 

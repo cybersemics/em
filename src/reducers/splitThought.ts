@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { Path, SplitResult, State } from '../@types'
 import { HOME_TOKEN } from '../constants'
-import { editableRender, editThought, moveThought, newThought } from '../reducers'
-import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
+import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
+import { editableRender, editThought, moveThought, newThought } from '../reducers'
+import { Path, SplitResult, State } from '../@types'
 
 /** Splits a thought into two thoughts.
  *

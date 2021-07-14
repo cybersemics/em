@@ -1,14 +1,14 @@
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
 import { connect } from 'react-redux'
-import { Path, State } from '../@types'
-import FeedbackButton from './FeedbackButton'
 // import { store } from '../store'
 // import { isDocumentEditable, publishMode } from '../util'
 // import { isTutorial } from '../selectors'
 import HomeLink from './HomeLink'
+import { Path, State } from '../@types'
 // import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
+import FeedbackButton from './FeedbackButton'
+import { View, StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

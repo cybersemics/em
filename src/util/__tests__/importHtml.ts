@@ -1,9 +1,9 @@
 import { HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
-import { importText } from '../../reducers'
-import { exportContext } from '../../selectors'
-import { SimplePath } from '../../types'
 import { removeHome } from '../../util'
+import { exportContext } from '../../selectors'
+import { importText } from '../../reducers'
 import { initialState } from '../../util/initialState'
+import { SimplePath } from '../../types'
 
 /** Imports the given html and exports it as plaintext. */
 const importExport = (html: string, isHTML = true) => {

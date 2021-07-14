@@ -1,7 +1,7 @@
 import React from 'react'
-import { Icon as IconType, Shortcut } from '../@types'
-import subCategorizeOne from '../action-creators/subCategorizeOne'
 import { isDocumentEditable } from '../util'
+import subCategorizeOne from '../action-creators/subCategorizeOne'
+import { Icon as IconType, Shortcut } from '../@types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

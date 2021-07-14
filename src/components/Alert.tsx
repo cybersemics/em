@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
+import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { Dispatch } from 'redux'
-import { Alert, State } from '../@types'
 import { alert } from '../action-creators'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
+import { Alert, State } from '../@types'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ alert }: State) => ({ alert })

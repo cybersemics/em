@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { Child, Path, State } from '../@types'
 import { newThought } from '../reducers'
 import { getAllChildren } from '../selectors'
 import { concatMany, concatOne, getPublishUrl, pathToContext, reducerFlow, unroot } from '../util'
+import { Child, Path, State } from '../@types'
 
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */
 const prependRevision = (state: State, { path, cid }: { path: Path; cid: string }) => {

@@ -1,6 +1,7 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
+
 import helpers from '../helpers'
 
 describe('cursor testing', () => {

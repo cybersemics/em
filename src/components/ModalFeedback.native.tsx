@@ -1,5 +1,10 @@
-import { AxiosError } from 'axios'
 import React, { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { submitFeedback } from '../util'
+// import { ActionButton } from './ActionButton'
+
+import { alert } from '../action-creators'
+import { AxiosError } from 'axios'
 import {
   StyleSheet,
   TextInput,
@@ -8,13 +13,11 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native'
-import { useDispatch, useSelector } from 'react-redux'
-import { State } from '../@types'
-import { alert } from '../action-creators'
-import { submitFeedback } from '../util'
-import { ActionButton } from './ActionButton'
+// import { MODALS } from '../constants'
 import Modal from './Modal'
+import { ActionButton } from './ActionButton'
 import { Text } from './Text.native'
+import { State } from '../@types'
 
 const FEEDBACK_MIN_LENGTH = 10
 

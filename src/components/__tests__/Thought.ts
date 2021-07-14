@@ -1,10 +1,10 @@
 import { ReactWrapper } from 'enzyme'
-import { importText } from '../../action-creators'
+import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
-import { store } from '../../store'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import { importText } from '../../action-creators'
 import windowEvent from '../../test-helpers/windowEvent'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 

@@ -1,3 +1,27 @@
+import TutorialStepStart from './TutorialStepStart'
+import TutorialStepFirstThought from './TutorialStepFirstThought'
+import TutorialStepFirstThoughtEnter from './TutorialStepFirstThoughtEnter'
+import TutorialStepSecondThought from './TutorialStepSecondThought'
+import TutorialStepSecondThoughtEnter from './TutorialStepSecondThoughtEnter'
+import TutorialStepSubThought from './TutorialStepSubThought'
+import TutorialStepSubThoughtEnter from './TutorialStepSubThoughtEnter'
+import TutorialStepAutoExpand from './TutorialStepAutoExpand'
+import TutorialStepAutoExpandExpand from './TutorialStepAutoExpandExpand'
+import TutorialStepSuccess from './TutorialStepSuccess'
+import Tutorial2StepStart from './Tutorial2StepStart'
+import Tutorial2StepChoose from './Tutorial2StepChoose'
+import Tutorial2StepContext1Parent from './Tutorial2StepContext1Parent'
+import Tutorial2StepContext1 from './Tutorial2StepContext1'
+import Tutorial2StepContext1SubThought from './Tutorial2StepContext1SubThought'
+import Tutorial2StepContext2Parent from './Tutorial2StepContext2Parent'
+import Tutorial2StepContext2 from './Tutorial2StepContext2'
+import Tutorial2StepContext2Subthought from './Tutorial2StepContext2Subthought'
+import Tutorial2StepContextViewSelect from './Tutorial2StepContextViewSelect'
+import Tutorial2StepContextViewToggle from './Tutorial2StepContextViewToggle'
+import Tutorial2StepContextViewOpen from './Tutorial2StepContextViewOpen'
+import Tutorial2StepContextViewExamples from './Tutorial2StepContextViewExamples'
+import Tutorial2StepSuccess from './Tutorial2StepSuccess'
+
 // constants
 import {
   TUTORIAL2_STEP_CHOOSE,
@@ -24,29 +48,6 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
-import Tutorial2StepChoose from './Tutorial2StepChoose'
-import Tutorial2StepContext1 from './Tutorial2StepContext1'
-import Tutorial2StepContext1Parent from './Tutorial2StepContext1Parent'
-import Tutorial2StepContext1SubThought from './Tutorial2StepContext1SubThought'
-import Tutorial2StepContext2 from './Tutorial2StepContext2'
-import Tutorial2StepContext2Parent from './Tutorial2StepContext2Parent'
-import Tutorial2StepContext2Subthought from './Tutorial2StepContext2Subthought'
-import Tutorial2StepContextViewExamples from './Tutorial2StepContextViewExamples'
-import Tutorial2StepContextViewOpen from './Tutorial2StepContextViewOpen'
-import Tutorial2StepContextViewSelect from './Tutorial2StepContextViewSelect'
-import Tutorial2StepContextViewToggle from './Tutorial2StepContextViewToggle'
-import Tutorial2StepStart from './Tutorial2StepStart'
-import Tutorial2StepSuccess from './Tutorial2StepSuccess'
-import TutorialStepAutoExpand from './TutorialStepAutoExpand'
-import TutorialStepAutoExpandExpand from './TutorialStepAutoExpandExpand'
-import TutorialStepFirstThought from './TutorialStepFirstThought'
-import TutorialStepFirstThoughtEnter from './TutorialStepFirstThoughtEnter'
-import TutorialStepSecondThought from './TutorialStepSecondThought'
-import TutorialStepSecondThoughtEnter from './TutorialStepSecondThoughtEnter'
-import TutorialStepStart from './TutorialStepStart'
-import TutorialStepSubThought from './TutorialStepSubThought'
-import TutorialStepSubThoughtEnter from './TutorialStepSubThoughtEnter'
-import TutorialStepSuccess from './TutorialStepSuccess'
 
 const tutorialStepComponentMap = {
   [TUTORIAL_STEP_START]: TutorialStepStart,

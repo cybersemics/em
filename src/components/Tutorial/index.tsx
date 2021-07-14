@@ -1,9 +1,14 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
-import { Connected, GesturePath, State } from '../../@types'
-import { tutorial } from '../../action-creators'
 import { isTouch } from '../../browser'
+import WithCSSTransition from './WithCSSTransition'
+import { shortcutById } from '../../shortcuts'
+import { headValue, once } from '../../util'
+import { getParent, getSetting } from '../../selectors'
+import { tutorial } from '../../action-creators'
+import { Connected, GesturePath, State } from '../../@types'
+
 // constants
 import {
   HOME_TOKEN,
@@ -23,14 +28,11 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
-import { getParent, getSetting } from '../../selectors'
-import { shortcutById } from '../../shortcuts'
-import { headValue, once } from '../../util'
-import GestureDiagram from '../GestureDiagram'
-import TutorialNavigation from './TutorialNavigation'
+
 // components
 import TutorialStepComponentMap from './TutorialStepComponentMap'
-import WithCSSTransition from './WithCSSTransition'
+import GestureDiagram from '../GestureDiagram'
+import TutorialNavigation from './TutorialNavigation'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')

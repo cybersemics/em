@@ -1,9 +1,9 @@
-import { importText, setCursor } from '../../action-creators'
 import { HOME_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import executeShortcut from '../../test-helpers/executeShortcut'
 import indentOnSpace from '../indentOnSpace'
+import executeShortcut from '../../test-helpers/executeShortcut'
 
 it('indent on adding space at the beginning of the thought', () => {
   const store = createTestStore()

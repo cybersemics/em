@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
 import { ALLOW_SINGLE_CONTEXT, HOME_PATH, HOME_TOKEN } from '../constants'
+import { parentOf, equalArrays, head, pathToContext, once, unroot } from '../util'
 import {
   firstVisibleChildWithCursorCheck,
   getContexts,
@@ -11,7 +11,7 @@ import {
   nextSibling as thoughtNextSibling,
   rootedParentOf,
 } from '../selectors'
-import { parentOf, equalArrays, head, pathToContext, once, unroot } from '../util'
+import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 interface NextThoughtResult {
   nextThoughts: Path

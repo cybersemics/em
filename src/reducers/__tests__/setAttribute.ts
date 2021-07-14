@@ -1,11 +1,12 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext } from '../../selectors'
 import { initialState, reducerFlow } from '../../util'
+import { exportContext } from '../../selectors'
+
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import setAttribute from '../setAttribute'
 import setCursor from '../setCursor'
+import setAttribute from '../setAttribute'
 
 it('set', () => {
   const steps = [

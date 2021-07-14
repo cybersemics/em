@@ -1,11 +1,11 @@
 import React from 'react'
-import { Alert } from 'react-native'
-// import { HOME_PATH } from '../constants'
-import Svg, { Path, G } from 'react-native-svg'
 // import { attributeEquals, simplifyPath } from '../selectors'
 // import { pathToContext } from '../util'
 // import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
+// import { HOME_PATH } from '../constants'
+import Svg, { Path, G } from 'react-native-svg'
+import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, fill }: IconType) => (

@@ -1,6 +1,6 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
-import { State } from '../@types'
 import { clearSelection, equalPath, headValue, isDivider } from '../util'
+import { State } from '../@types'
 
 /**
  * Store enhancer to detect cursor change and trigger appropriate actions (clear selection for now).

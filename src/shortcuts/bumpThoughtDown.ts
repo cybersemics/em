@@ -1,6 +1,6 @@
-import { Shortcut } from '../@types'
-import { bumpThoughtDown } from '../action-creators'
 import { asyncFocus, isDocumentEditable } from '../util'
+import { bumpThoughtDown } from '../action-creators'
+import { Shortcut } from '../@types'
 
 const bumpThoughtDownShortcut: Shortcut = {
   id: 'bumpThought',

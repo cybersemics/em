@@ -1,17 +1,19 @@
-import { render } from '@testing-library/react'
 import React, { createRef } from 'react'
-import { wrapInTestContext } from 'react-dnd-test-utils'
 import { act } from 'react-dom/test-utils'
+import { wrapInTestContext } from 'react-dnd-test-utils'
+import { render } from '@testing-library/react'
+
+import { initialize } from '../initialize'
 import { Provider } from 'react-redux'
-import { Await } from '../@types'
+import { store } from '../store'
+import * as db from '../data-providers/dexie'
 import { clear } from '../action-creators'
+import { Await } from '../@types'
+
 // components
 import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
-import * as db from '../data-providers/dexie'
-import { initialize } from '../initialize'
-import { store } from '../store'
 import { storage } from '../util/storage'
 
 /**

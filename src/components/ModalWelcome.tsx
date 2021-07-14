@@ -1,15 +1,15 @@
 /* eslint-disable no-unmodified-loop-condition */
-import classNames from 'classnames'
-import * as murmurHash3 from 'murmurhash3js'
 import React, { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { State } from '../@types'
-import { tutorial } from '../action-creators'
+import * as murmurHash3 from 'murmurhash3js'
+import classNames from 'classnames'
+import Modal from './Modal'
 import { BETA_HASH, EM_TOKEN } from '../constants'
+import { ActionButton } from './ActionButton'
+import { useDispatch, useSelector } from 'react-redux'
+import { tutorial } from '../action-creators'
 import { getAllChildren } from '../selectors'
 import { storage } from '../util/storage'
-import { ActionButton } from './ActionButton'
-import Modal from './Modal'
+import { State } from '../@types'
 
 const isLocalNetwork = Boolean(
   window.location.hostname === 'localhost' ||

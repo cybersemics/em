@@ -1,8 +1,7 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import { SimplePath } from '../@types'
-import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
 import { EM_TOKEN } from '../constants'
+import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
 import {
   clearSelection,
   decodeCharacterEntities,
@@ -12,6 +11,7 @@ import {
   pathToContext,
   strip,
 } from '../util'
+import { SimplePath } from '../@types'
 
 interface LinkProps {
   charLimit?: number

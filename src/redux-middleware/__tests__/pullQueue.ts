@@ -1,4 +1,5 @@
-import { SimplePath } from '../../@types'
+import { store } from '../../store'
+import { HOME_TOKEN } from '../../constants'
 import {
   clear,
   editThought,
@@ -8,15 +9,14 @@ import {
   newThought,
   setCursor,
 } from '../../action-creators'
-import { HOME_TOKEN } from '../../constants'
-import { DataProvider } from '../../data-providers/DataProvider'
-import getContext from '../../data-providers/data-helpers/getContext'
-import * as dexie from '../../data-providers/dexie'
 import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
-import { store } from '../../store'
-import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
+import * as dexie from '../../data-providers/dexie'
+import getContext from '../../data-providers/data-helpers/getContext'
+import { DataProvider } from '../../data-providers/DataProvider'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { SimplePath } from '../../@types'
 import testTimer from '../../test-helpers/testTimer'
+import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.

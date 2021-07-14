@@ -1,9 +1,10 @@
 import * as murmurHash3 from 'murmurhash3js'
-import { Context, ContextHash } from '../@types'
-import { ID } from '../constants'
 import globals from '../globals'
+import { ID } from '../constants'
+
 // util
 import { escapeSelector } from './escapeSelector'
+import { Context, ContextHash } from '../@types'
 import { normalizeThought } from './normalizeThought'
 
 const SEPARATOR_TOKEN = '__SEP__'

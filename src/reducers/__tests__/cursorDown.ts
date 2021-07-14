@@ -1,3 +1,7 @@
+import { initialState, pathToContext, reducerFlow } from '../../util'
+import { rankThoughtsFirstMatch } from '../../selectors'
+import { State } from '../../util/initialState'
+
 // reducers
 import {
   cursorDown,
@@ -8,10 +12,8 @@ import {
   toggleAttribute,
   toggleContextView,
 } from '../../reducers'
-import { rankThoughtsFirstMatch } from '../../selectors'
+
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import { initialState, pathToContext, reducerFlow } from '../../util'
-import { State } from '../../util/initialState'
 
 describe('normal view', () => {
   it('move cursor to next sibling', () => {

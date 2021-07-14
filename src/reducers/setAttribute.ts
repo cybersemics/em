@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { Context, State } from '../@types'
-import { createThought, setFirstSubthought } from '../reducers'
 import { getPrevRank, getAllChildren } from '../selectors'
+import { createThought, setFirstSubthought } from '../reducers'
 import { pathToContext, reducerFlow } from '../util'
+import { Context, State } from '../@types'
 
 /** Sets an attribute on the given context. */
 const setAttribute = (state: State, { context, key, value }: { context: Context; key: string; value?: string }) =>

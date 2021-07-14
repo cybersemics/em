@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { Path, SimplePath, State } from '../@types'
+
 // constants
 import {
   TUTORIAL2_STEP_CONTEXT1,
@@ -16,8 +17,21 @@ import {
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
   TUTORIAL_STEP_SUBTHOUGHT,
 } from '../constants'
-// reducers
-import { alert, createThought, setCursor, tutorialNext, tutorialStep as tutorialStepReducer } from '../reducers'
+
+// util
+import {
+  createId,
+  ellipsize,
+  getTextContentFromHTML,
+  head,
+  headValue,
+  once,
+  parentOf,
+  pathToContext,
+  reducerFlow,
+  unroot,
+} from '../util'
+
 // selectors
 import {
   getChildrenSorted,
@@ -33,19 +47,9 @@ import {
   rootedParentOf,
   simplifyPath,
 } from '../selectors'
-// util
-import {
-  createId,
-  ellipsize,
-  getTextContentFromHTML,
-  head,
-  headValue,
-  once,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-  unroot,
-} from '../util'
+
+// reducers
+import { alert, createThought, setCursor, tutorialNext, tutorialStep as tutorialStepReducer } from '../reducers'
 
 export interface NewThoughtPayload {
   at?: Path

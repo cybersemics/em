@@ -1,6 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext } from '../../selectors'
 import { initialState, reducerFlow } from '../../util'
+import { exportContext } from '../../selectors'
+
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'

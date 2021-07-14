@@ -1,9 +1,6 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { Icon as IconType, Shortcut, State, Thunk } from '../@types'
-import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
-import { isTouch } from '../browser'
-import { HOME_PATH } from '../constants'
+import { asyncFocus, ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
 import {
   getChildren,
   getThoughtBefore,
@@ -15,7 +12,10 @@ import {
   simplifyPath,
   splitChain,
 } from '../selectors'
-import { asyncFocus, ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
+import { HOME_PATH } from '../constants'
+import { isTouch } from '../browser'
+import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
+import { Icon as IconType, Shortcut, State, Thunk } from '../@types'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = (state: State) => {

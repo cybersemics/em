@@ -1,7 +1,7 @@
 import React from 'react'
-import { useDispatch } from 'react-redux'
 import { showModal } from '../action-creators'
 import FeedbackIcon from './icons/FeedbackIcon'
+import { useDispatch } from 'react-redux'
 
 /**
  * Button that opens feedback model.

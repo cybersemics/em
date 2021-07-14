@@ -1,9 +1,9 @@
-import { HOME_TOKEN } from '../../constants'
-import { join } from '../../reducers'
-import { exportContext, getChildrenRanked } from '../../selectors'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import { initialState, reducerFlow, removeHome } from '../../util'
+import { join } from '../../reducers'
+import { HOME_TOKEN } from '../../constants'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import importText from '../importText'
+import { exportContext, getChildrenRanked } from '../../selectors'
 
 it('joins two simple thoughts', () => {
   const text = `- a

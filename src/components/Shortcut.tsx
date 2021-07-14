@@ -1,6 +1,6 @@
 import React from 'react'
-import { Shortcut as ShortcutInterface } from '../@types'
 import { isTouch } from '../browser'
+import { Shortcut as ShortcutInterface } from '../@types'
 import { formatKeyboardShortcut } from '../shortcuts'
 import GestureDiagram from './GestureDiagram'
 

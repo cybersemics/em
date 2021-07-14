@@ -1,8 +1,8 @@
 import React from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 import { TouchBackend } from 'react-dnd-touch-backend'
+import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 
 const options = {
   backends: [

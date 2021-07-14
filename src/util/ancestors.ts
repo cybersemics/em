@@ -1,5 +1,5 @@
-import { Child, Path } from '../@types'
 import { equalThoughtRanked } from './equalThoughtRanked'
+import { Child, Path } from '../@types'
 
 /** Returns a subpath of ancestor children up to the given thought (inclusive). */
 export const ancestors = (path: Path, child: Child): Path | null => {

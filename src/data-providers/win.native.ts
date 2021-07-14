@@ -1,5 +1,5 @@
-import setGlobalVars from 'indexeddbshim/dist/indexeddbshim-noninvasive'
 import SQLite from 'react-native-sqlite-2'
+import setGlobalVars from 'indexeddbshim/dist/indexeddbshim-noninvasive'
 
 const win: { indexedDB?: any; IDBKeyRange?: any } = {}
 setGlobalVars(win, {

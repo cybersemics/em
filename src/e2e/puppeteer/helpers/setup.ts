@@ -1,5 +1,5 @@
-import { Browser, Device, Page } from 'puppeteer'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
+import { Browser, Device, Page } from 'puppeteer'
 
 export interface InitPageOptions {
   puppeteerBrowser?: Browser

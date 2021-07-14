@@ -1,15 +1,15 @@
-import classNames from 'classnames'
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
-import { Path, State } from '../@types'
-import { isTutorial, simplifyPath } from '../selectors'
+import classNames from 'classnames'
 import { store } from '../store'
 import { isDocumentEditable, publishMode } from '../util'
-import ContextBreadcrumbs from './ContextBreadcrumbs'
-import FeedbackButton from './FeedbackButton'
+import { isTutorial, simplifyPath } from '../selectors'
 import HomeLink from './HomeLink'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
+import FeedbackButton from './FeedbackButton'
+import { Path, State } from '../@types'
 
 // avoid changing object reference
 const navBreadcrumbsClass = {

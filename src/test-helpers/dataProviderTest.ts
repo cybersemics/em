@@ -1,13 +1,10 @@
-import all from 'it-all'
 import _ from 'lodash'
-import { Context, Parent } from '../@types'
+import all from 'it-all'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
-import { DataProvider } from '../data-providers/DataProvider'
-import getContext from '../data-providers/data-helpers/getContext'
 import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
-import getLexeme from '../data-providers/data-helpers/getLexeme'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
-import { importText } from '../reducers'
+import getContext from '../data-providers/data-helpers/getContext'
+import getLexeme from '../data-providers/data-helpers/getLexeme'
 import {
   equalArrays,
   hashContext,
@@ -19,7 +16,10 @@ import {
   reducerFlow,
   timestamp,
 } from '../util'
+import { DataProvider } from '../data-providers/DataProvider'
+import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
+import { Context, Parent } from '../@types'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

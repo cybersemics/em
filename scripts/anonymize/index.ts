@@ -1,14 +1,14 @@
-import fs from 'fs'
-import _ from 'lodash'
-import * as murmurHash3 from 'murmurhash3js'
-import { Child, Context, Index, Lexeme, Parent } from '../../src/@types'
-import { EM_TOKEN, HOME_TOKEN } from '../../src/constants'
-import { hashContext, hashThought, isEM, isRoot, normalizeThought, timestamp } from '../../src/util'
-
 // mock browser globals for page-lifecycle
 global.addEventListener = () => {}
 global.self = {} as any
 global.document = { hasFocus: () => false } as any
+
+import fs from 'fs'
+import _ from 'lodash'
+import * as murmurHash3 from 'murmurhash3js'
+import { EM_TOKEN, HOME_TOKEN } from '../../src/constants'
+import { hashContext, hashThought, isEM, isRoot, normalizeThought, timestamp } from '../../src/util'
+import { Child, Context, Index, Lexeme, Parent } from '../../src/@types'
 
 // arrays are stored as objects with a numeric index in Firebase
 // so we have to override array types

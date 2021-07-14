@@ -1,8 +1,21 @@
 import _ from 'lodash'
-import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
 import { HOME_PATH } from '../constants'
-// reducers
-import { alert, deleteThought, moveThought, newThought, setCursor } from '../reducers'
+import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
+
+// util
+import {
+  ellipsize,
+  equalThoughtValue,
+  head,
+  headValue,
+  isDivider,
+  isThoughtArchived,
+  parentOf,
+  pathToContext,
+  reducerFlow,
+  unroot,
+} from '../util'
+
 // selectors
 import {
   getAllChildren,
@@ -17,19 +30,9 @@ import {
   splitChain,
   thoughtsEditingFromChain,
 } from '../selectors'
-// util
-import {
-  ellipsize,
-  equalThoughtValue,
-  head,
-  headValue,
-  isDivider,
-  isThoughtArchived,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-  unroot,
-} from '../util'
+
+// reducers
+import { alert, deleteThought, moveThought, newThought, setCursor } from '../reducers'
 
 /** Returns path to the archive of the given context. */
 export const pathToArchive = (state: State, path: Path, context: Context): Path | null => {

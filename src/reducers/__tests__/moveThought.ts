@@ -1,8 +1,5 @@
-import { SimplePath } from '../../@types'
-import { clear, importText as importTextAction, moveThought as existingThoughtMoveAction } from '../../action-creators'
 import { HOME_TOKEN } from '../../constants'
-import { initialize } from '../../initialize'
-import { moveThought, importText, newSubthought, newThought, setCursor } from '../../reducers'
+import { equalArrays, initialState, reducerFlow } from '../../util'
 import {
   exportContext,
   getContexts,
@@ -13,12 +10,15 @@ import {
   getChildren,
   isPending,
 } from '../../selectors'
-import { store as appStore } from '../../store'
+import { moveThought, importText, newSubthought, newThought, setCursor } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
-import { equalArrays, initialState, reducerFlow } from '../../util'
 import { State } from '../../util/initialState'
+import { SimplePath } from '../../@types'
+import { store as appStore } from '../../store'
+import testTimer from '../../test-helpers/testTimer'
+import { initialize } from '../../initialize'
+import { clear, importText as importTextAction, moveThought as existingThoughtMoveAction } from '../../action-creators'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 const timer = testTimer()
 
