@@ -1,15 +1,12 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
 import { isTouch } from '../../browser'
-
 // constants
 import { HOME_TOKEN } from '../../constants'
-
-// util
-import { parentOf, ellipsize, head, headValue, pathToContext } from '../../util'
-
 // selectors
 import { getAllChildren } from '../../selectors'
+import { store } from '../../store'
+// util
+import { parentOf, ellipsize, head, headValue, pathToContext } from '../../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpand = ({ cursor } = {}) => {

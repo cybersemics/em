@@ -1,9 +1,9 @@
+import classNames from 'classnames'
 import React, { MouseEvent } from 'react'
 import { connect } from 'react-redux'
-import classNames from 'classnames'
+import { Context, State } from '../@types'
 import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
 import { head } from '../util'
-import { Context, State } from '../@types'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥

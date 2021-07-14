@@ -1,8 +1,8 @@
+import { State } from '../@types'
 import { HOME_PATH } from '../constants'
 import { alert, moveThought, newThought } from '../reducers'
-import { parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
 import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
-import { State } from '../@types'
+import { parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
 
 // attributes that apply to the parent and should not be moved with subCategorizeAll
 const stationaryMetaAttributes = {

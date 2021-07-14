@@ -1,9 +1,9 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
-import { HOME_TOKEN } from '../constants'
-import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
 import { Child, Context, Index, SimplePath, State } from '../@types'
+import { HOME_TOKEN } from '../constants'
+import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
+import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>

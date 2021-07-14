@@ -1,12 +1,12 @@
+import { importText, setCursor, newThought } from '../../action-creators'
 import { HOME_TOKEN } from '../../constants'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
-import { importText, setCursor, newThought } from '../../action-creators'
 import { store } from '../../store'
-import { createTestStore } from '../../test-helpers/createTestStore'
-import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
-import executeShortcut from '../../test-helpers/executeShortcut'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import { createTestStore } from '../../test-helpers/createTestStore'
+import executeShortcut from '../../test-helpers/executeShortcut'
 import clearThoughtShortcut from '../clearThought'
+import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 
 it('do nothing when there is no cursor', () => {
   const store = createTestStore()

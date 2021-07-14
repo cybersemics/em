@@ -1,12 +1,12 @@
-import { store } from '../../store'
-import { importText, editThought } from '../../action-creators'
-import { getLexeme as getThoughtSelector } from '../../selectors'
-import * as dexie from '../../data-providers/dexie'
-import getLexeme from '../../data-providers/data-helpers/getLexeme'
-import { DataProvider } from '../../data-providers/DataProvider'
-import testTimer from '../../test-helpers/testTimer'
 import { SimplePath } from '../../@types'
+import { importText, editThought } from '../../action-creators'
+import { DataProvider } from '../../data-providers/DataProvider'
+import getLexeme from '../../data-providers/data-helpers/getLexeme'
+import * as dexie from '../../data-providers/dexie'
+import { getLexeme as getThoughtSelector } from '../../selectors'
+import { store } from '../../store'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
+import testTimer from '../../test-helpers/testTimer'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.

@@ -1,8 +1,8 @@
 import React from 'react'
+import Svg, { Path } from 'react-native-svg'
 import { Icon as IconType, Shortcut } from '../@types'
 // import { isDocumentEditable } from '../util'
 import { indent } from '../action-creators'
-import Svg, { Path } from 'react-native-svg'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

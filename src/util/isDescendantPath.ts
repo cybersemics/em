@@ -1,5 +1,5 @@
-import { equalPath } from './equalPath'
 import { Path } from '../@types'
+import { equalPath } from './equalPath'
 
 /** Returns true if thoughts subset is contained within superset (inclusive). */
 export const isDescendantPath = (superset: Path | null, subset: Path | null) => {

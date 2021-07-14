@@ -1,5 +1,5 @@
-import { toggleSidebar } from '../action-creators'
 import { Shortcut } from '../@types'
+import { toggleSidebar } from '../action-creators'
 
 const toggleSidebarShortcut: Shortcut = {
   id: 'toggleSidebar',

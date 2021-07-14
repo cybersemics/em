@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
+import { initialState, reducerFlow } from '../../util'
 import { bumpThoughtDown, cursorBack, newSubthought, newThought } from '../index'
 
 it('bump leaf', () => {

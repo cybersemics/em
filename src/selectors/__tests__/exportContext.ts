@@ -1,7 +1,7 @@
-import { initialState, reducerFlow } from '../../util'
-import { editThought, importText, setCursor } from '../../reducers'
-import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import { SimplePath } from '../../@types'
+import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
+import { editThought, importText, setCursor } from '../../reducers'
+import { initialState, reducerFlow } from '../../util'
 import exportContext from '../exportContext'
 
 it('meta and archived thoughts are included', () => {

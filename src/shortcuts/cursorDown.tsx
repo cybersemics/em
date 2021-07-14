@@ -1,10 +1,9 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { parentOf, getElementPaddings, headValue, pathToContext } from '../util'
-import { attributeEquals } from '../selectors'
-import { cursorDown, scrollCursorIntoView } from '../action-creators'
 import { Dispatch, Icon as IconType, Shortcut } from '../@types'
-
+import { cursorDown, scrollCursorIntoView } from '../action-creators'
+import { attributeEquals } from '../selectors'
+import { parentOf, getElementPaddings, headValue, pathToContext } from '../util'
 // import directly since util/index is not loaded yet when shortcut is initialized
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
 

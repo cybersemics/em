@@ -1,6 +1,5 @@
-import { alert, moveThought } from '../reducers'
 import { SimplePath, State } from '../@types'
-import { parentOf, ellipsize, head, headRank, headValue, pathToContext } from '../util'
+import { alert, moveThought } from '../reducers'
 import {
   getNextRank,
   getRankBefore,
@@ -11,6 +10,7 @@ import {
   simplifyPath,
   getSortPreference,
 } from '../selectors'
+import { parentOf, ellipsize, head, headRank, headValue, pathToContext } from '../util'
 
 /** Swaps the thought with its previous siblings. */
 const moveThoughtUp = (state: State) => {

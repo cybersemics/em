@@ -1,5 +1,5 @@
-import { hashContext } from '../util'
 import { State } from '../@types'
+import { hashContext } from '../util'
 
 /** Return true if the context view is active for the given key, including selected subthoughts. */
 const isContextViewActive = (state: State, unrankedPath: string[]) => {

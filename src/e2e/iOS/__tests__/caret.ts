@@ -1,9 +1,8 @@
 /**
  * @jest-environment ./src/e2e/webdriverio-environment.js
  */
-
-import { gestures } from '../../../test-helpers/constants'
 import { Element } from 'webdriverio'
+import { gestures } from '../../../test-helpers/constants'
 import helpers from '../helpers'
 
 jest.setTimeout(100000)

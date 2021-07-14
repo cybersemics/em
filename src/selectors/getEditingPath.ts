@@ -1,7 +1,7 @@
 import _ from 'lodash'
+import { SimplePath, State } from '../@types'
 import { parentOf, head } from '../util'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
-import { SimplePath, State } from '../@types'
 
 /** Memoize resolver for getEditingPath. */
 const resolve = (state: State, simplePath: SimplePath) =>

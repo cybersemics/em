@@ -1,9 +1,9 @@
 import React, { useRef, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
-import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { alert, logout, showModal } from '../action-creators'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
+import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 
 /** A footer component with some useful links. */

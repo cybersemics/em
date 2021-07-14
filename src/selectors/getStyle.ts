@@ -1,7 +1,7 @@
-import { CSSProperties } from 'react'
 import _ from 'lodash'
-import { getAllChildren } from '../selectors'
+import { CSSProperties } from 'react'
 import { Context, State } from '../@types'
+import { getAllChildren } from '../selectors'
 import { keyValueBy } from '../util/keyValueBy'
 
 /** Parses the =style attribute of a given context into an object that can be passed to React styles. Returns null if there are no styles. */

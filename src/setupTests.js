@@ -1,9 +1,9 @@
+import '@testing-library/jest-dom'
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
 import { configure } from 'enzyme'
-import { noop } from 'lodash'
-import '@testing-library/jest-dom'
-import 'jest-localstorage-mock'
 import 'fake-indexeddb/auto'
+import 'jest-localstorage-mock'
+import { noop } from 'lodash'
 
 configure({ adapter: new Adapter() })
 

@@ -1,7 +1,7 @@
 import React from 'react'
+import { GestureResponderEvent } from 'react-native'
 import { Dispatch } from './Dispatch'
 import { GesturePath } from './GesturePath'
-import { GestureResponderEvent } from 'react-native'
 import { Icon } from './Icon'
 import { Key } from './Key'
 import { State } from './State'

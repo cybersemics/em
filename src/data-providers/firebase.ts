@@ -1,7 +1,7 @@
-import { Firebase, Index, Lexeme, Parent, State } from '../@types'
-import { keyValueBy, getUserRef } from '../util'
-import { error } from '../action-creators'
 import { Dispatch } from 'react'
+import { Firebase, Index, Lexeme, Parent, State } from '../@types'
+import { error } from '../action-creators'
+import { keyValueBy, getUserRef } from '../util'
 
 /**
  * Get all firebase related functions as an object.

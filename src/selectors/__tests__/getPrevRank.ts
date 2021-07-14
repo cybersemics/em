@@ -1,6 +1,6 @@
-import { initialState, isFunction, reducerFlow } from '../../util'
-import { getAllChildrenSorted } from '../../selectors'
 import { importText, newSubthought, newThought } from '../../reducers'
+import { getAllChildrenSorted } from '../../selectors'
+import { initialState, isFunction, reducerFlow } from '../../util'
 import getPrevRank from '../getPrevRank'
 
 it('get rank above all children', () => {

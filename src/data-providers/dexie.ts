@@ -1,8 +1,8 @@
 /* eslint-disable fp/no-this */
 import Dexie from 'dexie'
 import _ from 'lodash'
-import { hashThought, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../@types'
+import { hashThought, timestamp } from '../util'
 import win from './win'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.

@@ -1,6 +1,6 @@
 import { Context, Index } from '../@types'
-import { getContextMap } from '../util'
 import * as db from '../data-providers/dexie'
+import { getContextMap } from '../util'
 
 /**
  * Search by value and return context map.

@@ -1,5 +1,7 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
+import { Icon as IconType, Shortcut } from '../@types'
+import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 import { isTouch } from '../browser'
 import { hasChild } from '../selectors'
 import {
@@ -12,8 +14,6 @@ import {
   pathToContext,
   setSelection,
 } from '../util'
-import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
 

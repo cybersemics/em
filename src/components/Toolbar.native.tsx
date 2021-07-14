@@ -8,15 +8,13 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-
 import React, { useCallback } from 'react'
-import { shortcutById } from '../shortcuts'
 import { FlatList, ListRenderItem, TouchableOpacity, View, StyleSheet, GestureResponderEvent } from 'react-native'
-// import { store } from '../store'
-import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { Icon } from '../@types'
-import HamburgerMenu from './HamburgerMenu'
+import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { shortcutById } from '../shortcuts'
 import { store } from '../store'
+import HamburgerMenu from './HamburgerMenu'
 
 /** Toolbar component mobile. */
 const Toolbar = (

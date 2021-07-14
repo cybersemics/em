@@ -1,10 +1,10 @@
 /* eslint-disable fp/no-class, fp/no-this */
-import React from 'react'
 import classNames from 'classnames'
-import { FADEOUT_DURATION } from '../constants'
-import { modalCleanup } from '../util'
+import React from 'react'
 import { Connected } from '../@types'
 import { closeModal, modalComplete, tutorial } from '../action-creators'
+import { FADEOUT_DURATION } from '../constants'
+import { modalCleanup } from '../util'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void

@@ -1,6 +1,6 @@
+import { importText } from '../../action-creators'
 import { HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
-import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 

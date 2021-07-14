@@ -1,8 +1,8 @@
 import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { findThoughtByText } from '../../test-helpers/queries'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)

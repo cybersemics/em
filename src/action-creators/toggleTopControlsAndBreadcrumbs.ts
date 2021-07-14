@@ -1,5 +1,5 @@
-import { Thunk } from '../@types'
 import _ from 'lodash'
+import { Thunk } from '../@types'
 
 /**
  * Throttled action to limit the number actions dispatched within a fixed time.

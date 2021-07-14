@@ -1,13 +1,12 @@
-import React, { useRef } from 'react'
-import { connect } from 'react-redux'
 import _ from 'lodash'
-import { store } from '../store'
-import { selectNextEditable, strip } from '../util'
-import { Connected } from '../@types'
-import { search, setCursor } from '../action-creators'
-
+import React, { useRef } from 'react'
 // components
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import { connect } from 'react-redux'
+import { Connected } from '../@types'
+import { search, setCursor } from '../action-creators'
+import { store } from '../store'
+import { selectNextEditable, strip } from '../util'
 import SearchIcon from './SearchIcon'
 import SearchSubthoughts from './SearchSubthoughts'
 

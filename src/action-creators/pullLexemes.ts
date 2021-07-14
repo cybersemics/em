@@ -1,7 +1,7 @@
+import { reconcile, updateThoughts } from '.'
 import { Index, Lexeme, ThoughtsInterface, Thunk } from '../@types'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
-import { reconcile, updateThoughts } from '.'
 
 /**
  * Fetches lexemes from the local and remote source and reconciles.

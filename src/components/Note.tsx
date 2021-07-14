@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react'
-import { useDispatch } from 'react-redux'
-import { isTouch } from '../browser'
-import { store } from '../store'
-import { attribute, getParent, hasChild, isContextViewActive } from '../selectors'
-import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
-import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import { useDispatch } from 'react-redux'
 import { Context } from '../@types'
+import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
+import { isTouch } from '../browser'
+import { attribute, getParent, hasChild, isContextViewActive } from '../selectors'
+import { store } from '../store'
+import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 
 interface NoteProps {
   context: Context

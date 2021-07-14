@@ -1,11 +1,11 @@
 import 'react-native-get-random-values'
 import { validate as uuidValidate } from 'uuid'
+import { SimplePath, State } from '../../@types'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
+import { importText, editThought, newThought } from '../../reducers'
+import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import { hashContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
-import { importText, editThought, newThought } from '../../reducers'
-import { SimplePath, State } from '../../@types'
 
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = (text: string, isHTML = true) => {

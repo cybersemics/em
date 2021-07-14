@@ -1,10 +1,10 @@
-import { isTouch } from '../browser'
-import { attribute, hasChild, simplifyPath } from '../selectors'
-import PencilIcon from '../components/icons/PencilIcon'
-import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
-import { setAttribute, setNoteFocus } from '../action-creators'
 import { Shortcut } from '../@types'
+import { setAttribute, setNoteFocus } from '../action-creators'
+import { isTouch } from '../browser'
+import PencilIcon from '../components/icons/PencilIcon'
 import { HOME_PATH } from '../constants'
+import { attribute, hasChild, simplifyPath } from '../selectors'
+import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
 
 const noteShortcut: Shortcut = {
   id: 'note',

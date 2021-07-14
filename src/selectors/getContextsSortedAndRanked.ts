@@ -1,6 +1,6 @@
-import { makeCompareByProp, sort, unroot } from '../util'
-import { getContexts, isAncestorsVisible } from '../selectors'
 import { State, ThoughtContext } from '../@types'
+import { getContexts, isAncestorsVisible } from '../selectors'
+import { makeCompareByProp, sort, unroot } from '../util'
 
 /** Gets all contexts that the given thought is in, sorted and ranked. */
 const getContextsSortedAndRanked = (state: State, value: string): ThoughtContext[] =>

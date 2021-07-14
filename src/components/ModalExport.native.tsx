@@ -1,13 +1,18 @@
-import React, { useState } from 'react'
-import { useDispatch, useSelector, useStore } from 'react-redux'
+import { FontAwesome5 } from '@expo/vector-icons'
+import Clipboard from 'expo-clipboard'
 import { and } from 'fp-and-or'
-
+import React, { useState } from 'react'
+import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
+import RNPickerSelect from 'react-native-picker-select'
+import { useDispatch, useSelector, useStore } from 'react-redux'
+import { Child, ExportOption, State } from '../@types'
+import { alert, error, closeModal } from '../action-creators'
 import { HOME_PATH } from '../constants'
+import { exportContext, getAllChildren, simplifyPath } from '../selectors'
 import {
   download,
   ellipsize,
-  getExportPhrase,
-  // hashContext,
+  getExportPhrase, // hashContext,
   headValue,
   isFunction,
   isRoot,
@@ -15,16 +20,8 @@ import {
   timestamp,
   unroot,
 } from '../util'
-import { alert, error, closeModal } from '../action-creators'
-import { exportContext, getAllChildren, simplifyPath } from '../selectors'
-import Modal from './Modal'
-
-import { Child, ExportOption, State } from '../@types'
-import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
-import RNPickerSelect from 'react-native-picker-select'
-import { FontAwesome5 } from '@expo/vector-icons'
 import { ActionButton } from './ActionButton'
-import Clipboard from 'expo-clipboard'
+import Modal from './Modal'
 import { Text } from './Text.native'
 
 interface AdvancedSetting {

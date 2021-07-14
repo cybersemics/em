@@ -1,5 +1,5 @@
-import { once } from './once'
 import isAbbrev from './isAbbreviation'
+import { once } from './once'
 
 /**
  * Splits given value by special characters.

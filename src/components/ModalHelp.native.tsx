@@ -1,21 +1,28 @@
+import * as WebBrowser from 'expo-web-browser'
 import React from 'react'
+import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native'
 import { connect } from 'react-redux'
+import {
+  Connected,
+  /*  GesturePath, Shortcut */
+  State,
+} from '../@types'
 // import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 // import * as db from '../data-providers/dexie'
 // import { makeCompareByProp, sort } from '../util'
-import { closeModal, /* toggleShortcutsDiagram */ tutorial, tutorialStep as setTutorialStep } from '../action-creators'
-import { getSetting } from '../selectors'
+import {
+  closeModal,
+  /* toggleShortcutsDiagram */
+  tutorial,
+  tutorialStep as setTutorialStep,
+} from '../action-creators'
 import { META_PROGRAMMING_HELP, TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
-import { Connected /*  GesturePath, Shortcut */, State } from '../@types'
-
-import * as WebBrowser from 'expo-web-browser'
-
+import { getSetting } from '../selectors'
+import { ActionButton } from './ActionButton'
 // components
 // import GestureDiagram from './GestureDiagram'
 // import Logs from './Logs'
 import Modal from './Modal'
-import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native'
-import { ActionButton } from './ActionButton'
 import { Text } from './Text.native'
 
 interface IMetaprogramming {

@@ -1,7 +1,6 @@
-import React from 'react'
 import classNames from 'classnames'
+import React from 'react'
 import { tutorial, tutorialChoice, tutorialNext, tutorialStep as setTutorialStep } from '../../action-creators'
-
 import {
   TUTORIAL2_STEP_CHOOSE,
   TUTORIAL2_STEP_START,
@@ -12,10 +11,9 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-
-import TutorialNavigationPrev from './TutorialNavigationPrev'
-import TutorialNavigationNext from './TutorialNavigationNext'
 import TutorialNavigationButton from './TutorialNavigationButton'
+import TutorialNavigationNext from './TutorialNavigationNext'
+import TutorialNavigationPrev from './TutorialNavigationPrev'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigation = ({ tutorialStep, dispatch }) => {

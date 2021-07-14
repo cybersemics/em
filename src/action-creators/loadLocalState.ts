@@ -1,9 +1,9 @@
-import * as db from '../data-providers/dexie'
-import getContext from '../data-providers/data-helpers/getContext'
-import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { importText } from '../action-creators'
-import { never } from '../util'
 import { Thunk } from '../@types'
+import { importText } from '../action-creators'
+import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
+import getContext from '../data-providers/data-helpers/getContext'
+import * as db from '../data-providers/dexie'
+import { never } from '../util'
 
 /** Loads the local state from the IndexedDB database. */
 const loadLocalState = (): Thunk<Promise<void>> => async dispatch => {

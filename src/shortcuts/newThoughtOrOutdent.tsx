@@ -1,10 +1,10 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../@types'
-import { isTouch } from '../browser'
-import { splitAtSelection, headValue, isDocumentEditable } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
+import { isTouch } from '../browser'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
+import { splitAtSelection, headValue, isDocumentEditable } from '../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

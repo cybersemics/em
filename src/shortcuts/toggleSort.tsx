@@ -1,11 +1,11 @@
 import React from 'react'
+import { useSelector } from 'react-redux'
+import { Icon as IconType, Shortcut, SortPreference, State } from '../@types'
+import { deleteAttribute, setCursor, toggleAttribute } from '../action-creators'
 import { HOME_PATH } from '../constants'
 import { simplifyPath, getSortPreference } from '../selectors'
-import { deleteAttribute, setCursor, toggleAttribute } from '../action-creators'
-import { pathToContext, unroot } from '../util'
-import { Icon as IconType, Shortcut, SortPreference, State } from '../@types'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
-import { useSelector } from 'react-redux'
+import { pathToContext, unroot } from '../util'
 
 /* Available sort preferences */
 const sortPreferences = ['None', 'Alphabetical']

@@ -1,3 +1,4 @@
+import { Child } from '../../types'
 import {
   compare,
   compareDateStrings,
@@ -10,7 +11,6 @@ import {
   makeOrderedComparator,
   compareThoughtDescending,
 } from '../../util/compareThought'
-import { Child } from '../../types'
 
 it('compareNumberAndOther', () => {
   expect(compareNumberAndOther(1, 2)).toBe(0)

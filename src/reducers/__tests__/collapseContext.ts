@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
 import { collapseContext, cursorBack, cursorUp, newSubthought, newThought } from '../../reducers'
 import { exportContext } from '../../selectors'
+import { initialState, reducerFlow } from '../../util'
 
 it('do nothing on leaf', () => {
   const steps = [newThought('a'), newSubthought('b'), collapseContext({})]

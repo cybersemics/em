@@ -1,6 +1,5 @@
-import { EM_TOKEN } from '../../constants'
-import { createTestStore } from '../../test-helpers/createTestStore'
-import { attribute, rankThoughtsFirstMatch } from '../../selectors'
+import { findAllByPlaceholderText } from '@testing-library/react'
+import { SimplePath, Thunk } from '../../@types'
 import {
   editThought,
   importText,
@@ -9,14 +8,15 @@ import {
   toggleAttribute,
   setFirstSubthought,
 } from '../../action-creators'
-import toggleSortShortcut from '../toggleSort'
-import executeShortcut from '../../test-helpers/executeShortcut'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { SimplePath, Thunk } from '../../@types'
+import { EM_TOKEN } from '../../constants'
+import { attribute, rankThoughtsFirstMatch } from '../../selectors'
 import { store } from '../../store'
-import { findThoughtByText } from '../../test-helpers/queries'
-import { findAllByPlaceholderText } from '@testing-library/react'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import { createTestStore } from '../../test-helpers/createTestStore'
+import executeShortcut from '../../test-helpers/executeShortcut'
+import { findThoughtByText } from '../../test-helpers/queries'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import toggleSortShortcut from '../toggleSort'
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
   const store = createTestStore()

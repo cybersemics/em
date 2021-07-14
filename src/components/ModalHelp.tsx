@@ -1,19 +1,18 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
-import { isTouch } from '../browser'
-import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
-import * as db from '../data-providers/dexie'
-import { makeCompareByProp, sort } from '../util'
-import { closeModal, toggleShortcutsDiagram, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
-import { getSetting } from '../selectors'
-import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import { Connected, GesturePath, Shortcut, State } from '../@types'
-
+import { closeModal, toggleShortcutsDiagram, tutorial, tutorialStep as setTutorialStep } from '../action-creators'
+import { isTouch } from '../browser'
+import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
+import * as db from '../data-providers/dexie'
+import { getSetting } from '../selectors'
+import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
+import { makeCompareByProp, sort } from '../util'
+import { ActionButton } from './ActionButton'
 // components
 import GestureDiagram from './GestureDiagram'
 import Logs from './Logs'
 import Modal from './Modal'
-import { ActionButton } from './ActionButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {

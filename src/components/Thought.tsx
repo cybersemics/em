@@ -1,27 +1,27 @@
-import React, { useEffect } from 'react'
-import { ThunkDispatch } from 'redux-thunk'
-import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { store } from '../store'
-import globals from '../globals'
+import React, { useEffect } from 'react'
+import { connect } from 'react-redux'
+import { ThunkDispatch } from 'redux-thunk'
+import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
-import { compareReasonable } from '../util/compareThought'
-import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
-
-// components
-import Bullet from './Bullet'
-import Byline from './Byline'
-import Note from './Note'
-import StaticThought from './StaticThought'
-import Subthoughts from './Subthoughts'
-import ThoughtAnnotation from './ThoughtAnnotation'
-import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
-
+import globals from '../globals'
 // hooks
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
-
+// selectors
+import {
+  attribute,
+  getAllChildren,
+  getChildren,
+  getChildrenRanked,
+  getSortPreference,
+  getStyle,
+  hasChildren,
+  isContextViewActive,
+  rootedParentOf,
+} from '../selectors'
+import { store } from '../store'
 // util
 import {
   equalArrays,
@@ -38,19 +38,15 @@ import {
   pathToContext,
   publishMode,
 } from '../util'
-
-// selectors
-import {
-  attribute,
-  getAllChildren,
-  getChildren,
-  getChildrenRanked,
-  getSortPreference,
-  getStyle,
-  hasChildren,
-  isContextViewActive,
-  rootedParentOf,
-} from '../selectors'
+import { compareReasonable } from '../util/compareThought'
+// components
+import Bullet from './Bullet'
+import Byline from './Byline'
+import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
+import Note from './Note'
+import StaticThought from './StaticThought'
+import Subthoughts from './Subthoughts'
+import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
  * Redux

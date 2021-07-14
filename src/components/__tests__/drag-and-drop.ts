@@ -1,16 +1,14 @@
 import { ReactWrapper } from 'enzyme'
+import { Context, SimplePath } from '../../@types'
+import { importText } from '../../action-creators'
+import { HOME_TOKEN } from '../../constants'
+import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-
-import Thought from '../Thought'
-import Subthoughts from '../Subthoughts'
-
-import { HOME_TOKEN } from '../../constants'
-import { equalArrays, pathToContext } from '../../util'
-import { exportContext } from '../../selectors'
-import { importText } from '../../action-creators'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { Context, SimplePath } from '../../@types'
+import { equalArrays, pathToContext } from '../../util'
+import Subthoughts from '../Subthoughts'
+import Thought from '../Thought'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {

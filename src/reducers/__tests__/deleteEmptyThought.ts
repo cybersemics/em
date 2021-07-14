@@ -1,20 +1,19 @@
-import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
-import { exportContext, getChildren } from '../../selectors'
 import { importText } from '../../action-creators'
+import { HOME_TOKEN } from '../../constants'
+import { exportContext, getChildren } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { HOME_TOKEN } from '../../constants'
-
+import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
+import archiveThought from '../archiveThought'
 // reducers
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
 import deleteEmptyThought from '../deleteEmptyThought'
+import importTextReducer from '../importText'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
-import importTextReducer from '../importText'
-import archiveThought from '../archiveThought'
 
 it('delete empty thought', () => {
   const steps = [newThought('a'), newThought(''), deleteEmptyThought]
