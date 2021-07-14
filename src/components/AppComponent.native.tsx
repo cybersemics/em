@@ -18,6 +18,7 @@ import { useDimensions } from '@react-native-community/hooks'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { State } from '../@types'
 import { commonStyles } from '../style/commonStyles'
+import ModalAuth from './ModalAuth'
 
 const { flexOne, darkBackground, whiteText } = commonStyles
 
@@ -86,6 +87,7 @@ const AppComponent: React.FC = () => {
             <Footer />
           </ScrollView>
 
+          <ModalAuth />
           <ModalFeedback />
           <ModalHelp />
           <ModalWelcome />
