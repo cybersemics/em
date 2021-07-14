@@ -1,5 +1,5 @@
-import { expandThoughts } from '../selectors'
 import { Path, State } from '../@types'
+import { expandThoughts } from '../selectors'
 import { hashContext, pathToContext } from '../util'
 
 interface Options {

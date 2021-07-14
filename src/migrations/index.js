@@ -1,8 +1,6 @@
 /** Here's documentation for migrations. */
-
 import { SCHEMA_LATEST } from '../constants'
 import { keyValueBy } from '../util/keyValueBy'
-
 // migrations
 import * as hashKeys from './hashKeys'
 import * as metaSettings from './metaSettings'

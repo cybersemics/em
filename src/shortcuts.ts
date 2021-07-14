@@ -1,16 +1,15 @@
 /** Defines global keyboard shortcuts and gestures. */
-
 import Emitter from 'emitter20'
-import { Store } from 'redux'
-import { isMac, isTouch } from './browser'
-import globals from './globals'
-import { alert, suppressExpansion, showLatestShortcuts, toggleTopControlsAndBreadcrumbs } from './action-creators'
-import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
-import { keyValueBy } from './util/keyValueBy'
 import { GestureResponderEvent } from 'react-native'
+import { Store } from 'redux'
 import { Direction, GesturePath, Index, Key, Shortcut, State } from './@types'
-
+import { alert, suppressExpansion, showLatestShortcuts, toggleTopControlsAndBreadcrumbs } from './action-creators'
+import { isMac, isTouch } from './browser'
+import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
+import globals from './globals'
 import * as shortcutObject from './shortcuts/index'
+import { keyValueBy } from './util/keyValueBy'
+
 export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]
 
 export const shortcutEmitter = new Emitter()

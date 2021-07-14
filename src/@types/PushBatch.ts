@@ -1,3 +1,4 @@
+import { editThoughtPayload } from '../reducers/editThought'
 import { Child } from './Child'
 import { Context } from './Context'
 import { Index } from './IndexType'
@@ -5,7 +6,6 @@ import { Lexeme } from './Lexeme'
 import { Parent } from './Parent'
 import { Path } from './Path'
 import { RecentlyEditedTree } from './RecentlyEditedTree'
-import { editThoughtPayload } from '../reducers/editThought'
 
 /** Defines a single batch of updates added to the push queue. */
 export interface PushBatch {

@@ -1,10 +1,6 @@
 import _ from 'lodash'
-import { cursorBack, deleteThought, setCursor } from '../reducers'
 import { Child, Path, SimplePath, State, ThoughtContext } from '../@types'
-
-// util
-import { parentOf, head, headValue, pathToContext, once, reducerFlow, unroot, getTextContentFromHTML } from '../util'
-
+import { cursorBack, deleteThought, setCursor } from '../reducers'
 // selectors
 import {
   firstVisibleChild,
@@ -17,6 +13,8 @@ import {
   simplifyPath,
   thoughtsEditingFromChain,
 } from '../selectors'
+// util
+import { parentOf, head, headValue, pathToContext, once, reducerFlow, unroot, getTextContentFromHTML } from '../util'
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {

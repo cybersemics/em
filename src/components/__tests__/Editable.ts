@@ -1,10 +1,10 @@
 import { ReactWrapper } from 'enzyme'
+import { importText } from '../../action-creators'
+import bumpThoughtDown from '../../shortcuts/bumpThoughtDown'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { importText } from '../../action-creators'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import executeShortcut from '../../test-helpers/executeShortcut'
-import bumpThoughtDown from '../../shortcuts/bumpThoughtDown'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import Editable from '../Editable'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let

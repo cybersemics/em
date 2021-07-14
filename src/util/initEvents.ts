@@ -1,13 +1,13 @@
 import _ from 'lodash'
-import { Store } from 'redux'
-import { inputHandlers, isGestureHint } from '../shortcuts'
-import * as db from '../data-providers/dexie'
-import { clearSelection, isRoot, pathToContext } from '../util'
-import { decodeThoughtsUrl, pathExists } from '../selectors'
-import { alert, error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { Path, State } from '../@types'
-import { equalPath } from './equalPath'
 import lifecycle from 'page-lifecycle'
+import { Store } from 'redux'
+import { Path, State } from '../@types'
+import { alert, error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import * as db from '../data-providers/dexie'
+import { decodeThoughtsUrl, pathExists } from '../selectors'
+import { inputHandlers, isGestureHint } from '../shortcuts'
+import { clearSelection, isRoot, pathToContext } from '../util'
+import { equalPath } from './equalPath'
 
 declare global {
   interface Window {

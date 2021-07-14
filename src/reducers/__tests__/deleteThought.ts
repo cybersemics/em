@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { getContexts, getAllChildren, getParent } from '../../selectors'
 import { deleteThought, newSubthought, newThought } from '../../reducers'
+import { getContexts, getAllChildren, getParent } from '../../selectors'
+import { initialState, reducerFlow } from '../../util'
 
 it('delete from root', () => {
   const steps = [

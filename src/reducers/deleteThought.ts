@@ -1,6 +1,6 @@
 import _ from 'lodash'
+import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
 import { updateThoughts } from '../reducers'
-import { treeDelete } from '../util/recentlyEditedTree'
 import {
   getAllChildren,
   getChildrenRanked,
@@ -10,8 +10,6 @@ import {
   rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
-import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
-
 // util
 import {
   equalArrays,
@@ -23,6 +21,7 @@ import {
   timestamp,
   unroot,
 } from '../util'
+import { treeDelete } from '../util/recentlyEditedTree'
 
 interface Payload {
   context: Context

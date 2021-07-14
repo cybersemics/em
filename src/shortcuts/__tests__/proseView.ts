@@ -1,9 +1,9 @@
-import { createTestStore } from '../../test-helpers/createTestStore'
-import proseViewShortcut from '../proseView'
-import { attribute } from '../../selectors'
 import { importText } from '../../action-creators'
+import { attribute } from '../../selectors'
+import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import proseViewShortcut from '../proseView'
 
 it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {
   const store = createTestStore()

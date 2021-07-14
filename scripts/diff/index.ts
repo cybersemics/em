@@ -1,14 +1,14 @@
+import fs from 'fs'
+import _ from 'lodash'
+import { Child, Context, Index, Parent } from '../../src/@types'
+import { HOME_TOKEN } from '../../src/constants'
+import { hashContext, hashThought, head, unroot } from '../../src/util'
+import { State } from '../../src/util/initialState'
+
 // mock browser globals for page-lifecycle
 global.addEventListener = () => {}
 global.self = {} as any
 global.document = { hasFocus: () => false } as any
-
-import fs from 'fs'
-import _ from 'lodash'
-import { HOME_TOKEN } from '../../src/constants'
-import { hashContext, hashThought, head, unroot } from '../../src/util'
-import { State } from '../../src/util/initialState'
-import { Child, Context, Index, Parent } from '../../src/@types'
 
 const userId = 'm9S244ovF7fVrwpAoqoWxcz08s52'
 

@@ -1,9 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector, useStore } from 'react-redux'
 import ClipboardJS from 'clipboard'
 import { and } from 'fp-and-or'
-import globals from '../globals'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector, useStore } from 'react-redux'
+import useOnClickOutside from 'use-onclickoutside'
+import { Child, ExportOption, State } from '../@types'
+import { alert, error, closeModal, pull } from '../action-creators'
+import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
+import globals from '../globals'
+import { exportContext, getAllChildren, simplifyPath, theme } from '../selectors'
 import {
   download,
   ellipsize,
@@ -19,15 +24,10 @@ import {
   timestamp,
   unroot,
 } from '../util'
-import { alert, error, closeModal, pull } from '../action-creators'
-import { exportContext, getAllChildren, simplifyPath, theme } from '../selectors'
-import Modal from './Modal'
+import ChevronImg from './ChevronImg'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
-import ChevronImg from './ChevronImg'
-import { isTouch } from '../browser'
-import useOnClickOutside from 'use-onclickoutside'
-import { Child, ExportOption, State } from '../@types'
+import Modal from './Modal'
 
 interface AdvancedSetting {
   id: string

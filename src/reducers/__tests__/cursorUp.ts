@@ -1,4 +1,3 @@
-import { initialState, pathToContext, reducerFlow } from '../../util'
 import {
   cursorUp,
   importText,
@@ -9,6 +8,7 @@ import {
   toggleHiddenThoughts,
 } from '../../reducers'
 import { rankThoughtsFirstMatch } from '../../selectors'
+import { initialState, pathToContext, reducerFlow } from '../../util'
 import { State } from '../../util/initialState'
 
 it('move cursor to previous sibling', () => {

@@ -1,6 +1,6 @@
 import { Dispatch } from 'react'
-import RedoIcon from '../components/RedoIcon'
 import { Shortcut } from '../@types'
+import RedoIcon from '../components/RedoIcon'
 import { isRedoEnabled } from '../selectors/isRedoEnabled'
 
 interface RedoAction {

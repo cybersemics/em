@@ -1,7 +1,7 @@
-import { NOOP } from '../constants'
-import { store as globalStore } from '../store'
 import { Store } from 'redux'
 import { Shortcut, State } from '../@types'
+import { NOOP } from '../constants'
+import { store as globalStore } from '../store'
 
 interface Options {
   store?: Store<State, any>

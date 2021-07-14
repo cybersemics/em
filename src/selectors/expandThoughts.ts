@@ -1,3 +1,4 @@
+import { Child, Context, Index, Path, State, ThoughtContext } from '../@types'
 import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, MAX_EXPAND_DEPTH } from '../constants'
 import {
   attribute,
@@ -8,7 +9,6 @@ import {
   isContextViewActive,
   simplifyPath,
 } from '../selectors'
-import { Child, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   equalArrays,
   equalThoughtRanked,

@@ -1,9 +1,9 @@
 import React, { FC } from 'react'
+// import { State } from '../../util/initialState'
+import Svg, { Path, Rect } from 'react-native-svg'
 // import { connect } from 'react-redux'
 // import { theme } from '../../selectors'
 import { Index } from '../../@types'
-// import { State } from '../../util/initialState'
-import Svg, { Path, Rect } from 'react-native-svg'
 
 interface ChatIconProps {
   dark?: boolean

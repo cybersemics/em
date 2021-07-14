@@ -1,9 +1,9 @@
-import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { alert as alertAction } from '../action-creators'
-import { TouchableOpacity, Text, StyleSheet } from 'react-native'
-import { Alert, State } from '../@types'
 import { View } from 'moti'
+import React from 'react'
+import { TouchableOpacity, Text, StyleSheet } from 'react-native'
+import { useDispatch, useSelector } from 'react-redux'
+import { Alert, State } from '../@types'
+import { alert as alertAction } from '../action-creators'
 import { commonStyles } from '../style/commonStyles'
 
 const { flexEnd, whiteText, centerText } = commonStyles

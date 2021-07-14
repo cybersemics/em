@@ -1,12 +1,12 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
+import { GesturePath, State } from '../@types'
 import { isTouch } from '../browser'
-import { shortcutById } from '../shortcuts'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import { getSetting } from '../selectors'
+import { shortcutById } from '../shortcuts'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
-import { GesturePath, State } from '../@types'
 
 interface NewThoughtInstructionsProps {
   childrenLength: number

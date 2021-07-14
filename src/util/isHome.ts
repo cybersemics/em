@@ -1,5 +1,5 @@
-import { HOME_TOKEN } from '../constants'
 import { Child, ThoughtContext } from '../@types'
+import { HOME_TOKEN } from '../constants'
 
 /** Returns true if the thoughts or path is the home context. */
 export const isHome = (thoughts: (string | Child | ThoughtContext)[]): boolean => {

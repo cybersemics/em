@@ -1,6 +1,6 @@
+import { Path, State } from '../@types'
 import { alert, moveThought } from '../reducers'
 import { getRankAfter, hasChild, rootedParentOf, simplifyPath } from '../selectors'
-import { Path, State } from '../@types'
 import { ellipsize, head, headValue, isEM, isRoot, parentOf, pathToContext, unroot } from '../util'
 
 /** Decreases the indent level of the given thought, moving it to its parent. */

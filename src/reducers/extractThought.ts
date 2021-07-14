@@ -1,10 +1,10 @@
 import _ from 'lodash'
+import { State } from '../@types'
+import { rootedParentOf, simplifyPath } from '../selectors'
 import { headRank, headValue, pathToContext, reducerFlow } from '../util'
+import alert from './alert'
 import editThought from './editThought'
 import newThought from './newThought'
-import { rootedParentOf, simplifyPath } from '../selectors'
-import alert from './alert'
-import { State } from '../@types'
 
 /** Extract the selection as child thought. */
 const extractThought = (state: State) => {

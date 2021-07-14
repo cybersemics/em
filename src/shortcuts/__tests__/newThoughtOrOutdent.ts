@@ -1,11 +1,11 @@
+import { importText } from '../../action-creators'
 import { HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors'
-import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import newSubthought from '../newSubthought'
-import newThoughtOrOutdent from '../newThoughtOrOutdent'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import newSubthought from '../newSubthought'
+import newThoughtOrOutdent from '../newThoughtOrOutdent'
 
 it('empty thought should outdent when hit enter', () => {
   const store = createTestStore()

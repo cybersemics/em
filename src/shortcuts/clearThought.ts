@@ -1,6 +1,6 @@
-import { isDocumentEditable, setSelection } from '../util'
-import { REGEXP_TAGS } from '../constants'
 import { Shortcut } from '../@types'
+import { REGEXP_TAGS } from '../constants'
+import { isDocumentEditable, setSelection } from '../util'
 
 const clearThoughtShortcut: Shortcut = {
   id: 'clearThought',

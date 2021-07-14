@@ -1,8 +1,8 @@
+import classNames from 'classnames'
 import React from 'react'
 import { connect } from 'react-redux'
-import classNames from 'classnames'
-import { equalPath } from '../util'
 import { SimplePath, State } from '../@types'
+import { equalPath } from '../util'
 
 interface BulletCursorOverlayProps {
   isDragging?: boolean

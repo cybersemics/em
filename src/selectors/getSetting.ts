@@ -1,8 +1,8 @@
+import { Context, State } from '../@types'
 import { EM_TOKEN } from '../constants'
+import { getChildrenRanked } from '../selectors'
 import { isFunction } from '../util'
 import { keyValueBy } from '../util/keyValueBy'
-import { getChildrenRanked } from '../selectors'
-import { Context, State } from '../@types'
 import { storage } from '../util/storage'
 
 /** Cache localStorage settings. */

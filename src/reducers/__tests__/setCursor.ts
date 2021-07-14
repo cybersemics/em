@@ -1,7 +1,6 @@
 // TODO: Why does util have to be imported before selectors and reducers?
-import { initialState, reducerFlow } from '../../util'
-
 import { importText, setCursor, toggleContextView } from '../../reducers'
+import { initialState, reducerFlow } from '../../util'
 
 it('set the cursor to a SimplePath', () => {
   const text = `

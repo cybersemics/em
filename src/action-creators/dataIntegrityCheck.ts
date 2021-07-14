@@ -1,6 +1,16 @@
 import _ from 'lodash'
 import { Thunk, Path, ThoughtContext } from '../@types'
-
+// selectors
+import {
+  getAllChildren,
+  getChildrenRanked,
+  getLexeme,
+  getSetting,
+  hasLexeme,
+  rootedParentOf,
+  simplifyPath,
+  splitChain,
+} from '../selectors'
 // util
 import {
   parentOf,
@@ -16,18 +26,6 @@ import {
   timestamp,
   unroot,
 } from '../util'
-
-// selectors
-import {
-  getAllChildren,
-  getChildrenRanked,
-  getLexeme,
-  getSetting,
-  hasLexeme,
-  rootedParentOf,
-  simplifyPath,
-  splitChain,
-} from '../selectors'
 
 const disableAll = true
 const deleteDuplicateContextIndex = true

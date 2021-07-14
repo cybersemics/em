@@ -1,4 +1,5 @@
 import { Browser, Element } from 'webdriverio'
+
 interface WaitForElementOptions {
   timeout?: number
 }

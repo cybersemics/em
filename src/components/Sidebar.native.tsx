@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-
-import React from 'react'
-import { useSelector } from 'react-redux'
 import _ from 'lodash'
-import { findTreeDescendants } from '../util/recentlyEditedTree'
+import React from 'react'
 // import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 import { View, StyleSheet } from 'react-native'
-import { Text } from './Text.native'
+import { useSelector } from 'react-redux'
 import { State } from '../@types'
+import { findTreeDescendants } from '../util/recentlyEditedTree'
+import { Text } from './Text.native'
 
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {

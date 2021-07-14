@@ -1,8 +1,8 @@
 import React, { FC } from 'react'
+import Svg, { Path, Polygon } from 'react-native-svg'
 // import { connect } from 'react-redux'
 // import { theme } from '../selectors'
 import { Index } from '../@types'
-import Svg, { Path, Polygon } from 'react-native-svg'
 
 interface SearchIconProps {
   dark?: boolean

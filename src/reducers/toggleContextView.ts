@@ -1,10 +1,10 @@
 import * as immer from 'immer'
+import { Context, State } from '../@types'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
+import globals from '../globals'
 import { settings } from '../reducers'
 import { expandThoughts, getContexts, getSetting } from '../selectors'
 import { hashContext, headValue, pathToContext, reducerFlow } from '../util'
-import { Context, State } from '../@types'
-import globals from '../globals'
 
 /** Returns a new contextViews object with the given context toggled to the opposite of its previous value. */
 const toggleContext = (state: State, context: Context) =>

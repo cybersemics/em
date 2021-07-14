@@ -1,8 +1,8 @@
 import React from 'react'
-import { showModal } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
 // import { isTouch } from '../browser'
 import Svg, { G, Path } from 'react-native-svg'
+import { Icon as IconType, Shortcut } from '../@types'
+import { showModal } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

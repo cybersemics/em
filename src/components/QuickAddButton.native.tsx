@@ -1,9 +1,9 @@
 import React from 'react'
-import AddIcon from './AddIcon'
-import { useDispatch } from 'react-redux'
-import { toggleAbsoluteContext } from '../action-creators'
 // import { isAbsolute } from '../util'
 import { TouchableOpacity } from 'react-native'
+import { useDispatch } from 'react-redux'
+import { toggleAbsoluteContext } from '../action-creators'
+import AddIcon from './AddIcon'
 
 /**
  * Quick Add Button.

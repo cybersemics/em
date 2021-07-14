@@ -1,6 +1,6 @@
-import { getUserRef } from '../util'
-import { authenticate, error, status } from '../action-creators'
 import { Firebase, Thunk } from '../@types'
+import { authenticate, error, status } from '../action-creators'
+import { getUserRef } from '../util'
 import { storage } from '../util/storage'
 
 /** Updates local state with newly authenticated user. */

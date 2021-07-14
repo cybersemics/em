@@ -1,7 +1,7 @@
+import { Firebase, Parent, State, Thunk } from '../@types'
+import { loadRemoteState } from '../action-creators'
 import { HOME_TOKEN } from '../constants'
 import { hashContext, hashThought, owner } from '../util'
-import { loadRemoteState } from '../action-creators'
-import { Firebase, Parent, State, Thunk } from '../@types'
 
 /**
  * Loads a public context when the url contains a userId of a different user.

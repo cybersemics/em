@@ -1,6 +1,6 @@
 import { Dispatch } from 'react'
-import UndoIcon from '../components/UndoIcon'
 import { Shortcut } from '../@types'
+import UndoIcon from '../components/UndoIcon'
 import { isUndoEnabled } from '../selectors/isUndoEnabled'
 
 interface UndoAction {

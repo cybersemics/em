@@ -1,8 +1,7 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { cursorPrev } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
-
+import { cursorPrev } from '../action-creators'
 // import directly since util/index is not loaded yet when shortcut is initialized
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
 

@@ -1,6 +1,6 @@
+import { Thunk } from '../@types'
 import { fontSize as setFontSize } from '../action-creators'
 import { FONT_SCALE_INCREMENT, MAX_FONT_SIZE, MIN_FONT_SIZE } from '../constants'
-import { Thunk } from '../@types'
 
 /** Increases the font size. */
 export const scaleFontUp = (): Thunk => (dispatch, getState) => {

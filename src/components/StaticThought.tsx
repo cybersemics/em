@@ -1,10 +1,9 @@
 import React from 'react'
-import { isTouch } from '../browser'
-import { store } from '../store'
-import { rootedParentOf } from '../selectors'
 import { expandContextThought } from '../action-creators'
+import { isTouch } from '../browser'
+import { rootedParentOf } from '../selectors'
+import { store } from '../store'
 import { headValue, isDivider, isDocumentEditable } from '../util'
-
 // components
 import BulletCursorOverlay from './BulletCursorOverlay'
 import ContextBreadcrumbs from './ContextBreadcrumbs'

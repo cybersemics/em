@@ -1,4 +1,13 @@
+import { Child, Context, Path, State } from '../@types'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
+import {
+  getContexts,
+  getContextsSortedAndRanked,
+  getLexeme,
+  getChildrenRanked,
+  isContextViewActive,
+  splitChain,
+} from '../selectors'
 import {
   contextChainToPath,
   equalArrays,
@@ -9,15 +18,6 @@ import {
   pathToContext,
   unroot,
 } from '../util'
-import {
-  getContexts,
-  getContextsSortedAndRanked,
-  getLexeme,
-  getChildrenRanked,
-  isContextViewActive,
-  splitChain,
-} from '../selectors'
-import { Child, Context, Path, State } from '../@types'
 import getRootPath from './getRootPath'
 
 /** Ranks the thoughts from their rank in their context. */

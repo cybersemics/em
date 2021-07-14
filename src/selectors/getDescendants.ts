@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { head, pathToContext, unroot } from '../util'
-import { getChildrenRanked } from '../selectors'
 import { Child, Context, SimplePath, State } from '../@types'
+import { getChildrenRanked } from '../selectors'
+import { head, pathToContext, unroot } from '../util'
 
 interface Options {
   recur?: boolean

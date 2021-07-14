@@ -1,9 +1,9 @@
 import React from 'react'
+import { Icon as IconType, Shortcut } from '../@types'
+import { toggleAttribute } from '../action-creators'
+import { HOME_PATH } from '../constants'
 import { attributeEquals, simplifyPath } from '../selectors'
 import { pathToContext } from '../util'
-import { toggleAttribute } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
-import { HOME_PATH } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }: IconType) => (

@@ -1,5 +1,5 @@
-import React, { FC, useEffect } from 'react'
 import lifecycle from 'page-lifecycle'
+import React, { FC, useEffect } from 'react'
 import globals from '../globals'
 
 /** Turns off touching when app becomes hidden. */

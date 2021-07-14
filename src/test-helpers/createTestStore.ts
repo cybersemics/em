@@ -1,12 +1,12 @@
 import { applyMiddleware, compose, createStore, Store } from 'redux'
 import thunk from 'redux-thunk'
-import multi from '../redux-middleware/multi'
-import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { importText } from '../action-creators'
-import appReducer from '../reducers/app'
-import { never } from '../util'
-import undoRedoReducerEnhancer from '../redux-enhancers/undoRedoReducerEnhancer'
 import { State } from '../@types'
+import { importText } from '../action-creators'
+import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
+import appReducer from '../reducers/app'
+import undoRedoReducerEnhancer from '../redux-enhancers/undoRedoReducerEnhancer'
+import multi from '../redux-middleware/multi'
+import { never } from '../util'
 
 /**
  * Returns new store for test.

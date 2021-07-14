@@ -1,7 +1,7 @@
 import React from 'react'
 import { Icon as IconType, Shortcut } from '../@types'
-import { isDocumentEditable } from '../util'
 import { indent } from '../action-creators'
+import { isDocumentEditable } from '../util'
 import moveCursorForward from './moveCursorForward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

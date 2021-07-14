@@ -1,13 +1,12 @@
-import React from 'react'
-import { ancestors, isRoot, strip } from '../util'
-import { Child, Index, SimplePath } from '../@types'
 import classNames from 'classnames'
-
+import React from 'react'
+import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { Child, Index, SimplePath } from '../@types'
+import { ancestors, isRoot, strip } from '../util'
 // components
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
 
 export interface ContextBreadcrumbProps {
   homeContext?: boolean

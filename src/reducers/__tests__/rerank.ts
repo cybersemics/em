@@ -1,7 +1,7 @@
-import { initialState, reducerFlow } from '../../util'
-import { cursorDown, deleteThoughtWithCursor, moveThought, newThought, rerank } from '../../reducers'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import { cursorDown, deleteThoughtWithCursor, moveThought, newThought, rerank } from '../../reducers'
 import { getChildrenRanked } from '../../selectors'
+import { initialState, reducerFlow } from '../../util'
 
 it('recalculate absolute ranks while preserving relative order to avoid rank precision errors', () => {
   // add two thoughts normally then use insertBefore to cut the rank in half

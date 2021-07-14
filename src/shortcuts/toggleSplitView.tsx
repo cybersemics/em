@@ -1,6 +1,6 @@
 import React from 'react'
-import { toggleSplitView } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
+import { toggleSplitView } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => (

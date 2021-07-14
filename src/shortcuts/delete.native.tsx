@@ -1,12 +1,12 @@
 import React from 'react'
+import { Alert } from 'react-native'
+import Svg, { G, Path } from 'react-native-svg'
 // import { Key } from 'ts-key-enum'
 // import { isTouch } from '../browser'
 // import { hasChild } from '../selectors'
 // import { asyncFocus, ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
 // import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
-import Svg, { G, Path } from 'react-native-svg'
-import { Alert } from 'react-native'
 
 // let undoArchiveTimer: number // eslint-disable-line fp/no-let
 

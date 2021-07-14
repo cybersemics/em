@@ -1,8 +1,8 @@
-import { HOME_PATH } from '../constants'
-import { isRoot, pathToContext } from '../util'
-import { importText, setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getAllChildren } from '../selectors'
 import { Thunk } from '../@types'
+import { importText, setCursor } from '../action-creators'
+import { HOME_PATH } from '../constants'
+import { decodeThoughtsUrl, getAllChildren } from '../selectors'
+import { isRoot, pathToContext } from '../util'
 
 interface Options {
   skipRoot?: boolean

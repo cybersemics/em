@@ -1,11 +1,10 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-
+import { initialState, reducerFlow } from '../../util'
+import moveThoughtUp from '../moveThoughtUp'
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import moveThoughtUp from '../moveThoughtUp'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
 

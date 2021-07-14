@@ -8,22 +8,20 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { shortcutById } from '../shortcuts'
-import { isTouch } from '../browser'
-import { store } from '../store'
+import { Icon, State, Timer } from '../@types'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
+import { isTouch } from '../browser'
 import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { subtree, theme } from '../selectors'
-import { Icon, State, Timer } from '../@types'
-
+import { shortcutById } from '../shortcuts'
+import { store } from '../store'
+import Shortcut from './Shortcut'
 // components
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
-import Shortcut from './Shortcut'
 
 const ARROW_SCROLL_BUFFER = 20
 

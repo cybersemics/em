@@ -1,7 +1,7 @@
+import { Thunk, Path, SimplePath } from '../@types'
 import { error, loadFromUrl, newThought, setResourceCache as setResourceCacheActionCreator } from '../action-creators'
 import { attribute, getChildren, getChildrenRanked, simplifyPath } from '../selectors'
 import { pathToContext } from '../util'
-import { Thunk, Path, SimplePath } from '../@types'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
 const loadResource =

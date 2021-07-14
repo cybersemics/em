@@ -1,5 +1,7 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
+import { Child, Context, ContextHash, Index, State, ThoughtContext } from '../@types'
+import { pull } from '../action-creators'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import {
   decodeContextUrl,
@@ -10,8 +12,6 @@ import {
   isContextViewActive,
 } from '../selectors'
 import { equalArrays, hashContext, head, keyValueBy, pathToContext, unroot } from '../util'
-import { pull } from '../action-creators'
-import { Child, Context, ContextHash, Index, State, ThoughtContext } from '../@types'
 
 /** Debounce visible thought checks to avoid checking on every action. */
 const updatePullQueueDelay = 10
