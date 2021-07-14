@@ -11,15 +11,10 @@ Test:
 import React, { useCallback } from 'react'
 import { FlatList, ListRenderItem, TouchableOpacity, View, StyleSheet, GestureResponderEvent } from 'react-native'
 import { Icon } from '../@types'
-// import { store } from '../store'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
 import HamburgerMenu from './HamburgerMenu'
-
-//
-
-import { store } from '../store'
 
 /** Toolbar component mobile. */
 const Toolbar = (

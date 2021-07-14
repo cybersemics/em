@@ -8,7 +8,6 @@ const puppeteer = require('puppeteer')
 
 /** Puppeteer Environment for jest. */
 class PuppeteerEnvironment extends JsDomEnvironment {
-  browser
   constructor(config) {
     super(config)
   }

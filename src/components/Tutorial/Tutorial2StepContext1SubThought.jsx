@@ -1,5 +1,4 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
 import { isMac, isTouch } from '../../browser'
 import {
   TUTORIAL_CONTEXT,
@@ -8,9 +7,9 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-import { headValue } from '../../util'
 import { getChildrenRanked } from '../../selectors'
-
+import { store } from '../../store'
+import { headValue } from '../../util'
 import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
 
