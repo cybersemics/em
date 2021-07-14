@@ -16,10 +16,9 @@ export const commonStyles = StyleSheet.create({
   directionRow: { flexDirection: 'row' },
   directionColumn: { flexDirection: 'column' },
   directionColumnReverse: { flexDirection: 'column-reverse' },
-  centerText: { textAlign: 'center' },
   alarmText: { color: 'red', fontWeight: 'bold' },
   fullHeight: { height: '100%' },
-  fullWidth: { minWidth: '100%' },
+  fullWidth: { width: '100%' },
   absolute: { position: 'absolute' },
   spaceEvenly: { justifyContent: 'space-evenly' },
   spaceBetween: { justifyContent: 'space-between' },
@@ -45,6 +44,7 @@ export const commonStyles = StyleSheet.create({
   lightblueText: { color: 'lightblue' },
   whiteText: { color: 'white' },
   charcoalTextColor: { color: '#3F3F3f' },
+  crimsonText: { color: 'crimson' },
   blackTextColor: { color: 'black' },
   headerText: {
     fontSize: 20,
@@ -82,6 +82,8 @@ export const commonStyles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 10,
   },
+  centerText: { textAlign: 'center' },
+  underlineText: { textDecorationLine: 'underline' },
 
   // margin, padding
   noPadding: { padding: 0 },
@@ -101,8 +103,20 @@ export const commonStyles = StyleSheet.create({
   containerPadding: { paddingVertical: 20, paddingHorizontal: 15 },
 
   // other (shadows, background colors, etc...)
+  textInput: {
+    padding: 15,
+    borderColor: 'white',
+    borderWidth: 1,
+    width: '80%',
+    alignSelf: 'center',
+    margin: 5,
+    opacity: 0.5,
+    borderRadius: 8,
+    color: 'white',
+  },
   hidden: { display: 'none' },
   noOpacity: { opacity: 0 },
+  halfOpacity: { opacity: 0.5 },
   whiteBackground: { backgroundColor: 'white' },
   darkBackground: { backgroundColor: '#000' },
   shadow: {
