@@ -9,12 +9,12 @@ import { Text } from './Text.native'
 /** A fallback component for a global error boundary that the main App component is wrapped in. */
 const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStack?: any }) => (
   <View style={styles.container}>
-    <Text style={styles.text}>Oops, there was an error.</Text>
+    <Text>Oops, there was an error.</Text>
     <View>
       {error && <Text>{error.message}</Text>}
-      <Text style={styles.text}>{componentStack}</Text>
+      <Text>{componentStack}</Text>
       <TouchableOpacity onPress={() => Updates.reloadAsync()}>
-        <Text style={styles.text}>Refresh</Text>
+        <Text>Refresh</Text>
       </TouchableOpacity>
     </View>
   </View>
@@ -32,7 +32,6 @@ const ErrorBoundaryContainer: FC = ({ children }) => (
 
 const styles = StyleSheet.create({
   container: { margin: 50 },
-  text: { color: 'white' },
 })
 
 export default ErrorBoundaryContainer
