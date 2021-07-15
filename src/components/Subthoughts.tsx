@@ -117,7 +117,7 @@ const findFirstEnvContextWithZoom = (
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: SubthoughtsProps) => {
-  const { cursor, dataNonce, showHiddenThoughts, rootContext, expandedBottom, expandHoverTopPath } = state
+  const { cursor, showHiddenThoughts, rootContext, expandedBottom, expandHoverTopPath } = state
 
   const isAbsoluteContext = isAbsolute(rootContext)
 
@@ -193,7 +193,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   return {
     contextBinding,
-    dataNonce,
     distance,
     env,
     isEditingAncestor: isEditingPath && !isEditing,
