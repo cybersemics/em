@@ -10,7 +10,7 @@ const resolve = (state: State, childPath: SimplePath, parentThoughtsResolved?: P
     // slow, but ensures appendChildPath doesn't get memoized when context view changes
     parentThoughtsResolved ? isContextViewActive(state, pathToContext(parentThoughtsResolved)) : '',
     resolvePath(childPath),
-    resolvePath(parentThoughtsResolved || []),
+    resolvePath(parentThoughtsResolved || ([] as unknown as SimplePath)),
   ])
 
 /** Appends the head of a child SimplePath to a parent Path. In case of parent with active context view it appends head of the parent of the childPath.

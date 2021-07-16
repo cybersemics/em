@@ -54,7 +54,6 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
         - b
         - c`,
     }),
-    { type: 'cursorDown' },
     { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },

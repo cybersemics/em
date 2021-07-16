@@ -10,6 +10,7 @@ import {
 } from '../selectors'
 import { Child, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
+  appendToPath,
   equalArrays,
   equalThoughtRanked,
   hashContext,
@@ -70,7 +71,7 @@ function expandThoughts(
   path: Path | null,
   options?: { returnContexts?: boolean },
 ): Index<Path | Context> {
-  const firstVisibleThoughtPath = path && path.slice(0, -MAX_DISTANCE_FROM_CURSOR)
+  const firstVisibleThoughtPath = path && (path.slice(0, -MAX_DISTANCE_FROM_CURSOR) as Path)
   const expansionBasePath =
     firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
 
@@ -164,7 +165,8 @@ function expandThoughtsRecursive(
       : visibleChildren.filter(child => {
           const value = childValue(child, showContexts)
 
-          const childPath = [...(path || []), { ...child, value }]
+          const childNew = { ...child, value }
+          const childPath = path ? appendToPath(path, childNew) : ([childNew] as Path)
 
           const childContext = unroot(pathToContext(childPath))
 

@@ -1,9 +1,19 @@
 import _ from 'lodash'
 import { cursorBack, deleteThought, setCursor } from '../reducers'
-import { Child, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { Child, Path, State, ThoughtContext } from '../@types'
 
 // util
-import { parentOf, head, headValue, pathToContext, once, reducerFlow, unroot, getTextContentFromHTML } from '../util'
+import {
+  appendToPath,
+  parentOf,
+  head,
+  headValue,
+  pathToContext,
+  once,
+  reducerFlow,
+  unroot,
+  getTextContentFromHTML,
+} from '../util'
 
 // selectors
 import {
@@ -95,14 +105,14 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       return setCursorOrBack.apply(
         null,
         prev
-          ? [unroot(parentOf(path).concat(prev) as SimplePath), { offset: prev.value.length }]
+          ? [appendToPath(parentOf(path), prev), { offset: prev.value.length }]
           : // Case II: set cursor on next thought
           next()
           ? [
               unroot(
                 showContexts
-                  ? parentOf(path).concat({ value: head((next() as ThoughtContext).context), rank: next().rank })
-                  : parentOf(path).concat(next() as Child),
+                  ? appendToPath(parentOf(path), { value: head((next() as ThoughtContext).context), rank: next().rank })
+                  : appendToPath(parentOf(path), next() as Child),
               ),
               { offset: 0 },
             ]

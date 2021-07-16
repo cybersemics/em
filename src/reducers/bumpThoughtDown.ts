@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
 import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
-import { parentOf, headValue, pathToContext, reducerFlow, unroot } from '../util'
+import { appendToPath, parentOf, headValue, pathToContext, reducerFlow } from '../util'
 import { Path, SimplePath, State } from '../@types'
 
 /** Clears a thought's text, moving it to its first child. */
@@ -21,15 +21,15 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   // TODO: Resolve simplePath to make it work within the context view
   // Cannot do this without the contextChain
   // Need to store the full simplePath of each simplePath segment in the simplePath
-  const parentPath = unroot(parentOf(simplePath))
+  const parentPath = parentOf(simplePath)
 
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
-  const simplePathWithNewRank: SimplePath = [
-    ...parentPath,
-    { value, rank: getRankBefore(state, simplePath) },
-  ] as SimplePath
-  const simplePathWithNewRankAndValue: Path = [...parentPath, { value: '', rank: getRankBefore(state, simplePath) }]
+  const simplePathWithNewRank: SimplePath = appendToPath(parentPath, { value, rank: getRankBefore(state, simplePath) })
+  const simplePathWithNewRankAndValue: Path = appendToPath(parentPath, {
+    value: '',
+    rank: getRankBefore(state, simplePath),
+  })
 
   return reducerFlow([
     // modify the rank to get the thought to re-render (via the Subthoughts child key)

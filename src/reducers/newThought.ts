@@ -20,6 +20,7 @@ import {
 
 // util
 import {
+  appendToPath,
   createId,
   ellipsize,
   getTextContentFromHTML,
@@ -119,7 +120,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
   const getLastSortedChildPath = once((): SimplePath | null => {
     const lastChild = _.last(getChildrenSorted(state, thoughts))
-    return lastChild ? ([...simplePath, lastChild] as SimplePath) : null
+    return lastChild ? appendToPath(simplePath, lastChild) : null
   })
 
   // use the live-edited value

@@ -1,6 +1,6 @@
 import { TUTORIAL_STEP_START } from '../constants'
 import { firstVisibleChild, getSetting } from '../selectors'
-import { pathToContext } from '../util'
+import { appendToPath, pathToContext } from '../util'
 import { newThought } from '../reducers'
 import { State } from '../@types'
 
@@ -23,7 +23,7 @@ const newGrandChild = (state: State) => {
   // stop if there is no visible children
   if (!firstChild) return state
 
-  return newThought(state, { insertNewSubthought: true, at: cursor.concat(firstChild) })
+  return newThought(state, { insertNewSubthought: true, at: appendToPath(cursor, firstChild) })
 }
 
 export default newGrandChild

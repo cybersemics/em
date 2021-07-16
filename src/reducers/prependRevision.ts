@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { newThought } from '../reducers'
 import { getAllChildren } from '../selectors'
-import { concatMany, concatOne, getPublishUrl, pathToContext, reducerFlow, unroot } from '../util'
+import { appendToPath, concatOne, getPublishUrl, pathToContext, reducerFlow, unroot } from '../util'
 import { Child, Path, State } from '../@types'
 
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */
@@ -34,7 +34,7 @@ const prependRevision = (state: State, { path, cid }: { path: Path; cid: string 
     state =>
       !revisionsChild(state)
         ? newThought(state, {
-            at: concatOne(path, publishChild(state) as Child),
+            at: appendToPath(path, publishChild(state)!),
             insertNewSubthought: true,
             insertBefore: true,
             value: 'Revisions',
@@ -44,7 +44,7 @@ const prependRevision = (state: State, { path, cid }: { path: Path; cid: string 
 
     // insert revision url
     newThought({
-      at: concatMany(path, [publishChild(state) as Child, revisionsChild(state) as Child]),
+      at: appendToPath(path, publishChild(state) as Child, revisionsChild(state) as Child),
       insertNewSubthought: true,
       insertBefore: true,
       value: getPublishUrl(cid),

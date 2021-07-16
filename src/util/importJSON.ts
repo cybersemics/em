@@ -2,9 +2,8 @@ import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
 import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, State, Timestamp, ThoughtIndices } from '../@types'
-
-// util
 import {
+  appendToPath,
   createId,
   equalThoughtRanked,
   hashContext,
@@ -270,7 +269,7 @@ export const importJSON = (
   const lastChildIndex = (parent?.children.length || 0) + blocksNormalized.length - 1
   const importContextEncoded = hashContext(pathToContext(importPath))
   const lastChildFirstLevel = contextIndex[importContextEncoded]?.children[lastChildIndex]
-  const lastImported = unroot([...importPath, lastChildFirstLevel])
+  const lastImported = appendToPath(importPath, lastChildFirstLevel)
 
   return {
     contextIndexUpdates: contextIndex,

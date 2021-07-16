@@ -147,17 +147,19 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
   const isCursorParent =
     isExpandedHoverTopPath ||
-    (distance === 2
-      ? // grandparent
-        equalPath(rootedParentOf(state, parentOf(cursor || [])), path) &&
-        getChildren(state, pathToContext(cursor || [])).length === 0
-      : // parent
-        equalPath(parentOf(cursor || []), path))
+    (!!cursor &&
+      (distance === 2
+        ? // grandparent
+          equalPath(rootedParentOf(state, parentOf(cursor)), path) &&
+          getChildren(state, pathToContext(cursor)).length === 0
+        : // parent
+          equalPath(parentOf(cursor), path)))
 
   const contextBinding = parseJsonSafe(attribute(state, contextLive, '=bindContext') ?? '') as SimplePath | undefined
 
   // Note: An active expand hover top thought cannot be a cusor's grandparent as it is already treated as cursor's parent.
-  const isCursorGrandparent = !isExpandedHoverTopPath && equalPath(rootedParentOf(state, parentOf(cursor || [])), path)
+  const isCursorGrandparent =
+    !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
   const isExpanded = !!expanded[hashContext(pathToContext(path))]
   const isLeaf = !hasChildren(state, contextLive)
@@ -243,8 +245,6 @@ const ThoughtContainer = ({
   view,
   toggleTopControlsAndBreadcrumbs,
 }: ConnectedDraggableThoughtContainerProps) => {
-  cursor = cursor || []
-
   const state = store.getState()
 
   useEffect(() => {

@@ -3,6 +3,7 @@
 export { addContext } from './addContext'
 export { addEmojiSpace } from './addEmojiSpace'
 export { ancestors } from './ancestors'
+export { appendToPath } from './appendToPath'
 export { asyncFocus } from './asyncFocus'
 export { checkIfPathShareSubcontext } from './checkIfPathShareSubcontext'
 export { clearSelection } from './clearSelection'

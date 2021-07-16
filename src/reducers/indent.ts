@@ -1,9 +1,7 @@
 import { alert, moveThought } from '../reducers'
 import { getNextRank, hasChild, rootedParentOf, prevSibling } from '../selectors'
 import { State } from '../@types'
-
-// util
-import { ellipsize, head, headRank, headValue, isEM, isRoot, parentOf, pathToContext } from '../util'
+import { appendToPath, ellipsize, head, headRank, headValue, isEM, isRoot, parentOf, pathToContext } from '../util'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
 const indent = (state: State) => {
@@ -35,14 +33,10 @@ const indent = (state: State) => {
   // store selection offset before moveThought is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const cursorNew = [
-    ...parentOf(cursor),
-    prev,
-    {
-      ...head(cursor),
-      rank: getNextRank(state, pathToContext(parentOf(cursor).concat(prev))),
-    },
-  ]
+  const cursorNew = appendToPath(parentOf(cursor), prev, {
+    ...head(cursor),
+    rank: getNextRank(state, pathToContext(appendToPath(parentOf(cursor), prev))),
+  })
 
   return moveThought(state, {
     oldPath: cursor,
