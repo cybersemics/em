@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { EM_TOKEN } from '../constants'
-import { isFunction } from '../util'
+import { appendToPath, isFunction } from '../util'
 import { editThought } from '../reducers'
 import { getChildrenRanked, rankThoughtsFirstMatch } from '../selectors'
 import { SimplePath, State } from '../@types'
@@ -17,13 +17,10 @@ const settings = (state: State, { key, value }: { key: string; value: string }) 
     return state
   }
 
-  const simplePath = [
-    ...rankThoughtsFirstMatch(state, context),
-    {
-      ...oldThoughtRanked,
-      value: newValue,
-    },
-  ] as SimplePath
+  const simplePath = appendToPath(rankThoughtsFirstMatch(state, context) as SimplePath, {
+    ...oldThoughtRanked,
+    value: newValue,
+  })
 
   return editThought(state, {
     context,

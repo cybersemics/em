@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../constants'
 import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
-import { parentOf, pathToContext } from '../util'
+import { appendToPath, parentOf, pathToContext } from '../util'
 import { Thunk } from '../@types'
 
 // must be imported after util (???)
@@ -23,7 +23,7 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
   const next = getThoughtAfter(state, simplifyPath(state, cursor))
   if (!next) return
 
-  const path = parentOf(cursor).concat(next)
+  const path = appendToPath(parentOf(cursor), next)
 
   const isCursorPinned =
     attributeEquals(state, pathToContext(path), '=pin', 'true') ||

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
-import { parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
+import { appendToPath, parentOf, headRank, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { editableRender, editThought, moveThought, newThought } from '../reducers'
 import { Path, SplitResult, State } from '../@types'
@@ -24,7 +24,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   const valueLeft = strip(splitResult.left, { preserveFormatting: true })
   const valueRight = strip(splitResult.right, { preserveFormatting: true })
 
-  const pathLeft = parentOf(path).concat({ value: valueLeft, rank: headRank(path) })
+  const pathLeft = appendToPath(parentOf(path), { value: valueLeft, rank: headRank(path) })
 
   return reducerFlow([
     // set the thought's text to the left of the selection
@@ -46,14 +46,14 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
     // move children
     state => {
       const childNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
-      const pathRight = parentOf(simplePath).concat({ value: valueRight, rank: childNew!.rank })
+      const pathRight = appendToPath(parentOf(simplePath), { value: valueRight, rank: childNew!.rank })
       const children = getChildrenRanked(state, pathToContext(pathLeft))
 
       return reducerFlow(
         children.map(child =>
           moveThought({
-            oldPath: pathLeft.concat(child),
-            newPath: pathRight.concat(child),
+            oldPath: appendToPath(pathLeft, child),
+            newPath: appendToPath(pathRight, child),
           }),
         ),
       )(state)

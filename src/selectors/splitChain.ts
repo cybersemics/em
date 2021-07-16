@@ -16,7 +16,7 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
 
     // push an empty array when we encounter a contextView so that the next thought gets pushed onto a new component of the context chain
     // or if crossing context view boundary, push the SimplePath of the context
-    const showContexts = isContextViewActive(state, pathToContext(path.slice(0, i + 1)))
+    const showContexts = isContextViewActive(state, pathToContext(path.slice(0, i + 1) as Path))
     if (showContexts && i < path.length - 1) {
       const contexts = i > 0 ? getContexts(state, path[i + 1].value) : []
       const matchingContext = contexts.find(cx => cx.id === path[i + 1].id)

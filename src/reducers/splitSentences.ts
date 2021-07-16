@@ -1,10 +1,11 @@
 import _ from 'lodash'
 import {
-  parentOf,
+  appendToPath,
   getTextContentFromHTML,
   head,
   headRank,
   headValue,
+  parentOf,
   pathToContext,
   reducerFlow,
   splitSentence,
@@ -29,7 +30,7 @@ const splitSentences = (state: State) => {
   }
 
   const [firstSentence, ...otherSentences] = sentences
-  const newCursor = parentOf(cursor).concat({ ...head(cursor), value: firstSentence })
+  const newCursor = appendToPath(parentOf(cursor), { ...head(cursor), value: firstSentence })
 
   const reducers = [
     editThought({

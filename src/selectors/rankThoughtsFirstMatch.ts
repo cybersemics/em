@@ -1,5 +1,6 @@
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import {
+  appendToPath,
   contextChainToPath,
   equalArrays,
   equalThoughtRanked,
@@ -73,10 +74,10 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
       id: parent?.id || '',
     }
 
-    pathResult = unroot(pathResult.concat(thoughtRanked))
+    pathResult = appendToPath(pathResult, thoughtRanked)
 
     return thoughtRanked
-  })
+  }) as Path
 }
 
 export default rankThoughtsFirstMatch

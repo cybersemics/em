@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, updateThoughts } from '../reducers'
+import { HOME_PATH } from '../constants'
 import {
   getNextRank,
   getLexeme,
@@ -16,6 +17,7 @@ import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, State, Timesta
 // util
 import {
   addContext,
+  appendToPath,
   equalArrays,
   equalThoughtRanked,
   hashContext,
@@ -155,10 +157,10 @@ const moveThought = (
 
   // if duplicate subthoughts are merged then use rank of the duplicate thought in the new path instead of the newly calculated rank
   const updatedNewPath =
-    shouldUpdateRank && duplicateSubthought ? parentOf(newPath).concat(duplicateSubthought) : newPath
+    shouldUpdateRank && duplicateSubthought ? appendToPath(parentOf(newPath), duplicateSubthought) : newPath
 
   const updatedNewSimplePath =
-    shouldUpdateRank && duplicateSubthought ? parentOf(newSimplePath).concat(duplicateSubthought) : newSimplePath
+    shouldUpdateRank && duplicateSubthought ? appendToPath(parentOf(newSimplePath), duplicateSubthought) : newSimplePath
 
   /** Updates descendants. */
   const recursiveUpdates = (pathOld: Path, pathNew: Path, contextRecursive: Context = []): RecursiveMoveResult => {
@@ -431,7 +433,7 @@ const moveThought = (
   const newCursorPath = isPathInCursor
     ? isCursorAtOldPath
       ? updatedNewPath
-      : getNewPathFromOldContext(simplifyPath(state, state.cursor || []))
+      : getNewPathFromOldContext(simplifyPath(state, state.cursor || HOME_PATH))
     : state.cursor
 
   return reducerFlow([

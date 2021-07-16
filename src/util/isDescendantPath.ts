@@ -6,7 +6,7 @@ export const isDescendantPath = (superset: Path | null, subset: Path | null) => 
   if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
   if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
 
-  return !!superset.find((_, i) => equalPath(superset.slice(0, i + subset.length), subset))
+  return !!superset.find((_, i) => equalPath(superset.slice(0, i + subset.length) as Path, subset))
 }
 
 /** Returns the index of the first element in list that starts with thoughts. */

@@ -41,6 +41,7 @@ import {
 // util
 import {
   addEmojiSpace,
+  appendToPath,
   asyncFocus,
   clearSelection,
   parentOf,
@@ -258,7 +259,8 @@ const Editable = ({
 
     const isEditing = equalPath(cursor, path)
 
-    const pathLive = cursor && isEditing ? parentOf(path).concat(head(showContexts ? parentOf(cursor) : cursor)) : path
+    const pathLive =
+      cursor && isEditing ? appendToPath(parentOf(path), head(showContexts ? parentOf(cursor) : cursor)) : path
 
     dispatch(
       setCursor({

@@ -7,6 +7,7 @@ import { Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } fr
 // util
 import {
   addContext,
+  appendToPath,
   parentOf,
   equalArrays,
   equalThoughtRanked,
@@ -92,7 +93,8 @@ const editThought = (
   const archived = exactThought ? exactThought.archived : null
   const cursorNew =
     cursor &&
-    parentOf(cursor).concat(
+    appendToPath(
+      parentOf(cursor),
       head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
         ? { ...head(cursor), value: newValue }
         : head(cursor),
@@ -242,8 +244,8 @@ const editThought = (
       const hashedKey = hashThought(child.value)
       // use updated thoughtIndex if available
       const childLexeme = updatedAccum[hashedKey]?.lexemeNew || getLexeme(state, child.value)
-      const childOldPath = [...pathOld, child]
-      const childNewPath = [...(pathNew || pathOld), child]
+      const childOldPath = appendToPath(pathOld, child)
+      const childNewPath = appendToPath(pathNew || pathOld, child)
       const childContext = [...context, child.value]
 
       // this should only happen if there is a thoughtIndex integrity violation

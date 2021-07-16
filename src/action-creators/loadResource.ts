@@ -1,7 +1,7 @@
 import { error, loadFromUrl, newThought, setResourceCache as setResourceCacheActionCreator } from '../action-creators'
 import { attribute, getChildren, getChildrenRanked, simplifyPath } from '../selectors'
-import { pathToContext } from '../util'
-import { Thunk, Path, SimplePath } from '../@types'
+import { appendToPath, pathToContext } from '../util'
+import { Thunk, Path } from '../@types'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
 const loadResource =
@@ -22,7 +22,7 @@ const loadResource =
       const simplePath = simplifyPath(state, path)
       const childrenNew = getChildrenRanked(state, pathToContext(simplePath))
       const thoughtNew = childrenNew[childrenNew.length - 1]
-      const newThoughtPath = [...path, thoughtNew] as SimplePath
+      const newThoughtPath = appendToPath(simplePath, thoughtNew)
 
       /** An ad hoc action-creator to dispatch setResourceCacheActionCreator with the given value. */
       const setResourceCache = (value: boolean) =>

@@ -4,6 +4,7 @@ import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@typ
 
 // util
 import {
+  appendToPath,
   ellipsize,
   equalThoughtValue,
   head,
@@ -38,7 +39,7 @@ import { alert, deleteThought, moveThought, newThought, setCursor } from '../red
 export const pathToArchive = (state: State, path: Path, context: Context): Path | null => {
   const rankedArchive = getAllChildren(state, context).find(equalThoughtValue('=archive'))
   if (!rankedArchive) return null
-  const archivePath = rankedArchive ? [...parentOf(path), rankedArchive] : parentOf(path)
+  const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive) : parentOf(path)
   const newRank = getPrevRank(state, pathToContext(archivePath))
   return [...parentOf(path), rankedArchive, { ...head(path), rank: newRank }]
 }
@@ -113,14 +114,14 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const [cursorNew, offset]: [Path | null, number | undefined] =
     // Case I: set cursor on prev thought
     prev
-      ? [parentOf(path).concat(prev), prev.value.length]
+      ? [appendToPath(parentOf(path), prev), prev.value.length]
       : // Case II: set cursor on next thought
       next
       ? [
           unroot(
             showContexts
-              ? parentOf(path).concat({ value: head((next as ThoughtContext).context), rank: next.rank })
-              : parentOf(path).concat(next as Child),
+              ? appendToPath(parentOf(path), { value: head((next as ThoughtContext).context), rank: next.rank })
+              : appendToPath(parentOf(path), next as Child),
           ),
           0,
         ]

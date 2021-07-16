@@ -16,17 +16,17 @@ import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtC
 
 // util
 import {
-  parentOf,
+  appendToPath,
   ellipsize,
   equalArrays,
   equalPath,
   headValue,
+  isDescendantPath,
   isDocumentEditable,
   isEM,
-  pathToContext,
-  isDescendantPath,
   isRoot,
-  unroot,
+  parentOf,
+  pathToContext,
 } from '../util'
 
 // selectors
@@ -144,7 +144,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // drop on itself or after itself is a noop
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
-  const newPath = unroot(parentOf(thoughtsTo)).concat({
+  const newPath = appendToPath(parentOf(thoughtsTo), {
     value: headValue(thoughtsFrom),
     rank: getRankBefore(state, thoughtsTo),
   })

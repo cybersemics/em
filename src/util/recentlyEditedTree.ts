@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { produce } from 'immer'
 import {
+  appendToPath,
   parentOf,
   equalArrays,
   hashThought,
@@ -156,7 +157,7 @@ const nodeChange = (tree: Tree, oldPath: Path, newPath: Path) => {
             _.unset(tree, descendantContext.slice(0, closestAncestor.length + 1))
             descendantReplaced = true
           } else {
-            const updatedDescendantPath = newPath.concat(descendant.path.slice(newPath.length))
+            const updatedDescendantPath = appendToPath(newPath, ...descendant.path.slice(newPath.length))
             const updatedDescendantContext = contextEncode(pathToContext(updatedDescendantPath))
             _.unset(tree, contextEncode(pathToContext(descendant.path)))
             _.set(tree, updatedDescendantContext, { leaf: true, lastUpdated: timestamp(), path: updatedDescendantPath })
@@ -307,7 +308,7 @@ const nodeMove = (tree: Tree, oldPath: Path, newPath: Path) => {
     } else {
       const descendants = findTreeDescendants(tree, { startingPath: oldContext, showHiddenThoughts: true })
       descendants.forEach(descendant => {
-        const updatedNewPath = newPath.concat(descendant.path.slice(oldPath.length))
+        const updatedNewPath = appendToPath(newPath, ...descendant.path.slice(oldPath.length))
         nodeAdd(tree, updatedNewPath)
       })
       nodeDelete(tree, oldPath, false)
