@@ -93,6 +93,8 @@ export const initialState = (created: Timestamp = timestamp()) => {
     expandHoverBottomPaths: {},
     invalidState: false,
     inversePatches: [],
+    invites: [],
+    invite: {},
     isLoading: true,
     isPushing: false,
     latestShortcuts: [],

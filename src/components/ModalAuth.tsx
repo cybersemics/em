@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FC, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { alert, login } from '../action-creators'
+import { alert, login, showModal } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
 import { ActionButton } from './ActionButton'
 import { Index } from '../@types'
@@ -54,11 +54,6 @@ const modes: Index<Mode> = {
     modalKey: 'login',
     modalTitle: 'Log In',
   },
-  signup: {
-    name: 'signup',
-    modalKey: 'signup',
-    modalTitle: 'Sign Up',
-  },
   resetPassword: {
     name: 'resetPassword',
     modalKey: 'resetPassword',
@@ -79,19 +74,6 @@ const ModalAuth = () => {
   const [isSubmitting, updateIsSubmitting] = useState(false)
 
   const dispatch = useDispatch()
-
-  /** Sign up with email and password. */
-  const signUp: SubmitAction = useCallback(async (closeModal, email, password) => {
-    updateIsSubmitting(true)
-    try {
-      await window.firebase.auth().createUserWithEmailAndPassword(email, password!)
-      closeModal()
-      updateIsSubmitting(false)
-    } catch (error) {
-      updateIsSubmitting(false)
-      return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
-    }
-  }, [])
 
   /** Reset password using reset email. */
   const resetPassword: SubmitAction = useCallback(async (closeModal, email) => {
@@ -121,11 +103,7 @@ const ModalAuth = () => {
     }
   }, [])
 
-  const submitAction = isModeActive(modes.login)
-    ? loginWithEmailAndPassword
-    : isModeActive(modes.signup)
-    ? signUp
-    : resetPassword
+  const submitAction = isModeActive(modes.login) ? loginWithEmailAndPassword : resetPassword
 
   /**
    * Reset Email and Password fields.
@@ -155,7 +133,7 @@ const ModalAuth = () => {
   const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
 
   /** Show Sign Up with email and password. */
-  const showSignup = () => updateActiveMode(modes.signup)
+  const showSignup = () => dispatch(showModal({ id: 'signup' }))
 
   /** Show Login with email and password. */
   const showLogin = () => updateActiveMode(modes.login)

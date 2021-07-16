@@ -2,6 +2,7 @@ import { DROP_TARGET } from '../constants'
 import { Alert } from './Alert'
 import { Context } from './Context'
 import { Index } from './IndexType'
+import { InviteCodes } from './InviteCodes'
 import { Patch } from './Patch'
 import { Path } from './Path'
 import { PushBatch } from './PushBatch'
@@ -42,6 +43,9 @@ export interface State {
   hoverId?: DROP_TARGET
   invalidState: boolean
   inversePatches: Patch[]
+  invitationCode?: string | null
+  invite?: InviteCodes
+  invites: InviteCodes[]
   isLoading: boolean
   isPushing?: boolean
   lastUpdated?: string

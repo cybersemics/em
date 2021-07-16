@@ -91,7 +91,7 @@ input[type='text'] {
   padding: 10px;
   font-size: 16px;
   border: solid 1px #ddd;
-  border-radius: 10px;
+  border-radius: 5px;
   margin-bottom: 2vh;
 }
 input:focus {
@@ -3576,3 +3576,42 @@ a.advance-setting-link {
   transform: rotate(45deg);
 }
 /* Custom checkbox style ends */
+
+.modal .modal-wrapper {
+ display: flex;
+ min-height: 100px;
+ flex-direction: column;
+}
+
+.modal .modal-description {
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+.gift-code-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-self: start;
+  margin: 3vh auto;
+  align-items: center;
+  width: 100%;
+}
+
+.gift-code-wrapper svg {
+  cursor: default;
+}
+
+.gift-code-wrapper input {
+  margin: 0 10px;
+  min-width: 180px;
+}
+
+@media only screen and (min-width: 767px) {
+  .gift-code-wrapper {
+    width: 80%;
+  }
+
+  .gift-code-wrapper input {
+    min-width: 300px;
+  }
+}

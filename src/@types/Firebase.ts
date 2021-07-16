@@ -20,6 +20,7 @@ export interface User {
   uid: string
   displayName: string
   email: string
+  invites: Record<string, never>
   // see Firebase user for more properties
 }
 
@@ -27,6 +28,7 @@ export interface Ref {
   child: (name: string) => Ref
   once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>
   on: (eventName: string, callback: (snapshot: Snapshot) => any) => void
+  set: (value: any, onComplete?: (a: Error | null) => any) => Promise<any>
   update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>
 }
 

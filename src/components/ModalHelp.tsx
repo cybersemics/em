@@ -308,6 +308,10 @@ const ModalHelp = ({
           Share icon by <a href='https://thenounproject.com/term/share/1058861/'>Тимур Минвалеев</a> from the{' '}
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Gift icon by <a href='https://thenounproject.com/search/?q=gift&i=2221484'> Sarote Impheng</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
 
       <br />
