@@ -1,8 +1,9 @@
-import React, { ChangeEvent, FC, useCallback, useEffect, useState } from 'react'
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { alert, login, showModal } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
 import { ActionButton } from './ActionButton'
+import Input from './Input'
 import { Index } from '../@types'
 import Modal from './Modal'
 
@@ -19,28 +20,6 @@ const firebaseErrorsIndex = {
 type errorCode = keyof typeof firebaseErrorsIndex
 
 type SubmitAction = (closeModal: () => void, email: string, password?: string) => Promise<void>
-
-interface InputProps {
-  type: 'email' | 'password'
-  placeholder: string
-  onBlur: (e: ChangeEvent<HTMLInputElement>) => void
-  value: string
-}
-/**
- *
- */
-const Input: FC<InputProps> = ({ type, placeholder, value, onBlur }) => {
-  const [inputValue, updateInputValue] = useState(value)
-
-  useEffect(() => {
-    updateInputValue(value)
-  }, [value])
-
-  /** On input change handler. */
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => updateInputValue(e.target.value)
-
-  return <input type={type} placeholder={placeholder} value={inputValue} onChange={onChange} onBlur={onBlur} />
-}
 
 interface Mode {
   name: string
@@ -130,7 +109,9 @@ const ModalAuth = () => {
   const onChangeEmail = (e: ChangeEvent<HTMLInputElement>) => updateEmail(e.target.value)
 
   /** Handle password change. */
-  const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
+  const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => {
+    updatePassword(e.target.value)
+  }
 
   /** Show Sign Up with email and password. */
   const showSignup = () => dispatch(showModal({ id: 'signup' }))
@@ -204,10 +185,10 @@ const ModalAuth = () => {
       )}
     >
       <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-        <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
+        <Input type='email' placeholder='email' value={email} onChange={onChangeEmail} />
 
         {!isModeActive(modes.resetPassword) && (
-          <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
+          <Input type='password' placeholder='password' value={password} onChange={onChangePassword} />
         )}
 
         {isModeActive(modes.login) && (
