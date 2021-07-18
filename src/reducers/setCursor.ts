@@ -40,7 +40,11 @@ const setCursor = (
 ): State => {
   if (path && path.length > 1 && equalThoughtRanked(path[0], HOME_PATH[0])) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
-    console.error(new Error('setCursor: Invalid Path; Non-root Paths should omit ' + HOME_TOKEN))
+    console.error(
+      new Error(
+        `setCursor: Invalid Path ${JSON.stringify(pathToContext(path))}. Non-root Paths should omit ${HOME_TOKEN}`,
+      ),
+    )
     return state
   }
 
@@ -82,8 +86,6 @@ const setCursor = (
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
 
-  const oldCursor = state.cursor || []
-
   /**
    * Detects if any thought has collapsed for TUTORIAL_STEP_AUTOEXPAND.
    * This logic doesn't take invisible meta thoughts, hidden thoughts and pinned thoughts into consideration.
@@ -91,10 +93,12 @@ const setCursor = (
    * @todo Abstract tutorial logic away from setCursor and call only when tutorial is on.
    */
   const hasThoughtCollapsed = () =>
-    !expanded[hashContext(pathToContext(oldCursor))] &&
+    state.cursor &&
+    !expanded[hashContext(pathToContext(state.cursor))] &&
     (getAllChildren(state, context).length > 0 ||
-      (oldCursor.length > (thoughtsResolved || []).length &&
-        !isDescendant(pathToContext(thoughtsResolved || []), context)))
+      (state.cursor.length > (thoughtsResolved || []).length &&
+        thoughtsResolved &&
+        !isDescendant(pathToContext(thoughtsResolved), context)))
 
   const tutorialNext =
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && hasThoughtCollapsed()) ||

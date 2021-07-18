@@ -1,5 +1,6 @@
 import { HOME_TOKEN } from '../constants'
 import {
+  appendToPath,
   getTextContentFromHTML,
   head,
   headRank,
@@ -89,13 +90,10 @@ const deleteEmptyThought = (state: State): State => {
     // only if there is a previous sibling
     if (prev) {
       const valueNew = prev.value + value
-      const pathPrevNew = [
-        ...parentOf(simplePath),
-        {
-          ...prev,
-          value: valueNew,
-        },
-      ]
+      const pathPrevNew = appendToPath(parentOf(simplePath), {
+        ...prev,
+        value: valueNew,
+      })
 
       return reducerFlow([
         // change first thought value to concatenated value
@@ -110,8 +108,11 @@ const deleteEmptyThought = (state: State): State => {
         ...allChildren.map(
           (child, i) => (state: State) =>
             moveThought(state, {
-              oldPath: simplePath.concat(child),
-              newPath: pathPrevNew.concat({ ...child, rank: getNextRank(state, pathToContext(pathPrevNew)) + i }),
+              oldPath: appendToPath(simplePath, child),
+              newPath: appendToPath(pathPrevNew, {
+                ...child,
+                rank: getNextRank(state, pathToContext(pathPrevNew)) + i,
+              }),
             }),
         ),
 

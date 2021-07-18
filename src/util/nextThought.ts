@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ALLOW_SINGLE_CONTEXT, HOME_PATH, HOME_TOKEN } from '../constants'
-import { parentOf, equalArrays, head, pathToContext, once, unroot } from '../util'
+import { appendToPath, parentOf, equalArrays, head, pathToContext, once, unroot } from '../util'
 import {
   firstVisibleChildWithCursorCheck,
   getContexts,
@@ -79,7 +79,7 @@ const getPathFromContextChain = (state: State, contextChain: SimplePath[]): Path
   const contextPath = head(contextChain.slice(0, -1))
   const contextChild = head(contextPath)
   const matchedContextWithRanks = contextWithThoughtRank(state, getMatchedContext(state, contextChild, contextChain)!)
-  return [...(matchedContextWithRanks || []), contextChild, ...head(contextChain).slice(1)]
+  return appendToPath(matchedContextWithRanks || ([] as unknown as Path), contextChild, ...head(contextChain).slice(1))
 }
 
 /**
@@ -156,12 +156,12 @@ const nextInContextView = (
 
     return !ignoreChildren && firstChild()
       ? {
-          nextThoughts: unroot([...path, firstChild()]),
+          nextThoughts: appendToPath(path, firstChild()),
           contextChain: [],
         }
       : nextSibling
       ? {
-          nextThoughts: [...nextSibling, rankedContextHead],
+          nextThoughts: appendToPath(nextSibling, rankedContextHead),
           contextChain: contextChain.slice(0, -1),
         }
       : nextInThoughtView(
@@ -247,14 +247,16 @@ const nextInThoughtView = (
       ? nextUncle()
       : // reached root thought
         {
-          nextThoughts: [],
+          nextThoughts: HOME_PATH,
           contextChain,
         }
   }
 
   /** Gets the next uncle in the Context View. */
   const nextUncleInContextView = () => {
-    const pathToFirstThoughtInContext = parentOf(contextChain.length > 1 ? contextChain.flat() : thoughtViewPath())
+    const pathToFirstThoughtInContext = parentOf(
+      contextChain.length > 1 ? (contextChain.flat() as Path) : thoughtViewPath(),
+    )
     // restricts from working with multilevel context chains
     const rankedContextOfCurrentContext = contextChain[contextChain.length - 2]
     const contextChainTillFirstChildOfContext = [...contextChain.slice(0, -1), [head(contextChain)[0]] as SimplePath]
@@ -274,12 +276,12 @@ const nextInThoughtView = (
   const nextSibling = once(() => thoughtNextSibling(state, value, thoughtViewContext(), rank))
   return firstChild
     ? {
-        nextThoughts: unroot(path.concat(firstChild)),
+        nextThoughts: appendToPath(path, firstChild),
         contextChain: [] as SimplePath[],
       }
     : nextSibling()
     ? {
-        nextThoughts: unroot(parentOf(thoughtViewPath()).concat(nextSibling())),
+        nextThoughts: appendToPath(parentOf(thoughtViewPath()), nextSibling()),
         contextChain: contextChain.slice(0, -1),
       }
     : nextUncleInThoughtView() || nextUncleInContextView()

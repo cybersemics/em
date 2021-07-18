@@ -89,7 +89,6 @@ export const initialState = (created: Timestamp = timestamp()) => {
     cursorHistory: [],
     cursorInitialized: false, // tracks if the cursor has been restored from the url on first load and ensures it only happens once
     cursorOffset: 0,
-    dataNonce: 0, // cheap trick to re-render when thoughtIndex has been updated
     dragInProgress: false,
     editableNonce: 0,
     editing: null,

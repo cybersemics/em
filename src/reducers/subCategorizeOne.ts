@@ -1,9 +1,18 @@
 import { alert, moveThought, createThought, setCursor } from '../reducers'
 import { getRankBefore, hasChild, rootedParentOf, simplifyPath } from '../selectors'
 import { Child, State } from '../@types'
-
-// util
-import { createId, parentOf, ellipsize, head, headValue, isEM, pathToContext, reducerFlow, isRoot } from '../util'
+import {
+  appendToPath,
+  createId,
+  parentOf,
+  ellipsize,
+  head,
+  headValue,
+  isEM,
+  pathToContext,
+  reducerFlow,
+  isRoot,
+} from '../util'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
 const subCategorizeOne = (state: State) => {
@@ -48,14 +57,14 @@ const subCategorizeOne = (state: State) => {
       ...child,
     }),
     setCursor({
-      path: cursorParent.concat(child),
+      path: appendToPath(cursorParent, child),
       offset: 0,
       editing: true,
     }),
     state =>
       moveThought(state, {
         oldPath: cursor,
-        newPath: cursorParent.concat(child, head(cursor)),
+        newPath: appendToPath(cursorParent, child, head(cursor)),
       }),
   ])(state)
 }

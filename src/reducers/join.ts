@@ -1,10 +1,10 @@
 import _ from 'lodash'
 import editThought from './editThought'
 import { getAllChildren, getChildPath, getNextRank, simplifyPath } from '../selectors'
-import { head, parentOf, pathToContext, reducerFlow } from '../util'
+import { appendToPath, head, parentOf, pathToContext, reducerFlow } from '../util'
 import moveThought from './moveThought'
 import deleteThought from './deleteThought'
-import { SimplePath, State } from '../@types'
+import { State } from '../@types'
 
 /** Join two or more thoughts split by spaces. */
 const join = (state: State) => {
@@ -23,13 +23,13 @@ const join = (state: State) => {
 
   const reducers = contextChildren
     .map((sibling, i) => {
-      const pathToSibling = [...parentOf(simplePath), sibling] as SimplePath
+      const pathToSibling = appendToPath(parentOf(simplePath), sibling)
       const siblingContext = [...context, sibling.value]
       const children = getAllChildren(state, siblingContext)
 
       return children.map((child, j) => {
         const oldPath = getChildPath(state, child, pathToSibling)
-        const newPath = [...path, { ...child, rank: (minNextRank += 1) }]
+        const newPath = appendToPath(path, { ...child, rank: (minNextRank += 1) })
         return moveThought({ oldPath, newPath })
       })
     })

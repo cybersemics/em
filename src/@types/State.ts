@@ -24,7 +24,6 @@ export interface State {
   cursorHistory: Path[]
   cursorInitialized: boolean
   cursorOffset: number | null
-  dataNonce: number
   draggedSimplePath?: SimplePath
   draggingThought?: SimplePath
   dragHold?: boolean

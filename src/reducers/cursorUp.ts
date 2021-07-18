@@ -1,7 +1,7 @@
 import { HOME_PATH } from '../constants'
 import { setCursor } from '../reducers'
 import { rootedParentOf, prevSibling } from '../selectors'
-import { parentOf, head, pathToContext, unroot, isRoot } from '../util'
+import { appendToPath, parentOf, head, pathToContext, unroot, isRoot } from '../util'
 import { State } from '../@types'
 
 /** Moves the cursor to the previous sibling. */
@@ -13,7 +13,7 @@ const cursorUp = (state: State) => {
   const context = pathToContext(contextRanked)
 
   const thoughtBefore = prevSibling(state, value, context, rank)
-  const pathBefore = thoughtBefore && unroot(parentOf(path).concat(thoughtBefore))
+  const pathBefore = thoughtBefore && unroot(appendToPath(parentOf(path), thoughtBefore))
   // const prevNieces = thoughtBefore && getChildrenRanked(pathBefore)
   // const prevNiece = prevNieces && prevNieces[prevNieces.length - 1]
 

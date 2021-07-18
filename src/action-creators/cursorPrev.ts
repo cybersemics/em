@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
 import { getThoughtBefore, simplifyPath, getChildrenSorted, attributeEquals } from '../selectors'
-import { parentOf, pathToContext } from '../util'
+import { appendToPath, parentOf, pathToContext } from '../util'
 import { Thunk } from '../@types'
 
 /** Moves the cursor to the previous sibling, ignoring descendants. */
@@ -21,7 +21,7 @@ const cursorPrev = (): Thunk => (dispatch, getState) => {
   const prev = getThoughtBefore(state, simplifyPath(state, cursor))
   if (!prev) return
 
-  const path = [...parentOf(cursor), prev]
+  const path = appendToPath(parentOf(cursor), prev)
 
   const isCursorPinned =
     attributeEquals(state, pathToContext(path), '=pin', 'true') ||

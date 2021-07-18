@@ -13,6 +13,7 @@ import {
   reducerFlow,
   roamJsonToBlocks,
   strip,
+  unroot,
   validateRoam,
 } from '../util'
 import { editThought, setCursor, updateThoughts } from '../reducers'
@@ -151,7 +152,7 @@ const importText = (
       const getLastImportedAfterCollapse = () => {
         const cursorContextHead = lastImportedContext.slice(0, newDestinationPath.length - (destEmpty ? 2 : 1))
         const cursorContextTail = lastImportedContext.slice(newDestinationPath.length)
-        return [...cursorContextHead, ...cursorContextTail]
+        return unroot([...cursorContextHead, ...cursorContextTail])
       }
 
       const newCursor = rankThoughtsFirstMatch(

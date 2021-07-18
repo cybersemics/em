@@ -58,7 +58,7 @@ const hashKeyDown = (e: KeyboardEvent): string =>
   // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
   // e.g. alt + meta + n
   // use e.keyCode if available instead
-  (letters[e.keyCode] || digits[e.keyCode] || e.key).toUpperCase()
+  (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
 
 /** Initializes shortcut indices and stores conflicts. */
 const index = (): {

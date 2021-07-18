@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { head, pathToContext, unroot } from '../util'
+import { appendToPath, head, pathToContext } from '../util'
 import { getChildrenRanked } from '../selectors'
 import { Child, Context, SimplePath, State } from '../@types'
 
@@ -18,7 +18,7 @@ const getDescendants = (state: State, simplePath: SimplePath, { recur, filterFun
   // only append current thought in recursive calls
   return (recur ? [head(simplePath)] : []).concat(
     _.flatMap(filteredChildren, child =>
-      getDescendants(state, unroot([...simplePath, child] as SimplePath), {
+      getDescendants(state, appendToPath(simplePath, child), {
         recur: true,
         filterFunction,
       }),

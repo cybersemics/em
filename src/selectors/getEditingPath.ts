@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { parentOf, head } from '../util'
+import { appendToPath, head, parentOf } from '../util'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import { SimplePath, State } from '../@types'
 
@@ -9,7 +9,7 @@ const resolve = (state: State, simplePath: SimplePath) =>
 
 /** Swaps the head of a path with the cursor head. */
 const getEditingPath = _.memoize(
-  (state: State, simplePath: SimplePath) => [...parentOf(simplePath), head(state.cursor!)] as SimplePath,
+  (state: State, simplePath: SimplePath) => appendToPath(parentOf(simplePath), head(state.cursor!)),
   resolve,
 )
 

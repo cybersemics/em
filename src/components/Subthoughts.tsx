@@ -25,6 +25,7 @@ import {
 
 // util
 import {
+  appendToPath,
   checkIfPathShareSubcontext,
   ellipsize,
   equalArrays,
@@ -117,7 +118,7 @@ const findFirstEnvContextWithZoom = (
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: SubthoughtsProps) => {
-  const { cursor, dataNonce, showHiddenThoughts, rootContext, expandedBottom, expandHoverTopPath } = state
+  const { cursor, showHiddenThoughts, rootContext, expandedBottom, expandHoverTopPath } = state
 
   const isAbsoluteContext = isAbsolute(rootContext)
 
@@ -193,7 +194,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   return {
     contextBinding,
-    dataNonce,
     distance,
     env,
     isEditingAncestor: isEditingPath && !isEditing,
@@ -249,13 +249,10 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const contextTo = pathToContext(thoughtsTo)
   const dropPlacement = attribute(state, contextTo, '=drop') === 'top' ? 'top' : 'bottom'
 
-  const newPath = unroot([
-    ...thoughtsTo,
-    {
-      ...head(thoughtsFrom),
-      rank: dropPlacement === 'top' ? getPrevRank(state, contextTo) : getNextRank(state, contextTo),
-    },
-  ])
+  const newPath = appendToPath(thoughtsTo, {
+    ...head(thoughtsFrom),
+    rank: dropPlacement === 'top' ? getPrevRank(state, contextTo) : getNextRank(state, contextTo),
+  })
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedParentOf(state, pathToContext(thoughtsFrom))
@@ -518,21 +515,22 @@ export const SubthoughtsComponent = ({
 
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
-  const cursorContext = pathToContext(cursor || [])
+  const cursorContext = cursor ? pathToContext(cursor) : null
 
-  const isCursorLeaf = cursor && isLeaf(state, cursorContext)
+  const isCursorLeaf = cursor && isLeaf(state, cursorContext!)
 
   const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
   /** First visible thought at the top. */
-  const firstVisiblePath = cursor?.slice(0, -maxDistance)
+  const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path
 
   const isDescendantOfFirstVisiblePath = isDescendant(
-    pathToContext(firstVisiblePath || []),
+    // TODO: Add support for [ROOT] to isDescendant
+    pathToContext(firstVisiblePath || ([] as unknown as Path)),
     pathToContext(resolvedPath),
   )
 
-  const cursorSubcontextIndex = checkIfPathShareSubcontext(cursor || [], resolvedPath)
+  const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
 
   const isAncestorOfCursor =
     cursor && resolvedPath.length === cursorSubcontextIndex + 1 && cursor?.length > resolvedPath.length
