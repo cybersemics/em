@@ -12,14 +12,14 @@ const getUserInvites =
       const inviteCodes = Object.keys(snapshot.val() || {})
 
       if (inviteCodes.length === 0) {
-        dispatch(userInvites({ invite: {} }))
+        dispatch(userInvites({ userInvite: {} }))
       } else {
         inviteCodes.forEach((inviteCode: string) => {
           const invitesDb = window.firebase.database().ref(`invites/${inviteCode}`)
           invitesDb.once('value', (snapshot: Firebase.Snapshot) => {
             dispatch(
               userInvites({
-                invite: {
+                userInvite: {
                   id: inviteCode,
                   ...snapshot.val(),
                 },

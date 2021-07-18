@@ -46,7 +46,7 @@ const ModalComponent: React.FC<ModalProps> = props => {
   return (
     <Modal animationType='slide' visible={show} onRequestClose={close}>
       <View style={[flexOne, darkBackground, verticalPadding, horizontalPadding]}>
-        {id !== 'welcome' ? (
+        {!['welcome', 'signup', 'auth'].includes(id) ? (
           <Text style={styles.close} onPress={close}>
             ✕
           </Text>

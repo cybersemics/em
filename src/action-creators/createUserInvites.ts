@@ -12,7 +12,7 @@ const createUserInvites =
 
     dispatch(
       userInvites({
-        invite: {
+        userInvite: {
           id: inviteId,
           ...newInviteCode,
         },

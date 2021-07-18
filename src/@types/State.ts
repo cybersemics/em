@@ -44,10 +44,10 @@ export interface State {
   invalidState: boolean
   inversePatches: Patch[]
   invitationCode?: string | null
-  invite?: InviteCodes
-  invites: InviteCodes[]
+  invitationCodeDetail?: InviteCodes
   isLoading: boolean
   isPushing?: boolean
+  isUserLoading?: boolean
   lastUpdated?: string
   modals: Index<{ complete?: boolean }>
   noteFocus: boolean
@@ -77,6 +77,7 @@ export interface State {
   toolbarOverlay?: string | null
   tutorialStep?: number
   user?: User
+  userInvites?: InviteCodes[]
   latestShortcuts: Shortcut[]
   enableLatestShorcutsDiagram: boolean
 }

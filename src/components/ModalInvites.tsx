@@ -14,17 +14,17 @@ import Input from './Input'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { authenticated, user: { uid = '' } = {}, invites } = state
+  const { authenticated, user: { uid = '' } = {}, userInvites } = state
   return {
     dark: theme(state) !== 'Light',
     uid,
     authenticated,
-    invites,
+    userInvites,
   }
 }
 
 /** Modal to get gift codes. */
-const ModalInvites = ({ dark, uid, authenticated, invites }: ReturnType<typeof mapStateToProps>) => {
+const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<typeof mapStateToProps>) => {
   let giftCodes: { link: string; used: boolean }[] = []
   const isMounted = useRef(false)
   const dispatch = useDispatch()
@@ -71,12 +71,13 @@ const ModalInvites = ({ dark, uid, authenticated, invites }: ReturnType<typeof m
     if (authenticated) {
       if (!isMounted.current) {
         isMounted.current = true
-        if (invites.length === 0) {
+        if (userInvites && userInvites.length === 0) {
           generateInviteCode()
         } else {
-          invites.forEach((invite: InviteCodes) => {
-            return createGiftCode(invite)
-          })
+          userInvites &&
+            userInvites.forEach((invite: InviteCodes) => {
+              return createGiftCode(invite)
+            })
         }
       }
     }
@@ -84,7 +85,7 @@ const ModalInvites = ({ dark, uid, authenticated, invites }: ReturnType<typeof m
     return () => {
       isMounted.current = false
     }
-  }, [authenticated, invites])
+  }, [authenticated, userInvites])
 
   /** Handle onFocus and onBlur event. */
   const changeType = (idx: number, actionType: string) => {

@@ -1,10 +1,10 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { alert, login, showModal } from '../action-creators'
+import { alert, login, setAuthLoader } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
 import { ActionButton } from './ActionButton'
-import Input from './Input'
 import { Index } from '../@types'
+import Input from './Input'
 import Modal from './Modal'
 
 const firebaseErrorsIndex = {
@@ -97,6 +97,7 @@ const ModalAuth = () => {
    * Login using google account.
    */
   const signInWithGoogle = () => {
+    dispatch(setAuthLoader({ value: true }))
     updateIsSubmitting(true)
     dispatch(login())
   }
@@ -109,12 +110,7 @@ const ModalAuth = () => {
   const onChangeEmail = (e: ChangeEvent<HTMLInputElement>) => updateEmail(e.target.value)
 
   /** Handle password change. */
-  const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => {
-    updatePassword(e.target.value)
-  }
-
-  /** Show Sign Up with email and password. */
-  const showSignup = () => dispatch(showModal({ id: 'signup' }))
+  const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
 
   /** Show Login with email and password. */
   const showLogin = () => updateActiveMode(modes.login)
@@ -146,17 +142,6 @@ const ModalAuth = () => {
               style={{ textDecoration: 'underline', marginTop: 15 }}
             >
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
-            </button>
-          )}
-
-          {isModeActive(modes.login) && (
-            <button
-              disabled={isSubmitting}
-              className='button'
-              onClick={showSignup}
-              style={{ textDecoration: 'underline', marginTop: 15 }}
-            >
-              Create an account
             </button>
           )}
 

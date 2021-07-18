@@ -85,7 +85,8 @@ export const unknownAction = reducerToThunk<typeof reducers.unknownAction>('unkn
 export const updateThoughts = reducerToThunk<typeof reducers.updateThoughts>('updateThoughts')
 export const userInvites = reducerToThunk<typeof reducers.userInvites>('userInvites')
 export const userInvite = reducerToThunk<typeof reducers.userInvite>('userInvite')
-export const removeInvitationCode = reducerToThunk<typeof reducers.removeInvitationCode>('removeInvitationCode')
+export const removeInvites = reducerToThunk<typeof reducers.removeInvites>('removeInvites')
+export const setAuthLoader = reducerToThunk<typeof reducers.setAuthLoader>('setAuthLoader')
 
 // export custom action-creators
 export { default as alert } from './alert'

@@ -1,9 +1,10 @@
-import React, { ChangeEvent, FC, useCallback, useEffect, useState, useRef } from 'react'
+import React, { ChangeEvent, FC, useCallback, useEffect, useState } from 'react'
 import { connect, useDispatch } from 'react-redux'
-import { removeInvitationCode } from '../action-creators'
 import { ActionButton } from './ActionButton'
 import { Index, Connected, State } from '../@types'
+import { showModal } from '../action-creators'
 import Modal from './Modal'
+import { storage } from '../util/storage'
 
 const firebaseErrorsIndex = {
   'signup/no-code':
@@ -55,42 +56,39 @@ const modes: Index<Mode> = {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { invitationCode, invite } = state
+  const { invitationCode, invitationCodeDetail } = state
   return {
     invitationCode,
-    invite,
+    invitationCodeDetail,
   }
 }
 
 /** A modal dialog for signing up. */
-const ModalSignup = ({ invitationCode, invite }: Connected<ReturnType<typeof mapStateToProps>>) => {
-  const isMounted = useRef(false)
+const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnType<typeof mapStateToProps>>) => {
+  const dispatch = useDispatch()
   const [email, updateEmail] = useState('')
   const [password, updatePassword] = useState('')
   const [error, updateError] = useState<null | string>(null)
 
   const [isSubmitting, updateIsSubmitting] = useState(false)
 
-  const dispatch = useDispatch()
   useEffect(() => {
-    const hasInvite = invite && Object.keys(invite).length === 0
+    const hasInvite = invitationCodeDetail && Object.keys(invitationCodeDetail).length === 0
     let errorCode = ''
     if (invitationCode === '') {
       errorCode = 'signup/no-code'
-    } else if (!isMounted.current && hasInvite) {
-      isMounted.current = true
-      errorCode = ''
     } else if (hasInvite) {
       errorCode = 'signup/invalid-code'
-    } else if (invite && invite.usedBy) {
+    } else if (invitationCodeDetail && invitationCodeDetail.usedBy) {
       errorCode = 'signup/already-used-code'
     }
 
     updateError(firebaseErrorsIndex[errorCode as errorCode])
-    return () => {
-      isMounted.current = false
-    }
-  }, [invitationCode, invite])
+  }, [invitationCode, invitationCodeDetail])
+
+  useEffect(() => {
+    if (isSubmitting) storage.setItem('user-login', 'true')
+  }, [isSubmitting])
 
   /** Sign up with email and password. */
   const submitAction: SubmitAction = useCallback(async (closeModal, email, password) => {
@@ -99,7 +97,6 @@ const ModalSignup = ({ invitationCode, invite }: Connected<ReturnType<typeof map
       await window.firebase.auth().createUserWithEmailAndPassword(email, password!)
       closeModal()
       updateIsSubmitting(false)
-      dispatch(removeInvitationCode())
     } catch (error) {
       updateIsSubmitting(false)
       return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
@@ -111,6 +108,36 @@ const ModalSignup = ({ invitationCode, invite }: Connected<ReturnType<typeof map
 
   /** Handle password change. */
   const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
+
+  /** Show Login with email and password. */
+  const showLogin = () => dispatch(showModal({ id: 'auth' }))
+
+  if (error) {
+    return (
+      <Modal
+        id='signup'
+        title={modes.signup.modalTitle}
+        className='popup'
+        center
+        actions={() => (
+          <div style={undefined}>
+            <button
+              disabled={isSubmitting}
+              className='button'
+              onClick={showLogin}
+              style={{ textDecoration: 'underline', marginTop: 15 }}
+            >
+              Log in
+            </button>
+          </div>
+        )}
+      >
+        <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
+          <span style={{ color: 'crimson', paddingBottom: '30px' }}>{error}</span>
+        </div>
+      </Modal>
+    )
+  }
 
   return (
     <Modal
@@ -127,11 +154,19 @@ const ModalSignup = ({ invitationCode, invite }: Connected<ReturnType<typeof map
             isLoading={isSubmitting}
             onClick={() => submitAction(closeModal, email, password)}
           />
+
+          <button
+            disabled={isSubmitting}
+            className='button'
+            onClick={showLogin}
+            style={{ textDecoration: 'underline', marginTop: 15 }}
+          >
+            Log in
+          </button>
         </div>
       )}
     >
       <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-        {error && <span style={{ color: 'crimson', paddingBottom: '30px' }}>{error}</span>}
         <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
         <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
       </div>

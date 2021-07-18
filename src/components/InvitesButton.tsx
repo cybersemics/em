@@ -1,18 +1,31 @@
 import React from 'react'
-import { showModal } from '../action-creators'
+import { showModal, getUserInvites } from '../action-creators'
 import InvitesIcon from './icons/InvitesIcon'
-import { useDispatch } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
+import { Connected, State } from '../@types'
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const mapStateToProps = (state: State) => {
+  const { user } = state
+  return { user }
+}
 
 /**
  * Button that opens Invites model.
  */
-const InvitesButton: React.FC = () => {
+const InvitesButton = ({ user }: Connected<ReturnType<typeof mapStateToProps>>) => {
   const dispatch = useDispatch()
   return (
-    <div style={{ display: 'inline-flex' }} onClick={() => dispatch(showModal({ id: 'invites' }))}>
+    <div
+      style={{ display: 'inline-flex' }}
+      onClick={() => {
+        dispatch(showModal({ id: 'invites' }))
+        dispatch(getUserInvites(user ? user.uid : ''))
+      }}
+    >
       <InvitesIcon size={24} />
     </div>
   )
 }
 
-export default InvitesButton
+export default connect(mapStateToProps)(InvitesButton)

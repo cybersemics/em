@@ -94,10 +94,9 @@ export const initialState = (created: Timestamp = timestamp()) => {
     expandHoverBottomPaths: {},
     invalidState: false,
     inversePatches: [],
-    invites: [],
-    invite: {},
     isLoading: true,
     isPushing: false,
+    isUserLoading: false,
     latestShortcuts: [],
     modals: {},
     noteFocus: false, // true if a note has the browser selection
@@ -142,10 +141,13 @@ export const initialState = (created: Timestamp = timestamp()) => {
     state.showModal = 'welcome'
   }
 
+  // state.showModal = 'auth'
+
   if (window && window.location.pathname.substr(1) === 'signup') {
     state.showModal = 'signup'
     state.invitationCode = getQueryStringParams(window.location.search).code || ''
   }
+  storage.setItem('user-login', 'false')
 
   return state
 }

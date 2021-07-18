@@ -9,14 +9,8 @@ const getInviteById =
   dispatch => {
     const invitesDb = window.firebase.database().ref(`invites/${inviteId}`)
     invitesDb.once('value', (snapshot: Firebase.Snapshot) => {
-      dispatch(
-        userInvite({
-          invite: {
-            id: inviteId,
-            ...snapshot.val(),
-          },
-        }),
-      )
+      const hasInviteGenerated = Object.keys(snapshot.val() || []).length !== 0
+      dispatch(userInvite({ invitationCodeDetail: hasInviteGenerated ? { id: inviteId, ...snapshot.val() } : {} }))
     })
   }
 

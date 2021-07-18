@@ -2,9 +2,9 @@ import _ from 'lodash'
 import { InviteCodes, State } from '../@types'
 
 /** Sets invites for login user. */
-const userInvite = (state: State, { invite }: { invite: InviteCodes }) => ({
+const userInvite = (state: State, { invitationCodeDetail }: { invitationCodeDetail: InviteCodes }) => ({
   ...state,
-  invite: Object.keys(invite).length === 0 ? {} : invite,
+  invitationCodeDetail,
 })
 
 export default _.curryRight(userInvite)
