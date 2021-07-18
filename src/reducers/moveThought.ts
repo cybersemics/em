@@ -11,6 +11,7 @@ import {
   rootedParentOf,
   pathExists,
   getAllChildren,
+  getParent,
 } from '../selectors'
 import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
 
@@ -36,6 +37,7 @@ import {
   isDescendantPath,
   timestamp,
   unroot,
+  createId,
 } from '../util'
 
 type ChildUpdate = {
@@ -138,6 +140,8 @@ const moveThought = (
   // preserve contextIndex
   const contextEncodedOld = hashContext(oldContext)
   const contextEncodedNew = hashContext(newContext)
+  const parentOld = getParent(state, oldContext)
+  const parentNew = getParent(state, oldContext)
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const subthoughtsOld = getAllChildren(state, oldContext).filter(
@@ -397,7 +401,7 @@ const moveThought = (
     [contextEncodedOld]:
       subthoughtsOld.length > 0
         ? {
-            id: contextEncodedOld,
+            id: parentOld?.id || createId(),
             value: head(oldContext),
             context: oldContext,
             children: subthoughtsOld,
@@ -405,7 +409,7 @@ const moveThought = (
           }
         : null,
     [contextEncodedNew]: {
-      id: contextEncodedNew,
+      id: parentNew?.id || createId(),
       value: head(newContext),
       context: newContext,
       children: subthoughtsNew,

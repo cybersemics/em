@@ -15,6 +15,7 @@ import {
   timestamp,
   unroot,
 } from '../util'
+import { createId } from './createId'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp
@@ -69,7 +70,7 @@ const insertThought = (
 
   const parentNew: Parent = {
     // TODO: merging parentOld results in pending: true when importing into initialState. Is that correct?
-    id: hashContext(rootContext),
+    id: createId(),
     value: head(rootContext),
     context: rootContext,
     children: [
