@@ -79,3 +79,41 @@ it('add attribute if key has already been created', () => {
     - =test
       - goodbye`)
 })
+
+it('omit value to set only attribute', () => {
+  const steps = [
+    newThought('a'),
+    setAttribute({
+      context: ['a'],
+      key: '=test',
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =test`)
+})
+
+it('set empty attribute', () => {
+  const steps = [
+    newThought('a'),
+    setAttribute({
+      context: ['a'],
+      key: '=test',
+      value: '',
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =test
+      -${' '}`)
+})

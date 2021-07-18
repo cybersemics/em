@@ -16,9 +16,9 @@ const setAttribute = (state: State, { context, key, value }: { context: Context;
           })
       : null,
 
-    value
+    value != null
       ? setFirstSubthought({
-          context: context.concat(key),
+          context: [...context, key],
           value,
         })
       : null,
