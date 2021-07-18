@@ -11,10 +11,8 @@ import {
   push,
   updateThoughts,
 } from '../action-creators'
-import { hasPushes } from '../selectors'
 import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
 import { Thunk, Context, Index, Lexeme, PushBatch, State } from '../@types'
-import { store } from '../store'
 
 /** Merges multiple push batches into a single batch. Uses last value of local/remote. */
 const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>
@@ -196,6 +194,8 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
       }
     }, {})
 
+  dispatch(isPushing({ value: true }))
+
   const combinedBatch = pushQueue.reduce(mergeBatch, {} as PushBatch)
 
   const shouldSyncLexeme = combinedBatch.pendingLexemes && Object.keys(combinedBatch.pendingLexemes).length > 0
@@ -210,7 +210,7 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
 
   // Update the application state as soon as possible.
   if (shouldSyncLexeme) {
-    store.dispatch(
+    dispatch(
       updateThoughts({
         contextIndexUpdates: {},
         thoughtIndexUpdates: syncedThoughtIndexUpdates,
@@ -272,6 +272,12 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
     Object.keys(localMergedBatch).length > 0 && dispatch(pushBatch(syncedLocalMergedBatch)),
     Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(syncedRemoteMergedBatch)),
   ])
+
+  dispatch((dispatch, getState) => {
+    if (getState().isPushing) {
+      dispatch(isPushing({ value: false }))
+    }
+  })
 }
 
 // debounce pushQueue updates to avoid pushing on every action
@@ -283,15 +289,9 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // clear queue immediately to prevent pushing more than once
     // then flush the queue
     () => {
-      dispatch(flushPushQueue())
-        .then(() => {
-          if (getState().isPushing) {
-            dispatch(isPushing({ value: false }))
-          }
-        })
-        .catch((e: Error) => {
-          console.error('flushPushQueue error', e)
-        })
+      dispatch(flushPushQueue()).catch((e: Error) => {
+        console.error('flushPushQueue error', e)
+      })
       dispatch(clearPushQueue())
     },
     debounceDelay,
@@ -303,10 +303,7 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // if state has queued updates, flush the queue
     // do not trigger on isPushing to prevent infinite loop
     const state = getState()
-    if (hasPushes(state) && action.type !== 'isPushing') {
-      if (!state.isPushing) {
-        dispatch(isPushing({ value: true }))
-      }
+    if (state.pushQueue.length > 0 && action.type !== 'isPushing') {
       flushQueueDebounced()
     }
   }
