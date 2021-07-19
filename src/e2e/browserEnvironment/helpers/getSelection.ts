@@ -30,6 +30,9 @@ const getSelection = (browser: BrowserEnvironment) => {
           })
         | undefined
     },
+    get textContent() {
+      return browser.execute(() => window.getSelection()?.focusNode?.textContent)
+    },
   }
 }
 
