@@ -15,13 +15,24 @@ const getSelection = (browser: BrowserEnvironment) => {
       return browser.execute(() => window.getSelection()?.focusOffset)
     },
     get focusNode() {
-      const focusNodePromise = browser.execute(() => window.getSelection()?.focusNode)
+      let propertyAccessed = false
+
+      const focusNodePromise = new Promise(resolve =>
+        setTimeout(() => {
+          // only get focusNode if a property has not been accessed
+          resolve(propertyAccessed ? {} : browser.execute(() => window.getSelection()?.focusNode))
+        }),
+      )
+
       // eslint-disable-next-line fp/no-mutating-methods
       Object.defineProperty(focusNodePromise, 'textContent', {
         get: function (): Promise<string | undefined | null> {
+          // short-circuit the focusNodePromise since we are accessing a property
+          propertyAccessed = true
           return browser.execute(() => window.getSelection()?.focusNode?.textContent)
         },
       })
+
       // add the textContent property
       // add undefined to match the native browser api
       return focusNodePromise as
@@ -29,9 +40,6 @@ const getSelection = (browser: BrowserEnvironment) => {
             textContent: Promise<string | null | undefined>
           })
         | undefined
-    },
-    get textContent() {
-      return browser.execute(() => window.getSelection()?.focusNode?.textContent)
     },
   }
 }

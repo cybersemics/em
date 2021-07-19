@@ -34,7 +34,7 @@ it('Enter edit mode', async () => {
   await tap(editableNodeHandle)
 
   await waitUntil(isKeyboardShown)
-  const selectionTextContent = await getSelection().textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('foo')
 })
 
@@ -46,7 +46,7 @@ it('Preserve Editing: true', async () => {
   await tap(editableNodeHandle)
 
   await waitUntil(async () => (await getEditingText()) === 'foo')
-  const selectionTextContent = await getSelection().textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('foo')
 })
 
@@ -58,7 +58,7 @@ it('Preserve Editing: false', async () => {
   const editableNodeHandle = await waitForEditable('foo')
   await tap(editableNodeHandle)
 
-  const selectionTextContent = await getSelection().textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe(null)
 })
 
@@ -77,7 +77,7 @@ it('No uncle loop', async () => {
   await tap(editableNodeHandle)
   await waitUntil(async () => (await getEditingText()) === 'c')
 
-  const selectionTextContent = await getSelection().textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('c')
 })
 
@@ -117,7 +117,7 @@ it('Tap hidden uncle', async () => {
   await tap(editableNodeHandle)
 
   await waitUntil(async () => (await getEditingText()) === 'd')
-  const selectionTextContent = await getSelection().textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('d')
 })
 
@@ -139,7 +139,7 @@ it('Tap empty content while keyboard up', async () => {
   // Wait until cursor change
   await waitUntil(async () => (await getEditingText()) === 'b')
   expect(await isKeyboardShown()).toBeTruthy()
-  const selectionTextContent = await getSelection().textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe('b')
 })
 
@@ -183,7 +183,7 @@ it('Swipe over cursor', async () => {
   const editingText = await getEditingText()
   expect(editingText).toBe('foo')
 
-  const selectionTextContent = await getSelection().textContent
+  const selectionTextContent = await getSelection().focusNode?.textContent
   expect(selectionTextContent).toBe(null)
 })
 
