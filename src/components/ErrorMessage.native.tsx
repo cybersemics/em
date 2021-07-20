@@ -15,19 +15,16 @@ const { from, animate } = fadeIn
 const mapStateToProps = ({ error }: State) => ({ value: error })
 
 /** An error message that can be dismissed with a close button. */
-const ErrorMessage = ({ value, dispatch }: Connected<{ value?: any }>) => (
-  <>
-    {value ? (
-      <View style={[styles.container, redBackground]} from={from} animate={animate} transition={{ type: 'timing' }}>
-        <TouchableOpacity style={flexEnd} onPress={() => dispatch(error({ value: null }))}>
-          <Text style={whiteText}>x</Text>
-        </TouchableOpacity>
+const ErrorMessage = ({ value, dispatch }: Connected<{ value?: any }>) =>
+  value ? (
+    <View style={[styles.container, redBackground]} from={from} animate={animate} transition={{ type: 'timing' }}>
+      <TouchableOpacity style={flexEnd} onPress={() => dispatch(error({ value: null }))}>
+        <Text style={whiteText}>x</Text>
+      </TouchableOpacity>
 
-        <Text style={[centerText, whiteText]}>{value?.toString()}</Text>
-      </View>
-    ) : null}
-  </>
-)
+      <Text style={[centerText, whiteText]}>{value?.toString()}</Text>
+    </View>
+  ) : null
 
 const styles = StyleSheet.create({
   container: {
