@@ -13,15 +13,15 @@ import ModalWelcome from './ModalWelcome'
 import ModalExport from './ModalExport'
 import Alert from './Alert'
 import Footer from './Footer'
-import { Text } from './Text.native'
 import { useDimensions } from '@react-native-community/hooks'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { State } from '../@types'
 import { commonStyles } from '../style/commonStyles'
 import ModalAuth from './ModalAuth'
 import ErrorMessage from './ErrorMessage'
+import Content from './Content'
 
-const { flexOne, darkBackground, whiteText } = commonStyles
+const { flexOne, darkBackground } = commonStyles
 
 /**
  * AppComponent container.
@@ -73,15 +73,7 @@ const AppComponent: React.FC = () => {
           <ScrollView nestedScrollEnabled={true} style={flexOne}>
             <View style={contentHeight}>
               <ScrollView nestedScrollEnabled={true} style={flexOne}>
-                {Array(50)
-                  .fill(1)
-                  .map((_, index) => {
-                    return (
-                      <Text key={index} style={whiteText}>
-                        hello World - em thoughts {index}
-                      </Text>
-                    )
-                  })}
+                <Content />
               </ScrollView>
               <NavBar position='top' />
             </View>
