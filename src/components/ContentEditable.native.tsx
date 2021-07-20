@@ -24,7 +24,6 @@ const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...prop
   const handleInput = (e: string) => {
     // prevent innerHTML update when editing
     allowInnerHTMLChange.current = false
-    console.log({ e })
 
     // const event = Object.assign({}, e, {
     //   target: {

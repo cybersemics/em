@@ -55,13 +55,10 @@ const mapStateToProps = (state: State) => {
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, [], false)).length
-  // console.log({ children, rootThoughtsLength, isAbsoluteContext })
 
   // pass rootSort to allow root Subthoughts to render on toggleSort
   // pass scalar components to avoid re-render from object reference change
   const { type: rootSortType, direction: rootSortDirection } = getSortPreference(state, rootContext)
-
-  //   console.log({ children, rootThoughtsLength, isAbsoluteContext, rootSortType, rootSortDirection })
 
   return {
     search,
@@ -111,8 +108,6 @@ const Content: ContentComponent = props => {
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
-
-  console.log({ rootThoughtsLength, isAbsoluteContext })
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace = () => {

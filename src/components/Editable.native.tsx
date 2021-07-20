@@ -195,7 +195,7 @@ const Editable = ({
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
-  console.log(value)
+
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
   const context =
@@ -376,20 +376,6 @@ const Editable = ({
      */
     // if (isEditing) {
     //   const { isCollapsed, focusOffset, focusNode } = window.getSelection() || {}
-    //   console.info({
-    //     thoughts,
-    //     transient,
-    //     editMode,
-    //     isEditing,
-    //     contentRef: !!contentRef.current,
-    //     noFocusNode: !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold,
-    //     '!dragHold': dragHold,
-    //     '!noteFocus': noteFocus,
-    //     cursorOffset: cursorOffset !== null,
-    //     isCollapsed,
-    //     focusOffset,
-    //     focusNode: !!focusNode,
-    //   })
     // }
     // allow transient editable to have focus on render
     if (
@@ -455,8 +441,6 @@ const Editable = ({
       showDuplicationAlert(false, dispatch)
 
       if (readonly || uneditable || options) invalidStateError(null)
-
-      console.log({ newValue, oldValue, throttledChangeRef })
 
       // if we cancel the edit, we have to cancel pending its
       // this can occur for example by editing a value away from and back to its
