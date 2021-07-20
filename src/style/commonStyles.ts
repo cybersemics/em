@@ -39,6 +39,7 @@ export const commonStyles = StyleSheet.create({
   alignItemsCenter: { alignItems: 'center' },
   alignItemsEnd: { alignItems: 'flex-end' },
   selfCenter: { alignSelf: 'center' },
+  zeroHeight: { height: 0 },
 
   // text
   lightblueText: { color: 'lightblue' },
