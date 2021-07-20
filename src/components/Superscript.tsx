@@ -4,6 +4,8 @@ import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
 import { Child, Context, Index, SimplePath, State } from '../@types'
+import { commonStyles } from '../style/commonStyles'
+import { Text } from './Text.native'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>
@@ -63,19 +65,19 @@ const Superscript: FC<SuperscriptProps> = ({ empty, numContexts, showSingle, sup
   //   .reduce((charCount, child) => charCount + child.length, 0)
 
   return (
-    <span className='superscript-container'>
+    <Text style={commonStyles.whiteText}>
       {
         !empty && superscript && numContexts! > (showSingle ? 0 : 1) ? (
-          <span className='num-contexts'>
+          <Text>
             {' '}
             {/* Make the container position:relative so that the modal is positioned correctly */}
-            {numContexts ? <sup>{numContexts}</sup> : null}
+            {numContexts ? `${numContexts}` : null}
             {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
             {/* <DepthBar/> */}
-          </span>
+          </Text>
         ) : null /* <DepthBar/> */
       }
-    </span>
+    </Text>
   )
 }
 
