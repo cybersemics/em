@@ -1,7 +1,7 @@
 /* eslint-disable fp/no-get-set */
 import { BrowserEnvironment } from '../types'
 
-/** Returns a proxy getSelection object with async getters  for selection properties. WebdriverIO cannot retrieve the entire selection object so we delegate to asynchronous getters. Top-level selection properties (e.g. .focusNode) are compatible with nested properties (e.g. .focusNode.textContent) are compatible with parent properties by defining ad hoc getters on promises.
+/** Returns a proxy getSelection object with async getters for selection properties. WebdriverIO cannot retrieve the entire selection object so we delegate to asynchronous getters. Top-level selection properties (e.g. .focusNode) are compatible with nested properties (e.g. .focusNode.textContent) are compatible with parent properties by defining ad hoc getters on promises.
  *
  * @example
  * await getSelection().focusOffset
