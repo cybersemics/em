@@ -1,16 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { FC, MouseEvent, useRef, useState } from 'react'
-import { connect, useDispatch } from 'react-redux'
+import React, { FC } from 'react'
+import { connect } from 'react-redux'
 
-import {
-  cursorBack as cursorBackActionCreator,
-  expandContextThought,
-  toggleSidebar as toggleSidebarActionCreator,
-  closeModal,
-} from '../action-creators'
-import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { ABSOLUTE_PATH, HOME_PATH } from '../constants'
 import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
-import { isAbsolute, publishMode } from '../util'
+import { isAbsolute } from '../util'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
@@ -20,7 +13,7 @@ import { childrenFilterPredicate } from '../selectors/getChildren'
 import Editable from './Editable'
 import { SimplePath, State } from '../@types'
 import { storage } from '../util/storage'
-import { ScrollView, View } from 'react-native'
+import { ScrollView } from 'react-native'
 import { commonStyles } from '../style/commonStyles'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
@@ -76,60 +69,9 @@ const mapStateToProps = (state: State) => {
 
 type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
 
-/**
- * Calculates whether there was a click on the left margin or padding zone of content element.
- *
- * @param e The onClick e object.
- * @param content HTML element.
- */
-const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
-  const style = window.getComputedStyle(content!)
-  const pTop = parseInt(style.getPropertyValue('padding-top'))
-  const mTop = parseInt(style.getPropertyValue('margin-top'))
-  const mLeft = parseInt(style.getPropertyValue('margin-left'))
-  const x = e.clientX
-  const y = e.clientY
-  return x < mLeft && y > pTop + mTop
-}
-
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const {
-    search,
-    isTutorialLocal,
-    tutorialStep,
-    showModal,
-    rootThoughtsLength,
-    noteFocus,
-    rootSortDirection,
-    rootSortType,
-    isAbsoluteContext,
-  } = props
-  const dispatch = useDispatch()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [isPressed, setIsPressed] = useState<boolean>(false)
-
-  /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
-  const clickOnEmptySpace = () => {
-    // make sure the the actual Content element has been clicked
-    // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
-    if (!isPressed) return
-    setIsPressed(false)
-
-    // click event occured during text selection has focus node of type text unlike normal event which has node of type element
-    // prevent text selection from calling cursorBack incorrectly
-    const selection = window.getSelection()
-    const focusNode = selection && selection.focusNode
-    if (focusNode && focusNode.nodeType === Node.TEXT_NODE) return
-
-    // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    if (showModal) {
-      dispatch(closeModal())
-    } else if (!noteFocus) {
-      dispatch(cursorBackActionCreator())
-      expandContextThought(null)
-    }
-  }
+  const { search, isTutorialLocal, rootThoughtsLength, rootSortDirection, rootSortType, isAbsoluteContext } = props
 
   return (
     <ScrollView nestedScrollEnabled style={commonStyles.flexOne}>
