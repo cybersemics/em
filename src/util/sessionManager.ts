@@ -9,14 +9,45 @@ export enum SessionType {
   REMOTE = 'remote',
 }
 
+/** A unique session id for the current session. Gets instantiated to a uuid on the first call to getSessionId. */
 let sessionId: string | null = null
+
+/** A local storage sessions cache. */
+let localSessionsCache: Index<string>
 
 const SESSION_ID_KEY = 'EM_SESSION_ID'
 const LOCALSTORAGE_SESSIONIDS = 'EM_SESSION_IDS'
-const throttleTimeout = 5000
+const throttleGet = 1000
+const throttleKeepalive = 5000
 const sessionInvalidationTimeout = 360000
 
-/** Get current session id. */
+/******************************************************************************
+ * Local Storage and Caching
+ *****************************************************************************/
+
+/** Gets the local sessions and stores them in the local session cache. */
+const getLocalSessionIds = _.throttle(() => {
+  const localSessionsRaw = storage.getItem(LOCALSTORAGE_SESSIONIDS) || '{}'
+  try {
+    localSessionsCache = JSON.parse(localSessionsRaw)
+  } catch (err) {
+    console.error(`Invalid localStorage.${LOCALSTORAGE_SESSIONIDS}: ${localSessionsRaw}`)
+    console.error(err)
+  }
+  return localSessionsCache
+}, throttleGet)
+
+/** Writes local sessions to storage and sets the local session cache. */
+const setLocalSessionIds = (sessionsNew: Index<string>) => {
+  localSessionsCache = sessionsNew
+  storage.setItem(LOCALSTORAGE_SESSIONIDS, JSON.stringify(sessionsNew))
+}
+
+/******************************************************************************
+ * Public
+ *****************************************************************************/
+
+/** Get current session id. If not initiated, create a new uuid and save it to storage. */
 export const getSessionId = () => {
   if (!sessionId) {
     sessionId = sessionStorage.getItem(SESSION_ID_KEY) || uuid()
@@ -28,33 +59,19 @@ export const getSessionId = () => {
 /** Check if the current or given session is local/remote. */
 export const getSessionType = (sessionId?: string): SessionType | undefined => {
   if (!sessionId) return
-  const localSessionsRaw = storage.getItem(LOCALSTORAGE_SESSIONIDS)
-  if (!localSessionsRaw) return
-  try {
-    const localSessions: Index<string> = JSON.parse(localSessionsRaw)
-    return localSessions[sessionId] ? SessionType.LOCAL : SessionType.REMOTE
-  } catch (err) {
-    console.error(`Invalid localStorage.${LOCALSTORAGE_SESSIONIDS}: ${localSessionsRaw}`)
-    console.error(err)
-  }
+  const localSessions = getLocalSessionIds() || {}
+  return localSessions[sessionId] ? SessionType.LOCAL : SessionType.REMOTE
 }
 
 /** Add current session to local storage list of sessions, or update timestamp if already present. Removes any sessions that are expired. */
-export const updateLocalStorageSessionId = _.throttle(() => {
-  // read localSessions
-  const localSessionsRaw = storage.getItem(LOCALSTORAGE_SESSIONIDS) || '{}'
-  try {
-    const localSessions: Index<string> = JSON.parse(localSessionsRaw)
-    const sessionsNew = {
-      // filter out expired
-      ..._.pickBy(localSessions, (updated, key) => Date.now() - +updated < sessionInvalidationTimeout),
-      // add current session
-      [sessionId || getSessionId()]: Date.now(),
-    }
-    // write localSessions
-    storage.setItem(LOCALSTORAGE_SESSIONIDS, JSON.stringify(sessionsNew))
-  } catch (err) {
-    console.error(`Invalid localStorage.${LOCALSTORAGE_SESSIONIDS}: ${localSessionsRaw}`)
-    console.error(err)
+export const keepalive = _.throttle(() => {
+  const localSessions = getLocalSessionIds() || {}
+  const sessionsNew = {
+    // filter out expired
+    ..._.pickBy(localSessions, (updated, key) => Date.now() - +updated < sessionInvalidationTimeout),
+    // add current session
+    [sessionId || getSessionId()]: Date.now().toString(),
   }
-}, throttleTimeout)
+  // write sessions
+  setLocalSessionIds(sessionsNew)
+}, throttleKeepalive)
