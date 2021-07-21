@@ -20,7 +20,6 @@ import tap from './tap'
 import type from './type'
 import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
-import waitForElementNotExist from './waitForElementNotExist'
 import waitUntil from './waitUntil'
 import newThought from './newThought'
 
@@ -50,7 +49,6 @@ const helpers = {
   type,
   waitForEditable,
   waitForElement,
-  waitForElementNotExist,
   waitUntil,
 }
 
