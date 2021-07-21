@@ -8,7 +8,7 @@ import { alert, error, scrollCursorIntoView, setCursor, toggleTopControlsAndBrea
 import { Path, State } from '../@types'
 import { equalPath } from './equalPath'
 import lifecycle from 'page-lifecycle'
-import { clearStaleLocalStorageSessionIds, updateLocalStorageSessionIdThrottled } from './sessionManager'
+import { updateLocalStorageSessionId } from './sessionManager'
 import { getVisibilityChangeEventName, isTabHidden } from './visibilityApiHelpers'
 
 declare global {
@@ -101,8 +101,7 @@ export const initEvents = (store: Store<State, any>) => {
   /** Update local storage sessions used for managing subscriptions. */
   const onTabVisibilityChanged = () => {
     if (!isTabHidden()) {
-      clearStaleLocalStorageSessionIds()
-      updateLocalStorageSessionIdThrottled()
+      updateLocalStorageSessionId()
     }
   }
 

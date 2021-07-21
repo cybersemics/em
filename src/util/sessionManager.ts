@@ -1,6 +1,8 @@
-import { throttle } from 'lodash'
+/** Manages local sessions (tabs), providing a unique id per session that expires after a period of no use. */
+import _ from 'lodash'
 import { v4 as uuid } from 'uuid'
 import { Index } from '../@types'
+import { storage } from '../util/storage'
 
 export enum SessionType {
   LOCAL = 'local',
@@ -23,59 +25,36 @@ export const getSessionId = () => {
   return sessionId
 }
 
-/** Check if the current session is local/remote. */
+/** Check if the current or given session is local/remote. */
 export const getSessionType = (sessionId?: string): SessionType | undefined => {
   if (!sessionId) return
-  const localStorageSessions = window.localStorage.getItem(LOCALSTORAGE_SESSIONIDS)
-  if (!localStorageSessions) return
+  const localSessionsRaw = storage.getItem(LOCALSTORAGE_SESSIONIDS)
+  if (!localSessionsRaw) return
   try {
-    const localStorageSessionsIndex: Index = JSON.parse(localStorageSessions)
-    return localStorageSessionsIndex[sessionId] ? SessionType.LOCAL : SessionType.REMOTE
+    const localSessions: Index<string> = JSON.parse(localSessionsRaw)
+    return localSessions[sessionId] ? SessionType.LOCAL : SessionType.REMOTE
   } catch (err) {
-    console.warn(err)
+    console.error(`Invalid localStorage.${LOCALSTORAGE_SESSIONIDS}: ${localSessionsRaw}`)
+    console.error(err)
   }
 }
 
-/** Add session to local storage list of sessions, or update timestamp if already present. */
-export const updateLocalStorageSessionId = () => {
-  let localStorageSessions = window.localStorage.getItem(LOCALSTORAGE_SESSIONIDS)
-  if (!localStorageSessions) {
-    // initialize first
-    const initObject = JSON.stringify({})
-    window.localStorage.setItem(LOCALSTORAGE_SESSIONIDS, initObject)
-    localStorageSessions = initObject
-  }
+/** Add current session to local storage list of sessions, or update timestamp if already present. Removes any sessions that are expired. */
+export const updateLocalStorageSessionId = _.throttle(() => {
+  // read localSessions
+  const localSessionsRaw = storage.getItem(LOCALSTORAGE_SESSIONIDS) || '{}'
   try {
-    const localStorageSessionsIndex: Index = JSON.parse(localStorageSessions)
-    const updatedValue = {
-      ...localStorageSessionsIndex,
+    const localSessions: Index<string> = JSON.parse(localSessionsRaw)
+    const sessionsNew = {
+      // filter out expired
+      ..._.pickBy(localSessions, (updated, key) => Date.now() - +updated < sessionInvalidationTimeout),
+      // add current session
       [sessionId || getSessionId()]: Date.now(),
     }
-    window.localStorage.setItem(LOCALSTORAGE_SESSIONIDS, JSON.stringify(updatedValue))
+    // write localSessions
+    storage.setItem(LOCALSTORAGE_SESSIONIDS, JSON.stringify(sessionsNew))
   } catch (err) {
-    console.warn(err)
+    console.error(`Invalid localStorage.${LOCALSTORAGE_SESSIONIDS}: ${localSessionsRaw}`)
+    console.error(err)
   }
-}
-
-export const updateLocalStorageSessionIdThrottled = throttle(updateLocalStorageSessionId, throttleTimeout)
-
-/** Remove session from to local storage list of sessions if it's invalidated (last updated over 5 minutes). */
-export const clearStaleLocalStorageSessionIds = () => {
-  const localStorageSessions = window.localStorage.getItem(LOCALSTORAGE_SESSIONIDS)
-  if (!localStorageSessions) return
-  try {
-    const localStorageSessionsIndex: Index = JSON.parse(localStorageSessions)
-    const sessionsToKeep = Object.keys(localStorageSessionsIndex).reduce(
-      (acc, key) => ({
-        ...acc,
-        ...(Date.now() - localStorageSessionsIndex[key] < sessionInvalidationTimeout
-          ? { [key]: localStorageSessionsIndex[key] }
-          : {}),
-      }),
-      {},
-    )
-    window.localStorage.setItem(LOCALSTORAGE_SESSIONIDS, JSON.stringify(sessionsToKeep))
-  } catch (err) {
-    console.warn(err)
-  }
-}
+}, throttleTimeout)
