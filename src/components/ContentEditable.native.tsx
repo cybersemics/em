@@ -1,13 +1,13 @@
 import React, { useRef } from 'react'
 import { ViewStyle } from 'react-native'
 import { RichEditor, RichEditorProps, RichToolbar } from 'react-native-pell-rich-editor'
+
 import { commonStyles } from '../style/commonStyles'
 
 interface ContentEditableProps extends RichEditorProps {
   style: ViewStyle
   html: string
   disabled?: boolean
-  innerRef?: React.RefObject<HTMLDivElement>
   isEditing?: boolean
   forceUpdate: boolean
   onChange: (e: string) => void
@@ -16,7 +16,7 @@ interface ContentEditableProps extends RichEditorProps {
 /**
  * Content Editable Component.
  */
-const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...props }: ContentEditableProps) => {
+const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: ContentEditableProps) => {
   const allowInnerHTMLChange = useRef<boolean>(true)
   const contentRef = useRef<RichEditor>(null)
 
@@ -47,20 +47,9 @@ const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...prop
         style={style}
         containerStyle={commonStyles.paddingTop}
         editorStyle={editorStyle}
-        // onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
-        //   const innerHTML = contentRef!.current!.innerHTML
-
-        //   // allow innerHTML updates after blur
-        //   allowInnerHTMLChange.current = true
-
-        //   const event = Object.assign({}, originalEvent, {
-        //     target: {
-        //       value: innerHTML,
-        //     },
-        //   })
-
-        //   if (props.onBlur) props.onBlur(event)
-        // }}
+        onBlur={() => {
+          if (props.onBlur) props.onBlur()
+        }}
         onChange={handleInput}
         onKeyDown={(e: { keyCode: number; key: string }) => {
           if (props.onKeyDown) props.onKeyDown(e)
