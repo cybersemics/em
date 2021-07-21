@@ -91,6 +91,7 @@ export const commonStyles = StyleSheet.create({
   noMargin: { margin: 0 },
   noMarginTop: { marginTop: 0 },
   noMarginVertical: { marginVertical: 0 },
+  paddingTop: { paddingTop: 8 },
   margin: { margin: 15 },
   marginTop: { marginTop: 15 },
   marginBottom: { marginBottom: 15 },

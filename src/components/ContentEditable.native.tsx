@@ -44,8 +44,9 @@ const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...prop
           if (props.onPaste) props.onPaste(e)
         }}
         ref={contentRef}
-        // contentEditable={!disabled}
         style={style}
+        containerStyle={commonStyles.paddingTop}
+        editorStyle={editorStyle}
         // onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
         //   const innerHTML = contentRef!.current!.innerHTML
 
@@ -69,6 +70,8 @@ const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...prop
     </>
   )
 }
+
+const editorStyle = { backgroundColor: 'black', color: 'white', caretColor: 'white' }
 
 export declare type ContentEditableEvent = string
 
