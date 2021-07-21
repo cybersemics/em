@@ -22,6 +22,7 @@ import {
 
 // util
 import {
+  // appendToPath,
   checkIfPathShareSubcontext,
   // ellipsize,
   // equalArrays,
@@ -250,13 +251,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 //   const contextTo = pathToContext(thoughtsTo)
 //   const dropPlacement = attribute(state, contextTo, '=drop') === 'top' ? 'top' : 'bottom'
 
-//   const newPath = unroot([
-//     ...thoughtsTo,
-//     {
-//       ...head(thoughtsFrom),
-//       rank: dropPlacement === 'top' ? getPrevRank(state, contextTo) : getNextRank(state, contextTo),
-//     },
-//   ])
+//    const newPath = appendToPath(thoughtsTo, {
+//      ...head(thoughtsFrom),
+//      rank: dropPlacement === 'top' ? getPrevRank(state, contextTo) : getNextRank(state, contextTo),
+//    })
 
 //   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
 //   const oldContext = rootedParentOf(state, pathToContext(thoughtsFrom))
@@ -521,21 +519,21 @@ export const SubthoughtsComponent = ({
 
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
-  const cursorContext = pathToContext(cursor || [])
+  const cursorContext = cursor ? pathToContext(cursor) : null
 
-  const isCursorLeaf = cursor && isLeaf(state, cursorContext)
+  const isCursorLeaf = cursorContext && isLeaf(state, cursorContext)
 
   const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
   /** First visible thought at the top. */
-  const firstVisiblePath = cursor?.slice(0, -maxDistance)
+  const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path
 
   const isDescendantOfFirstVisiblePath = isDescendant(
     pathToContext(firstVisiblePath || []),
     pathToContext(resolvedPath),
   )
 
-  const cursorSubcontextIndex = checkIfPathShareSubcontext(cursor || [], resolvedPath)
+  const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
 
   const isAncestorOfCursor =
     cursor && resolvedPath.length === cursorSubcontextIndex + 1 && cursor?.length > resolvedPath.length
