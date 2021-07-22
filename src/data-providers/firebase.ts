@@ -1,7 +1,7 @@
 import { Dispatch } from 'react'
 import { hashContext, hashThought, keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
-import { Firebase, Index, Lexeme, Parent, State, ThoughtUpdates } from '../@types'
+import { Firebase, Index, Lexeme, Parent, State, ThoughtIndices, ThoughtUpdates } from '../@types'
 
 export enum FirebaseChangeTypes {
   Create = 'child_added',
@@ -112,59 +112,53 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 })
 
-const changeHandlers = {
-  contextIndex: {
-    [FirebaseChangeTypes.Create]: (parent: Parent) => ({
-      contextIndex: parent ? { [hashContext(parent.context)]: parent } : {},
+/** Creates a subscription handler that converts a Parent snapshot to a ThoughtUpdate and invokes a callback. */
+const createParentSubscriptionHandler =
+  (onUpdate: (updates: ThoughtUpdates) => void, { value }: { value?: Parent | null } = {}) =>
+  (snapshot: Firebase.Snapshot<Parent>) => {
+    const parent = snapshot.val()
+    if (!parent) return null
+    const updates = {
+      contextIndex: { [hashContext(parent.context)]: value !== undefined ? value : parent },
       thoughtIndex: {},
-    }),
-    [FirebaseChangeTypes.Update]: (parent: Parent) => ({
-      contextIndex: parent ? { [hashContext(parent.context)]: parent } : {},
-      thoughtIndex: {},
-    }),
-    [FirebaseChangeTypes.Delete]: (parent: Parent) => ({
-      contextIndex: parent ? { [hashContext(parent.context)]: null } : {},
-      thoughtIndex: {},
-    }),
-  },
-  thoughtIndex: {
-    [FirebaseChangeTypes.Create]: (lexeme: Lexeme) => ({
+    }
+    onUpdate(updates)
+  }
+
+/** Creates a subscription handler that converts a Lexeme snapshot to a ThoughtUpdate and invokes a callback. */
+const createLexemeSubscriptionHandler =
+  (onUpdate: (updates: ThoughtUpdates) => void, { value }: { value?: Lexeme | null } = {}) =>
+  (snapshot: Firebase.Snapshot<Lexeme>) => {
+    const lexeme = snapshot.val()
+    if (!lexeme) return null
+    const updates = {
       contextIndex: {},
-      thoughtIndex: lexeme ? { [hashThought(lexeme.value)]: lexeme } : {},
-    }),
-    [FirebaseChangeTypes.Update]: (lexeme: Lexeme) => ({
-      contextIndex: {},
-      thoughtIndex: lexeme ? { [hashThought(lexeme.value)]: lexeme } : {},
-    }),
-    [FirebaseChangeTypes.Delete]: (lexeme: Lexeme) => ({
-      contextIndex: {},
-      thoughtIndex: lexeme ? { [hashThought(lexeme.value)]: null } : {},
-    }),
-  },
-}
+      thoughtIndex: { [hashThought(lexeme.value)]: value !== undefined ? value : lexeme },
+    }
+    onUpdate(updates)
+  }
 
 /** Subscribe to firebase. */
 export const subscribe = (userId: string, onUpdate: (updates: ThoughtUpdates) => void) => {
-  const contextIndexListener: Firebase.Ref<Parent> = window.firebase?.database().ref(`users/${userId}/contextIndex`)
-  const thoughtIndexListener: Firebase.Ref<Lexeme> = window.firebase?.database().ref(`users/${userId}/thoughtIndex`)
+  const thoughtsRef: Firebase.Ref<ThoughtIndices> = window.firebase?.database().ref(`users/${userId}`)
+  const contextIndexRef: Firebase.Ref<Parent> = thoughtsRef.child('contextIndex')
+  const thoughtIndexRef: Firebase.Ref<Lexeme> = thoughtsRef.child('thoughtIndex')
 
-  const { contextIndex: contextIndexChangeHandlers, thoughtIndex: thoughtIndexChangeHandlers } = changeHandlers
+  // contextIndex subscriptions
+  contextIndexRef
+    .orderByChild('lastUpdated')
+    .startAt(new Date().toISOString())
+    .on('child_added', createParentSubscriptionHandler(onUpdate))
+  contextIndexRef.on('child_changed', createParentSubscriptionHandler(onUpdate))
+  contextIndexRef.on('child_removed', createParentSubscriptionHandler(onUpdate, { value: null }))
 
-  Object.keys(contextIndexChangeHandlers).forEach(key => {
-    const changeType = key as keyof typeof contextIndexChangeHandlers
-    contextIndexListener.on(key, snapshot => {
-      const updates = contextIndexChangeHandlers[changeType](snapshot.val())
-      onUpdate(updates)
-    })
-  })
-
-  Object.keys(thoughtIndexChangeHandlers).forEach(key => {
-    const changeType = key as keyof typeof thoughtIndexChangeHandlers
-    thoughtIndexListener.on(key, snapshot => {
-      const updates = thoughtIndexChangeHandlers[changeType](snapshot.val())
-      onUpdate(updates)
-    })
-  })
+  // thoughtIndex subscriptions
+  thoughtIndexRef
+    .orderByChild('lastUpdated')
+    .startAt(new Date().toISOString())
+    .on('child_added', createLexemeSubscriptionHandler(onUpdate))
+  thoughtIndexRef.on('child_changed', createLexemeSubscriptionHandler(onUpdate))
+  thoughtIndexRef.on('child_removed', createLexemeSubscriptionHandler(onUpdate, { value: null }))
 }
 
 export default getFirebaseProvider

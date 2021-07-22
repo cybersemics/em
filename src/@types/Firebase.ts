@@ -27,6 +27,8 @@ export interface Ref<T> {
   child: <R>(name: string) => Ref<R>
   once: (eventName: string, callback?: (snapshot: Snapshot<T>) => void) => Promise<Snapshot<T>>
   on: (eventName: string, callback: (snapshot: Snapshot<T>) => any) => void
+  orderByChild: (fieldName: string) => Ref<T>
+  startAt: (value: any) => Ref<T>
   update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>
 }
 
