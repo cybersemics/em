@@ -63,7 +63,7 @@ import {
 
 // selectors
 import {
-  // attributeEquals,
+  attributeEquals,
   getContexts,
   getSetting,
   getLexeme,
@@ -75,7 +75,7 @@ import {
 import { ViewStyle } from 'react-native'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
-// const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
+const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 interface EditableProps {
   path: Path
@@ -164,7 +164,7 @@ const Editable = ({
       : state.rootContext
   const childrenOptions = getAllChildren(state, [...context, '=options'])
   const options = childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
-  // const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
+  const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const editableNonceRef = useRef(state.editableNonce)
@@ -174,7 +174,7 @@ const Editable = ({
     editableNonceRef.current = state.editableNonce
   }, [state.editableNonce])
 
-  // const lexeme = getLexeme(state, value)
+  const lexeme = getLexeme(state, value)
   const childrenLabel = getAllChildren(state, [...thoughts, '=label'])
 
   // side effect to set old value ref to head value from updated simplePath.
@@ -561,13 +561,13 @@ const Editable = ({
           ? childrenLabel[0].value
           : ellipsizeUrl(value)
       }
-      // placeholder={
-      //   isTableColumn1
-      //     ? ''
-      //     : lexeme && Date.now() - new Date(lexeme.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
-      //     ? 'This is an empty thought'
-      //     : 'Add a thought'
-      // }
+      placeholder={
+        isTableColumn1
+          ? ''
+          : lexeme && Date.now() - new Date(lexeme.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
+          ? 'This is an empty thought'
+          : 'Add a thought'
+      }
       // stop propagation to prevent default content onClick (which removes the cursor)
       // onClick={stopPropagation}
       // onTouchEnd={onTap}
