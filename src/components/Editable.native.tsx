@@ -10,7 +10,7 @@ import {
   error,
   editThought,
   importText,
-  // setCursor,
+  setCursor,
   setEditingValue,
   setInvalidState,
   tutorialNext,
@@ -40,7 +40,7 @@ import {
 // util
 import {
   addEmojiSpace,
-  // appendToPath,
+  appendToPath,
   // asyncFocus,
   clearSelection,
   parentOf,
@@ -198,29 +198,29 @@ const Editable = ({
   }
 
   /** Set the cursor on the thought. */
-  // const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
-  //   const { cursor, editing: editingMode } = store.getState() // use fresh state
+  const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
+    const { cursor, editing: editingMode } = store.getState() // use fresh state
 
-  //   // do not set cursor if it is unchanged and we are not entering edit mode
-  //   if ((!editing || editingMode) && equalPath(cursor, path)) return
+    // do not set cursor if it is unchanged and we are not entering edit mode
+    if ((!editing || editingMode) && equalPath(cursor, path)) return
 
-  //   const isEditing = equalPath(cursor, path)
+    const isEditing = equalPath(cursor, path)
 
-  //   const pathLive =
-  //     cursor && isEditing ? appendToPath(parentOf(path), head(showContexts ? parentOf(cursor) : cursor)) : path
+    const pathLive =
+      cursor && isEditing ? appendToPath(parentOf(path), head(showContexts ? parentOf(cursor) : cursor)) : path
 
-  //   dispatch(
-  //     setCursor({
-  //       cursorHistoryClear: true,
-  //       editing,
-  //       // set offset to null to prevent setSelection on next render
-  //       // to use the existing offset after a user clicks or touches the screent
-  //       // when cursor is changed through another method, such as cursorDown, offset will be reset
-  //       offset: null,
-  //       path: pathLive,
-  //     }),
-  //   )
-  // }
+    dispatch(
+      setCursor({
+        cursorHistoryClear: true,
+        editing,
+        // set offset to null to prevent setSelection on next render
+        // to use the existing offset after a user clicks or touches the screent
+        // when cursor is changed through another method, such as cursorDown, offset will be reset
+        offset: null,
+        path: pathLive,
+      }),
+    )
+  }
 
   /**
    * Dispatches editThought and has tutorial logic.
@@ -527,18 +527,18 @@ const Editable = ({
    * Sets the cursor on focus.
    * Prevented by mousedown event above for hidden thoughts.
    */
-  // const onFocus = () => {
-  //   // do not allow blur to setEditingValue when it is followed immediately by a focus
-  //   blurring = false
+  const onFocus = () => {
+    // do not allow blur to setEditingValue when it is followed immediately by a focus
+    blurring = false
 
-  //   // get new state
-  //   const { dragInProgress } = store.getState()
+    // get new state
+    const { dragInProgress } = store.getState()
 
-  //   if (!dragInProgress) {
-  //     setCursorOnThought({ editing: true })
-  //     dispatch(setEditingValue(value))
-  //   }
-  // }
+    if (!dragInProgress) {
+      setCursorOnThought({ editing: true })
+      dispatch(setEditingValue(value))
+    }
+  }
 
   /**
    * Prevents onKeyDownAction call for shift, alt or ctrl keys.
@@ -574,7 +574,7 @@ const Editable = ({
       // must call onMouseDown on mobile since onTap cannot preventDefault
       // otherwise gestures and scrolling can trigger cursorBack (#1054)
       // onMouseDown={onTap}
-      // onFocus={onFocus}
+      onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
       onPaste={onPaste}
