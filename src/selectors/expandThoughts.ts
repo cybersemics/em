@@ -131,7 +131,13 @@ function expandThoughtsRecursive(
   const visibleChildren = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => {
-        const value = strip(childValue(child, showContexts))
+        const valueRaw = childValue(child, showContexts)
+        if (valueRaw == null) {
+          console.error('Invalid child', child)
+          console.error('Children', childrenUnfiltered)
+        }
+
+        const value = strip(valueRaw)
 
         const childContext = unroot([...context, value])
 
