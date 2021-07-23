@@ -112,7 +112,10 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 })
 
-/** Creates a subscription handler that converts a Parent snapshot to a ThoughtUpdate and invokes a callback. */
+/** Creates a subscription handler that converts a Parent snapshot to a ThoughtUpdate and invokes a callback.
+ *
+ * @param value The Parent value to set in the update. Defaults to the snapshot Parent. Useful for setting to null.
+ */
 const createParentSubscriptionHandler =
   (onUpdate: (updates: ThoughtUpdates) => void, { value }: { value?: Parent | null } = {}) =>
   (snapshot: Firebase.Snapshot<Parent>) => {
@@ -125,7 +128,10 @@ const createParentSubscriptionHandler =
     onUpdate(updates)
   }
 
-/** Creates a subscription handler that converts a Lexeme snapshot to a ThoughtUpdate and invokes a callback. */
+/** Creates a subscription handler that converts a Lexeme snapshot to a ThoughtUpdate and invokes a callback.
+ *
+ * @param value The Lexeme value to set in the update. Defaults to the snapshot Lexeme. Useful for setting to null.
+ */
 const createLexemeSubscriptionHandler =
   (onUpdate: (updates: ThoughtUpdates) => void, { value }: { value?: Lexeme | null } = {}) =>
   (snapshot: Firebase.Snapshot<Lexeme>) => {
