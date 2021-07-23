@@ -9,12 +9,17 @@ import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import { SessionType } from './util/sessionManager'
+import * as sessionManager from './util/sessionManager'
 import { State, ThoughtUpdates, Thunk } from './@types'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
+  // initialize the session id
+  sessionManager.init()
+
   // load local state unless loading a public context or source url
   await initDB()
+
   const src = urlDataSource()
   const thoughtsLocalPromise =
     owner() === '~'

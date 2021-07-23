@@ -47,6 +47,11 @@ const setLocalSessionIds = (sessionsNew: Index<string>) => {
  * Public
  *****************************************************************************/
 
+/** Saves session id on startup. The sessionId may have already been initialized in-memory via getSessionId, but it still needs to be persisted to local storage. */
+export const init = () => {
+  keepalive()
+}
+
 /** Get current session id. If not initiated, create a new uuid and save it to storage. */
 export const getSessionId = () => {
   if (!sessionId) {
