@@ -25,7 +25,7 @@ const config = {
     'browserstack.networkLogs': 'true',
   },
 
-  logLevel: 'warn',
+  logLevel: 'trace',
   baseUrl: '',
   waitforTimeout: 10000,
   connectionRetryTimeout: 90000,

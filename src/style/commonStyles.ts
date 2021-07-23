@@ -39,6 +39,7 @@ export const commonStyles = StyleSheet.create({
   alignItemsCenter: { alignItems: 'center' },
   alignItemsEnd: { alignItems: 'flex-end' },
   selfCenter: { alignSelf: 'center' },
+  zeroHeight: { height: 0 },
 
   // text
   lightblueText: { color: 'lightblue' },
@@ -90,6 +91,7 @@ export const commonStyles = StyleSheet.create({
   noMargin: { margin: 0 },
   noMarginTop: { marginTop: 0 },
   noMarginVertical: { marginVertical: 0 },
+  paddingTop: { paddingTop: 8 },
   margin: { margin: 15 },
   marginTop: { marginTop: 15 },
   marginBottom: { marginBottom: 15 },
@@ -119,6 +121,7 @@ export const commonStyles = StyleSheet.create({
   halfOpacity: { opacity: 0.5 },
   whiteBackground: { backgroundColor: 'white' },
   darkBackground: { backgroundColor: '#000' },
+  redBackground: { backgroundColor: '#CB2232' },
   shadow: {
     ...Platform.select({
       web: {

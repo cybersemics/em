@@ -6,8 +6,9 @@ import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 import { deleteCursor, updateCursor } from '../data-providers/dexie'
 import { Index, State } from '../@types'
 
-/** Delay with which to debounce browser history update. */
-const delay = 100
+/** Delay with which to throttle browser history update. */
+// write to local db is slow and not done in a separate thread yet, so we need to heavily throttle it
+const throttleDelay = 400
 
 interface Options {
   replace?: boolean
@@ -65,11 +66,11 @@ const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextView
   }
 }
 
-// debounces updateUrlHistory and passes it a fresh state when it is called.
-const updateUrlHistoryDebounced = _.throttle(getState => {
+// throttle updateUrlHistory and passes it a fresh state when it is called.
+const updateUrlHistoryThrottled = _.throttle(getState => {
   const state = getState()
   updateUrlHistory(state, state.cursor)
-}, delay)
+}, throttleDelay)
 
 /** Updates the url history after the cursor has changed. The call to updateUrlHistory will short circuit if the cursor has not deviated from the current url. */
 const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
@@ -78,7 +79,7 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
 
     // wait until local state has loaded before updating the url
     if (!getState().isLoading) {
-      updateUrlHistoryDebounced(getState)
+      updateUrlHistoryThrottled(getState)
     }
   }
 }

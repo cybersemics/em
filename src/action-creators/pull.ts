@@ -59,8 +59,8 @@ const pull =
     const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
 
     // get remote thoughts and reconcile with local
-    const user = getState().user
-    if (user) {
+    const status = getState().status
+    if (status === 'loaded') {
       const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMap, {
         maxDepth: maxDepth || BUFFER_DEPTH,
       })
