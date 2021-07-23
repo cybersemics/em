@@ -10,6 +10,7 @@ import thunk from 'redux-thunk'
 import multi from './redux-middleware/multi'
 import pushQueue from './redux-middleware/pushQueue'
 import pullQueue from './redux-middleware/pullQueue'
+import sessionManager from './redux-middleware/sessionManager'
 import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import appReducer from './reducers/app'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
@@ -24,7 +25,7 @@ if (!appReducer) {
 export const store = createStore(
   appReducer,
   composeEnhancers(
-    applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory),
+    applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory, sessionManager),
     undoRedoReducerEnhancer,
     cursorChangedEnhancer,
   ),

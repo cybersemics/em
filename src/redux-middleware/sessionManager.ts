@@ -1,13 +1,13 @@
-/** Updates the url history after the cursor has changed. The call to updateUrlHistory will short circuit if the cursor has not deviated from the current url. */
-const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
-  return next => action => {
-    next(action)
+import { ThunkMiddleware } from 'redux-thunk'
+import { State } from '../@types'
+import { keepalive } from '../util/sessionManager'
 
-    // wait until local state has loaded before updating the url
-    if (!getState().isLoading) {
-      updateUrlHistoryDebounced(getState)
-    }
+/** Runs a throttled session keepalive on every action. */
+const sessionManagerMiddleware: ThunkMiddleware<State> = ({ getState }) => {
+  return next => action => {
+    keepalive()
+    next(action)
   }
 }
 
-export default updateUrlHistoryMiddleware
+export default sessionManagerMiddleware
