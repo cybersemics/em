@@ -11,8 +11,7 @@ import {
   pathToContext,
   reducerFlow,
   isRoot,
-  hashContext,
-  unroot,
+  createId,
 } from '../util'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
@@ -48,10 +47,12 @@ const subCategorizeOne = (state: State) => {
 
   const value = ''
 
+  const newThoughtId = createId()
+
   const child: Child = {
     value,
     rank: newRank,
-    id: hashContext(unroot([...pathToContext(cursorParent), value])),
+    id: newThoughtId,
   }
 
   return reducerFlow([
@@ -59,6 +60,7 @@ const subCategorizeOne = (state: State) => {
       context: pathToContext(rootedParentOf(state, simplePath)),
       value,
       rank: newRank,
+      id: newThoughtId,
     }),
     setCursor({
       path: appendToPath(cursorParent, child),
@@ -68,10 +70,7 @@ const subCategorizeOne = (state: State) => {
     state =>
       moveThought(state, {
         oldPath: cursor,
-        newPath: appendToPath(cursorParent, child, {
-          ...head(cursor),
-          id: hashContext(unroot([...pathToContext(cursorParent), value, head(cursor).value])),
-        }),
+        newPath: appendToPath(cursorParent, child, head(cursor)),
       }),
   ])(state)
 }

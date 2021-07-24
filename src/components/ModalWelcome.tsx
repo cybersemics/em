@@ -76,6 +76,8 @@ const ModalWelcome = () => {
   const isTutorialSettingsLoaded = useSelector(
     (state: State) => getAllChildren(state, [EM_TOKEN, 'Settings', 'Tutorial']).length > 0,
   )
+
+  console.log(isTutorialSettingsLoaded, 'ola')
   const dispatch = useDispatch()
 
   /** Submit a beta invite code. */

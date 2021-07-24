@@ -2,7 +2,6 @@ import { HOME_TOKEN } from '../constants'
 import {
   appendToPath,
   getTextContentFromHTML,
-  hashContext,
   head,
   headRank,
   headValue,
@@ -11,7 +10,6 @@ import {
   parentOf,
   pathToContext,
   reducerFlow,
-  unroot,
 } from '../util'
 import {
   getNextRank,
@@ -95,7 +93,6 @@ const deleteEmptyThought = (state: State): State => {
       const pathPrevNew = appendToPath(parentOf(simplePath), {
         ...prev,
         value: valueNew,
-        id: hashContext(unroot([...pathToContext(parentOf(simplePath)), valueNew])),
       })
 
       return reducerFlow([

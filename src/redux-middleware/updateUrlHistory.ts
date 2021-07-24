@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
-import { equalArrays, hashContext, pathToContext } from '../util'
+import { equalArrays, headId, pathToContext } from '../util'
 import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 import { deleteCursor, updateCursor } from '../data-providers/dexie'
 import { Index, State } from '../@types'
@@ -23,7 +23,7 @@ interface Options {
 const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextViews }: Options = {}) => {
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
   const context = path ? pathToContext(path) : [HOME_TOKEN]
-  const encoded = hashContext(context)
+  const encoded = headId(path || HOME_PATH)
 
   // convert decoded root thought to null cursor
   const contextDecoded = decoded.path ? pathToContext(decoded.path) : [HOME_TOKEN]

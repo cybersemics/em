@@ -7,7 +7,7 @@ import {
   isAncestorsVisible,
   getSortPreference,
 } from '../selectors'
-import { hashContext, head, unroot } from '../util'
+import { head } from '../util'
 import { Child, Context, State, ThoughtContext } from '../@types'
 import { once } from 'lodash'
 
@@ -54,7 +54,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   return (
     prevChild && {
       ...prevChild,
-      id: hashContext(unroot([...context, valueNew()])),
+      id: prevChild.id,
       value: valueNew(),
     }
   )

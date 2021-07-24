@@ -1,7 +1,7 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 // import { canShowModal } from '../selectors'
-import { hashContext, hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from '.'
+import { hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from '.'
 import { Timestamp, ThoughtsInterface, State } from '../@types'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -13,9 +13,9 @@ const getLocal = (key: string) => {
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
 export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
-  const HOME_TOKEN_HASH = hashContext([HOME_TOKEN])
-  const ABSOLUTE_TOKEN_HASH = hashContext([ABSOLUTE_TOKEN])
-  const EM_TOKEN_HASH = hashContext([EM_TOKEN])
+  const HOME_TOKEN_HASH = HOME_TOKEN
+  const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
+  const EM_TOKEN_HASH = EM_TOKEN
 
   const contextIndex = {
     [HOME_TOKEN_HASH]: {

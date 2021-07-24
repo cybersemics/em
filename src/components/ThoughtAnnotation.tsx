@@ -9,8 +9,8 @@ import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } fr
 import {
   ellipsizeUrl,
   equalPath,
-  hashContext,
   head,
+  headId,
   headValue,
   isURL,
   once,
@@ -125,7 +125,7 @@ const ThoughtAnnotation = ({
   const state = store.getState()
   const value = headValue(showContexts ? parentOf(simplePath) : simplePath)
   const thoughts = pathToContext(simplePath)
-  const isExpanded = !!state.expanded[hashContext(thoughts)]
+  const isExpanded = !!state.expanded[headId(simplePath)]
   const childrenUrls = once(() => getAllChildren(state, thoughts).filter(child => isURL(child.value)))
 
   // no contexts if thought is empty

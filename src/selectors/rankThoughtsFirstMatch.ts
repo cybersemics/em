@@ -1,10 +1,9 @@
-import { HOME_PATH, HOME_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import {
   appendToPath,
   contextChainToPath,
   equalArrays,
   equalThoughtRanked,
-  hashContext,
   head,
   headValue,
   isRoot,
@@ -67,12 +66,15 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
       prevParentContext = parent.context
     }
 
+    const isEm = i === 0 && value === EM_TOKEN
+
+    const parentId = (parent ? parent.id : '') || ''
     const thoughtRanked = {
       value,
       // NOTE: we cannot throw an error if there is no parent, as it may be a floating context
       // unfortunately this that there is no protection against a (incorrectly) missing parent
       rank: parent?.rank ?? 0,
-      id: parent ? hashContext([...parent.context, value]) : '',
+      id: isEm ? EM_TOKEN : parentId,
     }
 
     pathResult = appendToPath(pathResult, thoughtRanked)

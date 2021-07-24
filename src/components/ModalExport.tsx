@@ -51,6 +51,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
   const dispatch = useDispatch()
   const isMounted = useRef(false)
+  const store = useStore()
 
   /** Handle new thoughts pulled. */
   const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
@@ -67,21 +68,25 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
     if (isMounted.current) return
 
     isMounted.current = true
-    dispatch(
-      pull(
-        { [hashContext(context)]: context },
-        {
-          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
-          // TODO: onRemoteThoughts ??
-          maxDepth: Infinity,
-        },
-      ),
-    ).then(() => {
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-      if (isMounted.current) {
-        setIsPulling(false)
-      }
-    })
+
+    const id = hashContext(store.getState(), context)
+
+    if (id)
+      dispatch(
+        pull(
+          { [id]: context },
+          {
+            onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+            // TODO: onRemoteThoughts ??
+            maxDepth: Infinity,
+          },
+        ),
+      ).then(() => {
+        // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+        if (isMounted.current) {
+          setIsPulling(false)
+        }
+      })
 
     return () => {
       isMounted.current = false

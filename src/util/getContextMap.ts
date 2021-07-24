@@ -1,5 +1,4 @@
 import { Context, Index, Lexeme } from '../@types'
-import { hashContext } from '.'
 
 /**
  * Generates index of context from lexemes.
@@ -9,9 +8,10 @@ export const getContextMap = (lexemes: (Lexeme | undefined)[]) => {
     return {
       ...acc,
       ...lexeme.contexts.reduce<Index<Context>>(
-        (accInner, { context }) => ({
+        (accInner, { context, id }) => ({
           ...accInner,
-          [hashContext(context)]: context,
+          // @MIGRATION_TODO: This provided id is incorrect. Parent id must be provided.
+          [id]: context,
         }),
         {},
       ),

@@ -1,10 +1,10 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { hashContext, reducerFlow } from '../util'
+import { reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
 import { Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
 
-const emContextEncoded = hashContext([EM_TOKEN])
+const emContextEncoded = EM_TOKEN
 
 /** Returns true if the source object is has been updated more recently than the destination object. */
 const isNewer = (src: Parent | Lexeme, dest: Parent | Lexeme) => src.lastUpdated > dest.lastUpdated

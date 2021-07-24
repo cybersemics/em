@@ -20,7 +20,7 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  hashContext,
+  headId,
   headValue,
   isDescendantPath,
   isDocumentEditable,
@@ -149,7 +149,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const value = headValue(thoughtsFrom)
   const parent = unroot(parentOf(thoughtsTo))
   const newPath = appendToPath(parent, {
-    id: hashContext([...pathToContext(parent), value]),
+    id: headId(thoughtsTo),
     value: value,
     rank: getRankBefore(state, thoughtsTo),
   })

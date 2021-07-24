@@ -5,7 +5,9 @@ import { State } from '../@types'
 const isContextViewActive = (state: State, unrankedPath: string[]) => {
   if (unrankedPath.length === 0) return false
 
-  return !!state.contextViews[hashContext(unrankedPath)]
+  const id = hashContext(state, unrankedPath)
+
+  return !!id && !!state.contextViews[id]
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // TODO: Figure out why this causes unwanted re-rendering during editing

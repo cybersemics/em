@@ -1,11 +1,22 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
-import { Block, Child, Context, Index, Lexeme, Parent, SimplePath, State, Timestamp, ThoughtIndices } from '../@types'
+import {
+  Block,
+  Child,
+  Context,
+  Index,
+  Lexeme,
+  Parent,
+  SimplePath,
+  State,
+  Timestamp,
+  ThoughtIndices,
+  Path,
+} from '../@types'
 import {
   appendToPath,
   equalThoughtRanked,
-  hashContext,
   hashThought,
   head,
   headRank,
@@ -13,9 +24,9 @@ import {
   pathToContext,
   removeContext,
   timestamp,
-  unroot,
 } from '../util'
 import { createId } from './createId'
+import { headId } from './headId'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp
@@ -25,6 +36,7 @@ export interface ImportJSONOptions {
 interface ThoughtPair {
   lexeme: Lexeme
   parent: Parent
+  newThought: Parent
 }
 
 type SaveThoughtsUpdate = ThoughtIndices & {
@@ -40,6 +52,7 @@ const skipRootThought = (blocks: Block[]) => {
   return head.children.length > 0 ? [...head.children, ...tail] : tail
 }
 
+// MIGRATION_TODO: This function now also returns another parent so that for each Child entry a Parent entry is also created.
 /** Generates a Parent and Lexeme for inserting a new thought into a context. */
 const insertThought = (
   state: State,
@@ -53,13 +66,16 @@ const insertThought = (
   const rootContext = context.length > 0 ? context : [HOME_TOKEN]
 
   const lexemeOld = getLexeme(state, value)
+
+  const newThoughtId = createId()
+
   const lexemeNew = {
     ...lexemeOld,
     value,
     contexts: [
       ...(lexemeOld?.contexts || []),
       {
-        id: hashContext(unroot([...rootContext, value])),
+        id: newThoughtId,
         context: rootContext,
         rank,
       },
@@ -70,13 +86,13 @@ const insertThought = (
 
   const parentNew: Parent = {
     // TODO: merging parentOld results in pending: true when importing into initialState. Is that correct?
-    id: createId(),
+    id: parentOld.id,
     value: head(rootContext),
     context: rootContext,
     children: [
       ...parentOld.children,
       {
-        id: hashContext(unroot([...rootContext, value])),
+        id: newThoughtId,
         value,
         rank,
         lastUpdated,
@@ -85,9 +101,18 @@ const insertThought = (
     lastUpdated,
   }
 
+  const newThought: Parent = {
+    id: newThoughtId,
+    value: value,
+    context: [...rootContext, value],
+    children: [],
+    lastUpdated,
+  }
+
   return {
     lexeme: lexemeNew,
     parent: parentNew,
+    newThought,
   }
 }
 
@@ -96,13 +121,19 @@ const saveThoughts = (
   state: State,
   contextIndexUpdates: Index<Parent>,
   thoughtIndexUpdates: Index<Lexeme>,
-  context: Context,
+  path: Path,
   blocks: Block[],
   rankIncrement = 1,
   startRank = 0,
   lastUpdated = timestamp(),
 ): ThoughtIndices => {
-  const contextEncoded = hashContext(context)
+  const contextEncoded = headId(path)
+
+  if (!contextEncoded)
+    return {
+      thoughtIndex: {},
+      contextIndex: {},
+    }
 
   const stateNew: State = {
     ...state,
@@ -132,24 +163,35 @@ const saveThoughts = (
         duplicateValueCount && duplicateValueCount > 0 ? `${value}(${duplicateValueCount})` : value
 
       if (!skipLevel) {
-        const existingChildren =
-          contextIndexUpdates[contextEncoded]?.children || state.thoughts.contextIndex[contextEncoded]?.children || []
-        const existingParent = {
-          ...(accum.contextIndex[contextEncoded] ||
+        const accumContextIndex = {
+          ...state.thoughts.contextIndex,
+          ...contextIndexUpdates,
+          ...accum.contextIndex,
+        }
+
+        const existingParent = accumContextIndex[contextEncoded]
+
+        console.log(
+          accum.contextIndex[contextEncoded] ||
             contextIndexUpdates[contextEncoded] ||
-            state.thoughts.contextIndex[contextEncoded]),
-          children: existingChildren,
+            state.thoughts.contextIndex[contextEncoded],
+          'exisiting parent',
+        )
+
+        if (!existingParent) {
+          console.log('Wtff', path)
         }
 
         const childLastUpdated = block.children[0]?.lastUpdated
         const childCreated = block.children[0]?.created
         const lastUpdatedInherited = block.lastUpdated || childLastUpdated || existingParent.lastUpdated || lastUpdated
         const createdInherited = block.created || childCreated || lastUpdated
-        const { lexeme, parent } = insertThought(
+
+        const { lexeme, parent, newThought } = insertThought(
           stateNew,
           existingParent,
           nonDuplicateValue,
-          context,
+          pathToContext(path),
           rank,
           createdInherited,
           lastUpdatedInherited,
@@ -157,6 +199,8 @@ const saveThoughts = (
 
         // TODO: remove mutations
         contextIndexUpdates[contextEncoded] = parent
+        // `Parent` entry for the newly created thought.
+        contextIndexUpdates[newThought.id] = newThought
         thoughtIndexUpdates[hashThought(nonDuplicateValue)] = lexeme
       }
 
@@ -165,14 +209,23 @@ const saveThoughts = (
         [hashedValue]: duplicateValueCount ? duplicateValueCount + 1 : 1,
       }
 
+      /**
+       *
+       */
+      const getLastAddedChild = () => {
+        const parent = contextIndexUpdates[contextEncoded]
+        return parent.children.find(child => child.value === nonDuplicateValue)
+      }
+
+      const childPath = skipLevel ? path : [...path, getLastAddedChild()!]
+
       if (block.children.length > 0) {
-        const childContext = skipLevel ? context : unroot([...context, nonDuplicateValue])
         return {
           ...saveThoughts(
             state,
             contextIndexUpdates,
             thoughtIndexUpdates,
-            childContext,
+            childPath as Path,
             block.children,
             rankIncrement,
             startRank,
@@ -232,7 +285,7 @@ export const importJSON = (
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, pathToContext(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
   const rootedContext = pathToContext(rootedParentOf(state, simplePath))
-  const contextEncoded = hashContext(rootedContext)
+  const contextEncoded = headId(simplePath)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
@@ -249,14 +302,13 @@ export const importJSON = (
   }
 
   const importPath = destEmpty ? rootedParentOf(state, simplePath) : simplePath
-  const importContext = pathToContext(importPath)
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
 
   const { contextIndex, thoughtIndex } = saveThoughts(
     state,
     { ...initialContextIndex },
     { ...initialThoughtIndex },
-    importContext,
+    importPath,
     blocksNormalized,
     rankIncrement,
     rankStart,
@@ -266,7 +318,7 @@ export const importJSON = (
   // get the last child imported in the first level so the cursor can be set
   const parent = initialContextIndex[contextEncoded]
   const lastChildIndex = (parent?.children.length || 0) + blocksNormalized.length - 1
-  const importContextEncoded = hashContext(pathToContext(importPath))
+  const importContextEncoded = headId(importPath)
   const lastChildFirstLevel = contextIndex[importContextEncoded]?.children[lastChildIndex]
   const lastImported = appendToPath(importPath, lastChildFirstLevel)
 

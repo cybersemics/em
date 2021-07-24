@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
-import { hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
+import { createId, hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
 import { Context, Index, Parent, ThoughtsInterface } from '../../@types'
+import { store } from '../../store'
 
 const MAX_DEPTH = 100
 
@@ -46,11 +47,15 @@ async function* getDescendantThoughts(
 
   // eslint-disable-next-line fp/no-loops
   while (contexts.length > 0) {
-    const contextIds = contexts.map(cx => hashContext(cx))
+    const contextIds = contexts.reduce((acc, cx) => {
+      const id = hashContext(store.getState(), cx)
+      return [...acc, ...(id ? [id] : [])]
+    }, [])
     const providerParents = (await provider.getContextsByIds(contextIds))
       // eslint-disable-next-line no-loop-func
       .map((parent, i) => ({
-        id: hashContext(contexts[i]),
+        // @MIGRATION_NOTE: since parent may not be defined, thus using createId here
+        id: parent?.id || createId(),
         children: parent?.children || [],
         lastUpdated: never(),
         ...parent,

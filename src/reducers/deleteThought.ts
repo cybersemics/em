@@ -17,7 +17,6 @@ import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
 import {
   equalArrays,
   equalThoughtRanked,
-  hashContext,
   hashThought,
   head,
   reducerFlow,
@@ -48,6 +47,18 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   context = rootedParentOf(state, thoughts)
   const key = hashThought(value)
   const lexeme = getLexeme(state, value)
+  const parent = getParent(state, context)
+  const deletedThoughtParent = getParent(state, thoughts)
+
+  if (!deletedThoughtParent) {
+    console.error('Parent entry of deleted thought not found!')
+    return state
+  }
+
+  if (!parent) {
+    console.error('Parent not found!')
+    return state
+  }
 
   // guard against missing lexeme (although this should never happen)
   if (!lexeme) {
@@ -55,11 +66,10 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
     return state
   }
 
-  const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
-  const parent = getParent(state, context)
+  const contextEncoded = parent.id
 
   const isValidThought = lexeme.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
 
@@ -183,7 +193,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
       {
         thoughtIndex: {},
         contextIndex: {
-          [hashContext(thoughts)]: null,
+          [deletedThoughtParent.id]: null,
         },
       } as ThoughtUpdates,
     )

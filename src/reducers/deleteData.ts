@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { deleteThought, updateLastUpdated } from '../data-providers/dexie'
-import { hashContext, hashThought, timestamp } from '../util'
+import { hashThought, timestamp } from '../util'
 import { getLexeme, getAllChildren } from '../selectors'
 import { State } from '../@types'
 
@@ -21,7 +21,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
         return state
       }
 
-      const contextEncoded = hashContext(parent.context)
+      const contextEncoded = parent.id
       const childrenNew = getAllChildren(state, parent.context).filter(
         child => hashThought(child.value) !== hashThought(value),
       )

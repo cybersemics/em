@@ -11,7 +11,7 @@ import {
   push,
   updateThoughts,
 } from '../action-creators'
-import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
+import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth, headId } from '../util'
 import { Thunk, Context, Index, Lexeme, PushBatch, State } from '../@types'
 
 /** Merges multiple push batches into a single batch. Uses last value of local/remote. */
@@ -63,9 +63,14 @@ const flushDeletes =
     // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
     const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
     if (pendingDeletes?.length) {
-      const pending: Index<Context> = keyValueBy(pendingDeletes, ({ context }) => ({
-        [hashContext(context)]: context,
-      }))
+      const pending: Index<Context> = keyValueBy(pendingDeletes, ({ context }) => {
+        const id = hashContext(getState(), context)
+        return id
+          ? {
+              [id]: context,
+            }
+          : null
+      })
 
       await dispatch(pull(pending, { maxDepth: Infinity }))
 
@@ -89,7 +94,8 @@ const flushEdits =
 
     if (pendingEdits?.length) {
       const pending: Index<Context> = keyValueBy(pendingEdits, ({ context }) => {
-        return { [hashContext(context)]: context }
+        const id = hashContext(getState(), context)
+        return id ? { [id]: context } : null
       })
 
       await dispatch(pull(pending, { maxDepth: Infinity }))
@@ -114,9 +120,8 @@ const flushMoves =
     // pull all children of source context
     if (descendantMoves?.length) {
       const pending: Index<Context> = keyValueBy(descendantMoves, ({ pathOld }) => {
-        const context = pathToContext(pathOld)
         // skip the pull for loaded descendants
-        return { [hashContext(context)]: context }
+        return { [headId(pathOld)]: pathToContext(pathOld) }
       })
       await dispatch(pull(pending, { maxDepth: Infinity }))
       maxDepth = Math.max(...descendantMoves.map(({ pathOld }) => getDepth(state, pathToContext(pathOld))))
@@ -127,7 +132,7 @@ const flushMoves =
       const pathToLoad = keyValueBy(pendingPulls, ({ path }) => {
         const context = pathToContext(path)
         return {
-          [hashContext(context)]: context,
+          [headId(path)]: context,
         }
       })
 

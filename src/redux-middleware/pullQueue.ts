@@ -21,8 +21,8 @@ const flushPullQueueDelay = 500
 
 /** Creates the initial pullQueue with only the em and root contexts. */
 const initialPullQueue = (): Index<Context> => ({
-  [hashContext([EM_TOKEN])]: [EM_TOKEN],
-  [hashContext([HOME_TOKEN])]: [HOME_TOKEN],
+  [EM_TOKEN]: [EM_TOKEN],
+  [HOME_TOKEN]: [HOME_TOKEN],
 })
 
 /** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
@@ -40,7 +40,8 @@ const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Ind
     // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
     ...keyValueBy(contextCursor, (value, i) => {
       const subcontext = contextCursor.slice(0, contextCursor.length - i)
-      return subcontext.length > 0 ? { [hashContext(subcontext)]: subcontext } : null
+      const id = hashContext(state, subcontext)
+      return subcontext.length > 0 && id ? { [id]: subcontext } : null
     }),
   }
 }
@@ -73,8 +74,10 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
           const contextChild = showContexts
             ? (child as ThoughtContext).context
             : unroot([...context, (child as Child).value])
-          const keyChild = hashContext(contextChild)
-          return contextIndex[keyChild] && contextIndex[keyChild].pending ? { [keyChild]: contextChild } : null
+          const keyChildId = hashContext(state, contextChild)
+          return keyChildId && contextIndex[keyChildId] && contextIndex[keyChildId].pending
+            ? { [keyChildId]: contextChild }
+            : null
         }),
       }
     },

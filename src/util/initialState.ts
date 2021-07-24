@@ -1,7 +1,7 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
-import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
+import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 import { State, Timestamp, ThoughtsInterface } from '../@types'
 import { storage } from './storage'
 
@@ -13,13 +13,9 @@ const getLocal = (key: string) => {
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
 export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
-  const HOME_TOKEN_HASH = hashContext([HOME_TOKEN])
-  const ABSOLUTE_TOKEN_HASH = hashContext([ABSOLUTE_TOKEN])
-  const EM_TOKEN_HASH = hashContext([EM_TOKEN])
-
   const contextIndex = {
-    [HOME_TOKEN_HASH]: {
-      id: HOME_TOKEN_HASH,
+    [HOME_TOKEN]: {
+      id: HOME_TOKEN,
       value: HOME_TOKEN,
       context: [HOME_TOKEN],
       children: [],
@@ -27,8 +23,8 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       pending: true,
       lastUpdated: never(),
     },
-    [ABSOLUTE_TOKEN_HASH]: {
-      id: ABSOLUTE_TOKEN_HASH,
+    [ABSOLUTE_TOKEN]: {
+      id: ABSOLUTE_TOKEN,
       value: ABSOLUTE_TOKEN,
       context: [ABSOLUTE_TOKEN],
       children: [],
@@ -36,8 +32,8 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       pending: true,
       lastUpdated: never(),
     },
-    [EM_TOKEN_HASH]: {
-      id: EM_TOKEN_HASH,
+    [EM_TOKEN]: {
+      id: EM_TOKEN,
       value: EM_TOKEN,
       context: [EM_TOKEN],
       children: [],

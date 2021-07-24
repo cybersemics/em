@@ -15,6 +15,7 @@ import {
   pathToContext,
   timestamp,
   unroot,
+  headId,
 } from '../util'
 
 // selectors
@@ -54,7 +55,7 @@ const dataIntegrityCheck =
     const value = headValue(path)
     const rank = headRank(path)
     const context = pathToContext(path)
-    const encoded = hashContext(context)
+    const encoded = headId(path)
     const lexeme = getLexeme(state, value)
     const pathContext = parentOf(context)
     const simplePath = simplifyPath(state, path)
@@ -126,7 +127,7 @@ const dataIntegrityCheck =
           const otherContextHasThought = otherContextChildren.some(
             child => hashThought(child.value) === hashThought(lexeme.value) && child.rank === cx.rank,
           )
-          const encoded = hashContext(cx.context)
+          const encoded = cx.id
           const parentEntry = contextIndex[encoded]
           const parentEntryAccum = accum[encoded]
           const children =
@@ -140,7 +141,7 @@ const dataIntegrityCheck =
                     ...children,
                     {
                       // guard against undefined
-                      id: hashContext(unroot([...cx.context, lexeme.value || ''])),
+                      id: hashContext(state, unroot([...cx.context, lexeme.value || ''])),
                       lastUpdated: cx.lastUpdated || timestamp(),
                       rank: cx.rank || 0,
                       value: lexeme.value || '',

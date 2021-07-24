@@ -40,8 +40,10 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Pr
 })
 
 /** Gets a Parent from the contextIndex. */
-export const getParent = ({ thoughts: { contextIndex } }: State, context: Context): Parent | null =>
-  contextIndex[hashContext(context)]
+export const getParent = (state: State, context: Context): Parent | null => {
+  const id = hashContext(state, context)
+  return id ? state.thoughts.contextIndex[id] : null
+}
 
 /** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
 export const getAllChildrenByContextHash = (
@@ -50,8 +52,11 @@ export const getAllChildrenByContextHash = (
 ): Child[] => contextIndex[contextEncoded]?.children || noChildren
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getAllChildren = (state: State, context: Context) =>
-  getAllChildrenByContextHash(state, hashContext(context))
+export const getAllChildren = (state: State, context: Context) => {
+  const hash = hashContext(state, context)
+  console.log(state, context, hash, 'waduu')
+  return getAllChildrenByContextHash(state, hash as ContextHash)
+}
 
 /** Makes a getAllChildren function that only returns visible thoughts. */
 const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: State, context: Context) => {
@@ -173,7 +178,7 @@ const isChildInCursor = (state: State, path: Path, showContexts: boolean, child:
     ...path,
     showContexts
       ? {
-          id: hashContext([...pathToContext(unroot(path)), value()]),
+          id: child.id,
           value: value(),
           rank: (child as ThoughtContext).rank,
           lastUpdated: (child as ThoughtContext).lastUpdated,

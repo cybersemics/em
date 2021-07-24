@@ -1,4 +1,4 @@
-import { createId, hashContext, hashThought, head, unroot } from '../util'
+import { createId, hashThought, head } from '../util'
 import { Index, Lexeme, Parent, State, Timestamp } from '../@types'
 
 /** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the updates if indexes are not in sync. */
@@ -24,9 +24,8 @@ const checkDataIntegrity = (state: State, max = 100000) => {
 
           const context = cx.context.slice(0, i)
           // get children of the lexeme context
-          const encoded = hashContext(context)
-          const parentEntry = contextIndex[encoded]
-          const parentEntryAccum = contextIndexUpdates[encoded]
+          const parentEntry = contextIndex[cx.id]
+          const parentEntryAccum = contextIndexUpdates[cx.id]
           const children =
             (parentEntryAccum && parentEntryAccum.children) || (parentEntry && parentEntry.children) || []
           const isInContextIndex = children.some(
@@ -40,7 +39,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
             // otherwise generate a large rank so it doesn't conflict
             const rank = i === cx.context.length - 1 ? cx.rank : i + 1000
             const valueNew = value
-            contextIndexUpdates[encoded] = {
+            contextIndexUpdates[cx.id] = {
               id: createId(),
               value: head(context),
               context,
@@ -51,7 +50,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
                   lastUpdated,
                   rank,
                   value: valueNew,
-                  id: hashContext(unroot([...context, valueNew])),
+                  id: createId(),
                 },
               ],
               lastUpdated: lastUpdated,
@@ -66,7 +65,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
     .forEach(key => {
       const parent = contextIndex[key]
 
-      const parentContextHash = hashContext(parent.context)
+      const parentContextHash = parent.id
 
       if (!parent.children) return
 
@@ -75,7 +74,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
         const lexeme = thoughtIndexUpdates[thoughtHash] || thoughtIndex[thoughtHash]
 
         const hasThoughtIndexEntry =
-          lexeme && lexeme.contexts.some(thoughtContext => hashContext(thoughtContext.context) === parentContextHash)
+          lexeme && lexeme.contexts.some(thoughtContext => thoughtContext.id === parentContextHash)
 
         if (!hasThoughtIndexEntry) {
           thoughtIndexUpdates[thoughtHash] = {
@@ -83,7 +82,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
             contexts: [
               ...lexeme.contexts,
               {
-                id: hashContext(unroot([...parent.context, lexeme.value])),
+                id: child.id,
                 context: parent.context,
                 rank: child.rank,
               },

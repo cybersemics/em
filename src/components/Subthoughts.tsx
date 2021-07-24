@@ -30,8 +30,8 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  hashContext,
   head,
+  headId,
   headValue,
   isAbsolute,
   isDescendant,
@@ -166,7 +166,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, referenceDepth - (props.depth ?? 0)))
     : 0
 
-  const contextHash = hashContext(pathToContext(resolvedPath))
+  const contextHash = headId(resolvedPath)
 
   const children = getAllChildren(state, contextLive)
 

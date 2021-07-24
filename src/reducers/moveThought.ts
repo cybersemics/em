@@ -21,7 +21,6 @@ import {
   appendToPath,
   equalArrays,
   equalThoughtRanked,
-  hashContext,
   hashThought,
   head,
   headId,
@@ -36,8 +35,6 @@ import {
   removeDuplicatedContext,
   isDescendantPath,
   timestamp,
-  unroot,
-  createId,
 } from '../util'
 
 type ChildUpdate = {
@@ -80,6 +77,10 @@ const moveThought = (
   const key = hashThought(value)
   const oldRank = headRank(oldSimplePath)
   const oldContext = rootedParentOf(state, oldThoughts)
+
+  const oldParent = head(rootedParentOf(state, oldSimplePath))
+  const newParent = head(rootedParentOf(state, newSimplePath))
+
   const newContext = rootedParentOf(state, newThoughts)
   const sameContext = equalArrays(oldContext, newContext)
   const lexemeOld = getLexeme(state, value) || {
@@ -88,6 +89,11 @@ const moveThought = (
     value,
     created: timestamp(),
     lastUpdated: timestamp(),
+  }
+
+  if (!oldParent) {
+    console.log('Parent entry not found!')
+    return state
   }
 
   if (!lexemeOld) {
@@ -110,7 +116,7 @@ const moveThought = (
   )
 
   // find id of head thought from exact thought if not available in oldPath
-  const id = headId(oldSimplePath) || exactThought?.id || null
+  const id = headId(oldSimplePath)
   if (!id) {
     console.warn('moveThought: oldSimplePath does not have an id and exactThought was not found.')
     console.warn('oldSimplePath', oldSimplePath)
@@ -138,10 +144,8 @@ const moveThought = (
   }
 
   // preserve contextIndex
-  const contextEncodedOld = hashContext(oldContext)
-  const contextEncodedNew = hashContext(newContext)
-  const parentOld = getParent(state, oldContext)
-  const parentNew = getParent(state, oldContext)
+  const contextEncodedOld = oldParent.id
+  const contextEncodedNew = newParent.id
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const subthoughtsOld = getAllChildren(state, oldContext).filter(
@@ -151,7 +155,7 @@ const moveThought = (
   const subthoughtsNew = getAllChildren(state, newContext)
     .filter(child => normalizeThought(child.value) !== normalizeThought(value))
     .concat({
-      id: hashContext(unroot([...newContext, value])),
+      id: oldParent.id,
       value,
       rank: newRank,
       lastUpdated: timestamp(),
@@ -221,18 +225,20 @@ const moveThought = (
 
         // New lexeme
         const childLexemeNew = removeDuplicatedContext(
-          addContext(childOldThoughtContextRemoved, contextNew, movedRank, child.id || null, archived),
+          addContext(childOldThoughtContextRemoved, contextNew, movedRank, child.id, archived),
           contextNew,
         )
 
         // update local thoughtIndex so that we do not have to wait for firebase
         thoughtIndexNew[hashedKey] = childLexemeNew
 
-        const childOldContextHash = hashContext(pathToContext(childPathOld))
+        const oldThought = getParent(state, pathToContext(pathOld))
+
+        if (!oldThought) console.error('Parent entry for the old path not found!')
 
         const childUpdate: ChildUpdate = {
           // child.id is undefined sometimes. Unable to reproduce.
-          id: hashContext(unroot(pathToContext(childPathNew))),
+          id: oldThought!.id,
           // TODO: Confirm that find will always succeed
           rank: (childLexemeNew.contexts || []).find(context => equalArrays(context.context, contextNew))!.rank,
           pending: isPending(state, childContext),
@@ -256,7 +262,7 @@ const moveThought = (
           },
           childUpdates: {
             ...accum.childUpdates,
-            [childOldContextHash]: childUpdate,
+            [oldThought!.id]: childUpdate,
             ...recursivechildUpdates,
           },
         }
@@ -305,20 +311,15 @@ const moveThought = (
           }
 
           const newPathParent = parentOf(childUpdate.pathNew)
+          const oldPathParent = parentOf(childUpdate.pathOld)
           const contextNew = pathToContext(newPathParent)
-          const contextOld = pathToContext(parentOf(childUpdate.pathOld))
-          const contextEncodedOld = hashContext(contextOld)
-          const contextEncodedNew = hashContext(contextNew)
 
-          // use updatedState because accum.contextIndex alone doesn't have all information of the previous contextIndex
-          const accumInnerChildrenOld = updatedState.thoughts.contextIndex[contextEncodedOld]?.children
+          const contextEncodedOld = head(oldPathParent).id
+          const contextEncodedNew = head(newPathParent).id
+
           const accumInnerChildrenNew = updatedState.thoughts.contextIndex[contextEncodedNew]?.children
 
           const normalizedValue = normalizeThought(childUpdate.value)
-
-          const childrenOld = (accumInnerChildrenOld || getAllChildren(updatedState, contextOld)).filter(
-            (child: Child) => normalizeThought(child.value) !== normalizedValue,
-          )
 
           const childrenNew = (accumInnerChildrenNew || getAllChildren(updatedState, contextNew))
             .filter((child: Child) => normalizeThought(child.value) !== normalizedValue)
@@ -337,28 +338,14 @@ const moveThought = (
           const isNewContextPendingDescendant =
             accum.pendingPulls.length && isDescendant(pathToContext(accum.pendingPulls[0].path), contextNew)
 
+          // Note: contextEncodedOld and contextEncodedNew should be same because they basically point to the same parent
           const accumNew = {
             contextIndex: {
               ...accum.contextIndex,
               ...(!isNewContextPendingDescendant
                 ? {
-                    [contextEncodedOld]:
-                      childrenOld.length > 0
-                        ? {
-                            id: contextEncodedOld,
-                            value: head(contextOld),
-                            context: contextOld,
-                            children: childrenOld,
-                            lastUpdated: timestamp(),
-                            ...(childUpdate.pending ? { pending: true } : null),
-                          }
-                        : null,
-                  }
-                : {}),
-              ...(!isNewContextPendingDescendant
-                ? {
-                    [contextEncodedNew]: {
-                      id: contextEncodedNew,
+                    [contextEncodedOld]: {
+                      id: contextEncodedOld,
                       value: head(contextNew),
                       context: contextNew,
                       children: childrenNew,
@@ -401,7 +388,7 @@ const moveThought = (
     [contextEncodedOld]:
       subthoughtsOld.length > 0
         ? {
-            id: parentOld?.id || createId(),
+            id: oldParent.id,
             value: head(oldContext),
             context: oldContext,
             children: subthoughtsOld,
@@ -409,7 +396,7 @@ const moveThought = (
           }
         : null,
     [contextEncodedNew]: {
-      id: parentNew?.id || createId(),
+      id: newParent.id,
       value: head(newContext),
       context: newContext,
       children: subthoughtsNew,
@@ -433,7 +420,7 @@ const moveThought = (
   /** Returns new path for the given old context.
    * Note: This uses childUpdates so it works only for updated descendants. For main ancestor oldPath that has been moved (ancestor) use updatedNewPath instead.
    */
-  const getNewPathFromOldContext = (path: SimplePath) => childUpdates[hashContext(pathToContext(path))].pathNew
+  const getNewPathFromOldContext = (path: SimplePath) => childUpdates[headId(path)].pathNew
 
   // if cursor is at old path then we don't need to find getNewPathfromContext as we already have updatedNewPath
   // Example: [a.b] (oldPath) and [a.b] (cursor) are subsets of each other

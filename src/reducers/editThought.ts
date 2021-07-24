@@ -68,8 +68,6 @@ const editThought = (
 
   const thoughtsOld = unroot(context).concat(oldValue)
   const thoughtsNew = unroot(context).concat(newValue)
-  const contextEncodedOld = hashContext(thoughtsOld)
-  const contextEncodedNew = hashContext(thoughtsNew)
 
   const grandParentPath = parentOf(parentOf(path))
 
@@ -77,14 +75,14 @@ const editThought = (
     ? appendToPath(
         grandParentPath,
         {
-          id: hashContext(unroot([...pathToContext(grandParentPath), oldValue])),
+          id: headId(parentOf(path)),
           value: oldValue,
           rank: headRank(parentOf(path)),
         },
         head(path),
       )
     : appendToPath(parentOf(path), {
-        id: hashContext(unroot([...pathToContext(parentOf(path)), oldValue])),
+        id: headId(path),
         value: oldValue,
         rank,
       })
@@ -93,14 +91,14 @@ const editThought = (
     ? appendToPath(
         parentOf(parentOf(path)),
         {
-          id: hashContext(unroot([...pathToContext(grandParentPath), newValue])),
+          id: headId(parentOf(path)),
           value: newValue,
           rank: headRank(parentOf(path)),
         },
         head(path),
       )
     : appendToPath(parentOf(path), {
-        id: hashContext(unroot([...pathToContext(parentOf(path)), newValue])),
+        id: headId(path),
         value: newValue,
         rank,
       })
@@ -109,7 +107,7 @@ const editThought = (
   const exactThought = lexemeOld.contexts.find(
     thoughtContext => equalArrays(thoughtContext.context, context) && thoughtContext.rank === rank,
   )
-  const id = headId(path) || exactThought!.id || null
+  const id = headId(path)
   const archived = exactThought ? exactThought.archived : null
   const cursorNew =
     cursor &&
@@ -123,7 +121,7 @@ const editThought = (
   const newPathParent = path.slice(0, path.length - 1) as Path
 
   const newPath = appendToPath(newPathParent, {
-    id: hashContext(unroot([...pathToContext(newPathParent), newValue])),
+    id: headId(path),
     value: newValue,
     rank: rankInContext || rank,
   })
@@ -188,7 +186,7 @@ const editThought = (
       contexts: removeContext(thoughtParentOld!, parentOf(pathToContext(pathLiveOld)), rank).contexts.concat({
         context: thoughtsNew,
         rank,
-        id: hashContext(unroot([...thoughtsNew, thoughtParentOld!.value])),
+        id: headId(path),
         ...(archived ? { archived } : {}),
       }),
       created: thoughtParentOld?.created || timestamp(),
@@ -200,14 +198,13 @@ const editThought = (
 
   // preserve contextIndex
   const contextNew = showContexts ? thoughtsNew : context
-  const contextNewEncoded = hashContext(contextNew)
   const thoughtNewSubthoughts = getAllChildren(state, contextNew)
     .filter(
       child =>
         !equalThoughtRanked(child, { value: oldValue, rank }) && !equalThoughtRanked(child, { value: newValue, rank }),
     )
     .concat({
-      id: hashContext(unroot([...contextNew, showContexts ? value : newValue])),
+      id: headId(path),
       value: showContexts ? value : newValue,
       rank,
       lastUpdated: timestamp(),
@@ -216,14 +213,23 @@ const editThought = (
 
   // preserve contextIndex
   const contextOld = showContexts ? thoughtsOld : context
-  const contextOldEncoded = hashContext(contextOld)
   const thoughtOldSubthoughts = getAllChildren(state, contextOld).filter(
     child => !equalThoughtRanked(child, head(pathLiveOld)),
   )
 
   const contextParent = rootedParentOf(state, showContexts ? context : pathToContext(pathLiveOld))
-  const contextParentEncoded = hashContext(contextParent)
 
+  // @MIGRATION-FIX (Making Parent.id required)
+  // The context will not be needed anymore to identify parent after independent editing. This is fix for migration.
+  // Also way to handle thoughts edit inside context view will change later.
+  // const parentNew = getParent(state, contextNew)
+  const parentOld = getParent(state, contextOld)
+  const parent = getParent(state, contextParent)
+
+  if (!parentOld || !parent) {
+    console.error('Parent not found')
+    return state
+  }
   const thoughtParentSubthoughts = showContexts
     ? getAllChildren(state, contextParent)
         .filter(
@@ -242,7 +248,7 @@ const editThought = (
         .concat(
           lexemeOld.contexts.length > 0
             ? {
-                id: hashContext(unroot([...contextParent, newValue])),
+                id: headId(path),
                 value: newValue,
                 rank: headRank(rootedParentOf(state, pathLiveOld)),
                 lastUpdated: timestamp(),
@@ -363,16 +369,16 @@ const editThought = (
 
       const output = keyValueBy(result.contextsOld, (contextOld, i) => {
         const contextNew = result.contextsNew[i]
-        const contextOldEncoded = hashContext(contextOld)
-        const contextNewEncoded = hashContext(contextNew)
+        const oldParent = getParent(state, contextOld)
+
+        if (!oldParent) return null
         const thoughtsOld = getAllChildren(state, contextOld)
         const thoughtsNew = getAllChildren(state, contextNew)
-        const isSameContext = hashContext(contextOld) === hashContext(contextNew)
+        const isSameContext = hashContext(state, contextOld) === hashContext(state, contextNew)
 
         return {
-          [contextOldEncoded]: null,
-          [contextNewEncoded]: {
-            ...(state.thoughts.contextIndex || {})[contextOldEncoded],
+          [oldParent.id]: {
+            ...(state.thoughts.contextIndex || {})[oldParent.id],
             context: contextNew,
             // if previous and new context is the same then do not duplicate children
             children: [...(isSameContext ? [] : thoughtsOld), ...thoughtsNew],
@@ -417,21 +423,9 @@ const editThought = (
     ...descendantUpdates,
   }
 
-  // @MIGRATION-FIX (Making Parent.id required)
-  // The context will not be needed anymore to identify parent after independent editing. This is fix for migration.
-  // Also way to handle thoughts edit inside context view will change later.
-  const parentNew = getParent(state, contextNew)
-  const parentOld = getParent(state, contextOld)
-  const parent = getParent(state, contextParent)
-
-  if (!parentNew || !parentOld || !parent) {
-    console.error('Parent not found')
-    return state
-  }
-
   const contextIndexUpdates = {
-    [contextNewEncoded]: {
-      id: parentNew.id,
+    [parentOld.id]: {
+      id: parentOld.id,
       value: head(contextNew),
       context: contextNew,
       children: thoughtNewSubthoughts,
@@ -439,14 +433,15 @@ const editThought = (
     },
     ...(showContexts
       ? {
-          [contextOldEncoded]: {
+          // @MIGRATION_TODO: May not be needed this after migration
+          [parentOld.id]: {
             id: parentOld.id,
             value: head(contextOld),
             context: contextOld,
             children: thoughtOldSubthoughts,
             lastUpdated: timestamp(),
           },
-          [contextParentEncoded]: {
+          [parent.id]: {
             id: parent.id,
             value: head(contextParent),
             context: contextParent,
@@ -459,11 +454,12 @@ const editThought = (
   }
 
   // preserve contextViews
+  // @MIGRATION_TODO: Since same id will be used for context views. Preserving context view may not be required.
   const contextViewsNew = { ...state.contextViews }
-  if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
-    contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
-    delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
-  }
+  // if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
+  //   contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
+  //   delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
+  // }
 
   // new state
   // do not bump data nonce, otherwise editable will be re-rendered

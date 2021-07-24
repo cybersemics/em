@@ -3,13 +3,13 @@ import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { HOME_TOKEN } from '../constants'
-import { hashContext, mergeThoughts } from '../util'
+import { mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
 import { isPending } from '../selectors'
 import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../@types'
 
 const BUFFER_DEPTH = 2
-const ROOT_ENCODED = hashContext([HOME_TOKEN])
+const ROOT_ENCODED = HOME_TOKEN
 
 export interface PullOptions {
   maxDepth?: number

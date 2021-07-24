@@ -1,12 +1,12 @@
 import { clearAll } from '../data-providers/dexie'
-import { hashContext, never } from '../util'
+import { never } from '../util'
 import { clear, importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Thunk } from '../@types'
 import { storage } from '../util/storage'
 
 /** Logs the user out of Firebase and clears the state. */
-const logout = (): Thunk => dispatch => {
+const logout = (): Thunk => (dispatch, getState) => {
   // sign out first to prevent updates to remote
   window.firebase.auth().signOut()
 
@@ -24,7 +24,7 @@ const logout = (): Thunk => dispatch => {
   // reset initial settings
   dispatch(
     importText({
-      path: [{ id: hashContext([EM_TOKEN]), value: EM_TOKEN, rank: 0 }],
+      path: [{ id: EM_TOKEN, value: EM_TOKEN, rank: 0 }],
       text: INITIAL_SETTINGS,
       lastUpdated: never(),
       preventSetCursor: true,

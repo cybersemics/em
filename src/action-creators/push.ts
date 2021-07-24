@@ -5,20 +5,10 @@ import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
-import { getUserRef, hashContext, isFunction, logWithTime, timestamp, unroot } from '../util'
+import { createId, getUserRef, hashContext, isFunction, logWithTime, timestamp, unroot } from '../util'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../@types'
 import { storage } from '../util/storage'
-
-// store the hashes of the localStorage Settings contexts for quick lookup
-// settings that are propagated to localStorage for faster load on startup
-// e.g. {
-//   [hashContext([EM_TOKEN, 'Settings', 'Tutorial'])]: 'Tutorial',
-//   ...
-// }
-const localStorageSettingsContexts = _.keyBy(['Tutorial', 'Last Updated'], value =>
-  hashContext([EM_TOKEN, 'Settings', value]),
-)
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (
@@ -26,6 +16,7 @@ const pushLocal = (
   contextIndexUpdates: Index<Parent> = {},
   recentlyEdited: Index,
   updates: Index = {},
+  localStorageSettingsContexts: Index<string>,
 ): Promise<any> => {
   // thoughtIndex
   const thoughtIndexPromises = [
@@ -105,7 +96,7 @@ const pushRemote =
             ? {
                 value: lexeme.value,
                 contexts: lexeme.contexts.map(cx => ({
-                  id: cx.id || hashContext(unroot([...cx.context, lexeme.value])),
+                  id: cx.id || hashContext(state, unroot([...cx.context, lexeme.value])) || createId(),
                   context: cx.context || null, // guard against NaN or undefined
                   rank: cx.rank || 0, // guard against NaN or undefined
                   ...(cx.lastUpdated
@@ -138,7 +129,7 @@ const pushRemote =
                 context: parentContext!.context,
                 children: dataIntegrityCheck
                   ? children.map(subthought => ({
-                      id: subthought.id || hashContext(unroot([...parentContext!.context, subthought.value || ''])),
+                      id: subthought.id,
                       value: subthought.value || '', // guard against NaN or undefined,
                       rank: subthought.rank || 0, // guard against NaN or undefined
                       ...(subthought.lastUpdated
@@ -208,9 +199,27 @@ const push =
     const authenticated = { state }
     const userRef = getUserRef(state)
 
+    // store the hashes of the localStorage Settings contexts for quick lookup
+    // settings that are propagated to localStorage for faster load on startup
+    // e.g. {
+    //   [hashContext([EM_TOKEN, 'Settings', 'Tutorial'])]: 'Tutorial',
+    //   ...
+    // }
+    const localStorageSettingsContexts = ['Tutorial', 'Last Updated'].reduce((acc, value) => {
+      const id = hashContext(state, [EM_TOKEN, 'Settings', value])
+      return {
+        ...acc,
+        ...(id
+          ? {
+              [id]: value,
+            }
+          : {}),
+      }
+    }, {})
     return Promise.all([
       // push local
-      local && pushLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates),
+      local &&
+        pushLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, localStorageSettingsContexts),
 
       // push remote
       remote &&

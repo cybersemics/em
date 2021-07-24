@@ -2,7 +2,7 @@
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
 import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
-import { appendToPath, parentOf, hashContext, headValue, pathToContext, reducerFlow, unroot } from '../util'
+import { appendToPath, parentOf, headValue, pathToContext, reducerFlow, headId } from '../util'
 import { Path, SimplePath, State } from '../@types'
 
 /** Clears a thought's text, moving it to its first child. */
@@ -27,12 +27,12 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
   const simplePathWithNewRank: SimplePath = appendToPath(parentPath, {
-    id: hashContext(unroot([...pathToContext(parentPath), ''])),
+    id: headId(simplePath),
     value,
     rank: getRankBefore(state, simplePath),
   })
   const simplePathWithNewRankAndValue: Path = appendToPath(parentPath, {
-    id: hashContext(unroot([...pathToContext(parentPath), ''])),
+    id: headId(simplePathWithNewRank),
     value: '',
     rank: getRankBefore(state, simplePath),
   })

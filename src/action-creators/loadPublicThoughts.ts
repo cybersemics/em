@@ -31,7 +31,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
       ...state,
       thoughts: {
         contextIndex: {
-          [hashContext([HOME_TOKEN])]: parentEntry,
+          [HOME_TOKEN]: parentEntry,
         },
         thoughtIndex: parentEntry.children.reduce(
           (accum, child) => ({
@@ -41,7 +41,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
               value: child.value,
               contexts: [
                 {
-                  id: hashContext([child.value]),
+                  id: hashContext(state, [child.value]),
                   context: [HOME_TOKEN],
                   rank: child.rank,
                 },

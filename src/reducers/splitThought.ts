@@ -2,7 +2,6 @@ import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
 import {
   appendToPath,
-  fixPathId,
   parentOf,
   hashContext,
   headRank,
@@ -10,6 +9,7 @@ import {
   pathToContext,
   reducerFlow,
   strip,
+  headId,
 } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { editableRender, editThought, moveThought, newThought } from '../reducers'
@@ -35,7 +35,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   const valueRight = strip(splitResult.right, { preserveFormatting: true })
 
   const pathLeft = appendToPath(parentOf(path), {
-    id: hashContext([...pathToContext(parentOf(path)), valueLeft]),
+    id: headId(path),
     value: valueLeft,
     rank: headRank(path),
   })
@@ -61,7 +61,8 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
     state => {
       const childNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
       const pathRight = appendToPath(parentOf(simplePath), {
-        id: hashContext([...pathToContext(parentOf(simplePath)), valueRight]),
+        // @MIGRATION_NOTE: The id needs to be same as the newly created thought id. Should we pass optional id to newThought ??
+        id: hashContext(state, [...pathToContext(parentOf(simplePath)), valueRight]) || '',
         value: valueRight,
         rank: childNew!.rank,
       })
@@ -70,8 +71,8 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
       return reducerFlow(
         children.map(child =>
           moveThought({
-            oldPath: fixPathId(appendToPath(pathLeft, child)),
-            newPath: fixPathId(appendToPath(pathRight, child)),
+            oldPath: appendToPath(pathLeft, child),
+            newPath: appendToPath(pathRight, child),
           }),
         ),
       )(state)

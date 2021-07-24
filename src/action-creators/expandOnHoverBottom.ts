@@ -1,5 +1,5 @@
 import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
-import { hashContext, pathToContext } from '../util'
+import { headId, pathToContext } from '../util'
 import { getChildren } from '../selectors'
 import { clearExpandBottom, expandBottom } from '.'
 import { Path, Thunk, Timer } from '../@types'
@@ -49,8 +49,10 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
     }, EXPAND_HOVER_DELAY)
   }
 
+  const parentId = headId(hoveringPath!)
+
   /** Check if current hovering context is already has active expansion. */
-  const isAlreadyExpanded = () => hoveringContext && expandHoverBottomPaths[hashContext(hoveringContext)]
+  const isAlreadyExpanded = () => hoveringContext && expandHoverBottomPaths[parentId]
 
   if (shouldExpand && hoveringPath && !isAlreadyExpanded()) {
     clearTimeout()

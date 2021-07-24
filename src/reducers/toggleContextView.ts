@@ -9,11 +9,13 @@ import globals from '../globals'
 /** Returns a new contextViews object with the given context toggled to the opposite of its previous value. */
 const toggleContext = (state: State, context: Context) =>
   immer.produce(state.contextViews, draft => {
-    const encoded = hashContext(context)
-    if (encoded in state.contextViews) {
-      delete draft[encoded] // eslint-disable-line fp/no-delete
-    } else {
-      draft[encoded] = true
+    const encoded = hashContext(state, context)
+    if (encoded) {
+      if (encoded in state.contextViews) {
+        delete draft[encoded] // eslint-disable-line fp/no-delete
+      } else {
+        draft[encoded] = true
+      }
     }
     return draft
   })

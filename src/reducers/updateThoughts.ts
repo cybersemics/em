@@ -2,17 +2,7 @@ import _ from 'lodash'
 import { initialState } from '../util/initialState'
 import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
-import {
-  htmlToJson,
-  hashContext,
-  importJSON,
-  isRoot,
-  logWithTime,
-  mergeUpdates,
-  once,
-  textToHtml,
-  reducerFlow,
-} from '../util'
+import { htmlToJson, importJSON, isRoot, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Child, Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
@@ -33,7 +23,7 @@ export interface UpdateThoughtsOptions {
   isLoading?: boolean
 }
 
-const rootEncoded = hashContext([HOME_TOKEN])
+const rootEncoded = HOME_TOKEN
 
 const contextCache = fifoCache<string>(10000)
 const lexemeCache = fifoCache<string>(10000)

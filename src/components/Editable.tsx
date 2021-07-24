@@ -48,7 +48,6 @@ import {
   ellipsize,
   ellipsizeUrl,
   equalPath,
-  hashContext,
   head,
   headValue,
   isDivider,
@@ -60,6 +59,7 @@ import {
   strip,
   normalizeThought,
   getCaretPositionDetails,
+  headId,
 } from '../util'
 
 // selectors
@@ -710,7 +710,7 @@ const Editable = ({
       className={classNames({
         preventAutoscroll: true,
         editable: true,
-        ['editable-' + hashContext(pathToContext(path), rank)]: true,
+        ['editable-' + headId(path)]: true,
         empty: value.length === 0,
       })}
       forceUpdate={editableNonceRef.current !== state.editableNonce}

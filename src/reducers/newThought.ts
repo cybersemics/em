@@ -21,9 +21,9 @@ import {
 // util
 import {
   appendToPath,
+  createId,
   ellipsize,
   getTextContentFromHTML,
-  hashContext,
   head,
   headValue,
   once,
@@ -149,6 +149,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
         : getNextRank(state, thoughts)
       : getRankAfter(state, simplePath)
 
+  const newThoughtId = createId()
   const reducers = [
     // createThought
     createThought({
@@ -164,10 +165,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       return !preventSetCursor
         ? setCursor(newState, {
             editing: true,
-            path: unroot([
-              ...parentPath!,
-              { value, rank: newRank, id: hashContext([...pathToContext(parentPath!), value]) },
-            ]),
+            path: unroot([...parentPath!, { value, rank: newRank, id: newThoughtId }]),
             offset: isMobile() ? 0 : offset != null ? offset : getTextContentFromHTML(value).length,
           })
         : null

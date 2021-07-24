@@ -2,7 +2,6 @@ import _, { once } from 'lodash'
 import { getPrevRank, getAllChildren, rankThoughtsFirstMatch } from '../selectors'
 import { editThought, createThought } from '../reducers'
 import { Context, SimplePath, State } from '../@types'
-import { hashContext, pathToContext } from '../util'
 
 /** Sets the value of the first subthought in the given context. */
 const setFirstSubthoughts = (state: State, { context, value }: { context: Context; value: string }) => {
@@ -17,7 +16,7 @@ const setFirstSubthoughts = (state: State, { context, value }: { context: Contex
         oldValue: oldFirstThoughtRanked.value,
         newValue: value,
         path: getFirstMatchedPath().concat({
-          id: hashContext([...pathToContext(getFirstMatchedPath()), value]),
+          id: oldFirstThoughtRanked.id,
           value,
           rank: oldFirstThoughtRanked.rank,
         }) as SimplePath,

@@ -14,8 +14,8 @@ import {
   createId,
   equalArrays,
   equalThoughtRanked,
-  hashContext,
   head,
+  headId,
   headValue,
   isDescendant,
   isFunction,
@@ -113,8 +113,10 @@ function expandThoughtsRecursive(
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
 
   /** Returns true if the child should be pinned open. */
-  const isPinned = (child: Child | ThoughtContext) =>
-    attribute(state, pathToContext(getChildPath(state, child, simplePath)), '=pin')
+  const isPinned = (child: Child | ThoughtContext) => {
+    const context = pathToContext(getChildPath(state, child, simplePath))
+    return attribute(state, context, '=pin')
+  }
 
   const simpleContext = pathToContext(simplePath)
   const context = pathToContext(path)
@@ -205,7 +207,7 @@ function expandThoughtsRecursive(
 
   const initialExpanded = {
     // expand current thought
-    [hashContext(pathToContext(rootedPath))]: returnContexts ? simpleContext : rootedPath,
+    [headId(rootedPath)]: returnContexts ? simpleContext : rootedPath,
   }
 
   return keyValueBy(

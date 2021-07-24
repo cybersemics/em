@@ -1,5 +1,5 @@
 import ClipboardJS from 'clipboard'
-import { editableNode, exportPhrase, hashContext, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { editableNode, exportPhrase, headId, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { exportContext, getDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
 import { Shortcut } from '../@types'
@@ -39,7 +39,7 @@ const copyCursorShortcut: Shortcut = {
     })
     if (hasPending) {
       dispatch(alert('Loading thoughts...', { alertType: 'clipboard' }))
-      await dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
+      await dispatch(pull({ [headId(simplePath)]: context }, { maxDepth: Infinity }))
     }
 
     const exported = exportContext(state, context, 'text/plain')

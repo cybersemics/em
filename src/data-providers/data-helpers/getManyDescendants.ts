@@ -1,11 +1,11 @@
 import { DataProvider } from '../DataProvider'
-import { hashContext, yieldAll } from '../../util'
+import { yieldAll } from '../../util'
 import { EM_TOKEN } from '../../constants'
 import getDescendantThoughts from './getDescendantThoughts'
 import { Context, ContextHash, Index, ThoughtsInterface } from '../../@types'
 
 // hash the EM context once on load
-const emContextEncoded = hashContext([EM_TOKEN])
+const emContextEncoded = EM_TOKEN
 
 /** Gets descendants of many contexts, returning them in a single ThoughtsInterface. Does not limit the depth of the em context.
  *
