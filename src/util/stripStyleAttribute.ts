@@ -15,6 +15,7 @@ const isColorWhite = (value: string) => whiteColors.includes(value.replace(/\s/g
 const allowedStyleProperties = [
   {
     property: 'color',
+    enabled: false,
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const background = styleProperties.find(property => property.name.startsWith('background'))
       return !((isColorBlack(styleProperty.value) || isColorWhite(styleProperty.value)) && !background)
@@ -26,25 +27,30 @@ const allowedStyleProperties = [
       if (styleProperty.value === 'normal') {
         return false
       }
-      // Don't preserve font-size property. It doesn't look nice. Because, when we copy text from an environment whose default font size is 14px, it doesn't match our default font size.
-      return !['font-size'].includes(styleProperty.name)
+      return ['font-style', 'font-weight'].includes(styleProperty.name)
     },
   },
   {
     property: 'background',
+    enabled: false,
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const color = styleProperties.find(property => property.name === 'color')
       return !(isColorWhite(styleProperty.value) && !color)
     },
   },
-  { property: 'border' },
-  { property: 'text' },
-  { property: 'padding' },
-  { property: 'word' },
-  { property: 'box-shadow' },
-  { property: 'color' },
-  { property: 'opacity' },
-  { property: 'white-space' },
+  {
+    property: 'text',
+    test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
+      return ['text-decoration'].includes(styleProperty.name)
+    },
+  },
+  { property: 'border', enabled: false },
+  { property: 'padding', enabled: false },
+  { property: 'word', enabled: false },
+  { property: 'box-shadow', enabled: false },
+  { property: 'color', enabled: false },
+  { property: 'opacity', enabled: false },
+  { property: 'white-space', enabled: false },
 ]
 
 /** Parse style string, returns array of StyleProperty. */
@@ -66,9 +72,9 @@ const parseStyleString = (styleString: string): StyleProperty[] => {
 const stripStyleAttribute = (style: string) => {
   const styles = parseStyleString(style)
   return styles.reduce((acc, property) => {
-    const styleProperty = allowedStyleProperties.find(allowedStyleProperty =>
-      property.name.startsWith(allowedStyleProperty.property),
-    )
+    const styleProperty = allowedStyleProperties
+      .filter(property => property.enabled !== false)
+      .find(allowedStyleProperty => property.name.startsWith(allowedStyleProperty.property))
     if (styleProperty && (!styleProperty.test || styleProperty.test(property, styles))) {
       return acc + `${property.name}: ${property.value};`
     }
