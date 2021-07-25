@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { setCursor } from '../reducers'
 import { getChildrenSorted } from '../selectors'
-import { nextThought } from '../util'
+import { isRoot, nextThought } from '../util'
 import { State } from '../@types'
 
 /** Moves the cursor to the next child, sibling, or nearest uncle. */
@@ -11,7 +11,7 @@ const cursorDown = (state: State) => {
   // if there is a cursor, get the next logical child, sibling, or uncle
   if (cursor) {
     const { nextThoughts, contextChain } = nextThought(state, cursor)
-    return nextThoughts.length > 0
+    return nextThoughts.length > 0 && !isRoot(nextThoughts)
       ? setCursor(state, {
           path: nextThoughts,
           contextChain: contextChain || [],
