@@ -38,6 +38,17 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       newPath: simplePathWithNewRank,
     }),
 
+    // new thought
+    state => {
+      // the context of the new empty thought
+      const contextEmpty = pathToContext(simplePath as Path)
+      return createThought(state, {
+        context: contextEmpty,
+        rank: getPrevRank(state, contextEmpty),
+        value,
+      })
+    },
+
     // clear text
     editThought({
       oldValue: value,
@@ -45,17 +56,6 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       context: rootedParentOf(state, context),
       path: simplePathWithNewRank,
     }),
-
-    // new thought
-    state => {
-      // the context of the new empty thought
-      const contextEmpty = pathToContext(simplePathWithNewRankAndValue as Path)
-      return createThought(state, {
-        context: contextEmpty,
-        rank: getPrevRank(state, contextEmpty),
-        value,
-      })
-    },
 
     // set cursor
     setCursor({
