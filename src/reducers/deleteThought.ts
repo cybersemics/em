@@ -117,6 +117,10 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
       },
     }
 
+    const parent = getParent(stateNew, thoughts)
+
+    if (!parent) return accumRecursive
+
     return getChildrenRanked(stateNew, thoughts).reduce(
       (accum, child) => {
         const hashedKey = hashThought(child.value)
@@ -193,7 +197,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
       {
         thoughtIndex: {},
         contextIndex: {
-          [deletedThoughtParent.id]: null,
+          [parent.id]: null,
         },
       } as ThoughtUpdates,
     )
@@ -215,17 +219,14 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   }
 
   const contextIndexUpdates = {
-    // current thought's Parent
-    [contextEncoded]:
-      subthoughts.length > 0
-        ? ({
-            id: parent?.id || contextEncoded,
-            value: head(context),
-            context,
-            children: subthoughts,
-            lastUpdated: timestamp(),
-          } as Parent)
-        : null,
+    // Deleted thought's parent
+    [contextEncoded]: {
+      id: parent?.id || contextEncoded,
+      value: head(context),
+      context,
+      children: subthoughts,
+      lastUpdated: timestamp(),
+    } as Parent,
     // descendants
     ...descendantUpdatesResult.contextIndex,
   }

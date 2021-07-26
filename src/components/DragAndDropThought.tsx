@@ -149,7 +149,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const value = headValue(thoughtsFrom)
   const parent = unroot(parentOf(thoughtsTo))
   const newPath = appendToPath(parent, {
-    id: headId(thoughtsTo),
+    id: headId(thoughtsFrom),
     value: value,
     rank: getRankBefore(state, thoughtsTo),
   })

@@ -8,6 +8,7 @@ import newThought from '../newThought'
 import moveThoughtUp from '../moveThoughtUp'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
+import { State } from '../../@types'
 
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtUp]
@@ -38,7 +39,8 @@ it('move to prev uncle', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    newThought({ value: 'b', at: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+    (newState: State) =>
+      newThought(newState, { value: 'b', at: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     moveThoughtUp,
   ]
@@ -58,7 +60,8 @@ it('move to prev uncle in sorted list', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    newThought({ value: 'b', at: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+    (newState: State) =>
+      newThought(newState, { value: 'b', at: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
     toggleAttribute({ context: ['b'], key: '=sort', value: 'Alphabetical' }),
     newSubthought('b1'),
     moveThoughtUp,
@@ -103,10 +106,12 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    newThought({ value: 'b', at: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+    (newState: State) =>
+      newThought(newState, { value: 'b', at: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ path: [{ id: hashContext(['b']), value: 'b', rank: 1 }] }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 }] }),
     moveThoughtUp,
   ]
 
@@ -127,7 +132,8 @@ it('trying to move last thought of root should do nothing', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
     moveThoughtUp,
   ]
 

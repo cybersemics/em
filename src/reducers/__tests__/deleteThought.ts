@@ -2,15 +2,17 @@ import { HOME_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { getContexts, getAllChildren, getParent } from '../../selectors'
 import { deleteThought, newSubthought, newThought } from '../../reducers'
+import { State } from '../../@types'
 
 it('delete from root', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    deleteThought({
-      context: [HOME_TOKEN],
-      thoughtRanked: { id: hashContext(['b']), value: 'b', rank: 1 },
-    }),
+    (newState: State) =>
+      deleteThought(newState, {
+        context: [HOME_TOKEN],
+        thoughtRanked: { id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 },
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -40,10 +42,11 @@ it('delete descendants of root thought', () => {
     newThought('a'),
     newSubthought('b'),
     newSubthought('c'),
-    deleteThought({
-      context: [HOME_TOKEN],
-      thoughtRanked: { id: hashContext(['a']), value: 'a', rank: 0 },
-    }),
+    (newState: State) =>
+      deleteThought(newState, {
+        context: [HOME_TOKEN],
+        thoughtRanked: { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -64,10 +67,11 @@ it('delete thought with duplicate child', () => {
   const steps = [
     newThought('a'),
     newSubthought('a'),
-    deleteThought({
-      context: [HOME_TOKEN],
-      thoughtRanked: { id: hashContext(['a']), value: 'a', rank: 0 },
-    }),
+    (newState: State) =>
+      deleteThought(newState, {
+        context: [HOME_TOKEN],
+        thoughtRanked: { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

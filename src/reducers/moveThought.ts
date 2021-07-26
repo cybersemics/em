@@ -35,6 +35,7 @@ import {
   removeDuplicatedContext,
   isDescendantPath,
   timestamp,
+  unroot,
 } from '../util'
 
 type ChildUpdate = {
@@ -52,6 +53,7 @@ type RecursiveMoveResult = {
   childUpdates: Index<ChildUpdate>
 }
 
+// @MIGRATION_TODO: Nested merge logic doesn't work properly.
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (
   state: State,
@@ -68,6 +70,7 @@ const moveThought = (
     skipRerank?: boolean
   },
 ) => {
+  // console.log(oldPath, newPath, 'movee')
   const oldSimplePath = simplifyPath(state, oldPath)
   const newSimplePath = simplifyPath(state, newPath)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
@@ -152,10 +155,16 @@ const moveThought = (
     child => !equalThoughtRanked(child, { value, rank: oldRank }),
   )
 
+  const movedThoughtParent = getParent(state, unroot([...oldContext, value]))
+
+  if (!movedThoughtParent) {
+    console.error('moveThought: parent entry for the moved thought not found!')
+    return state
+  }
   const subthoughtsNew = getAllChildren(state, newContext)
     .filter(child => normalizeThought(child.value) !== normalizeThought(value))
     .concat({
-      id: oldParent.id,
+      id: isDuplicateMerge ? duplicateSubthought!.id : movedThoughtParent.id,
       value,
       rank: newRank,
       lastUpdated: timestamp(),
@@ -232,13 +241,8 @@ const moveThought = (
         // update local thoughtIndex so that we do not have to wait for firebase
         thoughtIndexNew[hashedKey] = childLexemeNew
 
-        const oldThought = getParent(state, pathToContext(pathOld))
-
-        if (!oldThought) console.error('Parent entry for the old path not found!')
-
         const childUpdate: ChildUpdate = {
-          // child.id is undefined sometimes. Unable to reproduce.
-          id: oldThought!.id,
+          id: child.id,
           // TODO: Confirm that find will always succeed
           rank: (childLexemeNew.contexts || []).find(context => equalArrays(context.context, contextNew))!.rank,
           pending: isPending(state, childContext),
@@ -262,7 +266,7 @@ const moveThought = (
           },
           childUpdates: {
             ...accum.childUpdates,
-            [oldThought!.id]: childUpdate,
+            [child.id]: childUpdate,
             ...recursivechildUpdates,
           },
         }
@@ -311,17 +315,27 @@ const moveThought = (
           }
 
           const newPathParent = parentOf(childUpdate.pathNew)
-          const oldPathParent = parentOf(childUpdate.pathOld)
           const contextNew = pathToContext(newPathParent)
 
-          const contextEncodedOld = head(oldPathParent).id
-          const contextEncodedNew = head(newPathParent).id
+          const contextEncodedOld = head(parentOf(childUpdate.pathOld)).id
 
-          const accumInnerChildrenNew = updatedState.thoughts.contextIndex[contextEncodedNew]?.children
+          // children of the moved thought
+          const accumInnerChildrenNew = updatedState.thoughts.contextIndex[contextEncodedOld]?.children || []
 
+          const duplicateParent = isDuplicateMerge
+            ? getParent(updatedState, unroot(pathToContext(newPathParent)))
+            : null
+
+          const targetThoughtId = duplicateParent?.id || head(newPathParent).id
+
+          // Duplicate thought children in the target context
+          const duplicateThoughtChildren = duplicateParent?.children || []
+
+          // @MIGRATION_TODO: We have to check for duplicate because we changed hashContext to return uuid. So two same context can have different uuid. Remove this along with recursive updated in further migration steps.
+          const accumChildren = [...accumInnerChildrenNew, ...duplicateThoughtChildren]
           const normalizedValue = normalizeThought(childUpdate.value)
 
-          const childrenNew = (accumInnerChildrenNew || getAllChildren(updatedState, contextNew))
+          const childrenNew = (accumChildren || getAllChildren(updatedState, contextNew))
             .filter((child: Child) => normalizeThought(child.value) !== normalizedValue)
             .concat({
               value: childUpdate.value,
@@ -344,8 +358,14 @@ const moveThought = (
               ...accum.contextIndex,
               ...(!isNewContextPendingDescendant
                 ? {
-                    [contextEncodedOld]: {
-                      id: contextEncodedOld,
+                    // Deleting one of the duplicate thought because they are merged.
+                    ...(isDuplicateMerge
+                      ? {
+                          [contextEncodedOld]: null,
+                        }
+                      : {}),
+                    [targetThoughtId]: {
+                      id: targetThoughtId,
                       value: head(contextNew),
                       context: contextNew,
                       children: childrenNew,
@@ -385,18 +405,16 @@ const moveThought = (
       )
 
   const contextIndexUpdates: Index<Parent | null> = {
-    [contextEncodedOld]:
-      subthoughtsOld.length > 0
-        ? {
-            id: oldParent.id,
-            value: head(oldContext),
-            context: oldContext,
-            children: subthoughtsOld,
-            lastUpdated: timestamp(),
-          }
-        : null,
+    // @MIGRATION_NOTE: Do not delete parent entry if the children is empty
+    [contextEncodedOld]: {
+      id: oldParent.id,
+      value: head(oldContext),
+      context: oldContext,
+      children: subthoughtsOld,
+      lastUpdated: timestamp(),
+    },
     [contextEncodedNew]: {
-      id: newParent.id,
+      id: contextEncodedNew,
       value: head(newContext),
       context: newContext,
       children: subthoughtsNew,
@@ -412,10 +430,11 @@ const moveThought = (
 
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
-  if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
-    contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
-    delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
-  }
+  // @MIGRATION_TODO: This may not be required after migration.
+  // if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
+  //   contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
+  //   delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
+  // }
 
   /** Returns new path for the given old context.
    * Note: This uses childUpdates so it works only for updated descendants. For main ancestor oldPath that has been moved (ancestor) use updatedNewPath instead.

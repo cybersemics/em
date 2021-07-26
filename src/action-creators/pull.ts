@@ -40,7 +40,7 @@ const pull =
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    const thoughtsLocalIterable = getManyDescendants(db, contextMap, { maxDepth: maxDepth || BUFFER_DEPTH })
+    const thoughtsLocalIterable = getManyDescendants(db, contextMap, getState(), { maxDepth: maxDepth || BUFFER_DEPTH })
     // eslint-disable-next-line fp/no-loops
     for await (const thoughts of thoughtsLocalIterable) {
       // eslint-disable-next-line fp/no-mutating-methods
@@ -68,9 +68,14 @@ const pull =
     // get remote thoughts and reconcile with local
     const status = getState().status
     if (status === 'loaded') {
-      const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMap, {
-        maxDepth: maxDepth || BUFFER_DEPTH,
-      })
+      const thoughtsRemoteIterable = getManyDescendants(
+        getFirebaseProvider(getState(), dispatch),
+        contextMap,
+        getState(),
+        {
+          maxDepth: maxDepth || BUFFER_DEPTH,
+        },
+      )
 
       const thoughtRemoteChunks: ThoughtsInterface[] = []
 

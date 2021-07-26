@@ -3,7 +3,8 @@ import { removeHome } from '../../util'
 import { exportContext } from '../../selectors'
 import { importText } from '../../reducers'
 import { initialState } from '../../util/initialState'
-import { SimplePath } from '../../types'
+import { Path } from '../../@types'
+import { hashContext } from '../hashContext'
 
 /** Imports the given html and exports it as plaintext. */
 const importExport = (html: string, isHTML = true) => {
@@ -354,10 +355,11 @@ it('paste multiple thoughts in non-empty cursor', () => {
 
   const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
 
-  const simplePath = [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 0 },
-  ] as SimplePath
+  const simplePath: Path = [
+    { value: 'a', rank: 0, id: hashContext(state1, ['a']) || '' },
+    { value: 'b', rank: 0, id: hashContext(state1, ['a', 'b']) || '' },
+  ]
+
   const state2 = importText(state1, { path: simplePath, text: importedHtml })
 
   const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')
@@ -383,10 +385,10 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
 
   const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
 
-  const simplePath = [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 0 },
-  ] as SimplePath
+  const simplePath: Path = [
+    { value: 'a', rank: 0, id: hashContext(state1, ['a']) || '' },
+    { value: 'b', rank: 0, id: hashContext(state1, ['a', 'b']) || '' },
+  ]
   const state2 = importText(state1, { path: simplePath, text: importedHtml })
 
   const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')

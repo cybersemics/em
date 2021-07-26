@@ -158,6 +158,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
       rank: newRank,
       value,
+      id: newThoughtId,
     }),
     (newState: State) => {
       const parentPath = !preventSetCursor ? unroot(insertNewSubthought ? path : parentOf(path)) : null

@@ -2,8 +2,7 @@ import _ from 'lodash'
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { createId, hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
-import { Context, Index, Parent, ThoughtsInterface } from '../../@types'
-import { store } from '../../store'
+import { State, Context, Index, Parent, ThoughtsInterface } from '../../@types'
 
 const MAX_DEPTH = 100
 
@@ -39,6 +38,8 @@ const isUnbuffered = (parent: Parent) =>
 async function* getDescendantThoughts(
   provider: DataProvider,
   context: Context,
+  // @MIGRATION_TODO: Remove state dependency here after migration is complete
+  state: State,
   { maxDepth = MAX_DEPTH }: Options = {},
 ): AsyncIterable<ThoughtsInterface> {
   // use queue for breadth-first search
@@ -48,7 +49,7 @@ async function* getDescendantThoughts(
   // eslint-disable-next-line fp/no-loops
   while (contexts.length > 0) {
     const contextIds = contexts.reduce((acc, cx) => {
-      const id = hashContext(store.getState(), cx)
+      const id = hashContext(state, cx)
       return [...acc, ...(id ? [id] : [])]
     }, [])
     const providerParents = (await provider.getContextsByIds(contextIds))

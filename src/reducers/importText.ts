@@ -168,7 +168,7 @@ const importText = (
     return reducerFlow([
       updateThoughts(imported),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
-      shouldImportIntoDummy ? collapseContext({ deleteCursor: true, at: newDestinationPath }) : null,
+      shouldImportIntoDummy ? collapseContext({ deleteCursor: true, at: unroot(newDestinationPath) }) : null,
       // if original destination has empty then collapse once more.
       shouldImportIntoDummy && destEmpty ? collapseContext({ deleteCursor: true, at: parentOfDestination }) : null,
       // restore the selection to the last imported thought on the first level

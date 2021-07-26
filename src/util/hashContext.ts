@@ -7,7 +7,7 @@ import { EM_TOKEN } from '../constants'
 import { Context, Parent, State } from '../@types'
 // import { normalizeThought } from './normalizeThought'
 // import { getAllChildren } from '../selectors'
-import { isRoot } from './isRoot'
+import { isRoot } from '.'
 
 // const SEPARATOR_TOKEN = '__SEP__'
 
@@ -25,6 +25,17 @@ export const hashContext = (state: State, thoughts: Context, rank?: number): str
 
   const startsWithEM = thoughts[0] === EM_TOKEN
   const rootParent = state.thoughts.contextIndex[startsWithEM ? EM_TOKEN : state.rootContext[0]]
+
+  if (!rootParent) {
+    console.error(
+      'hashContext: Parent entry for root context not found',
+      startsWithEM ? EM_TOKEN : state.rootContext[0],
+    )
+    return null
+  }
+
+  if (startsWithEM && thoughts.length === 1) return rootParent.id
+
   const parent = recursiveParentFinder(state, rootParent, startsWithEM ? thoughts.slice(1) : thoughts)
   return parent?.id || null
 }
@@ -58,10 +69,7 @@ const recursiveParentFinder = (
     return null
   }
 
-  if (targetIndex === target.length - 1) {
-    console.log(nextParent, target, 'Found!')
-    return nextParent
-  }
+  if (targetIndex === target.length - 1) return nextParent
 
   return recursiveParentFinder(state, nextParent, target, targetIndex + 1, [...visitedId, child.id])
 }

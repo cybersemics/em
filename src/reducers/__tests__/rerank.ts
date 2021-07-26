@@ -2,6 +2,7 @@ import { hashContext, initialState, reducerFlow } from '../../util'
 import { cursorDown, deleteThoughtWithCursor, moveThought, newThought, rerank } from '../../reducers'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
+import { State } from '../../@types'
 
 it('recalculate absolute ranks while preserving relative order to avoid rank precision errors', () => {
   // add two thoughts normally then use insertBefore to cut the rank in half
@@ -42,10 +43,11 @@ it('rerank on moveThought if rnaks are too close', () => {
     newThought({ value: 'b', insertBefore: true }),
 
     // move any thought to trigger a rerank
-    moveThought({
-      oldPath: [{ id: hashContext(['a']), value: 'a', rank: 0 }],
-      newPath: [{ id: hashContext(['a']), value: 'a', rank: 99 }],
-    }),
+    (newState: State) =>
+      moveThought(newState, {
+        oldPath: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }],
+        newPath: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 99 }],
+      }),
   ]
 
   const state = reducerFlow(steps)(initialState())

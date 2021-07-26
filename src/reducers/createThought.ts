@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { getNextRank, getLexeme, getAllChildren, getParent } from '../selectors'
-import { createId, equalThoughtRanked, hashThought, head, timestamp } from '../util'
+import { createId, equalThoughtRanked, hashThought, head, timestamp, unroot } from '../util'
 import { Context, Index, Lexeme, Parent, State } from '../@types'
 
 interface Payload {
@@ -40,8 +40,10 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
   const contextIndexUpdates: Index<Parent> = {}
 
   if (context.length > 0) {
+    const newValue = addAsContext ? head(context) : value
+
     const newContextSubthought = {
-      value: addAsContext ? head(context) : value,
+      value: newValue,
       rank: addAsContext ? getNextRank(state, [value]) : rank,
       created: timestamp(),
       id,
@@ -55,6 +57,14 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       id: parent.id,
       children,
       lastUpdated: timestamp(),
+    }
+
+    contextIndexUpdates[id] = {
+      id,
+      children: [],
+      lastUpdated: timestamp(),
+      context: unroot([...contextActual, newValue]),
+      value: newValue,
     }
   }
 

@@ -20,7 +20,8 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+      (newState: State) =>
+        setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
       cursorDown,
     ]
 
@@ -34,7 +35,8 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newSubthought('b'),
-      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+      (newState: State) =>
+        setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
       cursorDown,
     ]
 
@@ -66,7 +68,8 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+      (newState: State) =>
+        setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
       newSubthought('a1'),
       cursorDown,
     ]
@@ -81,7 +84,8 @@ describe('normal view', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+      (newState: State) =>
+        setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
       newSubthought('a1'),
       newSubthought('a1.1'),
       newSubthought('a1.1.1'),
@@ -99,7 +103,8 @@ describe('normal view', () => {
       newThought('a'),
       newSubthought('n'),
       newThought('m'),
-      setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+      (newState: State) =>
+        setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
       toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
       cursorDown,
     ]
@@ -121,12 +126,13 @@ describe('context view', () => {
 
     const steps = [
       importText({ text }),
-      setCursor({
-        path: [
-          { id: hashContext(['a']), value: 'a', rank: 0 },
-          { id: hashContext(['a', 'm']), value: 'm', rank: 1 },
-        ],
-      }),
+      (newState: State) =>
+        setCursor(newState, {
+          path: [
+            { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+            { id: hashContext(newState, ['a', 'm']) || '', value: 'm', rank: 1 },
+          ],
+        }),
       toggleContextView,
       cursorDown,
     ]
@@ -191,20 +197,22 @@ describe('context view', () => {
 
     const steps = [
       importText({ text }),
-      setCursor({
-        path: [
-          { id: hashContext(['a']), value: 'a', rank: 0 },
-          { id: hashContext(['a', 'm']), value: 'm', rank: 1 },
-        ],
-      }),
+      (newState: State) =>
+        setCursor(newState, {
+          path: [
+            { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+            { id: hashContext(newState, ['a', 'm']) || '', value: 'm', rank: 1 },
+          ],
+        }),
       toggleContextView,
-      setCursor({
-        path: [
-          { id: hashContext(['a']), value: 'a', rank: 0 },
-          { id: hashContext(['a', 'm']), value: 'm', rank: 1 },
-          { id: hashContext(['a', 'm', 'a']), value: 'a', rank: 0 },
-        ],
-      }),
+      (newState: State) =>
+        setCursor(newState, {
+          path: [
+            { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+            { id: hashContext(newState, ['a', 'm']) || '', value: 'm', rank: 1 },
+            { id: hashContext(newState, ['a', 'm', 'a']) || '', value: 'a', rank: 0 },
+          ],
+        }),
       cursorDown,
     ]
 
@@ -264,7 +272,8 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor || [])).toMatchObject(['a', 'm', 'b', 'z'])
+    expect(stateNew.cursor).toBeDefined()
+    expect(pathToContext(stateNew.cursor!)).toMatchObject(['a', 'm', 'b', 'z'])
   })
 
   it("move cursor from context's last descendant to next sibling if there aren't any further contexts", () => {
@@ -286,7 +295,8 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor || [])).toMatchObject(['b'])
+    expect(stateNew.cursor).toBeDefined()
+    expect(pathToContext(stateNew.cursor!)).toMatchObject(['b'])
   })
 
   it('move cursor to circular path', () => {
@@ -312,7 +322,8 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor || [])).toMatchObject(['a', 'm', 'a', 'y'])
+    expect(stateNew.cursor).toBeDefined()
+    expect(pathToContext(stateNew.cursor!)).toMatchObject(['a', 'm', 'a', 'y'])
   })
 
   it('should not move cursor if the cursor on last thought', () => {

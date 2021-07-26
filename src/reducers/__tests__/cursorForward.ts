@@ -6,6 +6,7 @@ import cursorForward from '../cursorForward'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
+import { State } from '../../@types'
 
 it('reverse cursorBack', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack, cursorForward]
@@ -23,7 +24,8 @@ it('move to first child if there is no history', () => {
     newThought('a'),
     newSubthought('b'),
     newThought('c'),
-    setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
     cursorForward,
   ]
 

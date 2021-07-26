@@ -54,7 +54,6 @@ export const getAllChildrenByContextHash = (
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {
   const hash = hashContext(state, context)
-  console.log(state, context, hash, 'waduu')
   return getAllChildrenByContextHash(state, hash as ContextHash)
 }
 

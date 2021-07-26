@@ -24,9 +24,10 @@ import {
   pathToContext,
   removeContext,
   timestamp,
+  headId,
+  unroot,
 } from '../util'
 import { createId } from './createId'
-import { headId } from './headId'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp
@@ -171,17 +172,6 @@ const saveThoughts = (
 
         const existingParent = accumContextIndex[contextEncoded]
 
-        console.log(
-          accum.contextIndex[contextEncoded] ||
-            contextIndexUpdates[contextEncoded] ||
-            state.thoughts.contextIndex[contextEncoded],
-          'exisiting parent',
-        )
-
-        if (!existingParent) {
-          console.log('Wtff', path)
-        }
-
         const childLastUpdated = block.children[0]?.lastUpdated
         const childCreated = block.children[0]?.created
         const lastUpdatedInherited = block.lastUpdated || childLastUpdated || existingParent.lastUpdated || lastUpdated
@@ -191,7 +181,7 @@ const saveThoughts = (
           stateNew,
           existingParent,
           nonDuplicateValue,
-          pathToContext(path),
+          unroot(pathToContext(path)),
           rank,
           createdInherited,
           lastUpdatedInherited,
@@ -284,8 +274,9 @@ export const importJSON = (
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, pathToContext(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
-  const rootedContext = pathToContext(rootedParentOf(state, simplePath))
-  const contextEncoded = headId(simplePath)
+  const rootedPath = rootedParentOf(state, simplePath)
+  const rootedContext = pathToContext(rootedPath)
+  const contextEncoded = headId(rootedPath)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
@@ -293,7 +284,7 @@ export const importJSON = (
     if (lexeme) {
       initialThoughtIndex[hashThought('')] = removeContext(lexeme, context, headRank(simplePath))
       initialContextIndex[contextEncoded] = {
-        ...initialContextIndex[contextEncoded],
+        ...state.thoughts.contextIndex[contextEncoded],
         context: rootedContext,
         children: getAllChildren(state, rootedContext).filter(child => !equalThoughtRanked(child, destThought)),
         lastUpdated,
