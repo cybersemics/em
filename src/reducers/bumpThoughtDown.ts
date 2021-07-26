@@ -61,7 +61,6 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     // set cursor
     setCursor({
       path: simplePathWithNewRankAndValue,
-      offset: state.cursorOffset === 0 ? state.cursorOffset + 1 : 0, //trigger useEffect callback on Editable component
       editing: true,
     }),
     editableRender,
