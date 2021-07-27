@@ -27,7 +27,7 @@ import { isGestureHint, inputHandlers } from '../shortcuts'
 
 const { flexOne, darkBackground } = commonStyles
 
-const { handleGestureEnd, handleGestureSegment } = inputHandlers(store ?? {})
+const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 /** Cancel gesture if there is an active text selection on active drag. */
 const shouldCancelGesture = () => store?.getState().dragInProgress
