@@ -21,7 +21,7 @@ import ModalAuth from './ModalAuth'
 import ErrorMessage from './ErrorMessage'
 import Content from './Content'
 
-import MultiGesture from './MultiGesture.native'
+import MultiGesture from './MultiGesture'
 import { store } from '../store'
 import { isGestureHint, inputHandlers } from '../shortcuts'
 
