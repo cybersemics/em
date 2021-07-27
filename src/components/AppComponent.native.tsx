@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
 import NavBar from './NavBar'
 import ModalFeedback from './ModalFeedback'
-import { toggleSidebar } from '../action-creators'
+import { toggleSidebar, alert } from '../action-creators'
 import { useDispatch, useSelector } from 'react-redux'
 import { DrawerLayout } from 'react-native-gesture-handler'
 import Sidebar from './Sidebar'
@@ -21,7 +21,25 @@ import ModalAuth from './ModalAuth'
 import ErrorMessage from './ErrorMessage'
 import Content from './Content'
 
+import MultiGesture from './MultiGesture'
+import { store } from '../store'
+import { isGestureHint, inputHandlers } from '../shortcuts'
+
 const { flexOne, darkBackground } = commonStyles
+
+const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
+
+/** Cancel gesture if there is an active text selection on active drag. */
+const shouldCancelGesture = () => store?.getState().dragInProgress
+
+/** Dismiss gesture hint that is shown by alert. */
+const handleGestureCancel = () => {
+  store.dispatch((dispatch, getState) => {
+    if (isGestureHint(getState())) {
+      dispatch(alert(null))
+    }
+  })
+}
 
 /**
  * AppComponent container.
@@ -32,7 +50,7 @@ const AppComponent: React.FC = () => {
   const { height } = useDimensions().screen
 
   const showSidebar = useSelector((state: State) => state.showSidebar)
-  const alert = useSelector((state: State) => state.alert)
+  const showAlert = useSelector((state: State) => state.alert)
 
   /** Open drawer menu. */
   const openDrawer = () => {
@@ -67,14 +85,22 @@ const AppComponent: React.FC = () => {
           onDrawerClose={onDrawerClose}
           renderNavigationView={Sidebar}
         >
-          {alert && <Alert />}
+          {showAlert && <Alert />}
           <ErrorMessage />
           <Toolbar />
           <ScrollView nestedScrollEnabled={true} style={flexOne}>
             <View style={contentHeight}>
-              <ScrollView nestedScrollEnabled={true} style={flexOne}>
-                <Content />
-              </ScrollView>
+              <MultiGesture
+                onGesture={handleGestureSegment}
+                onEnd={handleGestureEnd}
+                shouldCancelGesture={shouldCancelGesture}
+                onCancel={handleGestureCancel}
+              >
+                <ScrollView nestedScrollEnabled={true} style={flexOne}>
+                  <Content />
+                </ScrollView>
+              </MultiGesture>
+
               <NavBar position='top' />
             </View>
 
