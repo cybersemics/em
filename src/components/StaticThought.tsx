@@ -31,6 +31,7 @@ const StaticThought = ({
   style,
   simplePath,
   toggleTopControlsAndBreadcrumbs,
+  editing,
 }: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && isLeaf
@@ -70,6 +71,7 @@ const StaticThought = ({
         <Editable
           path={path}
           cursorOffset={cursorOffset}
+          editing={editing}
           disabled={!isDocumentEditable()}
           isEditing={isEditing}
           rank={rank}

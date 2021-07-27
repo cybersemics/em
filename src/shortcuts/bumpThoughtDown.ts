@@ -1,5 +1,5 @@
 import { asyncFocus, isDocumentEditable } from '../util'
-import { bumpThoughtDown, setCursor } from '../action-creators'
+import { bumpThoughtDown } from '../action-creators'
 import { Shortcut } from '../@types'
 
 const bumpThoughtDownShortcut: Shortcut = {
@@ -9,24 +9,12 @@ const bumpThoughtDownShortcut: Shortcut = {
   gesture: 'rld',
   keyboard: { key: 'd', meta: true, alt: true },
   canExecute: getState => !!getState().cursor && isDocumentEditable(),
-  exec: (dispatch, getState) => {
-    asyncFocus()
+  exec: dispatch => {
+    // If there is already active selection, no need to focus to the hidden input.
+    if (!window.getSelection()?.focusNode) {
+      asyncFocus()
+    }
     dispatch(bumpThoughtDown())
-
-    // trigger useEffect callback on Editable component by causing a change on isEditing props
-    const cursor = getState().cursor
-    dispatch(
-      setCursor({
-        path: null,
-      }),
-    )
-    dispatch(
-      setCursor({
-        path: cursor,
-        offset: 0,
-        editing: true,
-      }),
-    )
   },
 }
 
