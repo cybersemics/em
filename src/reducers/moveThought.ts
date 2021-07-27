@@ -70,7 +70,6 @@ const moveThought = (
     skipRerank?: boolean
   },
 ) => {
-  // console.log(oldPath, newPath, 'movee')
   const oldSimplePath = simplifyPath(state, oldPath)
   const newSimplePath = simplifyPath(state, newPath)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
@@ -95,7 +94,7 @@ const moveThought = (
   }
 
   if (!oldParent) {
-    console.log('Parent entry not found!')
+    console.error('Parent entry not found!')
     return state
   }
 

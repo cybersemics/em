@@ -8,6 +8,7 @@ import { Context, Parent, State } from '../@types'
 // import { normalizeThought } from './normalizeThought'
 // import { getAllChildren } from '../selectors'
 import { isRoot } from '.'
+import { normalizeThought } from './normalizeThought'
 
 // const SEPARATOR_TOKEN = '__SEP__'
 
@@ -52,7 +53,10 @@ const recursiveParentFinder = (
 ): Parent | null => {
   if (target.length === 0 && parent.children.length === 0) return null
 
-  const child = parent.children.find(child => target[targetIndex] === child.value)
+  const child = parent.children.find(child => {
+    const targetValue = target[targetIndex]
+    return targetValue !== undefined && normalizeThought(target[targetIndex]) === normalizeThought(child.value)
+  })
 
   if (!child) return null
   const isCircular = visitedId.includes(child.id)

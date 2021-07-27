@@ -699,6 +699,3 @@
 // }
 
 // export default dataProviderTest
-
-const a = ''
-export default a

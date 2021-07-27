@@ -3,8 +3,7 @@ import { HOME_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newSubthought, newThought, setCursor } from '../../reducers'
-import { State } from '../../util/initialState'
-import { Context } from '../../@types'
+import { Context, State } from '../../@types'
 
 /** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
 const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) =>
@@ -14,7 +13,8 @@ const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) 
 )
 
 /** Returns true if a context is expanded. */
-const isContextExpanded = (state: State, context: Context) => expandThoughts(state, state.cursor)[hashContext(context)]
+const isContextExpanded = (state: State, context: Context) =>
+  expandThoughts(state, state.cursor)[hashContext(state, context) || '']
 
 describe('normal view', () => {
   it('ROOT is always expanded', () => {

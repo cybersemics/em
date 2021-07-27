@@ -3,6 +3,8 @@ import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { hashContext } from '../../util'
+import { Thunk } from '../../@types'
 
 it('redo thought change', () => {
   const store = createTestStore()
@@ -57,13 +59,16 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },
-    {
-      type: 'editThought',
-      newValue: 'arizona',
-      oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }],
-    },
+    (
+      (): Thunk => (dispatch, getState) =>
+        dispatch({
+          type: 'editThought',
+          newValue: 'arizona',
+          oldValue: 'a',
+          context: [HOME_TOKEN],
+          path: [{ value: 'a', rank: 0, id: hashContext(getState(), ['a']) }],
+        })
+    )(),
     setCursorFirstMatchActionCreator(['arizona', 'b']),
     { type: 'cursorBack' },
     { type: 'cursorUp' },

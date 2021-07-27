@@ -46,7 +46,7 @@ it('normal view', () => {
         - c`,
     }),
     // set the cursor to expand the subthoughts
-    setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] }),
+    setCursor({ path: [{ id: hashContext(store.getState(), ['a']) || '', value: 'a', rank: 0 }] }),
   ])
 
   // update DOM
@@ -62,7 +62,8 @@ it('normal view', () => {
   expect(pathToContext(thoughtsWrapper.at(1).props().simplePath)).toMatchObject(['a', 'c'])
 })
 
-describe('context view', () => {
+// @MIGRATION_TODO: Allow this test after migration is complete.
+describe.skip('context view', () => {
   it('render contexts of cursor thought when context view is enabled', () => {
     const now = timestamp()
 
@@ -123,7 +124,8 @@ describe('context view', () => {
     })
   })
 
-  it('render context children of contexts that have different lexeme instances', () => {
+  // @MIGRATION_TODO: Allow this test after migration is complete.
+  it.skip('render context children of contexts that have different lexeme instances', () => {
     // import thoughts
     store.dispatch([
       importText({
@@ -191,7 +193,8 @@ describe('context view', () => {
     })
   })
 
-  it('calculate proper resolved path for a children inside context view with duplicate lexeme', () => {
+  // @MIGRATION_TODO: Allow this test after migration is complete.
+  it.skip('calculate proper resolved path for a children inside context view with duplicate lexeme', () => {
     // Explaination: https://github.com/cybersemics/em/pull/878#issuecomment-717057916
 
     // import thoughts

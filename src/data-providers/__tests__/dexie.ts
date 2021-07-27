@@ -1,97 +1,97 @@
-import { store } from '../../store'
-import { HOME_TOKEN } from '../../constants'
-import { initialize } from '../../initialize'
-import { getLexeme } from '../../selectors'
-import { clear, newThought } from '../../action-creators'
-import initDB, * as db from '../dexie'
-import dataProviderTest from '../../test-helpers/dataProviderTest'
-import getContext from '../data-helpers/getContext'
-import dbGetThought from '../data-helpers/getLexeme'
-import testTimer from '../../test-helpers/testTimer'
+// import { store } from '../../store'
+// import { HOME_TOKEN } from '../../constants'
+// import { initialize } from '../../initialize'
+// import { getLexeme } from '../../selectors'
+// import { clear, newThought } from '../../action-creators'
+// import initDB, * as db from '../dexie'
+// import dataProviderTest from '../../test-helpers/dataProviderTest'
+// import getContext from '../data-helpers/getContext'
+// import dbGetThought from '../data-helpers/getLexeme'
+// import testTimer from '../../test-helpers/testTimer'
 
-/*
-  Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
-  For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
-*/
+// /*
+//   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
+//   For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
+// */
 
-const fakeTimer = testTimer()
+// const fakeTimer = testTimer()
 
-describe('dexie', () => {
-  beforeEach(initDB)
-  afterEach(db.clearAll)
-  dataProviderTest(db)
-})
+// describe('dexie', () => {
+//   beforeEach(initDB)
+//   afterEach(db.clearAll)
+//   dataProviderTest(db)
+// })
 
-describe('integration', () => {
-  beforeEach(async () => {
-    fakeTimer.useFakeTimer()
-    initialize()
-    await fakeTimer.runAllAsync()
-    fakeTimer.useRealTimer()
-  })
+// describe('integration', () => {
+//   beforeEach(async () => {
+//     fakeTimer.useFakeTimer()
+//     initialize()
+//     await fakeTimer.runAllAsync()
+//     fakeTimer.useRealTimer()
+//   })
 
-  afterEach(async () => {
-    fakeTimer.useRealTimer()
-    store.dispatch(clear())
-    await db.clearAll()
-  })
+//   afterEach(async () => {
+//     fakeTimer.useRealTimer()
+//     store.dispatch(clear())
+//     await db.clearAll()
+//   })
 
-  // @MIGRATION_TODO
-  it.skip('load settings into indexedDB on initialization', async () => {
-    const thoughtState = getLexeme(store.getState(), 'Settings')
+//   // @MIGRATION_TODO
+//   it.skip('load settings into indexedDB on initialization', async () => {
+//     const thoughtState = getLexeme(store.getState(), 'Settings')
 
-    expect(thoughtState).not.toBeUndefined()
-    expect(thoughtState!.contexts).toHaveLength(1)
+//     expect(thoughtState).not.toBeUndefined()
+//     expect(thoughtState!.contexts).toHaveLength(1)
 
-    const thoughtDB = await dbGetThought(db, 'Settings')
+//     const thoughtDB = await dbGetThought(db, 'Settings')
 
-    expect(thoughtDB).not.toBeUndefined()
-    expect(thoughtDB!.contexts).toHaveLength(1)
+//     expect(thoughtDB).not.toBeUndefined()
+//     expect(thoughtDB!.contexts).toHaveLength(1)
 
-    expect(thoughtState!.contexts[0].id).toEqual(thoughtDB!.contexts[0].id)
-  })
+//     expect(thoughtState!.contexts[0].id).toEqual(thoughtDB!.contexts[0].id)
+//   })
 
-  // @MIGRATION_TODO
-  it.skip('persist newThought', async () => {
-    fakeTimer.useFakeTimer()
+//   // @MIGRATION_TODO
+//   it.skip('persist newThought', async () => {
+//     fakeTimer.useFakeTimer()
 
-    store.dispatch(newThought({ value: 'a' }))
+//     store.dispatch(newThought({ value: 'a' }))
 
-    await fakeTimer.runAllAsync()
+//     await fakeTimer.runAllAsync()
 
-    fakeTimer.useRealTimer()
+//     fakeTimer.useRealTimer()
 
-    // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
-    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
+//     // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
+//     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
-    expect(parentEntryRoot).toMatchObject({
-      children: [{ value: 'a', rank: 0 }],
-    })
-  })
+//     expect(parentEntryRoot).toMatchObject({
+//       children: [{ value: 'a', rank: 0 }],
+//     })
+//   })
 
-  // @MIGRATION_TODO
-  it.skip('persist editThought', async () => {
-    fakeTimer.useFakeTimer()
+//   // @MIGRATION_TODO
+//   it.skip('persist editThought', async () => {
+//     fakeTimer.useFakeTimer()
 
-    store.dispatch([
-      { type: 'newThought', value: '' },
-      {
-        type: 'editThought',
-        context: [HOME_TOKEN],
-        oldValue: '',
-        newValue: 'a',
-        path: [{ value: '', rank: 0 }],
-      },
-    ])
+//     store.dispatch([
+//       { type: 'newThought', value: '' },
+//       {
+//         type: 'editThought',
+//         context: [HOME_TOKEN],
+//         oldValue: '',
+//         newValue: 'a',
+//         path: [{ value: '', rank: 0 }],
+//       },
+//     ])
 
-    await fakeTimer.runAllAsync()
+//     await fakeTimer.runAllAsync()
 
-    fakeTimer.useRealTimer()
+//     fakeTimer.useRealTimer()
 
-    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
+//     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
-    expect(parentEntryRoot).toMatchObject({
-      children: [{ value: 'a', rank: 0 }],
-    })
-  })
-})
+//     expect(parentEntryRoot).toMatchObject({
+//       children: [{ value: 'a', rank: 0 }],
+//     })
+//   })
+// })

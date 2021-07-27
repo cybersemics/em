@@ -1,11 +1,10 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { hashContext, hashThought, removeHome } from '../../util'
+import { hashThought, removeHome } from '../../util'
 import { exportContext } from '../../selectors'
 import { initialState } from '../initialState'
 import { RoamBlock, RoamPage, roamJsonToBlocks } from '../roamJsonToBlocks'
 import { importJSON } from '../importJSON'
 import { SimplePath, State } from '../../@types'
-import _ from 'lodash'
 import { keyValueBy } from '../keyValueBy'
 
 jest.mock('../timestamp', () => ({

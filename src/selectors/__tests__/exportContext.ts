@@ -1,7 +1,7 @@
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { editThought, importText, setCursor } from '../../reducers'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
-import { SimplePath } from '../../@types'
+import { SimplePath, State, Path } from '../../@types'
 import exportContext from '../exportContext'
 
 it('meta and archived thoughts are included', () => {
@@ -12,7 +12,11 @@ it('meta and archived thoughts are included', () => {
     - true
   - b`
 
-  const steps = [importText({ text }), setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] })]
+  const steps = [
+    importText({ text }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -35,7 +39,11 @@ it('meta is included but archived thoughts are excluded', () => {
     - true
   - b`
 
-  const steps = [importText({ text }), setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] })]
+  const steps = [
+    importText({ text }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -56,7 +64,11 @@ it('meta is excluded', () => {
     - true
   - b`
 
-  const steps = [importText({ text }), setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] })]
+  const steps = [
+    importText({ text }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -78,7 +90,11 @@ it('meta is excluded but archived is included', () => {
     - true
   - b`
 
-  const steps = [importText({ text }), setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] })]
+  const steps = [
+    importText({ text }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -93,7 +109,11 @@ it('exported as plain text', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [importText({ text }), setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] })]
+  const steps = [
+    importText({ text }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -108,7 +128,11 @@ it('exported as html', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [importText({ text }), setCursor({ path: [{ id: hashContext(['a']), value: 'a', rank: 0 }] })]
+  const steps = [
+    importText({ text }),
+    (newState: State) =>
+      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -133,15 +157,16 @@ it('export multi-line thoughts as separate thoughts', () => {
 
   const steps = [
     importText({ text }),
-    editThought({
-      oldValue: 'Hello',
-      newValue: 'Hello\nworld',
-      context: ['a', 'b'],
-      path: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
-      ] as SimplePath,
-    }),
+    (newState: State) =>
+      editThought(newState, {
+        oldValue: 'Hello',
+        newValue: 'Hello\nworld',
+        context: ['a', 'b'],
+        path: [
+          { value: 'a', rank: 0, id: hashContext(newState, ['a']) },
+          { value: 'b', rank: 0, id: hashContext(newState, ['a', 'b']) },
+        ] as Path as SimplePath,
+      }),
   ]
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
