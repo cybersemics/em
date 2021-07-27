@@ -1,5 +1,5 @@
 import ClipboardJS from 'clipboard'
-import { editableNode, getExportPhrase, hashContext, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { editableNode, exportPhrase, hashContext, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { exportContext, getDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
 import { Shortcut } from '../@types'
@@ -49,8 +49,10 @@ const copyCursorShortcut: Shortcut = {
     const el = editableNode(cursor!)
     setSelection(el!, { offset })
 
+    const phrase = exportPhrase(state, context, exported)
+
     dispatch(
-      alert(`Copied ${getExportPhrase(state, simplePath)} to the clipboard`, {
+      alert(`Copied ${phrase} to the clipboard`, {
         alertType: 'clipboard',
         clearTimeout: 3000,
       }),

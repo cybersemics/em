@@ -6,7 +6,7 @@ import { HOME_PATH } from '../constants'
 import {
   download,
   ellipsize,
-  getExportPhrase,
+  exportPhrase,
   // hashContext,
   headValue,
   isFunction,
@@ -76,11 +76,7 @@ const ModalExport = () => {
 
   const exportWord = 'Share'
 
-  const exportThoughtsPhrase = getExportPhrase(state, simplePath, {
-    filterFunction: and(
-      shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
-      shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
-    ),
+  const exportThoughtsPhrase = exportPhrase(state, context, exportContent, {
     value: title,
   })
 

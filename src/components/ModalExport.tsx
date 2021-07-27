@@ -1,18 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import ClipboardJS from 'clipboard'
-import { and } from 'fp-and-or'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
 import {
   download,
   ellipsize,
-  getExportPhrase,
+  exportPhrase,
   getPublishUrl,
   hashContext,
   headValue,
   isDocumentEditable,
-  isFunction,
   isRoot,
   pathToContext,
   removeHome,
@@ -27,7 +25,7 @@ import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
-import { Child, ExportOption, State } from '../@types'
+import { ExportOption, State } from '../@types'
 
 interface AdvancedSetting {
   id: string
@@ -73,11 +71,7 @@ const ModalExport = () => {
 
   const exportWord = isTouch ? 'Share' : 'Download'
 
-  const exportThoughtsPhrase = getExportPhrase(state, simplePath, {
-    filterFunction: and(
-      shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
-      shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
-    ),
+  const exportThoughtsPhrase = exportPhrase(state, context, exportContent, {
     value: title,
   })
 
