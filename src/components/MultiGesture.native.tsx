@@ -169,7 +169,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             this.props.onGesture?.(g, this.sequence, e)
           }
         }
-        console.log({ sequence: this.sequence })
       },
 
       // In rare cases release won't be called. See touchend above.

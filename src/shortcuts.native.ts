@@ -60,8 +60,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     const shortcut = shortcutGestureIndex[path as string]
 
-    console.log(shortcut, path)
-
     // display gesture hint
     clearTimeout(handleGestureSegmentTimeout)
     handleGestureSegmentTimeout = setTimeout(
