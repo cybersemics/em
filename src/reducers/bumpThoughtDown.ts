@@ -1,3 +1,4 @@
+/* eslint-disable */
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
 import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
@@ -60,6 +61,8 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     // set cursor
     setCursor({
       path: simplePathWithNewRankAndValue,
+      editing: true,
+      offset: 0,
     }),
     editableRender,
   ])(state)

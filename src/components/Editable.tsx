@@ -7,7 +7,6 @@ import classNames from 'classnames'
 import {
   alert,
   cursorBack,
-  editing,
   error,
   editThought,
   importText,
@@ -16,6 +15,7 @@ import {
   setInvalidState,
   tutorialNext,
   newThought,
+  editing as editingAction,
 } from '../action-creators'
 import { isTouch, isSafari } from '../browser'
 import globals from '../globals'
@@ -135,6 +135,7 @@ interface EditableProps {
   */
   transient?: boolean
   onKeyDownAction?: () => void
+  editing?: boolean | null
 }
 
 interface Alert {
@@ -192,6 +193,7 @@ const Editable = ({
   onKeyDownAction,
   dispatch,
   transient,
+  editing,
 }: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
@@ -432,7 +434,7 @@ const Editable = ({
       shortcutEmitter.off('shortcut', flush)
       showDuplicationAlert(false, dispatch)
     }
-  }, [isEditing, cursorOffset, state.dragInProgress])
+  }, [isEditing, cursorOffset, state.dragInProgress, editing])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = (e: ContentEditableEvent) => {
@@ -618,7 +620,7 @@ const Editable = ({
           !window.getSelection()?.focusNode ||
           !window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')
         ) {
-          dispatch(editing({ value: false }))
+          dispatch(editingAction({ value: false }))
         }
       }
     })

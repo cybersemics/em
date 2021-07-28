@@ -3,6 +3,7 @@ import { GesturePath } from '../@types'
 enum gestureEnum {
   newSubThought = 'rdr',
   newThought = 'rd',
+  bumpThoughtDown = 'rld',
 }
 
 // widen the type of the gestureEnum values to GesturePath using a mapped type

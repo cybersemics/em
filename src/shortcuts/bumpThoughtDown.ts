@@ -10,7 +10,10 @@ const bumpThoughtDownShortcut: Shortcut = {
   keyboard: { key: 'd', meta: true, alt: true },
   canExecute: getState => !!getState().cursor && isDocumentEditable(),
   exec: dispatch => {
-    asyncFocus()
+    // If there is already active selection, no need to focus to the hidden input.
+    if (!window.getSelection()?.focusNode) {
+      asyncFocus()
+    }
     dispatch(bumpThoughtDown())
   },
 }
