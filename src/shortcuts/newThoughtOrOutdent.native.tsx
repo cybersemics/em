@@ -18,7 +18,6 @@ const Icon = ({ fill = 'black', size = 20 }: IconType) => (
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string }) => {
-  console.log('new thought')
   const state = getState()
   const { cursor, editingValue } = state
 
