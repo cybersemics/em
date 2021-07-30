@@ -27,6 +27,7 @@ import {
   equalPath,
   hashContext,
   head,
+  headId,
   headValue,
   isDescendantPath,
   isDivider,
@@ -163,7 +164,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isCursorGrandparent =
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
-  const isExpanded = !!expanded[hashContext(pathToContext(path))]
+  const isExpanded = !!expanded[headId(path)]
   const isLeaf = !hasChildren(state, contextLive)
 
   return {
