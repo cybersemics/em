@@ -10,9 +10,9 @@ interface Options {
 
 /** Parses the thoughts from the url. */
 const decodeThoughtsUrl = (state: State, pathname: string, { exists }: Options = {}) => {
-  const urlPathname = pathname?.slice(1) || ''
-  const urlComponents = urlPathname?.split('/')
-  const urlOwner = urlComponents?.[0] || '~' // ~ represents currently authenticated user
+  const urlPathname = pathname.slice(1) || ''
+  const urlComponents = urlPathname.split('/')
+  const urlOwner = urlComponents[0] || '~' // ~ represents currently authenticated user
 
   if (urlOwner !== owner()) {
     console.error(

@@ -16,6 +16,7 @@ import {
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Child, Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
+import { isMobile } from '../util/isMobile'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>
@@ -161,7 +162,9 @@ const updateThoughts = (
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
     !state.cursorInitialized
       ? state => {
-          const { contextViews, path } = decodeThoughtsUrl(state, window?.location?.pathname)
+          if (isMobile()) return { ...state, cursorInitialized: true }
+
+          const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
           const cursorNew = !path || isRoot(path) ? null : path
           const isCursorLoaded = cursorNew?.every(child => getLexeme(state, child.value))
 
