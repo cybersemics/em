@@ -4,8 +4,7 @@ import { InviteCodes, State } from '../@types'
 import InvitesIcon from './icons/InvitesIcon'
 import CheckmarkIcon from './icons/CheckmarkIcon'
 import CopyClipboard from './icons/CopyClipboard'
-import { alert, createUserInvites } from '../action-creators'
-import { isTouch } from '../browser'
+import { alert, createUserInvites, updateInviteCode } from '../action-creators'
 import { theme } from '../selectors'
 import { createId, timestamp } from '../util'
 import { ActionButton } from './ActionButton'
@@ -25,7 +24,7 @@ const mapStateToProps = (state: State) => {
 
 /** Modal to get gift codes. */
 const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<typeof mapStateToProps>) => {
-  let giftCodes: { link: string; used: boolean }[] = []
+  let giftCodes: { link: string; used: boolean; seen: boolean | undefined }[] = []
   const isMounted = useRef(false)
   const dispatch = useDispatch()
 
@@ -37,7 +36,7 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
 
   let inviteCodeCnt = 0
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
+  /** Function to generate invite code. */
   const generateInviteCode = () => {
     if (inviteCodeCnt > 2) return
 
@@ -47,24 +46,12 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
     const newInviteCode: InviteCodes = {
       createdBy: uid,
       created: timestamp(),
+      hasSeen: false,
     }
 
     dispatch(createUserInvites(newInviteCode, inviteId, uid))
 
     generateInviteCode()
-  }
-
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  const createGiftCode = (invite: InviteCodes = {}) => {
-    giftCodes = [
-      ...giftCodes,
-      {
-        link: `${window.location.origin}/signup?code=${invite.id}`,
-        used: !!invite.used,
-      },
-    ]
-
-    updateGiftCode(giftCodes)
   }
 
   useEffect(() => {
@@ -76,7 +63,16 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
         } else {
           userInvites &&
             userInvites.forEach((invite: InviteCodes) => {
-              return createGiftCode(invite)
+              giftCodes = [
+                ...giftCodes,
+                {
+                  link: `${window.location.origin}/signup?code=${invite.id}`,
+                  used: !!invite.used,
+                  seen: invite.hasSeen,
+                },
+              ]
+
+              updateGiftCode(giftCodes)
             })
         }
       }
@@ -91,13 +87,12 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
   const changeType = (idx: number, actionType: string) => {
     let newIndex = idx
 
-    if (actionType === 'blur') {
-      newIndex = idx === selectedGiftCode ? -1 : idx
-    }
+    if (actionType === 'blur') newIndex = idx === selectedGiftCode ? -1 : idx
 
     inputType[idx] = 'text'
     updateInputType([...inputType])
     updateSelectedGiftCode(newIndex)
+    if (actionType === 'focus') dispatch(updateInviteCode(uid, giftCode[idx].link.split('=')[1], false))
   }
 
   /** Copy text to clipboard. */
@@ -137,7 +132,7 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
         <p className='modal-description'>
           You get three shinny gift codes to share <b>em</b> with anyone you choose!
         </p>
-        {giftCode.map(({ link, used }, idx) => {
+        {giftCode.map(({ link, used, seen }, idx) => {
           return (
             <div key={`${idx}-gift-code`} className='gift-code-wrapper'>
               <div
@@ -147,22 +142,21 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
                 <InvitesIcon fill={selectedGiftCode !== idx ? 'grey' : undefined} size={26} />
               </div>
               <Input
-                type={inputType[idx]}
+                type={seen ? 'text' : inputType[idx]}
                 placeholder='gift-code'
                 value={link}
                 onBlur={() => changeType(idx, 'blur')}
                 onFocus={() => changeType(idx, 'focus')}
+                onChange={() => changeType(idx, 'change')}
               />
               {used ? (
                 <CheckmarkIcon fill={selectedGiftCode !== idx ? 'grey' : undefined} size={21} />
               ) : (
                 <CheckmarkIcon fill={dark ? 'black' : 'white'} size={21} />
               )}
-              {isTouch && (
-                <div style={{ display: 'inline-flex' }} onClick={() => updateCopy(link)}>
-                  <CopyClipboard fill={selectedGiftCode !== idx ? 'grey' : undefined} size={26} />
-                </div>
-              )}
+              <div className='copy-icon-wrapper' onClick={() => updateCopy(link)}>
+                <CopyClipboard fill={selectedGiftCode !== idx ? 'grey' : undefined} size={26} />
+              </div>
             </div>
           )
         })}

@@ -110,7 +110,10 @@ const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnT
   const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
 
   /** Show Login with email and password. */
-  const showLogin = () => dispatch(showModal({ id: 'auth' }))
+  const showLogin = () => {
+    storage.setItem('user-login', 'false')
+    dispatch(showModal({ id: 'auth' }))
+  }
 
   if (error) {
     return (

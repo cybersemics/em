@@ -82,9 +82,9 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         if (id === 'signup' && window && window.location.pathname.substr(1) === 'signup') {
           const invitationCode = getQueryStringParams(window.location.search).code || ''
           const user = window.firebase.auth().currentUser
-          dispatch(updateInviteCode(user.uid, invitationCode))
+          dispatch(updateInviteCode(user.uid, invitationCode, true))
           window.history.pushState({}, '', window.location.origin)
-          setTimeout(() => window.location.reload())
+          setTimeout(() => window.location.reload(), 500)
         }
       }
 

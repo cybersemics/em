@@ -7,4 +7,5 @@ export interface InviteCodes {
   createdBy?: string
   used?: Timestamp
   usedBy?: string
+  hasSeen?: boolean
 }

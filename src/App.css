@@ -3615,3 +3615,11 @@ a.advance-setting-link {
     min-width: 300px;
   }
 }
+
+.copy-icon-wrapper {
+  display: 'inline-flex';
+}
+
+.copy-icon-wrapper svg {
+  cursor: pointer;
+}
