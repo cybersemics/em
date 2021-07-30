@@ -26,7 +26,7 @@ const {
   waitUntil,
 } = helpers()
 
-it('Enter edit mode', async () => {
+it('Enter edit mode ', async () => {
   await newThought('foo')
   await hideKeyboardByTappingDone()
 
