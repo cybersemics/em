@@ -360,6 +360,16 @@ const Editable = ({
   }
 
   useEffect(() => {
+    // Set editing to false after unmount
+    return () => {
+      const { cursor, editing } = store.getState()
+      if (editing && equalPath(cursor, path)) {
+        dispatch(editingAction({ value: false }))
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     const { editing, noteFocus, dragHold } = state
 
     // focus on the ContentEditable element if editing os on desktop
