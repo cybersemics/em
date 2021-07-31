@@ -7,10 +7,15 @@ interface Options {
 }
 
 /** Generates a user-friendly phrase describing how many thoughts will be exported. */
-export const exportPhrase = (state: State, context: Context, numDescendants: number, { value }: Options = {}) => {
+export const exportPhrase = (
+  state: State,
+  context: Context,
+  numDescendants: number | null,
+  { value }: Options = {},
+) => {
   const label = ellipsize(value || head(context))
 
   return isRoot(context)
     ? ` all ${numDescendants} thoughts`
-    : `"${label}"${numDescendants > 0 ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}`
+    : `"${label}"${numDescendants ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}`
 }
