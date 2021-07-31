@@ -7,6 +7,7 @@ export interface Parent {
   id: string
   value: string
   context: Context
+  parentId: string
   children: Child[]
   lastUpdated: Timestamp
   pending?: boolean

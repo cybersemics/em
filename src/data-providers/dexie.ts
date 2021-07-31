@@ -147,8 +147,8 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
-export const updateContext = async (id: string, { value, context, children, lastUpdated }: Parent) => {
-  return db.contextIndex.put({ id, value, context, children, lastUpdated })
+export const updateContext = async (id: string, { value, context, children, lastUpdated, parentId }: Parent) => {
+  return db.contextIndex.put({ id, value, context, children, lastUpdated, parentId })
 }
 
 /** Updates multiple thoughts in the contextIndex. */

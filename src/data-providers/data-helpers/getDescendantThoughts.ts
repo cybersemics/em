@@ -63,6 +63,8 @@ async function* getDescendantThoughts(
         // fill in context if not defined
         context: parent?.context || contexts[i] || context,
         value: head(contexts[i]),
+        // @MIGRATION_TODO: What happens if parent is not defined ?
+        parentId: parent?.parentId || '__UNKNOWN_',
       }))
 
     const parents =

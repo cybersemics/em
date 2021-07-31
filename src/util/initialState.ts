@@ -1,4 +1,4 @@
-import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PARENT_ID } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
 import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
@@ -18,6 +18,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       id: HOME_TOKEN,
       value: HOME_TOKEN,
       context: [HOME_TOKEN],
+      parentId: ROOT_PARENT_ID,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -27,6 +28,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       id: ABSOLUTE_TOKEN,
       value: ABSOLUTE_TOKEN,
       context: [ABSOLUTE_TOKEN],
+      parentId: ROOT_PARENT_ID,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -36,6 +38,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       id: EM_TOKEN,
       value: EM_TOKEN,
       context: [EM_TOKEN],
+      parentId: ROOT_PARENT_ID,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,

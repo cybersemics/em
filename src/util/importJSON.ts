@@ -90,6 +90,7 @@ const insertThought = (
     id: parentOld.id,
     value: head(rootContext),
     context: rootContext,
+    parentId: parentOld.parentId,
     children: [
       ...parentOld.children,
       {
@@ -107,6 +108,7 @@ const insertThought = (
     value: value,
     context: [...rootContext, value],
     children: [],
+    parentId: parentOld.id,
     lastUpdated,
   }
 

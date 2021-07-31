@@ -53,6 +53,8 @@ const checkDataIntegrity = (state: State, max = 100000) => {
                   id: createId(),
                 },
               ],
+              // @MIGRATION_TODO: FIX THIS
+              parentId: '',
               lastUpdated: lastUpdated,
             }
           }

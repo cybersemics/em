@@ -429,6 +429,7 @@ const editThought = (
       value: head(contextNew),
       context: contextNew,
       children: thoughtNewSubthoughts,
+      parentId: parentOld.parentId,
       lastUpdated: timestamp(),
     },
     ...(showContexts
@@ -439,6 +440,7 @@ const editThought = (
             value: head(contextOld),
             context: contextOld,
             children: thoughtOldSubthoughts,
+            parentId: parentOld.parentId,
             lastUpdated: timestamp(),
           },
           [parent.id]: {
@@ -446,6 +448,7 @@ const editThought = (
             value: head(contextParent),
             context: contextParent,
             children: thoughtParentSubthoughts,
+            parentId: parent.id,
             lastUpdated: timestamp(),
           },
         }

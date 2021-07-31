@@ -110,6 +110,8 @@ export const EMPTY_TOKEN = '__EMPTY__'
 // store the root string as a token that is not likely to be written by the user (bad things will happen)
 export const HOME_TOKEN = '__ROOT__'
 
+export const ROOT_PARENT_ID = '__ROOT_PARENT_ID'
+
 // token for hidden system context
 export const EM_TOKEN = '__EM__'
 

@@ -61,6 +61,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
 
     contextIndexUpdates[id] = {
       id,
+      parentId: parent.id,
       children: [],
       lastUpdated: timestamp(),
       context: unroot([...contextActual, newValue]),

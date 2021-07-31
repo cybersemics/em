@@ -149,6 +149,8 @@ const moveThought = (
   const contextEncodedOld = oldParent.id
   const contextEncodedNew = newParent.id
 
+  const newParentThought = state.thoughts.contextIndex[contextEncodedNew]
+
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
   const subthoughtsOld = getAllChildren(state, oldContext).filter(
     child => !equalThoughtRanked(child, { value, rank: oldRank }),
@@ -327,6 +329,11 @@ const moveThought = (
 
           const targetThoughtId = duplicateParent?.id || head(newPathParent).id
 
+          const targetThought = updatedState.thoughts.contextIndex[targetThoughtId]
+
+          if (targetThought) {
+            console.warn('[moveThought] Target thought not found!')
+          }
           // Duplicate thought children in the target context
           const duplicateThoughtChildren = duplicateParent?.children || []
 
@@ -351,6 +358,8 @@ const moveThought = (
           const isNewContextPendingDescendant =
             accum.pendingPulls.length && isDescendant(pathToContext(accum.pendingPulls[0].path), contextNew)
 
+          const targetParentThoughtId = headId(rootedParentOf(state, newPathParent))
+
           // Note: contextEncodedOld and contextEncodedNew should be same because they basically point to the same parent
           const accumNew = {
             contextIndex: {
@@ -368,6 +377,7 @@ const moveThought = (
                       value: head(contextNew),
                       context: contextNew,
                       children: childrenNew,
+                      parentId: targetParentThoughtId,
                       lastUpdated: timestamp(),
                       ...(childUpdate.pending ? { pending: true } : null),
                     },
@@ -410,6 +420,7 @@ const moveThought = (
       value: head(oldContext),
       context: oldContext,
       children: subthoughtsOld,
+      parentId: oldParent.id,
       lastUpdated: timestamp(),
     },
     [contextEncodedNew]: {
@@ -417,6 +428,7 @@ const moveThought = (
       value: head(newContext),
       context: newContext,
       children: subthoughtsNew,
+      parentId: newParentThought.parentId,
       lastUpdated: timestamp(),
     },
     ...contextIndexDescendantUpdates.contextIndex,
