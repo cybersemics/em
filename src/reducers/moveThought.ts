@@ -418,7 +418,6 @@ const moveThought = (
     [contextEncodedOld]: {
       id: oldParent.id,
       value: head(oldContext),
-      context: oldContext,
       children: subthoughtsOld,
       parentId: oldParent.id,
       lastUpdated: timestamp(),
@@ -426,7 +425,6 @@ const moveThought = (
     [contextEncodedNew]: {
       id: contextEncodedNew,
       value: head(newContext),
-      context: newContext,
       children: subthoughtsNew,
       parentId: newParentThought.parentId,
       lastUpdated: timestamp(),

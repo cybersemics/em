@@ -24,7 +24,6 @@ it('delete from root', () => {
 
   // contextIndex
   expect(rootParent).toMatchObject({
-    context: [HOME_TOKEN],
     children: [
       {
         value: 'a',

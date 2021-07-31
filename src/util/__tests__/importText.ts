@@ -30,14 +30,12 @@ it('basic import with proper thought structure', () => {
 
   expect(contextIndex).toMatchObject({
     [hashContext(stateNew, [EM_TOKEN])!]: {
-      context: [EM_TOKEN],
       children: [],
       lastUpdated: never(),
       // TODO: Is this expected?
       pending: true,
     },
     [hashContext(stateNew, [HOME_TOKEN])!]: {
-      context: [HOME_TOKEN],
       children: [
         {
           // tautological; full assertion below
@@ -49,13 +47,11 @@ it('basic import with proper thought structure', () => {
     },
     [hashContext(stateNew, [ABSOLUTE_TOKEN])!]: {
       // id: hashContext([ABSOLUTE_TOKEN]),
-      context: [ABSOLUTE_TOKEN],
       children: [],
       lastUpdated: never(),
       pending: true,
     },
     [hashContext(stateNew, ['a'])!]: {
-      context: ['a'],
       children: [
         {
           // tautological; full assertion below
@@ -169,7 +165,6 @@ it.skip('merge descendants', () => {
 
   expect(contextIndex).toMatchObject({
     [hashContext(newState, [HOME_TOKEN])!]: {
-      context: [HOME_TOKEN],
       children: [
         {
           value: 'a',
@@ -181,7 +176,6 @@ it.skip('merge descendants', () => {
       ],
     },
     [hashContext(newState, ['a'])!]: {
-      context: ['a'],
       children: [
         {
           value: 'b',
@@ -195,7 +189,6 @@ it.skip('merge descendants', () => {
       ],
     },
     [hashContext(newState, ['a', 'b'])!]: {
-      context: ['a', 'b'],
       children: [
         {
           value: 'c',
@@ -208,7 +201,6 @@ it.skip('merge descendants', () => {
       ],
     },
     [hashContext(newState, ['a', 'x'])!]: {
-      context: ['a', 'x'],
       children: [
         {
           value: 'y',

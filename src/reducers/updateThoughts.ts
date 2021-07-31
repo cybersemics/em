@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { initialState } from '../util/initialState'
-import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
+import { decodeThoughtsUrl, expandThoughts, getLexeme, isDescendantOfEmContext } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import { htmlToJson, importJSON, isRoot, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
@@ -130,7 +130,7 @@ const updateThoughts = (
   const cursorParent = contextIndex[rootEncoded] as Parent | null
   const thoughtsLoaded =
     !cursorParent?.pending ||
-    Object.keys(contextIndex).some(key => key !== rootEncoded && contextIndex[key].context[0] !== EM_TOKEN)
+    Object.keys(contextIndex).some(key => key !== rootEncoded && isDescendantOfEmContext(state, contextIndex[key].id))
   const stillLoading = state.isLoading ? isLoading ?? !thoughtsLoaded : false
 
   return reducerFlow([

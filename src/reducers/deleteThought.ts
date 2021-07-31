@@ -223,7 +223,6 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
     [contextEncoded]: {
       id: parent?.id || contextEncoded,
       value: head(context),
-      context,
       children: subthoughts,
       lastUpdated: timestamp(),
     } as Parent,

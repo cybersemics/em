@@ -1,14 +1,14 @@
 import _ from 'lodash'
-import * as db from '../data-providers/dexie'
-import getFirebaseProvider from '../data-providers/firebase'
-import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
+// import * as db from '../data-providers/dexie'
+// import getFirebaseProvider from '../data-providers/firebase'
+// import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { HOME_TOKEN } from '../constants'
 import { mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
 import { isPending } from '../selectors'
 import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../@types'
 
-const BUFFER_DEPTH = 2
+// const BUFFER_DEPTH = 2
 const ROOT_ENCODED = HOME_TOKEN
 
 export interface PullOptions {
@@ -22,6 +22,17 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
   // eslint-disable-next-line fp/no-loops
   for await (const item of it) {
     callback(item)
+  }
+}
+
+// @MIGRATION_TODO: Data providers are yet to be migrated. So just faking the calls rn.
+/**
+ * Fake generator function to return empty thought interface.
+ */
+async function* fakeAsyncIterable(): AsyncIterable<ThoughtsInterface> {
+  yield {
+    contextIndex: {},
+    thoughtIndex: {},
   }
 }
 
@@ -40,7 +51,10 @@ const pull =
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    const thoughtsLocalIterable = getManyDescendants(db, contextMap, getState(), { maxDepth: maxDepth || BUFFER_DEPTH })
+    // @MIGRATION_TODO: Data providers are yet to be migrated. So just faking the calls rn.
+    // const thoughtsLocalIterable = getManyDescendants(db, contextMap, getState(), { maxDepth: maxDepth || BUFFER_DEPTH })
+    const thoughtsLocalIterable = fakeAsyncIterable()
+
     // eslint-disable-next-line fp/no-loops
     for await (const thoughts of thoughtsLocalIterable) {
       // eslint-disable-next-line fp/no-mutating-methods
@@ -68,14 +82,17 @@ const pull =
     // get remote thoughts and reconcile with local
     const status = getState().status
     if (status === 'loaded') {
-      const thoughtsRemoteIterable = getManyDescendants(
-        getFirebaseProvider(getState(), dispatch),
-        contextMap,
-        getState(),
-        {
-          maxDepth: maxDepth || BUFFER_DEPTH,
-        },
-      )
+      // const thoughtsRemoteIterable = getManyDescendants(
+      //   getFirebaseProvider(getState(), dispatch),
+      //   contextMap,
+      //   getState(),
+      //   {
+      //     maxDepth: maxDepth || BUFFER_DEPTH,
+      //   },
+      // )
+
+      // @MIGRATION_TODO: Data providers are yet to be migrated. So just faking the calls rn.
+      const thoughtsRemoteIterable = fakeAsyncIterable()
 
       const thoughtRemoteChunks: ThoughtsInterface[] = []
 

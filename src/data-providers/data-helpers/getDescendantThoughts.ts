@@ -1,108 +1,107 @@
-import _ from 'lodash'
-import { EM_TOKEN } from '../../constants'
-import { DataProvider } from '../DataProvider'
-import { createId, hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
-import { State, Context, Index, Parent, ThoughtsInterface } from '../../@types'
+// import _ from 'lodash'
+// import { EM_TOKEN } from '../../constants'
+// import { DataProvider } from '../DataProvider'
+// import { createId, hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
+// import { State, Context, Index, Parent, ThoughtsInterface } from '../../@types'
+// import { getAncestorBy, getAncestorByValue } from '../../selectors'
 
-const MAX_DEPTH = 100
+// const MAX_DEPTH = 100
 
-interface Options {
-  maxDepth?: number
-}
+// interface Options {
+//   maxDepth?: number
+// }
 
-/** Returns a getter function that accesses a property on an object. */
-const prop =
-  (name: string) =>
-  <T>(x: Index<T>) =>
-    x[name]
+// /** Returns a getter function that accesses a property on an object. */
+// const prop =
+//   (name: string) =>
+//   <T>(x: Index<T>) =>
+//     x[name]
 
-/**
- * Returns true if the Parent should not be buffered for any of the following reasons:
- *
- * - Parent has no children.
- * - Context contains the em context.
- * - Context has a non-archive metaprogramming attribute.
- */
-const isUnbuffered = (parent: Parent) =>
-  parent.children.length === 0 ||
-  parent.context.includes(EM_TOKEN) ||
-  (parent.context.find(isFunction) && !parent.context.includes('=archive'))
+// /**
+//  * Returns true if the Parent should not be buffered for any of the following reasons:
+//  *
+//  * - Parent has no children.
+//  * - Context contains the em context.
+//  * - Context has a non-archive metaprogramming attribute.
+//  */
+// const isUnbuffered = (state: State, parent: Parent) =>
+//   parent.children.length === 0 ||
+//   getAncestorByValue(state, parent.id, EM_TOKEN) ||
+//   getAncestorBy(state, parent.id, thought => thought.value !== '=archive' && isFunction(thought.value))
 
-/**
- * Returns buffered thoughtIndex and contextIndex for all descendants using async iterables.
- *
- * @param context
- * @param children
- * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
- */
-async function* getDescendantThoughts(
-  provider: DataProvider,
-  context: Context,
-  // @MIGRATION_TODO: Remove state dependency here after migration is complete
-  state: State,
-  { maxDepth = MAX_DEPTH }: Options = {},
-): AsyncIterable<ThoughtsInterface> {
-  // use queue for breadth-first search
-  let contexts = [context] // eslint-disable-line fp/no-let
-  let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
+// /**
+//  * Returns buffered thoughtIndex and contextIndex for all descendants using async iterables.
+//  *
+//  * @param context
+//  * @param children
+//  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
+//  */
+// async function* getDescendantThoughts(
+//   provider: DataProvider,
+//   thought: string,
+//   // @MIGRATION_TODO: Remove state dependency here after migration is complete
+//   state: State,
+//   { maxDepth = MAX_DEPTH }: Options = {},
+// ): AsyncIterable<ThoughtsInterface> {
+//   // use queue for breadth-first search
+//   let contexts = [context] // eslint-disable-line fp/no-let
+//   let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
 
-  // eslint-disable-next-line fp/no-loops
-  while (contexts.length > 0) {
-    const contextIds = contexts.reduce((acc, cx) => {
-      const id = hashContext(state, cx)
-      return [...acc, ...(id ? [id] : [])]
-    }, [])
-    const providerParents = (await provider.getContextsByIds(contextIds))
-      // eslint-disable-next-line no-loop-func
-      .map((parent, i) => ({
-        // @MIGRATION_NOTE: since parent may not be defined, thus using createId here
-        id: parent?.id || createId(),
-        children: parent?.children || [],
-        lastUpdated: never(),
-        ...parent,
-        // fill in context if not defined
-        context: parent?.context || contexts[i] || context,
-        value: head(contexts[i]),
-        // @MIGRATION_TODO: What happens if parent is not defined ?
-        parentId: parent?.parentId || '__UNKNOWN_',
-      }))
+//   // eslint-disable-next-line fp/no-loops
+//   while (contexts.length > 0) {
+//     const contextIds = contexts.reduce((acc, cx) => {
+//       const id = hashContext(state, cx)
+//       return [...acc, ...(id ? [id] : [])]
+//     }, [])
+//     const providerParents = (await provider.getContextsByIds(contextIds))
+//       // eslint-disable-next-line no-loop-func
+//       .map((parent, i) => ({
+//         // @MIGRATION_NOTE: since parent may not be defined, thus using createId here
+//         id: parent?.id || createId(),
+//         children: parent?.children || [],
+//         lastUpdated: never(),
+//         ...parent,
+//         value: head(contexts[i]),
+//         // @MIGRATION_TODO: What happens if parent is not defined ?
+//         parentId: parent?.parentId || '__UNKNOWN_',
+//       }))
 
-    const parents =
-      currentMaxDepth > 0
-        ? providerParents
-        : providerParents.map(parent => ({
-            ...parent,
-            ...(!isUnbuffered(parent)
-              ? {
-                  children: parent.children.filter(_.flow(prop('value'), isFunction)),
-                  lastUpdated: never(),
-                  pending: true,
-                }
-              : null),
-          }))
+//     const parents =
+//       currentMaxDepth > 0
+//         ? providerParents
+//         : providerParents.map(parent => ({
+//             ...parent,
+//             ...(!isUnbuffered(state, parent)
+//               ? {
+//                   children: parent.children.filter(_.flow(prop('value'), isFunction)),
+//                   lastUpdated: never(),
+//                   pending: true,
+//                 }
+//               : null),
+//           }))
 
-    const thoughtIds = contexts.map(cx => hashThought(head(cx)))
-    const lexemes = await provider.getThoughtsByIds(thoughtIds)
+//     const thoughtIds = contexts.map(cx => hashThought(head(cx)))
+//     const lexemes = await provider.getThoughtsByIds(thoughtIds)
 
-    const contextIndex = keyValueBy(contextIds, (id, i) => {
-      // exclude non-pending leaves
-      return parents[i].children?.length > 0 || parents[i].pending ? { [id]: parents[i] } : null
-    })
-    const thoughtIndex = keyValueBy(thoughtIds, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
+//     const contextIndex = keyValueBy(contextIds, (id, i) => {
+//       // exclude non-pending leaves
+//       return parents[i].children?.length > 0 || parents[i].pending ? { [id]: parents[i] } : null
+//     })
+//     const thoughtIndex = keyValueBy(thoughtIds, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
-    const thoughts = {
-      contextIndex,
-      thoughtIndex,
-    }
+//     const thoughts = {
+//       contextIndex,
+//       thoughtIndex,
+//     }
 
-    // enqueue children
-    contexts = parents.map(parent => parent.children.map(child => unroot([...parent.context, child.value]))).flat()
+//     // enqueue children
+//     contexts = parents.map(parent => parent.children.map(child => unroot([...parent.context, child.value]))).flat()
 
-    // yield thought
-    yield thoughts
+//     // yield thought
+//     yield thoughts
 
-    currentMaxDepth--
-  }
-}
+//     currentMaxDepth--
+//   }
+// }
 
-export default getDescendantThoughts
+// export default getDescendantThoughts

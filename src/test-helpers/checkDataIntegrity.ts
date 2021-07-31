@@ -42,7 +42,6 @@ const checkDataIntegrity = (state: State, max = 100000) => {
             contextIndexUpdates[cx.id] = {
               id: createId(),
               value: head(context),
-              context,
               children: [
                 ...children.filter(child => hashThought(child.value) !== hashThought(valueNew)),
                 {
@@ -85,7 +84,8 @@ const checkDataIntegrity = (state: State, max = 100000) => {
               ...lexeme.contexts,
               {
                 id: child.id,
-                context: parent.context,
+                // @MIGRATION_TODO: Remove ThoughtContex.context,
+                context: [],
                 rank: child.rank,
               },
             ],

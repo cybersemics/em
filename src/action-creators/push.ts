@@ -127,7 +127,6 @@ const pushRemote =
                 id: parentContext!.id,
                 value: parentContext!.value,
                 parentId: parentContext!.parentId,
-                context: parentContext!.context,
                 children: dataIntegrityCheck
                   ? children.map(subthought => ({
                       id: subthought.id,
