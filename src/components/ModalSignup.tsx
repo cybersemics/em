@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, useCallback, useEffect, useState } from 'react'
+import React, { ChangeEvent, FC, useCallback, useEffect, useState, useRef } from 'react'
 import { connect, useDispatch } from 'react-redux'
 import { ActionButton } from './ActionButton'
 import { Index, Connected, State } from '../@types'
@@ -66,6 +66,7 @@ const mapStateToProps = (state: State) => {
 /** A modal dialog for signing up. */
 const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnType<typeof mapStateToProps>>) => {
   const dispatch = useDispatch()
+  const errorCode = useRef('')
   const [email, updateEmail] = useState('')
   const [password, updatePassword] = useState('')
   const [error, updateError] = useState<null | string>(null)
@@ -74,16 +75,15 @@ const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnT
 
   useEffect(() => {
     const hasInvite = invitationCodeDetail && Object.keys(invitationCodeDetail).length === 0
-    let errorCode = ''
     if (invitationCode === '') {
-      errorCode = 'signup/no-code'
+      errorCode.current = 'signup/no-code'
     } else if (hasInvite) {
-      errorCode = 'signup/invalid-code'
+      errorCode.current = 'signup/invalid-code'
     } else if (invitationCodeDetail && invitationCodeDetail.usedBy) {
-      errorCode = 'signup/already-used-code'
+      errorCode.current = 'signup/already-used-code'
     }
 
-    updateError(firebaseErrorsIndex[errorCode as errorCode])
+    updateError(firebaseErrorsIndex[errorCode.current as errorCode])
   }, [invitationCode, invitationCodeDetail])
 
   useEffect(() => {

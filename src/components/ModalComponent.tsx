@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { FADEOUT_DURATION } from '../constants'
 import { modalCleanup } from '../util'
 import { Connected } from '../@types'
-import { closeModal, modalComplete, tutorial, removeInvites, updateInviteCode } from '../action-creators'
+import { closeModal, modalComplete, tutorial, updateInviteCode } from '../action-creators'
 import { storage } from '../util/storage'
 import { getQueryStringParams } from '../util/getQueryString'
 
@@ -75,7 +75,6 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         }
         setTimeout(() => {
           storage.setItem('user-login', 'false')
-          if (id === 'invites') dispatch(removeInvites())
 
           dispatch(closeModal())
         }, FADEOUT_DURATION)

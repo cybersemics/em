@@ -2,12 +2,12 @@ import _ from 'lodash'
 import { InviteCodes, State } from '../@types'
 
 /** Sets invites for login user. */
-const userInvites = (state: State, { userInvite = {} }: { userInvite: InviteCodes }) => ({
+const userInvites = (state: State, { userInvite }: { userInvite: InviteCodes }) => ({
   ...state,
   userInvites:
     Object.keys(userInvite).length === 0
       ? []
-      : state.userInvites
+      : state.userInvites && state.userInvites.length < 3
       ? [...state.userInvites, ...[userInvite]]
       : [...[userInvite]],
 })

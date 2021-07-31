@@ -7,6 +7,7 @@ import {
   status as statusActionCreator,
   userAuthenticated,
   getInviteById,
+  getUserInvites,
 } from '../action-creators'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
@@ -24,6 +25,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
     firebase.auth().onAuthStateChanged((user: Firebase.User) => {
       if (user) {
         store.dispatch(userAuthenticated(user))
+        store.dispatch(getUserInvites(user.uid))
 
         const { applicationId, index } = ALGOLIA_CONFIG
         const hasRemoteConfig = applicationId && index

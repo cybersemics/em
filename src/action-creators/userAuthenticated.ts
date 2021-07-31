@@ -14,7 +14,6 @@ const userAuthenticated =
       throw new Error('Could not get userRef')
     }
 
-    // dispatch(showModal({ id: 'welcome' }))
     dispatch(authenticate({ value: true, user }))
 
     // login automatically on page load

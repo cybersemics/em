@@ -141,8 +141,6 @@ export const initialState = (created: Timestamp = timestamp()) => {
     state.showModal = 'welcome'
   }
 
-  // state.showModal = 'auth'
-
   if (window && window.location.pathname.substr(1) === 'signup') {
     state.showModal = 'signup'
     state.invitationCode = getQueryStringParams(window.location.search).code || ''

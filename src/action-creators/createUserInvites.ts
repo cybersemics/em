@@ -5,19 +5,21 @@ import { Thunk, InviteCodes } from '../@types'
  * Creates user invite codes when user is on referral page with no invitation code already existing.
  */
 const createUserInvites =
-  (newInviteCode: InviteCodes, inviteId: string, uid: string): Thunk =>
+  (newInviteCodes: InviteCodes[], uid: string): Thunk =>
   dispatch => {
-    window.firebase.database().ref(`/invites/${inviteId}`).set(newInviteCode)
-    window.firebase.database().ref(`/users/${uid}/invites/${inviteId}`).set(true)
+    newInviteCodes.forEach(({ id: inviteId, ...newInviteCode }) => {
+      window.firebase.database().ref(`/invites/${inviteId}`).set(newInviteCode)
+      window.firebase.database().ref(`/users/${uid}/invites/${inviteId}`).set(true)
 
-    dispatch(
-      userInvites({
-        userInvite: {
-          id: inviteId,
-          ...newInviteCode,
-        },
-      }),
-    )
+      dispatch(
+        userInvites({
+          userInvite: {
+            id: inviteId,
+            ...newInviteCode,
+          },
+        }),
+      )
+    })
   }
 
 export default createUserInvites

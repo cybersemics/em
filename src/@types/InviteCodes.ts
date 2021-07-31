@@ -1,10 +1,10 @@
 import { Timestamp } from './Timestamp'
 
-/** An object that contains an invite code. */
+/** An object that contains an invite code details. */
 export interface InviteCodes {
-  id?: string // db only
-  created?: Timestamp
-  createdBy?: string
+  id: string
+  created: Timestamp
+  createdBy: string
   used?: Timestamp
   usedBy?: string
   hasSeen?: boolean
