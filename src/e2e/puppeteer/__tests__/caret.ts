@@ -3,6 +3,7 @@
  */
 import { devices } from 'puppeteer'
 import helpers from '../helpers'
+import { WindowEm } from '../../../initialize'
 
 jest.setTimeout(20000)
 
@@ -188,6 +189,7 @@ describe('mobile only', () => {
     waitForHiddenEditable,
     waitForState,
     clickThought,
+    ref,
   } = helpers({ emulatedDevice: devices['iPhone 11'] })
 
   it('when subCategorizeOne, caret should be on new thought', async () => {
@@ -232,5 +234,26 @@ describe('mobile only', () => {
 
     const cursorText = await getEditingText()
     expect(cursorText).toBe('B')
+  })
+
+  it('while editing true, after opening modal the editing should be false', async () => {
+    const importText = `
+    - A
+      - B`
+
+    await paste(importText)
+
+    const editableNodeHandle = await waitForEditable('B')
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { horizontalClickLine: 'left' })
+
+    await waitForState('editing', true)
+
+    await click('#exportContext')
+    await click('.popup-close-x')
+
+    await waitForState('editing', false)
+    const editingValue = await ref().evaluate(() => (window.em as WindowEm).testHelpers.getState().editing)
+    expect(editingValue).toBe(false)
   })
 })
