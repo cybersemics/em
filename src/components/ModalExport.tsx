@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
+import { and } from 'fp-and-or'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
@@ -11,6 +12,7 @@ import {
   hashContext,
   headValue,
   isDocumentEditable,
+  isFunction,
   isRoot,
   pathToContext,
   removeHome,
@@ -18,14 +20,14 @@ import {
   unroot,
 } from '../util'
 import { alert, error, closeModal, pull } from '../action-creators'
-import { exportContext, getAllChildren, simplifyPath, theme } from '../selectors'
+import { exportContext, getAllChildren, getDescendants, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
-import { ExportOption, State } from '../@types'
+import { Child, ExportOption, State } from '../@types'
 
 interface AdvancedSetting {
   id: string
@@ -40,6 +42,66 @@ const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
+
+/******************************************************************************
+ * ExportDropdown component
+ *****************************************************************************/
+
+interface ExportDropdownProps {
+  selected: ExportOption
+  onSelect?: (option: ExportOption) => void
+}
+
+/** A dropdown menu to select an export type. */
+const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
+  const store = useStore()
+  const state = store.getState()
+  const [isOpen, setIsOpen] = useState(false)
+  // const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
+
+  const dark = theme(state) !== 'Light'
+  const themeColor = { color: dark ? 'white' : 'black' }
+
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false)
+  }, [])
+
+  const dropDownRef = React.useRef<HTMLDivElement>(null)
+  useOnClickOutside(dropDownRef, closeDropdown)
+
+  return (
+    <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
+      <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>
+        {selected.label}
+      </a>
+      <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
+        <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? 'rotate180' : ''} />
+        <span>
+          <DropDownMenu
+            isOpen={isOpen}
+            selected={selected}
+            onSelect={(option: ExportOption) => {
+              onSelect?.(option)
+              setIsOpen(false)
+            }}
+            options={exportOptions}
+            dark={dark}
+            style={{
+              top: '120%',
+              left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
+              display: 'table', // the only value that seems to overflow properly within the inline-flex element
+              padding: 0,
+            }}
+          />
+        </span>
+      </span>
+    </span>
+  )
+}
+
+/******************************************************************************
+ * ModalExport component
+ *****************************************************************************/
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport = () => {
@@ -56,12 +118,11 @@ const ModalExport = () => {
   const titleShort = ellipsize(title)
   const titleMedium = ellipsize(title, 25)
 
-  const [selected, setSelected] = useState(exportOptions[0])
-  const [isOpen, setIsOpen] = useState(false)
-  const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
   const [exportContent, setExportContent] = useState<string | null>(null)
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
+  const [selected, setSelected] = useState(exportOptions[0])
+  const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
   const dark = theme(state) !== 'Light'
   const themeColor = { color: dark ? 'white' : 'black' }
@@ -71,7 +132,9 @@ const ModalExport = () => {
 
   const exportWord = isTouch ? 'Share' : 'Download'
 
-  const exportThoughtsPhrase = exportPhrase(state, context, exportContent, {
+  const numDescendants =
+    selected.type === 'text/plain' && exportContent ? exportContent.split('\n').length - 1 : numDescendantsInState!
+  const exportThoughtsPhrase = exportPhrase(state, context, numDescendants, {
     value: title,
   })
 
@@ -86,19 +149,19 @@ const ModalExport = () => {
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
 
-  const closeDropdown = useCallback(() => {
-    setIsOpen(false)
-  }, [])
-
-  const dropDownRef = React.useRef<HTMLDivElement>(null)
-  useOnClickOutside(dropDownRef, closeDropdown)
-
-  // fetch all pending descendants of the cursor once before they are exported
+  // fetch all pending descendants of the cursor once for all components
   useEffect(() => {
     if (!isMounted.current) {
       // track isMounted so we can cancel the call to setExportContent after unmount
       isMounted.current = true
-      dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity })).then(() => {
+      dispatch(
+        pull(
+          { [hashContext(context)]: context },
+          {
+            maxDepth: Infinity,
+          },
+        ),
+      ).then(() => {
         if (isMounted.current) {
           setExportContentFromCursor()
         }
@@ -106,8 +169,22 @@ const ModalExport = () => {
     } else {
       setExportContentFromCursor()
     }
+  }, [])
 
+  useEffect(() => {
     if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
+
+    // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
+    if (selected.type === 'text/html') {
+      setNumDescendantsInState(
+        getDescendants(state, simplePath, {
+          filterFunction: and(
+            shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
+            shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
+          ),
+        }).length,
+      )
+    }
 
     return () => {
       isMounted.current = false
@@ -115,8 +192,6 @@ const ModalExport = () => {
   }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
 
   useEffect(() => {
-    document.addEventListener('click', onClickOutside)
-
     const clipboard = new ClipboardJS('.copy-clipboard-btn')
 
     clipboard.on('success', () => {
@@ -140,21 +215,12 @@ const ModalExport = () => {
     })
 
     return () => {
-      document.removeEventListener('click', onClickOutside)
       clipboard.destroy()
     }
   }, [exportThoughtsPhrase])
 
   const [publishing, setPublishing] = useState(false)
   const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
-
-  /** Updates the isOpen state when clicked outside modal. */
-  const onClickOutside = (e: MouseEvent) => {
-    if (isOpen && wrapperRef && !wrapperRef.contains(e.target as Node)) {
-      setIsOpen(false)
-      e.stopPropagation()
-    }
-  }
 
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
@@ -255,37 +321,7 @@ const ModalExport = () => {
             {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />
             <span>
               {' '}
-              as{' '}
-              <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
-                <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>
-                  {selected.label}
-                </a>
-                <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-                  <ChevronImg
-                    dark={dark}
-                    onClickHandle={() => setIsOpen(!isOpen)}
-                    className={isOpen ? 'rotate180' : ''}
-                  />
-                  <span ref={setWrapper}>
-                    <DropDownMenu
-                      isOpen={isOpen}
-                      selected={selected}
-                      onSelect={(option: ExportOption) => {
-                        setSelected(option)
-                        setIsOpen(false)
-                      }}
-                      options={exportOptions}
-                      dark={dark}
-                      style={{
-                        top: '120%',
-                        left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
-                        display: 'table', // the only value that seems to overflow properly within the inline-flex element
-                        padding: 0,
-                      }}
-                    />
-                  </span>
-                </span>
-              </span>
+              as <ExportDropdown selected={selected} onSelect={setSelected} />
             </span>
           </span>
         </span>

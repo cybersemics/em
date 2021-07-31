@@ -6,10 +6,9 @@ interface Options {
   value?: string
 }
 
-/** Counts the number of descendents of a path and returns a user-friendly phrase describing how many thoughts will be exported. */
-export const exportPhrase = (state: State, context: Context, exportContent: string | null, { value }: Options = {}) => {
+/** Generates a user-friendly phrase describing how many thoughts will be exported. */
+export const exportPhrase = (state: State, context: Context, numDescendants: number, { value }: Options = {}) => {
   const label = ellipsize(value || head(context))
-  const numDescendants = exportContent ? exportContent.split('\n').length - 1 : 0
 
   return isRoot(context)
     ? ` all ${numDescendants} thoughts`

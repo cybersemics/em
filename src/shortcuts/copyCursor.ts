@@ -49,7 +49,8 @@ const copyCursorShortcut: Shortcut = {
     const el = editableNode(cursor!)
     setSelection(el!, { offset })
 
-    const phrase = exportPhrase(state, context, exported)
+    const numDescendants = exported ? exported.split('\n').length - 1 : 0
+    const phrase = exportPhrase(state, context, numDescendants)
 
     dispatch(
       alert(`Copied ${phrase} to the clipboard`, {

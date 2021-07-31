@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import { and } from 'fp-and-or'
 
 import { HOME_PATH } from '../constants'
 import {
@@ -9,7 +8,6 @@ import {
   exportPhrase,
   // hashContext,
   headValue,
-  isFunction,
   isRoot,
   pathToContext,
   timestamp,
@@ -19,7 +17,7 @@ import { alert, error, closeModal } from '../action-creators'
 import { exportContext, getAllChildren, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
-import { Child, ExportOption, State } from '../@types'
+import { ExportOption, State } from '../@types'
 import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
 import RNPickerSelect from 'react-native-picker-select'
 import { FontAwesome5 } from '@expo/vector-icons'
@@ -67,6 +65,8 @@ const ModalExport = () => {
   const [exportContent] = useState<string | null>(null)
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
+  // const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
+  const numDescendantsInState = 0
 
   // const dark = theme(state) !== 'Light'
   // const themeColor = { color: dark ? 'white' : 'black' }
@@ -76,7 +76,9 @@ const ModalExport = () => {
 
   const exportWord = 'Share'
 
-  const exportThoughtsPhrase = exportPhrase(state, context, exportContent, {
+  const numDescendants =
+    selected.type === 'text/plain' && exportContent ? exportContent.split('\n').length - 1 : numDescendantsInState!
+  const exportThoughtsPhrase = exportPhrase(state, context, numDescendants, {
     value: title,
   })
 
