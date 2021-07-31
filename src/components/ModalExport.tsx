@@ -108,6 +108,7 @@ const ModalExport = () => {
   const store = useStore()
   const dispatch = useDispatch()
   const isMounted = useRef(false)
+  const isFetched = useRef(false)
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
@@ -150,24 +151,28 @@ const ModalExport = () => {
   }
 
   // fetch all pending descendants of the cursor once for all components
+  // track isMounted so we can cancel the call to setExportContent after unmount
   useEffect(() => {
-    if (!isMounted.current) {
-      // track isMounted so we can cancel the call to setExportContent after unmount
-      isMounted.current = true
-      dispatch(
-        pull(
-          { [hashContext(context)]: context },
-          {
-            maxDepth: Infinity,
-          },
-        ),
-      ).then(() => {
-        if (isMounted.current) {
-          setExportContentFromCursor()
-        }
-      })
-    } else {
-      setExportContentFromCursor()
+    if (isMounted.current) return
+
+    isMounted.current = true
+    dispatch(
+      pull(
+        { [hashContext(context)]: context },
+        {
+          maxDepth: Infinity,
+        },
+      ),
+    ).then(() => {
+      isFetched.current = true
+      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+      if (isMounted.current) {
+        setExportContentFromCursor()
+      }
+    })
+
+    return () => {
+      isMounted.current = false
     }
   }, [])
 
@@ -186,8 +191,9 @@ const ModalExport = () => {
       )
     }
 
-    return () => {
-      isMounted.current = false
+    // only re-export if inputs change and descendants have already been fetched
+    if (isFetched.current) {
+      setExportContentFromCursor()
     }
   }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
 
