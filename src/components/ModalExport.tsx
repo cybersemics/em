@@ -1,6 +1,7 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { and } from 'fp-and-or'
+import Emitter from 'emitter20'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
@@ -27,7 +28,7 @@ import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
-import { Child, ExportOption, State } from '../@types'
+import { Child, Context, ExportOption, State, ThoughtsInterface } from '../@types'
 
 interface AdvancedSetting {
   id: string
@@ -42,6 +43,48 @@ const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
+
+/******************************************************************************
+ * Hooks
+ *****************************************************************************/
+
+/** Use all descendants of a context. Only pulls descendants once per mount. */
+const useDescendants = (context: Context) => {
+  const dispatch = useDispatch()
+  const isMounted = useRef(false)
+  const isFetched = useRef(false)
+  const emitter = new Emitter()
+
+  // fetch all pending descendants of the cursor once for all components
+  // track isMounted so we can cancel the end trigger after unmount
+  useEffect(() => {
+    if (isMounted.current) return
+
+    isMounted.current = true
+    dispatch(
+      pull(
+        { [hashContext(context)]: context },
+        {
+          onLocalThoughts: (thoughts: ThoughtsInterface) => emitter.trigger('localThoughts', thoughts),
+          onRemoteThoughts: (thoughts: ThoughtsInterface) => emitter.trigger('remoteThoughts', thoughts),
+          maxDepth: Infinity,
+        },
+      ),
+    ).then(() => {
+      isFetched.current = true
+      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+      if (isMounted.current) {
+        emitter.trigger('end')
+      }
+    })
+
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  return { isFetched, on: emitter.on }
+}
 
 /******************************************************************************
  * ExportDropdown component
@@ -107,8 +150,6 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 const ModalExport = () => {
   const store = useStore()
   const dispatch = useDispatch()
-  const isMounted = useRef(false)
-  const isFetched = useRef(false)
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
@@ -150,31 +191,9 @@ const ModalExport = () => {
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
 
-  // fetch all pending descendants of the cursor once for all components
-  // track isMounted so we can cancel the call to setExportContent after unmount
-  useEffect(() => {
-    if (isMounted.current) return
+  const { isFetched, on: onDescendants } = useDescendants(context)
 
-    isMounted.current = true
-    dispatch(
-      pull(
-        { [hashContext(context)]: context },
-        {
-          maxDepth: Infinity,
-        },
-      ),
-    ).then(() => {
-      isFetched.current = true
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-      if (isMounted.current) {
-        setExportContentFromCursor()
-      }
-    })
-
-    return () => {
-      isMounted.current = false
-    }
-  }, [])
+  onDescendants('end', setExportContentFromCursor)
 
   useEffect(() => {
     if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
