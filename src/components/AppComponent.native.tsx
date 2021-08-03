@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { createRef, useEffect, useRef } from 'react'
 import { ScrollView, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
@@ -21,7 +21,7 @@ import ModalAuth from './ModalAuth'
 import ErrorMessage from './ErrorMessage'
 import Content from './Content'
 
-import MultiGesture from './MultiGesture'
+import MultiGesture, { MultiGestureRef } from './MultiGesture.native'
 import { store } from '../store'
 import { isGestureHint, inputHandlers } from '../shortcuts'
 
@@ -46,6 +46,7 @@ const handleGestureCancel = () => {
  */
 const AppComponent: React.FC = () => {
   const drawerRef = useRef<DrawerLayout>(null)
+  const multiGestureRef = createRef<MultiGestureRef>()
   const dispatch = useDispatch()
   const { height } = useDimensions().screen
 
@@ -88,24 +89,23 @@ const AppComponent: React.FC = () => {
           {showAlert && <Alert />}
           <ErrorMessage />
           <Toolbar />
-          <ScrollView nestedScrollEnabled={true} style={flexOne}>
+          <MultiGesture
+            ref={multiGestureRef}
+            onGesture={handleGestureSegment}
+            onEnd={handleGestureEnd}
+            shouldCancelGesture={shouldCancelGesture}
+            onCancel={handleGestureCancel}
+          >
             <View style={contentHeight}>
-              <MultiGesture
-                onGesture={handleGestureSegment}
-                onEnd={handleGestureEnd}
-                shouldCancelGesture={shouldCancelGesture}
-                onCancel={handleGestureCancel}
-              >
-                <ScrollView nestedScrollEnabled={true} style={flexOne}>
-                  <Content />
-                </ScrollView>
-              </MultiGesture>
+              <ScrollView scrollEnabled={multiGestureRef.current?.scrolling} nestedScrollEnabled={true} style={flexOne}>
+                <Content />
+              </ScrollView>
 
               <NavBar position='top' />
             </View>
 
             <Footer />
-          </ScrollView>
+          </MultiGesture>
 
           <ModalAuth />
           <ModalFeedback />
