@@ -179,7 +179,12 @@ const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
     )
 
     return (
-      <ScrollView style={commonStyles.flexOne} {...panResponder.panHandlers} scrollEnabled={scrolling}>
+      <ScrollView
+        style={commonStyles.flexOne}
+        {...panResponder.panHandlers}
+        scrollEnabled={scrolling}
+        nestedScrollEnabled={true}
+      >
         {props.children}
       </ScrollView>
     )
