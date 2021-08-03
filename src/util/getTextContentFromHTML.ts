@@ -4,5 +4,6 @@
 export const getTextContentFromHTML = (htmlValue: string) => {
   const dummyDiv = document.createElement('div')
   dummyDiv.innerHTML = htmlValue
+
   return dummyDiv.textContent!
 }
