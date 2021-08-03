@@ -27,6 +27,7 @@ import {
   State,
   PropertyRequired,
 } from '../@types'
+import getParentThought from './getParentThought'
 
 // use global instance of empty array so object reference doesn't change
 const noChildren: Child[] = []
@@ -190,7 +191,7 @@ const isChildInCursor = (state: State, path: Path, showContexts: boolean, child:
 
 /** Returns head of context if parent has active context view. */
 const pathHeadValue = (state: State, path: Path, child: Child | ThoughtContext, showContexts: boolean) => {
-  return showContexts ? head((child as ThoughtContext).context) : (child as Child).value
+  return showContexts ? getParentThought(state, (child as ThoughtContext).id)!.value : (child as Child).value
 }
 
 /** Check if the cursor is a meta attribute && the given context is the descendant of the cursor.  */

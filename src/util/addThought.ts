@@ -1,13 +1,12 @@
 import { timestamp } from './timestamp'
 import { getLexeme } from '../selectors'
-import { Context, Lexeme, State } from '../@types'
+import { Lexeme, State } from '../@types'
 
 /** Create a new thought to a lexeme, merging collisions. */
 export const addThought = (
   state: State,
   value: string,
   rank: number,
-  context: Context,
   lastUpdated = timestamp(),
   id: string,
 ): Lexeme => {
@@ -16,7 +15,6 @@ export const addThought = (
     ...lexemeOld,
     value,
     contexts: (lexemeOld ? lexemeOld.contexts || [] : []).concat({
-      context,
       rank,
       id,
     }),

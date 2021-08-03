@@ -53,7 +53,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       .filter(child => !equalThoughtRanked(child, newContextSubthought))
       .concat(newContextSubthought)
     contextIndexUpdates[parent.id] = {
-      ...contextIndexUpdates[parent.id],
+      ...state.thoughts.contextIndex[parent.id],
       id: parent.id,
       children,
       lastUpdated: timestamp(),
@@ -74,7 +74,6 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
     const subthoughtOld = getLexeme(state, head(context))
     subthoughtNew = Object.assign({}, subthoughtOld, {
       contexts: (subthoughtOld?.contexts || []).concat({
-        context: [value],
         id,
         rank: getNextRank(state, [value]),
       }),
@@ -89,7 +88,6 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       ? [
           ...lexeme.contexts,
           {
-            context,
             id,
             rank,
           },

@@ -1,24 +1,7 @@
-import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
-import {
-  appendToPath,
-  contextChainToPath,
-  equalArrays,
-  equalThoughtRanked,
-  head,
-  headValue,
-  isRoot,
-  pathToContext,
-  unroot,
-} from '../util'
-import {
-  getContexts,
-  getContextsSortedAndRanked,
-  getLexeme,
-  getChildrenRanked,
-  isContextViewActive,
-  splitChain,
-} from '../selectors'
-import { Child, Context, Path, State } from '../@types'
+import { EM_TOKEN, HOME_PATH } from '../constants'
+import { appendToPath, equalThoughtRanked, headId, isRoot, pathToContext } from '../util'
+import { getLexeme, getChildrenRanked } from '../selectors'
+import { Child, Path, State } from '../@types'
 import getRootPath from './getRootPath'
 
 /** Ranks the thoughts from their rank in their context. */
@@ -28,23 +11,16 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
   if (isRoot(pathUnranked)) return getRootPath(state)
 
   let pathResult: Path = HOME_PATH // eslint-disable-line fp/no-let
-  let prevParentContext = [HOME_TOKEN] // eslint-disable-line fp/no-let
+  // let prevParentContext = [HOME_TOKEN] // eslint-disable-line fp/no-let
 
   return pathUnranked.map((value, i) => {
     const lexeme = getLexeme(state, value)
-    const contextPathUnranked = i === 0 ? [HOME_TOKEN] : pathUnranked.slice(0, i)
-    const contextChain = splitChain(state, pathResult)
-    const path = contextChainToPath(contextChain)
-    const context = unroot(prevParentContext).concat(headValue(path)) as Context
-    const inContextView = i > 0 && isContextViewActive(state, contextPathUnranked)
-    const contexts = (inContextView ? getContextsSortedAndRanked : getContexts)(
-      state,
-      inContextView ? head(contextPathUnranked) : value,
-    )
+    const path = pathResult
 
-    const parents = inContextView
-      ? contexts.filter(child => head(child.context) === value)
-      : ((lexeme && lexeme.contexts) || []).filter(p => equalArrays(p.context, context))
+    const parents = ((lexeme && lexeme.contexts) || []).filter(p => {
+      const thought = state.thoughts.contextIndex[p.id]
+      return thought?.parentId === headId(path)
+    })
 
     const contextThoughts = parents.length > 1 ? getChildrenRanked(state, pathToContext(path)) : []
 
@@ -62,9 +38,9 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
             ),
           )
 
-    if (parent && parent.context) {
-      prevParentContext = parent.context
-    }
+    // if (parent && parent.context) {
+    //   prevParentContext = parent.context
+    // }
 
     const isEm = i === 0 && value === EM_TOKEN
 

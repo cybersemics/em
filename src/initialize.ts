@@ -7,7 +7,7 @@ import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import { State, Thunk } from './@types'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
-import checkDataIntegrity from './test-helpers/checkDataIntegrity'
+// import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
 
 /** Initilaize local db , firebase and window events. */
@@ -76,7 +76,7 @@ const windowEm = {
   hashContext,
   hashThought,
   isPending: withState(isPending),
-  checkDataIntegrity: withState(checkDataIntegrity),
+  // checkDataIntegrity: withState(checkDataIntegrity),
 }
 
 window.em = windowEm

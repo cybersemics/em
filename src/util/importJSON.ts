@@ -282,7 +282,7 @@ export const importJSON = (
   if (destEmpty) {
     const lexeme = getLexeme(state, '')
     if (lexeme) {
-      initialThoughtIndex[hashThought('')] = removeContext(lexeme, context, headRank(simplePath))
+      initialThoughtIndex[hashThought('')] = removeContext(state, lexeme, context, headRank(simplePath))
       initialContextIndex[contextEncoded] = {
         ...state.thoughts.contextIndex[contextEncoded],
         children: getAllChildren(state, rootedContext).filter(child => !equalThoughtRanked(child, destThought)),

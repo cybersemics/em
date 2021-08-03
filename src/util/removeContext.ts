@@ -1,10 +1,13 @@
 import { timestamp } from './timestamp'
-import { equalArrays } from './equalArrays'
 import { notNull } from './notNull'
-import { Context, Lexeme, Timestamp } from '../@types'
+import { State, Context, Lexeme, Timestamp } from '../@types'
+import { hashContext } from './hashContext'
+import { unroot } from './unroot'
 
+// @MIGRATION_TODO: Use id to remove instead of context
 /** Returns a new thought less the given context. */
 export const removeContext = (
+  state: State,
   lexeme: Lexeme,
   context: Context,
   rank: number,
@@ -16,7 +19,11 @@ export const removeContext = (
     notNull({
       contexts: lexeme.contexts
         ? lexeme.contexts.filter(
-            parent => !(equalArrays(parent.context, context) && (rank == null || parent.rank === rank)),
+            parent =>
+              !(
+                parent.id === hashContext(state, unroot([...context, lexeme.value])) &&
+                (rank == null || parent.rank === rank)
+              ),
           )
         : [],
       created: lexeme.created || lastUpdated,

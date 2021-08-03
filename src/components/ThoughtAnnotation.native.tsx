@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
+import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf, getAncestorByValue } from '../selectors'
 import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } from '../@types'
 import {
   ellipsizeUrl,
@@ -147,7 +147,7 @@ const ThoughtAnnotation = ({
   /** Returns true if the thought is not archived. */
   const isNotArchive = (thoughtContext: ThoughtContext) =>
     // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
-    showHiddenThoughts || !thoughtContext.context || thoughtContext.context.indexOf('=archive') === -1
+    showHiddenThoughts || !getAncestorByValue(state, thoughtContext.id, thoughtContext.id)
 
   const numContexts = contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
 

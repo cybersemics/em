@@ -93,13 +93,22 @@ const moveThought = (
     lastUpdated: timestamp(),
   }
 
-  if (!oldParent) {
-    console.error('Parent entry not found!')
+  const actualMovedThought = getParent(state, oldThoughts)
+
+  if (!actualMovedThought) {
+    console.error('moveThought: Parent entry for moved thought not found!', oldThoughts)
     return state
   }
 
   if (!lexemeOld) {
     console.error('Lexeme not found', oldPath)
+  }
+
+  const oldParentThought = state.thoughts.contextIndex[oldParent.id]
+
+  if (!oldParentThought) {
+    console.error('Parent entry not found!')
+    return state
   }
 
   const duplicateSubthought = getChildrenRanked(state, newContext).find(
@@ -112,9 +121,10 @@ const moveThought = (
   const newRank = isDuplicateMerge && duplicateSubthought ? duplicateSubthought.rank : headRank(newSimplePath)
 
   const isArchived = newThoughts.indexOf('=archive') !== -1
-  // find exact thought from thoughtIndex
+
+  // find exact thought from thoughtIndex\
   const exactThought = lexemeOld.contexts.find(
-    thoughtContext => equalArrays(thoughtContext.context, oldContext) && thoughtContext.rank === oldRank,
+    thoughtContext => thoughtContext.id === actualMovedThought.id && thoughtContext.rank === oldRank,
   )
 
   // find id of head thought from exact thought if not available in oldPath
@@ -130,7 +140,7 @@ const moveThought = (
 
   const movedThought = moveLexemeThought(lexemeOld, oldContext, newContext, oldRank, newRank, id, archived as Timestamp)
 
-  const lexemeNew = removeDuplicatedContext(movedThought, newContext)
+  const lexemeNew = removeDuplicatedContext(state, movedThought, newContext)
   const isPathInCursor = state.cursor && isDescendantPath(state.cursor, oldPath)
 
   // update thoughtIndex here since recursive updates may have to update same lexeme
@@ -146,7 +156,6 @@ const moveThought = (
   }
 
   // preserve contextIndex
-  const contextEncodedOld = oldParent.id
   const contextEncodedNew = newParent.id
 
   const newParentThought = state.thoughts.contextIndex[contextEncodedNew]
@@ -225,7 +234,7 @@ const moveThought = (
         // thoughtAccum should always exist, but unfortunately there is a bug somewhere that causes there to be missing lexemes
         // define a new lexeme if the old lexeme is missing
         const childOldThoughtContextRemoved = thoughtAccum
-          ? removeContext(thoughtAccum, oldThoughts, child.rank)
+          ? removeContext(state, thoughtAccum, oldThoughts, child.rank)
           : {
               contexts: [],
               value: child.value,
@@ -235,7 +244,8 @@ const moveThought = (
 
         // New lexeme
         const childLexemeNew = removeDuplicatedContext(
-          addContext(childOldThoughtContextRemoved, contextNew, movedRank, child.id, archived),
+          state,
+          addContext(childOldThoughtContextRemoved, movedRank, child.id, archived),
           contextNew,
         )
 
@@ -245,7 +255,7 @@ const moveThought = (
         const childUpdate: ChildUpdate = {
           id: child.id,
           // TODO: Confirm that find will always succeed
-          rank: (childLexemeNew.contexts || []).find(context => equalArrays(context.context, contextNew))!.rank,
+          rank: (childLexemeNew.contexts || []).find(context => context.id === headId(childPathNew))!.rank,
           pending: isPending(state, childContext),
           archived,
           pathOld: childPathOld,
@@ -415,21 +425,21 @@ const moveThought = (
 
   const contextIndexUpdates: Index<Parent | null> = {
     // @MIGRATION_NOTE: Do not delete parent entry if the children is empty
-    [contextEncodedOld]: {
-      id: oldParent.id,
-      value: head(oldContext),
+    [oldParentThought.id]: {
+      ...oldParentThought,
       children: subthoughtsOld,
-      parentId: oldParent.id,
       lastUpdated: timestamp(),
     },
-    [contextEncodedNew]: {
-      id: contextEncodedNew,
-      value: head(newContext),
+    [newParentThought.id]: {
+      ...newParentThought,
       children: subthoughtsNew,
-      parentId: newParentThought.parentId,
       lastUpdated: timestamp(),
     },
-    ...contextIndexDescendantUpdates.contextIndex,
+    [actualMovedThought.id]: {
+      ...actualMovedThought,
+      parentId: newParentThought.id,
+      lastUpdated: timestamp(),
+    },
   }
 
   const thoughtIndexUpdates = {

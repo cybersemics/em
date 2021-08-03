@@ -8,6 +8,6 @@ export const isAbsolute = (thoughts: (string | Child | ThoughtContext)[]): boole
     !!thoughts[0] &&
     ((thoughts[0] as Child).value === ABSOLUTE_TOKEN ||
       (thoughts[0] as string) === ABSOLUTE_TOKEN ||
-      ((thoughts[0] as ThoughtContext).context && isAbsolute((thoughts[0] as ThoughtContext).context)))
+      (thoughts[0] as ThoughtContext).id === ABSOLUTE_TOKEN)
   )
 }

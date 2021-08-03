@@ -96,8 +96,8 @@ it("archive thought with archived and hidden children - arvhive all children in 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
     - =a
-    - b
-    - =c`)
+    - =c
+    - b`)
 })
 
 it('do nothing if there is no cursor', () => {

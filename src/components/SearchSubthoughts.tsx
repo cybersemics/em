@@ -9,7 +9,7 @@ import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
 import { Connected, Index, Lexeme, SimplePath, State } from '../@types'
 import { getRemoteSearch } from '../search/algoliaSearch'
-import * as searchLocal from '../search/localSearch'
+import { getLocalSearch } from '../search/localSearch'
 import getFirebaseProvider from '../data-providers/firebase'
 
 interface SearchSubthoughtsProps {
@@ -47,7 +47,9 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
    * Search thoughts remotely or locally and add it to pullQueue.
    */
   const searchThoughts = async (value: string) => {
-    const searchRemote = getRemoteSearch(getFirebaseProvider(store.getState(), store.dispatch))
+    const searchRemote = getRemoteSearch(store.getState(), getFirebaseProvider(store.getState(), store.dispatch))
+
+    const searchLocal = getLocalSearch(store.getState())
 
     const setLoadingState = remoteSearch ? setIsRemoteSearching : setIsLocalSearching
     setLoadingState(true)
@@ -100,7 +102,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
         Object.values(thoughtIndex)
           .filter(
             lexeme =>
-              (archived || !isArchived(lexeme)) &&
+              (archived || !isArchived(store.getState(), lexeme)) &&
               lexeme.value !== HOME_TOKEN &&
               lexeme.value !== EM_TOKEN &&
               searchRegexp.test(lexeme.value),

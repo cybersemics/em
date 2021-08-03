@@ -10,6 +10,8 @@ import {
 import { head } from '../util'
 import { Child, Context, State, ThoughtContext } from '../@types'
 import { once } from 'lodash'
+import getContextForThought from './getContextForThought'
+import getParentThought from './getParentThought'
 
 /**
  * Gets a context's previous sibling with its rank.
@@ -34,7 +36,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
       return true
     } else if (
       !(contextViewActive
-        ? isAncestorsVisible(state, (child as ThoughtContext).context)
+        ? isAncestorsVisible(state, getContextForThought(state, (child as ThoughtContext).id)!)
         : showHiddenThoughts || isChildVisible(state, context, child as Child))
     ) {
       return false
@@ -48,7 +50,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   const prevChild = prev as ThoughtContext | Child | null
 
   const valueNew = once(() =>
-    contextViewActive ? head((prevChild as ThoughtContext).context) : (prevChild as Child).value,
+    contextViewActive ? getParentThought(state, (prevChild as ThoughtContext).id)!.value : (prevChild as Child).value,
   )
 
   return (

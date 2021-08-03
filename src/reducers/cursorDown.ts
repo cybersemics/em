@@ -10,11 +10,10 @@ const cursorDown = (state: State) => {
 
   // if there is a cursor, get the next logical child, sibling, or uncle
   if (cursor) {
-    const { nextThoughts, contextChain } = nextThought(state, cursor)
+    const { nextThoughts } = nextThought(state, cursor)
     return nextThoughts
       ? setCursor(state, {
           path: nextThoughts,
-          contextChain: contextChain || [],
           cursorHistoryClear: true,
           editing: true,
         })

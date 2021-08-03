@@ -53,15 +53,10 @@ const deleteEmptyThought = (state: State): State => {
       // if a child is already archived, move it to the parent
       // https://github.com/cybersemics/em/issues/864
       // https://github.com/cybersemics/em/issues/1282
+      // Note: Move the achieved child up a level all at once in the next step.
       ...allChildren.map(child => {
-        return !isThoughtArchived([...cursor, child])
-          ? archiveThought({ path: [...cursor, child] })
-          : moveThought({
-              oldPath: [...cursor, child],
-              newPath: [...parentOf(cursor), child],
-            })
+        return !isThoughtArchived([...cursor, child]) ? archiveThought({ path: [...cursor, child] }) : null
       }),
-
       // move the child archive up a level so it does not get permanently deleted
       state => {
         const childArchive = getAllChildren(state, context).find(child => child.value === '=archive')
@@ -72,7 +67,6 @@ const deleteEmptyThought = (state: State): State => {
             })
           : state
       },
-
       // permanently delete the empty thought
       deleteThought({
         context: parentOf(context),

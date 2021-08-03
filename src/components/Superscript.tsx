@@ -1,6 +1,6 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
+import { hasLexeme, getContexts, rootedParentOf, getAncestorByValue } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
 import { Child, Context, Index, SimplePath, State } from '../@types'
@@ -39,8 +39,11 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
   const numContexts = () => {
     const contexts = getContexts(state, head(thoughtsLive))
     // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
-    return (showHiddenThoughts ? contexts : contexts.filter(cx => !cx.context || cx.context.indexOf('=archive') === -1))
-      .length
+    return (
+      showHiddenThoughts
+        ? contexts
+        : contexts.filter(thoughtContext => !getAncestorByValue(state, thoughtContext.id, '=archive'))
+    ).length
   }
 
   return {

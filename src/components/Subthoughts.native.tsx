@@ -642,11 +642,11 @@ export const SubthoughtsComponent = ({
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
-                count={count + sumSubthoughtsLength(children)}
+                count={count + sumSubthoughtsLength(store.getState(), children)}
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
-                key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
+                key={`${child.id || child.rank}${(child as ThoughtContext).id ? '-context' : ''}`}
                 rank={child.rank}
                 isDraggable={actualDistance < 2}
                 showContexts={showContexts}

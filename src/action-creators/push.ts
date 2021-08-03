@@ -5,7 +5,7 @@ import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
-import { createId, getUserRef, hashContext, isFunction, logWithTime, timestamp, unroot } from '../util'
+import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../@types'
 import { storage } from '../util/storage'
@@ -96,8 +96,7 @@ const pushRemote =
             ? {
                 value: lexeme.value,
                 contexts: lexeme.contexts.map(cx => ({
-                  id: cx.id || hashContext(state, unroot([...cx.context, lexeme.value])) || createId(),
-                  context: cx.context || null, // guard against NaN or undefined
+                  id: cx.id,
                   rank: cx.rank || 0, // guard against NaN or undefined
                   ...(cx.lastUpdated
                     ? {

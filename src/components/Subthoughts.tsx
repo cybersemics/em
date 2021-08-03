@@ -664,12 +664,12 @@ export const SubthoughtsComponent = ({
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
-                count={count + sumSubthoughtsLength(children)}
+                count={count + sumSubthoughtsLength(store.getState(), children)}
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
                 // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
-                key={`${child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
+                key={`${child.rank}${(child as ThoughtContext).id ? '-context' : ''}`}
                 rank={child.rank}
                 isDraggable={actualDistance < 2}
                 showContexts={showContexts}

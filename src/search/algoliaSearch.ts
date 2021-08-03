@@ -1,17 +1,18 @@
 import AlgoliaClient, { SearchIndex } from 'algoliasearch'
 import { Store } from 'redux'
 import { setRemoteSearch } from '../action-creators'
-import { Context, Index } from '../@types'
+import { Context, Index, State } from '../@types'
 import { getContextMap, getAlgoliaApiKey } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let searchIndex: SearchIndex
 
+// @MIGRATION_TODO: Change this api to return ids instead of context.
 /**
  * Get remote search function.
  */
-export const getRemoteSearch = (remoteDataProvider: DataProvider) => {
+export const getRemoteSearch = (state: State, remoteDataProvider: DataProvider) => {
   /**
    * Search by value and return context map.
    */
@@ -20,7 +21,7 @@ export const getRemoteSearch = (remoteDataProvider: DataProvider) => {
     const result = await searchIndex.search(value)
     const hits = result.hits as any as Record<'thoughtHash' | 'value', string>[]
     const lexemes = await remoteDataProvider.getThoughtsByIds(hits.map(hit => hit.thoughtHash))
-    return getContextMap(lexemes)
+    return getContextMap(state, lexemes)
   }
 
   return {

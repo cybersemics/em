@@ -11,7 +11,7 @@ import {
   push,
   updateThoughts,
 } from '../action-creators'
-import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth, headId } from '../util'
+import { hashContext, keyValueBy, pathToContext, getDepth, headId } from '../util'
 import { Thunk, Context, Index, Lexeme, PushBatch, State } from '../@types'
 
 /** Merges multiple push batches into a single batch. Uses last value of local/remote. */
@@ -178,8 +178,8 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
        */
       const updatedLexemeContexts = () =>
         lexemeInUpdatedState.contexts.filter(thoughtContext => {
-          const isAlreadyInUpdate = lexemeInBatch?.contexts.some(thoughtContextInner =>
-            equalArrays(thoughtContextInner.context, thoughtContext.context),
+          const isAlreadyInUpdate = lexemeInBatch?.contexts.some(
+            thoughtContextInner => thoughtContextInner.id === thoughtContext.id,
           )
           return !isAlreadyInUpdate
         })

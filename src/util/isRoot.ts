@@ -8,6 +8,6 @@ export const isRoot = (thoughts: (string | Child | ThoughtContext)[]): boolean =
     !!thoughts[0] &&
     (ROOT_CONTEXTS.includes((thoughts[0] as Child).value) ||
       ROOT_CONTEXTS.includes(thoughts[0] as string) ||
-      ((thoughts[0] as ThoughtContext).context && isRoot((thoughts[0] as ThoughtContext).context)))
+      ROOT_CONTEXTS.includes((thoughts[0] as ThoughtContext).id))
   )
 }

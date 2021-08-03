@@ -14,16 +14,7 @@ import {
 import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
 
 // util
-import {
-  equalArrays,
-  equalThoughtRanked,
-  hashThought,
-  head,
-  reducerFlow,
-  removeContext,
-  timestamp,
-  unroot,
-} from '../util'
+import { equalThoughtRanked, hashThought, head, reducerFlow, removeContext, timestamp, unroot } from '../util'
 
 interface Payload {
   context: Context
@@ -48,9 +39,9 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const key = hashThought(value)
   const lexeme = getLexeme(state, value)
   const parent = getParent(state, context)
-  const deletedThoughtParent = getParent(state, thoughts)
+  const deletedThought = getParent(state, thoughts)
 
-  if (!deletedThoughtParent) {
+  if (!deletedThought) {
     console.error('Parent entry of deleted thought not found!')
     return state
   }
@@ -71,7 +62,9 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
 
   const contextEncoded = parent.id
 
-  const isValidThought = lexeme.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
+  const isValidThought = lexeme.contexts.find(
+    thoughtContext => thoughtContext.id === deletedThought!.id && rank === thoughtContext.rank,
+  )
 
   // if thought is not valid then just stop further execution
   if (!isValidThought) {
@@ -90,7 +83,9 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
 
   // the old thought less the context
   const newOldThought =
-    lexeme.contexts && lexeme.contexts.length > 1 ? removeContext(lexeme, context, showContexts ? 0 : rank) : null
+    lexeme.contexts && lexeme.contexts.length > 1
+      ? removeContext(state, lexeme, context, showContexts ? 0 : rank)
+      : null
 
   // update state so that we do not have to wait for firebase
   if (newOldThought) {
@@ -128,7 +123,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
         const childNew =
           childThought && childThought.contexts && childThought.contexts.length > 1
             ? // update child with deleted context removed
-              removeContext(childThought, thoughts, child.rank)
+              removeContext(state, childThought, thoughts, child.rank)
             : // if this was the only context of the child, delete the child
               null
 

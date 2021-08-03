@@ -14,7 +14,6 @@ import {
   createId,
   equalArrays,
   equalThoughtRanked,
-  head,
   headId,
   headValue,
   isDescendant,
@@ -27,10 +26,11 @@ import {
   strip,
   unroot,
 } from '../util'
+import getParentThought from './getParentThought'
 
-/** Get the value of the Child | Th oughtContext. */
-const childValue = (child: Child | ThoughtContext, showContexts: boolean) =>
-  showContexts ? head((child as ThoughtContext).context) : (child as Child).value
+/** Get the value of the Child | ThoughtContext. */
+const childValue = (state: State, child: Child | ThoughtContext, showContexts: boolean) =>
+  showContexts ? getParentThought(state, (child as ThoughtContext).id)!.value : (child as Child).value
 
 /** Returns true if the context is in table view. */
 const isTable = (state: State, context: Context) => attributeEquals(state, context, '=view', 'Table')
@@ -134,7 +134,7 @@ function expandThoughtsRecursive(
   const visibleChildren = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => {
-        const valueRaw = childValue(child, showContexts)
+        const valueRaw = childValue(state, child, showContexts)
         if (valueRaw == null) {
           console.error('Invalid child', child)
           console.error('Children', childrenUnfiltered)
@@ -163,7 +163,7 @@ function expandThoughtsRecursive(
   const isOnlyChildNoUrl =
     grandchildren &&
     !isTableColumn1(state, simpleContext) &&
-    (grandchildren.length !== 1 || !isURL(childValue(grandchildren[0], showContexts)))
+    (grandchildren.length !== 1 || !isURL(childValue(state, grandchildren[0], showContexts)))
 
   const childrenPinned =
     isOnlyChildNoUrl ||
@@ -172,7 +172,7 @@ function expandThoughtsRecursive(
     publishPinChildren(state, simpleContext)
       ? visibleChildren
       : visibleChildren.filter(child => {
-          const value = childValue(child, showContexts)
+          const value = childValue(state, child, showContexts)
 
           const childNew = { ...child, value, id: createId() }
           const childPath = path ? appendToPath(path, childNew) : ([childNew] as Path)
@@ -217,7 +217,7 @@ function expandThoughtsRecursive(
         ...(path || []),
         (childOrContext as Child).value != null
           ? (childOrContext as Child)
-          : { ...childOrContext, value: head((childOrContext as ThoughtContext).context) },
+          : { ...childOrContext, value: getParentThought(state, (childOrContext as ThoughtContext).id)!.value },
       ])
       // RECURSIVE
       // passing contextChain here creates an infinite loop

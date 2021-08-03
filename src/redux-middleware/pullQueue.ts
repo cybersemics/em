@@ -5,6 +5,7 @@ import {
   decodeContextUrl,
   expandThoughts,
   getAllChildrenByContextHash,
+  getContextForThought,
   getContexts,
   hasPushes,
   isContextViewActive,
@@ -72,7 +73,7 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
         // because only parents are specified by visibleContexts, we need to queue the children as well
         ...keyValueBy(children, child => {
           const contextChild = showContexts
-            ? (child as ThoughtContext).context
+            ? getContextForThought(state, (child as ThoughtContext).id)!
             : unroot([...context, (child as Child).value])
           const keyChildId = hashContext(state, contextChild)
           return keyChildId && contextIndex[keyChildId] && contextIndex[keyChildId].pending

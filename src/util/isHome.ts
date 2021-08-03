@@ -8,6 +8,6 @@ export const isHome = (thoughts: (string | Child | ThoughtContext)[]): boolean =
     !!thoughts[0] &&
     ((thoughts[0] as Child).value === HOME_TOKEN ||
       (thoughts[0] as string) === HOME_TOKEN ||
-      ((thoughts[0] as ThoughtContext).context && isHome((thoughts[0] as ThoughtContext).context)))
+      (thoughts[0] as ThoughtContext).id === HOME_TOKEN)
   )
 }

@@ -2,7 +2,7 @@ import initDB, * as db from '../../data-providers/dexie'
 import { importText } from '../../reducers'
 import { Context } from '../../@types'
 import { initialState } from '../../util'
-import * as localSearch from '../localSearch'
+import { getLocalSearch } from '../localSearch'
 
 /** Import text into the root of a blank initial state. */
 const importThoughts = (text: string) => {
@@ -18,7 +18,7 @@ describe('local search', () => {
   afterEach(db.clearAll)
 
   it('full text search with single word', async () => {
-    const { thoughtIndex } = importThoughts(`
+    const { thoughtIndex, contextIndex } = importThoughts(`
     - LP
       - Lost on you
       - One last time
@@ -36,6 +36,17 @@ describe('local search', () => {
 
     await Promise.all(Object.keys(thoughtIndex).map(hash => db.updateThought(hash, thoughtIndex[hash])))
 
+    const state = initialState()
+
+    const localSearch = getLocalSearch({
+      ...state,
+      thoughts: {
+        ...state.thoughts,
+        thoughtIndex,
+        contextIndex,
+      },
+    })
+
     const contextMap = await localSearch.searchAndGenerateContextMap('One')
 
     const expectedContexts: Context[] = [['LP'], ['Katty Perry'], ['Metallica'], ['Three Dog Night']]
@@ -47,7 +58,7 @@ describe('local search', () => {
   })
 
   it('full text search with multiple words', async () => {
-    const { thoughtIndex } = importThoughts(`
+    const { thoughtIndex, contextIndex } = importThoughts(`
     - Tasks
       - Errands
         - Get apple juice
@@ -63,6 +74,17 @@ describe('local search', () => {
 
     await Promise.all(Object.keys(thoughtIndex).map(hash => db.updateThought(hash, thoughtIndex[hash])))
 
+    const state = initialState()
+
+    const localSearch = getLocalSearch({
+      ...state,
+      thoughts: {
+        ...state.thoughts,
+        thoughtIndex,
+        contextIndex,
+      },
+    })
+
     const contextMap = await localSearch.searchAndGenerateContextMap('products and')
 
     const expectedContexts: Context[] = [
@@ -77,7 +99,7 @@ describe('local search', () => {
   })
 
   it('full text search with ignore case', async () => {
-    const { thoughtIndex } = importThoughts(`
+    const { thoughtIndex, contextIndex } = importThoughts(`
     - Anime Characters
       - Naruto
         - Knucklehead
@@ -92,6 +114,17 @@ describe('local search', () => {
     `)
 
     await Promise.all(Object.keys(thoughtIndex).map(hash => db.updateThought(hash, thoughtIndex[hash])))
+
+    const state = initialState()
+
+    const localSearch = getLocalSearch({
+      ...state,
+      thoughts: {
+        ...state.thoughts,
+        thoughtIndex,
+        contextIndex,
+      },
+    })
 
     const contextMap = await localSearch.searchAndGenerateContextMap('tenacious')
 

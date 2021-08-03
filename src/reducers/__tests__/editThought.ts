@@ -1,6 +1,6 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getAllChildren, getLexeme } from '../../selectors'
+import { exportContext, getContexts, getAllChildren, getLexeme, getParent } from '../../selectors'
 import { editThought, newThought, setCursor, importText } from '../../reducers'
 import { Path, SimplePath, State } from '../../@types'
 // import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
@@ -27,10 +27,17 @@ it('edit a thought', () => {
   - aa
   - b`)
 
+  const thought = getParent(stateNew, ['aa'])
+
+  // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
   // aa should exist in ROOT context
+
+  expect(thought).toBeDefined()
+  expect(thought!.parentId).toBe(HOME_TOKEN)
+
   expect(getContexts(stateNew, 'aa')).toMatchObject([
     {
-      context: [HOME_TOKEN],
+      id: thought!.id,
     },
   ])
   expect(getAllChildren(stateNew, [HOME_TOKEN])).toMatchObject([
@@ -72,7 +79,6 @@ it('edit a descendant', () => {
   // aa1 should exist in context a
   expect(getContexts(stateNew, 'aa1')).toMatchObject([
     {
-      context: ['a'],
       rank: 0,
     },
   ])
@@ -102,10 +108,18 @@ it('edit a thought with descendants', () => {
     - a1
     - a2`)
 
+  const thought = getParent(stateNew, ['aa'])
+
+  // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
+  // aa should exist in ROOT context
+
+  expect(thought).toBeDefined()
+  expect(thought!.parentId).toBe(HOME_TOKEN)
+
   // aa should exist in ROOT context
   expect(getContexts(stateNew, 'aa')).toMatchObject([
     {
-      context: [HOME_TOKEN],
+      id: thought!.id,
     },
   ])
   expect(getAllChildren(stateNew, ['aa'])).toMatchObject([
@@ -126,7 +140,10 @@ it('edit a thought existing in mutliple contexts', () => {
         newValue: 'abc',
         oldValue: 'ab',
         context: ['a'],
-        path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] as SimplePath,
+        path: [
+          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+          { id: hashContext(newState, ['a', 'ab']) || '', value: 'ab', rank: 0 },
+        ] as Path as SimplePath,
       }),
   ]
 
@@ -140,10 +157,18 @@ it('edit a thought existing in mutliple contexts', () => {
   - b
     - ab`)
 
+  const thought = getParent(stateNew, ['a', 'abc'])
+
+  // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
+  // aa should exist in ROOT context
+
+  expect(thought).not.toBeNull()
+  expect(thought!.parentId).toBe(hashContext(stateNew, ['a']))
+
   // abc should exist in context a
   expect(getContexts(stateNew, 'abc')).toMatchObject([
     {
-      context: ['a'],
+      id: thought!.id,
     },
   ])
   expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'abc', rank: 0 }])
@@ -178,14 +203,20 @@ it('edit a thought that exists in another context', () => {
   - b
     - ab`)
 
+  const thoughtInContextA = getParent(stateNew, ['a', 'ab'])
+  const thoughtInContextB = getParent(stateNew, ['b', 'ab'])
+
+  expect(thoughtInContextA).toBeTruthy()
+  expect(thoughtInContextB).toBeTruthy()
+
   // ab should exist in both contexts a and b
   expect(getContexts(stateNew, 'ab')).toMatchObject([
     {
-      context: ['a'],
+      id: thoughtInContextA!.id,
       rank: 0,
     },
     {
-      context: ['b'],
+      id: thoughtInContextB!.id,
       rank: 0,
     },
   ])
@@ -219,10 +250,13 @@ it('edit a child with the same value as its parent', () => {
   - a
     - ab`)
 
+  const thoughtInContextA = getParent(stateNew, ['a', 'ab'])
+
+  expect(thoughtInContextA).toBeTruthy()
   // ab should exist in context a
   expect(getContexts(stateNew, 'ab')).toMatchObject([
     {
-      context: ['a'],
+      id: thoughtInContextA!.id,
       rank: 0,
     },
   ])

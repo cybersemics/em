@@ -1,6 +1,7 @@
 import { isContextViewActive, getContexts, rankThoughtsFirstMatch } from '../selectors'
 import { pathToContext } from '../util'
 import { Path, SimplePath, State } from '../@types'
+import getContextForThought from './getContextForThought'
 
 /**
  * Splits a path into a contextChain based on contextViews.
@@ -21,13 +22,12 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
       const contexts = i > 0 ? getContexts(state, path[i + 1].value) : []
       const matchingContext = contexts.find(cx => cx.id === path[i + 1].id)
 
+      const context = matchingContext && getContextForThought(state, matchingContext.id)
       // NOTE: rankThoughtsFirstMatch will call splitChain, creating indirect recursion
       // Since we are only passing a SimplePath to rankThoughtsFirstMatch, it will not create an infinite loop (hopefully)
 
       // eslint-disable-next-line fp/no-mutating-methods
-      contextChain.push(
-        (matchingContext ? rankThoughtsFirstMatch(state, matchingContext.context.slice(0, -1)) : []) as SimplePath,
-      )
+      contextChain.push((context ? rankThoughtsFirstMatch(state, context.slice(0, -1)) : []) as SimplePath)
     }
   })
 
