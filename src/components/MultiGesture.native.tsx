@@ -1,8 +1,8 @@
 /* eslint-disable fp/no-class, fp/no-this */
-import React from 'react'
+import React, { useEffect, useImperativeHandle, useState } from 'react'
 import { noop } from 'lodash'
 import { Direction, GesturePath } from '../@types'
-import { GestureResponderEvent, PanResponder, View } from 'react-native'
+import { GestureResponderEvent, PanResponder, ScrollView } from 'react-native'
 import { commonStyles } from '../style/commonStyles'
 
 interface Point {
@@ -25,6 +25,11 @@ interface MultiGestureProps {
   shouldCancelGesture?: () => boolean
   scrollThreshold?: number
   threshold?: number
+  children: React.ReactNode
+}
+
+export interface MultiGestureRef {
+  scrolling: boolean
 }
 
 /** Returns u, d, l, r, or null. */
@@ -39,184 +44,146 @@ const gesture = (p1: Point, p2: Point, threshold: number) =>
     ? 'l'
     : null
 
+// React.FC<MultiGestureProps>
 /** A component that handles touch gestures composed of sequential swipes. */
-class MultiGesture extends React.Component<MultiGestureProps> {
-  abandon = false
-  currentStart: Point | null = null
-  scrollYStart: number | null = null
-  disableScroll = false
-  panResponder: { panHandlers: unknown }
-  scrolling = false
-  sequence: GesturePath = ''
+const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
+  (
+    {
+      threshold = 3,
 
-  constructor(props: MultiGestureProps) {
-    super(props)
+      // the distance to allow scrolling before abandoning the gesture
+      scrollThreshold = 15,
 
-    this.reset()
+      // fired at the start of a gesture
+      // includes false starts
+      onStart = noop,
 
-    // allow enabling/disabling scroll with this.disableScroll
-    // document.body.addEventListener(
-    //   'touchmove',
-    //   e => {
-    //     if (this.disableScroll) {
-    //       e.preventDefault()
-    //     }
-    //   },
-    //   { passive: false },
-    // )
+      // fired when a new gesture is added to the sequence
+      onGesture = noop,
 
-    // Listen to touchend directly to catch unterminated gestures.
-    // In order to make the gesture system more forgiving, we allow a tiny bit of scroll without abandoning the gesture.
-    // Unfortunately, there are some cases (#1242) where onPanResponderRelease is never called. Neither is onPanResponderReject or onPanResponderEnd.
-    // onPanResponderTerminate is called consistently, but it is also called for any any scroll event. I am not aware of a way to differentiate when onPanResponderTerminate is called from a scroll event vs a final termination where release it never called.
-    // So instead of eliminating the scroll lenience, we listen to touchend manually and ensure onEnd is called appropriately.
-    // Fixes https://github.com/cybersemics/em/issues/1242
-    // document.body.addEventListener('touchend', e => {
-    //   // manually reset everything except sequence and abandon, in case reset does not get called
-    //   // Fixes https://github.com/cybersemics/em/issues/1189
-    //   this.currentStart = null
-    //   this.scrollYStart = null
-    //   this.disableScroll = false
-    //   this.scrolling = false
+      // fired when all gestures have completed
+      onEnd = noop,
+      ...props
+    },
+    ref,
+  ) => {
+    const [scrolling, setScroll] = useState(true)
 
-    //   if (this.sequence) {
-    //     // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
-    //     setTimeout(() => {
-    //       if (!this.abandon && this.sequence) {
-    //         this.props.onEnd?.(this.sequence, e as unknown as GestureResponderEvent)
-    //         this.reset()
-    //       }
-    //     })
-    //   }
-    // })
+    let abandon = false
+    let currentStart: Point | null = null
+    let scrollYStart: number | null = null
+    let sequence: GesturePath = ''
 
-    // document.addEventListener('visibilitychange', () => {
-    //   this.reset()
-    // })
+    useImperativeHandle(ref, () => ({ scrolling }))
 
-    // TODO: Find a way to indicate that the children is being scrolled.
-    // window.addEventListener('scroll', () => {
-    //   this.scrolling = true
-    // })
+    useEffect(() => {
+      reset()
+    }, [])
 
-    this.panResponder = PanResponder.create({
-      // Prevent gesture when any text is selected.
-      // See https://github.com/cybersemics/em/issues/676.
-      // NOTE: thought it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
-      onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.() ?? true,
-      onMoveShouldSetPanResponderCapture: () => !this.props.shouldCancelGesture?.() ?? true,
+    /** Reset initial values. */
+    const reset = () => {
+      abandon = false
+      currentStart = null
+      scrollYStart = null
+      setScroll(true)
+      sequence = ''
+    }
 
-      // does not report moveX and moveY
-      // onPanResponderGrant: (e, gestureState) => {},
+    const panResponder = React.useMemo(
+      () =>
+        PanResponder.create({
+          // Prevent gesture when any text is selected.
+          // See https://github.com/cybersemics/em/issues/676.
+          // NOTE: thought it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
+          onMoveShouldSetPanResponder: () => !props.shouldCancelGesture?.() ?? true,
+          onMoveShouldSetPanResponderCapture: () => !props.shouldCancelGesture?.() ?? true,
 
-      onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
-        if (this.abandon) {
-          return
-        }
+          // does not report moveX and moveY
+          // onPanResponderGrant: (e, gestureState) => {},
 
-        if (this.props.shouldCancelGesture?.()) {
-          this.props.onCancel?.()
-          this.abandon = true
-          return
-        }
+          onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
+            if (abandon) {
+              return
+            }
 
-        // use the first trigger of the move event to initialize this.currentStart
-        // onPanResponderStart does not work (why?)
-        if (!this.currentStart) {
-          this.scrolling = false
-          // ensure that disableScroll is false when starting in case it wasn't reset properly
-          // may be related to https://github.com/cybersemics/em/issues/1189
-          this.disableScroll = false
-          this.currentStart = {
-            x: gestureState.moveX,
-            y: gestureState.moveY,
-          }
-          this.scrollYStart = window.scrollY
-          if (this.props.onStart) {
-            this.props.onStart()
-          }
-          return
-        }
+            if (props.shouldCancelGesture?.()) {
+              props.onCancel?.()
+              abandon = true
+              return
+            }
 
-        // abandon gestures when scrolling beyond vertical threshold
-        // because scrolling cannot be disabled after it has begin
-        // effectively only allows sequences to start with left or right
-        if (this.scrolling && Math.abs(this.scrollYStart! - window.scrollY) > this.props.scrollThreshold!) {
-          this.sequence = ''
-          this.props.onCancel?.()
-          this.abandon = true
-          return
-        }
+            // use the first trigger of the move event to initialize this.currentStart
+            // onPanResponderStart does not work (why?)
+            if (!currentStart) {
+              currentStart = {
+                x: gestureState.moveX,
+                y: gestureState.moveY,
+              }
 
-        const g = gesture(
-          this.currentStart,
-          {
-            x: gestureState.moveX,
-            y: gestureState.moveY,
+              if (onStart) {
+                onStart()
+              }
+              return
+            }
+
+            // abandon gestures when scrolling beyond vertical threshold
+            // because scrolling cannot be disabled after it has begin
+            // effectively only allows sequences to start with left or right
+            if (scrolling && Math.abs(scrollYStart! - window.scrollY) > scrollThreshold!) {
+              sequence = ''
+              setScroll(true)
+              props.onCancel?.()
+              abandon = true
+              return
+            }
+
+            const g = gesture(
+              currentStart,
+              {
+                x: gestureState.moveX,
+                y: gestureState.moveY,
+              },
+              threshold!,
+            )
+
+            if (g) {
+              currentStart = {
+                x: gestureState.moveX,
+                y: gestureState.moveY,
+              }
+
+              if (g !== sequence[sequence.length - 1]) {
+                sequence += g
+
+                // reset gestures if swipe up or down.
+                if (sequence[0] === 'u' || sequence[0] === 'd') {
+                  reset()
+                  return
+                }
+
+                setScroll(false)
+                onGesture?.(g, sequence, e)
+              }
+            }
           },
-          this.props.threshold!,
-        )
 
-        if (g) {
-          this.disableScroll = true
-          this.currentStart = {
-            x: gestureState.moveX,
-            y: gestureState.moveY,
-          }
+          // In rare cases release won't be called. See touchend above.
+          onPanResponderRelease: (e: GestureResponderEvent) => {
+            onEnd?.(sequence, e)
+            reset()
+          },
 
-          if (g !== this.sequence[this.sequence.length - 1]) {
-            this.sequence += g
-            this.props.onGesture?.(g, this.sequence, e)
-          }
-        }
-      },
-
-      // In rare cases release won't be called. See touchend above.
-      onPanResponderRelease: (e: GestureResponderEvent) => {
-        this.props.onEnd?.(this.sequence, e)
-        this.reset()
-      },
-
-      onPanResponderTerminationRequest: () => true,
-    })
-  }
-
-  reset() {
-    this.abandon = false
-    this.currentStart = null
-    this.scrollYStart = null
-    this.disableScroll = false
-    this.scrolling = false
-    this.sequence = ''
-  }
-
-  render() {
-    return (
-      <View style={commonStyles.flexOne} {...this.panResponder.panHandlers}>
-        {this.props.children}
-      </View>
+          onPanResponderTerminationRequest: () => true,
+        }),
+      [],
     )
-  }
 
-  static defaultProps: MultiGestureProps = {
-    // the distance threshold for a single gesture
-    // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
-    // related: https://github.com/cybersemics/em/issues/1268
-    threshold: 3,
-
-    // the distance to allow scrolling before abandoning the gesture
-    scrollThreshold: 15,
-
-    // fired at the start of a gesture
-    // includes false starts
-    onStart: noop,
-
-    // fired when a new gesture is added to the sequence
-    onGesture: noop,
-
-    // fired when all gestures have completed
-    onEnd: noop,
-  }
-}
+    return (
+      <ScrollView style={commonStyles.flexOne} {...panResponder.panHandlers} scrollEnabled={scrolling}>
+        {props.children}
+      </ScrollView>
+    )
+  },
+)
 
 export default MultiGesture

@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useRef } from 'react'
+import React, { createRef, useEffect, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
@@ -49,6 +49,7 @@ const AppComponent: React.FC = () => {
   const multiGestureRef = createRef<MultiGestureRef>()
   const dispatch = useDispatch()
   const { height } = useDimensions().screen
+  const [isScrollEnabled, setIsScrollEnabled] = useState(true)
 
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const showAlert = useSelector((state: State) => state.alert)
@@ -67,6 +68,10 @@ const AppComponent: React.FC = () => {
   useEffect(() => {
     if (showSidebar) return openDrawer()
   }, [showSidebar])
+
+  useEffect(() => {
+    setIsScrollEnabled(multiGestureRef.current?.scrolling || false)
+  }, [multiGestureRef])
 
   const contentHeight = {
     height: height - 125,
@@ -97,7 +102,7 @@ const AppComponent: React.FC = () => {
             onCancel={handleGestureCancel}
           >
             <View style={contentHeight}>
-              <ScrollView scrollEnabled={multiGestureRef.current?.scrolling} nestedScrollEnabled={true} style={flexOne}>
+              <ScrollView scrollEnabled={isScrollEnabled} nestedScrollEnabled={true} style={flexOne}>
                 <Content />
               </ScrollView>
 
