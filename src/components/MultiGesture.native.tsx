@@ -1,4 +1,3 @@
-/* eslint-disable fp/no-class, fp/no-this */
 import React, { useEffect, useImperativeHandle, useState } from 'react'
 import { noop } from 'lodash'
 import { Direction, GesturePath } from '../@types'
