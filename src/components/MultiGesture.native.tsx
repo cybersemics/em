@@ -43,7 +43,6 @@ const gesture = (p1: Point, p2: Point, threshold: number) =>
     ? 'l'
     : null
 
-// React.FC<MultiGestureProps>
 /** A component that handles touch gestures composed of sequential swipes. */
 const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
   (
