@@ -19,13 +19,13 @@ import { State } from '../@types'
 import { commonStyles } from '../style/commonStyles'
 import ModalAuth from './ModalAuth'
 import ErrorMessage from './ErrorMessage'
-import Content from './Content'
+import Content from './Content.native'
 
 import MultiGesture, { MultiGestureRef } from './MultiGesture.native'
 import { store } from '../store'
 import { isGestureHint, inputHandlers } from '../shortcuts'
 
-const { flexOne, darkBackground } = commonStyles
+const { flexOne, darkBackground, flexGrow } = commonStyles
 
 const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
@@ -70,7 +70,7 @@ const AppComponent: React.FC = () => {
   }, [showSidebar])
 
   useEffect(() => {
-    setIsScrollEnabled(multiGestureRef.current?.scrolling || false)
+    setIsScrollEnabled(multiGestureRef.current?.isGestureActive || false)
   }, [multiGestureRef])
 
   const contentHeight = {
@@ -102,8 +102,13 @@ const AppComponent: React.FC = () => {
             onCancel={handleGestureCancel}
           >
             <View style={contentHeight}>
-              <ScrollView scrollEnabled={isScrollEnabled} nestedScrollEnabled={true} style={flexOne}>
-                <Content />
+              <ScrollView
+                scrollEnabled={!isScrollEnabled}
+                nestedScrollEnabled={true}
+                contentContainerStyle={flexGrow}
+                style={flexOne}
+              >
+                <Content scrollEnabled={!isScrollEnabled} />
               </ScrollView>
 
               <NavBar position='top' />
