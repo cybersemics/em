@@ -28,7 +28,7 @@ interface MultiGestureProps {
 }
 
 export interface MultiGestureRef {
-  scrolling: boolean
+  isGestureActive: boolean
 }
 
 /** Returns u, d, l, r, or null. */
@@ -72,7 +72,7 @@ const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
     let scrollYStart: number | null = null
     let sequence: GesturePath = ''
 
-    useImperativeHandle(ref, () => ({ scrolling: isGestureActive }))
+    useImperativeHandle(ref, () => ({ isGestureActive }))
 
     useEffect(() => {
       reset()
