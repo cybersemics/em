@@ -67,14 +67,26 @@ const mapStateToProps = (state: State) => {
   }
 }
 
-type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
+interface IComponentProps {
+  scrollEnabled: boolean
+}
+
+type ContentComponent = FC<ReturnType<typeof mapStateToProps> & IComponentProps>
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const { search, isTutorialLocal, rootThoughtsLength, rootSortDirection, rootSortType, isAbsoluteContext } = props
+  const {
+    search,
+    isTutorialLocal,
+    rootThoughtsLength,
+    rootSortDirection,
+    rootSortType,
+    isAbsoluteContext,
+    scrollEnabled,
+  } = props
 
   return (
-    <ScrollView nestedScrollEnabled style={commonStyles.flexOne}>
+    <ScrollView scrollEnabled={scrollEnabled} nestedScrollEnabled style={commonStyles.flexOne}>
       {search != null ? (
         <Search />
       ) : (
