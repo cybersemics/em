@@ -17,31 +17,48 @@ interface GestureState {
 }
 
 interface MultiGestureProps {
+  children: React.ReactNode
   onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void
   onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void
   onStart?: () => void
   onCancel?: () => void
+  // When a swipe is less than this number of pixels, then it won't count as a gesture.
+  // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
+  // related: https://github.com/cybersemics/em/issues/1268
+  minDistance?: number
   shouldCancelGesture?: () => boolean
   scrollThreshold?: number
-  threshold?: number
-  children: React.ReactNode
 }
 
-/** Returns u, d, l, r, or null. */
-const gesture = (p1: Point, p2: Point, threshold: number) =>
-  p2.y - p1.y > threshold
-    ? 'd'
-    : p1.y - p2.y > threshold
+/** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
+const dirToRad = {
+  NW: -Math.PI * (3 / 4),
+  NE: -Math.PI / 4,
+  SE: Math.PI / 4,
+  SW: Math.PI * (3 / 4),
+}
+
+/** Return the closest gesture based on the angle between two points. See: https://github.com/cybersemics/em/issues/1379. */
+const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | null => {
+  // Instead of calculating the actual distance, calculate distance squared.
+  // Then we can compare it directly to minDistanceSquared and avoid the Math.sqrt call completely.
+  const distanceSquared = Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)
+  if (distanceSquared < minDistanceSquared) return null
+
+  // Math.atan2 returns 0 to 180deg as 0 to π, and 180 to 360deg as -π to 0 (clockwise starting due right)
+  const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x)
+  return angle >= dirToRad.NW && angle < dirToRad.NE
     ? 'u'
-    : p2.x - p1.x > threshold
+    : angle >= dirToRad.NE && angle < dirToRad.SE
     ? 'r'
-    : p1.x - p2.x > threshold
-    ? 'l'
-    : null
+    : angle >= dirToRad.SE && angle < dirToRad.SW
+    ? 'd'
+    : 'l'
+}
 
 /** A component that handles touch gestures composed of sequential swipes. */
 const MultiGesture: FC<MultiGestureProps> = ({
-  threshold = 3,
+  minDistance = 10,
 
   // the distance to allow scrolling before abandoning the gesture
   scrollThreshold = 15,
@@ -58,6 +75,9 @@ const MultiGesture: FC<MultiGestureProps> = ({
   ...props
 }) => {
   const [isGestureActive, setIsGestureActive] = useState(false)
+
+  // square the minDistance once for more efficient distance comparisons
+  const minDistanceSquared = Math.pow(minDistance, 2)
 
   let abandon = false
   let currentStart: Point | null = null
@@ -131,7 +151,7 @@ const MultiGesture: FC<MultiGestureProps> = ({
               x: gestureState.moveX,
               y: gestureState.moveY,
             },
-            threshold!,
+            minDistanceSquared,
           )
 
           if (g) {
