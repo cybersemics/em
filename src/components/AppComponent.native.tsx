@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
@@ -15,13 +15,13 @@ import Alert from './Alert'
 import Footer from './Footer'
 import { useDimensions } from '@react-native-community/hooks'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { State } from '../@types'
+import { Direction, GesturePath, State } from '../@types'
 import { commonStyles } from '../style/commonStyles'
 import ModalAuth from './ModalAuth'
 import ErrorMessage from './ErrorMessage'
 import Content from './Content.native'
 
-import MultiGesture, { MultiGestureRef } from './MultiGesture.native'
+import MultiGesture from './MultiGesture'
 import { store } from '../store'
 import { isGestureHint, inputHandlers } from '../shortcuts'
 
@@ -46,10 +46,10 @@ const handleGestureCancel = () => {
  */
 const AppComponent: React.FC = () => {
   const drawerRef = useRef<DrawerLayout>(null)
-  const multiGestureRef = createRef<MultiGestureRef>()
+
   const dispatch = useDispatch()
   const { height } = useDimensions().screen
-  const [isScrollEnabled, setIsScrollEnabled] = useState(true)
+  const [isGestureActive, setIsGestureActive] = useState(false)
 
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const showAlert = useSelector((state: State) => state.alert)
@@ -68,10 +68,6 @@ const AppComponent: React.FC = () => {
   useEffect(() => {
     if (showSidebar) return openDrawer()
   }, [showSidebar])
-
-  useEffect(() => {
-    setIsScrollEnabled(multiGestureRef.current?.isGestureActive || false)
-  }, [multiGestureRef])
 
   const contentHeight = {
     height: height - 125,
@@ -95,20 +91,28 @@ const AppComponent: React.FC = () => {
           <ErrorMessage />
           <Toolbar />
           <MultiGesture
-            ref={multiGestureRef}
-            onGesture={handleGestureSegment}
-            onEnd={handleGestureEnd}
+            onGesture={(g: Direction | null, path: GesturePath) => {
+              setIsGestureActive(true)
+              handleGestureSegment(g, path)
+            }}
+            onEnd={(...args) => {
+              setIsGestureActive(false)
+              handleGestureEnd(...args)
+            }}
             shouldCancelGesture={shouldCancelGesture}
-            onCancel={handleGestureCancel}
+            onCancel={() => {
+              setIsGestureActive(false)
+              handleGestureCancel()
+            }}
           >
             <View style={contentHeight}>
               <ScrollView
-                scrollEnabled={!isScrollEnabled}
+                scrollEnabled={!isGestureActive}
                 nestedScrollEnabled={true}
                 contentContainerStyle={flexGrow}
                 style={flexOne}
               >
-                <Content scrollEnabled={!isScrollEnabled} />
+                <Content scrollEnabled={!isGestureActive} />
               </ScrollView>
 
               <NavBar position='top' />
