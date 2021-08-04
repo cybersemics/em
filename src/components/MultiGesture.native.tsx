@@ -65,14 +65,14 @@ const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
     },
     ref,
   ) => {
-    const [scrolling, setScroll] = useState(true)
+    const [isGestureActive, setIsGestureActive] = useState(false)
 
     let abandon = false
     let currentStart: Point | null = null
     let scrollYStart: number | null = null
     let sequence: GesturePath = ''
 
-    useImperativeHandle(ref, () => ({ scrolling }))
+    useImperativeHandle(ref, () => ({ scrolling: isGestureActive }))
 
     useEffect(() => {
       reset()
@@ -83,7 +83,7 @@ const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
       abandon = false
       currentStart = null
       scrollYStart = null
-      setScroll(true)
+      setIsGestureActive(false)
       sequence = ''
     }
 
@@ -127,9 +127,9 @@ const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
             // abandon gestures when scrolling beyond vertical threshold
             // because scrolling cannot be disabled after it has begin
             // effectively only allows sequences to start with left or right
-            if (scrolling && Math.abs(scrollYStart! - window.scrollY) > scrollThreshold!) {
+            if (isGestureActive && Math.abs(scrollYStart! - window.scrollY) > scrollThreshold!) {
               sequence = ''
-              setScroll(true)
+              setIsGestureActive(true)
               props.onCancel?.()
               abandon = true
               return
@@ -159,7 +159,7 @@ const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
                   return
                 }
 
-                setScroll(false)
+                setIsGestureActive(true)
                 onGesture?.(g, sequence, e)
               }
             }
@@ -180,7 +180,7 @@ const MultiGesture = React.forwardRef<MultiGestureRef, MultiGestureProps>(
       <ScrollView
         style={commonStyles.flexOne}
         {...panResponder.panHandlers}
-        scrollEnabled={scrolling}
+        scrollEnabled={!isGestureActive}
         nestedScrollEnabled={true}
       >
         {props.children}
