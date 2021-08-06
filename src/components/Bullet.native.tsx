@@ -41,8 +41,9 @@ const Bullet = ({
   onClick,
   invalid,
   pending,
+  isEditing,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => (
-  <TouchableOpacity style={styles.container} onPress={onClick}>
+  <TouchableOpacity style={[styles.container, isEditing && styles.backgroundColor]} onPress={onClick}>
     <Text style={[commonStyles.whiteText, styles.text]}>
       {glyph || (showContexts ? (isLeaf ? '◦' : '▹') : isLeaf ? '•' : '▸')}
     </Text>
@@ -50,8 +51,10 @@ const Bullet = ({
 )
 
 const styles = StyleSheet.create({
-  container: {
+  backgroundColor: {
     backgroundColor: 'grey',
+  },
+  container: {
     borderRadius: 10,
     height: 20,
     width: 20,
