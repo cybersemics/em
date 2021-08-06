@@ -1,10 +1,17 @@
 import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../../constants'
+import { allIOSEmojis } from '../../emojiHelpers'
 
 it('normal emojis', () => {
   expect('🧠 Big Brain'.match(EMOJI_REGEX)).toBeTruthy()
   expect('👾 X Æ A-Xii 👾'.match(EMOJI_REGEX)).toBeTruthy()
   expect('🚦'.match(EMOJI_REGEX)).toBeTruthy()
   expect('🖼️'.match(EMOJI_REGEX)).toBeTruthy()
+})
+
+it('all ios emojis', () => {
+  allIOSEmojis.forEach(emoji => {
+    expect(emoji.match(EMOJI_REGEX)).toBeTruthy()
+  })
 })
 
 it('prevent unwanted characters to be detected as emojis.', () => {
@@ -75,4 +82,23 @@ it('ZWJ Sequenced emoji should be detected as single emoji', () => {
   zwjSequencedEmojis.forEach(emoji => {
     expect(emoji.match(EMOJI_REGEX_GLOBAL)).toHaveLength(1)
   })
+
+  // All individual emoji should be detected as a single emoji.
+  // TODO: Only this emoji 👁‍🗨 is detected as two separate emojis. Fix this later.
+  allIOSEmojis
+    .filter(emoji => !['👁‍🗨'].includes(emoji))
+    .forEach(emoji => {
+      expect(emoji.match(EMOJI_REGEX_GLOBAL)).toHaveLength(1)
+    })
+})
+
+it('completely match individual emoji without leaving unmatched selectors like uFE0F', () => {
+  allIOSEmojis
+    .filter(emoji => !['👁‍🗨'].includes(emoji))
+    .forEach(emoji => {
+      const match = emoji.match(EMOJI_REGEX)
+      expect(match).toBeTruthy()
+      // Whole emoji should be matched without leaving unmatched unciode characters
+      expect(match![0].length).toBe(emoji.length)
+    })
 })
