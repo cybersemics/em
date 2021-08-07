@@ -2,9 +2,10 @@ import React, { ChangeEvent, FC, useCallback, useEffect, useState, useRef } from
 import { connect, useDispatch } from 'react-redux'
 import { ActionButton } from './ActionButton'
 import { Index, Connected, State } from '../@types'
-import { showModal } from '../action-creators'
+import { showModal, updateInviteCode } from '../action-creators'
 import Modal from './Modal'
 import { storage } from '../util/storage'
+import { getQueryStringParams } from '../util/getQueryString'
 
 const firebaseErrorsIndex = {
   'signup/no-code':
@@ -101,6 +102,14 @@ const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnT
       updateIsSubmitting(false)
       return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
     }
+
+    if (window && window.location.pathname.substr(1) === 'signup') {
+      const invitationCode = getQueryStringParams(window.location.search).code || ''
+      const user = window.firebase.auth().currentUser
+      dispatch(updateInviteCode(user.uid, invitationCode, true))
+      window.history.pushState({}, '', window.location.origin)
+      setTimeout(() => window.location.reload(), 500)
+    }
   }, [])
 
   /** Handle email change. */
@@ -123,7 +132,7 @@ const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnT
         className='popup'
         center
         actions={() => (
-          <div style={undefined}>
+          <div>
             <button
               disabled={isSubmitting}
               className='button'

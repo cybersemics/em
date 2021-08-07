@@ -2,11 +2,11 @@
 import React from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION } from '../constants'
-import { modalCleanup } from '../util'
+import { modalCleanup, preventCloseOnEscape } from '../util'
 import { Connected } from '../@types'
-import { closeModal, modalComplete, tutorial, updateInviteCode } from '../action-creators'
+import { closeModal, modalComplete, tutorial } from '../action-creators'
 import { storage } from '../util/storage'
-import { getQueryStringParams } from '../util/getQueryString'
+// import { getQueryStringParams } from '../util/getQueryString'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
@@ -57,7 +57,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
        * A handler that closes the modal when the escape key is pressed.
        */
       this.escapeListener = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && !['welcome', 'signup', 'auth'].includes(this.props.id)) {
+        if (e.key === 'Escape' && !preventCloseOnEscape(this.props.id)) {
           e.stopPropagation()
           this.close!()
         }
@@ -67,7 +67,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
        * Animate and close the modal.
        */
       this.animateAndClose = () => {
-        const { dispatch, id } = this.props
+        const { dispatch } = this.props
         window.removeEventListener('keydown', this.escapeListener!, true)
         modalCleanup()
         if (this.ref.current) {
@@ -78,13 +78,6 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
 
           dispatch(closeModal())
         }, FADEOUT_DURATION)
-        if (id === 'signup' && window && window.location.pathname.substr(1) === 'signup') {
-          const invitationCode = getQueryStringParams(window.location.search).code || ''
-          const user = window.firebase.auth().currentUser
-          dispatch(updateInviteCode(user.uid, invitationCode, true))
-          window.history.pushState({}, '', window.location.origin)
-          setTimeout(() => window.location.reload(), 500)
-        }
       }
 
       // use capturing so that this fires before the global window Escape which removes the cursor
@@ -140,13 +133,11 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         style={Object.assign(
           {},
           style,
-          top ? { top: 55 } : null,
-          positionAtCursor
-            ? {
-                top: cursorCoords.y,
-                left: cursorCoords.x,
-              }
-            : null,
+          top && { top: 55 },
+          positionAtCursor && {
+            top: cursorCoords.y,
+            left: cursorCoords.x,
+          },
         )}
         className={
           className +
@@ -160,18 +151,18 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
           })
         }
       >
-        {!['welcome', 'signup', 'auth'].includes(id) ? (
+        {!preventCloseOnEscape(id) && (
           <a className='upper-right popup-close-x text-small' onClick={this.close}>
             ✕
           </a>
-        ) : null}
+        )}
         <div
           className={classNames({
             'modal-content': true,
-            ...(arrow ? { [arrow]: arrow } : null),
+            ...(arrow && { [arrow]: arrow }),
           })}
         >
-          {title ? <h1 className='modal-title'>{title}</h1> : null}
+          {title && <h1 className='modal-title'>{title}</h1>}
           <div className='modal-text'>{children}</div>
           {!hideModalActions && actions && (
             <div className='modal-actions'>

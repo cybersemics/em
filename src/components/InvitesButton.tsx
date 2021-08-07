@@ -1,5 +1,5 @@
 import React from 'react'
-import { showModal, getUserInvites } from '../action-creators'
+import { showModal } from '../action-creators'
 import InvitesIcon from './icons/InvitesIcon'
 import { connect, useDispatch } from 'react-redux'
 import { Connected, State } from '../@types'
@@ -16,13 +16,7 @@ const mapStateToProps = (state: State) => {
 const InvitesButton = ({ user }: Connected<ReturnType<typeof mapStateToProps>>) => {
   const dispatch = useDispatch()
   return (
-    <div
-      style={{ display: 'inline-flex' }}
-      onClick={() => {
-        dispatch(showModal({ id: 'invites' }))
-        dispatch(getUserInvites(user ? user.uid : ''))
-      }}
-    >
+    <div style={{ display: 'inline-flex' }} onClick={() => dispatch(showModal({ id: 'invites' }))}>
       <InvitesIcon size={24} />
     </div>
   )

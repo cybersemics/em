@@ -34,7 +34,6 @@ interface GiftCodeArray extends Record<string, any> {
 /** Modal to get gift codes. */
 const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<typeof mapStateToProps>) => {
   const isMounted = useRef(false)
-  const inviteCodeCnt = useRef(0)
   const firstUpdate = useRef(true)
   const giftCodeType: InviteCodes[] = []
   const giftCodesRefs = useRef(giftCodeType)
@@ -45,28 +44,23 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
   const [copiedGiftCode, updateCopiedGiftCode] = useState('')
   const [giftCode, updateGiftCode] = useState<GiftCodeArray[] | []>([])
 
-  /** Function to generate invite code. */
-  const generateInviteCode = () => {
-    if (inviteCodeCnt.current > 2) return
-
-    inviteCodeCnt.current++
-
-    const inviteId = createId().slice(0, 8)
-    const newInviteCode = {
-      id: inviteId,
-      createdBy: uid,
-      created: timestamp(),
-      hasSeen: false,
-    }
-
-    giftCodesRefs.current = [...giftCodesRefs.current, { ...newInviteCode }]
-    generateInviteCode()
-  }
+  useEffect(() => {
+    if (!userInvites || userInvites.length !== 3) dispatch(getUserInvites(uid))
+  }, [])
 
   useEffect(() => {
     if (authenticated) {
       if (!userInvites) {
-        generateInviteCode()
+        giftCodesRefs.current = Array.from({ length: 3 }).map(() => {
+          const inviteId = createId().slice(0, 8)
+          const newInviteCode = {
+            id: inviteId,
+            createdBy: uid,
+            created: timestamp(),
+            hasSeen: false,
+          }
+          return newInviteCode
+        })
         dispatch(createUserInvites(giftCodesRefs.current, uid))
       }
 
@@ -124,10 +118,6 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
     return <div>You arent allowed to view this page. </div>
   }
 
-  if (!authenticated) {
-    return <div>You arent allowed to view this page. </div>
-  }
-
   return (
     <Modal
       id='invites'
@@ -160,7 +150,6 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
                 value={link}
                 onBlur={() => changeType(idx, id, 'blur')}
                 onFocus={() => changeType(idx, id, 'focus')}
-                onChange={() => changeType(idx, id, 'change')}
               />
               {used ? (
                 <CheckmarkIcon fill={selectedIconFill} size={21} />

@@ -5,6 +5,7 @@ import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
 import { modalCleanup } from '../util'
 import { Connected } from '../@types' */
 import { /* closeModal */ modalComplete /* tutorial */ } from '../action-creators'
+import { preventCloseOnEscape } from '../util'
 import { useDispatch } from 'react-redux'
 import { Modal, View, StyleSheet, ScrollView } from 'react-native'
 import { Text } from './Text.native'
@@ -46,11 +47,11 @@ const ModalComponent: React.FC<ModalProps> = props => {
   return (
     <Modal animationType='slide' visible={show} onRequestClose={close}>
       <View style={[flexOne, darkBackground, verticalPadding, horizontalPadding]}>
-        {!['welcome', 'signup', 'auth'].includes(id) ? (
+        {!preventCloseOnEscape(id) && (
           <Text style={styles.close} onPress={close}>
             ✕
           </Text>
-        ) : null}
+        )}
 
         <ScrollView>
           {title ? <Text style={titleStyle}>{title}</Text> : null}
