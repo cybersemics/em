@@ -1,7 +1,6 @@
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState, createContext, useContext } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { and } from 'fp-and-or'
-import Emitter from 'emitter20'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
@@ -28,7 +27,87 @@ import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
-import { Child, Context, ExportOption, State, ThoughtsInterface } from '../@types'
+import { Child, Context, ExportOption, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+
+/******************************************************************************
+ * Contexts
+ *****************************************************************************/
+
+const PullStatusContext = createContext<boolean>(false)
+
+const DescendantNumberContext = createContext<number | null>(null)
+
+/******************************************************************************
+ * Context Providers
+ *****************************************************************************/
+
+/**
+ * Context to handle pull status and number of descendants.
+ */
+const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
+  const [isPulling, setIsPulling] = useState<boolean>(true)
+  // update numDescendants as descendants are pulled
+  const [numDescendants, setNumDescendants] = useState<number | null>(null)
+
+  const dispatch = useDispatch()
+  const isMounted = useRef(false)
+
+  /** Handle new thoughts pulled. */
+  const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
+    // count the total number of new children pulled
+    const numDescendantsNew = Object.values(thoughts.contextIndex).reduce((accum, parent) => {
+      return accum + parent.children.length
+    }, 0)
+    setNumDescendants(numDescendants => (numDescendants ?? 0) + numDescendantsNew)
+  }, [])
+
+  // fetch all pending descendants of the cursor once for all components
+  // track isMounted so we can cancel the end trigger after unmount
+  useEffect(() => {
+    if (isMounted.current) return
+
+    isMounted.current = true
+    dispatch(
+      pull(
+        { [hashContext(context)]: context },
+        {
+          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+          // TODO: onRemoteThoughts ??
+          maxDepth: Infinity,
+        },
+      ),
+    ).then(() => {
+      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+      if (isMounted.current) {
+        setIsPulling(false)
+      }
+    })
+
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  return (
+    <PullStatusContext.Provider value={isPulling}>
+      <DescendantNumberContext.Provider value={numDescendants}>{children}</DescendantNumberContext.Provider>
+    </PullStatusContext.Provider>
+  )
+}
+
+/******************************************************************************
+ * Hooks
+ *****************************************************************************/
+
+/**
+ * Use the pulling status of export.
+ */
+const usePullStatus = () => useContext(PullStatusContext)
+
+/**
+ * Use number of descendants that will be exported.
+ */
+const useDescendantsNumber = () => useContext(DescendantNumberContext)
 
 interface AdvancedSetting {
   id: string
@@ -45,54 +124,6 @@ const exportOptions: ExportOption[] = [
 ]
 
 /******************************************************************************
- * Hooks
- *****************************************************************************/
-
-/** Use all descendants of a context. Only pulls descendants once per mount.
- *
- * @returns An object like: { isFetched, emitter<'thoughtsLocal' | 'thoughtsRemote' | 'end'> }.
- **/
-const useDescendants = (context: Context) => {
-  const dispatch = useDispatch()
-  const isMounted = useRef(false)
-  const isFetched = useRef(false)
-  const emitter = new Emitter()
-
-  // fetch all pending descendants of the cursor once for all components
-  // track isMounted so we can cancel the end trigger after unmount
-  useEffect(() => {
-    if (isMounted.current) return
-
-    isMounted.current = true
-    dispatch(
-      pull(
-        { [hashContext(context)]: context },
-        {
-          onLocalThoughts: (thoughts: ThoughtsInterface) => emitter.trigger('thoughtsLocal', thoughts),
-          onRemoteThoughts: (thoughts: ThoughtsInterface) => emitter.trigger('thoughtsRemote', thoughts),
-          maxDepth: Infinity,
-        },
-      ),
-    ).then(() => {
-      isFetched.current = true
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-      if (isMounted.current) {
-        emitter.trigger('end')
-      }
-    })
-
-    return () => {
-      isMounted.current = false
-    }
-  }, [])
-
-  return {
-    isFetched,
-    emitter,
-  }
-}
-
-/******************************************************************************
  * ExportThoughtsPhrase component
  *****************************************************************************/
 
@@ -100,50 +131,21 @@ interface ExportThoughtsPhraseOptions {
   context: Context
   // the final number of descendants
   numDescendantsFinal: number | null
-  // an event handler registrant that fires whenever more thoughts are pulled
-  // used instead of a prop to avoid parent re-renders
-  descendantsEmitter: {
-    on: (eventName: 'thoughtsLocal', handler: (thoughts: ThoughtsInterface) => void) => void
-    off: (eventName: 'thoughtsLocal', handler: (thoughts: ThoughtsInterface) => void) => void
-  }
   title: string
 }
 
 /** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
-const ExportThoughtsPhrase = ({
-  context,
-  numDescendantsFinal,
-  descendantsEmitter,
-  title,
-}: ExportThoughtsPhraseOptions) => {
+const ExportThoughtsPhrase = ({ context, numDescendantsFinal, title }: ExportThoughtsPhraseOptions) => {
   const store = useStore()
   const state = store.getState()
 
-  // update numDescendants as descendants are pulled
-  const [numDescendants, setNumDescendants] = useState<number | null>(null)
-
-  /** Handle new thoughts pulled. */
-  const onThoughts = useCallback(
-    (thoughts: ThoughtsInterface) => {
-      // count the total number of new children pulled
-      const numDescendantsNew = Object.values(thoughts.contextIndex).reduce((accum, parent) => {
-        return accum + parent.children.length
-      }, 0)
-      setNumDescendants((numDescendants ?? 0) + numDescendantsNew)
-    },
-    [numDescendants],
-  )
-
-  useEffect(() => {
-    descendantsEmitter.on('thoughtsLocal', onThoughts)
-    return () => {
-      descendantsEmitter.off('thoughtsLocal', onThoughts)
-    }
-  }, [numDescendants])
+  // updates with latest number of descendants
+  const numDescendants = useDescendantsNumber()
 
   const exportThoughtsPhrase = exportPhrase(state, context, numDescendantsFinal ?? numDescendants ?? 0, {
     value: title,
   })
+
   return <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />
 }
 
@@ -208,13 +210,14 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
  *****************************************************************************/
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
-const ModalExport = () => {
+const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }> = ({
+  context,
+  simplePath,
+  cursor,
+}) => {
   const store = useStore()
   const dispatch = useDispatch()
   const state = store.getState()
-  const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
-  const simplePath = simplifyPath(state, cursor)
-  const context = pathToContext(simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getAllChildren(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
@@ -234,6 +237,8 @@ const ModalExport = () => {
     : { color: 'white', backgroundColor: 'black' }
 
   const exportWord = isTouch ? 'Share' : 'Download'
+
+  const isPulling = usePullStatus()
 
   // calculate the final number of descendants
   // uses a different method for text/plain and text/html
@@ -258,16 +263,10 @@ const ModalExport = () => {
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
 
-  // get an event emitter to pass to the ExportThoughtsPhrase component so that it can calculate the number of descendants in real-time as thoughts are pulled
-  // otherwise ModalExport will run its render logic every time a new batch of thoughts get pulled
-  const { isFetched, emitter: descendantsEmitter } = useDescendants(context)
-
+  // Sets export content when pull is complete by useDescendants
   useEffect(() => {
-    descendantsEmitter.on('end', setExportContentFromCursor)
-    return () => {
-      descendantsEmitter.off('end', setExportContentFromCursor)
-    }
-  }, [])
+    if (!isPulling) setExportContentFromCursor()
+  }, [isPulling])
 
   useEffect(() => {
     if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
@@ -284,8 +283,7 @@ const ModalExport = () => {
       )
     }
 
-    // only re-export if inputs change and descendants have already been fetched
-    if (isFetched.current) {
+    if (!isPulling) {
       setExportContentFromCursor()
     }
   }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
@@ -417,13 +415,7 @@ const ModalExport = () => {
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>
           <span>
-            {exportWord}{' '}
-            <ExportThoughtsPhrase
-              context={context}
-              numDescendantsFinal={numDescendants}
-              descendantsEmitter={descendantsEmitter}
-              title={title}
-            />
+            {exportWord} <ExportThoughtsPhrase context={context} numDescendantsFinal={numDescendants} title={title} />
             <span>
               {' '}
               as <ExportDropdown selected={selected} onSelect={setSelected} />
@@ -585,4 +577,21 @@ const ModalExport = () => {
   )
 }
 
-export default ModalExport
+/**
+ * ModalExport with necessary provider.
+ */
+const ModalExportWrapper = () => {
+  const store = useStore()
+  const state = store.getState()
+  const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
+  const simplePath = simplifyPath(state, cursor)
+  const context = pathToContext(simplePath)
+
+  return (
+    <PullProvider context={context}>
+      <ModalExport simplePath={simplePath} cursor={cursor} context={context} />
+    </PullProvider>
+  )
+}
+
+export default ModalExportWrapper
