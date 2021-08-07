@@ -13,6 +13,8 @@ const ROOT_ENCODED = hashContext([HOME_TOKEN])
 
 export interface PullOptions {
   maxDepth?: number
+  onLocalThoughts?: (thoughts: ThoughtsInterface) => void
+  onRemoteThoughts?: (thoughts: ThoughtsInterface) => void
 }
 
 /** Iterate through an async iterable and invoke a callback on each yield. */
@@ -28,7 +30,10 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
 const pull =
-  (contextMap: Index<Context>, { maxDepth }: PullOptions = {}): Thunk<Promise<boolean>> =>
+  (
+    contextMap: Index<Context>,
+    { maxDepth, onLocalThoughts, onRemoteThoughts }: PullOptions = {},
+  ): Thunk<Promise<boolean>> =>
   async (dispatch, getState) => {
     if (Object.keys(contextMap).length === 0) return false
 
@@ -54,6 +59,8 @@ const pull =
           ...(ROOT_ENCODED in contextMap ? { isLoading: false } : null),
         }),
       )
+
+      onLocalThoughts?.(thoughts)
     }
 
     const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
@@ -107,6 +114,8 @@ const pull =
             ],
           }),
         )
+
+        onRemoteThoughts?.(thoughtsRemoteChunk)
       })
 
       const thoughtsRemote = thoughtRemoteChunks.reduce(_.ary(mergeThoughts, 2))

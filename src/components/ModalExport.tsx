@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState, createContext, useContext } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import ClipboardJS from 'clipboard'
 import { and } from 'fp-and-or'
+import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
 import {
   download,
   ellipsize,
-  getExportPhrase,
+  exportPhrase,
   getPublishUrl,
   hashContext,
   headValue,
@@ -20,14 +20,94 @@ import {
   unroot,
 } from '../util'
 import { alert, error, closeModal, pull } from '../action-creators'
-import { exportContext, getAllChildren, simplifyPath, theme } from '../selectors'
+import { exportContext, getAllChildren, getDescendants, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
-import { Child, ExportOption, State } from '../@types'
+import { Child, Context, ExportOption, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+
+/******************************************************************************
+ * Contexts
+ *****************************************************************************/
+
+const PullStatusContext = createContext<boolean>(false)
+
+const DescendantNumberContext = createContext<number | null>(null)
+
+/******************************************************************************
+ * Context Providers
+ *****************************************************************************/
+
+/**
+ * Context to handle pull status and number of descendants.
+ */
+const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
+  const [isPulling, setIsPulling] = useState<boolean>(true)
+  // update numDescendants as descendants are pulled
+  const [numDescendants, setNumDescendants] = useState<number | null>(null)
+
+  const dispatch = useDispatch()
+  const isMounted = useRef(false)
+
+  /** Handle new thoughts pulled. */
+  const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
+    // count the total number of new children pulled
+    const numDescendantsNew = Object.values(thoughts.contextIndex).reduce((accum, parent) => {
+      return accum + parent.children.length
+    }, 0)
+    setNumDescendants(numDescendants => (numDescendants ?? 0) + numDescendantsNew)
+  }, [])
+
+  // fetch all pending descendants of the cursor once for all components
+  // track isMounted so we can cancel the end trigger after unmount
+  useEffect(() => {
+    if (isMounted.current) return
+
+    isMounted.current = true
+    dispatch(
+      pull(
+        { [hashContext(context)]: context },
+        {
+          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+          // TODO: onRemoteThoughts ??
+          maxDepth: Infinity,
+        },
+      ),
+    ).then(() => {
+      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+      if (isMounted.current) {
+        setIsPulling(false)
+      }
+    })
+
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  return (
+    <PullStatusContext.Provider value={isPulling}>
+      <DescendantNumberContext.Provider value={numDescendants}>{children}</DescendantNumberContext.Provider>
+    </PullStatusContext.Provider>
+  )
+}
+
+/******************************************************************************
+ * Hooks
+ *****************************************************************************/
+
+/**
+ * Use the pulling status of export.
+ */
+const usePullStatus = () => useContext(PullStatusContext)
+
+/**
+ * Use number of descendants that will be exported.
+ */
+const useDescendantsNumber = () => useContext(DescendantNumberContext)
 
 interface AdvancedSetting {
   id: string
@@ -43,27 +123,112 @@ const exportOptions: ExportOption[] = [
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
+/******************************************************************************
+ * ExportThoughtsPhrase component
+ *****************************************************************************/
+
+interface ExportThoughtsPhraseOptions {
+  context: Context
+  // the final number of descendants
+  numDescendantsFinal: number | null
+  title: string
+}
+
+/** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
+const ExportThoughtsPhrase = ({ context, numDescendantsFinal, title }: ExportThoughtsPhraseOptions) => {
+  const store = useStore()
+  const state = store.getState()
+
+  // updates with latest number of descendants
+  const numDescendants = useDescendantsNumber()
+
+  const exportThoughtsPhrase = exportPhrase(state, context, numDescendantsFinal ?? numDescendants ?? 0, {
+    value: title,
+  })
+
+  return <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />
+}
+
+/******************************************************************************
+ * ExportDropdown component
+ *****************************************************************************/
+
+interface ExportDropdownProps {
+  selected: ExportOption
+  onSelect?: (option: ExportOption) => void
+}
+
+/** A dropdown menu to select an export type. */
+const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
+  const store = useStore()
+  const state = store.getState()
+  const [isOpen, setIsOpen] = useState(false)
+  // const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
+
+  const dark = theme(state) !== 'Light'
+  const themeColor = { color: dark ? 'white' : 'black' }
+
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false)
+  }, [])
+
+  const dropDownRef = React.useRef<HTMLDivElement>(null)
+  useOnClickOutside(dropDownRef, closeDropdown)
+
+  return (
+    <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
+      <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>
+        {selected.label}
+      </a>
+      <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
+        <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? 'rotate180' : ''} />
+        <span>
+          <DropDownMenu
+            isOpen={isOpen}
+            selected={selected}
+            onSelect={(option: ExportOption) => {
+              onSelect?.(option)
+              setIsOpen(false)
+            }}
+            options={exportOptions}
+            dark={dark}
+            style={{
+              top: '120%',
+              left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
+              display: 'table', // the only value that seems to overflow properly within the inline-flex element
+              padding: 0,
+            }}
+          />
+        </span>
+      </span>
+    </span>
+  )
+}
+
+/******************************************************************************
+ * ModalExport component
+ *****************************************************************************/
+
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
-const ModalExport = () => {
+const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }> = ({
+  context,
+  simplePath,
+  cursor,
+}) => {
   const store = useStore()
   const dispatch = useDispatch()
-  const isMounted = useRef(false)
   const state = store.getState()
-  const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
-  const simplePath = simplifyPath(state, cursor)
-  const context = pathToContext(simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getAllChildren(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
   const titleShort = ellipsize(title)
   const titleMedium = ellipsize(title, 25)
 
-  const [selected, setSelected] = useState(exportOptions[0])
-  const [isOpen, setIsOpen] = useState(false)
-  const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
   const [exportContent, setExportContent] = useState<string | null>(null)
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
+  const [selected, setSelected] = useState(exportOptions[0])
+  const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
   const dark = theme(state) !== 'Light'
   const themeColor = { color: dark ? 'white' : 'black' }
@@ -73,11 +238,17 @@ const ModalExport = () => {
 
   const exportWord = isTouch ? 'Share' : 'Download'
 
-  const exportThoughtsPhrase = getExportPhrase(state, simplePath, {
-    filterFunction: and(
-      shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
-      shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
-    ),
+  const isPulling = usePullStatus()
+
+  // calculate the final number of descendants
+  // uses a different method for text/plain and text/html
+  // does not update in real-time (See: ExportThoughtsPhrase component)
+  const numDescendants = exportContent
+    ? selected.type === 'text/plain'
+      ? exportContent.split('\n').length - 1
+      : numDescendantsInState ?? 0
+    : null
+  const exportThoughtsPhrase = exportPhrase(state, context, numDescendants, {
     value: title,
   })
 
@@ -92,37 +263,32 @@ const ModalExport = () => {
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
 
-  const closeDropdown = useCallback(() => {
-    setIsOpen(false)
-  }, [])
-
-  const dropDownRef = React.useRef<HTMLDivElement>(null)
-  useOnClickOutside(dropDownRef, closeDropdown)
-
-  // fetch all pending descendants of the cursor once before they are exported
+  // Sets export content when pull is complete by useDescendants
   useEffect(() => {
-    if (!isMounted.current) {
-      // track isMounted so we can cancel the call to setExportContent after unmount
-      isMounted.current = true
-      dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity })).then(() => {
-        if (isMounted.current) {
-          setExportContentFromCursor()
-        }
-      })
-    } else {
-      setExportContentFromCursor()
-    }
+    if (!isPulling) setExportContentFromCursor()
+  }, [isPulling])
 
+  useEffect(() => {
     if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
 
-    return () => {
-      isMounted.current = false
+    // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
+    if (selected.type === 'text/html') {
+      setNumDescendantsInState(
+        getDescendants(state, simplePath, {
+          filterFunction: and(
+            shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
+            shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
+          ),
+        }).length,
+      )
+    }
+
+    if (!isPulling) {
+      setExportContentFromCursor()
     }
   }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
 
   useEffect(() => {
-    document.addEventListener('click', onClickOutside)
-
     const clipboard = new ClipboardJS('.copy-clipboard-btn')
 
     clipboard.on('success', () => {
@@ -146,21 +312,12 @@ const ModalExport = () => {
     })
 
     return () => {
-      document.removeEventListener('click', onClickOutside)
       clipboard.destroy()
     }
   }, [exportThoughtsPhrase])
 
   const [publishing, setPublishing] = useState(false)
   const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
-
-  /** Updates the isOpen state when clicked outside modal. */
-  const onClickOutside = (e: MouseEvent) => {
-    if (isOpen && wrapperRef && !wrapperRef.contains(e.target as Node)) {
-      setIsOpen(false)
-      e.stopPropagation()
-    }
-  }
 
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
@@ -258,40 +415,10 @@ const ModalExport = () => {
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>
           <span>
-            {exportWord} <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />
+            {exportWord} <ExportThoughtsPhrase context={context} numDescendantsFinal={numDescendants} title={title} />
             <span>
               {' '}
-              as{' '}
-              <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
-                <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>
-                  {selected.label}
-                </a>
-                <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-                  <ChevronImg
-                    dark={dark}
-                    onClickHandle={() => setIsOpen(!isOpen)}
-                    className={isOpen ? 'rotate180' : ''}
-                  />
-                  <span ref={setWrapper}>
-                    <DropDownMenu
-                      isOpen={isOpen}
-                      selected={selected}
-                      onSelect={(option: ExportOption) => {
-                        setSelected(option)
-                        setIsOpen(false)
-                      }}
-                      options={exportOptions}
-                      dark={dark}
-                      style={{
-                        top: '120%',
-                        left: 0, // position on the left edge of "Plain Text", otherwise the left side gets cut off on mobile
-                        display: 'table', // the only value that seems to overflow properly within the inline-flex element
-                        padding: 0,
-                      }}
-                    />
-                  </span>
-                </span>
-              </span>
+              as <ExportDropdown selected={selected} onSelect={setSelected} />
             </span>
           </span>
         </span>
@@ -450,4 +577,21 @@ const ModalExport = () => {
   )
 }
 
-export default ModalExport
+/**
+ * ModalExport with necessary provider.
+ */
+const ModalExportWrapper = () => {
+  const store = useStore()
+  const state = store.getState()
+  const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
+  const simplePath = simplifyPath(state, cursor)
+  const context = pathToContext(simplePath)
+
+  return (
+    <PullProvider context={context}>
+      <ModalExport simplePath={simplePath} cursor={cursor} context={context} />
+    </PullProvider>
+  )
+}
+
+export default ModalExportWrapper
