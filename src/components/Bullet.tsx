@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
 import { head } from '../util'
+import { Circle, Triangle } from './icons/bulletIcons'
 import { Context, State } from '../@types'
 
 // other bullets
@@ -55,7 +56,19 @@ const Bullet = ({
     })}
   >
     <span className='glyph' onClick={onClick}>
-      {glyph || (showContexts ? (isLeaf ? '◦' : '▹') : isLeaf ? '•' : '▸')}
+      { // The shape of text '•' and '▸' is a rectangle. The triangles/dots are not centered vertically inside the rectangle on all browsers. Hence, we replace them with svg.
+        glyph ||
+        (showContexts ? (
+          isLeaf ? (
+            <Circle />
+          ) : (
+            <Triangle />
+          )
+        ) : isLeaf ? (
+          <Circle fill='#C4C4C4' />
+        ) : (
+          <Triangle fill='#C4C4C4' />
+        ))}
     </span>
   </span>
 )
