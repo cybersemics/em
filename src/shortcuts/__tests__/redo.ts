@@ -4,7 +4,6 @@ import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { hashContext } from '../../util'
-import { Thunk } from '../../@types'
 
 it('redo thought change', () => {
   const store = createTestStore()
@@ -16,12 +15,14 @@ it('redo thought change', () => {
         - b`,
     }),
     { type: 'cursorUp' },
-    {
-      type: 'editThought',
-      newValue: 'aa',
-      oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }],
+    (dispatch, getState) => {
+      dispatch({
+        type: 'editThought',
+        newValue: 'aa',
+        oldValue: 'a',
+        context: [HOME_TOKEN],
+        path: [{ value: 'a', rank: 0, id: hashContext(getState(), ['a']) }],
+      })
     },
     { type: 'undoAction' },
   ])
@@ -59,30 +60,29 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },
-    (
-      (): Thunk => (dispatch, getState) =>
-        dispatch({
-          type: 'editThought',
-          newValue: 'arizona',
-          oldValue: 'a',
-          context: [HOME_TOKEN],
-          path: [{ value: 'a', rank: 0, id: hashContext(getState(), ['a']) }],
-        })
-    )(),
+    (dispatch, getState) =>
+      dispatch({
+        type: 'editThought',
+        newValue: 'arizona',
+        oldValue: 'a',
+        context: [HOME_TOKEN],
+        path: [{ value: 'a', rank: 0, id: hashContext(getState(), ['a']) }],
+      }),
     setCursorFirstMatchActionCreator(['arizona', 'b']),
     { type: 'cursorBack' },
     { type: 'cursorUp' },
     { type: 'cursorDown' },
-    {
-      type: 'editThought',
-      newValue: 'boston',
-      oldValue: 'b',
-      context: ['arizona'],
-      path: [
-        { value: 'arizona', rank: 0 },
-        { value: 'b', rank: 0 },
-      ],
-    },
+    (dispatch, getState) =>
+      dispatch({
+        type: 'editThought',
+        newValue: 'boston',
+        oldValue: 'b',
+        context: ['arizona'],
+        path: [
+          { value: 'arizona', rank: 0, id: hashContext(getState(), ['arizona']) },
+          { value: 'b', rank: 0, id: hashContext(getState(), ['arizona', 'b']) },
+        ],
+      }),
     { type: 'cursorDown' },
     { type: 'undoAction' },
     { type: 'undoAction' },
@@ -116,26 +116,35 @@ it('redo contiguous changes', () => {
         - A
         - B`,
     }),
-    {
-      type: 'editThought',
-      newValue: 'Atlantic',
-      oldValue: 'A',
-      context: [HOME_TOKEN],
-      path: [{ value: 'A', rank: 0 }],
+    (dispatch, getState) => {
+      const state = getState()
+      dispatch({
+        type: 'editThought',
+        newValue: 'Atlantic',
+        oldValue: 'A',
+        context: [HOME_TOKEN],
+        path: [{ value: 'A', rank: 0, id: hashContext(state, ['A']) }],
+      })
     },
-    {
-      type: 'editThought',
-      newValue: 'Atlantic ',
-      oldValue: 'Atlantic',
-      context: [HOME_TOKEN],
-      path: [{ value: 'Atlantic', rank: 0 }],
+    (dispatch, getState) => {
+      const state = getState()
+      dispatch({
+        type: 'editThought',
+        newValue: 'Atlantic ',
+        oldValue: 'Atlantic',
+        context: [HOME_TOKEN],
+        path: [{ value: 'Atlantic', rank: 0, id: hashContext(state, ['Atlantic']) }],
+      })
     },
-    {
-      type: 'editThought',
-      newValue: 'Atlantic City',
-      oldValue: 'Atlantic ',
-      context: [HOME_TOKEN],
-      path: [{ value: 'Atlantic ', rank: 0 }],
+    (dispatch, getState) => {
+      const state = getState()
+      dispatch({
+        type: 'editThought',
+        newValue: 'Atlantic City',
+        oldValue: 'Atlantic ',
+        context: [HOME_TOKEN],
+        path: [{ value: 'Atlantic ', rank: 0, id: hashContext(state, ['Atlantic']) }],
+      })
     },
     { type: 'undoAction' },
   ])

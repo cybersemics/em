@@ -14,7 +14,7 @@ import {
 import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
 
 // util
-import { equalThoughtRanked, hashThought, head, reducerFlow, removeContext, timestamp, unroot } from '../util'
+import { equalThoughtRanked, hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
 
 interface Payload {
   context: Context
@@ -60,10 +60,8 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
-  const contextEncoded = parent.id
-
   const isValidThought = lexeme.contexts.find(
-    thoughtContext => thoughtContext.id === deletedThought!.id && rank === thoughtContext.rank,
+    thoughtContext => thoughtContext.id === deletedThought.id && rank === thoughtContext.rank,
   )
 
   // if thought is not valid then just stop further execution
@@ -83,9 +81,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
 
   // the old thought less the context
   const newOldThought =
-    lexeme.contexts && lexeme.contexts.length > 1
-      ? removeContext(state, lexeme, context, showContexts ? 0 : rank)
-      : null
+    lexeme.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, context, rank) : null
 
   // update state so that we do not have to wait for firebase
   if (newOldThought) {
@@ -96,7 +92,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
 
   // remove thought from contextViews
   const contextViewsNew = { ...state.contextViews }
-  delete contextViewsNew[contextEncoded] // eslint-disable-line fp/no-delete
+  delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
 
   const subthoughts = getAllChildren(state, context).filter(child => !equalThoughtRanked(child, { value, rank }))
 
@@ -215,12 +211,13 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
 
   const contextIndexUpdates = {
     // Deleted thought's parent
-    [contextEncoded]: {
-      id: parent?.id || contextEncoded,
-      value: head(context),
+    [parent.id]: {
+      ...parent,
       children: subthoughts,
       lastUpdated: timestamp(),
     } as Parent,
+    [deletedThought.id]: null,
+    // TODO: How to remove descendant dependency with delete.
     // descendants
     ...descendantUpdatesResult.contextIndex,
   }

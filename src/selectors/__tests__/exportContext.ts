@@ -165,6 +165,7 @@ it('export multi-line thoughts as separate thoughts', () => {
         path: [
           { value: 'a', rank: 0, id: hashContext(newState, ['a']) },
           { value: 'b', rank: 0, id: hashContext(newState, ['a', 'b']) },
+          { value: 'hello', rank: 0, id: hashContext(newState, ['a', 'b', 'hello']) },
         ] as Path as SimplePath,
       }),
   ]

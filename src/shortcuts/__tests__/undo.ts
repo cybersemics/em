@@ -6,7 +6,7 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import undoShortcut from '../undo'
-import { initialState } from '../../util'
+import { hashContext, initialState } from '../../util'
 import * as undoUtils from '../../selectors/isUndoEnabled'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
@@ -123,16 +123,19 @@ it('group all navigation actions following an undoable(non-navigation) action an
     }),
     setCursorFirstMatchActionCreator(['b']),
     { type: 'indent' },
-    {
-      type: 'editThought',
-      newValue: 'b1',
-      oldValue: 'b',
-      context: ['a'],
-      rankInContext: 0,
-      path: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
-      ],
+    (dispatch, getState) => {
+      const state = getState()
+      dispatch({
+        type: 'editThought',
+        newValue: 'b1',
+        oldValue: 'b',
+        context: ['a'],
+        rankInContext: 0,
+        path: [
+          { value: 'a', rank: 0, id: hashContext(state, ['a']) },
+          { value: 'b', rank: 0, id: hashContext(state, ['a', 'b']) },
+        ],
+      })
     },
     { type: 'cursorBack' },
     { type: 'moveThoughtDown' },
@@ -242,18 +245,22 @@ it('newThought action should be merged with the succeeding patch', () => {
     }),
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
-    {
-      type: 'editThought',
-      context: [HOME_TOKEN],
-      oldValue: 'd',
-      newValue: 'd1',
-      rankInContext: 3,
-      path: [
-        {
-          value: 'd',
-          rank: 3,
-        },
-      ],
+    (dispatch, getState) => {
+      const state = getState()
+      dispatch({
+        type: 'editThought',
+        context: [HOME_TOKEN],
+        oldValue: 'd',
+        newValue: 'd1',
+        rankInContext: 3,
+        path: [
+          {
+            value: 'd',
+            rank: 3,
+            id: hashContext(state, ['d']),
+          },
+        ],
+      })
     },
     // undo thought change and preceding newThought action
     { type: 'undoAction' },
@@ -278,19 +285,25 @@ it('undo contiguous changes', () => {
         - A
         - B`,
     }),
-    {
-      type: 'editThought',
-      newValue: 'Atlantic',
-      oldValue: 'A',
-      context: [HOME_TOKEN],
-      path: [{ value: 'A', rank: 0 }],
+    (dispatch, getState) => {
+      const state = getState()
+      dispatch({
+        type: 'editThought',
+        newValue: 'Atlantic',
+        oldValue: 'A',
+        context: [HOME_TOKEN],
+        path: [{ value: 'A', rank: 0, id: hashContext(state, ['A']) }],
+      })
     },
-    {
-      type: 'editThought',
-      newValue: 'Atlantic City',
-      oldValue: 'Atlantic',
-      context: [HOME_TOKEN],
-      path: [{ value: 'Atlantic', rank: 0 }],
+    (dispatch, getState) => {
+      const state = getState()
+      dispatch({
+        type: 'editThought',
+        newValue: 'Atlantic City',
+        oldValue: 'Atlantic',
+        context: [HOME_TOKEN],
+        path: [{ value: 'Atlantic', rank: 0, id: hashContext(state, ['Atlantic']) }],
+      })
     },
     { type: 'undoAction' },
   ])
@@ -336,12 +349,15 @@ it('clear patches when any undoable action is dispatched', () => {
         - B`,
       preventSetCursor: true,
     }),
-    {
-      type: 'editThought',
-      newValue: 'Atlantic',
-      oldValue: 'A',
-      context: [HOME_TOKEN],
-      path: [{ value: 'A', rank: 0 }],
+    (dispatch, getState) => {
+      const state = getState()
+      dispatch({
+        type: 'editThought',
+        newValue: 'Atlantic',
+        oldValue: 'A',
+        context: [HOME_TOKEN],
+        path: [{ value: 'A', rank: 0, id: hashContext(state, ['A']) }],
+      })
     },
     { type: 'newThought', value: 'New Jersey' },
     { type: 'undoAction' },
