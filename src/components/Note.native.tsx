@@ -6,7 +6,7 @@ import { attribute, getParent, hasChild, isContextViewActive } from '../selector
 import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
 import { Context } from '../@types'
-import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
+import ContentEditable, { ContentEditableEvent } from './ContentEditable.native'
 
 interface NoteProps {
   context: Context
@@ -39,7 +39,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
   const note = attribute(state, context, '=note')
 
   /** Handles note keyboard shortcuts. */
-  const onKeyDown = (e: IKeyDown) => {
+  const onKeyDown = (e: { keyCode: number; key: string }) => {
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
     const note = attribute(store.getState(), context, '=note')
