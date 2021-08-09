@@ -5,17 +5,17 @@
 import { isMobile } from './isMobile'
 
 // @ts-ignore
-window = !isMobile
-  ? window
-  : {
-      getSelection: () => ({
-        focusOffset: 0,
-      }),
-      setTimeout: setTimeout,
-    }
+// window = !isMobile()
+//   ? window
+//   : {
+//       // getSelection: () => ({
+//       //   focusOffset: 0,
+//       // }),
+//       // setTimeout: setTimeout,
+//     }
 
 // @ts-ignore
-document = !isMobile
+document = !isMobile()
   ? document
   : {
       activeElement: {
