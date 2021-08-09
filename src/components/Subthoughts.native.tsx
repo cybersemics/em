@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { store } from '../store'
-import { isTouch } from '../browser'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import { shortcutById } from '../shortcuts'
 import globals from '../globals'
 import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import Thought from './Thought'
@@ -323,41 +322,30 @@ const NoChildren = ({
   children: Child[]
   simplePath: SimplePath
 }) => (
-  <div className='children-subheading text-note text-small'>
-    This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
-    <br />
-    <br />
-    <span>
-      {isTouch ? (
-        <span className='gesture-container'>
-          Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
-        </span>
-      ) : (
-        <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
-      )}{' '}
+  <View>
+    <Text> This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.</Text>
+
+    <Text>
+      <Text>
+        Swipe <GestureDiagram path={subthoughtShortcut?.gesture as GesturePath} size={30} color='darkgray' />
+      </Text>
       to add "{headValue(simplePath)}" to a new context.
-    </span>
-    <br />
+    </Text>
+
     {allowSingleContext ? (
       'A floating context... how interesting.'
     ) : (
-      <span>
-        {isTouch ? (
-          <span className='gesture-container'>
-            Swipe{' '}
-            <GestureDiagram
-              path={toggleContextViewShortcut.gesture as GesturePath}
-              size={30}
-              color='darkgray' /* mtach .children-subheading color */
-            />
-          </span>
-        ) : (
-          <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
-        )}{' '}
+      <Text>
+        Swipe
+        <GestureDiagram
+          path={toggleContextViewShortcut.gesture as GesturePath}
+          size={30}
+          color='darkgray' /* mtach .children-subheading color */
+        />
         to return to the normal view.
-      </span>
+      </Text>
     )}
-  </div>
+  </View>
 )
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
