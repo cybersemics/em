@@ -96,6 +96,7 @@
     "redux": "^4.1.0",
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.3.0",
+    "reselect": "^4.0.0",
     "sanitize-html": "^2.4.0",
     "truncate-html": "^1.0.3",
     "ts-key-enum": "^2.0.6",
