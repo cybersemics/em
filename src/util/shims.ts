@@ -4,15 +4,18 @@
 /* eslint-disable no-native-reassign */
 import { isMobile } from './isMobile'
 
+/*
+This shim doesn't work properly it breaks whenever opening Expo Go dev tools.
+*/
 // @ts-ignore
-// window = !isMobile()
-//   ? window
-//   : {
-//       // getSelection: () => ({
-//       //   focusOffset: 0,
-//       // }),
-//       // setTimeout: setTimeout,
-//     }
+window = !isMobile
+  ? window
+  : {
+      getSelection: () => ({
+        focusOffset: 0,
+      }),
+      setTimeout: setTimeout,
+    }
 
 // @ts-ignore
 document = !isMobile()
