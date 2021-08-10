@@ -394,22 +394,23 @@ const ThoughtContainer = ({
 
   return (
     <>
-      <View style={[directionRow, alignItemsCenter, marginBottom]}>
-        {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
-          <Bullet
-            isEditing={isEditing}
-            context={pathToContext(simplePath)}
-            leaf={isLeaf}
-            onClick={(e: React.MouseEvent) => {
-              if (!isEditing || children.length === 0) {
-                e.stopPropagation()
-                store.dispatch(setCursor({ path: simplePath }))
-              }
-            }}
-          />
-        )}
+      <View style={marginBottom}>
+        <View style={[directionRow, alignItemsCenter]}>
+          {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
+            <Bullet
+              isEditing={isEditing}
+              context={pathToContext(simplePath)}
+              leaf={isLeaf}
+              onClick={(e: React.MouseEvent) => {
+                if (!isEditing || children.length === 0) {
+                  e.stopPropagation()
+                  store.dispatch(setCursor({ path: simplePath }))
+                }
+              }}
+            />
+          )}
 
-        {/* // Todo: still need to decide the best approach to implement the annotations.
+          {/* // Todo: still need to decide the best approach to implement the annotations.
         <ThoughtAnnotation
           env={env}
           path={path}
@@ -421,26 +422,27 @@ const ThoughtContainer = ({
           simplePath={simplePath}
         /> */}
 
-        <StaticThought
-          env={env}
-          path={path}
-          cursorOffset={cursorOffset}
-          hideBullet
-          homeContext={homeContext}
-          isDraggable={isDraggable}
-          isDragging={isDragging}
-          isPublishChild={isPublishChild}
-          isEditing={isEditing}
-          isLeaf={isLeaf}
-          publish={publish}
-          rank={rank}
-          showContextBreadcrumbs={showContextBreadcrumbs}
-          showContexts={showContexts}
-          style={styleNew}
-          simplePath={simplePath}
-          toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
-          view={view}
-        />
+          <StaticThought
+            env={env}
+            path={path}
+            cursorOffset={cursorOffset}
+            hideBullet
+            homeContext={homeContext}
+            isDraggable={isDraggable}
+            isDragging={isDragging}
+            isPublishChild={isPublishChild}
+            isEditing={isEditing}
+            isLeaf={isLeaf}
+            publish={publish}
+            rank={rank}
+            showContextBreadcrumbs={showContextBreadcrumbs}
+            showContexts={showContexts}
+            style={styleNew}
+            simplePath={simplePath}
+            toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
+            view={view}
+          />
+        </View>
         <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
       </View>
 

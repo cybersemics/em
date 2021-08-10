@@ -1,11 +1,10 @@
 import React from 'react'
-// import { attributeEquals, simplifyPath } from '../selectors'
-// import { pathToContext } from '../util'
-// import { toggleAttribute } from '../action-creators'
+import { attributeEquals, simplifyPath } from '../selectors'
+import { pathToContext } from '../util'
+import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
-// import { HOME_PATH } from '../constants'
+import { HOME_PATH } from '../constants'
 import Svg, { Path, G } from 'react-native-svg'
-import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, fill }: IconType) => (
@@ -22,27 +21,29 @@ const pinOpenShortcut: Shortcut = {
   id: 'pinOpen',
   label: 'Pin Open',
   description: 'Pin and expand the current thought.',
-  // keyboard: { key: 'p', meta: true, alt: true },
+  keyboard: { key: 'p', meta: true, alt: true },
   svg: Icon,
-  exec: () => Alert.alert('pinOpenShortcut'),
-  // exec: (dispatch, getState) => {
-  //   const state = getState()
-  //   const { cursor } = state
-  //   if (!cursor) return
 
-  //   const context = pathToContext(cursor)
-  //   dispatch(toggleAttribute({
-  //     context,
-  //     key: '=pin',
-  //     value: 'true',
-  //   }))
-  // },
-  // isActive: getState => {
-  //   const state = getState()
-  //   const { cursor } = state
-  //   const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
-  //   return attributeEquals(state, context, '=pin', 'true')
-  // }
+  exec: (dispatch, getState) => {
+    const state = getState()
+    const { cursor } = state
+    if (!cursor) return
+
+    const context = pathToContext(cursor)
+    dispatch(
+      toggleAttribute({
+        context,
+        key: '=pin',
+        value: 'true',
+      }),
+    )
+  },
+  isActive: getState => {
+    const state = getState()
+    const { cursor } = state
+    const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
+    return attributeEquals(state, context, '=pin', 'true')
+  },
 }
 
 export default pinOpenShortcut
