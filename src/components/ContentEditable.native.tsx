@@ -148,7 +148,6 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
         }}
         onMessage={event => {
           const { eventType, event: webEvent, text } = JSON.parse(event.nativeEvent.data)
-          console.log(JSON.parse(event.nativeEvent.data))
 
           switch (eventType) {
             case WEBVIEW_POST_EVENTS.onFocus: {
