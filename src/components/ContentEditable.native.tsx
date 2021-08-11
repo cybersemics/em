@@ -51,11 +51,8 @@ const ContentEditable = ({
   const contentRef = useRef<WebView>(null)
 
   const [webviewHTML, setWebviewHTML] = useState<string>(createWebHTML({ innerHTML: html, placeholder, isEditing }))
-
   useEffect(() => {
-    if (!isEditing) {
-      setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
-    }
+    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
   }, [isEditing])
 
   useEffect(() => {
