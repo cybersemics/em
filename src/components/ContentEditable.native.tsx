@@ -48,27 +48,27 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
   }
 
   const _html = `
-<html>
+  <html>
   <head>
-      <style>
-        *{
-          margin: 0;
-        }
+    <style>
+      * {
+        margin: 0;
+      }
 
-        #content:empty:before{
-          content: attr(placeholder);
-        }
+      #content:empty:before {
+        content: attr(placeholder);
+      }
 
-        #content {
-          font-size: 55px;
-          font-family: Arial;
-          background-color: #000;
-          color: #fff;
-          width: 100%;
-          height: 100%;
-          outline: none;
-        }
-      </style>
+      #content {
+        font-size: 55px;
+        font-family: Arial;
+        background-color: #000;
+        color: #fff;
+        width: 100%;
+        height: 100%;
+        outline: none;
+      }
+    </style>
   </head>
   <script>
     function handleFocus(event) {
@@ -84,6 +84,7 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
 
     function handleKeydown(event) {
       const { keyCode, key } = event
+
       window.ReactNativeWebView.postMessage(JSON.stringify({ event: { keyCode, key}, eventType: ${WEBVIEW_POST_EVENTS.onKeyDown} }))
     }
 
@@ -96,6 +97,7 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
 
     function getSelectionValues() {
       const { anchorNode, focusNode, anchorOffset, focusOffset } = getSelection();
+
       window.ReactNativeWebView.postMessage(JSON.stringify({ anchorNode, focusNode, anchorOffset, focusOffset }))
     }
 
@@ -106,7 +108,6 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
       const placeholder = ele.getAttribute("placeholder");
 
       // Set the placeholder as initial content if it's empty
-
       ele.innerHTML.trim() === "" && (ele.innerHTML = placeholder);
 
       ele.addEventListener("focus", function (e) {
