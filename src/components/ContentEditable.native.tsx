@@ -154,6 +154,8 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
             case WEBVIEW_POST_EVENTS.onFocus: {
               // @ts-ignore
               window.getSelection = () => contentRef?.current?.injectJavaScript('getSelectionValues()')
+
+              if (props.onFocus) props.onFocus()
               break
             }
 

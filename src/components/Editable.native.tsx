@@ -531,13 +531,8 @@ const Editable = ({
     // do not allow blur to setEditingValue when it is followed immediately by a focus
     blurring = false
 
-    // get new state
-    const { dragInProgress } = store.getState()
-
-    if (!dragInProgress) {
-      setCursorOnThought({ editing: true })
-      dispatch(setEditingValue(value))
-    }
+    setCursorOnThought({ editing: true })
+    dispatch(setEditingValue(value))
   }
 
   /**
