@@ -528,6 +528,12 @@ a.text-link {
   white-space: pre-wrap;
 }
 
+.bullet {
+  border-radius: 50%;
+  width: 1em;
+  height: 1em;
+}
+
 .thought-annotation {
   position: absolute; /* cannot use position:absolute as it changes what the width is relative to */
   pointer-events: none;
@@ -1547,14 +1553,12 @@ h1 .num-contexts {
 */
 
 /* overlay bullet for cursor */
-
 .thought .bullet-cursor-overlay {
   display: none;
 }
 
 .child.editing > .thought-container > .bullet {
-  width: 1em;
-  height: 1em;
+  background-color: #50504f;
 }
 
 .child.editing > .thought-container > .thought .bullet-cursor-overlay,
