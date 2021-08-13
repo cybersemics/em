@@ -15,9 +15,15 @@ interface ContentEditableProps {
   onChange: (e: string) => void
   onFocus: () => void
   onBlur: () => void
-  onPaste?: (e: string) => void
+  onPaste?: (e: IOnPaste) => void
   onKeyDown?: (e: IKeyDown) => void
   placeholder: string
+}
+
+export interface IOnPaste {
+  htmlText: string
+  plainText: string
+  innerHTML: string
 }
 export interface IKeyDown {
   keyCode: number
@@ -30,6 +36,7 @@ enum WEBVIEW_POST_EVENTS {
   onChange,
   onPaste,
   onFocus,
+  onCopy,
 }
 /**
  * Content Editable Component.
@@ -71,30 +78,6 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
     </style>
   </head>
   <script>
-    function handleFocus(event) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ event, eventType: ${WEBVIEW_POST_EVENTS.onFocus} }))
-    }
-
-    function handleBlur(event) {
-      const element = document.getElementById("content");
-      const text = element.innerHTML.trim();
-
-      window.ReactNativeWebView.postMessage(JSON.stringify({ event, text, eventType: ${WEBVIEW_POST_EVENTS.onBlur} }))
-    }
-
-    function handleKeydown(event) {
-      const { keyCode, key } = event
-
-      window.ReactNativeWebView.postMessage(JSON.stringify({ event: { keyCode, key}, eventType: ${WEBVIEW_POST_EVENTS.onKeyDown} }))
-    }
-
-    function handleChange(event) {
-      const element = document.getElementById("content");
-      const text = element.innerHTML.trim();
-
-      window.ReactNativeWebView.postMessage(JSON.stringify({ event: text, eventType: ${WEBVIEW_POST_EVENTS.onChange} }))
-    }
-
     function getSelectionValues() {
       const { anchorNode, focusNode, anchorOffset, focusOffset } = getSelection();
 
@@ -113,11 +96,48 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
       ele.addEventListener("focus", function (e) {
         const value = e.target.innerHTML;
         value === placeholder && (e.target.innerHTML = "");
+
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: e, eventType: ${WEBVIEW_POST_EVENTS.onFocus} }))
       });
 
       ele.addEventListener("blur", function (e) {
         const value = e.target.innerHTML.trim();
         value === "" && (e.target.innerHTML = placeholder);
+
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: e, text: value, eventType: ${WEBVIEW_POST_EVENTS.onBlur} }))
+      });
+
+      ele.addEventListener("keydown", function (e) {
+        const { keyCode, key } = e
+
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: { keyCode, key }, eventType: ${WEBVIEW_POST_EVENTS.onKeyDown} }))
+      });
+
+      ele.addEventListener("keyup", function (e) {
+        const text = e.target.innerHTML.trim()
+
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: text, eventType: ${WEBVIEW_POST_EVENTS.onChange} }))
+      });
+
+      ele.addEventListener("copy", function (e) {
+        const selectedText = getSelection().getRangeAt(0).toString();
+        e.clipboardData.setData("text/plain", selectedText);
+        const content = e.clipboardData.getData('text/plain');
+      });
+
+      ele.addEventListener("paste", function (e) {
+        const plainText = e.clipboardData.getData('text/plain')
+        const htmlText = e.clipboardData.getData('text/html')
+
+        e.preventDefault()
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          event: {
+            plainText,
+            htmlText,
+            innerHTML: ele?.innerHTML
+          },
+          eventType: ${WEBVIEW_POST_EVENTS.onPaste}
+        }))
       });
     });
   </script>
@@ -127,10 +147,6 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
       id="content"
       contenteditable
       placeholder="${props.placeholder}"
-      onkeydown="return handleKeydown(event);"
-      onblur="return handleBlur(event);"
-      onfocus="return handleFocus(event);"
-      onkeyup="return handleChange(event);"
     >
       ${html}
     </div>
@@ -147,6 +163,10 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
         source={{
           html: _html,
         }}
+        hideKeyboardAccessoryView={true}
+        keyboardDisplayRequiresUserAction={false}
+        domStorageEnabled={false}
+        javaScriptEnabled
         onMessage={event => {
           const { eventType, event: webEvent, text } = JSON.parse(event.nativeEvent.data)
 
@@ -167,7 +187,12 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
             }
 
             case WEBVIEW_POST_EVENTS.onKeyDown: {
-              if (props.onKeyDown) props.onKeyDown(webEvent)
+              if (props.onKeyDown) props.onKeyDown(webEvent as IKeyDown)
+              break
+            }
+
+            case WEBVIEW_POST_EVENTS.onPaste: {
+              if (props.onPaste) props.onPaste(webEvent as IOnPaste)
               break
             }
 
@@ -176,6 +201,7 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
               // handleInput(webEvent)
               break
             }
+
             default:
               break
           }
