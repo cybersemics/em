@@ -41,7 +41,6 @@ import {
   parseJsonSafe,
   parseLet,
   pathToContext,
-  sumSubthoughtsLength,
   unroot,
 } from '../util'
 
@@ -76,7 +75,6 @@ interface SubthoughtsProps {
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
   childrenForced?: Child[]
-  count?: number
   depth?: number
   env?: Index<Context>
   expandable?: boolean
@@ -391,7 +389,6 @@ const NoChildren = ({
  * @param childrenForced             Optional.
  * @param contextBinding             Optional.
  * @param contextChain = []          Optional. Default: [].
- * @param count                      Optional. Default: 0.
  * @param depth.                     Optional. Default: 0.
  * @param isDragInProgress           Optional.
  * @param isEditingAncestor          Optional.
@@ -407,7 +404,6 @@ export const SubthoughtsComponent = ({
   childrenForced,
   contextBinding,
   path,
-  count = 0,
   depth = 0,
   distance,
   // dropTarget,
@@ -630,7 +626,6 @@ export const SubthoughtsComponent = ({
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
-                count={count + sumSubthoughtsLength(children)}
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}

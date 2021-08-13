@@ -61,7 +61,6 @@ export interface ThoughtContainerProps {
   childrenForced?: Child[]
   contextBinding?: Path
   path: Path
-  count?: number
   cursor?: Path | null
   depth?: number
   env?: Index<Context>
@@ -213,7 +212,6 @@ const ThoughtContainer = ({
   childrenForced,
   contextBinding,
   path,
-  count = 0,
   cursor,
   cursorOffset,
   depth = 0,
@@ -494,7 +492,6 @@ const ThoughtContainer = ({
           childrenForced={childrenForced}
           env={env}
           path={path}
-          count={count}
           depth={depth}
           isParentHovering={isAnyChildHovering}
           showContexts={allowSingleContext}
