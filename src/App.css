@@ -1558,7 +1558,7 @@ h1 .num-contexts {
 }
 
 .child.editing > .thought-container > .bullet,
-.child.editing > .thought-container > .bullet-highlighted {
+.child > .thought-container > .bullet-highlighted {
   background-color: #50504f;
 }
 
@@ -1587,17 +1587,23 @@ h1 .num-contexts {
   margin-top: 0.32em;
 }*/
 
-.child.show-contexts.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
+/*.child.show-contexts.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
 .child.show-contexts:first-of-type
   > .thought-container
   > .thought
   .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-  margin-top: calc(0.3em - 4px); /* */
+  margin-top: calc(0.3em - 4px); /* 
+}*/
+
+.child.show-contexts:first-of-type
+  > .thought-container
+  > .bullet-highlighted {
+  background-color: #50504f;
 }
 
-.dark .child.editing > .thought-container > .thought .bullet-cursor-overlay {
+/*.dark .child.editing > .thought-container > .bullet-cursor-overlay {
   opacity: 0.25;
-}
+}*/
 
 .children-new .child > .thought-container > .bullet .glyph {
   content: '+';
@@ -2671,9 +2677,9 @@ code,
   line-height: 1;
 }
 
-.children > .child > * > .thought-container > .bullet-cursor-overlay {
+/*.children > .child > * > .thought-container > .bullet-cursor-overlay {
   transition: text-indent 0.4s ease-in-out, opacity 0.4s ease-in-out;
-}
+}*/
 
 .prose > .children {
   margin-left: -5px;
@@ -2705,9 +2711,9 @@ code,
   opacity: 0;
 }
 
-.prose > .children > .child > .thought-container > .thought > .thought-container > .bullet-cursor-overlay {
+/*.prose > .children > .child > .thought-container > .thought > .thought-container > .bullet-cursor-overlay {
   opacity: 0;
-}
+}*/
 
 .prose > .children > .child > .children {
   margin-left: 3.5em;
@@ -2952,10 +2958,8 @@ code,
   padding: 3px 0;
 }
 
-.table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
-  top: -15px;
-  left: 4px;
-  margin-left: 0;
+.table-view > .children > .child > .thought-container > .bullet {
+  background-color: #50504f;
 }
 
 /* column 2 */
@@ -2984,13 +2988,12 @@ code,
   margin-left: 0;
 }
 
-.table-view > .children > .child > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
-  left: 18px;
-  margin-left: 0;
+.table-view > .children > .child > .children > .child > .thought-container > .bullet {
+  background-color: #50504f;
 }
 
 /* overlay bullet of first child in second column needs to compensate for top */
-.table-view
+/*.table-view
   > .children
   > .child
   > .children
@@ -2999,7 +3002,7 @@ code,
   > .thought
   > .bullet-cursor-overlay {
   top: -20px;
-}
+}*/
 
 .mobile
   .table-view
@@ -3254,13 +3257,13 @@ code,
 }
 
 /* overlay bullet */
-.publish > .children > .child .child.editing > .thought-container > .thought .bullet-cursor-overlay,
-.publish > .children > .child .child.dragging > .thought-container > .thought .bullet-cursor-overlay {
-  left: -0.48em;
+.publish > .children > .child .child.editing > .thought-container > .bullet,
+.publish > .children > .child .child.dragging > .thought-container > .bullet {
+  background-color: #50504f;
 }
 
 /* overlay bullet table view column 2 */
-.publish
+/*.publish
   > .children
   > .child.table-view
   > .children
@@ -3281,10 +3284,10 @@ code,
   > .thought
   .bullet-cursor-overlay {
   left: 20px;
-}
+}*/
 
 /* overlay bullet table view column 2 leaf */
-.publish
+/*.publish
   > .children
   > .child.table-view
   > .children
@@ -3305,7 +3308,7 @@ code,
   > .thought
   .bullet-cursor-overlay {
   left: 19px;
-}
+}*/
 
 .quick-add-button {
   display: inline-flex;
