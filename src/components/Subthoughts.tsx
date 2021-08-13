@@ -165,7 +165,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const contextHash = hashContext(pathToContext(resolvedPath))
 
-  const children = getAllChildren(state, contextLive)
+  const allChildren = getAllChildren(state, contextLive)
 
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
@@ -203,8 +203,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     isAbsoluteContext,
     zoomCursor,
     zoomParent,
-    // re-render if children change
-    __render: children,
+    // Re-render if children change.
+    // Uses getAllChildren for efficient change detection. Probably does not work in context view.
+    // Not used by render function, which uses a more complex calculation of children that supports context view.
+    __allChildren: allChildren,
   }
 }
 
