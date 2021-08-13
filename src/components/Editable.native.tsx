@@ -19,7 +19,7 @@ import {
 // import { isTouch, isSafari } from '../browser'
 // import globals from '../globals'
 import { store } from '../store'
-import ContentEditable, { ContentEditableEvent } from './ContentEditable.native'
+import ContentEditable, { ContentEditableEvent, IOnPaste } from './ContentEditable.native'
 import { shortcutEmitter } from '../shortcuts'
 import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
 
@@ -438,10 +438,8 @@ const Editable = ({
   }
 
   /** Imports text that is pasted onto the thought. */
-  const onPaste = (e: string) => {
-    const plainText = e
-    // const htmlText = e.getData('text/html')
-
+  const onPaste = (e: IOnPaste) => {
+    const { plainText, htmlText } = e
     // pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") results in blank plainText and htmlText
     // the text will still be pasted if we do not preventDefault, it just won't get stripped of html properly
     // See: https://github.com/cybersemics/em/issues/286
@@ -471,7 +469,7 @@ const Editable = ({
       dispatch(
         importText({
           path,
-          text: isHTML(plainText) ? plainText : 'HTML' || plainText,
+          text: isHTML(plainText) ? plainText : htmlText || plainText,
           rawDestValue,
         }),
       )
