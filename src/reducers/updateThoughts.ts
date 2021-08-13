@@ -15,7 +15,7 @@ import {
 } from '../util'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { Child, Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
+import { Child, Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State, ThoughtContext } from '../@types'
 import { isMobile } from '../util/isMobile'
 
 export interface UpdateThoughtsOptions {
@@ -60,6 +60,10 @@ export const getWhitelistedThoughts = once(() => {
   }
 })
 
+/** Returns true if a non-root context begins with HOME_TOKEN. Used as a data integrity check. */
+const isInvalidContext = (cx: ThoughtContext) =>
+  cx && cx.context && cx.context[0] === HOME_TOKEN && cx.context.length > 1
+
 /**
  * Updates thoughtIndex and contextIndex with any number of thoughts.
  *
@@ -84,6 +88,25 @@ const updateThoughts = (
 ) => {
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
+
+  // A non-root context should never begin with HOME_TOKEN.
+  // If one is found, it means there was a data integrity error that needs to be identified immediately.
+  // This can be removed after a while if it does not throw.
+  // (For efficiency, only check Redux state updates, i.e. when local && remote are true).
+  if (local && remote && Object.values(thoughtIndexUpdates).some(lexeme => lexeme?.contexts.some(isInvalidContext))) {
+    const invalidLexemes = Object.values(thoughtIndexUpdates).filter(lexeme =>
+      lexeme?.contexts.some(isInvalidContext),
+    ) as Lexeme[]
+    if (invalidLexemes.length > 0) {
+      invalidLexemes.forEach(lexeme => {
+        console.error(
+          `Invalid ThoughtContext found in Lexeme: '${lexeme.value}'. HOME_TOKEN should be omitted from the beginning; it is only valid to refer to the home context itself, i.e. [HOME_TOKEN].`,
+          lexeme,
+        )
+      })
+      throw new Error('Invalid ThoughtContext')
+    }
+  }
 
   // The contextIndex and thoughtIndex can consume more and more memory as thoughts are pulled from the db.
   // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and thoughtIndex.
