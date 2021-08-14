@@ -11,5 +11,3 @@ export const getQueryStringParams = (passedURL: string) => {
   })
   return searchMap
 }
-
-export default getQueryStringParams

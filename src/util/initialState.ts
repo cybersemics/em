@@ -1,10 +1,17 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
-import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
+import {
+  hashContext,
+  hashThought,
+  isDocumentEditable,
+  never,
+  parseJsonSafe,
+  timestamp,
+  getQueryStringParams,
+} from '../util'
 import { State, Timestamp, ThoughtsInterface } from '../@types'
 import { storage } from './storage'
-import { getQueryStringParams } from '../util/getQueryString'
 
 /** Safely gets a value from localStorage if it is in the environment. */
 const getLocal = (key: string) => {

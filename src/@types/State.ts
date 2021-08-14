@@ -77,7 +77,6 @@ export interface State {
   toolbarOverlay?: string | null
   tutorialStep?: number
   user?: User
-  userInvites?: InviteCodes[]
   latestShortcuts: Shortcut[]
   enableLatestShorcutsDiagram: boolean
 }

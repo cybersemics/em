@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { connect, useDispatch } from 'react-redux'
 import _ from 'lodash'
-import { InviteCodes, State } from '../@types'
+import { InviteCodes, State, Firebase } from '../@types'
 import InvitesIcon from './icons/InvitesIcon'
 import CheckmarkIcon from './icons/CheckmarkIcon'
 import CopyClipboard from './icons/CopyClipboard'
-import { alert, createUserInvites, updateInviteCode, getUserInvites } from '../action-creators'
+import { alert, updateInviteCode } from '../action-creators'
 import { theme } from '../selectors'
 import { createId, timestamp } from '../util'
 import { ActionButton } from './ActionButton'
@@ -14,12 +14,11 @@ import Input from './Input'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { authenticated, user: { uid = '' } = {}, userInvites } = state
+  const { authenticated, user: { uid = '' } = {} } = state
   return {
     dark: theme(state) !== 'Light',
     uid,
     authenticated,
-    userInvites,
   }
 }
 
@@ -32,7 +31,7 @@ interface GiftCodeArray extends Record<string, any> {
 }
 
 /** Modal to get gift codes. */
-const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<typeof mapStateToProps>) => {
+const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateToProps>) => {
   const isMounted = useRef(false)
   const firstUpdate = useRef(true)
   const giftCodeType: InviteCodes[] = []
@@ -45,48 +44,59 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
   const [giftCode, updateGiftCode] = useState<GiftCodeArray[] | []>([])
 
   useEffect(() => {
-    if (!userInvites || userInvites.length !== 3) dispatch(getUserInvites(uid))
+    if (!isMounted.current) {
+      isMounted.current = true
+      const userDb = window.firebase.database().ref(`users/${uid}`).child('invites')
+      userDb.once('value', (snapshot: Firebase.Snapshot) => {
+        const inviteCodes = Object.keys(snapshot.val() || {})
+
+        if (inviteCodes.length === 0) {
+          generateUserInvites()
+        } else {
+          inviteCodes.forEach((inviteCode: string) => {
+            const invitesDb = window.firebase.database().ref(`invites/${inviteCode}`)
+            invitesDb.on('value', (snapshot: Firebase.Snapshot) => {
+              giftCodesRefs.current = {
+                ...giftCodesRefs.current,
+                [inviteCode]: {
+                  id: inviteCode,
+                  ...snapshot.val(),
+                },
+              }
+              if (Object.keys(giftCodesRefs.current).length === 3) updateGiftCodes()
+            })
+          })
+        }
+      })
+    }
   }, [])
 
-  useEffect(() => {
-    if (authenticated) {
-      if (!userInvites) {
-        giftCodesRefs.current = Array.from({ length: 3 }).map(() => {
-          const inviteId = createId().slice(0, 8)
-          const newInviteCode = {
-            id: inviteId,
-            createdBy: uid,
-            created: timestamp(),
-            hasSeen: false,
-          }
-          return newInviteCode
-        })
-        dispatch(createUserInvites(giftCodesRefs.current, uid))
+  /** Generates user invites when none exists. */
+  const generateUserInvites = () => {
+    giftCodesRefs.current = Array.from({ length: 3 }).map(() => {
+      const inviteId = createId().slice(0, 8)
+      const newInviteCode = {
+        createdBy: uid,
+        created: timestamp(),
+        hasSeen: false,
       }
+      window.firebase.database().ref(`/invites/${inviteId}`).set(newInviteCode)
+      window.firebase.database().ref(`/users/${uid}/invites/${inviteId}`).set(true)
 
-      if (!isMounted.current) {
-        if (userInvites && userInvites.length === 3) updateGiftCodes()
-      } else {
-        isMounted.current = true
-      }
-    }
-  }, [authenticated, userInvites])
-
-  useEffect(() => {
-    if (focusedGiftCode !== -1) dispatch(getUserInvites(uid))
-  }, [focusedGiftCode])
+      return { ...newInviteCode, id: inviteId }
+    })
+    updateGiftCodes()
+  }
 
   /** Sets user invites in state. */
-  const updateGiftCodes = () => {
-    const giftCodes: GiftCodeArray[] = userInvites
-      ? userInvites.map((invite: InviteCodes) => ({
-          link: `${window.location.origin}/signup?code=${invite.id}`,
-          used: !!invite.used,
-          seen: invite.hasSeen,
-          id: invite.id,
-          type: invite.hasSeen ? 'text' : 'password',
-        }))
-      : []
+  const updateGiftCodes = (id = '') => {
+    const giftCodes: GiftCodeArray[] = Object.entries(giftCodesRefs.current).map(invite => ({
+      link: `${window.location.origin}/signup?code=${invite[1].id}`,
+      used: !!invite[1].used,
+      seen: id !== '' && id === invite[1].id ? true : invite[1].hasSeen,
+      id: invite[1].id,
+      type: (id !== '' && id === invite[1].id) || invite[1].hasSeen ? 'text' : 'password',
+    }))
     updateGiftCode(_.sortBy(giftCodes, ['id']))
   }
 
@@ -94,7 +104,10 @@ const ModalInvites = ({ dark, uid, authenticated, userInvites }: ReturnType<type
   const changeType = (idx: number | any, id: string | any, actionType: string) => {
     if (actionType === 'focus') {
       const isVisible = giftCode.find(({ id: inviteId }) => id === inviteId)?.seen
-      if (!isVisible) dispatch(updateInviteCode(uid, id, false))
+      if (!isVisible) {
+        updateGiftCodes(id)
+        dispatch(updateInviteCode(uid, id, false))
+      }
     }
     updateFocusedGiftCode(actionType === 'focus' ? idx : -1)
   }

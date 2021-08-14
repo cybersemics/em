@@ -108,7 +108,7 @@ const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnT
       const user = window.firebase.auth().currentUser
       dispatch(updateInviteCode(user.uid, invitationCode, true))
       window.history.pushState({}, '', window.location.origin)
-      setTimeout(() => window.location.reload(), 500)
+      setTimeout(() => window.location.reload(), 300)
     }
   }, [])
 
