@@ -1557,27 +1557,28 @@ h1 .num-contexts {
   display: none;
 }
 
-.child.editing > .thought-container > .bullet {
+.child.editing > .thought-container > .bullet,
+.child.editing > .thought-container > .bullet-highlighted {
   background-color: #50504f;
 }
 
-.child.editing > .thought-container > .thought .bullet-cursor-overlay,
+/*.child.editing > .thought-container > .thought .bullet-cursor-overlay,
 .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
   display: none;
   position: absolute;
   font-size: 280%;
   opacity: 0.2;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
-  line-height: 1;
+  /*line-height: 1;
   top: -0.4em;
   margin-top: 0.2em;
   margin-left: -0.575em;
-}
+}*/
 
 /* overlay bullet for drag */
 /* specificity to beat ".dark .child.editing > .thought-container > .thought .bullet-cursor-overlay" */
-.child.child.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-  color: lightblue;
+.child.child.child > .thought-container > .bullet-highlighted {
+  background-color: lightblue;
   opacity: 1;
 }
 

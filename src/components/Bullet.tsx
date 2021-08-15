@@ -2,9 +2,9 @@ import React, { MouseEvent } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
-import { head } from '../util'
+import { head, equalPath } from '../util'
 import { Circle, Triangle } from './icons/bulletIcons'
-import { Context, State } from '../@types'
+import { Context, SimplePath, State } from '../@types'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -16,11 +16,14 @@ interface BulletProps {
   onClick: (event: React.MouseEvent) => void
   showContexts?: boolean
   context: Context
+  isDragging?: boolean
+  simplePath: SimplePath
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
-  const { invalidState } = state
+  const { invalidState, draggedSimplePath, dragHold } = state
+  const { simplePath, isDragging } = props
   const lexeme = getLexeme(state, head(props.context))
   return {
     // if being edited and meta validation error has occured
@@ -30,6 +33,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     missing: !lexeme,
     pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
+    isDragging: isDragging || (dragHold && equalPath(draggedSimplePath!, simplePath)),
   }
 }
 
@@ -42,6 +46,7 @@ const Bullet = ({
   missing,
   onClick,
   pending,
+  isDragging,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => (
   <span
     className={classNames({
@@ -53,6 +58,7 @@ const Bullet = ({
       graypulse: pending,
       'show-contexts': showContexts,
       'invalid-option': invalid,
+      'bullet-highlighted': isDragging,
     })}
   >
     <span className='glyph' onClick={onClick}>

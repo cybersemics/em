@@ -424,6 +424,8 @@ const ThoughtContainer = ({
                   store.dispatch(setCursor({ path: simplePath }))
                 }
               }}
+              isDragging={isDragging}
+              simplePath={simplePath}
             />
           )}
 
