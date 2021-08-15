@@ -2,6 +2,10 @@
   gray: #838283
 */
 
+:root {
+  --bullet-overlay-color: #50504f;
+}
+
 /* fixed debug box in bottom right */
 #debug {
   position: fixed;
@@ -1114,12 +1118,13 @@ h1 .num-contexts {
 .child.show-contexts > .thought-container .bullet {
   position: relative;
   top: 1.6em;
+  background-color: var(--bullet-overlay-color);
 }
 
-.child.show-contexts > .thought-container .bullet-cursor-overlay {
+/*.child.show-contexts > .thought-container .bullet-cursor-overlay {
   /** use transform to not interfere with existing margin-top calculation */
-  transform: translateY(0.58em);
-}
+  /*transform: translateY(0.58em);
+}*/
 
 .child > .thought-container > .bullet .glyph {
   position: relative;
@@ -1183,7 +1188,6 @@ h1 .num-contexts {
 
 .child.leaf > .thought-container > .bullet.show-contexts .glyph {
   font-size: 90%;
-  top: -0.05em;
 }
 
 .mobile .child.leaf > .thought-container > .bullet.show-contexts .glyph {
@@ -1284,6 +1288,7 @@ h1 .num-contexts {
   .android .thought .bullet-cursor-overlay {
     display: none;
   }
+
   .android .child.editing > .thought-container > .thought .bullet-cursor-overlay,
   .android .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
     display: inline;
@@ -1328,6 +1333,7 @@ h1 .num-contexts {
     top: -21.6px;
     left: -24.5px;
   }
+
   .android .children-new .child > .thought-container > .bullet .glyph {
     content: '+';
     left: -0.15em;
@@ -1346,12 +1352,14 @@ h1 .num-contexts {
     margin-top: -0.1px;
     margin-left: 0.5em;
   }
+
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
     margin-bottom: 2px;
     padding-bottom: 4px;
   }
+
   .android .child {
     position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
     margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
@@ -1441,6 +1449,7 @@ h1 .num-contexts {
   .android .thought .bullet-cursor-overlay {
     display: none;
   }
+
   .android .child.editing > .thought-container > .thought .bullet-cursor-overlay,
   .android .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
     display: inline;
@@ -1499,17 +1508,20 @@ h1 .num-contexts {
     top: -0.1em;
     margin-right: -0.1em;
   }
+
   .android .thought,
   .android .thought-annotation {
     margin-top: -0.1px;
     margin-left: 0.5em;
   }
+
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
     margin-bottom: 2px;
     padding-bottom: 4px;
   }
+
   .android .child {
     position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
     margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
@@ -1559,7 +1571,7 @@ h1 .num-contexts {
 
 .child.editing > .thought-container > .bullet,
 .child > .thought-container > .bullet-highlighted {
-  background-color: #50504f;
+  background-color: var(--bullet-overlay-color);
 }
 
 /*.child.editing > .thought-container > .thought .bullet-cursor-overlay,
@@ -1598,7 +1610,7 @@ h1 .num-contexts {
 .child.show-contexts:first-of-type
   > .thought-container
   > .bullet-highlighted {
-  background-color: #50504f;
+  background-color: var(--bullet-overlay-color);
 }
 
 /*.dark .child.editing > .thought-container > .bullet-cursor-overlay {
@@ -2959,7 +2971,7 @@ code,
 }
 
 .table-view > .children > .child > .thought-container > .bullet {
-  background-color: #50504f;
+  background-color: var(--bullet-overlay-color);
 }
 
 /* column 2 */
@@ -2989,7 +3001,7 @@ code,
 }
 
 .table-view > .children > .child > .children > .child > .thought-container > .bullet {
-  background-color: #50504f;
+  background-color: var(--bullet-overlay-color);
 }
 
 /* overlay bullet of first child in second column needs to compensate for top */
@@ -3259,7 +3271,7 @@ code,
 /* overlay bullet */
 .publish > .children > .child .child.editing > .thought-container > .bullet,
 .publish > .children > .child .child.dragging > .thought-container > .bullet {
-  background-color: #50504f;
+  background-color: var(--bullet-overlay-color);
 }
 
 /* overlay bullet table view column 2 */
@@ -3464,6 +3476,7 @@ code,
     opacity: 0;
   }
 }
+
 .ripple_loader div {
   position: absolute;
   border-width: 19.04%;
@@ -3472,10 +3485,12 @@ code,
   border-radius: 50%;
   animation: ripple_loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
 }
+
 .ripple_loader div:nth-child(1) {
   border-color: #e90c59;
   animation-delay: 0s;
 }
+
 .ripple_loader div:nth-child(2) {
   border-color: #46dff0;
   animation-delay: -0.5s;
@@ -3493,6 +3508,7 @@ code,
   backface-visibility: hidden;
   transform-origin: 0 0; /* see note above */
 }
+
 .ripple_loader div {
   box-sizing: content-box;
 }
@@ -3521,6 +3537,7 @@ p.advance-setting-description {
 a.advance-setting-link {
   color: #000;
 }
+
 .dark a.advance-setting-link {
   color: #fff;
 }
