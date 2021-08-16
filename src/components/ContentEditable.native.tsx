@@ -81,8 +81,7 @@ const getWebHTML = ({ placeholder, innerHTML, isEditing }: IWebHTMLProps) => `
   document.addEventListener("DOMContentLoaded", function () {
     const ele = document.getElementById("content");
 
-    // Todo: fix focus on new thought.
-  ${isEditing} && ele.focus();
+    ${isEditing} && ele.focus();
 
     // Get the placeholder attribute
     const placeholder = ele.getAttribute("placeholder");
