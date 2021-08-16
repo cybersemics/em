@@ -573,6 +573,7 @@ const Editable = ({
       onPaste={onPaste}
       onKeyDown={onKeyDownAction ? onKeyDown : undefined}
       style={style || {}}
+      isEditing={isEditing}
     />
   )
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { View, ViewStyle, StyleSheet } from 'react-native'
 import { WebView } from 'react-native-webview'
 
@@ -46,6 +46,12 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
   const { width } = useDimensions().window
   const contentRef = useRef<WebView>(null)
 
+  const [value, setValue] = useState<string>()
+
+  useEffect(() => {
+    setValue(html)
+  }, [])
+
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (e: string) => {
     // prevent innerHTML update when editing
@@ -53,6 +59,8 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
 
     props.onChange(e)
   }
+
+  if (value === undefined) return null
 
   const _html = `
   <html>
@@ -87,6 +95,9 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
     document.addEventListener("DOMContentLoaded", function () {
       const ele = document.getElementById("content");
 
+      // Todo: fix focus on new thought.
+      // ${props.isEditing} && ele.focus()
+
       // Get the placeholder attribute
       const placeholder = ele.getAttribute("placeholder");
 
@@ -104,19 +115,25 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
         const value = e.target.innerHTML.trim();
         value === "" && (e.target.innerHTML = placeholder);
 
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: e, text: value, eventType: ${WEBVIEW_POST_EVENTS.onBlur} }))
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: e, text: value, eventType: ${
+          WEBVIEW_POST_EVENTS.onBlur
+        } }))
       });
 
       ele.addEventListener("keydown", function (e) {
         const { keyCode, key } = e
 
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: { keyCode, key }, eventType: ${WEBVIEW_POST_EVENTS.onKeyDown} }))
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: { keyCode, key }, eventType: ${
+          WEBVIEW_POST_EVENTS.onKeyDown
+        } }))
       });
 
       ele.addEventListener("keyup", function (e) {
         const text = e.target.innerHTML.trim()
 
-        window.ReactNativeWebView.postMessage(JSON.stringify({ event: text, eventType: ${WEBVIEW_POST_EVENTS.onChange} }))
+        window.ReactNativeWebView.postMessage(JSON.stringify({ event: text, eventType: ${
+          WEBVIEW_POST_EVENTS.onChange
+        } }))
       });
 
       ele.addEventListener("copy", function (e) {
@@ -148,7 +165,7 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
       contenteditable
       placeholder="${props.placeholder}"
     >
-      ${html}
+      ${value || ''}
     </div>
   </body>
 </html>
@@ -157,18 +174,16 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
   return (
     <View style={commonStyles.flexOne}>
       <WebView
-        key='web-view'
         ref={contentRef}
         originWhitelist={['*']}
         source={{
           html: _html,
         }}
         hideKeyboardAccessoryView={true}
-        keyboardDisplayRequiresUserAction={false}
         domStorageEnabled={false}
         javaScriptEnabled
         onMessage={event => {
-          const { eventType, event: webEvent, text } = JSON.parse(event.nativeEvent.data)
+          const { eventType, event: webEvent } = JSON.parse(event.nativeEvent.data)
 
           switch (eventType) {
             case WEBVIEW_POST_EVENTS.onFocus: {
@@ -180,7 +195,7 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
             }
 
             case WEBVIEW_POST_EVENTS.onBlur: {
-              handleInput(text)
+              setValue(html)
 
               if (props.onBlur) props.onBlur()
               break
@@ -198,7 +213,7 @@ const ContentEditable = ({ style, html, disabled, forceUpdate, ...props }: Conte
 
             // TODO: improve onChange event: if we use oninput to listen to changes on the text the component ends up rendering and taking cursor focus and dismissing the keyboard.
             case WEBVIEW_POST_EVENTS.onChange: {
-              // handleInput(webEvent)
+              handleInput(webEvent)
               break
             }
 
