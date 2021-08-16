@@ -530,6 +530,8 @@ a.text-link {
   /*display: inline-block;*/
   /*vertical-align: top;*/
   white-space: pre-wrap;
+  flex: 1;
+  justify-content: start;
 }
 
 .bullet {
@@ -1163,13 +1165,6 @@ h1 .num-contexts {
   /*margin-right: -7px; !* compensate for inline-block *!*/
   transform: rotate(90deg);
   /*transform-origin: 0.3em 0.5em;*/
-}
-
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-  transform-origin: 55% 60%;
 }
 
 .mobile .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,

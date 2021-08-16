@@ -22,7 +22,7 @@ interface BulletProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
-  const { invalidState, draggedSimplePath, dragHold } = state
+  const { invalidState, draggedSimplePath, dragHold, fontSize } = state
   const { simplePath, isDragging } = props
   const lexeme = getLexeme(state, head(props.context))
   return {
@@ -34,6 +34,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
     isDragging: isDragging || (dragHold && equalPath(draggedSimplePath!, simplePath)),
+    fontSize,
   }
 }
 
@@ -47,6 +48,7 @@ const Bullet = ({
   onClick,
   pending,
   isDragging,
+  fontSize,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => (
   <span
     className={classNames({
@@ -62,19 +64,15 @@ const Bullet = ({
     })}
   >
     <span className='glyph' onClick={onClick}>
-      { // The shape of text '•' and '▸' is a rectangle. The triangles/dots are not centered vertically inside the rectangle on all browsers. Hence, we replace them with svg.
+      {
+        // The shape of text '•' and '▸' is a rectangle. The triangles/dots are not centered vertically inside the rectangle on all browsers. Hence, we replace them with svg.
         glyph ||
-        (showContexts ? (
-          isLeaf ? (
-            <Circle />
+          (isLeaf ? (
+            <Circle fill={showContexts ? 'none' : '#C4C4C4'} size={fontSize * 0.3} />
           ) : (
-            <Triangle />
-          )
-        ) : isLeaf ? (
-          <Circle fill='#C4C4C4' />
-        ) : (
-          <Triangle fill='#C4C4C4' />
-        ))}
+            <Triangle fill={showContexts ? 'none' : '#C4C4C4'} size={fontSize * 0.5} />
+          ))
+      }
     </span>
   </span>
 )
