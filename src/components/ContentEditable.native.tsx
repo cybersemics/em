@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { View, ViewStyle, StyleSheet } from 'react-native'
 import { WebView } from 'react-native-webview'
 
@@ -172,11 +172,6 @@ const ContentEditable = ({
   const contentRef = useRef<WebView>(null)
 
   const [webviewHTML, setWebviewHTML] = useState<string>(getWebHTML({ innerHTML: html, placeholder, isEditing }))
-
-  console.log({ html })
-  useEffect(() => {
-    // setValue(html)
-  }, [])
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (e: string) => {
