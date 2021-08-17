@@ -2,11 +2,9 @@
 import React from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION } from '../constants'
-import { modalCleanup, preventCloseOnEscape } from '../util'
+import { modalCleanup } from '../util'
 import { Connected } from '../@types'
 import { closeModal, modalComplete, tutorial } from '../action-creators'
-import { storage } from '../util/storage'
-// import { getQueryStringParams } from '../util/getQueryString'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
@@ -28,6 +26,7 @@ export interface ModalProps {
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
   title: string
   top?: number
+  preventCloseOnEscape?: boolean
 }
 
 /** Retrieves the { x, y } coordinates of the selection range. */
@@ -57,7 +56,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
        * A handler that closes the modal when the escape key is pressed.
        */
       this.escapeListener = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && !preventCloseOnEscape(this.props.id)) {
+        if (e.key === 'Escape' && !this.props.preventCloseOnEscape) {
           e.stopPropagation()
           this.close!()
         }
@@ -74,8 +73,6 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
           this.ref.current.classList.add('animate-fadeout')
         }
         setTimeout(() => {
-          storage.setItem('user-login', 'false')
-
           dispatch(closeModal())
         }, FADEOUT_DURATION)
       }
@@ -151,7 +148,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
           })
         }
       >
-        {!preventCloseOnEscape(id) && (
+        {!this.props.preventCloseOnEscape && (
           <a className='upper-right popup-close-x text-small' onClick={this.close}>
             ✕
           </a>

@@ -95,7 +95,6 @@ export const initialState = (created: Timestamp = timestamp()) => {
     inversePatches: [],
     isLoading: true,
     isPushing: false,
-    isUserLoading: getLocal('user-login') === 'true',
     latestShortcuts: [],
     modals: {},
     noteFocus: false, // true if a note has the browser selection

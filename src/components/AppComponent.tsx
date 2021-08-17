@@ -29,7 +29,6 @@ import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
 import ModalSignup from './ModalSignup'
 import ModalInvites from './ModalInvites'
-import Loader from './Loader'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import { storage } from '../util/storage'
 import { State } from '../@types'
@@ -58,15 +57,7 @@ interface DispatchProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
-  const {
-    dragInProgress,
-    isLoading,
-    showModal,
-    splitPosition,
-    showSplitView,
-    enableLatestShorcutsDiagram,
-    isUserLoading,
-  } = state
+  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShorcutsDiagram } = state
   const dark = theme(state) !== 'Light'
   const scale = state.fontSize / BASE_FONT_SIZE
   return {
@@ -79,7 +70,6 @@ const mapStateToProps = (state: State): StateProps => {
     showSplitView,
     fontSize: state.fontSize,
     enableLatestShorcutsDiagram,
-    isUserLoading,
   }
 }
 
@@ -131,7 +121,6 @@ const AppComponent: FC<Props> = props => {
     splitPosition,
     updateSplitPos,
     fontSize,
-    isUserLoading,
   } = props
 
   const [splitView, updateSplitView] = useState(showSplitView)
@@ -164,10 +153,6 @@ const AppComponent: FC<Props> = props => {
     chrome: /Chrome/.test(navigator.userAgent),
     safari: /Safari/.test(navigator.userAgent),
   })
-
-  if (isUserLoading || localStorage.getItem('user-login') === 'true') {
-    return <Loader size={35} style={{ marginRight: '15px' }} />
-  }
 
   return (
     <div className={componentClassNames}>

@@ -1,15 +1,7 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
-import {
-  hashContext,
-  hashThought,
-  isDocumentEditable,
-  never,
-  parseJsonSafe,
-  timestamp,
-  getQueryStringParams,
-} from '../util'
+import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 import { State, Timestamp, ThoughtsInterface } from '../@types'
 import { storage } from './storage'
 
@@ -103,7 +95,6 @@ export const initialState = (created: Timestamp = timestamp()) => {
     inversePatches: [],
     isLoading: true,
     isPushing: false,
-    isUserLoading: false,
     latestShortcuts: [],
     modals: {},
     noteFocus: false, // true if a note has the browser selection
@@ -148,11 +139,10 @@ export const initialState = (created: Timestamp = timestamp()) => {
     state.showModal = 'welcome'
   }
 
+  // Show sign up modal if the app is loaded with signup path
   if (window && window.location.pathname.substr(1) === 'signup') {
     state.showModal = 'signup'
-    state.invitationCode = getQueryStringParams(window.location.search).code || ''
   }
-  storage.setItem('user-login', 'false')
 
   return state
 }

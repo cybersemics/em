@@ -5,7 +5,6 @@ import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
 import { modalCleanup } from '../util'
 import { Connected } from '../@types' */
 import { /* closeModal */ modalComplete /* tutorial */ } from '../action-creators'
-import { preventCloseOnEscape } from '../util'
 import { useDispatch } from 'react-redux'
 import { Modal, View, StyleSheet, ScrollView } from 'react-native'
 import { Text } from './Text.native'
@@ -25,6 +24,7 @@ export interface ModalProps {
   show?: boolean
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
   title: string
+  preventCloseOnEscape?: boolean
 }
 
 /** A generic modal component. */
@@ -40,14 +40,14 @@ const ModalComponent: React.FC<ModalProps> = props => {
   /** Dispatches a tutorial action that ends the tutorial. */
   // const endTutorial = () => dispatch(tutorial({ value: false }))
 
-  const { show, id, title, actions, children, hideModalActions /* onSubmit */ } = props
+  const { show, title, actions, children, hideModalActions /* onSubmit */ } = props
 
   if (!show) return null
 
   return (
     <Modal animationType='slide' visible={show} onRequestClose={close}>
       <View style={[flexOne, darkBackground, verticalPadding, horizontalPadding]}>
-        {!preventCloseOnEscape(id) && (
+        {!props.preventCloseOnEscape && (
           <Text style={styles.close} onPress={close}>
             ✕
           </Text>

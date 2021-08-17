@@ -137,6 +137,7 @@ const ModalWelcome = () => {
         className='popup'
         hideModalActions={!invited}
         center
+        preventCloseOnEscape={true}
         actions={({ complete }) => (
           <div>
             <ActionButton key='start' title='START TUTORIAL' onClick={complete} />

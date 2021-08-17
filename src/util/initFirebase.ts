@@ -6,7 +6,6 @@ import {
   setRemoteSearch,
   status as statusActionCreator,
   userAuthenticated,
-  getInviteById,
 } from '../action-creators'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from '../constants'
 import { owner } from '../util'
@@ -65,12 +64,6 @@ export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
         store.dispatch(statusActionCreator({ value: 'offline' }))
       }
     })
-
-    const { invitationCode, showModal: stateShowModal } = store.getState()
-
-    if (invitationCode !== '' && stateShowModal === 'signup') {
-      store.dispatch(getInviteById(invitationCode))
-    }
   }
 
   // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message

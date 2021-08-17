@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { connect, useDispatch } from 'react-redux'
-import _ from 'lodash'
-import { InviteCodes, State, Firebase } from '../@types'
+import { InviteCode, State, Firebase, Index } from '../@types'
 import InvitesIcon from './icons/InvitesIcon'
 import CheckmarkIcon from './icons/CheckmarkIcon'
 import CopyClipboard from './icons/CopyClipboard'
-import { alert, updateInviteCode } from '../action-creators'
+import { alert } from '../action-creators'
 import { theme } from '../selectors'
 import { createId, timestamp } from '../util'
 import { ActionButton } from './ActionButton'
 import Modal from './Modal'
-import Input from './Input'
+import { getInviteById, updateInviteCode } from '../apis/invites'
+import _ from 'lodash'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -22,110 +22,108 @@ const mapStateToProps = (state: State) => {
   }
 }
 
-interface GiftCodeArray extends Record<string, any> {
-  link: string
-  used: boolean
-  seen: boolean | undefined
-  id: string | undefined
-  type: string
+/**
+ * Get all the invite codes that belongs to the given user.
+ */
+const getUserInviteCodes = (userId: string) => {
+  const userDb = window.firebase.database().ref(`users/${userId}`).child('invites')
+  return new Promise<string[]>((resolve, reject) => {
+    userDb.once('value', (snapshot: Firebase.Snapshot) => {
+      resolve(Object.keys(snapshot.val() || {}))
+    })
+  })
 }
 
-/** Modal to get gift codes. */
-const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateToProps>) => {
-  const isMounted = useRef(false)
-  const firstUpdate = useRef(true)
-  const giftCodeType: InviteCodes[] = []
-  const giftCodesRefs = useRef(giftCodeType)
-
-  const dispatch = useDispatch()
-
-  const [focusedGiftCode, updateFocusedGiftCode] = useState(-1)
-  const [copiedGiftCode, updateCopiedGiftCode] = useState('')
-  const [giftCode, updateGiftCode] = useState<GiftCodeArray[] | []>([])
-
-  useEffect(() => {
-    if (!isMounted.current) {
-      isMounted.current = true
-      const userDb = window.firebase.database().ref(`users/${uid}`).child('invites')
-      userDb.once('value', (snapshot: Firebase.Snapshot) => {
-        const inviteCodes = Object.keys(snapshot.val() || {})
-
-        if (inviteCodes.length === 0) {
-          generateUserInvites()
-        } else {
-          inviteCodes.forEach((inviteCode: string) => {
-            const invitesDb = window.firebase.database().ref(`invites/${inviteCode}`)
-            invitesDb.on('value', (snapshot: Firebase.Snapshot) => {
-              giftCodesRefs.current = {
-                ...giftCodesRefs.current,
-                [inviteCode]: {
-                  id: inviteCode,
-                  ...snapshot.val(),
-                },
-              }
-              if (Object.keys(giftCodesRefs.current).length === 3) updateGiftCodes()
-            })
-          })
-        }
-      })
-    }
-  }, [])
-
-  /** Generates user invites when none exists. */
-  const generateUserInvites = () => {
-    giftCodesRefs.current = Array.from({ length: 3 }).map(() => {
+/** Generates three user invites. */
+const generateUserInvites = (userId: string) =>
+  Promise.all(
+    Array.from({ length: 3 }).map<Promise<InviteCode>>(async () => {
       const inviteId = createId().slice(0, 8)
-      const newInviteCode = {
-        createdBy: uid,
+
+      const newInviteCode: Omit<InviteCode, 'id'> = {
+        createdBy: userId,
         created: timestamp(),
         hasSeen: false,
       }
-      window.firebase.database().ref(`/invites/${inviteId}`).set(newInviteCode)
-      window.firebase.database().ref(`/users/${uid}/invites/${inviteId}`).set(true)
+
+      await Promise.all([
+        window.firebase.database().ref(`/invites/${inviteId}`).set(newInviteCode),
+        window.firebase.database().ref(`/users/${userId}/invites/${inviteId}`).set(true),
+      ])
 
       return { ...newInviteCode, id: inviteId }
-    })
-    updateGiftCodes()
-  }
+    }),
+  )
 
-  /** Sets user invites in state. */
-  const updateGiftCodes = (id = '') => {
-    const giftCodes: GiftCodeArray[] = Object.entries(giftCodesRefs.current).map(invite => ({
-      link: `${window.location.origin}/signup?code=${invite[1].id}`,
-      used: !!invite[1].used,
-      seen: id !== '' && id === invite[1].id ? true : invite[1].hasSeen,
-      id: invite[1].id,
-      type: (id !== '' && id === invite[1].id) || invite[1].hasSeen ? 'text' : 'password',
-    }))
-    updateGiftCode(_.sortBy(giftCodes, ['id']))
-  }
+/** Modal to get gift codes. */
+const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateToProps>) => {
+  const dispatch = useDispatch()
 
-  /** Handle onFocus and onBlur event. */
-  const changeType = (idx: number | any, id: string | any, actionType: string) => {
-    if (actionType === 'focus') {
-      const isVisible = giftCode.find(({ id: inviteId }) => id === inviteId)?.seen
-      if (!isVisible) {
-        updateGiftCodes(id)
-        dispatch(updateInviteCode(uid, id, false))
-      }
+  const [focusedGiftCode, setFocusedGiftCode] = useState<string | null>(null)
+  const [inviteCodes, setInviteCodes] = useState<Index<InviteCode>>({})
+
+  const [isFetchingInvites, setIsFetchingInvites] = useState(true)
+
+  /**
+   * Gets all invite codes of a user if available or generate them.
+   */
+  const getAllInvitesOrGenerate = useCallback(async (userId: string) => {
+    const inviteCodeIds = await getUserInviteCodes(userId)
+
+    const shouldGenerateInvites = inviteCodeIds.length === 0
+
+    const inviteCodes = await (shouldGenerateInvites
+      ? generateUserInvites(userId)
+      : Promise.all(inviteCodeIds.map(giftCode => getInviteById(giftCode))))
+
+    if (!inviteCodes) {
+      console.error('Invite codes not found!')
+      setIsFetchingInvites(false)
+      return
     }
-    updateFocusedGiftCode(actionType === 'focus' ? idx : -1)
+
+    setInviteCodes(_.keyBy(inviteCodes, ({ id }) => id))
+    setIsFetchingInvites(false)
+  }, [])
+
+  useEffect(() => {
+    getAllInvitesOrGenerate(uid)
+  }, [])
+
+  /**
+   * Handle when a invite code is seen by user.
+   */
+  const onInviteCodeSeen = async (inviteCodeId: string) => {
+    const inviteCode = inviteCodes[inviteCodeId]
+
+    if (!inviteCode) {
+      console.error(`InviteCode with id ${inviteCodeId} not found`)
+      return
+    }
+
+    if (!inviteCode?.hasSeen) {
+      const updatedInviteCode = {
+        ...inviteCode,
+        hasSeen: true,
+      }
+
+      const updatedInviteCodes: Index<InviteCode> = {
+        ...inviteCodes,
+        [inviteCodeId]: updatedInviteCode,
+      }
+
+      setInviteCodes(updatedInviteCodes)
+      setFocusedGiftCode(inviteCode.id)
+
+      await updateInviteCode(updatedInviteCode)
+    }
   }
 
   /** Copy text to clipboard. */
   const updateCopy = (text: string) => {
     navigator.clipboard.writeText(text)
-    updateCopiedGiftCode(text)
+    dispatch(alert('Invite code copied to clipboard', { clearTimeout: 2000 }))
   }
-
-  // alert when invites code is copied to clipboard
-  useEffect(() => {
-    if (!firstUpdate.current) {
-      dispatch(alert('Invite code copied to clipboard', { clearTimeout: 2000 }))
-    } else {
-      firstUpdate.current = false
-    }
-  }, [copiedGiftCode])
 
   if (!authenticated) {
     return <div>You arent allowed to view this page. </div>
@@ -147,22 +145,24 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
         <p className='modal-description'>
           You get three shinny gift codes to share <b>em</b> with anyone you choose!
         </p>
-        {giftCode.map(({ link, used, id, type }, idx) => {
-          const selectedIconFill = focusedGiftCode !== idx ? 'grey' : undefined
+        {isFetchingInvites && <p style={{ fontSize: '18px' }}>Fetching your shiny codes ✨...</p>}
+        {Object.values(inviteCodes).map(({ used, id, hasSeen }, idx) => {
+          const selectedIconFill = focusedGiftCode !== id ? 'grey' : undefined
+          const link = `${window.location.origin}/signup?code=${id}`
           return (
-            <div key={`${idx}-gift-code`} className='gift-code-wrapper'>
+            <div key={`${id}-gift-code`} className='gift-code-wrapper'>
               <div
                 style={{ display: 'inline-flex' }}
-                onClick={() => changeType(idx, id, focusedGiftCode === idx ? 'blur' : 'focus')}
+                onClick={() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id))}
               >
                 <InvitesIcon fill={selectedIconFill} size={26} />
               </div>
-              <Input
-                type={type}
+              <input
+                type={hasSeen ? 'text' : 'password'}
                 placeholder='gift-code'
                 value={link}
-                onBlur={() => changeType(idx, id, 'blur')}
-                onFocus={() => changeType(idx, id, 'focus')}
+                onBlur={() => setFocusedGiftCode(null)}
+                onFocus={() => onInviteCodeSeen(id)}
               />
               {used ? (
                 <CheckmarkIcon fill={selectedIconFill} size={21} />

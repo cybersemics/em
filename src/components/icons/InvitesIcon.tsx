@@ -1,7 +1,14 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
 import { theme } from '../../selectors'
-import { ChatIconProps, State } from '../../@types'
+import { Index, State } from '../../@types'
+
+export interface IconProps {
+  dark?: boolean
+  fill?: string
+  size?: number
+  style?: Index<string>
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => ({
@@ -9,7 +16,7 @@ const mapStateToProps = (state: State) => ({
 })
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const InvitesIcon: FC<ChatIconProps> = ({ dark, fill, size = 20, style }) => (
+const InvitesIcon: FC<IconProps> = ({ dark, fill, size = 20, style }) => (
   <svg
     className='icon'
     x='0px'

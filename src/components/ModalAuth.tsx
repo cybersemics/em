@@ -1,10 +1,9 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { alert, login, setAuthLoader } from '../action-creators'
+import { alert, login } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
 import { ActionButton } from './ActionButton'
 import { Index } from '../@types'
-import Input from './Input'
 import Modal from './Modal'
 
 const firebaseErrorsIndex = {
@@ -97,7 +96,6 @@ const ModalAuth = () => {
    * Login using google account.
    */
   const signInWithGoogle = () => {
-    dispatch(setAuthLoader({ value: true }))
     updateIsSubmitting(true)
     dispatch(login())
   }
@@ -124,6 +122,7 @@ const ModalAuth = () => {
       title={activeMode.modalTitle}
       className='popup'
       center
+      preventCloseOnEscape={true}
       actions={({ close: closeModal }) => (
         <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
           <ActionButton
@@ -170,10 +169,10 @@ const ModalAuth = () => {
       )}
     >
       <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-        <Input type='email' placeholder='email' value={email} onChange={onChangeEmail} />
+        <input type='email' placeholder='email' value={email} onChange={onChangeEmail} />
 
         {!isModeActive(modes.resetPassword) && (
-          <Input type='password' placeholder='password' value={password} onChange={onChangePassword} />
+          <input type='password' placeholder='password' value={password} onChange={onChangePassword} />
         )}
 
         {isModeActive(modes.login) && (

@@ -20,7 +20,7 @@ export interface User {
   uid: string
   displayName: string
   email: string
-  invites: Record<string, never>
+  invites: Record<string, boolean>
   // see Firebase user for more properties
 }
 

@@ -125,6 +125,7 @@ const ModalWelcome = () => {
       title='Welcome to em'
       hideModalActions={!invited}
       center
+      preventCloseOnEscape={true}
       actions={({ close }) => (
         <View style={styles.alignItemsCentre}>
           <ActionButton title='START TUTORIAL' onClick={() => close()} />

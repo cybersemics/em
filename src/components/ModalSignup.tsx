@@ -1,45 +1,11 @@
-import React, { ChangeEvent, FC, useCallback, useEffect, useState, useRef } from 'react'
-import { connect, useDispatch } from 'react-redux'
+import React, { useCallback, useEffect, useState, ChangeEventHandler } from 'react'
+import { useDispatch } from 'react-redux'
 import { ActionButton } from './ActionButton'
-import { Index, Connected, State } from '../@types'
-import { showModal, updateInviteCode } from '../action-creators'
+import { Index, InviteCode } from '../@types'
+import { showModal } from '../action-creators'
 import Modal from './Modal'
-import { storage } from '../util/storage'
-import { getQueryStringParams } from '../util/getQueryString'
-
-const firebaseErrorsIndex = {
-  'signup/no-code':
-    'em is currently in beta. Please join the waitlist, or find a friendly person who can offer you an invite to gain access immediately.',
-  'signup/invalid-code': 'Invalid invitation code',
-  'signup/already-used-code': 'This invitation code has already been used',
-  default: 'Something went wrong',
-}
-
-type errorCode = keyof typeof firebaseErrorsIndex
-
-type SubmitAction = (closeModal: () => void, email: string, password?: string) => Promise<void>
-
-interface InputProps {
-  type: 'email' | 'password'
-  placeholder: string
-  onBlur: (e: ChangeEvent<HTMLInputElement>) => void
-  value: string
-}
-/**
- *
- */
-const Input: FC<InputProps> = ({ type, placeholder, value, onBlur }) => {
-  const [inputValue, updateInputValue] = useState(value)
-
-  useEffect(() => {
-    updateInputValue(value)
-  }, [value])
-
-  /** On input change handler. */
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => updateInputValue(e.target.value)
-
-  return <input type={type} placeholder={placeholder} value={inputValue} onChange={onChange} onBlur={onBlur} />
-}
+import { getInviteById, updateInviteCode } from '../apis/invites'
+import { getQueryParam, timestamp } from '../util'
 
 interface Mode {
   name: string
@@ -55,101 +21,112 @@ const modes: Index<Mode> = {
   },
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { invitationCode, invitationCodeDetail } = state
-  return {
-    invitationCode,
-    invitationCodeDetail,
-  }
+// TODO: Separate this into separate file to reuse.
+const firebaseErrorsIndex = {
+  'auth/weak-password': 'Password should be at least 6 characters',
+  'auth/email-already-in-use': 'Account already exists',
+  'auth/invalid-email': 'Invalid email',
+  'auth/wrong-password': 'Invalid username or password',
+  'auth/user-not-found': 'User not found',
+  'auth/too-many-requests': 'Account temporarily disabled. You can restore it by resetting your password',
+  default: 'Something went wrong',
 }
 
+type errorCode = keyof typeof firebaseErrorsIndex
+
 /** A modal dialog for signing up. */
-const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnType<typeof mapStateToProps>>) => {
+const ModalSignup = () => {
   const dispatch = useDispatch()
-  const errorCode = useRef('')
-  const [email, updateEmail] = useState('')
-  const [password, updatePassword] = useState('')
-  const [error, updateError] = useState<null | string>(null)
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  })
+
+  const [inviteCode, setInviteCode] = useState<InviteCode | null>(null)
+
+  const [isValidatingCode, setIsValidatingCode] = useState(true)
+  const [validationError, setValidationError] = useState<null | string>(null)
 
   const [isSubmitting, updateIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<null | string>(null)
 
-  useEffect(() => {
-    const hasInvite = invitationCodeDetail && Object.keys(invitationCodeDetail).length === 0
-    if (invitationCode === '') {
-      errorCode.current = 'signup/no-code'
-    } else if (hasInvite) {
-      errorCode.current = 'signup/invalid-code'
-    } else if (invitationCodeDetail && invitationCodeDetail.usedBy) {
-      errorCode.current = 'signup/already-used-code'
+  /**
+   * Gets the invitation code from url and the validates it.
+   */
+  const handleInvitationCode = useCallback(async () => {
+    const invitationCodeId = getQueryParam('code')
+
+    // TODO: Send user back to another screen if user has no valid code.
+    if (!invitationCodeId) {
+      setValidationError('Invitation code not found')
+      setIsValidatingCode(false)
+      return
     }
 
-    updateError(firebaseErrorsIndex[errorCode.current as errorCode])
-  }, [invitationCode, invitationCodeDetail])
-
-  useEffect(() => {
-    if (isSubmitting) storage.setItem('user-login', 'true')
-  }, [isSubmitting])
-
-  /** Sign up with email and password. */
-  const submitAction: SubmitAction = useCallback(async (closeModal, email, password) => {
-    updateIsSubmitting(true)
+    // TODO: May be use never throw style error handling
     try {
-      await window.firebase.auth().createUserWithEmailAndPassword(email, password!)
-      closeModal()
-      updateIsSubmitting(false)
-    } catch (error) {
-      updateIsSubmitting(false)
-      return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
-    }
+      const inviteCode = await getInviteById(invitationCodeId)
 
-    if (window && window.location.pathname.substr(1) === 'signup') {
-      const invitationCode = getQueryStringParams(window.location.search).code || ''
-      const user = window.firebase.auth().currentUser
-      dispatch(updateInviteCode(user.uid, invitationCode, true))
-      window.history.pushState({}, '', window.location.origin)
-      setTimeout(() => window.location.reload(), 300)
+      if (inviteCode.used) {
+        setValidationError('Invitation code has already been used.')
+        setIsValidatingCode(false)
+        return
+      }
+
+      // Set the invite code and is validating to false, only if code is valid.
+      setInviteCode(inviteCode)
+      setIsValidatingCode(false)
+    } catch (err) {
+      setValidationError(err.message)
+      setIsValidatingCode(false)
     }
   }, [])
 
-  /** Handle email change. */
-  const onChangeEmail = (e: ChangeEvent<HTMLInputElement>) => updateEmail(e.target.value)
+  useEffect(() => {
+    handleInvitationCode()
+  }, [])
 
-  /** Handle password change. */
-  const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
+  /** Sign up with email and password. */
+  const submitAction = useCallback(
+    async (closeModal: () => void) => {
+      updateIsSubmitting(true)
+      try {
+        await window.firebase.auth().createUserWithEmailAndPassword(formData.email, formData.password!)
 
-  /** Show Login with email and password. */
-  const showLogin = () => {
-    storage.setItem('user-login', 'false')
-    dispatch(showModal({ id: 'auth' }))
-  }
+        const user = window.firebase.auth().currentUser
 
-  if (error) {
-    return (
-      <Modal
-        id='signup'
-        title={modes.signup.modalTitle}
-        className='popup'
-        center
-        actions={() => (
-          <div>
-            <button
-              disabled={isSubmitting}
-              className='button'
-              onClick={showLogin}
-              style={{ textDecoration: 'underline', marginTop: 15 }}
-            >
-              Log in
-            </button>
-          </div>
-        )}
-      >
-        <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-          <span style={{ color: 'crimson', paddingBottom: '30px' }}>{error}</span>
-        </div>
-      </Modal>
-    )
-  }
+        const updatedInviteCode: InviteCode = {
+          ...inviteCode!,
+          hasSeen: true,
+          used: timestamp(),
+          usedBy: user.uid,
+        }
+
+        await updateInviteCode(updatedInviteCode)
+
+        closeModal()
+        updateIsSubmitting(false)
+
+        // TODO: May be use react router ?
+        window.history.pushState({}, '', window.location.origin)
+        setTimeout(() => window.location.reload(), 300)
+      } catch (error) {
+        updateIsSubmitting(false)
+        return setSubmitError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
+      }
+    },
+    [formData],
+  )
+
+  /**
+   * Handles form change.
+   */
+  const formChangeHandler: ChangeEventHandler<HTMLInputElement> = e =>
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    })
 
   return (
     <Modal
@@ -157,33 +134,71 @@ const ModalSignup = ({ invitationCode, invitationCodeDetail }: Connected<ReturnT
       title={modes.signup.modalTitle}
       className='popup'
       center
+      preventCloseOnEscape={true}
       actions={({ close: closeModal }) => (
-        <div style={undefined}>
-          <ActionButton
-            key={modes.signup.modalKey}
-            title={modes.signup.modalTitle}
-            active={true}
-            isLoading={isSubmitting}
-            onClick={() => submitAction(closeModal, email, password)}
-          />
-
-          <button
-            disabled={isSubmitting}
-            className='button'
-            onClick={showLogin}
-            style={{ textDecoration: 'underline', marginTop: 15 }}
-          >
-            Log in
-          </button>
+        <div>
+          {!isValidatingCode && (
+            <>
+              {/* Only show sign up button if invitation is valid. */}
+              {!validationError && inviteCode && (
+                <ActionButton
+                  key={modes.signup.modalKey}
+                  title={modes.signup.modalTitle}
+                  active={true}
+                  isDisabled={isSubmitting}
+                  isLoading={isSubmitting}
+                  onClick={() => submitAction(closeModal)}
+                />
+              )}
+              <button
+                disabled={isSubmitting}
+                className='button'
+                onClick={() => dispatch(showModal({ id: 'auth' }))}
+                style={{ textDecoration: 'underline', marginTop: 15 }}
+              >
+                Log in
+              </button>
+            </>
+          )}
         </div>
       )}
     >
-      <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-        <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
-        <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
-      </div>
+      {/* Show validation in progress */}
+      {isValidatingCode && <div style={{ fontSize: '18px' }}>Invitation code is being validated ☑️ ...</div>}
+      {/* Show validation or sunmit error. */}
+      {(validationError || submitError) && (
+        <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
+          <span style={{ color: 'crimson', paddingBottom: '30px', fontSize: '18px' }}>
+            {validationError || submitError}
+          </span>
+        </div>
+      )}
+      {/* Show sign up form only if invitation code is valid. */}
+      {!isValidatingCode && !validationError && inviteCode && (
+        <>
+          <div
+            style={{
+              fontWeight: 'bold',
+              fontSize: '18px',
+              marginBottom: '60px',
+            }}
+          >
+            You have a valid invite code. You can sign up 🎉
+          </div>
+          <form style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
+            <input name='email' type='email' placeholder='email' value={formData.email} onChange={formChangeHandler} />
+            <input
+              name='password'
+              type='password'
+              placeholder='password'
+              value={formData.password}
+              onChange={formChangeHandler}
+            />
+          </form>
+        </>
+      )}
     </Modal>
   )
 }
 
-export default connect(mapStateToProps)(ModalSignup)
+export default ModalSignup
