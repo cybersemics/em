@@ -180,10 +180,6 @@ const ContentEditable = ({
     props.onChange(e)
   }
 
-  // if (value === undefined) return null
-
-  // const _html] =
-
   return (
     <View style={commonStyles.flexOne}>
       <WebView
@@ -208,8 +204,6 @@ const ContentEditable = ({
             }
 
             case WEBVIEW_POST_EVENTS.onBlur: {
-              //  setValue(html)
-              //   console.log({ _html, value })
               setWebviewHTML(getWebHTML({ innerHTML: html, placeholder }))
 
               if (props.onBlur) props.onBlur()
@@ -226,7 +220,6 @@ const ContentEditable = ({
               break
             }
 
-            // TODO: improve onChange event: if we use oninput to listen to changes on the text the component ends up rendering and taking cursor focus and dismissing the keyboard.
             case WEBVIEW_POST_EVENTS.onChange: {
               handleInput(webEvent)
               break
