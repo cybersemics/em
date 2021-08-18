@@ -66,7 +66,7 @@ const AppComponent: React.FC = () => {
 
   /** List to show sidebar. */
   useEffect(() => {
-    if (showSidebar) return openDrawer()
+    showSidebar ? openDrawer() : drawerRef?.current?.closeDrawer()
   }, [showSidebar])
 
   const contentHeight = {
@@ -90,37 +90,35 @@ const AppComponent: React.FC = () => {
           {showAlert && <Alert />}
           <ErrorMessage />
           <Toolbar />
-          <MultiGesture
-            onGesture={(g: Direction | null, path: GesturePath) => {
-              setIsGestureActive(true)
-              handleGestureSegment(g, path)
-            }}
-            onEnd={(...args) => {
-              setIsGestureActive(false)
-              handleGestureEnd(...args)
-            }}
-            shouldCancelGesture={shouldCancelGesture}
-            onCancel={() => {
-              setIsGestureActive(false)
-              handleGestureCancel()
-            }}
+          <ScrollView
+            scrollEnabled={!isGestureActive}
+            nestedScrollEnabled={true}
+            contentContainerStyle={flexGrow}
+            style={flexOne}
           >
             <View style={contentHeight}>
-              <ScrollView
-                scrollEnabled={!isGestureActive}
-                nestedScrollEnabled={true}
-                contentContainerStyle={flexGrow}
-                style={flexOne}
+              <MultiGesture
+                onGesture={(g: Direction | null, path: GesturePath) => {
+                  setIsGestureActive(true)
+                  handleGestureSegment(g, path)
+                }}
+                onEnd={(...args) => {
+                  setIsGestureActive(false)
+                  handleGestureEnd(...args)
+                }}
+                shouldCancelGesture={shouldCancelGesture}
+                onCancel={() => {
+                  setIsGestureActive(false)
+                  handleGestureCancel()
+                }}
               >
                 <Content scrollEnabled={!isGestureActive} />
-              </ScrollView>
-
+              </MultiGesture>
               <NavBar position='top' />
             </View>
 
             <Footer />
-          </MultiGesture>
-
+          </ScrollView>
           <ModalAuth />
           <ModalFeedback />
           <ModalHelp />
