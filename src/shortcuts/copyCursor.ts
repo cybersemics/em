@@ -2,7 +2,7 @@ import ClipboardJS from 'clipboard'
 import { editableNode, exportPhrase, hashContext, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { exportContext, getDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
-import { Shortcut } from '../@types'
+import { Shortcut, SimplePath, State } from '../@types'
 
 /** Copies a string directly to the clipboard by simulating a button click with ClipboadJS. */
 const copy = (s: string): void => {
@@ -10,6 +10,25 @@ const copy = (s: string): void => {
   const clipboard = new ClipboardJS(dummyButton, { text: () => s })
   dummyButton.click()
   clipboard.destroy()
+}
+
+/** Returns true if any descendants of the given Path is pending. Stops traversing when any pending descendant is found. */
+const hasPending = (state: State, simplePath: SimplePath) => {
+  let isPendingFound = false
+  // ignore the return value of getDescendants
+  // we are just using its filterFunction to check pending
+  getDescendants(state, simplePath, {
+    filterFunction: (child, context) => {
+      const contextChild = [...context, child.value]
+      if (isPending(state, contextChild)) {
+        isPendingFound = true
+      }
+      // if pending has been found, return false to filter out all remaining children and short circuit
+      return !isPendingFound
+    },
+  })
+
+  return isPendingFound
 }
 
 const copyCursorShortcut: Shortcut = {
@@ -29,15 +48,7 @@ const copyCursorShortcut: Shortcut = {
 
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
-    let hasPending = false
-    getDescendants(state, simplePath, {
-      // use filterFunction just to check if any child is pending
-      filterFunction: (child, context) => {
-        if (isPending(state, [...context, child.value])) hasPending = true
-        return true
-      },
-    })
-    if (hasPending) {
+    if (hasPending(state, simplePath)) {
       dispatch(alert('Loading thoughts...', { alertType: 'clipboard' }))
       await dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
     }
