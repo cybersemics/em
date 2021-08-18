@@ -53,7 +53,10 @@ const copyCursorShortcut: Shortcut = {
       await dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
     }
 
-    const exported = exportContext(state, context, 'text/plain')
+    // get new state after pull
+    const stateAfterPull = getState()
+
+    const exported = exportContext(stateAfterPull, context, 'text/plain')
     copy(exported)
 
     // restore selection
@@ -61,7 +64,7 @@ const copyCursorShortcut: Shortcut = {
     setSelection(el!, { offset })
 
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
-    const phrase = exportPhrase(state, context, numDescendants)
+    const phrase = exportPhrase(stateAfterPull, context, numDescendants)
 
     dispatch(
       alert(`Copied ${phrase} to the clipboard`, {
