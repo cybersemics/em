@@ -8,7 +8,7 @@ import waitForEditable from './waitForEditable'
  * */
 const editThought = async (browser: Browser<'async'>, value: string) => {
   await browser.sendKeys([value])
-  await waitForEditable(browser, value)
+  return await waitForEditable(browser, value)
 }
 
 export default editThought

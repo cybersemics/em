@@ -1,9 +1,7 @@
 import React from 'react'
-// import { isDocumentEditable } from '../util'
-// import subCategorizeOne from '../action-creators/subCategorizeOne'
+import subCategorizeOne from '../action-creators/subCategorizeOne'
 import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { Path } from 'react-native-svg'
-import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -20,9 +18,8 @@ const subCategorizeOneShortcut: Shortcut = {
   gesture: 'lu',
   keyboard: { key: 'o', meta: true, alt: true },
   svg: Icon,
-  exec: () => Alert.alert('subCategorizeOneShortcut'),
-  /*  canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  exec: dispatch => dispatch(subCategorizeOne()) */
+  /* canExecute: getState => isDocumentEditable() && !!getState().cursor */
+  exec: dispatch => dispatch(subCategorizeOne()),
 }
 
 // a shortcut for Raine until we have custom user shortcuts
@@ -32,9 +29,8 @@ export const subCategorizeOneShortcutAlias: Shortcut = {
   hideFromInstructions: true,
   keyboard: { key: ']', meta: true },
   svg: Icon,
-  exec: () => Alert.alert('subCategorizeOneShortcutAlias'),
-  /* canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  exec: dispatch => dispatch(subCategorizeOne()) */
+  /* canExecute: getState => isDocumentEditable() && !!getState().cursor */
+  exec: dispatch => dispatch(subCategorizeOne()),
 }
 
 export default subCategorizeOneShortcut

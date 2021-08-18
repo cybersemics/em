@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import Toolbar from './Toolbar'
 import NavBar from './NavBar'
 import ModalFeedback from './ModalFeedback'
-import { toggleSidebar } from '../action-creators'
+import { toggleSidebar, alert } from '../action-creators'
 import { useDispatch, useSelector } from 'react-redux'
 import { DrawerLayout } from 'react-native-gesture-handler'
 import Sidebar from './Sidebar'
@@ -15,24 +15,44 @@ import Alert from './Alert'
 import Footer from './Footer'
 import { useDimensions } from '@react-native-community/hooks'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { State } from '../@types'
+import { Direction, GesturePath, State } from '../@types'
 import { commonStyles } from '../style/commonStyles'
 import ModalAuth from './ModalAuth'
 import ErrorMessage from './ErrorMessage'
-import Content from './Content'
+import Content from './Content.native'
 
-const { flexOne, darkBackground } = commonStyles
+import MultiGesture from './MultiGesture'
+import { store } from '../store'
+import { isGestureHint, inputHandlers } from '../shortcuts'
+
+const { flexOne, darkBackground, flexGrow } = commonStyles
+
+const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
+
+/** Cancel gesture if there is an active text selection on active drag. */
+const shouldCancelGesture = () => store?.getState().dragInProgress
+
+/** Dismiss gesture hint that is shown by alert. */
+const handleGestureCancel = () => {
+  store.dispatch((dispatch, getState) => {
+    if (isGestureHint(getState())) {
+      dispatch(alert(null))
+    }
+  })
+}
 
 /**
  * AppComponent container.
  */
 const AppComponent: React.FC = () => {
   const drawerRef = useRef<DrawerLayout>(null)
+
   const dispatch = useDispatch()
   const { height } = useDimensions().screen
+  const [isGestureActive, setIsGestureActive] = useState(false)
 
   const showSidebar = useSelector((state: State) => state.showSidebar)
-  const alert = useSelector((state: State) => state.alert)
+  const showAlert = useSelector((state: State) => state.alert)
 
   /** Open drawer menu. */
   const openDrawer = () => {
@@ -67,19 +87,39 @@ const AppComponent: React.FC = () => {
           onDrawerClose={onDrawerClose}
           renderNavigationView={Sidebar}
         >
-          {alert && <Alert />}
+          {showAlert && <Alert />}
           <ErrorMessage />
           <Toolbar />
-          <ScrollView nestedScrollEnabled={true} style={flexOne}>
+          <MultiGesture
+            onGesture={(g: Direction | null, path: GesturePath) => {
+              setIsGestureActive(true)
+              handleGestureSegment(g, path)
+            }}
+            onEnd={(...args) => {
+              setIsGestureActive(false)
+              handleGestureEnd(...args)
+            }}
+            shouldCancelGesture={shouldCancelGesture}
+            onCancel={() => {
+              setIsGestureActive(false)
+              handleGestureCancel()
+            }}
+          >
             <View style={contentHeight}>
-              <ScrollView nestedScrollEnabled={true} style={flexOne}>
-                <Content />
+              <ScrollView
+                scrollEnabled={!isGestureActive}
+                nestedScrollEnabled={true}
+                contentContainerStyle={flexGrow}
+                style={flexOne}
+              >
+                <Content scrollEnabled={!isGestureActive} />
               </ScrollView>
+
               <NavBar position='top' />
             </View>
 
             <Footer />
-          </ScrollView>
+          </MultiGesture>
 
           <ModalAuth />
           <ModalFeedback />

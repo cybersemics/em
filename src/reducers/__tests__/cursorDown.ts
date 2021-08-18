@@ -304,4 +304,13 @@ describe('context view', () => {
 
     expect(pathToContext(stateNew.cursor || [])).toMatchObject(['a', 'm', 'a', 'y'])
   })
+
+  it('should not move cursor if the cursor on last thought', () => {
+    const steps = [newThought('a'), newThought('b'), setCursor({ path: [{ value: 'b', rank: 1 }] }), cursorDown]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.cursor).toMatchObject([{ value: 'b', rank: 1 }])
+  })
 })

@@ -52,7 +52,7 @@ const newThought =
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
     // making sure the current focus in on the editable component to prevent splitting
-    const isFocusOnEditable = document.activeElement!.classList.contains('editable')
+    const isFocusOnEditable = document?.activeElement!.classList.contains('editable')
 
     // Determine if thought at path is uneditable
     const contextOfCursor = path && pathToContext(path)

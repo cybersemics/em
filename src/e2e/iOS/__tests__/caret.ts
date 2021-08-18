@@ -26,7 +26,7 @@ const {
   waitUntil,
 } = helpers()
 
-it('Enter edit mode', async () => {
+it('Enter edit mode ', async () => {
   await newThought('foo')
   await hideKeyboardByTappingDone()
 
@@ -229,4 +229,28 @@ it('Swipe over hidden thought', async () => {
   }, newThoughtEditable)
 
   expect(previousSibling).toBe('y')
+})
+
+it('Bump Thought Down on a thought that has children', async () => {
+  await newThought('foo')
+  await newThought('bar', { insertNewSubthought: true })
+  await hideKeyboardByTappingDone()
+
+  const editableNodeHandle = await getEditable('foo')
+  await tap(editableNodeHandle)
+
+  await gesture(gestures.bumpThoughtDown)
+  const newThoughtEditable = await editThought('new')
+  const selectionTextContent = await getSelection().focusNode?.textContent
+
+  const childrenTexts = await ref().execute((newThoughtEditable: Element<'async'>) => {
+    const children = (newThoughtEditable as unknown as HTMLElement)
+      .closest('ul.children')
+      ?.firstElementChild?.getElementsByTagName('ul')[0]
+      ?.getElementsByClassName('editable') as HTMLCollection
+    return Array.from(children).map(x => (x as HTMLElement).innerText)
+  }, newThoughtEditable)
+
+  expect(selectionTextContent).toBe('new')
+  expect(childrenTexts).toEqual(['foo', 'bar'])
 })

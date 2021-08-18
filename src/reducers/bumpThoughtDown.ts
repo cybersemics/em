@@ -1,3 +1,4 @@
+/* eslint-disable */
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
 import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
@@ -38,6 +39,17 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       newPath: simplePathWithNewRank,
     }),
 
+    // new thought
+    state => {
+      // the context of the new empty thought
+      const contextEmpty = pathToContext(simplePath as Path)
+      return createThought(state, {
+        context: contextEmpty,
+        rank: getPrevRank(state, contextEmpty),
+        value,
+      })
+    },
+
     // clear text
     editThought({
       oldValue: value,
@@ -46,20 +58,11 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       path: simplePathWithNewRank,
     }),
 
-    // new thought
-    state => {
-      // the context of the new empty thought
-      const contextEmpty = pathToContext(simplePathWithNewRankAndValue as Path)
-      return createThought(state, {
-        context: contextEmpty,
-        rank: getPrevRank(state, contextEmpty),
-        value,
-      })
-    },
-
     // set cursor
     setCursor({
       path: simplePathWithNewRankAndValue,
+      editing: true,
+      offset: 0,
     }),
     editableRender,
   ])(state)

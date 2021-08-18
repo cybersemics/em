@@ -9,8 +9,8 @@ Test:
 
 */
 
-import React, { useEffect, useState } from 'react'
-import { connect } from 'react-redux'
+import React, { FC, useCallback, useEffect, useState } from 'react'
+import { connect, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
 import { isTouch } from '../browser'
@@ -19,6 +19,7 @@ import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators
 import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { subtree, theme } from '../selectors'
 import { Icon, State, Timer } from '../@types'
+import { createSelector } from 'reselect'
 
 // components
 import TriangleLeft from './TriangleLeft'
@@ -29,16 +30,7 @@ const ARROW_SCROLL_BUFFER = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const {
-    cursor,
-    fontSize,
-    thoughts,
-    isLoading,
-    toolbarOverlay,
-    scrollPrioritized,
-    showTopControls,
-    showHiddenThoughts,
-  } = state
+  const { fontSize, isLoading, toolbarOverlay, scrollPrioritized, showTopControls, showHiddenThoughts } = state
 
   return {
     dark: theme(state) !== 'Light',
@@ -47,12 +39,104 @@ const mapStateToProps = (state: State) => {
     scrollPrioritized,
     toolbarOverlay,
     // We cannot know if any one the shortcut's active status,has changed, so we re-render everytime thoughts or cursor is changed
-    thoughts,
-    cursor,
     showTopControls,
     // Needed to add this to re-render Toolbar when hidden thought is toggled.
     showHiddenThoughts,
   }
+}
+
+interface ToolbarIconProps {
+  shortcutId: string
+  isPressing: boolean
+  startOverlayTimer: (id: string) => void
+  clearHoldTimer: () => void
+  setPressingToolbarId: (id: string) => void
+  fontSize: number
+  fg: string
+}
+
+/**
+ * Selects thoughts from the state.
+ */
+const thoughtsSelector = (state: State) => state.thoughts
+/**
+ * Selects cursor from the state.
+ */
+const cursorSelector = (state: State) => state.cursor
+
+/**
+ * Creates new memoized selector with a boolean function as a tranform function. It  only recomputes on change in thoughts and cursor.
+ */
+const makeBooleanSelector = (check: () => boolean) => createSelector([thoughtsSelector, cursorSelector], () => check())
+
+/**
+ * ToolbarIcon component.
+ */
+const ToolbarIcon: FC<ToolbarIconProps> = ({
+  shortcutId,
+  isPressing,
+  startOverlayTimer,
+  clearHoldTimer,
+  setPressingToolbarId,
+  fontSize,
+  fg,
+}) => {
+  const { svg, exec, isActive, canExecute } = shortcutById(shortcutId)!
+
+  const isActiveSelector = useCallback(isActive ? makeBooleanSelector(() => isActive(store.getState)) : () => true, [
+    isActive,
+  ])
+
+  const canExecuteSelector = useCallback(
+    canExecute ? makeBooleanSelector(() => canExecute(store.getState)) : () => true,
+    [canExecute],
+  )
+
+  const isButtonActive = useSelector((state: State) => isActiveSelector(state))
+
+  const isButtonExecutable = useSelector((state: State) => canExecuteSelector(state))
+
+  // TODO: type svg correctly
+  const SVG = svg as React.FC<Icon>
+
+  return (
+    <div
+      key={shortcutId}
+      id={shortcutId}
+      style={{
+        paddingTop: isButtonExecutable && isPressing ? '10px' : '',
+        cursor: isButtonExecutable ? 'pointer' : 'default',
+      }}
+      className='toolbar-icon'
+      onMouseOver={() => startOverlayTimer(shortcutId)}
+      onMouseUp={clearHoldTimer}
+      onMouseDown={e => {
+        setPressingToolbarId(shortcutId)
+        // prevents editable blur
+        e.preventDefault()
+      }}
+      onMouseOut={clearHoldTimer}
+      onTouchEnd={clearHoldTimer}
+      onTouchStart={() => {
+        startOverlayTimer(shortcutId)
+        setPressingToolbarId(shortcutId)
+      }}
+      onClick={e => {
+        e.preventDefault()
+        if (!isButtonExecutable) return
+        exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+      }}
+    >
+      <SVG
+        style={{
+          cursor: isButtonExecutable ? 'pointer' : 'default',
+          fill: isButtonExecutable && isButtonActive ? fg : 'gray',
+          width: fontSize + 4,
+          height: fontSize + 4,
+        }}
+      />
+    </div>
+  )
 }
 
 /** Toolbar component. */
@@ -210,49 +294,17 @@ const Toolbar = ({
               <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
             </span>
             {shortcutIds.map(id => {
-              const { svg, exec, isActive, canExecute } = shortcutById(id)!
-              const isButtonActive = !isActive || isActive(store.getState)
-              const isButtonExecutable = !canExecute || canExecute(store.getState)
-
-              // TODO: type svg correctly
-              const SVG = svg as React.FC<Icon>
               return (
-                <div
+                <ToolbarIcon
+                  shortcutId={id}
                   key={id}
-                  id={id}
-                  style={{
-                    paddingTop: isButtonExecutable && pressingToolbarId === id ? '10px' : '',
-                    cursor: isButtonExecutable ? 'pointer' : 'default',
-                  }}
-                  className='toolbar-icon'
-                  onMouseOver={() => startOverlayTimer(id)}
-                  onMouseUp={clearHoldTimer}
-                  onMouseDown={e => {
-                    setPressingToolbarId(id)
-                    // prevents editable blur
-                    e.preventDefault()
-                  }}
-                  onMouseOut={clearHoldTimer}
-                  onTouchEnd={clearHoldTimer}
-                  onTouchStart={() => {
-                    startOverlayTimer(id)
-                    setPressingToolbarId(id)
-                  }}
-                  onClick={e => {
-                    e.preventDefault()
-                    if (!isButtonExecutable) return
-                    exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-                  }}
-                >
-                  <SVG
-                    style={{
-                      cursor: isButtonExecutable ? 'pointer' : 'default',
-                      fill: isButtonExecutable && isButtonActive ? fg : 'gray',
-                      width: fontSize + 4,
-                      height: fontSize + 4,
-                    }}
-                  />
-                </div>
+                  startOverlayTimer={startOverlayTimer}
+                  setPressingToolbarId={setPressingToolbarId}
+                  fg={fg}
+                  fontSize={fontSize}
+                  clearHoldTimer={clearHoldTimer}
+                  isPressing={pressingToolbarId === id}
+                />
               )
             })}
             <span id='right-arrow' className={rightArrowElementClassName}>

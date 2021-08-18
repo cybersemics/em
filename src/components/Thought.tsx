@@ -61,7 +61,6 @@ export interface ThoughtContainerProps {
   childrenForced?: Child[]
   contextBinding?: Path
   path: Path
-  count?: number
   cursor?: Path | null
   depth?: number
   env?: Index<Context>
@@ -106,6 +105,7 @@ interface ThoughtProps {
   style?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
+  editing?: boolean | null
 }
 
 export type ConnectedThoughtProps = ThoughtProps &
@@ -125,7 +125,7 @@ const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GL
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
-  const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath } = state
+  const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath, editing } = state
 
   const { path, simplePath, showContexts, depth } = props
 
@@ -179,6 +179,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     publish: !search && publishMode(),
     simplePathLive,
     view: attribute(state, contextLive, '=view'),
+    editing,
   }
 }
 
@@ -211,7 +212,6 @@ const ThoughtContainer = ({
   childrenForced,
   contextBinding,
   path,
-  count = 0,
   cursor,
   cursorOffset,
   depth = 0,
@@ -244,6 +244,7 @@ const ThoughtContainer = ({
   simplePathLive,
   view,
   toggleTopControlsAndBreadcrumbs,
+  editing,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
 
@@ -477,6 +478,7 @@ const ThoughtContainer = ({
             simplePath={simplePath}
             toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
             view={view}
+            editing={editing}
           />
 
           <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
@@ -490,7 +492,6 @@ const ThoughtContainer = ({
           childrenForced={childrenForced}
           env={env}
           path={path}
-          count={count}
           depth={depth}
           isParentHovering={isAnyChildHovering}
           showContexts={allowSingleContext}

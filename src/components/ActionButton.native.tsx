@@ -41,5 +41,5 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: '50%',
   },
-  title: { fontSize: 2 },
+  title: { fontSize: 2, color: '#000' },
 })

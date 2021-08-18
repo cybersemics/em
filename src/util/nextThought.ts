@@ -14,7 +14,7 @@ import {
 import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 interface NextThoughtResult {
-  nextThoughts: Path
+  nextThoughts: Path | null
   contextChain: SimplePath[]
 }
 
@@ -247,8 +247,8 @@ const nextInThoughtView = (
       ? nextUncle()
       : // reached root thought
         {
-          nextThoughts: HOME_PATH,
-          contextChain,
+          nextThoughts: null,
+          contextChain: [] as SimplePath[],
         }
   }
 

@@ -51,6 +51,7 @@ import {
 
 // reducers
 import { alert, createThought, setCursor, tutorialNext, tutorialStep as tutorialStepReducer } from '../reducers'
+import { isMobile } from '../util/isMobile'
 
 export interface NewThoughtPayload {
   at?: Path
@@ -166,7 +167,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       ? setCursor({
           editing: true,
           path: unroot([...(insertNewSubthought ? path : parentOf(path)), { value, rank: newRank, id }]),
-          offset: offset != null ? offset : getTextContentFromHTML(value).length,
+          offset: isMobile() ? 0 : offset != null ? offset : getTextContentFromHTML(value).length,
         })
       : null,
 

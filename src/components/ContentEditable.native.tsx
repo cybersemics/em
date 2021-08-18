@@ -5,12 +5,16 @@ import { RichEditor, RichEditorProps, RichToolbar } from 'react-native-pell-rich
 import { commonStyles } from '../style/commonStyles'
 
 interface ContentEditableProps extends RichEditorProps {
-  style: ViewStyle
+  style?: ViewStyle
   html: string
   disabled?: boolean
   isEditing?: boolean
-  forceUpdate: boolean
+  forceUpdate?: boolean
   onChange: (e: string) => void
+}
+export interface IKeyDown {
+  keyCode: number
+  key: string
 }
 
 /**
