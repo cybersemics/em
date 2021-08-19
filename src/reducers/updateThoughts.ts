@@ -85,6 +85,18 @@ const updateThoughts = (
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
+  // Debug: Some Child objects are missing their value property after the UndoRedoReducerEnhancer runs.
+  // This can be removed after #1406 is fixed and undo/redo is used for a prolonged period in production
+  Object.values(contextIndexUpdates).forEach(parentUpdate =>
+    parentUpdate?.children.forEach(child => {
+      if (child.value == null || child.rank == null) {
+        console.error('child', child)
+        console.error('parent', parentUpdate)
+        throw new Error('Child is missing a value property')
+      }
+    }),
+  )
+
   // The contextIndex and thoughtIndex can consume more and more memory as thoughts are pulled from the db.
   // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and thoughtIndex.
   // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
