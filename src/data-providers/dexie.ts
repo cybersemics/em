@@ -8,12 +8,6 @@ import { getSessionId } from '../util/sessionManager'
 import win from './win'
 import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, ThoughtUpdates, Timestamp } from '../@types'
 
-/** Get object merged with path updates. */
-const applyUpdates = <T extends Index>(original: T, pathUpdates: Index) =>
-  Object.keys(pathUpdates).reduce((acc, key) => {
-    return _.setWith(_.clone(acc), key, pathUpdates[key], _.clone)
-  }, original)
-
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
 // NOTE: Could not get this to work in setupTests.js
@@ -231,15 +225,16 @@ export const fullTextSearch = async (value: string) => {
 export const log = async ({ message, stack }: { message: string; stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
 
-// maps to dexie-observable's DatabaseChangeType which cannot be imported
+// Maps to dexie-observable's DatabaseChangeType which cannot be imported.
+// See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
 const DatabaseChangeType = {
   Created: 1,
   Updated: 2,
   Deleted: 3,
 }
 
-/** Parse a Created change event and return updates as normalized Updates. */
-const createdChangeUpdates = (change: ICreateChange) => {
+/** Parse a Created or Updated change event and return updates as normalized Updates. */
+const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) => {
   const { table, key, obj } = change
   return {
     contextIndexUpdates: table === 'contextIndex' ? { [key]: obj as Parent } : {},
@@ -247,49 +242,12 @@ const createdChangeUpdates = (change: ICreateChange) => {
   }
 }
 
-/** Parse a Update change event and return updates as normalized Updates.  */
-const updatedChangeUpdates = async (change: IUpdateChange) => {
-  const { key, table, mods: updates } = change
-
-  /**
-   * Dexie incorrectly sends null as a child value if a thought is removed from a context.
-   * We need to manually filter out such children that can cause the app to break.
-   */
-  const removeInvalidContexts = (lexeme: Lexeme): Lexeme => ({
-    ...lexeme,
-    contexts: lexeme.contexts.filter(c => c !== null),
-  })
-
-  /** Filter thoughts with null contexts. */
-  const filterInvalidContexts = (parent: Parent): Parent => ({
-    ...parent,
-    children: parent.children.filter(child => child !== null),
-  })
-  /** Get lexeme merged with updates. */
-  const getThoughtUpdates = async (id: string, updates: Index) => {
-    const lexeme = await getThoughtById(id)
-    const lexemeNew = lexeme ? applyUpdates(lexeme, updates as Lexeme) : null
-    return lexemeNew ? { [key]: removeInvalidContexts(lexemeNew) } : {}
-  }
-  /** Get context merged with updates. */
-  const getContextUpdates = async (id: string, updates: Index) => {
-    const context = await getContextById(id)
-    const parentNew = context ? applyUpdates(context, updates as Parent) : null
-    return parentNew ? { [key]: filterInvalidContexts(parentNew) } : {}
-  }
-
-  return {
-    contextIndexUpdates: table === 'contextIndex' ? await getContextUpdates(key, updates) : {},
-    thoughtIndexUpdates: table === 'thoughtIndex' ? await getThoughtUpdates(key, updates) : {},
-  }
-}
-
 /** Parse a Delete change event and return updates as normalized Updates.  */
 const deletedChangeUpdates = (change: IDeleteChange) => {
   const { key, table, oldObj } = change
   return {
-    contextIndexUpdates: table === 'contextIndex' && oldObj && oldObj.id ? { [key as string]: null } : {},
-    thoughtIndexUpdates: table === 'thoughtIndex' && oldObj && oldObj.id ? { [key as string]: null } : {},
+    contextIndexUpdates: table === 'contextIndex' && oldObj?.id ? { [key]: null } : {},
+    thoughtIndexUpdates: table === 'thoughtIndex' && oldObj?.id ? { [key]: null } : {},
   }
 }
 
@@ -300,9 +258,9 @@ export const subscribe = (onUpdate: (updates: ThoughtUpdates) => void) => {
       changes.forEach(async change => {
         const updates =
           change.type === DatabaseChangeType.Created
-            ? createdChangeUpdates(change as ICreateChange)
+            ? createdOrUpdatedChangeUpdates(change as ICreateChange)
             : change.type === DatabaseChangeType.Updated
-            ? await updatedChangeUpdates(change as IUpdateChange)
+            ? createdOrUpdatedChangeUpdates(change as IUpdateChange)
             : change.type === DatabaseChangeType.Deleted
             ? deletedChangeUpdates(change as IDeleteChange)
             : null
