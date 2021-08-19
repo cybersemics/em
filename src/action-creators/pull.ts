@@ -3,9 +3,9 @@ import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { HOME_TOKEN } from '../constants'
-import { hashContext, mergeThoughts } from '../util'
+import { hashContext, keyValueBy, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
-import { isPending } from '../selectors'
+import { getDescendantContexts, isPending } from '../selectors'
 import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../@types'
 
 const BUFFER_DEPTH = 2
@@ -37,10 +37,28 @@ const pull =
   async (dispatch, getState) => {
     if (Object.keys(contextMap).length === 0) return false
 
+    // pull only pending contexts
+    const state = getState()
+    const pendingContexts = _.flatMap(Object.values(contextMap), context =>
+      isPending(state, context)
+        ? // if the original contextMap context is pending, use it
+          [context]
+        : // otherwise search for pending descendants
+          getDescendantContexts(state, context).filter(context => isPending(state, context)),
+    )
+
+    // short circuit if there are no pending contexts to fetch
+    if (pendingContexts.length === 0) return false
+
+    // convert list of descendant pending contexts to a ContextMap
+    const contextMapPending = keyValueBy(pendingContexts, context => ({
+      [hashContext(context)]: context,
+    }))
+
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    const thoughtsLocalIterable = getManyDescendants(db, contextMap, { maxDepth: maxDepth || BUFFER_DEPTH })
+    const thoughtsLocalIterable = getManyDescendants(db, contextMapPending, { maxDepth: maxDepth || BUFFER_DEPTH })
     // eslint-disable-next-line fp/no-loops
     for await (const thoughts of thoughtsLocalIterable) {
       // eslint-disable-next-line fp/no-mutating-methods
@@ -63,12 +81,12 @@ const pull =
       onLocalThoughts?.(thoughts)
     }
 
-    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
+    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2), {})
 
     // get remote thoughts and reconcile with local
     const status = getState().status
     if (status === 'loaded') {
-      const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMap, {
+      const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMapPending, {
         maxDepth: maxDepth || BUFFER_DEPTH,
       })
 
@@ -138,14 +156,14 @@ const pull =
 
     // if we are pulling the home context and there are no pending thoughts, but the home parent is marked a pending, it means there are no children and we need to clear the pending status manually
     // https://github.com/cybersemics/em/issues/1344
-    const state = getState()
-    if (ROOT_ENCODED in contextMap && !hasPending && isPending(state, [HOME_TOKEN])) {
+    const stateNew = getState()
+    if (ROOT_ENCODED in contextMap && !hasPending && isPending(stateNew, [HOME_TOKEN])) {
       dispatch(
         updateThoughts({
           contextIndexUpdates: {
-            ...state.thoughts.contextIndex,
+            ...stateNew.thoughts.contextIndex,
             [ROOT_ENCODED]: {
-              ...state.thoughts.contextIndex[ROOT_ENCODED],
+              ...stateNew.thoughts.contextIndex[ROOT_ENCODED],
               pending: false,
             },
           },
