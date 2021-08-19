@@ -5,8 +5,8 @@ import getManyDescendants from '../data-providers/data-helpers/getManyDescendant
 import { HOME_TOKEN } from '../constants'
 import { hashContext, keyValueBy, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
-import { getDescendantContexts, isPending } from '../selectors'
-import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../@types'
+import { getDescendantContexts, getParent, isPending } from '../selectors'
+import { Thunk, Context, Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = hashContext([HOME_TOKEN])
@@ -25,6 +25,25 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
   }
 }
 
+/** Returns a list of pending contexts or missing parents from all contextMap contexts and their descendants. */
+const getPendingOrMissingContexts = (state: State, contextMap: Index<Context>) => {
+  /** Returns true if the context is pending or missing from the contextIndex. */
+  const isPendingOrMissing = (context: Context) => {
+    const parent = getParent(state, context)
+    return !parent || parent.pending
+  }
+
+  const contextsFiltered = _.flatMap(Object.values(contextMap), context =>
+    isPendingOrMissing(context)
+      ? // if the original contextMap context is pending, use it
+        [context]
+      : // otherwise search for pending or missing descendants
+        getDescendantContexts(state, context).filter(isPendingOrMissing),
+  )
+
+  return contextsFiltered
+}
+
 /**
  * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
@@ -37,15 +56,9 @@ const pull =
   async (dispatch, getState) => {
     if (Object.keys(contextMap).length === 0) return false
 
-    // pull only pending contexts
-    const state = getState()
-    const pendingContexts = _.flatMap(Object.values(contextMap), context =>
-      isPending(state, context)
-        ? // if the original contextMap context is pending, use it
-          [context]
-        : // otherwise search for pending descendants
-          getDescendantContexts(state, context).filter(context => isPending(state, context)),
-    )
+    // Pull only pending contexts and missing parents.
+    // Missing parents only occur in 2-part deletes (see flushDeletes and associated logic).
+    const pendingContexts = getPendingOrMissingContexts(getState(), contextMap)
 
     // short circuit if there are no pending contexts to fetch
     if (pendingContexts.length === 0) return false
