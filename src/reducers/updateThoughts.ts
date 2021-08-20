@@ -82,6 +82,8 @@ const updateThoughts = (
     isLoading,
   }: UpdateThoughtsOptions,
 ) => {
+  if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(thoughtIndexUpdates).length === 0) return state
+
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
