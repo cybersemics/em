@@ -128,7 +128,7 @@ const toggleSortShortcut: Shortcut = {
         currentSortPreference.direction &&
         dispatch(
           toggleAttribute({
-            context: [...unroot(context), '=sort'],
+            context: unroot([...context, '=sort']),
             key: currentSortPreference.type,
             value: currentSortPreference.direction,
           }),
@@ -149,7 +149,7 @@ const toggleSortShortcut: Shortcut = {
       nextSortPreference.direction &&
         dispatch(
           toggleAttribute({
-            context: [...context, '=sort'],
+            context: unroot([...context, '=sort']),
             key: nextSortPreference.type,
             value: nextSortPreference.direction,
           }),
