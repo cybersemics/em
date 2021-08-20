@@ -725,8 +725,7 @@ it('pending destination should be merged correctly (fetch pending before move)',
   ])
 })
 
-// TODO
-it.skip('only fetch the descendants up to the possible conflicting path', async () => {
+it('only fetch the descendants up to the possible conflicting path', async () => {
   initialize()
 
   const text = `
