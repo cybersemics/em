@@ -101,7 +101,7 @@ const updateThoughts = (
       invalidLexemes.forEach(lexeme => {
         console.error(
           `Invalid ThoughtContext found in Lexeme: '${lexeme.value}'. HOME_TOKEN should be omitted from the beginning; it is only valid to refer to the home context itself, i.e. [HOME_TOKEN].`,
-          lexeme,
+          lexeme.contexts,
         )
       })
       throw new Error('Invalid ThoughtContext')
