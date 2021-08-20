@@ -22,6 +22,11 @@ const isValidSource = <T extends Updateable>(update: SubscriptionUpdate<T>, upda
 const updateThoughtsFromSubscription =
   (updates: ThoughtSubscriptionUpdates, sessionType: SessionType): Thunk =>
   (dispatch, getState) => {
+    // disable local subscription when the user is logged in
+    // otherwise they will receive subscription updates from both local and remote
+    const state = getState()
+    if (state.status === 'loaded' && sessionType === SessionType.LOCAL) return
+
     const contextIndexUpdates = keyValueBy(updates.contextIndex, (key, parentUpdate) =>
       isValidSource(parentUpdate, sessionType)
         ? {
