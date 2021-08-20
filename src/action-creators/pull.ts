@@ -12,6 +12,9 @@ const BUFFER_DEPTH = 2
 const ROOT_ENCODED = hashContext([HOME_TOKEN])
 
 export interface PullOptions {
+  // pull given contexts without checking if they are pending
+  // used when authenticated to force a pull from the remote
+  force?: boolean
   maxDepth?: number
   onLocalThoughts?: (thoughts: ThoughtsInterface) => void
   onRemoteThoughts?: (thoughts: ThoughtsInterface) => void
@@ -51,27 +54,31 @@ const getPendingOrMissingContexts = (state: State, contextMap: Index<Context>) =
 const pull =
   (
     contextMap: Index<Context>,
-    { maxDepth, onLocalThoughts, onRemoteThoughts }: PullOptions = {},
+    { force, maxDepth, onLocalThoughts, onRemoteThoughts }: PullOptions = {},
   ): Thunk<Promise<boolean>> =>
   async (dispatch, getState) => {
     if (Object.keys(contextMap).length === 0) return false
 
-    // Pull only pending contexts and missing parents.
-    // Missing parents only occur in 2-part deletes (see flushDeletes and associated logic).
-    const pendingContexts = getPendingOrMissingContexts(getState(), contextMap)
+    let contextMapFiltered = contextMap
 
-    // short circuit if there are no pending contexts to fetch
-    if (pendingContexts.length === 0) return false
+    // pull only pending contexts parents unless forced
+    if (!force) {
+      // Missing parents only occur in 2-part deletes (see flushDeletes and associated logic).
+      const pendingContexts = getPendingOrMissingContexts(getState(), contextMap)
 
-    // convert list of descendant pending contexts to a ContextMap
-    const contextMapPending = keyValueBy(pendingContexts, context => ({
-      [hashContext(context)]: context,
-    }))
+      // short circuit if there are no pending contexts to fetch
+      if (pendingContexts.length === 0) return false
+
+      // convert list of descendant pending contexts to a ContextMap
+      contextMapFiltered = keyValueBy(pendingContexts, context => ({
+        [hashContext(context)]: context,
+      }))
+    }
 
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    const thoughtsLocalIterable = getManyDescendants(db, contextMapPending, { maxDepth: maxDepth || BUFFER_DEPTH })
+    const thoughtsLocalIterable = getManyDescendants(db, contextMapFiltered, { maxDepth: maxDepth || BUFFER_DEPTH })
     // eslint-disable-next-line fp/no-loops
     for await (const thoughts of thoughtsLocalIterable) {
       // eslint-disable-next-line fp/no-mutating-methods
@@ -99,7 +106,7 @@ const pull =
     // get remote thoughts and reconcile with local
     const status = getState().status
     if (status === 'loaded') {
-      const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMapPending, {
+      const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMapFiltered, {
         maxDepth: maxDepth || BUFFER_DEPTH,
       })
 
