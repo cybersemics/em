@@ -132,12 +132,12 @@ const importText = (
       : state
 
     /**
-     * Returns destination path.
+     * Returns the Path where thoughts will be imported. It may be the simplePath passed to importText, or it may be a dummy Path that is used to paste into an empty thought.
      */
-    const getDestinationPath = () => {
+    const getDestinationPath = (): SimplePath => {
       if (!shouldImportIntoDummy) return simplePath
       const newDummyThought = getAllChildren(updatedState, context).find(child => child.value === uuid)
-      return (newDummyThought ? [...simplePath, newDummyThought] : simplePath) as SimplePath
+      return newDummyThought ? unroot([...simplePath, newDummyThought] as unknown as SimplePath) : simplePath
     }
 
     const newDestinationPath = getDestinationPath()

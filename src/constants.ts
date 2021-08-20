@@ -218,7 +218,9 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'exportContext',
 ]
 
-export const EDIT_THROTTLE = 1000
+// Throttle editThought when user is typing.
+// See: thoughtChangeHandler in Editable.tsx.
+export const EDIT_THROTTLE = 500
 
 export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
 

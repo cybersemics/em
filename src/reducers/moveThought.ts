@@ -115,7 +115,7 @@ const moveThought = (
   if (!id) {
     console.warn('moveThought: oldSimplePath does not have an id and exactThought was not found.')
     console.warn('oldSimplePath', oldSimplePath)
-    console.warn('lexemeOld', lexemeOld)
+    console.warn('lexemeOld.contexts', lexemeOld.contexts)
   }
 
   // if move is used for archive then update the archived field to latest timestamp
