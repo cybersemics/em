@@ -13,7 +13,7 @@ import { subscribe } from '../data-providers/firebase'
 import { owner } from '../util'
 import initAlgoliaSearch from '../search/algoliaSearch'
 import { SessionType } from '../util/sessionManager'
-import { Firebase, State, ThoughtUpdates } from '../@types'
+import { Firebase, State, ThoughtSubscriptionUpdates } from '../@types'
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
@@ -27,7 +27,7 @@ export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
       if (user) {
         store.dispatch(userAuthenticated(user))
 
-        subscribe(user.uid, (updates: ThoughtUpdates) => {
+        subscribe(user.uid, (updates: ThoughtSubscriptionUpdates) => {
           store.dispatch(updateThoughtsFromSubscription(updates, SessionType.REMOTE))
         })
 

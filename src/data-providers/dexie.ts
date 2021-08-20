@@ -1,12 +1,12 @@
 /* eslint-disable fp/no-this */
 import _ from 'lodash'
-import Dexie from 'dexie'
+import Dexie, { Transaction } from 'dexie'
 import 'dexie-observable'
 import { ICreateChange, IDeleteChange, IUpdateChange } from 'dexie-observable/api'
 import { hashThought, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import win from './win'
-import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, ThoughtUpdates, Timestamp } from '../@types'
+import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, ThoughtSubscriptionUpdates, Timestamp } from '../@types'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -62,6 +62,12 @@ export interface Log {
   created: Timestamp
   message: string
   stack?: any
+}
+
+// If a ´source´ property is added to the Transaction object while performing a database operation, this value will be put in the change object. The ´source´ property is not an official property of Transaction but is added to all transactions when Dexie.Observable is active. The property can be used to ignore certain changes that origin from self.
+// See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
+interface ObservableTransaction extends Transaction {
+  source?: any
 }
 
 export const db = new Dexie('EM') as EM
@@ -124,7 +130,10 @@ export const clearAll = () => Promise.all([db.thoughtIndex.clear(), db.contextIn
 
 /** Updates a single thought in the thoughtIndex. */
 export const updateThought = async (id: string, thought: Lexeme) =>
-  db.thoughtIndex.put({ id, ...thought, updatedBy: getSessionId() })
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    return db.thoughtIndex.put({ id, ...thought, updatedBy: getSessionId() })
+  })
 
 /** Updates multiple thoughts in the thoughtIndex. */
 export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) => {
@@ -137,7 +146,11 @@ export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) 
 }
 
 /** Deletes a single thought from the thoughtIndex. */
-export const deleteThought = (id: string) => db.thoughtIndex.delete(id)
+export const deleteThought = (id: string) =>
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    return db.thoughtIndex.delete(id)
+  })
 
 /** Gets a single thought from the thoughtIndex by its id. */
 export const getThoughtById = (id: string) => db.thoughtIndex.get(id)
@@ -235,24 +248,52 @@ const DatabaseChangeType = {
 
 /** Parse a Created or Updated change event and return updates as normalized Updates. */
 const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) => {
-  const { table, key, obj } = change
+  // Source is set on the transaction object
+  // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
+  const { key, obj, source, table } = change as IUpdateChange
   return {
-    contextIndexUpdates: table === 'contextIndex' ? { [key]: obj as Parent } : {},
-    thoughtIndexUpdates: table === 'thoughtIndex' ? { [key]: obj as Lexeme } : {},
+    contextIndexUpdates:
+      table === 'contextIndex'
+        ? {
+            [key]: {
+              updatedBy: source,
+              value: obj as Parent,
+            },
+          }
+        : {},
+    thoughtIndexUpdates:
+      table === 'thoughtIndex'
+        ? {
+            [key]: {
+              updatedBy: source,
+              value: obj as Lexeme,
+            },
+          }
+        : {},
   }
 }
 
 /** Parse a Delete change event and return updates as normalized Updates.  */
 const deletedChangeUpdates = (change: IDeleteChange) => {
-  const { key, table, oldObj } = change
+  // Source is set on the transaction object
+  // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
+  const { key, oldObj, source, table } = change
   return {
-    contextIndexUpdates: table === 'contextIndex' && oldObj?.id ? { [key]: null } : {},
-    thoughtIndexUpdates: table === 'thoughtIndex' && oldObj?.id ? { [key]: null } : {},
+    contextIndexUpdates:
+      table === 'contextIndex' && oldObj?.id
+        ? {
+            [key]: {
+              updatedBy: source,
+              value: null,
+            },
+          }
+        : {},
+    thoughtIndexUpdates: table === 'thoughtIndex' && oldObj?.id ? { [key]: { updatedBy: source, value: null } } : {},
   }
 }
 
 /** Subscribe to dexie updates. */
-export const subscribe = (onUpdate: (updates: ThoughtUpdates) => void) => {
+export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => void) => {
   Object.prototype.hasOwnProperty.call(db, 'observable') &&
     db.on('changes', changes => {
       changes.forEach(async change => {
@@ -264,16 +305,16 @@ export const subscribe = (onUpdate: (updates: ThoughtUpdates) => void) => {
             : change.type === DatabaseChangeType.Deleted
             ? deletedChangeUpdates(change as IDeleteChange)
             : null
-        const thoughtUpdates = {
-          contextIndex: updates!.contextIndexUpdates,
-          thoughtIndex: updates!.thoughtIndexUpdates,
+        const thoughtSubscriptionUpdates = {
+          contextIndex: updates?.contextIndexUpdates || {},
+          thoughtIndex: updates?.thoughtIndexUpdates || {},
         }
         if (
-          Object.keys(thoughtUpdates.contextIndex).length === 0 &&
-          Object.keys(thoughtUpdates.thoughtIndex).length === 0
+          Object.keys(thoughtSubscriptionUpdates.contextIndex).length === 0 &&
+          Object.keys(thoughtSubscriptionUpdates.thoughtIndex).length === 0
         )
           return
-        onUpdate(thoughtUpdates)
+        onUpdate(thoughtSubscriptionUpdates)
       })
     })
 }

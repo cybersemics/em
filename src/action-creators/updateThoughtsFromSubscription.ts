@@ -1,34 +1,41 @@
-import _ from 'lodash'
 import { updateThoughts } from '../action-creators'
-import { ThoughtUpdates, Thunk } from '../@types'
+import { SubscriptionUpdate, ThoughtSubscriptionUpdates, Thunk } from '../@types'
 import { SessionType, getSessionId, getSessionType } from '../util/sessionManager'
+import { keyValueBy } from '../util'
 
 interface Updateable {
   updatedBy?: string
 }
 
 /** Returns true if the updateable entity is coming from the given SessionType and is not self. */
-export const isValidSource = (updateable: Updateable, updateType: SessionType) => {
+const isValidSource = <T extends Updateable>(update: SubscriptionUpdate<T>, updateType: SessionType) => {
+  // updatedBy may be stored on the object (Firebase) or passed through from the transaction object (Dexie).
+  // This is needed since deletes have no object to store updatedBy.
+  const updatedBy = update.updatedBy || update.value?.updatedBy
+
   // on a change event, the firebase snapshot only contains updated fields, which may not include updatedBy
   // in this case, return true so it gets added locally
-  return (
-    !updateable.updatedBy ||
-    (updateable.updatedBy !== getSessionId() && getSessionType(updateable.updatedBy) === updateType)
-  )
+  return !updatedBy || (updatedBy !== getSessionId() && getSessionType(updatedBy) === updateType)
 }
 
 /** Filters out updates from invalid sources (self or wrong SessionType) and updates thoughts. */
 const updateThoughtsFromSubscription =
-  (updates: ThoughtUpdates, sessionType: SessionType): Thunk =>
+  (updates: ThoughtSubscriptionUpdates, sessionType: SessionType): Thunk =>
   (dispatch, getState) => {
-    const state = getState()
-
-    const contextIndexUpdates = _.pickBy(updates.contextIndex, (parent, key) =>
-      !parent ? key in state.thoughts.contextIndex : isValidSource(parent, sessionType),
+    const contextIndexUpdates = keyValueBy(updates.contextIndex, (key, parentUpdate) =>
+      isValidSource(parentUpdate, sessionType)
+        ? {
+            [key]: parentUpdate.value,
+          }
+        : null,
     )
 
-    const thoughtIndexUpdates = _.pickBy(updates.thoughtIndex, (lexeme, key) =>
-      !lexeme ? key in state.thoughts.thoughtIndex : isValidSource(lexeme, sessionType),
+    const thoughtIndexUpdates = keyValueBy(updates.thoughtIndex, (key, lexemeUpdate) =>
+      isValidSource(lexemeUpdate, sessionType)
+        ? {
+            [key]: lexemeUpdate.value,
+          }
+        : null,
     )
 
     if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(thoughtIndexUpdates).length === 0) return

@@ -10,7 +10,7 @@ import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import { SessionType } from './util/sessionManager'
 import * as sessionManager from './util/sessionManager'
-import { State, ThoughtUpdates, Thunk } from './@types'
+import { State, ThoughtSubscriptionUpdates, Thunk } from './@types'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
@@ -40,7 +40,7 @@ export const initialize = async () => {
 
   await thoughtsLocalPromise
 
-  db.subscribe((updates: ThoughtUpdates) => {
+  db.subscribe((updates: ThoughtSubscriptionUpdates) => {
     store.dispatch(updateThoughtsFromSubscription(updates, SessionType.LOCAL))
   })
 

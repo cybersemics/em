@@ -1,7 +1,7 @@
 import { Dispatch } from 'react'
 import { hashContext, hashThought, keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
-import { Firebase, Index, Lexeme, Parent, State, ThoughtIndices, ThoughtUpdates } from '../@types'
+import { Firebase, Index, Lexeme, Parent, State, ThoughtIndices, ThoughtSubscriptionUpdates } from '../@types'
 
 export enum FirebaseChangeTypes {
   Create = 'child_added',
@@ -11,14 +11,14 @@ export enum FirebaseChangeTypes {
 
 export interface FirebaseChangeHandlers {
   contextIndex?: {
-    [FirebaseChangeTypes.Create]?: (updates: ThoughtUpdates) => void
-    [FirebaseChangeTypes.Update]?: (updates: ThoughtUpdates) => void
-    [FirebaseChangeTypes.Delete]?: (updates: ThoughtUpdates) => void
+    [FirebaseChangeTypes.Create]?: (updates: ThoughtSubscriptionUpdates) => void
+    [FirebaseChangeTypes.Update]?: (updates: ThoughtSubscriptionUpdates) => void
+    [FirebaseChangeTypes.Delete]?: (updates: ThoughtSubscriptionUpdates) => void
   }
   thoughtIndex?: {
-    [FirebaseChangeTypes.Create]?: (updates: ThoughtUpdates) => void
-    [FirebaseChangeTypes.Update]?: (updates: ThoughtUpdates) => void
-    [FirebaseChangeTypes.Delete]?: (updates: ThoughtUpdates) => void
+    [FirebaseChangeTypes.Create]?: (updates: ThoughtSubscriptionUpdates) => void
+    [FirebaseChangeTypes.Update]?: (updates: ThoughtSubscriptionUpdates) => void
+    [FirebaseChangeTypes.Delete]?: (updates: ThoughtSubscriptionUpdates) => void
   }
 }
 /**
@@ -117,12 +117,16 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
  * @param value The Parent value to set in the update. Defaults to the snapshot Parent. Useful for setting to null.
  */
 const createParentSubscriptionHandler =
-  (onUpdate: (updates: ThoughtUpdates) => void, { value }: { value?: Parent | null } = {}) =>
+  (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Parent | null } = {}) =>
   (snapshot: Firebase.Snapshot<Parent>) => {
     const parent = snapshot.val()
     if (!parent) return null
     const updates = {
-      contextIndex: { [hashContext(parent.context)]: value !== undefined ? value : parent },
+      contextIndex: {
+        [hashContext(parent.context)]: {
+          value: value !== undefined ? value : parent,
+        },
+      },
       thoughtIndex: {},
     }
     onUpdate(updates)
@@ -133,19 +137,23 @@ const createParentSubscriptionHandler =
  * @param value The Lexeme value to set in the update. Defaults to the snapshot Lexeme. Useful for setting to null.
  */
 const createLexemeSubscriptionHandler =
-  (onUpdate: (updates: ThoughtUpdates) => void, { value }: { value?: Lexeme | null } = {}) =>
+  (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Lexeme | null } = {}) =>
   (snapshot: Firebase.Snapshot<Lexeme>) => {
     const lexeme = snapshot.val()
     if (!lexeme) return null
     const updates = {
       contextIndex: {},
-      thoughtIndex: { [hashThought(lexeme.value)]: value !== undefined ? value : lexeme },
+      thoughtIndex: {
+        [hashThought(lexeme.value)]: {
+          value: value !== undefined ? value : lexeme,
+        },
+      },
     }
     onUpdate(updates)
   }
 
 /** Subscribe to firebase. */
-export const subscribe = (userId: string, onUpdate: (updates: ThoughtUpdates) => void) => {
+export const subscribe = (userId: string, onUpdate: (updates: ThoughtSubscriptionUpdates) => void) => {
   const thoughtsRef: Firebase.Ref<ThoughtIndices> = window.firebase?.database().ref(`users/${userId}`)
   const contextIndexRef: Firebase.Ref<Parent> = thoughtsRef.child('contextIndex')
   const thoughtIndexRef: Firebase.Ref<Lexeme> = thoughtsRef.child('thoughtIndex')
