@@ -39,7 +39,11 @@ const updateThoughtsFromSubscription =
     const contextIndexUpdates = keyValueBy(updates.contextIndex, (key, parentUpdate) =>
       isValidSource(state, parentUpdate, sessionType)
         ? {
-            [key]: parentUpdate.value,
+            // merge partial Parent from update with Redux Parent
+            // TODO: Fix Updateable type to indicate that all fields are optional
+            [key]: parentUpdate.value
+              ? { ...state.thoughts.contextIndex[parentUpdate.value.id!], ...parentUpdate.value }
+              : parentUpdate.value,
           }
         : null,
     )
@@ -47,7 +51,11 @@ const updateThoughtsFromSubscription =
     const thoughtIndexUpdates = keyValueBy(updates.thoughtIndex, (key, lexemeUpdate) =>
       isValidSource(state, lexemeUpdate, sessionType)
         ? {
-            [key]: lexemeUpdate.value,
+            // merge partial Lexeme from update with Redux Lexeme
+            // TODO: Fix Updateable type to indicate that all fields are optional
+            [key]: lexemeUpdate.value
+              ? { ...state.thoughts.thoughtIndex[lexemeUpdate.value.id!], ...lexemeUpdate.value }
+              : lexemeUpdate.value,
           }
         : null,
     )

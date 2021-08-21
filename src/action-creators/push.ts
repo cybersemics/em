@@ -6,6 +6,7 @@ import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
+import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../@types'
 import { storage } from '../util/storage'
@@ -93,18 +94,18 @@ const pushRemote =
     // prepend thoughtIndex/ and encode key
     const prependedDataUpdates = _.transform(
       thoughtIndexUpdates,
-      (accum: Index<Lexeme | null>, lexeme: Lexeme | null, key: string) => {
+      (accum, lexemeUpdate, key) => {
         if (!key) {
-          console.error('Unescaped empty key', lexeme, new Error())
+          console.error('Unescaped empty key', lexemeUpdate, new Error())
           return
         }
 
         // fix undefined/NaN rank
         accum['thoughtIndex/' + (key || EMPTY_TOKEN)] =
-          lexeme && getSetting(state, 'Data Integrity Check') === 'On'
+          lexemeUpdate && getSetting(state, 'Data Integrity Check') === 'On'
             ? {
-                value: lexeme.value,
-                contexts: lexeme.contexts.map(cx => ({
+                value: lexemeUpdate.value,
+                contexts: lexemeUpdate.contexts.map(cx => ({
                   context: cx.context || null, // guard against NaN or undefined
                   rank: cx.rank || 0, // guard against NaN or undefined
                   ...(cx.lastUpdated
@@ -113,10 +114,11 @@ const pushRemote =
                       }
                     : null),
                 })),
-                created: lexeme.created || timestamp(),
-                lastUpdated: lexeme.lastUpdated || timestamp(),
+                created: lexemeUpdate.created || timestamp(),
+                lastUpdated: lexemeUpdate.lastUpdated || timestamp(),
+                updatedBy: lexemeUpdate.updatedBy || getSessionId(),
               }
-            : lexeme
+            : lexemeUpdate
       },
       {} as Index<Lexeme | null>,
     )
@@ -126,13 +128,13 @@ const pushRemote =
     const dataIntegrityCheck = getSetting(state, 'Data Integrity Check') === 'On'
     const prependedContextIndexUpdates = _.transform(
       contextIndexUpdates,
-      (accum, parentContext, key) => {
+      (accum, parentUpdate, key) => {
         // fix undefined/NaN rank
-        const children = parentContext && parentContext.children
+        const children = parentUpdate && parentUpdate.children
         accum['contextIndex/' + key] =
           children && children.length > 0
             ? {
-                context: parentContext!.context,
+                context: parentUpdate!.context,
                 children: dataIntegrityCheck
                   ? children.map(subthought => ({
                       value: subthought.value || '', // guard against NaN or undefined,
@@ -144,7 +146,8 @@ const pushRemote =
                         : null),
                     }))
                   : children,
-                lastUpdated: parentContext!.lastUpdated || timestamp(),
+                lastUpdated: parentUpdate!.lastUpdated || timestamp(),
+                updatedBy: parentUpdate!.updatedBy || getSessionId(),
               }
             : null
       },
