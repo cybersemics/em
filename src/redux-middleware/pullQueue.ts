@@ -87,8 +87,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   let pullQueue = initialPullQueue()
 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
-  const flushPullQueue = async () => {
-    // expand pull queue to include its children
+  const flushPullQueue = async ({ force }: { force?: boolean }) => {
+    // expand pull queue to include visible descendants and search contexts
     const extendedPullQueue = appendVisibleContexts(getState(), pullQueue, {
       ...lastVisibleContexts,
       ...lastSearchContexts,
@@ -96,7 +96,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
-    const hasMorePending = await dispatch(pull(extendedPullQueue))
+    const hasMorePending = await dispatch(pull(extendedPullQueue, { force }))
 
     const { user } = getState()
     if (!user && hasMorePending) {
@@ -153,9 +153,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // do not throttle initial flush
     if (isLoaded) {
-      flushPullQueueThrottled()
+      flushPullQueueThrottled({ force })
     } else {
-      flushPullQueue()
+      flushPullQueue({ force })
       isLoaded = true
     }
   }
@@ -172,7 +172,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       lastVisibleContexts = {}
       pullQueue = initialPullQueue()
     }
-    // update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates
+    // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.
+    // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit and remote thoughts will not be loaded.
     else if (action.type === 'authenticate' && action.value) {
       pullQueue = { ...pullQueue, ...initialPullQueue() }
       updatePullQueue({ force: true })

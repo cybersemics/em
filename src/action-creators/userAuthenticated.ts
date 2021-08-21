@@ -1,6 +1,5 @@
-import { HOME_TOKEN } from '../constants'
-import { getUserRef, hashContext } from '../util'
-import { authenticate, error, pull, status } from '../action-creators'
+import { getUserRef } from '../util'
+import { authenticate, error, status } from '../action-creators'
 import { Firebase, Thunk } from '../@types'
 import { storage } from '../util/storage'
 
@@ -37,10 +36,6 @@ const userAuthenticated =
     )
 
     dispatch(status({ value: 'loaded' }))
-
-    // Thoughts are previously loaded from local storage, which turns off pending on the root context, causing pull to short circuit and remote thoughts to not be loaded.
-    // Force a pull once authenticated to make remote thoughts load initially. Afterwards, just watch for subscription updates.
-    dispatch(pull({ [hashContext([HOME_TOKEN])]: [HOME_TOKEN] }, { force: true }))
   }
 
 export default userAuthenticated
