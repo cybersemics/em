@@ -144,14 +144,14 @@ const flushMoves =
     })
   }
 
-/** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
+/** Push queued updates to the local and remote. Make sure to clear the queue immediately to prevent redundant pushes. */
 const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) => {
   const { pushQueue } = getState()
 
   if (pushQueue.length === 0) return Promise.resolve()
 
   /**
-   * Checks the latest state thoughtIndex (refers to new state after pullLexemes) and creates synced thoughtIndexUpdate for the pending lexemes..
+   * Checks the latest state thoughtIndex (refers to new state after pullLexemes) and creates synced thoughtIndexUpdate for the pending lexemes.
    */
   const getSyncedThoughtsUpdate = (
     pendingLexemes: Index<boolean>,
@@ -267,12 +267,13 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
     },
   }
 
-  // push
+  // push local and remote batches
   await Promise.all([
     Object.keys(localMergedBatch).length > 0 && dispatch(pushBatch(syncedLocalMergedBatch)),
     Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(syncedRemoteMergedBatch)),
   ])
 
+  // turn off isPushing at the end
   dispatch((dispatch, getState) => {
     if (getState().isPushing) {
       dispatch(isPushing({ value: false }))
