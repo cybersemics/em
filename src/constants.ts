@@ -304,6 +304,8 @@ export const MODALS: Index<string> = {
   export: 'export',
   feedback: 'feedback',
   auth: 'auth',
+  invites: 'invites',
+  signup: 'signup',
 }
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'

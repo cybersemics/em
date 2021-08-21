@@ -308,6 +308,19 @@ const ModalHelp = ({
           Share icon by <a href='https://thenounproject.com/term/share/1058861/'>Тимур Минвалеев</a> from the{' '}
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Gift icon by <a href='https://thenounproject.com/search/?q=gift&i=2221484'> Sarote Impheng</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Copy to clipboard icon by{' '}
+          <a href='https://thenounproject.com/search/?q=copy+to+clipboard&i=1669410'>Hare Krishna</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Checkmark icon by <a href='https://thenounproject.com/search/?q=checkmark&i=870288'>arif fajar yulianto</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
 
       <br />

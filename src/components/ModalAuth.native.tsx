@@ -72,11 +72,6 @@ const modes: Index<Mode> = {
     modalKey: 'login',
     modalTitle: 'Log In',
   },
-  signup: {
-    name: 'signup',
-    modalKey: 'signup',
-    modalTitle: 'Sign Up',
-  },
   resetPassword: {
     name: 'resetPassword',
     modalKey: 'resetPassword',
@@ -110,19 +105,6 @@ const ModalAuth = () => {
 
   const dispatch = useDispatch()
 
-  /** Sign up with email and password. */
-  const signUp: SubmitAction = useCallback(async (closeModal, email, password) => {
-    updateIsSubmitting(true)
-    try {
-      await window.firebase.auth().createUserWithEmailAndPassword(email, password!)
-      closeModal()
-      updateIsSubmitting(false)
-    } catch (error) {
-      updateIsSubmitting(false)
-      return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
-    }
-  }, [])
-
   /** Reset password using reset email. */
   const resetPassword: SubmitAction = useCallback(async (closeModal, email) => {
     updateIsSubmitting(true)
@@ -151,11 +133,7 @@ const ModalAuth = () => {
     }
   }, [])
 
-  const submitAction = isModeActive(modes.login)
-    ? loginWithEmailAndPassword
-    : isModeActive(modes.signup)
-    ? signUp
-    : resetPassword
+  const submitAction = isModeActive(modes.login) ? loginWithEmailAndPassword : resetPassword
 
   /**
    * Reset Email and Password fields.
@@ -184,9 +162,6 @@ const ModalAuth = () => {
   /** Handle password change. */
   const onChangePassword = (e: NativeSyntheticEvent<TextInputFocusEventData>) => updatePassword(e.nativeEvent.text)
 
-  /** Show Sign Up with email and password. */
-  const showSignup = () => updateActiveMode(modes.signup)
-
   /** Show Login with email and password. */
   const showLogin = () => updateActiveMode(modes.login)
 
@@ -212,12 +187,6 @@ const ModalAuth = () => {
               <Text style={[underlineText, whiteText]}>
                 {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
               </Text>
-            </TouchableOpacity>
-          )}
-
-          {isModeActive(modes.login) && (
-            <TouchableOpacity disabled={isSubmitting} onPress={showSignup} style={marginTop}>
-              <Text style={[underlineText, whiteText]}>Create an account</Text>
             </TouchableOpacity>
           )}
 

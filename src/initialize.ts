@@ -17,6 +17,10 @@ export const initialize = async () => {
   // initialize the session id
   sessionManager.init()
 
+  // Note: Initialize firebase as soon as possible. Some components like ModalSignup needs to use firebase as soon as it renders.
+  // TODO: Check if initializing firebase before local db causes any problem.
+  initFirebase({ store })
+
   // load local state unless loading a public context or source url
   await initDB()
 
@@ -35,8 +39,6 @@ export const initialize = async () => {
       store.dispatch(preloadSources)
     }, 500)
   })
-
-  initFirebase({ store })
 
   await thoughtsLocalPromise
 

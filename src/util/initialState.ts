@@ -146,5 +146,10 @@ export const initialState = (created: Timestamp = timestamp()) => {
     state.showModal = 'welcome'
   }
 
+  // Show sign up modal if the app is loaded with signup path
+  if (window && window.location.pathname.substr(1) === 'signup') {
+    state.showModal = 'signup'
+  }
+
   return state
 }
