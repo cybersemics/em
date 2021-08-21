@@ -105,7 +105,7 @@ const pull =
 
     // get remote thoughts and reconcile with local
     const status = getState().status
-    if (status === 'loaded') {
+    if (status === 'loading' || status === 'loaded') {
       const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMapFiltered, {
         maxDepth: maxDepth || BUFFER_DEPTH,
       })
@@ -140,7 +140,6 @@ const pull =
           },
           {} as Index<Lexeme>,
         )
-
         dispatch(
           reconcile({
             thoughtsResults: [
