@@ -9,7 +9,7 @@ import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
-  const { authenticated, user, status, tutorialStep, isPushing, isTutorialOn, pushQueueLength, fontSize } =
+  const { authenticated, user, status, tutorialStep, isPushing, isTutorialOn, isPushQueueEmpty, fontSize } =
     useFooterUseSelectors()
 
   const firstUpdate = useRef(true)
@@ -83,14 +83,14 @@ const Footer = () => {
               className={
                 status === 'offline'
                   ? 'dim'
-                  : pushQueueLength > 0 && !isPushing
+                  : !isPushQueueEmpty && !isPushing
                   ? 'error'
                   : status === 'loaded'
                   ? 'online'
                   : undefined
               }
             >
-              {pushQueueLength > 0
+              {!isPushQueueEmpty
                 ? 'Saving'
                 : status === 'loaded'
                 ? 'Online'
