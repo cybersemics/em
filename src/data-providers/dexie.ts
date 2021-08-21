@@ -248,7 +248,7 @@ const DatabaseChangeType = {
 
 /** Parse a Created or Updated change event and return updates as normalized Updates. */
 const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) => {
-  // Source is set on the transaction object
+  // source is set on the transaction object
   // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
   const { key, obj, source, table } = change as IUpdateChange
   return {
@@ -275,7 +275,7 @@ const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) =>
 
 /** Parse a Delete change event and return updates as normalized Updates.  */
 const deletedChangeUpdates = (change: IDeleteChange) => {
-  // Source is set on the transaction object
+  // source is set on the transaction object
   // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
   const { key, oldObj, source, table } = change
   return {

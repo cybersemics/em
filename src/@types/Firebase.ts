@@ -33,5 +33,7 @@ export interface Ref<T> {
 }
 
 export interface Snapshot<T = any> {
+  // same as object id
+  key: string
   val: () => T
 }

@@ -116,15 +116,25 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
  *
  * @param value The Parent value to set in the update. Defaults to the snapshot Parent. Useful for setting to null.
  */
-const createParentSubscriptionHandler =
+const parentSubscriptionHandler =
   (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Parent | null } = {}) =>
   (snapshot: Firebase.Snapshot<Parent>) => {
-    const parent = snapshot.val()
-    if (!parent) return null
+    // only contains fields that have changed
+    const parentPartial = snapshot.val()
+    if (!parentPartial) return null
     const updates = {
       contextIndex: {
-        [hashContext(parent.context)]: {
-          value: value !== undefined ? value : parent,
+        [hashContext(parentPartial.context)]: {
+          // snapshot contains updatedBy of deleted thought
+          updatedBy: parentPartial.updatedBy,
+          value:
+            value !== undefined
+              ? value
+              : {
+                  // pass id from snapshot since snapshot only contains changed fields
+                  id: snapshot.key,
+                  ...parentPartial,
+                },
         },
       },
       thoughtIndex: {},
@@ -136,16 +146,25 @@ const createParentSubscriptionHandler =
  *
  * @param value The Lexeme value to set in the update. Defaults to the snapshot Lexeme. Useful for setting to null.
  */
-const createLexemeSubscriptionHandler =
+const lexemeSubscriptionHandler =
   (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Lexeme | null } = {}) =>
   (snapshot: Firebase.Snapshot<Lexeme>) => {
-    const lexeme = snapshot.val()
-    if (!lexeme) return null
+    const lexemePartial = snapshot.val()
+    if (!lexemePartial) return null
     const updates = {
       contextIndex: {},
       thoughtIndex: {
-        [hashThought(lexeme.value)]: {
-          value: value !== undefined ? value : lexeme,
+        [hashThought(lexemePartial.value)]: {
+          // snapshot contains updatedBy of deleted thought
+          updatedBy: lexemePartial.updatedBy,
+          value:
+            value !== undefined
+              ? value
+              : {
+                  // pass id from snapshot since snapshot only contains changed fields
+                  id: snapshot.key,
+                  ...lexemePartial,
+                },
         },
       },
     }
@@ -162,17 +181,17 @@ export const subscribe = (userId: string, onUpdate: (updates: ThoughtSubscriptio
   contextIndexRef
     .orderByChild('lastUpdated')
     .startAt(new Date().toISOString())
-    .on('child_added', createParentSubscriptionHandler(onUpdate))
-  contextIndexRef.on('child_changed', createParentSubscriptionHandler(onUpdate))
-  contextIndexRef.on('child_removed', createParentSubscriptionHandler(onUpdate, { value: null }))
+    .on('child_added', parentSubscriptionHandler(onUpdate))
+  contextIndexRef.on('child_changed', parentSubscriptionHandler(onUpdate))
+  contextIndexRef.on('child_removed', parentSubscriptionHandler(onUpdate, { value: null }))
 
   // thoughtIndex subscriptions
   thoughtIndexRef
     .orderByChild('lastUpdated')
     .startAt(new Date().toISOString())
-    .on('child_added', createLexemeSubscriptionHandler(onUpdate))
-  thoughtIndexRef.on('child_changed', createLexemeSubscriptionHandler(onUpdate))
-  thoughtIndexRef.on('child_removed', createLexemeSubscriptionHandler(onUpdate, { value: null }))
+    .on('child_added', lexemeSubscriptionHandler(onUpdate))
+  thoughtIndexRef.on('child_changed', lexemeSubscriptionHandler(onUpdate))
+  thoughtIndexRef.on('child_removed', lexemeSubscriptionHandler(onUpdate, { value: null }))
 }
 
 export default getFirebaseProvider

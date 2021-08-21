@@ -1,20 +1,29 @@
 import { updateThoughts } from '../action-creators'
-import { SubscriptionUpdate, ThoughtSubscriptionUpdates, Thunk } from '../@types'
+import { State, SubscriptionUpdate, ThoughtSubscriptionUpdates, Thunk } from '../@types'
 import { SessionType, getSessionId, getSessionType } from '../util/sessionManager'
 import { keyValueBy } from '../util'
 
 interface Updateable {
+  // used to look up the object in the Redux state when only receiving updated fields
+  id?: string
   updatedBy?: string
 }
 
 /** Returns true if the updateable entity is coming from the given SessionType and is not self. */
-const isValidSource = <T extends Updateable>(update: SubscriptionUpdate<T>, updateType: SessionType) => {
-  // updatedBy may be stored on the object (Firebase) or passed through from the transaction object (Dexie).
-  // This is needed since deletes have no object to store updatedBy.
-  const updatedBy = update.updatedBy || update.value?.updatedBy
+const isValidSource = <T extends Updateable>(state: State, update: SubscriptionUpdate<T>, updateType: SessionType) => {
+  const updatedBy =
+    // updatedBy may be passed  from the transaction object (Dexie).
+    // This is needed since deletes have no object to store updatedBy.
+    update.updatedBy ||
+    // updatedBy may be stored on the object itself (Firebase)
+    update.value?.updatedBy ||
+    // updatedBy may not have changed, and thus is not included in the child_changed snapshot.
+    // In this case updatedBy from Redux state.
+    (update.value ? state.thoughts.contextIndex[update.value.id!]?.updatedBy : null) ||
+    (update.value ? state.thoughts.thoughtIndex[update.value.id!]?.updatedBy : null)
 
   // on a change event, the firebase snapshot only contains updated fields, which may not include updatedBy
-  // in this case, return true so it gets added locally
+  // if we don't have the record in Redux state, return true so it gets added
   return !updatedBy || (updatedBy !== getSessionId() && getSessionType(updatedBy) === updateType)
 }
 
@@ -28,7 +37,7 @@ const updateThoughtsFromSubscription =
     if (state.status === 'loaded' && sessionType === SessionType.LOCAL) return
 
     const contextIndexUpdates = keyValueBy(updates.contextIndex, (key, parentUpdate) =>
-      isValidSource(parentUpdate, sessionType)
+      isValidSource(state, parentUpdate, sessionType)
         ? {
             [key]: parentUpdate.value,
           }
@@ -36,7 +45,7 @@ const updateThoughtsFromSubscription =
     )
 
     const thoughtIndexUpdates = keyValueBy(updates.thoughtIndex, (key, lexemeUpdate) =>
-      isValidSource(lexemeUpdate, sessionType)
+      isValidSource(state, lexemeUpdate, sessionType)
         ? {
             [key]: lexemeUpdate.value,
           }
