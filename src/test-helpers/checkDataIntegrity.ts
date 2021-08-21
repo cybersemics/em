@@ -1,4 +1,5 @@
 import { hashContext, hashThought } from '../util'
+import { getSessionId } from '../util/sessionManager'
 import { Index, Lexeme, Parent, State, Timestamp } from '../@types'
 
 /** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the updates if indexes are not in sync. */
@@ -51,7 +52,8 @@ const checkDataIntegrity = (state: State, max = 100000) => {
                   value: valueNew,
                 },
               ],
-              lastUpdated: lastUpdated,
+              lastUpdated,
+              updatedBy: getSessionId(),
             }
           }
         })

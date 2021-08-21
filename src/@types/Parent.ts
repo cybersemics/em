@@ -9,5 +9,5 @@ export interface Parent {
   context: Context
   lastUpdated: Timestamp
   pending?: boolean
-  updatedBy?: string
+  updatedBy: string
 }

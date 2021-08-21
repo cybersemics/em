@@ -54,7 +54,9 @@ export const init = () => {
 
 /** Get current session id. If not initiated, create a new uuid and save it to storage. */
 export const getSessionId = () => {
-  if (!sessionId) {
+  if (typeof sessionStorage === undefined) {
+    sessionId = 'NO_SESSION_STORAGE'
+  } else if (!sessionId) {
     sessionId = sessionStorage.getItem(SESSION_ID_KEY) || uuid()
     sessionStorage.setItem(SESSION_ID_KEY, sessionId)
   }
