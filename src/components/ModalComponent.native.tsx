@@ -24,6 +24,7 @@ export interface ModalProps {
   show?: boolean
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
   title: string
+  preventCloseOnEscape?: boolean
 }
 
 /** A generic modal component. */
@@ -39,18 +40,18 @@ const ModalComponent: React.FC<ModalProps> = props => {
   /** Dispatches a tutorial action that ends the tutorial. */
   // const endTutorial = () => dispatch(tutorial({ value: false }))
 
-  const { show, id, title, actions, children, hideModalActions /* onSubmit */ } = props
+  const { show, title, actions, children, hideModalActions /* onSubmit */ } = props
 
   if (!show) return null
 
   return (
     <Modal animationType='slide' visible={show} onRequestClose={close}>
       <View style={[flexOne, darkBackground, verticalPadding, horizontalPadding]}>
-        {id !== 'welcome' ? (
+        {!props.preventCloseOnEscape && (
           <Text style={styles.close} onPress={close}>
             ✕
           </Text>
-        ) : null}
+        )}
 
         <ScrollView>
           {title ? <Text style={titleStyle}>{title}</Text> : null}

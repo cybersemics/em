@@ -10,6 +10,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
 import FeedbackButton from './FeedbackButton'
 import { Path, State } from '../@types'
+import InvitesButton from './InvitesButton'
 
 // avoid changing object reference
 const navBreadcrumbsClass = {
@@ -18,10 +19,11 @@ const navBreadcrumbsClass = {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { cursor, showBreadcrumbs } = state
+  const { cursor, showBreadcrumbs, authenticated } = state
   return {
     cursor,
     showBreadcrumbs,
+    authenticated,
   }
 }
 
@@ -30,10 +32,12 @@ const NavBar = ({
   cursor,
   position,
   showBreadcrumbs,
+  authenticated,
 }: {
   cursor: Path | null
   position: string
   showBreadcrumbs: boolean
+  authenticated: boolean
 }) => {
   const isTutorialOn = isTutorial(store.getState())
 
@@ -61,6 +65,7 @@ const NavBar = ({
               </CSSTransition>
 
               <div className='nav-right-button-group'>
+                {authenticated && <InvitesButton />}
                 <FeedbackButton />
                 <QuickAddButton />
               </div>

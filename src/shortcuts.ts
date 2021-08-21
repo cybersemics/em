@@ -210,7 +210,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
       state.showModal === 'welcome' ||
       state.showModal === 'help' ||
       state.showModal === 'feedback' ||
-      state.showModal === 'auth'
+      state.showModal === 'auth' ||
+      state.showModal === 'invites'
     )
       return
 

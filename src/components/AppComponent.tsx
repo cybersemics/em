@@ -27,6 +27,8 @@ import Toolbar from './Toolbar'
 import HamburgerMenu from './HamburgerMenu'
 import ModalFeedback from './ModalFeedback'
 import ModalAuth from './ModalAuth'
+import ModalSignup from './ModalSignup'
+import ModalInvites from './ModalInvites'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import { storage } from '../util/storage'
 import { State } from '../@types'
@@ -46,6 +48,7 @@ interface StateProps {
   splitPosition?: number
   fontSize: number
   enableLatestShorcutsDiagram: boolean
+  isUserLoading?: boolean
 }
 
 interface DispatchProps {
@@ -180,6 +183,10 @@ const AppComponent: FC<Props> = props => {
             <ModalFeedback />
           ) : showModal === 'auth' ? (
             <ModalAuth />
+          ) : showModal === 'signup' ? (
+            <ModalSignup />
+          ) : showModal === 'invites' ? (
+            <ModalInvites />
           ) : (
             'Invalid showModal'
           )
