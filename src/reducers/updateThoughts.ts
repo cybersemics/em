@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { initialState } from '../util/initialState'
-import { decodeThoughtsUrl, expandThoughts, getLexeme } from '../selectors'
+import { decodeThoughtsUrl, expandThoughts, getLexeme, getParent } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import {
   htmlToJson,
@@ -9,6 +9,7 @@ import {
   isRoot,
   logWithTime,
   mergeUpdates,
+  normalizeThought,
   once,
   textToHtml,
   reducerFlow,
@@ -89,22 +90,38 @@ const updateThoughts = (
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
-  // A non-root context should never begin with HOME_TOKEN.
-  // If one is found, it means there was a data integrity error that needs to be identified immediately.
-  // This can be removed after a while if it does not throw.
-  // (For efficiency, only check Redux state updates, i.e. when local && remote are true).
-  if (local && remote && Object.values(thoughtIndexUpdates).some(lexeme => lexeme?.contexts.some(isInvalidContext))) {
-    const invalidLexemes = Object.values(thoughtIndexUpdates).filter(lexeme =>
-      lexeme?.contexts.some(isInvalidContext),
-    ) as Lexeme[]
-    if (invalidLexemes.length > 0) {
-      invalidLexemes.forEach(lexeme => {
-        console.error(
-          `Invalid ThoughtContext found in Lexeme: '${lexeme.value}'. HOME_TOKEN should be omitted from the beginning; it is only valid to refer to the home context itself, i.e. [HOME_TOKEN].`,
-          lexeme.contexts,
-        )
-      })
-      throw new Error('Invalid ThoughtContext')
+  // Data Integrity Checks
+
+  // Sometimes Child objects are missing their value property
+  // Check all updates in case the problem is in the subscription logic
+  Object.values(contextIndexUpdates).forEach(parentUpdate =>
+    parentUpdate?.children.forEach(child => {
+      if (child.value == null || child.rank == null) {
+        console.error('child', child)
+        console.error('parent', parentUpdate)
+        throw new Error('Child is missing a value property')
+      }
+    }),
+  )
+
+  // For efficiency, only check new updates, i.e. when local && remote are true.
+  // This will stop these data integrity issues from ever getting persisted.
+  if (local && remote) {
+    // A non-root context should never begin with HOME_TOKEN.
+    // If one is found, it means there was a data integrity error that needs to be identified immediately.
+    if (Object.values(thoughtIndexUpdates).some(lexeme => lexeme?.contexts.some(isInvalidContext))) {
+      const invalidLexemes = Object.values(thoughtIndexUpdates).filter(lexeme =>
+        lexeme?.contexts.some(isInvalidContext),
+      ) as Lexeme[]
+      if (invalidLexemes.length > 0) {
+        invalidLexemes.forEach(lexeme => {
+          console.error(
+            `Invalid ThoughtContext found in Lexeme: '${lexeme.value}'. HOME_TOKEN should be omitted from the beginning; it is only valid to refer to the home context itself, i.e. [HOME_TOKEN].`,
+            lexeme.contexts,
+          )
+        })
+        throw new Error('Invalid ThoughtContext')
+      }
     }
   }
 
@@ -181,6 +198,33 @@ const updateThoughts = (
         thoughtIndex,
       },
     }),
+
+    // Data Integrity Check
+    // Catch Lexeme-Parent rank mismatches on empty thought
+    state => {
+      // loop through all Lexemes that are being updated
+      Object.values(thoughtIndexUpdates).forEach(lexeme => {
+        // loop through each ThoughtContext of each Lexeme
+        lexeme?.contexts.forEach(cx => {
+          // find the Child with the same value and rank in the Parent
+          const parent = getParent(state, cx.context)
+          const child = parent?.children.find(
+            child => normalizeThought(child.value) === normalizeThought(lexeme.value) && child.rank === cx.rank,
+          )
+          if (!child) {
+            console.error('lexeme', lexeme)
+            console.error('parent', parent)
+            throw new Error(
+              `ThoughtContext for "${lexeme.value}" in ${JSON.stringify(cx.context)} with rank ${
+                cx.rank
+              } is not found in corresponding Parent.`,
+            )
+          }
+        })
+      })
+
+      return state
+    },
 
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
     !state.cursorInitialized
