@@ -63,7 +63,9 @@ const pull =
 
     // pull only pending contexts parents unless forced
     if (!force) {
-      // Missing parents only occur in 2-part deletes (see flushDeletes and associated logic).
+      // In a 2-part delete, all of the descendants that are in the Redux store are deleted in Part I, and pending descendants are pulled and then deleted in Part II.
+      // With the old style pull, Part II pulled the pending descendants as expected. With the new style pull that only pulls pending thoughts, pull will short circuit in Part II since there is no Parent which is marked as pending (it was deleted in Part I). Thus we need to check both pending and check that the Parent is there at all. The only way it could be missing is if it was removed in Part I of a 2-part delete.
+      // See: flushDeletes
       const pendingContexts = getPendingOrMissingContexts(getState(), contextMap)
 
       // short circuit if there are no pending contexts to fetch
