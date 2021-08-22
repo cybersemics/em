@@ -301,7 +301,7 @@ const deletedChangeUpdates = (change: IDeleteChange) => {
 
 /** Subscribe to dexie updates. Returns an unsubscribe function. */
 export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => void) => {
-  if (!Object.prototype.hasOwnProperty.call(db, 'observable')) return
+  if (!Object.prototype.hasOwnProperty.call(db, 'observable')) return null
 
   /** Changes subscriber that converts Dexie updates to ThoughtSubscriptionUpdates and calls onUpdate. */
   const onChanges = (changes: IDatabaseChange[]) => {

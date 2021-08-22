@@ -33,6 +33,7 @@ const updateThoughtsFromSubscription =
   (dispatch, getState) => {
     // disable local subscription when the user is logged in
     // otherwise they will receive subscription updates from both local and remote
+    // if local subscriptions are correctly unsubscribed from on remote connect, it will never hit this case, but it's good to have in place to be safe and make this function less dependent on other subscriptions
     const state = getState()
     if (state.status === 'loaded' && sessionType === SessionType.LOCAL) return
 
