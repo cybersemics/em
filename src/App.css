@@ -524,7 +524,7 @@ a.text-link {
 
 .thought,
 .thought-annotation {
- /* width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */
+  width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */
   font-weight: 300;
   margin-left: 0.667em;
   /*display: inline-block;*/
@@ -580,6 +580,7 @@ a.text-link {
   padding-bottom: 0.25em;
   padding-top: 0.25em;
   position: relative; /* position above thought-annotation so that function background color does not mask thought */
+  width: calc(100% - 1em);
 }
 
 .child .editable,
