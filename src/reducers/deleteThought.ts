@@ -11,19 +11,8 @@ import {
   rootedParentOf,
 } from '../selectors'
 import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
-
-// util
-import {
-  equalArrays,
-  equalThoughtRanked,
-  hashContext,
-  hashThought,
-  reducerFlow,
-  removeContext,
-  timestamp,
-  unroot,
-} from '../util'
 import { getSessionId } from '../util/sessionManager'
+import { equalThoughtRanked, hashContext, hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
 
 interface Payload {
   context: Context
@@ -57,14 +46,6 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const contextEncoded = hashContext(context)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
-
-  const isValidThought = lexeme.contexts.find(parent => equalArrays(context, parent.context) && rank === parent.rank)
-
-  // if thought is not valid then just stop further execution
-  if (!isValidThought) {
-    console.error(`Thought ${value} with rank ${rank} is not in ${JSON.stringify(context)}`)
-    return state
-  }
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
