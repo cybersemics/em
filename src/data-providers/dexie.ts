@@ -2,7 +2,7 @@
 import _ from 'lodash'
 import Dexie, { Transaction } from 'dexie'
 import 'dexie-observable'
-import { ICreateChange, IDeleteChange, IUpdateChange } from 'dexie-observable/api'
+import { ICreateChange, IDatabaseChange, IDeleteChange, IUpdateChange } from 'dexie-observable/api'
 import { hashThought, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import win from './win'
@@ -62,6 +62,13 @@ export interface Log {
   created: Timestamp
   message: string
   stack?: any
+}
+
+// the value returned by a Dexie hook like 'on'
+// the official Dexie type says it has a return type of void so we correct it here
+// See: https://github.com/dfahlander/Dexie.js/blob/0b3478c351fad412113fbb3edef38c1d3f3e54da/src/public/types/db-events.d.ts
+interface DbEvents {
+  unsubscribe: (subscriber: (changes: IDatabaseChange[]) => void) => void
 }
 
 // If a ´source´ property is added to the Transaction object while performing a database operation, this value will be put in the change object. The ´source´ property is not an official property of Transaction but is added to all transactions when Dexie.Observable is active. The property can be used to ignore certain changes that origin from self.
@@ -292,31 +299,39 @@ const deletedChangeUpdates = (change: IDeleteChange) => {
   }
 }
 
-/** Subscribe to dexie updates. */
+/** Subscribe to dexie updates. Returns an unsubscribe function. */
 export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => void) => {
-  Object.prototype.hasOwnProperty.call(db, 'observable') &&
-    db.on('changes', changes => {
-      changes.forEach(async change => {
-        const updates =
-          change.type === DatabaseChangeType.Created
-            ? createdOrUpdatedChangeUpdates(change as ICreateChange)
-            : change.type === DatabaseChangeType.Updated
-            ? createdOrUpdatedChangeUpdates(change as IUpdateChange)
-            : change.type === DatabaseChangeType.Deleted
-            ? deletedChangeUpdates(change as IDeleteChange)
-            : null
-        const thoughtSubscriptionUpdates = {
-          contextIndex: updates?.contextIndexUpdates || {},
-          thoughtIndex: updates?.thoughtIndexUpdates || {},
-        }
-        if (
-          Object.keys(thoughtSubscriptionUpdates.contextIndex).length === 0 &&
-          Object.keys(thoughtSubscriptionUpdates.thoughtIndex).length === 0
-        )
-          return
-        onUpdate(thoughtSubscriptionUpdates)
-      })
+  if (!Object.prototype.hasOwnProperty.call(db, 'observable')) return
+
+  /** Changes subscriber that converts Dexie updates to ThoughtSubscriptionUpdates and calls onUpdate. */
+  const onChanges = (changes: IDatabaseChange[]) => {
+    changes.forEach(async change => {
+      const updates =
+        change.type === DatabaseChangeType.Created
+          ? createdOrUpdatedChangeUpdates(change as ICreateChange)
+          : change.type === DatabaseChangeType.Updated
+          ? createdOrUpdatedChangeUpdates(change as IUpdateChange)
+          : change.type === DatabaseChangeType.Deleted
+          ? deletedChangeUpdates(change as IDeleteChange)
+          : null
+      const thoughtSubscriptionUpdates = {
+        contextIndex: updates?.contextIndexUpdates || {},
+        thoughtIndex: updates?.thoughtIndexUpdates || {},
+      }
+      if (
+        Object.keys(thoughtSubscriptionUpdates.contextIndex).length === 0 &&
+        Object.keys(thoughtSubscriptionUpdates.thoughtIndex).length === 0
+      )
+        return
+      onUpdate(thoughtSubscriptionUpdates)
     })
+  }
+
+  // Dexie type does not have the correct return type for some reason
+  // See: DbEvents above
+  const { unsubscribe } = db.on('changes', onChanges) as unknown as DbEvents
+
+  return () => unsubscribe(onChanges)
 }
 
 export default initDB
