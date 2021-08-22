@@ -64,13 +64,6 @@ export interface Log {
   stack?: any
 }
 
-// the value returned by a Dexie hook like 'on'
-// the official Dexie type says it has a return type of void so we correct it here
-// See: https://github.com/dfahlander/Dexie.js/blob/0b3478c351fad412113fbb3edef38c1d3f3e54da/src/public/types/db-events.d.ts
-interface DbEvents {
-  unsubscribe: (subscriber: (changes: IDatabaseChange[]) => void) => void
-}
-
 // If a ´source´ property is added to the Transaction object while performing a database operation, this value will be put in the change object. The ´source´ property is not an official property of Transaction but is added to all transactions when Dexie.Observable is active. The property can be used to ignore certain changes that origin from self.
 // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
 interface ObservableTransaction extends Transaction {
@@ -78,6 +71,9 @@ interface ObservableTransaction extends Transaction {
 }
 
 export const db = new Dexie('EM') as EM
+
+// store a singleton subscription handler for unsubscribing
+let subscriber: ((changes: IDatabaseChange[]) => void) | null
 
 /** Initializes the EM record where helpers are stored. */
 const initHelpers = async () => {
@@ -299,9 +295,12 @@ const deletedChangeUpdates = (change: IDeleteChange) => {
   }
 }
 
-/** Subscribe to dexie updates. Returns an unsubscribe function. */
-export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => void) => {
-  if (!Object.prototype.hasOwnProperty.call(db, 'observable')) return null
+/** Subscribe to dexie updates. NOOP if aleady subscribed. */
+export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => void): void => {
+  if (!Object.prototype.hasOwnProperty.call(db, 'observable')) return
+
+  // NOOP if already subscribed
+  if (subscriber) return
 
   /** Changes subscriber that converts Dexie updates to ThoughtSubscriptionUpdates and calls onUpdate. */
   const onChanges = (changes: IDatabaseChange[]) => {
@@ -327,11 +326,21 @@ export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => voi
     })
   }
 
-  // Dexie type does not have the correct return type for some reason
-  // See: DbEvents above
-  const { unsubscribe } = db.on('changes', onChanges) as unknown as DbEvents
+  db.on('changes', onChanges)
 
-  return () => unsubscribe(onChanges)
+  // store subscriber in singleton to be accessed by unsubscribe
+  subscriber = onChanges
+}
+
+/** Unsubscribes from dexie updates. NOOP if already unsubscribed. */
+export const unsubscribe = (): void => {
+  // NOOP if already unsubscribed
+  if (!subscriber) return
+
+  db.on('changes').unsubscribe(subscriber)
+
+  // clear subscriber so that subscribe can detect if already subscribed
+  subscriber = null
 }
 
 export default initDB
