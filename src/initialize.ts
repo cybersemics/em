@@ -1,17 +1,95 @@
 import './App.css'
 import _ from 'lodash'
+import { Store } from 'redux'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
-import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
-import { loadFromUrl, loadLocalState, preloadSources, updateThoughtsFromSubscription } from './action-creators'
+import { hashContext, hashThought, initEvents, owner, setSelection, urlDataSource } from './util'
+import {
+  authenticate,
+  loadPublicThoughts,
+  setRemoteSearch,
+  status as statusActionCreator,
+  userAuthenticated,
+  loadFromUrl,
+  loadLocalState,
+  preloadSources,
+  updateThoughtsFromSubscription,
+} from './action-creators'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import { SessionType } from './util/sessionManager'
 import * as sessionManager from './util/sessionManager'
-import { State, ThoughtSubscriptionUpdates, Thunk } from './@types'
+import { Firebase, State, ThoughtSubscriptionUpdates, Thunk } from './@types'
+import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
+import globals from './globals'
+import { subscribe } from './data-providers/firebase'
+import initAlgoliaSearch from './search/algoliaSearch'
 
+/** Initialize firebase and event handlers. */
+export const initFirebase = async ({ store }: { store: Store<State, any> }) => {
+  if (window.firebase) {
+    const firebase = window.firebase
+    firebase.initializeApp(FIREBASE_CONFIG)
+
+    // on auth change
+    // this is called when the user logs in or the page refreshes when the user is already authenticated
+    firebase.auth().onAuthStateChanged((user: Firebase.User) => {
+      if (user) {
+        store.dispatch(userAuthenticated(user))
+
+        subscribe(user.uid, (updates: ThoughtSubscriptionUpdates) => {
+          store.dispatch(updateThoughtsFromSubscription(updates, SessionType.REMOTE))
+        })
+
+        const { applicationId, index } = ALGOLIA_CONFIG
+        const hasRemoteConfig = applicationId && index
+
+        if (!hasRemoteConfig) console.warn('Algolia configs not found. Remote search is not enabled.')
+        else initAlgoliaSearch(user.uid, { applicationId, index }, store)
+      } else {
+        store.dispatch(authenticate({ value: false }))
+        store.dispatch(setRemoteSearch({ value: false }))
+      }
+    })
+
+    // load a public context
+    if (owner() !== '~') {
+      store.dispatch(loadPublicThoughts())
+    }
+
+    // on connect change
+    // this is called when moving from online to offline and vice versa
+    const connectedRef = firebase.database().ref('.info/connected')
+    connectedRef.on('value', async (snapshot: Firebase.Snapshot<boolean>) => {
+      const connected = snapshot.val()
+      const status = store.getState().status
+
+      // either connect with authenticated user or go to connected state until they login
+      if (connected) {
+        // once connected, disable offline mode timer
+        window.clearTimeout(globals.offlineTimer)
+
+        // if reconnecting from offline mode, onAuthStateChange is not called since Firebase is still authenticated, but we still need to execute the app authentication logic and subscribe to the main value event
+        // if status is loading, we can assume onAuthStateChanged and thus userAuthenticated was already called
+        if (status !== 'loading' && firebase.auth().currentUser) {
+          await store.dispatch(userAuthenticated(firebase.auth().currentUser))
+        }
+      }
+
+      // if thoughtIndex was already loaded and we go offline, enter offline mode immediately
+      else if (status === 'loaded') {
+        store.dispatch(statusActionCreator({ value: 'offline' }))
+      }
+    })
+  }
+
+  // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
+  globals.offlineTimer = window.setTimeout(() => {
+    store.dispatch(statusActionCreator({ value: 'offline' }))
+  }, OFFLINE_TIMEOUT)
+}
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
   // initialize the session id
