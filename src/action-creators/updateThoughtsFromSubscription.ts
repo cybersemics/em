@@ -67,7 +67,9 @@ const updateThoughtsFromSubscription =
       updateThoughts({
         contextIndexUpdates,
         thoughtIndexUpdates,
-        local: false,
+        // sync remote updates to local
+        local: sessionType === SessionType.REMOTE,
+        // do not sync local updates to remote since Firebase handles offline writes
         remote: false,
       }),
     )
