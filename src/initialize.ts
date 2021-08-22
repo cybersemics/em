@@ -26,12 +26,8 @@ import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
 
-interface InitFirebaseOptions {
-  onConnected?: (connected: boolean, authenticated: boolean) => void
-}
-
 /** Initialize firebase and event handlers. */
-export const initFirebase = async ({ onConnected }: InitFirebaseOptions): Promise<void> => {
+export const initFirebase = async (): Promise<void> => {
   if (window.firebase) {
     const firebase = window.firebase
     firebase.initializeApp(FIREBASE_CONFIG)
@@ -69,12 +65,8 @@ export const initFirebase = async ({ onConnected }: InitFirebaseOptions): Promis
       const connected = snapshot.val()
       const status = store.getState().status
 
-      onConnected?.(connected, !!firebase.auth().currentUser)
-
       // either connect with authenticated user or go to connected state until they login
       if (connected) {
-        // unsubscribe from Dexie subscriptions to avoid redundant updates since we will get all updates from Firebase
-
         // once connected, disable offline mode timer
         window.clearTimeout(globals.offlineTimer)
 
@@ -99,35 +91,23 @@ export const initFirebase = async ({ onConnected }: InitFirebaseOptions): Promis
 }
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
-  /** Dispatches updateThoughtsFromSubscription when a local subscription is received. Passed to db.subscribe. */
-  const onLocalSubscription = (updates: ThoughtSubscriptionUpdates) => {
-    console.log('onLocalSubscription')
-    store.dispatch(updateThoughtsFromSubscription(updates, SessionType.LOCAL))
-  }
   // initialize the session id
   sessionManager.init()
 
   // Note: Initialize firebase as soon as possible. Some components like ModalSignup needs to use firebase as soon as it renders.
   // TODO: Check if initializing firebase before local db causes any problem.
-  initFirebase({
-    // we subscribe/unsubscribe from Dexie depending on whether Firebase is connected
-    // this avoids processing subscriptions before they get to updateThoughtsFromSubscription
-    onConnected: (connected: boolean, authenticated: boolean) => {
-      if (connected) {
-        console.log('unsubscribe')
-        db.unsubscribe()
-      } else {
-        console.log('re-subscribe')
-        db.subscribe(onLocalSubscription)
-      }
-    },
-  })
+  initFirebase()
 
   // load local state unless loading a public context or source url
   await initDB()
 
-  console.log('subscribe')
-  db.subscribe(onLocalSubscription)
+  db.subscribe((updates: ThoughtSubscriptionUpdates) => {
+    // only allow local subscriptions if not logged in
+    const { status } = store.getState()
+    if (status !== 'disconnected') return
+
+    store.dispatch(updateThoughtsFromSubscription(updates, SessionType.LOCAL))
+  })
 
   const src = urlDataSource()
   const thoughtsLocalPromise =
