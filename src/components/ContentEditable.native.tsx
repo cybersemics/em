@@ -75,6 +75,31 @@ const ContentEditable = ({
     setHeight(DEFAULT_WEBVIEW_HEIGHT)
   }
 
+  useEffect(() => {
+    if (!isEditing) {
+      setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+    }
+  }, [isEditing])
+
+  useEffect(() => {
+    arrangeInputContainer(html)
+  }, [])
+
+  /** Helper function to determine the height of the input element. */
+  const arrangeInputContainer = (innerHTML: string) => {
+    const rows = Math.ceil(innerHTML.length / 30)
+
+    const newHeight = (rows === 0 ? 1 : rows) * DEFAULT_WEBVIEW_HEIGHT
+
+    if (newHeight !== DEFAULT_WEBVIEW_HEIGHT) {
+      setHeight(rows * DEFAULT_WEBVIEW_HEIGHT)
+
+      return
+    }
+
+    setHeight(DEFAULT_WEBVIEW_HEIGHT)
+  }
+
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (e: string) => {
     // prevent innerHTML update when editing
