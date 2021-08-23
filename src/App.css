@@ -4,6 +4,7 @@
 
 :root {
   --bullet-overlay-color: #50504f;
+  --base-font-size: 16px;
 }
 
 /* fixed debug box in bottom right */
@@ -22,7 +23,7 @@ body,
 #root,
 #app {
   height: 100%;
-  font-size: 16px;
+  font-size: var(--base-font-size);
 }
 
 body,
@@ -525,7 +526,6 @@ a.text-link {
 .thought,
 .thought-annotation {
   width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */
-  font-weight: 300;
   margin-left: 0.667em;
   /*display: inline-block;*/
   /*vertical-align: top;*/
@@ -2474,10 +2474,18 @@ code,
   width: calc(100% - 80px);
   margin-top: -0.3em;
   margin-left: -0.7em;
-  background-color: lightblue;
-  height: 3px;
-  border-radius: 99px;
+  height: var(--base-font-size); 
   z-index: 1;
+}
+
+.active-drop-hover {
+  position: absolute;
+  width: calc(100% - 80px);
+  margin-top: -0.3em;
+  margin-left: -0.7em;  
+  height: var(--base-font-size); 
+  z-index: 1; 
+  border-top: 0.2em solid lightblue;
 }
 
 .children .child:first-child > .drop-hover {

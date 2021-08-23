@@ -429,12 +429,7 @@ const ThoughtContainer = ({
             />
           )}
 
-          <span
-            className='drop-hover'
-            style={{
-              display: shouldDisplayHover ? 'inline' : 'none',
-            }}
-          ></span>
+          <span className={shouldDisplayHover ? 'active-drop-hover' : 'drop-hover'}></span>
 
           <ThoughtAnnotation
             env={env}

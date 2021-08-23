@@ -379,10 +379,7 @@ const EmptyChildrenDropTarget = ({
           last: depth === 0,
         })}
       >
-        <span
-          className='drop-hover'
-          style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}
-        ></span>
+        <span className={globals.simulateDropHover || isHovering ? 'active-drop-hover' : 'drop-hover'}></span>
       </li>,
     )}
   </ul>
@@ -681,10 +678,11 @@ export const SubthoughtsComponent = ({
               style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}
             >
               <span
-                className='drop-hover'
-                style={{
-                  display: (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none',
-                }}
+                className={
+                  (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort
+                    ? 'active-drop-hover'
+                    : 'drop-hover'
+                }
               ></span>
             </li>,
           )}
