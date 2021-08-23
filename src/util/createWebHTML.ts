@@ -26,6 +26,8 @@ export const createWebHTML = ({ placeholder, innerHTML, isEditing }: IWebHTMLPro
 
     #content:empty:before {
       content: attr(placeholder);
+      font-style: italic;
+      opacity: 0.5;
     }
 
     #content {
@@ -46,10 +48,27 @@ export const createWebHTML = ({ placeholder, innerHTML, isEditing }: IWebHTMLPro
     window.ReactNativeWebView.postMessage(JSON.stringify({ anchorNode, focusNode, anchorOffset, focusOffset }))
   }
 
+  function focusInput() {
+    try{
+      const ele = document.getElementById("content");
+      ele.focus();
+    } catch(e){
+      window.ReactNativeWebView.postMessage(JSON.stringify({ error: e }))
+    }
+  }
+
+  function blurInput() {
+    document.getElementById('content').blur();
+  }
+
+  window.onload = function (e) {
+    e.preventDefault()
+
+    ${isEditing} ? focusInput() : blurInput()
+  };
+
   document.addEventListener("DOMContentLoaded", function () {
     const ele = document.getElementById("content");
-
-    ${isEditing} && ele.focus();
 
     // Get the placeholder attribute
     const placeholder = ele.getAttribute("placeholder");
@@ -58,7 +77,7 @@ export const createWebHTML = ({ placeholder, innerHTML, isEditing }: IWebHTMLPro
     ele.innerHTML.trim() === "" && (ele.innerHTML = placeholder);
 
     ele.addEventListener("focus", function (e) {
-      const value = e.target.innerHTML;
+      const value = e.target.innerHTML.trim();
       value === placeholder && (e.target.innerHTML = "");
 
       window.ReactNativeWebView.postMessage(JSON.stringify({ event: e, eventType: ${WEBVIEW_POST_EVENTS.onFocus} }))
@@ -113,7 +132,7 @@ export const createWebHTML = ({ placeholder, innerHTML, isEditing }: IWebHTMLPro
 <body>
   <div
     id="content"
-    contenteditable
+    contenteditable="true"
     placeholder="${placeholder}"
   >
     ${innerHTML || ''}

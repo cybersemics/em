@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { View, ViewStyle, StyleSheet } from 'react-native'
 import { WebView } from 'react-native-webview'
 
@@ -31,6 +31,8 @@ export interface IKeyDown {
   key: string
 }
 
+const DEFAULT_WEBVIEW_HEIGHT = 25
+
 /**
  * Content Editable Component.
  */
@@ -45,20 +47,48 @@ const ContentEditable = ({
 }: ContentEditableProps) => {
   const allowInnerHTMLChange = useRef<boolean>(true)
   const { width } = useDimensions().window
+  const [height, setHeight] = useState(DEFAULT_WEBVIEW_HEIGHT)
   const contentRef = useRef<WebView>(null)
 
   const [webviewHTML, setWebviewHTML] = useState<string>(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+
+  useEffect(() => {
+    if (!isEditing) {
+      setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+    }
+  }, [isEditing])
+
+  useEffect(() => {
+    arrangeInputContainer(html)
+  }, [])
+
+  /** Helper function to determine the height of the input element. */
+  const arrangeInputContainer = (innerHTML: string) => {
+    const rows = Math.ceil(innerHTML.length / 30)
+
+    const newHeight = (rows === 0 ? 1 : rows) * DEFAULT_WEBVIEW_HEIGHT
+
+    if (newHeight !== DEFAULT_WEBVIEW_HEIGHT) {
+      setHeight(rows * DEFAULT_WEBVIEW_HEIGHT)
+
+      return
+    }
+
+    setHeight(DEFAULT_WEBVIEW_HEIGHT)
+  }
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (e: string) => {
     // prevent innerHTML update when editing
     allowInnerHTMLChange.current = false
 
+    arrangeInputContainer(e)
+
     props.onChange(e)
   }
 
   return (
-    <View style={commonStyles.flexOne}>
+    <View style={[commonStyles.flexOne, styles({ isEditing }).container]}>
       <WebView
         ref={contentRef}
         originWhitelist={['*']}
@@ -68,6 +98,7 @@ const ContentEditable = ({
         hideKeyboardAccessoryView={true}
         domStorageEnabled={false}
         javaScriptEnabled
+        keyboardDisplayRequiresUserAction={false}
         onMessage={event => {
           const { eventType, event: webEvent } = JSON.parse(event.nativeEvent.data)
 
@@ -106,16 +137,23 @@ const ContentEditable = ({
               break
           }
         }}
-        style={styles(width).webview}
+        style={styles({ width, height }).webview}
       />
     </View>
   )
 }
 
-/** Style.  */
-const styles = (width = 0) =>
+interface IStyle {
+  height?: number
+  width?: number
+  isEditing?: boolean
+}
+
+/** Style. */
+const styles = ({ width = 0, height, isEditing = false }: IStyle) =>
   StyleSheet.create({
-    webview: { width: width - 25, height: 25, marginTop: 10, marginHorizontal: 5, backgroundColor: 'transparent' },
+    webview: { width: width - 25, height, marginTop: 10, marginHorizontal: 5, backgroundColor: 'transparent' },
+    container: { opacity: isEditing ? 1 : 0.5 },
   })
 
 export declare type ContentEditableEvent = string
