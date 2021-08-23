@@ -1,7 +1,7 @@
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import { appendToPath, parentOf, head, pathToContext, once } from '../util'
 import { nextSibling as thoughtNextSibling, rootedParentOf, firstVisibleChildWithCursorCheck } from '../selectors'
-import { Context, Path, State } from '../@types'
+import { Context, Path, SimplePath, State } from '../@types'
 
 interface NextThoughtResult {
   nextThoughts: Path | null
@@ -192,22 +192,23 @@ const nextInThoughtView = (
   ignoreChildren?: boolean,
 ): NextThoughtResult | null => {
   const firstChild =
-    !ignoreChildren && firstVisibleChildWithCursorCheck(state, path, pathToContext(path) || [HOME_TOKEN])
+    !ignoreChildren &&
+    firstVisibleChildWithCursorCheck(state, path as SimplePath, pathToContext(state, path) || [HOME_TOKEN])
 
-  const thoughtViewPath = once(() => path)
+  const thoughtViewPath = path
   // pathToContext is expensive than duplicate condition check hence using the former
-  const thoughtViewContext = once(() => context)
+  const thoughtViewContext = context
 
   /** Returns the next uncle in the thought view. */
   const nextUncleInThoughtView = () => {
-    const parentThought = head(parentOf(thoughtViewPath()))
+    const parentThought = state.thoughts.contextIndex[head(parentOf(thoughtViewPath))]
 
     /** Gets the next uncle.
      * Only calculate uncle if not at root.
      */
     const nextUncle = () => {
-      const parentContext = context.length === 1 ? [HOME_TOKEN] : parentOf(thoughtViewContext())
-      const parentPath = parentOf(thoughtViewPath())
+      const parentContext = context.length === 1 ? [HOME_TOKEN] : parentOf(thoughtViewContext)
+      const parentPath = parentOf(thoughtViewPath)
       return nextInThoughtView(state, parentThought.value, parentContext, parentThought.rank, parentPath, true)
     }
 
@@ -240,23 +241,24 @@ const nextInThoughtView = (
   //   )
   // }
 
-  const nextSibling = once(() => thoughtNextSibling(state, value, thoughtViewContext(), rank))
+  const nextSibling = once(() => thoughtNextSibling(state, value, thoughtViewContext, rank))
   return firstChild
     ? {
-        nextThoughts: appendToPath(path, firstChild),
+        nextThoughts: appendToPath(path, firstChild.id),
       }
     : nextSibling()
     ? {
-        nextThoughts: appendToPath(parentOf(thoughtViewPath()), nextSibling()),
+        nextThoughts: appendToPath(parentOf(thoughtViewPath), nextSibling().id),
       }
     : nextUncleInThoughtView()
 }
 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain. */
 export const nextThought = (state: State, path: Path = HOME_PATH) => {
-  const { value, rank } = head(path)
+  const thought = state.thoughts.contextIndex[head(path)]
+  const { value, rank } = thought
   const parentPath = rootedParentOf(state, path)
-  const context = pathToContext(parentPath)
+  const context = pathToContext(state, parentPath)
 
   // @MIGRATION_TODO: Context view related logic is disabled
   // return isContextViewActive(state, pathToContext(parentPath)) || isContextViewActive(state, pathToContext(path))

@@ -28,7 +28,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   const { cursor, noteFocus } = state
 
   if (cursor) {
-    const context = pathToContext(cursor)
+    const context = pathToContext(state, cursor)
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
     } else if (hasChild(state, context, '=readonly')) {

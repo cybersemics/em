@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { cursorBack, deleteThought, setCursor } from '../reducers'
-import { Child, Path, State } from '../@types'
+import { Path, State } from '../@types'
 
 // util
 import {
@@ -34,7 +34,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   const path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, pathToContext(parentOf(path)))
+  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(path)))
   // @MIGRATION_TODO: Fix the context view related logic here.
   if (showContexts) {
     // Get thought in ContextView
@@ -49,9 +49,11 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     // }
   }
   const simplePath = simplifyPath(state, path)
-  const thoughts = pathToContext(simplePath)
+  const thoughts = pathToContext(state, simplePath)
   const context = rootedParentOf(state, thoughts)
-  const { value, rank } = head(simplePath)
+
+  const thought = state.thoughts.contextIndex[head(simplePath)]
+  const { value, rank } = thought
 
   /** Calculates the previous context within a context view. */
   const prevContext = () => {
@@ -66,11 +68,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     })
     const context = prevContext()
     return context
-      ? ({
-          value: getParentThought(state, context.id)!.value,
-          rank: prevContext().rank,
-        } as Child)
-      : null
   }
 
   // prev must be calculated before dispatching deleteThought
@@ -90,9 +87,9 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   return reducerFlow([
     // delete thought
     deleteThought({
-      context: parentOf(pathToContext(simplePath)),
+      context: parentOf(pathToContext(state, simplePath)),
       showContexts,
-      thoughtRanked: head(simplePath),
+      thoughtId: head(simplePath),
     }),
 
     // move cursor
@@ -108,19 +105,11 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       return setCursorOrBack.apply(
         null,
         prev
-          ? [appendToPath(parentOf(path), prev), { offset: prev.value.length }]
+          ? [appendToPath(parentOf(path), prev.id), { offset: prev.value.length }]
           : // Case II: set cursor on next thought
           next()
           ? [
-              unroot(
-                showContexts
-                  ? appendToPath(parentOf(path), {
-                      id: next().id,
-                      value: getParentThought(state, next().id)!.value,
-                      rank: next().rank,
-                    })
-                  : appendToPath(parentOf(path), next() as Child),
-              ),
+              unroot(showContexts ? appendToPath(parentOf(path), next().id) : appendToPath(parentOf(path), next().id)),
               { offset: 0 },
             ]
           : // Case III: delete last thought in context; set cursor on context

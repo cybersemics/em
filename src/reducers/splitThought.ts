@@ -1,16 +1,6 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
-import {
-  appendToPath,
-  parentOf,
-  hashContext,
-  headRank,
-  headValue,
-  pathToContext,
-  reducerFlow,
-  strip,
-  headId,
-} from '../util'
+import { appendToPath, parentOf, headValue, pathToContext, reducerFlow, strip } from '../util'
 import { getThoughtAfter, getChildrenRanked, simplifyPath } from '../selectors'
 import { editableRender, editThought, moveThought, newThought } from '../reducers'
 import { Path, SplitResult, State } from '../@types'
@@ -25,7 +15,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
 
   const simplePath = simplifyPath(state, path)
 
-  const thoughts = pathToContext(simplePath)
+  const thoughts = pathToContext(state, simplePath)
   const context = thoughts.length > 1 ? parentOf(thoughts) : [HOME_TOKEN]
 
   // split the value into left and right parts
@@ -34,11 +24,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   const valueLeft = strip(splitResult.left, { preserveFormatting: true })
   const valueRight = strip(splitResult.right, { preserveFormatting: true })
 
-  const pathLeft = appendToPath(parentOf(path), {
-    id: headId(path),
-    value: valueLeft,
-    rank: headRank(path),
-  })
+  const pathLeft = path
 
   return reducerFlow([
     // set the thought's text to the left of the selection
@@ -60,19 +46,15 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
     // move children
     state => {
       const childNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
-      const pathRight = appendToPath(parentOf(simplePath), {
-        // @MIGRATION_NOTE: The id needs to be same as the newly created thought id. Should we pass optional id to newThought ??
-        id: hashContext(state, [...pathToContext(parentOf(simplePath)), valueRight]) || '',
-        value: valueRight,
-        rank: childNew!.rank,
-      })
-      const children = getChildrenRanked(state, pathToContext(pathLeft))
+      const pathRight = appendToPath(parentOf(simplePath), childNew!.id)
+      const children = getChildrenRanked(state, pathToContext(state, pathLeft))
 
       return reducerFlow(
         children.map(child =>
           moveThought({
-            oldPath: appendToPath(pathLeft, child),
-            newPath: appendToPath(pathRight, child),
+            oldPath: appendToPath(pathLeft, child.id),
+            newPath: appendToPath(pathRight, child.id),
+            newRank: childNew!.rank,
           }),
         ),
       )(state)

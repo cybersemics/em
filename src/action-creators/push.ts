@@ -7,11 +7,12 @@ import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { getSetting } from '../selectors'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
-import { Thunk, Index, Lexeme, Parent } from '../@types'
+import { Thunk, Index, Lexeme, Parent, State } from '../@types'
 import { storage } from '../util/storage'
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (
+  state: State,
   thoughtIndexUpdates: Index<Lexeme> = {},
   contextIndexUpdates: Index<Parent> = {},
   recentlyEdited: Index,
@@ -31,6 +32,10 @@ const pushLocal = (
 
   logWithTime('sync: thoughtIndexPromises generated')
 
+  const updatedContextIndex = {
+    ...state.thoughts.contextIndex,
+    ...contextIndexUpdates,
+  }
   // contextIndex
   const contextIndexPromises = [
     ...Object.keys(contextIndexUpdates).map(contextEncoded => {
@@ -39,9 +44,15 @@ const pushLocal = (
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[contextEncoded]
       if (name) {
-        const firstChild = parentEntry.children && parentEntry.children.find(child => !isFunction(child.value))
+        const firstChild =
+          parentEntry.children &&
+          parentEntry.children.find(child => {
+            const thought = updatedContextIndex[child]
+            return !isFunction(thought.value)
+          })
         if (firstChild) {
-          storage.setItem(`Settings/${name}`, firstChild.value)
+          const thought = updatedContextIndex[firstChild]
+          storage.setItem(`Settings/${name}`, thought.value)
         }
       }
 
@@ -90,20 +101,11 @@ const pushRemote =
           return
         }
 
-        // fix undefined/NaN rank
         accum['thoughtIndex/' + (key || EMPTY_TOKEN)] =
           lexeme && getSetting(state, 'Data Integrity Check') === 'On'
             ? {
                 value: lexeme.value,
-                contexts: lexeme.contexts.map(cx => ({
-                  id: cx.id,
-                  rank: cx.rank || 0, // guard against NaN or undefined
-                  ...(cx.lastUpdated
-                    ? {
-                        lastUpdated: cx.lastUpdated,
-                      }
-                    : null),
-                })),
+                contexts: lexeme.contexts,
                 created: lexeme.created || timestamp(),
                 lastUpdated: lexeme.lastUpdated || timestamp(),
               }
@@ -126,19 +128,11 @@ const pushRemote =
                 id: parentContext!.id,
                 value: parentContext!.value,
                 parentId: parentContext!.parentId,
-                children: dataIntegrityCheck
-                  ? children.map(subthought => ({
-                      id: subthought.id,
-                      value: subthought.value || '', // guard against NaN or undefined,
-                      rank: subthought.rank || 0, // guard against NaN or undefined
-                      ...(subthought.lastUpdated
-                        ? {
-                            lastUpdated: subthought.lastUpdated,
-                          }
-                        : null),
-                    }))
-                  : children,
+                // @MIGRATION_TODO: Data intergity fix
+                children: dataIntegrityCheck ? children : children,
                 lastUpdated: parentContext!.lastUpdated || timestamp(),
+                archived: parentContext!.archived,
+                rank: parentContext!.rank,
               }
             : null
       },
@@ -218,7 +212,14 @@ const push =
     return Promise.all([
       // push local
       local &&
-        pushLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates, localStorageSettingsContexts),
+        pushLocal(
+          getState(),
+          thoughtIndexUpdates,
+          contextIndexUpdates,
+          recentlyEdited,
+          updates,
+          localStorageSettingsContexts,
+        ),
 
       // push remote
       remote &&

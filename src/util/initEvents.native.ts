@@ -30,11 +30,11 @@ export const initEvents = (store: Store<State, any>) => {
       lastPath = state.cursor
     }
 
-    if (!path || !pathExists(state, pathToContext(path)) || equalPath(lastPath, path)) {
+    if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(lastPath, path)) {
       window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
     }
 
-    lastPath = path && pathExists(state, pathToContext(path)) ? path : lastPath
+    lastPath = path && pathExists(state, pathToContext(state, path)) ? path : lastPath
     lastState = e.state
 
     const toRoot = !path || isRoot(path)

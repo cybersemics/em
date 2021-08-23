@@ -6,13 +6,7 @@ import { Lexeme, ThoughtContext, Timestamp } from '../@types'
 export const addContext = (lexeme: Lexeme, rank: number, id: string, archived: Timestamp): Lexeme => ({
   ...lexeme,
   ...notNull({
-    contexts: (lexeme.contexts || [])
-      .filter((parent: ThoughtContext) => !(id === parent.id && parent.rank === rank))
-      .concat({
-        rank,
-        id,
-        ...(archived ? { archived } : {}),
-      }),
+    contexts: (lexeme.contexts || []).filter((thought: ThoughtContext) => !(id === thought)).concat(id),
     created: lexeme.created || timestamp(),
     lastUpdated: timestamp(),
   }),

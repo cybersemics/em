@@ -1,6 +1,6 @@
 import { alert, moveThought, createThought, setCursor } from '../reducers'
 import { getRankBefore, hasChild, rootedParentOf, simplifyPath } from '../selectors'
-import { Child, State } from '../@types'
+import { State } from '../@types'
 import {
   appendToPath,
   parentOf,
@@ -21,7 +21,7 @@ const subCategorizeOne = (state: State) => {
   if (!cursor) return state
 
   const cursorParent = parentOf(cursor)
-  const context = pathToContext(cursorParent)
+  const context = pathToContext(state, cursorParent)
 
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
@@ -49,28 +49,23 @@ const subCategorizeOne = (state: State) => {
 
   const newThoughtId = createId()
 
-  const child: Child = {
-    value,
-    rank: newRank,
-    id: newThoughtId,
-  }
-
   return reducerFlow([
     createThought({
-      context: pathToContext(rootedParentOf(state, simplePath)),
+      context: pathToContext(state, rootedParentOf(state, simplePath)),
       value,
       rank: newRank,
       id: newThoughtId,
     }),
     setCursor({
-      path: appendToPath(cursorParent, child),
+      path: appendToPath(cursorParent, newThoughtId),
       offset: 0,
       editing: true,
     }),
     state =>
       moveThought(state, {
         oldPath: cursor,
-        newPath: appendToPath(cursorParent, child, head(cursor)),
+        newPath: appendToPath(cursorParent, newThoughtId, head(cursor)),
+        newRank,
       }),
   ])(state)
 }

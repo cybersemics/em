@@ -1,7 +1,6 @@
 import { getLexeme, rankThoughtsFirstMatch } from '../selectors'
 import { parentOf, head, headValue, splice } from '../util'
 import { SimplePath, State, ThoughtContext } from '../@types'
-import getParentThought from './getParentThought'
 import getContextForThought from './getContextForThought'
 
 /** Generates path from the last segment of a context chain. */
@@ -17,10 +16,8 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
   }
 
   const ult = contextChain[contextChain.length - 1]
-  const parent = lexeme.contexts.find(
-    parent => getParentThought(state, parent.id)?.value === ult[0].value,
-  ) as ThoughtContext
-  const pathPrepend = parentOf(rankThoughtsFirstMatch(state, getContextForThought(state, parent.id)!))
+  const parent = lexeme.contexts.find(parent => parent === ult[0]) as ThoughtContext
+  const pathPrepend = parentOf(rankThoughtsFirstMatch(state, getContextForThought(state, parent)!))
   return pathPrepend.concat(splice(ult, 1, 0, head(penult))) as SimplePath
 }
 

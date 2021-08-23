@@ -2,7 +2,7 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
-import { splitAtSelection, headValue, isDocumentEditable } from '../util'
+import { splitAtSelection, headValue, isDocumentEditable, head } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
 
@@ -30,8 +30,10 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   const state = getState()
   const { cursor, editingValue } = state
 
+  const cursorHeadThought = cursor && state.thoughts.contextIndex[head(cursor)]
+
   // if current edited thought is duplicate and user hits enter
-  if (cursor && editingValue && headValue(cursor) !== editingValue) {
+  if (cursor && editingValue && cursorHeadThought && cursorHeadThought.value !== editingValue) {
     dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }))
     return
   }

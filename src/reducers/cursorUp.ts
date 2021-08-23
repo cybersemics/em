@@ -8,12 +8,20 @@ import { State } from '../@types'
 const cursorUp = (state: State) => {
   const { cursor } = state
   const path = cursor || HOME_PATH
-  const { value, rank } = head(path)
   const contextRanked = rootedParentOf(state, path)
-  const context = pathToContext(contextRanked)
+  const context = pathToContext(state, contextRanked)
+
+  const cursorThought = state.thoughts.contextIndex[head(path)]
+
+  if (!cursorThought) {
+    console.error('Cursor thought not found!')
+    return state
+  }
+
+  const { value, rank } = cursorThought
 
   const thoughtBefore = prevSibling(state, value, context, rank)
-  const pathBefore = thoughtBefore && unroot(appendToPath(parentOf(path), thoughtBefore))
+  const pathBefore = thoughtBefore && unroot(appendToPath(parentOf(path), thoughtBefore.id))
   // const prevNieces = thoughtBefore && getChildrenRanked(pathBefore)
   // const prevNiece = prevNieces && prevNieces[prevNieces.length - 1]
 

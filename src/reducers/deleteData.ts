@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import { deleteThought, updateLastUpdated } from '../data-providers/dexie'
 import { hashThought, timestamp } from '../util'
-import { getLexeme, getAllChildren, getContextForThought } from '../selectors'
+import { getLexeme, getContextForThought } from '../selectors'
 import { State } from '../@types'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Deletes the value from the thoughtIndex. */
 const deleteData = (state: State, { value }: { value: string }) => {
@@ -15,14 +16,16 @@ const deleteData = (state: State, { value }: { value: string }) => {
   // delete value from all contexts
   const contextIndex = { ...state.thoughts.contextIndex }
   if (lexeme && lexeme.contexts && lexeme.contexts.length > 0) {
-    lexeme.contexts.forEach(parent => {
+    lexeme.contexts.forEach(thoughtId => {
+      const thought = state.thoughts.contextIndex[thoughtId]
+      const parent = state.thoughts.contextIndex[thought.parentId]
+
       if (!parent) {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.stringify(parent)}`)
         return state
       }
-
       const contextEncoded = parent.id
-      const childrenNew = getAllChildren(state, getContextForThought(state, parent.id)!).filter(
+      const childrenNew = getAllChildrenAsThoughts(state, getContextForThought(state, parent.id)!).filter(
         child => hashThought(child.value) !== hashThought(value),
       )
 
@@ -34,7 +37,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
       else {
         contextIndex[contextEncoded] = {
           ...contextIndex[contextEncoded],
-          children: childrenNew,
+          children: childrenNew.map(({ id }) => id),
           lastUpdated: timestamp(),
         }
       }

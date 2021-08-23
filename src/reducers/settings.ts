@@ -17,10 +17,7 @@ const settings = (state: State, { key, value }: { key: string; value: string }) 
     return state
   }
 
-  const simplePath = appendToPath(rankThoughtsFirstMatch(state, context) as SimplePath, {
-    ...oldThoughtRanked,
-    value: newValue,
-  })
+  const simplePath = appendToPath(rankThoughtsFirstMatch(state, context) as SimplePath, oldThoughtRanked.id)
 
   return editThought(state, {
     context,

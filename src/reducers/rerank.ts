@@ -6,13 +6,14 @@ import { SimplePath, State } from '../@types'
 
 /** Recalculate absolute ranks while preserving relative order to avoid rank precision errors. */
 const rerank = (state: State, simplePath: SimplePath): State => {
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   return reducerFlow(
     getChildrenRanked(state, context).map((child, i) =>
       moveThought({
-        oldPath: appendToPath(simplePath, child),
-        newPath: appendToPath(simplePath, { ...child, rank: i }),
+        oldPath: appendToPath(simplePath, child.id),
+        newPath: appendToPath(simplePath, child.id),
         skipRerank: true,
+        newRank: i,
       }),
     ),
   )(state)

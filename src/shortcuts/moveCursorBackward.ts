@@ -18,7 +18,7 @@ const moveCursorBackward: Shortcut = {
 
     const path = simplifyPath(state, cursor)
     // parentOf twice because we are checking if this thought is in column 2 of a table
-    const contextGrandparent = parentOf(parentOf(pathToContext(path)))
+    const contextGrandparent = parentOf(parentOf(pathToContext(state, path)))
     const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
 
     dispatch(isTable ? cursorBack() : outdent())

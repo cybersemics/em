@@ -1,23 +1,11 @@
 import _ from 'lodash'
-import { treeChange } from '../util/recentlyEditedTree'
+// import { treeChange } from '../util/recentlyEditedTree'
 import { getLexeme, getAllChildren } from '../selectors'
 import updateThoughts from './updateThoughts'
-import { Context, Path, SimplePath, State, Timestamp } from '../@types'
+import { Context, SimplePath, State, Timestamp } from '../@types'
 
 // util
-import {
-  addContext,
-  appendToPath,
-  parentOf,
-  equalThoughtRanked,
-  hashThought,
-  head,
-  headId,
-  headRank,
-  isDivider,
-  removeContext,
-  timestamp,
-} from '../util'
+import { addContext, hashThought, headId, headRank, isDivider, removeContext, timestamp } from '../util'
 
 export interface editThoughtPayload {
   oldValue: string
@@ -35,7 +23,6 @@ const editThought = (
 ) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
-  const { cursor } = state
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
   const rank = headRank(path)
@@ -65,34 +52,12 @@ const editThought = (
     return state
   }
 
-  // find exact thought from thoughtIndex
-  const exactThought = lexemeOld.contexts.find(
-    thoughtContext => thoughtContext.id === editedThoughtId && thoughtContext.rank === rank,
-  )
-
-  const archived = exactThought ? exactThought.archived : null
-
-  const cursorNew =
-    cursor &&
-    appendToPath(
-      parentOf(cursor),
-      head(cursor).value === oldValue && head(cursor).rank === (rankInContext || rank)
-        ? { ...head(cursor), value: newValue }
-        : head(cursor),
-    )
-
-  const editedThoughtParentPath = path.slice(0, path.length - 1) as Path
-
-  const newPath = appendToPath(editedThoughtParentPath, {
-    id: editedThoughtId,
-    value: newValue,
-    rank: rankInContext || rank,
-  })
+  const archived = editedThought.archived
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  // let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
-    recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
+    // recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
   } catch (e) {
     console.error('editThought: treeChange immer error')
     console.error(e)
@@ -130,17 +95,8 @@ const editThought = (
   }
 
   const thoughtNewSubthoughts = getAllChildren(state, context)
-    .filter(
-      child =>
-        !equalThoughtRanked(child, { value: oldValue, rank }) && !equalThoughtRanked(child, { value: newValue, rank }),
-    )
-    .concat({
-      id: editedThought!.id,
-      value: newValue,
-      rank,
-      lastUpdated: timestamp(),
-      ...(archived ? { archived } : {}),
-    })
+    .filter(child => child !== editedThought.id)
+    .concat(editedThoughtId)
 
   const thoughtIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, lexemeNew takes precedence since it contains the updated thought
@@ -174,14 +130,13 @@ const editThought = (
   // do not bump data nonce, otherwise editable will be re-rendered
   const stateNew: State = {
     ...state,
-    cursor: cursorNew,
     contextViews: contextViewsNew,
   }
 
   return updateThoughts(stateNew, {
     thoughtIndexUpdates,
     contextIndexUpdates,
-    recentlyEdited,
+    // recentlyEdited,
   })
 }
 

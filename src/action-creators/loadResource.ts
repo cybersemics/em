@@ -9,7 +9,7 @@ const loadResource =
   (dispatch, getState) => {
     const state = getState()
     const { resourceCache } = state
-    const context = pathToContext(path)
+    const context = pathToContext(state, path)
     const src = attribute(state, context, '=src')
 
     /** Returns true if the path has any children. */
@@ -20,9 +20,9 @@ const loadResource =
       dispatch(newThought({ at: path, insertNewSubthought: true, preventSetCursor: true }))
 
       const simplePath = simplifyPath(state, path)
-      const childrenNew = getChildrenRanked(state, pathToContext(simplePath))
+      const childrenNew = getChildrenRanked(state, pathToContext(state, simplePath))
       const thoughtNew = childrenNew[childrenNew.length - 1]
-      const newThoughtPath = appendToPath(simplePath, thoughtNew)
+      const newThoughtPath = appendToPath(simplePath, thoughtNew.id)
 
       /** An ad hoc action-creator to dispatch setResourceCacheActionCreator with the given value. */
       const setResourceCache = (value: boolean) =>

@@ -18,13 +18,10 @@ export const removeContext = (
     lexeme,
     notNull({
       contexts: lexeme.contexts
-        ? lexeme.contexts.filter(
-            parent =>
-              !(
-                parent.id === hashContext(state, unroot([...context, lexeme.value])) &&
-                (rank == null || parent.rank === rank)
-              ),
-          )
+        ? lexeme.contexts.filter(thought => {
+            const parentId = state.thoughts.contextIndex[thought].parentId
+            return !(parentId === hashContext(state, unroot([...context, lexeme.value])))
+          })
         : [],
       created: lexeme.created || lastUpdated,
       lastUpdated: lastUpdated,

@@ -14,7 +14,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
     ? // delete existing attribute
       deleteThought(state, {
         context,
-        thoughtRanked: head(path),
+        thoughtId: head(path),
       })
     : // create new attribute
       reducerFlow([

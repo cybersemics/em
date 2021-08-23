@@ -119,8 +119,8 @@ export const ABSOLUTE_TOKEN = '__ABSOLUTE__'
 
 export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 
-export const HOME_PATH = [{ value: HOME_TOKEN, rank: 0, id: HOME_TOKEN }] as SimplePath
-export const ABSOLUTE_PATH = [{ value: ABSOLUTE_TOKEN, rank: 0, id: ABSOLUTE_TOKEN }] as SimplePath
+export const HOME_PATH = [HOME_TOKEN] as SimplePath
+export const ABSOLUTE_PATH = [ABSOLUTE_TOKEN] as SimplePath
 
 export const ALLOW_SINGLE_CONTEXT = false
 

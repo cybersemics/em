@@ -14,7 +14,7 @@ import {
   unroot,
 } from '../util'
 import { alert, error, closeModal } from '../action-creators'
-import { exportContext, getAllChildren, simplifyPath } from '../selectors'
+import { exportContext, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
 import { ExportOption, State } from '../@types'
@@ -24,6 +24,7 @@ import { FontAwesome5 } from '@expo/vector-icons'
 import { ActionButton } from './ActionButton'
 import Clipboard from 'expo-clipboard'
 import { Text } from './Text.native'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface AdvancedSetting {
   id: string
@@ -52,9 +53,9 @@ const ModalExport = () => {
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getAllChildren(state, contextTitle)[0]
+  const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)

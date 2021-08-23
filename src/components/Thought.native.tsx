@@ -42,6 +42,7 @@ import {
 // selectors
 import {
   attribute,
+  childIdsToThoughts,
   getAllChildren,
   getChildren,
   getChildrenRanked,
@@ -54,6 +55,7 @@ import {
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
 import ThoughtAnnotation from './ThoughtAnnotation'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /**********************************************************************
  * Redux
@@ -141,7 +143,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const simplePathLive = isEditing
     ? (parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath)
     : simplePath
-  const contextLive = pathToContext(simplePathLive)
+  const contextLive = pathToContext(state, simplePathLive)
 
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
 
@@ -154,7 +156,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
       (distance === 2
         ? // grandparent
           equalPath(rootedParentOf(state, parentOf(cursor)), path) &&
-          getChildren(state, pathToContext(cursor)).length === 0
+          getChildren(state, pathToContext(state, cursor)).length === 0
         : // parent
           equalPath(parentOf(cursor), path)))
 
@@ -294,15 +296,17 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
+  const children = childrenForced
+    ? childIdsToThoughts(state, childrenForced)
+    : getChildrenRanked(state, pathToContext(state, contextBinding || simplePathLive))
 
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  const thoughts = pathToContext(simplePath)
-  const thoughtsLive = pathToContext(simplePathLive!)
+  const thoughts = pathToContext(state, simplePath)
+  const thoughtsLive = pathToContext(state, simplePathLive!)
   const context = parentOf(thoughts)
-  const childrenOptions = getAllChildren(state, [...context, '=options'])
+  const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
   const options =
     !isFunction(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
 
@@ -351,7 +355,7 @@ const ThoughtContainer = ({
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
-  const draggingThoughtValue = state.draggingThought ? head(pathToContext(state.draggingThought)) : null
+  const draggingThoughtValue = state.draggingThought ? head(pathToContext(state, state.draggingThought)) : null
 
   const isAnyChildHovering = useIsChildHovering(thoughts, isHovering, isDeepHovering)
 
@@ -371,13 +375,13 @@ const ThoughtContainer = ({
       // check if it's alphabetically previous to current thought
       compareReasonable(draggingThoughtValue, value) <= 0 &&
       // check if it's alphabetically next to previous thought if it exists
-      (!prevChild || compareReasonable(draggingThoughtValue, (prevChild as Child).value) === 1)
+      (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
     : // if alphabetical sort is disabled just check if current thought is hovering
       globals.simulateDropHover || isHovering
 
   const { direction: sortDirection, type: sortType } = getSortPreference(
     store.getState(),
-    pathToContext(simplePathLive!),
+    pathToContext(state, simplePathLive!),
   )
 
   // avoid re-renders from object reference change
@@ -399,7 +403,7 @@ const ThoughtContainer = ({
         {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
           <Bullet
             isEditing={isEditing}
-            context={pathToContext(simplePath)}
+            context={pathToContext(state, simplePath)}
             leaf={isLeaf}
             onClick={(e: React.MouseEvent) => {
               if (!isEditing || children.length === 0) {

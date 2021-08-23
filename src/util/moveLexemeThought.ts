@@ -1,31 +1,21 @@
-import { Context, Lexeme, Timestamp } from '../@types'
+import { Lexeme, State } from '../@types'
 import { concatOne, timestamp } from '../util'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. Changed rank). Removes duplicates with the same { value, rank }. */
-export const moveLexemeThought = (
-  lexeme: Lexeme,
-  oldContext: Context,
-  newContext: Context,
-  oldRank: number,
-  newRank: number,
-  id: string,
-  archived: Timestamp,
-) => ({
+export const moveLexemeThought = (state: State, lexeme: Lexeme, oldRank: number, newRank: number, id: string) => ({
   ...lexeme,
   contexts: concatOne(
-    (lexeme.contexts || []).filter(
-      parent =>
+    (lexeme.contexts || []).filter(child => {
+      const thought = state.thoughts.contextIndex[child]
+      return (
         // remove old context
-        (parent.rank !== oldRank || parent.id !== id) &&
+        (thought.rank !== oldRank || child !== id) &&
         // remove new context with duplicate rank
-        (parent.rank !== newRank || parent.id !== id),
-    ),
+        (thought.rank !== newRank || child !== id)
+      )
+    }),
     // add new context
-    {
-      rank: newRank,
-      id,
-      ...(archived ? { archived } : {}),
-    },
+    id,
   ),
   created: lexeme.created || timestamp(),
   lastUpdated: timestamp(),

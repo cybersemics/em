@@ -7,5 +7,4 @@ export const resolveArray = (items: any[]): string => items.join('__RESOLVE__')
 export const resolveShallow = (o: Index<any>): string => resolveArray(Object.values(o))
 
 /** A memoize resolver for Paths and Child[]. */
-export const resolvePath = (pathlike: Child[] | null): string | null =>
-  pathlike ? resolveArray(pathlike.map(resolveShallow)) : pathlike
+export const resolvePath = (pathlike: Child[] | null): string | null => (pathlike ? resolveArray(pathlike) : pathlike)

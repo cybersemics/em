@@ -4,7 +4,6 @@ import {
   clearPushQueue,
   editThought,
   deleteThought,
-  moveThought,
   isPushing,
   pull,
   pullLexemes,
@@ -78,7 +77,7 @@ const flushDeletes =
         dispatch(
           deleteThought({
             context,
-            thoughtRanked: child,
+            thoughtId: child,
           }),
         )
       })
@@ -121,16 +120,16 @@ const flushMoves =
     if (descendantMoves?.length) {
       const pending: Index<Context> = keyValueBy(descendantMoves, ({ pathOld }) => {
         // skip the pull for loaded descendants
-        return { [headId(pathOld)]: pathToContext(pathOld) }
+        return { [headId(pathOld)]: pathToContext(state, pathOld) }
       })
       await dispatch(pull(pending, { maxDepth: Infinity }))
-      maxDepth = Math.max(...descendantMoves.map(({ pathOld }) => getDepth(state, pathToContext(pathOld))))
+      maxDepth = Math.max(...descendantMoves.map(({ pathOld }) => getDepth(state, pathToContext(state, pathOld))))
     }
 
     // pull all children of destination (upto max depth of possibly conflcited path) context before moving any thoughts
     if (pendingPulls.length) {
       const pathToLoad = keyValueBy(pendingPulls, ({ path }) => {
-        const context = pathToContext(path)
+        const context = pathToContext(state, path)
         return {
           [headId(path)]: context,
         }
@@ -139,14 +138,15 @@ const flushMoves =
       await dispatch(pull(pathToLoad, { maxDepth }))
     }
 
-    descendantMoves.forEach(({ pathOld, pathNew }) => {
-      dispatch(
-        moveThought({
-          oldPath: pathOld,
-          newPath: pathNew,
-        }),
-      )
-    })
+    // @MIGRATION_TODO: Descendant moves is no longer required. Remove related logic.
+    // descendantMoves.forEach(({ pathOld, pathNew }) => {
+    //   dispatch(
+    //     moveThought({
+    //       oldPath: pathOld,
+    //       newPath: pathNew,
+    //     }),
+    //   )
+    // })
   }
 
 /** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
@@ -179,7 +179,7 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
       const updatedLexemeContexts = () =>
         lexemeInUpdatedState.contexts.filter(thoughtContext => {
           const isAlreadyInUpdate = lexemeInBatch?.contexts.some(
-            thoughtContextInner => thoughtContextInner.id === thoughtContext.id,
+            thoughtContextInner => thoughtContextInner === thoughtContext,
           )
           return !isAlreadyInUpdate
         })

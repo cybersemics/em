@@ -22,11 +22,11 @@ interface Options {
  */
 const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextViews }: Options = {}) => {
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
-  const context = path ? pathToContext(path) : [HOME_TOKEN]
+  const context = path ? pathToContext(state, path) : [HOME_TOKEN]
   const encoded = headId(path || HOME_PATH)
 
   // convert decoded root thought to null cursor
-  const contextDecoded = decoded.path ? pathToContext(decoded.path) : [HOME_TOKEN]
+  const contextDecoded = decoded.path ? pathToContext(state, decoded.path) : [HOME_TOKEN]
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
   if (

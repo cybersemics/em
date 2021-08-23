@@ -15,10 +15,12 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
 
   const { hoveringPath, hoverId, expandHoverBottomPaths, dragInProgress } = state
 
-  const hoveringContext = hoveringPath && pathToContext(hoveringPath)
+  const hoveringContext = hoveringPath && pathToContext(state, hoveringPath)
 
   const shouldExpand =
-    hoverId === DROP_TARGET.EmptyDrop && hoveringPath && getChildren(state, pathToContext(hoveringPath)).length > 0
+    hoverId === DROP_TARGET.EmptyDrop &&
+    hoveringPath &&
+    getChildren(state, pathToContext(state, hoveringPath)).length > 0
 
   /** Clears active delayed dispatch. */
   const clearTimeout = () => {

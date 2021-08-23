@@ -10,15 +10,15 @@ interface Options {
 
 /** Generates a flat list of all descendants. */
 const getDescendants = (state: State, simplePath: SimplePath, { recur, filterFunction }: Options = {}): Child[] => {
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   const children = getChildrenRanked(state, context)
   const filteredChildren = filterFunction
-    ? children.filter(child => filterFunction(child, context, simplePath))
+    ? children.filter(child => filterFunction(child.value, context, simplePath))
     : children
   // only append current thought in recursive calls
   return (recur ? [head(simplePath)] : []).concat(
     _.flatMap(filteredChildren, child =>
-      getDescendants(state, appendToPath(simplePath, child), {
+      getDescendants(state, appendToPath(simplePath, child.id), {
         recur: true,
         filterFunction,
       }),

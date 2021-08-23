@@ -1,15 +1,5 @@
 import _ from 'lodash'
-import {
-  appendToPath,
-  getTextContentFromHTML,
-  head,
-  headRank,
-  headValue,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-  splitSentence,
-} from '../util'
+import { getTextContentFromHTML, headRank, headValue, pathToContext, reducerFlow, splitSentence } from '../util'
 import { editableRender, editingValue, editThought, newThought, setCursor } from '../reducers'
 import { rootedParentOf, simplifyPath } from '../selectors'
 import { State } from '../@types'
@@ -18,7 +8,7 @@ import { State } from '../@types'
 const splitSentences = (state: State) => {
   const { cursor } = state
   if (!cursor) return state
-  const thoughts = pathToContext(cursor)
+  const thoughts = pathToContext(state, cursor)
   const cursorContext = rootedParentOf(state, thoughts)
   const rank = headRank(cursor)
   const value = headValue(cursor)
@@ -30,10 +20,7 @@ const splitSentences = (state: State) => {
   }
 
   const [firstSentence, ...otherSentences] = sentences
-  const newCursor = appendToPath(parentOf(cursor), {
-    ...head(cursor),
-    value: firstSentence,
-  })
+  const newCursor = cursor
 
   const reducers = [
     editThought({

@@ -20,14 +20,15 @@ import {
   unroot,
 } from '../util'
 import { alert, error, closeModal, pull } from '../action-creators'
-import { exportContext, getAllChildren, getDescendants, simplifyPath, theme } from '../selectors'
+import { exportContext, getDescendants, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
-import { Child, Context, ExportOption, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+import { Context, ExportOption, Parent, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /******************************************************************************
  * Contexts
@@ -224,7 +225,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
   const dispatch = useDispatch()
   const state = store.getState()
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getAllChildren(state, contextTitle)[0]
+  const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
   const titleShort = ellipsize(title)
   const titleMedium = ellipsize(title, 25)
@@ -281,8 +282,8 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       setNumDescendantsInState(
         getDescendants(state, simplePath, {
           filterFunction: and(
-            shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
-            shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
+            shouldIncludeMetaAttributes || ((thought: Parent) => !isFunction(thought.value)),
+            shouldIncludeArchived || ((thought: Parent) => thought.value !== '=archive'),
           ),
         }).length,
       )
@@ -590,7 +591,7 @@ const ModalExportWrapper = () => {
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
 
   return (
     <PullProvider context={context}>

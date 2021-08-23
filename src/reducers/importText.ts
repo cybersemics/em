@@ -23,6 +23,7 @@ import newThought from './newThought'
 import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
@@ -51,10 +52,11 @@ const importText = (
 
   path = path || HOME_PATH
   const simplePath = simplifyPath(state, path)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   const convertedText = isRoam ? text : textToHtml(text)
   const numLines = (convertedText.match(regexpListItem) || []).length
-  const destThought = head(path)
+  const thoughtId = head(path)
+  const destThought = state.thoughts.contextIndex[thoughtId]
   const destValue = rawDestValue || destThought.value
 
   // if we are only importing a single line of html, then simply modify the current thought
@@ -86,13 +88,13 @@ const importText = (
       editThought({
         oldValue: destValue,
         newValue,
-        context: rootedParentOf(state, pathToContext(path)),
+        context: rootedParentOf(state, pathToContext(state, path)),
         path: simplePath,
       }),
 
       !preventSetCursor && path
         ? setCursor({
-            path: [...parentOf(path), { ...destThought, value: newValue }],
+            path: [...parentOf(path), thoughtId],
             offset,
           })
         : null,
@@ -134,7 +136,7 @@ const importText = (
      */
     const getDestinationPath = () => {
       if (!shouldImportIntoDummy) return simplePath
-      const newDummyThought = getAllChildren(updatedState, context).find(child => child.value === uuid)
+      const newDummyThought = getAllChildrenAsThoughts(updatedState, context).find(child => child.value === uuid)
       return (newDummyThought ? [...simplePath, newDummyThought] : simplePath) as SimplePath
     }
 
@@ -144,7 +146,7 @@ const importText = (
 
     /** Set cursor to the last imported path. */
     const setLastImportedCursor = (state: State) => {
-      const lastImportedContext = pathToContext(imported.lastImported)
+      const lastImportedContext = pathToContext(state, imported.lastImported)
 
       /** Get last iumported cursor after using collapse. */
       const getLastImportedAfterCollapse = () => {

@@ -22,7 +22,7 @@ const cursorDown = (state: State) => {
   // if no cursor, move cursor to first thought in root
   else {
     const children = getChildrenSorted(state, [HOME_TOKEN])
-    return children.length > 0 ? setCursor(state, { path: [children[0]] }) : state
+    return children.length > 0 ? setCursor(state, { path: [children[0].id] }) : state
   }
 }
 

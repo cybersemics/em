@@ -13,7 +13,7 @@ import {
   isFunction,
 } from '../util'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
-import { Context, Index, Path, Timestamp } from '../@types'
+import { Context, Index, Path, State, Timestamp } from '../@types'
 import { isEM } from './isEM'
 
 export interface Leaf {
@@ -56,6 +56,7 @@ const shouldHide = (context: Context) => isRoot(context) || isEM(context) || con
  * @returns Array of descendant object.
  */
 export const findTreeDescendants = (
+  state: State,
   tree: Tree,
   { startingPath, showHiddenThoughts }: { startingPath?: Context; showHiddenThoughts?: boolean },
 ): Leaf[] => {
@@ -64,8 +65,8 @@ export const findTreeDescendants = (
     ? []
     : // check node.path here instead of node.leaf to not break on legacy tree structure
     node.path
-    ? [].concat(!showHiddenThoughts && shouldHide(pathToContext(node.path)) ? [] : { ...node })
-    : _.flatMap(Object.keys(node).map(child => findTreeDescendants(node[child], { showHiddenThoughts })))
+    ? [].concat(!showHiddenThoughts && shouldHide(pathToContext(state, node.path)) ? [] : { ...node })
+    : _.flatMap(Object.keys(node).map(child => findTreeDescendants(state, node[child], { showHiddenThoughts })))
 }
 
 /**
@@ -114,16 +115,16 @@ const findClosestSharedAncestor = (
  * nodeAdd will just pass ['A','B','C','K','L']  as both second (oldPath) and third parameter (newPath) for nodeChange because
  * commonPath derived from oldPath inside nodeChange will be ['A','B','C'] anyways. (This will eliminate use of DUMMY_TOKEN too)
  */
-const nodeAdd = (tree: Tree, newPath: Path) => nodeChange(tree, newPath, newPath)
+const nodeAdd = (state: State, tree: Tree, newPath: Path) => nodeChange(state, tree, newPath, newPath)
 
 /**
  * Adds or updates node to the existing tree object by mutating.
  *
  * @param tree Nested object representing tree.
  */
-const nodeChange = (tree: Tree, oldPath: Path, newPath: Path) => {
-  const oldContext = contextEncode(pathToContext(oldPath))
-  const newContext = contextEncode(pathToContext(newPath))
+const nodeChange = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
+  const oldContext = contextEncode(pathToContext(state, oldPath))
+  const newContext = contextEncode(pathToContext(state, newPath))
   const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldContext)
 
   if (commonNode) {
@@ -132,7 +133,7 @@ const nodeChange = (tree: Tree, oldPath: Path, newPath: Path) => {
       _.unset(tree, commonPath)
       _.set(tree, newContext, { leaf: true, lastUpdated: timestamp(), path: newPath })
     } else {
-      const leafNodes = findTreeDescendants(tree, { startingPath: commonPath, showHiddenThoughts: true })
+      const leafNodes = findTreeDescendants(state, tree, { startingPath: commonPath, showHiddenThoughts: true })
       // if oldPath is already available we just need to update its descendants
       if (equalArrays(commonPath, oldContext)) {
         // this flag is needed to know if ancestor replaces very old descentdant in the tree
@@ -152,24 +153,24 @@ const nodeChange = (tree: Tree, oldPath: Path, newPath: Path) => {
          */
         leafNodes.forEach(descendant => {
           if (timeDifference(timestamp(), descendant.lastUpdated) > EDIT_TIME_MAX) {
-            const descendantContext = contextEncode(pathToContext(descendant.path))
+            const descendantContext = contextEncode(pathToContext(state, descendant.path))
             const closestAncestor = findClosestSharedAncestor(tree, descendantContext).path
             _.unset(tree, descendantContext.slice(0, closestAncestor.length + 1))
             descendantReplaced = true
           } else {
             const updatedDescendantPath = appendToPath(newPath, ...descendant.path.slice(newPath.length))
-            const updatedDescendantContext = contextEncode(pathToContext(updatedDescendantPath))
-            _.unset(tree, contextEncode(pathToContext(descendant.path)))
+            const updatedDescendantContext = contextEncode(pathToContext(state, updatedDescendantPath))
+            _.unset(tree, contextEncode(pathToContext(state, descendant.path)))
             _.set(tree, updatedDescendantContext, { leaf: true, lastUpdated: timestamp(), path: updatedDescendantPath })
           }
         })
-        if (descendantReplaced) nodeChange(tree, oldPath, newPath)
+        if (descendantReplaced) nodeChange(state, tree, oldPath, newPath)
         // called once again to remove merge inconsitencty that might occur while replacing descendants by ancestor
         else if (head(oldContext) !== head(newContext)) _.unset(tree, oldContext)
       } else {
         let isMerged = false // eslint-disable-line fp/no-let
         leafNodes.forEach(descendant => {
-          const descendantContext = contextEncode(pathToContext(descendant.path))
+          const descendantContext = contextEncode(pathToContext(state, descendant.path))
           if (descendantContext[0] === EM_TOKEN) return // preventing nodes at level 0 from merged to this (temporary fix)
           const [shortContext, longContext] =
             newContext.length < descendantContext.length
@@ -221,8 +222,8 @@ const nodeChange = (tree: Tree, oldPath: Path, newPath: Path) => {
  * @param tree Nested object representing tree.
  * @param [timestampUpdate=true] If false it doesn't update lastUpdated property of all affected leaf nodes (used by nodeMove).
  */
-const nodeDelete = (tree: Tree, oldPath: Path, timestampUpdate = true) => {
-  const oldContext = contextEncode(pathToContext(oldPath))
+const nodeDelete = (state: State, tree: Tree, oldPath: Path, timestampUpdate = true) => {
+  const oldContext = contextEncode(pathToContext(state, oldPath))
   const { node: commonNode, path: commonPath } = findTreeDeepestSubcontext(tree, oldContext)
   if (commonNode) {
     if (oldContext.length > commonPath.length) return // if node is not already available in the tree
@@ -249,13 +250,15 @@ const nodeDelete = (tree: Tree, oldPath: Path, timestampUpdate = true) => {
       */
       const pathBeingMerged = commonPath.slice(0, closestAncestor.path.length + 1)
       _.unset(tree, pathBeingMerged) // deleting the merged path
-      findTreeDescendants(tree, { startingPath: nodeToMergeIntoPath, showHiddenThoughts: true }).forEach(descendant => {
-        _.set(tree, contextEncode(pathToContext(descendant.path)), {
-          leaf: true,
-          lastUpdated: timestampUpdate ? timestamp() : descendant.lastUpdated,
-          path: descendant.path,
-        })
-      })
+      findTreeDescendants(state, tree, { startingPath: nodeToMergeIntoPath, showHiddenThoughts: true }).forEach(
+        descendant => {
+          _.set(tree, contextEncode(pathToContext(state, descendant.path)), {
+            leaf: true,
+            lastUpdated: timestampUpdate ? timestamp() : descendant.lastUpdated,
+            path: descendant.path,
+          })
+        },
+      )
     } else {
       /*
      if cannot be merged to either parent or grandParent then just making parent path as the leaf node
@@ -290,9 +293,9 @@ const nodeDelete = (tree: Tree, oldPath: Path, timestampUpdate = true) => {
  * @param oldPath
  * @param newPath
  */
-const nodeMove = (tree: Tree, oldPath: Path, newPath: Path) => {
-  const oldContext = contextEncode(pathToContext(oldPath))
-  const newContext = contextEncode(pathToContext(newPath))
+const nodeMove = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
+  const oldContext = contextEncode(pathToContext(state, oldPath))
+  const newContext = contextEncode(pathToContext(state, newPath))
 
   const { node: oldNode, path: commonOldPath } = findTreeDeepestSubcontext(tree, oldContext)
   const { path: commonNewPath } = findTreeDeepestSubcontext(tree, newContext)
@@ -301,26 +304,26 @@ const nodeMove = (tree: Tree, oldPath: Path, newPath: Path) => {
     // if node is already available
     if (equalArrays(commonOldPath, commonNewPath)) {
       // if moved with in same place (only rank has changed) (to prevent traversing descendants)
-      nodeChange(tree, oldPath, newPath)
+      nodeChange(state, tree, oldPath, newPath)
     } else if (oldNode.leaf) {
-      nodeAdd(tree, newPath)
-      nodeDelete(tree, oldPath, false)
+      nodeAdd(state, tree, newPath)
+      nodeDelete(state, tree, oldPath, false)
     } else {
-      const descendants = findTreeDescendants(tree, { startingPath: oldContext, showHiddenThoughts: true })
+      const descendants = findTreeDescendants(state, tree, { startingPath: oldContext, showHiddenThoughts: true })
       descendants.forEach(descendant => {
         const updatedNewPath = appendToPath(newPath, ...descendant.path.slice(oldPath.length))
-        nodeAdd(tree, updatedNewPath)
+        nodeAdd(state, tree, updatedNewPath)
       })
-      nodeDelete(tree, oldPath, false)
+      nodeDelete(state, tree, oldPath, false)
     }
-  } else nodeAdd(tree, newPath) // if exact node is not found in the tree
+  } else nodeAdd(state, tree, newPath) // if exact node is not found in the tree
 }
 
 /** Using immer to pass a draft object as the first argument to the given destructive function to avoid mutation. */
 const immerfy =
-  <T = any>(f: (draft: T, ...rest: any[]) => void) =>
-  (obj: T, ...rest: any[]) =>
-    produce(obj, (draft: T) => f(draft, ...rest))
+  <T = any>(f: (state: State, draft: T, ...rest: any[]) => void) =>
+  (state: State, obj: T, ...rest: any[]) =>
+    produce(obj, (draft: T) => f(state, draft, ...rest))
 
 /**
  * Adds or updates node to the existing tree object.

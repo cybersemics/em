@@ -18,17 +18,17 @@ const moveThoughtUp = (state: State) => {
 
   if (!cursor) return state
 
-  const thoughts = pathToContext(cursor)
+  const thoughts = pathToContext(state, cursor)
   const pathParent = parentOf(cursor)
-  const context = pathToContext(pathParent)
+  const context = pathToContext(state, pathParent)
   const value = headValue(cursor)
   const rank = headRank(cursor)
 
-  const prevThought = prevSibling(state, value, rootedParentOf(state, pathToContext(cursor)), rank)
+  const prevThought = prevSibling(state, value, rootedParentOf(state, pathToContext(state, cursor)), rank)
 
   // if the cursor is the first thought or the context is sorted, move the thought to the end of its prev uncle
   const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null
-  const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought) : null
+  const prevUnclePath = prevUncleThought ? appendToPath(parentOf(pathParent), prevUncleThought.id) : null
 
   if (!prevThought && !prevUnclePath) return state
 
@@ -64,20 +64,18 @@ const moveThoughtUp = (state: State) => {
   const rankNew =
     prevThought && !isSorted
       ? // previous thought (unsorted)
-        getRankBefore(state, simplifyPath(state, pathParent).concat(prevThought) as SimplePath)
+        getRankBefore(state, simplifyPath(state, pathParent).concat(prevThought.id) as SimplePath)
       : // first thought in previous uncle
-        getNextRank(state, pathToContext(prevUnclePath!))
+        getNextRank(state, pathToContext(state, prevUnclePath!))
 
   const newPathParent = prevThought && !isSorted ? pathParent : prevUnclePath!
-  const newPath = appendToPath(newPathParent, {
-    ...head(cursor),
-    rank: rankNew,
-  })
+  const newPath = appendToPath(newPathParent, head(cursor))
 
   return moveThought(state, {
     oldPath: cursor,
     newPath,
     offset,
+    newRank: rankNew,
   })
 }
 

@@ -14,7 +14,7 @@ const deleteAtribute = (state: State, { context, key }: { context: Context; key:
     ? deleteThought(state, {
         context,
         showContexts: false,
-        thoughtRanked: head(path),
+        thoughtId: head(path),
       })
     : state
 }

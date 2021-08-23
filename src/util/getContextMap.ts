@@ -11,14 +11,14 @@ export const getContextMap = (state: State, lexemes: (Lexeme | undefined)[]) => 
   return (lexemes.filter(lexeme => lexeme) as Lexeme[]).reduce<Index<Context>>((acc, lexeme) => {
     return {
       ...acc,
-      ...lexeme.contexts.reduce<Index<Context>>(
-        (accInner, { id }) => ({
+      ...lexeme.contexts.reduce<Index<Context>>((accInner, thoughtId) => {
+        const thought = state.thoughts.contextIndex[thoughtId]
+        return {
           ...accInner,
           // @MIGRATION_TODO: This provided id is incorrect. Parent id must be provided.
-          [id]: unroot(parentOf(getContextForThought(state, id)!)),
-        }),
-        {},
-      ),
+          [thought.parentId]: unroot(parentOf(getContextForThought(state, thought.parentId)!)),
+        }
+      }, {}),
     }
   }, {})
 }

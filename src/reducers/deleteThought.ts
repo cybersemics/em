@@ -2,7 +2,6 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { treeDelete } from '../util/recentlyEditedTree'
 import {
-  getAllChildren,
   getChildrenRanked,
   getLexeme,
   getParent,
@@ -14,11 +13,12 @@ import {
 import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
 
 // util
-import { equalThoughtRanked, hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
+import { hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface Payload {
   context: Context
-  thoughtRanked: Child
+  thoughtId: Child
   showContexts?: boolean
 }
 
@@ -29,9 +29,10 @@ interface ThoughtUpdates {
 }
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions. */
-const deleteThought = (state: State, { context, thoughtRanked, showContexts }: Payload) => {
-  const { value, rank } = thoughtRanked
+const deleteThought = (state: State, { context, thoughtId, showContexts }: Payload) => {
+  const thought = state.thoughts.contextIndex[thoughtId]
 
+  const { value, rank } = thought
   if (!hasLexeme(state, value)) return state
 
   const thoughts = unroot(context.concat(value))
@@ -60,9 +61,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
-  const isValidThought = lexeme.contexts.find(
-    thoughtContext => thoughtContext.id === deletedThought.id && rank === thoughtContext.rank,
-  )
+  const isValidThought = lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 
   // if thought is not valid then just stop further execution
   if (!isValidThought) {
@@ -73,7 +72,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
-    recentlyEdited = treeDelete(state.recentlyEdited, oldRankedThoughts)
+    recentlyEdited = treeDelete(state, state.recentlyEdited, oldRankedThoughts)
   } catch (e) {
     console.error('deleteThought: treeDelete immer error')
     console.error(e)
@@ -94,7 +93,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getAllChildren(state, context).filter(child => !equalThoughtRanked(child, { value, rank }))
+  const subthoughts = getAllChildrenAsThoughts(state, context).filter(child => child.id !== thought.id)
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts: Context, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
@@ -115,11 +114,11 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
     return getChildrenRanked(stateNew, thoughts).reduce(
       (accum, child) => {
         const hashedKey = hashThought(child.value)
-        const childThought = getLexeme(stateNew, child.value)
+        const lexeme = getLexeme(stateNew, child.value)
         const childNew =
-          childThought && childThought.contexts && childThought.contexts.length > 1
+          lexeme && lexeme.contexts && lexeme.contexts.length > 1
             ? // update child with deleted context removed
-              removeContext(state, childThought, thoughts, child.rank)
+              removeContext(state, lexeme, thoughts, child.rank)
             : // if this was the only context of the child, delete the child
               null
 
@@ -156,7 +155,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
                 child,
               },
             ],
-          }
+          } as ThoughtUpdates
         }
 
         // RECURSION
@@ -213,7 +212,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
     // Deleted thought's parent
     [parent.id]: {
       ...parent,
-      children: subthoughts,
+      children: subthoughts.map(({ id }) => id),
       lastUpdated: timestamp(),
     } as Parent,
     [deletedThought.id]: null,

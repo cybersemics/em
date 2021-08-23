@@ -14,10 +14,7 @@ export const addThought = (
   return {
     ...lexemeOld,
     value,
-    contexts: (lexemeOld ? lexemeOld.contexts || [] : []).concat({
-      rank,
-      id,
-    }),
+    contexts: (lexemeOld ? lexemeOld.contexts || [] : []).concat(id),
     created: lexemeOld && lexemeOld.created ? lexemeOld.created : lastUpdated,
     lastUpdated,
   }

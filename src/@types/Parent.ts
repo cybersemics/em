@@ -5,8 +5,10 @@ import { Timestamp } from './Timestamp'
 export interface Parent {
   id: string
   value: string
+  rank: number
   parentId: string
   children: Child[]
   lastUpdated: Timestamp
   pending?: boolean
+  archived?: Timestamp
 }

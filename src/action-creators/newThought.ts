@@ -1,16 +1,17 @@
 import { isTouch, isSafari } from '../browser'
 import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
-import { getSetting, getAllChildren, hasChild, isContextViewActive } from '../selectors'
+import { getSetting, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, parentOf, ellipsize, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import { Thunk, Context, Path, SplitResult, State } from '../@types'
 import { isMobile } from '../util/isMobile'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (splitResult: SplitResult, context: Context | null, state: State) => {
   const { editingValue } = state
   if (!editingValue) return false
-  const siblings = getAllChildren(state, context || [HOME_TOKEN])
+  const siblings = getAllChildrenAsThoughts(state, context || [HOME_TOKEN])
   return (
     splitResult.left === splitResult.right ||
     siblings.some(sibling => sibling.value === splitResult.left || sibling.value === splitResult.right)
@@ -56,17 +57,17 @@ const newThought =
     const isFocusOnEditable = isMobile() ? true : document.activeElement!.classList.contains('editable')
 
     // Determine if thought at path is uneditable
-    const contextOfCursor = path && pathToContext(path)
+    const contextOfCursor = path && pathToContext(state, path)
     const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
 
-    const showContexts = path && isContextViewActive(state, parentOf(pathToContext(path)))
+    const showContexts = path && isContextViewActive(state, parentOf(pathToContext(state, path)))
 
     const context =
       path &&
       (showContexts && path.length > 2
-        ? pathToContext(parentOf(parentOf(path)))
+        ? pathToContext(state, parentOf(parentOf(path)))
         : !showContexts && path.length > 1
-        ? pathToContext(parentOf(path))
+        ? pathToContext(state, parentOf(path))
         : [HOME_TOKEN])
     // split the thought at the selection
     // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near

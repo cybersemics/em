@@ -26,7 +26,7 @@ const loadLocalState = (): Thunk<Promise<void>> => async (dispatch, getState) =>
     // set lastUpdated to never so that any settings from remote are used over the initial settings
     return dispatch(
       importText({
-        path: [{ id: EM_TOKEN, value: EM_TOKEN, rank: 0 }],
+        path: [EM_TOKEN],
         text: INITIAL_SETTINGS,
         lastUpdated: never(),
         preventSetCursor: true,

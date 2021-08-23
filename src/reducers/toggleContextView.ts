@@ -32,7 +32,7 @@ const toggleContextView = (state: State) => {
   //   ? [stripPunctuation(subthoughtUnderSelection.text)]
   //   : pathToContext(state.cursor)
 
-  const context = pathToContext(state.cursor)
+  const context = pathToContext(state, state.cursor)
 
   return reducerFlow([
     // update contextViews

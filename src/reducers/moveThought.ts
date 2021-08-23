@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, updateThoughts } from '../reducers'
 import { getLexeme, getChildrenRanked, isPending, simplifyPath, rootedParentOf, getAllChildren } from '../selectors'
-import { Index, Parent, Path, State, Timestamp } from '../@types'
+import { Index, Parent, Path, State } from '../@types'
 
 // util
 import {
@@ -12,7 +12,6 @@ import {
   headRank,
   isDescendantPath,
   moveLexemeThought,
-  normalizeThought,
   pathToContext,
   reducerFlow,
   removeDuplicatedContext,
@@ -28,12 +27,14 @@ const moveThought = (
     newPath,
     offset,
     skipRerank,
+    newRank,
   }: {
     oldPath: Path
     newPath: Path
     offset?: number
     // skip the auto rerank to prevent infinite loop
     skipRerank?: boolean
+    newRank: number
   },
 ) => {
   const oldSimplePath = simplifyPath(state, oldPath)
@@ -41,14 +42,14 @@ const moveThought = (
 
   const movingThoughtId = headId(oldSimplePath)
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
-  const oldThoughts = pathToContext(oldSimplePath)
-  const newThoughts = pathToContext(newSimplePath)
+  const oldThoughts = pathToContext(state, oldSimplePath)
+  const newThoughts = pathToContext(state, newSimplePath)
   const value = head(oldThoughts)
   const key = hashThought(value)
   const oldRank = headRank(oldSimplePath)
   const oldContext = rootedParentOf(state, oldThoughts)
 
-  const newParentPath = head(rootedParentOf(state, newSimplePath))
+  const newParentId = head(rootedParentOf(state, newSimplePath))
 
   const newContext = rootedParentOf(state, newThoughts)
   // const sameContext = equalArrays(oldContext, newContext)
@@ -79,7 +80,7 @@ const moveThought = (
     return state
   }
 
-  const newParentThought = state.thoughts.contextIndex[newParentPath.id]
+  const newParentThought = state.thoughts.contextIndex[newParentId]
 
   if (!newParentThought) {
     console.error('New parent entry for moving not found!')
@@ -94,31 +95,19 @@ const moveThought = (
 
   // const isDuplicateMerge = duplicateSubthought && !sameContext
 
-  const newRank = headRank(newSimplePath)
-
   const isArchived = newThoughts.indexOf('=archive') !== -1
 
   // find exact thought from thoughtIndex\
-  const exactThought = lexemeOld.contexts.find(
-    thoughtContext => thoughtContext.id === movingThoughtId && thoughtContext.rank === oldRank,
-  )
+  const exactThought = lexemeOld.contexts.find(thoughtContext => thoughtContext === movingThoughtId)
 
   if (!exactThought) {
     console.warn('moveThought: Exact thought was not found in the lexeme.')
   }
 
   // if move is used for archive then update the archived field to latest timestamp
-  const archived = isArchived || !exactThought ? timestamp() : (exactThought.archived as Timestamp)
+  const archived = isArchived ? timestamp() : movingThought.archived
 
-  const lexemeAfterMove = moveLexemeThought(
-    lexemeOld,
-    oldContext,
-    newContext,
-    oldRank,
-    newRank,
-    movingThoughtId,
-    archived as Timestamp,
-  )
+  const lexemeAfterMove = moveLexemeThought(state, lexemeOld, oldRank, newRank, movingThoughtId)
 
   const lexemeNew = removeDuplicatedContext(state, lexemeAfterMove, newContext)
 
@@ -128,26 +117,20 @@ const moveThought = (
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
-    recentlyEdited = treeMove(state.recentlyEdited, oldPath, newPath)
+    recentlyEdited = treeMove(state, state.recentlyEdited, oldPath, newPath)
   } catch (e) {
     console.error('moveThought: treeMove immer error')
     console.error(e)
   }
 
   // if the contexts have changed, remove the value from the old contextIndex and add it to the new
-  const updatedChildrenOldParent = getAllChildren(state, oldContext).filter(child => child.id !== movingThoughtId)
+  const updatedChildrenOldParent = getAllChildren(state, oldContext).filter(child => child !== movingThoughtId)
 
   const updatedChildrenNewParent = getAllChildren(state, newContext)
-    .filter(child => normalizeThought(child.value) !== normalizeThought(value))
-    .concat({
-      id: movingThoughtId,
-      value,
-      rank: newRank,
-      lastUpdated: timestamp(),
-      ...(archived ? { archived } : {}),
-    })
+    .filter(child => child !== movingThoughtId)
+    .concat(movingThoughtId)
 
-  const isNewContextPending = isPending(state, pathToContext(newPath))
+  const isNewContextPending = isPending(state, newThoughts)
 
   const contextIndexUpdates: Index<Parent | null> = {
     // @MIGRATION_NOTE: Do not delete parent entry if the children is empty
@@ -164,6 +147,8 @@ const moveThought = (
     [movingThought.id]: {
       ...movingThought,
       parentId: newParentThought.id,
+      rank: newRank,
+      archived,
       lastUpdated: timestamp(),
     },
   }
@@ -218,9 +203,11 @@ const moveThought = (
       ? state => {
           const rankPrecision = 10e-8
           const children = getChildrenRanked(state, newContext)
-          const ranksTooClose = children.some(
-            (child, i) => i > 0 && Math.abs(child.rank - children[i - 1].rank) < rankPrecision,
-          )
+          const ranksTooClose = children.some((thought, i) => {
+            if (i === 0) return false
+            const secondThought = state.thoughts.contextIndex[children[i - 1].id]
+            return Math.abs(thought.rank - secondThought.rank) < rankPrecision
+          })
           return ranksTooClose ? rerank(state, rootedParentOf(state, newSimplePath)) : state
         }
       : null,

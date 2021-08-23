@@ -22,6 +22,7 @@ const decodeThoughtsUrl = (state: State, pathname: string, { exists }: Options =
   }
 
   const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [HOME_TOKEN]
+
   const pathUnranked = urlPath.map(componentToThought)
   const contextViews = keyValueBy(urlPath, (cur, i) => {
     const parent = getParent(state, pathUnranked.slice(0, i + 1))

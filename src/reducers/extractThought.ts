@@ -26,7 +26,7 @@ const extractThought = (state: State) => {
   const newValue = `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim()
   const childValue = value.slice(selectionStart, selectionEnd)
 
-  const thoughts = pathToContext(cursor)
+  const thoughts = pathToContext(state, cursor)
   const cursorContext = rootedParentOf(state, thoughts)
   const rank = headRank(cursor)
 

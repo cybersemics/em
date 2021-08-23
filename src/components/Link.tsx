@@ -2,15 +2,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import { EM_TOKEN } from '../constants'
 import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import {
-  clearSelection,
-  decodeCharacterEntities,
-  ellipsize,
-  equalArrays,
-  headValue,
-  pathToContext,
-  strip,
-} from '../util'
+import { clearSelection, decodeCharacterEntities, ellipsize, headId, headValue, strip } from '../util'
 import { SimplePath } from '../@types'
 
 interface LinkProps {
@@ -21,7 +13,7 @@ interface LinkProps {
 
 /** Renders a link with the appropriate label to the given context. */
 const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
-  const emContext = equalArrays(pathToContext(simplePath), [EM_TOKEN])
+  const emContext = simplePath.length === 1 && headId(simplePath) === EM_TOKEN
   const value = label || strip(headValue(simplePath))
   const dispatch = useDispatch()
 

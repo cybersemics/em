@@ -24,7 +24,7 @@ const logout = (): Thunk => (dispatch, getState) => {
   // reset initial settings
   dispatch(
     importText({
-      path: [{ id: EM_TOKEN, value: EM_TOKEN, rank: 0 }],
+      path: [EM_TOKEN],
       text: INITIAL_SETTINGS,
       lastUpdated: never(),
       preventSetCursor: true,

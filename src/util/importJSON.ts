@@ -1,22 +1,9 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
-import {
-  Block,
-  Child,
-  Context,
-  Index,
-  Lexeme,
-  Parent,
-  SimplePath,
-  State,
-  Timestamp,
-  ThoughtIndices,
-  Path,
-} from '../@types'
+import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf, childIdsToThoughts } from '../selectors'
+import { Block, Context, Index, Lexeme, Parent, SimplePath, State, Timestamp, ThoughtIndices, Path } from '../@types'
 import {
   appendToPath,
-  equalThoughtRanked,
   hashThought,
   head,
   headRank,
@@ -73,32 +60,17 @@ const insertThought = (
   const lexemeNew = {
     ...lexemeOld,
     value,
-    contexts: [
-      ...(lexemeOld?.contexts || []),
-      {
-        id: newThoughtId,
-        context: rootContext,
-        rank,
-      },
-    ],
+    contexts: [...(lexemeOld?.contexts || []), newThoughtId],
     created: lexemeOld?.created ?? created,
     lastUpdated,
   }
 
   const parentNew: Parent = {
     // TODO: merging parentOld results in pending: true when importing into initialState. Is that correct?
-    id: parentOld.id,
+    ...parentOld,
     value: head(rootContext),
     parentId: parentOld.parentId,
-    children: [
-      ...parentOld.children,
-      {
-        id: newThoughtId,
-        value,
-        rank,
-        lastUpdated,
-      },
-    ],
+    children: [...parentOld.children, newThoughtId],
     lastUpdated,
   }
 
@@ -108,6 +80,7 @@ const insertThought = (
     children: [],
     parentId: parentOld.id,
     lastUpdated,
+    rank,
   }
 
   return {
@@ -128,7 +101,7 @@ const saveThoughts = (
   startRank = 0,
   lastUpdated = timestamp(),
 ): ThoughtIndices => {
-  const contextEncoded = headId(path)
+  const contextEncoded = head(path)
 
   if (!contextEncoded)
     return {
@@ -181,7 +154,7 @@ const saveThoughts = (
           stateNew,
           existingParent,
           nonDuplicateValue,
-          unroot(pathToContext(path)),
+          unroot(pathToContext(state, path)),
           rank,
           createdInherited,
           lastUpdatedInherited,
@@ -191,6 +164,7 @@ const saveThoughts = (
         contextIndexUpdates[contextEncoded] = parent
         // `Parent` entry for the newly created thought.
         contextIndexUpdates[newThought.id] = newThought
+
         thoughtIndexUpdates[hashThought(nonDuplicateValue)] = lexeme
       }
 
@@ -199,23 +173,38 @@ const saveThoughts = (
         [hashedValue]: duplicateValueCount ? duplicateValueCount + 1 : 1,
       }
 
+      const updatedState: State = {
+        ...state,
+        thoughts: {
+          ...state.thoughts,
+          contextIndex: {
+            ...state.thoughts.contextIndex,
+            ...contextIndexUpdates,
+          },
+          thoughtIndex: {
+            ...state.thoughts.thoughtIndex,
+            ...thoughtIndexUpdates,
+          },
+        },
+      }
+
       /**
        *
        */
       const getLastAddedChild = () => {
         const parent = contextIndexUpdates[contextEncoded]
-        return parent.children.find(child => child.value === nonDuplicateValue)
+        return childIdsToThoughts(updatedState, parent.children).find(child => child.value === nonDuplicateValue)
       }
 
-      const childPath = skipLevel ? path : [...path, getLastAddedChild()!]
+      const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()!.id]
 
       if (block.children.length > 0) {
         return {
           ...saveThoughts(
-            state,
+            updatedState,
             contextIndexUpdates,
             thoughtIndexUpdates,
-            childPath as Path,
+            childPath,
             block.children,
             rankIncrement,
             startRank,
@@ -251,7 +240,7 @@ const getContextsNum = (blocks: Block[]): number => {
 }
 
 /** Calculate rankIncrement value based on rank of next sibling or its absence. */
-const getRankIncrement = (state: State, blocks: Block[], context: Context, destThought: Child, rankStart: number) => {
+const getRankIncrement = (state: State, blocks: Block[], context: Context, destThought: Parent, rankStart: number) => {
   const destValue = destThought.value
   const destRank = destThought.rank
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
@@ -268,14 +257,14 @@ export const importJSON = (
 ) => {
   const initialThoughtIndex: Index<Lexeme> = {}
   const initialContextIndex: Index<Parent> = {}
-  const context = pathToContext(parentOf(simplePath))
-  const destThought = head(simplePath)
-  const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(simplePath)).length === 0
+  const context = pathToContext(state, parentOf(simplePath))
+  const destThought = state.thoughts.contextIndex[head(simplePath)]
+  const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(state, simplePath)).length === 0
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
-  const rankStart = destEmpty ? destThought.rank : getNextRank(state, pathToContext(simplePath))
+  const rankStart = destEmpty ? destThought.rank : getNextRank(state, pathToContext(state, simplePath))
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
   const rootedPath = rootedParentOf(state, simplePath)
-  const rootedContext = pathToContext(rootedPath)
+  const rootedContext = pathToContext(state, rootedPath)
   const contextEncoded = headId(rootedPath)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
@@ -285,7 +274,7 @@ export const importJSON = (
       initialThoughtIndex[hashThought('')] = removeContext(state, lexeme, context, headRank(simplePath))
       initialContextIndex[contextEncoded] = {
         ...state.thoughts.contextIndex[contextEncoded],
-        children: getAllChildren(state, rootedContext).filter(child => !equalThoughtRanked(child, destThought)),
+        children: getAllChildren(state, rootedContext).filter(child => child !== destThought.id),
         lastUpdated,
       }
     }

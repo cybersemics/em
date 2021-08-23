@@ -14,7 +14,7 @@ const theme = (state: State) => {
   /** Looks for =focus/Theme in ancestors. */
   const ancestorTheme = () => {
     if (!state.cursor) return null
-    const context = pathToContext(simplifyPath(state, state.cursor))
+    const context = pathToContext(state, simplifyPath(state, state.cursor))
     const theme = context.findIndex((value, i) => {
       const subcontext = context.slice(0, context.length - i)
       // use attributeEquals for O(1) lookup

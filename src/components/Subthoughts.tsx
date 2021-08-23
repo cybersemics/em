@@ -54,6 +54,7 @@ import {
   appendChildPath,
   attribute,
   attributeEquals,
+  childIdsToThoughts,
   childrenFilterPredicate,
   getAllChildren,
   getAllChildrenSorted,
@@ -64,12 +65,12 @@ import {
   getEditingPath,
   getGlobalSortPreference,
   getNextRank,
-  getPrevRank,
   getSortPreference,
   getStyle,
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -106,7 +107,7 @@ const findFirstEnvContextWithZoom = (
   state: State,
   { context, env }: { context: Context; env: LazyEnv },
 ): Context | null => {
-  const children = getAllChildren(state, context)
+  const children = getAllChildrenAsThoughts(state, context)
   const child = children.find(
     child => isFunction(child.value) && child.value in env && attribute(state, env[child.value], '=focus') === 'Zoom',
   )
@@ -133,7 +134,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const isEditing = equalPath(cursor, resolvedPath)
 
   const pathLive = isEditing ? cursor! : resolvedPath
-  const thoughtsLive = pathToContext(pathLive)
+  const thoughtsLive = pathToContext(state, pathLive)
   const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
   const showContextsParent = isContextViewActive(state, parentOf(thoughtsLive))
 
@@ -142,8 +143,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
-  const contextLive = pathToContext(simplePathLive)
-  const cursorContext = cursor ? pathToContext(cursor) : null
+  const contextLive = pathToContext(state, simplePathLive)
+  const cursorContext = cursor ? pathToContext(state, cursor) : null
 
   const contextBinding = parseJsonSafe(attribute(state, contextLive, '=bindContext') ?? '', undefined) as
     | Path
@@ -173,7 +174,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
-  const envSelf = parseLet(state, pathToContext(simplePath))
+  const envSelf = parseLet(state, pathToContext(state, simplePath))
   const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
 
   /*
@@ -191,7 +192,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     cursorContext &&
     (attributeEquals(state, parentOf(cursorContext), '=focus', 'Zoom') ||
       attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
-      findFirstEnvContextWithZoom(state, { context: pathToContext(rootedParentOf(state, cursor!)), env }))
+      findFirstEnvContextWithZoom(state, { context: pathToContext(state, rootedParentOf(state, cursor!)), env }))
 
   return {
     contextBinding,
@@ -247,17 +248,12 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
   const thoughtsTo = props.simplePath
-  const contextTo = pathToContext(thoughtsTo)
-  const dropPlacement = attribute(state, contextTo, '=drop') === 'top' ? 'top' : 'bottom'
 
-  const newPath = appendToPath(thoughtsTo, {
-    ...head(thoughtsFrom),
-    rank: dropPlacement === 'top' ? getPrevRank(state, contextTo) : getNextRank(state, contextTo),
-  })
+  const newPath = appendToPath(thoughtsTo, head(thoughtsFrom))
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(state, pathToContext(thoughtsFrom))
-  const newContext = rootedParentOf(state, pathToContext(newPath))
+  const oldContext = rootedParentOf(state, pathToContext(state, thoughtsFrom))
+  const newContext = rootedParentOf(state, pathToContext(state, newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
   // cannot drop on itself
@@ -276,8 +272,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
       ? {
           type: 'createThought',
           value: headValue(thoughtsTo),
-          context: pathToContext(thoughtsFrom),
-          rank: getNextRank(state, pathToContext(thoughtsFrom)),
+          context: pathToContext(state, thoughtsFrom),
+          rank: getNextRank(state, pathToContext(state, thoughtsFrom)),
         }
       : {
           type: 'moveThought',
@@ -447,7 +443,7 @@ export const SubthoughtsComponent = ({
     }) ||
     globalSort
   const { cursor } = state
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   const value = headValue(simplePath)
   const resolvedPath = path ?? simplePath
 
@@ -472,8 +468,8 @@ export const SubthoughtsComponent = ({
     childrenForced || showContexts
       ? getContextsSortedAndRanked(state, headValue(simplePath))
       : sortPreference?.type !== 'None'
-      ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
-      : (getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[])
+      ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
+      : getChildrenRanked(state, pathToContext(state, contextBinding || simplePath))
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -491,17 +487,16 @@ export const SubthoughtsComponent = ({
     }, {} as Index<Child[] | ThoughtContext[]>)
   }
 
+  const cursorThoughtArray = cursor && childIdsToThoughts(state, cursor)
   // Ensure that editable newThought is visible.
   const editIndex =
-    cursor && children && show
+    cursor && children && show && cursorThoughtArray
       ? children.findIndex(child => {
-          return cursor[depth] && cursor[depth].rank === child.rank
+          return cursor[depth] && cursorThoughtArray[depth].rank === child.rank
         })
       : 0
 
-  const filteredChildren = children.filter(
-    childrenFilterPredicate(state, resolvedPath, pathToContext(simplePath), showContexts),
-  )
+  const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
   const proposedPageSize = isRoot(simplePath) ? Infinity : PAGINATION_SIZE * page
   if (editIndex > proposedPageSize - 1) {
@@ -518,7 +513,7 @@ export const SubthoughtsComponent = ({
 
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
-  const cursorContext = cursor ? pathToContext(cursor) : null
+  const cursorContext = cursor ? pathToContext(state, cursor) : null
 
   const isCursorLeaf = cursor && isLeaf(state, cursorContext!)
 
@@ -529,8 +524,8 @@ export const SubthoughtsComponent = ({
 
   const isDescendantOfFirstVisiblePath = isDescendant(
     // TODO: Add support for [ROOT] to isDescendant
-    pathToContext(firstVisiblePath || ([] as unknown as Path)),
-    pathToContext(resolvedPath),
+    pathToContext(state, firstVisiblePath || ([] as unknown as Path)),
+    pathToContext(state, resolvedPath),
   )
 
   const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
@@ -591,12 +586,16 @@ export const SubthoughtsComponent = ({
   return (
     <>
       {contextBinding && showContexts ? (
-        <div className='text-note text-small'>(Bound to {pathToContext(contextBinding!).join('/')})</div>
+        <div className='text-note text-small'>(Bound to {pathToContext(state, contextBinding!).join('/')})</div>
       ) : null}
       {show && showContexts && !(filteredChildren.length === 0 && isRoot(simplePath)) ? (
         filteredChildren.length < (allowSingleContext ? 1 : 2) ? (
           // No children
-          <NoChildren allowSingleContext={allowSingleContext} children={children as Child[]} simplePath={simplePath} />
+          <NoChildren
+            allowSingleContext={allowSingleContext}
+            children={children.map(({ value }) => value)}
+            simplePath={simplePath}
+          />
         ) : null
       ) : null}
 
@@ -618,8 +617,8 @@ export const SubthoughtsComponent = ({
 
             // TODO: childPath should be unrooted, but if we change it it breaks
             // figure out what is incorrectly depending on childPath being rooted
-            const childPath = getChildPath(state, child, simplePath, showContexts)
-            const childContext = pathToContext(childPath)
+            const childPath = getChildPath(state, child.id, simplePath, showContexts)
+            const childContext = pathToContext(state, childPath)
             const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(state, { context: childContext, env }))
 
             /** Returns true if the cursor in in the child path. */
@@ -669,7 +668,7 @@ export const SubthoughtsComponent = ({
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
                 // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
-                key={`${child.rank}${(child as ThoughtContext).id ? '-context' : ''}`}
+                key={`${child.rank}${child.id ? '-context' : ''}`}
                 rank={child.rank}
                 isDraggable={actualDistance < 2}
                 showContexts={showContexts}

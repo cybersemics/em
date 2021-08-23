@@ -37,7 +37,7 @@ interface NewThoughtDispatchProps {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: NewThoughtProps) => {
   const { cursor } = state
-  const children = getChildrenRanked(state, pathToContext(props.path))
+  const children = getChildrenRanked(state, pathToContext(state, props.path))
   return {
     cursor,
     show: !children.length || children[children.length - 1].value !== '',
@@ -57,8 +57,8 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
       return
     }
 
-    const context = pathToContext(path)
-    const newRank = getNextRank(state, pathToContext(path))
+    const context = pathToContext(state, path)
+    const newRank = getNextRank(state, pathToContext(state, path))
 
     const newThoughtId = createId()
 
@@ -76,11 +76,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 
     dispatch(
       setCursor({
-        path: appendToPath(path, {
-          id: newThoughtId,
-          rank: newRank,
-          value,
-        }),
+        path: appendToPath(path, newThoughtId),
         offset: getTextContentFromHTML(value).length,
       }),
     )
@@ -98,7 +94,7 @@ const NewThought = ({
   value = '',
   type = 'bullet',
 }: NewThoughtProps & NewThoughtDispatchProps) => {
-  const context = pathToContext(path)
+  const context = pathToContext(store.getState(), path)
   const depth = unroot(context).length
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector, useStore } from 'react-redux'
 import { isTouch } from '../browser'
 import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
@@ -17,9 +17,15 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
 const RecentEdited = () => {
   const recentlyEditedTree = useSelector((state: State) => state.recentlyEdited)
   const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
+
+  const store = useStore()
+
   // eslint-disable-next-line fp/no-mutating-methods
   const recentlyEdited = _.reverse(
-    _.sortBy(findTreeDescendants(recentlyEditedTree, { startingPath: [], showHiddenThoughts }), 'lastUpdated'),
+    _.sortBy(
+      findTreeDescendants(store.getState(), recentlyEditedTree, { startingPath: [], showHiddenThoughts }),
+      'lastUpdated',
+    ),
   )
 
   return (

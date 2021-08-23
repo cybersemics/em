@@ -9,6 +9,7 @@ import { Context, Parent, State } from '../@types'
 // import { getAllChildren } from '../selectors'
 import { isRoot } from '.'
 import { normalizeThought } from './normalizeThought'
+import { childIdsToThoughts } from '../selectors'
 
 // const SEPARATOR_TOKEN = '__SEP__'
 
@@ -53,7 +54,9 @@ const recursiveParentFinder = (
 ): Parent | null => {
   if (target.length === 0 && parent.children.length === 0) return null
 
-  const child = parent.children.find(child => {
+  const children = childIdsToThoughts(state, parent.children)
+
+  const child = children.find(child => {
     const targetValue = target[targetIndex]
     return targetValue !== undefined && normalizeThought(target[targetIndex]) === normalizeThought(child.value)
   })

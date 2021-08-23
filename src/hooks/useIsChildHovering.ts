@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux'
+import { useSelector, useStore } from 'react-redux'
 import { Context, State } from '../@types'
 import { pathToContext } from '../util'
 
@@ -6,12 +6,13 @@ import { pathToContext } from '../util'
  * Returns if any child is being hovered on.
  */
 const useIsChildHovering = (context: Context, isHovering: boolean, isDeepHovering: boolean) => {
+  const store = useStore()
   /* The motivation for this custom hook is to prevent rendering Thought component each time state.hoveringThought changes.
     Thought component needs to be reactive to the change of hoveringThought but only rerender when calculated value of isChildHovering changes.
     So instead of passing it through mapStateToProps which will re-render component everytime, instead use custom hook that will react to the changes.
   */
   const hoveringPath = useSelector((state: State) => state.hoveringPath)
-  const hoveringThought = hoveringPath && pathToContext(hoveringPath)
+  const hoveringThought = hoveringPath && pathToContext(store.getState(), hoveringPath)
   return (
     isDeepHovering &&
     !isHovering &&

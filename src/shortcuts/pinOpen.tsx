@@ -36,7 +36,7 @@ const pinOpenShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const context = pathToContext(cursor)
+    const context = pathToContext(state, cursor)
     dispatch(
       toggleAttribute({
         context,
@@ -48,7 +48,7 @@ const pinOpenShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
+    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
     return attributeEquals(state, context, '=pin', 'true')
   },
 }

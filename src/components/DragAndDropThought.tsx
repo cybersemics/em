@@ -50,8 +50,8 @@ export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerP
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ConnectedThoughtContainerProps) => {
   const state = store.getState()
-  const thoughts = pathToContext(props.simplePathLive!)
-  const context = parentOf(pathToContext(props.simplePathLive!))
+  const thoughts = pathToContext(state, props.simplePathLive!)
+  const context = parentOf(pathToContext(state, props.simplePathLive!))
   const isDraggable = props.isDraggable || props.isCursorParent
 
   return (
@@ -90,13 +90,13 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 })
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
-const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonitor) => {
+const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
   const { cursor, expandHoverTopPath } = state
   const { path } = props
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
-  const simpleThoughts = pathToContext(props.simplePathLive!)
+  const simpleThoughts = pathToContext(state, props.simplePathLive!)
   const context = parentOf(simpleThoughts)
   const isSorted = getSortPreference(state, context).type !== 'None'
 
@@ -146,24 +146,21 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // drop on itself or after itself is a noop
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
-  const value = headValue(thoughtsFrom)
   const parent = unroot(parentOf(thoughtsTo))
-  const newPath = appendToPath(parent, {
-    id: headId(thoughtsFrom),
-    value: value,
-    rank: getRankBefore(state, thoughtsTo),
-  })
+  const newPath = appendToPath(parent, headId(thoughtsFrom))
 
+  const newRank = getRankBefore(state, thoughtsTo)
   store.dispatch(
     props.showContexts
       ? createThought({
           value: headValue(thoughtsTo),
-          context: pathToContext(thoughtsFrom),
+          context: pathToContext(state, thoughtsFrom),
           rank: getNextRank(state, thoughtsFrom),
         })
       : moveThought({
           oldPath: thoughtsFrom,
           newPath,
+          newRank,
         }),
   )
 

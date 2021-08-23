@@ -14,7 +14,7 @@ const sortPreferences = ['None', 'Alphabetical']
 const getCursorSortDirection = (state: State) => {
   const { cursor } = state
   const simplePath = simplifyPath(state, cursor || HOME_PATH)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   return getSortPreference(state, context).direction
 }
 
@@ -103,7 +103,7 @@ const toggleSortShortcut: Shortcut = {
     const { cursor } = state
 
     const simplePath = simplifyPath(state, cursor || HOME_PATH)
-    const context = pathToContext(simplePath)
+    const context = pathToContext(state, simplePath)
     const currentSortPreference = getSortPreference(state, context)
     const globalSortPreference = getGlobalSortPreference(state)
     const nextSortPreference = decideNextSortPreference(currentSortPreference)
@@ -164,7 +164,7 @@ const toggleSortShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
 
-    const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
+    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
 
     return getSortPreference(state, context).type === 'Alphabetical'
   },

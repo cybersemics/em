@@ -68,11 +68,11 @@ import {
   getContexts,
   getSetting,
   getLexeme,
-  getAllChildren,
   hasChild,
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -196,7 +196,7 @@ const Editable = ({
   editing,
 }: Connected<EditableProps>) => {
   const state = store.getState()
-  const thoughts = pathToContext(simplePath)
+  const thoughts = pathToContext(state, simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
@@ -206,8 +206,8 @@ const Editable = ({
       : !showContexts && thoughts.length > 1
       ? parentOf(thoughts)
       : state.rootContext
-  const childrenOptions = getAllChildren(state, [...context, '=options'])
-  const options = childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
+  const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
+  const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -219,7 +219,7 @@ const Editable = ({
   }, [state.editableNonce])
 
   const lexeme = getLexeme(state, value)
-  const childrenLabel = getAllChildren(state, [...thoughts, '=label'])
+  const childrenLabel = getAllChildrenAsThoughts(state, [...thoughts, '=label'])
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef<HTMLInputElement>(null)
@@ -478,7 +478,7 @@ const Editable = ({
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
 
-    const thoughtsInContext = getAllChildren(state, context)
+    const thoughtsInContext = getAllChildrenAsThoughts(state, context)
 
     const normalizedNewValue = normalizeThought(newValue)
 
@@ -673,7 +673,7 @@ const Editable = ({
 
     const state = store.getState()
 
-    showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
+    showContexts = showContexts || isContextViewActive(state, pathToContext(state, simplePath))
 
     const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)

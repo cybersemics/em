@@ -24,7 +24,7 @@ const copyCursorShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     const simplePath = simplifyPath(state, cursor!)
-    const context = pathToContext(simplePath)
+    const context = pathToContext(state, simplePath)
     const offset = window.getSelection()?.focusOffset
 
     // if there are any pending descendants, do a pull
@@ -33,7 +33,8 @@ const copyCursorShortcut: Shortcut = {
     getDescendants(state, simplePath, {
       // use filterFunction just to check if any child is pending
       filterFunction: (child, context) => {
-        if (isPending(state, [...context, child.value])) hasPending = true
+        const thought = state.thoughts.contextIndex[child]
+        if (isPending(state, [...context, thought.value])) hasPending = true
         return true
       },
     })

@@ -1,7 +1,7 @@
 import './App.css'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
-import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
+import { getContexts, getParent, getLexeme, getChildrenRanked, isPending } from './selectors'
 import { hashContext, hashThought, initEvents, initFirebase, owner, setSelection, urlDataSource } from './util'
 import { loadFromUrl, loadLocalState, preloadSources } from './action-creators'
 import { State, Thunk } from './@types'
@@ -9,6 +9,7 @@ import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 // import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import _ from 'lodash'
+import { getAllChildrenAsThoughts } from './selectors/getChildren'
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
@@ -71,7 +72,7 @@ const windowEm = {
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   getParent: withState(getParent),
-  getAllChildren: withState(getAllChildren),
+  getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
   getChildrenRanked: withState(getChildrenRanked),
   hashContext,
   hashThought,

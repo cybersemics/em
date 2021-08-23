@@ -100,8 +100,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   const simplePath = simplifyPath(state, path)
 
-  const thoughts = pathToContext(simplePath)
-  const context = pathToContext(rootedParentOf(state, simplePath))
+  const thoughts = pathToContext(state, simplePath)
+  const context = pathToContext(state, rootedParentOf(state, simplePath))
 
   // prevent adding Subthought to readonly or unextendable Thought
   const sourceContext = insertNewSubthought ? thoughts : context
@@ -116,12 +116,12 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   }
 
   const showContexts = isContextViewActive(state, thoughts)
-  const showContextsParent = isContextViewActive(state, pathToContext(parentOf(simplePath)))
+  const showContextsParent = isContextViewActive(state, pathToContext(state, parentOf(simplePath)))
 
   /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
   const getLastSortedChildPath = once((): SimplePath | null => {
     const lastChild = _.last(getChildrenSorted(state, thoughts))
-    return lastChild ? appendToPath(simplePath, lastChild) : null
+    return lastChild ? appendToPath(simplePath, lastChild.id) : null
   })
 
   // use the live-edited value
@@ -166,7 +166,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       return !preventSetCursor
         ? setCursor(newState, {
             editing: true,
-            path: unroot([...parentPath!, { value, rank: newRank, id: newThoughtId }]),
+            path: unroot([...parentPath!, newThoughtId]),
             offset: isMobile() ? 0 : offset != null ? offset : getTextContentFromHTML(value).length,
           })
         : null

@@ -2,7 +2,7 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PAREN
 import globals from '../globals'
 // import { canShowModal } from '../selectors'
 import { hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from '.'
-import { Timestamp, ThoughtsInterface, State } from '../@types'
+import { Timestamp, ThoughtsInterface, State, Parent, Index } from '../@types'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -17,36 +17,36 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN
 
-  const contextIndex = {
+  const contextIndex: Index<Parent> = {
     [HOME_TOKEN_HASH]: {
       id: HOME_TOKEN_HASH,
       value: HOME_TOKEN,
-      context: [HOME_TOKEN],
       children: [],
       parentId: ROOT_PARENT_ID,
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
     },
     [ABSOLUTE_TOKEN_HASH]: {
       id: ABSOLUTE_TOKEN_HASH,
       value: ABSOLUTE_TOKEN,
-      context: [ABSOLUTE_TOKEN],
       parentId: ROOT_PARENT_ID,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
     },
     [EM_TOKEN_HASH]: {
       id: EM_TOKEN_HASH,
       value: EM_TOKEN,
-      context: [EM_TOKEN],
       parentId: ROOT_PARENT_ID,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
     },
   }
 

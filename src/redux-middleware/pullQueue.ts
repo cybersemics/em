@@ -33,7 +33,7 @@ const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Ind
   // if there is no cursor, decode the url so the cursor can be loaded
   // after loading the ranks will be inferred to update the cursor
   const contextUrl = decodeContextUrl(state, window.location.pathname)
-  const contextCursor = cursor ? pathToContext(cursor) : contextUrl
+  const contextCursor = cursor ? pathToContext(state, cursor) : contextUrl
 
   return {
     ...expandedContexts,
@@ -72,9 +72,7 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
 
         // because only parents are specified by visibleContexts, we need to queue the children as well
         ...keyValueBy(children, child => {
-          const contextChild = showContexts
-            ? getContextForThought(state, (child as ThoughtContext).id)!
-            : unroot([...context, (child as Child).value])
+          const contextChild = showContexts ? getContextForThought(state, child)! : unroot([...context, child])
           const keyChildId = hashContext(state, contextChild)
           return keyChildId && contextIndex[keyChildId] && contextIndex[keyChildId].pending
             ? { [keyChildId]: contextChild }

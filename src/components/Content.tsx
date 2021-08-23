@@ -9,14 +9,14 @@ import {
   closeModal,
 } from '../action-creators'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
+import { getSetting, isTutorial, getSortPreference } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
-import { childrenFilterPredicate } from '../selectors/getChildren'
+import { childrenFilterPredicate, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import Editable from './Editable'
 import { SimplePath, State } from '../@types'
 import { storage } from '../util/storage'
@@ -24,12 +24,7 @@ import { storage } from '../util/storage'
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
 
-const transientChildPath = [
-  {
-    value: '',
-    rank: 0,
-  },
-] as SimplePath
+const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
 
 /*
   Transient Editable represents a child that is yet not in the state.
@@ -49,10 +44,10 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   const isAbsoluteContext = isAbsolute(rootContext)
-  const children = getAllChildren(state, rootContext)
+  const children = getAllChildrenAsThoughts(state, rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
-  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, [], false)).length
+  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
 
   // pass rootSort to allow root Subthoughts to render on toggleSort
   // pass scalar components to avoid re-render from object reference change

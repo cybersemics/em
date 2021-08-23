@@ -2,7 +2,7 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PAREN
 import globals from '../globals'
 import { canShowModal } from '../selectors'
 import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
-import { State, Timestamp, ThoughtsInterface } from '../@types'
+import { State, Timestamp, ThoughtsInterface, Parent, Index } from '../@types'
 import { storage } from './storage'
 
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -13,36 +13,36 @@ const getLocal = (key: string) => {
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
 export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
-  const contextIndex = {
+  const contextIndex: Index<Parent> = {
     [HOME_TOKEN]: {
       id: HOME_TOKEN,
       value: HOME_TOKEN,
-      context: [HOME_TOKEN],
       parentId: ROOT_PARENT_ID,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
     },
     [ABSOLUTE_TOKEN]: {
       id: ABSOLUTE_TOKEN,
       value: ABSOLUTE_TOKEN,
-      context: [ABSOLUTE_TOKEN],
       parentId: ROOT_PARENT_ID,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
     },
     [EM_TOKEN]: {
       id: EM_TOKEN,
       value: EM_TOKEN,
-      context: [EM_TOKEN],
       parentId: ROOT_PARENT_ID,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
     },
   }
 

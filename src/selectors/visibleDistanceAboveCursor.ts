@@ -8,6 +8,6 @@ import { State } from '../@types'
  */
 const visibleDistanceAboveCursor = (state: State) =>
   MAX_DISTANCE_FROM_CURSOR -
-  (getChildren(state, state.cursor ? pathToContext(state.cursor) : [HOME_TOKEN]).length === 0 ? 1 : 2)
+  (getChildren(state, state.cursor ? pathToContext(state, state.cursor) : [HOME_TOKEN]).length === 0 ? 1 : 2)
 
 export default visibleDistanceAboveCursor

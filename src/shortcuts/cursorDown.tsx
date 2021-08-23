@@ -88,7 +88,7 @@ const cursorDownShortcut: Shortcut = {
 
     // use default browser behavior in prose mode
     const contextRanked = parentOf(cursor)
-    const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
+    const isProseView = attributeEquals(state, pathToContext(state, contextRanked), '=view', 'Prose')
     const isProseMode = isProseView && (window.getSelection()?.focusOffset as number) < headValue(cursor).length - 1
     if (isProseMode) return false
 

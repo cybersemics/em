@@ -19,12 +19,7 @@ import { commonStyles } from '../style/commonStyles'
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
 
-const transientChildPath = [
-  {
-    value: '',
-    rank: 0,
-  },
-] as SimplePath
+const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
 
 /*
   Transient Editable represents a child that is yet not in the state.
@@ -47,7 +42,7 @@ const mapStateToProps = (state: State) => {
   const children = getAllChildren(state, rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
-  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, [], false)).length
+  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
 
   // pass rootSort to allow root Subthoughts to render on toggleSort
   // pass scalar components to avoid re-render from object reference change

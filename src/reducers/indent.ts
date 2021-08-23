@@ -9,7 +9,12 @@ const indent = (state: State) => {
 
   if (!cursor) return state
 
-  const prev = prevSibling(state, headValue(cursor), pathToContext(rootedParentOf(state, cursor)), headRank(cursor))
+  const prev = prevSibling(
+    state,
+    headValue(cursor),
+    pathToContext(state, rootedParentOf(state, cursor)),
+    headRank(cursor),
+  )
 
   if (!prev) return state
 
@@ -18,11 +23,11 @@ const indent = (state: State) => {
     return alert(state, { value: `The "${isEM(cursor) ? 'em' : 'home'} context" may not be indented.` })
   }
   // cancel if parent is readonly or unextendable
-  else if (hasChild(state, pathToContext(parentOf(cursor)), '=readonly')) {
+  else if (hasChild(state, pathToContext(state, parentOf(cursor)), '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`,
     })
-  } else if (hasChild(state, pathToContext(parentOf(cursor)), '=uneditable')) {
+  } else if (hasChild(state, pathToContext(state, parentOf(cursor)), '=uneditable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(
         cursor,
@@ -33,15 +38,13 @@ const indent = (state: State) => {
   // store selection offset before moveThought is dispatched
   const offset = window.getSelection()?.focusOffset
 
-  const cursorNew = appendToPath(parentOf(cursor), prev, {
-    ...head(cursor),
-    rank: getNextRank(state, pathToContext(appendToPath(parentOf(cursor), prev))),
-  })
+  const cursorNew = appendToPath(parentOf(cursor), prev.id, head(cursor))
 
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
     offset,
+    newRank: getNextRank(state, pathToContext(state, appendToPath(parentOf(cursor), prev.id))),
   })
 }
 

@@ -10,12 +10,12 @@ const preloadSources = (): Thunk => (dispatch, getState) => {
   // get a list of all =src contexts with =preload converted to paths
   const paths = getContexts(state, '=preload')
     .filter(thoughtContext => {
-      const thought = state.thoughts.contextIndex[thoughtContext.id]
+      const thought = state.thoughts.contextIndex[thoughtContext]
       const parentThought = state.thoughts.contextIndex[thought.parentId]
       return parentThought.value === '=src'
     })
     .map(thoughtContext => {
-      const thought = state.thoughts.contextIndex[thoughtContext.id]
+      const thought = state.thoughts.contextIndex[thoughtContext]
       const parentThought = state.thoughts.contextIndex[thought.parentId]
       const context = getContextForThought(state, parentThought.id)
       return rankThoughtsFirstMatch(state, unroot(context!))

@@ -8,7 +8,7 @@ const getThoughtAfter = (state: State, simplePath: SimplePath) => {
   const value = headValue(simplePath)
   const rank = headRank(simplePath)
   const parentPath = rootedParentOf(state, simplePath)
-  const children = getChildrenSorted(state, pathToContext(parentPath))
+  const children = getChildrenSorted(state, pathToContext(state, parentPath))
 
   if (children.length === 0) {
     return null

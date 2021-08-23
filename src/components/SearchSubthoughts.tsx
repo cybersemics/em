@@ -136,7 +136,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
         {formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"
       </span>
       <Subthoughts
-        childrenForced={children.slice(0, searchLimit)}
+        childrenForced={children.slice(0, searchLimit).map(({ id }) => id)}
         simplePath={HOME_PATH}
         allowSingleContextParent={true}
         expandable={true}

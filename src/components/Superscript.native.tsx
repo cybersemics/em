@@ -24,14 +24,16 @@ interface SuperscriptProps {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: SuperscriptProps) => {
   const { contextViews, cursor, showHiddenThoughts, showModal } = state
-  const cursorContext = cursor ? pathToContext(cursor) : [HOME_TOKEN]
+  const cursorContext = cursor ? pathToContext(state, cursor) : [HOME_TOKEN]
 
   const editing =
-    cursor && equalArrays(cursorContext, pathToContext(props.simplePath || [])) && hasLexeme(state, headValue(cursor))
+    cursor &&
+    equalArrays(cursorContext, pathToContext(state, props.simplePath || [])) &&
+    hasLexeme(state, headValue(cursor))
 
   const simplePath = props.showContexts && props.simplePath ? rootedParentOf(state, props.simplePath) : props.simplePath
 
-  const thoughts = props.thoughts || pathToContext(simplePath)
+  const thoughts = props.thoughts || pathToContext(state, simplePath)
 
   const thoughtsLive = editing ? (props.showContexts ? parentOf(cursorContext) : cursorContext) : thoughts
 
@@ -44,7 +46,7 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
     return (
       showHiddenThoughts
         ? contexts
-        : contexts.filter(thoughtContext => !getAncestorByValue(state, thoughtContext.id, thoughtContext.id))
+        : contexts.filter(thoughtContext => !getAncestorByValue(state, thoughtContext, '=archive'))
     ).length
   }
 

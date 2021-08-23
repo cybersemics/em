@@ -36,7 +36,7 @@ export const getWhitelistedThoughts = once(() => {
 
   const htmlSettings = textToHtml(INITIAL_SETTINGS)
   const jsonSettings = htmlToJson(htmlSettings)
-  const settingsImported = importJSON(state, [{ value: EM_TOKEN, rank: 0 }] as SimplePath, jsonSettings)
+  const settingsImported = importJSON(state, [EM_TOKEN] as SimplePath, jsonSettings)
 
   return {
     contextIndex: {
@@ -156,7 +156,7 @@ const updateThoughts = (
 
           const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
           const cursorNew = !path || isRoot(path) ? null : path
-          const isCursorLoaded = cursorNew?.every(child => getLexeme(state, child.value))
+          const isCursorLoaded = cursorNew?.every(child => getLexeme(state, child))
 
           return isCursorLoaded || !cursorNew
             ? {

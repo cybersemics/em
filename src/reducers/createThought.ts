@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getLexeme, getAllChildren, getParent } from '../selectors'
-import { createId, equalThoughtRanked, hashThought, head, timestamp } from '../util'
+import { getLexeme, getAllChildren, getParent, getNextRank } from '../selectors'
+import { createId, hashThought, head, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, State } from '../@types'
 
 interface Payload {
@@ -42,16 +42,10 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
   if (context.length > 0) {
     const newValue = addAsContext ? head(context) : value
 
-    const newContextSubthought = {
-      value: newValue,
-      rank: addAsContext ? getNextRank(state, [value]) : rank,
-      created: timestamp(),
-      id,
-      lastUpdated: timestamp(),
-    }
     const children = getAllChildren(state, contextActual)
-      .filter(child => !equalThoughtRanked(child, newContextSubthought))
-      .concat(newContextSubthought)
+      .filter(child => child !== id)
+      .concat(id)
+
     contextIndexUpdates[parent.id] = {
       ...state.thoughts.contextIndex[parent.id],
       id: parent.id,
@@ -64,6 +58,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       parentId: parent.id,
       children: [],
       lastUpdated: timestamp(),
+      rank: addAsContext ? getNextRank(state, [value]) : rank,
       value: newValue,
     }
   }
@@ -73,10 +68,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
   if (addAsContext) {
     const subthoughtOld = getLexeme(state, head(context))
     subthoughtNew = Object.assign({}, subthoughtOld, {
-      contexts: (subthoughtOld?.contexts || []).concat({
-        id,
-        rank: getNextRank(state, [value]),
-      }),
+      contexts: (subthoughtOld?.contexts || []).concat(id),
       created: subthoughtOld?.created || timestamp(),
       lastUpdated: timestamp(),
     })
@@ -85,13 +77,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       ? []
       : // floating thought (no context)
       context.length > 0
-      ? [
-          ...lexeme.contexts,
-          {
-            id,
-            rank,
-          },
-        ]
+      ? [...lexeme.contexts, id]
       : lexeme.contexts
   }
 

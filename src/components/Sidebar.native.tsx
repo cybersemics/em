@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import React from 'react'
-import { useSelector } from 'react-redux'
+import { useSelector, useStore } from 'react-redux'
 import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 // import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
@@ -13,9 +13,15 @@ import { State } from '../@types'
 const RecentEdited = () => {
   const recentlyEditedTree = useSelector((state: State) => state.recentlyEdited)
   const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
+
+  const store = useStore()
+
   // eslint-disable-next-line fp/no-mutating-methods
   const recentlyEdited = _.reverse(
-    _.sortBy(findTreeDescendants(recentlyEditedTree, { startingPath: [], showHiddenThoughts }), 'lastUpdated'),
+    _.sortBy(
+      findTreeDescendants(store.getState(), recentlyEditedTree, { startingPath: [], showHiddenThoughts }),
+      'lastUpdated',
+    ),
   )
 
   return (
