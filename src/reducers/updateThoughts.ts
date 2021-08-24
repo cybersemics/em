@@ -212,13 +212,15 @@ const updateThoughts = (
             child => normalizeThought(child.value) === normalizeThought(lexeme.value) && child.rank === cx.rank,
           )
           if (!child) {
-            console.error('lexeme', lexeme)
-            console.error('parent', parent)
-            throw new Error(
-              `ThoughtContext for "${lexeme.value}" in ${JSON.stringify(cx.context)} with rank ${
-                cx.rank
-              } is not found in corresponding Parent.`,
-            )
+            // disable check until #1409 is fixed
+            // because pullLexemes was designed to temporarily create invalid state
+            // console.error('lexeme', lexeme)
+            // console.error('parent', parent)
+            // throw new Error(
+            //   `ThoughtContext for "${lexeme.value}" in ${JSON.stringify(cx.context)} with rank ${
+            //     cx.rank
+            //   } is not found in corresponding Parent.`,
+            // )
           }
         })
       })
