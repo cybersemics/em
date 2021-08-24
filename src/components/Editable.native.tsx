@@ -483,6 +483,8 @@ const Editable = ({
   const onBlur = () => {
     blurring = true
 
+    setCursorOnThought({ editing: false })
+
     // if (isTouch && isSafari()) {
     //   resetToolbarPosition()
     //   document.removeEventListener('scroll', updateToolbarPositionOnScroll)
