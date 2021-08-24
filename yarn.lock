@@ -15189,11 +15189,6 @@ react-native-get-random-values@^1.7.0:
   dependencies:
     fast-base64-decode "^1.0.0"
 
-react-native-pell-rich-editor@^1.8.5:
-  version "1.8.5"
-  resolved "https://registry.yarnpkg.com/react-native-pell-rich-editor/-/react-native-pell-rich-editor-1.8.5.tgz#41a01127f39184007d5f6cddccc1bdaaecc74097"
-  integrity sha512-8sks6ah/ffafC0m5PVJ4ZHPg8hT3EwTNkL6qaKELOPKWbnrR9tu72yLZiFqO5n3u8lkHhY79FQ4g7wdXt6F7iw==
-
 react-native-picker-select@^8.0.4:
   version "8.0.4"
   resolved "https://registry.yarnpkg.com/react-native-picker-select/-/react-native-picker-select-8.0.4.tgz#3f7f1f42df69b06e7d2c10338288332a6c40fd10"
