@@ -76,9 +76,7 @@ const ContentEditable = ({
   }
 
   useEffect(() => {
-    if (!isEditing) {
-      setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
-    }
+    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
   }, [isEditing])
 
   useEffect(() => {
