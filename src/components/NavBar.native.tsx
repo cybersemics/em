@@ -1,15 +1,14 @@
 import React from 'react'
 import { connect } from 'react-redux'
-// import { store } from '../store'
-// import { isDocumentEditable, publishMode } from '../util'
-// import { isTutorial } from '../selectors'
+import { store } from '../store'
+import { publishMode } from '../util'
+import { simplifyPath } from '../selectors'
 import HomeLink from './HomeLink'
 import { Path, State } from '../@types'
-// import ContextBreadcrumbs from './ContextBreadcrumbs'
+import ContextBreadcrumbs from './ContextBreadcrumbs'
 import QuickAddButton from './QuickAddButton'
 import FeedbackButton from './FeedbackButton'
 import { View, StyleSheet } from 'react-native'
-import { Text } from './Text.native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -28,11 +27,15 @@ interface IComponentProps {
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
 const NavBar = ({ cursor, position, showBreadcrumbs }: IComponentProps) => {
+  const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path
+
+  const breadcrumbSimplePath = simplifyPath(store.getState(), breadcrumbPath)
+
   return (
     <View style={styles.container}>
       <HomeLink />
 
-      <Text style={styles.breadcrumbs}>{'bread > crumbs > will go > here > thoughts > ua'}</Text>
+      <ContextBreadcrumbs simplePath={breadcrumbSimplePath} />
 
       <View style={styles.buttonsContainer}>
         <FeedbackButton />
