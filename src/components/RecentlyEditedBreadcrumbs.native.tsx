@@ -1,5 +1,5 @@
 import React from 'react'
-import { connect } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { simplifyPath } from '../selectors'
 
 // components
@@ -11,29 +11,22 @@ import { Path, State } from '../@types'
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: Omit<ContextBreadcrumbProps, 'simplePath'> & { path: Path }) => ({
-  simplePath: simplifyPath(state, props.path),
-})
-
 /**
  * Varaint of ContextBreadcrumbs for recently edited with collapsing overflow.
  */
-const RecentlyEditedBreadcrumbs = connect(mapStateToProps)(
-  (props: ContextBreadcrumbProps & ReturnType<typeof mapStateToProps>) => {
-    const parentSimplePath = parentOf(props.simplePath)
-    const simplePath = props.simplePath
+const RecentlyEditedBreadcrumbs = (props: Omit<ContextBreadcrumbProps, 'simplePath'> & { path: Path }) => {
+  const simplePath = useSelector((state: State) => simplifyPath(state, props.path))
+  const parentSimplePath = parentOf(simplePath)
 
-    return (
-      <>
-        <View style={[commonStyles.halfOpacity, commonStyles.marginBottomS]}>
-          <ContextBreadcrumbs {...props} simplePath={simplePath} />
-        </View>
-        <Link simplePath={parentSimplePath} label={headValue(simplePath)} />
-        <Superscript simplePath={simplePath} />
-      </>
-    )
-  },
-)
+  return (
+    <>
+      <View style={[commonStyles.halfOpacity, commonStyles.marginBottomS]}>
+        <ContextBreadcrumbs {...props} simplePath={simplePath} />
+      </View>
+      <Link simplePath={parentSimplePath} label={headValue(simplePath)} />
+      <Superscript simplePath={simplePath} />
+    </>
+  )
+}
 
 export default RecentlyEditedBreadcrumbs
