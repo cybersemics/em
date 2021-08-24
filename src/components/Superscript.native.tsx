@@ -4,6 +4,7 @@ import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
 import { Child, Context, Index, SimplePath, State } from '../@types'
+import { StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
 
@@ -65,13 +66,12 @@ const Superscript: FC<SuperscriptProps> = ({ empty, numContexts, showSingle, sup
   //   .reduce((charCount, child) => charCount + child.length, 0)
 
   return (
-    <Text style={commonStyles.whiteText}>
+    <Text>
       {
         !empty && superscript && numContexts! > (showSingle ? 0 : 1) ? (
           <Text>
-            {' '}
             {/* Make the container position:relative so that the modal is positioned correctly */}
-            {numContexts ? <sup>{numContexts}</sup> : null}
+            {numContexts ? <Text style={[commonStyles.halfOpacity, styles.sup]}>{numContexts}</Text> : null}
             {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
             {/* <DepthBar/> */}
           </Text>
@@ -80,5 +80,9 @@ const Superscript: FC<SuperscriptProps> = ({ empty, numContexts, showSingle, sup
     </Text>
   )
 }
+
+const styles = StyleSheet.create({
+  sup: { fontSize: 2 },
+})
 
 export default connect(mapStateToProps)(Superscript)
