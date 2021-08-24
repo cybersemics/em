@@ -55,7 +55,6 @@ const ContentEditable = ({
     setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
   }, [isEditing])
 
-  console.log({ html })
   useEffect(() => {
     arrangeInputContainer(html)
   }, [])
