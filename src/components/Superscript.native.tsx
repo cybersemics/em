@@ -61,22 +61,11 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
 
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
 const Superscript: FC<SuperscriptProps> = ({ empty, numContexts, showSingle, superscript = true }) => {
-  // showContexts = showContexts || isContextViewActive(store.getState(), simplePath)
-  // const numDescendantCharacters = getDescendants(showContexts ? simplePathLive.concat(thoughtRaw) : simplePathLive )
-  //   .reduce((charCount, child) => charCount + child.length, 0)
-
   return (
     <Text>
-      {
-        !empty && superscript && numContexts! > (showSingle ? 0 : 1) ? (
-          <Text>
-            {/* Make the container position:relative so that the modal is positioned correctly */}
-            {numContexts ? <Text style={[commonStyles.halfOpacity, styles.sup]}>{numContexts}</Text> : null}
-            {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
-            {/* <DepthBar/> */}
-          </Text>
-        ) : null /* <DepthBar/> */
-      }
+      {!empty && superscript && numContexts! > (showSingle ? 0 : 1) ? (
+        <Text>{numContexts ? <Text style={[commonStyles.halfOpacity, styles.sup]}>{numContexts}</Text> : null}</Text>
+      ) : null}
     </Text>
   )
 }

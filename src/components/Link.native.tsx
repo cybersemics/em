@@ -1,16 +1,7 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-// import { EM_TOKEN } from '../constants'
 import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import {
-  clearSelection,
-  // decodeCharacterEntities,
-  // ellipsize,
-  // equalArrays,
-  headValue,
-  // pathToContext,
-  strip,
-} from '../util'
+import { clearSelection, headValue, strip } from '../util'
 import { StyleSheet } from 'react-native'
 import { SimplePath } from '../@types'
 import { Text } from './Text.native'
