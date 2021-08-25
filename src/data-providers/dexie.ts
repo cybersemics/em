@@ -139,14 +139,16 @@ export const updateThought = async (id: string, thought: Lexeme) =>
   })
 
 /** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) => {
-  const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
-    ...(thoughtIndexMap[key] as Lexeme),
-    updatedBy: getSessionId(),
-    id: key,
-  }))
-  return db.thoughtIndex.bulkPut(thoughtsArray)
-}
+export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) =>
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
+      ...(thoughtIndexMap[key] as Lexeme),
+      updatedBy: getSessionId(),
+      id: key,
+    }))
+    return db.thoughtIndex.bulkPut(thoughtsArray)
+  })
 
 /** Deletes a single thought from the thoughtIndex. */
 export const deleteThought = (id: string) =>
@@ -168,22 +170,30 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
-export const updateContext = async (id: string, { context, children, lastUpdated }: Parent) => {
-  return db.contextIndex.put({ id, context, children, updatedBy: getSessionId(), lastUpdated })
-}
+export const updateContext = async (id: string, { context, children, lastUpdated }: Parent) =>
+  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    return db.contextIndex.put({ id, context, children, updatedBy: getSessionId(), lastUpdated })
+  })
 
 /** Updates multiple thoughts in the contextIndex. */
-export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) => {
-  const contextsArray = Object.keys(contextIndexMap).map(key => ({
-    ...(contextIndexMap[key] as Parent),
-    updatedBy: getSessionId(),
-    id: key,
-  }))
-  return db.contextIndex.bulkPut(contextsArray)
-}
+export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) =>
+  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    const contextsArray = Object.keys(contextIndexMap).map(key => ({
+      ...(contextIndexMap[key] as Parent),
+      updatedBy: getSessionId(),
+      id: key,
+    }))
+    return db.contextIndex.bulkPut(contextsArray)
+  })
 
 /** Deletes a single thought from the contextIndex. */
-export const deleteContext = async (id: string) => db.contextIndex.delete(id)
+export const deleteContext = async (id: string) =>
+  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    return db.contextIndex.delete(id)
+  })
 
 /** Get a context by id. */
 export const getContextById = async (id: string) => db.contextIndex.get(id)
