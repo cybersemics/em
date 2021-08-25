@@ -47,7 +47,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
 
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || e.keyCode === 'N'.charCodeAt(0)) {
-      editable.focus()
+      editable?.focus()
       setSelection(editable, { end: true })
       dispatch(setNoteFocus({ value: false }))
     }

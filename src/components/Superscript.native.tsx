@@ -4,6 +4,7 @@ import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
 import { Child, Context, Index, SimplePath, State } from '../@types'
+import { StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
 
@@ -60,25 +61,17 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
 
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
 const Superscript: FC<SuperscriptProps> = ({ empty, numContexts, showSingle, superscript = true }) => {
-  // showContexts = showContexts || isContextViewActive(store.getState(), simplePath)
-  // const numDescendantCharacters = getDescendants(showContexts ? simplePathLive.concat(thoughtRaw) : simplePathLive )
-  //   .reduce((charCount, child) => charCount + child.length, 0)
-
   return (
-    <Text style={commonStyles.whiteText}>
-      {
-        !empty && superscript && numContexts! > (showSingle ? 0 : 1) ? (
-          <Text>
-            {' '}
-            {/* Make the container position:relative so that the modal is positioned correctly */}
-            {numContexts ? <sup>{numContexts}</sup> : null}
-            {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
-            {/* <DepthBar/> */}
-          </Text>
-        ) : null /* <DepthBar/> */
-      }
+    <Text>
+      {!empty && superscript && numContexts! > (showSingle ? 0 : 1) ? (
+        <Text>{numContexts ? <Text style={[commonStyles.halfOpacity, styles.sup]}>{numContexts}</Text> : null}</Text>
+      ) : null}
     </Text>
   )
 }
+
+const styles = StyleSheet.create({
+  sup: { fontSize: 2 },
+})
 
 export default connect(mapStateToProps)(Superscript)

@@ -232,7 +232,6 @@ const updateThoughts = (
     //       }
     //     })
     //   })
-
     //   return state
     // },
 
