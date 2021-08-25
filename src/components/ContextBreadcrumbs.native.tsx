@@ -8,6 +8,8 @@ import Link from './Link'
 import Superscript from './Superscript'
 import { View } from 'moti'
 import { Text } from './Text.native'
+import { fadeIn } from '../style/animations'
+import { commonStyles } from '../style/commonStyles'
 
 export interface ContextBreadcrumbProps {
   homeContext?: boolean
@@ -23,6 +25,9 @@ type OverflowChild = Child & {
 }
 
 type OverflowPath = OverflowChild[]
+
+const { from, animate } = fadeIn
+const { flexWrap, directionRow, flexGrow, alignItemsCenter } = commonStyles
 
 /** Breadcrumbs for contexts within the context views. */
 export const ContextBreadcrumbs = ({
@@ -57,7 +62,7 @@ export const ContextBreadcrumbs = ({
       : charLimitedArray
 
   return (
-    <View>
+    <View style={flexGrow}>
       {isRoot(simplePath) ? (
         /*
       If the path is the root context, check homeContext which is true if the context is directly in the root (in which case the HomeLink is already displayed as the thought)
@@ -81,11 +86,24 @@ export const ContextBreadcrumbs = ({
           <HomeLink color='gray' size={20} />
         ) : null
       ) : (
-        <View>
+        <View style={[directionRow, flexWrap]}>
           {overflowArray.map((thoughtRanked, i) => {
             const subthoughts = ancestors(simplePath, thoughtRanked) as SimplePath
+
             return (
-              <>
+              <View
+                key={i}
+                from={from}
+                animate={animate}
+                transition={{
+                  type: 'timing',
+                  duration: 350,
+                }}
+                exit={{
+                  opacity: 0.5,
+                }}
+                style={[directionRow, alignItemsCenter]}
+              >
                 {!thoughtRanked.isOverflow ? (
                   <Text>
                     {i > 0 ? <Text> • </Text> : null}
@@ -98,7 +116,7 @@ export const ContextBreadcrumbs = ({
                     <Text onPress={() => setEllipsize(false)}> ... </Text>
                   </Text>
                 )}
-              </>
+              </View>
             )
           })}
         </View>
