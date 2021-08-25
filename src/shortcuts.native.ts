@@ -62,7 +62,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // display gesture hint
     clearTimeout(handleGestureSegmentTimeout)
-    handleGestureSegmentTimeout = setTimeout(
+    handleGestureSegmentTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
+
+    setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
         store.dispatch((dispatch, getState) => {
