@@ -23,11 +23,13 @@ const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
       style={style.text}
       onPress={() => {
         clearSelection()
-        dispatch(search({ value: null }))
-        dispatch(searchContexts({ value: null }))
-        dispatch(setCursor({ path: simplePath }))
-        dispatch(toggleSidebar({ value: false }))
-        dispatch(scrollCursorIntoView())
+        dispatch([
+          search({ value: null }),
+          searchContexts({ value: null }),
+          setCursor({ path: simplePath }),
+          toggleSidebar({ value: false }),
+          scrollCursorIntoView(),
+        ])
       }}
     >
       {value}
