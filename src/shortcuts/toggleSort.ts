@@ -1,6 +1,6 @@
 import { HOME_PATH } from '../constants'
 import { simplifyPath, getSortPreference } from '../selectors'
-import { deleteAttribute, toggleAttribute } from '../action-creators'
+import { alert, deleteAttribute, toggleAttribute } from '../action-creators'
 import Icon from '../components/icons/Sort'
 import { pathToContext, unroot } from '../util'
 import { Shortcut, SortPreference } from '../@types'
@@ -36,7 +36,7 @@ const toggleSortShortcut: Shortcut = {
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', meta: true, alt: true },
   svg: Icon,
-  exec: (dispatch, getState) => {
+  exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     const { cursor } = state
 
@@ -45,6 +45,13 @@ const toggleSortShortcut: Shortcut = {
     const currentSortPreference = getSortPreference(state, context)
     const globalSortPreference = getGlobalSortPreference(state)
     const nextSortPreference = decideNextSortPreference(currentSortPreference)
+
+    // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
+    // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
+    if (type === 'keyboard') {
+      const sortDirectionLabel = currentSortPreference.direction === 'Asc' ? 'ascending' : 'descending'
+      dispatch(alert(currentSortPreference.direction ? `Sort ${sortDirectionLabel}` : null, { clearTimeout: 2000 }))
+    }
 
     // If next sort preference equals to global sort preference then delete sort attribute.
     if (
