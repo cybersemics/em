@@ -74,7 +74,7 @@ const mapStateToProps = (state: State) => {
 
 type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
 
-/** Calculates whether there was a click on the left margin or padding zone of content element. */
+/** Calculates whether there was a click on the left margin or padding zone of content element. Used to activate Recently Edited sidebar on mobile. */
 const isPointInLeftGutter = (x: number, y: number, content?: HTMLElement) => {
   const style = window.getComputedStyle(content!)
   const pTop = parseInt(style.getPropertyValue('padding-top'))
@@ -137,7 +137,7 @@ const Content: ContentComponent = props => {
     <div
       id='content-wrapper'
       onClick={e => {
-        if (!showModal && isPointInLeftGutter(e.clientX, e.clientY, contentRef.current!)) {
+        if (!showModal && isTouch && isPointInLeftGutter(e.clientX, e.clientY, contentRef.current!)) {
           dispatch(toggleSidebar())
         }
       }}
