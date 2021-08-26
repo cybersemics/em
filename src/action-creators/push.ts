@@ -3,8 +3,7 @@ import _ from 'lodash'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
-import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
-import { getSetting } from '../selectors'
+import { EM_TOKEN } from '../constants'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../@types'
@@ -22,8 +21,8 @@ const localStorageSettingsContexts = _.keyBy(['Tutorial', 'Last Updated'], value
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (
-  thoughtIndexUpdates: Index<Lexeme> = {},
-  contextIndexUpdates: Index<Parent> = {},
+  contextIndexUpdates: Index<Parent | null> = {},
+  thoughtIndexUpdates: Index<Lexeme | null> = {},
   recentlyEdited: Index,
   updates: Index = {},
 ): Promise<any> => {
@@ -36,25 +35,25 @@ const pushLocal = (
       return db.deleteThought(key)
     }),
     db.updateLastUpdated(timestamp()),
-  ] as Promise<any>[]
+  ] as Promise<unknown>[]
 
   logWithTime('sync: thoughtIndexPromises generated')
 
   // contextIndex
   const contextIndexPromises = [
     ...Object.keys(contextIndexUpdates).map(contextEncoded => {
-      const parentEntry = contextIndexUpdates[contextEncoded] || {}
+      const parentEntry = contextIndexUpdates[contextEncoded]
 
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[contextEncoded]
       if (name) {
-        const firstChild = parentEntry.children && parentEntry.children.find(child => !isFunction(child.value))
+        const firstChild = parentEntry?.children.find(child => !isFunction(child.value))
         if (firstChild) {
           storage.setItem(`Settings/${name}`, firstChild.value)
         }
       }
 
-      return parentEntry.children && parentEntry.children.length > 0
+      return parentEntry?.children && parentEntry.children.length > 0
         ? db.updateContext(contextEncoded, parentEntry)
         : db.deleteContext(contextEncoded)
     }),
@@ -77,8 +76,8 @@ const pushLocal = (
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
 const pushRemote =
   (
-    thoughtIndexUpdates: Index<Lexeme | null> = {},
     contextIndexUpdates: Index<Parent | null> = {},
+    thoughtIndexUpdates: Index<Lexeme | null> = {},
     recentlyEdited: Index | undefined,
     updates: Index = {},
   ): Thunk<Promise<unknown>> =>
@@ -96,34 +95,13 @@ const pushRemote =
       (accum: Index<Lexeme | null>, lexeme: Lexeme | null, key: string) => {
         if (!key) {
           console.error('Unescaped empty key', lexeme, new Error())
-          return
         }
-
-        // fix undefined/NaN rank
-        accum['thoughtIndex/' + (key || EMPTY_TOKEN)] =
-          lexeme && getSetting(state, 'Data Integrity Check') === 'On'
-            ? {
-                value: lexeme.value,
-                contexts: lexeme.contexts.map(cx => ({
-                  context: cx.context || null, // guard against NaN or undefined
-                  rank: cx.rank || 0, // guard against NaN or undefined
-                  ...(cx.lastUpdated
-                    ? {
-                        lastUpdated: cx.lastUpdated,
-                      }
-                    : null),
-                })),
-                created: lexeme.created || timestamp(),
-                lastUpdated: lexeme.lastUpdated || timestamp(),
-              }
-            : lexeme
       },
       {} as Index<Lexeme | null>,
     )
 
     logWithTime('pushRemote: prepend thoughtIndex key')
 
-    const dataIntegrityCheck = getSetting(state, 'Data Integrity Check') === 'On'
     const prependedContextIndexUpdates = _.transform(
       contextIndexUpdates,
       (accum, parentContext, key) => {
@@ -133,17 +111,7 @@ const pushRemote =
           children && children.length > 0
             ? {
                 context: parentContext!.context,
-                children: dataIntegrityCheck
-                  ? children.map(subthought => ({
-                      value: subthought.value || '', // guard against NaN or undefined,
-                      rank: subthought.rank || 0, // guard against NaN or undefined
-                      ...(subthought.lastUpdated
-                        ? {
-                            lastUpdated: subthought.lastUpdated,
-                          }
-                        : null),
-                    }))
-                  : children,
+                children,
                 lastUpdated: parentContext!.lastUpdated || timestamp(),
               }
             : null
@@ -191,8 +159,8 @@ const pushRemote =
 /** Syncs updates to local database and Firebase. */
 const push =
   (
-    thoughtIndexUpdates = {},
-    contextIndexUpdates = {},
+    contextIndexUpdates: Index<Parent | null> = {},
+    thoughtIndexUpdates: Index<Lexeme | null> = {},
     { local = true, remote = true, updates = {}, recentlyEdited = {} } = {},
   ): Thunk =>
   (dispatch, getState) => {
@@ -206,13 +174,13 @@ const push =
 
     return Promise.all([
       // push local
-      local && pushLocal(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates),
+      local && pushLocal(contextIndexUpdates, thoughtIndexUpdates, recentlyEdited, updates),
 
       // push remote
       remote &&
         authenticated &&
         userRef &&
-        pushRemote(thoughtIndexUpdates, contextIndexUpdates, recentlyEdited, updates)(dispatch, getState),
+        pushRemote(contextIndexUpdates, thoughtIndexUpdates, recentlyEdited, updates)(dispatch, getState),
     ])
   }
 

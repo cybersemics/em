@@ -49,7 +49,7 @@ const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>
 
 /** Push a batch to the local/remote. */
 const pushBatch = (batch: PushBatch) =>
-  push(batch.thoughtIndexUpdates, batch.contextIndexUpdates, {
+  push(batch.contextIndexUpdates, batch.thoughtIndexUpdates, {
     recentlyEdited: batch.recentlyEdited,
     local: batch.local !== false,
     remote: batch.remote !== false,
