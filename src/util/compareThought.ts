@@ -1,8 +1,9 @@
 import { lower } from './lower'
 import { Child, ComparatorFunction, ComparatorValue } from '../@types'
-import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL, IGNORED_PREFIXES } from '../constants'
+import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../constants'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
+const IGNORED_PREFIXES = ['the ']
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
@@ -15,8 +16,8 @@ const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX_GLOBAL, '
 /** Remove ignored prefixes from comparator inputs. */
 const removeIgnoredPrefixes = (str: string) => str.replace(regexIgnoredPrefixes, '$2')
 
-/** Make comparator inputs reasonable.  */
-const makeReasonable = (str: string) => {
+/** Removes emojis, spaces, and prefix 'the' to make a string comparable.  */
+const removeUncomparableCharacters = (str: string) => {
   return removeIgnoredPrefixes(removeEmojisAndSpaces(str))
 }
 
@@ -103,7 +104,7 @@ export const makeOrderedComparator =
  * 2. dates (9/1, 10/1, 11/1)
  * 3. lexicographic (default)
  */
-const compareReasonableText = makeOrderedComparator<string>([
+const compareReadableText = makeOrderedComparator<string>([
   compareNumberAndOther,
   compareNumbers,
   compareDateAndOther,
@@ -116,13 +117,13 @@ const compareReasonableText = makeOrderedComparator<string>([
  * 1. empty
  * 2. punctuation (=, +, #hi, =test)
  * 3. emoji
- * 4. compareReasonableText on text without emoji
+ * 4. compareReadableText on text without emoji
  */
 export const compareReasonable = makeOrderedComparator<string>([
   compareEmpty,
   comparePunctuationAndOther,
   compareStringsWithEmoji,
-  (a, b) => compareReasonableText(makeReasonable(a), makeReasonable(b)),
+  (a, b) => compareReadableText(removeUncomparableCharacters(a), removeUncomparableCharacters(b)),
 ])
 
 /** Get reverse of the given comparator. */
