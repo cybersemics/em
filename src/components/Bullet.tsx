@@ -23,9 +23,10 @@ const mapStateToProps = (state: State, props: BulletProps) => {
   const lexeme = getLexeme(state, head(props.context))
   return {
     // if being edited and meta validation error has occured
-    invalid: !lexeme || (!!props.isEditing && invalidState),
+    invalid: !!props.isEditing && invalidState,
     // re-render when leaf status changes
     isLeaf: !hasChildren(state, props.context),
+    missing: !lexeme,
     pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
   }
@@ -35,14 +36,19 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 const Bullet = ({
   showContexts,
   glyph,
-  isLeaf,
-  onClick,
   invalid,
+  isLeaf,
+  missing,
+  onClick,
   pending,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => (
   <span
     className={classNames({
       bullet: true,
+      // Since Parents and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
+      // Therefore render in a simple gray rather than an error color.
+      // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
+      gray: missing,
       graypulse: pending,
       'show-contexts': showContexts,
       'invalid-option': invalid,
