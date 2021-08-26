@@ -1,11 +1,11 @@
-import React, { FC, MouseEvent, useMemo, useRef, useState } from 'react'
+import React, { FC, useMemo, useRef, useState } from 'react'
 import { connect, useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import { isTouch } from '../browser'
 import {
   cursorBack as cursorBackActionCreator,
   expandContextThought,
-  toggleSidebar as toggleSidebarActionCreator,
+  toggleSidebar,
   closeModal,
 } from '../action-creators'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
@@ -74,19 +74,12 @@ const mapStateToProps = (state: State) => {
 
 type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
 
-/**
- * Calculates whether there was a click on the left margin or padding zone of content element.
- *
- * @param e The onClick e object.
- * @param content HTML element.
- */
-const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
+/** Calculates whether there was a click on the left margin or padding zone of content element. */
+const isPointInLeftGutter = (x: number, y: number, content?: HTMLElement) => {
   const style = window.getComputedStyle(content!)
   const pTop = parseInt(style.getPropertyValue('padding-top'))
   const mTop = parseInt(style.getPropertyValue('margin-top'))
   const mLeft = parseInt(style.getPropertyValue('margin-left'))
-  const x = e.clientX
-  const y = e.clientY
   return x < mLeft && y > pTop + mTop
 }
 
@@ -144,8 +137,8 @@ const Content: ContentComponent = props => {
     <div
       id='content-wrapper'
       onClick={e => {
-        if (!showModal && isLeftSpaceClick(e, contentRef.current!)) {
-          dispatch(toggleSidebarActionCreator({}))
+        if (!showModal && isPointInLeftGutter(e.clientX, e.clientY, contentRef.current!)) {
+          dispatch(toggleSidebar())
         }
       }}
     >
