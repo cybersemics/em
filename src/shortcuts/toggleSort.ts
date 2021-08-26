@@ -1,6 +1,6 @@
 import { HOME_PATH } from '../constants'
 import { simplifyPath, getSortPreference } from '../selectors'
-import { deleteAttribute, setCursor, toggleAttribute } from '../action-creators'
+import { deleteAttribute, toggleAttribute } from '../action-creators'
 import Icon from '../components/icons/Sort'
 import { pathToContext, unroot } from '../util'
 import { Shortcut, SortPreference } from '../@types'
@@ -92,10 +92,6 @@ const toggleSortShortcut: Shortcut = {
             value: nextSortPreference.direction,
           }),
         )
-    }
-
-    if (cursor) {
-      dispatch(setCursor({ path: state.cursor }))
     }
   },
   isActive: getState => {
