@@ -172,23 +172,19 @@ const push =
     const authenticated = { state }
     const userRef = getUserRef(state)
 
-    // Data Integrity Check
-    // Do not allow pending Parents to be persisted
-    Object.values(contextIndexUpdates).forEach(parent => {
-      if (parent?.pending) {
-        throw new Error(`Pending parents may not be pushed. Context: ${JSON.stringify(parent.context)}`)
-      }
-    })
+    // Filter out pending Parents so they are not persisted.
+    // Why not filter them out upstream in updateThoughts? Pending Parents sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
+    const contextIndexUpdatesNotPending = _.pickBy(contextIndexUpdates, parent => !parent?.pending)
 
     return Promise.all([
       // push local
-      local && pushLocal(contextIndexUpdates, thoughtIndexUpdates, recentlyEdited, updates),
+      local && pushLocal(contextIndexUpdatesNotPending, thoughtIndexUpdates, recentlyEdited, updates),
 
       // push remote
       remote &&
         authenticated &&
         userRef &&
-        pushRemote(contextIndexUpdates, thoughtIndexUpdates, recentlyEdited, updates)(dispatch, getState),
+        pushRemote(contextIndexUpdatesNotPending, thoughtIndexUpdates, recentlyEdited, updates)(dispatch, getState),
     ])
   }
 
