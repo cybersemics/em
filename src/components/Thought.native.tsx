@@ -372,11 +372,6 @@ const ThoughtContainer = ({
     : // if alphabetical sort is disabled just check if current thought is hovering
       globals.simulateDropHover || isHovering
 
-  const { direction: sortDirection, type: sortType } = getSortPreference(
-    store.getState(),
-    pathToContext(simplePathLive!),
-  )
-
   // avoid re-renders from object reference change
   const styleNew =
     Object.keys(styleSelf || {}).length > 0 ||
@@ -455,8 +450,6 @@ const ThoughtContainer = ({
         isParentHovering={isAnyChildHovering}
         showContexts={allowSingleContext}
         simplePath={simplePath}
-        sortType={sortType}
-        sortDirection={sortDirection}
       />
     </>
   )

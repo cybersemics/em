@@ -10,18 +10,7 @@ import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import {
-  Child,
-  Context,
-  GesturePath,
-  Index,
-  LazyEnv,
-  Path,
-  SimplePath,
-  SortDirection,
-  State,
-  ThoughtContext,
-} from '../@types'
+import { Child, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {
@@ -79,8 +68,6 @@ interface SubthoughtsProps {
   expandable?: boolean
   isParentHovering?: boolean
   showContexts?: boolean
-  sortType?: string
-  sortDirection?: SortDirection | null
   simplePath: SimplePath
   path?: Path
 }
@@ -189,14 +176,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
       attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
       findFirstEnvContextWithZoom(state, { context: pathToContext(rootedParentOf(state, cursor!)), env }))
 
-  const sortPreferenceProps = props.sortType
-    ? {
-        type: props.sortType,
-        direction: props.sortDirection,
-      }
-    : null
-  const sortPreferenceState = getSortPreference(state, pathToContext(simplePathLive))
-  const sortPreference = sortPreferenceProps || sortPreferenceState
+  const sortPreference = getSortPreference(state, pathToContext(simplePathLive))
 
   return {
     contextBinding,

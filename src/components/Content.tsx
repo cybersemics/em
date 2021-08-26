@@ -9,7 +9,7 @@ import {
   closeModal,
 } from '../action-creators'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { getSetting, getAllChildren, isTutorial, getSortPreference } from '../selectors'
+import { getSetting, getAllChildren, isTutorial } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
 
 // components
@@ -54,10 +54,6 @@ const mapStateToProps = (state: State) => {
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot, [], false)).length
 
-  // pass rootSort to allow root Subthoughts to render on toggleSort
-  // pass scalar components to avoid re-render from object reference change
-  const { type: rootSortType, direction: rootSortDirection } = getSortPreference(state, rootContext)
-
   return {
     search,
     showModal,
@@ -65,8 +61,6 @@ const mapStateToProps = (state: State) => {
     tutorialStep,
     rootThoughtsLength,
     noteFocus,
-    rootSortDirection,
-    rootSortType,
     isAbsoluteContext,
     rootContext,
   }
@@ -85,17 +79,7 @@ const isPointInLeftGutter = (x: number, y: number, content?: HTMLElement) => {
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const {
-    search,
-    isTutorialLocal,
-    tutorialStep,
-    showModal,
-    rootThoughtsLength,
-    noteFocus,
-    rootSortDirection,
-    rootSortType,
-    isAbsoluteContext,
-  } = props
+  const { search, isTutorialLocal, tutorialStep, showModal, rootThoughtsLength, noteFocus, isAbsoluteContext } = props
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
@@ -160,12 +144,7 @@ const Content: ContentComponent = props => {
                 <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} />
               )
             ) : (
-              <Subthoughts
-                simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH}
-                expandable={true}
-                sortDirection={rootSortDirection}
-                sortType={rootSortType}
-              />
+              <Subthoughts simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH} expandable={true} />
             )}
           </>
         )}
