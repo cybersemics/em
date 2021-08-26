@@ -10,18 +10,7 @@ import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import {
-  Child,
-  Context,
-  GesturePath,
-  Index,
-  LazyEnv,
-  Path,
-  SimplePath,
-  SortDirection,
-  State,
-  ThoughtContext,
-} from '../@types'
+import { Child, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {
@@ -61,7 +50,6 @@ import {
   getChildrenRanked,
   getContextsSortedAndRanked,
   getEditingPath,
-  getGlobalSortPreference,
   getNextRank,
   getPrevRank,
   getSortPreference,
@@ -80,8 +68,6 @@ interface SubthoughtsProps {
   expandable?: boolean
   isParentHovering?: boolean
   showContexts?: boolean
-  sortType?: string
-  sortDirection?: SortDirection | null
   simplePath: SimplePath
   path?: Path
 }
@@ -190,17 +176,23 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
       attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
       findFirstEnvContextWithZoom(state, { context: pathToContext(rootedParentOf(state, cursor!)), env }))
 
+  const sortPreference = getSortPreference(state, pathToContext(simplePathLive))
+
   return {
     contextBinding,
     distance,
     env,
     isEditingAncestor: isEditingPath && !isEditing,
+    // expand thought due to cursor and hover expansion
+    isExpanded: !!state.expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isAbsoluteContext,
     showContexts,
     showHiddenThoughts,
     simplePath: simplePathLive,
-    // expand thought due to cursor and hover expansion
-    isExpanded: !!store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
-    isAbsoluteContext,
+    // pass sortType and sortDirection since they are scalars
+    // passing sortPreference directly would re-render the component each time, since the preference object reference changes
+    sortType: sortPreference.type,
+    sortDirection: sortPreference.direction,
     zoomCursor,
     zoomParent,
     // Re-render if children change.
@@ -414,33 +406,26 @@ export const SubthoughtsComponent = ({
   allowSingleContextParent,
   childrenForced,
   contextBinding,
-  path,
   depth = 0,
   distance,
   dropTarget,
   env,
   isDragInProgress,
   isEditingAncestor,
+  isExpanded,
   isHovering,
   isParentHovering,
+  path,
   showContexts,
+  simplePath,
   sortDirection: contextSortDirection,
   sortType: contextSortType,
-  simplePath,
-  isExpanded,
   zoomCursor,
   zoomParent,
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
   const [page, setPage] = useState(1)
-  const globalSort = getGlobalSortPreference(state)
-  const sortPreference =
-    (contextSortType && {
-      type: contextSortType,
-      direction: contextSortDirection,
-    }) ||
-    globalSort
   const { cursor } = state
   const context = pathToContext(simplePath)
   const value = headValue(simplePath)
@@ -466,7 +451,7 @@ export const SubthoughtsComponent = ({
   const children =
     childrenForced || showContexts
       ? getContextsSortedAndRanked(state, headValue(simplePath))
-      : sortPreference?.type !== 'None'
+      : contextSortType !== 'None'
       ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
       : (getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[])
 

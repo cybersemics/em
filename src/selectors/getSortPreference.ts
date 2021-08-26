@@ -14,7 +14,7 @@ const getSortDirection = (sortType: string, state: State, context: Context) => {
 
 /** Get the sort setting from the given context meta or, if not provided, the global sort. */
 const getSortPreference = (state: State, context: Context): SortPreference => {
-  const childrenSort = getAllChildren(state, [...unroot(context), '=sort'])
+  const childrenSort = getAllChildren(state, unroot([...context, '=sort']))
   return childrenSort.length > 0
     ? {
         type: childrenSort[0].value,
