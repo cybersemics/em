@@ -1,8 +1,9 @@
 import { lower } from './lower'
 import { Child, ComparatorFunction, ComparatorValue } from '../@types'
-import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL, IGNORED_PREFIXES } from '../constants'
+import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../constants'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
+const IGNORED_PREFIXES = ['the ']
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
@@ -15,8 +16,8 @@ const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX_GLOBAL, '
 /** Remove ignored prefixes from comparator inputs. */
 const removeIgnoredPrefixes = (str: string) => str.replace(regexIgnoredPrefixes, '$2')
 
-/** Make comparator inputs reasonable.  */
-const makeReasonable = (str: string) => {
+/** Removes emojis, spaces, and prefix 'the' to make a string comparable.  */
+const removeUncomparableCharacters = (str: string) => {
   return removeIgnoredPrefixes(removeEmojisAndSpaces(str))
 }
 
@@ -32,7 +33,13 @@ const parseDate = (s: string) =>
       : s,
   )
 
-/** The default comparator that can be used in sort. */
+/** Returns trure if the given string is an integer or decimal number. Recognizes prefixed number strings like "#1" and "$1" as numbers. */
+const isNumber = (x: number | string) => !isNaN(toNumber(x))
+
+/** Converts a string to a number. If given a number, returns it as-is. If given a string with a prefixe such as "#" or "$", strips it and returns the actual number. If the input cannot be converted to a number, returns NaN. */
+const toNumber = (x: number | string) => (typeof x === 'number' ? x : +x.replace(/^[$₹₤₱₠₪₨€#] ?/, ''))
+
+/** The default comparator that uses the ">" operator. Can be passed to Array.prototype.sort. */
 export const compare = <T>(a: T, b: T): ComparatorValue => (a > b ? 1 : a < b ? -1 : 0)
 
 /** A comparator that sorts emojis above non-emojis. */
@@ -50,17 +57,17 @@ export const compareEmpty = (a: string, b: string): ComparatorValue => {
 }
 
 /** A comparator that sorts numbers ahead of non-numbers. */
-export const compareNumberAndOther = <T, U>(a: T, b: U): ComparatorValue => {
-  const aIsNum = !isNaN(+a)
-  const bIsNum = !isNaN(+b)
+export const compareNumberAndOther = (a: number | string, b: number | string): ComparatorValue => {
+  const aIsNum = isNumber(a)
+  const bIsNum = isNumber(b)
   return aIsNum && !bIsNum ? -1 : bIsNum && !aIsNum ? 1 : 0
 }
 
 /** A comparator that sorts numbers in numeric order. */
-export const compareNumbers = <T, U>(a: T, b: U): ComparatorValue => {
-  const aIsNum = !isNaN(+a)
-  const bIsNum = !isNaN(+b)
-  return aIsNum && bIsNum ? compare(+a, +b) : 0
+export const compareNumbers = (a: number | string, b: number | string): ComparatorValue => {
+  const aIsNum = isNumber(a)
+  const bIsNum = isNumber(b)
+  return aIsNum && bIsNum ? compare(toNumber(a), toNumber(b)) : 0
 }
 
 /** A case-insensitive lexicographic comparator. */
@@ -99,11 +106,11 @@ export const makeOrderedComparator =
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
 /** A comparator that sorts basic text.
- * 1. numbers (8, 9, 10)
+ * 1. numbers (8, 9, 10; #8, #9, #10)
  * 2. dates (9/1, 10/1, 11/1)
  * 3. lexicographic (default)
  */
-const compareReasonableText = makeOrderedComparator<string>([
+const compareReadableText = makeOrderedComparator<string>([
   compareNumberAndOther,
   compareNumbers,
   compareDateAndOther,
@@ -116,13 +123,13 @@ const compareReasonableText = makeOrderedComparator<string>([
  * 1. empty
  * 2. punctuation (=, +, #hi, =test)
  * 3. emoji
- * 4. compareReasonableText on text without emoji
+ * 4. compareReadableText on text without emoji
  */
 export const compareReasonable = makeOrderedComparator<string>([
   compareEmpty,
   comparePunctuationAndOther,
   compareStringsWithEmoji,
-  (a, b) => compareReasonableText(makeReasonable(a), makeReasonable(b)),
+  (a, b) => compareReadableText(removeUncomparableCharacters(a), removeUncomparableCharacters(b)),
 ])
 
 /** Get reverse of the given comparator. */

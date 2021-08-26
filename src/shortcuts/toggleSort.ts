@@ -1,59 +1,13 @@
-import React from 'react'
 import { HOME_PATH } from '../constants'
 import { simplifyPath, getSortPreference } from '../selectors'
-import { deleteAttribute, setCursor, toggleAttribute } from '../action-creators'
+import { alert, deleteAttribute, toggleAttribute } from '../action-creators'
+import Icon from '../components/icons/Sort'
 import { pathToContext, unroot } from '../util'
-import { Icon as IconType, Shortcut, SortPreference, State } from '../@types'
+import { Shortcut, SortPreference } from '../@types'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
-import { useSelector } from 'react-redux'
-import Svg, { Polygon, Rect, G } from 'react-native-svg'
 
 /* Available sort preferences */
 const sortPreferences = ['None', 'Alphabetical']
-
-/** Get sort direction of cursor. */
-const getCursorSortDirection = (state: State) => {
-  const { cursor } = state
-  const simplePath = simplifyPath(state, cursor || HOME_PATH)
-  const context = pathToContext(simplePath)
-  return getSortPreference(state, context).direction
-}
-
-/** Ascending Icon Component. */
-const IconAsc = ({ size = 20, fill }: IconType) => (
-  <Svg fill={fill} width={size} height={size} viewBox='0 0 24 24'>
-    <G translateY={4}>
-      <Polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
-      <Rect x='10' y='16' width='11' height='2' />
-      <Rect x='10' y='12' width='9' height='2' />
-      <Rect x='10' y='8' width='7' height='2' />
-      <Rect x='10' y='4' width='5' height='2' />
-      <Rect x='10' y='0' width='3' height='2' />
-    </G>
-  </Svg>
-)
-
-/** Descending Icon Component. */
-const IconDesc = ({ size = 20, fill }: IconType) => (
-  <Svg fill={fill} width={size} height={size} viewBox='0 0 24 24'>
-    <G translateY={4}>
-      <Polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
-      <Rect x='10' y='16' width='3' height='2' />
-      <Rect x='10' y='12' width='5' height='2' />
-      <Rect x='10' y='8' width='7' height='2' />
-      <Rect x='10' y='4' width='9' height='2' />
-      <Rect x='10' y='0' width='11' height='2' />
-    </G>
-  </Svg>
-)
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const Icon = ({ size = 20, fill }: IconType) => {
-  const direction = useSelector(getCursorSortDirection)
-  const Component = direction === 'Desc' ? IconDesc : IconAsc
-
-  return <Component size={size} fill={fill} />
-}
 
 /** Decide next sort preference.
  None → Alphabetical
@@ -82,7 +36,7 @@ const toggleSortShortcut: Shortcut = {
   description: 'Sort the current context alphabetically.',
   keyboard: { key: 's', meta: true, alt: true },
   svg: Icon,
-  exec: (dispatch, getState) => {
+  exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     const { cursor } = state
 
@@ -91,6 +45,13 @@ const toggleSortShortcut: Shortcut = {
     const currentSortPreference = getSortPreference(state, context)
     const globalSortPreference = getGlobalSortPreference(state)
     const nextSortPreference = decideNextSortPreference(currentSortPreference)
+
+    // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
+    // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
+    if (type === 'keyboard') {
+      const sortDirectionLabel = currentSortPreference.direction === 'Asc' ? 'ascending' : 'descending'
+      dispatch(alert(currentSortPreference.direction ? `Sort ${sortDirectionLabel}` : null, { clearTimeout: 2000 }))
+    }
 
     // If next sort preference equals to global sort preference then delete sort attribute.
     if (
@@ -112,7 +73,7 @@ const toggleSortShortcut: Shortcut = {
         currentSortPreference.direction &&
         dispatch(
           toggleAttribute({
-            context: [...unroot(context), '=sort'],
+            context: unroot([...context, '=sort']),
             key: currentSortPreference.type,
             value: currentSortPreference.direction,
           }),
@@ -133,15 +94,11 @@ const toggleSortShortcut: Shortcut = {
       nextSortPreference.direction &&
         dispatch(
           toggleAttribute({
-            context: [...context, '=sort'],
+            context: unroot([...context, '=sort']),
             key: nextSortPreference.type,
             value: nextSortPreference.direction,
           }),
         )
-    }
-
-    if (cursor) {
-      dispatch(setCursor({ path: state.cursor }))
     }
   },
   isActive: getState => {

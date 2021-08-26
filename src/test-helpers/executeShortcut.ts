@@ -2,10 +2,11 @@ import { NOOP } from '../constants'
 import { store as globalStore } from '../store'
 import { Store } from 'redux'
 import { Shortcut, State } from '../@types'
+import { ShortcutType } from '../@types/Shortcut'
 
 interface Options {
   store?: Store<State, any>
-  type?: string
+  type?: ShortcutType
   event?: Event
 }
 
@@ -18,7 +19,9 @@ const executeShortcut = (shortcut: Shortcut, { store, type, event }: Options = {
   event = event ?? eventNoop
 
   const canExecute = !shortcut.canExecute || shortcut.canExecute(store.getState)
-  if (canExecute) shortcut.exec(store.dispatch, store.getState, event, { type })
+  if (canExecute) {
+    shortcut.exec(store.dispatch, store.getState, event, { type })
+  }
 }
 
 export default executeShortcut

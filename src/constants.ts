@@ -322,8 +322,6 @@ export const EMOJI_REGEX = emojiRegex
  */
 export const EMOJI_REGEX_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
-export const IGNORED_PREFIXES = ['the ']
-
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span']
 
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]

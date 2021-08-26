@@ -6,6 +6,9 @@ import { Icon } from './Icon'
 import { Key } from './Key'
 import { State } from './State'
 
+// how the shortcut was activated
+export type ShortcutType = 'gesture' | 'keyboard' | 'toolbar'
+
 export interface Shortcut {
   // a function that returns true if the shortcut can be executed with the current state
   canExecute?: (getState: () => State) => boolean
@@ -22,7 +25,7 @@ export interface Shortcut {
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | React.MouseEvent,
-    { type }: { type: string },
+    { type }: { type: ShortcutType },
   ) => void
 
   // a MultiGesture sequence to activate the shortcut on touch screens
