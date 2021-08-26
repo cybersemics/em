@@ -172,6 +172,14 @@ const push =
     const authenticated = { state }
     const userRef = getUserRef(state)
 
+    // Data Integrity Check
+    // Do not allow pending Parents to be persisted
+    Object.values(contextIndexUpdates).forEach(parent => {
+      if (parent?.pending) {
+        throw new Error(`Pending parents may not be pushed. Context: ${JSON.stringify(parent.context)}`)
+      }
+    })
+
     return Promise.all([
       // push local
       local && pushLocal(contextIndexUpdates, thoughtIndexUpdates, recentlyEdited, updates),
