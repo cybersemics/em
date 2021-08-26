@@ -49,8 +49,10 @@ const toggleSortShortcut: Shortcut = {
     // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
-      const sortDirectionLabel = currentSortPreference.direction === 'Asc' ? 'ascending' : 'descending'
-      dispatch(alert(currentSortPreference.direction ? `Sort ${sortDirectionLabel}` : null, { clearTimeout: 2000 }))
+      const sortDirectionLabel = nextSortPreference.direction === 'Asc' ? 'ascending' : 'descending'
+      dispatch(
+        alert(nextSortPreference.direction ? `Sort ${sortDirectionLabel}` : 'Sort manually', { clearTimeout: 2000 }),
+      )
     }
 
     // If next sort preference equals to global sort preference then delete sort attribute.
