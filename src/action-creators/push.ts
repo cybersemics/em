@@ -3,7 +3,7 @@ import _ from 'lodash'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
-import { EM_TOKEN } from '../constants'
+import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../@types'
@@ -96,6 +96,7 @@ const pushRemote =
         if (!key) {
           console.error('Unescaped empty key', lexeme, new Error())
         }
+        accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = lexeme
       },
       {} as Index<Lexeme | null>,
     )
