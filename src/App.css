@@ -6,7 +6,7 @@
   --bullet-overlay-color: #50504f;
   --base-font-size: 16px;
 }
-
+t .status
 /* fixed debug box in bottom right */
 #debug {
   position: fixed;
@@ -1492,6 +1492,7 @@ h1 .num-contexts {
     top: -21.6px;
     left: -24.5px;
   }
+
   .android .children-new .child > .thought-container > .bullet .glyph {
     content: '+';
     left: -0.15em;
@@ -2471,15 +2472,17 @@ code,
 /* the bar that displays on hover when moving thoughts */
 .drop-hover {
   position: absolute;
+  display: none;
   width: calc(100% - 80px);
   margin-top: -0.3em;
   margin-left: -0.7em;
-  height: var(--base-font-size); 
+  height: var(--base-font-size);
   z-index: 1;
 }
 
 .active-drop-hover {
   position: absolute;
+  display: flex;
   width: calc(100% - 80px);
   margin-top: -0.3em;
   margin-left: -0.7em;  
