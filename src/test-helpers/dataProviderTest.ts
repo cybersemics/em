@@ -19,6 +19,7 @@ import {
 import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
+import { getSessionId } from '../util/sessionManager'
 import { Context, Parent } from '../@types'
 
 declare global {
@@ -96,6 +97,7 @@ const dataProviderTest = (provider: DataProvider) => {
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     await provider.updateThought('12345', lexeme)
@@ -131,6 +133,7 @@ const dataProviderTest = (provider: DataProvider) => {
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     await provider.updateThought(lexeme.id, lexeme)
@@ -152,6 +155,7 @@ const dataProviderTest = (provider: DataProvider) => {
         { value: 'c', rank: 2 },
       ],
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     await provider.updateContext(hashContext(['x']), parentEntry)
@@ -173,6 +177,7 @@ const dataProviderTest = (provider: DataProvider) => {
         { value: 'c', rank: 2 },
       ],
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     const parentEntryA = {
@@ -180,6 +185,7 @@ const dataProviderTest = (provider: DataProvider) => {
       context: ['x', 'a'],
       children: [],
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     await provider.updateContext(hashContext(['x']), parentEntryX)
@@ -197,6 +203,7 @@ const dataProviderTest = (provider: DataProvider) => {
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     const thoughtY = {
@@ -206,6 +213,7 @@ const dataProviderTest = (provider: DataProvider) => {
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     await provider.updateThoughtIndex({
@@ -230,6 +238,7 @@ const dataProviderTest = (provider: DataProvider) => {
         { value: 'c', rank: 2 },
       ],
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     const parentEntryY = {
@@ -241,6 +250,7 @@ const dataProviderTest = (provider: DataProvider) => {
         { value: 'f', rank: 2 },
       ],
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     await provider.updateContextIndex({
@@ -342,6 +352,7 @@ const dataProviderTest = (provider: DataProvider) => {
           context: ['x', 'y'],
           children: [],
           lastUpdated: never(),
+          updatedBy: getSessionId(),
           pending: true,
         },
       })
@@ -381,6 +392,7 @@ const dataProviderTest = (provider: DataProvider) => {
           context: ['x', 'y', 'z'],
           children: [],
           lastUpdated: never(),
+          updatedBy: getSessionId(),
           pending: true,
         },
       })
@@ -536,12 +548,14 @@ const dataProviderTest = (provider: DataProvider) => {
           children: [],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId(),
         },
         [hashContext(['t', 'u', 'v'])]: {
           ...contextIndex[hashContext(['t', 'u', 'v'])],
           children: [],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId(),
         },
         // empty contexts are present in local state but not provider state
         // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],
@@ -605,6 +619,7 @@ const dataProviderTest = (provider: DataProvider) => {
           children: [],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId(),
         },
         // empty contexts are present in local state but not provider state
         // [hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])],
@@ -650,7 +665,6 @@ const dataProviderTest = (provider: DataProvider) => {
         ),
       )
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
-
       expect(thoughts.contextIndex).toEqual({
         ..._.pick(
           contextIndex,
@@ -664,12 +678,14 @@ const dataProviderTest = (provider: DataProvider) => {
           ],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId(),
         },
         [hashContext(['t', 'u', 'v'])]: {
           ...contextIndex[hashContext(['t', 'u', 'v'])],
           children: [],
           pending: true,
           lastUpdated: never(),
+          updatedBy: getSessionId(),
         },
         // empty contexts are present in local state but not provider state
         // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],

@@ -14,7 +14,7 @@ const { flexEnd, textOpacityWhite, hyperlink, lightblueText, row, justifyContent
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
-  const { authenticated, user, status, pushQueueLength, fontSize } = useFooterUseSelectors()
+  const { authenticated, user, status, isPushing, isPushQueueEmpty, fontSize } = useFooterUseSelectors()
 
   // alert when font size changes
   const firstUpdate = useRef(true)
@@ -63,7 +63,7 @@ const Footer = () => {
           <View>
             <Text style={textOpacityWhite}>Status: </Text>
             <Text style={textOpacityWhite}>
-              {pushQueueLength > 0
+              {(!isPushQueueEmpty || isPushing) && (status === 'loading' || status === 'loaded')
                 ? 'Saving'
                 : status === 'loaded'
                 ? 'Online'

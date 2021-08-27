@@ -11,8 +11,7 @@ import {
   rootedParentOf,
 } from '../selectors'
 import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
-
-// util
+import { getSessionId } from '../util/sessionManager'
 import { equalThoughtRanked, hashContext, hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
 
 interface Payload {
@@ -192,6 +191,7 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
             context,
             children: subthoughts,
             lastUpdated: timestamp(),
+            updatedBy: getSessionId(),
           } as Parent)
         : null,
     // descendants

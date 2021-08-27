@@ -7,47 +7,127 @@ import {
   moveThought,
   isPushing,
   pull,
-  pullLexemes,
   push,
   updateThoughts,
 } from '../action-creators'
+import * as db from '../data-providers/dexie'
+import getFirebaseProvider from '../data-providers/firebase'
 import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
 import { Thunk, Context, Index, Lexeme, PushBatch, State } from '../@types'
 
-/** Merges multiple push batches into a single batch. Uses last value of local/remote. */
-const mergeBatch = (accum: PushBatch, batch: PushBatch): PushBatch =>
-  accum
-    ? {
-        ...accum,
-        contextIndexUpdates: {
-          ...accum.contextIndexUpdates,
-          ...batch.contextIndexUpdates,
-        },
-        thoughtIndexUpdates: {
-          ...accum.thoughtIndexUpdates,
-          ...batch.thoughtIndexUpdates,
-        },
-        recentlyEdited: {
-          ...accum.recentlyEdited,
-          ...batch.recentlyEdited,
-        },
-        pendingDeletes: [...(accum.pendingDeletes || []), ...(batch.pendingDeletes || [])],
-        pendingEdits: [...(accum.pendingEdits || []), ...(batch.pendingEdits || [])],
-        descendantMoves: [...(accum.descendantMoves || []), ...(batch.descendantMoves || [])],
-        pendingLexemes: {
-          ...(accum.pendingLexemes || {}),
-          ...(batch.pendingLexemes || {}),
-        },
-        updates: {
-          ...accum.updates,
-          ...batch.updates,
-        },
-        local: batch.local !== false,
-        remote: batch.remote !== false,
-      }
-    : batch
+/** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only thoughtIndexUpdates. */
+const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
+  ...accum,
+  contextIndexUpdates: {
+    ...accum.contextIndexUpdates,
+    ...batch.contextIndexUpdates,
+  },
+  thoughtIndexUpdates: {
+    ...accum.thoughtIndexUpdates,
+    ...batch.thoughtIndexUpdates,
+  },
+  recentlyEdited: {
+    ...accum.recentlyEdited,
+    ...batch.recentlyEdited,
+  },
+  pendingDeletes: [...(accum.pendingDeletes || []), ...(batch.pendingDeletes || [])],
+  pendingEdits: [...(accum.pendingEdits || []), ...(batch.pendingEdits || [])],
+  descendantMoves: [...(accum.descendantMoves || []), ...(batch.descendantMoves || [])],
+  pendingLexemes: {
+    ...(accum.pendingLexemes || {}),
+    ...(batch.pendingLexemes || {}),
+  },
+  updates: {
+    ...accum.updates,
+    ...batch.updates,
+  },
+  // TODO: Should we set local/remote to true if any of the batches are true?
+  // Or push them separately?
+  local: batch.local !== false,
+  remote: batch.remote !== false,
+})
 
-/** Push a batch to the local/remote. */
+/** Merges conflicting Lexemes from two different ThoughtIndexUpdates. Only returns Lexemes with actual conflicts. Used to merge pulled Lexemes into a PushBatch. */
+const mergeConflictingThoughtIndexUpdates = (
+  thoughtIndexUpdatesA: Index<Lexeme | null>,
+  thoughtIndexUpdatesB: Index<Lexeme | null>,
+): Index<Lexeme> =>
+  Object.keys(thoughtIndexUpdatesB).reduce<Index<Lexeme>>((acc, thoughtId) => {
+    const lexemeA = thoughtIndexUpdatesA[thoughtId]
+    const lexemeB = thoughtIndexUpdatesB[thoughtId]
+
+    // return either lexeme is missing since we are only merging conflicting updates
+    if (!lexemeA || !lexemeB) return acc
+
+    /** Returns the lexeme's contexts in the pulled state without the lexemeA contexts. */
+    const lexemeBcontextsDiff = lexemeB.contexts.filter(thoughtContextB => {
+      const isInA = lexemeA.contexts.some(thoughtContextA =>
+        equalArrays(thoughtContextA.context, thoughtContextB.context),
+      )
+      return !isInA
+    })
+
+    // if there are contexts in lexemeB that are not in A, then return without updates
+    if (lexemeBcontextsDiff.length === 0) return acc
+
+    return {
+      ...acc,
+      [thoughtId]: {
+        ...lexemeA,
+        contexts: [...lexemeA.contexts, ...lexemeBcontextsDiff],
+      },
+    }
+  }, {})
+
+/**
+ * Fetches lexemes from local and remote and merges them into a PushBatch. When there is a synchronous edit in state, the Lexeme may already exist in the local or remote. This function ensures that the local/remote Lexeme gets merged with the edited Lexeme in Redux state. It updates Redux state only (like pull) and returns ThoughtIndexUpdates so that they can be merged into the existing batch and sent in one push.
+ */
+const pullPendingLexemes =
+  (batch: PushBatch): Thunk<Promise<Index<Lexeme>>> =>
+  async (dispatch, getState) => {
+    // return if there are no pending lexemes
+    const pendingLexemeIds = Object.keys(batch.pendingLexemes || {})
+    if (pendingLexemeIds.length === 0) return Promise.resolve({})
+
+    const state = getState()
+
+    // pull local and remote Lexemes
+    const [localLexemes, remoteLexemes] = await Promise.all([
+      db.getThoughtsByIds(pendingLexemeIds),
+      state.status === 'loaded'
+        ? getFirebaseProvider(state, dispatch).getThoughtsByIds(pendingLexemeIds)
+        : Promise.resolve({} as (Lexeme | undefined)[]),
+    ])
+
+    // generate a thoughtIndex from the pulled Lexemes
+    const thoughtIndexPulled = pendingLexemeIds.reduce<Index<Lexeme>>((acc, thoughtHash, index) => {
+      // assume local storage does not have Lexemes that remote doesn't have
+      // keep remote if local is missing
+      const lexemePulled = remoteLexemes[index] || localLexemes[index]
+      return {
+        ...acc,
+        ...(lexemePulled ? { [thoughtHash]: lexemePulled } : {}),
+      }
+    }, {})
+
+    const thoughtIndexUpdatesMerged = mergeConflictingThoughtIndexUpdates(thoughtIndexPulled, batch.thoughtIndexUpdates)
+
+    // dispatch updateThoughts on Redux state only with the merged Lexemes to update the UI with new superscripts
+    if (Object.keys(thoughtIndexUpdatesMerged).length > 0) {
+      dispatch(
+        updateThoughts({
+          contextIndexUpdates: {},
+          thoughtIndexUpdates: thoughtIndexUpdatesMerged,
+          remote: false,
+          local: false,
+        }),
+      )
+    }
+
+    return thoughtIndexUpdatesMerged
+  }
+
+/** Push a batch to the local and/or remote. */
 const pushBatch = (batch: PushBatch) =>
   push(batch.contextIndexUpdates, batch.thoughtIndexUpdates, {
     recentlyEdited: batch.recentlyEdited,
@@ -144,81 +224,20 @@ const flushMoves =
     })
   }
 
-/** Sync queued updates with the local and remote. Make sure to clear the queue immediately to prevent redundant syncs. */
+/** Push queued updates to the local and remote. Make sure to clear the queue synchronously after calling this to prevent redundant pushes. */
 const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) => {
   const { pushQueue } = getState()
 
   if (pushQueue.length === 0) return Promise.resolve()
 
-  /**
-   * Checks the latest state thoughtIndex (refers to new state after pullLexemes) and creates synced thoughtIndexUpdate for the pending lexemes..
-   */
-  const getSyncedThoughtsUpdate = (
-    pendingLexemes: Index<boolean>,
-    thoughtIndexUpdates: Index<Lexeme | null>,
-  ): Index<Lexeme | null> =>
-    Object.keys(pendingLexemes).reduce<Index<Lexeme | null>>((acc, thoughtId) => {
-      const updatedState = getState()
-
-      // Return early if this particular lexeme was not pending
-      const hadPendingLexeme = pendingLexemes?.[thoughtId]
-      if (!hadPendingLexeme) return acc
-
-      // Note: thoughtIndexUpdates generated by undo/redo can have null valuesg
-      const lexemeInBatch = thoughtIndexUpdates[thoughtId]
-
-      const lexemeInUpdatedState = updatedState.thoughts.thoughtIndex[thoughtId]
-      /**
-       * Returns updated lexeme context without the already availble entries in the the lexemeInBatch contexts.
-       */
-      const updatedLexemeContexts = () =>
-        lexemeInUpdatedState.contexts.filter(thoughtContext => {
-          const isAlreadyInUpdate = lexemeInBatch?.contexts.some(thoughtContextInner =>
-            equalArrays(thoughtContextInner.context, thoughtContext.context),
-          )
-          return !isAlreadyInUpdate
-        })
-
-      return {
-        ...acc,
-        ...(lexemeInUpdatedState && lexemeInUpdatedState.contexts
-          ? {
-              [thoughtId]: lexemeInBatch
-                ? {
-                    ...lexemeInBatch,
-                    contexts: [...lexemeInBatch.contexts, ...updatedLexemeContexts()],
-                  }
-                : null,
-            }
-          : {}),
-      }
-    }, {})
-
   dispatch(isPushing({ value: true }))
 
-  const combinedBatch = pushQueue.reduce(mergeBatch, {} as PushBatch)
+  const combinedBatch = pushQueue.reduce(mergeBatch)
 
-  const shouldSyncLexeme = combinedBatch.pendingLexemes && Object.keys(combinedBatch.pendingLexemes).length > 0
-
-  // Pull all the pending lexemes that are not available in state yet, reconcile and update the thoughtIndexUpdates. Prevents local and remote lexemes getting overriden by incomplete application state (due to lazy loading).
+  // Pull all the pending lexemes that are not available in state yet, merge and update the thoughtIndexUpdates. Prevents local and remote lexemes getting overriden by incomplete application state (due to lazy loading). Dispatched updateThoughts
   // Related issue: https://github.com/cybersemics/em/issues/1074
-  if (shouldSyncLexeme) await dispatch(pullLexemes(Object.keys(combinedBatch.pendingLexemes!)))
-
-  const syncedThoughtIndexUpdates = shouldSyncLexeme
-    ? getSyncedThoughtsUpdate(combinedBatch.pendingLexemes!, combinedBatch.thoughtIndexUpdates)
-    : {}
-
-  // Update the application state as soon as possible.
-  if (shouldSyncLexeme) {
-    dispatch(
-      updateThoughts({
-        contextIndexUpdates: {},
-        thoughtIndexUpdates: syncedThoughtIndexUpdates,
-        remote: false,
-        local: false,
-      }),
-    )
-  }
+  const thoughtIndexUpdatesMerged = await dispatch(pullPendingLexemes(combinedBatch))
+  const mergedBatch = { thoughtIndexUpdates: thoughtIndexUpdatesMerged } as PushBatch
 
   // Note: pushQueue needs to be passed to the flush action creators as lexemeSyncedPushQueue is asychronous and pushQueue is emptied as soon as dispatched.
   dispatch(flushDeletes(pushQueue))
@@ -233,46 +252,19 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
     throw new Error('Invalid pushQueue batch. local and remote cannot both be false.')
   }
 
-  // merge batches
-  const localMergedBatch = localBatches.reduce(mergeBatch, {} as PushBatch)
-  const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as PushBatch)
+  // merge merged Lexemes into both local and remote batches
+  const localMergedBatch = [...localBatches, mergedBatch].reduce(mergeBatch)
+  const remoteMergedBatch = [...remoteBatches, mergedBatch].reduce(mergeBatch)
 
-  /** Get updated thought index updates required for a batch from already synced thoughtIndexUpdates. */
-  const getThoughtUpdates = (pendingLexemes: Index<boolean>) =>
-    Object.keys(pendingLexemes).reduce((acc, thoughtId) => {
-      const updatedLexme = syncedThoughtIndexUpdates[thoughtId]
-      return {
-        ...acc,
-        ...(updatedLexme ? { [thoughtId]: updatedLexme } : {}),
-      }
-    }, {})
-
-  const syncedLocalMergedBatch: PushBatch = {
-    ...localMergedBatch,
-    thoughtIndexUpdates: {
-      ...localMergedBatch.thoughtIndexUpdates,
-      ...(shouldSyncLexeme && localMergedBatch.pendingLexemes
-        ? getThoughtUpdates(localMergedBatch.pendingLexemes!)
-        : {}),
-    },
-  }
-
-  const syncedRemoteMergedBatch: PushBatch = {
-    ...remoteMergedBatch,
-    thoughtIndexUpdates: {
-      ...remoteMergedBatch.thoughtIndexUpdates,
-      ...(shouldSyncLexeme && remoteMergedBatch.pendingLexemes
-        ? getThoughtUpdates(remoteMergedBatch.pendingLexemes!)
-        : {}),
-    },
-  }
-
-  // push
+  // push local and remote batches
   await Promise.all([
-    Object.keys(localMergedBatch).length > 0 && dispatch(pushBatch(syncedLocalMergedBatch)),
-    Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(syncedRemoteMergedBatch)),
+    // push will detect that these are only local updates
+    Object.keys(localMergedBatch).length > 0 && dispatch(pushBatch(localMergedBatch)),
+    // push will detect that these are only remote updates
+    Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(remoteMergedBatch)),
   ])
 
+  // turn off isPushing at the end
   dispatch((dispatch, getState) => {
     if (getState().isPushing) {
       dispatch(isPushing({ value: false }))

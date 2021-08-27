@@ -27,7 +27,7 @@ import {
   unroot,
 } from '../util'
 
-/** Get the value of the Child | Th oughtContext. */
+/** Get the value of the Child | ThoughtContext. */
 const childValue = (child: Child | ThoughtContext, showContexts: boolean) =>
   showContexts ? head((child as ThoughtContext).context) : (child as Child).value
 
@@ -131,14 +131,7 @@ function expandThoughtsRecursive(
   const visibleChildren = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => {
-        const valueRaw = childValue(child, showContexts)
-        if (valueRaw == null) {
-          console.error('Invalid child', child)
-          console.error('Children', childrenUnfiltered)
-        }
-
-        const value = strip(valueRaw)
-
+        const value = strip(childValue(child, showContexts))
         const childContext = unroot([...context, value])
 
         /** Check of the path is the ancestor of the expansion path. */

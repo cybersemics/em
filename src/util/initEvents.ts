@@ -8,6 +8,8 @@ import { alert, error, scrollCursorIntoView, setCursor, toggleTopControlsAndBrea
 import { Path, State } from '../@types'
 import { equalPath } from './equalPath'
 import lifecycle from 'page-lifecycle'
+import { keepalive } from './sessionManager'
+import { getVisibilityChangeEventName, isTabHidden } from './visibilityApiHelpers'
 
 declare global {
   interface Window {
@@ -96,6 +98,13 @@ export const initEvents = (store: Store<State, any>) => {
   // store input handlers so they can be removed on cleanup
   const { keyDown, keyUp } = (window.__inputHandlers = inputHandlers(store))
 
+  /** Update local storage sessions used for managing subscriptions. */
+  const onTabVisibilityChanged = () => {
+    if (!isTabHidden()) {
+      keepalive()
+    }
+  }
+
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
@@ -105,6 +114,8 @@ export const initEvents = (store: Store<State, any>) => {
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('error', onError)
   window.addEventListener('beforeunload', onBeforeUnload)
+  window.addEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
+
   // clean up when PWA is hidden
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
@@ -117,6 +128,7 @@ export const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('error', onError)
     window.removeEventListener('beforeunload', onBeforeUnload)
+    window.removeEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
     lifecycle.removeEventListener('statechange', onStateChange)
   }
 

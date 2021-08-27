@@ -1,6 +1,11 @@
 import _ from 'lodash'
 import { initialState } from '../util/initialState'
-import { decodeThoughtsUrl, expandThoughts, getLexeme, getParent } from '../selectors'
+import {
+  decodeThoughtsUrl,
+  expandThoughts,
+  getLexeme,
+  // getParent,
+} from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import {
   htmlToJson,
@@ -9,7 +14,7 @@ import {
   isRoot,
   logWithTime,
   mergeUpdates,
-  normalizeThought,
+  // normalizeThought,
   once,
   textToHtml,
   reducerFlow,
@@ -87,6 +92,8 @@ const updateThoughts = (
     isLoading,
   }: UpdateThoughtsOptions,
 ) => {
+  if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(thoughtIndexUpdates).length === 0) return state
+
   const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
 
@@ -200,33 +207,33 @@ const updateThoughts = (
     }),
 
     // Data Integrity Check
-    // Catch Lexeme-Parent rank mismatches on empty thought
-    state => {
-      // loop through all Lexemes that are being updated
-      Object.values(thoughtIndexUpdates).forEach(lexeme => {
-        // loop through each ThoughtContext of each Lexeme
-        lexeme?.contexts.forEach(cx => {
-          // find the Child with the same value and rank in the Parent
-          const parent = getParent(state, cx.context)
-          const child = parent?.children.find(
-            child => normalizeThought(child.value) === normalizeThought(lexeme.value) && child.rank === cx.rank,
-          )
-          if (!child) {
-            // disable check until #1409 is fixed
-            // because pullLexemes was designed to temporarily create invalid state
-            // console.error('lexeme', lexeme)
-            // console.error('parent', parent)
-            // throw new Error(
-            //   `ThoughtContext for "${lexeme.value}" in ${JSON.stringify(cx.context)} with rank ${
-            //     cx.rank
-            //   } is not found in corresponding Parent.`,
-            // )
-          }
-        })
-      })
+    // Catch Lexeme-Parent rank mismatches on empty thought.
+    // Disable since 2-part moves rely on temporary invalid state.
+    // Re-enable after Independent Editing (#495)
 
-      return state
-    },
+    // state => {
+    //   // loop through all Lexemes that are being updated
+    //   Object.values(thoughtIndexUpdates).forEach(lexeme => {
+    //     // loop through each ThoughtContext of each Lexeme
+    //     lexeme?.contexts.forEach(cx => {
+    //       // find the Child with the same value and rank in the Parent
+    //       const parent = getParent(state, cx.context)
+    //       const child = parent?.children.find(
+    //         child => normalizeThought(child.value) === normalizeThought(lexeme.value) && child.rank === cx.rank,
+    //       )
+    //       if (!child) {
+    //         console.error('lexeme', lexeme)
+    //         console.error('parent', parent)
+    //         throw new Error(
+    //           `ThoughtContext for "${lexeme.value}" in ${JSON.stringify(cx.context)} with rank ${
+    //             cx.rank
+    //           } is not found in corresponding Parent.`,
+    //         )
+    //       }
+    //     })
+    //   })
+    //   return state
+    // },
 
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
     !state.cursorInitialized

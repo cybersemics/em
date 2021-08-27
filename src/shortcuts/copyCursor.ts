@@ -1,6 +1,6 @@
 import ClipboardJS from 'clipboard'
 import { editableNode, exportPhrase, hashContext, isDocumentEditable, pathToContext, setSelection } from '../util'
-import { exportContext, getDescendants, isPending, simplifyPath } from '../selectors'
+import { exportContext, someDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
 import { Shortcut } from '../@types'
 
@@ -29,20 +29,15 @@ const copyCursorShortcut: Shortcut = {
 
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
-    let hasPending = false
-    getDescendants(state, simplePath, {
-      // use filterFunction just to check if any child is pending
-      filterFunction: (child, context) => {
-        if (isPending(state, [...context, child.value])) hasPending = true
-        return true
-      },
-    })
-    if (hasPending) {
+    if (someDescendants(state, context, (child, context) => isPending(state, [...context, child.value]))) {
       dispatch(alert('Loading thoughts...', { alertType: 'clipboard' }))
       await dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
     }
 
-    const exported = exportContext(state, context, 'text/plain')
+    // get new state after pull
+    const stateAfterPull = getState()
+
+    const exported = exportContext(stateAfterPull, context, 'text/plain')
     copy(exported)
 
     // restore selection
@@ -50,7 +45,7 @@ const copyCursorShortcut: Shortcut = {
     setSelection(el!, { offset })
 
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
-    const phrase = exportPhrase(state, context, numDescendants)
+    const phrase = exportPhrase(stateAfterPull, context, numDescendants)
 
     dispatch(
       alert(`Copied ${phrase} to the clipboard`, {

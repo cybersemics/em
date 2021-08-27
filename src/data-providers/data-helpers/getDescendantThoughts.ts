@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { hashContext, hashThought, head, isFunction, keyValueBy, never, unroot } from '../../util'
+import { getSessionId } from '../../util/sessionManager'
 import { Context, Index, Parent, ThoughtsInterface } from '../../@types'
 
 const MAX_DEPTH = 100
@@ -53,6 +54,7 @@ async function* getDescendantThoughts(
         id: hashContext(contexts[i]),
         children: parent?.children || [],
         lastUpdated: never(),
+        updatedBy: getSessionId(),
         ...parent,
         // fill in context if not defined
         context: parent?.context || contexts[i] || context,
@@ -67,6 +69,7 @@ async function* getDescendantThoughts(
               ? {
                   children: parent.children.filter(_.flow(prop('value'), isFunction)),
                   lastUpdated: never(),
+                  updatedBy: getSessionId(),
                   pending: true,
                 }
               : null),

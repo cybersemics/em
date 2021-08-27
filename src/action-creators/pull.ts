@@ -3,15 +3,18 @@ import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { HOME_TOKEN } from '../constants'
-import { hashContext, mergeThoughts } from '../util'
+import { hashContext, keyValueBy, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
-import { isPending } from '../selectors'
-import { Thunk, Context, Index, Lexeme, Parent, ThoughtsInterface } from '../@types'
+import { getDescendantContexts, getParent, isPending } from '../selectors'
+import { Thunk, Context, Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = hashContext([HOME_TOKEN])
 
 export interface PullOptions {
+  // pull given contexts without checking if they are pending
+  // used when authenticated to force a pull from the remote
+  force?: boolean
   maxDepth?: number
   onLocalThoughts?: (thoughts: ThoughtsInterface) => void
   onRemoteThoughts?: (thoughts: ThoughtsInterface) => void
@@ -25,6 +28,25 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
   }
 }
 
+/** Returns a list of pending contexts or missing parents from all contextMap contexts and their descendants. */
+const getPendingOrMissingContexts = (state: State, contextMap: Index<Context>) => {
+  /** Returns true if the context is pending or missing from the contextIndex. */
+  const isPendingOrMissing = (context: Context) => {
+    const parent = getParent(state, context)
+    return !parent || parent.pending
+  }
+
+  const contextsFiltered = _.flatMap(Object.values(contextMap), context =>
+    isPendingOrMissing(context)
+      ? // if the original contextMap context is pending, use it
+        [context]
+      : // otherwise search for pending or missing descendants
+        getDescendantContexts(state, context).filter(isPendingOrMissing),
+  )
+
+  return contextsFiltered
+}
+
 /**
  * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
@@ -32,15 +54,33 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
 const pull =
   (
     contextMap: Index<Context>,
-    { maxDepth, onLocalThoughts, onRemoteThoughts }: PullOptions = {},
+    { force, maxDepth, onLocalThoughts, onRemoteThoughts }: PullOptions = {},
   ): Thunk<Promise<boolean>> =>
   async (dispatch, getState) => {
     if (Object.keys(contextMap).length === 0) return false
 
+    let contextMapFiltered = contextMap
+
+    // pull only pending contexts parents unless forced
+    if (!force) {
+      // In a 2-part delete, all of the descendants that are in the Redux store are deleted in Part I, and pending descendants are pulled and then deleted in Part II.
+      // With the old style pull, Part II pulled the pending descendants as expected. With the new style pull that only pulls pending thoughts, pull will short circuit in Part II since there is no Parent which is marked as pending (it was deleted in Part I). Thus we need to check both pending and check that the Parent is there at all. The only way it could be missing is if it was removed in Part I of a 2-part delete.
+      // See: flushDeletes
+      const pendingContexts = getPendingOrMissingContexts(getState(), contextMap)
+
+      // short circuit if there are no pending contexts to fetch
+      if (pendingContexts.length === 0) return false
+
+      // convert list of descendant pending contexts to a ContextMap
+      contextMapFiltered = keyValueBy(pendingContexts, context => ({
+        [hashContext(context)]: context,
+      }))
+    }
+
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    const thoughtsLocalIterable = getManyDescendants(db, contextMap, { maxDepth: maxDepth || BUFFER_DEPTH })
+    const thoughtsLocalIterable = getManyDescendants(db, contextMapFiltered, { maxDepth: maxDepth || BUFFER_DEPTH })
     // eslint-disable-next-line fp/no-loops
     for await (const thoughts of thoughtsLocalIterable) {
       // eslint-disable-next-line fp/no-mutating-methods
@@ -63,12 +103,13 @@ const pull =
       onLocalThoughts?.(thoughts)
     }
 
+    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
     const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
 
     // get remote thoughts and reconcile with local
     const status = getState().status
-    if (status === 'loaded') {
-      const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMap, {
+    if (status === 'loading' || status === 'loaded') {
+      const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMapFiltered, {
         maxDepth: maxDepth || BUFFER_DEPTH,
       })
 
@@ -102,7 +143,6 @@ const pull =
           },
           {} as Index<Lexeme>,
         )
-
         dispatch(
           reconcile({
             thoughtsResults: [
@@ -118,15 +158,15 @@ const pull =
         onRemoteThoughts?.(thoughtsRemoteChunk)
       })
 
+      // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
       const thoughtsRemote = thoughtRemoteChunks.reduce(_.ary(mergeThoughts, 2))
 
-      // the reconcile dispatched above is based on remote keys only
-      // thoughts that exist locally and not remotely will be missed
-      // sync all thoughts here to ensure none are missed
-      // TODO: Only reconcile local-only thoughts
+      // The reconcile dispatched above only covers remote keys since it is within thoughtsRemoteIterable.
+      // Reconcile thoughts that exist locally but not remotely.
       dispatch(
         reconcile({
           thoughtsResults: [thoughtsLocal, thoughtsRemote],
+          local: false,
         }),
       )
     }
@@ -138,14 +178,14 @@ const pull =
 
     // if we are pulling the home context and there are no pending thoughts, but the home parent is marked a pending, it means there are no children and we need to clear the pending status manually
     // https://github.com/cybersemics/em/issues/1344
-    const state = getState()
-    if (ROOT_ENCODED in contextMap && !hasPending && isPending(state, [HOME_TOKEN])) {
+    const stateNew = getState()
+    if (ROOT_ENCODED in contextMap && !hasPending && isPending(stateNew, [HOME_TOKEN])) {
       dispatch(
         updateThoughts({
           contextIndexUpdates: {
-            ...state.thoughts.contextIndex,
+            ...stateNew.thoughts.contextIndex,
             [ROOT_ENCODED]: {
-              ...state.thoughts.contextIndex[ROOT_ENCODED],
+              ...stateNew.thoughts.contextIndex[ROOT_ENCODED],
               pending: false,
             },
           },

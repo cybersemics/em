@@ -8,4 +8,5 @@ export interface Lexeme {
   contexts: ThoughtContext[]
   created: Timestamp
   lastUpdated: Timestamp
+  updatedBy?: string
 }

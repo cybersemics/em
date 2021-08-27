@@ -5,6 +5,7 @@ import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
 import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
+import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent } from '../@types'
 import { storage } from '../util/storage'
@@ -92,11 +93,11 @@ const pushRemote =
     // prepend thoughtIndex/ and encode key
     const prependedDataUpdates = _.transform(
       thoughtIndexUpdates,
-      (accum: Index<Lexeme | null>, lexeme: Lexeme | null, key: string) => {
+      (accum, lexemeUpdate, key) => {
         if (!key) {
-          console.error('Unescaped empty key', lexeme, new Error())
+          console.error('Unescaped empty key', lexemeUpdate, new Error())
         }
-        accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = lexeme
+        accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = lexemeUpdate
       },
       {} as Index<Lexeme | null>,
     )
@@ -105,15 +106,16 @@ const pushRemote =
 
     const prependedContextIndexUpdates = _.transform(
       contextIndexUpdates,
-      (accum, parentContext, key) => {
+      (accum, parentUpdate, key) => {
         // fix undefined/NaN rank
-        const children = parentContext && parentContext.children
+        const children = parentUpdate && parentUpdate.children
         accum['contextIndex/' + key] =
           children && children.length > 0
             ? {
-                context: parentContext!.context,
+                context: parentUpdate!.context,
                 children,
-                lastUpdated: parentContext!.lastUpdated || timestamp(),
+                lastUpdated: parentUpdate!.lastUpdated || timestamp(),
+                updatedBy: parentUpdate!.updatedBy || getSessionId(),
               }
             : null
       },

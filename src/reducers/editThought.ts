@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { treeChange } from '../util/recentlyEditedTree'
 import { getLexeme, getAllChildren, getChildrenRanked, isPending, rootedParentOf } from '../selectors'
 import updateThoughts from './updateThoughts'
-import { Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
+import { Child, Context, Index, Lexeme, Parent, Path, SimplePath, State, Timestamp } from '../@types'
 
 // util
 import {
@@ -24,6 +24,7 @@ import {
   timestamp,
   unroot,
 } from '../util'
+import { getSessionId } from '../util/sessionManager'
 
 export interface editThoughtPayload {
   oldValue: string
@@ -123,22 +124,23 @@ const editThought = (
       : null
 
   // do not add floating thought to context
-  const newThoughtWithoutContext = thoughtCollision || {
-    value: newValue,
+  const lexemeNewWithoutContext: Lexeme = thoughtCollision || {
     contexts: [],
     created: timestamp(),
     lastUpdated: timestamp(),
+    updatedBy: getSessionId(),
+    value: newValue,
   }
   const lexemeNew =
     lexemeOld.contexts.length > 0
       ? addContext(
-          newThoughtWithoutContext,
+          lexemeNewWithoutContext,
           context,
           showContexts ? headRank(rootedParentOf(state, pathLiveOld)) : rank,
           id,
           archived as Timestamp,
         )
-      : newThoughtWithoutContext
+      : lexemeNewWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
   thoughtIndex[newKey] = lexemeNew
@@ -153,9 +155,8 @@ const editThought = (
   }
 
   // if context view, change the contexts of the current thought (which is rendered visually as the parent of the context since are in the context view)
-  let thoughtParentNew // eslint-disable-line fp/no-let
   if (showContexts) {
-    thoughtParentNew = {
+    const lexemeParentNew = {
       value,
       ...thoughtParentOld,
       contexts: removeContext(thoughtParentOld!, parentOf(pathToContext(pathLiveOld)), rank).contexts.concat({
@@ -166,26 +167,29 @@ const editThought = (
       }),
       created: thoughtParentOld?.created || timestamp(),
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
-    thoughtIndex[hashThought(value)] = thoughtParentNew
+    thoughtIndex[hashThought(value)] = lexemeParentNew
   }
 
   // preserve contextIndex
   const contextNew = showContexts ? thoughtsNew : context
   const contextNewEncoded = hashContext(contextNew)
-  const thoughtNewSubthoughts = getAllChildren(state, contextNew)
-    .filter(
+  const thoughtNewSubthoughts = [
+    ...getAllChildren(state, contextNew).filter(
       child =>
         !equalThoughtRanked(child, { value: oldValue, rank }) && !equalThoughtRanked(child, { value: newValue, rank }),
-    )
-    .concat({
+    ),
+    {
       value: showContexts ? value : newValue,
       rank,
       lastUpdated: timestamp(),
       ...(id ? { id } : null),
       ...(archived ? { archived } : {}),
-    })
+      updatedBy: getSessionId(),
+    } as Child,
+  ]
 
   // preserve contextIndex
   const contextOld = showContexts ? thoughtsOld : context
@@ -327,7 +331,7 @@ const editThought = (
     (accum, result) => {
       if (hitPending) return accum
 
-      const output = keyValueBy(result.contextsOld, (contextOld, i) => {
+      const output: Index<Parent | null> = keyValueBy(result.contextsOld, (contextOld, i) => {
         const contextNew = result.contextsNew[i]
         const contextOldEncoded = hashContext(contextOld)
         const contextNewEncoded = hashContext(contextNew)
@@ -343,6 +347,7 @@ const editThought = (
             // if previous and new context is the same then do not duplicate children
             children: [...(isSameContext ? [] : thoughtsOld), ...thoughtsNew],
             lastUpdated: timestamp(),
+            updatedBy: getSessionId(),
           },
         }
       })
@@ -388,6 +393,7 @@ const editThought = (
       context: contextNew,
       children: thoughtNewSubthoughts,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     },
     ...(showContexts
       ? {
@@ -395,11 +401,13 @@ const editThought = (
             context: contextOld,
             children: thoughtOldSubthoughts,
             lastUpdated: timestamp(),
+            updatedBy: getSessionId(),
           },
           [contextParentEncoded]: {
             context: contextParent,
             children: thoughtParentSubthoughts,
             lastUpdated: timestamp(),
+            updatedBy: getSessionId(),
           },
         }
       : null),

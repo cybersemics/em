@@ -1,9 +1,12 @@
 /* eslint-disable fp/no-this */
-import Dexie from 'dexie'
 import _ from 'lodash'
+import Dexie, { Transaction } from 'dexie'
+import 'dexie-observable'
+import { ICreateChange, IDatabaseChange, IDeleteChange, IUpdateChange } from 'dexie-observable/api'
 import { hashThought, timestamp } from '../util'
-import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, Timestamp } from '../@types'
+import { getSessionId } from '../util/sessionManager'
 import win from './win'
+import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, ThoughtSubscriptionUpdates, Timestamp } from '../@types'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -30,8 +33,8 @@ class EM extends Dexie {
     }
 
     this.version(1).stores({
-      contextIndex: 'id, context, *children, lastUpdated',
-      thoughtIndex: 'id, value, *contexts, created, lastUpdated, *words',
+      contextIndex: 'id, context, *children, lastUpdated, updatedBy',
+      thoughtIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       logs: '++id, created, message, stack',
@@ -61,7 +64,16 @@ export interface Log {
   stack?: any
 }
 
-const db = new Dexie('EM') as EM
+// If a ´source´ property is added to the Transaction object while performing a database operation, this value will be put in the change object. The ´source´ property is not an official property of Transaction but is added to all transactions when Dexie.Observable is active. The property can be used to ignore certain changes that origin from self.
+// See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
+interface ObservableTransaction extends Transaction {
+  source?: any
+}
+
+export const db = new Dexie('EM') as EM
+
+// store a singleton subscription handler for unsubscribing
+let subscriber: ((changes: IDatabaseChange[]) => void) | null
 
 /** Initializes the EM record where helpers are stored. */
 const initHelpers = async () => {
@@ -75,8 +87,8 @@ const initHelpers = async () => {
 const initDB = async () => {
   if (!db.isOpen()) {
     await db.version(1).stores({
-      thoughtIndex: 'id, value, *contexts, created, lastUpdated',
       contextIndex: 'id, *children, lastUpdated',
+      thoughtIndex: 'id, value, *contexts, created, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       thoughtWordsIndex: 'id, *words',
       logs: '++id, created, message, stack',
@@ -120,19 +132,30 @@ const initDB = async () => {
 export const clearAll = () => Promise.all([db.thoughtIndex.clear(), db.contextIndex.clear(), db.helpers.clear()])
 
 /** Updates a single thought in the thoughtIndex. */
-export const updateThought = async (id: string, thought: Lexeme) => db.thoughtIndex.put({ id, ...thought })
+export const updateThought = async (id: string, thought: Lexeme) =>
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    return db.thoughtIndex.put({ id, ...thought, updatedBy: getSessionId() })
+  })
 
 /** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) => {
-  const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
-    ...(thoughtIndexMap[key] as Lexeme),
-    id: key,
-  }))
-  return db.thoughtIndex.bulkPut(thoughtsArray)
-}
+export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) =>
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
+      ...(thoughtIndexMap[key] as Lexeme),
+      updatedBy: getSessionId(),
+      id: key,
+    }))
+    return db.thoughtIndex.bulkPut(thoughtsArray)
+  })
 
 /** Deletes a single thought from the thoughtIndex. */
-export const deleteThought = (id: string) => db.thoughtIndex.delete(id)
+export const deleteThought = (id: string) =>
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    return db.thoughtIndex.delete(id)
+  })
 
 /** Gets a single thought from the thoughtIndex by its id. */
 export const getThoughtById = (id: string) => db.thoughtIndex.get(id)
@@ -147,21 +170,30 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
-export const updateContext = async (id: string, { context, children, lastUpdated }: Parent) => {
-  return db.contextIndex.put({ id, context, children, lastUpdated })
-}
+export const updateContext = async (id: string, { context, children, lastUpdated }: Parent) =>
+  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    return db.contextIndex.put({ id, context, children, updatedBy: getSessionId(), lastUpdated })
+  })
 
 /** Updates multiple thoughts in the contextIndex. */
-export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) => {
-  const contextsArray = Object.keys(contextIndexMap).map(key => ({
-    ...(contextIndexMap[key] as Parent),
-    id: key,
-  }))
-  return db.contextIndex.bulkPut(contextsArray)
-}
+export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) =>
+  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    const contextsArray = Object.keys(contextIndexMap).map(key => ({
+      ...(contextIndexMap[key] as Parent),
+      updatedBy: getSessionId(),
+      id: key,
+    }))
+    return db.contextIndex.bulkPut(contextsArray)
+  })
 
 /** Deletes a single thought from the contextIndex. */
-export const deleteContext = async (id: string) => db.contextIndex.delete(id)
+export const deleteContext = async (id: string) =>
+  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+    tx.source = getSessionId()
+    return db.contextIndex.delete(id)
+  })
 
 /** Get a context by id. */
 export const getContextById = async (id: string) => db.contextIndex.get(id)
@@ -218,5 +250,107 @@ export const fullTextSearch = async (value: string) => {
 /** Logs a message. */
 export const log = async ({ message, stack }: { message: string; stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
+
+// Maps to dexie-observable's DatabaseChangeType which cannot be imported.
+// See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
+const DatabaseChangeType = {
+  Created: 1,
+  Updated: 2,
+  Deleted: 3,
+}
+
+/** Parse a Created or Updated change event and return updates as normalized Updates. */
+const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) => {
+  // source is set on the transaction object
+  // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
+  const { key, obj, source, table } = change as IUpdateChange
+  return {
+    contextIndexUpdates:
+      table === 'contextIndex'
+        ? {
+            [key]: {
+              updatedBy: source,
+              value: obj as Parent,
+            },
+          }
+        : {},
+    thoughtIndexUpdates:
+      table === 'thoughtIndex'
+        ? {
+            [key]: {
+              updatedBy: source,
+              value: obj as Lexeme,
+            },
+          }
+        : {},
+  }
+}
+
+/** Parse a Delete change event and return updates as normalized Updates.  */
+const deletedChangeUpdates = (change: IDeleteChange) => {
+  // source is set on the transaction object
+  // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
+  const { key, oldObj, source, table } = change
+  return {
+    contextIndexUpdates:
+      table === 'contextIndex' && oldObj?.id
+        ? {
+            [key]: {
+              updatedBy: source,
+              value: null,
+            },
+          }
+        : {},
+    thoughtIndexUpdates: table === 'thoughtIndex' && oldObj?.id ? { [key]: { updatedBy: source, value: null } } : {},
+  }
+}
+
+/** Subscribe to dexie updates. NOOP if aleady subscribed. */
+export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => void): void => {
+  if (!Object.prototype.hasOwnProperty.call(db, 'observable')) return
+
+  // NOOP if already subscribed
+  if (subscriber) return
+
+  /** Changes subscriber that converts Dexie updates to ThoughtSubscriptionUpdates and calls onUpdate. */
+  const onChanges = (changes: IDatabaseChange[]) => {
+    changes.forEach(async change => {
+      const updates =
+        change.type === DatabaseChangeType.Created
+          ? createdOrUpdatedChangeUpdates(change as ICreateChange)
+          : change.type === DatabaseChangeType.Updated
+          ? createdOrUpdatedChangeUpdates(change as IUpdateChange)
+          : change.type === DatabaseChangeType.Deleted
+          ? deletedChangeUpdates(change as IDeleteChange)
+          : null
+      const thoughtSubscriptionUpdates = {
+        contextIndex: updates?.contextIndexUpdates || {},
+        thoughtIndex: updates?.thoughtIndexUpdates || {},
+      }
+      if (
+        Object.keys(thoughtSubscriptionUpdates.contextIndex).length === 0 &&
+        Object.keys(thoughtSubscriptionUpdates.thoughtIndex).length === 0
+      )
+        return
+      onUpdate(thoughtSubscriptionUpdates)
+    })
+  }
+
+  db.on('changes', onChanges)
+
+  // store subscriber in singleton to be accessed by unsubscribe
+  subscriber = onChanges
+}
+
+/** Unsubscribes from dexie updates. NOOP if already unsubscribed. */
+export const unsubscribe = (): void => {
+  // NOOP if already unsubscribed
+  if (!subscriber) return
+
+  db.on('changes').unsubscribe(subscriber)
+
+  // clear subscriber so that subscribe can detect if already subscribed
+  subscriber = null
+}
 
 export default initDB
