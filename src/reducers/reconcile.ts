@@ -4,6 +4,14 @@ import { hashContext, reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
 import { Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
 
+interface ReconcileOptions {
+  thoughtsResults: [ThoughtsInterface, ThoughtsInterface]
+  // If true, updates local thoughts with thoughts that were only found on remote. Default: true.
+  local?: boolean
+  // If true, updates remote thoughts with thoughts that were only found on local. Default: true.
+  remote?: boolean
+}
+
 const emContextEncoded = hashContext([EM_TOKEN])
 
 /** Returns true if the source object is has been updated more recently than the destination object. */
@@ -14,8 +22,10 @@ const shouldUpdateEm = (src: Parent, dest: Parent, key: string) =>
   key === emContextEncoded && src.children.length > dest.children.length
 
 /** Compares local and remote and updates missing thoughts or those with older timestamps. */
-const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: [ThoughtsInterface, ThoughtsInterface] }) => {
+const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOptions) => {
   const [thoughtsLocal, thoughtsRemote] = thoughtsResults
+  const updateLocal = local !== false
+  const updateRemote = remote !== false
 
   /** Returns a predicate that returns true if a key is missing from the given destination object or it was updated more recently than the value in the destination object. */
   const shouldUpdateDest =
@@ -32,10 +42,18 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: [Though
     }
 
   // get the thoughts that are missing from either local or remote
-  const contextIndexLocalOnly = _.pickBy(thoughtsLocal.contextIndex, shouldUpdateDest(thoughtsRemote.contextIndex))
-  const contextIndexRemoteOnly = _.pickBy(thoughtsRemote.contextIndex, shouldUpdateDest(thoughtsLocal.contextIndex))
-  const thoughtIndexLocalOnly = _.pickBy(thoughtsLocal.thoughtIndex, shouldUpdateDest(thoughtsRemote.thoughtIndex))
-  const thoughtIndexRemoteOnly = _.pickBy(thoughtsRemote.thoughtIndex, shouldUpdateDest(thoughtsLocal.thoughtIndex))
+  const contextIndexLocalOnly = updateRemote
+    ? _.pickBy(thoughtsLocal.contextIndex, shouldUpdateDest(thoughtsRemote.contextIndex))
+    : {}
+  const contextIndexRemoteOnly = updateLocal
+    ? _.pickBy(thoughtsRemote.contextIndex, shouldUpdateDest(thoughtsLocal.contextIndex))
+    : {}
+  const thoughtIndexLocalOnly = updateRemote
+    ? _.pickBy(thoughtsLocal.thoughtIndex, shouldUpdateDest(thoughtsRemote.thoughtIndex))
+    : {}
+  const thoughtIndexRemoteOnly = updateLocal
+    ? _.pickBy(thoughtsRemote.thoughtIndex, shouldUpdateDest(thoughtsLocal.thoughtIndex))
+    : {}
 
   // get local pending thoughts that are returned by the remote but are not updateable
   // so that we can clear pending
@@ -68,23 +86,27 @@ const reconcile = (state: State, { thoughtsResults }: { thoughtsResults: [Though
           })
       : null,
 
-    // update local
+    // update local (thoughts that were found to only be on remote)
     Object.keys(contextIndexRemoteOnly).length > 0 || Object.keys(thoughtIndexRemoteOnly).length > 0
       ? state =>
           updateThoughts(state, {
             contextIndexUpdates: contextIndexRemoteOnly,
             thoughtIndexUpdates: thoughtIndexRemoteOnly,
+            // flags default to true, but use explicit values for clarity
+            local: true,
             remote: false,
           })
       : null,
 
-    // update remote
+    // update remote (thoughts that were found to only be on local)
     Object.keys(contextIndexLocalOnly).length > 0 || Object.keys(thoughtIndexLocalOnly).length > 0
       ? state =>
           updateThoughts(state, {
             contextIndexUpdates: contextIndexLocalOnly,
             thoughtIndexUpdates: thoughtIndexLocalOnly,
+            // flags default to true, but use explicit values for clarity
             local: false,
+            remote: true,
           })
       : null,
   ])(state)

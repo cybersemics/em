@@ -103,7 +103,8 @@ const pull =
       onLocalThoughts?.(thoughts)
     }
 
-    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2), {})
+    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
+    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
 
     // get remote thoughts and reconcile with local
     const status = getState().status
@@ -157,15 +158,15 @@ const pull =
         onRemoteThoughts?.(thoughtsRemoteChunk)
       })
 
+      // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
       const thoughtsRemote = thoughtRemoteChunks.reduce(_.ary(mergeThoughts, 2))
 
-      // the reconcile dispatched above is based on remote keys only
-      // thoughts that exist locally and not remotely will be missed
-      // sync all thoughts here to ensure none are missed
-      // TODO: Only reconcile local-only thoughts
+      // The reconcile dispatched above only covers remote keys since it is within thoughtsRemoteIterable.
+      // Reconcile thoughts that exist locally but not remotely.
       dispatch(
         reconcile({
           thoughtsResults: [thoughtsLocal, thoughtsRemote],
+          local: false,
         }),
       )
     }
