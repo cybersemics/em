@@ -40,7 +40,7 @@ export const getAllChildrenByContextHash = (
   contextEncoded: ContextHash,
 ): Child[] => contextIndex[contextEncoded]?.children || noChildren
 
-/** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
+/** Returns children of a context (unordered). If the children have not changed, returns the same array object reference. */
 export const getAllChildren = (state: State, context: Context) =>
   getAllChildrenByContextHash(state, hashContext(context))
 
@@ -66,7 +66,7 @@ export const hasChildren = (state: State, context: Context) => {
   return state.showHiddenThoughts ? children.length > 0 : children.some(isChildVisible(state, context))
 }
 
-/** Gets all visible children within a context. */
+/** Gets all visible children within a context (unsorted). */
 export const getChildren = getVisibleThoughts(getAllChildren)
 
 /** Gets all children within a context sorted by rank or sort preference. */
@@ -145,7 +145,7 @@ const resortEmptyInPlace = (sorted: Child[]): Child[] => {
   return sortedFinal
 }
 
-/** Gets all children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
+/** Gets all children of a context sorted by their ranking. Includes hidden thoughts. Returns a new array object reference even if the children have not changed. */
 export const getChildrenRanked = (state: State, context: Context): Child[] =>
   getChildrenSortedBy(state, context, compareByRank)
 
