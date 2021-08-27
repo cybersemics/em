@@ -4,7 +4,7 @@ import { timestamp } from './timestamp'
 import { getSessionId } from '../util/sessionManager'
 import { Context, Lexeme, ThoughtContext, Timestamp } from '../@types'
 
-/** Returns a new thought plus the given context. Does not add duplicates. */
+/** Returns a new Lexeme plus the given context. Does not add duplicates. */
 export const addContext = (
   lexeme: Lexeme,
   context: Context,

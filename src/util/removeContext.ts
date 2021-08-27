@@ -4,7 +4,7 @@ import { notNull } from './notNull'
 import { getSessionId } from './sessionManager'
 import { Context, Lexeme, Timestamp } from '../@types'
 
-/** Returns a new thought less the given context. */
+/** Returns a new Lexeme without the given context. */
 export const removeContext = (
   lexeme: Lexeme,
   context: Context,
