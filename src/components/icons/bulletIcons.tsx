@@ -8,7 +8,7 @@ import { Icon } from '../../@types'
  * @param fill The color filled inside the triangle; if the fill is empty, using 'none'.
  * @returns The svg for the circle.
  */
-export const Circle = ({ size = 7, fill = 'none' }: Icon) => (
+export const Circle = ({ size = 8, fill = 'none' }: Icon) => (
   <svg width={size} height={size}>
     <circle cx={size / 2} cy={size / 2} r={size / 2} fill={fill} stroke='#fcf8f8' strokeWidth='0.12' />
   </svg>

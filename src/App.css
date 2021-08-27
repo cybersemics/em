@@ -3023,7 +3023,7 @@ code,
   top: -20px;
 }*/
 
-.mobile
+/*.mobile
   .table-view
   > .children
   > .child
@@ -3033,7 +3033,7 @@ code,
   > .thought
   > .bullet-cursor-overlay {
   top: -21px;
-}
+}*/
 
 /* pre-thought .drop-hover of column 1 */
 .table-view > .children > .child > .thought-container > .drop-hover {
