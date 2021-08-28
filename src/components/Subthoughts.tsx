@@ -10,18 +10,7 @@ import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import {
-  Child,
-  Context,
-  GesturePath,
-  Index,
-  LazyEnv,
-  Path,
-  SimplePath,
-  SortPreference,
-  State,
-  ThoughtContext,
-} from '../@types'
+import { Child, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {
@@ -40,7 +29,6 @@ import {
   isEM,
   isFunction,
   isRoot,
-  memoize,
   once,
   parentOf,
   parseJsonSafe,
@@ -63,7 +51,6 @@ import {
   getContextsSortedAndRanked,
   getEditingPath,
   getNextRank,
-  getParent,
   getPrevRank,
   getSortPreference,
   getStyle,
@@ -108,30 +95,6 @@ const findFirstEnvContextWithZoom = (
   )
   return child ? [...env[child.value], '=focus', 'Zoom'] : null
 }
-
-/** Gets the visible, sorted Child nodes or ThoughtContexts that should be displayed in the Subthoughts component. Memoized to return a stable object reference for mapStateToProps. */
-const getSubthoughts = memoize(
-  (
-    state: State,
-    {
-      // We need grandchildrenLoaded as an input so that we properly memoize hidden thoughts
-      // Because =hidden is a grandchild, it is not seen as a dependency without making it explicit.
-      // The hidden thought will still render briefly until =hidden is loaded. We would need to fetch the =hidden attribute with every thought to mitigate this, but that would double tne number of trips to dexie to load the contextIndex.
-      grandchildrenLoaded,
-      showContexts,
-      simplePath,
-      sortPreference,
-    }: { grandchildrenLoaded: boolean; showContexts: boolean; simplePath: SimplePath; sortPreference: SortPreference },
-  ) => {
-    const context = pathToContext(simplePath)
-    return showContexts
-      ? getContextsSortedAndRanked(state, headValue(simplePath))
-      : sortPreference.type !== 'None'
-      ? getAllChildrenSorted(state, context)
-      : (getChildrenRanked(state, context) as (Child | ThoughtContext)[])
-  },
-  { size: 10000 },
-)
 
 /********************************************************************
  * mapStateToProps
@@ -190,20 +153,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const allChildren = getAllChildren(state, contextLive)
 
-  const sortPreference = getSortPreference(state, pathToContext(simplePathLive))
-
-  const context = pathToContext(simplePath)
-
-  // We need to pass grandchildrenLoaded so that getSubthoughts properly memoizes hidden thoughts. See: getSubthoughts.
-  const grandchildrenLoaded: boolean =
-    !showContexts && (allChildren.length === 0 || getParent(state, unroot([...context, allChildren[0].value])) != null)
-  const children =
-    props.childrenForced || getSubthoughts(state, { grandchildrenLoaded, showContexts, simplePath, sortPreference })
-
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
-  const envSelf = parseLet(state, context)
+  const envSelf = parseLet(state, pathToContext(simplePath))
   const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
 
   /*
@@ -223,8 +176,9 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
       attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
       findFirstEnvContextWithZoom(state, { context: pathToContext(rootedParentOf(state, cursor!)), env }))
 
+  const sortPreference = getSortPreference(state, pathToContext(simplePathLive))
+
   return {
-    children,
     contextBinding,
     distance,
     env,
@@ -450,7 +404,7 @@ EmptyChildrenDropTarget.displayName = 'EmptyChildrenDropTarget'
 export const SubthoughtsComponent = ({
   allowSingleContext,
   allowSingleContextParent,
-  children,
+  childrenForced,
   contextBinding,
   depth = 0,
   distance,
@@ -491,6 +445,15 @@ export const SubthoughtsComponent = ({
       )
     }
   }, [isHovering])
+
+  // disable intrathought linking until add, edit, delete, and expansion can be implemented
+  // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
+  const children =
+    childrenForced || showContexts
+      ? getContextsSortedAndRanked(state, headValue(simplePath))
+      : contextSortType !== 'None'
+      ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
+      : (getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[])
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
