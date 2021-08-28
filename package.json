@@ -38,6 +38,14 @@
     "test:ios": "react-scripts test ./src/e2e/iOS --verbose",
     "test:puppeteer": "react-scripts test ./src/e2e/puppeteer"
   },
+  "jest": {
+    "moduleNameMapper": {
+      "^proxy-memoize$": "<rootDir>/node_modules/proxy-memoize/dist/index.modern.js"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!proxy-memoize)"
+    ]
+  },
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "@react-native-async-storage/async-storage": "^1.13.0",
