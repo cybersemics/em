@@ -1,5 +1,4 @@
 import * as murmurHash3 from 'murmurhash3js'
-import moize from 'moize'
 import globals from '../globals'
 
 // util
@@ -25,8 +24,11 @@ const encodeHashedContext = (context: Context, rank?: number): ContextHash => {
 /** Returns a hashContext function with or without hashing at compile-time for performance. */
 const hashContextFunction = globals.disableThoughtHashing ? encodePlainContext : encodeHashedContext
 
-export const hashContext = moize(hashContextFunction, {
-  isDeepEqual: true,
-  maxSize: 10000,
-  profileName: 'hashContext',
-})
+// memoization overhead is too great
+// strict equal has far fewer cache hits, so is the slowest
+// deep equal is not noticeably different than unmemoized
+// export const hashContext = moize(hashContextFunction, {
+//   maxSize: 10000,
+//   profileName: 'hashContext',
+// })
+export const hashContext = hashContextFunction
