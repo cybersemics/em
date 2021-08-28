@@ -1,5 +1,6 @@
 import './App.css'
 import _ from 'lodash'
+import moize from 'moize'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
@@ -25,6 +26,11 @@ import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
 import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
+
+// enable to collect moize usage stats
+// do not enable in production
+// execute moize.getStats in the console to analyze cache hits, e.g. moize.getStats('hashContext')
+// moize.collectStats()
 
 /** Initialize firebase and event handlers. */
 export const initFirebase = async (): Promise<void> => {
@@ -170,6 +176,7 @@ const windowEm = {
   hashThought,
   isPending: withState(isPending),
   checkDataIntegrity: withState(checkDataIntegrity),
+  moize,
 }
 
 window.em = windowEm

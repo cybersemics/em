@@ -25,4 +25,8 @@ const encodeHashedContext = (context: Context, rank?: number): ContextHash => {
 /** Returns a hashContext function with or without hashing at compile-time for performance. */
 const hashContextFunction = globals.disableThoughtHashing ? encodePlainContext : encodeHashedContext
 
-export const hashContext = moize(hashContextFunction, { isDeepEqual: true, maxSize: 10000 })
+export const hashContext = moize(hashContextFunction, {
+  isDeepEqual: true,
+  maxSize: 10000,
+  profileName: 'hashContext',
+})
