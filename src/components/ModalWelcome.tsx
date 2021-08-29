@@ -85,7 +85,6 @@ const ModalWelcome = () => {
       setError('Invalid code')
       return
     }
-
     storage.setItem('inviteCode', inviteCode)
 
     // wait for fade animation to complete
