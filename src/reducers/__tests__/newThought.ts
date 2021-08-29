@@ -56,7 +56,7 @@ it('new subthought top', () => {
     (newState: State) =>
       newThought(newState, {
         value: 'd',
-        at: [{ id: hashContext(newState, ['a']) || 'kw', value: 'a', rank: 0 }],
+        at: [hashContext(newState, ['a'])!],
         insertNewSubthought: true,
         insertBefore: true,
       }),
@@ -76,7 +76,7 @@ it('new subthought top', () => {
 it('update cursor to first new thought', () => {
   const stateNew = newThought(initialState(), { value: 'a' })
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
+  expect(stateNew.cursor).toMatchObject([hashContext(stateNew, ['a'])!])
 })
 
 it('update cursor to new thought', () => {
@@ -85,5 +85,5 @@ it('update cursor to new thought', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'b', rank: 1 }])
+  expect(stateNew.cursor).toMatchObject([hashContext(stateNew, ['b'])!])
 })

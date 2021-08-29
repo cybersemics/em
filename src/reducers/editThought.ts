@@ -68,7 +68,7 @@ const editThought = (
   const isThoughtOldOrphan = () => !lexemeOld.contexts || lexemeOld.contexts.length < 2
 
   // the old thought less the context
-  const newOldThought = !isThoughtOldOrphan() ? removeContext(state, lexemeOld, context, rank) : null
+  const newOldThought = !isThoughtOldOrphan() ? removeContext(state, lexemeOld, editedThoughtId) : null
 
   // do not add floating thought to context
   const newThoughtWithoutContext = thoughtCollision || {

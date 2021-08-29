@@ -7,7 +7,7 @@ import newThoughtOrOutdent from '../newThoughtOrOutdent'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
-it('empty thought should outdent when hit enter', () => {
+it.only('empty thought should outdent when hit enter', () => {
   const store = createTestStore()
 
   // import thoughts

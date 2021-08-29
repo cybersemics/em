@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 
 // reducers
 import newSubthought from '../newSubthought'
@@ -63,8 +63,5 @@ it('preserve cursor', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'a2', rank: 1 },
-  ])
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2']))
 })

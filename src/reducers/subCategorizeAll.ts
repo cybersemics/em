@@ -80,7 +80,7 @@ const subCategorizeAll = (state: State) => {
         moveThought(state, {
           oldPath: appendToPath(cursorParent, child.id),
           newPath: appendToPath(cursorParent, getThoughtNew(state).id, child.id),
-          newRank: getThoughtNew(state).rank,
+          newRank: child.rank,
         }),
     ),
   ]

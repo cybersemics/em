@@ -14,6 +14,7 @@ const bumpThoughtDownShortcut: Shortcut = {
     if (!window.getSelection()?.focusNode) {
       asyncFocus()
     }
+
     dispatch(bumpThoughtDown())
   },
 }

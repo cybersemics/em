@@ -10,6 +10,8 @@ import {
   getChildren,
   isPending,
   getParent,
+  rankThoughtsFirstMatch,
+  childIdsToThoughts,
 } from '../../selectors'
 import { moveThought, importText, newSubthought, newThought, setCursor } from '../../reducers'
 // import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
@@ -28,8 +30,9 @@ it('move within root', () => {
     newThought('b'),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 }],
-        newPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: -1 }],
+        oldPath: rankThoughtsFirstMatch(newState, ['b']),
+        newPath: rankThoughtsFirstMatch(newState, ['b']),
+        newRank: -1,
       }),
   ]
 
@@ -41,16 +44,11 @@ it('move within root', () => {
   - b
   - a`)
 
-  const thought = getParent(stateNew, ['b'])
-  expect(thought).not.toBeNull()
+  const thoughtB = getParent(stateNew, ['b'])!
 
   // b should exist in the ROOT context
-  expect(getContexts(stateNew, 'b')).toMatchObject([
-    {
-      id: thought!.id,
-      rank: -1,
-    },
-  ])
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
+  expect(thoughtB.parentId).toBe(HOME_TOKEN)
 })
 
 it('persist id on move', () => {
@@ -58,37 +56,25 @@ it('persist id on move', () => {
 
   const stateNew1 = reducerFlow(steps1)(initialState())
 
-  const thoughtA2 = getParent(stateNew1, ['a', 'a1', 'a2'])
+  const thoughtA2 = getParent(stateNew1, ['a', 'a1', 'a2'])!
 
-  expect(thoughtA2).not.toBeNull()
-
-  const oldExactThought = getLexeme(stateNew1, 'a2')!.contexts.find(
-    thought => thought.id === thoughtA2!.id && thought.rank === 0,
-  )
-
-  expect(oldExactThought).not.toBeNull()
-
-  const oldId = oldExactThought!.id
+  expect(getLexeme(stateNew1, 'a2')!.contexts).toEqual([thoughtA2.id])
 
   const steps2 = [
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [
-          { id: hashContext(newState, ['b']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['b', 'a1']) || '', value: 'a1', rank: 0 },
-        ],
-        newPath: [{ id: hashContext(newState, ['a1']) || '', value: 'a1', rank: 1 }],
+        oldPath: rankThoughtsFirstMatch(newState, ['a', 'a1']),
+        newPath: [hashContext(newState, ['a', 'a1'])!],
+        newRank: 1,
       }),
   ]
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
-  const newExactThought = getLexeme(stateNew2, 'a2')!.contexts.find(
-    thought => thoughtA2!.id === thought.id && thought.rank === 0,
-  )
 
-  expect(newExactThought).not.toBeNull()
+  const thoughtA2New = getParent(stateNew2, ['a1', 'a2'])!
+  expect(getLexeme(stateNew2, 'a2')!.contexts).toEqual([thoughtA2New.id])
 
-  expect(oldId).toEqual(newExactThought!.id)
+  expect(thoughtA2New.id).toEqual(thoughtA2!.id)
 })
 
 it('move within context', () => {
@@ -98,14 +84,9 @@ it('move within context', () => {
     newThought('a2'),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'a2']) || '', value: 'a2', rank: 1 },
-        ],
-        newPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'a2']) || '', value: 'a2', rank: -1 },
-        ],
+        oldPath: rankThoughtsFirstMatch(newState, ['a', 'a2']),
+        newPath: rankThoughtsFirstMatch(newState, ['a', 'a2']),
+        newRank: -1,
       }),
   ]
 
@@ -118,39 +99,25 @@ it('move within context', () => {
     - a2
     - a1`)
 
-  const thoughtA = getParent(stateNew, ['a'])
-  const thoughtA2 = getParent(stateNew, ['a', 'a2'])
+  const thoughtA = getParent(stateNew, ['a'])!
+  const thoughtA2 = getParent(stateNew, ['a', 'a2'])!
 
-  expect(thoughtA).not.toBeNull()
-  expect(thoughtA2).not.toBeNull()
+  expect(thoughtA2.parentId).toBe(thoughtA.id)
 
-  expect(thoughtA2?.parentId).toBe(thoughtA?.id)
-
-  expect(getContexts(stateNew, 'a2')).toMatchObject([
-    {
-      id: thoughtA2!.id,
-      rank: -1,
-    },
-  ])
+  expect(getContexts(stateNew, 'a2')).toMatchObject([thoughtA2.id])
 })
 
 it('move across contexts', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    (newState: State) =>
-      newThought(newState, { value: 'b', at: [{ id: hashContext(newState, ['b']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
     newSubthought('b1'),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [
-          { id: hashContext(newState, ['b']) || '', value: 'b', rank: 0 },
-          { id: hashContext(newState, ['b', 'b1']) || '', value: 'b1', rank: 0 },
-        ],
-        newPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'b1']) || '', value: 'b1', rank: 1 },
-        ],
+        oldPath: rankThoughtsFirstMatch(newState, ['b', 'b1']),
+        newPath: [hashContext(newState, ['a'])!, hashContext(newState, ['b', 'b1'])!],
+        newRank: 1,
       }),
   ]
 
@@ -164,20 +131,13 @@ it('move across contexts', () => {
     - b1
   - b`)
 
-  const thoughtA = getParent(stateNew, ['a'])
-  const thoughtB1 = getParent(stateNew, ['a', 'b1'])
+  const thoughtA = getParent(stateNew, ['a'])!
+  const thoughtB1 = getParent(stateNew, ['a', 'b1'])!
 
-  expect(thoughtA).not.toBeNull()
-  expect(thoughtB1).not.toBeNull()
-
-  expect(thoughtB1!.parentId).toBe(thoughtA!.id)
   // b1 should exist in context a
-  expect(getContexts(stateNew, 'b1')).toMatchObject([
-    {
-      id: thoughtB1!.id,
-      rank: 1,
-    },
-  ])
+  expect(thoughtB1!.parentId).toBe(thoughtA.id)
+
+  expect(getContexts(stateNew, 'b1')).toMatchObject([thoughtB1.id])
 })
 
 it('move descendants', () => {
@@ -185,14 +145,14 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    (newState: State) =>
-      newThought(newState, { value: 'b', at: [{ id: hashContext(newState, ['b']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
     newSubthought('b1'),
     newSubthought('b1.1'),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 }],
-        newPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: -1 }],
+        oldPath: [hashContext(newState, ['b'])!],
+        newPath: [hashContext(newState, ['b'])!],
+        newRank: -1,
       }),
   ]
 
@@ -221,25 +181,10 @@ it('move descendants', () => {
   expect(thoughtB11!.parentId).toBe(thoughtB1!.id)
 
   // Checking if the lexeme has correct reference to the thought after move.
-  expect(getContexts(stateNew, 'b')).toMatchObject([
-    {
-      id: thoughtB!.id,
-      rank: -1,
-    },
-  ])
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB?.id])
 
-  expect(getContexts(stateNew, 'b1')).toMatchObject([
-    {
-      id: thoughtB1!.id,
-      rank: 0,
-    },
-  ])
-  expect(getContexts(stateNew, 'b1.1')).toMatchObject([
-    {
-      id: thoughtB11!.id,
-      rank: 0,
-    },
-  ])
+  expect(getContexts(stateNew, 'b1')).toMatchObject([thoughtB1?.id])
+  expect(getContexts(stateNew, 'b1.1')).toMatchObject([thoughtB11!.id])
 })
 
 it('moving cursor thought should update cursor', () => {
@@ -249,21 +194,18 @@ it('moving cursor thought should update cursor', () => {
     newThought('a2'),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'a2']) || '', value: 'a2', rank: 1 },
-        ],
-        newPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'a2']) || '', value: 'a2', rank: -1 },
-        ],
+        oldPath: rankThoughtsFirstMatch(newState, ['a', 'a2']),
+        newPath: rankThoughtsFirstMatch(newState, ['a', 'a2']),
+        newRank: -1,
       }),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(thoughts).toMatchObject([
     { value: 'a', rank: 0 },
     { value: 'a2', rank: -1 },
   ])
@@ -277,15 +219,18 @@ it('moving ancestor of cursor should update cursor', () => {
     newSubthought('b1.1'),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 }],
-        newPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: -1 }],
+        oldPath: [hashContext(newState, ['b'])!],
+        newPath: [hashContext(newState, ['b'])!],
+        newRank: -1,
       }),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(thoughts).toMatchObject([
     { value: 'b', rank: -1 },
     { value: 'b1', rank: 0 },
     { value: 'b1.1', rank: 0 },
@@ -298,19 +243,21 @@ it('moving unrelated thought should not update cursor', () => {
     newThought('b'),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    (newState: State) =>
-      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 }],
-        newPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: -1 }],
+        oldPath: [hashContext(newState, ['b'])!],
+        newPath: [hashContext(newState, ['b'])!],
+        newRank: -1,
       }),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
+  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(thoughts).toMatchObject([{ value: 'a', rank: 0 }])
 })
 
 it('move root thought into another root thought', () => {
@@ -324,11 +271,9 @@ it('move root thought into another root thought', () => {
     importText({ text }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 1 }],
-        newPath: [
-          { id: hashContext(newState, ['x']) || '', value: 'x', rank: 0 },
-          { id: hashContext(newState, ['x', 'a']) || '', value: 'a', rank: 0 },
-        ],
+        oldPath: [hashContext(newState, ['a'])!],
+        newPath: [hashContext(newState, ['x'])!, hashContext(newState, ['a'])!],
+        newRank: 0,
       }),
   ]
 
@@ -341,33 +286,19 @@ it('move root thought into another root thought', () => {
       - b
         - c`)
 
-  const thoughtA = getParent(stateNew, ['x', 'a'])
-  const thoughtB = getParent(stateNew, ['x', 'a', 'b'])
-  const thoughtC = getParent(stateNew, ['x', 'a', 'b', 'c'])
+  const thoughtX = getParent(stateNew, ['x'])!
+  const thoughtA = getParent(stateNew, ['x', 'a'])!
+  const thoughtB = getParent(stateNew, ['x', 'a', 'b'])!
+  const thoughtC = getParent(stateNew, ['x', 'a', 'b', 'c'])!
 
-  expect(thoughtA).toBeTruthy()
-  expect(thoughtB).toBeTruthy()
-  expect(thoughtC).toBeTruthy()
+  expect(getContexts(stateNew, 'a')).toMatchObject([thoughtA.id])
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB!.id])
+  expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC!.id])
 
-  expect(getContexts(stateNew, 'a')).toMatchObject([
-    {
-      id: thoughtA!.id,
-      rank: 0,
-    },
-  ])
-
-  expect(getContexts(stateNew, 'b')).toMatchObject([
-    {
-      id: thoughtB!.id,
-      rank: 0,
-    },
-  ])
-  expect(getContexts(stateNew, 'c')).toMatchObject([
-    {
-      id: thoughtC!.id,
-      rank: 0,
-    },
-  ])
+  expect(thoughtX.parentId).toBe(HOME_TOKEN)
+  expect(thoughtA.parentId).toBe(thoughtX.id)
+  expect(thoughtB.parentId).toBe(thoughtA.id)
+  expect(thoughtC.parentId).toBe(thoughtB.id)
 })
 
 // ensure that siblings of descendants are properly merged into final result
@@ -382,11 +313,9 @@ it('move descendants with siblings', () => {
     importText({ text }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'b']) || '', value: 'b', rank: 0 },
-        ],
-        newPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 }],
+        oldPath: rankThoughtsFirstMatch(newState, ['a', 'b']),
+        newPath: [hashContext(newState, ['a', 'b'])!],
+        newRank: 1,
       }),
   ]
 
@@ -399,38 +328,16 @@ it('move descendants with siblings', () => {
     - c
     - d`)
 
-  const thoughtB = getParent(stateNew, ['b'])
-  const thoughtC = getParent(stateNew, ['b', 'c'])
-  const thoughtD = getParent(stateNew, ['b', 'd'])
+  const thoughtB = getParent(stateNew, ['b'])!
+  const thoughtC = getParent(stateNew, ['b', 'c'])!
+  const thoughtD = getParent(stateNew, ['b', 'd'])!
 
-  expect(thoughtB).not.toBeNull()
-  expect(thoughtC).not.toBeNull()
-  expect(thoughtD).not.toBeNull()
+  expect(thoughtC.parentId).toBe(thoughtB.id)
+  expect(thoughtD.parentId).toBe(thoughtB.id)
 
-  expect(thoughtC!.parentId).toBe(thoughtB!.id)
-  expect(thoughtD!.parentId).toBe(thoughtB!.id)
-
-  // b should exist in the ROOT context
-  expect(getContexts(stateNew, 'b')).toMatchObject([
-    {
-      id: thoughtB!.id,
-      rank: 1,
-    },
-  ])
-
-  // context for both the descendants of b should change
-  expect(getContexts(stateNew, 'c')).toMatchObject([
-    {
-      id: thoughtC!.id,
-      rank: 0,
-    },
-  ])
-  expect(getContexts(stateNew, 'd')).toMatchObject([
-    {
-      id: thoughtD!.id,
-      rank: 1,
-    },
-  ])
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
+  expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC.id])
+  expect(getContexts(stateNew, 'd')).toMatchObject([thoughtD.id])
 })
 
 // @MIGRATION_TODO: Merge logic has not been fixed.
@@ -446,12 +353,13 @@ it.skip('merge duplicate with new rank', () => {
     importText({ text }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['m']) || '', value: 'm', rank: 1 }],
+        oldPath: [hashContext(newState, ['m'])!],
         newPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+          hashContext(newState, ['a'])!,
           // Note: Here we are using id of thought ['m'] instead of ['a', 'm'] because we want merge thought to take the id of the moved thought. We can change it to take id of the duplicate thought i.e ['a', 'm'] later.
-          { id: hashContext(newState, ['m']) || '', value: 'm', rank: 0 },
+          hashContext(newState, ['m'])!,
         ],
+        newRank: 0,
       }),
   ]
 
@@ -489,11 +397,9 @@ it.skip('merge with duplicate with duplicate rank', () => {
     importText({ text }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['m']) || '', value: 'm', rank: 1 }],
-        newPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'm']) || '', value: 'm', rank: 0 },
-        ],
+        oldPath: [hashContext(newState, ['m'])!],
+        newPath: [hashContext(newState, ['a'])!, hashContext(newState, ['a', 'm'])!],
+        newRank: 0,
       }),
   ]
 
@@ -531,11 +437,9 @@ it('move with duplicate descendant', () => {
     importText({ text }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 }],
-        newPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'b']) || '', value: 'b', rank: 0 },
-        ],
+        oldPath: [hashContext(newState, ['b'])!],
+        newPath: [hashContext(newState, ['a'])!, hashContext(newState, ['b'])!],
+        newRank: 0,
       }),
   ]
 
@@ -550,17 +454,11 @@ it('move with duplicate descendant', () => {
       - y
         - x`)
 
-  const thoughtXUnderB = getParent(stateNew, ['a', 'b', 'x'])
-  const thoughtXUnderY = getParent(stateNew, ['a', 'b', 'y', 'x'])
-
-  expect(thoughtXUnderB).toBeTruthy()
-  expect(thoughtXUnderY).toBeTruthy()
+  const thoughtXUnderB = getParent(stateNew, ['a', 'b', 'x'])!
+  const thoughtXUnderY = getParent(stateNew, ['a', 'b', 'y', 'x'])!
 
   // x should have contexts a/b and a/b/y
-  expect(getContexts(stateNew, 'x')).toMatchObject([
-    { id: thoughtXUnderB!.id, rank: 0 },
-    { id: thoughtXUnderY!.id, rank: 0 },
-  ])
+  expect(getContexts(stateNew, 'x')).toMatchObject([thoughtXUnderB.id, thoughtXUnderY.id])
 })
 
 it('move with hash matched descendant', () => {
@@ -574,11 +472,9 @@ it('move with hash matched descendant', () => {
     importText({ text }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 }],
-        newPath: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'b']) || '', value: 'b', rank: 0 },
-        ],
+        oldPath: [hashContext(newState, ['b'])!],
+        newPath: [hashContext(newState, ['a'])!, hashContext(newState, ['b'])!],
+        newRank: 0,
       }),
   ]
 
@@ -591,18 +487,12 @@ it('move with hash matched descendant', () => {
       - =note
         - note`)
 
-  const thoughtNoteFirst = getParent(stateNew, ['a', 'b', '=note'])
-  const thoughtNoteSecond = getParent(stateNew, ['a', 'b', '=note', 'note'])
+  const thoughtNoteFirst = getParent(stateNew, ['a', 'b', '=note'])!
+  const thoughtNoteSecond = getParent(stateNew, ['a', 'b', '=note', 'note'])!
 
-  expect(thoughtNoteFirst).toBeTruthy()
-  expect(thoughtNoteSecond).toBeTruthy()
+  expect(thoughtNoteSecond?.parentId).toBe(thoughtNoteFirst.id)
 
-  expect(thoughtNoteSecond?.parentId).toBe(thoughtNoteFirst!.id)
-
-  expect(getContexts(stateNew, 'note')).toMatchObject([
-    { id: thoughtNoteFirst!.id, rank: 0 },
-    { id: thoughtNoteSecond!.id, rank: 0 },
-  ])
+  expect(getContexts(stateNew, 'note')).toMatchObject([thoughtNoteFirst.id, thoughtNoteSecond.id])
 })
 
 // @MIGRATION_TODO: Duplicate merging has not been fixed yet.
@@ -618,11 +508,9 @@ it.skip('move with nested duplicate thoughts', () => {
     importText({ text }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [
-          { id: hashContext(newState, ['c']) || '', value: 'c', rank: 1 },
-          { id: hashContext(newState, ['c', 'a']) || '', value: 'a', rank: 0 },
-        ],
-        newPath: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }],
+        oldPath: rankThoughtsFirstMatch(newState, ['c', 'a']),
+        newPath: [hashContext(newState, ['a'])!],
+        newRank: 0,
       }),
   ]
 
@@ -656,11 +544,9 @@ it.skip('move with nested duplicate thoughts and merge their children', () => {
     importText({ text }),
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [
-          { id: hashContext(newState, ['p']) || '', value: 'p', rank: 1 },
-          { id: hashContext(newState, ['p', 'a']) || '', value: 'a', rank: 0 },
-        ],
-        newPath: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }],
+        oldPath: rankThoughtsFirstMatch(newState, ['p', 'a']),
+        newPath: [hashContext(newState, ['a'])!],
+        newRank: 0,
       }),
   ]
 
@@ -732,18 +618,10 @@ it.skip('consitent rank between thoughtIndex and contextIndex on duplicate merge
     importText({ text }),
     (state: State) =>
       moveThought(state, {
-        oldPath: [
-          { id: hashContext(state, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(state, ['a', 'b']) || '', value: 'b', rank: 0 },
-        ],
+        oldPath: rankThoughtsFirstMatch(state, ['a', 'b']),
         // Note: Here new rank will be 0.5 because it's calculated between a (0) and b (1)
-        newPath: [
-          {
-            id: hashContext(state, ['b']) || '',
-            value: 'b',
-            rank: getRankAfter(state, [{ value: 'a', rank: 0 }] as SimplePath),
-          },
-        ],
+        newPath: [hashContext(state, ['b'])!],
+        newRank: getRankAfter(state, [hashContext(state, ['a'])] as SimplePath) as number,
       }),
   ]
 
@@ -797,14 +675,9 @@ it.skip('pending destination should be merged correctly (fetch pending before mo
 
   appStore.dispatch([
     existingThoughtMoveAction({
-      oldPath: [
-        { id: hashContext(appStore.getState(), ['a']) || '', value: 'a', rank: 0 },
-        { id: hashContext(appStore.getState(), ['a', 'b']) || '', value: 'b', rank: 0 },
-      ],
-      newPath: [
-        { id: hashContext(appStore.getState(), ['d']) || '', value: 'd', rank: 1 },
-        { id: hashContext(appStore.getState(), ['d', 'b']) || '', value: 'b', rank: 1 },
-      ],
+      oldPath: [hashContext(appStore.getState(), ['a'])!, hashContext(appStore.getState(), ['a', 'b'])!],
+      newPath: [hashContext(appStore.getState(), ['d'])!, hashContext(appStore.getState(), ['d', 'b'])!],
+      newRank: 1,
     }),
   ])
   await timer.runAllAsync()
@@ -863,14 +736,9 @@ it.skip('only fetch the descendants upto the possible conflicting path', async (
 
   appStore.dispatch([
     existingThoughtMoveAction({
-      oldPath: [
-        { id: hashContext(appStore.getState(), ['a']) || '', value: 'a', rank: 0 },
-        { id: hashContext(appStore.getState(), ['a', 'b']) || '', value: 'b', rank: 0 },
-      ],
-      newPath: [
-        { id: hashContext(appStore.getState(), ['p']) || '', value: 'p', rank: 1 },
-        { id: hashContext(appStore.getState(), ['p', 'b']) || '', value: 'b', rank: 1 },
-      ],
+      oldPath: rankThoughtsFirstMatch(appStore.getState(), ['a', 'b']),
+      newPath: [hashContext(appStore.getState(), ['p'])!, hashContext(appStore.getState(), ['p', 'b'])!],
+      newRank: 1,
     }),
   ])
   await timer.runAllAsync()

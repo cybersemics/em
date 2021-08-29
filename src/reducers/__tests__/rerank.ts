@@ -26,7 +26,7 @@ it('recalculate absolute ranks while preserving relative order to avoid rank pre
   ])
 })
 
-it('rerank on moveThought if rnaks are too close', () => {
+it('rerank on moveThought if ranks are too close', () => {
   /** Creates a new thought above and deletes the thought below in a way that decreases the new thought's rank. */
   const halveRank = (value: string) =>
     reducerFlow([newThought({ value, insertBefore: true }), cursorDown, deleteThoughtWithCursor({})])
@@ -34,10 +34,9 @@ it('rerank on moveThought if rnaks are too close', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
-
     // first use the halving technique to create a thought with an extremely small rank
     // ranks becomes too close after about 24 halvings
-    ...new Array(24).fill(halveRank('c')),
+    ...new Array(25).fill(halveRank('c')),
 
     // create a new thought above which will create a thought halfway between rank 0 and the extremely small rank
     newThought({ value: 'b', insertBefore: true }),
@@ -45,8 +44,9 @@ it('rerank on moveThought if rnaks are too close', () => {
     // move any thought to trigger a rerank
     (newState: State) =>
       moveThought(newState, {
-        oldPath: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }],
-        newPath: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 99 }],
+        oldPath: [hashContext(newState, ['a'])!],
+        newPath: [hashContext(newState, ['a'])!],
+        newRank: 99,
       }),
   ]
 

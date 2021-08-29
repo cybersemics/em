@@ -30,6 +30,7 @@ import {
   splitChain,
   thoughtsEditingFromChain,
   getParentThought,
+  getPrevRank,
 } from '../selectors'
 
 // reducers
@@ -37,12 +38,22 @@ import { alert, deleteThought, moveThought, newThought, setCursor } from '../red
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Returns path to the archive of the given context. */
-export const pathToArchive = (state: State, path: Path, context: Context): Path | null => {
+export const pathAndRankToArchive = (
+  state: State,
+  path: Path,
+  context: Context,
+): {
+  path: Path
+  rank: number
+} | null => {
   const rankedArchive = getAllChildrenAsThoughts(state, context).find(equalThoughtValue('=archive'))
   if (!rankedArchive) return null
-  // const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive.id) : parentOf(path)
-  // const newRank = getPrevRank(state, pathToContext(state, archivePath))
-  return [...parentOf(path), rankedArchive.id, head(path)]
+  const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive.id) : parentOf(path)
+  const newRank = getPrevRank(state, pathToContext(state, archivePath))
+  return {
+    path: [...parentOf(path), rankedArchive.id, head(path)],
+    rank: newRank,
+  }
 }
 
 /** Moves the thought to =archive. If the thought is already in =archive, permanently deletes it.
@@ -166,15 +177,16 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           }),
 
           // execute moveThought after newThought has updated the state
-          (state: State) =>
-            moveThought(state, {
+          (state: State) => {
+            const { path: newPath, rank } = pathAndRankToArchive(state, showContexts ? simplePath : path!, context)!
+            return moveThought(state, {
               oldPath: path,
               // TODO: Are we sure pathToArchive cannot return null?
-              newPath: pathToArchive(state, showContexts ? simplePath : path!, context)!,
+              newPath: newPath!,
               offset,
-              // TODO: Fix rank here
-              newRank: 0,
-            }),
+              newRank: rank,
+            })
+          },
         ]),
 
     setCursor({

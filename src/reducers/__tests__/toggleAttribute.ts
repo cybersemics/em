@@ -81,8 +81,7 @@ it('add attribute if key has already been created', () => {
   const steps = [
     newThought('a'),
     newSubthought('=test'),
-    (newState: State) =>
-      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
     toggleAttribute({
       context: ['a'],
       key: '=test',

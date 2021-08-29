@@ -1,5 +1,5 @@
 import { State } from '../../@types'
-import { HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import { createId } from '../createId'
 import { hashContext } from '../hashContext'
 import { initialState } from '../initialState'
@@ -18,36 +18,27 @@ it('hashContext', () => {
         ...state.thoughts.contextIndex,
         [HOME_TOKEN]: {
           id: HOME_TOKEN,
-          children: [
-            {
-              id: ids[0],
-              value: 'A',
-              rank: 0,
-            },
-          ],
-          context: [],
+          children: [ids[0]],
           lastUpdated: timestamp(),
           value: HOME_TOKEN,
+          rank: 0,
+          parentId: ROOT_PARENT_ID,
         },
         [ids[0]]: {
           id: ids[0],
           value: 'A',
-          children: [
-            {
-              id: ids[1],
-              value: 'B',
-              rank: 0,
-            },
-          ],
-          context: [HOME_TOKEN],
+          children: [ids[1]],
           lastUpdated: timestamp(),
+          rank: 0,
+          parentId: HOME_TOKEN,
         },
         [ids[1]]: {
           id: ids[1],
           value: 'B',
           children: [],
-          context: ['A'],
           lastUpdated: timestamp(),
+          parentId: ids[0],
+          rank: 0,
         },
       },
     },

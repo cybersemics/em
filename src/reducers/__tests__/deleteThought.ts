@@ -11,7 +11,7 @@ it('delete from root', () => {
     (newState: State) =>
       deleteThought(newState, {
         context: [HOME_TOKEN],
-        thoughtRanked: { id: hashContext(newState, ['b']) || '', value: 'b', rank: 1 },
+        thoughtId: hashContext(newState, ['b']) || '',
       }),
   ]
 
@@ -24,12 +24,7 @@ it('delete from root', () => {
 
   // contextIndex
   expect(rootParent).toMatchObject({
-    children: [
-      {
-        value: 'a',
-        rank: 0,
-      },
-    ],
+    children: [hashContext(stateNew, ['a'])],
   })
 
   // thoughtIndex
@@ -44,7 +39,7 @@ it('delete descendants of root thought', () => {
     (newState: State) =>
       deleteThought(newState, {
         context: [HOME_TOKEN],
-        thoughtRanked: { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+        thoughtId: hashContext(newState, ['a']) || '',
       }),
   ]
 
@@ -69,7 +64,7 @@ it('delete thought with duplicate child', () => {
     (newState: State) =>
       deleteThought(newState, {
         context: [HOME_TOKEN],
-        thoughtRanked: { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
+        thoughtId: hashContext(newState, ['a']) || '',
       }),
   ]
 

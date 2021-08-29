@@ -3,6 +3,7 @@ import { appendToPath, equalThoughtRanked, headId, isRoot, pathToContext } from 
 import { getLexeme, getChildrenRanked } from '../selectors'
 import { Path, State } from '../@types'
 import getRootPath from './getRootPath'
+import childIdsToThoughts from './childIdsToThoughts'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
@@ -17,42 +18,33 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
     const lexeme = getLexeme(state, value)
     const path = pathResult
 
-    const parents = ((lexeme && lexeme.contexts) || [])
+    const thoughts = childIdsToThoughts(state, (lexeme && lexeme.contexts) || [])
       // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
-      .map(thoughtId => {
-        const thought = state.thoughts.contextIndex[thoughtId]
-        return state.thoughts.contextIndex[thought.parentId]
-      })
-      .filter(p => {
-        return p.id === headId(path)
-      })
+      .filter(thought => thought?.parentId === headId(path))
 
-    const contextThoughts = parents.length > 1 ? getChildrenRanked(state, pathToContext(state, path)) : []
+    const contextThoughts = thoughts.length > 1 ? getChildrenRanked(state, pathToContext(state, path)) : []
 
-    // there may be duplicate parents that are missing from contextIndex
-    // in this case, find the matching thought
-    const parent =
-      parents.length <= 1
-        ? parents[0]
-        : parents.find(parent => {
+    // If thoughts length is greater than 1 then it means a parent has multiple children with same value.
+    // In this case match the first found
+    // TODO: May be simply select the first from the thoughts array ??
+    const finalThought =
+      thoughts.length <= 1
+        ? thoughts[0]
+        : thoughts.find(thought => {
             return contextThoughts.some(child =>
               equalThoughtRanked(child, {
                 value,
-                rank: parent.rank,
+                rank: thought.rank,
               }),
             )
           })
 
-    // if (parent && parent.context) {
-    //   prevParentContext = parent.context
-    // }
-
     const isEm = i === 0 && value === EM_TOKEN
 
-    const parentId = (parent ? parent.id : '') || ''
-    pathResult = appendToPath(pathResult, isEm ? EM_TOKEN : parentId)
+    const thoughtId = (finalThought ? finalThought.id : '') || ''
+    pathResult = appendToPath(pathResult, isEm ? EM_TOKEN : thoughtId)
 
-    return parentId
+    return thoughtId
   }) as Path
 }
 

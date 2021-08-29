@@ -392,5 +392,6 @@ it('thought with html value should be expanded', () => {
   const stateNew = importText(initialState(), { text })
 
   const stateNew1 = setCursorFirstMatch(stateNew, ['<i>a</i>'])
+
   expect(isContextExpanded(stateNew1, ['<i>a</i>'])).toBeTruthy()
 })

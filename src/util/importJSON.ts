@@ -6,7 +6,6 @@ import {
   appendToPath,
   hashThought,
   head,
-  headRank,
   parentOf,
   pathToContext,
   removeContext,
@@ -271,7 +270,7 @@ export const importJSON = (
   if (destEmpty) {
     const lexeme = getLexeme(state, '')
     if (lexeme) {
-      initialThoughtIndex[hashThought('')] = removeContext(state, lexeme, context, headRank(simplePath))
+      initialThoughtIndex[hashThought('')] = removeContext(state, lexeme, destThought.id)
       initialContextIndex[contextEncoded] = {
         ...state.thoughts.contextIndex[contextEncoded],
         children: getAllChildren(state, rootedContext).filter(child => child !== destThought.id),

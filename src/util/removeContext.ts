@@ -1,28 +1,20 @@
 import { timestamp } from './timestamp'
 import { notNull } from './notNull'
-import { State, Context, Lexeme, Timestamp } from '../@types'
-import { hashContext } from './hashContext'
-import { unroot } from './unroot'
+import { State, Lexeme, Timestamp } from '../@types'
 
 // @MIGRATION_TODO: Use id to remove instead of context
 /** Returns a new thought less the given context. */
 export const removeContext = (
   state: State,
   lexeme: Lexeme,
-  context: Context,
-  rank: number,
+  thoughtId: string,
   lastUpdated: Timestamp = timestamp(),
 ): Lexeme => {
   return Object.assign(
     {},
     lexeme,
     notNull({
-      contexts: lexeme.contexts
-        ? lexeme.contexts.filter(thought => {
-            const parentId = state.thoughts.contextIndex[thought].parentId
-            return !(parentId === hashContext(state, unroot([...context, lexeme.value])))
-          })
-        : [],
+      contexts: lexeme.contexts ? lexeme.contexts.filter(id => id !== thoughtId) : [],
       created: lexeme.created || lastUpdated,
       lastUpdated: lastUpdated,
     }),

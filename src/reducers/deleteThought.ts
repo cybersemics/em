@@ -29,10 +29,15 @@ interface ThoughtUpdates {
 }
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions. */
-const deleteThought = (state: State, { context, thoughtId, showContexts }: Payload) => {
-  const thought = state.thoughts.contextIndex[thoughtId]
+const deleteThought = (state: State, { context, thoughtId }: Payload) => {
+  const deletedThought = state.thoughts.contextIndex[thoughtId]
 
-  const { value, rank } = thought
+  if (!deletedThought) {
+    console.error(`deleteThought: Thought not found for id ${thoughtId}`)
+    return state
+  }
+
+  const { value, rank } = deletedThought
   if (!hasLexeme(state, value)) return state
 
   const thoughts = unroot(context.concat(value))
@@ -40,12 +45,6 @@ const deleteThought = (state: State, { context, thoughtId, showContexts }: Paylo
   const key = hashThought(value)
   const lexeme = getLexeme(state, value)
   const parent = getParent(state, context)
-  const deletedThought = getParent(state, thoughts)
-
-  if (!deletedThought) {
-    console.error('Parent entry of deleted thought not found!')
-    return state
-  }
 
   if (!parent) {
     console.error('Parent not found!')
@@ -80,7 +79,7 @@ const deleteThought = (state: State, { context, thoughtId, showContexts }: Paylo
 
   // the old thought less the context
   const newOldThought =
-    lexeme.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, context, rank) : null
+    lexeme.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, deletedThought.id) : null
 
   // update state so that we do not have to wait for firebase
   if (newOldThought) {
@@ -93,7 +92,7 @@ const deleteThought = (state: State, { context, thoughtId, showContexts }: Paylo
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getAllChildrenAsThoughts(state, context).filter(child => child.id !== thought.id)
+  const subthoughts = getAllChildrenAsThoughts(state, context).filter(child => child.id !== deletedThought.id)
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts: Context, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
@@ -118,7 +117,7 @@ const deleteThought = (state: State, { context, thoughtId, showContexts }: Paylo
         const childNew =
           lexeme && lexeme.contexts && lexeme.contexts.length > 1
             ? // update child with deleted context removed
-              removeContext(state, lexeme, thoughts, child.rank)
+              removeContext(state, lexeme, child.id)
             : // if this was the only context of the child, delete the child
               null
 

@@ -17,7 +17,7 @@ import {
   validateRoam,
 } from '../util'
 import { editThought, setCursor, updateThoughts } from '../reducers'
-import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
+import { getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
 import { Path, SimplePath, State, Timestamp } from '../@types'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
@@ -137,7 +137,7 @@ const importText = (
     const getDestinationPath = () => {
       if (!shouldImportIntoDummy) return simplePath
       const newDummyThought = getAllChildrenAsThoughts(updatedState, context).find(child => child.value === uuid)
-      return (newDummyThought ? [...simplePath, newDummyThought] : simplePath) as SimplePath
+      return (newDummyThought ? [...simplePath, newDummyThought.id] : simplePath) as SimplePath
     }
 
     const newDestinationPath = getDestinationPath()
@@ -146,19 +146,16 @@ const importText = (
 
     /** Set cursor to the last imported path. */
     const setLastImportedCursor = (state: State) => {
-      const lastImportedContext = pathToContext(state, imported.lastImported)
+      const lastImportedContext = imported.lastImported
 
       /** Get last iumported cursor after using collapse. */
       const getLastImportedAfterCollapse = () => {
         const cursorContextHead = lastImportedContext.slice(0, newDestinationPath.length - (destEmpty ? 2 : 1))
         const cursorContextTail = lastImportedContext.slice(newDestinationPath.length)
-        return unroot([...cursorContextHead, ...cursorContextTail])
+        return unroot([...cursorContextHead, ...cursorContextTail]) as SimplePath
       }
 
-      const newCursor = rankThoughtsFirstMatch(
-        state,
-        shouldImportIntoDummy ? getLastImportedAfterCollapse() : lastImportedContext,
-      )
+      const newCursor = shouldImportIntoDummy ? getLastImportedAfterCollapse() : lastImportedContext
 
       return setCursor(state, {
         path: newCursor,

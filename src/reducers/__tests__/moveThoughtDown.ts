@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { childIdsToThoughts, exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import { State } from '../../@types'
 
@@ -15,8 +15,7 @@ it('move within root', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    (newState: State) =>
-      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
     moveThoughtDown,
   ]
 
@@ -36,10 +35,7 @@ it('move within context', () => {
     newThought('a2'),
     (newState: State) =>
       setCursor(newState, {
-        path: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'a1']) || '', value: 'a1', rank: 0 },
-        ],
+        path: rankThoughtsFirstMatch(newState, ['a', 'a1']),
       }),
     moveThoughtDown,
   ]
@@ -58,15 +54,11 @@ it('move to next uncle', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    (newState: State) =>
-      newThought(newState, { value: 'b', at: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => newThought(newState, { value: 'b', at: [HOME_TOKEN] }),
     newSubthought('b1'),
     (newState: State) =>
       setCursor(newState, {
-        path: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'a1']) || '', value: 'a1', rank: 0 },
-        ],
+        path: rankThoughtsFirstMatch(newState, ['a', 'a1']),
       }),
     moveThoughtDown,
   ]
@@ -88,8 +80,7 @@ it('move to next uncle in sorted list', () => {
     toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
     newSubthought('a1'),
     newThought('a2'),
-    (newState: State) =>
-      newThought(newState, { value: 'b', at: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
     setCursorFirstMatch(['a', 'a1']),
     moveThoughtDown,
   ]
@@ -133,12 +124,10 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    (newState: State) =>
-      newThought(newState, { value: 'b', at: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    (newState: State) =>
-      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
     moveThoughtDown,
   ]
 
@@ -171,8 +160,7 @@ it('trying to move last thought of context with no next uncle should do nothing'
   const steps = [
     newThought('a'),
     newThought('b'),
-    (newState: State) =>
-      setCursor(newState, { path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }] }),
+    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
     newSubthought('a1'),
     newSubthought('a1.1'),
     moveThoughtDown,
@@ -213,10 +201,7 @@ it('move cursor thought should update cursor', () => {
     newThought('a2'),
     (newState: State) =>
       setCursor(newState, {
-        path: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', 'a1']) || '', value: 'a1', rank: 0 },
-        ],
+        path: rankThoughtsFirstMatch(newState, ['a', 'a1']),
       }),
     moveThoughtDown,
   ]
@@ -224,7 +209,9 @@ it('move cursor thought should update cursor', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(thoughts).toMatchObject([
     { value: 'a', rank: 0 },
     { value: 'a1', rank: 2 },
   ])

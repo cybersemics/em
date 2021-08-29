@@ -8,13 +8,16 @@ import { Context, State } from '../@types'
 const toggleAttribute = (state: State, { context, key, value }: { context: Context; key: string; value: string }) => {
   if (!context) return state
 
-  const path = rankThoughtsFirstMatch(state, context.concat(key))
+  /**
+   * Get actual path of the the key.
+   */
+  const path = () => rankThoughtsFirstMatch(state, context.concat(key))
 
   return attributeEquals(state, context, key, value)
     ? // delete existing attribute
       deleteThought(state, {
         context,
-        thoughtId: head(path),
+        thoughtId: head(path()),
       })
     : // create new attribute
       reducerFlow([

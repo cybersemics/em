@@ -102,7 +102,7 @@ const toggleSortShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
 
-    const simplePath = simplifyPath(state, cursor || HOME_PATH)
+    const simplePath = cursor || HOME_PATH
     const context = pathToContext(state, simplePath)
     const currentSortPreference = getSortPreference(state, context)
     const globalSortPreference = getGlobalSortPreference(state)

@@ -1,12 +1,5 @@
 import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, MAX_EXPAND_DEPTH } from '../constants'
-import {
-  attribute,
-  attributeEquals,
-  getAllChildren,
-  getChildPath,
-  isContextViewActive,
-  simplifyPath,
-} from '../selectors'
+import { attribute, attributeEquals, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
 import { Child, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   appendToPath,
@@ -71,7 +64,7 @@ function expandThoughts(
   options?: { returnContexts?: boolean },
 ): Index<Path | Context> {
   const firstVisibleThoughtPath = path && (path.slice(0, -MAX_DISTANCE_FROM_CURSOR) as Path)
-  const expansionBasePath =
+  const expanstionStartingPath =
     firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
 
   if (path && !state.thoughts.contextIndex[head(path)]) {
@@ -79,7 +72,7 @@ function expandThoughts(
     return {}
   }
 
-  return expandThoughtsRecursive(state, expansionBasePath, path || HOME_PATH, options)
+  return expandThoughtsRecursive(state, path || HOME_PATH, expanstionStartingPath || HOME_PATH, options)
 }
 
 /**
@@ -117,7 +110,7 @@ function expandThoughtsRecursive(
 
   /** Returns true if the child should be pinned open. */
   const isPinned = (child: Child | ThoughtContext) => {
-    const context = pathToContext(state, getChildPath(state, child, simplePath))
+    const context = pathToContext(state, appendToPath(simplePath, child))
     return attribute(state, context, '=pin')
   }
 

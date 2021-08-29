@@ -3,8 +3,6 @@ import {
   appendToPath,
   getTextContentFromHTML,
   head,
-  headRank,
-  headValue,
   isDivider,
   isThoughtArchived,
   parentOf,
@@ -33,6 +31,10 @@ const deleteEmptyThought = (state: State): State => {
 
   if (!cursor) return state
 
+  const cursorThought = state.thoughts.contextIndex[head(cursor)]
+
+  const { value } = cursorThought
+
   const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
   const context = pathToContext(state, cursor)
   const simplePath = simplifyPath(state, cursor)
@@ -40,10 +42,10 @@ const deleteEmptyThought = (state: State): State => {
   const visibleChildren = getChildren(state, context)
   // check innerHTML in case the user just executed clearThought, which yields an empty thought in the DOM but not in state
   const isDomEmpty = document.querySelector('.editing .editable')?.innerHTML === ''
-  const isEmpty = headValue(cursor) === '' || isDomEmpty
+  const isEmpty = value === '' || isDomEmpty
 
   // delete an empty thought with no children
-  if ((isEmpty && allChildren.length === 0) || isDivider(headValue(cursor))) {
+  if ((isEmpty && allChildren.length === 0) || isDivider(value)) {
     return deleteThoughtWithCursor(state, {})
   }
   // archive an empty thought with only hidden children
@@ -73,12 +75,16 @@ const deleteEmptyThought = (state: State): State => {
         context: parentOf(context),
         thoughtId: head(cursor),
       }),
+      // @MIGRATION-TODO: Set proper cursor here
+      setCursor({
+        path: null,
+      }),
     ])(state)
   }
   // delete from beginning and merge with previous sibling
   else if (offset === 0 && sel?.isCollapsed && !showContexts) {
-    const value = headValue(cursor)
-    const rank = headRank(cursor)
+    const cursorThought = state.thoughts.contextIndex[head(cursor)]
+    const { value, rank } = cursorThought
     const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
     const prev = prevSibling(state, value, pathToContext(state, rootedParentOf(state, cursor)), rank)
 

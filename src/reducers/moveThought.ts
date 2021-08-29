@@ -5,18 +5,7 @@ import { getLexeme, getChildrenRanked, isPending, simplifyPath, rootedParentOf, 
 import { Index, Parent, Path, State } from '../@types'
 
 // util
-import {
-  hashThought,
-  head,
-  headId,
-  headRank,
-  isDescendantPath,
-  moveLexemeThought,
-  pathToContext,
-  reducerFlow,
-  removeDuplicatedContext,
-  timestamp,
-} from '../util'
+import { head, headId, isDescendantPath, pathToContext, reducerFlow, timestamp } from '../util'
 
 // @MIGRATION_TODO: Nested merge logic doesn't work properly.
 /** Moves a thought from one context to another, or within the same context. */
@@ -41,12 +30,9 @@ const moveThought = (
   const newSimplePath = simplifyPath(state, newPath)
 
   const movingThoughtId = headId(oldSimplePath)
-  const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldThoughts = pathToContext(state, oldSimplePath)
   const newThoughts = pathToContext(state, newSimplePath)
   const value = head(oldThoughts)
-  const key = hashThought(value)
-  const oldRank = headRank(oldSimplePath)
   const oldContext = rootedParentOf(state, oldThoughts)
 
   const newParentId = head(rootedParentOf(state, newSimplePath))
@@ -107,13 +93,6 @@ const moveThought = (
   // if move is used for archive then update the archived field to latest timestamp
   const archived = isArchived ? timestamp() : movingThought.archived
 
-  const lexemeAfterMove = moveLexemeThought(state, lexemeOld, oldRank, newRank, movingThoughtId)
-
-  const lexemeNew = removeDuplicatedContext(state, lexemeAfterMove, newContext)
-
-  // update thoughtIndex here since recursive updates may have to update same lexeme
-  thoughtIndexNew[key] = lexemeNew
-
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
@@ -153,10 +132,6 @@ const moveThought = (
     },
   }
 
-  const thoughtIndexUpdates = {
-    [key]: lexemeNew,
-  }
-
   // preserve contextViews
   const contextViewsNew = { ...state.contextViews }
   // @MIGRATION_TODO: This may not be required after migration.
@@ -190,7 +165,7 @@ const moveThought = (
     // update thoughts
     updateThoughts({
       contextIndexUpdates,
-      thoughtIndexUpdates,
+      thoughtIndexUpdates: {},
       recentlyEdited,
       // load the children of the conflicted path if it's pending
       pendingPulls: isNewContextPending ? [{ path: newPath }] : [],

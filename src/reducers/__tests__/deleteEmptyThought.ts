@@ -1,5 +1,5 @@
 import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
-import { exportContext, getChildren } from '../../selectors'
+import { exportContext, getChildren, rankThoughtsFirstMatch } from '../../selectors'
 import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -169,10 +169,7 @@ it('cursor should move to prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'a1', rank: 0 },
-  ])
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a1']))
 })
 
 it('cursor should move to next sibling if there is no prev sibling', () => {
@@ -189,10 +186,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'a2', rank: 1 },
-  ])
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2']))
 })
 
 it('cursor should move to parent if the deleted thought has no siblings', () => {
@@ -201,7 +195,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a']))
 })
 
 it('cursor should be removed if the last thought is deleted', () => {

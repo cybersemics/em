@@ -1,5 +1,5 @@
 import 'react-native-get-random-values'
-// import { validate as uuidValidate } from 'uuid'
+import { validate as uuidValidate } from 'uuid'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { hashContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
@@ -25,50 +25,46 @@ it('basic import with proper thought structure', () => {
   const stateNew = importText(initialState(now), { text, lastUpdated: now })
   const { contextIndex, thoughtIndex } = stateNew.thoughts
 
-  const childAId = getParent(stateNew, [HOME_TOKEN])?.children[0]?.id
-  const childBId = getParent(stateNew, ['a'])?.children[0]?.id
+  const childAId = getParent(stateNew, [HOME_TOKEN])?.children[0]
+  const childBId = getParent(stateNew, ['a'])?.children[0]
 
   expect(contextIndex).toMatchObject({
     [hashContext(stateNew, [EM_TOKEN])!]: {
+      id: EM_TOKEN,
       children: [],
       lastUpdated: never(),
       // TODO: Is this expected?
       pending: true,
+      rank: 0,
     },
     [hashContext(stateNew, [HOME_TOKEN])!]: {
-      children: [
-        {
-          // tautological; full assertion below
-          id: childAId,
-          value: 'a',
-          rank: 0,
-        },
-      ],
+      children: [childAId],
     },
     [hashContext(stateNew, [ABSOLUTE_TOKEN])!]: {
-      // id: hashContext([ABSOLUTE_TOKEN]),
+      id: ABSOLUTE_TOKEN,
       children: [],
       lastUpdated: never(),
       pending: true,
     },
     [hashContext(stateNew, ['a'])!]: {
-      children: [
-        {
-          // tautological; full assertion below
-          id: childBId,
-          value: 'b',
-          rank: 0,
-        },
-      ],
+      id: childAId,
+      value: 'a',
+      rank: 0,
+      children: [childBId],
+    },
+    [hashContext(stateNew, ['a', 'b'])!]: {
+      id: childBId,
+      value: 'b',
+      rank: 0,
+      children: [],
     },
   })
 
-  // @MIGRATION_TODO: Jest doesn't have lexicographic string comparison yet :(
   expect(contextIndex[hashContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
 
   // Note: Child.id is hashedContext instead of uuid. Change this after migration is complete.
-  // expect(uuidValidate(childAId!)).toBe(true)
-  // expect(uuidValidate(childBId!)).toBe(true)
+  expect(uuidValidate(childAId!)).toBe(true)
+  expect(uuidValidate(childBId!)).toBe(true)
 
   expect(thoughtIndex).toMatchObject({
     [hashThought(HOME_TOKEN)]: {
@@ -91,24 +87,12 @@ it('basic import with proper thought structure', () => {
     },
     [hashThought('a')]: {
       value: 'a',
-      contexts: [
-        {
-          id: childAId,
-          context: [HOME_TOKEN],
-          rank: 0,
-        },
-      ],
+      contexts: [childAId],
       created: now,
     },
     [hashThought('b')]: {
       value: 'b',
-      contexts: [
-        {
-          id: childBId,
-          context: ['a'],
-          rank: 0,
-        },
-      ],
+      contexts: [childBId],
       created: now,
     },
   })
@@ -366,27 +350,15 @@ it('duplicate thoughts', () => {
   const imported = importText(initialState(), { text, lastUpdated: now })
   const lexeme = imported.thoughts.thoughtIndex[hashThought('m')]
 
-  const childAId = lexeme.contexts[0]?.id
-  const childBId = lexeme.contexts[1]?.id
+  const childAId = lexeme.contexts[0]
+  const childBId = lexeme.contexts[1]
 
-  // @MIGRATION_TODO: Child.id is hashedContext instead of uuid. Change this after migration is complete.
-  // expect(uuidValidate(childAId!)).toBe(true)
-  // expect(uuidValidate(childBId!)).toBe(true)
+  expect(uuidValidate(childAId!)).toBe(true)
+  expect(uuidValidate(childBId!)).toBe(true)
 
   expect(lexeme).toMatchObject({
     value: 'm',
-    contexts: [
-      {
-        id: childAId,
-        context: ['a'],
-        rank: 0,
-      },
-      {
-        id: childBId,
-        context: ['b'],
-        rank: 0,
-      },
-    ],
+    contexts: [childAId, childBId],
     created: now,
   })
 
@@ -498,17 +470,11 @@ it('replace empty cursor', () => {
         newValue: '',
         oldValue: 'b',
         context: ['a'],
-        path: [
-          { value: 'a', rank: 0, id: hashContext(newState, ['a']) },
-          { value: 'b', rank: 0, id: hashContext(newState, ['a', 'b']) },
-        ] as Path as SimplePath,
+        path: [hashContext(newState, ['a']), hashContext(newState, ['a', 'b'])] as Path as SimplePath,
       }),
     (newState: State) =>
       importText(newState, {
-        path: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', '']) || '', value: '', rank: 0 },
-        ],
+        path: [hashContext(newState, ['a']) || '', hashContext(newState, ['a', '']) || ''],
         text: paste,
       }),
   ])(initialState())
@@ -534,25 +500,18 @@ it('replace empty cursor without affecting siblings', () => {
 
   const stateNew = reducerFlow([
     importText({ text }),
-
     // manually change `c` to empty thought since importText skips empty thoughts
     (newState: State) =>
       editThought(newState, {
         newValue: '',
         oldValue: 'c',
         context: ['a'],
-        path: [
-          { value: 'a', rank: 0, id: hashContext(newState, ['a']) || '' },
-          { value: 'c', rank: 1, id: hashContext(newState, ['a', 'c']) || '' },
-        ] as Path as SimplePath,
+        path: [hashContext(newState, ['a']), hashContext(newState, ['a', 'c'])] as Path as SimplePath,
       }),
 
     (newState: State) =>
       importText(newState, {
-        path: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', '']) || '', value: '', rank: 1 },
-        ],
+        path: [hashContext(newState, ['a']) || '', hashContext(newState, ['a', '']) || ''],
         text: paste,
       }),
   ])(initialState())
@@ -566,7 +525,7 @@ it('replace empty cursor without affecting siblings', () => {
     - y
     - d`)
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a' }, { value: 'y' }])
+  expect(stateNew.cursor).toMatchObject([hashContext(stateNew, ['a']), hashContext(stateNew, ['a', 'y'])])
 })
 
 it('import as subthoughts of non-empty cursor', () => {
@@ -579,7 +538,7 @@ it('import as subthoughts of non-empty cursor', () => {
     newThought('a'),
     (newState: State) =>
       importText(newState, {
-        path: [{ id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 }],
+        path: [hashContext(newState, ['a']) || ''],
         text: paste,
       }),
   ])(initialState())
@@ -591,10 +550,7 @@ it('import as subthoughts of non-empty cursor', () => {
     - x
     - y`)
 
-  expect(stateNew.cursor).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'y', rank: 1 },
-  ])
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'y']))
 })
 
 it('decode HTML entities', () => {
@@ -648,18 +604,12 @@ it('single-line nested html tags', () => {
         newValue: '',
         oldValue: 'b',
         context: ['a'],
-        path: [
-          { value: 'a', rank: 0, id: hashContext(newState, ['a']) || '' },
-          { value: 'b', rank: 0, id: hashContext(newState, ['a', 'b']) || '' },
-        ] as Path as SimplePath,
+        path: [hashContext(newState, ['a']) || '', hashContext(newState, ['a', 'b']) || ''] as Path as SimplePath,
       }),
 
     (newState: State) =>
       importText(newState, {
-        path: [
-          { id: hashContext(newState, ['a']) || '', value: 'a', rank: 0 },
-          { id: hashContext(newState, ['a', '']) || '', value: '', rank: 0 },
-        ],
+        path: [hashContext(newState, ['a']) || '', hashContext(newState, ['a', '']) || ''],
         text: paste,
       }),
   ])(initialState())

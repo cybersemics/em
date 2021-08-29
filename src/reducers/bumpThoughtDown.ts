@@ -2,7 +2,7 @@
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
 import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
-import { appendToPath, parentOf, headValue, pathToContext, reducerFlow, headId } from '../util'
+import { appendToPath, parentOf, headValue, pathToContext, reducerFlow, headId, head } from '../util'
 import { Path, SimplePath, State } from '../@types'
 
 /** Clears a thought's text, moving it to its first child. */
@@ -10,7 +10,9 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   if (!simplePath && !state.cursor) return state
 
   simplePath = simplePath || simplifyPath(state, state.cursor!)
-  const value = headValue(simplePath)
+
+  const headThought = state.thoughts.contextIndex[head(simplePath)]
+  const { value } = headThought
 
   // const rank = headRank(simplePath)
   const context = pathToContext(state, simplePath)
