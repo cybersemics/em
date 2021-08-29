@@ -81,7 +81,15 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
   fontSize,
   fg,
 }) => {
-  const { svg, exec, isActive, canExecute } = shortcutById(shortcutId)!
+  const shortcut = shortcutById(shortcutId)
+  if (!shortcut) {
+    throw new Error('Missing shortcut: ' + shortcutId)
+  }
+  const { svg, exec, isActive, canExecute } = shortcut
+
+  if (!svg) {
+    throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
+  }
 
   const isActiveSelector = useCallback(isActive ? makeBooleanSelector(() => isActive(store.getState)) : () => true, [
     isActive,

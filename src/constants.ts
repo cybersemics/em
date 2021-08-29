@@ -207,7 +207,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'pinOpen',
   'pinSubthoughts',
   'note',
-  'delete',
+  'archive',
   'toggleContextView',
   'proseView',
   // 'toggleSplitView',
