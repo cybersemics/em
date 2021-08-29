@@ -5,7 +5,7 @@ import getManyDescendants from '../data-providers/data-helpers/getManyDescendant
 import { HOME_TOKEN } from '../constants'
 import { hashContext, keyValueBy, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
-import { getDescendantContexts, getParent, isPending } from '../selectors'
+import { getDescendantContexts, isPending } from '../selectors'
 import { Thunk, Context, Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
 
 const BUFFER_DEPTH = 2
@@ -28,23 +28,20 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
   }
 }
 
-/** Returns a list of pending contexts or missing parents from all contextMap contexts and their descendants. */
-const getPendingOrMissingContexts = (state: State, contextMap: Index<Context>) => {
-  /** Returns true if the context is pending or missing from the contextIndex. */
-  const isPendingOrMissing = (context: Context) => {
-    const parent = getParent(state, context)
-    return !parent || parent.pending
-  }
-
+/** Returns a list of pending contexts from all contextMap contexts and their descendants. */
+const getPendingContexts = (state: State, contextMap: Index<Context>): Index<Context> => {
   const contextsFiltered = _.flatMap(Object.values(contextMap), context =>
-    isPendingOrMissing(context)
+    isPending(state, context)
       ? // if the original contextMap context is pending, use it
         [context]
       : // otherwise search for pending or missing descendants
-        getDescendantContexts(state, context).filter(isPendingOrMissing),
+        getDescendantContexts(state, context).filter(context => isPending(state, context)),
   )
 
-  return contextsFiltered
+  // convert context array to contextMap
+  return keyValueBy(contextsFiltered, context => ({
+    [hashContext(context)]: context,
+  }))
 }
 
 /**
@@ -57,25 +54,11 @@ const pull =
     { force, maxDepth, onLocalThoughts, onRemoteThoughts }: PullOptions = {},
   ): Thunk<Promise<boolean>> =>
   async (dispatch, getState) => {
-    if (Object.keys(contextMap).length === 0) return false
-
-    let contextMapFiltered = contextMap
-
     // pull only pending contexts parents unless forced
-    if (!force) {
-      // In a 2-part delete, all of the descendants that are in the Redux store are deleted in Part I, and pending descendants are pulled and then deleted in Part II.
-      // With the old style pull, Part II pulled the pending descendants as expected. With the new style pull that only pulls pending thoughts, pull will short circuit in Part II since there is no Parent which is marked as pending (it was deleted in Part I). Thus we need to check both pending and check that the Parent is there at all. The only way it could be missing is if it was removed in Part I of a 2-part delete.
-      // See: flushDeletes
-      const pendingContexts = getPendingOrMissingContexts(getState(), contextMap)
+    const contextMapFiltered = force ? contextMap : getPendingContexts(getState(), contextMap)
 
-      // short circuit if there are no pending contexts to fetch
-      if (pendingContexts.length === 0) return false
-
-      // convert list of descendant pending contexts to a ContextMap
-      contextMapFiltered = keyValueBy(pendingContexts, context => ({
-        [hashContext(context)]: context,
-      }))
-    }
+    // short circuit if there are no contexts to fetch
+    if (Object.keys(contextMapFiltered).length === 0) return false
 
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
