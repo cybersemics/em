@@ -144,24 +144,31 @@ textarea {
 .clear {
   clear: both;
 }
+
 .relative {
   position: relative;
 }
+
 .missing {
   color: #ccc;
 }
+
 .direct {
   color: #212121;
 }
+
 .center {
   text-align: center;
 }
+
 .left {
   text-align: left;
 }
+
 .hidden {
   display: none !important;
 }
+
 .shown {
   display: inline-block;
 }
@@ -171,6 +178,7 @@ textarea {
     text-align: center;
   }
 }
+
 .upper-right {
   position: absolute;
   top: 0;
@@ -313,12 +321,12 @@ a.text-link {
 .left-triangle::after {
   content: '\25C0 \FE0E';
 }
+
 .right-triangle::after {
   content: '\25B6 \FE0E';
 }
 
 /* Toolbar */
-
 .toolbar-container {
   position: fixed;
   text-align: right;
@@ -511,7 +519,7 @@ a.text-link {
    display: flex;
    flex-direction: row;
    align-items: center;
-  }
+}
 
 .thought,
 .thought-annotation,
@@ -1152,11 +1160,11 @@ h1 .num-contexts {
   margin-right: -1.5px;
 }
 
-.mobile .child > .thought-container > .bullet.show-contexts .glyph {
+/*.mobile .child > .thought-container > .bullet.show-contexts .glyph {
   font-size: 80%;
   left: -0.08em;
   top: 0.05em;
-}
+}*/
 
 .child.expanded:not(.leaf) > .thought-container > .bullet,
 .child.editing:not(.leaf) > .thought-container > .bullet,
@@ -1173,24 +1181,27 @@ h1 .num-contexts {
 .mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
 .mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
   left: 0.06em;
-}
+}*/
 
+/*
 .mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
 .mobile .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
 .mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
 .mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
   left: -0.02em;
-}
+}*/
 
+/*
 .child.leaf > .thought-container > .bullet.show-contexts .glyph {
   font-size: 90%;
-}
+}*/
 
+/*
 .mobile .child.leaf > .thought-container > .bullet.show-contexts .glyph {
   top: 0;
   left: -0.3em;
   margin-right: calc(-0.48em - 5px); /* offset from .child > .thought-container > .bullet .glyph margin-right */
-}
+/*}*/
 
 .archive-check {
   margin-left: -12px;
@@ -1219,26 +1230,26 @@ h1 .num-contexts {
     margin-left: -3px;
   }
 
-  .android .child.leaf > .thought-container > .bullet .glyph {
+  /*.android .child.leaf > .thought-container > .bullet .glyph {
     left: 1.7px;
     top: -7px;
     font-size: 26px;
-  }
+  }*/
 
-  .android .child > .thought-container > .bullet .glyph {
+/*  .android .child > .thought-container > .bullet .glyph {
     position: relative;
     margin-left: -16.8px;
     opacity: 0.8;
     transition: opacity 0.75s ease-in-out;
     margin-right: -5px; /* increase click area */
-    padding-right: 10.1px;
+  /*  padding-right: 10.1px;
     left: 3px;
     font-size: 16px;
     top: -1px;
-  }
+  }*/
 
   /* Contexted Styles */
-  .android .child > .thought-container > .bullet.show-contexts .glyph {
+  /*.android .child > .thought-container > .bullet.show-contexts .glyph {
     font-size: 149%;
     left: 2px;
     top: -5.1px;
@@ -1251,35 +1262,35 @@ h1 .num-contexts {
     top: -8.1px;
     margin-right: -5px;
     padding-right: 10px;
-  }
+  }*/
 
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
+ /* .android .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
   .android .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
   .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
   .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
     left: 2px;
     font-size: 20px;
     top: -2.5px;
-  }
+  }*/
 
   .android .expanded:not(.leaf) > .thought-container > .bullet,
   .android .editing:not(.leaf) > .thought-container > .bullet,
   .android .cursor-parent:not(.leaf) > .thought-container > .bullet,
   .android .cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-    display: inline-block;
+    /*display: inline-block;
     margin-right: -1px; /* compensate for inline-block */
     transform: rotate(90deg);
-    transform-origin: -11px 9px;
+    /*transform-origin: -11px 9px;*/
   }
 
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
+ /* .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
   .android .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
   .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
   .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
     left: 2px;
     top: -1.6px;
     font-size: 19px;
-  }
+  }*/
 
   .android .thought .bullet-cursor-overlay {
     display: none;
@@ -1344,8 +1355,8 @@ h1 .num-contexts {
   }
 
   .android .thought,
-  .android .thought-annotation {
-    margin-top: -0.1px;
+  .android .thought-annotation{
+    /*margin-top: -0.1px;*/
     margin-left: 0.5em;
   }
 
@@ -1362,16 +1373,17 @@ h1 .num-contexts {
   margin-top: 0.501em; /* Match editable padding */
     padding: 1px 0 0.2px 100px;
   }
+
   .android .children .thought > .editable,
   .children .thought-annotation > .editable {
     margin-bottom: 6px;
   }
 
-  .android .thought,
+  /*.android .thought,
   .android .thought-annotation {
     margin-top: -2.1px;
     margin-left: 0.5em;
-  }
+  }*/
 }
 
 /* Tablet Properties */
@@ -1382,26 +1394,26 @@ h1 .num-contexts {
     margin-left: -3px;
   }
 
-  .android .child.leaf > .thought-container > .bullet .glyph {
+ /* .android .child.leaf > .thought-container > .bullet .glyph {
     left: 1.7px;
     top: -1px;
     font-size: 19px;
-  }
+  }*/
 
   .android .child > .thought-container > .bullet .glyph {
     position: relative;
-    margin-left: -16.8px;
+    /*margin-left: -16.8px;*/
     opacity: 0.8;
     transition: opacity 0.75s ease-in-out;
     margin-right: -5px; /* increase click area */
-    padding-right: 10.1px;
-    left: 4px;
+    padding-right: 5px;
+    /*left: 4px;
     font-size: 28px;
-    top: -9px;
+    top: -9px;*/
   }
 
   /* Contexted Styles */
-  .android .child > .thought-container > .bullet.show-contexts .glyph {
+ /* .android .child > .thought-container > .bullet.show-contexts .glyph {
     font-size: 149%;
     left: 2px;
     top: -5.1px;
@@ -1422,25 +1434,25 @@ h1 .num-contexts {
   .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
     left: 3px;
     top: -5.1px;
-  }
+  }*/
 
   .android .expanded:not(.leaf) > .thought-container > .bullet,
   .android .editing:not(.leaf) > .thought-container > .bullet,
   .android .cursor-parent:not(.leaf) > .thought-container > .bullet,
   .android .cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-    display: inline-block;
+    /*display: inline-block;
     margin-right: -1px; /* compensate for inline-block */
     transform: rotate(90deg);
-    transform-origin: -11px 9px;
+    /*transform-origin: -11px 9px;*/
   }
 
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
+ /* .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
   .android .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
   .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
   .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
     left: 2px;
     top: -9.5px;
-  }
+  }*/
 
   .android .thought .bullet-cursor-overlay {
     display: none;
@@ -1525,6 +1537,7 @@ h1 .num-contexts {
   margin-top: 0.501em; /* Match editable padding */
     padding: 1px 0 0.2px 100px;
   }
+
   .android .children .thought > .editable,
   .children .thought-annotation > .editable {
     margin-bottom: 6px;
@@ -1961,6 +1974,7 @@ h1 .num-contexts {
 .children-new {
   transition: all 0.75s ease-out;
 }
+
 .children-new.distance-from-cursor-1,
 .children-new.distance-from-cursor-2,
 .children-new.distance-from-cursor-3 {
@@ -2190,6 +2204,7 @@ h1 .num-contexts {
   border: 0 none;
   margin: 10px auto 0;
 }
+
 .modal-content .button:focus {
   color: #fff;
   outline: 0 none;
@@ -2208,6 +2223,7 @@ h1 .num-contexts {
 .popup .modal-actions.modal-actions-stack a.button {
   margin-bottom: 0.5em;
 }
+
 @media screen and (min-width: 480px) {
   .popup .modal-actions.modal-actions-stack {
     display: flex;
@@ -2295,9 +2311,11 @@ h1 .num-contexts {
 .animate {
   transition: all 0.4s ease-out;
 }
+
 .animate-slow {
   transition: all 1s ease-out;
 }
+
 .animate-fadeout {
   opacity: 0;
 }
@@ -2326,6 +2344,7 @@ h1 .num-contexts {
 .arrow:after {
   border-width: 10px;
 }
+
 .arrow:before {
   border-width: 12px;
 }
@@ -2350,6 +2369,7 @@ h1 .num-contexts {
 .dark .arrow-left:after {
   border-right-color: #333;
 }
+
 .dark .arrow-left:before {
   border-right-color: rgba(255, 255, 255, 0.15);
 }
@@ -2358,10 +2378,12 @@ h1 .num-contexts {
 .arrow-lefttop:before {
   top: 20px;
 }
+
 .arrow-leftbottom:after,
 .arrow-leftbottom:before {
   bottom: 20px;
 }
+
 .arrow-leftmiddle:after,
 .arrow-leftmiddle:before {
   top: 50%;
@@ -2738,6 +2760,7 @@ code,
   margin-left: 3.5em;
   margin-bottom: 10px;
 }
+
 .Resizer {
   background: #fff;
   opacity: 0.2;
@@ -2776,12 +2799,15 @@ code,
   border-left: 5px solid rgba(255, 255, 255, 0.5);
   border-right: 5px solid rgba(255, 255, 255, 0.5);
 }
+
 .Resizer.disabled {
   cursor: not-allowed;
 }
+
 .Resizer.disabled:hover {
   border-color: transparent;
 }
+
 .SplitPane.animating .Pane {
   transition: width 0.4s ease;
 }
@@ -3353,6 +3379,7 @@ code,
 .latest-shortcuts-transition-exit {
   opacity: 1;
 }
+
 .latest-shortcuts-transition-exit-active {
   opacity: 0;
   transition: opacity 400ms;
@@ -3502,11 +3529,13 @@ code,
   border-color: #46dff0;
   animation-delay: -0.5s;
 }
+
 .ripple_loader_container {
   display: inline-block;
   overflow: hidden;
   background: rgba(255, 255, 255, 0);
 }
+
 .ripple_loader {
   width: 100%;
   height: 100%;
