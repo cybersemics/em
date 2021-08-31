@@ -583,10 +583,10 @@ a.text-link {
 .child .editable {
   padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
   /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
-  margin-top: -0.25em; /* offset padding-top */
+  /*margin-top: -0.25em; /* offset padding-top */
   margin-left: -5px; /* offset padding-left */
-  padding-bottom: 0.25em;
-  padding-top: 0.25em;
+  /*padding-bottom: 0.25em;
+  padding-top: 0.25em;*/
   position: relative; /* position above thought-annotation so that function background color does not mask thought */
   width: calc(100% - 1em);
 }
@@ -596,14 +596,14 @@ a.text-link {
   word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
 }
 
-.mobile .child .editable {
+/*.mobile .child .editable {
   padding-bottom: 0;
-}
+}*/
 
-.children .thought > .editable,
+/*.children .thought > .editable,
 .children .thought-annotation > .editable {
   margin-bottom: -0.25em;
-}
+}*/
 
 .children {
   font-size: 1em;
@@ -1374,10 +1374,10 @@ h1 .num-contexts {
     padding: 1px 0 0.2px 100px;
   }
 
-  .android .children .thought > .editable,
+  /*.android .children .thought > .editable,
   .children .thought-annotation > .editable {
     margin-bottom: 6px;
-  }
+  }*/
 
   /*.android .thought,
   .android .thought-annotation {
@@ -1538,10 +1538,10 @@ h1 .num-contexts {
     padding: 1px 0 0.2px 100px;
   }
 
-  .android .children .thought > .editable,
+  /*.android .children .thought > .editable,
   .children .thought-annotation > .editable {
     margin-bottom: 6px;
-  }
+  }*/
 }
 
 /*.context-chain > .child > .thought-container > .bullet .glyph {
