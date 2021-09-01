@@ -65,7 +65,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 )
 
 const archiveShortcut: Shortcut = {
-  id: 'delete',
+  id: 'archive',
   label: 'Archive',
   description: 'Archive the current thought.',
   gesture: 'ldl',
