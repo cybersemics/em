@@ -16,7 +16,7 @@ export const storage = {
   },
 }
 
-export const sessionStorage = {
+export const storeSession = {
   clear(): void {
     sessionStorage.clear()
   },

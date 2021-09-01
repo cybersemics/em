@@ -18,7 +18,7 @@ export const storage = {
   },
 }
 
-export const sessionStorage = {
+export const storeSession = {
   clear(): void {
     syncStorage.clear()
   },
