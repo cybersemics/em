@@ -22,7 +22,7 @@ import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
-import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
+import { Connected, Context, Path, SimplePath, TutorialChoice, State } from '../@types'
 
 // constants
 import {
@@ -49,7 +49,6 @@ import {
   ellipsizeUrl,
   equalPath,
   head,
-  headValue,
   isDivider,
   isElementHiddenByAutoFocus,
   isHTML,
@@ -194,10 +193,11 @@ const Editable = ({
   dispatch,
   transient,
   editing,
-}: Connected<EditableProps>) => {
+  thought,
+}: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
   const state = store.getState()
   const thoughts = pathToContext(state, simplePath)
-  const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
+  const value = thought.value || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
   const context =
@@ -233,13 +233,8 @@ const Editable = ({
 
   // side effect to set old value ref to head value from updated simplePath.
   useEffect(() => {
-    oldValueRef.current = headValue(simplePath)
-  }, [headValue(simplePath)])
-
-  useEffect(() => {
-    // set value to old value
     oldValueRef.current = value
-  }, [simplePath])
+  }, [value])
 
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
@@ -746,4 +741,14 @@ const Editable = ({
   )
 }
 
-export default connect()(Editable)
+/**
+ * Needs to rerender when value changes.
+ */
+const mapStateToProps = (state: State, props: EditableProps) => {
+  const thought = state.thoughts.contextIndex[head(props.simplePath)]
+  return {
+    thought,
+  }
+}
+
+export default connect(mapStateToProps)(Editable)

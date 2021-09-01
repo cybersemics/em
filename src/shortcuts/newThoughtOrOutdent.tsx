@@ -2,7 +2,7 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
-import { splitAtSelection, headValue, isDocumentEditable, head } from '../util'
+import { splitAtSelection, isDocumentEditable, head } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
 
@@ -42,7 +42,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   if (
     type === 'keyboard' &&
     cursor &&
-    headValue(cursor).length === 0 &&
+    cursorHeadThought?.value.length === 0 &&
     isLastVisibleChild(state, simplifyPath(state, cursor))
   ) {
     dispatch(outdent())

@@ -1,6 +1,6 @@
 import { store as appStore } from '../../store'
 import { MODALS, HOME_TOKEN } from '../../constants'
-import { exportContext } from '../../selectors'
+import { childIdsToThoughts, exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
@@ -131,10 +131,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
         oldValue: 'b',
         context: ['a'],
         rankInContext: 0,
-        path: [
-          { value: 'a', rank: 0, id: hashContext(state, ['a']) },
-          { value: 'b', rank: 0, id: hashContext(state, ['a', 'b']) },
-        ],
+        path: rankThoughtsFirstMatch(state, ['a', 'b']),
       })
     },
     { type: 'cursorBack' },
@@ -145,7 +142,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
     { type: 'undoAction' },
   ])
 
-  const cursorAfterFirstUndo = store.getState().cursor
+  const cursorAfterFirstUndo = childIdsToThoughts(store.getState(), store.getState().cursor!)
   expect(cursorAfterFirstUndo).toMatchObject([{ value: 'a' }])
 
   const exportedAfterFirstUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -159,7 +156,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
   // undo 'cursorBack' and 'editThought'
   store.dispatch({ type: 'undoAction' })
 
-  const cursorAfterSecondUndo = store.getState().cursor
+  const cursorAfterSecondUndo = childIdsToThoughts(store.getState(), store.getState().cursor!)
   expect(cursorAfterSecondUndo).toMatchObject([{ value: 'a' }, { value: 'b' }])
 
   const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -253,13 +250,7 @@ it('newThought action should be merged with the succeeding patch', () => {
         oldValue: 'd',
         newValue: 'd1',
         rankInContext: 3,
-        path: [
-          {
-            value: 'd',
-            rank: 3,
-            id: hashContext(state, ['d']),
-          },
-        ],
+        path: [hashContext(state, ['d'])],
       })
     },
     // undo thought change and preceding newThought action
@@ -292,7 +283,7 @@ it('undo contiguous changes', () => {
         newValue: 'Atlantic',
         oldValue: 'A',
         context: [HOME_TOKEN],
-        path: [{ value: 'A', rank: 0, id: hashContext(state, ['A']) }],
+        path: [hashContext(state, ['A'])],
       })
     },
     (dispatch, getState) => {
@@ -302,7 +293,7 @@ it('undo contiguous changes', () => {
         newValue: 'Atlantic City',
         oldValue: 'Atlantic',
         context: [HOME_TOKEN],
-        path: [{ value: 'Atlantic', rank: 0, id: hashContext(state, ['Atlantic']) }],
+        path: [hashContext(state, ['Atlantic'])],
       })
     },
     { type: 'undoAction' },
@@ -356,7 +347,7 @@ it('clear patches when any undoable action is dispatched', () => {
         newValue: 'Atlantic',
         oldValue: 'A',
         context: [HOME_TOKEN],
-        path: [{ value: 'A', rank: 0, id: hashContext(state, ['A']) }],
+        path: [hashContext(state, ['A'])],
       })
     },
     { type: 'newThought', value: 'New Jersey' },

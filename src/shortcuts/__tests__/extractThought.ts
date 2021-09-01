@@ -1,5 +1,6 @@
 import { screen, findAllByPlaceholderText } from '@testing-library/react'
 import { extractThought, newThought } from '../../action-creators'
+import { childIdsToThoughts } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findThoughtByText } from '../../test-helpers/queries'
@@ -58,7 +59,8 @@ describe('Extract thought', () => {
     const selectedText = setSelection(thought!, 10, 17)
     store.dispatch([extractThought()])
 
-    expect(thought?.textContent).toBe(thoughtValue.slice(0, 9))
+    const updatedThought = await findThoughtByText(thoughtValue.slice(0, 9))
+    expect(updatedThought?.textContent).toBeTruthy()
 
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
@@ -83,6 +85,8 @@ describe('Extract thought', () => {
     const createdThought = await findThoughtByText(selectedText)
     expect(createdThought).toBeTruthy()
 
-    expect(store.getState().cursor).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
+    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+
+    expect(cursorThoughts).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
   })
 })
