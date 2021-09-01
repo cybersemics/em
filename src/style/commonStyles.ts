@@ -60,7 +60,7 @@ export const commonStyles = StyleSheet.create({
   centeredText: { textAlign: 'center' },
   textAlignRight: { textAlign: 'right' },
   smallText: {
-    fontSize: 12,
+    fontSize: 2,
   },
   smallTitle: {
     fontSize: 14,
