@@ -2,7 +2,7 @@
 import _ from 'lodash'
 import { v4 as uuid } from 'uuid'
 import { Index } from '../@types'
-import { storage } from '../util/storage'
+import { storage, sessionStorage } from '../util/storage'
 
 export enum SessionType {
   LOCAL = 'local',
