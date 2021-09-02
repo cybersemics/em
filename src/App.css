@@ -534,7 +534,7 @@ a.text-link {
 .thought,
 .thought-annotation {
   width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */
-  margin-left: 0.667em;
+  /*margin-left: 0.667em;*/
   /*display: inline-block;*/
   /*vertical-align: top;*/
   white-space: pre-wrap;
@@ -1354,7 +1354,7 @@ h1 .num-contexts {
     margin-right: -0.1em;
   }
 
-  .android .thought,
+ .android .thought,
   .android .thought-annotation{
     /*margin-top: -0.1px;*/
     margin-left: 0.5em;
@@ -1521,7 +1521,7 @@ h1 .num-contexts {
   .android .thought,
   .android .thought-annotation {
     margin-top: -0.1px;
-    margin-left: 0.5em;
+    margin-left: 2.5em;
   }
 
   .android .children-subheading {
