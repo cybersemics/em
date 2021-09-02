@@ -2,11 +2,10 @@
 import React from 'react'
 import { noop } from 'lodash'
 import { Direction, GesturePath } from '../@types'
-import { GestureResponderEvent } from 'react-native'
 
 // expects peer dependencies react-dom and react-native-web
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PanResponder, View } = require('react-native')
+// const { PanResponder, View } = require('react-native')
 
 interface Point {
   x: number
@@ -21,8 +20,8 @@ interface GestureState {
 }
 
 interface MultiGestureProps {
-  onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void
-  onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void
+  onGesture?: (g: Direction | null, sequence: GesturePath, e: any) => void
+  onEnd?: (sequence: GesturePath | null, e: any) => void
   onStart?: () => void
   onCancel?: () => void
   minDistance?: number
@@ -104,7 +103,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
         setTimeout(() => {
           if (!this.abandon && this.sequence) {
-            this.props.onEnd?.(this.sequence, e as unknown as GestureResponderEvent)
+            this.props.onEnd?.(this.sequence, e as any)
             this.reset()
           }
         })
@@ -119,7 +118,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       this.scrolling = true
     })
 
-    this.panResponder = PanResponder.create({
+    this.panResponder = {
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: thought it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
@@ -129,7 +128,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // does not report moveX and moveY
       // onPanResponderGrant: (e, gestureState) => {},
 
-      onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
+      onPanResponderMove: (e: any, gestureState: GestureState) => {
         if (this.abandon) {
           return
         }
@@ -192,13 +191,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       },
 
       // In rare cases release won't be called. See touchend above.
-      onPanResponderRelease: (e: GestureResponderEvent) => {
+      onPanResponderRelease: (e: any) => {
         this.props.onEnd?.(this.sequence, e)
         this.reset()
       },
 
       onPanResponderTerminationRequest: () => true,
-    })
+    } as any
   }
 
   reset() {
@@ -211,7 +210,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   }
 
   render() {
-    return <View {...this.panResponder.panHandlers}>{this.props.children}</View>
+    return <div {...this.panResponder.panHandlers}>{this.props.children}</div>
   }
 
   static defaultProps: MultiGestureProps = {

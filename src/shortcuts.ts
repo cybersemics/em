@@ -7,7 +7,6 @@ import globals from './globals'
 import { alert, suppressExpansion, showLatestShortcuts, toggleTopControlsAndBreadcrumbs } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
 import { keyValueBy } from './util/keyValueBy'
-import { GestureResponderEvent } from 'react-native'
 import { Direction, GesturePath, Index, Key, Shortcut, State } from './@types'
 
 import * as shortcutObject from './shortcuts/index'
@@ -152,7 +151,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
   },
 
   /** Executes a valid gesture and closes the gesture hint. */
-  handleGestureEnd: (gesture: GesturePath | null, e: GestureResponderEvent) => {
+  handleGestureEnd: (gesture: GesturePath | null, e: any) => {
     const state = store.getState()
     const { scrollPrioritized } = state
 

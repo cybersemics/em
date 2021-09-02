@@ -1,6 +1,4 @@
-import { Platform, StyleSheet } from 'react-native'
-
-export const commonStyles = StyleSheet.create({
+export const commonStyles = {
   // container
   column: {
     flex: 1,
@@ -124,7 +122,7 @@ export const commonStyles = StyleSheet.create({
   darkBackground: { backgroundColor: '#000' },
   redBackground: { backgroundColor: '#CB2232' },
   shadow: {
-    ...Platform.select({
+    ...{
       web: {
         shadowColor: 'rgba(192, 192, 192, 1)',
         shadowOffset: {
@@ -146,6 +144,6 @@ export const commonStyles = StyleSheet.create({
       android: {
         elevation: 1,
       },
-    }),
+    },
   },
-})
+}

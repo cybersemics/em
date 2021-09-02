@@ -1,7 +1,6 @@
 import React from 'react'
 import { Dispatch } from './Dispatch'
 import { GesturePath } from './GesturePath'
-import { GestureResponderEvent } from 'react-native'
 import { Icon } from './Icon'
 import { Key } from './Key'
 import { State } from './State'
@@ -24,7 +23,7 @@ export interface Shortcut {
   exec: (
     dispatch: Dispatch,
     getState: () => State,
-    e: Event | GestureResponderEvent | React.MouseEvent,
+    e: any, // Event | GestureResponderEvent | React.MouseEvent,
     { type }: { type: ShortcutType },
   ) => void
 
