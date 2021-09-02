@@ -17,7 +17,7 @@ it('get child resolved path', () => {
     { value: 'p', rank: 0 },
     { value: 'o', rank: 0 },
     { value: 'q', rank: 0 },
-  ] as SimplePath
+  ] as unknown as SimplePath
 
   const path = appendChildPath(initialState(), childSimplePath, parentPath)
 
@@ -36,7 +36,7 @@ it('get child resolved path when parent has active context view', () => {
     { value: 's', rank: 0 },
     { value: 't', rank: 0 },
     { value: 'k', rank: 0 },
-  ] as SimplePath
+  ] as unknown as SimplePath
 
   const steps = [setCursor({ path: parentPath }), toggleContextView]
 

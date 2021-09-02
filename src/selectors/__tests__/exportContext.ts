@@ -140,7 +140,7 @@ it('export multi-line thoughts as separate thoughts', () => {
       path: [
         { value: 'a', rank: 0 },
         { value: 'b', rank: 0 },
-      ] as SimplePath,
+      ] as unknown as SimplePath,
     }),
   ]
   const stateNew = reducerFlow(steps)(initialState())

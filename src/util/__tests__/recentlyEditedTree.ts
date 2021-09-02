@@ -25,6 +25,8 @@ it('Hide meta and ROOT thoughts for recently edited tree', () => {
       } as Leaf,
       c: {
         d: {
+          leaf: true,
+          lastUpdated: timestamp(),
           path: [
             {
               id: createId(),

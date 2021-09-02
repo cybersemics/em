@@ -13,13 +13,13 @@ it('single chain', () => {
         [
           { value: 'a', rank: 0 },
           { value: 'b', rank: 0 },
-        ] as SimplePath,
+        ] as unknown as SimplePath,
       ],
       [
         { value: 'a', rank: 0 },
         { value: 'b', rank: 0 },
         { value: 'c', rank: 0 },
-      ] as SimplePath,
+      ] as unknown as SimplePath,
     ),
   ).toEqual([
     { value: 'a', rank: 0 },

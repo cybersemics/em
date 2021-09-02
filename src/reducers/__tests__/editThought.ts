@@ -52,7 +52,7 @@ it('edit a descendant', () => {
       path: [
         { value: 'a', rank: 1 },
         { value: 'a1', rank: 0 },
-      ] as SimplePath,
+      ] as unknown as SimplePath,
     }),
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -154,7 +154,7 @@ it('edit a thought that exists in another context', () => {
       path: [
         { value: 'b', rank: 1 },
         { value: 'a', rank: 0 },
-      ] as SimplePath,
+      ] as unknown as SimplePath,
     }),
   ]
 
@@ -196,7 +196,7 @@ it('edit a child with the same value as its parent', () => {
       path: [
         { value: 'a', rank: 0 },
         { value: 'a', rank: 0 },
-      ] as SimplePath,
+      ] as unknown as SimplePath,
     }),
   ]
 

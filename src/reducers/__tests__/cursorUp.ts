@@ -9,7 +9,8 @@ import {
   toggleHiddenThoughts,
 } from '../../reducers'
 import { rankThoughtsFirstMatch } from '../../selectors'
-import { State } from '../../util/initialState'
+import { State } from '../../@types/State'
+import { HOME_PATH } from '../../constants'
 
 it('move cursor to previous sibling', () => {
   const steps = [newThought('a'), newThought('b'), cursorUp]
@@ -83,6 +84,6 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor || [])).toMatchObject(['a', 'm'])
+    expect(pathToContext(stateNew.cursor || HOME_PATH)).toMatchObject(['a', 'm'])
   })
 })

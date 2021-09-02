@@ -99,12 +99,13 @@ it('makeOrderedComparator', () => {
   expect(makeOrderedComparator([compare])(1, 2)).toBe(-1)
   expect(makeOrderedComparator([compare])(1, 1)).toBe(0)
 
-  expect(makeOrderedComparator([compare, compareNumberAndOther])(1, 2)).toBe(-1)
-  expect(makeOrderedComparator([compare, compareNumberAndOther])(2, 1)).toBe(1)
-  expect(makeOrderedComparator([compare, compareNumberAndOther])(2, 1)).toBe(1)
+  // set type explicitly, otherwise it infers too general a type from the first item in the array
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(1, 2)).toBe(-1)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(2, 1)).toBe(1)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(2, 1)).toBe(1)
   expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(1, 'a')).toBe(-1)
   expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])('a', 1)).toBe(1)
-  expect(makeOrderedComparator([compare, compareNumberAndOther])('a', 'a')).toBe(0)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])('a', 'a')).toBe(0)
 
   expect(makeOrderedComparator<string | number>([compareNumberAndOther, compare])(1, 'a')).toBe(-1)
   expect(makeOrderedComparator<string | number>([compareNumberAndOther, compare])('a', 1)).toBe(1)

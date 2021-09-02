@@ -509,7 +509,7 @@ it('replace empty cursor', () => {
       path: [
         { value: 'a', rank: 0 },
         { value: 'b', rank: 0 },
-      ] as SimplePath,
+      ] as unknown as SimplePath,
     }),
 
     importText({
@@ -552,7 +552,7 @@ it('replace empty cursor without affecting siblings', () => {
       path: [
         { value: 'a', rank: 0 },
         { value: 'c', rank: 1 },
-      ] as SimplePath,
+      ] as unknown as SimplePath,
     }),
 
     importText({
@@ -656,7 +656,7 @@ it('single-line nested html tags', () => {
       path: [
         { value: 'a', rank: 0 },
         { value: 'b', rank: 0 },
-      ] as SimplePath,
+      ] as unknown as SimplePath,
     }),
 
     importText({

@@ -357,7 +357,7 @@ it('paste multiple thoughts in non-empty cursor', () => {
   const simplePath = [
     { value: 'a', rank: 0 },
     { value: 'b', rank: 0 },
-  ] as SimplePath
+  ] as unknown as SimplePath
   const state2 = importText(state1, { path: simplePath, text: importedHtml })
 
   const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')
@@ -386,7 +386,7 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
   const simplePath = [
     { value: 'a', rank: 0 },
     { value: 'b', rank: 0 },
-  ] as SimplePath
+  ] as unknown as SimplePath
   const state2 = importText(state1, { path: simplePath, text: importedHtml })
 
   const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')

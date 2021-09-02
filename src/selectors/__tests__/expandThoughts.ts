@@ -3,8 +3,7 @@ import { HOME_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newSubthought, newThought, setCursor } from '../../reducers'
-import { State } from '../../util/initialState'
-import { Context } from '../../@types'
+import { Context, State } from '../../@types'
 
 /** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
 const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) =>

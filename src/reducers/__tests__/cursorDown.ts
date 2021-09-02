@@ -1,6 +1,7 @@
+import { HOME_PATH } from '../../constants'
 import { initialState, pathToContext, reducerFlow } from '../../util'
 import { rankThoughtsFirstMatch } from '../../selectors'
-import { State } from '../../util/initialState'
+import { State } from '../../@types/State'
 
 // reducers
 import {
@@ -254,7 +255,7 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor || [])).toMatchObject(['a', 'm', 'b', 'z'])
+    expect(pathToContext(stateNew.cursor || HOME_PATH)).toMatchObject(['a', 'm', 'b', 'z'])
   })
 
   it("move cursor from context's last descendant to next sibling if there aren't any further contexts", () => {
@@ -276,7 +277,7 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor || [])).toMatchObject(['b'])
+    expect(pathToContext(stateNew.cursor || HOME_PATH)).toMatchObject(['b'])
   })
 
   it('move cursor to circular path', () => {
@@ -302,7 +303,7 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(pathToContext(stateNew.cursor || [])).toMatchObject(['a', 'm', 'a', 'y'])
+    expect(pathToContext(stateNew.cursor || HOME_PATH)).toMatchObject(['a', 'm', 'a', 'y'])
   })
 
   it('should not move cursor if the cursor on last thought', () => {
