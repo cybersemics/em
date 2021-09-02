@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "build": "tsc ; npm run notify",
+    "notify": "/usr/bin/osascript -e \"display notification \\\"Build complete\\\"\"",
+    "watch": "nodemon -w index.ts -x \"npm run build\""
+  }
+}
