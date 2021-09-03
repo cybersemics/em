@@ -49,11 +49,19 @@ const ContentEditable = ({
   const { width } = useDimensions().window
   const [height, setHeight] = useState(DEFAULT_WEBVIEW_HEIGHT)
   const contentRef = useRef<WebView>(null)
+  const [innerHTMLValue, setInnerHTMLValue] = useState(html)
 
   const [webviewHTML, setWebviewHTML] = useState<string>(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+
   useEffect(() => {
     setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
   }, [isEditing])
+
+  useEffect(() => {
+    if (html.trim() === innerHTMLValue.trim()) return
+
+    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+  }, [html])
 
   useEffect(() => {
     arrangeInputContainer(html)
@@ -76,12 +84,14 @@ const ContentEditable = ({
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (e: string) => {
+    const inputValue = e.replace(/&nbsp;/g, ' ').trim()
+
     // prevent innerHTML update when editing
     allowInnerHTMLChange.current = false
 
-    arrangeInputContainer(e)
-
-    props.onChange(e)
+    arrangeInputContainer(inputValue)
+    setInnerHTMLValue(inputValue)
+    props.onChange(inputValue)
   }
 
   return (
