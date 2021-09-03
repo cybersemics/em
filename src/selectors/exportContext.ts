@@ -32,7 +32,7 @@ interface Options {
 /** Exports the navigable subtree of the given context.
  *
  * @param context
- * @param format
+ * @param format    Default: text/html.
  * @param title     Replace the value of the root thought with a new title.
  */
 export const exportContext = (

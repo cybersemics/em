@@ -1,4 +1,4 @@
-Diffs two em databases and outputs importable thoughts.
+Imports one em database into another.
 
 ## Build
 
@@ -8,4 +8,9 @@ npm run build
 
 ## Usage
 
-`node build/scripts/diff/index.js /Users/raine/Documents/Backups/em,\ Workflowy/2021-03-25T07_48_47Z_em-proto_data.json /Users/raine/Documents/Backups/em,\ Workflowy/em-proto-m9S244ovF7fVrwpAoqoWxcz08s52-export\ -\ 05-09-21.json | c`
+`node build/scripts/merge/index.js sample/em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export.json sample/em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-EDITED.json`
+
+Outputs two files:
+
+- `em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-contextIndex.json`
+- 'em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-thoughtIndex.json`

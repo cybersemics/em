@@ -236,7 +236,7 @@ const updateThoughts = (
     // },
 
     // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
-    !state.cursorInitialized
+    !state.cursorInitialized && typeof window !== 'undefined'
       ? state => {
           if (isMobile()) return { ...state, cursorInitialized: true }
 
