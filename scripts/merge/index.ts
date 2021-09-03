@@ -140,16 +140,18 @@ const main = () => {
 
   console.info('')
 
-  // write new contextIndex and thoughtIndex to output directory
+  // write new state to output directory
   fs.mkdirSync('output', { recursive: true })
 
-  const fileContextIndexOutput = `output/${file1Base}-contextIndex${file1Ext}`
-  console.info(`Writing ${fileContextIndexOutput}`)
-  fs.writeFileSync(fileContextIndexOutput, JSON.stringify(stateNew.thoughts.contextIndex, null, 2))
-
-  const fileThoughtIndexOutput = `output/${file1Base}-thoughtIndex${file1Ext}`
-  console.info(`Writing ${fileThoughtIndexOutput}`)
-  fs.writeFileSync(fileThoughtIndexOutput, JSON.stringify(stateNew.thoughts.thoughtIndex, null, 2))
+  // merge updated thoughts back into firebase db
+  const dbNew = {
+    ...thoughtsCurrent,
+    contextIndex: stateNew.thoughts.contextIndex,
+    thoughtIndex: stateNew.thoughts.thoughtIndex,
+  }
+  const fileNew = `output/${file1Base}-merged${file1Ext}`
+  console.info(`Writing ${fileNew}`)
+  fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
 
   if (errors.length === 0) {
     console.info('Success!')
