@@ -50,6 +50,12 @@ interface UserThoughts {
   contextIndex: State['thoughts']['contextIndex']
 }
 
+interface ErrorLog {
+  e: Error
+  file: string
+  message: string
+}
+
 /*************************************************************************
  * CONSTANTS
  ************************************************************************/
@@ -100,17 +106,39 @@ const main = () => {
     : [file2]
 
   // accumulate the new state by importing each input
-  let stateNew = { ...stateBlank, thoughts: thoughtsCurrent }
+  let stateNew: State = { ...stateBlank, thoughts: thoughtsCurrent }
+  let errors: ErrorLog[] = []
+
   filesToImport.forEach(file => {
     // skip hidden files including .DS_Store
     if (path.basename(file).startsWith('.')) return
-    console.info(`Reading thoughts to import: ${file}`)
-    const input = fs.readFileSync(file, 'utf-8')
-    const dbImport = JSON.parse(input) as Database | UserThoughts
-    const thoughtsImported = (dbImport as Database).users?.[userId] || (dbImport as UserThoughts)
-    console.info('Merging')
-    stateNew = mergeThoughts(stateNew, thoughtsImported)
+
+    let dbImport: Database | UserThoughts | null = null
+
+    try {
+      console.info(`Reading thoughts to import: ${file}`)
+      const input = fs.readFileSync(file, 'utf-8')
+      dbImport = JSON.parse(input) as Database | UserThoughts
+    } catch (e) {
+      console.error('Error reading')
+      errors.push({ e: e as Error, file, message: 'Error reading' })
+      return
+    }
+
+    try {
+      const thoughtsImported = (dbImport as unknown as Database).users?.[userId] || dbImport
+      const numParents = Object.keys(thoughtsImported.contextIndex).length
+      const numLexemes = Object.keys(thoughtsImported.thoughtIndex).length
+      console.info(`Merging ${numParents} parents and ${numLexemes} lexemes`)
+      stateNew = mergeThoughts(stateNew, thoughtsImported)
+    } catch (e) {
+      console.error('Error merging')
+      errors.push({ e: e as Error, file, message: 'Error merging' })
+      return
+    }
   })
+
+  console.info('')
 
   // write new contextIndex and thoughtIndex to output directory
   fs.mkdirSync('output', { recursive: true })
@@ -123,7 +151,19 @@ const main = () => {
   console.info(`Writing ${fileThoughtIndexOutput}`)
   fs.writeFileSync(fileThoughtIndexOutput, JSON.stringify(stateNew.thoughts.thoughtIndex, null, 2))
 
-  console.info('Success!')
+  if (errors.length === 0) {
+    console.info('Success!')
+  } else {
+    console.info('Writing error log')
+    const debugOutput = errors.map(error => `${error.file}\n${error.message}\n${error.e.stack}`).join('\n')
+    fs.writeFileSync('output/debug.log', debugOutput)
+
+    console.info('Partial success! See output/debug.log for error messages and stack trace.')
+
+    console.info('')
+    console.info('Files that did not get merged:')
+    errors.forEach(error => console.error(error.file))
+  }
 }
 
 main()
