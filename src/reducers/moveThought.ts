@@ -183,10 +183,11 @@ const moveThought = (
           child.value,
         )
 
-        if (!thoughtAccum) {
-          console.warn(`Missing lexeme "${child.value}"`)
-          console.warn('context', oldThoughts)
-        }
+        // disable for merge script
+        // if (!thoughtAccum) {
+        //   console.warn(`Missing lexeme "${child.value}"`)
+        //   console.warn('context', oldThoughts)
+        // }
 
         const childContext: Context = [...oldThoughts, child.value]
         const childPathOld: Path = [...pathOld, child]
