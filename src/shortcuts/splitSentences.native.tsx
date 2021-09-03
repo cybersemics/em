@@ -1,13 +1,12 @@
-import React from 'react'
-// import _ from 'lodash'
-// import { parentOf, headValue, pathToContext, splitSentence } from '../util'
-// import { alert, splitSentences } from '../action-creators'
-// import { Action } from 'redux'
-// import { getAllChildren, isContextViewActive } from '../selectors'
-// import { HOME_TOKEN } from '../constants'
-import { Icon as IconType, Shortcut } from '../@types'
+import React, { Dispatch } from 'react'
+import _ from 'lodash'
+import { parentOf, headValue, pathToContext, splitSentence } from '../util'
+import { alert, splitSentences } from '../action-creators'
+import { Action } from 'redux'
+import { getAllChildren, isContextViewActive } from '../selectors'
+import { HOME_TOKEN } from '../constants'
+import { Icon as IconType, Shortcut, Thunk } from '../@types'
 import Svg, { Path, G } from 'react-native-svg'
-import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -24,8 +23,7 @@ const splitSentencesShortcut: Shortcut = {
   description: 'Splits multiple sentences in a single thought into separate thoughts.',
   keyboard: { key: 's', meta: true, shift: true },
   svg: Icon,
-  exec: () => Alert.alert('splitSentencesShortcut'),
-  /* canExecute: getState => getState().cursor !== null,
+  canExecute: getState => getState().cursor !== null,
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state
@@ -33,22 +31,36 @@ const splitSentencesShortcut: Shortcut = {
     const sentences = splitSentence(value)
 
     if (!sentences || sentences.length === 1) {
-      dispatch(alert('Cannot split sentences: thought has only one sentence.', { alertType: 'splitSentencesErr2', clearTimeout: 3000 }))
+      dispatch(
+        alert('Cannot split sentences: thought has only one sentence.', {
+          alertType: 'splitSentencesErr2',
+          clearTimeout: 3000,
+        }),
+      )
       return
     }
     // check if splitSentences creates duplicates
     const showContexts = cursor && isContextViewActive(state, parentOf(pathToContext(cursor)))
-    const context = cursor && (showContexts && cursor.length > 2 ? pathToContext(parentOf(parentOf(cursor)))
-      : !showContexts && cursor.length > 1 ? pathToContext(parentOf(cursor))
-      : [HOME_TOKEN])
+    const context =
+      cursor &&
+      (showContexts && cursor.length > 2
+        ? pathToContext(parentOf(parentOf(cursor)))
+        : !showContexts && cursor.length > 1
+        ? pathToContext(parentOf(cursor))
+        : [HOME_TOKEN])
     const siblings = context && getAllChildren(state, context).map(({ value }) => value)
     const duplicates = _.intersection(sentences, siblings)
     if (duplicates.length !== 0) {
-      dispatch(alert('Cannot split sentences: splitting creates duplicates.', { alertType: 'splitSentencesErr3', clearTimeout: 3000 }))
+      dispatch(
+        alert('Cannot split sentences: splitting creates duplicates.', {
+          alertType: 'splitSentencesErr3',
+          clearTimeout: 3000,
+        }),
+      )
       return
     }
     dispatch(splitSentences())
-  } */
+  },
 }
 
 export default splitSentencesShortcut
