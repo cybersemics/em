@@ -554,7 +554,8 @@ a.text-link {
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
   width: auto;
-  padding-right: 0.5rem;
+
+  padding-left: 0.667em;
 }
 
 .thought-annotation .subthought {
