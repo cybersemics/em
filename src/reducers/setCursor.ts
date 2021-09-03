@@ -108,7 +108,8 @@ const setCursor = (
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
       thoughtsResolved &&
       thoughtsResolved.length >= 1 &&
-      headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+      headValue(state, thoughtsResolved).toLowerCase().replace(/"/g, '') ===
+        TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
 
   const updatedOffset = offset ?? (state.editingValue !== null ? 0 : null)
 

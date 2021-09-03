@@ -53,7 +53,9 @@ const toggleContextView = (state: State) => {
       return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
         ? settings(state, {
             key: 'Tutorial Step',
-            value: (tutorialStep + (getContexts(state, headValue(state.cursor!)).length > 1 ? 1 : 0.1)).toString(),
+            value: (
+              tutorialStep + (getContexts(state, headValue(state, state.cursor!)).length > 1 ? 1 : 0.1)
+            ).toString(),
           })
         : state
     },

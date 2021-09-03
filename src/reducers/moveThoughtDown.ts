@@ -37,23 +37,23 @@ const moveThoughtDown = (state: State) => {
 
   if (isSorted && !nextUnclePath) {
     return alert(state, {
-      value: `Cannot move subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" while sort is enabled.`,
+      value: `Cannot move subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" while sort is enabled.`,
     })
   } else if (hasChild(state, thoughts, '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be moved.`,
+      value: `"${ellipsize(headValue(state, cursor))}" is read-only and cannot be moved.`,
     })
   } else if (hasChild(state, thoughts, '=immovable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(cursor))}" is immovable.`,
+      value: `"${ellipsize(headValue(state, cursor))}" is immovable.`,
     })
   } else if (hasChild(state, context, '=readonly')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are read-only and cannot be moved.`,
+      value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" are read-only and cannot be moved.`,
     })
   } else if (hasChild(state, context, '=immovable')) {
     return alert(state, {
-      value: `Subthoughts of "${ellipsize(headValue(parentOf(cursor)))}" are immovable.`,
+      value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" are immovable.`,
     })
   }
 

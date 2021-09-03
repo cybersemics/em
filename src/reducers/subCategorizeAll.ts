@@ -33,11 +33,15 @@ const subCategorizeAll = (state: State) => {
   // cancel if parent is readonly
   else if (hasChild(state, context, '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`,
+      value: `"${ellipsize(headValue(state, cursorParent))}" is read-only so "${headValue(
+        state,
+        cursor,
+      )}" cannot be subcategorized.`,
     })
   } else if (hasChild(state, context, '=unextendable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(
+      value: `"${ellipsize(headValue(state, cursorParent))}" is unextendable so "${headValue(
+        state,
         cursor,
       )}" cannot be subcategorized.`,
     })

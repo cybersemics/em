@@ -179,8 +179,8 @@ const Editable = ({
 
   // side effect to set old value ref to head value from updated simplePath.
   useEffect(() => {
-    oldValueRef.current = headValue(simplePath)
-  }, [headValue(simplePath)])
+    oldValueRef.current = headValue(state, simplePath)
+  }, [headValue(state, simplePath)])
 
   useEffect(() => {
     // set value to old value

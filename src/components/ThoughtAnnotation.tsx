@@ -101,7 +101,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     showHiddenThoughts,
     path: simplePathLive,
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
-    isThoughtValueEditing: editingValue === headValue(simplePathLive),
+    isThoughtValueEditing: editingValue === headValue(state, simplePathLive),
   }
 }
 
@@ -124,7 +124,7 @@ const ThoughtAnnotation = ({
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const state = store.getState()
-  const value = headValue(showContexts ? parentOf(simplePath) : simplePath)
+  const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
   const thoughts = pathToContext(state, simplePath)
   const isExpanded = !!state.expanded[headId(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, thoughts).filter(child => isURL(child.value)))

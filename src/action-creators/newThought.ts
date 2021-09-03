@@ -1,7 +1,7 @@
 import { isTouch, isSafari } from '../browser'
 import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
 import { getSetting, hasChild, isContextViewActive } from '../selectors'
-import { asyncFocus, parentOf, ellipsize, headValue, pathToContext } from '../util'
+import { asyncFocus, parentOf, ellipsize, pathToContext, head } from '../util'
 import { alert } from '../action-creators'
 import { Thunk, Context, Path, SplitResult, State } from '../@types'
 import { isMobile } from '../util/isMobile'
@@ -49,6 +49,8 @@ const newThought =
     const tutorialStep = +!getSetting(state, 'Tutorial Step')
 
     const path = at || cursor
+
+    const thought = path && state.thoughts.contextIndex[head(path)]
 
     // cancel if tutorial has just started
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
@@ -98,8 +100,8 @@ const newThought =
         return
       }
       dispatch(
-        uneditable && path
-          ? { type: 'error', value: `"${ellipsize(headValue(path))}" is uneditable and cannot be split.` }
+        uneditable && path && thought
+          ? { type: 'error', value: `"${ellipsize(thought?.value)}" is uneditable and cannot be split.` }
           : { type: 'splitThought', splitResult },
       )
       return

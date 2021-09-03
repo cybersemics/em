@@ -32,7 +32,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
     } else if (hasChild(state, context, '=readonly')) {
-      dispatch(error({ value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be archived.` }))
+      dispatch(error({ value: `"${ellipsize(headValue(state, cursor))}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const editable = e.target ? editableOfNote(e.target as HTMLElement) : null
       dispatch(deleteAttribute({ context, key: '=note' }))

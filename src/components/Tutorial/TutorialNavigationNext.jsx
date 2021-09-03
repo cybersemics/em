@@ -22,6 +22,8 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
 
+import { store } from '../../store'
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const {
@@ -54,7 +56,7 @@ const TutorialNavigationNext = connect(mapStateToProps)(
       ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
-        (!cursor || headValue(cursor).length > 0)) ||
+        (!cursor || headValue(store.getState(), cursor).length > 0)) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
         context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&

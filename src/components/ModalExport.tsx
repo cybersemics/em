@@ -10,7 +10,7 @@ import {
   exportPhrase,
   getPublishUrl,
   hashContext,
-  headValue,
+  head,
   isDocumentEditable,
   isFunction,
   isRoot,
@@ -226,7 +226,8 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
   const state = store.getState()
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
-  const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
+  const cursorThought = state.thoughts.contextIndex[head(cursor)]
+  const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
   const titleShort = ellipsize(title)
   const titleMedium = ellipsize(title, 25)
 

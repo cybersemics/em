@@ -93,14 +93,14 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(thoughtsContextView)) : []
+    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(state, thoughtsContextView)) : []
     const contextsFiltered = contexts.filter(({ id }) => {
       const parentThought = getParentThought(state, id)
       return parentThought?.value !== '=archive'
     })
     const removedContextIndex = contextsFiltered.findIndex(({ id }) => {
       const parentThought = getParentThought(state, id)
-      return parentThought?.value === headValue(path)
+      return parentThought?.value === headValue(state, path)
     })
 
     const prevContext = contextsFiltered[removedContextIndex - 1]
@@ -110,14 +110,14 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   /** Gets the next sibling context in the context view. */
   const nextContext = (): ThoughtContext => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
-    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(thoughtsContextView)) : []
+    const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(state, thoughtsContextView)) : []
     const contextsFiltered = contexts.filter(({ id }) => {
       const parentThought = getParentThought(state, id)
       return parentThought?.value !== '=archive'
     })
     const removedContextIndex = contextsFiltered.findIndex(({ id }) => {
       const parentThought = getParentThought(state, id)
-      return parentThought?.value === headValue(path)
+      return parentThought?.value === headValue(state, path)
     })
     const nextContext = contextsFiltered[removedContextIndex + 1]
     return nextContext.id
@@ -170,7 +170,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
           // undo alert
           alert({
-            value: `Archived ${ellipsize(headValue(showContexts ? simplePath : path))}`,
+            value: `Archived ${ellipsize(headValue(state, showContexts ? simplePath : path))}`,
             // provide an alertType so the delete shortcut can null the alert after a delay
             alertType: 'undoArchive',
             showCloseLink: true,

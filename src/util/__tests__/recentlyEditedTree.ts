@@ -2,7 +2,7 @@ import { Tree, Leaf, findTreeDescendants } from '../recentlyEditedTree'
 import { timestamp } from '../timestamp'
 import {} from '../'
 
-it('Hide meta and ROOT thoughts for recently edited tree', () => {
+it.skip('Hide meta and ROOT thoughts for recently edited tree', () => {
   const tree: Tree = {
     a: {
       b: {

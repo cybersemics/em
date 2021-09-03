@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { connect } from 'react-redux'
+import { connect, useStore } from 'react-redux'
 import classNames from 'classnames'
 import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { store } from '../store'
@@ -171,12 +171,60 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const children = getAllChildren(state, contextLive)
 
+  const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
+
+  const isAncestorOfCursor =
+    cursor && resolvedPath.length === cursorSubcontextIndex + 1 && cursor?.length > resolvedPath.length
+
+  const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
+  /** First visible thought at the top. */
+  const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path
+
+  const isDescendantOfCursor =
+    cursor && cursor.length === cursorSubcontextIndex + 1 && resolvedPath.length > cursor?.length
+
+  const isCursor = cursor && resolvedPath.length === cursorSubcontextIndex + 1 && resolvedPath.length === cursor?.length
+  const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
+
+  const isDescendantOfFirstVisiblePath = isDescendant(
+    // TODO: Add support for [ROOT] to isDescendant
+    pathToContext(state, firstVisiblePath || ([] as unknown as Path)),
+    pathToContext(state, resolvedPath),
+  )
+  /*
+    The thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
+  */
+  const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
+
+  /*
+    Note:
+
+    # Thoughts that should not be dimmed
+      - Cursor and its descendants.
+      - Thoughts that are both descendant of the first visible thought and ancestor of the cursor.
+      - Siblings of the cursor if the cursor is a leaf thought.
+
+    # Thoughts that should be dimmed
+      - first visible thought should be dimmed if it is not direct parent of the cursor.
+      - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
+  */
+  const shouldDim =
+    cursor && isDescendantOfFirstVisiblePath && !(isCursorParent && isCursorLeaf) && !isCursor && !isDescendantOfCursor
+
+  /*
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+  */
+
+  /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
+  const zoomParentEditing = () =>
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath)
+
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
   const envSelf = parseLet(state, pathToContext(state, simplePath))
   const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
-
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
     1. Force actualDistance to 2 to hide thoughts.
@@ -194,11 +242,28 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
       attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
       findFirstEnvContextWithZoom(state, { context: pathToContext(state, rootedParentOf(state, cursor!)), env }))
 
+  const isEditingAncestor = isEditingPath && !isEditing
+
+  const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
+
+  /*
+    Note: The following properties is applied to the immediate childrens with given class.
+
+    distance-from-cursor-0 fully visible
+    distance-from-cursor-1 dimmed
+    distance-from-cursor-2 shifted left and hidden
+    distance-from-cursor-3 shiifted left and hidden
+
+    Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
+  */
+  const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
+
   return {
     contextBinding,
     distance,
+    actualDistance,
     env,
-    isEditingAncestor: isEditingPath && !isEditing,
+    isEditingAncestor,
     showContexts,
     showHiddenThoughts,
     simplePath: simplePathLive,
@@ -220,7 +285,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
   const thoughtsTo = props.simplePath
-  const { cursor, expandHoverTopPath } = store.getState()
+  const { cursor, expandHoverTopPath, thoughts } = store.getState()
 
   const { path } = props
 
@@ -233,7 +298,9 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
   // there is no self thought to check since this is <Subthoughts>
   const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
-  const divider = isDivider(headValue(thoughtsTo))
+
+  const toThought = thoughts.contextIndex[head(thoughtsTo)]
+  const divider = isDivider(toThought.value)
 
   // do not drop on descendants or thoughts hidden by autofocus
   return !isHidden && !isDescendant && !divider
@@ -256,11 +323,14 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const newContext = rootedParentOf(state, pathToContext(state, newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
+  const toThought = state.thoughts.contextIndex[head(thoughtsTo)]
+  const fromThought = state.thoughts.contextIndex[head(thoughtsFrom)]
+
   // cannot drop on itself
   if (equalPath(thoughtsFrom, newPath)) return
 
   // cannot move root or em context or target is divider
-  if (isDivider(headValue(thoughtsTo)) || (isRootOrEM && !sameContext)) {
+  if (isDivider(toThought.value) || (isRootOrEM && !sameContext)) {
     store.dispatch(
       error({ value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` }),
     )
@@ -271,7 +341,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
     props.showContexts
       ? {
           type: 'createThought',
-          value: headValue(thoughtsTo),
+          value: toThought.value,
           context: pathToContext(state, thoughtsFrom),
           rank: getNextRank(state, pathToContext(state, thoughtsFrom)),
         }
@@ -286,8 +356,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   if (!sameContext) {
     // wait until after MultiGesture has cleared the error so this alert does no get cleared
     setTimeout(() => {
-      const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
-      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(headValue(thoughtsTo)) + '"'
+      const alertFrom = '"' + ellipsize(fromThought.value) + '"'
+      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(toThought.value) + '"'
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`))
       clearTimeout(globals.errorTimer)
@@ -316,45 +386,51 @@ const NoChildren = ({
   allowSingleContext?: boolean
   children: Child[]
   simplePath: SimplePath
-}) => (
-  <div className='children-subheading text-note text-small'>
-    This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
-    <br />
-    <br />
-    <span>
-      {isTouch ? (
-        <span className='gesture-container'>
-          Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
-        </span>
+}) => {
+  const store = useStore<State>()
+
+  const { value } = store.getState().thoughts.contextIndex[head(simplePath)]
+
+  return (
+    <div className='children-subheading text-note text-small'>
+      This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
+      <br />
+      <br />
+      <span>
+        {isTouch ? (
+          <span className='gesture-container'>
+            Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
+          </span>
+        ) : (
+          <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
+        )}{' '}
+        to add "{value}" to a new context.
+      </span>
+      <br />
+      {allowSingleContext ? (
+        'A floating context... how interesting.'
       ) : (
-        <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
-      )}{' '}
-      to add "{headValue(simplePath)}" to a new context.
-    </span>
-    <br />
-    {allowSingleContext ? (
-      'A floating context... how interesting.'
-    ) : (
-      // @MIGRATION_NOTE: toogle view is disabled for the migration
-      // <span>
-      //   {isTouch ? (
-      //     <span className='gesture-container'>
-      //       Swipe{' '}
-      //       <GestureDiagram
-      //         path={toggleContextViewShortcut.gesture as GesturePath}
-      //         size={30}
-      //         color='darkgray' /* mtach .children-subheading color */
-      //       />
-      //     </span>
-      //   ) : (
-      //     <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
-      //   )}{' '}
-      //   to return to the normal view.
-      // </span>
-      <></>
-    )}
-  </div>
-)
+        // @MIGRATION_NOTE: toogle view is disabled for the migration
+        // <span>
+        //   {isTouch ? (
+        //     <span className='gesture-container'>
+        //       Swipe{' '}
+        //       <GestureDiagram
+        //         path={toggleContextViewShortcut.gesture as GesturePath}
+        //         size={30}
+        //         color='darkgray' /* mtach .children-subheading color */
+        //       />
+        //     </span>
+        //   ) : (
+        //     <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
+        //   )}{' '}
+        //   to return to the normal view.
+        // </span>
+        <></>
+      )}
+    </div>
+  )
+}
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
 const EmptyChildrenDropTarget = ({
@@ -431,6 +507,7 @@ export const SubthoughtsComponent = ({
   isExpanded,
   zoomCursor,
   zoomParent,
+  actualDistance,
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
@@ -444,8 +521,9 @@ export const SubthoughtsComponent = ({
     globalSort
   const { cursor } = state
   const context = pathToContext(state, simplePath)
-  const value = headValue(simplePath)
-  const resolvedPath = path ?? simplePath
+
+  const thought = state.thoughts.contextIndex[head(simplePath)]
+  const { value } = thought
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
@@ -466,7 +544,7 @@ export const SubthoughtsComponent = ({
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
   const children =
     childrenForced || showContexts
-      ? getContextsSortedAndRanked(state, headValue(simplePath))
+      ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : sortPreference?.type !== 'None'
       ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
       : getChildrenRanked(state, pathToContext(state, contextBinding || simplePath))
@@ -504,76 +582,6 @@ export const SubthoughtsComponent = ({
     return null
   }
   const isPaginated = show && filteredChildren.length > proposedPageSize
-  // expand root, editing path, and contexts previously marked for expansion in setCursor
-
-  /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
-  const zoomParentEditing = () =>
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath)
-
-  const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
-
-  const cursorContext = cursor ? pathToContext(state, cursor) : null
-
-  const isCursorLeaf = cursor && isLeaf(state, cursorContext!)
-
-  const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
-
-  /** First visible thought at the top. */
-  const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path
-
-  const isDescendantOfFirstVisiblePath = isDescendant(
-    // TODO: Add support for [ROOT] to isDescendant
-    pathToContext(state, firstVisiblePath || ([] as unknown as Path)),
-    pathToContext(state, resolvedPath),
-  )
-
-  const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
-
-  const isAncestorOfCursor =
-    cursor && resolvedPath.length === cursorSubcontextIndex + 1 && cursor?.length > resolvedPath.length
-
-  const isDescendantOfCursor =
-    cursor && cursor.length === cursorSubcontextIndex + 1 && resolvedPath.length > cursor?.length
-
-  const isCursor = cursor && resolvedPath.length === cursorSubcontextIndex + 1 && resolvedPath.length === cursor?.length
-  const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
-
-  /*
-    The thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
-  */
-  const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
-
-  /*
-    Note:
-
-    # Thoughts that should not be dimmed
-      - Cursor and its descendants.
-      - Thoughts that are both descendant of the first visible thought and ancestor of the cursor.
-      - Siblings of the cursor if the cursor is a leaf thought.
-
-    # Thoughts that should be dimmed
-      - first visible thought should be dimmed if it is not direct parent of the cursor.
-      - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
-  */
-  const shouldDim =
-    cursor && isDescendantOfFirstVisiblePath && !(isCursorParent && isCursorLeaf) && !isCursor && !isDescendantOfCursor
-
-  /*
-    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
-  */
-
-  /*
-    Note: The following properties is applied to the immediate childrens with given class.
-
-    distance-from-cursor-0 fully visible
-    distance-from-cursor-1 dimmed
-    distance-from-cursor-2 shifted left and hidden
-    distance-from-cursor-3 shiifted left and hidden
-
-    Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
-  */
-  const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
 
   const contextChildren = [...unroot(context), '=children'] // children of parent with =children
   const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren

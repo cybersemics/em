@@ -29,7 +29,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   const simplePath = simplifyPath(state, cursor)
 
   // can delete if the current thought is a divider
-  if (isDivider(headValue(cursor))) return true
+  if (isDivider(headValue(state, cursor))) return true
 
   // can't delete in context view (TODO)
   const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
@@ -60,12 +60,16 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
   const children = getChildren(state, contextOfCursor)
 
   if (prevThought && uneditable) {
-    dispatch(error({ value: `'${ellipsize(headValue(cursor))}' is uneditable and cannot be merged.` }))
+    dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))
     return
   }
 
   // empty thought on mobile
-  if (isTouch && editing && ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor)))) {
+  if (
+    isTouch &&
+    editing &&
+    ((headValue(state, cursor) === '' && children.length === 0) || isDivider(headValue(state, cursor)))
+  ) {
     asyncFocus()
   }
 
@@ -85,7 +89,7 @@ const canExecuteOutdent = (state: State) => {
     cursor &&
     offset === 0 &&
     isDocumentEditable() &&
-    headValue(cursor).length !== 0 &&
+    headValue(state, cursor).length !== 0 &&
     getChildren(state, parentOf(pathToContext(state, cursor))).length === 1
   )
 }
@@ -95,7 +99,7 @@ const isMergedThoughtDuplicate = (state: State) => {
   const { cursor, editingValue } = state
   if (!cursor) return false
   // If we are going to delete empty thought
-  if (headValue(cursor) === '' || editingValue === '') return false
+  if (headValue(state, cursor) === '' || editingValue === '') return false
 
   const simplePath = simplifyPath(state, cursor)
   const prevThought = getThoughtBefore(state, simplePath)
@@ -103,7 +107,7 @@ const isMergedThoughtDuplicate = (state: State) => {
   const contextChain = splitChain(state, cursor)
   const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
   const path = lastThoughtsFromContextChain(state, contextChain)
-  const mergedThoughtValue = prevThought.value + headValue(cursor)
+  const mergedThoughtValue = prevThought.value + headValue(state, cursor)
   const context = pathToContext(
     state,
     showContexts && contextChain.length > 1

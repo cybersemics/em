@@ -42,8 +42,9 @@ const TutorialStepAutoExpand = ({ cursor } = {}) => {
               </Fragment>
               <Fragment>
                 {' '}
-                to hide{(isCursorLeaf ? headValue(cursor) : cursorChildren[0].value).length === 0 && ' the empty '}{' '}
-                subthought {isCursorLeaf ? headValue(cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.
+                to hide
+                {(isCursorLeaf ? headValue(state, cursor) : cursorChildren[0].value).length === 0 && ' the empty '}{' '}
+                subthought {isCursorLeaf ? headValue(state, cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.
               </Fragment>
             </Fragment>
           ) : (

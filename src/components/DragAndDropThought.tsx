@@ -20,8 +20,7 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  headId,
-  headValue,
+  head,
   isDescendantPath,
   isDocumentEditable,
   isEM,
@@ -41,6 +40,7 @@ import {
   rootedParentOf,
   visibleDistanceAboveCursor,
 } from '../selectors'
+import { Path } from '../@types'
 
 export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerProps &
   ReturnType<typeof dragCollect> &
@@ -130,6 +130,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
+  const toThought = state.thoughts.contextIndex[head(thoughtsTo)]
+  const fromThought = state.thoughts.contextIndex[head(thoughtsFrom as Path)]
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedParentOf(state, thoughtsFrom)
   const newContext = rootedParentOf(state, thoughtsTo)
@@ -147,13 +149,13 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
   const parent = unroot(parentOf(thoughtsTo))
-  const newPath = appendToPath(parent, headId(thoughtsFrom))
+  const newPath = appendToPath(parent, head(thoughtsFrom))
 
   const newRank = getRankBefore(state, thoughtsTo)
   store.dispatch(
     props.showContexts
       ? createThought({
-          value: headValue(thoughtsTo),
+          value: toThought.value,
           context: pathToContext(state, thoughtsFrom),
           rank: getNextRank(state, thoughtsFrom),
         })
@@ -164,12 +166,14 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
         }),
   )
 
+  const parentThought = state.thoughts.contextIndex[head(parentOf(thoughtsTo))]
+
   // alert user of move to another context
   if (!sameContext) {
     // wait until after MultiGesture has cleared the error so this alert does not get cleared
     setTimeout(() => {
-      const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
-      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(headValue(parentOf(thoughtsTo))) + '"'
+      const alertFrom = '"' + ellipsize(fromThought.value) + '"'
+      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
       clearTimeout(globals.errorTimer)

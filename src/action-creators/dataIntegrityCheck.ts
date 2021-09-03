@@ -2,17 +2,7 @@ import _ from 'lodash'
 import { Thunk, Path, ThoughtContext } from '../@types'
 
 // util
-import {
-  parentOf,
-  equalThoughtValue,
-  hashThought,
-  head,
-  headRank,
-  headValue,
-  pathToContext,
-  timestamp,
-  headId,
-} from '../util'
+import { parentOf, equalThoughtValue, hashThought, head, pathToContext, timestamp, headId } from '../util'
 
 // selectors
 import {
@@ -47,9 +37,9 @@ const dataIntegrityCheck =
     if (splitChain(state, path).length > 1) return
 
     const contextIndex = state.thoughts.contextIndex ?? {}
-    const thoughtRanked = head(path)
-    const value = headValue(path)
-    const rank = headRank(path)
+
+    const thought = state.thoughts.contextIndex[head(path)]
+    const { rank, value } = thought
     const context = pathToContext(state, path)
     const encoded = headId(path)
     const lexeme = getLexeme(state, value)
@@ -177,7 +167,7 @@ const dataIntegrityCheck =
 
         if (contextIndexThoughtsMatchingValue.length > 0) {
           const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(
-            thought => thought.id === thoughtRanked,
+            thought => thought.id === thoughtId,
           )
           if (thoughtsMatchingValueAndRank.length === 0) {
             // const contextIndexRank = contextIndexThoughtsMatchingValue[0].rank

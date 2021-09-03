@@ -117,6 +117,7 @@ it('do not allow edit to duplicate thought', async () => {
   expect(rootSubthoughts).toHaveLength(3)
 })
 
+// @MIGRATION_TODO: On hitting enter in the last empty visible child, it triggers outdent. So the following test fails because it is triggering outdent. Previously it was working because `isLastVisibleChild` had a bug that it is always false for child of root context.
 it('allow duplicate empty thoughts', async () => {
   // create empty thought
   windowEvent('keydown', { key: 'Enter' })

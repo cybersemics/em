@@ -4,7 +4,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { equalArrays, pathToContext } from '../../util'
 import { importText, setCursor } from '../../action-creators'
 import Subthoughts from '../Subthoughts'
-import { Context, Path, SimplePath } from '../../@types'
+import { Context, Path, SimplePath, State } from '../../@types'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
@@ -17,14 +17,14 @@ interface ThoughtOrSubthoughtsComponent {
 }
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given thoughts path. */
-const wherePath = (context: Context) => (node: ThoughtOrSubthoughtsComponent) => {
+const wherePath = (state: State, context: Context) => (node: ThoughtOrSubthoughtsComponent) => {
   const path = node.props().path ?? node.props().simplePath
-  return !!path && equalArrays(pathToContext(path), context)
+  return !!path && equalArrays(pathToContext(state, path), context)
 }
 
 /** Returns the children component inside the Subthoughts for the given context. */
-const getChildrenComponent = (context: Context) => {
-  const subthoughtsWrapper = wrapper.find(Subthoughts).filterWhere(wherePath(context)).first()
+const getChildrenComponent = (state: State, context: Context) => {
+  const subthoughtsWrapper = wrapper.find(Subthoughts).filterWhere(wherePath(state, context)).first()
 
   return subthoughtsWrapper.find('.children').at(0)
 }
@@ -68,9 +68,9 @@ it('ancestors should be visible only up to allowed distance from cursor', () => 
   // update DOM
   wrapper.update()
 
-  const childrenC = getChildrenComponent(['a', 'b', 'c'])
-  const childrenB = getChildrenComponent(['a', 'b'])
-  const childrenA = getChildrenComponent(['a'])
+  const childrenC = getChildrenComponent(store.getState(), ['a', 'b', 'c'])
+  const childrenB = getChildrenComponent(store.getState(), ['a', 'b'])
+  const childrenA = getChildrenComponent(store.getState(), ['a'])
 
   expect(childrenC.hasClass('distance-from-cursor-1')).toBe(true)
   expect(childrenB.hasClass('distance-from-cursor-2')).toBe(true)
@@ -100,9 +100,9 @@ it('descendants of hidden ancestor must be hidden too', () => {
   // update DOM
   wrapper.update()
 
-  const childrenC = getChildrenComponent(['a', 'b'])
-  const childrenE = getChildrenComponent(['a', 'e'])
-  const childrenF = getChildrenComponent(['a', 'e', 'f'])
+  const childrenC = getChildrenComponent(store.getState(), ['a', 'b'])
+  const childrenE = getChildrenComponent(store.getState(), ['a', 'e'])
+  const childrenF = getChildrenComponent(store.getState(), ['a', 'e', 'f'])
 
   expect(childrenC.hasClass('distance-from-cursor-1')).toBe(true)
   expect(childrenE.hasClass('distance-from-cursor-2')).toBe(true)
@@ -132,8 +132,8 @@ it('when the cursor is on a table grandchild leaf (column 2), other grandchildre
   // update DOM
   wrapper.update()
 
-  const childrenB = getChildrenComponent(['a', 'b'])
-  const childrenK = getChildrenComponent(['a', 'k'])
+  const childrenB = getChildrenComponent(store.getState(), ['a', 'b'])
+  const childrenK = getChildrenComponent(store.getState(), ['a', 'k'])
 
   expect(childrenB.hasClass('distance-from-cursor-1')).toBe(true)
   expect(childrenK.hasClass('distance-from-cursor-1')).toBe(true)
@@ -159,9 +159,9 @@ it('when the cursor is null, all thoughts should be visible and not dimmed', () 
   // update DOM
   wrapper.update()
 
-  const childrenC = getChildrenComponent(['a', 'b', 'c'])
-  const childrenB = getChildrenComponent(['a', 'b'])
-  const childrenA = getChildrenComponent(['a'])
+  const childrenC = getChildrenComponent(store.getState(), ['a', 'b', 'c'])
+  const childrenB = getChildrenComponent(store.getState(), ['a', 'b'])
+  const childrenA = getChildrenComponent(store.getState(), ['a'])
 
   expect(childrenC.hasClass('distance-from-cursor-0')).toBe(true)
   expect(childrenB.hasClass('distance-from-cursor-0')).toBe(true)
@@ -187,7 +187,7 @@ it('siblings of the leaf cursor should not be dimmed', () => {
   // update DOM
   wrapper.update()
 
-  const childrenA = getChildrenComponent(['a'])
+  const childrenA = getChildrenComponent(store.getState(), ['a'])
 
   expect(childrenA.hasClass('distance-from-cursor-0')).toBe(true)
 })
@@ -212,7 +212,7 @@ it('siblings of the non leaf cursor should be dimmed', () => {
   // update DOM
   wrapper.update()
 
-  const childrenA = getChildrenComponent(['a'])
+  const childrenA = getChildrenComponent(store.getState(), ['a'])
 
   expect(childrenA.hasClass('distance-from-cursor-1')).toBe(true)
 })

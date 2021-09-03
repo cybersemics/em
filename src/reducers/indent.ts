@@ -23,11 +23,15 @@ const indent = (state: State) => {
   // cancel if parent is readonly or unextendable
   else if (hasChild(state, pathToContext(state, parentOf(cursor)), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(cursor)}" may not be indented.`,
+      value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is read-only so "${headValue(
+        state,
+        cursor,
+      )}" may not be indented.`,
     })
   } else if (hasChild(state, pathToContext(state, parentOf(cursor)), '=uneditable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(
+      value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is unextendable so "${headValue(
+        state,
         cursor,
       )}" may not be indented.`,
     })

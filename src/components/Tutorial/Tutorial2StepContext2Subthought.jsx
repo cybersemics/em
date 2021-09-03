@@ -84,7 +84,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
             <TutorialHint>
               <br />
               <br />
-              {!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+              {!cursor || headValue(state, cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
                 ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". `
                 : null}
               {isTouch ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}

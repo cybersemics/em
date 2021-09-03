@@ -16,6 +16,7 @@ import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { Context, Index, Path, State, Timestamp } from '../@types'
 import { isEM } from './isEM'
 
+// @MIGRATION_TODO: Fix recently edited logic.
 export interface Leaf {
   leaf: true
   lastUpdated: Timestamp

@@ -3,7 +3,7 @@ import { isTouch } from '../browser'
 import { store } from '../store'
 import { rootedParentOf } from '../selectors'
 import { expandContextThought } from '../action-creators'
-import { headValue, isDivider, isDocumentEditable } from '../util'
+import { head, isDivider, isDocumentEditable } from '../util'
 
 // components
 import BulletCursorOverlay from './BulletCursorOverlay'
@@ -39,6 +39,8 @@ const StaticThought = ({
 
   const state = store.getState()
 
+  const { value } = state.thoughts.contextIndex[head(simplePath)]
+
   return (
     <View>
       {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && (
@@ -65,7 +67,7 @@ const StaticThought = ({
 
       {homeContext ? (
         <HomeLink />
-      ) : isDivider(headValue(simplePath)) ? (
+      ) : isDivider(value) ? (
         <Divider path={simplePath} />
       ) : (
         // cannot use simplePathLive here else Editable gets re-rendered during editing

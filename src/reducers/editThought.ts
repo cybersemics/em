@@ -5,7 +5,7 @@ import updateThoughts from './updateThoughts'
 import { Context, SimplePath, State, Timestamp } from '../@types'
 
 // util
-import { addContext, hashThought, headId, headRank, isDivider, removeContext, timestamp } from '../util'
+import { addContext, hashThought, headId, isDivider, removeContext, timestamp } from '../util'
 
 export interface editThoughtPayload {
   oldValue: string
@@ -25,7 +25,6 @@ const editThought = (
 
   // thoughts may exist for both the old value and the new value
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
-  const rank = headRank(path)
   const editedThoughtId = headId(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
@@ -51,6 +50,8 @@ const editThought = (
     console.error('Parent not found')
     return state
   }
+
+  const { rank } = editedThought
 
   const archived = editedThought.archived
 

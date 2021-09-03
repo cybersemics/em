@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { connect } from 'react-redux'
+import { connect, useStore } from 'react-redux'
 import { store } from '../store'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
@@ -324,43 +324,46 @@ const NoChildren = ({
   allowSingleContext?: boolean
   children: Child[]
   simplePath: SimplePath
-}) => (
-  <div className='children-subheading text-note text-small'>
-    This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
-    <br />
-    <br />
-    <span>
-      {isTouch ? (
-        <span className='gesture-container'>
-          Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
-        </span>
-      ) : (
-        <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
-      )}{' '}
-      to add "{headValue(simplePath)}" to a new context.
-    </span>
-    <br />
-    {allowSingleContext ? (
-      'A floating context... how interesting.'
-    ) : (
+}) => {
+  const store = useStore<State>()
+  return (
+    <div className='children-subheading text-note text-small'>
+      This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
+      <br />
+      <br />
       <span>
         {isTouch ? (
           <span className='gesture-container'>
-            Swipe{' '}
-            <GestureDiagram
-              path={toggleContextViewShortcut.gesture as GesturePath}
-              size={30}
-              color='darkgray' /* mtach .children-subheading color */
-            />
+            Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
           </span>
         ) : (
-          <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
+          <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
         )}{' '}
-        to return to the normal view.
+        to add "{headValue(store.getState(), simplePath)}" to a new context.
       </span>
-    )}
-  </div>
-)
+      <br />
+      {allowSingleContext ? (
+        'A floating context... how interesting.'
+      ) : (
+        <span>
+          {isTouch ? (
+            <span className='gesture-container'>
+              Swipe{' '}
+              <GestureDiagram
+                path={toggleContextViewShortcut.gesture as GesturePath}
+                size={30}
+                color='darkgray' /* mtach .children-subheading color */
+              />
+            </span>
+          ) : (
+            <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
+          )}{' '}
+          to return to the normal view.
+        </span>
+      )}
+    </div>
+  )
+}
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
 // const EmptyChildrenDropTarget = ({
@@ -473,7 +476,7 @@ export const SubthoughtsComponent = ({
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
   const children =
     childrenForced || showContexts
-      ? getContextsSortedAndRanked(state, headValue(simplePath))
+      ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : sortPreference?.type !== 'None'
       ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
       : getChildrenRanked(state, pathToContext(state, contextBinding || simplePath))

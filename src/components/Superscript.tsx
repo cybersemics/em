@@ -27,7 +27,7 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
   const editing =
     cursor &&
     equalArrays(cursorContext, pathToContext(state, props.simplePath || [])) &&
-    hasLexeme(state, headValue(cursor))
+    hasLexeme(state, headValue(state, cursor))
 
   const simplePath = props.showContexts && props.simplePath ? rootedParentOf(state, props.simplePath) : props.simplePath
 

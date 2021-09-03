@@ -34,7 +34,7 @@ const splitSentencesShortcut: Shortcut = {
   exec: (dispatch: Dispatch<Action | Thunk>, getState) => {
     const state = getState()
     const { cursor } = state
-    const value = headValue(cursor!)
+    const value = headValue(state, cursor!)
     const sentences = splitSentence(value)
 
     if (!sentences || sentences.length <= 1) {

@@ -59,7 +59,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, simplePath)
     const prevContext = once(() => {
-      const contexts = getContextsSortedAndRanked(state, headValue(thoughtsContextView))
+      const contexts = getContextsSortedAndRanked(state, headValue(state, thoughtsContextView))
       const removedContextIndex = contexts.findIndex(({ id }) => {
         const parentThought = getParentThought(state, id)
         return parentThought?.value === value
@@ -96,7 +96,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     state => {
       const next = once(() =>
         showContexts
-          ? getContextsSortedAndRanked(state, headValue(parentOf(simplePath)))[0]
+          ? getContextsSortedAndRanked(state, headValue(state, parentOf(simplePath)))[0]
           : firstVisibleChild(state, context),
       )
 

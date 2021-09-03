@@ -2,9 +2,9 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
-import { splitAtSelection, isDocumentEditable, head } from '../util'
+import { splitAtSelection, isDocumentEditable, head, isRoot } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
-import { isLastVisibleChild, simplifyPath } from '../selectors'
+import { isLastVisibleChild, rootedParentOf, simplifyPath } from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -42,6 +42,8 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   if (
     type === 'keyboard' &&
     cursor &&
+    // outdent should not get triggered if the cursor is child of root context
+    !isRoot(rootedParentOf(state, cursor)) &&
     cursorHeadThought?.value.length === 0 &&
     isLastVisibleChild(state, simplifyPath(state, cursor))
   ) {

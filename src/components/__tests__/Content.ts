@@ -34,7 +34,7 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
 
   store.dispatch(
     deleteThoughtWithCursor({
-      path: [{ id: hashContext(store.getState(), ['a']) || '', value: 'a', rank: 0 }],
+      path: [hashContext(store.getState(), ['a'])!],
     }),
   )
 
@@ -43,7 +43,7 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
 
   store.dispatch(
     deleteThoughtWithCursor({
-      path: [{ id: hashContext(store.getState(), ['b']) || '', value: 'b', rank: 1 }],
+      path: [hashContext(store.getState(), ['b'])!],
     }),
   )
 

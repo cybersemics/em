@@ -7,7 +7,7 @@ import getContextForThought from './getContextForThought'
 const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]): SimplePath => {
   if (contextChain.length === 1) return contextChain[0]
   const penult = contextChain[contextChain.length - 2]
-  const lexeme = getLexeme(state, headValue(penult))
+  const lexeme = getLexeme(state, headValue(state, penult))
 
   // guard against missing lexeme (although this should never happen)
   if (!lexeme) {

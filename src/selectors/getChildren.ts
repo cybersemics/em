@@ -10,9 +10,9 @@ import {
   sort,
   pathToContext,
   unroot,
-  headValue,
   isDescendant,
   splice,
+  head,
 } from '../util'
 import {
   Child,
@@ -171,20 +171,23 @@ export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath,
 
 /** Checks if a child lies within the cursor path. */
 const isChildInCursor = (state: State, path: Path, child: Parent) => {
-  return state.cursor && state.cursor[path.length] === child.id
+  const childPath = unroot([...path, child.id])
+  return state.cursor && state.cursor[childPath.length - 1] === child.id
 }
 
 /** Check if the cursor is a meta attribute && the given context is the descendant of the cursor.  */
 const isDescendantOfMetaCursor = (state: State, context: Context): boolean => {
   if (!state.cursor) return false
 
-  return isFunction(headValue(state.cursor)) && isDescendant(pathToContext(state, state.cursor), context)
+  const { value: cursorValue } = state.thoughts.contextIndex[head(state.cursor)]
+
+  return isFunction(cursorValue) && isDescendant(pathToContext(state, state.cursor), context)
 }
 
 /** Checks if the child is visible or if the child lies within the cursor or is descendant of the meta cursor. */
 const isChildVisibleWithCursorCheck = _.curry((state: State, path: SimplePath, thought: Parent) => {
   const context = pathToContext(state, path)
-  const childContext = [...context, thought.value]
+  const childContext = unroot([...context, thought.value])
 
   return (
     state.showHiddenThoughts ||
