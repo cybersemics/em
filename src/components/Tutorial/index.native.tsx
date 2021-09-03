@@ -35,6 +35,7 @@ import { View } from 'moti'
 import { fadeIn } from '../../style/animations'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { commonStyles } from '../../style/commonStyles'
+import { doStringsMatch } from '../../util/doStringsMatch'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
@@ -122,19 +123,19 @@ const Tutorial = () => {
         tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT &&
           cursor &&
-          headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT &&
           cursor &&
-          headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) ||
+          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT[tutorialChoice])) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT &&
           cursor &&
-          headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT &&
           cursor &&
-          headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT &&
           cursor &&
-          headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
+          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT[tutorialChoice]))) &&
       gesture() ? (
         <View style={alignItemsCenter}>
           <GestureDiagram path={gesture()!} size={40} strokeWidth={1} arrowSize={5} />
