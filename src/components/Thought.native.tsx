@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG, VIEW_MODE } from '../constants'
 import { compareReasonable } from '../util/compareThought'
 import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
 
@@ -52,6 +52,7 @@ import {
 } from '../selectors'
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
+import { StyleSheet } from 'react-native'
 import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
@@ -385,25 +386,27 @@ const ThoughtContainer = ({
       ? styleEnv
       : style
 
-  return (
-    <>
-      <View style={marginBottom}>
-        <View style={[directionRow, alignItemsCenter]}>
-          {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
-            <Bullet
-              isEditing={isEditing}
-              context={pathToContext(simplePath)}
-              leaf={isLeaf}
-              onClick={(e: React.MouseEvent) => {
-                if (!isEditing || children.length === 0) {
-                  e.stopPropagation()
-                  store.dispatch(setCursor({ path: simplePath }))
-                }
-              }}
-            />
-          )}
+  const isTableView = view === VIEW_MODE.Table
+  const isProseView = view === VIEW_MODE.Prose
 
-          {/* // Todo: still need to decide the best approach to implement the annotations.
+  return (
+    <View style={marginBottom}>
+      <View style={[directionRow, alignItemsCenter]}>
+        {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
+          <Bullet
+            isEditing={isEditing}
+            context={pathToContext(simplePath)}
+            leaf={isLeaf}
+            onClick={(e: React.MouseEvent) => {
+              if (!isEditing || children.length === 0) {
+                e.stopPropagation()
+                store.dispatch(setCursor({ path: simplePath }))
+              }
+            }}
+          />
+        )}
+
+        {/* // Todo: still need to decide the best approach to implement the annotations.
         <ThoughtAnnotation
           env={env}
           path={path}
@@ -415,45 +418,51 @@ const ThoughtContainer = ({
           simplePath={simplePath}
         /> */}
 
-          <StaticThought
-            env={env}
-            path={path}
-            cursorOffset={cursorOffset}
-            hideBullet
-            homeContext={homeContext}
-            isDraggable={isDraggable}
-            isDragging={isDragging}
-            isPublishChild={isPublishChild}
-            isEditing={isEditing}
-            isLeaf={isLeaf}
-            publish={publish}
-            rank={rank}
-            showContextBreadcrumbs={showContextBreadcrumbs}
-            showContexts={showContexts}
-            style={styleNew}
-            simplePath={simplePath}
-            toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
-            view={view}
-          />
-        </View>
-        <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
+        <StaticThought
+          env={env}
+          path={path}
+          cursorOffset={cursorOffset}
+          hideBullet
+          homeContext={homeContext}
+          isDraggable={isDraggable}
+          isDragging={isDragging}
+          isPublishChild={isPublishChild}
+          isEditing={isEditing}
+          isLeaf={isLeaf}
+          publish={publish}
+          rank={rank}
+          showContextBreadcrumbs={showContextBreadcrumbs}
+          showContexts={showContexts}
+          style={styleNew}
+          simplePath={simplePath}
+          toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
+          view={view}
+        />
       </View>
+      <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
 
       {publish && context.length === 0 && <Byline context={thoughts} />}
 
-      <Subthoughts
-        allowSingleContext={allowSingleContext}
-        childrenForced={childrenForced}
-        env={env}
-        path={path}
-        depth={depth}
-        isParentHovering={isAnyChildHovering}
-        showContexts={allowSingleContext}
-        simplePath={simplePath}
-      />
-    </>
+      <View style={[isProseView && styles.proseView, isTableView && styles.tableView]}>
+        <Subthoughts
+          allowSingleContext={allowSingleContext}
+          childrenForced={childrenForced}
+          env={env}
+          path={path}
+          depth={depth}
+          isParentHovering={isAnyChildHovering}
+          showContexts={allowSingleContext}
+          simplePath={simplePath}
+        />
+      </View>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  proseView: { marginLeft: 20 },
+  tableView: { justifyContent: 'flex-end', alignSelf: 'baseline' },
+})
 
 ThoughtContainer.displayName = 'ThoughtContainer'
 
