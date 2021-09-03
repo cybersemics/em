@@ -25,6 +25,15 @@ import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { State } from '../../@types'
 
+const tutorialSteps = [
+  TUTORIAL_STEP_START,
+  TUTORIAL_STEP_SUCCESS,
+  TUTORIAL2_STEP_START,
+  TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
+  TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
+  TUTORIAL2_STEP_SUCCESS,
+]
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationNext = () => {
   const { cursor, expanded, rootChildren, tutorialChoice, tutorialStep } = useSelector((state: State) => {
@@ -45,23 +54,23 @@ const TutorialNavigationNext = () => {
   })
   const dispatch = useDispatch()
 
-  return [
-    TUTORIAL_STEP_START,
-    TUTORIAL_STEP_SUCCESS,
-    TUTORIAL2_STEP_START,
-    TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
-    TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
-    TUTORIAL2_STEP_SUCCESS,
-  ].includes(tutorialStep) ||
-    (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0) ||
-    ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
-      tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
-      tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
-      (!cursor || headValue(cursor).length > 0)) ||
-    (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
-      context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
-    (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&
-      context2SubthoughtCreated({ rootChildren, tutorialChoice })) ? (
+  /** Check if user has completed a tutorial step. */
+  const isTutorialStepCompleted = (): boolean => {
+    return (
+      tutorialSteps.includes(tutorialStep) ||
+      (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0) ||
+      ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
+        tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
+        tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
+        (!cursor || headValue(cursor).length > 0)) ||
+      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
+        context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
+      (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&
+        context2SubthoughtCreated({ rootChildren, tutorialChoice }))
+    )
+  }
+
+  return isTutorialStepCompleted() ? (
     <TutorialNavigationButton
       clickHandler={() => dispatch(tutorialNext({}))}
       value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}
