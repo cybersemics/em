@@ -20,6 +20,7 @@ import StaticSuperscript from '../StaticSuperscript'
 import { Child, Path, ThoughtContext } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
+import { doStringsMatch } from '../../util/doStringsMatch'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT2_PARENT
 
@@ -36,10 +37,10 @@ const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }: IComponentP
   const state = store.getState()
   // e.g. Work
   return (
-    rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
+    rootChildren.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
     // e.g. Work/To Do
-    getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(
-      child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+    getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child =>
+      doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
     ) &&
     // e.g. Work/To Do/y
     getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
@@ -90,12 +91,10 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
       </Text>
       {
         // e.g. Work
-        rootChildren.find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),
-        ) &&
+        rootChildren.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
         // e.g. Work/To Do
-        getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+        getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child =>
+          doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
         ) ? (
           <>
             <Text style={smallText}>Do you remember how to do it?</Text>

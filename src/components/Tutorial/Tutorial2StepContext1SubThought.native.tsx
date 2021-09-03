@@ -16,6 +16,7 @@ import { context1SubthoughtCreated } from './TutorialUtils'
 import { Child, Path } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
+import { doStringsMatch } from '../../util/doStringsMatch'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 
@@ -53,18 +54,16 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
       </Text>
       {
         // e.g. Home
-        rootChildren.find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
-        ) &&
+        rootChildren.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) &&
         // e.g. Home/To Do
-        getChildrenRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+        getChildrenRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child =>
+          doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
         ) ? (
           <Text style={smallText}>
             Do you remember how to do it?
             <TutorialHint>
               <Text style={smallText}>
-                {!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+                {!cursor || !doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT[tutorialChoice])
                   ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". `
                   : null}
                 Trace the line below with your finger to create a new thought{' '}

@@ -13,6 +13,7 @@ import {
 import { Child, Path } from '../../@types'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
+import { doStringsMatch } from '../../util/doStringsMatch'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 
@@ -39,9 +40,7 @@ const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootChildren }: ICompon
       Add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <Text style={[smallText, italic]}>within</Text> “
       {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”.
     </Text>
-    {rootChildren.find(
-      child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
-    ) ? (
+    {rootChildren.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) ? (
       <Text style={smallText}>
         Do you remember how to do it?
         <TutorialHint>

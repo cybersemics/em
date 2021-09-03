@@ -15,10 +15,8 @@ const TutorialStepSubThoughtEnter = ({ cursor }: IComponentProps) => (
   <Fragment>
     <Text style={smallText}>
       As you can see{isTouch ? ' (if you scroll down)' : ''}, the new thought
-      {cursor && cursor.length > 1 && headValue(cursor).length > 0 ? (
-        <Fragment> "{ellipsize(headValue(cursor))}"</Fragment>
-      ) : null}{' '}
-      is nested <Text style={[smallText, italic]}>within</Text>{' '}
+      {cursor && cursor.length > 1 && headValue(cursor).length > 0 ? `${ellipsize(headValue(cursor))}` : null} is nested{' '}
+      <Text style={[smallText, italic]}>within</Text>{' '}
       {cursor && cursor.length > 1 ? (
         <Text style={smallText}>{ellipsize(headValue(parentOf(cursor)))}</Text>
       ) : (

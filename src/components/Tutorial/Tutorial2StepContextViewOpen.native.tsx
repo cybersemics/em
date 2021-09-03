@@ -10,6 +10,7 @@ import { getContexts } from '../../selectors'
 import { Child, Path } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
+import { doStringsMatch } from '../../util/doStringsMatch'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 
@@ -29,7 +30,7 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }: 
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
 
   const context = hashContext([
-    (cursor && cursor[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+    (cursor && doStringsMatch(cursor[0].value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])
       ? TUTORIAL_CONTEXT1_PARENT
       : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
     TUTORIAL_CONTEXT[tutorialChoice],
@@ -38,9 +39,9 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }: 
   return !cursor ||
     !cursor.some(
       child =>
-        child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||
-        child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase() ||
-        child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+        doStringsMatch(child.value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice]) ||
+        doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice]) ||
+        doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
     ) ? (
     <Text style={smallText}>
       Oops, "{caseSensitiveValue}" is hidden because the selection changed. Select "
