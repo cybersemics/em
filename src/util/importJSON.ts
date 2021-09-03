@@ -127,6 +127,10 @@ const saveThoughts = (
 
   const updates = blocks.reduce<SaveThoughtsUpdate>(
     (accum, block, index) => {
+      if (block.scope == null) {
+        console.error('Invalid block scope', block)
+        return accum
+      }
       const skipLevel = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
       const rank = startRank + index * rankIncrement
 
