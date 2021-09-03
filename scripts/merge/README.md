@@ -8,7 +8,7 @@ npm run build
 
 ## Usage
 
-`node build/scripts/merge/index.js sample/em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export.json sample/em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-EDITED.json`
+`node build/scripts/merge/index.js sample/em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export.json sample/backups`
 
 Outputs two files:
 
