@@ -32,22 +32,53 @@ global.localStorage = memoryStore()
  ************************************************************************/
 
 import { HOME_TOKEN } from '../../src/constants'
-import { hashContext, hashThought, head, initialState, isRoot, unroot } from '../../src/util'
-import { Child, Context, Index, Parent, State } from '../../src/@types'
+import { hashContext, hashThought, head, initialState, isRoot, keyValueBy, unroot } from '../../src/util'
 import { exportContext, hasLexeme } from '../../src/selectors'
 import { importText } from '../../src/reducers'
+import {
+  Child,
+  Context,
+  Index,
+  Lexeme,
+  Parent,
+  State,
+  Timestamp,
+  ThoughtContext,
+  ThoughtIndices,
+} from '../../src/@types'
 
 /*************************************************************************
  * TYPES
  ************************************************************************/
 
 interface Database {
-  users: Index<UserThoughts>
+  users: Index<FirebaseThoughts>
 }
 
-interface UserThoughts {
-  thoughtIndex: State['thoughts']['thoughtIndex']
-  contextIndex: State['thoughts']['contextIndex']
+interface FirebaseParent {
+  id?: string
+  // firebase stores arrays as objects
+  children: Index<Child>
+  context: Context
+  lastUpdated: Timestamp
+  pending?: boolean
+  updatedBy: string
+}
+
+interface FirebaseLexeme {
+  id?: string
+  value: string
+  // firebase stores arrays as objects
+  contexts: Index<ThoughtContext>
+  created: Timestamp
+  lastUpdated: Timestamp
+  updatedBy?: string
+}
+
+interface FirebaseThoughts {
+  contextIndex: Index<FirebaseParent>
+  // Firebase thoughtIndex is actually a FirebaseLexeme, but exportContext doesn't use it so we can quiet the type checker
+  thoughtIndex: Index<Lexeme>
 }
 
 interface ErrorLog {
@@ -72,9 +103,54 @@ const stateBlank = initialState()
  * SCRIPT
  *****************************************************************/
 
+/** Read a thought database from file and convert arrays that are stored in Firebase as objects to proper arrays. */
+const readThoughts = (file: string): FirebaseThoughts => {
+  const input = fs.readFileSync(file, 'utf-8')
+  const db = JSON.parse(input) as Database | FirebaseThoughts
+  return (db as Database).users?.[userId] || (db as FirebaseThoughts)
+}
+
+/** Reads thoughts that were exported from Firebase. Converts Parent children to proper arrays. */
+const convertParentChildren = (thoughts: FirebaseThoughts): ThoughtIndices => {
+  const contextIndex = keyValueBy(thoughts.contextIndex, (key, parent) => {
+    return {
+      [key]: {
+        ...parent,
+        children: Object.values(parent.children || {}),
+      },
+    }
+  })
+
+  return {
+    contextIndex,
+    thoughtIndex: thoughts.thoughtIndex,
+  }
+}
+
 /** Merges thoughts into current state using importText to handle duplicates and merged descendants. */
-const mergeThoughts = (state: State, thoughts: UserThoughts) => {
-  const html = exportContext({ ...stateBlank, thoughts: thoughts }, [HOME_TOKEN])
+const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
+  const numParents = Object.keys(thoughts.contextIndex).length
+  // console.info(`Recalculating ${numParents} contextIndex hashes`)
+  // recalculate contextIndex hashes
+  // thoughtIndex is not used by exportContext, so we don't have to rehash it
+  // const contextIndexRehashed = keyValueBy(thoughts.contextIndex, (key, parent) => {
+  //   const keyNew = Array.isArray(parent.context) ? hashContext(parent.context) : key
+  //   return {
+  //     [keyNew]: {
+  //       ...parent,
+  //       id: keyNew,
+  //     },
+  //   }
+  // })
+  console.info(`Exporting HTML of ${numParents} parents for re-import`)
+  const html = exportContext(
+    {
+      ...stateBlank,
+      thoughts,
+    },
+    [HOME_TOKEN],
+  )
+  console.info('Importing new thoughts into current db')
   const stateNew = importText(state, { text: html })
   return stateNew
 }
@@ -95,9 +171,9 @@ const main = () => {
 
   // read base thoughts
   console.info(`Reading current thoughts: ${file1}`)
-  const input1 = fs.readFileSync(file1, 'utf-8')
-  const dbCurrent = JSON.parse(input1) as Database | UserThoughts
-  const thoughtsCurrent = (dbCurrent as Database).users?.[userId] || (dbCurrent as UserThoughts)
+  const thoughtsCurrentRaw = readThoughts(file1)
+  console.info('Converting Parent children to proper arrays')
+  const thoughtsCurrent = convertParentChildren(thoughtsCurrentRaw)
 
   // read thoughts to be imported
   // this can be a directory or a file
@@ -113,12 +189,13 @@ const main = () => {
     // skip hidden files including .DS_Store
     if (path.basename(file).startsWith('.')) return
 
-    let dbImport: Database | UserThoughts | null = null
+    let thoughtsImported: ThoughtIndices
 
     try {
-      console.info(`Reading thoughts to import: ${file}`)
-      const input = fs.readFileSync(file, 'utf-8')
-      dbImport = JSON.parse(input) as Database | UserThoughts
+      console.info(`Reading thoughts: ${file}`)
+      const thoughtsImportedRaw = readThoughts(file)
+      console.info('Converting Parent children to proper arrays')
+      thoughtsImported = convertParentChildren(thoughtsImportedRaw)
     } catch (e) {
       console.error('Error reading')
       errors.push({ e: e as Error, file, message: 'Error reading' })
@@ -126,10 +203,6 @@ const main = () => {
     }
 
     try {
-      const thoughtsImported = (dbImport as unknown as Database).users?.[userId] || dbImport
-      const numParents = Object.keys(thoughtsImported.contextIndex).length
-      const numLexemes = Object.keys(thoughtsImported.thoughtIndex).length
-      console.info(`Merging ${numParents} parents and ${numLexemes} lexemes`)
       stateNew = mergeThoughts(stateNew, thoughtsImported)
     } catch (e) {
       console.error('Error merging')
