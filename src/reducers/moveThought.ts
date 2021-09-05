@@ -113,9 +113,10 @@ const moveThought = (
   // find id of head thought from exact thought if not available in oldPath
   const id = headId(oldSimplePath) || exactThought?.id || null
   if (!id) {
-    console.warn('moveThought: oldSimplePath does not have an id and exactThought was not found.')
-    console.warn('oldSimplePath', oldSimplePath)
-    console.warn('lexemeOld.contexts', lexemeOld.contexts)
+    // disable for merge script
+    // console.warn('moveThought: oldSimplePath does not have an id and exactThought was not found.')
+    // console.warn('oldSimplePath', oldSimplePath)
+    // console.warn('lexemeOld.contexts', lexemeOld.contexts)
   }
 
   // if move is used for archive then update the archived field to latest timestamp
