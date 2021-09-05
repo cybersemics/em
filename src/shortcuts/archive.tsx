@@ -2,16 +2,7 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { isTouch } from '../browser'
 import { hasChild } from '../selectors'
-import {
-  asyncFocus,
-  ellipsize,
-  isDocumentEditable,
-  headValue,
-  isEM,
-  isRoot,
-  pathToContext,
-  setSelection,
-} from '../util'
+import { asyncFocus, ellipsize, isDocumentEditable, isEM, isRoot, pathToContext, setSelection, head } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
 
@@ -28,11 +19,12 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   const { cursor, noteFocus } = state
 
   if (cursor) {
+    const cursorThought = state.thoughts.contextIndex[head(cursor)]
     const context = pathToContext(state, cursor)
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
     } else if (hasChild(state, context, '=readonly')) {
-      dispatch(error({ value: `"${ellipsize(headValue(state, cursor))}" is read-only and cannot be archived.` }))
+      dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const editable = e.target ? editableOfNote(e.target as HTMLElement) : null
       dispatch(deleteAttribute({ context, key: '=note' }))
@@ -84,7 +76,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 )
 
 const archiveShortcut: Shortcut = {
-  id: 'delete',
+  id: 'archive',
   label: 'Archive',
   description: 'Archive the current thought.',
   gesture: 'ldl',
@@ -101,25 +93,14 @@ export const archiveAliases: Shortcut = {
   hideFromInstructions: true,
   gesture: [
     'ldlr',
-    'ldldr',
-    'ldldlr',
-    'ldldldr',
     'lrdl',
     'lrdrl',
     'lrdldr',
     'lrdldlr',
     'ldru',
     'ldrlru',
-    'ldldlru',
-    'ldldrlru',
     'ldllru',
-    'ldldrld',
-    'ldldldld',
-    'ldld',
-    'ldldld',
     'ldlru',
-    'ldldru',
-    'ldldldru',
     'lrdru',
     'lrdlru',
     'lrdldru',

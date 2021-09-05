@@ -1,9 +1,10 @@
+import { head } from '.'
 import { Path } from '../@types'
-import { headId } from './headId'
+import { isMobile } from './isMobile'
 
 /** Returns the editable DOM node of the given thoughts. */
 export const editableNode = (path: Path): HTMLElement | null => {
-  // const rank = headRank(path)
+  if (isMobile()) return null
   // also selects dividers
-  return (document.getElementsByClassName('editable-' + headId(path))[0] as HTMLElement) || null
+  return (document.getElementsByClassName('editable-' + head(path))[0] as HTMLElement) || null
 }

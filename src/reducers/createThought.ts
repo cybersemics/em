@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getLexeme, getAllChildren, getParent, getNextRank } from '../selectors'
+import { getNextRank, getLexeme, getAllChildren, getParent } from '../selectors'
 import { createId, hashThought, head, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, State } from '../@types'
+import { getSessionId } from '../util/sessionManager'
 
 interface Payload {
   context: Context
@@ -24,6 +25,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }),
   }
 
@@ -51,6 +53,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       id: parent.id,
       children,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
 
     contextIndexUpdates[id] = {
@@ -60,18 +63,21 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       lastUpdated: timestamp(),
       rank: addAsContext ? getNextRank(state, [value]) : rank,
       value: newValue,
+      updatedBy: getSessionId(),
     }
   }
 
   // if adding as the context of an existing thought
-  let subthoughtNew // eslint-disable-line fp/no-let
+  let lexemeNew: Lexeme | undefined // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const subthoughtOld = getLexeme(state, head(context))
-    subthoughtNew = Object.assign({}, subthoughtOld, {
-      contexts: (subthoughtOld?.contexts || []).concat(id),
-      created: subthoughtOld?.created || timestamp(),
+    const lexemeOld = state.thoughts.thoughtIndex[head(context)]
+    lexemeNew = {
+      ...lexemeOld!,
+      contexts: (lexemeOld?.contexts || []).concat(id),
+      created: lexemeOld?.created || timestamp(),
       lastUpdated: timestamp(),
-    })
+      updatedBy: getSessionId(),
+    }
   } else {
     lexeme.contexts = !lexeme.contexts
       ? []
@@ -83,9 +89,9 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
 
   const thoughtIndexUpdates = {
     [hashThought(lexeme.value)]: lexeme,
-    ...(subthoughtNew
+    ...(lexemeNew
       ? {
-          [hashThought(subthoughtNew.value)]: subthoughtNew,
+          [hashThought(lexemeNew.value)]: lexemeNew,
         }
       : null),
   }

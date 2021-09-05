@@ -26,6 +26,7 @@ export interface ModalProps {
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
   title: string
   top?: number
+  preventCloseOnEscape?: boolean
 }
 
 /** Retrieves the { x, y } coordinates of the selection range. */
@@ -55,7 +56,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
        * A handler that closes the modal when the escape key is pressed.
        */
       this.escapeListener = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
+        if (e.key === 'Escape' && !this.props.preventCloseOnEscape) {
           e.stopPropagation()
           this.close!()
         }
@@ -129,13 +130,11 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         style={Object.assign(
           {},
           style,
-          top ? { top: 55 } : null,
-          positionAtCursor
-            ? {
-                top: cursorCoords.y,
-                left: cursorCoords.x,
-              }
-            : null,
+          top && { top: 55 },
+          positionAtCursor && {
+            top: cursorCoords.y,
+            left: cursorCoords.x,
+          },
         )}
         className={
           className +
@@ -149,18 +148,18 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
           })
         }
       >
-        {id !== 'welcome' ? (
+        {!this.props.preventCloseOnEscape && (
           <a className='upper-right popup-close-x text-small' onClick={this.close}>
             ✕
           </a>
-        ) : null}
+        )}
         <div
           className={classNames({
             'modal-content': true,
-            ...(arrow ? { [arrow]: arrow } : null),
+            ...(arrow && { [arrow]: arrow }),
           })}
         >
-          {title ? <h1 className='modal-title'>{title}</h1> : null}
+          {title && <h1 className='modal-title'>{title}</h1>}
           <div className='modal-text'>{children}</div>
           {!hideModalActions && actions && (
             <div className='modal-actions'>

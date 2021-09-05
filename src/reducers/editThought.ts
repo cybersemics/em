@@ -2,10 +2,11 @@ import _ from 'lodash'
 // import { treeChange } from '../util/recentlyEditedTree'
 import { getLexeme, getAllChildren } from '../selectors'
 import updateThoughts from './updateThoughts'
-import { Context, SimplePath, State, Timestamp } from '../@types'
+import { Context, Lexeme, SimplePath, State, Timestamp } from '../@types'
 
 // util
 import { addContext, hashThought, headId, isDivider, removeContext, timestamp } from '../util'
+import { getSessionId } from '../util/sessionManager'
 
 export interface editThoughtPayload {
   oldValue: string
@@ -72,16 +73,18 @@ const editThought = (
   const newOldThought = !isThoughtOldOrphan() ? removeContext(state, lexemeOld, editedThoughtId) : null
 
   // do not add floating thought to context
-  const newThoughtWithoutContext = thoughtCollision || {
-    value: newValue,
+  const lexemeNewWithoutContext: Lexeme = thoughtCollision || {
     contexts: [],
     created: timestamp(),
     lastUpdated: timestamp(),
+    updatedBy: getSessionId(),
+    value: newValue,
   }
+
   const lexemeNew =
     lexemeOld.contexts.length > 0
-      ? addContext(newThoughtWithoutContext, rank, editedThoughtId, archived as Timestamp)
-      : newThoughtWithoutContext
+      ? addContext(lexemeNewWithoutContext, rank, editedThoughtId, archived as Timestamp)
+      : lexemeNewWithoutContext
 
   // update local thoughtIndex so that we do not have to wait for firebase
   thoughtIndex[newKey] = lexemeNew
@@ -110,11 +113,13 @@ const editThought = (
       ...parentofEditedThought,
       children: thoughtNewSubthoughts,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     },
     [editedThought.id]: {
       ...editedThought,
       value: newValue,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     },
     // ...contextIndexDescendantUpdates,
   }

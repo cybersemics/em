@@ -15,10 +15,9 @@ let fixContextIndex = (max = 100000) => {
 
       // check that each of the lexeme's contexts and its ancestors exist in contextIndex
       lexeme.contexts.forEach(cx => {
-        if (!cx.context) return
-
-        // subcontexts
-        // Note: Concat lexeme value too else it won't check for it's ancestor io contextIndex
+        if (!cx.context)
+          return // subcontexts
+          // Note: Concat lexeme value too else it won't check for it's ancestor io contextIndex
         ;[...cx.context, lexeme.value].forEach((value, i) => {
           // don't check root
           if (i === 0) return

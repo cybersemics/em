@@ -19,6 +19,9 @@ it('compareNumberAndOther', () => {
   expect(compareNumberAndOther('1', 'a')).toBe(-1)
   expect(compareNumberAndOther('a', 1)).toBe(1)
   expect(compareNumberAndOther('a', '1')).toBe(1)
+  expect(compareNumberAndOther('#1', 1)).toBe(0)
+  expect(compareNumberAndOther('#1', 'a')).toBe(-1)
+  expect(compareNumberAndOther('a', '#1')).toBe(1)
 })
 
 it('compareNumbers', () => {
@@ -32,6 +35,24 @@ it('compareNumbers', () => {
   expect(compareNumbers('2', '1')).toBe(1)
   expect(compareNumbers('9', '10')).toBe(-1)
   expect(compareNumbers('10', '9')).toBe(1)
+
+  // prefixed number strings
+  expect(compareNumbers('#1', '#1')).toBe(0)
+  expect(compareNumbers('#1', '#2')).toBe(-1)
+  expect(compareNumbers('#2', '#1')).toBe(1)
+  expect(compareNumbers('#9', '#10')).toBe(-1)
+  expect(compareNumbers('#10', '#9')).toBe(1)
+  expect(compareNumbers('# 1', '# 1')).toBe(0)
+  expect(compareNumbers('# 1', '# 2')).toBe(-1)
+  expect(compareNumbers('# 2', '# 1')).toBe(1)
+  expect(compareNumbers('# 9', '# 10')).toBe(-1)
+  expect(compareNumbers('# 10', '# 9')).toBe(1)
+
+  // currencies
+  expect(compareNumbers('$9', '#10')).toBe(-1)
+  expect(compareNumbers('€9', '€10')).toBe(-1)
+  expect(compareNumbers('₤9', '₤10')).toBe(-1)
+  expect(compareNumbers('₪9', '₪10')).toBe(-1)
 })
 
 it('compareLowercase', () => {

@@ -11,7 +11,7 @@ export interface Firebase {
     signOut: () => void
   }) & { GoogleAuthProvider: any }
   database: () => {
-    ref: (s: string) => Ref
+    ref: (s: string) => Ref<any>
   }
   initializeApp: (config: Index<string>) => void
 }
@@ -20,16 +20,22 @@ export interface User {
   uid: string
   displayName: string
   email: string
+  invites: Record<string, boolean>
   // see Firebase user for more properties
 }
 
-export interface Ref {
-  child: (name: string) => Ref
-  once: (eventName: string, callback?: (snapshot: Snapshot) => void) => Promise<Snapshot>
-  on: (eventName: string, callback: (snapshot: Snapshot) => any) => void
+export interface Ref<T> {
+  child: <R>(name: string) => Ref<R>
+  once: (eventName: string, callback?: (snapshot: Snapshot<T>) => void) => Promise<Snapshot<T>>
+  on: (eventName: string, callback: (snapshot: Snapshot<T>) => any) => void
+  orderByChild: (fieldName: string) => Ref<T>
+  startAt: (value: any) => Ref<T>
+  set: (value: any, onComplete?: (a: Error | null) => any) => Promise<any>
   update: (updates: Index, callback?: (err: Error | null, ...args: any[]) => void) => Promise<any>
 }
 
 export interface Snapshot<T = any> {
+  // same as object id
+  key: string
   val: () => T
 }

@@ -19,6 +19,7 @@
 // import { DataProvider } from '../data-providers/DataProvider'
 // import { importText } from '../reducers'
 // import { initialState } from '../util/initialState'
+// import { getSessionId } from '../util/sessionManager'
 // import { Context, Parent } from '../@types'
 
 // declare global {
@@ -96,6 +97,7 @@
 //       contexts: [],
 //       created: timestamp(),
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     await provider.updateThought('12345', lexeme)
@@ -131,6 +133,7 @@
 //       contexts: [],
 //       created: timestamp(),
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     await provider.updateThought(lexeme.id, lexeme)
@@ -145,14 +148,14 @@
 
 //     const parentEntry = {
 //       id: hashContext(['x']),
-//       value: 'x',
 //       context: ['x'],
 //       children: [
-//         { id: hashContext(['x', 'a']), value: 'a', rank: 0 },
-//         { id: hashContext(['x', 'b']), value: 'b', rank: 1 },
-//         { id: hashContext(['x', 'c']), value: 'c', rank: 2 },
+//         { value: 'a', rank: 0 },
+//         { value: 'b', rank: 1 },
+//         { value: 'c', rank: 2 },
 //       ],
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     await provider.updateContext(hashContext(['x']), parentEntry)
@@ -167,22 +170,22 @@
 //   test('getContextsByIds', async () => {
 //     const parentEntryX = {
 //       id: hashContext(['x']),
-//       value: 'x',
 //       context: ['x'],
 //       children: [
-//         { id: hashContext(['x', 'a']), value: 'a', rank: 0 },
-//         { id: hashContext(['x', 'b']), value: 'b', rank: 1 },
-//         { id: hashContext(['x', 'c']), value: 'c', rank: 2 },
+//         { value: 'a', rank: 0 },
+//         { value: 'b', rank: 1 },
+//         { value: 'c', rank: 2 },
 //       ],
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     const parentEntryA = {
 //       id: hashContext(['x', 'a']),
-//       value: 'a',
 //       context: ['x', 'a'],
 //       children: [],
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     await provider.updateContext(hashContext(['x']), parentEntryX)
@@ -200,6 +203,7 @@
 //       contexts: [],
 //       created: timestamp(),
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     const thoughtY = {
@@ -209,6 +213,7 @@
 //       contexts: [],
 //       created: timestamp(),
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     await provider.updateThoughtIndex({
@@ -226,26 +231,26 @@
 //   test('updateContextIndex', async () => {
 //     const parentEntryX = {
 //       id: hashContext(['x']),
-//       value: 'x',
 //       context: ['x'],
 //       children: [
-//         { id: hashContext(['x', 'a']), value: 'a', rank: 0 },
-//         { id: hashContext(['x', 'b']), value: 'b', rank: 1 },
-//         { id: hashContext(['x', 'c']), value: 'c', rank: 2 },
+//         { value: 'a', rank: 0 },
+//         { value: 'b', rank: 1 },
+//         { value: 'c', rank: 2 },
 //       ],
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     const parentEntryY = {
 //       id: hashContext(['y']),
-//       value: 'y',
 //       context: ['y'],
 //       children: [
-//         { id: hashContext(['x', 'd']), value: 'd', rank: 0 },
-//         { id: hashContext(['x', 'e']), value: 'e', rank: 1 },
-//         { id: hashContext(['x', 'f']), value: 'f', rank: 2 },
+//         { value: 'd', rank: 0 },
+//         { value: 'e', rank: 1 },
+//         { value: 'f', rank: 2 },
 //       ],
 //       lastUpdated: timestamp(),
+//       updatedBy: getSessionId(),
 //     }
 
 //     await provider.updateContextIndex({
@@ -347,8 +352,8 @@
 //           context: ['x', 'y'],
 //           children: [],
 //           lastUpdated: never(),
+//           updatedBy: getSessionId(),
 //           pending: true,
-//           value: 'y',
 //         },
 //       })
 
@@ -387,8 +392,8 @@
 //           context: ['x', 'y', 'z'],
 //           children: [],
 //           lastUpdated: never(),
+//           updatedBy: getSessionId(),
 //           pending: true,
-//           value: 'z',
 //         },
 //       })
 
@@ -543,12 +548,14 @@
 //           children: [],
 //           pending: true,
 //           lastUpdated: never(),
+//           updatedBy: getSessionId(),
 //         },
 //         [hashContext(['t', 'u', 'v'])]: {
 //           ...contextIndex[hashContext(['t', 'u', 'v'])],
 //           children: [],
 //           pending: true,
 //           lastUpdated: never(),
+//           updatedBy: getSessionId(),
 //         },
 //         // empty contexts are present in local state but not provider state
 //         // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],
@@ -580,7 +587,7 @@
 
 //       const stateNew = reducerFlow([
 //         importText({ text: rootText }),
-//         importText({ path: [{ id: hashContext([EM_TOKEN]), value: EM_TOKEN, rank: 0 }], text: emText }),
+//         importText({ path: [{ value: EM_TOKEN, rank: 0 }], text: emText }),
 //       ])(initialState())
 
 //       const { contextIndex, thoughtIndex } = stateNew.thoughts
@@ -612,6 +619,7 @@
 //           children: [],
 //           pending: true,
 //           lastUpdated: never(),
+//           updatedBy: getSessionId(),
 //         },
 //         // empty contexts are present in local state but not provider state
 //         // [hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])],
@@ -657,7 +665,6 @@
 //         ),
 //       )
 //       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
-
 //       expect(thoughts.contextIndex).toEqual({
 //         ..._.pick(
 //           contextIndex,
@@ -671,12 +678,14 @@
 //           ],
 //           pending: true,
 //           lastUpdated: never(),
+//           updatedBy: getSessionId(),
 //         },
 //         [hashContext(['t', 'u', 'v'])]: {
 //           ...contextIndex[hashContext(['t', 'u', 'v'])],
 //           children: [],
 //           pending: true,
 //           lastUpdated: never(),
+//           updatedBy: getSessionId(),
 //         },
 //         // empty contexts are present in local state but not provider state
 //         // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],

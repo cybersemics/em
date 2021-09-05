@@ -11,8 +11,7 @@ import {
   rootedParentOf,
 } from '../selectors'
 import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
-
-// util
+import { getSessionId } from '../util/sessionManager'
 import { hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
@@ -51,16 +50,20 @@ const deleteThought = (state: State, { context, thoughtId }: Payload) => {
     return state
   }
 
-  // guard against missing lexeme (although this should never happen)
+  // guard against missing lexeme
+  // while this should never happen, there are some concurrency issues that can cause it to happen, so we should print an error and just delete the Parent
   if (!lexeme) {
-    console.error('Lexeme not found', value)
+    console.warn(
+      `Missing Lexeme: "${value}". This indicates that there is a data integrity issue upstream. Deleting Parent anyway.`,
+      value,
+    )
     return state
   }
 
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
   const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
-  const isValidThought = lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
+  const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 
   // if thought is not valid then just stop further execution
   if (!isValidThought) {
@@ -96,7 +99,7 @@ const deleteThought = (state: State, { context, thoughtId }: Payload) => {
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thoughts: Context, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
-    // modify the state to use the thoughtIndex with newOldThought
+    // modify the state to use the thoughtIndex with newOldLexeme
     // this ensures that contexts are calculated correctly for descendants with duplicate values
     const stateNew: State = {
       ...state,
@@ -213,6 +216,7 @@ const deleteThought = (state: State, { context, thoughtId }: Payload) => {
       ...parent,
       children: subthoughts.map(({ id }) => id),
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     } as Parent,
     [deletedThought.id]: null,
     // TODO: How to remove descendant dependency with delete.

@@ -2,6 +2,7 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PAREN
 import globals from '../globals'
 // import { canShowModal } from '../selectors'
 import { hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from '.'
+import { getSessionId } from './sessionManager'
 import { Timestamp, ThoughtsInterface, State, Parent, Index } from '../@types'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -27,6 +28,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       pending: true,
       lastUpdated: never(),
       rank: 0,
+      updatedBy: getSessionId(),
     },
     [ABSOLUTE_TOKEN_HASH]: {
       id: ABSOLUTE_TOKEN_HASH,
@@ -37,6 +39,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       pending: true,
       lastUpdated: never(),
       rank: 0,
+      updatedBy: getSessionId(),
     },
     [EM_TOKEN_HASH]: {
       id: EM_TOKEN_HASH,
@@ -47,6 +50,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       pending: true,
       lastUpdated: never(),
       rank: 0,
+      updatedBy: getSessionId(),
     },
   }
 
@@ -57,6 +61,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created,
       lastUpdated: never(),
+      updatedBy: getSessionId(),
     },
     [hashThought(ABSOLUTE_TOKEN)]: {
       value: ABSOLUTE_TOKEN,
@@ -64,6 +69,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created,
       lastUpdated: never(),
+      updatedBy: getSessionId(),
     },
     // this will get populated by importText in loadLocalState
     // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
@@ -72,6 +78,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       contexts: [],
       created,
       lastUpdated: never(),
+      updatedBy: getSessionId(),
     },
   }
 

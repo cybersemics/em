@@ -11,6 +11,7 @@ import multi from './redux-middleware/multi'
 // import pushQueue from './redux-middleware/pushQueue'
 // import pullQueue from './redux-middleware/pullQueue'
 // import updateUrlHistory from './redux-middleware/updateUrlHistory'
+import sessionManager from './redux-middleware/sessionManager'
 import appReducer from './reducers/app'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
 import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
@@ -24,5 +25,5 @@ if (!appReducer) {
 // @MIGRATION_NOTE: Disabling push and pull until the migration is complete
 export const store = createStore(
   appReducer,
-  composeEnhancers(applyMiddleware(multi, thunk), undoRedoReducerEnhancer, cursorChangedEnhancer),
+  composeEnhancers(applyMiddleware(multi, thunk, sessionManager), undoRedoReducerEnhancer, cursorChangedEnhancer),
 )

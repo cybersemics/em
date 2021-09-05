@@ -11,4 +11,5 @@ export interface Parent {
   lastUpdated: Timestamp
   pending?: boolean
   archived?: Timestamp
+  updatedBy: string
 }

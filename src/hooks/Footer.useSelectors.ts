@@ -14,7 +14,7 @@ export const useFooterUseSelectors = () => {
       isPushing: state.isPushing,
       isTutorialOn: isTutorial(state),
       fontSize: state.fontSize,
-      pushQueueLength: state.pushQueue.length,
+      isPushQueueEmpty: state.pushQueue.length === 0,
     }),
     shallowEqual,
   )

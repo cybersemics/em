@@ -2,15 +2,15 @@ import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import {
-  decodeContextUrl,
   expandThoughts,
   getAllChildrenByContextHash,
   getContextForThought,
   getContexts,
+  getVisibleContexts,
   hasPushes,
   isContextViewActive,
 } from '../selectors'
-import { equalArrays, hashContext, head, keyValueBy, pathToContext, unroot } from '../util'
+import { equalArrays, hashContext, head, keyValueBy, unroot } from '../util'
 import { pull } from '../action-creators'
 import { Child, Context, ContextHash, Index, State, ThoughtContext } from '../@types'
 
@@ -25,27 +25,6 @@ const initialPullQueue = (): Index<Context> => ({
   [EM_TOKEN]: [EM_TOKEN],
   [HOME_TOKEN]: [HOME_TOKEN],
 })
-
-/** Generates a map of all visible contexts, including the cursor, all its ancestors, and the expanded contexts. */
-const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Index<Context> => {
-  const { cursor } = state
-
-  // if there is no cursor, decode the url so the cursor can be loaded
-  // after loading the ranks will be inferred to update the cursor
-  const contextUrl = decodeContextUrl(state, window.location.pathname)
-  const contextCursor = cursor ? pathToContext(state, cursor) : contextUrl
-
-  return {
-    ...expandedContexts,
-    // generate the cursor and all its ancestors
-    // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
-    ...keyValueBy(contextCursor, (value, i) => {
-      const subcontext = contextCursor.slice(0, contextCursor.length - i)
-      const id = hashContext(state, subcontext)
-      return subcontext.length > 0 && id ? { [id]: subcontext } : null
-    }),
-  }
-}
 
 /** Appends all visible contexts and their children to the pullQueue. */
 const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleContexts: Index<Context>) => {
@@ -109,8 +88,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   let pullQueue = initialPullQueue()
 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
-  const flushPullQueue = async () => {
-    // expand pull queue to include its children
+  const flushPullQueue = async ({ forcePull }: { forcePull?: boolean } = {}) => {
+    // expand pull queue to include visible descendants and search contexts
     const extendedPullQueue = appendVisibleContexts(getState(), pullQueue, {
       ...lastVisibleContexts,
       ...lastSearchContexts,
@@ -118,22 +97,30 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
-    const hasMorePending = await dispatch(pull(extendedPullQueue))
+    // if there are any pending thoughts remaining after the pull, we need to add them to the pullQueue and immediately flush
+    const hasMorePending = await dispatch(pull(extendedPullQueue, { force: forcePull }))
 
     const { user } = getState()
     if (!user && hasMorePending) {
-      updatePullQueue({ force: true })
+      updatePullQueue({ forceFlush: true, forcePull })
     }
   }
 
   /**
    * Adds unloaded contexts based on cursor and state.expanded to the pull queue.
    *
-   * @param force   Calculates a new pending and forces flushPullQueue.
+   * @param forceFlush   Calculates a new pullQueue and ignores memoization so that flush is guaranteed.
+   * @param forcePull    Passes force: true to pull to fetch all descendants up to the buffer depth, not just pending. Implies forceFlush.
    */
-  const updatePullQueue = ({ force }: { force?: boolean } = {}) => {
+  const updatePullQueue = ({ forceFlush, forcePull }: { forceFlush?: boolean; forcePull?: boolean } = {}) => {
     // if updatePullQueue is called directly, do not allow updatePullQueueDebounced to call it again
     updatePullQueueDebounced.cancel()
+
+    // If we are forcing, cancel the existing throttled flush since it could outrace this flush and pull without force.
+    // This can cause remote thoughts to not be pulled on load if thoughts are already loaded from the local db.
+    if (forceFlush || forcePull) {
+      flushPullQueueThrottled.cancel()
+    }
 
     const state = getState()
 
@@ -151,7 +138,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // return if expanded is the same, unless force is specified or expanded is empty
     if (
-      !force &&
+      !forceFlush &&
+      !forcePull &&
       Object.keys(state.expanded).length > 0 &&
       equalArrays(Object.keys(expandedContexts), Object.keys(lastExpanded)) &&
       isSearchSame
@@ -165,7 +153,13 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     const visibleContexts = getVisibleContexts(state, expandedContexts)
 
-    if (!force && equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts)) && isSearchSame) return
+    if (
+      !forceFlush &&
+      !forcePull &&
+      equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts)) &&
+      isSearchSame
+    )
+      return
 
     // update last visibleContexts
     lastVisibleContexts = visibleContexts
@@ -173,11 +167,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // update last searchContexts
     lastSearchContexts = state.searchContexts
 
-    // do not throttle initial flush
+    // do not throttle initial flush or flush on authenticate
     if (isLoaded) {
-      flushPullQueueThrottled()
+      flushPullQueueThrottled({ forcePull })
     } else {
-      flushPullQueue()
+      flushPullQueue({ forcePull })
       isLoaded = true
     }
   }
@@ -194,10 +188,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       lastVisibleContexts = {}
       pullQueue = initialPullQueue()
     }
-    // update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates
+    // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.
+    // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit and remote thoughts will not be loaded.
     else if (action.type === 'authenticate' && action.value) {
       pullQueue = { ...pullQueue, ...initialPullQueue() }
-      updatePullQueue({ force: true })
+      updatePullQueue({ forcePull: true })
     }
     // do not updatePullQueue if there are syncs queued or in progress
     // this gets checked again in updatePullQueue, but short circuit here if possible

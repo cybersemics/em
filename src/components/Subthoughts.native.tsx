@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { connect, useStore } from 'react-redux'
 import { store } from '../store'
-import { isTouch } from '../browser'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import { shortcutById } from '../shortcuts'
 import globals from '../globals'
 import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import Thought from './Thought'
@@ -42,7 +41,6 @@ import {
   parseJsonSafe,
   parseLet,
   pathToContext,
-  sumSubthoughtsLength,
   unroot,
 } from '../util'
 
@@ -79,7 +77,6 @@ interface SubthoughtsProps {
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
   childrenForced?: Child[]
-  count?: number
   depth?: number
   env?: Index<Context>
   expandable?: boolean
@@ -170,7 +167,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const contextHash = headId(resolvedPath)
 
-  const children = getAllChildren(state, contextLive)
+  const allChildren = getAllChildren(state, contextLive)
 
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
@@ -208,8 +205,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     isAbsoluteContext,
     zoomCursor,
     zoomParent,
-    // re-render if children change
-    __render: children,
+    // Re-render if children change.
+    // Uses getAllChildren for efficient change detection. Probably does not work in context view.
+    // Not used by render function, which uses a more complex calculation of children that supports context view.
+    __allChildren: allChildren,
   }
 }
 
@@ -326,42 +325,32 @@ const NoChildren = ({
   simplePath: SimplePath
 }) => {
   const store = useStore<State>()
+
   return (
-    <div className='children-subheading text-note text-small'>
-      This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.
-      <br />
-      <br />
-      <span>
-        {isTouch ? (
-          <span className='gesture-container'>
-            Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
-          </span>
-        ) : (
-          <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
-        )}{' '}
+    <View>
+      <Text> This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.</Text>
+
+      <Text>
+        <Text>
+          Swipe <GestureDiagram path={subthoughtShortcut?.gesture as GesturePath} size={30} color='darkgray' />
+        </Text>
         to add "{headValue(store.getState(), simplePath)}" to a new context.
-      </span>
-      <br />
+      </Text>
+
       {allowSingleContext ? (
         'A floating context... how interesting.'
       ) : (
-        <span>
-          {isTouch ? (
-            <span className='gesture-container'>
-              Swipe{' '}
-              <GestureDiagram
-                path={toggleContextViewShortcut.gesture as GesturePath}
-                size={30}
-                color='darkgray' /* mtach .children-subheading color */
-              />
-            </span>
-          ) : (
-            <span>Type {formatKeyboardShortcut(toggleContextViewShortcut.keyboard!)}</span>
-          )}{' '}
+        <Text>
+          Swipe
+          <GestureDiagram
+            path={toggleContextViewShortcut.gesture as GesturePath}
+            size={30}
+            color='darkgray' /* mtach .children-subheading color */
+          />
           to return to the normal view.
-        </span>
+        </Text>
       )}
-    </div>
+    </View>
   )
 }
 
@@ -408,7 +397,6 @@ const NoChildren = ({
  * @param childrenForced             Optional.
  * @param contextBinding             Optional.
  * @param contextChain = []          Optional. Default: [].
- * @param count                      Optional. Default: 0.
  * @param depth.                     Optional. Default: 0.
  * @param isDragInProgress           Optional.
  * @param isEditingAncestor          Optional.
@@ -424,7 +412,6 @@ export const SubthoughtsComponent = ({
   childrenForced,
   contextBinding,
   path,
-  count = 0,
   depth = 0,
   distance,
   // dropTarget,
@@ -650,7 +637,6 @@ export const SubthoughtsComponent = ({
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
-                count={count + sumSubthoughtsLength(store.getState(), children)}
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}

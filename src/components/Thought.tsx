@@ -62,7 +62,6 @@ export interface ThoughtContainerProps {
   childrenForced?: Child[]
   contextBinding?: Path
   path: Path
-  count?: number
   cursor?: Path | null
   depth?: number
   env?: Index<Context>
@@ -214,7 +213,6 @@ const ThoughtContainer = ({
   childrenForced,
   contextBinding,
   path,
-  count = 0,
   cursor,
   cursorOffset,
   depth = 0,
@@ -384,11 +382,6 @@ const ThoughtContainer = ({
     : // if alphabetical sort is disabled just check if current thought is hovering
       globals.simulateDropHover || isHovering
 
-  const { direction: sortDirection, type: sortType } = getSortPreference(
-    store.getState(),
-    pathToContext(state, simplePathLive!),
-  )
-
   // avoid re-renders from object reference change
   const styleNew =
     Object.keys(styleSelf || {}).length > 0 ||
@@ -505,13 +498,10 @@ const ThoughtContainer = ({
           childrenForced={childrenForced}
           env={env}
           path={path}
-          count={count}
           depth={depth}
           isParentHovering={isAnyChildHovering}
           showContexts={allowSingleContext}
           simplePath={simplePath}
-          sortType={sortType}
-          sortDirection={sortDirection}
         />
       </li>,
     ),

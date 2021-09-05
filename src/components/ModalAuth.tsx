@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, useCallback, useEffect, useState } from 'react'
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { alert, login } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
@@ -20,28 +20,6 @@ type errorCode = keyof typeof firebaseErrorsIndex
 
 type SubmitAction = (closeModal: () => void, email: string, password?: string) => Promise<void>
 
-interface InputProps {
-  type: 'email' | 'password'
-  placeholder: string
-  onBlur: (e: ChangeEvent<HTMLInputElement>) => void
-  value: string
-}
-/**
- *
- */
-const Input: FC<InputProps> = ({ type, placeholder, value, onBlur }) => {
-  const [inputValue, updateInputValue] = useState(value)
-
-  useEffect(() => {
-    updateInputValue(value)
-  }, [value])
-
-  /** On input change handler. */
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => updateInputValue(e.target.value)
-
-  return <input type={type} placeholder={placeholder} value={inputValue} onChange={onChange} onBlur={onBlur} />
-}
-
 interface Mode {
   name: string
   modalKey: string
@@ -53,11 +31,6 @@ const modes: Index<Mode> = {
     name: 'login',
     modalKey: 'login',
     modalTitle: 'Log In',
-  },
-  signup: {
-    name: 'signup',
-    modalKey: 'signup',
-    modalTitle: 'Sign Up',
   },
   resetPassword: {
     name: 'resetPassword',
@@ -79,19 +52,6 @@ const ModalAuth = () => {
   const [isSubmitting, updateIsSubmitting] = useState(false)
 
   const dispatch = useDispatch()
-
-  /** Sign up with email and password. */
-  const signUp: SubmitAction = useCallback(async (closeModal, email, password) => {
-    updateIsSubmitting(true)
-    try {
-      await window.firebase.auth().createUserWithEmailAndPassword(email, password!)
-      closeModal()
-      updateIsSubmitting(false)
-    } catch (error) {
-      updateIsSubmitting(false)
-      return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
-    }
-  }, [])
 
   /** Reset password using reset email. */
   const resetPassword: SubmitAction = useCallback(async (closeModal, email) => {
@@ -121,11 +81,7 @@ const ModalAuth = () => {
     }
   }, [])
 
-  const submitAction = isModeActive(modes.login)
-    ? loginWithEmailAndPassword
-    : isModeActive(modes.signup)
-    ? signUp
-    : resetPassword
+  const submitAction = isModeActive(modes.login) ? loginWithEmailAndPassword : resetPassword
 
   /**
    * Reset Email and Password fields.
@@ -154,9 +110,6 @@ const ModalAuth = () => {
   /** Handle password change. */
   const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
 
-  /** Show Sign Up with email and password. */
-  const showSignup = () => updateActiveMode(modes.signup)
-
   /** Show Login with email and password. */
   const showLogin = () => updateActiveMode(modes.login)
 
@@ -169,6 +122,7 @@ const ModalAuth = () => {
       title={activeMode.modalTitle}
       className='popup'
       center
+      preventCloseOnEscape={true}
       actions={({ close: closeModal }) => (
         <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
           <ActionButton
@@ -187,17 +141,6 @@ const ModalAuth = () => {
               style={{ textDecoration: 'underline', marginTop: 15 }}
             >
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
-            </button>
-          )}
-
-          {isModeActive(modes.login) && (
-            <button
-              disabled={isSubmitting}
-              className='button'
-              onClick={showSignup}
-              style={{ textDecoration: 'underline', marginTop: 15 }}
-            >
-              Create an account
             </button>
           )}
 
@@ -226,10 +169,10 @@ const ModalAuth = () => {
       )}
     >
       <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-        <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
+        <input type='email' placeholder='email' value={email} onChange={onChangeEmail} />
 
         {!isModeActive(modes.resetPassword) && (
-          <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
+          <input type='password' placeholder='password' value={password} onChange={onChangePassword} />
         )}
 
         {isModeActive(modes.login) && (

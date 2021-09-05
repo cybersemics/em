@@ -10,18 +10,7 @@ import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import {
-  Child,
-  Context,
-  GesturePath,
-  Index,
-  LazyEnv,
-  Path,
-  SimplePath,
-  SortDirection,
-  State,
-  ThoughtContext,
-} from '../@types'
+import { Child, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {
@@ -45,7 +34,6 @@ import {
   parseJsonSafe,
   parseLet,
   pathToContext,
-  sumSubthoughtsLength,
   unroot,
 } from '../util'
 
@@ -63,7 +51,6 @@ import {
   getChildrenRanked,
   getContextsSortedAndRanked,
   getEditingPath,
-  getGlobalSortPreference,
   getNextRank,
   getSortPreference,
   getStyle,
@@ -77,14 +64,11 @@ interface SubthoughtsProps {
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
   childrenForced?: Child[]
-  count?: number
   depth?: number
   env?: Index<Context>
   expandable?: boolean
   isParentHovering?: boolean
   showContexts?: boolean
-  sortType?: string
-  sortDirection?: SortDirection | null
   simplePath: SimplePath
   path?: Path
 }
@@ -169,7 +153,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const contextHash = headId(resolvedPath)
 
-  const children = getAllChildren(state, contextLive)
+  const allChildren = getAllChildren(state, contextLive)
 
   const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
 
@@ -258,22 +242,30 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   */
   const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
 
+  const sortPreference = getSortPreference(state, pathToContext(state, simplePathLive))
+
   return {
     contextBinding,
     distance,
     actualDistance,
     env,
     isEditingAncestor,
+    // expand thought due to cursor and hover expansion
+    isExpanded: !!state.expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isAbsoluteContext,
     showContexts,
     showHiddenThoughts,
     simplePath: simplePathLive,
-    // expand thought due to cursor and hover expansion
-    isExpanded: !!store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
-    isAbsoluteContext,
+    // pass sortType and sortDirection since they are scalars
+    // passing sortPreference directly would re-render the component each time, since the preference object reference changes
+    sortType: sortPreference.type,
+    sortDirection: sortPreference.direction,
     zoomCursor,
     zoomParent,
-    // re-render if children change
-    __render: children,
+    // Re-render if children change.
+    // Uses getAllChildren for efficient change detection. Probably does not work in context view.
+    // Not used by render function, which uses a more complex calculation of children that supports context view.
+    __allChildren: allChildren,
   }
 }
 
@@ -475,7 +467,6 @@ EmptyChildrenDropTarget.displayName = 'EmptyChildrenDropTarget'
  * @param childrenForced             Optional.
  * @param contextBinding             Optional.
  * @param contextChain = []          Optional. Default: [].
- * @param count                      Optional. Default: 0.
  * @param depth.                     Optional. Default: 0.
  * @param isDragInProgress           Optional.
  * @param isEditingAncestor          Optional.
@@ -490,21 +481,20 @@ export const SubthoughtsComponent = ({
   allowSingleContextParent,
   childrenForced,
   contextBinding,
-  path,
-  count = 0,
   depth = 0,
   distance,
   dropTarget,
   env,
   isDragInProgress,
   isEditingAncestor,
+  isExpanded,
   isHovering,
   isParentHovering,
+  path,
   showContexts,
+  simplePath,
   sortDirection: contextSortDirection,
   sortType: contextSortType,
-  simplePath,
-  isExpanded,
   zoomCursor,
   zoomParent,
   actualDistance,
@@ -512,13 +502,6 @@ export const SubthoughtsComponent = ({
   // <Subthoughts> render
   const state = store.getState()
   const [page, setPage] = useState(1)
-  const globalSort = getGlobalSortPreference(state)
-  const sortPreference =
-    (contextSortType && {
-      type: contextSortType,
-      direction: contextSortDirection,
-    }) ||
-    globalSort
   const { cursor } = state
   const context = pathToContext(state, simplePath)
 
@@ -545,7 +528,7 @@ export const SubthoughtsComponent = ({
   const children =
     childrenForced || showContexts
       ? getContextsSortedAndRanked(state, headValue(state, simplePath))
-      : sortPreference?.type !== 'None'
+      : contextSortType !== 'None'
       ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
       : getChildrenRanked(state, pathToContext(state, contextBinding || simplePath))
 
@@ -671,7 +654,6 @@ export const SubthoughtsComponent = ({
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
-                count={count + sumSubthoughtsLength(store.getState(), children)}
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}

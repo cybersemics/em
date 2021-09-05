@@ -1,4 +1,5 @@
-// import { createId, hashThought, head } from '../util'
+// import { hashContext, hashThought } from '../util'
+// import { getSessionId } from '../util/sessionManager'
 // import { Index, Lexeme, Parent, State, Timestamp } from '../@types'
 
 // /** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the updates if indexes are not in sync. */
@@ -24,8 +25,9 @@
 
 //           const context = cx.context.slice(0, i)
 //           // get children of the lexeme context
-//           const parentEntry = contextIndex[cx.id]
-//           const parentEntryAccum = contextIndexUpdates[cx.id]
+//           const encoded = hashContext(context)
+//           const parentEntry = contextIndex[encoded]
+//           const parentEntryAccum = contextIndexUpdates[encoded]
 //           const children =
 //             (parentEntryAccum && parentEntryAccum.children) || (parentEntry && parentEntry.children) || []
 //           const isInContextIndex = children.some(
@@ -39,9 +41,8 @@
 //             // otherwise generate a large rank so it doesn't conflict
 //             const rank = i === cx.context.length - 1 ? cx.rank : i + 1000
 //             const valueNew = value
-//             contextIndexUpdates[cx.id] = {
-//               id: createId(),
-//               value: head(context),
+//             contextIndexUpdates[encoded] = {
+//               context,
 //               children: [
 //                 ...children.filter(child => hashThought(child.value) !== hashThought(valueNew)),
 //                 {
@@ -49,12 +50,10 @@
 //                   lastUpdated,
 //                   rank,
 //                   value: valueNew,
-//                   id: createId(),
 //                 },
 //               ],
-//               // @MIGRATION_TODO: FIX THIS
-//               parentId: '',
-//               lastUpdated: lastUpdated,
+//               lastUpdated,
+//               updatedBy: getSessionId(),
 //             }
 //           }
 //         })
@@ -66,7 +65,7 @@
 //     .forEach(key => {
 //       const parent = contextIndex[key]
 
-//       const parentContextHash = parent.id
+//       const parentContextHash = hashContext(parent.context)
 
 //       if (!parent.children) return
 
@@ -75,7 +74,7 @@
 //         const lexeme = thoughtIndexUpdates[thoughtHash] || thoughtIndex[thoughtHash]
 
 //         const hasThoughtIndexEntry =
-//           lexeme && lexeme.contexts.some(thoughtContext => thoughtContext.id === parentContextHash)
+//           lexeme && lexeme.contexts.some(thoughtContext => hashContext(thoughtContext.context) === parentContextHash)
 
 //         if (!hasThoughtIndexEntry) {
 //           thoughtIndexUpdates[thoughtHash] = {
@@ -83,9 +82,7 @@
 //             contexts: [
 //               ...lexeme.contexts,
 //               {
-//                 id: child.id,
-//                 // @MIGRATION_TODO: Remove ThoughtContex.context,
-//                 context: [],
+//                 context: parent.context,
 //                 rank: child.rank,
 //               },
 //             ],

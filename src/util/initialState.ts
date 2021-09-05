@@ -2,8 +2,9 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PAREN
 import globals from '../globals'
 import { canShowModal } from '../selectors'
 import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
-import { State, Timestamp, ThoughtsInterface, Parent, Index } from '../@types'
+import { getSessionId } from './sessionManager'
 import { storage } from './storage'
+import { State, Timestamp, ThoughtsInterface, Parent, Index } from '../@types'
 
 /** Safely gets a value from localStorage if it is in the environment. */
 const getLocal = (key: string) => {
@@ -13,8 +14,11 @@ const getLocal = (key: string) => {
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
 export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
+  const HOME_TOKEN_HASH = HOME_TOKEN
+  const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
+  const EM_TOKEN_HASH = EM_TOKEN
   const contextIndex: Index<Parent> = {
-    [HOME_TOKEN]: {
+    [HOME_TOKEN_HASH]: {
       id: HOME_TOKEN,
       value: HOME_TOKEN,
       parentId: ROOT_PARENT_ID,
@@ -23,8 +27,9 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       pending: true,
       lastUpdated: never(),
       rank: 0,
+      updatedBy: getSessionId(),
     },
-    [ABSOLUTE_TOKEN]: {
+    [ABSOLUTE_TOKEN_HASH]: {
       id: ABSOLUTE_TOKEN,
       value: ABSOLUTE_TOKEN,
       parentId: ROOT_PARENT_ID,
@@ -33,8 +38,9 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       pending: true,
       lastUpdated: never(),
       rank: 0,
+      updatedBy: getSessionId(),
     },
-    [EM_TOKEN]: {
+    [EM_TOKEN_HASH]: {
       id: EM_TOKEN,
       value: EM_TOKEN,
       parentId: ROOT_PARENT_ID,
@@ -43,6 +49,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       pending: true,
       lastUpdated: never(),
       rank: 0,
+      updatedBy: getSessionId(),
     },
   }
 
@@ -53,6 +60,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created,
       lastUpdated: never(),
+      updatedBy: getSessionId(),
     },
     [hashThought(ABSOLUTE_TOKEN)]: {
       value: ABSOLUTE_TOKEN,
@@ -60,6 +68,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
       created,
       lastUpdated: never(),
+      updatedBy: getSessionId(),
     },
     // this will get populated by importText in loadLocalState
     // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
@@ -68,6 +77,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       contexts: [],
       created,
       lastUpdated: never(),
+      updatedBy: getSessionId(),
     },
   }
 
@@ -146,6 +156,11 @@ export const initialState = (created: Timestamp = timestamp()) => {
   // welcome modal
   if (isDocumentEditable() && canShowModal(state, 'welcome')) {
     state.showModal = 'welcome'
+  }
+
+  // Show sign up modal if the app is loaded with signup path
+  if (window && window.location.pathname.substr(1) === 'signup') {
+    state.showModal = 'signup'
   }
 
   return state

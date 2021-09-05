@@ -4,7 +4,7 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import { isTouch } from '../browser'
 import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
-import { toggleSidebar } from '../action-creators'
+import { toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 import { State } from '../@types'
 
@@ -46,7 +46,7 @@ const Sidebar = () => {
   const dispatch = useDispatch()
 
   /** Toggle the sidebar. */
-  const onToggleSidebar = (value: boolean) => dispatch(toggleSidebar({ value }))
+  const toggleSidebar = (value: boolean) => dispatch(toggleSidebarActionCreator({ value }))
 
   return (
     /**
@@ -61,10 +61,10 @@ const Sidebar = () => {
       swipeAreaWidth={8}
       anchor='left'
       onOpen={() => {
-        onToggleSidebar(true)
+        toggleSidebar(true)
       }}
       onClose={() => {
-        onToggleSidebar(false)
+        toggleSidebar(false)
       }}
       open={showSidebar}
     >

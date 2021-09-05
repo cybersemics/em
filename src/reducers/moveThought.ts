@@ -6,6 +6,7 @@ import { Index, Parent, Path, State } from '../@types'
 
 // util
 import { head, headId, isDescendantPath, pathToContext, reducerFlow, timestamp } from '../util'
+import { getSessionId } from '../util/sessionManager'
 
 // @MIGRATION_TODO: Nested merge logic doesn't work properly.
 /** Moves a thought from one context to another, or within the same context. */
@@ -45,6 +46,7 @@ const moveThought = (
     value,
     created: timestamp(),
     lastUpdated: timestamp(),
+    updatedBy: getSessionId(),
   }
 
   const movingThought = state.thoughts.contextIndex[movingThoughtId]
@@ -117,11 +119,13 @@ const moveThought = (
       ...oldParentThought,
       children: updatedChildrenOldParent,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     },
     [newParentThought.id]: {
       ...newParentThought,
       children: updatedChildrenNewParent,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     },
     [movingThought.id]: {
       ...movingThought,
@@ -129,6 +133,7 @@ const moveThought = (
       rank: newRank,
       archived,
       lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     },
   }
 

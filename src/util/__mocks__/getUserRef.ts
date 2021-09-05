@@ -6,6 +6,7 @@
 
 // /** Returns a snapshot that returns the given value. */
 // const wrapSnapshot = <T>(val: T): Firebase.Snapshot<T> => ({
+//   key: 'WRAP_SNAPSHOT_KEY_MOCK',
 //   val: () => val,
 // })
 

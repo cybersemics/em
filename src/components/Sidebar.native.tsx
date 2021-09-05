@@ -4,7 +4,7 @@ import React from 'react'
 import { useSelector, useStore } from 'react-redux'
 import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
-// import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
+import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 import { View, StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 import { State } from '../@types'
@@ -29,10 +29,11 @@ const RecentEdited = () => {
       <Text style={styles.headerText}>Recently Edited Thoughts</Text>
 
       <View style={styles.padding}>
-        <Text style={styles.text}>RecentlyEditedBreadcrumbs will go here</Text>
-        {/* {recentlyEdited.map((recentlyEditedThought, i) => (
-          <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path} charLimit={32} thoughtsLimit={10} />
-        )) } */}
+        {recentlyEdited.map((recentlyEditedThought, i) => {
+          return (
+            <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path} charLimit={32} thoughtsLimit={10} />
+          )
+        })}
       </View>
     </View>
   )
@@ -46,7 +47,7 @@ const Sidebar = () => {
 const styles = StyleSheet.create({
   container: { backgroundColor: '#292a2b', height: '100%', padding: 15 },
   headerText: { color: '#666', fontWeight: '300', fontSize: 12 },
-  padding: { padding: 15 },
+  padding: { padding: 5 },
   text: { color: '#fff' },
 })
 

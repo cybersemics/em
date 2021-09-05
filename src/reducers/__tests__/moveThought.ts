@@ -7,7 +7,6 @@ import {
   getAllChildren,
   getChildrenRanked,
   getRankAfter,
-  getChildren,
   isPending,
   getParent,
   rankThoughtsFirstMatch,
@@ -77,7 +76,7 @@ it('persist id on move', () => {
   expect(thoughtA2New.id).toEqual(thoughtA2!.id)
 })
 
-it('move within context', () => {
+it('move within context (rank only)', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
@@ -607,8 +606,9 @@ it.skip('data integrity test', () => {
   // expect(contextUpdates).toBe(0)
 })
 
-// @MIGRATION_TODO: Duplicate meege is not working yet.
-it.skip('consitent rank between thoughtIndex and contextIndex on duplicate merge', () => {
+// skip until fixed: Importing duplicate uncle missing ThoughtContext (#1407)
+// @MIGRATION_TODO: Duplicate merge is not working yet.
+it.skip('consistent rank between thoughtIndex and contextIndex on duplicate merge', () => {
   const text = `
   - a
     - b
@@ -631,9 +631,9 @@ it.skip('consitent rank between thoughtIndex and contextIndex on duplicate merge
 
   expect(contextsOfB).toHaveLength(1)
 
-  const rankFromContextIndex = getChildren(stateNew, [HOME_TOKEN]).find(child => child.value === 'b')?.rank
+  // const rankFromContextIndex = getChildren(stateNew, [HOME_TOKEN]).find(child => child.value === 'b')?.rank
 
-  expect(contextsOfB[0].rank).toBe(rankFromContextIndex)
+  // expect(contextsOfB[0].rank).toBe(rankFromContextIndex)
 })
 
 // @MIGRATION_TODO
@@ -673,10 +673,12 @@ it.skip('pending destination should be merged correctly (fetch pending before mo
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
+  const pathAB = rankThoughtsFirstMatch(appStore.getState(), ['a', 'b'])
+  const pathDB = rankThoughtsFirstMatch(appStore.getState(), ['d', 'b'])
   appStore.dispatch([
     existingThoughtMoveAction({
-      oldPath: [hashContext(appStore.getState(), ['a'])!, hashContext(appStore.getState(), ['a', 'b'])!],
-      newPath: [hashContext(appStore.getState(), ['d'])!, hashContext(appStore.getState(), ['d', 'b'])!],
+      oldPath: pathAB,
+      newPath: pathDB,
       newRank: 1,
     }),
   ])
@@ -693,14 +695,14 @@ it.skip('pending destination should be merged correctly (fetch pending before mo
   ])
 })
 
-// @MIGRATION_TODO:
-it.skip('only fetch the descendants upto the possible conflicting path', async () => {
+// @MIGRATION_TODO: Pull needs to be enabled.
+it.skip('only fetch the descendants up to the possible conflicting path', async () => {
   initialize()
 
   const text = `
   - a
     - b
-      -c
+      - c
         - 1
         - 2
   - p
@@ -710,7 +712,8 @@ it.skip('only fetch the descendants upto the possible conflicting path', async (
           - 3.1
           - 3.2
             - 3.2.1
-        - 4`
+        - 4
+  - z`
 
   timer.useFakeTimer()
 
@@ -734,10 +737,12 @@ it.skip('only fetch the descendants upto the possible conflicting path', async (
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
+  const pathAB = rankThoughtsFirstMatch(appStore.getState(), ['a', 'b'])
+  const pathPB = rankThoughtsFirstMatch(appStore.getState(), ['p', 'b'])
   appStore.dispatch([
     existingThoughtMoveAction({
-      oldPath: rankThoughtsFirstMatch(appStore.getState(), ['a', 'b']),
-      newPath: [hashContext(appStore.getState(), ['p'])!, hashContext(appStore.getState(), ['p', 'b'])!],
+      oldPath: pathAB,
+      newPath: pathPB,
       newRank: 1,
     }),
   ])

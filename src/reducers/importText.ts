@@ -22,6 +22,7 @@ import { Path, SimplePath, State, Timestamp } from '../@types'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
+import { getSessionId } from '../util/sessionManager'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
@@ -35,6 +36,7 @@ interface Options {
   preventSetCursor?: boolean
   rawDestValue?: string
   skipRoot?: boolean
+  updatedBy?: string
 }
 
 /** Imports thoughts from html or raw text.
@@ -46,7 +48,7 @@ interface Options {
  */
 const importText = (
   state: State,
-  { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot }: Options,
+  { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot, updatedBy = getSessionId() }: Options,
 ): State => {
   const isRoam = validateRoam(text)
 
@@ -132,9 +134,9 @@ const importText = (
       : state
 
     /**
-     * Returns destination path.
+     * Returns the Path where thoughts will be imported. It may be the simplePath passed to importText, or it may be a dummy Path that is used to paste into an empty thought.
      */
-    const getDestinationPath = () => {
+    const getDestinationPath = (): SimplePath => {
       if (!shouldImportIntoDummy) return simplePath
       const newDummyThought = getAllChildrenAsThoughts(updatedState, context).find(child => child.value === uuid)
       return (newDummyThought ? [...simplePath, newDummyThought.id] : simplePath) as SimplePath
@@ -142,7 +144,7 @@ const importText = (
 
     const newDestinationPath = getDestinationPath()
 
-    const imported = importJSON(updatedState, newDestinationPath, json, { lastUpdated, skipRoot })
+    const imported = importJSON(updatedState, newDestinationPath, json, { lastUpdated, skipRoot, updatedBy })
 
     /** Set cursor to the last imported path. */
     const setLastImportedCursor = (state: State) => {

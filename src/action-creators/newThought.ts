@@ -4,7 +4,6 @@ import { getSetting, hasChild, isContextViewActive } from '../selectors'
 import { asyncFocus, parentOf, ellipsize, pathToContext, head } from '../util'
 import { alert } from '../action-creators'
 import { Thunk, Context, Path, SplitResult, State } from '../@types'
-import { isMobile } from '../util/isMobile'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
@@ -56,7 +55,7 @@ const newThought =
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
     // making sure the current focus in on the editable component to prevent splitting
-    const isFocusOnEditable = isMobile() ? true : document.activeElement!.classList.contains('editable')
+    const isFocusOnEditable = document?.activeElement!.classList.contains('editable')
 
     // Determine if thought at path is uneditable
     const contextOfCursor = path && pathToContext(state, path)

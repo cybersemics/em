@@ -209,7 +209,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'pinOpen',
   'pinSubthoughts',
   'note',
-  'delete',
+  'archive',
   // @MIGRATION_NOTE: context view is disable for the migration.
   // 'toggleContextView',
   'proseView',
@@ -221,7 +221,9 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'exportContext',
 ]
 
-export const EDIT_THROTTLE = 1000
+// Throttle editThought when user is typing.
+// See: thoughtChangeHandler in Editable.tsx.
+export const EDIT_THROTTLE = 500
 
 export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
 
@@ -305,6 +307,8 @@ export const MODALS: Index<string> = {
   export: 'export',
   feedback: 'feedback',
   auth: 'auth',
+  invites: 'invites',
+  signup: 'signup',
 }
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'
@@ -320,8 +324,6 @@ export const EMOJI_REGEX = emojiRegex
         Explaination: https://stackoverflow.com/a/30887581/10168748
  */
 export const EMOJI_REGEX_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
-
-export const IGNORED_PREFIXES = ['the ']
 
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span']
 

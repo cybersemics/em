@@ -20,7 +20,7 @@ import {
   unroot,
 } from '../util'
 import { alert, error, closeModal, pull } from '../action-creators'
-import { exportContext, getDescendants, simplifyPath, theme } from '../selectors'
+import { exportContext, getDescendantPaths, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
@@ -281,7 +281,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
     if (selected.type === 'text/html') {
       setNumDescendantsInState(
-        getDescendants(state, simplePath, {
+        getDescendantPaths(state, simplePath, {
           filterFunction: and(
             shouldIncludeMetaAttributes || ((thought: Parent) => !isFunction(thought.value)),
             shouldIncludeArchived || ((thought: Parent) => thought.value !== '=archive'),

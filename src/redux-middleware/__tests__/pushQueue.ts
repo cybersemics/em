@@ -1,8 +1,8 @@
 import { store } from '../../store'
 import { importText, editThought } from '../../action-creators'
-import { getLexeme as getThoughtSelector } from '../../selectors'
+import { getLexeme as getLexemeState, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
-import getLexeme from '../../data-providers/data-helpers/getLexeme'
+import getLexemeDb from '../../data-providers/data-helpers/getLexeme'
 import { DataProvider } from '../../data-providers/DataProvider'
 import testTimer from '../../test-helpers/testTimer'
 import { SimplePath } from '../../@types'
@@ -20,7 +20,7 @@ const db = dexie as DataProvider
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('editing thoughts to new value with related pending lexeme', async () => {
+it('editing a thought should load the lexeme and merge contexts', async () => {
   // Related issue: https://github.com/cybersemics/em/issues/1074
 
   fakeTimer.useFakeTimer()
@@ -43,37 +43,51 @@ it('editing thoughts to new value with related pending lexeme', async () => {
 
   await fakeTimer.useRealTimer()
 
-  expect((await getLexeme(db, 'f'))?.contexts).toHaveLength(1)
+  expect((await getLexemeDb(db, 'f'))?.contexts).toHaveLength(1)
 
   // refresh test app
   await refreshTestApp()
 
   fakeTimer.useFakeTimer()
 
-  // lexeme for 'f; should not be loaded into the state yet.
-  expect(getThoughtSelector(store.getState(), 'f')).toBeFalsy()
+  // lexeme for 'f' should not be loaded into the state yet.
+  expect(getLexemeState(store.getState(), 'f')).toBeFalsy()
+
+  const pathGH = rankThoughtsFirstMatch(store.getState(), ['g', 'h']) as SimplePath
 
   store.dispatch(
     editThought({
       oldValue: 'h',
       newValue: 'f',
       context: ['g'],
-      path: [
-        { value: 'g', rank: 0 },
-        { value: 'h', rank: 0 },
-      ] as SimplePath,
+      path: pathGH,
     }),
   )
   await fakeTimer.runAllAsync()
 
   fakeTimer.useRealTimer()
 
-  // related lexemes should be pulled and synced after thought is edited.
+  // existing Lexemes should be pulled and synced after thought is edited.
 
   // both db and state should have same updated lexeme
-  const expectedContexts = [{ context: ['g'] }, { context: ['a', 'b', 'c', 'd', 'e'] }]
+  const thoughtContextsState = getLexemeState(store.getState(), 'f')?.contexts
 
-  expect(getThoughtSelector(store.getState(), 'f')?.contexts).toMatchObject(expectedContexts)
+  // check that state has the correct contexts, ignoring order and ids
+  expect(thoughtContextsState).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ context: ['g'] }),
+      expect.objectContaining({ context: ['a', 'b', 'c', 'd', 'e'] }),
+    ]),
+  )
+  expect(thoughtContextsState).toHaveLength(2)
 
-  expect((await getLexeme(db, 'f'))?.contexts).toMatchObject(expectedContexts)
+  // check that db has the correct contexts, ignoring order and ids
+  const thoughtContextsDb = (await getLexemeDb(db, 'f'))?.contexts
+  expect(thoughtContextsDb).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ context: ['g'] }),
+      expect.objectContaining({ context: ['a', 'b', 'c', 'd', 'e'] }),
+    ]),
+  )
+  expect(thoughtContextsState).toHaveLength(2)
 })

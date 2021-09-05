@@ -1,15 +1,15 @@
-import React, { FC, MouseEvent, useMemo, useRef, useState } from 'react'
+import React, { FC, useMemo, useRef, useState } from 'react'
 import { connect, useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import { isTouch } from '../browser'
 import {
   cursorBack as cursorBackActionCreator,
   expandContextThought,
-  toggleSidebar as toggleSidebarActionCreator,
+  toggleSidebar,
   closeModal,
 } from '../action-creators'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { getSetting, isTutorial, getSortPreference } from '../selectors'
+import { getSetting, isTutorial } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
 
 // components
@@ -49,10 +49,6 @@ const mapStateToProps = (state: State) => {
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
 
-  // pass rootSort to allow root Subthoughts to render on toggleSort
-  // pass scalar components to avoid re-render from object reference change
-  const { type: rootSortType, direction: rootSortDirection } = getSortPreference(state, rootContext)
-
   return {
     search,
     showModal,
@@ -60,8 +56,6 @@ const mapStateToProps = (state: State) => {
     tutorialStep,
     rootThoughtsLength,
     noteFocus,
-    rootSortDirection,
-    rootSortType,
     isAbsoluteContext,
     rootContext,
   }
@@ -69,35 +63,18 @@ const mapStateToProps = (state: State) => {
 
 type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
 
-/**
- * Calculates whether there was a click on the left margin or padding zone of content element.
- *
- * @param e The onClick e object.
- * @param content HTML element.
- */
-const isLeftSpaceClick = (e: MouseEvent, content?: HTMLElement) => {
+/** Calculates whether there was a click on the left margin or padding zone of content element. Used to activate Recently Edited sidebar on mobile. */
+const isPointInLeftGutter = (x: number, y: number, content?: HTMLElement) => {
   const style = window.getComputedStyle(content!)
   const pTop = parseInt(style.getPropertyValue('padding-top'))
   const mTop = parseInt(style.getPropertyValue('margin-top'))
   const mLeft = parseInt(style.getPropertyValue('margin-left'))
-  const x = e.clientX
-  const y = e.clientY
   return x < mLeft && y > pTop + mTop
 }
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const {
-    search,
-    isTutorialLocal,
-    tutorialStep,
-    showModal,
-    rootThoughtsLength,
-    noteFocus,
-    rootSortDirection,
-    rootSortType,
-    isAbsoluteContext,
-  } = props
+  const { search, isTutorialLocal, tutorialStep, showModal, rootThoughtsLength, noteFocus, isAbsoluteContext } = props
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
@@ -139,8 +116,8 @@ const Content: ContentComponent = props => {
     <div
       id='content-wrapper'
       onClick={e => {
-        if (!showModal && isLeftSpaceClick(e, contentRef.current!)) {
-          dispatch(toggleSidebarActionCreator({}))
+        if (!showModal && isTouch && isPointInLeftGutter(e.clientX, e.clientY, contentRef.current!)) {
+          dispatch(toggleSidebar())
         }
       }}
     >
@@ -162,12 +139,7 @@ const Content: ContentComponent = props => {
                 <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} />
               )
             ) : (
-              <Subthoughts
-                simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH}
-                expandable={true}
-                sortDirection={rootSortDirection}
-                sortType={rootSortType}
-              />
+              <Subthoughts simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH} expandable={true} />
             )}
           </>
         )}

@@ -1,9 +1,7 @@
 import React from 'react'
-// import { isDocumentEditable } from '../util'
-// import { outdent } from '../action-creators'
+import { outdent } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { Path } from 'react-native-svg'
-import { Alert } from 'react-native'
 
 // import moveCursorBackward from './moveCursorBackward'
 
@@ -25,8 +23,7 @@ const outdentShortcut: Shortcut = {
   description:
     'De-indent? Outdent? Whatever the opposite of indent is. Move the current thought "out" a level (immediately after its parent).',
   svg: Icon,
-  exec: () => Alert.alert('noteShortcut'),
-  /* canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  // canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
@@ -34,7 +31,7 @@ const outdentShortcut: Shortcut = {
     if (!cursor || cursor.length < 2) return
 
     dispatch(outdent())
-  } */
+  },
 }
 
 export default outdentShortcut

@@ -1,26 +1,47 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
-import { equalArrays, headId, pathToContext } from '../util'
+import { equalArrays, equalPath, headId, pathToContext } from '../util'
 import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
 import { deleteCursor, updateCursor } from '../data-providers/dexie'
-import { Index, State } from '../@types'
-
-/** Delay with which to throttle browser history update. */
-// write to local db is slow and not done in a separate thread yet, so we need to heavily throttle it
-const throttleDelay = 400
+import { Context, Index, Path, State } from '../@types'
 
 interface Options {
+  // if true, replaces the last history state; otherwise pushes history state
   replace?: boolean
+
+  // Used during toggleContextViews when the state has not yet been updated. Defaults to state.contextViews.
   contextViews?: Index<boolean>
 }
+
+/** Time delay (ms) to throttle the updateUrlHistory middleware so it is not executed on every action. */
+const THROTTLE_MIDDLEWARE = 50
+
+/** Time delay (ms) to throttle writing the cursor to the database which is slow and not done in a separate worker yet. */
+const THROTTLE_DB_WRITE = 400
+
+// The last path that is passed to updateUrlHistory that is different from the current path. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
+let pathPrev: Path | null = null
+
+const updateCursorThrottled = _.throttle((state: State, context: Context) => {
+  // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
+  // ensure the location does not change through refreshes in standalone PWA mode
+  const updateCursorPromise = state.cursor ? updateCursor(hashContextUrl(state, context)) : deleteCursor()
+  updateCursorPromise.catch(err => {
+    throw new Error(err)
+  })
+}, THROTTLE_DB_WRITE)
+
 /**
- * Sets the url and history to the given thoughts.
+ * Sets the url to the given Path.
  * SIDE EFFECTS: window.history.
- *
- * @param contextViews   Optional argument can be used during toggleContextViews when the state has not yet been updated. Defaults to URL contextViews.
  */
 const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextViews }: Options = {}) => {
+  // wait until local state has loaded before updating the url
+  // nothing to update if the cursor hasn't changed
+  if (state.isLoading || equalPath(pathPrev, path)) return
+  pathPrev = path
+
   const decoded = decodeThoughtsUrl(state, window.location.pathname)
   const context = path ? pathToContext(state, path) : [HOME_TOKEN]
   const encoded = headId(path || HOME_PATH)
@@ -40,12 +61,7 @@ const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextView
     contextViews: contextViews || state.contextViews || decoded.contextViews,
   }
 
-  // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
-  // ensure the location does not change through refreshes in standalone PWA mode
-  const updateCursorPromise = path ? updateCursor(hashContextUrl(stateWithNewContextViews, context)) : deleteCursor()
-  updateCursorPromise.catch(err => {
-    throw new Error(err)
-  })
+  updateCursorThrottled(stateWithNewContextViews, context)
 
   // if PWA, do not update browser URL as it causes a special browser navigation bar to appear
   // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
@@ -70,17 +86,13 @@ const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextView
 const updateUrlHistoryThrottled = _.throttle(getState => {
   const state = getState()
   updateUrlHistory(state, state.cursor)
-}, throttleDelay)
+}, THROTTLE_MIDDLEWARE)
 
 /** Updates the url history after the cursor has changed. The call to updateUrlHistory will short circuit if the cursor has not deviated from the current url. */
 const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
     next(action)
-
-    // wait until local state has loaded before updating the url
-    if (!getState().isLoading) {
-      updateUrlHistoryThrottled(getState)
-    }
+    updateUrlHistoryThrottled(getState)
   }
 }
 

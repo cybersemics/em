@@ -14,10 +14,12 @@ import {
   unroot,
 } from '../util'
 import { createId } from './createId'
+import { getSessionId } from './sessionManager'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp
   skipRoot?: boolean
+  updatedBy?: string
 }
 
 interface ThoughtPair {
@@ -49,6 +51,7 @@ const insertThought = (
   rank: number,
   created: Timestamp = timestamp(),
   lastUpdated: Timestamp = timestamp(),
+  updatedBy = getSessionId(),
 ): ThoughtPair => {
   const rootContext = context.length > 0 ? context : [HOME_TOKEN]
 
@@ -62,6 +65,7 @@ const insertThought = (
     contexts: [...(lexemeOld?.contexts || []), newThoughtId],
     created: lexemeOld?.created ?? created,
     lastUpdated,
+    updatedBy,
   }
 
   const parentNew: Parent = {
@@ -71,6 +75,7 @@ const insertThought = (
     parentId: parentOld.parentId,
     children: [...parentOld.children, newThoughtId],
     lastUpdated,
+    updatedBy,
   }
 
   const newThought: Parent = {
@@ -79,6 +84,7 @@ const insertThought = (
     children: [],
     parentId: parentOld.id,
     lastUpdated,
+    updatedBy,
     rank,
   }
 
@@ -99,6 +105,7 @@ const saveThoughts = (
   rankIncrement = 1,
   startRank = 0,
   lastUpdated = timestamp(),
+  updatedBy = getSessionId(),
 ): ThoughtIndices => {
   const contextEncoded = head(path)
 
@@ -157,6 +164,7 @@ const saveThoughts = (
           rank,
           createdInherited,
           lastUpdatedInherited,
+          updatedBy,
         )
 
         // TODO: remove mutations
@@ -252,7 +260,7 @@ export const importJSON = (
   state: State,
   simplePath: SimplePath,
   blocks: Block[],
-  { lastUpdated = timestamp(), skipRoot = false }: ImportJSONOptions = {},
+  { lastUpdated = timestamp(), updatedBy = getSessionId(), skipRoot = false }: ImportJSONOptions = {},
 ) => {
   const initialThoughtIndex: Index<Lexeme> = {}
   const initialContextIndex: Index<Parent> = {}
@@ -275,6 +283,7 @@ export const importJSON = (
         ...state.thoughts.contextIndex[contextEncoded],
         children: getAllChildren(state, rootedContext).filter(child => child !== destThought.id),
         lastUpdated,
+        updatedBy,
       }
     }
   }
@@ -291,6 +300,7 @@ export const importJSON = (
     rankIncrement,
     rankStart,
     lastUpdated,
+    updatedBy,
   )
 
   // get the last child imported in the first level so the cursor can be set

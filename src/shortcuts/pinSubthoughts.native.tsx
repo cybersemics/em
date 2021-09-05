@@ -1,11 +1,10 @@
 import React from 'react'
-// import { attributeEquals, simplifyPath } from '../selectors'
-// import { pathToContext } from '../util'
-// import { toggleAttribute } from '../action-creators'
+import { attributeEquals, simplifyPath } from '../selectors'
+import { pathToContext } from '../util'
+import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
-// import { HOME_PATH } from '../constants'
+import { HOME_PATH } from '../constants'
 import Svg, { Path, G } from 'react-native-svg'
-import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, fill }: IconType) => (
@@ -26,27 +25,28 @@ const pinSubthoughtsShortcut: Shortcut = {
   description: "Pin open the current thought's subthoughts.",
   // keyboard: { key: 'p', meta: true, shift: true },
   svg: Icon,
-  exec: () => Alert.alert('pinSubthoughtsShortcut'),
-  /*  exec: (dispatch, getState) => {
-     const state = getState()
-     const { cursor } = state
-     if (!cursor) return
+  exec: (dispatch, getState) => {
+    const state = getState()
+    const { cursor } = state
+    if (!cursor) return
 
-     const simplePath = simplifyPath(state, cursor)
-     const context = pathToContext(simplePath)
+    const simplePath = simplifyPath(state, cursor)
+    const context = pathToContext(state, simplePath)
 
-     dispatch(toggleAttribute({
-       context,
-       key: '=pinChildren',
-       value: 'true',
-     }))
-   },
-   isActive: getState => {
-     const state = getState()
-     const { cursor } = state
-     const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
-     return attributeEquals(state, context, '=pinChildren', 'true')
-   } */
+    dispatch(
+      toggleAttribute({
+        context,
+        key: '=pinChildren',
+        value: 'true',
+      }),
+    )
+  },
+  isActive: getState => {
+    const state = getState()
+    const { cursor } = state
+    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
+    return attributeEquals(state, context, '=pinChildren', 'true')
+  },
 }
 
 export default pinSubthoughtsShortcut
