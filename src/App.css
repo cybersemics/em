@@ -1293,9 +1293,9 @@ h1 .num-contexts {
     font-size: 19px;
   }*/
 
-  .android .thought .bullet-cursor-overlay {
+  /*.android .thought .bullet-cursor-overlay {
     display: none;
-  }
+  }*/
 
   /*.android .child.editing > .thought-container > .thought .bullet-cursor-overlay,
   .android .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
@@ -1576,9 +1576,9 @@ h1 .num-contexts {
 */
 
 /* overlay bullet for cursor */
-.thought .bullet-cursor-overlay {
+/*.thought .bullet-cursor-overlay {
   display: none;
-}
+}*/
 
 .child.editing > .thought-container > .bullet,
 .child > .thought-container > .bullet-highlighted {
@@ -2918,8 +2918,7 @@ code,
   margin-left: 6px;
 }
 
-.child-divider .bullet,
-.child-divider .bullet-cursor-overlay {
+.child-divider .bullet {
   display: none !important;
 }
 
@@ -2973,9 +2972,9 @@ code,
 }
 
 /* cursor can still be seen since are dimmed due to autofocus */
-.table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
+/*.table-view > .children > .child > .thought-container > .thought > .bullet-cursor-overlay {
   display: none;
-}
+}*/
 
 .table-view > .children > .child.editing > .thought-container > .thought > .editable:before {
   position: absolute;
