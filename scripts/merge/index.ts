@@ -183,7 +183,8 @@ const main = () => {
 
   // accumulate the new state by importing each input
   let stateNew: State = { ...stateBlank, thoughts: thoughtsCurrent }
-  let errors: ErrorLog[] = []
+  const errors: ErrorLog[] = []
+  const success: string[] = []
 
   filesToImport.forEach(file => {
     // skip hidden files including .DS_Store
@@ -204,6 +205,9 @@ const main = () => {
 
     try {
       stateNew = mergeThoughts(stateNew, thoughtsImported)
+
+      // if we made it this far, there was no error
+      success.push(file)
     } catch (e) {
       console.error('Error merging')
       errors.push({ e: e as Error, file, message: 'Error merging' })
@@ -234,6 +238,10 @@ const main = () => {
     fs.writeFileSync('output/debug.log', debugOutput)
 
     console.info('Partial success! See output/debug.log for error messages and stack trace.')
+
+    console.info('')
+    console.info('Files that did get merged:')
+    success.forEach(file => console.error(file))
 
     console.info('')
     console.info('Files that did not get merged:')
