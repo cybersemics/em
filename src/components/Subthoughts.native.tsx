@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import { shortcutById } from '../shortcuts'
 import globals from '../globals'
-import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, VIEW_MODE } from '../constants'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import {
@@ -58,10 +58,6 @@ import {
   getContextsSortedAndRanked,
   getEditingPath,
   getGlobalSortPreference,
-  // getNextRank,
-  // getPrevRank,
-  // getSortPreference,
-  getStyle,
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
@@ -84,6 +80,7 @@ interface SubthoughtsProps {
   sortDirection?: SortDirection | null
   simplePath: SimplePath
   path?: Path
+  view?: string | null
 }
 
 // assert shortcuts at load time
@@ -421,6 +418,7 @@ export const SubthoughtsComponent = ({
   isExpanded,
   zoomCursor,
   zoomParent,
+  view,
 }: SubthoughtsProps & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
@@ -568,8 +566,6 @@ export const SubthoughtsComponent = ({
 
   const contextChildren = [...unroot(context), '=children'] // children of parent with =children
   const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
-  const styleChildren = getStyle(state, contextChildren)
-  const styleGrandChildren = getStyle(state, contextGrandchildren)
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
   // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
@@ -586,9 +582,8 @@ export const SubthoughtsComponent = ({
         ) : null
       ) : null}
 
-      {show && filteredChildren.length > (showContexts && !allowSingleContext ? 1 : 0) ? (
-        <View style={{ marginLeft: depth * 25 }}>
-          {filteredChildren.map((child, i) => {
+      {show && filteredChildren.length > (showContexts && !allowSingleContext ? 1 : 0)
+        ? filteredChildren.map((child, i) => {
             if (i >= proposedPageSize) {
               return null
             }
@@ -609,42 +604,42 @@ export const SubthoughtsComponent = ({
                 (!!childContextEnvZoom() && attribute(state, childContextEnvZoom()!, '=bullet') === 'None'))
 
             /** Gets the =focus/Zoom/=style of the child path. */
-            const styleZoom = () => getStyle(state, [...childContext, '=focus', 'Zoom'])
 
             /** Gets the style of the Zoom applied via env. */
-            const styleEnvZoom = () => (childContextEnvZoom() ? getStyle(state, childContextEnvZoom()!) : null)
 
             const style = {
-              styleGrandChildren,
-              styleChildren,
-              ...(isEditingChildPath()
-                ? {
-                    ...styleZoom(),
-                    ...styleEnvZoom(),
-                  }
-                : null),
+              marginRight: 20,
             }
 
+            const isTableView = view === VIEW_MODE.Table
+            const isProseView = view === VIEW_MODE.Prose
+
             return child ? (
-              <Thought
-                allowSingleContext={allowSingleContextParent}
-                depth={depth + 1}
-                env={env}
-                hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
+              <View
                 key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
-                rank={child.rank}
-                isDraggable={actualDistance < 2}
-                showContexts={showContexts}
-                prevChild={filteredChildren[i - 1]}
-                isParentHovering={isParentHovering}
-                style={Object.keys(style).length > 0 ? style : undefined}
-                path={appendChildPath(state, childPath, path)}
-                simplePath={childPath}
-              />
+                style={[{ marginLeft: depth * 25 }]}
+              >
+                <Thought
+                  allowSingleContext={allowSingleContextParent}
+                  depth={depth + 1}
+                  env={env}
+                  view={view}
+                  hideBullet={
+                    isProseView || hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()
+                  }
+                  rank={child.rank}
+                  isDraggable={actualDistance < 2}
+                  showContexts={showContexts}
+                  prevChild={filteredChildren[i - 1]}
+                  isParentHovering={isParentHovering}
+                  style={isTableView ? style : {}}
+                  path={appendChildPath(state, childPath, path)}
+                  simplePath={childPath}
+                />
+              </View>
             ) : null
-          })}
-        </View>
-      ) : null}
+          })
+        : null}
 
       {isPaginated && distance !== 2 && (
         <TouchableOpacity style={commonStyles.row}>

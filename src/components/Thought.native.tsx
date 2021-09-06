@@ -14,7 +14,7 @@ import Bullet from './Bullet'
 import Byline from './Byline'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import Subthoughts from './Subthoughts'
+import Subthoughts from './Subthoughts.native'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 
 // hooks
@@ -52,7 +52,7 @@ import {
 } from '../selectors'
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, ViewStyle } from 'react-native'
 import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
@@ -386,8 +386,7 @@ const ThoughtContainer = ({
       ? styleEnv
       : style
 
-  const isTableView = view === VIEW_MODE.Table
-  const isProseView = view === VIEW_MODE.Prose
+  const isProseView = hideBullet
 
   return (
     <View style={marginBottom}>
@@ -397,14 +396,15 @@ const ThoughtContainer = ({
             isEditing={isEditing}
             context={pathToContext(simplePath)}
             leaf={isLeaf}
-            onClick={(e: React.MouseEvent) => {
+            onClick={() => {
               if (!isEditing || children.length === 0) {
-                e.stopPropagation()
                 store.dispatch(setCursor({ path: simplePath }))
               }
             }}
           />
         )}
+
+        {isProseView && <View style={styles(isEditing).proseView} />}
 
         {/* // Todo: still need to decide the best approach to implement the annotations.
         <ThoughtAnnotation
@@ -443,26 +443,33 @@ const ThoughtContainer = ({
 
       {publish && context.length === 0 && <Byline context={thoughts} />}
 
-      <View style={[isProseView && styles.proseView, isTableView && styles.tableView]}>
-        <Subthoughts
-          allowSingleContext={allowSingleContext}
-          childrenForced={childrenForced}
-          env={env}
-          path={path}
-          depth={depth}
-          isParentHovering={isAnyChildHovering}
-          showContexts={allowSingleContext}
-          simplePath={simplePath}
-        />
-      </View>
+      <Subthoughts
+        allowSingleContext={allowSingleContext}
+        childrenForced={childrenForced}
+        env={env}
+        path={path}
+        depth={depth}
+        isParentHovering={isAnyChildHovering}
+        showContexts={allowSingleContext}
+        simplePath={simplePath}
+        view={view}
+      />
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  proseView: { marginLeft: 20 },
-  tableView: { justifyContent: 'flex-end', alignSelf: 'baseline' },
-})
+/** Styles. */
+const styles = (isEditing?: boolean) =>
+  StyleSheet.create({
+    proseView: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: 'white',
+      opacity: isEditing ? 0.2 : 0,
+      marginRight: 15,
+    },
+  })
 
 ThoughtContainer.displayName = 'ThoughtContainer'
 
