@@ -52,7 +52,7 @@ import {
 } from '../selectors'
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
-import { StyleSheet, ViewStyle } from 'react-native'
+import { StyleSheet } from 'react-native'
 import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
