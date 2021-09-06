@@ -19,6 +19,7 @@ interface ContentEditableProps {
   onPaste?: (e: IOnPaste) => void
   onKeyDown?: (e: IKeyDown) => void
   placeholder: string
+  isTable?: boolean
 }
 
 export interface IOnPaste {
@@ -43,6 +44,7 @@ const ContentEditable = ({
   forceUpdate,
   placeholder,
   isEditing,
+  isTable,
   ...props
 }: ContentEditableProps) => {
   const allowInnerHTMLChange = useRef<boolean>(true)
@@ -51,16 +53,22 @@ const ContentEditable = ({
   const contentRef = useRef<WebView>(null)
   const [innerHTMLValue, setInnerHTMLValue] = useState(html)
 
-  const [webviewHTML, setWebviewHTML] = useState<string>(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+  const [webviewHTML, setWebviewHTML] = useState<string>(
+    createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }),
+  )
 
   useEffect(() => {
-    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
+  }, [isTable])
+
+  useEffect(() => {
+    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
   }, [isEditing])
 
   useEffect(() => {
     if (html.trim() === innerHTMLValue.trim()) return
 
-    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
   }, [html])
 
   useEffect(() => {
@@ -119,7 +127,7 @@ const ContentEditable = ({
             }
 
             case WEBVIEW_POST_EVENTS.onBlur: {
-              setWebviewHTML(createWebHTML({ innerHTML: html, placeholder }))
+              setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isTable }))
 
               if (props.onBlur) props.onBlur()
               break
@@ -144,7 +152,7 @@ const ContentEditable = ({
               break
           }
         }}
-        style={styles({ width, height }).webview}
+        style={styles({ width: !isTable ? width : width - 40, height }).webview}
       />
     </View>
   )
