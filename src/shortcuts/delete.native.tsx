@@ -73,8 +73,8 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const deleteShortcut: Shortcut = {
   id: 'delete',
-  label: 'Archive',
-  description: 'Archive the current thought.',
+  label: 'Delete',
+  description: 'Permanently delete the current thought.',
   gesture: 'ldl',
   svg: Icon,
   exec: () => Alert.alert('deleteShortcut'),

@@ -2,7 +2,7 @@
 import _ from 'lodash'
 import { v4 as uuid } from 'uuid'
 import { Index } from '../@types'
-import { storage } from '../util/storage'
+import { storage, storeSession } from '../util/storage'
 
 export enum SessionType {
   LOCAL = 'local',
@@ -54,11 +54,11 @@ export const init = () => {
 
 /** Get current session id. If not initiated, create a new uuid and save it to storage. */
 export const getSessionId = () => {
-  if (typeof sessionStorage === undefined) {
+  if (typeof storeSession === undefined) {
     sessionId = 'NO_SESSION_STORAGE'
   } else if (!sessionId) {
-    sessionId = sessionStorage.getItem(SESSION_ID_KEY) || uuid()
-    sessionStorage.setItem(SESSION_ID_KEY, sessionId)
+    sessionId = storeSession.getItem(SESSION_ID_KEY) || uuid()
+    storeSession.setItem(SESSION_ID_KEY, sessionId)
   }
   return sessionId
 }

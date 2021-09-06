@@ -14,6 +14,12 @@ window = !isMobile
       getSelection: () => ({
         focusOffset: 0,
       }),
+      location: {
+        pathname: '',
+      },
+      decodeURIComponent: (str: string) => {
+        return decodeURI(str)
+      },
       setTimeout: setTimeout,
     }
 
