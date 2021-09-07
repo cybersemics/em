@@ -1,13 +1,16 @@
 /* eslint-disable fp/no-class, fp/no-this */
-import React from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION } from '../constants'
 import { Connected } from '../@types'
-import { closeModal, modalComplete, tutorial } from '../action-creators'
+import { closeModal, modalComplete } from '../action-creators'
+import styled, { css } from 'styled-components'
+import tw from 'twin.macro'
+import { AnimatePresence, motion } from 'framer-motion'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
-  complete: ModalComponent['complete']
+  complete: () => void
 }
 
 export interface ModalProps {
@@ -27,119 +30,149 @@ export interface ModalProps {
   preventCloseOnEscape?: boolean
 }
 
+// Styles
+const ModalWrapper = styled(motion.div)<{ center?: boolean; opaque?: boolean }>`
+  ${tw`
+    relative
+    p-10
+    bg-black
+    z-modal
+  `}
+
+  ${props =>
+    props.center &&
+    css`
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+    `}
+`
+
+const ModalCloseButton = tw.a`
+  fixed top-2 right-2 text-base
+  text-white
+  text-decoration[none]
+`
+
+const ModalContent = styled.div`
+  max-width: 40em;
+  margin: 0 auto;
+  max-height: none;
+`
+
+const ModalTitle = tw.h1`
+    mb-10
+    text-center
+    text-3xl
+    font-bold
+`
+
+const ModalContentWrapper = tw.div`
+  mb-10
+`
+
+const ModalActionsContainer = tw.div`
+  flex justify-center
+  text-center
+`
+
 /** A generic modal component. */
-class ModalComponent extends React.Component<Connected<ModalProps>> {
-  animateAndClose: (() => void) | null = null
-  escapeListener: ((e: KeyboardEvent) => void) | null = null
-  ref: React.RefObject<HTMLDivElement>
-
-  constructor(props: Connected<ModalProps>) {
-    super(props)
-    this.ref = React.createRef()
-  }
-
-  componentDidMount() {
-    // add a global escape listener
-    if (this.props.show) {
-      /**
-       * A handler that closes the modal when the escape key is pressed.
-       */
-      this.escapeListener = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && !this.props.preventCloseOnEscape) {
-          e.stopPropagation()
-          this.close!()
-        }
-      }
-
-      /**
-       * Animate and close the modal.
-       */
-      this.animateAndClose = () => {
-        const { dispatch } = this.props
-        window.removeEventListener('keydown', this.escapeListener!, true)
-        if (this.ref.current) {
-          this.ref.current.classList.add('animate-fadeout')
-        }
-        setTimeout(() => {
-          dispatch(closeModal())
-        }, FADEOUT_DURATION)
-      }
-
-      // use capturing so that this fires before the global window Escape which removes the cursor
-      window.addEventListener('keydown', this.escapeListener, true)
-    }
-  }
-
-  close = () => this.animateAndClose!()
-
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.escapeListener!, true)
-  }
+const ModalComponent: FC<Connected<ModalProps>> = props => {
+  const [closing, setClosing] = useState(false)
+  const ref = useRef(null)
 
   /** Dispatches a modalComplete action for the modal. */
-  complete = () => this.props.dispatch(modalComplete(this.props.id))
+  const complete = () => props.dispatch(modalComplete(props.id))
 
   /** Dispatches a tutorial action that ends the tutorial. */
-  endTutorial = () => this.props.dispatch(tutorial({ value: false }))
+  // const endTutorial = () => props.dispatch(tutorial({ value: false }))
 
-  render() {
-    const { show, id, title, arrow, center, opaque, className, style, actions, hideModalActions, top, children } =
-      this.props
+  /**
+   * Close modal.
+   */
+  const close = () => animateAndClose!()
 
-    if (!show) return null
+  const escapeListener = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !props.preventCloseOnEscape) {
+      e.stopPropagation()
+      close!()
+    }
+  }, [])
 
-    /** Dispatches a closeModal action for the modal. */
+  const animateAndClose = useCallback(() => {
+    const { dispatch } = props
+    window.removeEventListener('keydown', escapeListener!, true)
+    setClosing(true)
+    // TODO: Use prop show to animate unmount instead.
+    setTimeout(() => {
+      dispatch(closeModal())
+    }, FADEOUT_DURATION)
+  }, [])
 
-    // /** Dispatches a modalComplete action for the modal. */
-    // const complete = () => dispatch(modalComplete(id))
+  useEffect(() => {
+    if (props.show) {
+      // use capturing so that this fires before the global window Escape which removes the cursor
+      window.addEventListener('keydown', escapeListener, true)
 
-    // /** Dispatches a tutorial action that ends the tutorial. */
-    // const endTutorial = () => dispatch(tutorial({ value: false }))
+      return () => {
+        window.removeEventListener('keydown', escapeListener!, true)
+      }
+    }
+  }, [])
 
-    return (
-      <div
-        ref={this.ref}
-        style={Object.assign({}, style, top && { top: 55 })}
-        className={
-          className +
-          ' ' +
-          classNames({
-            modal: true,
-            animate: true,
-            [`modal-${id}`]: true,
-            center,
-            opaque,
-          })
-        }
-      >
-        {!this.props.preventCloseOnEscape && (
-          <a className='upper-right popup-close-x text-small' onClick={this.close}>
-            ✕
-          </a>
-        )}
-        <div
-          className={classNames({
-            'modal-content': true,
-            ...(arrow && { [arrow]: arrow }),
-          })}
+  const { show, id, title, arrow, center, opaque, className, style, actions, hideModalActions, top, children } = props
+
+  if (!show) return null
+
+  return (
+    <AnimatePresence>
+      {!closing && (
+        <ModalWrapper
+          ref={ref}
+          opaque={opaque}
+          center={center}
+          initial={{
+            opacity: 0,
+          }}
+          animate={{
+            opacity: 1,
+          }}
+          exit={{
+            opacity: 0,
+          }}
+          transition={{ duration: 0.5 }}
+          style={Object.assign({}, style, top && { top: 55 })}
+          // TODO: Refactor  id class name
+          className={
+            className +
+            ' ' +
+            classNames({
+              [`modal-${id}`]: true,
+            })
+          }
         >
-          {title && <h1 className='modal-title'>{title}</h1>}
-          <div className='modal-text'>{children}</div>
-          {!hideModalActions && actions && (
-            <div className='modal-actions'>
-              {actions({
-                close: this.close,
-                complete: this.complete,
-              })}
-            </div>
-          )}
-          <a className='modal-close' onClick={() => this.close()}>
-            <span>✕</span>
-          </a>
-        </div>
-      </div>
-    )
-  }
+          {!props.preventCloseOnEscape && <ModalCloseButton onClick={close}>✕</ModalCloseButton>}
+          <ModalContent
+            // TODO: Refactor arrow functionality here
+            className={classNames({
+              ...(arrow && { [arrow]: arrow }),
+            })}
+          >
+            {title && <ModalTitle>{title}</ModalTitle>}
+            <ModalContentWrapper>{children}</ModalContentWrapper>
+            {!hideModalActions && actions && (
+              <ModalActionsContainer>
+                {actions({
+                  close: close,
+                  complete: complete,
+                })}
+              </ModalActionsContainer>
+            )}
+          </ModalContent>
+        </ModalWrapper>
+      )}
+    </AnimatePresence>
+  )
 }
 
 export default ModalComponent

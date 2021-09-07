@@ -6,6 +6,12 @@ import Modal from './Modal'
 import { alert } from '../action-creators'
 import { AxiosError } from 'axios'
 import { State } from '../@types'
+import TextArea from '../TextArea'
+import TextLink from './TextLink'
+
+// Needs to import twin.macro for tw prop to work
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import tw from 'twin.macro'
 
 const FEEDBACK_MIN_LENGTH = 10
 
@@ -78,19 +84,19 @@ const ModalFeedback = () => {
             title='Send'
             active={true}
             isLoading={isSubmitting}
-            isDisabled={isDisabled}
+            disabled={isDisabled}
             onClick={() => onSubmit({ close })}
           />
-          <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}>
-            <a id='skip-tutorial' onClick={() => close()}>
+          <div key='cancel' tw='mt-2.5'>
+            <TextLink onClick={() => close()} grayed>
               Cancel
-            </a>
+            </TextLink>
           </div>
         </div>
       )}
     >
-      <p style={{ fontSize: 18, marginBottom: 30 }}>Send us your bugs, hopes, and dreams!</p>
-      <textarea
+      <p tw='text-lg mb-5 text-center'>Send us your bugs, hopes, and dreams!</p>
+      <TextArea
         placeholder={'Enter your message'}
         rows={1}
         value={feedback}

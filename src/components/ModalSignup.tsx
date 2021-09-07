@@ -147,7 +147,7 @@ const ModalSignup = () => {
                   key={modes.signup.modalKey}
                   title={modes.signup.modalTitle}
                   active={true}
-                  isDisabled={isSubmitting}
+                  disabled={isSubmitting}
                   isLoading={isSubmitting}
                   onClick={() => submitAction(closeModal)}
                 />

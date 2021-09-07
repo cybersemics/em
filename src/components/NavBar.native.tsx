@@ -36,7 +36,6 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: IComponentProps) => {
       <HomeLink />
 
       <ContextBreadcrumbs simplePath={breadcrumbSimplePath} />
-
       <View style={styles.buttonsContainer}>
         <FeedbackButton />
         <QuickAddButton />

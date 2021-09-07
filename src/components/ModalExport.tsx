@@ -23,12 +23,17 @@ import { exportContext, getAllChildren, getDescendantPaths, simplifyPath, theme 
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
-import ChevronImg from './ChevronImg'
+import Chevron from './Chevron'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
 import download from '../device/download'
 import * as selection from '../device/selection'
 import { Child, Context, ExportOption, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+import tw from 'twin.macro'
+import { ActionButton } from './ActionButton'
+import TextLink from './TextLink'
+import styled from 'styled-components'
+import TextArea from '../TextArea'
 
 /******************************************************************************
  * Contexts
@@ -183,7 +188,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
         {selected.label}
       </a>
       <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <ChevronImg dark={dark} onClickHandle={() => setIsOpen(!isOpen)} className={isOpen ? 'rotate180' : ''} />
+        <Chevron orientation={isOpen ? 'up' : 'down'} onClickHandle={() => setIsOpen(!isOpen)} />
         <span>
           <DropDownMenu
             isOpen={isOpen}
@@ -207,6 +212,106 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   )
 }
 
+const ModalExportContainer = tw.section`
+ flex justify-center
+ mb-4
+`
+
+const ActionWrapper = tw.div`
+  flex justify-center
+  mt-14 mb-5
+`
+
+const ClipboardWrapper = tw.div`
+  text-center
+`
+
+const AdvancedSettingContainer = tw.div`
+  flex justify-center
+  mt-14
+`
+
+const AdvancedSettingLink = styled(TextLink)<{ active?: boolean }>`
+  ${tw`
+    relative
+    transition-opacity
+    text-gray-300
+  `}
+  opacity:${props => (props.active ? 1 : 0.5)};
+`
+const ChevronContainer = tw.span`
+  relative
+  flex flex-col items-center
+`
+
+const AdvancedSettingSection = tw.section`
+  mx-auto
+  flex flex-col justify-center
+  max-width[35rem]
+`
+
+const CheckMark = styled.span`
+  ${tw`
+    absolute top-0 left-0
+    height[15px] width[15px]
+    bg-black
+    border border-solid border-white
+  `}
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 4px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    display: none;
+  }
+`
+
+const CheckboxInput = styled.input`
+  ${tw`
+    absolute
+    opacity-0
+    cursor-pointer
+    height[0] width[0]
+  `}
+
+  &:checked ~ ${CheckMark}:after {
+    display: block;
+  }
+`
+
+const CheckboxContainer = tw.label`
+  block 
+  relative
+  mb-3 pl-9
+  cursor-pointer
+  select-none
+`
+
+const SettingLabel = tw.p`
+  mb-1.5
+  text-base
+`
+
+const SettingDescription = tw.p`
+  text-sm
+  opacity-70
+`
+
+const ModalExportPublish = tw.div`
+  border-t-2 border-top-style[solid] border-gray-300 dark:border-gray-700
+  mt-8 mb-5 pt-10
+  text-center
+`
+
+const ButtonWrapper = tw.div`
+  flex justify-center
+`
 /******************************************************************************
  * ModalExport component
  *****************************************************************************/
@@ -231,12 +336,6 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
   const [selected, setSelected] = useState(exportOptions[0])
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
-
-  const dark = theme(state) !== 'Light'
-  const themeColor = { color: dark ? 'white' : 'black' }
-  const themeColorWithBackground = dark
-    ? { color: 'black', backgroundColor: 'white' }
-    : { color: 'white', backgroundColor: 'black' }
 
   const exportWord = isTouch ? 'Share' : 'Download'
 
@@ -412,10 +511,10 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
   ]
 
   return (
-    <Modal id='export' title='Export' className='popup'>
+    <Modal id='export' title='Export'>
       {/* Export message */}
-      <div className='modal-export-wrapper'>
-        <span className='modal-content-to-export'>
+      <ModalExportContainer>
+        <span>
           <span>
             {exportWord} <ExportThoughtsPhrase context={context} numDescendantsFinal={numDescendants} title={title} />
             <span>
@@ -424,96 +523,63 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
             </span>
           </span>
         </span>
-      </div>
+      </ModalExportContainer>
 
       {/* Preview */}
-      <textarea
-        readOnly
-        style={{
-          backgroundColor: '#111',
-          border: 'none',
-          borderRadius: '10px',
-          color: '#aaa',
-          fontSize: '1em',
-          height: '120px',
-          marginBottom: '20px',
-          width: '300px',
-        }}
-        value={exportContent || ''}
-      ></textarea>
-
+      <TextArea readOnly value={exportContent || ''}></TextArea>
       {/* Download button */}
-      <div className='modal-export-btns-wrapper'>
-        <button
-          className='modal-btn-export'
-          disabled={exportContent === null}
-          onClick={onExportClick}
-          style={themeColorWithBackground}
-        >
-          {exportWord}
-        </button>
-      </div>
+      <ActionWrapper>
+        <ActionButton title={exportWord} disabled={exportContent === null} onClick={onExportClick}></ActionButton>
+      </ActionWrapper>
 
       {/* Copy to clipboard */}
-      <div className='cp-clipboard-wrapper'>
+      <ClipboardWrapper>
         {exportContent !== null ? (
-          <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>
-            Copy to clipboard
-          </a>
+          <TextLink data-clipboard-text={exportContent}>Copy to clipboard</TextLink>
         ) : (
           <LoadingEllipsis />
         )}
-      </div>
-
+      </ClipboardWrapper>
       {/* Advanced Settings */}
-      <div className='advance-setting-wrapper'>
+      <AdvancedSettingContainer>
         <span>
-          <a
-            className='advance-setting-link no-select'
-            onClick={onAdvancedClick}
-            style={{ opacity: advancedSettings ? 1 : 0.5 }}
-          >
+          <AdvancedSettingLink active={advancedSettings} onClick={onAdvancedClick}>
             Advanced
-          </a>
+          </AdvancedSettingLink>
         </span>
-        <span className='advance-setting-chevron'>
-          <ChevronImg
-            dark={dark}
-            onClickHandle={onAdvancedClick}
-            className={advancedSettings ? 'rotate180' : ''}
-            additonalStyle={{ opacity: advancedSettings ? 1 : 0.5 }}
-          />
-        </span>
-      </div>
+        <ChevronContainer>
+          <Chevron orientation={!advancedSettings ? 'down' : 'up'} onClickHandle={onAdvancedClick} />
+        </ChevronContainer>
+      </AdvancedSettingContainer>
 
       {advancedSettings && (
-        <div className='advance-setting-section'>
+        <AdvancedSettingSection>
           {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, checked, title, description }) => {
             return (
-              <label className='checkbox-container' key={`${id}-key-${title}`}>
+              <CheckboxContainer className='chckbox-container' key={`${id}-key-${title}`}>
                 <div>
-                  <p className='advance-setting-label'>{title}</p>
-                  <p className='advance-setting-description dim'>{description}</p>
+                  <SettingLabel>{title}</SettingLabel>
+                  <SettingDescription>{description}</SettingDescription>
                 </div>
-                <input
+                <CheckboxInput
                   type='checkbox'
                   id={id}
                   checked={!!checked}
                   onChange={onChangeFunc}
                   defaultChecked={!!defaultChecked}
                 />
-                <span className='checkmark'></span>
-              </label>
+                <CheckMark></CheckMark>
+              </CheckboxContainer>
             )
           })}
-        </div>
+        </AdvancedSettingSection>
       )}
 
       {/* Publish */}
 
       {isDocumentEditable() && (
         <>
-          <div className='modal-export-publish'>
+          <ModalExportPublish>
             {publishedCIDs.length > 0 ? (
               <div>
                 Published:{' '}
@@ -529,7 +595,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
               </div>
             ) : (
               <div>
-                <p>
+                <p tw='mb-4'>
                   {publishing ? (
                     'Publishing...'
                   ) : (
@@ -546,33 +612,23 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
                 </p>
               </div>
             )}
-          </div>
+          </ModalExportPublish>
 
-          <div className='modal-export-btns-wrapper'>
-            <button
-              className='modal-btn-export'
+          <ButtonWrapper>
+            <ActionButton
+              title='Publish'
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
               onClick={publish}
-              style={themeColorWithBackground}
-            >
-              Publish
-            </button>
-
+            ></ActionButton>
             {(publishing || publishedCIDs.length > 0) && (
-              <button
-                className='modal-btn-cancel'
+              <ActionButton
+                title='Close'
                 onClick={() => {
                   dispatch([alert(null), closeModal()])
                 }}
-                style={{
-                  fontSize: '14px',
-                  ...themeColor,
-                }}
-              >
-                Close
-              </button>
+              ></ActionButton>
             )}
-          </div>
+          </ButtonWrapper>
         </>
       )}
     </Modal>
