@@ -73,6 +73,7 @@ export const createWebHTML = ({ placeholder, innerHTML, isEditing, isTable }: IW
   function focusInput() {
     try{
       const ele = document.getElementById("content");
+      ele.focus();
       setEndOfContenteditable(ele)
     } catch(e){
       window.ReactNativeWebView.postMessage(JSON.stringify({ error: e }))

@@ -51,7 +51,7 @@ const ContentEditable = ({
   const { width } = useDimensions().window
   const [height, setHeight] = useState(DEFAULT_WEBVIEW_HEIGHT)
   const contentRef = useRef<WebView>(null)
-  const [innerHTMLValue, setInnerHTMLValue] = useState(html)
+  const [innerHTMLValue, setInnerHTMLValue] = useState<string>()
 
   const [webviewHTML, setWebviewHTML] = useState<string>(
     createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }),
@@ -59,14 +59,10 @@ const ContentEditable = ({
 
   useEffect(() => {
     setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
-  }, [isTable])
+  }, [isEditing, isTable])
 
   useEffect(() => {
-    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
-  }, [isEditing])
-
-  useEffect(() => {
-    if (html.trim() === innerHTMLValue.trim()) return
+    if (html.trim() === innerHTMLValue?.trim()) return
 
     setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
   }, [html])
