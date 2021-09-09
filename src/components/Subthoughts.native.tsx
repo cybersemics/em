@@ -65,6 +65,7 @@ import { View } from 'moti'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
 import { TouchableOpacity } from 'react-native'
+import { getThoughtSpacing } from '../util/getThoughtSpacing'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -81,6 +82,7 @@ interface SubthoughtsProps {
   simplePath: SimplePath
   path?: Path
   view?: string | null
+  space?: number
 }
 
 // assert shortcuts at load time
@@ -577,6 +579,8 @@ export const SubthoughtsComponent = ({
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
 
+  // width - distance * depth;
+
   const contextChildren = [...unroot(context), '=children'] // children of parent with =children
   const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
@@ -629,8 +633,12 @@ export const SubthoughtsComponent = ({
 
             return child ? (
               <View
+                transition={{
+                  type: 'spring',
+                }}
+                delay={200}
                 key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
-                style={[{ marginLeft: depth * 25 }]}
+                animate={{ marginLeft: getThoughtSpacing(actualDistance(), depth), width: 20 }}
               >
                 <Thought
                   allowSingleContext={allowSingleContextParent}
@@ -643,6 +651,8 @@ export const SubthoughtsComponent = ({
                   isVisible={actualDistance() < 2}
                   prevChild={filteredChildren[i - 1]}
                   rank={child.rank}
+                  space={getThoughtSpacing(actualDistance(), depth) * depth}
+                  isDraggable={actualDistance() < 2}
                   showContexts={showContexts}
                   simplePath={childPath}
                   style={isTableView ? style : {}}
