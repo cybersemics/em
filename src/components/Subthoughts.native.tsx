@@ -65,7 +65,6 @@ import { View } from 'moti'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
 import { TouchableOpacity } from 'react-native'
-import { getThoughtSpacing } from '../util/getThoughtSpacing'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -107,6 +106,19 @@ const findFirstEnvContextWithZoom = (
     child => isFunction(child.value) && child.value in env && attribute(state, env[child.value], '=focus') === 'Zoom',
   )
   return child ? [...env[child.value], '=focus', 'Zoom'] : null
+}
+
+/** Get thought space. */
+const getThoughtSpacing = (distance: number, depth: number): number => {
+  if (distance === 0 || (distance === 1 && depth !== 0)) {
+    return 20
+  }
+
+  if (distance === 1 && depth === 0) {
+    return 5
+  }
+
+  return 0
 }
 
 /********************************************************************
