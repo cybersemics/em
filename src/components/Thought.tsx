@@ -463,9 +463,8 @@ const ThoughtContainer = ({
             view={view}
             editing={editing}
           />
-
-          <Note path={simplePathLive} />
         </div>
+        <Note path={simplePathLive} />
 
         {publish && context.length === 0 && <Byline context={thoughts} />}
 
