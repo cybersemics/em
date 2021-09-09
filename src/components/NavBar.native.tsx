@@ -35,7 +35,9 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: IComponentProps) => {
     <View style={styles.container}>
       <HomeLink />
 
-      <ContextBreadcrumbs simplePath={breadcrumbSimplePath} />
+      <View style={styles.breadcrumbs}>
+        <ContextBreadcrumbs simplePath={breadcrumbSimplePath} />
+      </View>
 
       <View style={styles.buttonsContainer}>
         <FeedbackButton />
@@ -47,7 +49,7 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: IComponentProps) => {
 
 const styles = StyleSheet.create({
   container: { paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center' },
-  breadcrumbs: { color: 'white', flex: 1, flexWrap: 'wrap' },
+  breadcrumbs: { flex: 1, flexWrap: 'wrap' },
   buttonsContainer: { flexDirection: 'row', alignItems: 'center' },
 })
 
