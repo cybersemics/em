@@ -1,11 +1,10 @@
 import React from 'react'
-// import { attributeEquals, simplifyPath } from '../selectors'
-// import { pathToContext } from '../util'
-// import { toggleAttribute } from '../action-creators'
+import { attributeEquals, simplifyPath } from '../selectors'
+import { pathToContext } from '../util'
+import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
-// import { HOME_PATH } from '../constants'
+import { HOME_PATH } from '../constants'
 import Svg, { Path, G } from 'react-native-svg'
-import { Alert } from 'react-native'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, fill }: IconType) => (
@@ -22,11 +21,10 @@ const toggleTableViewShortcut: Shortcut = {
   id: 'toggleTableView',
   label: 'Toggle Table View',
   description: 'View the current context as a table, where each level of subthoughts is shown as a column.',
-  // gesture: 'rdlu',
-  // keyboard: { key: 't', alt: true, shift: true },
+  gesture: 'rdlu',
+  keyboard: { key: 't', alt: true, shift: true },
   svg: Icon,
-  exec: () => Alert.alert('toggleTableViewShortcut'),
-  /* exec: (dispatch, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
     if (!cursor) return
@@ -34,18 +32,20 @@ const toggleTableViewShortcut: Shortcut = {
     const simplePath = simplifyPath(state, cursor)
     const context = pathToContext(simplePath)
 
-    dispatch(toggleAttribute({
-      context,
-      key: '=view',
-      value: 'Table'
-    }))
+    dispatch(
+      toggleAttribute({
+        context,
+        key: '=view',
+        value: 'Table',
+      }),
+    )
   },
   isActive: getState => {
     const state = getState()
     const { cursor } = state
     const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
     return attributeEquals(state, context, '=view', 'Table')
-  } */
+  },
 }
 
 export default toggleTableViewShortcut

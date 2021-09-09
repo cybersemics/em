@@ -573,6 +573,7 @@ const Editable = ({
       onBlur={onBlur}
       onChange={onChangeHandler}
       onPaste={onPaste}
+      isTable={isTableColumn1}
       onKeyDown={onKeyDownAction ? onKeyDown : undefined}
       style={style || {}}
       isEditing={isEditing}
