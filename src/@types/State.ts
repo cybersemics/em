@@ -53,6 +53,7 @@ export interface State {
   isPushing?: boolean
   lastUpdated?: string
   modals: Index<{ complete?: boolean }>
+  // noteFocus is true if the caret is on the note
   noteFocus: boolean
   patches: Patch[]
   pushQueue: PushBatch[]

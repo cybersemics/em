@@ -105,7 +105,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     isPushing: false,
     latestShortcuts: [],
     modals: {},
-    noteFocus: false, // true if a note has the browser selection
+    noteFocus: false,
     patches: [],
     recentlyEdited: {},
     resourceCache: {},
