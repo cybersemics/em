@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG, VIEW_MODE } from '../constants'
+import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
 import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
 
@@ -88,6 +88,7 @@ export interface ThoughtContainerProps {
   simplePath: SimplePath
   simplePathLive?: SimplePath
   view?: string | null
+  space?: number
 }
 
 interface ThoughtProps {
@@ -108,6 +109,7 @@ interface ThoughtProps {
   style?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
+  space?: number
 }
 
 export type ConnectedThoughtProps = ThoughtProps &
@@ -246,6 +248,8 @@ const ThoughtContainer = ({
   simplePath,
   simplePathLive,
   view,
+  distance,
+  space,
   toggleTopControlsAndBreadcrumbs,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
@@ -389,8 +393,16 @@ const ThoughtContainer = ({
   const isProseView = hideBullet
 
   return (
-    <View style={marginBottom}>
-      <View style={[directionRow, alignItemsCenter]}>
+    <View style={[marginBottom]}>
+      <View
+        transition={{
+          type: 'timing',
+        }}
+        delay={200}
+        animate={{ opacity: distance > 1 ? -10 : 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        style={[directionRow, alignItemsCenter]}
+      >
         {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
           <Bullet
             isEditing={isEditing}
@@ -423,6 +435,7 @@ const ThoughtContainer = ({
           path={path}
           cursorOffset={cursorOffset}
           hideBullet
+          space={space}
           homeContext={homeContext}
           isDraggable={isDraggable}
           isDragging={isDragging}
