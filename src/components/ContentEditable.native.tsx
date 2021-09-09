@@ -14,8 +14,8 @@ interface ContentEditableProps {
   isEditing?: boolean
   forceUpdate?: boolean
   onChange: (e: string) => void
-  onFocus: () => void
-  onBlur: () => void
+  onFocus?: () => void
+  onBlur?: () => void
   onPaste?: (e: IOnPaste) => void
   onKeyDown?: (e: IKeyDown) => void
   placeholder: string

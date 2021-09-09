@@ -1,30 +1,46 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { attribute, getParent, isContextViewActive } from '../selectors'
-import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
-import { strip } from '../util'
+import { attribute, getEditingPath, getParent, isContextViewActive, simplifyPath } from '../selectors'
+import {
+  cursorDown,
+  deleteAttribute,
+  editing,
+  setAttribute,
+  setCursor,
+  setNoteFocus,
+  toggleNote,
+} from '../action-creators'
+import { equalArrays, pathToContext, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
-import asyncFocus from '../device/asyncFocus'
-import selectNextEditable from '../device/selectNextEditable'
 import * as selection from '../device/selection'
-import { Context, State } from '../@types'
+import { Path, State } from '../@types'
 
 interface NoteProps {
-  context: Context
-  onFocus: (e: React.FocusEvent) => void
+  path: Path
 }
 
-/** Gets the editable node for the given note element. */
-const editableOfNote = (noteEl: HTMLElement) => {
-  // To prevent incorrect compilation, we need an explict return statement here (https://github.com/cybersemics/em/issues/923#issuecomment-738103132)
-  return (noteEl.parentNode?.previousSibling as HTMLElement)?.querySelector('.editable') as HTMLElement | null
+/** Sets the cursor on the note's thought as it is being edited. */
+const setCursorOnLiveThought = ({ path }: { path: Path }) => {
+  const state = store.getState()
+  const simplePath = simplifyPath(state, path) || path
+  const simplePathLive = getEditingPath(state, simplePath)
+
+  store.dispatch(
+    setCursor({
+      path: simplePathLive,
+      cursorHistoryClear: true,
+      editing: true,
+      noteFocus: true,
+    }),
+  )
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ context, onFocus }: NoteProps) => {
+const Note = ({ path }: NoteProps) => {
   const state = store.getState()
+  const context = pathToContext(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
   const [justPasted, setJustPasted] = useState(false)
@@ -35,6 +51,15 @@ const Note = ({ context, onFocus }: NoteProps) => {
     return noteThought && !noteThought.pending
   })
 
+  // set the caret on the note if editing this thought and noteFocus is true
+  useEffect(() => {
+    const state = store.getState()
+    // cursor must be true if editing
+    if (state.editing && state.noteFocus && equalArrays(pathToContext(simplifyPath(state, state.cursor!)), context)) {
+      selection.set(noteRef.current!, { end: true })
+    }
+  }, [state.noteFocus])
+
   if (!hasNote || isContextViewActive(state, context)) return null
 
   const note = attribute(state, context, '=note')
@@ -44,15 +69,12 @@ const Note = ({ context, onFocus }: NoteProps) => {
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
     const note = attribute(store.getState(), context, '=note')
-    const editable = editableOfNote(e.target as HTMLElement)!
 
     // select thought
-    if (e.key === 'Escape' || e.key === 'ArrowUp' || (e.metaKey && e.altKey && e.keyCode === 'N'.charCodeAt(0))) {
+    if (e.key === 'Escape' || e.key === 'ArrowUp') {
       e.stopPropagation()
       e.preventDefault()
-      editable.focus()
-      selection.set(editable, { end: true })
-      dispatch(setNoteFocus({ value: false }))
+      dispatch(toggleNote())
     }
     // delete empty note
     // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
@@ -60,19 +82,12 @@ const Note = ({ context, onFocus }: NoteProps) => {
     else if (e.key === 'Backspace' && !note) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
-
-      if (isTouch) {
-        asyncFocus()
-      }
-      editable.focus()
-      selection.set(editable, { end: true })
-
       dispatch(deleteAttribute({ context, key: '=note' }))
       dispatch(setNoteFocus({ value: false }))
     } else if (e.key === 'ArrowDown') {
       e.stopPropagation()
       e.preventDefault()
-      selectNextEditable(editable)
+      dispatch(cursorDown())
     }
   }
 
@@ -116,7 +131,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
           setJustPasted(true)
         }}
         onBlur={onBlur}
-        onFocus={onFocus}
+        onFocus={() => setCursorOnLiveThought({ path })}
       />
     </div>
   )

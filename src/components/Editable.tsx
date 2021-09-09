@@ -178,7 +178,10 @@ let blurring = false
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: EditableProps) => {
+  const hasNoteFocus = state.noteFocus && equalPath(state.cursor, props.path)
   return {
+    // re-render when noteFocus changes in order to set the selection
+    hasNoteFocus,
     isCursorCleared: props.isEditing && state.cursorCleared,
   }
 }
@@ -195,6 +198,7 @@ const Editable = ({
   simplePath,
   path,
   cursorOffset,
+  hasNoteFocus,
   showContexts,
   rank,
   style,
@@ -202,7 +206,7 @@ const Editable = ({
   dispatch,
   transient,
   editing,
-}: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
+}: Connected<EditableProps> & ReturnType<typeof mapStateToProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
@@ -448,7 +452,7 @@ const Editable = ({
       shortcutEmitter.off('shortcut', flush)
       showDuplicationAlert(false, dispatch)
     }
-  }, [isEditing, cursorOffset, state.dragInProgress, editing])
+  }, [isEditing, cursorOffset, hasNoteFocus, state.dragInProgress, editing])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = (e: ContentEditableEvent) => {

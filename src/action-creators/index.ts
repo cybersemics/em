@@ -73,6 +73,7 @@ export const toggleAbsoluteContext = reducerToThunk<typeof reducers.toggleAbsolu
 export const toggleAttribute = reducerToThunk<typeof reducers.toggleAttribute>('toggleAttribute')
 export const toggleContextView = reducerToThunk<typeof reducers.toggleContextView>('toggleContextView')
 export const toggleHiddenThoughts = reducerToThunk<typeof reducers.toggleHiddenThoughts>('toggleHiddenThoughts')
+export const toggleNote = reducerToThunk<typeof reducers.toggleNote>('toggleNote')
 export const toggleShortcutsDiagram = reducerToThunk<typeof reducers.toggleShortcutsDiagram>('toggleShortcutsDiagram')
 export const toggleSidebar = reducerToThunk<typeof reducers.toggleSidebar>('toggleSidebar')
 export const toggleSplitView = reducerToThunk<typeof reducers.toggleSplitView>('toggleSplitView')
