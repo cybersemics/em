@@ -9,7 +9,7 @@ import { headValue, isDivider, isDocumentEditable } from '../util'
 import BulletCursorOverlay from './BulletCursorOverlay'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
-import Editable from './Editable'
+import Editable from './Editable.native'
 import HomeLink from './HomeLink'
 import Superscript from './Superscript'
 import { ConnectedThoughtProps } from './Thought'
@@ -31,6 +31,7 @@ const StaticThought = ({
   showContextBreadcrumbs,
   showContexts,
   style,
+  space,
   simplePath,
   toggleTopControlsAndBreadcrumbs,
 }: ConnectedThoughtProps) => {
@@ -75,8 +76,8 @@ const StaticThought = ({
           disabled={!isDocumentEditable()}
           isEditing={isEditing}
           rank={rank}
+          space={space}
           showContexts={showContexts}
-          style={style}
           simplePath={simplePath}
           onKeyDownAction={isTouch ? undefined : toggleTopControlsAndBreadcrumbs}
         />

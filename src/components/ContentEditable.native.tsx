@@ -65,9 +65,10 @@ const ContentEditable = ({
   }, [isEditing, isTable])
 
   useEffect(() => {
+    arrangeInputContainer(html)
+
     if (html.trim() === innerHTMLValue?.current?.trim()) return
 
-    arrangeInputContainer(html)
     setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
   }, [html])
 
@@ -80,6 +81,8 @@ const ContentEditable = ({
     const rows = Math.ceil(innerHTML.length / 30)
 
     const newHeight = (rows === 0 ? 1 : rows) * DEFAULT_WEBVIEW_HEIGHT
+
+    console.log({ newHeight })
 
     if (newHeight !== DEFAULT_WEBVIEW_HEIGHT) {
       setHeight(rows * DEFAULT_WEBVIEW_HEIGHT)
