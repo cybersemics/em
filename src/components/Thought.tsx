@@ -188,19 +188,8 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>) => ({
+const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
   toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
-  setCursorOnNote:
-    ({ path }: { path: Path }) =>
-    () =>
-      dispatch(
-        setCursor({
-          path,
-          cursorHistoryClear: true,
-          editing: true,
-          noteFocus: true,
-        }),
-      ),
 })
 
 /**********************************************************************
@@ -241,7 +230,6 @@ const ThoughtContainer = ({
   prevChild,
   publish,
   rank,
-  setCursorOnNote,
   showContexts,
   style,
   simplePath,
@@ -300,7 +288,6 @@ const ThoughtContainer = ({
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
   const thoughts = pathToContext(simplePath)
-  const thoughtsLive = pathToContext(simplePathLive!)
   const context = parentOf(thoughts)
   const childrenOptions = getAllChildren(state, [...context, '=options'])
   const options =
@@ -480,7 +467,7 @@ const ThoughtContainer = ({
             editing={editing}
           />
 
-          <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
+          <Note path={simplePathLive} />
         </div>
 
         {publish && context.length === 0 && <Byline context={thoughts} />}
