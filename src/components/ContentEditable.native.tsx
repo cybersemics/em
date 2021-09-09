@@ -82,8 +82,6 @@ const ContentEditable = ({
 
     const newHeight = (rows === 0 ? 1 : rows) * DEFAULT_WEBVIEW_HEIGHT
 
-    console.log({ newHeight })
-
     if (newHeight !== DEFAULT_WEBVIEW_HEIGHT) {
       setHeight(rows * DEFAULT_WEBVIEW_HEIGHT)
 
