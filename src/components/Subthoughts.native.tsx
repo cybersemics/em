@@ -579,8 +579,6 @@ export const SubthoughtsComponent = ({
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
 
-  // width - distance * depth;
-
   const contextChildren = [...unroot(context), '=children'] // children of parent with =children
   const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
   const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
