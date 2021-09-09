@@ -32,7 +32,7 @@ export const createWebHTML = ({ placeholder, innerHTML, isEditing, isTable }: IW
     }
 
     #content {
-      font-size: 55px;
+      font-size: 20px;
       font-family: Arial;
       background-color: #000;
       color: #fff;
@@ -42,6 +42,8 @@ export const createWebHTML = ({ placeholder, innerHTML, isEditing, isTable }: IW
       ${isTable && `text-align: right;`}
     }
   </style>
+
+  <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0">
 </head>
 <script>
   function getSelectionValues() {
