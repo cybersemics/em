@@ -27,7 +27,7 @@ type OverflowChild = Child & {
 type OverflowPath = OverflowChild[]
 
 const { from, animate } = fadeIn
-const { flexWrap, directionRow, flexGrow, alignItemsCenter } = commonStyles
+const { flexWrap, directionRow, alignItemsCenter } = commonStyles
 
 /** Breadcrumbs for contexts within the context views. */
 export const ContextBreadcrumbs = ({
@@ -62,7 +62,7 @@ export const ContextBreadcrumbs = ({
       : charLimitedArray
 
   return (
-    <View style={flexGrow}>
+    <View>
       {isRoot(simplePath) ? (
         /*
       If the path is the root context, check homeContext which is true if the context is directly in the root (in which case the HomeLink is already displayed as the thought)
