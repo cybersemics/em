@@ -20,6 +20,7 @@ interface ContentEditableProps {
   onKeyDown?: (e: IKeyDown) => void
   placeholder: string
   isTable?: boolean
+  space?: number
 }
 
 export interface IOnPaste {
@@ -45,13 +46,15 @@ const ContentEditable = ({
   placeholder,
   isEditing,
   isTable,
+  space,
   ...props
 }: ContentEditableProps) => {
   const allowInnerHTMLChange = useRef<boolean>(true)
   const { width } = useDimensions().window
+
   const [height, setHeight] = useState(DEFAULT_WEBVIEW_HEIGHT)
   const contentRef = useRef<WebView>(null)
-  const [innerHTMLValue, setInnerHTMLValue] = useState<string>()
+  const innerHTMLValue = useRef<string>(html)
 
   const [webviewHTML, setWebviewHTML] = useState<string>(
     createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }),
@@ -62,8 +65,9 @@ const ContentEditable = ({
   }, [isEditing, isTable])
 
   useEffect(() => {
-    if (html.trim() === innerHTMLValue?.trim()) return
+    if (html.trim() === innerHTMLValue?.current?.trim()) return
 
+    arrangeInputContainer(html)
     setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
   }, [html])
 
@@ -94,7 +98,7 @@ const ContentEditable = ({
     allowInnerHTMLChange.current = false
 
     arrangeInputContainer(inputValue)
-    setInnerHTMLValue(inputValue)
+    innerHTMLValue.current = inputValue
     props.onChange(inputValue)
   }
 
@@ -148,7 +152,7 @@ const ContentEditable = ({
               break
           }
         }}
-        style={styles({ width: !isTable ? width : width - 40, height }).webview}
+        style={styles({ width: !isTable ? width - (space || 0) : width - 40, height }).webview}
       />
     </View>
   )
@@ -163,7 +167,13 @@ interface IStyle {
 /** Style. */
 const styles = ({ width = 0, height, isEditing = false }: IStyle) =>
   StyleSheet.create({
-    webview: { width: width - 25, height, marginTop: 10, marginHorizontal: 5, backgroundColor: 'transparent' },
+    webview: {
+      width: width - 25,
+      height,
+      marginTop: 10,
+      marginHorizontal: 5,
+      backgroundColor: 'transparent',
+    },
     container: { opacity: isEditing ? 1 : 0.5 },
   })
 
