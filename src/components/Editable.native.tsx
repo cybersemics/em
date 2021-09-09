@@ -90,6 +90,7 @@ interface EditableProps {
     2. It also sets focus to itself on render.
   */
   transient?: boolean
+  space?: number
   onKeyDownAction?: () => void
 }
 
@@ -145,7 +146,6 @@ const mapStateToProps = (state: State, props: EditableProps) => {
  */
 const Editable = ({
   disabled,
-  isCursorCleared,
   isEditing,
   simplePath,
   path,
@@ -156,7 +156,8 @@ const Editable = ({
   onKeyDownAction,
   dispatch,
   transient,
-}: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
+  space,
+}: Connected<EditableProps>) => {
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
@@ -575,6 +576,7 @@ const Editable = ({
       // must call onMouseDown on mobile since onTap cannot preventDefault
       // otherwise gestures and scrolling can trigger cursorBack (#1054)
       // onMouseDown={onTap}
+      space={space}
       onFocus={onFocus}
       onBlur={onBlur}
       onChange={onChangeHandler}
