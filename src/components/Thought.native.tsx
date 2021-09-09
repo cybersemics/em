@@ -399,7 +399,7 @@ const ThoughtContainer = ({
           type: 'timing',
         }}
         delay={200}
-        animate={{ opacity: distance > 1 ? -10 : 1, scale: 1 }}
+        animate={{ opacity: distance > 1 ? 0 : 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         style={[directionRow, alignItemsCenter]}
       >
