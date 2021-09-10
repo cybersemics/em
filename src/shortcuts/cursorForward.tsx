@@ -1,6 +1,7 @@
 import React from 'react'
+import { cursorForward } from '../action-creators'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { Icon as IconType, Shortcut } from '../@types'
-import { cursorForward, scrollCursorIntoView } from '../action-creators'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -29,7 +30,7 @@ const cursorForwardShortcut: Shortcut = {
   // must wrap in anonymous function since exit is defined at run time
   exec: dispatch => {
     dispatch(cursorForward())
-    dispatch(scrollCursorIntoView())
+    scrollCursorIntoView()
   },
 }
 

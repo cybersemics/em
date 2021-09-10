@@ -1,10 +1,11 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
+import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
 import { clearSelection, headValue, strip } from '../util'
 import { StyleSheet } from 'react-native'
-import { SimplePath } from '../@types'
 import { Text } from './Text.native'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import { SimplePath } from '../@types'
 
 interface LinkProps {
   charLimit?: number

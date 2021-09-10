@@ -1,5 +1,6 @@
 import { HOME_TOKEN } from '../constants'
-import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
+import { setCursor, suppressExpansion } from '../action-creators'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { appendToPath, parentOf, pathToContext } from '../util'
 import { Thunk } from '../@types'
 
@@ -15,7 +16,7 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
     const children = getChildrenSorted(state, [HOME_TOKEN])
     if (children.length > 0) {
       dispatch(setCursor({ path: [children[0]] }))
-      dispatch(scrollCursorIntoView())
+      scrollCursorIntoView()
     }
     return
   }
@@ -33,7 +34,7 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
   if (!isCursorPinned) dispatch(suppressExpansion({ duration: 100 }))
 
   dispatch(setCursor({ path }))
-  dispatch(scrollCursorIntoView())
+  scrollCursorIntoView()
 }
 
 export default cursorNext

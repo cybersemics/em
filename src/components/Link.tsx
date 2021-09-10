@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import { EM_TOKEN } from '../constants'
-import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
+import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
 import {
   clearSelection,
   decodeCharacterEntities,
@@ -11,6 +11,7 @@ import {
   pathToContext,
   strip,
 } from '../util'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { SimplePath } from '../@types'
 
 interface LinkProps {
@@ -38,7 +39,7 @@ const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
         dispatch(searchContexts({ value: null }))
         dispatch(setCursor({ path: simplePath }))
         dispatch(toggleSidebar({ value: false }))
-        dispatch(scrollCursorIntoView())
+        scrollCursorIntoView()
       }}
       dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : undefined}
     >

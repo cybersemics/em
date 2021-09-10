@@ -4,9 +4,10 @@ import { inputHandlers /* isGestureHint */ } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { clearSelection, isRoot, pathToContext } from '.'
 import { decodeThoughtsUrl, pathExists } from '../selectors'
-import { /* alert */ error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { Path, State } from '../@types'
+import { /* alert */ error, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { equalPath } from './equalPath'
+import { Path, State } from '../@types'
 // import lifecycle from 'page-lifecycle'
 
 declare global {

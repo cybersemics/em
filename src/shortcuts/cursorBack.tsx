@@ -1,7 +1,8 @@
 import React from 'react'
 import { Icon as IconType, Shortcut } from '../@types'
 import { clearSelection } from '../util'
-import { cursorBack, scrollCursorIntoView } from '../action-creators'
+import { cursorBack } from '../action-creators'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 
 // import directly since util/index is not loaded yet when shortcut is initialized
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
@@ -42,7 +43,7 @@ const cursorBackShortcut: Shortcut = {
     const { cursor, search } = getState()
     if (cursor || search != null) {
       dispatch(cursorBack())
-      dispatch(scrollCursorIntoView())
+      scrollCursorIntoView()
 
       // clear browser selection if cursor has been removed
       if (!getState().cursor) {

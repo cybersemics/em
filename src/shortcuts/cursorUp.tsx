@@ -2,7 +2,8 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { attributeEquals } from '../selectors'
 import { parentOf, getElementPaddings, pathToContext } from '../util'
-import { cursorUp, scrollCursorIntoView } from '../action-creators'
+import { cursorUp } from '../action-creators'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { Icon as IconType, Shortcut } from '../@types'
 
 // import directly since util/index is not loaded yet when shortcut is initialized
@@ -78,7 +79,7 @@ const cursorUpShortcut: Shortcut = {
   },
   exec: throttleByAnimationFrame(dispatch => {
     dispatch(cursorUp())
-    dispatch(scrollCursorIntoView())
+    scrollCursorIntoView()
   }),
 }
 
