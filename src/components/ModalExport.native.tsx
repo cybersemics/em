@@ -1,29 +1,19 @@
-import React, { useState } from 'react'
+import React, { createContext, FC, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-
+import { and } from 'fp-and-or'
 import { HOME_PATH } from '../constants'
-import {
-  ellipsize,
-  exportPhrase,
-  // hashContext,
-  headValue,
-  isRoot,
-  pathToContext,
-  timestamp,
-  unroot,
-} from '../util'
-import { alert, error, closeModal } from '../action-creators'
-import { exportContext, getAllChildren, simplifyPath } from '../selectors'
+import { exportPhrase, hashContext, headValue, isFunction, isRoot, pathToContext, removeHome, unroot } from '../util'
+import { alert, error, pull, modalComplete } from '../action-creators'
+import { exportContext, getAllChildren, getDescendantPaths, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
-import { ExportOption, State } from '../@types'
-import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
+import { Child, Context, ExportOption, State, ThoughtsInterface } from '../@types'
+import { View, StyleSheet, TextInput, TouchableOpacity, Share } from 'react-native'
 import RNPickerSelect from 'react-native-picker-select'
 import { FontAwesome5 } from '@expo/vector-icons'
 import { ActionButton } from './ActionButton'
 import Clipboard from 'expo-clipboard'
 import { Text } from './Text.native'
-import download from '../device/download'
 
 interface AdvancedSetting {
   id: string
@@ -44,6 +34,86 @@ const exportOptions: ExportOption[] = [
   { type: 'text/html', label: 'HTML', extension: 'html' },
 ]
 
+/******************************************************************************
+ * Contexts
+ *****************************************************************************/
+
+const PullStatusContext = createContext<boolean>(false)
+
+const DescendantNumberContext = createContext<number | null>(null)
+
+/******************************************************************************
+ * Context Providers
+ *****************************************************************************/
+
+/**
+ * Context to handle pull status and number of descendants.
+ */
+const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
+  const [isPulling, setIsPulling] = useState<boolean>(true)
+  // update numDescendants as descendants are pulled
+  const [numDescendants, setNumDescendants] = useState<number | null>(null)
+
+  const dispatch = useDispatch()
+  const isMounted = useRef(false)
+
+  /** Handle new thoughts pulled. */
+  const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
+    // count the total number of new children pulled
+    const numDescendantsNew = Object.values(thoughts.contextIndex).reduce((accum, parent) => {
+      return accum + parent.children.length
+    }, 0)
+    setNumDescendants(numDescendants => (numDescendants ?? 0) + numDescendantsNew)
+  }, [])
+
+  // fetch all pending descendants of the cursor once for all components
+  // track isMounted so we can cancel the end trigger after unmount
+  useEffect(() => {
+    if (isMounted.current) return
+
+    isMounted.current = true
+    dispatch(
+      pull(
+        { [hashContext(context)]: context },
+        {
+          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+          // TODO: onRemoteThoughts ??
+          maxDepth: Infinity,
+        },
+      ),
+    ).then(() => {
+      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+      if (isMounted.current) {
+        setIsPulling(false)
+      }
+    })
+
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  return (
+    <PullStatusContext.Provider value={isPulling}>
+      <DescendantNumberContext.Provider value={numDescendants}>{children}</DescendantNumberContext.Provider>
+    </PullStatusContext.Provider>
+  )
+}
+
+/******************************************************************************
+ * Hooks
+ *****************************************************************************/
+
+/**
+ * Use the pulling status of export.
+ */
+const usePullStatus = () => useContext(PullStatusContext)
+
+/**
+ * Use number of descendants that will be exported.
+ */
+// const useDescendantsNumber = () => useContext(DescendantNumberContext)
+
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport = () => {
   const store = useStore()
@@ -56,18 +126,16 @@ const ModalExport = () => {
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getAllChildren(state, contextTitle)[0]
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
-  const titleShort = ellipsize(title)
-  // const titleMedium = ellipsize(title, 25)
 
-  const [selected, setSelected] = useState(exportOptions[0])
-  // const [isOpen, setIsOpen] = useState(false)
-  // const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
-  const [exportContent] = useState<string | null>(null)
+  const [selected, setSelected] = useState(exportOptions[1])
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState(0)
+  const [exportContent, setExportContent] = useState<string | null>(null)
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
-  // const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
-  const numDescendantsInState = 0
+  const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
+  // const numDescendantsInState = 0
 
+  const isPulling = usePullStatus()
   // const dark = theme(state) !== 'Light'
   // const themeColor = { color: dark ? 'white' : 'black' }
   // const themeColorWithBackground = dark
@@ -77,78 +145,61 @@ const ModalExport = () => {
   const exportWord = 'Share'
 
   const numDescendants =
-    selected.type === 'text/plain' && exportContent ? exportContent.split('\n').length - 1 : numDescendantsInState!
+    selected?.type === 'text/plain' && exportContent ? exportContent.split('\n').length - 1 : numDescendantsInState!
   const exportThoughtsPhrase = exportPhrase(state, context, numDescendants, {
     value: title,
   })
 
-  // /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
-  // const setExportContentFromCursor = () => {
-  //   const exported = exportContext(store.getState(), context, selected.type, {
-  //     title: titleChild ? titleChild.value : undefined,
-  //     excludeMeta: !shouldIncludeMetaAttributes,
-  //     excludeArchived: !shouldIncludeArchived,
-  //   })
+  /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
+  const setExportContentFromCursor = () => {
+    // console.log('setExportContentFromCursor', { titleChild })
+    const exported = exportContext(store.getState(), context, selected?.type, {
+      title: titleChild ? titleChild.value : undefined,
+      excludeMeta: !shouldIncludeMetaAttributes,
+      excludeArchived: !shouldIncludeArchived,
+    })
 
-  //   setExportContent(titleChild ? exported : removeHome(exported).trimStart())
-  // }
+    setExportContent(titleChild ? exported : removeHome(exported).trimStart())
+  }
 
-  // const closeDropdown = useCallback(() => {
-  //   setIsOpen(false)
-  // }, [])
+  // Sets export content when pull is complete by useDescendants
+  useEffect(() => {
+    setExportContentFromCursor()
+  }, [isPulling])
 
-  // fetch all pending descendants of the cursor once before they are exported
-  // useEffect(() => {
-  //   if (!isMounted.current) {
-  //     // track isMounted so we can cancel the call to setExportContent after unmount
-  //     isMounted.current = true
-  //     dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity })).then(() => {
-  //       if (isMounted.current) {
-  //         setExportContentFromCursor()
-  //       }
-  //     })
-  //   } else {
-  //     setExportContentFromCursor()
-  //   }
+  useEffect(() => {
+    if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
 
-  //   if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
+    // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
+    if (selected?.type === 'text/html') {
+      setNumDescendantsInState(
+        getDescendantPaths(state, simplePath, {
+          filterFunction: and(
+            shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
+            shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
+          ),
+        }).length,
+      )
+    }
 
-  //   return () => {
-  //     isMounted.current = false
-  //   }
-  // }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
+    // TODO: check if is pulling
+    setExportContentFromCursor()
+  }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
 
   const [publishing, setPublishing] = useState(false)
   const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
 
-  /** Updates the isOpen state when clicked outside modal. */
-  // const onClickOutside = (e: MouseEvent) => {
-  //   if (isOpen && wrapperRef && !wrapperRef.contains(e.target as Node)) {
-  //     setIsOpen(false)
-  //     e.stopPropagation()
-  //   }
-  // }
-
   /** Shares or downloads when the export button is clicked. */
-  const onExportClick = () => {
-    // use mobile share if it is available
-    if (navigator.share) {
-      navigator.share({
-        text: exportContent!,
-        title: titleShort,
+  const onExportClick = async () => {
+    try {
+      await Share.share({
+        message: exportContent!,
       })
-    }
-    // otherwise download the data with createObjectURL
-    else {
-      try {
-        download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
-      } catch (e) {
-        dispatch(error({ value: e.message }))
-        console.error('Download Error', e.message)
-      }
-    }
+    } catch (e) {
+      dispatch(error({ value: e.message }))
 
-    dispatch(closeModal())
+      console.error('Download Error', e.message)
+    }
   }
 
   /** Publishes the thoughts to IPFS. */
@@ -202,8 +253,7 @@ const ModalExport = () => {
   const copyToClipboard = () => {
     Clipboard.setString(exportContent || '')
     dispatch([
-      // TODO: Fix close modal.
-      closeModal(),
+      modalComplete('export'),
       alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 }),
     ])
   }
@@ -236,7 +286,11 @@ const ModalExport = () => {
           {`${exportWord} ${exportThoughtsPhrase} as`}
 
           <RNPickerSelect
-            onValueChange={(value: number) => setSelected(exportOptions[value])}
+            onValueChange={(value: number) => {
+              setSelectedOptionIndex(value)
+              setSelected(exportOptions[value])
+            }}
+            value={selectedOptionIndex}
             style={{
               placeholder: styles.placeholder,
               inputIOS: styles.pickerInputStyle,
@@ -360,4 +414,21 @@ const styles = StyleSheet.create({
   },
 })
 
-export default ModalExport
+/**
+ * ModalExport with necessary provider.
+ */
+const ModalExportWrapper = () => {
+  const store = useStore()
+  const state = store.getState()
+  const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
+  const simplePath = simplifyPath(state, cursor)
+  const context = pathToContext(simplePath)
+
+  return (
+    <PullProvider context={context}>
+      <ModalExport />
+    </PullProvider>
+  )
+}
+
+export default ModalExportWrapper

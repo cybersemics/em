@@ -3,6 +3,7 @@ import { head, isFunction, unroot } from '../util'
 import { Child, Context, MimeType, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
+import { isMobile } from '../util/isMobile'
 
 /** Replaces the root value with a given title. */
 const replaceTitle = (text: string, title: string, format: MimeType) => {
