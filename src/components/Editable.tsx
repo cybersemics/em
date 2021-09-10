@@ -24,6 +24,7 @@ import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import asyncFocus from '../device/asyncFocus'
 import clearSelection from '../device/clearSelection'
+import getCaretPositionDetails from '../device/getCaretPositionDetails'
 import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
 
 // constants
@@ -59,7 +60,6 @@ import {
   setSelection,
   strip,
   normalizeThought,
-  getCaretPositionDetails,
 } from '../util'
 
 // selectors
