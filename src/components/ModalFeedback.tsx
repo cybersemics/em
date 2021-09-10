@@ -88,7 +88,7 @@ const ModalFeedback = () => {
             onClick={() => onSubmit({ close })}
           />
           <div key='cancel' tw='mt-2.5'>
-            <TextLink onClick={() => close()} grayed>
+            <TextLink onClick={() => close()} colorVariant='gray'>
               Cancel
             </TextLink>
           </div>

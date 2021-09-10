@@ -141,6 +141,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
           fill: isButtonExecutable && isButtonActive ? fg : 'gray',
           width: fontSize + 4,
           height: fontSize + 4,
+          boxSizing: 'content-box',
         }}
       />
     </div>

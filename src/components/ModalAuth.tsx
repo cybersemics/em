@@ -6,6 +6,10 @@ import { ActionButton } from './ActionButton'
 import { Index } from '../@types'
 import { storage } from '../util/storage'
 import Modal from './Modal'
+import tw, { styled } from 'twin.macro'
+import TextLink from './TextLink'
+import Input from './Input'
+import Message from './Message'
 
 const firebaseErrorsIndex = {
   'auth/weak-password': 'Password should be at least 6 characters',
@@ -39,6 +43,21 @@ const modes: Index<Mode> = {
     modalTitle: 'Reset Password',
   },
 }
+const Wrapper = styled.div<{ active?: boolean }>`
+  ${tw`flex flex-col gap-4`}
+  ${props => props.active && tw`-mb-12`}
+`
+
+const FormGroup = styled.form`
+  ${tw`
+  sm:(padding[0 20%])`}
+
+  ${Input} {
+    ${tw`
+      mb-2.5
+    `}
+  }
+`
 
 /** A modal dialog for signing up, logging in, and resetting password. */
 const ModalAuth = () => {
@@ -126,7 +145,7 @@ const ModalAuth = () => {
       center
       preventCloseOnEscape={true}
       actions={({ close: closeModal }) => (
-        <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
+        <Wrapper active={isModeActive(modes.resetPassword)}>
           <ActionButton
             key={activeMode.modalKey}
             title={activeMode.modalTitle}
@@ -136,55 +155,56 @@ const ModalAuth = () => {
           />
 
           {!isModeActive(modes.login) && (
-            <button
-              disabled={isSubmitting}
-              className='button'
-              onClick={showLogin}
-              style={{ textDecoration: 'underline', marginTop: 15 }}
-            >
+            <TextLink as='button' disabled={isSubmitting} onClick={showLogin}>
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
-            </button>
+            </TextLink>
           )}
 
           {!isModeActive(modes.resetPassword) && (
-            <button
-              disabled={isSubmitting}
-              className='button'
-              style={{ textDecoration: 'underline', marginTop: 15 }}
-              onClick={signInWithGoogle}
-            >
+            <TextLink as='button' disabled={isSubmitting} onClick={signInWithGoogle}>
               Sign in with Google
-            </button>
+            </TextLink>
           )}
 
-          <button
+          <TextLink
+            id='cancel-login'
+            as='button'
             disabled={isSubmitting}
-            className='button'
             key='cancel'
-            style={{ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }}
+            onClick={() => closeModal()}
+            colorVariant='gray'
           >
-            <a id='cancel-login' onClick={() => closeModal()}>
-              Work Offline
-            </a>
-          </button>
-        </div>
+            Work Offline
+          </TextLink>
+        </Wrapper>
       )}
     >
-      <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
-        <input type='email' placeholder='email' value={email} onChange={onChangeEmail} />
+      <FormGroup>
+        <Input type='email' placeholder='email' value={email} onChange={onChangeEmail} />
 
         {!isModeActive(modes.resetPassword) && (
-          <input type='password' placeholder='password' value={password} onChange={onChangePassword} />
+          <Input type='password' placeholder='password' value={password} onChange={onChangePassword} />
         )}
+      </FormGroup>
 
+      <div css={tw`text-center mt-4`}>
         {isModeActive(modes.login) && (
-          <button disabled={isSubmitting} className='button' onClick={showForgotPassword}>
+          <TextLink as='button' variant='text' disabled={isSubmitting} onClick={showForgotPassword}>
             Forgot Password?
-          </button>
+          </TextLink>
         )}
-
-        {error && <span style={{ color: 'crimson' }}>{error}</span>}
       </div>
+
+      {error && (
+        <Message
+          type='error'
+          css={`
+            ${tw`m-4`}
+          `}
+        >
+          {error}
+        </Message>
+      )}
     </Modal>
   )
 }

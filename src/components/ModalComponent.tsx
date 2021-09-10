@@ -35,7 +35,8 @@ const ModalWrapper = styled(motion.div)<{ center?: boolean; opaque?: boolean }>`
   ${tw`
     relative
     p-10
-    bg-black
+    bg-white
+    dark:bg-black
     z-modal
   `}
 
@@ -50,7 +51,8 @@ const ModalWrapper = styled(motion.div)<{ center?: boolean; opaque?: boolean }>`
 
 const ModalCloseButton = tw.a`
   fixed top-2 right-2 text-base
-  text-white
+  text-black
+  dark:text-white
   text-decoration[none]
 `
 
@@ -61,14 +63,14 @@ const ModalContent = styled.div`
 `
 
 const ModalTitle = tw.h1`
-    mb-10
+    mb-24
     text-center
     text-3xl
     font-bold
 `
 
 const ModalContentWrapper = tw.div`
-  mb-10
+  mb-20
 `
 
 const ModalActionsContainer = tw.div`
@@ -151,7 +153,11 @@ const ModalComponent: FC<Connected<ModalProps>> = props => {
             })
           }
         >
-          {!props.preventCloseOnEscape && <ModalCloseButton onClick={close}>✕</ModalCloseButton>}
+          {!props.preventCloseOnEscape && (
+            <ModalCloseButton id='js-close-modal' onClick={close}>
+              ✕
+            </ModalCloseButton>
+          )}
           <ModalContent
             // TODO: Refactor arrow functionality here
             className={classNames({

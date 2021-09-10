@@ -12,6 +12,9 @@ import Modal from './Modal'
 import { getInviteById, updateInviteCode } from '../apis/invites'
 import _ from 'lodash'
 import { baseUrl } from '../device/router'
+import Message from './Message'
+import Input from './Input'
+import tw from 'twin.macro'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -34,6 +37,12 @@ const getUserInviteCodes = (userId: string) => {
     })
   })
 }
+
+const GiftCodeWrapper = tw.div`
+  flex flex-row items-center gap-2
+  m-4 mx-auto
+  w-full
+`
 
 /** Generates three user invites. */
 const generateUserInvites = (userId: string) =>
@@ -142,40 +151,53 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
         </div>
       )}
     >
-      <div className='modal-wrapper'>
-        <p className='modal-description'>
-          You get three shiny gift codes to share <b>em</b> with anyone you choose!
-        </p>
-        {isFetchingInvites && <p style={{ fontSize: '18px' }}>Fetching your shiny codes ✨...</p>}
-        {Object.values(inviteCodes).map(({ used, id, hasSeen }, idx) => {
-          const selectedIconFill = focusedGiftCode !== id ? 'grey' : undefined
-          const link = `${baseUrl}/signup?code=${id}`
-          return (
-            <div key={`${id}-gift-code`} className='gift-code-wrapper'>
-              <div
-                style={{ display: 'inline-flex' }}
-                onClick={() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id))}
-              >
-                <InvitesIcon fill={selectedIconFill} size={26} />
-              </div>
-              <input
-                type={hasSeen ? 'text' : 'password'}
-                placeholder='gift-code'
-                value={link}
-                onBlur={() => setFocusedGiftCode(null)}
-                onFocus={() => onInviteCodeSeen(id)}
-              />
-              {used ? (
-                <CheckmarkIcon fill={selectedIconFill} size={21} />
-              ) : (
-                <CheckmarkIcon fill={dark ? 'black' : 'white'} size={21} />
-              )}
-              <div className='copy-icon-wrapper' onClick={() => updateCopy(link)}>
-                <CopyClipboard fill={selectedIconFill} size={26} />
-              </div>
-            </div>
-          )
-        })}
+      <div>
+        {!isFetchingInvites && (
+          <Message type='success'>
+            You get three shiny gift codes to share <b>em</b> with anyone you choose!
+          </Message>
+        )}
+        {isFetchingInvites && <Message type='info'>Fetching your shiny codes ✨...</Message>}
+        <div css={tw`mt-12`}>
+          {Object.values(inviteCodes).map(({ used, id, hasSeen }, idx) => {
+            const selectedIconFill = focusedGiftCode !== id ? 'grey' : undefined
+            const link = `${baseUrl}/signup?code=${id}`
+            return (
+              <GiftCodeWrapper key={`${id}-gift-code`}>
+                <div
+                  style={{ display: 'inline-flex' }}
+                  onClick={() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id))}
+                >
+                  <InvitesIcon fill={selectedIconFill} size={26} />
+                </div>
+                <Input
+                  type={hasSeen ? 'text' : 'password'}
+                  placeholder='gift-code'
+                  value={link}
+                  onBlur={() => setFocusedGiftCode(null)}
+                  onFocus={() => onInviteCodeSeen(id)}
+                />
+                {used ? (
+                  <CheckmarkIcon fill={selectedIconFill} size={21} />
+                ) : (
+                  <CheckmarkIcon fill={dark ? 'black' : 'white'} size={21} />
+                )}
+                <div
+                  css={`
+                    display-inline: flex;
+
+                    svg {
+                      cursor: pointer;
+                    }
+                  `}
+                  onClick={() => updateCopy(link)}
+                >
+                  <CopyClipboard fill={selectedIconFill} size={26} />
+                </div>
+              </GiftCodeWrapper>
+            )
+          })}
+        </div>
       </div>
     </Modal>
   )

@@ -222,7 +222,7 @@ describe('mobile only', () => {
     await waitForState('editing', true)
 
     await click('#exportContext')
-    await click('.popup-close-x')
+    await click('#js-close-modal')
 
     await waitForState('editing', false)
     const editingValue = await ref().evaluate(() => (window.em as WindowEm).testHelpers.getState().editing)

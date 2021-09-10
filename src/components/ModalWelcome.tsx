@@ -76,6 +76,7 @@ const ModalWelcome = () => {
             <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
             {
               <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}>
+                {/* TODO: Fix enzyme not finding styled components by id */}
                 <a
                   id='skip-tutorial'
                   onClick={

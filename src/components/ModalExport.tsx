@@ -235,9 +235,10 @@ const AdvancedSettingLink = styled(TextLink)<{ active?: boolean }>`
   ${tw`
     relative
     transition-opacity
-    text-gray-300
-  `}
-  opacity:${props => (props.active ? 1 : 0.5)};
+    text-gray-700
+    dark:text-gray-400
+    `}
+  ${props => (props.active ? tw`text-opacity-100` : tw`text-opacity-60`)};
 `
 const ChevronContainer = tw.span`
   relative

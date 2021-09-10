@@ -16,7 +16,7 @@ const TutorialNavigationButton = ({ isLast, clickHandler, value, disabled = fals
     <ActionButton
       onClick={clickHandler}
       title={value}
-      isDisabled={disabled}
+      disabled={disabled}
       style={disabled ? commonStyles.halfOpacity : {}}
     />
   </View>
