@@ -15,7 +15,7 @@ import { ConnectedThoughtProps } from './Thought'
 import { View } from 'moti'
 import { Text } from 'react-native'
 
-/** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
+/** A static thought element with context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   cursorOffset,
   homeContext,

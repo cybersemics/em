@@ -10,7 +10,7 @@ import { Icon } from '../../@types'
  */
 export const Circle = ({ size = 8, fill = 'none' }: Icon) => (
   <svg width={size} height={size}>
-    <circle cx={size / 2} cy={size / 2} r={size / 2} fill={fill} stroke='#fcf8f8' strokeWidth='0.12' />
+    <circle cx={size / 2} cy={size / 2} r={size / 2 - 0.5} fill={fill} stroke='#fcf8f8' strokeWidth='0.12' />
   </svg>
 )
 

@@ -13,7 +13,7 @@ import HomeLink from './HomeLink'
 import Superscript from './Superscript'
 import { ConnectedThoughtProps } from './Thought'
 
-/** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
+/** A static thought element with context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   cursorOffset,
   homeContext,
