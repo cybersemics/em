@@ -3,7 +3,6 @@ import { unescape } from 'html-escaper'
 import {
   htmlToJson,
   createId,
-  getTextContentFromHTML,
   head,
   importJSON,
   isRoot,
@@ -24,6 +23,7 @@ import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
 import { getSessionId } from '../util/sessionManager'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
