@@ -81,7 +81,7 @@ interface SubthoughtsProps {
   simplePath: SimplePath
   path?: Path
   view?: string | null
-  space?: number
+  marginLeftParent?: number
 }
 
 // assert shortcuts at load time
@@ -646,7 +646,7 @@ export const SubthoughtsComponent = ({
                     isProseView || hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()
                   }
                   rank={child.rank}
-                  space={getThoughtSpacing(actualDistance, depth) * depth}
+                  marginLeftParent={getThoughtSpacing(actualDistance, depth) * depth}
                   isDraggable={actualDistance < 2}
                   showContexts={showContexts}
                   prevChild={filteredChildren[i - 1]}

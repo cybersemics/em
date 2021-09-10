@@ -31,7 +31,7 @@ const StaticThought = ({
   showContextBreadcrumbs,
   showContexts,
   style,
-  space,
+  marginLeftParent,
   simplePath,
   toggleTopControlsAndBreadcrumbs,
 }: ConnectedThoughtProps) => {
@@ -76,7 +76,7 @@ const StaticThought = ({
           disabled={!isDocumentEditable()}
           isEditing={isEditing}
           rank={rank}
-          space={space}
+          marginLeftParent={marginLeftParent}
           showContexts={showContexts}
           simplePath={simplePath}
           onKeyDownAction={isTouch ? undefined : toggleTopControlsAndBreadcrumbs}

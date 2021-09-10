@@ -85,7 +85,7 @@ export interface ThoughtContainerProps {
   simplePath: SimplePath
   simplePathLive?: SimplePath
   view?: string | null
-  space?: number
+  marginLeftParent?: number
 }
 
 interface ThoughtProps {
@@ -107,7 +107,7 @@ interface ThoughtProps {
   simplePath: SimplePath
   view?: string | null
   editing?: boolean | null
-  space?: number
+  marginLeftParent?: number
 }
 
 export type ConnectedThoughtProps = ThoughtProps &
