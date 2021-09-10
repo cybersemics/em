@@ -81,7 +81,7 @@ interface SubthoughtsProps {
   simplePath: SimplePath
   path?: Path
   view?: string | null
-  space?: number
+  marginLeftParent?: number
 }
 
 // assert shortcuts at load time
@@ -661,7 +661,7 @@ export const SubthoughtsComponent = ({
                   isVisible={actualDistance() < 2}
                   prevChild={filteredChildren[i - 1]}
                   rank={child.rank}
-                  space={getThoughtSpacing(actualDistance(), depth) * depth}
+                  marginLeftParent={getThoughtSpacing(actualDistance(), depth) * depth}
                   isDraggable={actualDistance() < 2}
                   showContexts={showContexts}
                   simplePath={childPath}

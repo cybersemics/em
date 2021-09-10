@@ -88,7 +88,7 @@ export interface ThoughtContainerProps {
   simplePath: SimplePath
   simplePathLive?: SimplePath
   view?: string | null
-  space?: number
+  marginLeftParent?: number
 }
 
 interface ThoughtProps {
@@ -109,7 +109,7 @@ interface ThoughtProps {
   style?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
-  space?: number
+  marginLeftParent?: number
 }
 
 export type ConnectedThoughtProps = ThoughtProps &
@@ -237,7 +237,7 @@ const ThoughtContainer = ({
   simplePathLive,
   view,
   distance,
-  space,
+  marginLeftParent,
   toggleTopControlsAndBreadcrumbs,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
@@ -422,7 +422,7 @@ const ThoughtContainer = ({
           path={path}
           cursorOffset={cursorOffset}
           hideBullet
-          space={space}
+          marginLeftParent={marginLeftParent}
           homeContext={homeContext}
           isVisible={isVisible}
           isDragging={isDragging}

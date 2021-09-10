@@ -20,7 +20,7 @@ interface ContentEditableProps {
   onKeyDown?: (e: IKeyDown) => void
   placeholder: string
   isTable?: boolean
-  space?: number
+  marginLeftParent?: number
 }
 
 export interface IOnPaste {
@@ -46,7 +46,7 @@ const ContentEditable = ({
   placeholder,
   isEditing,
   isTable,
-  space,
+  marginLeftParent,
   ...props
 }: ContentEditableProps) => {
   const allowInnerHTMLChange = useRef<boolean>(true)
@@ -153,7 +153,7 @@ const ContentEditable = ({
               break
           }
         }}
-        style={styles({ width: !isTable ? width - (space || 0) : width - 40, height }).webview}
+        style={styles({ width: !isTable ? width - (marginLeftParent || 0) : width - 40, height }).webview}
       />
     </View>
   )
