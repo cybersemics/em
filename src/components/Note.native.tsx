@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { attribute, getParent, hasChild, isContextViewActive } from '../selectors'
+import { attribute, getParent, isContextViewActive } from '../selectors'
 import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
 import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
-import { Context } from '../@types'
 import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
+import { Context, State } from '../@types'
 
 interface NoteProps {
   context: Context
@@ -26,15 +26,13 @@ const Note = ({ context, onFocus }: NoteProps) => {
   const dispatch = useDispatch()
   const [justPasted, setJustPasted] = useState(false)
 
-  const hasNote = hasChild(state, context, '=note')
-
-  /** Check if the note thought is pending or not. */
-  const isNotePending = () => {
+  /** Returns true if this context has a non-pending note.. */
+  const hasNote = useSelector((state: State) => {
     const noteThought = getParent(state, [...context, '=note'])
-    return !noteThought || noteThought.pending
-  }
+    return noteThought && !noteThought.pending
+  })
 
-  if (!hasNote || isNotePending() || isContextViewActive(state, context)) return null
+  if (!hasNote || isContextViewActive(state, context)) return null
 
   const note = attribute(state, context, '=note')
 
