@@ -109,17 +109,8 @@ const findFirstEnvContextWithZoom = (
 }
 
 /** Get thought space. */
-const getThoughtSpacing = (distance: number, depth: number): number => {
-  if (distance === 0 || (distance === 1 && depth !== 0)) {
-    return 20
-  }
-
-  if (distance === 1 && depth === 0) {
-    return 5
-  }
-
-  return 0
-}
+const getThoughtSpacing = (distance: number, depth: number): number =>
+  distance === 0 || (distance === 1 && depth !== 0) ? 20 : distance === 1 && depth === 0 ? 5 : 0
 
 /********************************************************************
  * mapStateToProps
