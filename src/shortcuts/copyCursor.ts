@@ -1,15 +1,26 @@
 import ClipboardJS from 'clipboard'
-import { editableNode, exportPhrase, hashContext, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { exportPhrase, hashContext, isDocumentEditable, pathToContext } from '../util'
 import { exportContext, someDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
 import { Shortcut } from '../@types'
 
 /** Copies a string directly to the clipboard by simulating a button click with ClipboadJS. */
 const copy = (s: string): void => {
+  // save selection
+  const sel = window.getSelection()
+  const range = sel && sel.rangeCount > 0 ? sel?.getRangeAt(0) : null
+
+  // copy from dummy element using ClipboardJS
   const dummyButton = document.createElement('button')
   const clipboard = new ClipboardJS(dummyButton, { text: () => s })
   dummyButton.click()
   clipboard.destroy()
+
+  // restore selection
+  if (range) {
+    sel?.removeAllRanges()
+    sel?.addRange(range)
+  }
 }
 
 const copyCursorShortcut: Shortcut = {
@@ -25,7 +36,6 @@ const copyCursorShortcut: Shortcut = {
     const { cursor } = state
     const simplePath = simplifyPath(state, cursor!)
     const context = pathToContext(simplePath)
-    const offset = window.getSelection()?.focusOffset
 
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
@@ -39,10 +49,6 @@ const copyCursorShortcut: Shortcut = {
 
     const exported = exportContext(stateAfterPull, context, 'text/plain')
     copy(exported)
-
-    // restore selection
-    const el = editableNode(cursor!)
-    setSelection(el!, { offset })
 
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
     const phrase = exportPhrase(stateAfterPull, context, numDescendants)
