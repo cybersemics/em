@@ -5,7 +5,6 @@ import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
 import {
-  download,
   ellipsize,
   exportPhrase,
   getPublishUrl,
@@ -27,6 +26,7 @@ import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
+import download from '../device/download'
 import { Child, Context, ExportOption, Path, SimplePath, State, ThoughtsInterface } from '../@types'
 
 /******************************************************************************

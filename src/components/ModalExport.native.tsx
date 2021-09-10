@@ -3,7 +3,6 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 
 import { HOME_PATH } from '../constants'
 import {
-  download,
   ellipsize,
   exportPhrase,
   // hashContext,
@@ -24,6 +23,7 @@ import { FontAwesome5 } from '@expo/vector-icons'
 import { ActionButton } from './ActionButton'
 import Clipboard from 'expo-clipboard'
 import { Text } from './Text.native'
+import download from '../device/download'
 
 interface AdvancedSetting {
   id: string
