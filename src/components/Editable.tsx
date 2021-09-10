@@ -22,6 +22,7 @@ import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
+import asyncFocus from '../device/asyncFocus'
 import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
 
 // constants
@@ -42,7 +43,6 @@ import {
 import {
   addEmojiSpace,
   appendToPath,
-  asyncFocus,
   clearSelection,
   parentOf,
   ellipsize,

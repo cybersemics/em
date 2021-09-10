@@ -2,17 +2,9 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { isTouch } from '../browser'
 import { hasChild } from '../selectors'
-import {
-  asyncFocus,
-  ellipsize,
-  isDocumentEditable,
-  headValue,
-  isEM,
-  isRoot,
-  pathToContext,
-  setSelection,
-} from '../util'
+import { ellipsize, isDocumentEditable, headValue, isEM, isRoot, pathToContext, setSelection } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
+import asyncFocus from '../device/asyncFocus'
 import { Icon as IconType, Shortcut } from '../@types'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let

@@ -4,8 +4,9 @@ import { isTouch } from '../browser'
 import { store } from '../store'
 import { attribute, getParent, isContextViewActive } from '../selectors'
 import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
-import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
+import { selectNextEditable, setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import asyncFocus from '../device/asyncFocus'
 import { Context, State } from '../@types'
 
 interface NoteProps {
