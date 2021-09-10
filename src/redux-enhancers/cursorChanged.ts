@@ -1,5 +1,6 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
-import { clearSelection, equalPath, headValue, isDivider } from '../util'
+import { equalPath, headValue, isDivider } from '../util'
+import clearSelection from '../device/clearSelection'
 import { State } from '../@types'
 
 /**

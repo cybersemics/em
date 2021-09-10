@@ -23,6 +23,7 @@ import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import asyncFocus from '../device/asyncFocus'
+import clearSelection from '../device/clearSelection'
 import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
 
 // constants
@@ -43,7 +44,6 @@ import {
 import {
   addEmojiSpace,
   appendToPath,
-  clearSelection,
   parentOf,
   ellipsize,
   ellipsizeUrl,

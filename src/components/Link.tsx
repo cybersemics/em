@@ -2,16 +2,9 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import { EM_TOKEN } from '../constants'
 import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import {
-  clearSelection,
-  decodeCharacterEntities,
-  ellipsize,
-  equalArrays,
-  headValue,
-  pathToContext,
-  strip,
-} from '../util'
+import { decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToContext, strip } from '../util'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import clearSelection from '../device/clearSelection'
 import { SimplePath } from '../@types'
 
 interface LinkProps {
