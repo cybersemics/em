@@ -109,16 +109,10 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
  */
 const usePullStatus = () => useContext(PullStatusContext)
 
-/**
- * Use number of descendants that will be exported.
- */
-// const useDescendantsNumber = () => useContext(DescendantNumberContext)
-
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport = () => {
   const store = useStore()
   const dispatch = useDispatch()
-  // const isMounted = useRef(false)
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
@@ -133,14 +127,8 @@ const ModalExport = () => {
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
-  // const numDescendantsInState = 0
 
   const isPulling = usePullStatus()
-  // const dark = theme(state) !== 'Light'
-  // const themeColor = { color: dark ? 'white' : 'black' }
-  // const themeColorWithBackground = dark
-  //   ? { color: 'black', backgroundColor: 'white' }
-  //   : { color: 'white', backgroundColor: 'black' }
 
   const exportWord = 'Share'
 
