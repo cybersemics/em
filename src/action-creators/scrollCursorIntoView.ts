@@ -5,6 +5,10 @@ import { Thunk } from '../@types'
 const scrollCursorIntoView =
   (delay?: number): Thunk =>
   (dispatch, getState) => {
+    // web only
+    // TODO: Implement on React Native
+    if (typeof window === 'undefined') return
+
     setTimeout(() => {
       const { cursor } = getState()
       if (!cursor) {
