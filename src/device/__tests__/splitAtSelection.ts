@@ -1,6 +1,6 @@
-import { getCaretPositionDetails } from '../util/getCaretPositionDetails'
-import { setSelection } from '../util/setSelection'
+import getCaretPositionDetails from '../getCaretPositionDetails'
 import splitAtSelection from '../splitAtSelection'
+import { setSelection } from '../../util/setSelection'
 
 it('split at selecion with nested nodes', () => {
   const thoughtValue = 'The <b>rise <i>and fall</i></b> of Nikola Tesla.'
