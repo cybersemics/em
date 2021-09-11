@@ -5,7 +5,7 @@ import getElementPaddings from './getElementPaddings'
 /** Clears the selection. */
 export const clear = () => window.getSelection()?.removeAllRanges()
 
-/** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. */
+/** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
 export const isCollapsed = () => window.getSelection()?.isCollapsed
 
 /** Returns true if there is an active selection. */
@@ -86,3 +86,6 @@ export const offsetStart = () => {
   if (!range) return null
   return range.startOffset || 0
 }
+
+/** Returns the selection text, or null if there is no selection. */
+export const text = () => window.getSelection()?.toString() || null
