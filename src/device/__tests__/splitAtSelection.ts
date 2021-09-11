@@ -1,5 +1,5 @@
 import splitAtSelection from '../splitAtSelection'
-import { setSelection } from '../../util/setSelection'
+import * as selection from '../device/selection'
 
 it('split at selection with nested nodes', () => {
   const thoughtValue = 'The <b>rise <i>and fall</i></b> of Nikola Tesla.'
@@ -11,7 +11,7 @@ it('split at selection with nested nodes', () => {
   document.body.appendChild(dummyDiv)
 
   // The rise and| fall of Nikola Tesla. (Cursor should be after `and`)
-  setSelection(dummyDiv, { offset: 12 })
+  selection.set(dummyDiv, { offset: 12 })
 
   const selectionRange = document.getSelection()?.getRangeAt(0)
 

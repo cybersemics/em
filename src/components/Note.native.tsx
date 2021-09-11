@@ -4,11 +4,12 @@ import { isTouch } from '../browser'
 import { store } from '../store'
 import { attribute, getParent, isContextViewActive } from '../selectors'
 import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
-import { setSelection, strip } from '../util'
+import { strip } from '../util'
 import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
 import asyncFocus from '../device/asyncFocus'
 import selectNextEditable from '../device/selectNextEditable'
 import { Context, State } from '../@types'
+import * as selection from '../device/selection'
 
 interface NoteProps {
   context: Context
@@ -48,7 +49,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp' || e.keyCode === 'N'.charCodeAt(0)) {
       editable?.focus()
-      setSelection(editable, { end: true })
+      selection.set(editable, { end: true })
       dispatch(setNoteFocus({ value: false }))
     }
     // delete empty note
@@ -59,7 +60,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
         asyncFocus()
       }
       editable.focus()
-      setSelection(editable, { end: true })
+      selection.set(editable, { end: true })
 
       dispatch(deleteAttribute({ context, key: '=note' }))
       dispatch(setNoteFocus({ value: false }))

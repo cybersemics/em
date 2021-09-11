@@ -55,7 +55,6 @@ import {
   isHTML,
   isURL,
   pathToContext,
-  // setSelection,
   strip,
   normalizeThought,
   // getCaretPositionDetails,
@@ -221,7 +220,7 @@ const Editable = ({
       setCursor({
         cursorHistoryClear: true,
         editing,
-        // set offset to null to prevent setSelection on next render
+        // set offset to null to prevent setting the selection on next render
         // to use the existing offset after a user clicks or touches the screent
         // when cursor is changed through another method, such as cursorDown, offset will be reset
         offset: null,
@@ -306,7 +305,7 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   // const setSelectionToCursorOffset = () => {
-  //   setSelection(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
+  //   selection.set(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
   // }
 
   useEffect(() => {
@@ -315,7 +314,7 @@ const Editable = ({
     // focus on the ContentEditable element if editing os on desktop
     const editMode = editing
 
-    // if there is no browser selection, do not manually call setSelection as it does not preserve the cursor offset. Instead allow the default focus event.
+    // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
     const cursorWithoutSelection = state.cursorOffset !== null || !selection.isActive()
 
     // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
