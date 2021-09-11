@@ -1,5 +1,5 @@
 import { initialState, reducerFlow } from '../../util'
-import { exportContext, getChildren } from '../../selectors'
+import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -222,10 +222,11 @@ describe('mount', () => {
     store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
     jest.runOnlyPendingTimers()
 
-    const dummyEditable = document.createElement('div')
-    dummyEditable.innerHTML = 'apple'
-
-    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
+    // In this case, the selection is at the end of the apple element.
+    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.ELEMENT_NODE)
+    expect(window.getSelection()?.focusNode?.textContent).toBe('apple')
+    expect(window.getSelection()?.focusOffset).toBe(1)
   })
 
   it('after merging siblings, caret should be in between', async () => {
@@ -240,12 +241,10 @@ describe('mount', () => {
     ])
     jest.runOnlyPendingTimers()
 
-    const mergedValue = getChildren(store.getState(), [HOME_TOKEN])[0].value
-
-    const dummyEditable = document.createElement('div')
-    dummyEditable.innerHTML = mergedValue
-
-    // TODO: Also check the if the selection focusNode parent is the correct editable
+    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
+    // In this case, the selection is in the applebanana text node, in between apple and banana.
+    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.TEXT_NODE)
+    expect(window.getSelection()?.focusNode?.textContent).toBe('applebanana')
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 })
