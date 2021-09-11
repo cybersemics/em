@@ -131,7 +131,7 @@ const setCursor = (
             ? state.cursorHistory.slice(0, -1)
             : state.cursorHistory,
           // set cursorOffset to null if editingValue is null
-          // (prevents Editable from calling setSelection on click since we want the default cursor placement in that case)
+          // (prevents Editable from calling selection.set on click since we want the default cursor placement in that case)
           contextViews: newContextViews,
         }
       : null),

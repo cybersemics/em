@@ -4,7 +4,7 @@ import moize from 'moize'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
-import { hashContext, hashThought, initEvents, owner, setSelection, urlDataSource } from './util'
+import { hashContext, hashThought, initEvents, owner, urlDataSource } from './util'
 import {
   authenticate,
   loadPublicThoughts,
@@ -27,6 +27,7 @@ import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
 import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
+import * as selection from './device/selection'
 
 // enable to collect moize usage stats
 // do not enable in production
@@ -158,7 +159,7 @@ const withDispatch =
     store.dispatch(f(...args))
 
 const testHelpers = {
-  setSelection,
+  setSelection: selection.set,
   importToContext: withDispatch(importToContext),
   getLexemeFromDB,
   getState: store.getState,

@@ -2,8 +2,9 @@ import React from 'react'
 // import { Key } from 'ts-key-enum'
 // import { isTouch } from '../browser'
 // import { hasChild } from '../selectors'
-// import { ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext, setSelection } from '../util'
+// import { ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext } from '../util'
 // import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
+// import * as selection from '../device/selection'
 import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { G, Path } from 'react-native-svg'
 import { Alert } from 'react-native'
@@ -40,7 +41,7 @@ import { Alert } from 'react-native'
 //       }
 //       if (editable) {
 //         editable.focus()
-//         setSelection(editable, { end: true })
+//         selection.set(editable, { end: true })
 //       }
 //     }
 //     else {
