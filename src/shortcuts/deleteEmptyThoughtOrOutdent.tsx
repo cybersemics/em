@@ -78,15 +78,12 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
 /** A selector that returns true if the cursor is on an only child that can be outdented by the delete command. */
 const canExecuteOutdent = (state: State) => {
   const { cursor } = state
-  const selection = window.getSelection()
 
-  if (!cursor || !selection) return false
-
-  const offset = selection.focusOffset
+  if (!cursor || (!selection.isActive() && selection.isText())) return false
 
   return (
     cursor &&
-    offset === 0 &&
+    selection.offset() === 0 &&
     isDocumentEditable() &&
     headValue(cursor).length !== 0 &&
     getChildren(state, parentOf(pathToContext(cursor))).length === 1
