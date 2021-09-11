@@ -25,7 +25,6 @@ import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
-import isEditingThought from '../device/isEditingThought'
 import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../@types'
 
 // constants
@@ -641,7 +640,7 @@ const Editable = ({
 
       if (isTouch) {
         // Set editing value to false if user exit editing mode by tapping on other elements other than editable.
-        if (!isEditingThought()) {
+        if (!selection.isThought()) {
           dispatch(editingAction({ value: false }))
         }
       }

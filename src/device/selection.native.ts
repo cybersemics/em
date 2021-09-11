@@ -11,6 +11,9 @@ export const isActive = () => true
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. */
 export const isCollapsed = isActive
 
+/** Returns true if the selection is on a thought. */
+export const isThought = isActive
+
 /** Returns true if text is selected. Not relevant on React Native, so just return true if there is any selection at all. See selection.ts for web implementation. */
 export const isText = () => true
 

@@ -11,6 +11,10 @@ export const isCollapsed = () => window.getSelection()?.isCollapsed
 /** Returns true if there is an active selection. */
 export const isActive = () => !!window.getSelection()?.focusNode
 
+/** Returns true if the selection is on a thought. */
+// We should see if it is possible to just use state.editing and selection.isActive()
+export const isThought = () => !!window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')
+
 /** Returns true if the selection is not on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = () => {
   const selection = window.getSelection()
