@@ -15,6 +15,7 @@ import { childrenFilterPredicate } from '../selectors/getChildren'
 import Editable from './Editable'
 import { SimplePath, State } from '../@types'
 import { storage } from '../util/storage'
+import isTextSelected from '../device/isTextSelected'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
@@ -77,11 +78,10 @@ const Content: ContentComponent = props => {
     if (!isPressed) return
     setIsPressed(false)
 
+    // web only
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
     // prevent text selection from calling cursorBack incorrectly
-    const selection = window.getSelection()
-    const focusNode = selection && selection.focusNode
-    if (focusNode && focusNode.nodeType === Node.TEXT_NODE) return
+    if (isTextSelected()) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     if (showModal) {

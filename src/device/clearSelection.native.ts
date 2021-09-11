@@ -1,9 +1,6 @@
 /** Clears the selection. */
 const clearSelection = (): void => {
-  const sel = window.getSelection()
-  if (sel) {
-    sel.removeAllRanges()
-  }
+  // TODO: Not implemented
 }
 
 export default clearSelection

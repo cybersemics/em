@@ -9,6 +9,8 @@ import { isDocumentEditable } from '../util'
 import { isTutorial, theme } from '../selectors'
 import { alert, toggleSidebar, updateSplitPosition } from '../action-creators'
 import { store } from '../store'
+import hasSelection from '../device/hasSelection'
+import isSelectionCollapsed from '../device/isSelectionCollapsed'
 
 // components
 import Alert from './Alert'
@@ -91,8 +93,8 @@ const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
 
 type Props = StateProps & DispatchProps
 
-/** Cancel gesture if there is an active text selection on active drag. */
-const shouldCancelGesture = () => !!window.getSelection()?.toString() || store.getState().dragInProgress
+/** Cancel gesture if there is an active text selection or active drag. */
+const shouldCancelGesture = () => (hasSelection() && isSelectionCollapsed()) || store.getState().dragInProgress
 
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {

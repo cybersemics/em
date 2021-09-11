@@ -8,6 +8,7 @@ import { setSelection, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import asyncFocus from '../device/asyncFocus'
 import selectNextEditable from '../device/selectNextEditable'
+import hasSelection from '../device/hasSelection'
 import { Context, State } from '../@types'
 
 interface NoteProps {
@@ -95,7 +96,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
 
   /** Set editing to false onBlur, if keyboard is closed. */
   const onBlur = () => {
-    if (isTouch && !window.getSelection()?.focusNode) {
+    if (isTouch && !hasSelection()) {
       setTimeout(() => dispatch(editing({ value: false })))
     }
   }
