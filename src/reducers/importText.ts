@@ -30,24 +30,45 @@ const regexpListItem = /<li(?:\s|>)/gim
 
 interface Options {
   path?: Path
-  text: string
+
+  // Set the lastUpdated timestamp on the imported thoughts. Default: now.
   lastUpdated?: Timestamp
+
+  // Prevents the default behavior of setting the cursor to the last thought at the first level.
   preventSetCursor?: boolean
+
+  // When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
   rawDestValue?: string
+
+  // the character offset to end replacing text if the import is not multiline, such as the end of the selection
+  replaceEnd?: number
+
+  // the character offset to start replacing text if the import is not multiline, such as the start of the selection
+  replaceStart?: number
+
   skipRoot?: boolean
+
+  // text or HTML that will be inserted below the thought (if multiline) or inside the thought (singl line only)
+  text: string
+
+  // A user session id to associate with the update. Defaults to the current session.
   updatedBy?: string
 }
 
-/** Imports thoughts from html or raw text.
- *
- * @param lastUpdated       Set the lastUpdated timestamp on the imported thoughts. Default: now.
- * @param preventSetCursor  Prevents the default behavior of setting the cursor to the last thought at the first level.
- * @param rawDestValue      When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
- * @param skipRoot          See importHtml @param.
- */
+/** Imports thoughts from html or raw text. */
 const importText = (
   state: State,
-  { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot, updatedBy = getSessionId() }: Options,
+  {
+    path,
+    text,
+    lastUpdated,
+    preventSetCursor,
+    rawDestValue,
+    replaceEnd,
+    replaceStart,
+    skipRoot,
+    updatedBy = getSessionId(),
+  }: Options,
 ): State => {
   const isRoam = validateRoam(text)
 
@@ -63,23 +84,11 @@ const importText = (
   if (numLines <= 1 && !isRoam && !isRoot(path)) {
     const textNormalized = strip(convertedText, { preserveFormatting: true })
 
-    // get the range if there is one so that we can import over the selected html
-    const selection = window.getSelection()
-    const [startOffset, endOffset] =
-      selection && selection.rangeCount > 0
-        ? (() => {
-            const range = selection.getRangeAt(0)
-            const offsets = [range.startOffset, range.endOffset]
-            range.collapse()
-            return offsets
-          })()
-        : [0, 0]
-
     // insert the textNormalized into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
 
-    const left = (destValue.slice(0, startOffset) + textNormalized).trimLeft()
-    const right = destValue.slice(endOffset).trimRight()
+    const left = (destValue.slice(0, replaceStart ?? 0) + textNormalized).trimLeft()
+    const right = destValue.slice(replaceEnd ?? 0).trimRight()
     const newValue = left + right
 
     const offset = getTextContentFromHTML(left).length
@@ -173,7 +182,7 @@ const importText = (
       shouldImportIntoDummy ? collapseContext({ deleteCursor: true, at: newDestinationPath }) : null,
       // if original destination has empty then collapse once more.
       shouldImportIntoDummy && destEmpty ? collapseContext({ deleteCursor: true, at: parentOfDestination }) : null,
-      // restore the selection to the last imported thought on the first level
+      // restore the cursor to the last imported thought on the first level
       // Note: Since collapseContext behavior sets cursor to the first children, we need to set cursor back to the old cursor if preventSetCursor is true.
       !preventSetCursor
         ? setLastImportedCursor

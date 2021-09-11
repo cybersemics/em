@@ -395,7 +395,6 @@ const Editable = ({
      * You may need to inspect them if something goes wrong.
      */
     // if (isEditing) {
-    //   const { isCollapsed, focusOffset, focusNode } = window.getSelection() || {}
     //   console.info({
     //     thoughts,
     //     transient,
@@ -403,12 +402,12 @@ const Editable = ({
     //     isEditing,
     //     contentRef: !!contentRef.current,
     //     noFocusNode: !noteFocus && (cursorOffset !== null || !selection.isActive()) && !dragHold,
-    //     '!dragHold': dragHold,
-    //     '!noteFocus': noteFocus,
+    //     dragHold: dragHold,
+    //     noteFocus: noteFocus,
     //     cursorOffset: cursorOffset !== null,
-    //     isCollapsed,
-    //     focusOffset,
-    //     focusNode: !!focusNode,
+    //     isCollapsed: selection.isCollapsed(),
+    //     focusOffset: selection.offset(),
+    //     hasSelection: selection.isActive(),
     //   })
     // }
     // allow transient editable to have focus on render
@@ -580,6 +579,13 @@ const Editable = ({
           path,
           text: isHTML(plainText) ? plainText : htmlText || plainText,
           rawDestValue,
+          // pass selection start and end for importText to replace (if the imported thoughts are one line)
+          ...(selection.isActive() && !selection.isCollapsed()
+            ? {
+                replaceStart: selection.offsetStart()!,
+                replaceEnd: selection.offsetEnd()!,
+              }
+            : null),
         }),
       )
 
