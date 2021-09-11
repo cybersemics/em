@@ -1,5 +1,5 @@
-import { getCaretPositionDetails } from '../getCaretPositionDetails'
-import { getTextContentFromHTML } from '../getTextContentFromHTML'
+import getCaretPositionDetails from '../getCaretPositionDetails'
+import getTextContentFromHTML from '../getTextContentFromHTML'
 
 /** Create dummy div with given html value. */
 const createDummyDiv = (htmlValue: string) => {

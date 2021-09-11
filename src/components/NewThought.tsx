@@ -8,9 +8,11 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import { appendToPath, asyncFocus, createId, getTextContentFromHTML, pathToContext, unroot } from '../util'
+import { appendToPath, createId, pathToContext, unroot } from '../util'
 import { getNextRank, getChildrenRanked } from '../selectors'
 import { cursorBack, createThought, setCursor } from '../action-creators'
+import asyncFocus from '../device/asyncFocus'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { Path, SimplePath, State } from '../@types'
 
 interface NewThoughtProps {

@@ -1,8 +1,9 @@
 import { isTouch, isSafari } from '../browser'
 import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
 import { getSetting, getAllChildren, hasChild, isContextViewActive } from '../selectors'
-import { asyncFocus, parentOf, ellipsize, headValue, pathToContext } from '../util'
+import { parentOf, ellipsize, headValue, pathToContext } from '../util'
 import { alert } from '../action-creators'
+import asyncFocus from '../device/asyncFocus'
 import { Thunk, Context, Path, SplitResult, State } from '../@types'
 
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */

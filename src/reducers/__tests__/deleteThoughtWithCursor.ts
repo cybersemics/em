@@ -1,8 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
+import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import getCaretPositionDetails from '../../device/getCaretPositionDetails'
 
 // reducers
 import cursorBack from '../cursorBack'

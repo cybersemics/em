@@ -1,5 +1,6 @@
-import { asyncFocus, isDocumentEditable } from '../util'
+import { isDocumentEditable } from '../util'
 import { bumpThoughtDown } from '../action-creators'
+import asyncFocus from '../device/asyncFocus'
 import { Shortcut } from '../@types'
 
 const bumpThoughtDownShortcut: Shortcut = {

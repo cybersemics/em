@@ -1,7 +1,6 @@
 import { HOME_TOKEN } from '../constants'
 import {
   appendToPath,
-  getTextContentFromHTML,
   head,
   headRank,
   headValue,
@@ -22,6 +21,7 @@ import {
   rootedParentOf,
 } from '../selectors'
 import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCursor } from '../reducers'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { SimplePath, State } from '../@types'
 import archiveThought from './archiveThought'
 

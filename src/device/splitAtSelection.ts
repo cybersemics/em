@@ -23,7 +23,7 @@ function splitNode(root: HTMLElement, range: Range) {
 /**
  * Splits the given element into two proper html value at the current selection.
  */
-export const splitAtSelection = (el: HTMLElement, range: Range) => {
+const splitAtSelection = (el: HTMLElement, range: Range) => {
   const splitNodesResult = splitNode(el, range)
 
   if (!splitNodesResult) return null
@@ -38,3 +38,5 @@ export const splitAtSelection = (el: HTMLElement, range: Range) => {
     right: rightDiv.innerHTML,
   }
 }
+
+export default splitAtSelection

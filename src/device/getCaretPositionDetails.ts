@@ -47,7 +47,7 @@ const recursiveFocusNodeFinder = (node: Node, relativeOffset: number): CaretPosi
  *
  * @param relativeOffset - The offset that is taken relative to the value with all the html tags removed.
  */
-export const getCaretPositionDetails = (node: Node, relativeOffset: number): CaretPositionDetails | null => {
+const getCaretPositionDetails = (node: Node, relativeOffset: number): CaretPositionDetails | null => {
   // case where caret should be positioned at the beginning of the node.
   if (relativeOffset <= 0) return { focusNode: node, offset: 0 }
 
@@ -61,3 +61,5 @@ export const getCaretPositionDetails = (node: Node, relativeOffset: number): Car
 
   return recursiveFocusNodeFinder(node, relativeOffset)
 }
+
+export default getCaretPositionDetails

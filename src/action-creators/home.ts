@@ -1,6 +1,6 @@
 import { restoreCursorBeforeSearch, search, searchContexts, setCursor } from '../action-creators'
-import { clearSelection } from '../util'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import clearSelection from '../device/clearSelection'
 import { Thunk } from '../@types'
 
 /** Navigates home and resets the scroll position. */

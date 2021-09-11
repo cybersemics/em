@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { modalCleanup } from '../util'
+import modalCleanup from '../device/modalCleanup'
 import { State } from '../@types'
 
 /**

@@ -5,7 +5,7 @@ import { WebView } from 'react-native-webview'
 
 import { commonStyles } from '../style/commonStyles'
 import { useDimensions } from '@react-native-community/hooks'
-import { createWebHTML, WEBVIEW_POST_EVENTS } from '../util/createWebHTML'
+import { createWebHTML, WEBVIEW_POST_EVENTS } from '../device/createWebHTML.native'
 
 interface ContentEditableProps {
   style?: ViewStyle

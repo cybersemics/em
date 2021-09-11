@@ -1,8 +1,9 @@
 import { isTouch } from '../browser'
 import { attribute, hasChild, simplifyPath } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
-import { asyncFocus, editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { editableNode, isDocumentEditable, pathToContext, setSelection } from '../util'
 import { setAttribute, setNoteFocus } from '../action-creators'
+import asyncFocus from '../device/asyncFocus'
 import { Shortcut } from '../@types'
 import { HOME_PATH } from '../constants'
 

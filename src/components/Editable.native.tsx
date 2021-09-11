@@ -21,6 +21,7 @@ import {
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent, IOnPaste } from './ContentEditable.native'
 import { shortcutEmitter } from '../shortcuts'
+import clearSelection from '../device/clearSelection'
 import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
 
 // constants
@@ -42,7 +43,6 @@ import {
   addEmojiSpace,
   appendToPath,
   // asyncFocus,
-  clearSelection,
   parentOf,
   ellipsize,
   ellipsizeUrl,

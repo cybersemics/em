@@ -3,7 +3,7 @@ import { MimeType } from '../@types'
 /** Download data to a file.
  * See https://stackoverflow.com/a/30832210/480608.
  */
-export const download = (data: string, filename: string, type: MimeType = 'text/plain') => {
+const download = (data: string, filename: string, type: MimeType = 'text/plain') => {
   const file = new Blob([data], { type })
 
   // IE10+
@@ -25,3 +25,5 @@ export const download = (data: string, filename: string, type: MimeType = 'text/
     }, 0)
   }
 }
+
+export default download

@@ -1,10 +1,11 @@
-import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
+import { initialState, reducerFlow } from '../../util'
 import { exportContext, getChildren } from '../../selectors'
 import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { HOME_TOKEN } from '../../constants'
+import getCaretPositionDetails from '../../device/getCaretPositionDetails'
 
 // reducers
 import cursorBack from '../cursorBack'
