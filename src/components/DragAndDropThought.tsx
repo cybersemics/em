@@ -13,6 +13,7 @@ import { NOOP } from '../constants'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, error, moveThought, createThought } from '../action-creators'
 import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
+import * as selection from '../device/selection'
 
 // util
 import {
@@ -69,7 +70,7 @@ const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
     dragInProgress({
       value: true,
       draggingThought: simplePathLive,
-      offset: document.getSelection()?.focusOffset,
+      offset: selection.offset(),
     }),
   )
   return { simplePath: simplePathLive }
