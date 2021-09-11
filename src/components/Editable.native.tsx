@@ -23,6 +23,8 @@ import { store } from '../store'
 import ContentEditable, { ContentEditableEvent, IOnPaste } from './ContentEditable.native'
 import { shortcutEmitter } from '../shortcuts'
 import clearSelection from '../device/clearSelection'
+import hasSelection from '../device/hasSelection'
+import getSelectionOffset from '../device/getSelectionOffset'
 import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../@types'
 
 // constants
@@ -316,20 +318,13 @@ const Editable = ({
     const editMode = editing
 
     // if there is no browser selection, do not manually call setSelection as it does not preserve the cursor offset. Instead allow the default focus event.
-    const cursorWithoutSelection = true // state.cursorOffset !== null || !window.getSelection()?.focusNode
+    const cursorWithoutSelection = state.cursorOffset !== null || !hasSelection()
 
     // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
     // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
     // disable on mobile to avoid infinite loop (#908)
-    const isAtBeginning = true //   !isTouch && window.getSelection()?.focusOffset === 0
+    const isAtBeginning = getSelectionOffset() === 0
 
-    /**
-     * Note: There are a lot of different values that determine if setSelection is called!
-     * You may need to inspect them if something goes wrong.
-     */
-    // if (isEditing) {
-    //   const { isCollapsed, focusOffset, focusNode } = window.getSelection() || {}
-    // }
     // allow transient editable to have focus on render
     if (
       transient ||

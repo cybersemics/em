@@ -24,12 +24,13 @@ import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCu
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { SimplePath, State } from '../@types'
 import archiveThought from './archiveThought'
+import getSelectionOffset from '../device/getSelectionOffset'
+import isSelectionCollapsed from '../device/isSelectionCollapsed'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {
   const { cursor, editing } = state
-  const sel = window.getSelection()
-  const offset = sel ? sel.focusOffset : 0
+  const offset = getSelectionOffset() ?? 0
 
   if (!cursor) return state
 
@@ -79,7 +80,7 @@ const deleteEmptyThought = (state: State): State => {
     ])(state)
   }
   // delete from beginning and merge with previous sibling
-  else if (offset === 0 && sel?.isCollapsed && !showContexts) {
+  else if (offset === 0 && isSelectionCollapsed() && !showContexts) {
     const value = headValue(cursor)
     const rank = headRank(cursor)
     const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
