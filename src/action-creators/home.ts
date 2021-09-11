@@ -1,6 +1,6 @@
 import { restoreCursorBeforeSearch, search, searchContexts, setCursor } from '../action-creators'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import clearSelection from '../device/clearSelection'
+import * as selection from '../device/selection'
 import { Thunk } from '../@types'
 
 /** Navigates home and resets the scroll position. */
@@ -13,7 +13,7 @@ const home = (): Thunk => (dispatch, getState) => {
     dispatch(restoreCursorBeforeSearch)
   } else {
     dispatch(setCursor({ path: null, cursorHistoryClear: true }))
-    clearSelection()
+    selection.clear()
     scrollCursorIntoView()
   }
 }

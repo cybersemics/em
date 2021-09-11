@@ -7,7 +7,7 @@ import { decodeThoughtsUrl, pathExists } from '../selectors'
 import { /* alert */ error, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { equalPath } from './equalPath'
-import clearSelection from '../device/clearSelection'
+import * as selection from '../device/selection'
 import { Path, State } from '../@types'
 // import lifecycle from 'page-lifecycle'
 
@@ -43,7 +43,7 @@ export const initEvents = (store: Store<State, any>) => {
 
     // clear the selection if root
     if (toRoot) {
-      clearSelection()
+      selection.clear()
     }
 
     // set the cursor

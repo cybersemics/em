@@ -24,9 +24,7 @@ import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import asyncFocus from '../device/asyncFocus'
-import clearSelection from '../device/clearSelection'
-import hasSelection from '../device/hasSelection'
-import getSelectionOffset from '../device/getSelectionOffset'
+import * as selection from '../device/selection'
 import isEditingThought from '../device/isEditingThought'
 import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../@types'
 
@@ -337,7 +335,7 @@ const Editable = ({
 
       if (isDivider(newValue)) {
         // remove selection so that the focusOffset does not cause a split false positive in newThought
-        clearSelection()
+        selection.clear()
       }
 
       // store the value so that we have a transcendental head when it is changed
@@ -385,12 +383,12 @@ const Editable = ({
     const editMode = !isTouch || editing
 
     // if there is no browser selection, do not manually call setSelection as it does not preserve the cursor offset. Instead allow the default focus event.
-    const cursorWithoutSelection = state.cursorOffset !== null || !hasSelection()
+    const cursorWithoutSelection = state.cursorOffset !== null || !selection.isActive()
 
     // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
     // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
     // disable on mobile to avoid infinite loop (#908)
-    const isAtBeginning = !isTouch && getSelectionOffset() === 0
+    const isAtBeginning = !isTouch && selection.offset() === 0
 
     /**
      * Note: There are a lot of different values that determine if setSelection is called!
@@ -404,7 +402,7 @@ const Editable = ({
     //     editMode,
     //     isEditing,
     //     contentRef: !!contentRef.current,
-    //     noFocusNode: !noteFocus && (cursorOffset !== null || !hasSelection) && !dragHold,
+    //     noFocusNode: !noteFocus && (cursorOffset !== null || !selection.isActive()) && !dragHold,
     //     '!dragHold': dragHold,
     //     '!noteFocus': noteFocus,
     //     cursorOffset: cursorOffset !== null,

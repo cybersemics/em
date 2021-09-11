@@ -5,7 +5,7 @@ import { headValue, strip } from '../util'
 import { StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import clearSelection from '../device/clearSelection'
+import * as selection from '../device/selection'
 import { SimplePath } from '../@types'
 
 interface LinkProps {
@@ -24,7 +24,7 @@ const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
     <Text
       style={style.text}
       onPress={() => {
-        clearSelection()
+        selection.clear()
         dispatch([
           search({ value: null }),
           searchContexts({ value: null }),

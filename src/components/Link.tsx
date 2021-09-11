@@ -4,7 +4,7 @@ import { EM_TOKEN } from '../constants'
 import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
 import { decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToContext, strip } from '../util'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import clearSelection from '../device/clearSelection'
+import * as selection from '../device/selection'
 import { SimplePath } from '../@types'
 
 interface LinkProps {
@@ -27,7 +27,7 @@ const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
       onClick={e => {
         // eslint-disable-line react/no-danger-with-children
         e.preventDefault()
-        clearSelection()
+        selection.clear()
         dispatch(search({ value: null }))
         dispatch(searchContexts({ value: null }))
         dispatch(setCursor({ path: simplePath }))

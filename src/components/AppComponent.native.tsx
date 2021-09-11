@@ -27,6 +27,7 @@ import { isGestureHint, inputHandlers } from '../shortcuts'
 import Tutorial from './Tutorial'
 import { isTutorial } from '../selectors'
 import { storage } from '../util'
+import * as selection from '../device/selection'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 
@@ -35,7 +36,7 @@ const { flexOne, darkBackground, flexGrow } = commonStyles
 const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 /** Cancel gesture if there is an active text selection on active drag. */
-const shouldCancelGesture = () => store?.getState().dragInProgress
+const shouldCancelGesture = () => selection.isActive() || store?.getState().dragInProgress
 
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {

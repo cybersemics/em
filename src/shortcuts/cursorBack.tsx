@@ -2,7 +2,7 @@ import React from 'react'
 import { Icon as IconType, Shortcut } from '../@types'
 import { cursorBack } from '../action-creators'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import clearSelection from '../device/clearSelection'
+import * as selection from '../device/selection'
 
 // import directly since util/index is not loaded yet when shortcut is initialized
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
@@ -29,7 +29,7 @@ const blur = () => {
   if (document.activeElement) {
     const el = document.activeElement as HTMLInputElement
     el.blur()
-    clearSelection()
+    selection.clear()
   }
 }
 
