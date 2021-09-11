@@ -469,6 +469,13 @@ const Editable = ({
           path,
           text: isHTML(plainText) ? plainText : htmlText || plainText,
           rawDestValue,
+          // pass selection start and end for importText to replace (if the imported thoughts are one line)
+          ...(selection.isActive() && !selection.isCollapsed()
+            ? {
+                replaceStart: selection.offsetStart()!,
+                replaceEnd: selection.offsetEnd()!,
+              }
+            : null),
         }),
       )
 
