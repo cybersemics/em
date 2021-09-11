@@ -5,7 +5,6 @@ import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { HOME_TOKEN } from '../../constants'
-import getCaretPositionDetails from '../../device/getCaretPositionDetails'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -226,9 +225,7 @@ describe('mount', () => {
     const dummyEditable = document.createElement('div')
     dummyEditable.innerHTML = 'apple'
 
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
-
-    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 
   it('after merging siblings, caret should be in between', async () => {
@@ -248,9 +245,7 @@ describe('mount', () => {
     const dummyEditable = document.createElement('div')
     dummyEditable.innerHTML = mergedValue
 
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
-
     // TODO: Also check the if the selection focusNode parent is the correct editable
-    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 })

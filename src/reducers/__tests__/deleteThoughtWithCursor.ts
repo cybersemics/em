@@ -3,7 +3,6 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import getCaretPositionDetails from '../../device/getCaretPositionDetails'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -136,10 +135,8 @@ describe('mount', () => {
     const dummyEditable = document.createElement('div')
     dummyEditable.innerHTML = 'apple'
 
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
-
     // TODO: Also check the if the selection focusNode parent is the correct editable
 
-    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 })
