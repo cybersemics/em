@@ -19,22 +19,12 @@ export interface ModalProps {
   id: string
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
   opaque?: boolean
-  positionAtCursor?: boolean
   show?: boolean
   style?: React.CSSProperties
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
   title: string
   top?: number
   preventCloseOnEscape?: boolean
-}
-
-/** Retrieves the { x, y } coordinates of the selection range. */
-const getSelectionCoordinates = () => {
-  const sel = document.getSelection()
-  // JSDOM implementation of Range does not support getClientRects
-  return sel && sel.type !== 'None' && sel.getRangeAt(0).getClientRects
-    ? sel.getRangeAt(0).getClientRects()[0] || {}
-    : { x: 0, y: 0 }
 }
 
 /** A generic modal component. */
@@ -93,25 +83,10 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   endTutorial = () => this.props.dispatch(tutorial({ value: false }))
 
   render() {
-    const {
-      show,
-      id,
-      title,
-      arrow,
-      center,
-      opaque,
-      className,
-      style,
-      actions,
-      positionAtCursor,
-      hideModalActions,
-      top,
-      children,
-    } = this.props
+    const { show, id, title, arrow, center, opaque, className, style, actions, hideModalActions, top, children } =
+      this.props
 
     if (!show) return null
-
-    const cursorCoords = getSelectionCoordinates()
 
     /** Dispatches a closeModal action for the modal. */
 
@@ -124,15 +99,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
     return (
       <div
         ref={this.ref}
-        style={Object.assign(
-          {},
-          style,
-          top && { top: 55 },
-          positionAtCursor && {
-            top: cursorCoords.y,
-            left: cursorCoords.x,
-          },
-        )}
+        style={Object.assign({}, style, top && { top: 55 })}
         className={
           className +
           ' ' +
