@@ -3,7 +3,6 @@ import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import getCaretPositionDetails from '../../device/getCaretPositionDetails'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -132,14 +131,10 @@ describe('mount', () => {
     ])
     jest.runOnlyPendingTimers()
 
-    // Note: To test caret position always use getCaretPostionDetails with a dummy div.
-    const dummyEditable = document.createElement('div')
-    dummyEditable.innerHTML = 'apple'
-
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
-
-    // TODO: Also check the if the selection focusNode parent is the correct editable
-
-    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
+    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
+    // In this case, the selection moves to the end of the apple element.
+    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.ELEMENT_NODE)
+    expect(window.getSelection()?.focusNode?.textContent).toBe('apple')
+    expect(window.getSelection()?.focusOffset).toBe(1)
   })
 })

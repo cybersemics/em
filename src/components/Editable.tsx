@@ -24,7 +24,6 @@ import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import asyncFocus from '../device/asyncFocus'
 import clearSelection from '../device/clearSelection'
-import getCaretPositionDetails from '../device/getCaretPositionDetails'
 import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
 
 // constants
@@ -353,10 +352,7 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
-    if (contentRef.current) {
-      const caretPositionDetails = getCaretPositionDetails(contentRef.current, cursorOffset || state.cursorOffset || 0)
-      setSelection(caretPositionDetails?.focusNode ?? contentRef.current, { offset: caretPositionDetails?.offset || 0 })
-    }
+    setSelection(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
   }
 
   useEffect(() => {
