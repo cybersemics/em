@@ -5,21 +5,19 @@ import newThought from './newThought'
 import { rootedParentOf, simplifyPath } from '../selectors'
 import alert from './alert'
 import { State } from '../@types'
-import hasSelection from '../device/hasSelection'
-import getSelectionOffsetStart from '../device/getSelectionOffsetStart'
-import getSelectionOffsetEnd from '../device/getSelectionOffsetEnd'
+import * as selection from '../device/selection'
 
 /** Extract the selection as child thought. */
 const extractThought = (state: State) => {
   const { cursor } = state
   if (!cursor) return state
 
-  if (!hasSelection()) {
+  if (!selection.isActive()) {
     return state
   }
 
-  const selectionStart = getSelectionOffsetStart()!
-  const selectionEnd = getSelectionOffsetEnd()!
+  const selectionStart = selection.offsetStart()!
+  const selectionEnd = selection.offsetEnd()!
   if (selectionStart === selectionEnd) {
     return alert(state, { value: 'No text selected to extract' })
   }
