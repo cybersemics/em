@@ -6,6 +6,8 @@ import { rootedParentOf, simplifyPath } from '../selectors'
 import alert from './alert'
 import { State } from '../@types'
 import hasSelection from '../device/hasSelection'
+import getSelectionOffsetStart from '../device/getSelectionOffsetStart'
+import getSelectionOffsetEnd from '../device/getSelectionOffsetEnd'
 
 /** Extract the selection as child thought. */
 const extractThought = (state: State) => {
@@ -16,9 +18,8 @@ const extractThought = (state: State) => {
     return state
   }
 
-  const selection = window.getSelection()!
-  const selectionStart = selection?.getRangeAt(0).startOffset || 0
-  const selectionEnd = selectionStart + selection.toString().length
+  const selectionStart = getSelectionOffsetStart()!
+  const selectionEnd = getSelectionOffsetEnd()!
   if (selectionStart === selectionEnd) {
     return alert(state, { value: 'No text selected to extract' })
   }
