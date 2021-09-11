@@ -1,10 +1,10 @@
+import * as selection from './selection'
 import ClipboardJS from 'clipboard'
 
 /** Copies a string directly to the clipboard by simulating a button click with ClipboadJS. */
 const copy = (s: string): void => {
   // save selection
-  const sel = window.getSelection()
-  const range = sel && sel.rangeCount > 0 ? sel?.getRangeAt(0) : null
+  const selectionState = selection.save()
 
   // copy from dummy element using ClipboardJS
   const dummyButton = document.createElement('button')
@@ -13,10 +13,7 @@ const copy = (s: string): void => {
   clipboard.destroy()
 
   // restore selection
-  if (range) {
-    sel?.removeAllRanges()
-    sel?.addRange(range)
-  }
+  selection.restore(selectionState)
 }
 
 export default copy

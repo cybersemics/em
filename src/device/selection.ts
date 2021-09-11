@@ -101,6 +101,21 @@ export const offsetStart = () => {
   return range.startOffset || 0
 }
 
+/** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
+export const restore = (range: Range | null) => {
+  if (!range) return
+  const sel = window.getSelection()
+  sel?.removeAllRanges()
+  sel?.addRange(range)
+}
+
+/** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. */
+export const save = () => {
+  const sel = window.getSelection()
+  const range = sel && sel.rangeCount > 0 ? sel?.getRangeAt(0) : null
+  return range
+}
+
 /**
  * Get the focus node and it's offset for the given relative offset for the given node.
  *
@@ -160,8 +175,8 @@ const recursiveFocusNodeFinder = (node: Node, relativeOffset: number): CaretPosi
   return recursiveFocusNodeFinder(possibleFocusNode, remainingrelativeOffset)
 }
 
-/** Set the selection at the desired offset on the given node. Inserts empty text node when element has no children. If the node does not exist, noop.
- * NOTE: asyncFocus needs to be called on mobile before setSelection and before any asynchronous effects that call setSelection.
+/** Set the selection at the desired offset on the given node. Inserts empty text node when element has no children.
+ * NOTE: asyncFocus() needs to be called on mobile before set and before any asynchronous effects that call set.
  *
   @param node      The node to set the selection on.
   @param offset    Character offset of the selection relative to the plain text content, i.e. ignoring nested HTML.
