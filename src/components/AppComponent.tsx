@@ -1,5 +1,5 @@
-import React, { FC, Suspense, useEffect, useLayoutEffect, useState, useRef } from 'react'
-import { connect, useSelector, useDispatch } from 'react-redux'
+import React, { FC, Suspense, useEffect, useLayoutEffect, useState } from 'react'
+import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import SplitPane from 'react-split-pane'
 import { isAndroid, isTouch } from '../browser'
@@ -7,7 +7,7 @@ import { BASE_FONT_SIZE } from '../constants'
 import { inputHandlers, isGestureHint } from '../shortcuts'
 import { isDocumentEditable } from '../util'
 import { isTutorial, theme } from '../selectors'
-import { alert, updateSplitPosition, resetSettings } from '../action-creators'
+import { alert, updateSplitPosition } from '../action-creators'
 import { store } from '../store'
 
 // components
@@ -49,7 +49,6 @@ interface StateProps {
   fontSize: number
   enableLatestShorcutsDiagram: boolean
   isUserLoading?: boolean
-  authenticated: boolean
 }
 
 interface DispatchProps {
@@ -58,15 +57,7 @@ interface DispatchProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
-  const {
-    dragInProgress,
-    isLoading,
-    showModal,
-    splitPosition,
-    showSplitView,
-    enableLatestShorcutsDiagram,
-    authenticated,
-  } = state
+  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShorcutsDiagram } = state
   const dark = theme(state) !== 'Light'
   const scale = state.fontSize / BASE_FONT_SIZE
   return {
@@ -79,7 +70,6 @@ const mapStateToProps = (state: State): StateProps => {
     showSplitView,
     fontSize: state.fontSize,
     enableLatestShorcutsDiagram,
-    authenticated,
   }
 }
 
@@ -131,13 +121,10 @@ const AppComponent: FC<Props> = props => {
     splitPosition,
     updateSplitPos,
     fontSize,
-    authenticated,
   } = props
 
-  const dispatch = useDispatch()
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
-  const userStateRef = useRef(authenticated)
 
   const tutorialSettings = useSelector(isTutorial)
   const tutorial = isLoading ? tutorialLocal : tutorialSettings
@@ -156,11 +143,6 @@ const AppComponent: FC<Props> = props => {
       clearTimeout(splitAnimationTimer)
     }
   }, [showSplitView])
-
-  useEffect(() => {
-    if (!authenticated && userStateRef.current) dispatch(resetSettings())
-    userStateRef.current = authenticated
-  }, [authenticated])
 
   const componentClassNames = classNames({
     container: true,

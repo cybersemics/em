@@ -15,6 +15,7 @@ import {
   loadLocalState,
   preloadSources,
   updateThoughtsFromSubscription,
+  logout,
 } from './action-creators'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
@@ -56,6 +57,7 @@ export const initFirebase = async (): Promise<void> => {
       } else {
         store.dispatch(authenticate({ value: false }))
         store.dispatch(setRemoteSearch({ value: false }))
+        store.dispatch(logout())
       }
     })
 
