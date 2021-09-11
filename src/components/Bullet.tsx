@@ -68,9 +68,9 @@ const Bullet = ({
         // The shape of text '•' and '▸' is a rectangle. The triangles/dots are not centered vertically inside the rectangle on all browsers. Hence, we replace them with svg.
         glyph ||
           (isLeaf ? (
-            <Circle fill={showContexts ? 'none' : '#C4C4C4'} size={fontSize * 0.3} />
+            <Circle fill={showContexts ? 'none' : '#C4C4C4'} size={Math.round(fontSize * 0.2) * 2} />
           ) : (
-            <Triangle fill={showContexts ? 'none' : '#C4C4C4'} size={fontSize * 0.5} />
+            <Triangle fill={showContexts ? 'none' : '#C4C4C4'} size={Math.round(fontSize * 0.15) * 4} />
           ))
       }
     </span>

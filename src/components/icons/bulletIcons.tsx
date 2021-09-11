@@ -7,10 +7,11 @@ import { Icon } from '../../@types'
  * @param size The width/height of the circle's outside square box.
  * @param fill The color filled inside the triangle; if the fill is empty, using 'none'.
  * @returns The svg for the circle.
+ * On Safari, the svg width and height have to be slightly larger than the dot diameter, otherwise edge of the dot will be cutoff.
  */
 export const Circle = ({ size = 8, fill = 'none' }: Icon) => (
   <svg width={size} height={size}>
-    <circle cx={size / 2} cy={size / 2} r={size / 2 - 0.5} fill={fill} stroke='#fcf8f8' strokeWidth='0.12' />
+    <circle cx={size / 2} cy={size / 2} r={size / 2 - 1} fill={fill} stroke='#fcf8f8' strokeWidth='0.12' />
   </svg>
 )
 
@@ -21,13 +22,8 @@ export const Circle = ({ size = 8, fill = 'none' }: Icon) => (
  * @param fill The color filled inside the triangle; if the fill is empty, using 'none'.
  * @returns The svg for the triangle.
  */
-export const Triangle = ({ size, fill = 'none' }: Icon) => (
-  <svg width={size && size * 0.75} height={size} viewBox='0 0 9 12' fill={fill} xmlns='http://www.w3.org/2000/svg'>
-    <path
-      d='M0.0600004 0.907771L8.88 6L0.0600004 11.0922L0.0600004 0.907771Z'
-      fill={fill}
-      stroke='#fcf8f8'
-      strokeWidth='0.12'
-    />
+export const Triangle = ({ size = 12, fill = 'none' }: Icon) => (
+  <svg width={size} height={size} viewBox='0 0 12 12' fill={fill}>
+    <polygon points='3,1 3,11 12,6' fill={fill} stroke='#fcfaf8' strokeWidth='0.12' />
   </svg>
 )
