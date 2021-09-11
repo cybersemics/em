@@ -11,6 +11,7 @@ import {
   rootedParentOf,
   simplifyPath,
 } from '../selectors'
+import * as selection from '../device/selection'
 
 /** Swaps the thought with its next siblings. */
 const moveThoughtDown = (state: State) => {
@@ -58,7 +59,7 @@ const moveThoughtDown = (state: State) => {
   }
 
   // store selection offset before moveThought is dispatched
-  const offset = window.getSelection()?.focusOffset
+  const offset = selection.offset()
 
   const rankNew =
     nextThought && !isSorted

@@ -22,14 +22,6 @@ const toggleContext = (state: State, context: Context) =>
 const toggleContextView = (state: State) => {
   if (!state.cursor) return state
 
-  // disable intrathought linking until add, edit, delete, and expansion can be implemented
-  // const value = headValue(state.cursor)
-  // const ngrams = getNgrams(value, 3, { thoughts: { thoughtIndex: state.thoughts.thoughtIndex } })
-  // const subthoughtUnderSelection = findSubthoughtByIndex(ngrams, window.getSelection().focusOffset)
-  // const context = subthoughtUnderSelection.contexts.length > 0 && subthoughtUnderSelection.text !== value
-  //   ? [stripPunctuation(subthoughtUnderSelection.text)]
-  //   : pathToContext(state.cursor)
-
   const context = pathToContext(state.cursor)
 
   return reducerFlow([

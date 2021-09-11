@@ -2,6 +2,7 @@ import { isDocumentEditable } from '../util'
 import { bumpThoughtDown } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
 import { Shortcut } from '../@types'
+import * as selection from '../device/selection'
 
 const bumpThoughtDownShortcut: Shortcut = {
   id: 'bumpThought',
@@ -12,7 +13,7 @@ const bumpThoughtDownShortcut: Shortcut = {
   canExecute: getState => !!getState().cursor && isDocumentEditable(),
   exec: dispatch => {
     // If there is already active selection, no need to focus to the hidden input.
-    if (!window.getSelection()?.focusNode) {
+    if (!selection.isActive()) {
       asyncFocus()
     }
     dispatch(bumpThoughtDown())

@@ -1,27 +1,9 @@
-import ClipboardJS from 'clipboard'
 import { exportPhrase, hashContext, isDocumentEditable, pathToContext } from '../util'
 import { exportContext, someDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
+import copy from '../device/copy'
+import * as selection from '../device/selection'
 import { Shortcut } from '../@types'
-
-/** Copies a string directly to the clipboard by simulating a button click with ClipboadJS. */
-const copy = (s: string): void => {
-  // save selection
-  const sel = window.getSelection()
-  const range = sel && sel.rangeCount > 0 ? sel?.getRangeAt(0) : null
-
-  // copy from dummy element using ClipboardJS
-  const dummyButton = document.createElement('button')
-  const clipboard = new ClipboardJS(dummyButton, { text: () => s })
-  dummyButton.click()
-  clipboard.destroy()
-
-  // restore selection
-  if (range) {
-    sel?.removeAllRanges()
-    sel?.addRange(range)
-  }
-}
 
 const copyCursorShortcut: Shortcut = {
   id: 'copyCursor',
@@ -30,7 +12,7 @@ const copyCursorShortcut: Shortcut = {
   keyboard: { key: 'c', meta: true },
   canExecute: getState =>
     // do not copy cursor if there is a browser selection
-    !window.getSelection()?.toString() && !!getState().cursor && isDocumentEditable(),
+    !selection.isActive() && !!getState().cursor && isDocumentEditable(),
   exec: async (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
