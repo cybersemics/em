@@ -44,7 +44,7 @@ const cursorUpShortcut: Shortcut = {
     // use default browser behavior in prose mode
     const contextRanked = parentOf(cursor)
     const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
-    const isProseMode = isProseView && (window.getSelection()?.focusOffset as number) > 0
+    const isProseMode = isProseView && selection.offset()! > 0
     if (isProseMode) return false
 
     // use default browser if selection is on the second or greater line of a multi-line editable

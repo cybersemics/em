@@ -17,15 +17,17 @@ import { isTouch } from '../browser'
 import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
 import { Icon as IconType, Shortcut, State, Thunk } from '../@types'
+import * as selection from '../device/selection'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = (state: State) => {
   const { cursor } = state
-  const sel = window.getSelection()
-  if (!sel) return false
+
+  // isActive is not enough on its own, because there is a case where there is a selection object but no focusNode and we want to still execute the shortcut
+  if (!selection.isActive() && selection.isText()) return false
 
   // can't delete if there is no cursor, there is a selection range, the document is not editable, or the caret is not at the beginning of the thought
-  if (!cursor || !isDocumentEditable() || sel.focusOffset > 0 || !sel.isCollapsed) return false
+  if (!cursor || !isDocumentEditable() || selection.offset()! > 0 || !selection.isCollapsed()) return false
 
   const simplePath = simplifyPath(state, cursor)
 

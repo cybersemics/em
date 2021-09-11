@@ -2,6 +2,7 @@ import { isDocumentEditable, pathToContext } from '../util'
 import { hasChild } from '../selectors'
 import { indent } from '../action-creators'
 import { Shortcut, State } from '../@types'
+import * as selection from '../device/selection'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const canExecute = (getState: () => State) => {
@@ -16,11 +17,10 @@ const canExecute = (getState: () => State) => {
   // eslint-disable-next-line
   const readonly = () => hasChild(state, cursorContext, '=readonly')
 
-  const selection = window.getSelection()
-  if (!selection) return false
-  const offset = selection.focusOffset
+  // isActive is not enough on its own, because there is a case where there is a selection object but no focusNode and we want to still execute the shortcut
+  if (!selection.isActive() && selection.isText()) return false
 
-  return isDocumentEditable() && cursor && offset === 0 && !immovable() && !readonly()
+  return isDocumentEditable() && cursor && selection.offset() === 0 && !immovable() && !readonly()
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

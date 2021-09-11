@@ -1,6 +1,7 @@
 import { cursorBeforeSearch, search, restoreCursorBeforeSearch } from '../action-creators'
 import SearchIcon from '../components/SearchIcon'
 import { Shortcut } from '../@types'
+import * as selection from '../device/selection'
 
 const searchShortcut: Shortcut = {
   id: 'search',
@@ -10,8 +11,7 @@ const searchShortcut: Shortcut = {
   keyboard: { key: 'f', meta: true, alt: true },
   exec: (dispatch, getState) => {
     const state = getState()
-    const selection = window.getSelection()
-    dispatch(search({ value: !state.search && selection ? selection.toString() : null }))
+    dispatch(search({ value: !state.search && selection.isActive() ? selection.text() : null }))
 
     // if enabling search, save current cursor
     if (state.search == null) {

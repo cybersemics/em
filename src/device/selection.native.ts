@@ -22,3 +22,6 @@ export const offsetStart = () => (isActive() ? 0 : null)
 
 /** Returns the character offset at the end of the selection. Returns null if there is no selection. */
 export const offsetEnd = () => (isActive() ? 0 : null)
+
+/** Returns the selection text, or null if there is no selection. */
+export const text = () => ''
