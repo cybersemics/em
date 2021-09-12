@@ -1,5 +1,5 @@
 import splitAtSelection from '../splitAtSelection'
-import * as selection from '../device/selection'
+import * as selection from '../selection'
 
 it('split at selection with nested nodes', () => {
   const thoughtValue = 'The <b>rise <i>and fall</i></b> of Nikola Tesla.'
