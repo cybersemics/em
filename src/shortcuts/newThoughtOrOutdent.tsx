@@ -5,7 +5,7 @@ import { isTouch } from '../browser'
 import { headValue, isDocumentEditable } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
-import splitAtSelection from '../device/splitAtSelection'
+import * as selection from '../device/selection'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -48,7 +48,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   }
   // otherwise, create a new thought
   else {
-    const splitResult = cursor ? splitAtSelection(e.target as HTMLElement) : null
+    const splitResult = cursor ? selection.split(e.target as HTMLElement) : null
 
     // prevent split on gesture
     dispatch(newThought({ value: '', splitResult, preventSplit: type === 'gesture' }))
