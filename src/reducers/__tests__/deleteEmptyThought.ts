@@ -113,7 +113,15 @@ it('do nothing if there is no cursor', () => {
 })
 
 it('merge thoughts', () => {
-  const steps = [newThought('a'), newThought('b'), deleteEmptyThought]
+  // set the cursor
+  const steps = [
+    newThought('a'),
+    newThought('b'),
+    // reset the cursor to ensure that cursor offset is 0
+    setCursor({ path: null }),
+    setCursorFirstMatch(['b']),
+    deleteEmptyThought,
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -150,6 +158,9 @@ it("do not change first thought's children", () => {
     newThought('a2'),
     cursorBack,
     newThought('b'),
+    // reset the cursor to ensure that cursor offset is 0
+    setCursor({ path: null }),
+    setCursorFirstMatch(['b']),
     deleteEmptyThought,
   ]
 
