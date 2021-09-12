@@ -8,6 +8,7 @@ import { hashContext, hashThought, initEvents, owner, setSelection, urlDataSourc
 import {
   authenticate,
   loadPublicThoughts,
+  logout,
   setRemoteSearch,
   status as statusActionCreator,
   userAuthenticated,
@@ -54,6 +55,11 @@ export const initFirebase = async (): Promise<void> => {
         if (!hasRemoteConfig) console.warn('Algolia configs not found. Remote search is not enabled.')
         else initAlgoliaSearch(user.uid, { applicationId, index }, store)
       } else {
+        // if the authentication state changes while the user is still logged in, it means that they logged out from another tab
+        // we should log them out of all tabs
+        if (store.getState().authenticated) {
+          store.dispatch(logout())
+        }
         store.dispatch(authenticate({ value: false }))
         store.dispatch(setRemoteSearch({ value: false }))
       }
