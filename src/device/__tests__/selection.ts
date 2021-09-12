@@ -1,4 +1,4 @@
-import { getCaretPositionDetails } from '../setSelection'
+import { getCaretPositionDetails } from '../selection'
 import getTextContentFromHTML from '../../device/getTextContentFromHTML'
 
 /** Create dummy div with given html value. */
