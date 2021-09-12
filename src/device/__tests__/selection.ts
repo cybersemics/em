@@ -1,4 +1,4 @@
-import { getCaretPositionDetails } from '../selection'
+import { offsetFromClosestParent } from '../selection'
 import getTextContentFromHTML from '../../device/getTextContentFromHTML'
 
 /** Create dummy div with given html value. */
@@ -8,14 +8,14 @@ const createDummyDiv = (htmlValue: string) => {
   return dummyDiv
 }
 
-describe('getCaretPositionDetails', () => {
+describe('offsetFromClosestParent', () => {
   it('get caret position details at the beginning of the thought', () => {
     const thoughtValue = 'tanjiro <b> sword </b>'
     const dummyEditable = createDummyDiv(thoughtValue)
 
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 0)
-    expect(caretPositionDetails).toMatchObject({
-      focusNode: dummyEditable,
+    const nodeOffset = offsetFromClosestParent(dummyEditable, 0)
+    expect(nodeOffset).toMatchObject({
+      node: dummyEditable,
       offset: 0,
     })
   })
@@ -27,9 +27,9 @@ describe('getCaretPositionDetails', () => {
 
     const textContent = getTextContentFromHTML(thoughtValue)
 
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, textContent.length)
-    expect(caretPositionDetails).toMatchObject({
-      focusNode: dummyEditable,
+    const nodeOffset = offsetFromClosestParent(dummyEditable, textContent.length)
+    expect(nodeOffset).toMatchObject({
+      node: dummyEditable,
       offset: 2,
     })
   })
@@ -41,7 +41,7 @@ describe('getCaretPositionDetails', () => {
 
     // Note: Taking offset relative to the plain text that doesn't includes any html tags. i.e `This is a nested html value.`
 
-    const caretPositionDetailsFirst = getCaretPositionDetails(dummyEditable, 20)
+    const nodeOffsetFirst = offsetFromClosestParent(dummyEditable, 20)
 
     /*
      * Dom structure inside editable.
@@ -55,12 +55,12 @@ describe('getCaretPositionDetails', () => {
      *    - [1] Text (' value.').
      */
 
-    expect(caretPositionDetailsFirst).toMatchObject({
-      focusNode: dummyEditable.getElementsByTagName('i')[0].childNodes[0],
+    expect(nodeOffsetFirst).toMatchObject({
+      node: dummyEditable.getElementsByTagName('i')[0].childNodes[0],
       offset: 2,
     })
 
-    const caretPositionDetailsSecond = getCaretPositionDetails(dummyEditable, 26)
+    const nodeOffsetSecond = offsetFromClosestParent(dummyEditable, 26)
 
     /*
      * Dom structure inside editable.
@@ -74,8 +74,8 @@ describe('getCaretPositionDetails', () => {
      *    - [2] Text ( 'valu|e.') Expecting caret postion to be at fourth index of this text node.
      */
 
-    expect(caretPositionDetailsSecond).toMatchObject({
-      focusNode: dummyEditable.getElementsByTagName('b')[0].childNodes[2],
+    expect(nodeOffsetSecond).toMatchObject({
+      node: dummyEditable.getElementsByTagName('b')[0].childNodes[2],
       offset: 4,
     })
   })
