@@ -39,7 +39,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   // otherwise, create a new thought
   else {
     // TODO: find a way to get splitResult object
-    // const splitResult = cursor ? splitAtSelection(e.target as HTMLElement) : null
+    // const splitResult = cursor ? selection.split(e.target as HTMLElement) : null
 
     // prevent split on gesture
     dispatch(newThought({ value: '', preventSplit: type === 'gesture' }))
