@@ -57,7 +57,7 @@ import {
   pathToContext,
   strip,
   normalizeThought,
-  // getCaretPositionDetails,
+  // offsetFromClosestParent,
 } from '../util'
 
 // selectors

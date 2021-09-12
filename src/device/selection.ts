@@ -7,8 +7,9 @@ type SelectionOptionsType = {
   end?: boolean
 }
 
-interface CaretPositionDetails {
-  focusNode: Node | null
+/** A node and character offset. */
+interface NodeOffset {
+  node: Node | null
   offset: number
 }
 
@@ -117,29 +118,9 @@ export const save = () => {
 }
 
 /**
- * Get the focus node and it's offset for the given relative offset for the given node.
- *
- * @param relativeOffset - The offset that is taken relative to the value with all the html tags removed.
- */
-export const getCaretPositionDetails = (node: Node, relativeOffset: number): CaretPositionDetails | null => {
-  // case where caret should be positioned at the beginning of the node.
-  if (relativeOffset <= 0) return { focusNode: node, offset: 0 }
-
-  // case where the caret should be positioned at the end of the node.
-  if (node.textContent && relativeOffset >= node.textContent.length) {
-    return {
-      focusNode: node,
-      offset: node.childNodes.length,
-    }
-  }
-
-  return recursiveFocusNodeFinder(node, relativeOffset)
-}
-
-/**
  * Recursively iterates the nodes children and returns focusNode and offset where the relative offset ends.
  */
-const recursiveFocusNodeFinder = (node: Node, relativeOffset: number): CaretPositionDetails | null => {
+const offsetFromClosestParentRecursive = (node: Node, relativeOffset: number): NodeOffset | null => {
   if (!node.hasChildNodes()) return null
 
   const childNodesArray = Array.from(node.childNodes)
@@ -164,7 +145,7 @@ const recursiveFocusNodeFinder = (node: Node, relativeOffset: number): CaretPosi
   // Note: A possible focus node can itself be a focus node only if it is of type #text. Else focus node should be one of it's descendant text node.
   if (isTextNode) {
     return {
-      focusNode: possibleFocusNode,
+      node: possibleFocusNode,
       // the actual offset should always be taken relative to the focus node.
       offset: relativeOffset - textCountBeforeThisNode,
     }
@@ -172,7 +153,26 @@ const recursiveFocusNodeFinder = (node: Node, relativeOffset: number): CaretPosi
 
   const remainingrelativeOffset = relativeOffset - textCountBeforeThisNode
 
-  return recursiveFocusNodeFinder(possibleFocusNode, remainingrelativeOffset)
+  return offsetFromClosestParentRecursive(possibleFocusNode, remainingrelativeOffset)
+}
+
+/**
+ * Takes a root node and a plain text offset relative to that node. Finds the node at that offset and returns an offset relative to its closest parent.
+ *
+ * @param nodeOffset - The offset that is taken relative to the value with all the html tags removed.
+ */
+export const offsetFromClosestParent = (nodeRoot: Node, offsetRoot: number): NodeOffset | null => {
+  // case where caret should be positioned at the beginning of the node.
+  if (offsetRoot <= 0) return { node: nodeRoot, offset: 0 }
+  // case where the caret should be positioned at the end of the node.
+  else if (nodeRoot.textContent && offsetRoot >= nodeRoot.textContent.length) {
+    return {
+      node: nodeRoot,
+      offset: nodeRoot.childNodes.length,
+    }
+  }
+
+  return offsetFromClosestParentRecursive(nodeRoot, offsetRoot)
 }
 
 /** Set the selection at the desired offset on the given node. Inserts empty text node when element has no children.
@@ -190,8 +190,8 @@ export const set = (
 
   // if a numeric offset is given, convert the outer offset (relative to the thought) to the inner offset (relative to the nearest ancestor of the new selection) which is expected by Range
   // this handles nested HTML elements such as <b> or <i>.
-  const caretPositionDetails = offset != null ? getCaretPositionDetails(node, offset) : null
-  const focusNode = caretPositionDetails?.focusNode ?? node
+  const nodeOffset = offset != null ? offsetFromClosestParent(node, offset) : null
+  const focusNode = nodeOffset?.node ?? node
 
   /** Returns end offset based on the type of node. */
   const getEndOffset = () => {
@@ -205,7 +205,7 @@ export const set = (
   // this may still throw an error if the text node does no exist any longer
   if (focusNode !== null) {
     try {
-      range.setStart(focusNode, end ? getEndOffset() : caretPositionDetails?.offset ?? offset)
+      range.setStart(focusNode, end ? getEndOffset() : nodeOffset?.offset ?? offset)
     } catch (e) {
       console.warn(e)
     }
