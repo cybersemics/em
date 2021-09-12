@@ -13,9 +13,7 @@ it('split at selection with nested nodes', () => {
   // The rise and| fall of Nikola Tesla. (Cursor should be after `and`)
   selection.set(dummyDiv, { offset: 12 })
 
-  const selectionRange = document.getSelection()?.getRangeAt(0)
-
-  const splitResult = splitAtSelection(dummyDiv, selectionRange!)
+  const splitResult = splitAtSelection(dummyDiv)
 
   expect(splitResult).toMatchObject({
     left: 'The <b>rise <i>and</i></b>',

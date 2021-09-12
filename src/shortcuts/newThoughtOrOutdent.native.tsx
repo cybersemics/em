@@ -38,23 +38,11 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   }
   // otherwise, create a new thought
   else {
-    // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
-    // const isTargetHTMLElement = e.target instanceof HTMLElement
-    // const target = e.target as HTMLElement
-
-    // Note: e.target should be a HTMLElement and a content editable node
-    // const isTargetAnEditable = isTargetHTMLElement && target.hasAttribute('contenteditable')
-
-    // const currentSelection = document.getSelection()
-    // const currentSelectionRange =
-    //   currentSelection && currentSelection.rangeCount > 0 ? document.getSelection()?.getRangeAt(0) : null
-
     // TODO: find a way to get splitResult object
-    // const splitResult =
-    //   cursor && isTargetAnEditable && currentSelectionRange ? splitAtSelection(target, currentSelectionRange) : null
+    // const splitResult = cursor ? splitAtSelection(e.target as HTMLElement) : null
 
     // prevent split on gesture
-    dispatch(newThought({ value: '', splitResult: { left: '', right: '' }, preventSplit: type === 'gesture' }))
+    dispatch(newThought({ value: '', preventSplit: type === 'gesture' }))
   }
 }
 

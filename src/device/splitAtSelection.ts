@@ -23,9 +23,18 @@ function splitNode(root: HTMLElement, range: Range) {
 /**
  * Splits the given element into two proper html value at the current selection.
  */
-const splitAtSelection = (el: HTMLElement, range: Range) => {
-  const splitNodesResult = splitNode(el, range)
+const splitAtSelection = (el: HTMLElement) => {
+  // Note: Jest triggers newThought with windowEvent which has window as target causing getOffsetWithinContent to fail
+  if (!(el instanceof HTMLElement) || el.nodeType !== Node.ELEMENT_NODE) return null
 
+  const selection = window.getSelection()
+
+  if (!selection) return null
+
+  const range = selection && selection.rangeCount > 0 ? selection?.getRangeAt(0) : null
+  if (!range) return null
+
+  const splitNodesResult = splitNode(el, range)
   if (!splitNodesResult) return null
 
   const leftDiv = document.createElement('div')
