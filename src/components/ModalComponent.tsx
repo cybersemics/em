@@ -2,7 +2,6 @@
 import React from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION } from '../constants'
-import modalCleanup from '../device/modalCleanup'
 import { Connected } from '../@types'
 import { closeModal, modalComplete, tutorial } from '../action-creators'
 
@@ -68,7 +67,6 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
       this.animateAndClose = () => {
         const { dispatch } = this.props
         window.removeEventListener('keydown', this.escapeListener!, true)
-        modalCleanup()
         if (this.ref.current) {
           this.ref.current.classList.add('animate-fadeout')
         }
@@ -85,7 +83,6 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   close = () => this.animateAndClose!()
 
   componentWillUnmount() {
-    modalCleanup()
     window.removeEventListener('keydown', this.escapeListener!, true)
   }
 
