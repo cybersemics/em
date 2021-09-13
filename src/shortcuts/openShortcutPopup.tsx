@@ -2,6 +2,7 @@ import React from 'react'
 import { isTouch } from '../browser'
 import { showModal } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
+import scrollTo from '../device/scrollTo'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -31,8 +32,8 @@ const openShortcutPopupShortcut: Shortcut = {
   keyboard: { key: '/', meta: true },
   svg: Icon,
   exec: dispatch => {
-    window.scrollTo(0, 0)
     dispatch(showModal({ id: 'help' }))
+    scrollTo('top')
   },
 }
 
