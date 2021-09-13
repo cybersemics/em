@@ -7,7 +7,7 @@ import { BASE_FONT_SIZE } from '../constants'
 import { inputHandlers, isGestureHint } from '../shortcuts'
 import { isDocumentEditable } from '../util'
 import { isTutorial, theme } from '../selectors'
-import { alert, updateSplitPosition } from '../action-creators'
+import { alert, toggleSidebar, updateSplitPosition } from '../action-creators'
 import { store } from '../store'
 
 // components
@@ -53,6 +53,20 @@ interface StateProps {
 
 interface DispatchProps {
   updateSplitPos: (splitPos: number) => void
+}
+
+/** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
+const SidebarGutter = () => {
+  return (
+    <div style={{ position: 'relative' }}>
+      <div
+        onClick={() => {
+          store.dispatch(toggleSidebar())
+        }}
+        style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
+      ></div>
+    </div>
+  )
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -214,6 +228,7 @@ const AppComponent: FC<Props> = props => {
             </SplitPane>
 
             <div className='nav-bottom-wrapper'>
+              {isTouch && <SidebarGutter />}
               <Scale amount={scale!} origin='bottom left'>
                 <NavBar position='bottom' />
               </Scale>

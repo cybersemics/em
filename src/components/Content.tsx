@@ -2,12 +2,7 @@ import React, { FC, useMemo, useRef, useState } from 'react'
 import { connect, useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import { isTouch } from '../browser'
-import {
-  cursorBack as cursorBackActionCreator,
-  expandContextThought,
-  toggleSidebar,
-  closeModal,
-} from '../action-creators'
+import { cursorBack as cursorBackActionCreator, expandContextThought, closeModal } from '../action-creators'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, getAllChildren, isTutorial } from '../selectors'
 import { isAbsolute, publishMode } from '../util'
@@ -68,15 +63,6 @@ const mapStateToProps = (state: State) => {
 
 type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
 
-/** Calculates whether there was a click on the left margin or padding zone of content element. Used to activate Recently Edited sidebar on mobile. */
-const isPointInLeftGutter = (x: number, y: number, content?: HTMLElement) => {
-  const style = window.getComputedStyle(content!)
-  const pTop = parseInt(style.getPropertyValue('padding-top'))
-  const mTop = parseInt(style.getPropertyValue('margin-top'))
-  const mLeft = parseInt(style.getPropertyValue('margin-left'))
-  return x < mLeft && y > pTop + mTop
-}
-
 /** The main content section of em. */
 const Content: ContentComponent = props => {
   const { search, isTutorialLocal, tutorialStep, showModal, rootThoughtsLength, noteFocus, isAbsoluteContext } = props
@@ -118,14 +104,7 @@ const Content: ContentComponent = props => {
   )
 
   return (
-    <div
-      id='content-wrapper'
-      onClick={e => {
-        if (!showModal && isTouch && isPointInLeftGutter(e.clientX, e.clientY, contentRef.current!)) {
-          dispatch(toggleSidebar())
-        }
-      }}
-    >
+    <div id='content-wrapper'>
       <div
         id='content'
         ref={contentRef}
