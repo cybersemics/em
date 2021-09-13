@@ -24,15 +24,6 @@ const Icon = ({ size = 20 }: IconType) => (
   </svg>
 )
 
-/** Removes the browser selection. */
-const blur = () => {
-  if (document.activeElement) {
-    const el = document.activeElement as HTMLInputElement
-    el.blur()
-    selection.clear()
-  }
-}
-
 const cursorBackShortcut: Shortcut = {
   id: 'cursorBack',
   label: 'Back',
@@ -46,8 +37,9 @@ const cursorBackShortcut: Shortcut = {
       scrollCursorIntoView()
 
       // clear browser selection if cursor has been removed
-      if (!getState().cursor) {
-        blur()
+      const { cursor: cursorNew } = getState()
+      if (!cursorNew) {
+        selection.clear()
       }
     }
   }),
