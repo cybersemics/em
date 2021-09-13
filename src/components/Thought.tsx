@@ -70,13 +70,15 @@ export interface ThoughtContainerProps {
   isPublishChild?: boolean
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
-  isDraggable?: boolean
   isDragging?: boolean
   isEditing?: boolean
   isEditingPath?: boolean
   isExpanded?: boolean
   isHovering?: boolean
   isParentHovering?: boolean
+  // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
+  // currently this does not control visibility, but merely tracks it
+  isVisible?: boolean
   prevChild?: Child | ThoughtContext
   publish?: boolean
   rank: number
@@ -92,11 +94,13 @@ interface ThoughtProps {
   env?: Index<Context>
   hideBullet?: boolean
   homeContext?: boolean
-  isDraggable?: boolean
   isDragging?: boolean
   isPublishChild?: boolean
   isEditing?: boolean
   isLeaf?: boolean
+  // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
+  // currently this does not control visibility, but merely tracks it
+  isVisible?: boolean
   path: Path
   publish?: boolean
   rank: number
@@ -225,7 +229,7 @@ const ThoughtContainer = ({
   isPublishChild,
   isCursorGrandparent,
   isCursorParent,
-  isDraggable,
+  isVisible,
   isDragging,
   isEditing,
   isEditingPath,
@@ -460,11 +464,11 @@ const ThoughtContainer = ({
             cursorOffset={cursorOffset}
             hideBullet={hideBullet}
             homeContext={homeContext}
-            isDraggable={isDraggable}
             isDragging={isDragging}
             isPublishChild={isPublishChild}
             isEditing={isEditing}
             isLeaf={isLeaf}
+            isVisible={isVisible}
             publish={publish}
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs}

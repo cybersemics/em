@@ -53,7 +53,6 @@ import {
   head,
   headValue,
   isDivider,
-  isElementHiddenByAutoFocus,
   isHTML,
   isURL,
   pathToContext,
@@ -125,6 +124,7 @@ interface EditableProps {
   cursorOffset?: number | null
   disabled?: boolean
   isEditing?: boolean
+  isVisible?: boolean
   rank: number
   showContexts?: boolean
   style?: React.CSSProperties
@@ -192,6 +192,7 @@ const Editable = ({
   disabled,
   isCursorCleared,
   isEditing,
+  isVisible,
   simplePath,
   path,
   cursorOffset,
@@ -682,16 +683,16 @@ const Editable = ({
 
     showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
 
-    const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
     if (
       disabled ||
       // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-      (!globals.touching && !state.dragInProgress && (!editingOrOnCursor || isHiddenByAutofocus))
+      (!globals.touching && !state.dragInProgress && (!editingOrOnCursor || !isVisible))
     ) {
+      // do not set cursor on hidden thought
       e.preventDefault()
-      if (isHiddenByAutofocus) {
+      if (!isVisible) {
         dispatch(cursorBack())
       } else {
         // prevent focus to allow navigation with mobile keyboard down
