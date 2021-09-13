@@ -533,7 +533,8 @@ a.text-link {
 }
 
 .subthought-text,
-.thought-annotation .breadcrumbs {
+.thought-annotation .breadcrumbs,
+.thought-annotation .superscript-container {
   visibility: hidden;
 }
 
@@ -567,6 +568,7 @@ a.text-link {
 .children .thought > .editable,
 .children .thought-annotation > .editable {
   margin-bottom: -0.25em;
+  display: inline;
 }
 
 .children {
@@ -2655,6 +2657,12 @@ code,
 .prose > .children > .child > .thought-container > .thought-annotation > .superscript-container {
   text-indent: 1.7em;
   top: -2px;
+  position: relative;
+}
+
+.thought-container > .thought > .superscript-container {
+  text-indent: 1.7em;
+  top: -4px;
   position: relative;
 }
 
