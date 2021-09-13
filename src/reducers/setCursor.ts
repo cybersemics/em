@@ -137,6 +137,8 @@ const setCursor = (
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear
     editing: editing != null ? editing : state.editing,
+    // reset cursorCleared on navigate
+    cursorCleared: false,
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,

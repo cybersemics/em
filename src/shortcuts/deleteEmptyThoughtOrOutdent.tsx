@@ -125,15 +125,14 @@ const canExecute = (getState: () => State) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState) => {
-  const editable = document.querySelector('.editing .editable') as HTMLElement
-  /** The below condition will be true only when user triggered clearThought. In that scenario innerHTML will empty but editingValue will be non-empty. */
-  if (editable?.innerHTML === '' && editable?.getAttribute('placeholder') !== '') {
+  const state = getState()
+  if (state.cursorCleared) {
     dispatch(deleteEmptyThought)
-  } else if (canExecuteOutdent(getState())) {
+  } else if (canExecuteOutdent(state)) {
     dispatch(outdent())
   }
   // additional check for duplicates
-  else if (isMergedThoughtDuplicate(getState())) {
+  else if (isMergedThoughtDuplicate(state)) {
     dispatch(
       alert('Duplicate thoughts are not allowed within the same context.', {
         alertType: 'duplicateThoughts',
