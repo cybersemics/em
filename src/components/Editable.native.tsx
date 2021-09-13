@@ -52,7 +52,6 @@ import {
   head,
   headValue,
   isDivider,
-  // isElementHiddenByAutoFocus,
   isHTML,
   isURL,
   pathToContext,

@@ -73,13 +73,13 @@ export interface ThoughtContainerProps {
   isPublishChild?: boolean
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
-  isDraggable?: boolean
   isDragging?: boolean
   isEditing?: boolean
   isEditingPath?: boolean
   isExpanded?: boolean
   isHovering?: boolean
   isParentHovering?: boolean
+  isVisible?: boolean
   prevChild?: Child | ThoughtContext
   publish?: boolean
   rank: number
@@ -95,11 +95,11 @@ interface ThoughtProps {
   env?: Index<Context>
   hideBullet?: boolean
   homeContext?: boolean
-  isDraggable?: boolean
   isDragging?: boolean
   isPublishChild?: boolean
   isEditing?: boolean
   isLeaf?: boolean
+  isVisible?: boolean
   path: Path
   publish?: boolean
   rank: number
@@ -228,7 +228,6 @@ const ThoughtContainer = ({
   isPublishChild,
   isCursorGrandparent,
   isCursorParent,
-  isDraggable,
   isDragging,
   isEditing,
   isEditingPath,
@@ -237,6 +236,7 @@ const ThoughtContainer = ({
   isHovering,
   isLeaf,
   isParentHovering,
+  isVisible,
   prevChild,
   publish,
   rank,
@@ -424,7 +424,7 @@ const ThoughtContainer = ({
           cursorOffset={cursorOffset}
           hideBullet
           homeContext={homeContext}
-          isDraggable={isDraggable}
+          isVisible={isVisible}
           isDragging={isDragging}
           isPublishChild={isPublishChild}
           isEditing={isEditing}

@@ -623,18 +623,18 @@ export const SubthoughtsComponent = ({
                   allowSingleContext={allowSingleContextParent}
                   depth={depth + 1}
                   env={env}
-                  view={view}
                   hideBullet={
                     isProseView || hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()
                   }
-                  rank={child.rank}
-                  isDraggable={actualDistance < 2}
-                  showContexts={showContexts}
-                  prevChild={filteredChildren[i - 1]}
                   isParentHovering={isParentHovering}
+                  isVisible={actualDistance < 2}
+                  prevChild={filteredChildren[i - 1]}
+                  rank={child.rank}
+                  showContexts={showContexts}
+                  simplePath={childPath}
                   style={isTableView ? style : {}}
                   path={appendChildPath(state, childPath, path)}
-                  simplePath={childPath}
+                  view={view}
                 />
               </View>
             ) : null

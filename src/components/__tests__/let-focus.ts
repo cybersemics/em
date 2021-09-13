@@ -17,7 +17,7 @@ it('define =focus/Zoom in a =let expression and apply it to a thought', async ()
     - b
   `)
 
-  // isElementHiddenByAutoFocus does not work since getComputedStyle is not working here for some reason
+  // getComputedStyle is not working here for some reason
   // instead check the zoomCursor class
 
   // b should initially be visible

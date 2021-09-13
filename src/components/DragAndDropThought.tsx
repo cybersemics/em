@@ -50,7 +50,7 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
   const state = store.getState()
   const thoughts = pathToContext(props.simplePathLive!)
   const context = parentOf(pathToContext(props.simplePathLive!))
-  const isDraggable = props.isDraggable || props.isCursorParent
+  const isDraggable = props.isVisible || props.isCursorParent
 
   return (
     isDocumentEditable() &&
