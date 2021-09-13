@@ -604,22 +604,11 @@ a.text-link {
   backface-visibility: hidden;
 }
 
-/* needs to be -1 for children of modal child. */
-.modal-container .children {
-  position: relative;
-  z-index: -1;
-}
-
 .children-subheading {
   position: relative;
   margin-top: 3px;
   margin-bottom: 2px;
   padding-bottom: 4px;
-}
-
-/* siblings after the modal have to be simply hidden because the above trick doesn't work */
-.sibling-after {
-  visibility: hidden;
 }
 
 .ellipsis {
