@@ -7,6 +7,7 @@ import classNames from 'classnames'
 import {
   alert,
   cursorBack,
+  cursorCleared,
   error,
   editThought,
   importText,
@@ -24,7 +25,7 @@ import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import asyncFocus from '../device/asyncFocus'
 import clearSelection from '../device/clearSelection'
-import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
+import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../@types'
 
 // constants
 import {
@@ -176,12 +177,20 @@ const showDuplicationAlert = duplicateAlertToggler()
 // intended to be global, not local state
 let blurring = false
 
+// eslint-disable-next-line jsdoc/require-jsdoc
+const mapStateToProps = (state: State, props: EditableProps) => {
+  return {
+    isCursorCleared: props.isEditing && state.cursorCleared,
+  }
+}
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
   disabled,
+  isCursorCleared,
   isEditing,
   simplePath,
   path,
@@ -193,7 +202,7 @@ const Editable = ({
   dispatch,
   transient,
   editing,
-}: Connected<EditableProps>) => {
+}: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
   const state = store.getState()
   const thoughts = pathToContext(simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
@@ -618,6 +627,8 @@ const Editable = ({
       if (blurring) {
         blurring = false
         dispatch(setEditingValue(null))
+        // temporary states such as duplicate error states and cursorCleared are reset on blur
+        dispatch(cursorCleared({ value: false }))
       }
 
       if (isTouch) {
@@ -699,6 +710,10 @@ const Editable = ({
     if (e.key in MODIFIER_KEYS) return
     onKeyDownAction!()
   }
+
+  // strip formatting tags for clearThought placeholder
+  const valueStripped = isCursorCleared ? unescape(strip(value, { preserveFormatting: false })) : null
+
   return (
     <ContentEditable
       disabled={disabled}
@@ -713,6 +728,10 @@ const Editable = ({
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
+          : // render as empty string during temporary clear state
+          // see: /reducers/cursorCleared
+          isCursorCleared
+          ? ''
           : isEditing
           ? value
           : childrenLabel.length > 0
@@ -720,7 +739,9 @@ const Editable = ({
           : ellipsizeUrl(value)
       }
       placeholder={
-        isTableColumn1
+        isCursorCleared
+          ? valueStripped || 'This is an empty thought'
+          : isTableColumn1
           ? ''
           : lexeme && Date.now() - new Date(lexeme.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
           ? 'This is an empty thought'
@@ -742,4 +763,4 @@ const Editable = ({
   )
 }
 
-export default connect()(Editable)
+export default connect(mapStateToProps)(Editable)

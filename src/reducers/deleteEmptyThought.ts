@@ -38,9 +38,7 @@ const deleteEmptyThought = (state: State): State => {
   const simplePath = simplifyPath(state, cursor)
   const allChildren = getChildrenRanked(state, context)
   const visibleChildren = getChildren(state, context)
-  // check innerHTML in case the user just executed clearThought, which yields an empty thought in the DOM but not in state
-  const isDomEmpty = document.querySelector('.editing .editable')?.innerHTML === ''
-  const isEmpty = headValue(cursor) === '' || isDomEmpty
+  const isEmpty = headValue(cursor) === '' || state.cursorCleared
 
   // delete an empty thought with no children
   if ((isEmpty && allChildren.length === 0) || isDivider(headValue(cursor))) {

@@ -19,6 +19,10 @@ export interface State {
   autologin: boolean
   contextViews: Index<boolean>
   cursor: Path | null
+  // set to true when clearThought is activated
+  // temporarily renders the cursor thought as an empty string for quickly changing the entire value
+  // see: /reducers/cursorCleared
+  cursorCleared: boolean
   cursorBeforeQuickAdd: Path | null
   cursorBeforeSearch: Path | null
   cursorHistory: Path[]
