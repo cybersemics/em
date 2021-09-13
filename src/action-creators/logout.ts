@@ -4,6 +4,7 @@ import { clear, importText } from '../action-creators'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Thunk } from '../@types'
 import { storage } from '../util/storage'
+import scrollTo from '../device/scrollTo'
 
 /** Logs the user out of Firebase and clears the state. */
 const logout = (): Thunk => dispatch => {
@@ -32,7 +33,7 @@ const logout = (): Thunk => dispatch => {
   )
 
   // scroll to top
-  window.scrollTo(0, 0)
+  scrollTo('top')
 }
 
 export default logout
