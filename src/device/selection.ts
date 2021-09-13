@@ -1,6 +1,7 @@
 /** Wraps the browser Selection API in a device-agnostic interface. */
 
 import getElementPaddings from './getElementPaddings'
+import { SplitResult } from '../@types'
 
 type SelectionOptionsType = {
   offset?: number
@@ -14,20 +15,21 @@ interface NodeOffset {
 }
 
 /** Clears the selection. */
-export const clear = () => window.getSelection()?.removeAllRanges()
+export const clear = (): void => window.getSelection()?.removeAllRanges()
 
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
-export const isCollapsed = () => window.getSelection()?.isCollapsed
+export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 
 /** Returns true if there is an active selection. */
-export const isActive = () => !!window.getSelection()?.focusNode
+export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
-export const isThought = () => !!window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')
+export const isThought = (): boolean =>
+  !!window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')
 
 /** Returns true if the selection is not on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
-export const isOnFirstLine = () => {
+export const isOnFirstLine = (): boolean => {
   const selection = window.getSelection()
   if (!selection) return true
 
@@ -51,7 +53,7 @@ export const isOnFirstLine = () => {
 }
 
 /** Returns true if the selection is on the last line of its content. Returns true if there is no selection or if the text is a single line. */
-export const isOnLastLine = () => {
+export const isOnLastLine = (): boolean => {
   const selection = window.getSelection()
   if (!selection) return true
 
@@ -78,13 +80,13 @@ export const isOnLastLine = () => {
 }
 
 /** Returns true if the browser selection is on a text node. */
-export const isText = () => window.getSelection()?.focusNode?.nodeType === Node.TEXT_NODE
+export const isText = (): boolean => window.getSelection()?.focusNode?.nodeType === Node.TEXT_NODE
 
 /** Returns the character offset of the active selection. */
-export const offset = () => window.getSelection()?.focusOffset
+export const offset = (): number | null => window.getSelection()?.focusOffset ?? null
 
 /** Returns the character offset at the end of the selection. Returns null if there is no selection. */
-export const offsetEnd = () => {
+export const offsetEnd = (): number | null => {
   const selection = window.getSelection()
   if (!selection) return null
   const range = selection.getRangeAt(0)
@@ -94,7 +96,7 @@ export const offsetEnd = () => {
 }
 
 /** Returns the character offset at the start of the selection. Returns null if there is no selection. */
-export const offsetStart = () => {
+export const offsetStart = (): number | null => {
   const selection = window.getSelection()
   if (!selection) return null
   const range = selection.getRangeAt(0)
@@ -103,7 +105,7 @@ export const offsetStart = () => {
 }
 
 /** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
-export const restore = (range: Range | null) => {
+export const restore = (range: Range | null): void => {
   if (!range) return
   const sel = window.getSelection()
   sel?.removeAllRanges()
@@ -111,7 +113,7 @@ export const restore = (range: Range | null) => {
 }
 
 /** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. */
-export const save = () => {
+export const save = (): Range | null => {
   const sel = window.getSelection()
   const range = sel && sel.rangeCount > 0 ? sel?.getRangeAt(0) : null
   return range
@@ -185,7 +187,7 @@ export const offsetFromClosestParent = (nodeRoot: Node, offsetRoot: number): Nod
 export const set = (
   node: Node | null,
   { offset = 0, end = false }: SelectionOptionsType = { offset: 0, end: false },
-) => {
+): void => {
   if (!node) return
 
   // if a numeric offset is given, convert the outer offset (relative to the thought) to the inner offset (relative to the nearest ancestor of the new selection) which is expected by Range
@@ -218,29 +220,29 @@ export const set = (
 /**
  * Split given root node into two different ranges at the given selection.
  */
-function splitNode(root: HTMLElement, range: Range) {
+function splitNode(root: HTMLElement, range: Range): { left: Range; right: Range } | null {
   const { firstChild, lastChild } = root
 
-  if (!firstChild || !lastChild) return
+  if (!firstChild || !lastChild) return null
 
-  const previousRange = document.createRange()
-  previousRange.setStartBefore(firstChild)
-  previousRange.setEnd(range.startContainer, range.startOffset)
+  const rangeLeft = document.createRange()
+  rangeLeft.setStartBefore(firstChild)
+  rangeLeft.setEnd(range.startContainer, range.startOffset)
 
-  const nextRange = document.createRange()
-  nextRange.setStart(range.endContainer, range.endOffset)
-  nextRange.setEndAfter(lastChild)
+  const rangeRight = document.createRange()
+  rangeRight.setStart(range.endContainer, range.endOffset)
+  rangeRight.setEndAfter(lastChild)
 
   return {
-    previous: previousRange,
-    next: nextRange,
+    left: rangeLeft,
+    right: rangeRight,
   }
 }
 
 /**
  * Returns the HTML before and after selection. If splitting within an element, restores missing tags. e.g. <b>ap|ple/b> -> { left: '<b>ap</b>', right: '<b>ple</b>' }. Return null if there is no selection or the element is not valid.
  */
-export const split = (el: HTMLElement) => {
+export const split = (el: HTMLElement): SplitResult | null => {
   // Note: Jest triggers newThought with windowEvent which has window as target causing getOffsetWithinContent to fail
   if (!(el instanceof HTMLElement) || el.nodeType !== Node.ELEMENT_NODE) return null
 
@@ -256,8 +258,8 @@ export const split = (el: HTMLElement) => {
 
   const leftDiv = document.createElement('div')
   const rightDiv = document.createElement('div')
-  leftDiv.appendChild(splitNodesResult.previous.cloneContents())
-  rightDiv.appendChild(splitNodesResult.next.cloneContents())
+  leftDiv.appendChild(splitNodesResult.left.cloneContents())
+  rightDiv.appendChild(splitNodesResult.right.cloneContents())
 
   return {
     left: leftDiv.innerHTML,
@@ -266,4 +268,4 @@ export const split = (el: HTMLElement) => {
 }
 
 /** Returns the selection text, or null if there is no selection. */
-export const text = () => window.getSelection()?.toString() || null
+export const text = () => window.getSelection()?.toString() ?? null
