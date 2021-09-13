@@ -42,7 +42,7 @@ const indent = (state: State) => {
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
-    offset,
+    ...(offset != null ? { offset } : null),
   })
 }
 

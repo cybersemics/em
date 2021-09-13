@@ -66,11 +66,12 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
 
 /** Handles drag start. */
 const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
+  const offset = selection.offset()
   store.dispatch(
     dragInProgress({
       value: true,
       draggingThought: simplePathLive,
-      offset: selection.offset(),
+      ...(offset != null ? { offset } : null),
     }),
   )
   return { simplePath: simplePathLive }

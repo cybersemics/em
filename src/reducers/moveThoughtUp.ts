@@ -78,7 +78,7 @@ const moveThoughtUp = (state: State) => {
   return moveThought(state, {
     oldPath: cursor,
     newPath,
-    offset,
+    ...(offset != null ? { offset } : null),
   })
 }
 
