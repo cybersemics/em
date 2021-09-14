@@ -26,6 +26,7 @@ import {
   SimplePath,
 } from '../@types'
 import childIdsToThoughts from './childIdsToThoughts'
+import { getThoughtById } from './getThought'
 
 // use global instance of empty array so object reference doesn't change
 const noChildren: Parent[] = []
@@ -41,12 +42,12 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Pa
 /** Gets a Parent from the contextIndex. */
 export const getParent = (state: State, context: Context): Parent | null => {
   const id = hashContext(state, context)
-  return id ? state.thoughts.contextIndex[id] : null
+  return id ? getThoughtById(state, id) : null
 }
 
 /** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
 export const getAllChildrenByContextHash = (state: State, contextEncoded: ContextHash): Child[] =>
-  state.thoughts.contextIndex[contextEncoded]?.children || noChildren
+  getThoughtById(state, contextEncoded)?.children || noChildren
 
 /** Returns the subthoughts (as Parent) of the given context unordered. . */
 export const getAllChildrenAsThoughts = (state: State, context: Context) =>
@@ -179,7 +180,7 @@ const isChildInCursor = (state: State, path: Path, child: Parent) => {
 const isDescendantOfMetaCursor = (state: State, context: Context): boolean => {
   if (!state.cursor) return false
 
-  const { value: cursorValue } = state.thoughts.contextIndex[head(state.cursor)]
+  const { value: cursorValue } = getThoughtById(state, head(state.cursor))
 
   return isFunction(cursorValue) && isDescendant(pathToContext(state, state.cursor), context)
 }
@@ -199,7 +200,7 @@ const isChildVisibleWithCursorCheck = _.curry((state: State, path: SimplePath, t
 
 /** Checks if the child is created after latest absolute context toggle. */
 const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | ThoughtContext) => {
-  const thought = state.thoughts.contextIndex[child]
+  const thought = getThoughtById(state, child)
   return thought.lastUpdated && state.absoluteContextTime && thought.lastUpdated > state.absoluteContextTime
 })
 

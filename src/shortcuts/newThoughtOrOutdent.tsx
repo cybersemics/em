@@ -4,7 +4,7 @@ import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
 import { splitAtSelection, isDocumentEditable, head, isRoot } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
-import { isLastVisibleChild, rootedParentOf, simplifyPath } from '../selectors'
+import { getThoughtById, isLastVisibleChild, rootedParentOf, simplifyPath } from '../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -30,7 +30,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   const state = getState()
   const { cursor, editingValue } = state
 
-  const cursorHeadThought = cursor && state.thoughts.contextIndex[head(cursor)]
+  const cursorHeadThought = cursor && getThoughtById(state, head(cursor))
 
   // if current edited thought is duplicate and user hits enter
   if (cursor && editingValue && cursorHeadThought && cursorHeadThought.value !== editingValue) {

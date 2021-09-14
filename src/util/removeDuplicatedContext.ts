@@ -1,4 +1,5 @@
 import { Context, Lexeme, State } from '../@types'
+import { getThoughtById } from '../selectors'
 import { hashContext } from './hashContext'
 
 // @MIGRATION_TODO: Use id instead of context.
@@ -12,7 +13,7 @@ export const removeDuplicatedContext = (state: State, lexeme: Lexeme, context: C
   return {
     ...lexeme,
     contexts: (lexeme.contexts || []).filter(child => {
-      const thought = state.thoughts.contextIndex[child]
+      const thought = getThoughtById(state, child)
       return thought.parentId !== hashContext(state, context)
     }),
   }

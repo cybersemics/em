@@ -6,6 +6,7 @@ import {
   getRankAfter,
   getSortPreference,
   getThoughtAfter,
+  getThoughtById,
   hasChild,
   nextSibling,
   rootedParentOf,
@@ -21,7 +22,7 @@ const moveThoughtDown = (state: State) => {
   const thoughts = pathToContext(state, cursor)
   const pathParent = parentOf(cursor)
   const context = pathToContext(state, pathParent)
-  const cursorThought = state.thoughts.contextIndex[head(cursor)]
+  const cursorThought = getThoughtById(state, head(cursor))
   const { value, rank } = cursorThought
 
   const nextThought = nextSibling(state, value, rootedParentOf(state, pathToContext(state, cursor)), rank)

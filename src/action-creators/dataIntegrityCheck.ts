@@ -9,6 +9,7 @@ import {
   getChildrenRanked,
   getLexeme,
   getSetting,
+  getThoughtById,
   hasLexeme,
   rootedParentOf,
   simplifyPath,
@@ -38,7 +39,7 @@ const dataIntegrityCheck =
 
     const contextIndex = state.thoughts.contextIndex ?? {}
 
-    const thought = state.thoughts.contextIndex[head(path)]
+    const thought = getThoughtById(state, head(path))
     const { rank, value } = thought
     const context = pathToContext(state, path)
     const encoded = headId(path)
@@ -53,7 +54,7 @@ const dataIntegrityCheck =
       const parentEntry = contextIndex[encoded]
       const children = (parentEntry || {}).children || []
       const childrenUnique = _.uniqBy(children, child => {
-        const thought = state.thoughts.contextIndex[child]
+        const thought = getThoughtById(state, child)
         return thought.value + '__SEP' + thought.rank
       })
       if (parentEntry && childrenUnique.length < children.length) {
@@ -77,7 +78,7 @@ const dataIntegrityCheck =
       const children = (contextIndex[encoded] || {}).children || []
       // eslint-disable-next-line fp/no-loops,fp/no-let
       for (const child of children) {
-        const thought = state.thoughts.contextIndex[child]
+        const thought = getThoughtById(state, child)
         const childExists = hasLexeme(state, thought.value)
         if (!childExists) {
           console.warn('Recreating missing lexeme in thoughtIndex:', thought.value)
@@ -112,11 +113,11 @@ const dataIntegrityCheck =
       // const contextSubthoughts = getChildrenRanked(state, pathContext)
       if (recreateMissingContextIndex) {
         const contextIndexUpdates = lexeme.contexts.reduce((accum: any, cx: ThoughtContext) => {
-          const otherContextChildren = state.thoughts.contextIndex[cx].children
-          const contextThought = state.thoughts.contextIndex[cx]
+          const otherContextChildren = getThoughtById(state, cx).children
+          const contextThought = getThoughtById(state, cx)
 
           const otherContextHasThought = otherContextChildren.some(child => {
-            const thought = state.thoughts.contextIndex[child]
+            const thought = getThoughtById(state, child)
             return hashThought(thought.value) === hashThought(lexeme.value) && thought.rank === contextThought.rank
           })
           const encoded = cx

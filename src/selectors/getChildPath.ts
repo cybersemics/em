@@ -6,6 +6,7 @@ import { Child, SimplePath, State, ThoughtContext } from '../@types'
 import getParentThought from './getParentThought'
 import getContextForThought from './getContextForThought'
 import { getAllChildrenAsThoughts } from './getChildren'
+import { getThoughtById } from './getThought'
 
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */
 const resolve = (state: State, child: Child | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>
@@ -22,7 +23,7 @@ const resolve = (state: State, child: Child | ThoughtContext, simplePath: Simple
 /** Because the current thought only needs to hash match another thought we need to use the exact value of the child from the other context child.context SHOULD always be defined when showContexts is true. */
 const getChildPath = _.memoize(
   (state: State, child: Child | ThoughtContext, simplePath: SimplePath, showContexts?: boolean): SimplePath => {
-    const simplePathHeadThought = state.thoughts.contextIndex[head(simplePath)]
+    const simplePathHeadThought = getThoughtById(state, head(simplePath))
     const otherSubthought = (
       showContexts && getParentThought(state, child)!.value
         ? getAllChildrenAsThoughts(state, getContextForThought(state, child)!)

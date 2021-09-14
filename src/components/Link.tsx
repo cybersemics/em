@@ -5,6 +5,7 @@ import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar 
 import { clearSelection, decodeCharacterEntities, ellipsize, head, headId, strip } from '../util'
 import { SimplePath } from '../@types'
 import { store } from '../store'
+import { getThoughtById } from '../selectors'
 
 interface LinkProps {
   charLimit?: number
@@ -15,7 +16,7 @@ interface LinkProps {
 /** Renders a link with the appropriate label to the given context. */
 const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
   const emContext = simplePath.length === 1 && headId(simplePath) === EM_TOKEN
-  const thought = store.getState().thoughts.contextIndex[head(simplePath)]
+  const thought = getThoughtById(store.getState(), head(simplePath))
   const value = label || strip(thought.value)
   const dispatch = useDispatch()
 

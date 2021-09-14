@@ -2,10 +2,11 @@ import { head, pathToContext } from '../util'
 import { getChildrenSorted } from '../selectors'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
+import { getThoughtById } from './getThought'
 
 /** Gets a new rank before the given thought in a list but after the previous thought. */
 const getThoughtBefore = (state: State, simplePath: SimplePath) => {
-  const cursorThought = state.thoughts.contextIndex[head(simplePath)]
+  const cursorThought = getThoughtById(state, head(simplePath))
   const { value, rank } = cursorThought
   const parentPath = rootedParentOf(state, simplePath)
   const children = getChildrenSorted(state, pathToContext(state, parentPath))

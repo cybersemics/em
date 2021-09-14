@@ -35,12 +35,13 @@ import {
   getNextRank,
   getRankBefore,
   getSortPreference,
+  getThoughtById,
+  getThoughtByPath,
   hasChild,
   isBefore,
   rootedParentOf,
   visibleDistanceAboveCursor,
 } from '../selectors'
-import { Path } from '../@types'
 
 export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerProps &
   ReturnType<typeof dragCollect> &
@@ -130,8 +131,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
-  const toThought = state.thoughts.contextIndex[head(thoughtsTo)]
-  const fromThought = state.thoughts.contextIndex[head(thoughtsFrom as Path)]
+  const toThought = getThoughtByPath(state, thoughtsTo)
+  const fromThought = getThoughtByPath(state, thoughtsFrom)
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedParentOf(state, thoughtsFrom)
   const newContext = rootedParentOf(state, thoughtsTo)
@@ -166,7 +167,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
         }),
   )
 
-  const parentThought = state.thoughts.contextIndex[head(parentOf(thoughtsTo))]
+  const parentThought = getThoughtById(state, head(parentOf(thoughtsTo)))
 
   // alert user of move to another context
   if (!sameContext) {

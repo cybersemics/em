@@ -5,6 +5,7 @@ import {
   getChildrenRanked,
   getLexeme,
   getParent,
+  getThoughtById,
   hasLexeme,
   isPending,
   rankThoughtsFirstMatch,
@@ -29,7 +30,7 @@ interface ThoughtUpdates {
 
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions. */
 const deleteThought = (state: State, { context, thoughtId }: Payload) => {
-  const deletedThought = state.thoughts.contextIndex[thoughtId]
+  const deletedThought = getThoughtById(state, thoughtId)
 
   if (!deletedThought) {
     console.error(`deleteThought: Thought not found for id ${thoughtId}`)

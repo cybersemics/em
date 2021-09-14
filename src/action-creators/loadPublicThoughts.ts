@@ -2,6 +2,7 @@ import { HOME_TOKEN } from '../constants'
 import { createId, hashContext, hashThought, owner } from '../util'
 import { loadRemoteState } from '../action-creators'
 import { Firebase, Parent, State, Thunk } from '../@types'
+import { getThoughtById } from '../selectors'
 
 /**
  * Loads a public context when the url contains a userId of a different user.
@@ -34,7 +35,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
           [HOME_TOKEN]: parentEntry,
         },
         thoughtIndex: parentEntry.children.reduce((accum, child) => {
-          const thought = state.thoughts.contextIndex[child]
+          const thought = getThoughtById(state, child)
           return {
             ...accum,
             [hashThought(thought.value)]: {

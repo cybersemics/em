@@ -1,6 +1,11 @@
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import { appendToPath, parentOf, head, pathToContext, once } from '../util'
-import { nextSibling as thoughtNextSibling, rootedParentOf, firstVisibleChildWithCursorCheck } from '../selectors'
+import {
+  nextSibling as thoughtNextSibling,
+  rootedParentOf,
+  firstVisibleChildWithCursorCheck,
+  getThoughtById,
+} from '../selectors'
 import { Context, Path, SimplePath, State } from '../@types'
 
 interface NextThoughtResult {
@@ -201,7 +206,7 @@ const nextInThoughtView = (
 
   /** Returns the next uncle in the thought view. */
   const nextUncleInThoughtView = () => {
-    const parentThought = state.thoughts.contextIndex[head(parentOf(thoughtViewPath))]
+    const parentThought = getThoughtById(state, head(parentOf(thoughtViewPath)))
 
     /** Gets the next uncle.
      * Only calculate uncle if not at root.
@@ -255,7 +260,7 @@ const nextInThoughtView = (
 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain. */
 export const nextThought = (state: State, path: Path = HOME_PATH) => {
-  const thought = state.thoughts.contextIndex[head(path)]
+  const thought = getThoughtById(state, head(path))
   const { value, rank } = thought
   const parentPath = rootedParentOf(state, path)
   const context = pathToContext(state, parentPath)

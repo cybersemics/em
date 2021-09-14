@@ -1,5 +1,5 @@
 import { Key } from 'ts-key-enum'
-import { hasChild } from '../selectors'
+import { getThoughtById, hasChild } from '../selectors'
 import { ellipsize, head, isDocumentEditable, isEM, isRoot, pathToContext } from '../util'
 import { alert, deleteThoughtWithCursor, error } from '../action-creators'
 import { Shortcut } from '../@types'
@@ -11,7 +11,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
 
   if (cursor) {
     const context = pathToContext(state, cursor)
-    const cursorThought = state.thoughts.contextIndex[head(cursor)]
+    const cursorThought = getThoughtById(state, head(cursor))
 
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))

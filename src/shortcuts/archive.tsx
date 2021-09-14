@@ -1,7 +1,7 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
 import { isTouch } from '../browser'
-import { hasChild } from '../selectors'
+import { getThoughtById, hasChild } from '../selectors'
 import { asyncFocus, ellipsize, isDocumentEditable, isEM, isRoot, pathToContext, setSelection, head } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
@@ -19,7 +19,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   const { cursor, noteFocus } = state
 
   if (cursor) {
-    const cursorThought = state.thoughts.contextIndex[head(cursor)]
+    const cursorThought = getThoughtById(state, head(cursor))
     const context = pathToContext(state, cursor)
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))

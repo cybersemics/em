@@ -10,6 +10,7 @@ import {
   prevSibling,
   simplifyPath,
   getSortPreference,
+  getThoughtById,
 } from '../selectors'
 
 /** Swaps the thought with its previous siblings. */
@@ -22,7 +23,7 @@ const moveThoughtUp = (state: State) => {
   const pathParent = parentOf(cursor)
   const context = pathToContext(state, pathParent)
 
-  const cursorThought = state.thoughts.contextIndex[head(cursor)]
+  const cursorThought = getThoughtById(state, head(cursor))
   const { value, rank } = cursorThought
 
   const prevThought = prevSibling(state, value, rootedParentOf(state, pathToContext(state, cursor)), rank)

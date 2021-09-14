@@ -17,7 +17,7 @@ import {
   validateRoam,
 } from '../util'
 import { editThought, setCursor, updateThoughts } from '../reducers'
-import { getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
+import { getAllChildren, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
 import { Path, SimplePath, State, Timestamp } from '../@types'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
@@ -58,7 +58,7 @@ const importText = (
   const convertedText = isRoam ? text : textToHtml(text)
   const numLines = (convertedText.match(regexpListItem) || []).length
   const thoughtId = head(path)
-  const destThought = state.thoughts.contextIndex[thoughtId]
+  const destThought = getThoughtById(state, thoughtId)
   const destValue = rawDestValue || destThought.value
 
   // if we are only importing a single line of html, then simply modify the current thought

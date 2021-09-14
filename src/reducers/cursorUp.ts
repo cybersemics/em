@@ -1,6 +1,6 @@
 import { HOME_PATH } from '../constants'
 import { setCursor } from '../reducers'
-import { rootedParentOf, prevSibling } from '../selectors'
+import { rootedParentOf, prevSibling, getThoughtById } from '../selectors'
 import { appendToPath, parentOf, head, pathToContext, unroot, isRoot } from '../util'
 import { State } from '../@types'
 
@@ -11,7 +11,7 @@ const cursorUp = (state: State) => {
   const contextRanked = rootedParentOf(state, path)
   const context = pathToContext(state, contextRanked)
 
-  const cursorThought = state.thoughts.contextIndex[head(path)]
+  const cursorThought = getThoughtById(state, head(path))
 
   if (!cursorThought) {
     console.error('Cursor thought not found!')

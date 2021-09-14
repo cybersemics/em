@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { head, pathToContext, reducerFlow } from '../util'
 import editThought from './editThought'
 import newThought from './newThought'
-import { rootedParentOf, simplifyPath } from '../selectors'
+import { getThoughtById, rootedParentOf, simplifyPath } from '../selectors'
 import alert from './alert'
 import { State } from '../@types'
 
@@ -22,7 +22,7 @@ const extractThought = (state: State) => {
     return alert(state, { value: 'No text selected to extract' })
   }
 
-  const cursorThought = state.thoughts.contextIndex[head(cursor)]
+  const cursorThought = getThoughtById(state, head(cursor))
 
   if (!cursorThought) {
     console.warn('Cursor thought not found!')

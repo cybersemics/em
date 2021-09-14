@@ -25,6 +25,7 @@ import {
   simplifyPath,
   thoughtsEditingFromChain,
   getParentThought,
+  getThoughtById,
 } from '../selectors'
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
@@ -52,7 +53,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   const thoughts = pathToContext(state, simplePath)
   const context = rootedParentOf(state, thoughts)
 
-  const thought = state.thoughts.contextIndex[head(simplePath)]
+  const thought = getThoughtById(state, head(simplePath))
   const { value, rank } = thought
 
   /** Calculates the previous context within a context view. */

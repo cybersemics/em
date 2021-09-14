@@ -1,4 +1,5 @@
 import { Lexeme, State } from '../@types'
+import { getThoughtById } from '../selectors'
 import { concatOne, timestamp } from '../util'
 import { getSessionId } from './sessionManager'
 
@@ -7,7 +8,7 @@ export const moveLexemeThought = (state: State, lexeme: Lexeme, oldRank: number,
   ...lexeme,
   contexts: concatOne(
     (lexeme.contexts || []).filter(child => {
-      const thought = state.thoughts.contextIndex[child]
+      const thought = getThoughtById(state, child)
       return (
         // remove old context
         (thought.rank !== oldRank || child !== id) &&

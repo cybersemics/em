@@ -1,9 +1,9 @@
 import React from 'react'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { rootedParentOf } from '../selectors'
+import { getThoughtByPath, rootedParentOf } from '../selectors'
 import { expandContextThought } from '../action-creators'
-import { head, isDivider, isDocumentEditable } from '../util'
+import { isDivider, isDocumentEditable } from '../util'
 
 // components
 import BulletCursorOverlay from './BulletCursorOverlay'
@@ -38,7 +38,7 @@ const StaticThought = ({
 
   const state = store.getState()
 
-  const { value } = state.thoughts.contextIndex[head(simplePath)]
+  const { value } = getThoughtByPath(state, simplePath)
 
   return (
     <div className='thought'>

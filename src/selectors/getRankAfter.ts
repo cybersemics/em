@@ -3,11 +3,12 @@ import { getChildrenRanked } from '../selectors'
 import { equalThoughtValue, head, pathToContext } from '../util'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
+import { getThoughtById } from './getThought'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 const getRankAfter = (state: State, simplePath: SimplePath) => {
   const thoughtId = head(simplePath)
-  const thought = state.thoughts.contextIndex[thoughtId]
+  const thought = getThoughtById(state, thoughtId)
   const { value, rank } = thought
   const parentPath = rootedParentOf(state, simplePath)
   const children = getChildrenRanked(state, pathToContext(state, parentPath))

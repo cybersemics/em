@@ -1,6 +1,6 @@
 import _ from 'lodash'
 // import { treeChange } from '../util/recentlyEditedTree'
-import { getLexeme, getAllChildren } from '../selectors'
+import { getLexeme, getAllChildren, getThoughtById } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { Context, Lexeme, SimplePath, State, Timestamp } from '../@types'
 
@@ -32,7 +32,7 @@ const editThought = (
   const lexemeOld = getLexeme(state, oldValue)
   const thoughtCollision = getLexeme(state, newValue)
 
-  const editedThought = state.thoughts.contextIndex[editedThoughtId]
+  const editedThought = getThoughtById(state, editedThoughtId)
 
   if (!editedThought) {
     console.error('editThought: Edited thought not found!')
@@ -45,7 +45,7 @@ const editThought = (
     return state
   }
 
-  const parentofEditedThought = state.thoughts.contextIndex[editedThought.parentId]
+  const parentofEditedThought = getThoughtById(state, editedThought.parentId)
 
   if (!parentofEditedThought) {
     console.error('Parent not found')

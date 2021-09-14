@@ -6,6 +6,7 @@ import { StyleSheet } from 'react-native'
 import { SimplePath } from '../@types'
 import { Text } from './Text.native'
 import { store } from '../store'
+import { getThoughtById } from '../selectors'
 
 interface LinkProps {
   charLimit?: number
@@ -15,7 +16,7 @@ interface LinkProps {
 
 /** Renders a link with the appropriate label to the given context. */
 const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
-  const thought = store.getState().thoughts.contextIndex[head(simplePath)]
+  const thought = getThoughtById(store.getState(), head(simplePath))
 
   const value = label || strip(thought.value)
 

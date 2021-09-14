@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import editThought from './editThought'
-import { getAllChildren, getChildPath, getNextRank, simplifyPath } from '../selectors'
+import { getAllChildren, getChildPath, getNextRank, getThoughtById, simplifyPath } from '../selectors'
 import { appendToPath, head, parentOf, pathToContext, reducerFlow } from '../util'
 import moveThought from './moveThought'
 import deleteThought from './deleteThought'
@@ -18,7 +18,7 @@ const join = (state: State) => {
   const context = pathToContext(state, parentOf(simplePath))
   const contextChildren = getAllChildrenAsThoughts(state, context)
   const thoughtId = head(simplePath)
-  const { value, rank } = state.thoughts.contextIndex[thoughtId]
+  const { value, rank } = getThoughtById(state, thoughtId)
   const siblings = contextChildren.filter(child => child.value !== value && child.rank !== rank)
 
   let minNextRank = getNextRank(state, context)

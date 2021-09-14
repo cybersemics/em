@@ -20,7 +20,7 @@ import {
   unroot,
 } from '../util'
 import { alert, error, closeModal, pull } from '../action-creators'
-import { exportContext, getDescendantPaths, simplifyPath, theme } from '../selectors'
+import { exportContext, getDescendantPaths, getThoughtById, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
@@ -226,7 +226,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
   const state = store.getState()
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
-  const cursorThought = state.thoughts.contextIndex[head(cursor)]
+  const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
   const titleShort = ellipsize(title)
   const titleMedium = ellipsize(title, 25)

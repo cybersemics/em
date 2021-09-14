@@ -4,7 +4,7 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import { HOME_PATH } from '../constants'
 import { download, ellipsize, exportPhrase, head, isRoot, pathToContext, timestamp, unroot } from '../util'
 import { alert, error, closeModal } from '../action-creators'
-import { exportContext, simplifyPath } from '../selectors'
+import { exportContext, getThoughtById, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
 import { ExportOption, State } from '../@types'
@@ -46,7 +46,7 @@ const ModalExport = () => {
   const context = pathToContext(state, simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
   const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
-  const cursorThought = state.thoughts.contextIndex[head(cursor)]
+  const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)

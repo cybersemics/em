@@ -18,10 +18,11 @@ import {
 } from '../util'
 import getParentThought from './getParentThought'
 import { getAllChildrenAsThoughts } from './getChildren'
+import { getThoughtById } from './getThought'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (state: State, child: Child | ThoughtContext, showContexts: boolean) =>
-  showContexts ? getParentThought(state, child)!.value : state.thoughts.contextIndex[child].value
+  showContexts ? getParentThought(state, child)!.value : getThoughtById(state, child).value
 
 /** Returns true if the context is in table view. */
 const isTable = (state: State, context: Context) => attributeEquals(state, context, '=view', 'Table')
@@ -67,7 +68,7 @@ function expandThoughts(
   const expanstionStartingPath =
     firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
 
-  if (path && !state.thoughts.contextIndex[head(path)]) {
+  if (path && !getThoughtById(state, head(path))) {
     console.error(`expandThought: Base path head thought not found!`)
     return {}
   }

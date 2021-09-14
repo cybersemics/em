@@ -31,6 +31,7 @@ import {
   thoughtsEditingFromChain,
   getParentThought,
   getPrevRank,
+  getThoughtById,
 } from '../selectors'
 
 // reducers
@@ -76,7 +77,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       ? parentOf(simplePath)
       : HOME_PATH
   const context = pathToContext(state, pathParent)
-  const thought = state.thoughts.contextIndex[head(simplePath)]
+  const thought = getThoughtById(state, head(simplePath))
 
   if (!thought) {
     console.error(`achiveThought: Parent entry not found for id${head(simplePath)}!`)

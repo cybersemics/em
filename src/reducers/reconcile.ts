@@ -3,6 +3,7 @@ import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
 import { Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
+import { getThoughtById } from '../selectors'
 
 interface ReconcileOptions {
   thoughtsResults: [ThoughtsInterface, ThoughtsInterface]
@@ -62,7 +63,7 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
     _.pickBy(
       thoughtsLocal.contextIndex,
       (parentEntry: Parent, key: string) =>
-        !state.thoughts.contextIndex[key] &&
+        !getThoughtById(state, key) &&
         !contextIndexLocalOnly[key] &&
         (thoughtsRemote.contextIndex || {})[key] &&
         parentEntry.pending,

@@ -1,3 +1,4 @@
+import { getThoughtById } from '.'
 import { Index, Parent, State } from '../@types'
 import { EM_TOKEN, ROOT_PARENT_ID } from '../constants'
 import { normalizeThought } from '../util'
@@ -11,9 +12,9 @@ const getAncestorBy = (
   checkFn: (thought: Parent) => boolean,
   traversedIds: Index<boolean> = {},
 ): Parent | null => {
-  const thought = state.thoughts.contextIndex[thoughtId]
+  const thought = getThoughtById(state, thoughtId)
   if (!thought) return null
-  const parentThought = state.thoughts.contextIndex[thought.parentId]
+  const parentThought = getThoughtById(state, thought.parentId)
   if (!parentThought) return null
 
   if (traversedIds[parentThought.id]) {

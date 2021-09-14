@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getLexeme, getAllChildren, getParent } from '../selectors'
+import { getNextRank, getLexeme, getAllChildren, getParent, getThoughtById } from '../selectors'
 import { createId, hashThought, head, timestamp } from '../util'
 import { Context, Index, Lexeme, Parent, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
@@ -49,7 +49,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       .concat(id)
 
     contextIndexUpdates[parent.id] = {
-      ...state.thoughts.contextIndex[parent.id],
+      ...getThoughtById(state, parent.id),
       id: parent.id,
       children,
       lastUpdated: timestamp(),
@@ -70,7 +70,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
   // if adding as the context of an existing thought
   let lexemeNew: Lexeme | undefined // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const lexemeOld = state.thoughts.thoughtIndex[head(context)]
+    const lexemeOld = getLexeme(state, head(context))
     lexemeNew = {
       ...lexemeOld!,
       contexts: (lexemeOld?.contexts || []).concat(id),

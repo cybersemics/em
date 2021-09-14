@@ -54,6 +54,8 @@ import {
   getNextRank,
   getSortPreference,
   getStyle,
+  getThoughtById,
+  getThoughtByPath,
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
@@ -315,8 +317,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const newContext = rootedParentOf(state, pathToContext(state, newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
-  const toThought = state.thoughts.contextIndex[head(thoughtsTo)]
-  const fromThought = state.thoughts.contextIndex[head(thoughtsFrom)]
+  const toThought = getThoughtByPath(state, thoughtsTo)
+  const fromThought = getThoughtByPath(state, thoughtsFrom)
 
   // cannot drop on itself
   if (equalPath(thoughtsFrom, newPath)) return
@@ -381,7 +383,7 @@ const NoChildren = ({
 }) => {
   const store = useStore<State>()
 
-  const { value } = store.getState().thoughts.contextIndex[head(simplePath)]
+  const { value } = getThoughtById(store.getState(), head(simplePath))
 
   return (
     <div className='children-subheading text-note text-small'>
@@ -504,8 +506,7 @@ export const SubthoughtsComponent = ({
   const [page, setPage] = useState(1)
   const { cursor } = state
   const context = pathToContext(state, simplePath)
-
-  const thought = state.thoughts.contextIndex[head(simplePath)]
+  const thought = getThoughtByPath(state, simplePath)
   const { value } = thought
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)

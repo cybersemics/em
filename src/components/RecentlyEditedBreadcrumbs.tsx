@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect, useSelector } from 'react-redux'
-import { simplifyPath } from '../selectors'
+import { getThoughtById, simplifyPath } from '../selectors'
 
 // components
 import Link from './Link'
@@ -22,7 +22,7 @@ const RecentlyEditedBreadcrumbs = connect(mapStateToProps)(
     const parentSimplePath = parentOf(props.simplePath)
     const simplePath = props.simplePath
 
-    const value = useSelector((state: State) => state.thoughts.contextIndex[head(simplePath)].value)
+    const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
     return (
       <div className='recently-edited-breadcrumbs'>

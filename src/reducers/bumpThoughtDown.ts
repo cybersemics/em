@@ -1,7 +1,7 @@
 /* eslint-disable */
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
-import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
+import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
 import { appendToPath, parentOf, headValue, pathToContext, reducerFlow, headId, head } from '../util'
 import { Path, SimplePath, State } from '../@types'
 
@@ -11,7 +11,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
 
   simplePath = simplePath || simplifyPath(state, state.cursor!)
 
-  const headThought = state.thoughts.contextIndex[head(simplePath)]
+  const headThought = getThoughtById(state, head(simplePath))
   const { value } = headThought
 
   // const rank = headRank(simplePath)

@@ -1,7 +1,7 @@
 import React from 'react'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { rootedParentOf } from '../selectors'
+import { getThoughtById, rootedParentOf } from '../selectors'
 import { expandContextThought } from '../action-creators'
 import { head, isDivider, isDocumentEditable } from '../util'
 
@@ -39,7 +39,7 @@ const StaticThought = ({
 
   const state = store.getState()
 
-  const { value } = state.thoughts.contextIndex[head(simplePath)]
+  const { value } = getThoughtById(state, head(simplePath))
 
   return (
     <View>

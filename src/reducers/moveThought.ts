@@ -1,7 +1,15 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, updateThoughts } from '../reducers'
-import { getLexeme, getChildrenRanked, isPending, simplifyPath, rootedParentOf, getAllChildren } from '../selectors'
+import {
+  getLexeme,
+  getChildrenRanked,
+  isPending,
+  simplifyPath,
+  rootedParentOf,
+  getAllChildren,
+  getThoughtById,
+} from '../selectors'
 import { Index, Parent, Path, State } from '../@types'
 
 // util
@@ -49,7 +57,7 @@ const moveThought = (
     updatedBy: getSessionId(),
   }
 
-  const movingThought = state.thoughts.contextIndex[movingThoughtId]
+  const movingThought = getThoughtById(state, movingThoughtId)
 
   if (!movingThought) {
     console.error('moveThought: Parent entry for moved thought not found!', oldThoughts)
@@ -61,14 +69,14 @@ const moveThought = (
     return state
   }
 
-  const oldParentThought = state.thoughts.contextIndex[movingThought.parentId]
+  const oldParentThought = getThoughtById(state, movingThought.parentId)
 
   if (!oldParentThought) {
     console.error('Old parent entry of moving thought not found!')
     return state
   }
 
-  const newParentThought = state.thoughts.contextIndex[newParentId]
+  const newParentThought = getThoughtById(state, newParentId)
 
   if (!newParentThought) {
     console.error('New parent entry for moving not found!')
@@ -185,7 +193,7 @@ const moveThought = (
           const children = getChildrenRanked(state, newContext)
           const ranksTooClose = children.some((thought, i) => {
             if (i === 0) return false
-            const secondThought = state.thoughts.contextIndex[children[i - 1].id]
+            const secondThought = getThoughtById(state, children[i - 1].id)
             return Math.abs(thought.rank - secondThought.rank) < rankPrecision
           })
           return ranksTooClose ? rerank(state, rootedParentOf(state, newSimplePath)) : state

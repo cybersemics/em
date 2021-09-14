@@ -17,6 +17,7 @@ import {
   prevSibling,
   simplifyPath,
   rootedParentOf,
+  getThoughtById,
 } from '../selectors'
 import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCursor } from '../reducers'
 import { State } from '../@types'
@@ -31,7 +32,7 @@ const deleteEmptyThought = (state: State): State => {
 
   if (!cursor) return state
 
-  const cursorThought = state.thoughts.contextIndex[head(cursor)]
+  const cursorThought = getThoughtById(state, head(cursor))
 
   const { value } = cursorThought
 
@@ -83,7 +84,7 @@ const deleteEmptyThought = (state: State): State => {
   }
   // delete from beginning and merge with previous sibling
   else if (offset === 0 && sel?.isCollapsed && !showContexts) {
-    const cursorThought = state.thoughts.contextIndex[head(cursor)]
+    const cursorThought = getThoughtById(state, head(cursor))
     const { value, rank } = cursorThought
     const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
     const prev = prevSibling(state, value, pathToContext(state, rootedParentOf(state, cursor)), rank)

@@ -70,7 +70,9 @@ import {
   hasChild,
   isContextViewActive,
   rootedParentOf,
+  getThoughtById,
 } from '../selectors'
+
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -745,7 +747,7 @@ const Editable = ({
  * Needs to rerender when value changes.
  */
 const mapStateToProps = (state: State, props: EditableProps) => {
-  const thought = state.thoughts.contextIndex[head(props.simplePath)]
+  const thought = getThoughtById(state, head(props.simplePath))
   return {
     thought,
   }

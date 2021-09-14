@@ -9,7 +9,7 @@ import { Context, Parent, State } from '../@types'
 // import { getAllChildren } from '../selectors'
 import { isRoot } from '.'
 import { normalizeThought } from './normalizeThought'
-import { childIdsToThoughts } from '../selectors'
+import { childIdsToThoughts, getThoughtById } from '../selectors'
 
 // const SEPARATOR_TOKEN = '__SEP__'
 
@@ -20,13 +20,13 @@ import { childIdsToThoughts } from '../selectors'
 //       (typeof rank === 'number' ? SEPARATOR_TOKEN + rank : ''),
 //   ) as ContextHash
 
-/** Encode the thoughts (and optionally rank) as a string. */
+/** Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. */
 export const hashContext = (state: State, thoughts: Context, rank?: number): string | null => {
   const root = isRoot(thoughts)
   if (root) return thoughts[0]
 
   const startsWithEM = thoughts[0] === EM_TOKEN
-  const rootParent = state.thoughts.contextIndex[startsWithEM ? EM_TOKEN : state.rootContext[0]]
+  const rootParent = getThoughtById(state, startsWithEM ? EM_TOKEN : state.rootContext[0])
 
   if (!rootParent) {
     console.error(
@@ -43,7 +43,7 @@ export const hashContext = (state: State, thoughts: Context, rank?: number): str
 }
 
 /**
- *
+ * Recursively finds the thought for the given context.
  */
 const recursiveParentFinder = (
   state: State,
@@ -69,7 +69,7 @@ const recursiveParentFinder = (
     return null
   }
 
-  const nextParent = state.thoughts.contextIndex[child.id]
+  const nextParent = getThoughtById(state, child.id)
 
   if (!nextParent) {
     console.warn('Parent entry for the child not found!', child)

@@ -47,6 +47,7 @@ import {
   getChildrenRanked,
   getSortPreference,
   getStyle,
+  getThoughtById,
   hasChildren,
   isContextViewActive,
   rootedParentOf,
@@ -355,9 +356,7 @@ const ThoughtContainer = ({
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
-  const draggingThoughtValue = state.draggingThought
-    ? state.thoughts.contextIndex[headId(state.draggingThought)].value
-    : null
+  const draggingThoughtValue = state.draggingThought ? getThoughtById(state, headId(state.draggingThought)).value : null
 
   const isAnyChildHovering = useIsChildHovering(thoughts, isHovering, isDeepHovering)
 
