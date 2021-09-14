@@ -101,6 +101,32 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 }
 
 /******************************************************************************
+ * ExportThoughtsPhrase component
+ *****************************************************************************/
+
+interface ExportThoughtsPhraseOptions {
+  context: Context
+  // the final number of descendants
+  numDescendantsFinal: number | null
+  title: string
+}
+
+/** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
+const ExportThoughtsPhrase = ({ context, numDescendantsFinal, title }: ExportThoughtsPhraseOptions) => {
+  const store = useStore()
+  const state = store.getState()
+
+  // updates with latest number of descendants
+  const numDescendants = useDescendantsNumber()
+
+  const exportThoughtsPhrase = exportPhrase(state, context, numDescendantsFinal ?? numDescendants ?? 0, {
+    value: title,
+  })
+
+  return <Text>{exportThoughtsPhrase}</Text>
+}
+
+/******************************************************************************
  * Hooks
  *****************************************************************************/
 
@@ -108,6 +134,11 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
  * Use the pulling status of export.
  */
 const usePullStatus = () => useContext(PullStatusContext)
+
+/**
+ * Use number of descendants that will be exported.
+ */
+const useDescendantsNumber = () => useContext(DescendantNumberContext)
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport = () => {
@@ -271,8 +302,7 @@ const ModalExport = () => {
     <Modal id='export' title='Export' className='popup'>
       <View style={styles.exportContentContainer}>
         <Text style={styles.white}>
-          {`${exportWord} ${exportThoughtsPhrase} as`}
-
+          {exportWord} <ExportThoughtsPhrase context={context} numDescendantsFinal={numDescendants} title={title} />
           <RNPickerSelect
             onValueChange={(value: number) => {
               setSelectedOptionIndex(value)
