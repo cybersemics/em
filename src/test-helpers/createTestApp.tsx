@@ -67,8 +67,11 @@ const createTestApp = async () => {
 
     wrapper = await mount(<TestApp ref={dndRef} />, { attachTo: root })
     wrapper.update()
+
     // dismiss the tutorial
-    const skipTutorial = wrapper.find('#skip-tutorial')
+    // TODO: Sytled components seems to have extra wrapper around them in JSDOM
+    const skipTutorial = wrapper.find('#skip-tutorial').at(1)
+
     skipTutorial.simulate('click')
 
     // flush all the promises before the actual test starts

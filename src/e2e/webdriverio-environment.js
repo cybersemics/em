@@ -80,6 +80,8 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
         },
         e => {
           if (e) {
+            console.error(chalk.red('BrowserStackLocal: Failed'))
+            console.error(chalk.red(e))
             reject(e)
           } else {
             console.info(chalk.green('BrowserStackLocal: Running'))

@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { tutorial } from '../action-creators'
 import { getAllChildren } from '../selectors'
 import { State } from '../@types'
+import TextLink from './TextLink'
 
 /** Shrink modal text and logos to fit container vertically. */
 const onRef = (el: HTMLDivElement) => {
@@ -76,8 +77,7 @@ const ModalWelcome = () => {
             <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
             {
               <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}>
-                {/* TODO: Fix enzyme not finding styled components by id */}
-                <a
+                <TextLink
                   id='skip-tutorial'
                   onClick={
                     isTutorialSettingsLoaded
@@ -89,7 +89,7 @@ const ModalWelcome = () => {
                   }
                 >
                   This ain’t my first rodeo. Skip it.
-                </a>
+                </TextLink>
               </div>
             }
           </div>
