@@ -1,6 +1,6 @@
-import { EM_TOKEN, HOME_PATH } from '../constants'
-import { appendToPath, equalThoughtRanked, headId, isRoot, pathToContext } from '../util'
-import { getLexeme, getChildrenRanked } from '../selectors'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { appendToPath, isRoot } from '../util'
+import { getLexeme } from '../selectors'
 import { Path, State } from '../@types'
 import getRootPath from './getRootPath'
 import childIdsToThoughts from './childIdsToThoughts'
@@ -8,44 +8,37 @@ import childIdsToThoughts from './childIdsToThoughts'
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
 // NOTE: path is pathToContexted
-const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path => {
+const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path | null => {
   if (isRoot(pathUnranked)) return getRootPath(state)
 
-  let pathResult: Path = HOME_PATH // eslint-disable-line fp/no-let
-  // let prevParentContext = [HOME_TOKEN] // eslint-disable-line fp/no-let
+  // Also supports ranking thoughts from EM context
+  const isEmContext = pathUnranked[0] === EM_TOKEN
 
-  return pathUnranked.map((value, i) => {
-    const lexeme = getLexeme(state, value)
-    const path = pathResult
+  const startingContext = isEmContext ? EM_TOKEN : HOME_TOKEN
+  const context = pathUnranked.slice(isEmContext ? 1 : 0)
 
-    const thoughts = childIdsToThoughts(state, (lexeme && lexeme.contexts) || [])
-      // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
-      .filter(thought => thought?.parentId === headId(path))
+  try {
+    return context.reduce<Path>((acc, value, i) => {
+      const lexeme = getLexeme(state, value)
 
-    const contextThoughts = thoughts.length > 1 ? getChildrenRanked(state, pathToContext(state, path)) : []
+      const prevParentId = acc[acc.length - 1] || startingContext
 
-    // If thoughts length is greater than 1 then it means a parent has multiple children with same value.
-    // In this case match the first found
-    // TODO: May be simply select the first from the thoughts array ??
-    const finalThought =
-      thoughts.length <= 1
-        ? thoughts[0]
-        : thoughts.find(thought => {
-            return contextThoughts.some(child =>
-              equalThoughtRanked(child, {
-                value,
-                rank: thought.rank,
-              }),
-            )
-          })
+      // get all thoughts that have the desired value within the current context
+      const thoughts = childIdsToThoughts(state, (lexeme && lexeme.contexts) || [])
+        // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
+        .filter(thought => thought?.parentId === prevParentId)
 
-    const isEm = i === 0 && value === EM_TOKEN
+      const finalThought = thoughts[0]
 
-    const thoughtId = (finalThought ? finalThought.id : '') || ''
-    pathResult = appendToPath(pathResult, isEm ? EM_TOKEN : thoughtId)
+      const isEm = i === 0 && value === EM_TOKEN
 
-    return thoughtId
-  }) as Path
+      if (!finalThought) throw Error('Thought not found')
+
+      return appendToPath(acc, isEm ? EM_TOKEN : finalThought.id)
+    }, [] as any as Path)
+  } catch (err) {
+    return null
+  }
 }
 
 export default rankThoughtsFirstMatch

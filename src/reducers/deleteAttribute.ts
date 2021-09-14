@@ -10,7 +10,7 @@ const deleteAtribute = (state: State, { context, key }: { context: Context; key:
 
   const path = rankThoughtsFirstMatch(state, [...context, key])
 
-  return hasChild(state, context, key)
+  return path && hasChild(state, context, key)
     ? deleteThought(state, {
         context,
         showContexts: false,

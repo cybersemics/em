@@ -148,7 +148,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // drop on itself or after itself is a noop
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
-  const parent = unroot(parentOf(thoughtsTo))
+  const parent = unroot(rootedParentOf(state, thoughtsTo))
   const newPath = appendToPath(parent, head(thoughtsFrom))
 
   const newRank = getRankBefore(state, thoughtsTo)

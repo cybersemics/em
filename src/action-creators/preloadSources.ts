@@ -23,7 +23,7 @@ const preloadSources = (): Thunk => (dispatch, getState) => {
 
   // preload sources
   paths.forEach(path => {
-    dispatch(loadResource(path))
+    path && dispatch(loadResource(path))
   })
 }
 

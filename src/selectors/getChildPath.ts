@@ -29,10 +29,11 @@ const getChildPath = _.memoize(
         : []
     ).find(child => hashThought(child.value) === hashThought(simplePathHeadThought.value))?.value
 
+    const path = showContexts && rankThoughtsFirstMatch(state, getContextForThought(state, child)!)
     const childPath = (
-      showContexts
+      showContexts && path
         ? // rankThoughtsFirstMatch not accounted for by memoize resolver
-          rankThoughtsFirstMatch(state, getContextForThought(state, child)!).concat(otherSubthought!)
+          path.concat(otherSubthought!)
         : unroot(simplePath).concat(child as Child)
     ) as SimplePath
 

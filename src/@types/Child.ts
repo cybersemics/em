@@ -1,2 +1,2 @@
-/** A thought with a specific rank. */
+/** Thought id of a child of a parent. */
 export type Child = string

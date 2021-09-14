@@ -21,7 +21,7 @@ it('archive a thought', () => {
   - a`)
 })
 
-// @MIGRATION_TODO: Should a context have duplicate thought ??
+// @MIGRATION_TODO: Enable this after moveThought duplicate merge has been fixed. Should a context have duplicate thought ??
 it.skip('deduplicate archived thoughts with the same value', () => {
   const steps = [newThought('a'), newThought('b'), newThought('b'), archiveThought({}), archiveThought({})]
 

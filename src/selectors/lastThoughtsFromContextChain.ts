@@ -17,7 +17,10 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
 
   const ult = contextChain[contextChain.length - 1]
   const parent = lexeme.contexts.find(parent => parent === ult[0]) as ThoughtContext
-  const pathPrepend = parentOf(rankThoughtsFirstMatch(state, getContextForThought(state, parent)!))
+  // MIGRATION_TODO: Write a function that returns path given the parent id.
+  const path = rankThoughtsFirstMatch(state, getContextForThought(state, parent)!)
+  if (!path) throw new Error(`Path not found for parent id: ${parent}`)
+  const pathPrepend = parentOf(path)
   return pathPrepend.concat(splice(ult, 1, 0, head(penult))) as SimplePath
 }
 
