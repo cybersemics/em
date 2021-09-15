@@ -7,7 +7,7 @@ import {
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
-import { chain, expandThoughts, getSetting, getAllChildren } from '../selectors'
+import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
 import { equalPath, headId, headValue, isDescendant, pathToContext } from '../util'
 import { settings } from '../reducers'
 import { Index, Path, SimplePath, State, TutorialChoice } from '../@types'
@@ -50,7 +50,7 @@ const setCursor = (
     return state
   }
 
-  const simplePath = (path || HOME_PATH) as SimplePath
+  const simplePath = path ? simplifyPath(state, path) : HOME_PATH
   const context = pathToContext(state, simplePath)
   const thoughtsResolved = path && contextChain.length > 0 ? chain(state, contextChain, simplePath!) : path
 
