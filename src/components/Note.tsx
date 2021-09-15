@@ -54,8 +54,8 @@ const Note = ({ path }: NoteProps) => {
   // set the caret on the note if editing this thought and noteFocus is true
   useEffect(() => {
     const state = store.getState()
-    // cursor must be true if editing
-    if (state.editing && state.noteFocus && equalArrays(pathToContext(simplifyPath(state, state.cursor!)), context)) {
+    // cursor must be true if note is focused
+    if (state.noteFocus && equalArrays(pathToContext(simplifyPath(state, state.cursor!)), context)) {
       selection.set(noteRef.current!, { end: true })
     }
   }, [state.noteFocus])
