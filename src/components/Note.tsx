@@ -14,6 +14,7 @@ import {
 } from '../action-creators'
 import { equalArrays, pathToContext, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
 import { Path, State } from '../@types'
 
@@ -82,6 +83,7 @@ const Note = ({ path }: NoteProps) => {
     else if (e.key === 'Backspace' && !note) {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
+      asyncFocus()
       dispatch(deleteAttribute({ context, key: '=note' }))
       dispatch(setNoteFocus({ value: false }))
     } else if (e.key === 'ArrowDown') {
