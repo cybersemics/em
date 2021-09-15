@@ -422,10 +422,12 @@ const editThought = (
   }
 
   // new state
-  // do not bump data nonce, otherwise editable will be re-rendered
   const stateNew: State = {
     ...state,
     cursor: cursorNew,
+    // clear the clearThought state on edit instead of waiting till blur
+    // otherwise activating clearThought after edit will toggle it off
+    cursorCleared: false,
     contextViews: contextViewsNew,
   }
 
