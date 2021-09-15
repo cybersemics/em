@@ -392,26 +392,6 @@ const Editable = ({
     // disable on mobile to avoid infinite loop (#908)
     const isAtBeginning = !isTouch && selection.offset() === 0
 
-    /**
-     * Note: There are a lot of different values that determine if we set the selection
-     * You may need to inspect them if something goes wrong.
-     */
-    // if (isEditing) {
-    //   console.info({
-    //     thoughts,
-    //     transient,
-    //     editMode,
-    //     isEditing,
-    //     contentRef: !!contentRef.current,
-    //     noFocusNode: !noteFocus && (cursorOffset !== null || !selection.isActive()) && !dragHold,
-    //     dragHold: dragHold,
-    //     noteFocus: noteFocus,
-    //     cursorOffset: cursorOffset !== null,
-    //     isCollapsed: selection.isCollapsed(),
-    //     focusOffset: selection.offset(),
-    //     hasSelection: selection.isActive(),
-    //   })
-    // }
     // allow transient editable to have focus on render
     if (
       transient ||
@@ -437,6 +417,19 @@ const Editable = ({
         setSelectionToCursorOffset()
       }
     }
+    // // there are many different values that determine if we set the selection
+    // // use this to help debug selection issues
+    // else if (isEditing) {
+    //   console.info('')
+    //   console.info('These values are false, preventing the selection from being set on', value)
+    //   if (!editMode) console.info('- editMode')
+    //   if (!contentRef.current) console.info('- contentRef.current')
+    //   if (noteFocus) console.info('- !noteFocus')
+    //   if (!(cursorWithoutSelection || isAtBeginning)) console.info('- cursorWithoutSelection || isAtBeginning')
+    //   if (dragHold) console.info('- !dragHold')
+    //   if (isTapped) console.info('- !isTapped')
+    //   console.info('state.cursorOffset', state.cursorOffset)
+    // }
 
     if (isTapped) {
       setIsTapped(false)
