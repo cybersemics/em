@@ -29,7 +29,13 @@ export const AsyncFocus = (): (() => void) => {
   hiddenInput.style.fontSize = '16px'
 
   document.body.prepend(hiddenInput)
-  return () => hiddenInput.focus()
+  return () => {
+    // do not set the selection if it is already on a text node
+    const sel = window.getSelection()
+    if (sel?.focusNode?.nodeType !== Node.TEXT_NODE) {
+      hiddenInput.focus()
+    }
+  }
 }
 
 // export a singleton
