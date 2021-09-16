@@ -1,14 +1,14 @@
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { appendToPath, isRoot } from '../util'
 import { getLexeme } from '../selectors'
-import { Path, State } from '../@types'
+import { SimplePath, State } from '../@types'
 import getRootPath from './getRootPath'
 import childIdsToThoughts from './childIdsToThoughts'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
 // NOTE: path is pathToContexted
-const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path | null => {
+const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): SimplePath | null => {
   if (isRoot(pathUnranked)) return getRootPath(state)
 
   // Also supports ranking thoughts from EM context
@@ -18,7 +18,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path | nu
   const context = pathUnranked.slice(isEmContext ? 1 : 0)
 
   try {
-    return context.reduce<Path>((acc, value, i) => {
+    return context.reduce<SimplePath>((acc, value, i) => {
       const lexeme = getLexeme(state, value)
 
       const prevParentId = acc[acc.length - 1] || startingContext
@@ -35,7 +35,7 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): Path | nu
       if (!finalThought) throw Error('Thought not found')
 
       return appendToPath(acc, isEm ? EM_TOKEN : finalThought.id)
-    }, [] as any as Path)
+    }, [] as any as SimplePath)
   } catch (err) {
     return null
   }

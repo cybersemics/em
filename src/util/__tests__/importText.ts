@@ -4,8 +4,11 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '..
 import { hashContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
 import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
-import { importText, editThought, newThought } from '../../reducers'
-import { Path, SimplePath, State } from '../../@types'
+import { importText, newThought } from '../../reducers'
+import { State } from '../../@types'
+import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
+import { ImportTextPayload } from '../../reducers/importText'
+import _ from 'lodash'
 
 /** Helper function that imports html and exports it as plaintext. */
 const importExport = (text: string, isHTML = true) => {
@@ -15,6 +18,20 @@ const importExport = (text: string, isHTML = true) => {
   return removeHome(exported)
 }
 
+/**
+ * Import text reducer that imports on given unranked path first matched.
+ */
+const importTextAtFirstMatch = _.curryRight(
+  (state: State, payload: Omit<ImportTextPayload, 'path'> & { at: string[] }) => {
+    const path = rankThoughtsFirstMatch(state, payload.at)
+
+    if (!path) throw new Error(`Path not found for ${payload.at}`)
+    return importText(state, {
+      ...payload,
+      path,
+    })
+  },
+)
 it('basic import with proper thought structure', () => {
   const text = `
   - a
@@ -124,12 +141,11 @@ it.skip('merge descendants', () => {
   const newState = reducerFlow([
     importText({ text: initialText, lastUpdated: now }),
     newThought({ at: HOME_PATH, value: '' }),
-    (state: State) =>
-      importText(state, {
-        path: rankThoughtsFirstMatch(state, ['']),
-        text: mergeText,
-        lastUpdated: now,
-      }),
+    importTextAtFirstMatch({
+      at: [''],
+      text: mergeText,
+      lastUpdated: now,
+    }),
   ])(initialState(now))
 
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
@@ -463,20 +479,16 @@ it('replace empty cursor', () => {
 
   const stateNew = reducerFlow([
     importText({ text }),
-
     // manually change `b` to empty thought since importText skips empty thoughts
-    (newState: State) =>
-      editThought(newState, {
-        newValue: '',
-        oldValue: 'b',
-        context: ['a'],
-        path: [hashContext(newState, ['a']), hashContext(newState, ['a', 'b'])] as Path as SimplePath,
-      }),
-    (newState: State) =>
-      importText(newState, {
-        path: [hashContext(newState, ['a']) || '', hashContext(newState, ['a', '']) || ''],
-        text: paste,
-      }),
+    editThoughtAtFirstMatch({
+      newValue: '',
+      oldValue: 'b',
+      at: ['a', 'b'],
+    }),
+    importTextAtFirstMatch({
+      at: ['a', ''],
+      text: paste,
+    }),
   ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -501,19 +513,15 @@ it('replace empty cursor without affecting siblings', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `c` to empty thought since importText skips empty thoughts
-    (newState: State) =>
-      editThought(newState, {
-        newValue: '',
-        oldValue: 'c',
-        context: ['a'],
-        path: [hashContext(newState, ['a']), hashContext(newState, ['a', 'c'])] as Path as SimplePath,
-      }),
-
-    (newState: State) =>
-      importText(newState, {
-        path: [hashContext(newState, ['a']) || '', hashContext(newState, ['a', '']) || ''],
-        text: paste,
-      }),
+    editThoughtAtFirstMatch({
+      newValue: '',
+      oldValue: 'c',
+      at: ['a', 'c'],
+    }),
+    importTextAtFirstMatch({
+      at: ['a', ''],
+      text: paste,
+    }),
   ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -536,11 +544,10 @@ it('import as subthoughts of non-empty cursor', () => {
 
   const stateNew = reducerFlow([
     newThought('a'),
-    (newState: State) =>
-      importText(newState, {
-        path: [hashContext(newState, ['a']) || ''],
-        text: paste,
-      }),
+    importTextAtFirstMatch({
+      at: ['a'],
+      text: paste,
+    }),
   ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -550,7 +557,7 @@ it('import as subthoughts of non-empty cursor', () => {
     - x
     - y`)
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'y']))
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'y'])!)
 })
 
 it('decode HTML entities', () => {
@@ -599,19 +606,15 @@ it('single-line nested html tags', () => {
     importText({ text }),
 
     // manually change `b` to empty thought to not see 'b' end of the new value.
-    (newState: State) =>
-      editThought(newState, {
-        newValue: '',
-        oldValue: 'b',
-        context: ['a'],
-        path: [hashContext(newState, ['a']) || '', hashContext(newState, ['a', 'b']) || ''] as Path as SimplePath,
-      }),
-
-    (newState: State) =>
-      importText(newState, {
-        path: [hashContext(newState, ['a']) || '', hashContext(newState, ['a', '']) || ''],
-        text: paste,
-      }),
+    editThoughtAtFirstMatch({
+      newValue: '',
+      oldValue: 'b',
+      at: ['a', 'b'],
+    }),
+    importTextAtFirstMatch({
+      at: ['a', ''],
+      text: paste,
+    }),
   ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')

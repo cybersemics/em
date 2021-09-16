@@ -6,11 +6,12 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import undoShortcut from '../undo'
-import { hashContext, initialState } from '../../util'
+import { initialState } from '../../util'
 import * as undoUtils from '../../selectors/isUndoEnabled'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
+import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
 
 const timer = testTimer()
 
@@ -242,17 +243,12 @@ it('newThought action should be merged with the succeeding patch', () => {
     }),
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
-    (dispatch, getState) => {
-      const state = getState()
-      dispatch({
-        type: 'editThought',
-        context: [HOME_TOKEN],
-        oldValue: 'd',
-        newValue: 'd1',
-        rankInContext: 3,
-        path: [hashContext(state, ['d'])],
-      })
-    },
+    editThoughtAtFirstMatchActionCreator({
+      oldValue: 'd',
+      newValue: 'd1',
+      rankInContext: 3,
+      at: ['d'],
+    }),
     // undo thought change and preceding newThought action
     { type: 'undoAction' },
   ])
@@ -276,26 +272,16 @@ it('undo contiguous changes', () => {
         - A
         - B`,
     }),
-    (dispatch, getState) => {
-      const state = getState()
-      dispatch({
-        type: 'editThought',
-        newValue: 'Atlantic',
-        oldValue: 'A',
-        context: [HOME_TOKEN],
-        path: [hashContext(state, ['A'])],
-      })
-    },
-    (dispatch, getState) => {
-      const state = getState()
-      dispatch({
-        type: 'editThought',
-        newValue: 'Atlantic City',
-        oldValue: 'Atlantic',
-        context: [HOME_TOKEN],
-        path: [hashContext(state, ['Atlantic'])],
-      })
-    },
+    editThoughtAtFirstMatchActionCreator({
+      newValue: 'Atlantic',
+      oldValue: 'A',
+      at: ['A'],
+    }),
+    editThoughtAtFirstMatchActionCreator({
+      newValue: 'Atlantic City',
+      oldValue: 'Atlantic',
+      at: ['Atlantic'],
+    }),
     { type: 'undoAction' },
   ])
 
@@ -340,16 +326,11 @@ it('clear patches when any undoable action is dispatched', () => {
         - B`,
       preventSetCursor: true,
     }),
-    (dispatch, getState) => {
-      const state = getState()
-      dispatch({
-        type: 'editThought',
-        newValue: 'Atlantic',
-        oldValue: 'A',
-        context: [HOME_TOKEN],
-        path: [hashContext(state, ['A'])],
-      })
-    },
+    editThoughtAtFirstMatchActionCreator({
+      newValue: 'Atlantic',
+      oldValue: 'A',
+      at: ['A'],
+    }),
     { type: 'newThought', value: 'New Jersey' },
     { type: 'undoAction' },
     { type: 'undoAction' },

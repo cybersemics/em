@@ -1,12 +1,12 @@
 import { HOME_TOKEN } from '../../constants'
 
 // TODO: Why does util have to be imported before selectors and reducers?
-import { hashContext, initialState, reducerFlow } from '../../util'
+import { initialState, reducerFlow } from '../../util'
 
-import { childIdsToThoughts, exportContext, getContexts } from '../../selectors'
+import { exportContext, getContexts } from '../../selectors'
 import { archiveThought, cursorUp, newSubthought, newThought, setCursor, toggleContextView } from '../../reducers'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import { State } from '../../@types'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 
 it('archive a thought', () => {
   const steps = [newThought('a'), newThought('b'), archiveThought({})]
@@ -112,7 +112,7 @@ it('permanently delete archive with descendants', () => {
   const steps = [
     newThought('a'),
     newSubthought('b'),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
+    setCursorFirstMatch(['a']),
     archiveThought({}),
     setCursorFirstMatch(['=archive']),
     archiveThought({}),
@@ -136,9 +136,7 @@ it('cursor should move to prev sibling', () => {
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
     { value: 'a', rank: 0 },
     { value: 'a1', rank: 0 },
   ])
@@ -158,9 +156,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
     { value: 'a', rank: 0 },
     { value: 'a2', rank: 1 },
   ])
@@ -172,9 +168,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([{ value: 'a', rank: 0 }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
 })
 
 it('cursor should be removed if the last thought is deleted', () => {
@@ -187,16 +181,7 @@ it('cursor should be removed if the last thought is deleted', () => {
 })
 
 it('empty thought should be archived if it has descendants', () => {
-  const steps = [
-    newThought('a'),
-    newThought(''),
-    newSubthought('b'),
-    (newState: State) =>
-      setCursor(newState, {
-        path: [hashContext(newState, [''])!],
-      }),
-    archiveThought({}),
-  ]
+  const steps = [newThought('a'), newThought(''), newSubthought('b'), setCursorFirstMatch(['']), archiveThought({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())

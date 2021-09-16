@@ -1,7 +1,8 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { collapseContext, cursorBack, cursorUp, newSubthought, newThought } from '../../reducers'
-import { childIdsToThoughts, exportContext } from '../../selectors'
+import { exportContext } from '../../selectors'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 
 it('do nothing on leaf', () => {
   const steps = [newThought('a'), newSubthought('b'), collapseContext({})]
@@ -29,9 +30,7 @@ it('collapse context with single child', () => {
       - b
     - c`)
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([{ value: 'a' }, { value: 'c' }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('collapse context with multiple children', () => {
@@ -57,9 +56,7 @@ it('collapse context with multiple children', () => {
     - c
     - d`)
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([{ value: 'a' }, { value: 'c' }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('merge children', () => {
@@ -86,9 +83,7 @@ it('merge children', () => {
     - d
     - x`)
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([{ value: 'a' }, { value: 'c' }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
 })
 
 // @MIGRATION_TODO: Fix this after duplicate merge is fixed
@@ -115,9 +110,7 @@ it.skip('merge duplicate children', () => {
     - c
     - d`)
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([{ value: 'a' }, { value: 'c' }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('after collapse context set cursor to the first visible children.', () => {
@@ -133,9 +126,7 @@ it('after collapse context set cursor to the first visible children.', () => {
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([{ value: 'a' }, { value: 'c' }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('after collapse context set cursor to the parent if there are no visible children.', () => {
@@ -144,7 +135,5 @@ it('after collapse context set cursor to the parent if there are no visible chil
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([{ value: 'a' }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }])
 })

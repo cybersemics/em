@@ -1,8 +1,8 @@
-import { hashContext, initialState, reducerFlow } from '../../util'
-import { cursorDown, deleteThoughtWithCursor, moveThought, newThought, rerank } from '../../reducers'
+import { initialState, reducerFlow } from '../../util'
+import { cursorDown, deleteThoughtWithCursor, newThought, rerank } from '../../reducers'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
-import { State } from '../../@types'
+import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 
 it('recalculate absolute ranks while preserving relative order to avoid rank precision errors', () => {
   // add two thoughts normally then use insertBefore to cut the rank in half
@@ -42,12 +42,11 @@ it('rerank on moveThought if ranks are too close', () => {
     newThought({ value: 'b', insertBefore: true }),
 
     // move any thought to trigger a rerank
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['a'])!],
-        newPath: [hashContext(newState, ['a'])!],
-        newRank: 99,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['a'],
+      to: ['a'],
+      newRank: 99,
+    }),
   ]
 
   const state = reducerFlow(steps)(initialState())

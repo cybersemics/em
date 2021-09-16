@@ -1,31 +1,24 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
-import {
-  exportContext,
-  getContexts,
-  getAllChildren,
-  getLexeme,
-  getParent,
-  rankThoughtsFirstMatch,
-  getParentThought,
-} from '../../selectors'
-import { editThought, newThought, setCursor, importText } from '../../reducers'
-import { Parent, Path, SimplePath, State } from '../../@types'
+import { exportContext, getContexts, getAllChildren, getLexeme, getParent, getParentThought } from '../../selectors'
+import { newThought, importText } from '../../reducers'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 // import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
 
 it('edit a thought', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a']) || ''] }),
-    (newState: State) =>
-      editThought(newState, {
-        newValue: 'aa',
-        oldValue: 'a',
-        context: [HOME_TOKEN],
-        path: [hashContext(newState, ['a'])] as SimplePath,
-      }),
+    setCursorFirstMatch(['a']),
+    editThoughtAtFirstMatch({
+      newValue: 'aa',
+      oldValue: 'a',
+      at: ['a'],
+    }),
   ]
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -45,7 +38,7 @@ it('edit a thought', () => {
 
   expect(getContexts(stateNew, 'aa')).toMatchObject([thought!.id])
 
-  const expectedChildren: Partial<Parent>[] = [
+  expect(getAllChildrenAsThoughts(stateNew, [HOME_TOKEN])).toMatchObject([
     {
       id: hashContext(stateNew, ['b'])!,
       value: 'b',
@@ -58,8 +51,7 @@ it('edit a thought', () => {
       parentId: HOME_TOKEN,
       rank: 0,
     },
-  ]
-  expect(getAllChildrenAsThoughts(stateNew, [HOME_TOKEN])).toMatchObject(expectedChildren)
+  ])
 
   // cursor should be at /aa
   expect(stateNew.cursor).toMatchObject([hashContext(stateNew, ['aa'])])
@@ -69,15 +61,15 @@ it('edit a descendant', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a']) || ''] }),
-    (newState: State) => {
-      return editThought(newState, {
-        newValue: 'aa1',
-        oldValue: 'a1',
-        context: ['a'],
-        path: rankThoughtsFirstMatch(newState, ['a', 'a1']) as Path as SimplePath,
-      })
-    },
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
+    editThoughtAtFirstMatch({
+      newValue: 'aa1',
+      oldValue: 'a1',
+      at: ['a', 'a1'],
+    }),
   ]
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -105,13 +97,11 @@ it('edit a thought with descendants', () => {
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a2' }),
-    (newState: State) =>
-      editThought(newState, {
-        newValue: 'aa',
-        oldValue: 'a',
-        context: [HOME_TOKEN],
-        path: [hashContext(newState, ['a']) || ''] as SimplePath,
-      }),
+    editThoughtAtFirstMatch({
+      newValue: 'aa',
+      oldValue: 'a',
+      at: ['a'],
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -138,7 +128,7 @@ it('edit a thought with descendants', () => {
 
   expect(thought?.parentId).toBe(HOME_TOKEN)
 
-  const expectedChildren: Partial<Parent>[] = [
+  expect(getAllChildrenAsThoughts(stateNew, ['aa'])).toMatchObject([
     {
       value: 'a1',
       rank: 0,
@@ -149,24 +139,23 @@ it('edit a thought with descendants', () => {
       rank: 1,
       id: thoughtA2?.id,
     },
-  ]
-
-  expect(getAllChildrenAsThoughts(stateNew, ['aa'])).toMatchObject(expectedChildren)
+  ])
 })
 
 it('edit a thought existing in mutliple contexts', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a']) || ''] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    (newState: State) =>
-      editThought(newState, {
-        newValue: 'abc',
-        oldValue: 'ab',
-        context: ['a'],
-        path: rankThoughtsFirstMatch(newState, ['a', 'ab']) as Path as SimplePath,
-      }),
+    editThoughtAtFirstMatch({
+      newValue: 'abc',
+      oldValue: 'ab',
+      at: ['a', 'ab'],
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -190,29 +179,29 @@ it('edit a thought existing in mutliple contexts', () => {
   // abc should exist in context a
   expect(getContexts(stateNew, 'abc')).toMatchObject([thoughtABC.id])
 
-  const expectedChildren = [
+  expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject([
     {
       value: 'abc',
       rank: 0,
       id: thoughtABC.id,
     },
-  ]
-  expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject(expectedChildren)
+  ])
 })
 
 it('edit a thought that exists in another context', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a']) || ''] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    (newState: State) =>
-      editThought(newState, {
-        newValue: 'ab',
-        oldValue: 'a',
-        context: ['b'],
-        path: rankThoughtsFirstMatch(newState, ['b', 'a']) as Path as SimplePath,
-      }),
+    editThoughtAtFirstMatch({
+      newValue: 'ab',
+      oldValue: 'a',
+      at: ['b', 'a'],
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -249,13 +238,11 @@ it('edit a child with the same value as its parent', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    (newState: State) =>
-      editThought(newState, {
-        newValue: 'ab',
-        oldValue: 'a',
-        context: ['a'],
-        path: rankThoughtsFirstMatch(newState, ['a', 'a']) as Path as SimplePath,
-      }),
+    editThoughtAtFirstMatch({
+      newValue: 'ab',
+      oldValue: 'a',
+      at: ['a', 'a'],
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -277,27 +264,30 @@ it('edit a child with the same value as its parent', () => {
   expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0, id: thoughtInContextA.id }])
 
   // cursor should be /a/ab
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'ab']))
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    {
+      value: 'a',
+    },
+    {
+      value: 'ab',
+    },
+  ])
 })
 
 it('do not duplicate children when new and old context are same', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b', insertNewSubthought: true }),
-    (newState: State) =>
-      editThought(newState, {
-        newValue: 'as',
-        oldValue: 'a',
-        context: [HOME_TOKEN],
-        path: [hashContext(newState, ['a'])] as SimplePath,
-      }),
-    (newState: State) =>
-      editThought(newState, {
-        newValue: 'a',
-        oldValue: 'as',
-        context: [HOME_TOKEN],
-        path: [hashContext(newState, ['as'])] as SimplePath,
-      }),
+    editThoughtAtFirstMatch({
+      newValue: 'as',
+      oldValue: 'a',
+      at: ['a'],
+    }),
+    editThoughtAtFirstMatch({
+      newValue: 'a',
+      oldValue: 'as',
+      at: ['as'],
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -406,14 +396,11 @@ describe('changing thought with duplicate descendent', () => {
         - b
           - ac`,
       }),
-      (newState: State) => {
-        return editThought(newState, {
-          newValue: 'ac',
-          oldValue: 'a',
-          context: [HOME_TOKEN],
-          path: [hashContext(newState, ['a'])] as SimplePath,
-        })
-      },
+      editThoughtAtFirstMatch({
+        newValue: 'ac',
+        oldValue: 'a',
+        at: ['a'],
+      }),
     ]
 
     // run steps through reducer flow and export as plaintext for readable test
@@ -440,13 +427,11 @@ describe('changing thought with duplicate descendent', () => {
         - b
           - a`,
       }),
-      (newState: State) =>
-        editThought(newState, {
-          newValue: 'ac',
-          oldValue: 'a',
-          context: [HOME_TOKEN],
-          path: [hashContext(newState, ['a'])] as SimplePath,
-        }),
+      editThoughtAtFirstMatch({
+        newValue: 'ac',
+        oldValue: 'a',
+        at: ['a'],
+      }),
     ]
 
     // run steps through reducer flow and export as plaintext for readable test

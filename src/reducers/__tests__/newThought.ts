@@ -2,7 +2,7 @@ import { HOME_TOKEN } from '../../constants'
 import { hashContext, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import newThought from '../newThought'
-import { State } from '../../@types'
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 
 it('new thought in root', () => {
   const stateNew = newThought(initialState(), { value: 'a' })
@@ -53,13 +53,12 @@ it('new subthought top', () => {
     newThought('a'),
     newThought({ value: 'b', insertNewSubthought: true }),
     newThought('c'),
-    (newState: State) =>
-      newThought(newState, {
-        value: 'd',
-        at: [hashContext(newState, ['a'])!],
-        insertNewSubthought: true,
-        insertBefore: true,
-      }),
+    newThoughtAtFirstMatch({
+      value: 'd',
+      at: ['a'],
+      insertNewSubthought: true,
+      insertBefore: true,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

@@ -1,5 +1,5 @@
-import { hashContext, initialState, pathToContext, reducerFlow } from '../../util'
-import { childIdsToThoughts, rankThoughtsFirstMatch } from '../../selectors'
+import { initialState, pathToContext, reducerFlow } from '../../util'
+import { rankThoughtsFirstMatch } from '../../selectors'
 import { State } from '../../@types'
 
 // reducers
@@ -14,38 +14,24 @@ import {
 } from '../../reducers'
 
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 
 describe('normal view', () => {
   it('move cursor to next sibling', () => {
-    const steps = [
-      newThought('a'),
-      newThought('b'),
-      (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-      cursorDown,
-    ]
+    const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), cursorDown]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([{ value: 'b', rank: 1 }])
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
   })
 
   it('move cursor from parent first child', () => {
-    const steps = [
-      newThought('a'),
-      newSubthought('b'),
-      (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-      cursorDown,
-    ]
+    const steps = [newThought('a'), newSubthought('b'), setCursorFirstMatch(['a']), cursorDown]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
-
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'b', rank: 0 },
     ])
@@ -56,10 +42,7 @@ describe('normal view', () => {
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
-
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([{ value: 'a', rank: 0 }])
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
   })
 
   it('do nothing when there are no thoughts', () => {
@@ -69,27 +52,19 @@ describe('normal view', () => {
   })
 
   it('move cursor to next uncle', () => {
-    const steps = [
-      newThought('a'),
-      newThought('b'),
-      (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-      newSubthought('a1'),
-      cursorDown,
-    ]
+    const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), newSubthought('a1'), cursorDown]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([{ value: 'b', rank: 1 }])
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
   })
 
   it('move cursor to nearest uncle', () => {
     const steps = [
       newThought('a'),
       newThought('b'),
-      (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
+      setCursorFirstMatch(['a']),
       newSubthought('a1'),
       newSubthought('a1.1'),
       newSubthought('a1.1.1'),
@@ -98,10 +73,7 @@ describe('normal view', () => {
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
-
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([{ value: 'b', rank: 1 }])
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
   })
 
   it('work for sorted thoughts', () => {
@@ -109,16 +81,14 @@ describe('normal view', () => {
       newThought('a'),
       newSubthought('n'),
       newThought('m'),
-      (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
+      setCursorFirstMatch(['a']),
       toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
       cursorDown,
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([{ value: 'a' }, { value: 'm' }])
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'm' }])
   })
 })
 
@@ -145,9 +115,7 @@ describe.skip('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'm', rank: 1 },
       { value: 'a', rank: 0 },
@@ -163,7 +131,7 @@ describe.skip('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(stateNew.cursor).toMatchObject([
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'n', rank: 1 },
     ])
@@ -209,23 +177,14 @@ describe.skip('context view', () => {
           path: rankThoughtsFirstMatch(newState, ['a', 'm']),
         }),
       toggleContextView,
-      (newState: State) =>
-        setCursor(newState, {
-          path: [
-            hashContext(newState, ['a'])!,
-            hashContext(newState, ['a', 'm'])!,
-            hashContext(newState, ['a', 'm', 'a'])!,
-          ],
-        }),
+      setCursorFirstMatch(['a', 'm', 'a']),
       cursorDown,
     ]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'm', rank: 1 },
       { value: 'b', rank: 1 },
@@ -251,7 +210,7 @@ describe.skip('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(stateNew.cursor).toMatchObject([
+    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'm', rank: 0 },
       { value: 'b', rank: 1 },
@@ -269,9 +228,9 @@ describe.skip('context view', () => {
 
     const steps = [
       importText({ text }),
-      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      setCursorFirstMatch(['a', 'm']),
       toggleContextView,
-      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
+      setCursorFirstMatch(['a', 'm', 'b', 'y']),
       cursorDown,
     ]
 
@@ -292,9 +251,9 @@ describe.skip('context view', () => {
 
     const steps = [
       importText({ text }),
-      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      setCursorFirstMatch(['a', 'm']),
       toggleContextView,
-      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'b', 'y']) }),
+      setCursorFirstMatch(['a', 'm', 'b', 'y']),
       cursorDown,
     ]
 
@@ -319,9 +278,9 @@ describe.skip('context view', () => {
 
     const steps = [
       importText({ text }),
-      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      setCursorFirstMatch(['a', 'm']),
       toggleContextView,
-      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a', 'x']) }),
+      setCursorFirstMatch(['a', 'm', 'a', 'x']),
       cursorDown,
     ]
 
@@ -333,12 +292,7 @@ describe.skip('context view', () => {
   })
 
   it('should not move cursor if the cursor on last thought', () => {
-    const steps = [
-      newThought('a'),
-      newThought('b'),
-      (stateNew: State) => setCursor(stateNew, { path: [hashContext(stateNew, ['b'])!] }),
-      cursorDown,
-    ]
+    const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), cursorDown]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())

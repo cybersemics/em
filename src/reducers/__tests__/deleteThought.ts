@@ -1,47 +1,52 @@
 import { HOME_TOKEN } from '../../constants'
-import { hashContext, initialState, reducerFlow } from '../../util'
-import { getContexts, getAllChildren, getParent } from '../../selectors'
-import { deleteThought, newSubthought, newThought } from '../../reducers'
+import { initialState, parentOf, reducerFlow } from '../../util'
+import { getContexts, getAllChildren, getParent, getThoughtByPath, rankThoughtsFirstMatch } from '../../selectors'
+import { newSubthought, newThought, deleteThought } from '../../reducers'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import { State } from '../../@types'
+import _ from 'lodash'
+
+/**
+ * Delete thought at the given unranked path first matched.
+ */
+const deleteThoughtAtFirstMatch = _.curryRight((state: State, at: string[]) => {
+  const path = rankThoughtsFirstMatch(state, at)
+
+  if (!path) throw new Error(`Ranked thoughts not found for context: ${at}`)
+
+  const thought = getThoughtByPath(state, path)
+
+  const context = at.length > 1 ? parentOf(at) : [HOME_TOKEN]
+
+  return deleteThought(state, {
+    context,
+    thoughtId: thought.id,
+  })
+})
 
 it('delete from root', () => {
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    (newState: State) =>
-      deleteThought(newState, {
-        context: [HOME_TOKEN],
-        thoughtId: hashContext(newState, ['b']) || '',
-      }),
-  ]
+  const steps = [newThought('a'), newThought('b'), deleteThoughtAtFirstMatch(['b'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const state = initialState()
   const stateNew = reducerFlow(steps)(state)
 
   /** Gets the root Parent from a state's contextIndex. */
-  const rootParent = getParent(stateNew, [HOME_TOKEN])
+  const rootParent = getParent(stateNew, [HOME_TOKEN])!
 
   // contextIndex
-  expect(rootParent).toMatchObject({
-    children: [hashContext(stateNew, ['a'])],
-  })
+  matchChildIdsWithThoughts(stateNew, rootParent.children, [
+    {
+      value: 'a',
+    },
+  ])
 
   // thoughtIndex
   expect(getContexts(stateNew, 'b')).toEqual([])
 })
 
 it('delete descendants of root thought', () => {
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    newSubthought('c'),
-    (newState: State) =>
-      deleteThought(newState, {
-        context: [HOME_TOKEN],
-        thoughtId: hashContext(newState, ['a']) || '',
-      }),
-  ]
+  const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), deleteThoughtAtFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -58,15 +63,7 @@ it('delete descendants of root thought', () => {
 })
 
 it('delete thought with duplicate child', () => {
-  const steps = [
-    newThought('a'),
-    newSubthought('a'),
-    (newState: State) =>
-      deleteThought(newState, {
-        context: [HOME_TOKEN],
-        thoughtId: hashContext(newState, ['a']) || '',
-      }),
-  ]
+  const steps = [newThought('a'), newSubthought('a'), deleteThoughtAtFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())

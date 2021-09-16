@@ -29,7 +29,7 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
 
-interface Options {
+export interface ImportTextPayload {
   path?: Path
   text: string
   lastUpdated?: Timestamp
@@ -48,7 +48,7 @@ interface Options {
  */
 const importText = (
   state: State,
-  { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot, updatedBy = getSessionId() }: Options,
+  { path, text, lastUpdated, preventSetCursor, rawDestValue, skipRoot, updatedBy = getSessionId() }: ImportTextPayload,
 ): State => {
   const isRoam = validateRoam(text)
 

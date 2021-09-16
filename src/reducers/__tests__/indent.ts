@@ -58,5 +58,5 @@ it('indent on cursor thought should update cursor', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a1', 'a2']))
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a1', 'a2'])!)
 })

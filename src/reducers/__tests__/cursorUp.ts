@@ -17,7 +17,7 @@ it('move cursor to previous sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a']))
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a'])!)
 })
 
 it('move cursor to previous attribute when showHiddenThoughts is true', () => {
@@ -47,7 +47,7 @@ it('move cursor from first child to parent', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a']))
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a'])!)
 })
 
 it('move to last root child when there is no cursor', () => {
@@ -56,7 +56,7 @@ it('move to last root child when there is no cursor', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['b']))
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['b'])!)
 })
 
 it('do nothing when there are no thoughts', () => {
@@ -87,6 +87,6 @@ describe.skip('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBeDefined()
-    expect(pathToContext(stateNew.cursor!)).toMatchObject(['a', 'm'])
+    expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['a', 'm'])
   })
 })

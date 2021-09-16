@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { hashContext, initialState, reducerFlow } from '../../util'
+import { initialState, reducerFlow } from '../../util'
 import { childIdsToThoughts, exportContext } from '../../selectors'
 
 // reducers
@@ -8,7 +8,8 @@ import newThought from '../newThought'
 import moveThoughtUp from '../moveThoughtUp'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
-import { State } from '../../@types'
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtUp]
@@ -39,7 +40,10 @@ it('move to prev uncle', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newSubthought('b1'),
     moveThoughtUp,
   ]
@@ -59,7 +63,10 @@ it('move to prev uncle in sorted list', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     toggleAttribute({ context: ['b'], key: '=sort', value: 'Alphabetical' }),
     newSubthought('b1'),
     moveThoughtUp,
@@ -104,10 +111,13 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['b'])!] }),
+    setCursorFirstMatch(['b']),
     moveThoughtUp,
   ]
 
@@ -125,12 +135,7 @@ it('move descendants', () => {
 })
 
 it('trying to move last thought of root should do nothing', () => {
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-    moveThoughtUp,
-  ]
+  const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), moveThoughtUp]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())

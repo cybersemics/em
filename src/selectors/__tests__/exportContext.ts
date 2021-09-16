@@ -1,9 +1,9 @@
-import { hashContext, initialState, reducerFlow } from '../../util'
-import { editThought, importText, setCursor } from '../../reducers'
+import { initialState, reducerFlow } from '../../util'
+import { importText } from '../../reducers'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
-import { SimplePath, State, Path } from '../../@types'
 import exportContext from '../exportContext'
-import rankThoughtsFirstMatch from '../rankThoughtsFirstMatch'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
 
 it('meta and archived thoughts are included', () => {
   const text = `- a
@@ -13,10 +13,7 @@ it('meta and archived thoughts are included', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -39,10 +36,7 @@ it('meta is included but archived thoughts are excluded', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -63,10 +57,7 @@ it('meta is excluded', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -88,10 +79,7 @@ it('meta is excluded but archived is included', () => {
     - true
   - b`
 
-  const steps = [
-    importText({ text }),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -106,10 +94,7 @@ it('exported as plain text', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [
-    importText({ text }),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -124,10 +109,7 @@ it('exported as html', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [
-    importText({ text }),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-  ]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -152,13 +134,11 @@ it('export multi-line thoughts as separate thoughts', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      editThought(newState, {
-        oldValue: 'Hello',
-        newValue: 'Hello\nworld',
-        context: ['a', 'b'],
-        path: rankThoughtsFirstMatch(newState, ['a', 'b', 'hello']) as Path as SimplePath,
-      }),
+    editThoughtAtFirstMatch({
+      oldValue: 'Hello',
+      newValue: 'Hello\nworld',
+      at: ['a', 'b', 'hello'],
+    }),
   ]
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')

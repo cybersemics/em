@@ -1,13 +1,12 @@
 import { HOME_TOKEN } from '../../constants'
-import { hashContext, initialState, reducerFlow } from '../../util'
+import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-import { State } from '../../@types'
 
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import setCursor from '../setCursor'
 import setAttribute from '../setAttribute'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('set', () => {
   const steps = [
@@ -58,7 +57,7 @@ it('add attribute if key has already been created', () => {
   const steps = [
     newThought('a'),
     newSubthought('=test'),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
+    setCursorFirstMatch(['a']),
     setAttribute({
       context: ['a'],
       key: '=test',

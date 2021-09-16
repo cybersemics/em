@@ -16,25 +16,18 @@ import { Index, Parent, Path, State } from '../@types'
 import { head, headId, isDescendantPath, pathToContext, reducerFlow, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 
+export interface MoveThoughtPayload {
+  oldPath: Path
+  newPath: Path
+  offset?: number
+  // skip the auto rerank to prevent infinite loop
+  skipRerank?: boolean
+  newRank: number
+}
+
 // @MIGRATION_TODO: Nested merge logic doesn't work properly.
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (
-  state: State,
-  {
-    oldPath,
-    newPath,
-    offset,
-    skipRerank,
-    newRank,
-  }: {
-    oldPath: Path
-    newPath: Path
-    offset?: number
-    // skip the auto rerank to prevent infinite loop
-    skipRerank?: boolean
-    newRank: number
-  },
-) => {
+const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank }: MoveThoughtPayload) => {
   const oldSimplePath = simplifyPath(state, oldPath)
   const newSimplePath = simplifyPath(state, newPath)
 

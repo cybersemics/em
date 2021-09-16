@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { hashContext, initialState, reducerFlow } from '../../util'
+import { initialState, reducerFlow } from '../../util'
 import {
   exportContext,
   getContexts,
@@ -12,14 +12,17 @@ import {
   rankThoughtsFirstMatch,
   childIdsToThoughts,
 } from '../../selectors'
-import { moveThought, importText, newSubthought, newThought, setCursor } from '../../reducers'
+import { importText, newSubthought, newThought } from '../../reducers'
 // import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
-import { State, SimplePath } from '../../@types'
+import { State } from '../../@types'
 import { store as appStore } from '../../store'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
 import { clear, importText as importTextAction, moveThought as existingThoughtMoveAction } from '../../action-creators'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 
 const timer = testTimer()
 
@@ -27,12 +30,11 @@ it('move within root', () => {
   const steps = [
     newThought('a'),
     newThought('b'),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: rankThoughtsFirstMatch(newState, ['b']),
-        newPath: rankThoughtsFirstMatch(newState, ['b']),
-        newRank: -1,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['b'],
+      newRank: -1,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -60,12 +62,11 @@ it('persist id on move', () => {
   expect(getLexeme(stateNew1, 'a2')!.contexts).toEqual([thoughtA2.id])
 
   const steps2 = [
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: rankThoughtsFirstMatch(newState, ['a', 'a1']),
-        newPath: [hashContext(newState, ['a', 'a1'])!],
-        newRank: 1,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'a1'],
+      to: ['a1'],
+      newRank: 1,
+    }),
   ]
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
@@ -81,12 +82,11 @@ it('move within context (rank only)', () => {
     newThought('a'),
     newSubthought('a1'),
     newThought('a2'),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: rankThoughtsFirstMatch(newState, ['a', 'a2']),
-        newPath: rankThoughtsFirstMatch(newState, ['a', 'a2']),
-        newRank: -1,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'a2'],
+      to: ['a', 'a2'],
+      newRank: -1,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -110,14 +110,16 @@ it('move across contexts', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newSubthought('b1'),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: rankThoughtsFirstMatch(newState, ['b', 'b1']),
-        newPath: [hashContext(newState, ['a'])!, hashContext(newState, ['b', 'b1'])!],
-        newRank: 1,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['b', 'b1'],
+      to: ['a', 'b1'],
+      newRank: 1,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -144,15 +146,17 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    (newState: State) => newThought(newState, { value: 'b', at: [hashContext(newState, ['a'])!] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['b'])!],
-        newPath: [hashContext(newState, ['b'])!],
-        newRank: -1,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['b'],
+      newRank: -1,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -191,20 +195,17 @@ it('moving cursor thought should update cursor', () => {
     newThought('a'),
     newSubthought('a1'),
     newThought('a2'),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: rankThoughtsFirstMatch(newState, ['a', 'a2']),
-        newPath: rankThoughtsFirstMatch(newState, ['a', 'a2']),
-        newRank: -1,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'a2'],
+      to: ['a', 'a2'],
+      newRank: -1,
+    }),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([
+  expect(childIdsToThoughts(stateNew, stateNew.cursor!)).toMatchObject([
     { value: 'a', rank: 0 },
     { value: 'a2', rank: -1 },
   ])
@@ -216,12 +217,11 @@ it('moving ancestor of cursor should update cursor', () => {
     newThought('b'),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['b'])!],
-        newPath: [hashContext(newState, ['b'])!],
-        newRank: -1,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['b'],
+      newRank: -1,
+    }),
   ]
 
   // run steps through reducer flow
@@ -242,21 +242,18 @@ it('moving unrelated thought should not update cursor', () => {
     newThought('b'),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    (newState: State) => setCursor(newState, { path: [hashContext(newState, ['a'])!] }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['b'])!],
-        newPath: [hashContext(newState, ['b'])!],
-        newRank: -1,
-      }),
+    setCursorFirstMatch(['a']),
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['b'],
+      newRank: -1,
+    }),
   ]
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(thoughts).toMatchObject([{ value: 'a', rank: 0 }])
+  expect(childIdsToThoughts(stateNew, stateNew.cursor!)).toMatchObject([{ value: 'a', rank: 0 }])
 })
 
 it('move root thought into another root thought', () => {
@@ -268,12 +265,11 @@ it('move root thought into another root thought', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['a'])!],
-        newPath: [hashContext(newState, ['x'])!, hashContext(newState, ['a'])!],
-        newRank: 0,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['a'],
+      to: ['x', 'a'],
+      newRank: -1,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -310,12 +306,11 @@ it('move descendants with siblings', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: rankThoughtsFirstMatch(newState, ['a', 'b']),
-        newPath: [hashContext(newState, ['a', 'b'])!],
-        newRank: 1,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'b'],
+      to: ['b'],
+      newRank: 1,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -350,16 +345,11 @@ it.skip('merge duplicate with new rank', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['m'])!],
-        newPath: [
-          hashContext(newState, ['a'])!,
-          // Note: Here we are using id of thought ['m'] instead of ['a', 'm'] because we want merge thought to take the id of the moved thought. We can change it to take id of the duplicate thought i.e ['a', 'm'] later.
-          hashContext(newState, ['m'])!,
-        ],
-        newRank: 0,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['m'],
+      to: ['a', 'm'],
+      newRank: 0,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -394,12 +384,11 @@ it.skip('merge with duplicate with duplicate rank', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['m'])!],
-        newPath: [hashContext(newState, ['a'])!, hashContext(newState, ['a', 'm'])!],
-        newRank: 0,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['m'],
+      to: ['a', 'm'],
+      newRank: 0,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -434,12 +423,11 @@ it('move with duplicate descendant', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['b'])!],
-        newPath: [hashContext(newState, ['a'])!, hashContext(newState, ['b'])!],
-        newRank: 0,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['a', 'b'],
+      newRank: 0,
+    }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -469,12 +457,11 @@ it('move with hash matched descendant', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: [hashContext(newState, ['b'])!],
-        newPath: [hashContext(newState, ['a'])!, hashContext(newState, ['b'])!],
-        newRank: 0,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['a', 'b'],
+      newRank: 0,
+    }),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -505,12 +492,11 @@ it.skip('move with nested duplicate thoughts', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: rankThoughtsFirstMatch(newState, ['c', 'a']),
-        newPath: [hashContext(newState, ['a'])!],
-        newRank: 0,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['c', 'a'],
+      to: ['a'],
+      newRank: 0,
+    }),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -541,12 +527,11 @@ it.skip('move with nested duplicate thoughts and merge their children', () => {
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThought(newState, {
-        oldPath: rankThoughtsFirstMatch(newState, ['p', 'a']),
-        newPath: [hashContext(newState, ['a'])!],
-        newRank: 0,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['p', 'a'],
+      to: ['a'],
+      newRank: 0,
+    }),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -616,12 +601,12 @@ it.skip('consistent rank between thoughtIndex and contextIndex on duplicate merg
 
   const steps = [
     importText({ text }),
-    (state: State) =>
-      moveThought(state, {
-        oldPath: rankThoughtsFirstMatch(state, ['a', 'b']),
+    (newState: State) =>
+      moveThoughtAtFirstMatch(newState, {
+        from: ['a', 'b'],
+        to: ['b'],
         // Note: Here new rank will be 0.5 because it's calculated between a (0) and b (1)
-        newPath: [hashContext(state, ['b'])!],
-        newRank: getRankAfter(state, [hashContext(state, ['a'])] as SimplePath) as number,
+        newRank: getRankAfter(newState, rankThoughtsFirstMatch(newState, ['a'])!) as number,
       }),
   ]
 
@@ -677,8 +662,8 @@ it.skip('pending destination should be merged correctly (fetch pending before mo
   const pathDB = rankThoughtsFirstMatch(appStore.getState(), ['d', 'b'])
   appStore.dispatch([
     existingThoughtMoveAction({
-      oldPath: pathAB,
-      newPath: pathDB,
+      oldPath: pathAB!,
+      newPath: pathDB!,
       newRank: 1,
     }),
   ])
@@ -741,8 +726,8 @@ it.skip('only fetch the descendants up to the possible conflicting path', async 
   const pathPB = rankThoughtsFirstMatch(appStore.getState(), ['p', 'b'])
   appStore.dispatch([
     existingThoughtMoveAction({
-      oldPath: pathAB,
-      newPath: pathPB,
+      oldPath: pathAB!,
+      newPath: pathPB!,
       newRank: 1,
     }),
   ])
