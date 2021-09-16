@@ -417,18 +417,17 @@ const Editable = ({
         setSelectionToCursorOffset()
       }
     }
+
     // // there are many different values that determine if we set the selection
     // // use this to help debug selection issues
     // else if (isEditing) {
-    //   console.info('')
     //   console.info('These values are false, preventing the selection from being set on', value)
-    //   if (!editMode) console.info('- editMode')
-    //   if (!contentRef.current) console.info('- contentRef.current')
-    //   if (noteFocus) console.info('- !noteFocus')
-    //   if (!(cursorWithoutSelection || isAtBeginning)) console.info('- cursorWithoutSelection || isAtBeginning')
-    //   if (dragHold) console.info('- !dragHold')
-    //   if (isTapped) console.info('- !isTapped')
-    //   console.info('state.cursorOffset', state.cursorOffset)
+    //   if (!editMode) console.info('  - editMode')
+    //   if (!contentRef.current) console.info('  - contentRef.current')
+    //   if (noteFocus) console.info('  - !noteFocus')
+    //   if (!(cursorWithoutSelection || isAtBeginning)) console.info('  - cursorWithoutSelection || isAtBeginning')
+    //   if (dragHold) console.info('  - !dragHold')
+    //   if (isTapped) console.info('  - !isTapped')
     // }
 
     if (isTapped) {
@@ -615,7 +614,6 @@ const Editable = ({
     }
 
     // if we know that the focus is changing to another editable or note then do not set editing to false
-
     const isRelatedTargetEditableOrNote =
       e.relatedTarget &&
       ((e.relatedTarget as Element).classList.contains('editable') ||
