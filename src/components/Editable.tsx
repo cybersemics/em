@@ -78,8 +78,6 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 // eslint-disable-next-line jsdoc/require-jsdoc
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
-const asyncFocusThrottled = _.throttle(asyncFocus, 100)
-
 /** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
 const makeToolbarPositionFixed = () => {
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
@@ -410,8 +408,7 @@ const Editable = ({
         For some reason, setTimeout fixes it.
       */
       if (isTouch && isSafari()) {
-        // asyncFocus needs to be throttled otherwise it causes an infinite loop (#908).
-        asyncFocusThrottled()
+        asyncFocus()
         setTimeout(setSelectionToCursorOffset)
       } else {
         setSelectionToCursorOffset()
