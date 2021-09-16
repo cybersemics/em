@@ -1,8 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
-import { store } from '../../store'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -105,36 +103,4 @@ it('cursor should be removed if the last thought is deleted', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
-})
-
-/** Mount tests required for caret. */
-describe('mount', () => {
-  beforeEach(createTestApp)
-  afterEach(cleanupTestApp)
-
-  it('after deleting first child, caret should move to beginning of next sibling', () => {
-    store.dispatch([
-      { type: 'newThought', value: 'apple' },
-      { type: 'newThought', value: 'banana' },
-      { type: 'cursorUp' },
-      { type: 'deleteThoughtWithCursor' },
-    ])
-    jest.runOnlyPendingTimers()
-    expect(window.getSelection()?.focusOffset).toBe(0)
-  })
-
-  it('after deleting last child, caret should move to end of previous sibling', () => {
-    store.dispatch([
-      { type: 'newThought', value: 'apple' },
-      { type: 'newThought', value: 'banana' },
-      { type: 'deleteThoughtWithCursor' },
-    ])
-    jest.runOnlyPendingTimers()
-
-    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
-    // In this case, the selection moves to the end of the apple element.
-    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.ELEMENT_NODE)
-    expect(window.getSelection()?.focusNode?.textContent).toBe('apple')
-    expect(window.getSelection()?.focusOffset).toBe(1)
-  })
 })
