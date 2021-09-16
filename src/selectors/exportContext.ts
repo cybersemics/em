@@ -1,6 +1,7 @@
 import { attribute, getChildrenRanked } from '../selectors'
 import { head, isFunction, unroot } from '../util'
 import { Context, MimeType, Parent, State } from '../@types'
+import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
 
 /** Replaces the root value with a given title. */
@@ -11,13 +12,6 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
     : format === 'text/plain'
     ? `- ${title}${text.slice(text.indexOf('\n'))}`
     : text
-}
-
-/** Strips out HTML tags when exporting as plain text. */
-const stripHTMLTag = (str: string) => {
-  const tmp = document.createElement('div')
-  tmp.innerHTML = str
-  return tmp.textContent || tmp.innerText || ''
 }
 
 interface Options {
@@ -97,7 +91,7 @@ export const exportContext = (
     exportedChildren && format === 'text/html' ? tab1 : ''
   }${exportedChildren}${linePostfix}`
 
-  const textFinal = format === 'text/plain' ? stripHTMLTag(textWithChildren) : textWithChildren
+  const textFinal = format === 'text/plain' ? textWithChildren.replace(REGEXP_TAGS, '') : textWithChildren
 
   const output = indent === 0 && format === 'text/html' ? `<ul>\n  ${textFinal}\n</ul>` : textFinal
 

@@ -23,6 +23,7 @@ const StaticThought = ({
   isDragging,
   isEditing,
   isLeaf,
+  isVisible,
   path,
   publish,
   rank,
@@ -76,6 +77,7 @@ const StaticThought = ({
           editing={editing}
           disabled={!isDocumentEditable()}
           isEditing={isEditing}
+          isVisible={isVisible}
           rank={rank}
           showContexts={showContexts}
           style={style}

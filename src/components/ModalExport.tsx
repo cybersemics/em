@@ -5,7 +5,6 @@ import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
 import {
-  download,
   ellipsize,
   exportPhrase,
   getPublishUrl,
@@ -27,6 +26,8 @@ import LoadingEllipsis from './LoadingEllipsis'
 import ChevronImg from './ChevronImg'
 import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
+import download from '../device/download'
+import * as selection from '../device/selection'
 import { Context, ExportOption, Parent, Path, SimplePath, State, ThoughtsInterface } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
@@ -300,7 +301,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
 
     clipboard.on('success', () => {
       // Note: clipboard leaves unwanted text selection after copy operation. so removing it to prevent issue with gesture handler
-      if (document.getSelection()?.toString()) document.getSelection()?.removeAllRanges()
+      selection.clear()
 
       dispatch([
         closeModal(),

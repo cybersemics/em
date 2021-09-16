@@ -1,6 +1,6 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { asyncFocus, ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
+import { ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
 import {
   getChildren,
   getThoughtBefore,
@@ -14,17 +14,20 @@ import {
 import { HOME_PATH } from '../constants'
 import { isTouch } from '../browser'
 import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
+import asyncFocus from '../device/asyncFocus'
 import { Icon as IconType, Shortcut, State, Thunk } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import * as selection from '../device/selection'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = (state: State) => {
   const { cursor } = state
-  const sel = window.getSelection()
-  if (!sel) return false
+
+  // isActive is not enough on its own, because there is a case where there is a selection object but no focusNode and we want to still execute the shortcut
+  if (!selection.isActive() && selection.isText()) return false
 
   // can't delete if there is no cursor, there is a selection range, the document is not editable, or the caret is not at the beginning of the thought
-  if (!cursor || !isDocumentEditable() || sel.focusOffset > 0 || !sel.isCollapsed) return false
+  if (!cursor || !isDocumentEditable() || selection.offset()! > 0 || !selection.isCollapsed()) return false
 
   const simplePath = simplifyPath(state, cursor)
 
@@ -79,15 +82,12 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
 /** A selector that returns true if the cursor is on an only child that can be outdented by the delete command. */
 const canExecuteOutdent = (state: State) => {
   const { cursor } = state
-  const selection = window.getSelection()
 
-  if (!cursor || !selection) return false
-
-  const offset = selection.focusOffset
+  if (!cursor || (!selection.isActive() && selection.isText())) return false
 
   return (
     cursor &&
-    offset === 0 &&
+    selection.offset() === 0 &&
     isDocumentEditable() &&
     headValue(state, cursor).length !== 0 &&
     getChildren(state, parentOf(pathToContext(state, cursor))).length === 1
@@ -129,15 +129,14 @@ const canExecute = (getState: () => State) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState) => {
-  const editable = document.querySelector('.editing .editable') as HTMLElement
-  /** The below condition will be true only when user triggered clearThought. In that scenario innerHTML will empty but editingValue will be non-empty. */
-  if (editable?.innerHTML === '' && editable?.getAttribute('placeholder') !== '') {
+  const state = getState()
+  if (state.cursorCleared) {
     dispatch(deleteEmptyThought)
-  } else if (canExecuteOutdent(getState())) {
+  } else if (canExecuteOutdent(state)) {
     dispatch(outdent())
   }
   // additional check for duplicates
-  else if (isMergedThoughtDuplicate(getState())) {
+  else if (isMergedThoughtDuplicate(state)) {
     dispatch(
       alert('Duplicate thoughts are not allowed within the same context.', {
         alertType: 'duplicateThoughts',

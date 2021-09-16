@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   devSettingsText: { color: 'white', fontStyle: 'italic', fontSize: 2 },
   linkBtn: { marginTop: -2 },
   iconProvidersWrapper: { opacity: 0.7 },
-  tutorialButtonText: { fontSize: 6 },
+  tutorialButtonText: { fontSize: 6, color: '#000' },
 })
 
 export default connect(mapStateToProps)(ModalHelp)

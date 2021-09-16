@@ -1,11 +1,11 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-
 import { getThoughtById, hasChild } from '../selectors'
-import { ellipsize, head, isEM, isRoot, pathToContext, setSelection } from '../util'
+import { ellipsize, head, isEM, isRoot, pathToContext } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { G, Path } from 'react-native-svg'
+import * as selection from '../device/selection'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
 
@@ -36,7 +36,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
 
       if (editable) {
         editable.focus()
-        setSelection(editable, { end: true })
+        selection.set(editable, { end: true })
       }
     } else {
       // clear the undo alert timer to prevent previously cleared undo alert from closing this one
@@ -67,7 +67,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 )
 
 const archiveShortcut: Shortcut = {
-  id: 'delete',
+  id: 'archive',
   label: 'Archive',
   description: 'Archive the current thought.',
   gesture: 'ldl',

@@ -1,7 +1,8 @@
 import _ from 'lodash'
-import { getTextContentFromHTML, head, pathToContext, reducerFlow, splitSentence } from '../util'
+import { head, pathToContext, reducerFlow, splitSentence } from '../util'
 import { editableRender, editingValue, editThought, newThought, setCursor } from '../reducers'
 import { getThoughtById, rootedParentOf, simplifyPath } from '../selectors'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { State } from '../@types'
 
 /** Split thought by sentences. Create new thought for each sentence. Thought value, on which cursor is on, replace with first sentence. */

@@ -2,8 +2,10 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { isTouch } from '../browser'
 import { getThoughtById, hasChild } from '../selectors'
-import { asyncFocus, ellipsize, isDocumentEditable, isEM, isRoot, pathToContext, setSelection, head } from '../util'
+import { ellipsize, head, isDocumentEditable, isEM, isRoot, pathToContext } from '../util'
 import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
+import asyncFocus from '../device/asyncFocus'
+import * as selection from '../device/selection'
 import { Icon as IconType, Shortcut } from '../@types'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
@@ -35,7 +37,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       }
       if (editable) {
         editable.focus()
-        setSelection(editable, { end: true })
+        selection.set(editable, { end: true })
       }
     } else {
       // clear the undo alert timer to prevent previously cleared undo alert from closing this one

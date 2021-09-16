@@ -12,6 +12,7 @@ import {
   getSortPreference,
   getThoughtById,
 } from '../selectors'
+import * as selection from '../device/selection'
 
 /** Swaps the thought with its previous siblings. */
 const moveThoughtUp = (state: State) => {
@@ -61,7 +62,7 @@ const moveThoughtUp = (state: State) => {
   }
 
   // get selection offset before moveThought is dispatched
-  const offset = window.getSelection()?.focusOffset
+  const offset = selection.offset()
 
   const rankNew =
     prevThought && !isSorted
@@ -76,7 +77,7 @@ const moveThoughtUp = (state: State) => {
   return moveThought(state, {
     oldPath: cursor,
     newPath,
-    offset,
+    ...(offset != null ? { offset } : null),
     newRank: rankNew,
   })
 }

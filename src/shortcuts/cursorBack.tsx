@@ -1,7 +1,8 @@
 import React from 'react'
 import { Icon as IconType, Shortcut } from '../@types'
-import { clearSelection } from '../util'
-import { cursorBack, scrollCursorIntoView } from '../action-creators'
+import { cursorBack } from '../action-creators'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import * as selection from '../device/selection'
 
 // import directly since util/index is not loaded yet when shortcut is initialized
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
@@ -23,15 +24,6 @@ const Icon = ({ size = 20 }: IconType) => (
   </svg>
 )
 
-/** Removes the browser selection. */
-const blur = () => {
-  if (document.activeElement) {
-    const el = document.activeElement as HTMLInputElement
-    el.blur()
-    clearSelection()
-  }
-}
-
 const cursorBackShortcut: Shortcut = {
   id: 'cursorBack',
   label: 'Back',
@@ -42,11 +34,12 @@ const cursorBackShortcut: Shortcut = {
     const { cursor, search } = getState()
     if (cursor || search != null) {
       dispatch(cursorBack())
-      dispatch(scrollCursorIntoView())
+      scrollCursorIntoView()
 
       // clear browser selection if cursor has been removed
-      if (!getState().cursor) {
-        blur()
+      const { cursor: cursorNew } = getState()
+      if (!cursorNew) {
+        selection.clear()
       }
     }
   }),

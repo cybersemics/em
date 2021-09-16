@@ -1,8 +1,10 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import { EM_TOKEN } from '../constants'
-import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import { clearSelection, decodeCharacterEntities, ellipsize, head, headId, strip } from '../util'
+import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
+import { decodeCharacterEntities, ellipsize, head, strip } from '../util'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import * as selection from '../device/selection'
 import { SimplePath } from '../@types'
 import { store } from '../store'
 import { getThoughtById } from '../selectors'
@@ -15,7 +17,7 @@ interface LinkProps {
 
 /** Renders a link with the appropriate label to the given context. */
 const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
-  const emContext = simplePath.length === 1 && headId(simplePath) === EM_TOKEN
+  const emContext = simplePath.length === 1 && head(simplePath) === EM_TOKEN
   const thought = getThoughtById(store.getState(), head(simplePath))
   const value = label || strip(thought.value)
   const dispatch = useDispatch()
@@ -28,12 +30,12 @@ const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
       onClick={e => {
         // eslint-disable-line react/no-danger-with-children
         e.preventDefault()
-        clearSelection()
+        selection.clear()
         dispatch(search({ value: null }))
         dispatch(searchContexts({ value: null }))
         dispatch(setCursor({ path: simplePath }))
         dispatch(toggleSidebar({ value: false }))
-        dispatch(scrollCursorIntoView())
+        scrollCursorIntoView()
       }}
       dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : undefined}
     >

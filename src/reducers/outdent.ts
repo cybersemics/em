@@ -2,6 +2,7 @@ import { alert, moveThought } from '../reducers'
 import { getRankAfter, hasChild, rootedParentOf, simplifyPath } from '../selectors'
 import { Path, State } from '../@types'
 import { ellipsize, head, headValue, isEM, isRoot, parentOf, pathToContext, unroot } from '../util'
+import * as selection from '../device/selection'
 
 /** Decreases the indent level of the given thought, moving it to its parent. */
 const outdent = (state: State) => {
@@ -32,14 +33,14 @@ const outdent = (state: State) => {
   }
 
   // store selection offset before moveThought is dispatched
-  const offset = window.getSelection()?.focusOffset
+  const offset = selection.offset()
 
   const cursorNew: Path = [...unroot(rootedParentOf(state, parentOf(cursor))), head(cursor)]
 
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
-    offset,
+    ...(offset != null ? { offset } : null),
     newRank: getRankAfter(state, parentOf(simplifyPath(state, cursor))),
   })
 }

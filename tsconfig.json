@@ -1,5 +1,7 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js"],
+  // @MIGRATION_TODO: Remove exclude here. At the current phase of migration, all the native parts has not been fixed yet.
+  "exclude": ["src/**/*.native.ts", "src/**/*.native.tsx"],
   "compilerOptions": {
     "strict": true,
     "lib": ["dom", "es2019"],

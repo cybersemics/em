@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
+import { initialState, reducerFlow } from '../../util'
 import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -63,7 +63,7 @@ it('cursor should move to prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2']))
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2'])!)
 })
 
 it('cursor should move to next sibling if there is no prev sibling', () => {
@@ -80,7 +80,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2']))
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2'])!)
 })
 
 it('cursor should move to parent if the deleted thought has no siblings', () => {
@@ -89,7 +89,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a']))
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a'])!)
 })
 
 it('cursor should be removed if the last thought is deleted', () => {
@@ -124,14 +124,10 @@ describe('mount', () => {
     ])
     jest.runOnlyPendingTimers()
 
-    // Note: To test caret position always use getCaretPostionDetails with a dummy div.
-    const dummyEditable = document.createElement('div')
-    dummyEditable.innerHTML = 'apple'
-
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
-
-    // TODO: Also check the if the selection focusNode parent is the correct editable
-
-    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
+    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
+    // In this case, the selection moves to the end of the apple element.
+    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.ELEMENT_NODE)
+    expect(window.getSelection()?.focusNode?.textContent).toBe('apple')
+    expect(window.getSelection()?.focusOffset).toBe(1)
   })
 })

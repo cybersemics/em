@@ -6,6 +6,7 @@ import { unescape } from 'html-escaper'
 import {
   alert,
   // cursorBack,
+  cursorCleared,
   // editing,
   error,
   editThought,
@@ -21,7 +22,8 @@ import {
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent, IOnPaste } from './ContentEditable.native'
 import { shortcutEmitter } from '../shortcuts'
-import { Connected, Context, Path, SimplePath, TutorialChoice } from '../@types'
+import * as selection from '../device/selection'
+import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../@types'
 
 // constants
 import {
@@ -42,7 +44,6 @@ import {
   addEmojiSpace,
   appendToPath,
   // asyncFocus,
-  clearSelection,
   parentOf,
   ellipsize,
   ellipsizeUrl,
@@ -51,14 +52,12 @@ import {
   head,
   headValue,
   isDivider,
-  // isElementHiddenByAutoFocus,
   isHTML,
   isURL,
   pathToContext,
-  // setSelection,
   strip,
   normalizeThought,
-  // getCaretPositionDetails,
+  // offsetFromClosestParent,
 } from '../util'
 
 // selectors
@@ -133,12 +132,20 @@ const showDuplicationAlert = duplicateAlertToggler()
 // intended to be global, not local state
 let blurring = false
 
+// eslint-disable-next-line jsdoc/require-jsdoc
+const mapStateToProps = (state: State, props: EditableProps) => {
+  return {
+    isCursorCleared: props.isEditing && state.cursorCleared,
+  }
+}
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
   disabled,
+  isCursorCleared,
   isEditing,
   simplePath,
   path,
@@ -149,7 +156,7 @@ const Editable = ({
   onKeyDownAction,
   dispatch,
   transient,
-}: Connected<EditableProps>) => {
+}: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
   const state = store.getState()
   const thoughts = pathToContext(state, simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
@@ -213,7 +220,7 @@ const Editable = ({
       setCursor({
         cursorHistoryClear: true,
         editing,
-        // set offset to null to prevent setSelection on next render
+        // set offset to null to prevent setting the selection on next render
         // to use the existing offset after a user clicks or touches the screent
         // when cursor is changed through another method, such as cursorDown, offset will be reset
         offset: null,
@@ -270,7 +277,7 @@ const Editable = ({
 
       if (isDivider(newValue)) {
         // remove selection so that the focusOffset does not cause a split false positive in newThought
-        clearSelection()
+        selection.clear()
       }
 
       // store the value so that we have a transcendental head when it is changed
@@ -298,10 +305,7 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   // const setSelectionToCursorOffset = () => {
-  //   if (contentRef.current) {
-  //     const caretPositionDetails = getCaretPositionDetails(contentRef.current, cursorOffset || state.cursorOffset || 0)
-  //     setSelection(caretPositionDetails?.focusNode ?? contentRef.current, { offset: caretPositionDetails?.offset || 0 })
-  //   }
+  //   selection.set(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
   // }
 
   useEffect(() => {
@@ -310,21 +314,14 @@ const Editable = ({
     // focus on the ContentEditable element if editing os on desktop
     const editMode = editing
 
-    // if there is no browser selection, do not manually call setSelection as it does not preserve the cursor offset. Instead allow the default focus event.
-    const cursorWithoutSelection = true // state.cursorOffset !== null || !window.getSelection()?.focusNode
+    // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
+    const cursorWithoutSelection = state.cursorOffset !== null || !selection.isActive()
 
     // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
     // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
     // disable on mobile to avoid infinite loop (#908)
-    const isAtBeginning = true //   !isTouch && window.getSelection()?.focusOffset === 0
+    const isAtBeginning = selection.offset() === 0
 
-    /**
-     * Note: There are a lot of different values that determine if setSelection is called!
-     * You may need to inspect them if something goes wrong.
-     */
-    // if (isEditing) {
-    //   const { isCollapsed, focusOffset, focusNode } = window.getSelection() || {}
-    // }
     // allow transient editable to have focus on render
     if (
       transient ||
@@ -471,6 +468,13 @@ const Editable = ({
           path,
           text: isHTML(plainText) ? plainText : htmlText || plainText,
           rawDestValue,
+          // pass selection start and end for importText to replace (if the imported thoughts are one line)
+          ...(selection.isActive() && !selection.isCollapsed()
+            ? {
+                replaceStart: selection.offsetStart()!,
+                replaceEnd: selection.offsetEnd()!,
+              }
+            : null),
         }),
       )
 
@@ -519,6 +523,8 @@ const Editable = ({
       if (blurring) {
         blurring = false
         dispatch(setEditingValue(null))
+        // temporary states such as duplicate error states and cursorCleared are reset on blur
+        dispatch(cursorCleared({ value: false }))
       }
     })
   }
@@ -550,6 +556,8 @@ const Editable = ({
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
+          : isCursorCleared
+          ? ''
           : isEditing
           ? value
           : childrenLabel.length > 0
@@ -573,6 +581,7 @@ const Editable = ({
       onBlur={onBlur}
       onChange={onChangeHandler}
       onPaste={onPaste}
+      isTable={isTableColumn1}
       onKeyDown={onKeyDownAction ? onKeyDown : undefined}
       style={style || {}}
       isEditing={isEditing}
@@ -580,4 +589,4 @@ const Editable = ({
   )
 }
 
-export default connect()(Editable)
+export default connect(mapStateToProps)(Editable)

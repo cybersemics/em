@@ -1,14 +1,5 @@
 import { HOME_TOKEN } from '../constants'
-import {
-  appendToPath,
-  getTextContentFromHTML,
-  head,
-  isDivider,
-  isThoughtArchived,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-} from '../util'
+import { appendToPath, head, isDivider, isThoughtArchived, parentOf, pathToContext, reducerFlow } from '../util'
 import {
   getNextRank,
   getChildren,
@@ -20,6 +11,7 @@ import {
   getThoughtById,
 } from '../selectors'
 import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCursor } from '../reducers'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { State } from '../@types'
 import archiveThought from './archiveThought'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -27,8 +19,6 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {
   const { cursor, editing } = state
-  const sel = window.getSelection()
-  const offset = sel ? sel.focusOffset : 0
 
   if (!cursor) return state
 
@@ -36,14 +26,13 @@ const deleteEmptyThought = (state: State): State => {
 
   const { value } = cursorThought
 
+  const offset = state.cursorOffset ?? 0
   const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
   const context = pathToContext(state, cursor)
   const simplePath = simplifyPath(state, cursor)
   const allChildren = getChildrenRanked(state, context)
   const visibleChildren = getChildren(state, context)
-  // check innerHTML in case the user just executed clearThought, which yields an empty thought in the DOM but not in state
-  const isDomEmpty = document.querySelector('.editing .editable')?.innerHTML === ''
-  const isEmpty = value === '' || isDomEmpty
+  const isEmpty = value === '' || state.cursorCleared
 
   // delete an empty thought with no children
   if ((isEmpty && allChildren.length === 0) || isDivider(value)) {
@@ -83,8 +72,7 @@ const deleteEmptyThought = (state: State): State => {
     ])(state)
   }
   // delete from beginning and merge with previous sibling
-  else if (offset === 0 && sel?.isCollapsed && !showContexts) {
-    const cursorThought = getThoughtById(state, head(cursor))
+  else if (offset === 0 && !showContexts) {
     const { value, rank } = cursorThought
     const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
     const prev = prevSibling(state, value, pathToContext(state, rootedParentOf(state, cursor)), rank)

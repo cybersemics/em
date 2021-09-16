@@ -19,10 +19,17 @@ export interface State {
   autologin: boolean
   contextViews: Index<boolean>
   cursor: Path | null
+  // set to true when clearThought is activated
+  // temporarily renders the cursor thought as an empty string for quickly changing the entire value
+  // see: /reducers/cursorCleared
+  cursorCleared: boolean
   cursorBeforeQuickAdd: Path | null
   cursorBeforeSearch: Path | null
   cursorHistory: Path[]
   cursorInitialized: boolean
+  // the offset of the caret within the cursor, relative to the start of the thought
+  // currently only 0 and n are used, where n is the length of the thought
+  // null means that the caret is no forcefully set on re-render, allowing the device to set it, e.g. on click
   cursorOffset: number | null
   draggedSimplePath?: SimplePath
   draggingThought?: SimplePath

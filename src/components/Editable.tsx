@@ -7,6 +7,7 @@ import classNames from 'classnames'
 import {
   alert,
   cursorBack,
+  cursorCleared,
   error,
   editThought,
   importText,
@@ -22,7 +23,9 @@ import globals from '../globals'
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
-import { Connected, Context, Path, SimplePath, TutorialChoice, State } from '../@types'
+import asyncFocus from '../device/asyncFocus'
+import * as selection from '../device/selection'
+import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../@types'
 
 // constants
 import {
@@ -42,22 +45,17 @@ import {
 import {
   addEmojiSpace,
   appendToPath,
-  asyncFocus,
-  clearSelection,
   parentOf,
   ellipsize,
   ellipsizeUrl,
   equalPath,
   head,
   isDivider,
-  isElementHiddenByAutoFocus,
   isHTML,
   isURL,
   pathToContext,
-  setSelection,
   strip,
   normalizeThought,
-  getCaretPositionDetails,
   headId,
 } from '../util'
 
@@ -126,6 +124,7 @@ interface EditableProps {
   cursorOffset?: number | null
   disabled?: boolean
   isEditing?: boolean
+  isVisible?: boolean
   rank: number
   showContexts?: boolean
   style?: React.CSSProperties
@@ -178,13 +177,25 @@ const showDuplicationAlert = duplicateAlertToggler()
 // intended to be global, not local state
 let blurring = false
 
+// eslint-disable-next-line jsdoc/require-jsdoc
+const mapStateToProps = (state: State, props: EditableProps) => {
+  // TODO: This is neede to rerender when value changes. Refactor is needed here.
+  const thought = getThoughtById(state, head(props.simplePath))
+  return {
+    isCursorCleared: props.isEditing && state.cursorCleared,
+    thought,
+  }
+}
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
   disabled,
+  isCursorCleared,
   isEditing,
+  isVisible,
   simplePath,
   path,
   cursorOffset,
@@ -265,7 +276,7 @@ const Editable = ({
       setCursor({
         cursorHistoryClear: true,
         editing,
-        // set offset to null to prevent setSelection on next render
+        // set offset to null to prevent selection.set on next render
         // to use the existing offset after a user clicks or touches the screent
         // when cursor is changed through another method, such as cursorDown, offset will be reset
         offset: null,
@@ -322,7 +333,7 @@ const Editable = ({
 
       if (isDivider(newValue)) {
         // remove selection so that the focusOffset does not cause a split false positive in newThought
-        clearSelection()
+        selection.clear()
       }
 
       // store the value so that we have a transcendental head when it is changed
@@ -350,10 +361,7 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
-    if (contentRef.current) {
-      const caretPositionDetails = getCaretPositionDetails(contentRef.current, cursorOffset || state.cursorOffset || 0)
-      setSelection(caretPositionDetails?.focusNode ?? contentRef.current, { offset: caretPositionDetails?.offset || 0 })
-    }
+    selection.set(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
   }
 
   useEffect(() => {
@@ -372,33 +380,32 @@ const Editable = ({
     // focus on the ContentEditable element if editing os on desktop
     const editMode = !isTouch || editing
 
-    // if there is no browser selection, do not manually call setSelection as it does not preserve the cursor offset. Instead allow the default focus event.
-    const cursorWithoutSelection = state.cursorOffset !== null || !window.getSelection()?.focusNode
+    // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
+    const cursorWithoutSelection = state.cursorOffset !== null || !selection.isActive()
 
     // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
     // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
     // disable on mobile to avoid infinite loop (#908)
-    const isAtBeginning = !isTouch && window.getSelection()?.focusOffset === 0
+    const isAtBeginning = !isTouch && selection.offset() === 0
 
     /**
-     * Note: There are a lot of different values that determine if setSelection is called!
+     * Note: There are a lot of different values that determine if we set the selection
      * You may need to inspect them if something goes wrong.
      */
     // if (isEditing) {
-    //   const { isCollapsed, focusOffset, focusNode } = window.getSelection() || {}
     //   console.info({
     //     thoughts,
     //     transient,
     //     editMode,
     //     isEditing,
     //     contentRef: !!contentRef.current,
-    //     noFocusNode: !noteFocus && (cursorOffset !== null || !window.getSelection()?.focusNode) && !dragHold,
-    //     '!dragHold': dragHold,
-    //     '!noteFocus': noteFocus,
+    //     noFocusNode: !noteFocus && (cursorOffset !== null || !selection.isActive()) && !dragHold,
+    //     dragHold: dragHold,
+    //     noteFocus: noteFocus,
     //     cursorOffset: cursorOffset !== null,
-    //     isCollapsed,
-    //     focusOffset,
-    //     focusNode: !!focusNode,
+    //     isCollapsed: selection.isCollapsed(),
+    //     focusOffset: selection.offset(),
+    //     hasSelection: selection.isActive(),
     //   })
     // }
     // allow transient editable to have focus on render
@@ -570,6 +577,13 @@ const Editable = ({
           path,
           text: isHTML(plainText) ? plainText : htmlText || plainText,
           rawDestValue,
+          // pass selection start and end for importText to replace (if the imported thoughts are one line)
+          ...(selection.isActive() && !selection.isCollapsed()
+            ? {
+                replaceStart: selection.offsetStart()!,
+                replaceEnd: selection.offsetEnd()!,
+              }
+            : null),
         }),
       )
 
@@ -619,14 +633,13 @@ const Editable = ({
       if (blurring) {
         blurring = false
         dispatch(setEditingValue(null))
+        // temporary states such as duplicate error states and cursorCleared are reset on blur
+        dispatch(cursorCleared({ value: false }))
       }
 
       if (isTouch) {
         // Set editing value to false if user exit editing mode by tapping on other elements other than editable.
-        if (
-          !window.getSelection()?.focusNode ||
-          !window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')
-        ) {
+        if (!selection.isThought()) {
           dispatch(editingAction({ value: false }))
         }
       }
@@ -672,16 +685,16 @@ const Editable = ({
 
     showContexts = showContexts || isContextViewActive(state, pathToContext(state, simplePath))
 
-    const isHiddenByAutofocus = isElementHiddenByAutoFocus(e.target as HTMLElement)
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
     if (
       disabled ||
       // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-      (!globals.touching && !state.dragInProgress && (!editingOrOnCursor || isHiddenByAutofocus))
+      (!globals.touching && !state.dragInProgress && (!editingOrOnCursor || !isVisible))
     ) {
+      // do not set cursor on hidden thought
       e.preventDefault()
-      if (isHiddenByAutofocus) {
+      if (!isVisible) {
         dispatch(cursorBack())
       } else {
         // prevent focus to allow navigation with mobile keyboard down
@@ -700,6 +713,10 @@ const Editable = ({
     if (e.key in MODIFIER_KEYS) return
     onKeyDownAction!()
   }
+
+  // strip formatting tags for clearThought placeholder
+  const valueStripped = isCursorCleared ? unescape(strip(value, { preserveFormatting: false })) : null
+
   return (
     <ContentEditable
       disabled={disabled}
@@ -714,6 +731,10 @@ const Editable = ({
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
+          : // render as empty string during temporary clear state
+          // see: /reducers/cursorCleared
+          isCursorCleared
+          ? ''
           : isEditing
           ? value
           : childrenLabel.length > 0
@@ -721,7 +742,9 @@ const Editable = ({
           : ellipsizeUrl(value)
       }
       placeholder={
-        isTableColumn1
+        isCursorCleared
+          ? valueStripped || 'This is an empty thought'
+          : isTableColumn1
           ? ''
           : lexeme && Date.now() - new Date(lexeme.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
           ? 'This is an empty thought'
@@ -741,16 +764,6 @@ const Editable = ({
       style={style || {}}
     />
   )
-}
-
-/**
- * Needs to rerender when value changes.
- */
-const mapStateToProps = (state: State, props: EditableProps) => {
-  const thought = getThoughtById(state, head(props.simplePath))
-  return {
-    thought,
-  }
 }
 
 export default connect(mapStateToProps)(Editable)

@@ -98,6 +98,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     cursor: null,
     cursorBeforeSearch: null,
     cursorBeforeQuickAdd: null,
+    cursorCleared: false,
     cursorHistory: [],
     cursorInitialized: false, // tracks if the cursor has been restored from the url on first load and ensures it only happens once
     cursorOffset: 0,

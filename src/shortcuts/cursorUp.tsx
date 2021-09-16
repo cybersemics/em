@@ -1,9 +1,11 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
 import { attributeEquals } from '../selectors'
-import { parentOf, getElementPaddings, pathToContext } from '../util'
-import { cursorUp, scrollCursorIntoView } from '../action-creators'
+import { parentOf, pathToContext } from '../util'
+import { cursorUp } from '../action-creators'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { Icon as IconType, Shortcut } from '../@types'
+import * as selection from '../device/selection'
 
 // import directly since util/index is not loaded yet when shortcut is initialized
 import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
@@ -27,31 +29,6 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
   </svg>
 )
 
-/** Returns true if the selection is on the second or greater line of a multi-line editable. */
-const isSelectionOnMultiLine = () => {
-  const selection = window.getSelection()
-  if (!selection) return false
-
-  const { anchorNode: baseNode, rangeCount } = selection
-  if (rangeCount === 0) return false
-
-  const clientRects = selection.getRangeAt(0).getClientRects()
-  if (!clientRects?.length) return false
-
-  const { y: rangeY } = clientRects[0]
-  if (!rangeY) return false
-
-  const baseNodeParentEl = baseNode?.parentElement as HTMLElement
-  if (!baseNodeParentEl) return false
-
-  const { y: baseNodeY } = baseNodeParentEl.getClientRects()[0]
-  const [paddingTop] = getElementPaddings(baseNodeParentEl)
-
-  // allow error of 5px
-  const isOnFirstLine = Math.abs(rangeY - baseNodeY - paddingTop) < 5
-  return !isOnFirstLine
-}
-
 const cursorUpShortcut: Shortcut = {
   id: 'cursorUp',
   label: 'Cursor Up',
@@ -67,18 +44,15 @@ const cursorUpShortcut: Shortcut = {
     // use default browser behavior in prose mode
     const contextRanked = parentOf(cursor)
     const isProseView = attributeEquals(state, pathToContext(state, contextRanked), '=view', 'Prose')
-    const isProseMode = isProseView && (window.getSelection()?.focusOffset as number) > 0
+    const isProseMode = isProseView && selection.offset()! > 0
     if (isProseMode) return false
 
     // use default browser if selection is on the second or greater line of a multi-line editable
-    const isMultiLine = isSelectionOnMultiLine()
-    if (isMultiLine) return false
-
-    return true
+    return selection.isOnFirstLine()
   },
   exec: throttleByAnimationFrame(dispatch => {
     dispatch(cursorUp())
-    dispatch(scrollCursorIntoView())
+    scrollCursorIntoView()
   }),
 }
 

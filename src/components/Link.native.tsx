@@ -1,12 +1,14 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import { scrollCursorIntoView, search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import { clearSelection, head, strip } from '../util'
+import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
+import { head, strip } from '../util'
 import { StyleSheet } from 'react-native'
-import { SimplePath } from '../@types'
 import { Text } from './Text.native'
 import { store } from '../store'
 import { getThoughtById } from '../selectors'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import * as selection from '../device/selection'
+import { SimplePath } from '../@types'
 
 interface LinkProps {
   charLimit?: number
@@ -26,7 +28,7 @@ const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
     <Text
       style={style.text}
       onPress={() => {
-        clearSelection()
+        selection.clear()
         dispatch([
           search({ value: null }),
           searchContexts({ value: null }),

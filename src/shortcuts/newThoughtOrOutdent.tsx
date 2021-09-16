@@ -2,9 +2,10 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
-import { splitAtSelection, isDocumentEditable, head, isRoot } from '../util'
+import { head, isDocumentEditable, isRoot } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
 import { getThoughtById, isLastVisibleChild, rootedParentOf, simplifyPath } from '../selectors'
+import * as selection from '../device/selection'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -51,19 +52,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   }
   // otherwise, create a new thought
   else {
-    // Note: Jest triggers new thought with windowEvent which has window as target causing getOffsetWithinContent to fail
-    const isTargetHTMLElement = e.target instanceof HTMLElement
-    const target = e.target as HTMLElement
-
-    // Note: e.target should be a HTMLElement and a content editable node
-    const isTargetAnEditable = isTargetHTMLElement && target.hasAttribute('contenteditable')
-
-    const currentSelection = document.getSelection()
-    const currentSelectionRange =
-      currentSelection && currentSelection.rangeCount > 0 ? document.getSelection()?.getRangeAt(0) : null
-
-    const splitResult =
-      cursor && isTargetAnEditable && currentSelectionRange ? splitAtSelection(target, currentSelectionRange) : null
+    const splitResult = cursor ? selection.split(e.target as HTMLElement) : null
 
     // prevent split on gesture
     dispatch(newThought({ value: '', splitResult, preventSplit: type === 'gesture' }))

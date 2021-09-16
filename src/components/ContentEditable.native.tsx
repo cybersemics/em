@@ -5,7 +5,7 @@ import { WebView } from 'react-native-webview'
 
 import { commonStyles } from '../style/commonStyles'
 import { useDimensions } from '@react-native-community/hooks'
-import { createWebHTML, WEBVIEW_POST_EVENTS } from '../util/createWebHTML'
+import { createWebHTML, WEBVIEW_POST_EVENTS } from '../device/createWebHTML.native'
 
 interface ContentEditableProps {
   style?: ViewStyle
@@ -19,6 +19,8 @@ interface ContentEditableProps {
   onPaste?: (e: IOnPaste) => void
   onKeyDown?: (e: IKeyDown) => void
   placeholder: string
+  isTable?: boolean
+  space?: number
 }
 
 export interface IOnPaste {
@@ -43,17 +45,31 @@ const ContentEditable = ({
   forceUpdate,
   placeholder,
   isEditing,
+  isTable,
+  space,
   ...props
 }: ContentEditableProps) => {
   const allowInnerHTMLChange = useRef<boolean>(true)
   const { width } = useDimensions().window
+
   const [height, setHeight] = useState(DEFAULT_WEBVIEW_HEIGHT)
   const contentRef = useRef<WebView>(null)
+  const innerHTMLValue = useRef<string>(html)
 
-  const [webviewHTML, setWebviewHTML] = useState<string>(createWebHTML({ innerHTML: html, placeholder, isEditing }))
+  const [webviewHTML, setWebviewHTML] = useState<string>(
+    createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }),
+  )
+
   useEffect(() => {
-    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing }))
-  }, [isEditing])
+    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
+  }, [isEditing, isTable])
+
+  useEffect(() => {
+    if (html.trim() === innerHTMLValue?.current?.trim()) return
+
+    arrangeInputContainer(html)
+    setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isEditing, isTable }))
+  }, [html])
 
   useEffect(() => {
     arrangeInputContainer(html)
@@ -76,12 +92,14 @@ const ContentEditable = ({
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (e: string) => {
+    const inputValue = e.replace(/&nbsp;/g, ' ').trim()
+
     // prevent innerHTML update when editing
     allowInnerHTMLChange.current = false
 
-    arrangeInputContainer(e)
-
-    props.onChange(e)
+    arrangeInputContainer(inputValue)
+    innerHTMLValue.current = inputValue
+    props.onChange(inputValue)
   }
 
   return (
@@ -109,7 +127,7 @@ const ContentEditable = ({
             }
 
             case WEBVIEW_POST_EVENTS.onBlur: {
-              setWebviewHTML(createWebHTML({ innerHTML: html, placeholder }))
+              setWebviewHTML(createWebHTML({ innerHTML: html, placeholder, isTable }))
 
               if (props.onBlur) props.onBlur()
               break
@@ -134,7 +152,7 @@ const ContentEditable = ({
               break
           }
         }}
-        style={styles({ width, height }).webview}
+        style={styles({ width: !isTable ? width - (space || 0) : width - 40, height }).webview}
       />
     </View>
   )
@@ -149,7 +167,13 @@ interface IStyle {
 /** Style. */
 const styles = ({ width = 0, height, isEditing = false }: IStyle) =>
   StyleSheet.create({
-    webview: { width: width - 25, height, marginTop: 10, marginHorizontal: 5, backgroundColor: 'transparent' },
+    webview: {
+      width: width - 25,
+      height,
+      marginTop: 10,
+      marginHorizontal: 5,
+      backgroundColor: 'transparent',
+    },
     container: { opacity: isEditing ? 1 : 0.5 },
   })
 

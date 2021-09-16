@@ -2,7 +2,16 @@ import React, { useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 
 import { HOME_PATH } from '../constants'
-import { download, ellipsize, exportPhrase, head, isRoot, pathToContext, timestamp, unroot } from '../util'
+import {
+  ellipsize,
+  exportPhrase,
+  head,
+  // hashContext,
+  isRoot,
+  pathToContext,
+  timestamp,
+  unroot,
+} from '../util'
 import { alert, error, closeModal } from '../action-creators'
 import { exportContext, getThoughtById, simplifyPath } from '../selectors'
 import Modal from './Modal'
@@ -15,6 +24,7 @@ import { ActionButton } from './ActionButton'
 import Clipboard from 'expo-clipboard'
 import { Text } from './Text.native'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import download from '../device/download'
 
 interface AdvancedSetting {
   id: string

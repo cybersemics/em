@@ -1,10 +1,12 @@
 import { isTouch, isSafari } from '../browser'
 import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
 import { getSetting, getThoughtByPath, hasChild, isContextViewActive } from '../selectors'
-import { asyncFocus, parentOf, ellipsize, pathToContext } from '../util'
+import { parentOf, ellipsize, pathToContext } from '../util'
 import { alert } from '../action-creators'
+import asyncFocus from '../device/asyncFocus'
 import { Thunk, Context, Path, SplitResult, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import * as selection from '../device/selection'
 
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (splitResult: SplitResult, context: Context | null, state: State) => {
@@ -54,9 +56,6 @@ const newThought =
     // cancel if tutorial has just started
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
-    // making sure the current focus in on the editable component to prevent splitting
-    const isFocusOnEditable = document?.activeElement!.classList.contains('editable')
-
     // Determine if thought at path is uneditable
     const contextOfCursor = path && pathToContext(state, path)
     const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
@@ -76,7 +75,7 @@ const newThought =
     const split =
       !preventSplit &&
       path &&
-      isFocusOnEditable &&
+      selection.isThought() &&
       !showContexts &&
       !value &&
       editingValue &&

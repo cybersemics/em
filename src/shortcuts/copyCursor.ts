@@ -1,16 +1,9 @@
-import ClipboardJS from 'clipboard'
-import { editableNode, exportPhrase, head, isDocumentEditable, pathToContext, setSelection } from '../util'
+import { exportPhrase, head, isDocumentEditable, pathToContext } from '../util'
 import { exportContext, someDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
+import copy from '../device/copy'
+import * as selection from '../device/selection'
 import { Shortcut } from '../@types'
-
-/** Copies a string directly to the clipboard by simulating a button click with ClipboadJS. */
-const copy = (s: string): void => {
-  const dummyButton = document.createElement('button')
-  const clipboard = new ClipboardJS(dummyButton, { text: () => s })
-  dummyButton.click()
-  clipboard.destroy()
-}
 
 const copyCursorShortcut: Shortcut = {
   id: 'copyCursor',
@@ -19,13 +12,12 @@ const copyCursorShortcut: Shortcut = {
   keyboard: { key: 'c', meta: true },
   canExecute: getState =>
     // do not copy cursor if there is a browser selection
-    !window.getSelection()?.toString() && !!getState().cursor && isDocumentEditable(),
+    !selection.isActive() && !!getState().cursor && isDocumentEditable(),
   exec: async (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
     const simplePath = simplifyPath(state, cursor!)
     const context = pathToContext(state, simplePath)
-    const offset = window.getSelection()?.focusOffset
 
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
@@ -39,10 +31,6 @@ const copyCursorShortcut: Shortcut = {
 
     const exported = exportContext(stateAfterPull, context, 'text/plain')
     copy(exported)
-
-    // restore selection
-    const el = editableNode(cursor!)
-    setSelection(el!, { offset })
 
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
     const phrase = exportPhrase(stateAfterPull, context, numDescendants)

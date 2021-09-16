@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG, VIEW_MODE } from '../constants'
 import { compareReasonable } from '../util/compareThought'
 import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
 
@@ -14,7 +14,7 @@ import Bullet from './Bullet'
 import Byline from './Byline'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import Subthoughts from './Subthoughts'
+import Subthoughts from './Subthoughts.native'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 
 // hooks
@@ -54,6 +54,7 @@ import {
 } from '../selectors'
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
+import { StyleSheet } from 'react-native'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
@@ -75,13 +76,13 @@ export interface ThoughtContainerProps {
   isPublishChild?: boolean
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
-  isDraggable?: boolean
   isDragging?: boolean
   isEditing?: boolean
   isEditingPath?: boolean
   isExpanded?: boolean
   isHovering?: boolean
   isParentHovering?: boolean
+  isVisible?: boolean
   prevChild?: Child | ThoughtContext
   publish?: boolean
   rank: number
@@ -97,11 +98,11 @@ interface ThoughtProps {
   env?: Index<Context>
   hideBullet?: boolean
   homeContext?: boolean
-  isDraggable?: boolean
   isDragging?: boolean
   isPublishChild?: boolean
   isEditing?: boolean
   isLeaf?: boolean
+  isVisible?: boolean
   path: Path
   publish?: boolean
   rank: number
@@ -230,7 +231,6 @@ const ThoughtContainer = ({
   isPublishChild,
   isCursorGrandparent,
   isCursorParent,
-  isDraggable,
   isDragging,
   isEditing,
   isEditingPath,
@@ -239,6 +239,7 @@ const ThoughtContainer = ({
   isHovering,
   isLeaf,
   isParentHovering,
+  isVisible,
   prevChild,
   publish,
   rank,
@@ -390,25 +391,27 @@ const ThoughtContainer = ({
       ? styleEnv
       : style
 
-  return (
-    <>
-      <View style={marginBottom}>
-        <View style={[directionRow, alignItemsCenter]}>
-          {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
-            <Bullet
-              isEditing={isEditing}
-              context={pathToContext(state, simplePath)}
-              leaf={isLeaf}
-              onClick={(e: React.MouseEvent) => {
-                if (!isEditing || children.length === 0) {
-                  e.stopPropagation()
-                  store.dispatch(setCursor({ path: simplePath }))
-                }
-              }}
-            />
-          )}
+  const isProseView = hideBullet
 
-          {/* // Todo: still need to decide the best approach to implement the annotations.
+  return (
+    <View style={marginBottom}>
+      <View style={[directionRow, alignItemsCenter]}>
+        {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
+          <Bullet
+            isEditing={isEditing}
+            context={pathToContext(state, simplePath)}
+            leaf={isLeaf}
+            onClick={() => {
+              if (!isEditing || children.length === 0) {
+                store.dispatch(setCursor({ path: simplePath }))
+              }
+            }}
+          />
+        )}
+
+        {isProseView && <View style={styles(isEditing).proseView} />}
+
+        {/* // Todo: still need to decide the best approach to implement the annotations.
         <ThoughtAnnotation
           env={env}
           path={path}
@@ -420,29 +423,28 @@ const ThoughtContainer = ({
           simplePath={simplePath}
         /> */}
 
-          <StaticThought
-            env={env}
-            path={path}
-            cursorOffset={cursorOffset}
-            hideBullet
-            homeContext={homeContext}
-            isDraggable={isDraggable}
-            isDragging={isDragging}
-            isPublishChild={isPublishChild}
-            isEditing={isEditing}
-            isLeaf={isLeaf}
-            publish={publish}
-            rank={rank}
-            showContextBreadcrumbs={showContextBreadcrumbs}
-            showContexts={showContexts}
-            style={styleNew}
-            simplePath={simplePath}
-            toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
-            view={view}
-          />
-        </View>
-        <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
+        <StaticThought
+          env={env}
+          path={path}
+          cursorOffset={cursorOffset}
+          hideBullet
+          homeContext={homeContext}
+          isVisible={isVisible}
+          isDragging={isDragging}
+          isPublishChild={isPublishChild}
+          isEditing={isEditing}
+          isLeaf={isLeaf}
+          publish={publish}
+          rank={rank}
+          showContextBreadcrumbs={showContextBreadcrumbs}
+          showContexts={showContexts}
+          style={styleNew}
+          simplePath={simplePath}
+          toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
+          view={view}
+        />
       </View>
+      <Note context={thoughtsLive} onFocus={setCursorOnNote({ path: path })} />
 
       {publish && context.length === 0 && <Byline context={thoughts} />}
 
@@ -455,10 +457,24 @@ const ThoughtContainer = ({
         isParentHovering={isAnyChildHovering}
         showContexts={allowSingleContext}
         simplePath={simplePath}
+        view={view}
       />
-    </>
+    </View>
   )
 }
+
+/** Styles. */
+const styles = (isEditing?: boolean) =>
+  StyleSheet.create({
+    proseView: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: 'white',
+      opacity: isEditing ? 0.2 : 0,
+      marginRight: 15,
+    },
+  })
 
 ThoughtContainer.displayName = 'ThoughtContainer'
 

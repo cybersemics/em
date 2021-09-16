@@ -464,3 +464,8 @@ export const GLOBAL_STYLE_ENV = {
     bullet: 'None',
   },
 }
+
+export enum VIEW_MODE {
+  Table = 'Table',
+  Prose = 'Prose',
+}

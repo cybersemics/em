@@ -1,12 +1,15 @@
 import React, { useRef, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { attribute, getParent, hasChild, isContextViewActive } from '../selectors'
+import { attribute, getParent, isContextViewActive } from '../selectors'
 import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
-import { asyncFocus, selectNextEditable, setSelection, strip } from '../util'
+import { strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
-import { Context } from '../@types'
+import asyncFocus from '../device/asyncFocus'
+import selectNextEditable from '../device/selectNextEditable'
+import * as selection from '../device/selection'
+import { Context, State } from '../@types'
 
 interface NoteProps {
   context: Context
@@ -26,15 +29,13 @@ const Note = ({ context, onFocus }: NoteProps) => {
   const noteRef: { current: HTMLElement | null } = useRef(null)
   const [justPasted, setJustPasted] = useState(false)
 
-  const hasNote = hasChild(state, context, '=note')
-
-  /** Check if the note thought is pending or not. */
-  const isNotePending = () => {
+  /** Returns true if this context has a non-pending note.. */
+  const hasNote = useSelector((state: State) => {
     const noteThought = getParent(state, [...context, '=note'])
-    return !noteThought || noteThought.pending
-  }
+    return noteThought && !noteThought.pending
+  })
 
-  if (!hasNote || isNotePending() || isContextViewActive(state, context)) return null
+  if (!hasNote || isContextViewActive(state, context)) return null
 
   const note = attribute(state, context, '=note')
 
@@ -50,7 +51,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
       e.stopPropagation()
       e.preventDefault()
       editable.focus()
-      setSelection(editable, { end: true })
+      selection.set(editable, { end: true })
       dispatch(setNoteFocus({ value: false }))
     }
     // delete empty note
@@ -64,7 +65,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
         asyncFocus()
       }
       editable.focus()
-      setSelection(editable, { end: true })
+      selection.set(editable, { end: true })
 
       dispatch(deleteAttribute({ context, key: '=note' }))
       dispatch(setNoteFocus({ value: false }))
@@ -95,7 +96,7 @@ const Note = ({ context, onFocus }: NoteProps) => {
 
   /** Set editing to false onBlur, if keyboard is closed. */
   const onBlur = () => {
-    if (isTouch && !window.getSelection()?.focusNode) {
+    if (isTouch && !selection.isActive()) {
       setTimeout(() => dispatch(editing({ value: false })))
     }
   }

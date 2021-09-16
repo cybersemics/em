@@ -5,6 +5,7 @@ import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { alert, logout, showModal } from '../action-creators'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
+import scrollTo from '../device/scrollTo'
 
 /** A footer component with some useful links. */
 const Footer = () => {
@@ -19,12 +20,7 @@ const Footer = () => {
     // prevent alert dispatch when rendered for first time
     if (!firstUpdate.current) {
       dispatch(alert(`Font size: ${fontSize}`, { clearTimeout: 2000 }))
-
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        left: 0,
-        behavior: 'smooth',
-      })
+      scrollTo('bottom')
     } else {
       firstUpdate.current = false
     }

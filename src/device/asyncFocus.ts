@@ -33,4 +33,6 @@ export const AsyncFocus = (): (() => void) => {
 }
 
 // export a singleton
-export const asyncFocus = AsyncFocus()
+const asyncFocus = AsyncFocus()
+
+export default asyncFocus

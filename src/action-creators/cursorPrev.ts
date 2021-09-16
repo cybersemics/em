@@ -1,7 +1,8 @@
 import { HOME_TOKEN } from '../constants'
-import { scrollCursorIntoView, setCursor, suppressExpansion } from '../action-creators'
+import { setCursor, suppressExpansion } from '../action-creators'
 import { getThoughtBefore, simplifyPath, getChildrenSorted, attributeEquals } from '../selectors'
 import { appendToPath, parentOf, pathToContext } from '../util'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { Thunk } from '../@types'
 
 /** Moves the cursor to the previous sibling, ignoring descendants. */
@@ -13,7 +14,7 @@ const cursorPrev = (): Thunk => (dispatch, getState) => {
     const children = getChildrenSorted(state, [HOME_TOKEN])
     if (children.length > 0) {
       dispatch(setCursor({ path: [children[0].id] }))
-      dispatch(scrollCursorIntoView())
+      scrollCursorIntoView()
     }
     return
   }
@@ -31,7 +32,7 @@ const cursorPrev = (): Thunk => (dispatch, getState) => {
   if (!isCursorPinned) dispatch(suppressExpansion({ duration: 100 }))
 
   dispatch(setCursor({ path }))
-  dispatch(scrollCursorIntoView())
+  scrollCursorIntoView()
 }
 
 export default cursorPrev

@@ -2,18 +2,10 @@ import _ from 'lodash'
 import { cursorBack, deleteThought, setCursor } from '../reducers'
 import { Path, State } from '../@types'
 
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
+
 // util
-import {
-  appendToPath,
-  getTextContentFromHTML,
-  head,
-  headValue,
-  once,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-  unroot,
-} from '../util'
+import { appendToPath, head, headValue, once, parentOf, pathToContext, reducerFlow, unroot } from '../util'
 
 // selectors
 import {

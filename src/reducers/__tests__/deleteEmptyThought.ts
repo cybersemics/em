@@ -1,5 +1,5 @@
-import { initialState, reducerFlow, getCaretPositionDetails } from '../../util'
-import { exportContext, getChildren, rankThoughtsFirstMatch } from '../../selectors'
+import { initialState, reducerFlow } from '../../util'
+import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -113,7 +113,15 @@ it('do nothing if there is no cursor', () => {
 })
 
 it('merge thoughts', () => {
-  const steps = [newThought('a'), newThought('b'), deleteEmptyThought]
+  // set the cursor
+  const steps = [
+    newThought('a'),
+    newThought('b'),
+    // reset the cursor to ensure that cursor offset is 0
+    setCursor({ path: null }),
+    setCursorFirstMatch(['b']),
+    deleteEmptyThought,
+  ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -150,6 +158,9 @@ it("do not change first thought's children", () => {
     newThought('a2'),
     cursorBack,
     newThought('b'),
+    // reset the cursor to ensure that cursor offset is 0
+    setCursor({ path: null }),
+    setCursorFirstMatch(['b']),
     deleteEmptyThought,
   ]
 
@@ -216,12 +227,11 @@ describe('mount', () => {
     store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
     jest.runOnlyPendingTimers()
 
-    const dummyEditable = document.createElement('div')
-    dummyEditable.innerHTML = 'apple'
-
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
-
-    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
+    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
+    // In this case, the selection is at the end of the apple element.
+    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.ELEMENT_NODE)
+    expect(window.getSelection()?.focusNode?.textContent).toBe('apple')
+    expect(window.getSelection()?.focusOffset).toBe(1)
   })
 
   it('after merging siblings, caret should be in between', async () => {
@@ -236,14 +246,10 @@ describe('mount', () => {
     ])
     jest.runOnlyPendingTimers()
 
-    const mergedValue = getChildren(store.getState(), [HOME_TOKEN])[0].value
-
-    const dummyEditable = document.createElement('div')
-    dummyEditable.innerHTML = mergedValue
-
-    const caretPositionDetails = getCaretPositionDetails(dummyEditable, 'apple'.length)
-
-    // TODO: Also check the if the selection focusNode parent is the correct editable
-    expect(window.getSelection()?.focusOffset).toBe(caretPositionDetails?.offset)
+    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
+    // In this case, the selection is in the applebanana text node, in between apple and banana.
+    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.TEXT_NODE)
+    expect(window.getSelection()?.focusNode?.textContent).toBe('applebanana')
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 })

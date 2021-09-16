@@ -23,7 +23,6 @@ import {
   appendToPath,
   createId,
   ellipsize,
-  getTextContentFromHTML,
   head,
   headValue,
   once,
@@ -52,6 +51,7 @@ import {
 // reducers
 import { alert, createThought, setCursor, tutorialNext, tutorialStep as tutorialStepReducer } from '../reducers'
 import { isMobile } from '../util/isMobile'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 export interface NewThoughtPayload {
   at?: Path

@@ -21,6 +21,7 @@ export const clearPushQueue = reducerToThunk<typeof reducers.clearPushQueue>('cl
 export const collapseContext = reducerToThunk<typeof reducers.collapseContext>('collapseContext')
 export const cursorBeforeSearch = reducerToThunk<typeof reducers.cursorBeforeSearch>('cursorBeforeSearch')
 export const cursorBack = reducerToThunk<typeof reducers.cursorBack>('cursorBack')
+export const cursorCleared = reducerToThunk<typeof reducers.cursorCleared>('cursorCleared')
 export const cursorDown = reducerToThunk<typeof reducers.cursorDown>('cursorDown')
 export const cursorForward = reducerToThunk<typeof reducers.cursorForward>('cursorForward')
 export const cursorHistory = reducerToThunk<typeof reducers.cursorHistory>('cursorHistory')
@@ -109,7 +110,6 @@ export { default as preloadSources } from './preloadSources'
 export { default as pull } from './pull'
 export { default as push } from './push'
 export { default as restoreCursorBeforeSearch } from './restoreCursorBeforeSearch'
-export { default as scrollCursorIntoView } from './scrollCursorIntoView'
 export { default as setEditingValue } from './setEditingValue'
 export { default as setInvalidState } from './setInvalidState'
 export { default as showLatestShortcuts } from './showLatestShortcuts'

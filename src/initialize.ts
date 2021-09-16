@@ -4,12 +4,11 @@ import moize from 'moize'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getParent, getLexeme, getChildrenRanked, isPending } from './selectors'
-import { hashContext, hashThought, initEvents, owner, setSelection, urlDataSource } from './util'
-// import checkDataIntegrity from './test-helpers/checkDataIntegrity'
-import { getAllChildrenAsThoughts } from './selectors/getChildren'
+import { hashContext, hashThought, initEvents, owner, urlDataSource } from './util'
 import {
   authenticate,
   loadPublicThoughts,
+  logout,
   setRemoteSearch,
   status as statusActionCreator,
   userAuthenticated,
@@ -27,6 +26,8 @@ import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
 import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
+import * as selection from './device/selection'
+import { getAllChildrenAsThoughts } from './selectors/getChildren'
 
 // enable to collect moize usage stats
 // do not enable in production
@@ -55,6 +56,11 @@ export const initFirebase = async (): Promise<void> => {
         if (!hasRemoteConfig) console.warn('Algolia configs not found. Remote search is not enabled.')
         else initAlgoliaSearch(user.uid, { applicationId, index }, store)
       } else {
+        // if the authentication state changes while the user is still logged in, it means that they logged out from another tab
+        // we should log them out of all tabs
+        if (store.getState().authenticated) {
+          store.dispatch(logout())
+        }
         store.dispatch(authenticate({ value: false }))
         store.dispatch(setRemoteSearch({ value: false }))
       }
@@ -153,7 +159,7 @@ const withDispatch =
     store.dispatch(f(...args))
 
 const testHelpers = {
-  setSelection,
+  setSelection: selection.set,
   importToContext: withDispatch(importToContext),
   getLexemeFromDB,
   getState: store.getState,

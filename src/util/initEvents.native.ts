@@ -2,11 +2,13 @@ import _ from 'lodash'
 import { Store } from 'redux'
 import { inputHandlers /* isGestureHint */ } from '../shortcuts'
 import * as db from '../data-providers/dexie'
-import { clearSelection, isRoot, pathToContext } from '.'
+import { isRoot, pathToContext } from '.'
 import { decodeThoughtsUrl, pathExists } from '../selectors'
-import { /* alert */ error, scrollCursorIntoView, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { Path, State } from '../@types'
+import { /* alert */ error, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { equalPath } from './equalPath'
+import * as selection from '../device/selection'
+import { Path, State } from '../@types'
 // import lifecycle from 'page-lifecycle'
 
 declare global {
@@ -41,7 +43,7 @@ export const initEvents = (store: Store<State, any>) => {
 
     // clear the selection if root
     if (toRoot) {
-      clearSelection()
+      selection.clear()
     }
 
     // set the cursor

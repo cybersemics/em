@@ -613,8 +613,8 @@ export const SubthoughtsComponent = ({
             const childContext = pathToContext(state, childPath)
             const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(state, { context: childContext, env }))
 
-            /** Returns true if the cursor in in the child path. */
-            const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
+            /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
+            const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
 
             /** Gets the =focus/Zoom/=style of the child path. */
             const styleZoom = () => getStyle(state, [...childContext, '=focus', 'Zoom'])
@@ -661,7 +661,7 @@ export const SubthoughtsComponent = ({
                 // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
                 key={`${child.rank}${child.id ? '-context' : ''}`}
                 rank={child.rank}
-                isDraggable={actualDistance < 2}
+                isVisible={actualDistance < 2 || (distance === 2 && isEditingChildPath())}
                 showContexts={showContexts}
                 prevChild={filteredChildren[i - 1]}
                 isParentHovering={isParentHovering}

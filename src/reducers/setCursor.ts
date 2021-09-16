@@ -134,12 +134,14 @@ const setCursor = (
             ? state.cursorHistory.slice(0, -1)
             : state.cursorHistory,
           // set cursorOffset to null if editingValue is null
-          // (prevents Editable from calling setSelection on click since we want the default cursor placement in that case)
+          // (prevents Editable from calling selection.set on click since we want the default cursor placement in that case)
           contextViews: newContextViews,
         }
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear
     editing: editing != null ? editing : state.editing,
+    // reset cursorCleared on navigate
+    cursorCleared: false,
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,

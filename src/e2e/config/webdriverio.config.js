@@ -20,7 +20,7 @@ const config = {
     'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || 'local-' + new Date().getTime(),
     'browserstack.local': 'true',
     'browserstack.idleTimeout': 30,
-    'browserstack.debug': 'true',
+    // 'browserstack.debug': 'true',
     // 'browserstack.console': 'verbose',
     // 'browserstack.networkLogs': 'true',
   },
@@ -29,7 +29,7 @@ const config = {
   baseUrl: '',
   waitforTimeout: 10000,
   connectionRetryTimeout: 90000,
-  connectionRetryCount: 100,
+  connectionRetryCount: 10,
   hostname: 'hub.browserstack.com',
 }
 

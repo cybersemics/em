@@ -1,5 +1,6 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
-import { clearSelection, equalPath, headValue, isDivider } from '../util'
+import { equalPath, headValue, isDivider } from '../util'
+import * as selection from '../device/selection'
 import { State } from '../@types'
 
 /**
@@ -19,7 +20,7 @@ const cursorChangedEnhancer: StoreEnhancer<any> =
         !equalPath(state.cursor, updatedState.cursor) &&
         isDivider(headValue(updatedState, updatedState.cursor))
       ) {
-        clearSelection()
+        selection.clear()
       }
       return updatedState
     }

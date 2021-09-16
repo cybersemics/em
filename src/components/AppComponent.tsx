@@ -7,8 +7,9 @@ import { BASE_FONT_SIZE } from '../constants'
 import { inputHandlers, isGestureHint } from '../shortcuts'
 import { isDocumentEditable } from '../util'
 import { isTutorial, theme } from '../selectors'
-import { alert, updateSplitPosition } from '../action-creators'
+import { alert, toggleSidebar, updateSplitPosition } from '../action-creators'
 import { store } from '../store'
+import * as selection from '../device/selection'
 
 // components
 import Alert from './Alert'
@@ -55,6 +56,20 @@ interface DispatchProps {
   updateSplitPos: (splitPos: number) => void
 }
 
+/** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
+const SidebarGutter = () => {
+  return (
+    <div style={{ position: 'relative' }}>
+      <div
+        onClick={() => {
+          store.dispatch(toggleSidebar())
+        }}
+        style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
+      ></div>
+    </div>
+  )
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShorcutsDiagram } = state
@@ -77,8 +92,8 @@ const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
 
 type Props = StateProps & DispatchProps
 
-/** Cancel gesture if there is an active text selection on active drag. */
-const shouldCancelGesture = () => !!window.getSelection()?.toString() || store.getState().dragInProgress
+/** Cancel gesture if there is an active text selection or active drag. */
+const shouldCancelGesture = () => (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress
 
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {
@@ -214,6 +229,7 @@ const AppComponent: FC<Props> = props => {
             </SplitPane>
 
             <div className='nav-bottom-wrapper'>
+              {isTouch && <SidebarGutter />}
               <Scale amount={scale!} origin='bottom left'>
                 <NavBar position='bottom' />
               </Scale>

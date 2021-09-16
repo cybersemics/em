@@ -13,6 +13,7 @@ import { NOOP } from '../constants'
 import globals from '../globals'
 import { alert, dragHold, dragInProgress, error, moveThought, createThought } from '../action-creators'
 import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
+import * as selection from '../device/selection'
 
 // util
 import {
@@ -53,7 +54,7 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
   const state = store.getState()
   const thoughts = pathToContext(state, props.simplePathLive!)
   const context = parentOf(pathToContext(state, props.simplePathLive!))
-  const isDraggable = props.isDraggable || props.isCursorParent
+  const isDraggable = props.isVisible || props.isCursorParent
 
   return (
     isDocumentEditable() &&
@@ -68,11 +69,12 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
 
 /** Handles drag start. */
 const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
+  const offset = selection.offset()
   store.dispatch(
     dragInProgress({
       value: true,
       draggingThought: simplePathLive,
-      offset: document.getSelection()?.focusOffset,
+      ...(offset != null ? { offset } : null),
     }),
   )
   return { simplePath: simplePathLive }

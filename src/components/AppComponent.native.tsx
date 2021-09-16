@@ -24,13 +24,19 @@ import Content from './Content.native'
 import MultiGesture from './MultiGesture'
 import { store } from '../store'
 import { isGestureHint, inputHandlers } from '../shortcuts'
+import Tutorial from './Tutorial'
+import { isTutorial } from '../selectors'
+import { storage } from '../util'
+import * as selection from '../device/selection'
+
+const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 
 const { flexOne, darkBackground, flexGrow } = commonStyles
 
 const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 /** Cancel gesture if there is an active text selection on active drag. */
-const shouldCancelGesture = () => store?.getState().dragInProgress
+const shouldCancelGesture = () => selection.isActive() || store?.getState().dragInProgress
 
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {
@@ -50,9 +56,13 @@ const AppComponent: React.FC = () => {
   const dispatch = useDispatch()
   const { height } = useDimensions().screen
   const [isGestureActive, setIsGestureActive] = useState(false)
+  const tutorialSettings = useSelector(isTutorial)
 
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const showAlert = useSelector((state: State) => state.alert)
+  const isLoading = useSelector((state: State) => state.isLoading)
+
+  const tutorial = isLoading ? tutorialLocal : tutorialSettings
 
   /** Open drawer menu. */
   const openDrawer = () => {
@@ -88,8 +98,10 @@ const AppComponent: React.FC = () => {
           renderNavigationView={Sidebar}
         >
           {showAlert && <Alert />}
+          {tutorial && <Tutorial />}
+          {!tutorial && <Toolbar />}
+
           <ErrorMessage />
-          <Toolbar />
           <ScrollView
             scrollEnabled={!isGestureActive}
             nestedScrollEnabled={true}
