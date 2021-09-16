@@ -319,7 +319,6 @@ const Editable = ({
 
     // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
     // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
-    // disable on mobile to avoid infinite loop (#908)
     const isAtBeginning = selection.offset() === 0
 
     // allow transient editable to have focus on render
@@ -334,8 +333,7 @@ const Editable = ({
         For some reason, setTimeout fixes it.
       */
       // if (isTouch && isSafari()) {
-      //   // asyncFocus needs to be throttled otherwise it causes an infinite loop (#908).
-      //   asyncFocusThrottled()
+      //   asyncFocus()
       //   setTimeout(setSelectionToCursorOffset)
       // } else {
       //   setSelectionToCursorOffset()
