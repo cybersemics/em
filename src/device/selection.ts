@@ -121,7 +121,7 @@ export const restore = (range: Range | null): void => {
   sel?.addRange(range)
 }
 
-/** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. */
+/** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. Only supports a rangeCount of 1. */
 export const save = (): Range | null => {
   const sel = window.getSelection()
   const range = sel && sel.rangeCount > 0 ? sel?.getRangeAt(0) : null
