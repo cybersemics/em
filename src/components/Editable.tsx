@@ -597,10 +597,10 @@ const Editable = ({
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
-    // reset rendered value to previous non-duplicate
-    if (contentRef.current) {
+    // if there was an ephemeral duplicate state, reset the rendered value to previous non-duplicate
+    if (contentRef.current?.innerHTML !== oldValueRef.current) {
       contentRef.current!.innerHTML = oldValueRef.current
-      contentRef.current.style.opacity = '1.0'
+      contentRef.current!.style.opacity = '1.0'
       showDuplicationAlert(false, dispatch)
     }
 
