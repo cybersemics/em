@@ -70,8 +70,10 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const isEmpty = value === ''
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(path)
-  const hasDescendants = getAllChildren(state, pathToContext(path)).length !== 0
+  const allChildren = getAllChildren(state, thoughts)
+  const hasDescendants = allChildren.length !== 0
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
+  const alertLabel = ellipsize(value === '=note' ? 'note ' + allChildren[0]?.value || '' : value)
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
@@ -155,7 +157,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
           // undo alert
           alert({
-            value: `Archived ${ellipsize(headValue(showContexts ? simplePath : path))}`,
+            value: `Archived ${alertLabel}`,
             // provide an alertType so the delete shortcut can null the alert after a delay
             alertType: 'undoArchive',
             showCloseLink: true,
