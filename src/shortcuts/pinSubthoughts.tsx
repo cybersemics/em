@@ -48,7 +48,7 @@ const pinSubthoughtsShortcut: Shortcut = {
     if (type === 'keyboard') {
       const pinned = attributeEquals(state, context, '=pinChildren', 'true')
       dispatch(
-        alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts', { clearTimeout: 2000, showCloseLink: false }),
+        alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts', { clearDelay: 2000, showCloseLink: false }),
       )
     }
 

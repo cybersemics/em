@@ -135,7 +135,7 @@ const exec: Shortcut['exec'] = (dispatch, getState) => {
     dispatch(
       alert('Duplicate thoughts are not allowed within the same context.', {
         alertType: 'duplicateThoughts',
-        clearTimeout: 2000,
+        clearDelay: 2000,
       }),
     )
   } else {

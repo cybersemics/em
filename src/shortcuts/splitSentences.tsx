@@ -40,7 +40,7 @@ const splitSentencesShortcut: Shortcut = {
       dispatch(
         alert('Cannot split sentences: thought is an empty thought or has only one sentence.', {
           alertType: 'splitSentencesErr2',
-          clearTimeout: 3000,
+          clearDelay: 3000,
         }),
       )
       return
@@ -60,7 +60,7 @@ const splitSentencesShortcut: Shortcut = {
       dispatch(
         alert('Cannot split sentences: splitting creates duplicates.', {
           alertType: 'splitSentencesErr3',
-          clearTimeout: 3000,
+          clearDelay: 3000,
         }),
       )
       return

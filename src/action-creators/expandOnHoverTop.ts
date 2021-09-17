@@ -51,9 +51,9 @@ const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
   const shouldExpand = shouldAllowActiveHoverTop(state)
 
   /** Clears an active delayed dispatch. */
-  const clearTimeout = () => {
+  const clearTimer = () => {
     if (expandTopTimer) {
-      window.clearTimeout(expandTopTimer)
+      clearTimeout(expandTopTimer)
       expandTopTimer = null
     }
   }
@@ -64,7 +64,7 @@ const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
   if (shouldCancel) dispatch(expandHoverTop({ path: null }))
 
   if (!shouldExpand) {
-    clearTimeout()
+    clearTimer()
     return
   }
 
@@ -87,7 +87,7 @@ const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
   const newExpandHoverPath = hoveringPath && parentOf(hoveringPath)
 
   if (shouldExpand && newExpandHoverPath && !isSameExpandHoverTopPath(newExpandHoverPath)) {
-    clearTimeout()
+    clearTimer()
     expandTopTimer = delayedDispatch(newExpandHoverPath)
   }
 }

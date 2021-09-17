@@ -273,7 +273,7 @@ const ModalExport = () => {
     Clipboard.setString(exportContent || '')
     dispatch([
       modalComplete('export'),
-      alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 }),
+      alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearDelay: 3000 }),
     ])
   }
 

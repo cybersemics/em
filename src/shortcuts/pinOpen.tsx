@@ -42,7 +42,7 @@ const pinOpenShortcut: Shortcut = {
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
       const pinned = attributeEquals(state, context, '=pin', 'true')
-      dispatch(alert(pinned ? 'Unpinned thought' : 'Pinned thought', { clearTimeout: 2000, showCloseLink: false }))
+      dispatch(alert(pinned ? 'Unpinned thought' : 'Pinned thought', { clearDelay: 2000, showCloseLink: false }))
     }
 
     dispatch(

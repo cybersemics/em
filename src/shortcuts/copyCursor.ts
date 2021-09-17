@@ -38,7 +38,7 @@ const copyCursorShortcut: Shortcut = {
     dispatch(
       alert(`Copied ${phrase} to the clipboard`, {
         alertType: 'clipboard',
-        clearTimeout: 3000,
+        clearDelay: 3000,
       }),
     )
   },

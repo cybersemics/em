@@ -155,7 +155,7 @@ const duplicateAlertToggler = () => {
       return
     }
     if (timeoutId) {
-      window.clearTimeout(timeoutId)
+      clearTimeout(timeoutId)
       timeoutId = undefined
     }
 

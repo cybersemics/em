@@ -81,7 +81,7 @@ export const initFirebase = async (): Promise<void> => {
       // either connect with authenticated user or go to connected state until they login
       if (connected) {
         // once connected, disable offline mode timer
-        window.clearTimeout(globals.offlineTimer)
+        clearTimeout(globals.offlineTimer)
 
         // if reconnecting from offline mode, onAuthStateChange is not called since Firebase is still authenticated, but we still need to execute the app authentication logic and subscribe to the main value event
         // if status is loading, we can assume onAuthStateChanged and thus userAuthenticated was already called

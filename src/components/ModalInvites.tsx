@@ -122,7 +122,7 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
   /** Copy text to clipboard. */
   const updateCopy = (text: string) => {
     navigator.clipboard.writeText(text)
-    dispatch(alert('Invite code copied to clipboard', { clearTimeout: 2000 }))
+    dispatch(alert('Invite code copied to clipboard', { clearDelay: 2000 }))
   }
 
   if (!authenticated) {

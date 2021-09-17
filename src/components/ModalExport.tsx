@@ -298,7 +298,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
 
       dispatch([
         closeModal(),
-        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 }),
+        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearDelay: 3000 }),
       ])
 
       clearTimeout(globals.errorTimer)
