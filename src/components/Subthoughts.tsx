@@ -373,7 +373,6 @@ const EmptyChildrenDropTarget = ({
     {dropTarget(
       <li
         className={classNames({
-          child: true,
           'drop-end': true,
           'inside-divider': isThoughtDivider,
           last: depth === 0,

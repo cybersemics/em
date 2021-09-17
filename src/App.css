@@ -2189,6 +2189,11 @@ code,
   border-top: 0.2em solid lightblue;
 }
 
+.empty-children .active-drop-hover {
+  margin-left: -2.5rem;
+  margin-top: 0;
+}
+
 .children .child:first-child > .drop-hover {
   margin-top: -0.3em;
 }
@@ -2231,10 +2236,6 @@ code,
 
 .empty-children .drop-end.inside-divider {
   margin-left: 60px;
-}
-
-.mobile .empty-children .drop-end {
-  margin-left: 25%;
 }
 
 .empty-children .drop-end > .drop-hover {
