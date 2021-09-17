@@ -98,7 +98,7 @@ export const initFirebase = async (): Promise<void> => {
   }
 
   // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
-  globals.offlineTimer = window.setTimeout(() => {
+  globals.offlineTimer = setTimeout(() => {
     store.dispatch(statusActionCreator({ value: 'offline' }))
   }, OFFLINE_TIMEOUT)
 }

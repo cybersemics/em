@@ -309,7 +309,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       dispatch(error({ value: 'Error copying thoughts' }))
 
       clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
+      globals.errorTimer = setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
     })
 
     return () => {

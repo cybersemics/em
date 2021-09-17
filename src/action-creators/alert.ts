@@ -25,7 +25,7 @@ const alert =
     if (clearTimeout) {
       // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
       clearAlertTimeoutId && window.clearTimeout(clearAlertTimeoutId)
-      clearAlertTimeoutId = window.setTimeout(() => {
+      clearAlertTimeoutId = setTimeout(() => {
         dispatch({
           type: 'alert',
           alertType,
