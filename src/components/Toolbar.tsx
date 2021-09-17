@@ -9,7 +9,7 @@ Test:
 
 */
 
-import React, { FC, useCallback, useEffect, useState } from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
@@ -155,6 +155,7 @@ const Toolbar = ({
   scrollPrioritized,
   showTopControls,
 }: ReturnType<typeof mapStateToProps>) => {
+  const toolbarRef = useRef<HTMLDivElement>(null)
   const [holdTimer, setHoldTimer] = useState<Timer>(0 as unknown as Timer)
   const [holdTimer2, setHoldTimer2] = useState<Timer>(0 as unknown as Timer)
   const [lastScrollLeft, setLastScrollLeft] = useState<number | undefined>()
@@ -181,13 +182,11 @@ const Toolbar = ({
 
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
-    const toolbarElement = document.getElementById('toolbar')
-    if (toolbarElement) {
-      setLeftArrowElementClassName(toolbarElement.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
+    const el = toolbarRef.current
+    if (el) {
+      setLeftArrowElementClassName(el.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
       setRightArrowElementClassName(
-        toolbarElement.offsetWidth + toolbarElement.scrollLeft < toolbarElement.scrollWidth - ARROW_SCROLL_BUFFER
-          ? 'shown'
-          : 'hidden',
+        el.offsetWidth + el.scrollLeft < el.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden',
       )
     }
   }
@@ -245,11 +244,10 @@ const Toolbar = ({
   /** Clears the overlay timer if scrolling. */
   const onTouchMove = (e: React.TouchEvent) => {
     const touch = e.touches[0]
-    const toolbarEl = document.getElementById('toolbar')
     const touchedEl = document.elementFromPoint(touch.pageX, touch.pageY)
 
     // detect touchleave
-    if (!toolbarEl?.contains(touchedEl)) {
+    if (!toolbarRef.current?.contains(touchedEl)) {
       store.dispatch(overlayHide())
       clearTimeout(holdTimer)
     }
@@ -292,6 +290,7 @@ const Toolbar = ({
         <div>
           <div
             id='toolbar'
+            ref={toolbarRef}
             className='toolbar'
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
