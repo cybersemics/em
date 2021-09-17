@@ -1,6 +1,5 @@
 /** Wraps the browser Selection API in a device-agnostic interface. */
 
-import getElementPaddings from './getElementPaddings'
 import { SplitResult } from '../@types'
 
 type SelectionOptionsType = {
@@ -13,6 +12,10 @@ interface NodeOffset {
   node: Node | null
   offset: number
 }
+
+/** Gets the padding of an element as an array of numbers. */
+const getElementPaddings = (element: HTMLElement): number[] =>
+  window.getComputedStyle(element, null).getPropertyValue('padding').split('px ').map(Number)
 
 /** Clears the selection. */
 export const clear = (): void => window.getSelection()?.removeAllRanges()
