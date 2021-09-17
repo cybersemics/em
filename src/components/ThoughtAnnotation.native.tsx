@@ -30,6 +30,7 @@ import { Text } from './Text.native'
 import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
 import { TouchableOpacity } from 'react-native'
+import { isInternalLink } from '../device/router'
 
 const { from, animate } = fadeIn
 
@@ -74,7 +75,7 @@ const UrlIconLink = ({ url }: { url: string }) => (
   <TouchableOpacity
     onPress={e => {
       e.stopPropagation() // prevent Editable onMouseDown
-      if (url.startsWith(window.location.origin)) {
+      if (isInternalLink(url)) {
         const { path, contextViews } = decodeThoughtsUrl(store.getState(), {
           exists: true,
           url,

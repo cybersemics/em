@@ -1,3 +1,7 @@
+/** Returns true if a link is to a thought within the user's thoughtspace. */
+export const isInternalLink = (url: string) => typeof window === 'undefined' || url.startsWith(window.location.origin)
+
+/** True if the current app is hosted on the same machine. */
 export const isLocalNetwork = Boolean(
   window.location.hostname === 'localhost' ||
     window.location.hostname === 'bs-local.com' || // required for browserstack

@@ -24,6 +24,7 @@ import HomeLink from './HomeLink'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
+import { isInternalLink } from '../device/router'
 
 interface ThoughtAnnotationProps {
   dark?: boolean
@@ -70,7 +71,7 @@ const UrlIconLink = ({ url }: { url: string }) => (
     className='external-link'
     onClick={e => {
       e.stopPropagation() // prevent Editable onMouseDown
-      if (url.startsWith(window.location.origin)) {
+      if (isInternalLink(url)) {
         const { path, contextViews } = decodeThoughtsUrl(store.getState(), {
           exists: true,
           url,
