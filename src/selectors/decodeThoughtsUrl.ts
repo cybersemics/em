@@ -6,12 +6,16 @@ import { State } from '../@types'
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null
   exists?: boolean
+
+  // the url to decode and convert to a Path. Defaults to window.location.pathname.
+  url?: string
 }
 
 /** Parses the thoughts from the url. */
-const decodeThoughtsUrl = (state: State, pathname: string, { exists }: Options = {}) => {
-  const urlPathname = pathname.slice(1) || ''
-  const urlComponents = urlPathname.split('/')
+const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
+  url = url || window.location.href
+  const urlRelative = url.replace(/^(?:\/\/|[^/]+)*(\/)?/, '')
+  const urlComponents = urlRelative.split('/')
   const urlOwner = urlComponents[0] || '~' // ~ represents currently authenticated user
 
   if (urlOwner !== owner()) {

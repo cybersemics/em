@@ -42,7 +42,7 @@ const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextView
   if (state.isLoading || equalPath(pathPrev, path)) return
   pathPrev = path
 
-  const decoded = decodeThoughtsUrl(state, window.location.pathname)
+  const decoded = decodeThoughtsUrl(state)
   const context = path ? pathToContext(path) : [HOME_TOKEN]
   const encoded = hashContext(context)
 

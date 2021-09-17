@@ -240,7 +240,7 @@ const updateThoughts = (
       ? state => {
           if (isMobile()) return { ...state, cursorInitialized: true }
 
-          const { contextViews, path } = decodeThoughtsUrl(state, window.location.pathname)
+          const { contextViews, path } = decodeThoughtsUrl(state)
           const cursorNew = !path || isRoot(path) ? null : path
           const isCursorLoaded = cursorNew?.every(child => getLexeme(state, child.value))
 

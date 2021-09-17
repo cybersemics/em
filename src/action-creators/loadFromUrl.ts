@@ -25,7 +25,7 @@ const loadFromUrl =
 
     // decode url after importText so that we are using updated state
     const state = getState()
-    const { path: decodedPath } = decodeThoughtsUrl(state, window.location.pathname, { exists: true })
+    const { path: decodedPath } = decodeThoughtsUrl(state, { exists: true })
 
     // set cursor to first child if cursor is not provided via url
     const firstChild = decodedPath ? getAllChildren(state, pathToContext(decodedPath))[0] : null

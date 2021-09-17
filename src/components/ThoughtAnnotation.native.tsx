@@ -75,8 +75,9 @@ const UrlIconLink = ({ url }: { url: string }) => (
     onPress={e => {
       e.stopPropagation() // prevent Editable onMouseDown
       if (url.startsWith(window.location.origin)) {
-        const { path, contextViews } = decodeThoughtsUrl(store.getState(), url.slice(window.location.origin.length), {
+        const { path, contextViews } = decodeThoughtsUrl(store.getState(), {
           exists: true,
+          url,
         })
         store.dispatch(setCursor({ path, replaceContextViews: contextViews }))
         e.preventDefault()

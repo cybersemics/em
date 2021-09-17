@@ -28,7 +28,7 @@ export const initEvents = (store: Store<State, any>) => {
   const onPopstate = (e: PopStateEvent) => {
     const state = store.getState()
 
-    const { path, contextViews } = decodeThoughtsUrl(state, window.location.pathname)
+    const { path, contextViews } = decodeThoughtsUrl(state)
 
     if (!lastPath) {
       lastPath = state.cursor
