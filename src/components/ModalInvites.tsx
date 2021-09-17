@@ -11,6 +11,7 @@ import { ActionButton } from './ActionButton'
 import Modal from './Modal'
 import { getInviteById, updateInviteCode } from '../apis/invites'
 import _ from 'lodash'
+import { baseUrl } from '../device/router'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -148,7 +149,7 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
         {isFetchingInvites && <p style={{ fontSize: '18px' }}>Fetching your shiny codes ✨...</p>}
         {Object.values(inviteCodes).map(({ used, id, hasSeen }, idx) => {
           const selectedIconFill = focusedGiftCode !== id ? 'grey' : undefined
-          const link = `${window.location.origin}/signup?code=${id}`
+          const link = `${baseUrl}/signup?code=${id}`
           return (
             <div key={`${id}-gift-code`} className='gift-code-wrapper'>
               <div

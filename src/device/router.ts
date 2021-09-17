@@ -1,3 +1,5 @@
+export const baseUrl = window.location.origin
+
 /** Returns true if a link is to a thought within the user's thoughtspace. */
 export const isInternalLink = (url: string) => typeof window === 'undefined' || url.startsWith(window.location.origin)
 
