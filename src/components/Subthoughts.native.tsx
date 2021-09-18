@@ -503,37 +503,16 @@ export const SubthoughtsComponent = ({
 
   const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
-  const cursorContext = cursor ? pathToContext(cursor) : null
-
-  const isCursorLeaf = cursorContext && isLeaf(state, cursorContext)
-
-  const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
-
-  /** First visible thought at the top. */
-  const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path
-
-  const isDescendantOfFirstVisiblePath = isDescendant(
-    pathToContext(firstVisiblePath || []),
-    pathToContext(resolvedPath),
-  )
-
-  const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
-
-  const isAncestorOfCursor =
-    cursor && resolvedPath.length === cursorSubcontextIndex + 1 && cursor?.length > resolvedPath.length
-
-  const isDescendantOfCursor =
-    cursor && cursor.length === cursorSubcontextIndex + 1 && resolvedPath.length > cursor?.length
-
-  const isCursor = cursor && resolvedPath.length === cursorSubcontextIndex + 1 && resolvedPath.length === cursor?.length
-  const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
-
-  /*
-    The thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
-  */
-  const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
-
-  /*
+  /** Calculates the autofocus state to hide or dim thoughts.
+   * Note: The following properties is applied to the immediate childrens with given class.
+   * - distance-from-cursor-0 fully visible
+   * - distance-from-cursor-1 dimmed
+   * - distance-from-cursor-2 shifted left and hidden
+   * - distance-from-cursor-3 shiifted left and hidden
+   * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
+   */
+  const actualDistance = once(() => {
+    /*
     Note:
 
     # Thoughts that should not be dimmed
@@ -544,25 +523,53 @@ export const SubthoughtsComponent = ({
     # Thoughts that should be dimmed
       - first visible thought should be dimmed if it is not direct parent of the cursor.
       - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
-  */
-  const shouldDim =
-    cursor && isDescendantOfFirstVisiblePath && !(isCursorParent && isCursorLeaf) && !isCursor && !isDescendantOfCursor
 
-  /*
     Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
-  */
+    */
 
-  /*
-    Note: The following properties is applied to the immediate childrens with given class.
+    const isCursorLeaf = cursor && isLeaf(state, pathToContext(cursor))
 
-    distance-from-cursor-0 fully visible
-    distance-from-cursor-1 dimmed
-    distance-from-cursor-2 shifted left and hidden
-    distance-from-cursor-3 shiifted left and hidden
+    const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
-    Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
-  */
-  const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
+    /** First visible thought at the top. */
+    const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path | undefined
+
+    const isDescendantOfFirstVisiblePath = isDescendant(
+      // TODO: Add support for [ROOT] to isDescendant
+      pathToContext(firstVisiblePath || ([] as unknown as Path)),
+      pathToContext(resolvedPath),
+    )
+
+    const cursorSubcontextIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
+
+    const isAncestorOfCursor =
+      cursor && cursor.length > resolvedPath.length && resolvedPath.length === cursorSubcontextIndex() + 1
+
+    const isCursor =
+      cursor && resolvedPath.length === cursorSubcontextIndex() + 1 && resolvedPath.length === cursor?.length
+
+    /** Returns true if the resolvedPath is a descendant of the cursor. */
+    const isDescendantOfCursor = () =>
+      cursor && resolvedPath.length > cursor.length && cursor.length === cursorSubcontextIndex() + 1
+
+    // thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
+    const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
+
+    const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
+
+    /** Returns true if the children should be dimmed by the autofocus. */
+    const shouldDim = () => {
+      return (
+        cursor &&
+        isDescendantOfFirstVisiblePath &&
+        !(isCursorParent && isCursorLeaf) &&
+        !isCursor &&
+        !isDescendantOfCursor()
+      )
+    }
+
+    return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
+  })
 
   const contextChildren = [...unroot(context), '=children'] // children of parent with =children
   const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
@@ -627,7 +634,7 @@ export const SubthoughtsComponent = ({
                     isProseView || hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()
                   }
                   isParentHovering={isParentHovering}
-                  isVisible={actualDistance < 2}
+                  isVisible={actualDistance() < 2}
                   prevChild={filteredChildren[i - 1]}
                   rank={child.rank}
                   showContexts={showContexts}
