@@ -97,7 +97,7 @@ const helpText = `Usage: node build/scripts/merge/index.js em-proto-current.json
 
 let prevContext: Context = []
 
-const stateBlank = initialState()
+const stateStart = initialState()
 
 /*****************************************************************
  * SCRIPT
@@ -112,6 +112,11 @@ const readThoughts = (file: string): FirebaseThoughts => {
 
 /** Reads thoughts that were exported from Firebase. Converts Parent children to proper arrays. */
 const convertParentChildren = (thoughts: FirebaseThoughts): ThoughtIndices => {
+  // if already converted, return as-is
+  const firstParent = Object.values(thoughts.contextIndex)[0]
+  const isConverted = Array.isArray(firstParent.children)
+  if (isConverted) return thoughts as unknown as ThoughtIndices
+
   const contextIndex = keyValueBy(thoughts.contextIndex, (key, parent) => {
     return {
       [key]: {
@@ -130,27 +135,35 @@ const convertParentChildren = (thoughts: FirebaseThoughts): ThoughtIndices => {
 /** Merges thoughts into current state using importText to handle duplicates and merged descendants. */
 const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
   const numParents = Object.keys(thoughts.contextIndex).length
-  // console.info(`Recalculating ${numParents} contextIndex hashes`)
+  console.info(`Recalculating ${numParents} contextIndex hashes`)
   // recalculate contextIndex hashes
-  // thoughtIndex is not used by exportContext, so we don't have to rehash it
-  // const contextIndexRehashed = keyValueBy(thoughts.contextIndex, (key, parent) => {
-  //   const keyNew = Array.isArray(parent.context) ? hashContext(parent.context) : key
-  //   return {
-  //     [keyNew]: {
-  //       ...parent,
-  //       id: keyNew,
-  //     },
-  //   }
-  // })
+  // thoughtIndex is not used, so we don't have to rehash it
+  const contextIndexRehashed = keyValueBy(thoughts.contextIndex, (key, parent) => {
+    // there are some invalid Parents with missing context field
+    if (!parent?.context) return {}
+
+    // convert FirebaseContext to actual array
+    const keyNew = hashContext(Object.values(parent.context))
+    return {
+      [keyNew]: {
+        ...parent,
+        id: keyNew,
+      },
+    }
+  })
+
   console.info(`Exporting HTML of ${numParents} parents for re-import`)
   const html = exportContext(
     {
-      ...stateBlank,
-      thoughts,
+      ...stateStart,
+      thoughts: {
+        ...stateStart.thoughts,
+        contextIndex: contextIndexRehashed,
+      },
     },
     [HOME_TOKEN],
   )
-  console.info('Importing new thoughts into current db')
+  console.info(`Importing ${html.split('\n').length} new thoughts into current db`)
   const stateNew = importText(state, { text: html })
   return stateNew
 }
@@ -172,6 +185,7 @@ const main = () => {
   // read base thoughts
   console.info(`Reading current thoughts: ${file1}`)
   const thoughtsCurrentRaw = readThoughts(file1)
+
   console.info('Converting Parent children to proper arrays')
   const thoughtsCurrent = convertParentChildren(thoughtsCurrentRaw)
 
@@ -182,7 +196,7 @@ const main = () => {
     : [file2]
 
   // accumulate the new state by importing each input
-  let stateNew: State = { ...stateBlank, thoughts: thoughtsCurrent }
+  let stateNew: State = { ...stateStart, thoughts: thoughtsCurrent }
   const errors: ErrorLog[] = []
   const success: string[] = []
 
