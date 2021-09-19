@@ -4,6 +4,43 @@ import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import { SimplePath } from '../../@types'
 import exportContext from '../exportContext'
 
+it('root with children', () => {
+  const text = `- a
+- b`
+
+  const steps = [importText({ text })]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- __ROOT__
+  - a
+  - b`)
+})
+
+it('rename root to given title', () => {
+  const text = `- a
+- b`
+
+  const steps = [importText({ text })]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { title: 'hello' })
+
+  expect(exported).toBe(`- hello
+  - a
+  - b`)
+})
+
+it('no thoughts', () => {
+  const exported = exportContext(initialState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe('- __ROOT__')
+})
+
 it('meta and archived thoughts are included', () => {
   const text = `- a
   - =archive
