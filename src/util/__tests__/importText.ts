@@ -330,7 +330,7 @@ it('two root thoughts', () => {
   expect(exported.trim()).toBe(text)
 })
 
-it('skip root token', () => {
+it('skip HOME token', () => {
   const text = `- ${HOME_TOKEN}
   - a
     - b
@@ -1119,4 +1119,71 @@ it('import multiple thoughts to end of home context with other thoughts', () => 
   - c
     - d
   - e`)
+})
+
+it(`import "${HOME_TOKEN}"`, () => {
+  const text = HOME_TOKEN
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
+})
+
+it(`import "- ${HOME_TOKEN}"`, () => {
+  const text = `- ${HOME_TOKEN}`
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
+})
+
+it(`import HOME token with children`, () => {
+  const text = `- ${HOME_TOKEN}
+  - a
+    - b`
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b`)
+})
+
+it(`import HTML with "${HOME_TOKEN}"`, () => {
+  const text = `<ul>
+  <li>${HOME_TOKEN}</li>
+</ul>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
+})
+
+it(`import HTML with untrimmed "${HOME_TOKEN}  "`, () => {
+  const text = `<ul>
+  <li>${HOME_TOKEN}  </li>
+</ul>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
+})
+
+it(`remove nested HOME token but keep descendants`, () => {
+  const text = `- a
+  - b
+    - c
+  - ${HOME_TOKEN}
+    - d`
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - c
+    - d`)
 })

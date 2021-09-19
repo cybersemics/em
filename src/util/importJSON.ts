@@ -282,7 +282,9 @@ export const importJSON = (
   const lastChildIndex = (parent?.children.length || 0) + blocksNormalized.length - 1
   const importContextEncoded = hashContext(pathToContext(importPath))
   const lastChildFirstLevel = contextIndex[importContextEncoded]?.children[lastChildIndex]
-  const lastImported = appendToPath(importPath, lastChildFirstLevel)
+
+  // there may be no last child even if there are imported blocks, i.e. a lone __ROOT__
+  const lastImported = lastChildFirstLevel ? appendToPath(importPath, lastChildFirstLevel) : null
 
   return {
     contextIndexUpdates: contextIndex,
