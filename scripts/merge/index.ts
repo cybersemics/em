@@ -5,6 +5,7 @@
 import fs from 'fs'
 import path from 'path'
 import _ from 'lodash'
+import { v4 as uid } from 'uuid'
 import memoryStore from './memoryStore'
 
 /*************************************************************************
@@ -32,7 +33,7 @@ global.localStorage = memoryStore()
  ************************************************************************/
 
 import { HOME_TOKEN } from '../../src/constants'
-import { hashContext, hashThought, head, initialState, isRoot, keyValueBy, unroot } from '../../src/util'
+import { hashContext, hashThought, head, initialState, isRoot, keyValueBy, timestamp, unroot } from '../../src/util'
 import { exportContext, hasLexeme } from '../../src/selectors'
 import { importText } from '../../src/reducers'
 import {
@@ -52,7 +53,7 @@ import {
  ************************************************************************/
 
 interface Database {
-  users: Index<FirebaseThoughts>
+  users: Index<RawThoughts>
 }
 
 interface FirebaseParent {
@@ -63,6 +64,27 @@ interface FirebaseParent {
   lastUpdated: Timestamp
   pending?: boolean
   updatedBy: string
+}
+
+// Parent before context was added
+interface LegacyChild {
+  created: Timestamp
+  key: string
+  lastUpdated: Timestamp
+  rank: number
+}
+
+interface LegacyThoughtContext {
+  context: Context
+  lastUpdated: Timestamp
+  rank: number
+}
+
+interface LegacyLexeme {
+  value: string
+  memberOf: LegacyThoughtContext[]
+  created: Timestamp
+  lastUpdated: Timestamp
 }
 
 interface FirebaseLexeme {
@@ -81,6 +103,13 @@ interface FirebaseThoughts {
   thoughtIndex: Index<Lexeme>
 }
 
+interface LegacyThoughts {
+  contextChildren: Index<LegacyChild[]>
+  data: Index<LegacyLexeme>
+}
+
+type RawThoughts = FirebaseThoughts | LegacyThoughts | ThoughtIndices
+
 interface ErrorLog {
   e: Error
   file: string
@@ -93,7 +122,7 @@ interface ErrorLog {
 
 const userId = 'm9S244ovF7fVrwpAoqoWxcz08s52'
 
-const helpText = `Usage: node build/scripts/merge/index.js em-proto-current.json em-proto-backup.json\n\nOutputs contextIndex.json and thoughtIndex.json to ./output`
+const helpText = `Usage: node build/scripts/merge/index.js em-proto-current.json em-proto-backup.json`
 
 let prevContext: Context = []
 
@@ -104,20 +133,65 @@ const stateStart = initialState()
  *****************************************************************/
 
 /** Read a thought database from file and convert arrays that are stored in Firebase as objects to proper arrays. */
-const readThoughts = (file: string): FirebaseThoughts => {
+const readThoughts = (file: string): RawThoughts => {
   const input = fs.readFileSync(file, 'utf-8')
-  const db = JSON.parse(input) as Database | FirebaseThoughts
-  return (db as Database).users?.[userId] || (db as FirebaseThoughts)
+  const db = JSON.parse(input) as Database | RawThoughts
+  return (db as Database).users?.[userId] || (db as RawThoughts)
 }
 
-/** Reads thoughts that were exported from Firebase. Converts Parent children to proper arrays. */
-const convertParentChildren = (thoughts: FirebaseThoughts): ThoughtIndices => {
+/** Converts old contextChildren schema to contextIndex. Leaves thoughtIndex empty since it is not used. */
+const convertLegacyThoughts = (thoughts: RawThoughts): FirebaseThoughts | ThoughtIndices => {
+  // if already modern, return as-is
+  if ('contextIndex' in thoughts) return thoughts as FirebaseThoughts | ThoughtIndices
+
+  const updatedBy = uid()
+
+  // build a new contextIndex by iterating through each legacy Lexeme
+  const contextIndex = Object.values(thoughts.data).reduce<Index<Parent>>((accum, lexeme) => {
+    // skip missing memberOf
+    if (!lexeme.memberOf) {
+      console.warn('Missing memberOf', lexeme)
+      return accum
+    }
+
+    // add each legacy ThoughtContext as a Child
+    lexeme.memberOf.forEach(cx => {
+      // skip missing context
+      if (!cx.context) {
+        console.warn('Missing context', cx)
+        return
+      }
+      const key = hashContext(cx.context)
+      accum[key] = {
+        ...accum[key],
+        id: key,
+        // add a new child to the old Parent
+        children: [...(accum[key]?.children || []), { value: lexeme.value, rank: cx.rank }],
+        context: cx.context,
+        lastUpdated: cx.lastUpdated,
+        updatedBy,
+      }
+    })
+
+    return accum
+  }, {})
+
+  const thoughtsNew: ThoughtIndices = {
+    contextIndex,
+    thoughtIndex: {},
+  }
+
+  return thoughtsNew
+}
+
+/** Reads thoughts that were exported from Firebase. Converts Parent children to proper arrays. If thoughts are already in the correct format, return as-is. */
+const convertParentChildren = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
   // if already converted, return as-is
-  const firstParent = Object.values(thoughts.contextIndex)[0]
+  const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseParent
   const isConverted = Array.isArray(firstParent.children)
   if (isConverted) return thoughts as unknown as ThoughtIndices
 
-  const contextIndex = keyValueBy(thoughts.contextIndex, (key, parent) => {
+  const contextIndex = keyValueBy(thoughts.contextIndex as Index<FirebaseParent>, (key, parent) => {
     return {
       [key]: {
         ...parent,
@@ -144,8 +218,9 @@ const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
   // thoughtIndex is not used, so we don't have to rehash it
   const contextIndexRehashed = keyValueBy(thoughts.contextIndex, (key, parent) => {
     // there are some invalid Parents with missing context field
-    if (!parent?.context) {
+    if (!parent.context) {
       missingContexts++
+      console.warn('Missing Parent context', parent)
       return {}
     }
 
@@ -170,6 +245,7 @@ const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
     },
     [HOME_TOKEN],
   )
+
   console.info(`Importing ${html.split('\n').length} new thoughts into current db`)
   const stateNew = importText(state, { text: html })
   return {
@@ -198,8 +274,11 @@ const main = () => {
   console.info(`Reading current thoughts: ${file1}`)
   const thoughtsCurrentRaw = readThoughts(file1)
 
+  console.info('Converting legacy thoughts to modern schema')
+  const thoughtsModern = convertLegacyThoughts(thoughtsCurrentRaw)
+
   console.info('Converting Parent children to proper arrays')
-  const thoughtsCurrent = convertParentChildren(thoughtsCurrentRaw)
+  const thoughtsCurrent = convertParentChildren(thoughtsModern)
 
   // read thoughts to be imported
   // this can be a directory or a file
@@ -221,8 +300,12 @@ const main = () => {
     try {
       console.info(`Reading thoughts: ${file}`)
       const thoughtsImportedRaw = readThoughts(file)
+
+      console.info('Converting legacy thoughts to modern schema')
+      const thoughtsModern = convertLegacyThoughts(thoughtsImportedRaw)
+
       console.info('Converting Parent children to proper arrays')
-      thoughtsImported = convertParentChildren(thoughtsImportedRaw)
+      thoughtsImported = convertParentChildren(thoughtsModern)
     } catch (e) {
       console.error('Error reading')
       errors.push({ e: e as Error, file, message: 'Error reading' })
