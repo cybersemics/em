@@ -128,7 +128,8 @@ const saveThoughts = (
   const updates = blocks.reduce<SaveThoughtsUpdate>(
     (accum, block, index) => {
       if (block.scope == null) {
-        console.error('Invalid block scope', block)
+        // disable for merge script as it affects only a few leaves
+        // console.error('Invalid block scope', block)
         return accum
       }
       const skipLevel = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
