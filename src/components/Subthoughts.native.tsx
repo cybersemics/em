@@ -653,7 +653,6 @@ export const SubthoughtsComponent = ({
                   prevChild={filteredChildren[i - 1]}
                   rank={child.rank}
                   marginLeftParent={getThoughtSpacing(actualDistance(), depth) * depth}
-                  isDraggable={actualDistance() < 2}
                   showContexts={showContexts}
                   simplePath={childPath}
                   style={isTableView ? style : {}}

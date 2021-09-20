@@ -1,13 +1,11 @@
 import _ from 'lodash'
 import React, { useEffect, useRef, useState } from 'react'
 import { Dispatch } from 'redux'
-import { connect } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { unescape } from 'html-escaper'
 import {
   alert,
-  // cursorBack,
   cursorCleared,
-  // editing,
   error,
   editThought,
   importText,
@@ -17,8 +15,7 @@ import {
   tutorialNext,
   newThought,
 } from '../action-creators'
-// import { isTouch, isSafari } from '../browser'
-// import globals from '../globals'
+
 import { store } from '../store'
 import ContentEditable, { ContentEditableEvent, IOnPaste } from './ContentEditable.native'
 import { shortcutEmitter } from '../shortcuts'
@@ -133,13 +130,6 @@ const showDuplicationAlert = duplicateAlertToggler()
 // intended to be global, not local state
 let blurring = false
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: EditableProps) => {
-  return {
-    isCursorCleared: props.isEditing && state.cursorCleared,
-  }
-}
-
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -159,6 +149,8 @@ const Editable = ({
   marginLeftParent,
 }: Connected<EditableProps>) => {
   const state = store.getState()
+
+  const isCursorCleared = useSelector(({ cursorCleared }: State) => (isEditing || false) && cursorCleared)
   const thoughts = pathToContext(simplePath)
   const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
 
@@ -589,4 +581,4 @@ const Editable = ({
   )
 }
 
-export default connect(mapStateToProps)(Editable)
+export default Editable
