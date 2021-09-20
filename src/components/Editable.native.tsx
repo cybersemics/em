@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React, { useEffect, useRef, useState } from 'react'
 import { Dispatch } from 'redux'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { unescape } from 'html-escaper'
 import {
   alert,
@@ -20,7 +20,7 @@ import { store } from '../store'
 import ContentEditable, { ContentEditableEvent, IOnPaste } from './ContentEditable.native'
 import { shortcutEmitter } from '../shortcuts'
 import * as selection from '../device/selection'
-import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../@types'
+import { Context, Path, SimplePath, State, TutorialChoice } from '../@types'
 
 // constants
 import {
@@ -144,11 +144,11 @@ const Editable = ({
   rank,
   style,
   onKeyDownAction,
-  dispatch,
   transient,
   marginLeftParent,
-}: Connected<EditableProps>) => {
+}: EditableProps) => {
   const state = store.getState()
+  const dispatch = useDispatch()
 
   const isCursorCleared = useSelector(({ cursorCleared }: State) => (isEditing || false) && cursorCleared)
   const thoughts = pathToContext(simplePath)
