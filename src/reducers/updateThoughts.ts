@@ -106,7 +106,7 @@ const updateThoughts = (
       if (child.value == null || child.rank == null) {
         console.error('child', child)
         console.error('parent', parentUpdate)
-        throw new Error('Child is missing a value property')
+        throw new Error('Child is missing value or rank')
       }
     }),
   )

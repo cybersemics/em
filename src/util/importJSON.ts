@@ -127,9 +127,11 @@ const saveThoughts = (
 
   const updates = blocks.reduce<SaveThoughtsUpdate>(
     (accum, block, index) => {
-      if (block.scope == null) {
+      // handle invalid blocks
+      // TODO: Fix htmlToJson to return valid Block | Blocks[]
+      if (block.scope == null || !block.children) {
         // disable for merge script as it affects only a few leaves
-        // console.error('Invalid block scope', block)
+        // console.error('Invalid block', block)
         return accum
       }
       const skipLevel = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
@@ -214,9 +216,13 @@ const saveThoughts = (
 
 /** Return number of contexts in blocks array. */
 const getContextsNum = (blocks: Block[]): number => {
-  return blocks
-    .map(block => (block.children.length > 0 ? 1 + getContextsNum(block.children) : 1))
-    .reduce((acc, val) => acc + val, 0)
+  return (
+    blocks
+      // TODO: block.children can be undefined because there are some empty arrays that can slip in instead of Block.
+      // Unfortunately removing them causes other tests to fail, so fixing this is a more significant effort.
+      .map(block => (!block.children ? 0 : block.children.length > 0 ? 1 + getContextsNum(block.children) : 1))
+      .reduce((acc, val) => acc + val, 0)
+  )
 }
 
 /** Calculate rankIncrement value based on rank of next sibling or its absence. */
