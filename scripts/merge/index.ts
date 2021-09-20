@@ -134,13 +134,20 @@ const convertParentChildren = (thoughts: FirebaseThoughts): ThoughtIndices => {
 
 /** Merges thoughts into current state using importText to handle duplicates and merged descendants. */
 const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
+  // track how many parents do not have a context property
+  // a few are okay, but they are skipped so en masse is a problem
+  let missingContexts = 0
+
   const numParents = Object.keys(thoughts.contextIndex).length
   console.info(`Recalculating ${numParents} contextIndex hashes`)
   // recalculate contextIndex hashes
   // thoughtIndex is not used, so we don't have to rehash it
   const contextIndexRehashed = keyValueBy(thoughts.contextIndex, (key, parent) => {
     // there are some invalid Parents with missing context field
-    if (!parent?.context) return {}
+    if (!parent?.context) {
+      missingContexts++
+      return {}
+    }
 
     // convert FirebaseContext to actual array
     const keyNew = hashContext(Object.values(parent.context))
@@ -165,7 +172,12 @@ const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
   )
   console.info(`Importing ${html.split('\n').length} new thoughts into current db`)
   const stateNew = importText(state, { text: html })
-  return stateNew
+  return {
+    state: stateNew,
+    errors: {
+      missingContexts,
+    },
+  }
 }
 
 const main = () => {
@@ -218,7 +230,12 @@ const main = () => {
     }
 
     try {
-      stateNew = mergeThoughts(stateNew, thoughtsImported)
+      const { state: stateImported, errors } = mergeThoughts(stateNew, thoughtsImported)
+      stateNew = stateImported
+
+      if (errors.missingContexts > 10) {
+        console.warn('More than 10 Parents with missing context property:', errors.missingContexts)
+      }
 
       // if we made it this far, there was no error
       success.push(file)
