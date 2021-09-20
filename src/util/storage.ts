@@ -13,6 +13,7 @@ export const storage = {
 
   removeItem(key: string): void {
     // localStorage.removeItem(key)
+    // eslint-disable-next-line fp/no-delete
     delete store[key]
   },
 
