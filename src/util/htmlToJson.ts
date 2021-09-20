@@ -128,7 +128,7 @@ const joinChildren = (nodes: Block[]) => {
       if (index === 0) return node
       return {
         ...accum,
-        children: [...accum.children, ...(Array.isArray(node) ? node : [node])],
+        children: [...(accum.children || []), ...(Array.isArray(node) ? node : [node])],
       }
     }),
   )
@@ -193,11 +193,13 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 
   if (Array.isArray(blocks[0])) return blocks.flat()
 
-  // retrieve first chunk, if the first element is Block and the second is Block[], join children (Block[]) with parent (Block), else return blocks as is.
-  const [first, rest] = blocks
-  const result = !Array.isArray(first) && Array.isArray(rest) ? joinChildren(blocks as Block[]) : (blocks as Block[])
+  // nested elements are parsed into a specific structure of [Block, Block[]]
+  // in this case, join children (Block[]) with parent (Block), otherwise return blocks as is.
+  const shouldJoin = blocks.length === 2 && !Array.isArray(blocks[0]) && Array.isArray(blocks[1]) && blocks.length === 2
+  const blocksJoined = shouldJoin ? joinChildren(blocks as Block[]) : blocks
 
-  return result
+  // TODO: Handle Block[][]
+  return blocksJoined as (Block | Block)[]
 }
 
 /** Parses input HTML and saves in JSON array using Himalaya. */

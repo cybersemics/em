@@ -1187,3 +1187,19 @@ it(`remove nested HOME token but keep descendants`, () => {
       - c
     - d`)
 })
+
+it(`import sibling empty thoughts`, () => {
+  const text = `<ul>
+  <li>a</li>
+  <li></li>
+  <li></li>
+  <li>b</li>
+</ul>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b`)
+})
