@@ -4,6 +4,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import chalk from 'chalk'
 import _ from 'lodash'
 import { v4 as uid } from 'uuid'
 import memoryStore from './memoryStore'
@@ -33,7 +34,7 @@ global.localStorage = memoryStore()
  ************************************************************************/
 
 import { HOME_TOKEN } from '../../src/constants'
-import { hashContext, hashThought, head, initialState, isRoot, keyValueBy, timestamp, unroot } from '../../src/util'
+import { hashContext, hashThought, head, initialState, isRoot, timestamp, unroot } from '../../src/util'
 import { exportContext, hasLexeme } from '../../src/selectors'
 import { importText } from '../../src/reducers'
 import {
@@ -66,49 +67,13 @@ interface FirebaseParent {
   updatedBy: string
 }
 
-// Parent before context was added
-interface LegacyChild {
-  created: Timestamp
-  key: string
-  lastUpdated: Timestamp
-  rank: number
-}
-
-interface LegacyThoughtContext {
-  context: Context
-  lastUpdated: Timestamp
-  rank: number
-}
-
-interface LegacyLexeme {
-  value: string
-  memberOf: LegacyThoughtContext[]
-  created: Timestamp
-  lastUpdated: Timestamp
-}
-
-interface FirebaseLexeme {
-  id?: string
-  value: string
-  // firebase stores arrays as objects
-  contexts: Index<ThoughtContext>
-  created: Timestamp
-  lastUpdated: Timestamp
-  updatedBy?: string
-}
-
 interface FirebaseThoughts {
   contextIndex: Index<FirebaseParent>
   // Firebase thoughtIndex is actually a FirebaseLexeme, but exportContext doesn't use it so we can quiet the type checker
   thoughtIndex: Index<Lexeme>
 }
 
-interface LegacyThoughts {
-  contextChildren: Index<LegacyChild[]>
-  data: Index<LegacyLexeme>
-}
-
-type RawThoughts = FirebaseThoughts | LegacyThoughts | ThoughtIndices
+type RawThoughts = FirebaseThoughts | ThoughtIndices
 
 interface ErrorLog {
   e: Error
@@ -132,43 +97,66 @@ const stateStart = initialState()
  * SCRIPT
  *****************************************************************/
 
-/** Read a thought database from file and convert arrays that are stored in Firebase as objects to proper arrays. */
-const readThoughts = (file: string): RawThoughts => {
+/** Read a thought database from file. Normalizes contextIndex and thoughtIndex property names. */
+const readThoughts = (file: string): FirebaseThoughts => {
   const input = fs.readFileSync(file, 'utf-8')
-  const db = JSON.parse(input) as Database | RawThoughts
-  return (db as Database).users?.[userId] || (db as RawThoughts)
+  const db = JSON.parse(input)
+  const state = db.users?.[userId] || db
+
+  // rename contextChildren -> contextIndex
+  if (state.contextChildren) {
+    state.contextIndex = state.contextChildren
+    delete state.contextChildren
+  }
+
+  // rename data -> thoughtIndex
+  if (state.data) {
+    state.thoughtIndex = state.data
+    delete state.data
+  }
+
+  return state
 }
 
-/** Converts old contextChildren schema to contextIndex. Leaves thoughtIndex empty since it is not used. */
-const convertLegacyThoughts = (thoughts: RawThoughts): FirebaseThoughts | ThoughtIndices => {
-  // if already modern, return as-is
-  if ('contextIndex' in thoughts) return thoughts as FirebaseThoughts | ThoughtIndices
+/** Adds a context property to a Parent based on the context stored in thoughtIndex. Leaves thoughtIndex as-is since it is not used. */
+const recreateParentContexts = (thoughts: FirebaseThoughts | ThoughtIndices): FirebaseThoughts | ThoughtIndices => {
+  // if the contextIndex already has Parent contexts, return it as-is
+  // assume the first Parent is representative
+  const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseParent
+  if (firstParent.context) return thoughts
+
+  const lexemes = Object.values(thoughts.thoughtIndex)
+  console.info(`Recreating incomplete Parents from ${chalk.cyan(lexemes.length)} Lexemes`)
 
   const updatedBy = uid()
 
   // build a new contextIndex by iterating through each legacy Lexeme
-  const contextIndex = Object.values(thoughts.data).reduce<Index<Parent>>((accum, lexeme) => {
-    // skip missing memberOf
-    if (!lexeme.memberOf) {
-      console.warn('Missing memberOf', lexeme)
-      return accum
-    }
+  const contextIndex = lexemes.reduce<Index<Parent>>((accum, lexeme) => {
+    // invalid Lexeme
+    if (lexeme.value == null) return accum
 
-    // add each legacy ThoughtContext as a Child
-    lexeme.memberOf.forEach(cx => {
+    // read legacy memberOf property as contexts
+    const contexts: ThoughtContext[] = Object.values((lexeme as any).memberOf || lexeme.contexts || {})
+
+    // skip missing contexts
+    if (!contexts) return accum
+
+    // add each legacy ThoughtContext as a Child to a Parent
+    contexts.forEach(cx => {
       // skip missing context
-      if (!cx.context) {
-        console.warn('Missing context', cx)
-        return
-      }
-      const key = hashContext(cx.context)
+      if (!cx.context) return
+
+      // handle Firebase "array"
+      const context = Object.values(cx.context)
+      const key = hashContext(context)
+      const parentOld = accum[key]
+      const childrenOld = parentOld?.children || []
       accum[key] = {
-        ...accum[key],
+        ...parentOld,
         id: key,
-        // add a new child to the old Parent
-        children: [...(accum[key]?.children || []), { value: lexeme.value, rank: cx.rank }],
-        context: cx.context,
-        lastUpdated: cx.lastUpdated,
+        children: [...childrenOld, { value: lexeme.value, rank: cx.rank || Math.random() * 10e8 }],
+        context: context,
+        lastUpdated: cx.lastUpdated || timestamp(),
         updatedBy,
       }
     })
@@ -176,84 +164,91 @@ const convertLegacyThoughts = (thoughts: RawThoughts): FirebaseThoughts | Though
     return accum
   }, {})
 
-  const thoughtsNew: ThoughtIndices = {
+  const thoughtsNew: ThoughtIndices & { isContextIndexRehashed: boolean } = {
     contextIndex,
-    thoughtIndex: {},
+    thoughtIndex: thoughts.thoughtIndex,
+    // track recalculated contexthash to avoid recalculating again in mergeThoughts
+    isContextIndexRehashed: true,
   }
 
   return thoughtsNew
 }
 
-/** Reads thoughts that were exported from Firebase. Converts Parent children to proper arrays. If thoughts are already in the correct format, return as-is. */
-const convertParentChildren = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
-  // if already converted, return as-is
+/** Normalizes the contextIndex by converting Firebase "arrays" to proper arrays and recalculating context hashes. Skips hash recalculation if isContextIndexRehashed is true. */
+const normalizeThoughts = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
+  // if the contextIndex already has proper arrays and a modern ROOT hash, return it as-is
+  // assume the first Parent is representative
   const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseParent
-  const isConverted = Array.isArray(firstParent.children)
-  if (isConverted) return thoughts as unknown as ThoughtIndices
+  const isModernHash = '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
+  if (Array.isArray(firstParent.context) && Array.isArray(firstParent.children) && isModernHash)
+    return thoughts as ThoughtIndices
 
-  const contextIndex = keyValueBy(thoughts.contextIndex as Index<FirebaseParent>, (key, parent) => {
+  const numParents = Object.keys(thoughts.contextIndex).length
+  console.info(`Normalizing ${chalk.cyan(numParents)} Parents`)
+
+  // track how many parents do not have a context property
+  // a few are okay, but they are skipped so en masse is a problem
+  let missingContexts = 0
+
+  // recalculate contextIndex hashes
+  // thoughtIndex is not used, so we don't have to rehash it
+  const contextIndexNew = Object.keys(thoughts.contextIndex as Index<FirebaseParent>).reduce((accum, key) => {
+    const parent = thoughts.contextIndex[key]
+
+    // there are some invalid Parents with missing context field
+    if (!parent.context) {
+      missingContexts++
+      return {}
+    }
+
+    // convert Parent.children Firebase "array"
+    const children = Object.values(parent.children || {})
+    const context = Object.values(parent.context || {})
+
+    // convert FirebaseContext to actual array
+    const keyNew = (thoughts as any).isContextIndexRehashed || isModernHash ? key : hashContext(context)
+
     return {
-      [key]: {
+      ...accum,
+      [keyNew]: {
         ...parent,
-        children: Object.values(parent.children || {}),
+        id: keyNew,
+        children,
+        context,
       },
     }
-  })
+  }, {})
+
+  if (missingContexts > 10) {
+    console.warn('More than 10 Parents with missing context property:', missingContexts)
+  }
 
   return {
-    contextIndex,
-    thoughtIndex: thoughts.thoughtIndex,
+    ...thoughts,
+    contextIndex: contextIndexNew,
   }
 }
 
 /** Merges thoughts into current state using importText to handle duplicates and merged descendants. */
 const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
-  // track how many parents do not have a context property
-  // a few are okay, but they are skipped so en masse is a problem
-  let missingContexts = 0
-
-  const numParents = Object.keys(thoughts.contextIndex).length
-  console.info(`Recalculating ${numParents} contextIndex hashes`)
-  // recalculate contextIndex hashes
-  // thoughtIndex is not used, so we don't have to rehash it
-  const contextIndexRehashed = keyValueBy(thoughts.contextIndex, (key, parent) => {
-    // there are some invalid Parents with missing context field
-    if (!parent.context) {
-      missingContexts++
-      console.warn('Missing Parent context', parent)
-      return {}
-    }
-
-    // convert FirebaseContext to actual array
-    const keyNew = hashContext(Object.values(parent.context))
-    return {
-      [keyNew]: {
-        ...parent,
-        id: keyNew,
-      },
-    }
-  })
-
-  console.info(`Exporting HTML of ${numParents} parents for re-import`)
+  console.info(`Exporting ${chalk.cyan(Object.keys(thoughts.contextIndex).length)} Parents to HTML`)
   const html = exportContext(
     {
       ...stateStart,
       thoughts: {
         ...stateStart.thoughts,
-        contextIndex: contextIndexRehashed,
+        ...thoughts,
       },
     },
     [HOME_TOKEN],
   )
 
-  console.info(`Importing ${html.split('\n').length} new thoughts into current db`)
+  console.info(
+    `Importing HTML into ${chalk.cyan(Object.keys(state.thoughts.contextIndex).length)} Parents of current db`,
+  )
   const stateNew = importText(state, { text: html })
-  return {
-    state: stateNew,
-    errors: {
-      missingContexts,
-    },
-  }
+
+  return stateNew
 }
 
 const main = () => {
@@ -274,11 +269,8 @@ const main = () => {
   console.info(`Reading current thoughts: ${file1}`)
   const thoughtsCurrentRaw = readThoughts(file1)
 
-  console.info('Converting legacy thoughts to modern schema')
-  const thoughtsModern = convertLegacyThoughts(thoughtsCurrentRaw)
-
-  console.info('Converting Parent children to proper arrays')
-  const thoughtsCurrent = convertParentChildren(thoughtsModern)
+  const thoughtsCurrentWithContexts = recreateParentContexts(thoughtsCurrentRaw)
+  const thoughtsCurrent = normalizeThoughts(thoughtsCurrentWithContexts)
 
   // read thoughts to be imported
   // this can be a directory or a file
@@ -301,11 +293,8 @@ const main = () => {
       console.info(`Reading thoughts: ${file}`)
       const thoughtsImportedRaw = readThoughts(file)
 
-      console.info('Converting legacy thoughts to modern schema')
-      const thoughtsModern = convertLegacyThoughts(thoughtsImportedRaw)
-
-      console.info('Converting Parent children to proper arrays')
-      thoughtsImported = convertParentChildren(thoughtsModern)
+      const thoughtsImportedWithContexts = recreateParentContexts(thoughtsImportedRaw)
+      thoughtsImported = normalizeThoughts(thoughtsImportedWithContexts)
     } catch (e) {
       console.error('Error reading')
       errors.push({ e: e as Error, file, message: 'Error reading' })
@@ -313,12 +302,8 @@ const main = () => {
     }
 
     try {
-      const { state: stateImported, errors } = mergeThoughts(stateNew, thoughtsImported)
+      const stateImported = mergeThoughts(stateNew, thoughtsImported)
       stateNew = stateImported
-
-      if (errors.missingContexts > 10) {
-        console.warn('More than 10 Parents with missing context property:', errors.missingContexts)
-      }
 
       // if we made it this far, there was no error
       success.push(file)
@@ -328,8 +313,6 @@ const main = () => {
       return
     }
   })
-
-  console.info('')
 
   // write new state to output directory
   fs.mkdirSync('output', { recursive: true })
@@ -341,25 +324,32 @@ const main = () => {
     thoughtIndex: stateNew.thoughts.thoughtIndex,
   }
   const fileNew = `output/${file1Base}-merged${file1Ext}`
-  console.info(`Writing ${fileNew}`)
+  console.info(
+    `Writing new database with ${chalk.cyan(Object.keys(stateNew.thoughts.contextIndex).length)} Parents to output`,
+  )
   fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
 
   if (errors.length === 0) {
-    console.info('Success!')
+    console.info(chalk.green('SUCCESS'))
   } else {
     console.info('Writing error log')
     const debugOutput = errors.map(error => `${error.file}\n${error.message}\n${error.e.stack}`).join('\n')
     fs.writeFileSync('output/debug.log', debugOutput)
 
-    console.info('Partial success! See output/debug.log for error messages and stack trace.')
+    if (success.length > 0) {
+      console.info('')
+      console.info('Files that did get merged:')
+      success.forEach(file => console.error(file))
+    }
 
-    console.info('')
-    console.info('Files that did get merged:')
-    success.forEach(file => console.error(file))
-
-    console.info('')
     console.info('Files that did not get merged:')
     errors.forEach(error => console.error(error.file))
+
+    console.info(
+      `${chalk.red(
+        success.length > 0 ? 'PARTIAL SUCCESS' : 'FAIL',
+      )}! See output/debug.log for error messages and stack trace.`,
+    )
   }
 }
 
