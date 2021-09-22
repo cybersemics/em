@@ -63,14 +63,18 @@ const Bullet = ({
       'bullet-highlighted': isDragging,
     })}
   >
-    <span className='glyph' onClick={onClick}>
+    <span
+      className='glyph'
+      style={{ width: `${Math.round(fontSize / 2) * 2}px`, height: `${Math.round(fontSize / 2) * 2}px` }}
+      onClick={onClick}
+    >
       {
         // The shape of text '•' and '▸' is a rectangle. The triangles/dots are not centered vertically inside the rectangle on all browsers. Hence, we replace them with svg.
         glyph ||
           (isLeaf ? (
-            <Circle fill={showContexts ? 'none' : '#C4C4C4'} size={Math.round(fontSize * 0.2) * 2} />
+            <Circle fill={showContexts ? 'none' : '#C4C4C4'} size={Math.floor(fontSize * 0.28) * 2} />
           ) : (
-            <Triangle fill={showContexts ? 'none' : '#C4C4C4'} size={Math.round(fontSize * 0.15) * 4} />
+            <Triangle fill={showContexts ? 'none' : '#C4C4C4'} size={Math.ceil(fontSize * 0.32) * 2} />
           ))
       }
     </span>
