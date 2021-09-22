@@ -5,7 +5,7 @@ import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
 import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
-import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } from '../@types'
+import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path, Lexeme } from '../@types'
 import {
   ellipsizeUrl,
   equalPath,
@@ -41,6 +41,7 @@ interface ThoughtAnnotationProps {
   showHiddenThoughts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
+  thoughtIndex?: Index<Lexeme>
 }
 
 /** Sets the innerHTML of the ngram text. */
@@ -87,7 +88,19 @@ const UrlIconLink = ({ url }: { url: string }) => (
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
-  const { cursor, invalidState, editingValue, showHiddenThoughts } = state
+  /**
+   * Adding dependency on thoughtIndex as the fetch for thought is async await.
+   * ThoughtAnnotation wasn't waiting for all the thoughtIndex to be set before it was rendered.
+   * And hence the superscript wasn't rendering properly on load.
+   * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
+   */
+  const {
+    cursor,
+    invalidState,
+    editingValue,
+    showHiddenThoughts,
+    thoughts: { thoughtIndex },
+  } = state
 
   const isEditing = equalPath(cursor, props.path)
   const simplePathLive = isEditing
@@ -103,6 +116,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     path: simplePathLive,
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     isThoughtValueEditing: editingValue === headValue(simplePathLive),
+    thoughtIndex,
   }
 }
 
@@ -119,6 +133,7 @@ const ThoughtAnnotation = ({
   editingValue,
   style,
   showHiddenThoughts,
+  thoughtIndex,
 }: Connected<ThoughtAnnotationProps>) => {
   // only show real time update if being edited while having meta validation error
   // do not increase numContexts when in an invalid state since the thought has not been updated in state
