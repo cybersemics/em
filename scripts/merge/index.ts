@@ -97,6 +97,9 @@ const stateStart = initialState()
  * SCRIPT
  *****************************************************************/
 
+/** Checks if the contextIndex uses the most up-to-date hash function by checking the existence of the root context hash. */
+const isModernHash = (thoughts: RawThoughts) => '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
+
 /** Read a thought database from file. Normalizes contextIndex and thoughtIndex property names. */
 const readThoughts = (file: string): FirebaseThoughts => {
   const input = fs.readFileSync(file, 'utf-8')
@@ -118,15 +121,10 @@ const readThoughts = (file: string): FirebaseThoughts => {
   return state
 }
 
-/** Adds a context property to a Parent based on the context stored in thoughtIndex. Leaves thoughtIndex as-is since it is not used. */
-const recreateParentContexts = (thoughts: FirebaseThoughts | ThoughtIndices): FirebaseThoughts | ThoughtIndices => {
-  // if the contextIndex already has Parent contexts, return it as-is
-  // assume the first Parent is representative
-  const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseParent
-  if (firstParent.context) return thoughts
-
+/** Since the legacy contextIndex has no context property, it is impossible traverse the tree without the original hash function. Instead, recreate the contextIndex with new hashes from the thoughtIndex, which does have the context. Converts Firebase "arrays" to proper arrays. Leaves thoughtIndex as-is since it is not used to merge thoughts. */
+const recreateParents = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
   const lexemes = Object.values(thoughts.thoughtIndex)
-  console.info(`Recreating incomplete Parents from ${chalk.cyan(lexemes.length)} Lexemes`)
+  console.info(`Recalculating context hash from ${chalk.cyan(lexemes.length)} Lexemes`)
 
   const updatedBy = uid()
 
@@ -143,19 +141,18 @@ const recreateParentContexts = (thoughts: FirebaseThoughts | ThoughtIndices): Fi
 
     // add each legacy ThoughtContext as a Child to a Parent
     contexts.forEach(cx => {
-      // skip missing context
+      // skip ThoughtContext without context property
       if (!cx.context) return
 
-      // handle Firebase "array"
       const context = Object.values(cx.context)
       const key = hashContext(context)
       const parentOld = accum[key]
-      const childrenOld = parentOld?.children || []
+      const childrenOld = Object.values(parentOld?.children || {})
       accum[key] = {
         ...parentOld,
         id: key,
         children: [...childrenOld, { value: lexeme.value, rank: cx.rank || Math.random() * 10e8 }],
-        context: context,
+        context,
         lastUpdated: cx.lastUpdated || timestamp(),
         updatedBy,
       }
@@ -174,14 +171,12 @@ const recreateParentContexts = (thoughts: FirebaseThoughts | ThoughtIndices): Fi
   return thoughtsNew
 }
 
-/** Normalizes the contextIndex by converting Firebase "arrays" to proper arrays and recalculating context hashes. Skips hash recalculation if isContextIndexRehashed is true. */
-const normalizeThoughts = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
-  // if the contextIndex already has proper arrays and a modern ROOT hash, return it as-is
+/** Normalizes the contextIndex by converting Firebase "arrays" to proper arrays and recalculating context hashes if needed. Skips hash recalculation if isContextIndexRehashed is true. */
+const normalizeFirebaseArrays = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
+  // if the contextIndex already has proper arrays, return it as-is to avoid NOOP iteration
   // assume the first Parent is representative
   const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseParent
-  const isModernHash = '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
-  if (Array.isArray(firstParent.context) && Array.isArray(firstParent.children) && isModernHash)
-    return thoughts as ThoughtIndices
+  if (Array.isArray(firstParent.context) && Array.isArray(firstParent.children)) return thoughts as ThoughtIndices
 
   const numParents = Object.keys(thoughts.contextIndex).length
   console.info(`Normalizing ${chalk.cyan(numParents)} Parents`)
@@ -190,8 +185,8 @@ const normalizeThoughts = (thoughts: FirebaseThoughts | ThoughtIndices): Thought
   // a few are okay, but they are skipped so en masse is a problem
   let missingContexts = 0
 
-  // recalculate contextIndex hashes
-  // thoughtIndex is not used, so we don't have to rehash it
+  // convert Firebase "arrays" to proper arrays
+  // thoughtIndex is not used, so we don't have to normalize it
   const contextIndexNew = Object.keys(thoughts.contextIndex as Index<FirebaseParent>).reduce((accum, key) => {
     const parent = thoughts.contextIndex[key]
 
@@ -205,14 +200,10 @@ const normalizeThoughts = (thoughts: FirebaseThoughts | ThoughtIndices): Thought
     const children = Object.values(parent.children || {})
     const context = Object.values(parent.context || {})
 
-    // convert FirebaseContext to actual array
-    const keyNew = (thoughts as any).isContextIndexRehashed || isModernHash ? key : hashContext(context)
-
     return {
       ...accum,
-      [keyNew]: {
+      [key]: {
         ...parent,
-        id: keyNew,
         children,
         context,
       },
@@ -269,8 +260,9 @@ const main = () => {
   console.info(`Reading current thoughts: ${file1}`)
   const thoughtsCurrentRaw = readThoughts(file1)
 
-  const thoughtsCurrentWithContexts = recreateParentContexts(thoughtsCurrentRaw)
-  const thoughtsCurrent = normalizeThoughts(thoughtsCurrentWithContexts)
+  const thoughtsCurrent = isModernHash(thoughtsCurrentRaw)
+    ? normalizeFirebaseArrays(thoughtsCurrentRaw)
+    : recreateParents(thoughtsCurrentRaw)
 
   // read thoughts to be imported
   // this can be a directory or a file
@@ -293,11 +285,15 @@ const main = () => {
       console.info(`Reading thoughts: ${file}`)
       const thoughtsImportedRaw = readThoughts(file)
 
-      const thoughtsImportedWithContexts = recreateParentContexts(thoughtsImportedRaw)
-      thoughtsImported = normalizeThoughts(thoughtsImportedWithContexts)
+      // skip thoughts with a modern context hash, since we know they all have context properties
+      // otherwise there is no way to determine if all Parents have their context property set without iterating through them, since there was a period with mixed Parents
+      thoughtsImported = isModernHash(thoughtsImportedRaw)
+        ? normalizeFirebaseArrays(thoughtsImportedRaw)
+        : recreateParents(thoughtsImportedRaw)
     } catch (e) {
       console.error('Error reading')
       errors.push({ e: e as Error, file, message: 'Error reading' })
+      console.info('')
       return
     }
 
@@ -310,8 +306,11 @@ const main = () => {
     } catch (e) {
       console.error('Error merging')
       errors.push({ e: e as Error, file, message: 'Error merging' })
+      console.info('')
       return
     }
+
+    console.info('')
   })
 
   // write new state to output directory
