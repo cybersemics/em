@@ -11,6 +11,7 @@ import {
   error,
   editThought,
   importText,
+  insertMultipleThoughts,
   setCursor,
   setEditingValue,
   setInvalidState,
@@ -299,7 +300,7 @@ const Editable = ({
       showContexts,
       rank,
       simplePath,
-    }: { context: Context; showContexts?: boolean; rank: number; simplePath: Path },
+    }: { context: Context; showContexts?: boolean; rank: number; simplePath: SimplePath },
   ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
@@ -329,7 +330,7 @@ const Editable = ({
           oldValue,
           newValue,
           rankInContext: rank,
-          path: simplePath as SimplePath,
+          path: simplePath,
         }),
       )
 
@@ -617,6 +618,33 @@ const Editable = ({
         (e.relatedTarget as Element).classList.contains('note-editable'))
 
     if (isRelatedTargetEditableOrNote) return
+
+    // check for separate lines created via speech-to-text newlines
+    // only after blur can we safely convert newlines to new thoughts without interrupting speeach-to-text
+    const lines = (e.target as HTMLInputElement).value
+      .split(/<div>/g)
+      .map(line => line.replace('</div>', ''))
+      .slice(1)
+
+    // insert speech-to-text lines
+    if (lines.length > 1) {
+      // edit original thought to first line
+      dispatch([
+        editThought({
+          context,
+          showContexts,
+          oldValue: value,
+          newValue: lines[0],
+          rankInContext: rank,
+          path: simplePath,
+        }),
+        // insert remaining lines
+        insertMultipleThoughts({ simplePath, lines: lines.slice(1) }),
+        // set editing to false again, since inserting thoughts enables edit mode
+        // TODO: There is a call to setCursor with editing: true that invalidates this line
+        editingAction({ value: false }),
+      ])
+    }
 
     // if related target is not editable wait until the next render to determine if we have really blurred
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)

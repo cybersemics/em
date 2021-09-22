@@ -43,6 +43,7 @@ export const deleteThought = reducerToThunk<typeof reducers.deleteThought>('dele
 export const extractThought = reducerToThunk<typeof reducers.extractThought>('extractThought')
 export const heading = reducerToThunk<typeof reducers.heading>('heading')
 export const indent = reducerToThunk<typeof reducers.indent>('indent')
+export const insertMultipleThoughts = reducerToThunk<typeof reducers.insertMultipleThoughts>('insertMultipleThoughts')
 export const isPushing = reducerToThunk<typeof reducers.isPushing>('isPushing')
 export const join = reducerToThunk<typeof reducers.join>('join')
 export const closeModal = reducerToThunk<typeof reducers.closeModal>('closeModal')
