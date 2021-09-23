@@ -97,6 +97,14 @@ const stateStart = initialState()
  * SCRIPT
  *****************************************************************/
 
+/** Gets the number of Lexemes in the State or Thoughts. */
+const numLexemes = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughts) =>
+  Object.keys(((stateOrThoughts as State).thoughts || (stateOrThoughts as ThoughtIndices)).thoughtIndex).length
+
+/** Gets the number of Parents in the State or Thoughts. */
+const numParents = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughts) =>
+  Object.keys(((stateOrThoughts as State).thoughts || (stateOrThoughts as ThoughtIndices)).contextIndex).length
+
 /** Checks if the contextIndex uses the most up-to-date hash function by checking the existence of the root context hash. */
 const isModernHash = (thoughts: RawThoughts) => '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
 
@@ -118,13 +126,15 @@ const readThoughts = (file: string): FirebaseThoughts => {
     delete state.data
   }
 
+  console.info(`${chalk.blue(numParents(state))} Parents read`)
+
   return state
 }
 
 /** Since the legacy contextIndex has no context property, it is impossible traverse the tree without the original hash function. Instead, recreate the contextIndex with new hashes from the thoughtIndex, which does have the context. Converts Firebase "arrays" to proper arrays. Leaves thoughtIndex as-is since it is not used to merge thoughts. */
 const recreateParents = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
   const lexemes = Object.values(thoughts.thoughtIndex)
-  console.info(`Recalculating context hash from ${chalk.cyan(lexemes.length)} Lexemes`)
+  console.info(`Recalculating context hash from ${chalk.blue(lexemes.length)} Lexemes`)
 
   const updatedBy = uid()
 
@@ -178,8 +188,7 @@ const normalizeFirebaseArrays = (thoughts: FirebaseThoughts | ThoughtIndices): T
   const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseParent
   if (Array.isArray(firstParent.context) && Array.isArray(firstParent.children)) return thoughts as ThoughtIndices
 
-  const numParents = Object.keys(thoughts.contextIndex).length
-  console.info(`Normalizing ${chalk.cyan(numParents)} Parents`)
+  console.info(`Normalizing ${chalk.blue(numParents(thoughts))} Parents`)
 
   // track how many parents do not have a context property
   // a few are okay, but they are skipped so en masse is a problem
@@ -222,7 +231,7 @@ const normalizeFirebaseArrays = (thoughts: FirebaseThoughts | ThoughtIndices): T
 
 /** Merges thoughts into current state using importText to handle duplicates and merged descendants. */
 const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
-  console.info(`Exporting ${chalk.cyan(Object.keys(thoughts.contextIndex).length)} Parents to HTML`)
+  console.info(`Exporting ${chalk.blue(numParents(thoughts))} Parents to HTML`)
   const html = exportContext(
     {
       ...stateStart,
@@ -234,10 +243,12 @@ const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
     [HOME_TOKEN],
   )
 
-  console.info(
-    `Importing HTML into ${chalk.cyan(Object.keys(state.thoughts.contextIndex).length)} Parents of current db`,
-  )
+  console.info('Importing HTML')
   const stateNew = importText(state, { text: html })
+
+  console.info(
+    `New state has ${chalk.blue(numParents(stateNew))} Parents and ${chalk.blue(numLexemes(stateNew))} Lexemes`,
+  )
 
   return stateNew
 }
@@ -323,9 +334,7 @@ const main = () => {
     thoughtIndex: stateNew.thoughts.thoughtIndex,
   }
   const fileNew = `output/${file1Base}-merged${file1Ext}`
-  console.info(
-    `Writing new database with ${chalk.cyan(Object.keys(stateNew.thoughts.contextIndex).length)} Parents to output`,
-  )
+  console.info(`Writing new database with ${chalk.blue(numParents(stateNew))} Parents to output`)
   fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
 
   if (errors.length === 0) {

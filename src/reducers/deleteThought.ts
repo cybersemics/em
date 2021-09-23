@@ -39,7 +39,6 @@ const deleteThought = (state: State, { context, thoughtRanked, showContexts }: P
   if (!lexeme) {
     console.warn(
       `Missing Lexeme: "${value}". This indicates that there is a data integrity issue upstream. Deleting Parent anyway.`,
-      value,
     )
   }
 
