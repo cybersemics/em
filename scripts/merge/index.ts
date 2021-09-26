@@ -35,7 +35,7 @@ global.localStorage = memoryStore()
 
 import { HOME_TOKEN } from '../../src/constants'
 import { hashContext, hashThought, head, initialState, isRoot, timestamp, unroot } from '../../src/util'
-import { exportContext, hasLexeme } from '../../src/selectors'
+import { exportContext, getAllChildren, hasLexeme } from '../../src/selectors'
 import { importText } from '../../src/reducers'
 import {
   Child,
@@ -232,23 +232,26 @@ const normalizeFirebaseArrays = (thoughts: FirebaseThoughts | ThoughtIndices): T
 /** Merges thoughts into current state using importText to handle duplicates and merged descendants. */
 const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
   console.info(`Exporting ${chalk.blue(numParents(thoughts))} Parents to HTML`)
-  const html = exportContext(
-    {
-      ...stateStart,
-      thoughts: {
-        ...stateStart.thoughts,
-        ...thoughts,
-      },
+  const stateBackup: State = {
+    ...stateStart,
+    thoughts: {
+      ...stateStart.thoughts,
+      ...thoughts,
     },
-    [HOME_TOKEN],
-  )
+  }
 
-  console.info('Importing HTML')
-  const stateNew = importText(state, { text: html })
+  // import each child individually to reduce memory usage
+  const stateNew = getAllChildren(stateBackup, [HOME_TOKEN]).reduce((stateAccum, child) => {
+    console.info(`Exporting ${child.value}`)
+    const html = exportContext(stateBackup, [child.value])
+    console.info(`Importing ${child.value}`)
+    const stateNew = importText(stateAccum, { text: html })
+    console.info(
+      `New state has ${chalk.blue(numParents(stateNew))} Parents and ${chalk.blue(numLexemes(stateNew))} Lexemes`,
+    )
 
-  console.info(
-    `New state has ${chalk.blue(numParents(stateNew))} Parents and ${chalk.blue(numLexemes(stateNew))} Lexemes`,
-  )
+    return stateNew
+  }, state)
 
   return stateNew
 }
