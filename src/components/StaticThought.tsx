@@ -84,7 +84,7 @@ const StaticThought = ({
         />
       )}
 
-      <Superscript simplePath={simplePath} showContexts={showContexts} superscript={!isRoot} />
+      <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />
     </div>
   )
 }

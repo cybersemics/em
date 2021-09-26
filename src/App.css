@@ -502,12 +502,17 @@ a.text-link {
   user-select: text;
 }
 
+.thought-container {
+  width: calc(100% - 1em);
+  position: relative;
+}
+
 .thought,
 .thought-annotation {
   width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */
   font-weight: 300;
   margin-top: 0;
-  margin-left: 0.667em;
+  margin-left: 0.3em;
   display: inline-block;
   vertical-align: top;
   white-space: pre-wrap;
@@ -518,8 +523,7 @@ a.text-link {
   pointer-events: none;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
-  width: auto;
-  padding-right: 0.5rem;
+  padding-left: 0.4rem;
 }
 
 .thought-annotation .subthought {
@@ -533,8 +537,7 @@ a.text-link {
 }
 
 .subthought-text,
-.thought-annotation .breadcrumbs,
-.thought-annotation .superscript-container {
+.thought-annotation .breadcrumbs {
   visibility: hidden;
 }
 
@@ -547,7 +550,7 @@ a.text-link {
 }
 
 .child .editable {
-  padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
+  padding-left: 10px; /* Add padding otherwise cursor disappears on empty elements */
   /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
   margin-top: -0.25em; /* offset padding-top */
   margin-left: -5px; /* offset padding-left */
@@ -568,7 +571,6 @@ a.text-link {
 .children .thought > .editable,
 .children .thought-annotation > .editable {
   margin-bottom: -0.25em;
-  display: inline;
 }
 
 .children {
@@ -1543,9 +1545,9 @@ h1 .num-contexts {
   opacity: 0.2;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
   line-height: 1;
-  top: -0.4em;
+  top: -0.46em;
   margin-top: 0.2em;
-  margin-left: -0.575em;
+  margin-left: -0.45em;
 }
 
 /* overlay bullet for drag */
@@ -1557,7 +1559,7 @@ h1 .num-contexts {
 
 .child.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
 .child:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-  margin-top: 0.32em;
+  margin-top: 0.2em;
 }
 
 .child.show-contexts.editing:first-of-type > .thought-container > .thought .bullet-cursor-overlay,
@@ -2657,12 +2659,6 @@ code,
 .prose > .children > .child > .thought-container > .thought-annotation > .superscript-container {
   text-indent: 1.7em;
   top: -2px;
-  position: relative;
-}
-
-.thought-container > .thought > .superscript-container {
-  text-indent: 1.7em;
-  top: -4px;
   position: relative;
 }
 
