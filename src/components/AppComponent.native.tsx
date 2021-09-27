@@ -28,10 +28,13 @@ import Tutorial from './Tutorial'
 import { isTutorial } from '../selectors'
 import { storage } from '../util'
 import * as selection from '../device/selection'
+import { useTheme } from 'styled-components/native'
+import { Theme } from '../themeProvider'
+import tw from 'tailwind-react-native-classnames'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 
-const { flexOne, darkBackground, flexGrow } = commonStyles
+const { flexOne, flexGrow } = commonStyles
 
 const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
@@ -83,13 +86,21 @@ const AppComponent: React.FC = () => {
     height: height - 125,
   }
 
+  const theme = useTheme() as Theme
+
   return (
     <>
       <StatusBar
         // eslint-disable-next-line react/style-prop-object
         style='light'
       />
-      <SafeAreaView style={[flexOne, darkBackground]}>
+      <SafeAreaView
+        style={tw.style({
+          'bg-black': theme.mode === 'dark',
+          'bg-white': theme.mode === 'light',
+          'flex-1': true,
+        })}
+      >
         <DrawerLayout
           ref={drawerRef}
           drawerWidth={300}

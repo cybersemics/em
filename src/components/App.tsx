@@ -8,7 +8,6 @@ import ErrorBoundaryContainer from './ErrorBoundaryContainer'
 import TouchMonitor from './TouchMonitor'
 import { DragAndDropContext } from './DragAndDropContext'
 import GlobalStyle from '../styles/globalStyles'
-// import { GlobalStyles as BaseStyles } from 'twin.macro'
 
 /**
  * App.

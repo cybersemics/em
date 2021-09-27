@@ -11,6 +11,10 @@ import { storage } from '../util/storage'
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 import { State } from '../@types'
+import tw from 'tailwind-react-native-classnames'
+import styled from 'styled-components/native'
+import themeSpecific from '../styled-helpers/themeSpecific'
+import { useToggleThemeMode } from '../themeProvider'
 
 const isLocalNetwork = Boolean(__DEV__)
 
@@ -58,6 +62,20 @@ const validateInviteCode = (code: string) =>
 // }
 // }
 
+const GrayedText = styled(Text)`
+  text-decoration: underline;
+  ${themeSpecific({
+    light: tw`text-gray-700`,
+    dark: tw`text-gray-200`,
+  })}
+`
+
+const ThemedButton = styled(ActionButton)`
+  ${themeSpecific({
+    light: tw`bg-blue-800`,
+    dark: tw`bg-green-400`,
+  })}
+`
 /** A modal that welcomes the user to em. */
 const ModalWelcome = () => {
   const [inviteCode, setInviteCode] = useState(storage.getItem('inviteCode') || '')
@@ -119,6 +137,8 @@ const ModalWelcome = () => {
       }),
     )
 
+  const toggleTheme = useToggleThemeMode()
+
   return (
     <Modal
       id='welcome'
@@ -141,16 +161,17 @@ const ModalWelcome = () => {
               }
               style={styles.helperActionButton}
             >
-              <Text style={styles.helperActionButtonText}>This ain’t my first rodeo. Skip it.</Text>
+              <GrayedText>This ain’t my first rodeo. Skip it.</GrayedText>
             </TouchableOpacity>
           }
+          <ThemedButton title='CHANGE THEME' onClick={() => toggleTheme()}></ThemedButton>
         </View>
       )}
     >
       <View style={styles.content}>
         {invited ? (
-          <Text style={styles.welcomeText}>
-            <Text style={styles.bold}>em</Text> is a process-oriented writing tool for personal sensemaking.
+          <Text style={tw`text-center`}>
+            <Text style={tw`font-bold`}>em</Text> is a process-oriented writing tool for personal sensemaking.
           </Text>
         ) : (
           <View>
@@ -190,11 +211,9 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     textDecorationLine: 'underline',
-    fontSize: 4,
   },
   errorText: { color: 'red' },
   uppercaseText: { textTransform: 'uppercase' },
-  welcomeText: { color: 'white', textAlign: 'center', fontSize: 6 },
   bold: { fontWeight: 'bold' },
   earlyWelcomeText: { marginBottom: 60, color: 'white', textAlign: 'center', fontSize: 6 },
   codeInput: {
