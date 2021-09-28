@@ -23,6 +23,7 @@ const { smallText, italic } = commonStyles
 const Tutorial2StepContext1Parent = ({ cursor, tutorialChoice, rootChildren }: IComponentProps) => {
   const { getState } = useStore<State>()
   const state = getState()
+
   return (
     <Fragment>
       <Text style={smallText}>

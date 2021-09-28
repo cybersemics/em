@@ -12,12 +12,6 @@ import { Alert } from 'react-native'
 
 // let undoArchiveTimer: number // eslint-disable-line fp/no-let
 
-/** Gets the editable node for the given note element. */
-// const editableOfNote = (noteEl: HTMLElement) => {
-//   const closest = noteEl.closest('.thought-container')
-//   return closest ? closest.querySelector('.editable') as HTMLElement : null
-// }
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 // const exec: Shortcut['exec'] = (dispatch, getState, e) => {
 //   const state = getState()
@@ -31,19 +25,6 @@ import { Alert } from 'react-native'
 //     else if (hasChild(state, context, '=readonly')) {
 //       dispatch(error({ value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` }))
 //     }
-//     else if (noteFocus) {
-//       const editable = e.target ? editableOfNote(e.target as HTMLElement) : null
-//       dispatch(deleteAttribute({ context, key: '=note' }))
-
-//       // restore selection manually since Editable is not re-rendered
-//       if (isTouch) {
-//         asyncFocus()
-//       }
-//       if (editable) {
-//         editable.focus()
-//         selection.set(editable, { end: true })
-//       }
-//     }
 //     else {
 
 //       // clear the undo alert timer to prevent previously cleared undo alert from closing this one
@@ -51,7 +32,7 @@ import { Alert } from 'react-native'
 
 //       // close the alert after a delay
 //       // only close the alert if it is an undo alert
-//       undoArchiveTimer = window.setTimeout(() => {
+//       undoArchiveTimer = setTimeout(() => {
 //         const state = getState()
 //         if (state.alert && state.alert.alertType === 'undoArchive') {
 //           dispatch(alert(null))

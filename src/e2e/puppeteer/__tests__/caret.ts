@@ -72,22 +72,6 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
-  it('clicking to the left of a thought, the caret should move to the beginning of the thought.', async () => {
-    const importText = `
-    - Purple Rain`
-
-    await paste(importText)
-
-    const editableNodeHandle = await waitForEditable('Purple Rain')
-
-    await click(editableNodeHandle, { offset: 5 })
-    await waitUntil(() => window.getSelection()?.focusOffset === 5)
-    await click(editableNodeHandle, { horizontalClickLine: 'left', x: -50 })
-
-    const offset = await getSelection().focusOffset
-    expect(offset).toBe(0)
-  })
-
   it('clicking on the right edge of a thought, the caret should move to the end of the thought.', async () => {
     const importText = `
     - Richard Feynman`
@@ -102,18 +86,6 @@ describe('all platforms', () => {
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe('Richard Feynman'.length)
-  })
-
-  it.skip('clicking to the right of a thought, the caret should...?', async () => {
-    // const importText = `
-    // - Richard Feynman`
-    // await press('Enter')
-    // await paste(importText)
-    // await setCursor(['Richard Feynman'], { offset: 0 })
-    // const editableNodeHandle = await getEditable('Richard Feynman')
-    // await click(editableNodeHandle, { horizontalClickLine: 'right', x: 50 })
-    // const offset = await getSelection().focusOffset
-    // expect(offset).toBe('Richard Feynman'.length)
   })
 
   it('clicking in the middle of a thought, the caret should be set to the point that is clicked.', async () => {

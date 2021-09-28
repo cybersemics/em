@@ -60,7 +60,6 @@ const Tutorial = () => {
   })
 
   const { getState } = useStore<State>()
-
   const state = getState()
 
   const dispatch = useDispatch()

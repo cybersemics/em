@@ -1,5 +1,14 @@
 import { HOME_TOKEN } from '../constants'
-import { appendToPath, head, isDivider, isThoughtArchived, parentOf, pathToContext, reducerFlow } from '../util'
+import {
+  appendToPath,
+  head,
+  headValue,
+  isDivider,
+  isThoughtArchived,
+  parentOf,
+  pathToContext,
+  reducerFlow,
+} from '../util'
 import {
   getNextRank,
   getChildren,
@@ -23,7 +32,6 @@ const deleteEmptyThought = (state: State): State => {
   if (!cursor) return state
 
   const cursorThought = getThoughtById(state, head(cursor))
-
   const { value } = cursorThought
 
   const offset = state.cursorOffset ?? 0
@@ -32,7 +40,7 @@ const deleteEmptyThought = (state: State): State => {
   const simplePath = simplifyPath(state, cursor)
   const allChildren = getChildrenRanked(state, context)
   const visibleChildren = getChildren(state, context)
-  const isEmpty = value === '' || state.cursorCleared
+  const isEmpty = headValue(state, cursor) === '' || state.cursorCleared
 
   // delete an empty thought with no children
   if ((isEmpty && allChildren.length === 0) || isDivider(value)) {

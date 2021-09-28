@@ -3,6 +3,7 @@ import { hashContext, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import newThought from '../newThought'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import { setCursor } from '..'
 
 it('new thought in root', () => {
   const stateNew = newThought(initialState(), { value: 'a' })
@@ -70,6 +71,18 @@ it('new subthought top', () => {
     - d
     - b
     - c`)
+})
+
+it('new thought to top of home context', () => {
+  const steps = [newThought('a'), setCursor({ path: null }), newThought({ value: 'b', insertBefore: true })]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - b
+  - a`)
 })
 
 it('update cursor to first new thought', () => {

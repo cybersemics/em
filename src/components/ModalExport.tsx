@@ -305,7 +305,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
 
       dispatch([
         closeModal(),
-        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearTimeout: 3000 }),
+        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearDelay: 3000 }),
       ])
 
       clearTimeout(globals.errorTimer)
@@ -316,7 +316,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       dispatch(error({ value: 'Error copying thoughts' }))
 
       clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
+      globals.errorTimer = setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
     })
 
     return () => {

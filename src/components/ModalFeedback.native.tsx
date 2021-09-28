@@ -46,7 +46,7 @@ const ModalFeedback = () => {
       dispatch(
         alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, {
           alertType: 'modalFeedback',
-          clearTimeout: 5000,
+          clearDelay: 5000,
         }),
       )
       setIsDisabled(true)

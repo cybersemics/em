@@ -117,7 +117,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     isPushing: false,
     latestShortcuts: [],
     modals: {},
-    noteFocus: false, // true if a note has the browser selection
+    noteFocus: false,
     patches: [],
     recentlyEdited: {},
     resourceCache: {},
@@ -160,7 +160,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
   }
 
   // Show sign up modal if the app is loaded with signup path
-  if (window && window.location.pathname.substr(1) === 'signup') {
+  if (typeof window !== 'undefined' && window.location.pathname.substr(1) === 'signup') {
     state.showModal = 'signup'
   }
 

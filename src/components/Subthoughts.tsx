@@ -268,6 +268,12 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     // Uses getAllChildren for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
     __allChildren: allChildren,
+    // We need to re-render when actualDistance changes, but it is complicated and expensive.
+    // Until actualDistance gets refactored and optimized, we can provide a quick fix for any observed rendering issues.
+    // The only rendering issue observed so far is when the cursor changes from a leaf thought in the home context (actualDistance: 1) to null (actualDistance: 0).
+    // This is especially fragile since other code may accidentally rely on this to re-render the component.
+    // If optimizing or testing re-rendering, it would be best to remove this line.
+    __noCursorRoot: isRoot(simplePath) && state.cursor === null,
   }
 }
 
@@ -355,7 +361,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`))
       clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
+      globals.errorTimer = setTimeout(() => store.dispatch(alert(null)), 5000)
     }, 100)
   }
 }
@@ -499,7 +505,6 @@ export const SubthoughtsComponent = ({
   sortType: contextSortType,
   zoomCursor,
   zoomParent,
-  actualDistance,
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
@@ -508,6 +513,7 @@ export const SubthoughtsComponent = ({
   const context = pathToContext(state, simplePath)
   const thought = getThoughtByPath(state, simplePath)
   const { value } = thought
+  const resolvedPath = path ?? simplePath
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
@@ -566,6 +572,80 @@ export const SubthoughtsComponent = ({
     return null
   }
   const isPaginated = show && filteredChildren.length > proposedPageSize
+  /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
+  const zoomParentEditing = () =>
+    // eslint-disable-next-line jsdoc/require-jsdoc
+    cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath)
+
+  const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
+
+  /** Calculates the autofocus state to hide or dim thoughts.
+   * Note: The following properties is applied to the immediate childrens with given class.
+   * - distance-from-cursor-0 fully visible
+   * - distance-from-cursor-1 dimmed
+   * - distance-from-cursor-2 shifted left and hidden
+   * - distance-from-cursor-3 shiifted left and hidden
+   * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
+   */
+  const actualDistance = once(() => {
+    /*
+    Note:
+
+    # Thoughts that should not be dimmed
+      - Cursor and its descendants.
+      - Thoughts that are both descendant of the first visible thought and ancestor of the cursor.
+      - Siblings of the cursor if the cursor is a leaf thought.
+
+    # Thoughts that should be dimmed
+      - first visible thought should be dimmed if it is not direct parent of the cursor.
+      - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
+
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+    */
+
+    const isCursorLeaf = cursor && isLeaf(state, pathToContext(state, cursor))
+
+    const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
+
+    /** First visible thought at the top. */
+    const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path | undefined
+
+    const isDescendantOfFirstVisiblePath = isDescendant(
+      // TODO: Add support for [ROOT] to isDescendant
+      pathToContext(state, firstVisiblePath || ([] as unknown as Path)),
+      pathToContext(state, resolvedPath),
+    )
+
+    const cursorSubcontextIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
+
+    const isAncestorOfCursor =
+      cursor && cursor.length > resolvedPath.length && resolvedPath.length === cursorSubcontextIndex() + 1
+
+    const isCursor =
+      cursor && resolvedPath.length === cursorSubcontextIndex() + 1 && resolvedPath.length === cursor?.length
+
+    /** Returns true if the resolvedPath is a descendant of the cursor. */
+    const isDescendantOfCursor = () =>
+      cursor && resolvedPath.length > cursor.length && cursor.length === cursorSubcontextIndex() + 1
+
+    // thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
+    const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
+
+    const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
+
+    /** Returns true if the children should be dimmed by the autofocus. */
+    const shouldDim = () => {
+      return (
+        cursor &&
+        isDescendantOfFirstVisiblePath &&
+        !(isCursorParent && isCursorLeaf) &&
+        !isCursor &&
+        !isDescendantOfCursor()
+      )
+    }
+
+    return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
+  })
 
   const contextChildren = [...unroot(context), '=children'] // children of parent with =children
   const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
@@ -597,7 +677,7 @@ export const SubthoughtsComponent = ({
           className={classNames({
             children: true,
             'context-chain': showContexts,
-            [`distance-from-cursor-${actualDistance}`]: true,
+            [`distance-from-cursor-${actualDistance()}`]: true,
             zoomCursor,
             zoomParent,
           })}
@@ -661,7 +741,7 @@ export const SubthoughtsComponent = ({
                 // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
                 key={`${child.rank}${child.id ? '-context' : ''}`}
                 rank={child.rank}
-                isVisible={actualDistance < 2 || (distance === 2 && isEditingChildPath())}
+                isVisible={actualDistance() < 2 || (distance === 2 && isEditingChildPath())}
                 showContexts={showContexts}
                 prevChild={filteredChildren[i - 1]}
                 isParentHovering={isParentHovering}

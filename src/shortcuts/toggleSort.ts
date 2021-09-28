@@ -51,7 +51,7 @@ const toggleSortShortcut: Shortcut = {
     if (type === 'keyboard') {
       const sortDirectionLabel = nextSortPreference.direction === 'Asc' ? 'ascending' : 'descending'
       dispatch(
-        alert(nextSortPreference.direction ? `Sort ${sortDirectionLabel}` : 'Sort manually', { clearTimeout: 2000 }),
+        alert(nextSortPreference.direction ? `Sort ${sortDirectionLabel}` : 'Sort manually', { clearDelay: 2000 }),
       )
     }
 

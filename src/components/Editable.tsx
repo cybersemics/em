@@ -11,6 +11,7 @@ import {
   error,
   editThought,
   importText,
+  insertMultipleThoughts,
   setCursor,
   setEditingValue,
   setInvalidState,
@@ -78,8 +79,6 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
-
-const asyncFocusThrottled = _.throttle(asyncFocus, 100)
 
 /** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
 const makeToolbarPositionFixed = () => {
@@ -149,7 +148,7 @@ const duplicateAlertToggler = () => {
   let timeoutId: number | undefined // eslint-disable-line fp/no-let
   return (show: boolean, dispatch: Dispatch<Alert>) => {
     if (show) {
-      timeoutId = window.setTimeout(() => {
+      timeoutId = setTimeout(() => {
         dispatch(
           alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }),
         )
@@ -158,7 +157,7 @@ const duplicateAlertToggler = () => {
       return
     }
     if (timeoutId) {
-      window.clearTimeout(timeoutId)
+      clearTimeout(timeoutId)
       timeoutId = undefined
     }
 
@@ -181,9 +180,12 @@ let blurring = false
 const mapStateToProps = (state: State, props: EditableProps) => {
   // TODO: This is neede to rerender when value changes. Refactor is needed here.
   const thought = getThoughtById(state, head(props.simplePath))
+  const hasNoteFocus = state.noteFocus && equalPath(state.cursor, props.path)
   return {
     isCursorCleared: props.isEditing && state.cursorCleared,
     thought,
+    // re-render when noteFocus changes in order to set the selection
+    hasNoteFocus,
   }
 }
 
@@ -199,6 +201,7 @@ const Editable = ({
   simplePath,
   path,
   cursorOffset,
+  hasNoteFocus,
   showContexts,
   rank,
   style,
@@ -297,7 +300,7 @@ const Editable = ({
       showContexts,
       rank,
       simplePath,
-    }: { context: Context; showContexts?: boolean; rank: number; simplePath: Path },
+    }: { context: Context; showContexts?: boolean; rank: number; simplePath: SimplePath },
   ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
@@ -327,7 +330,7 @@ const Editable = ({
           oldValue,
           newValue,
           rankInContext: rank,
-          path: simplePath as SimplePath,
+          path: simplePath,
         }),
       )
 
@@ -388,26 +391,6 @@ const Editable = ({
     // disable on mobile to avoid infinite loop (#908)
     const isAtBeginning = !isTouch && selection.offset() === 0
 
-    /**
-     * Note: There are a lot of different values that determine if we set the selection
-     * You may need to inspect them if something goes wrong.
-     */
-    // if (isEditing) {
-    //   console.info({
-    //     thoughts,
-    //     transient,
-    //     editMode,
-    //     isEditing,
-    //     contentRef: !!contentRef.current,
-    //     noFocusNode: !noteFocus && (cursorOffset !== null || !selection.isActive()) && !dragHold,
-    //     dragHold: dragHold,
-    //     noteFocus: noteFocus,
-    //     cursorOffset: cursorOffset !== null,
-    //     isCollapsed: selection.isCollapsed(),
-    //     focusOffset: selection.offset(),
-    //     hasSelection: selection.isActive(),
-    //   })
-    // }
     // allow transient editable to have focus on render
     if (
       transient ||
@@ -426,13 +409,24 @@ const Editable = ({
         For some reason, setTimeout fixes it.
       */
       if (isTouch && isSafari()) {
-        // asyncFocus needs to be throttled otherwise it causes an infinite loop (#908).
-        asyncFocusThrottled()
+        asyncFocus()
         setTimeout(setSelectionToCursorOffset)
       } else {
         setSelectionToCursorOffset()
       }
     }
+
+    // // there are many different values that determine if we set the selection
+    // // use this to help debug selection issues
+    // else if (isEditing) {
+    //   console.info('These values are false, preventing the selection from being set on', value)
+    //   if (!editMode) console.info('  - editMode')
+    //   if (!contentRef.current) console.info('  - contentRef.current')
+    //   if (noteFocus) console.info('  - !noteFocus')
+    //   if (!(cursorWithoutSelection || isAtBeginning)) console.info('  - cursorWithoutSelection || isAtBeginning')
+    //   if (dragHold) console.info('  - !dragHold')
+    //   if (isTapped) console.info('  - !isTapped')
+    // }
 
     if (isTapped) {
       setIsTapped(false)
@@ -448,7 +442,7 @@ const Editable = ({
       shortcutEmitter.off('shortcut', flush)
       showDuplicationAlert(false, dispatch)
     }
-  }, [isEditing, cursorOffset, state.dragInProgress, editing])
+  }, [isEditing, cursorOffset, hasNoteFocus, state.dragInProgress, editing])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = (e: ContentEditableEvent) => {
@@ -604,10 +598,10 @@ const Editable = ({
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
-    // reset rendered value to previous non-duplicate
-    if (contentRef.current) {
+    // if there was an ephemeral duplicate state, reset the rendered value to previous non-duplicate
+    if (contentRef.current?.innerHTML !== oldValueRef.current) {
       contentRef.current!.innerHTML = oldValueRef.current
-      contentRef.current.style.opacity = '1.0'
+      contentRef.current!.style.opacity = '1.0'
       showDuplicationAlert(false, dispatch)
     }
 
@@ -618,13 +612,39 @@ const Editable = ({
     }
 
     // if we know that the focus is changing to another editable or note then do not set editing to false
-
     const isRelatedTargetEditableOrNote =
       e.relatedTarget &&
       ((e.relatedTarget as Element).classList.contains('editable') ||
         (e.relatedTarget as Element).classList.contains('note-editable'))
 
     if (isRelatedTargetEditableOrNote) return
+
+    // check for separate lines created via speech-to-text newlines
+    // only after blur can we safely convert newlines to new thoughts without interrupting speeach-to-text
+    const lines = (e.target as HTMLInputElement).value
+      .split(/<div>/g)
+      .map(line => line.replace('</div>', ''))
+      .slice(1)
+
+    // insert speech-to-text lines
+    if (lines.length > 1) {
+      // edit original thought to first line
+      dispatch([
+        editThought({
+          context,
+          showContexts,
+          oldValue: value,
+          newValue: lines[0],
+          rankInContext: rank,
+          path: simplePath,
+        }),
+        // insert remaining lines
+        insertMultipleThoughts({ simplePath, lines: lines.slice(1) }),
+        // set editing to false again, since inserting thoughts enables edit mode
+        // TODO: There is a call to setCursor with editing: true that invalidates this line
+        editingAction({ value: false }),
+      ])
+    }
 
     // if related target is not editable wait until the next render to determine if we have really blurred
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)

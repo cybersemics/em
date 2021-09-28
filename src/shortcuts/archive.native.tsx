@@ -1,19 +1,14 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
 import { getThoughtById, hasChild } from '../selectors'
-import { ellipsize, head, isEM, isRoot, pathToContext } from '../util'
-import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
+import { HOME_PATH } from '../constants'
+import { appendToPath, ellipsize, head, isEM, isRoot, pathToContext } from '../util'
+import { alert, archiveThought, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { G, Path } from 'react-native-svg'
-import * as selection from '../device/selection'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
-
-/** Gets the editable node for the given note element. */
-const editableOfNote = (noteEl: HTMLElement) => {
-  const closest = noteEl.closest('.thought-container')
-  return closest ? (closest.querySelector('.editable') as HTMLElement) : null
-}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e) => {
@@ -29,22 +24,21 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     } else if (hasChild(state, context, '=readonly')) {
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
-      const editable = e.target ? editableOfNote(e.target as HTMLElement) : null
-      dispatch(deleteAttribute({ context, key: '=note' }))
-
-      // restore selection manually since Editable is not re-rendered
-
-      if (editable) {
-        editable.focus()
-        selection.set(editable, { end: true })
-      }
+      const path = state.cursor || HOME_PATH
+      const context = pathToContext(state, path)
+      const allChildren = getAllChildrenAsThoughts(state, context)
+      const childNote = allChildren.find(child => child.value === '=note')
+      // we know there is a =note child if noteFocus is true
+      // we just need to get the Child object so that archiveThought has the full path
+      const pathNote = appendToPath(path, childNote!.id)
+      dispatch(archiveThought({ path: pathNote }))
     } else {
       // clear the undo alert timer to prevent previously cleared undo alert from closing this one
       clearTimeout(undoArchiveTimer)
 
       // close the alert after a delay
       // only close the alert if it is an undo alert
-      undoArchiveTimer = window.setTimeout(() => {
+      undoArchiveTimer = setTimeout(() => {
         const state = getState()
         if (state.alert && state.alert.alertType === 'undoArchive') {
           dispatch(alert(null))

@@ -5,7 +5,6 @@ import { store } from '../store'
 import { strip } from '../util'
 import { Connected } from '../@types'
 import { search, setCursor } from '../action-creators'
-import selectNextEditable from '../device/selectNextEditable'
 
 // components
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
@@ -24,7 +23,7 @@ const debouncedSearch = _.debounce(
 const onKeyDown = (e: React.KeyboardEvent) => {
   if (e.key === 'ArrowDown') {
     e.preventDefault()
-    selectNextEditable(e.target as HTMLElement)
+    throw new Error('TODO: Search onKeyDown')
   }
 }
 

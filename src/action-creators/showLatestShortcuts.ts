@@ -9,8 +9,8 @@ interface Options {
 let timeoutId: Timer | null = null
 
 /** Clear timeout id. */
-const clearTimeout = () => {
-  if (timeoutId) window.clearTimeout(timeoutId)
+const clearTimer = () => {
+  if (timeoutId) clearTimeout(timeoutId)
   timeoutId = null
 }
 
@@ -21,7 +21,7 @@ const showLatestShortcuts =
   (shortcut?: Shortcut, { clear }: Options = {}): Thunk =>
   (dispatch, getState) => {
     if (clear) {
-      clearTimeout()
+      clearTimer()
       dispatch(clearLatestShortcuts())
       return
     }
@@ -32,11 +32,11 @@ const showLatestShortcuts =
       // Clear shortcuts if exceeds limit
       if (exceedsLimit) dispatch(clearLatestShortcuts())
 
-      clearTimeout()
+      clearTimer()
       dispatch(addLatestShortcuts(shortcut))
       timeoutId = setTimeout(() => {
         dispatch(clearLatestShortcuts())
-        clearTimeout()
+        clearTimer()
       }, LATEST_SHORTCUT_DIAGRAM_DURATION)
     }
   }

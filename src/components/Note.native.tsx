@@ -1,31 +1,44 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { isTouch } from '../browser'
 import { store } from '../store'
-import { attribute, getParent, isContextViewActive } from '../selectors'
-import { deleteAttribute, editing, setAttribute, setNoteFocus } from '../action-creators'
-import { strip } from '../util'
+import { attribute, getEditingPath, getParent, isContextViewActive, simplifyPath } from '../selectors'
+import {
+  cursorDown,
+  deleteAttribute,
+  editing,
+  setAttribute,
+  setCursor,
+  setNoteFocus,
+  toggleNote,
+} from '../action-creators'
+import { equalArrays, pathToContext, strip } from '../util'
 import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
-import asyncFocus from '../device/asyncFocus'
-import selectNextEditable from '../device/selectNextEditable'
-import { Context, State } from '../@types'
-import * as selection from '../device/selection'
+import { Path, State } from '../@types'
 
 interface NoteProps {
-  context: Context
-  onFocus: () => void
+  path: Path
 }
 
-// Todo: discuss editableOfNote() equivalent approach in native.
-/** Gets the editable node for the given note element. */
-const editableOfNote = (noteEl: any) => {
-  // To prevent incorrect compilation, we need an explict return statement here (https://github.com/cybersemics/em/issues/923#issuecomment-738103132)
-  return (noteEl.parentNode?.previousSibling as HTMLElement)?.querySelector('.editable') as HTMLElement | null
+/** Sets the cursor on the note's thought as it is being edited. */
+const setCursorOnLiveThought = ({ path }: { path: Path }) => {
+  const state = store.getState()
+  const simplePath = simplifyPath(state, path)
+  const simplePathLive = getEditingPath(state, simplePath)
+
+  store.dispatch(
+    setCursor({
+      path: simplePathLive,
+      cursorHistoryClear: true,
+      editing: true,
+      noteFocus: true,
+    }),
+  )
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ context, onFocus }: NoteProps) => {
+const Note = ({ path }: NoteProps) => {
   const state = store.getState()
+  const context = pathToContext(state, path)
   const dispatch = useDispatch()
   const [justPasted, setJustPasted] = useState(false)
 
@@ -34,6 +47,19 @@ const Note = ({ context, onFocus }: NoteProps) => {
     const noteThought = getParent(state, [...context, '=note'])
     return noteThought && !noteThought.pending
   })
+
+  // set the caret on the note if editing this thought and noteFocus is true
+  useEffect(() => {
+    const state = store.getState()
+    // cursor must be true if editing
+    if (
+      state.editing &&
+      state.noteFocus &&
+      equalArrays(pathToContext(state, simplifyPath(state, state.cursor!)), context)
+    ) {
+      // TODO: Set the caret to the end of the note
+    }
+  }, [state.cursor, state.editing, state.noteFocus])
 
   if (!hasNote || isContextViewActive(state, context)) return null
 
@@ -44,28 +70,19 @@ const Note = ({ context, onFocus }: NoteProps) => {
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
     const note = attribute(store.getState(), context, '=note')
-    const editable = editableOfNote(e)!
 
     // select thought
-    if (e.key === 'Escape' || e.key === 'ArrowUp' || e.keyCode === 'N'.charCodeAt(0)) {
-      editable?.focus()
-      selection.set(editable, { end: true })
-      dispatch(setNoteFocus({ value: false }))
+    if (e.key === 'Escape' || e.key === 'ArrowUp') {
+      dispatch(toggleNote())
     }
     // delete empty note
     // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
     // note may be '' or null if the attribute child was deleted
     else if (e.key === 'Backspace' && !note) {
-      if (isTouch) {
-        asyncFocus()
-      }
-      editable.focus()
-      selection.set(editable, { end: true })
-
       dispatch(deleteAttribute({ context, key: '=note' }))
       dispatch(setNoteFocus({ value: false }))
     } else if (e.key === 'ArrowDown') {
-      selectNextEditable(editable)
+      dispatch(cursorDown())
     }
   }
 
@@ -104,8 +121,8 @@ const Note = ({ context, onFocus }: NoteProps) => {
       //   setJustPasted(true)
       // }}
       onBlur={onBlur}
+      onFocus={() => setCursorOnLiveThought({ path })}
       forceUpdate={false}
-      onFocus={onFocus}
     />
   )
 }

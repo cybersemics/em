@@ -22,7 +22,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       dispatch(
         alert(`Deleted ${ellipsize(cursorThought.value)}`, {
           showCloseLink: true,
-          clearTimeout: 8000,
+          clearDelay: 8000,
         }),
       )
 

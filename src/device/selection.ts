@@ -1,6 +1,5 @@
 /** Wraps the browser Selection API in a device-agnostic interface. */
 
-import getElementPaddings from './getElementPaddings'
 import { SplitResult } from '../@types'
 
 type SelectionOptionsType = {
@@ -14,6 +13,10 @@ interface NodeOffset {
   offset: number
 }
 
+/** Gets the padding of an element as an array of numbers. */
+const getElementPaddings = (element: HTMLElement): number[] =>
+  window.getComputedStyle(element, null).getPropertyValue('padding').split('px ').map(Number)
+
 /** Clears the selection. */
 export const clear = (): void => window.getSelection()?.removeAllRanges()
 
@@ -23,10 +26,19 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 /** Returns true if there is an active selection. */
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
+/** Returns true if the Node is an editable. */
+const isEditable = (node?: Node | null) =>
+  !!node && node.nodeType === Node.ELEMENT_NODE && !!(node as HTMLElement).classList?.contains('editable')
+
 /** Returns true if the selection is on a thought. */
 // We should see if it is possible to just use state.editing and selection.isActive()
-export const isThought = (): boolean =>
-  !!window.getSelection()?.focusNode?.parentElement?.classList.contains('editable')
+export const isThought = (): boolean => {
+  // type classList as optional
+  const focusNode = window.getSelection()?.focusNode
+  if (!focusNode) return false
+  // check focusNode and focusNode.parentNode, since it could be on the TEXT_NODE or the ELEMENT_NODE
+  return isEditable(focusNode) || isEditable(focusNode.parentNode)
+}
 
 /** Returns true if the selection is not on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = (): boolean => {
@@ -112,7 +124,7 @@ export const restore = (range: Range | null): void => {
   sel?.addRange(range)
 }
 
-/** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. */
+/** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. Only supports a rangeCount of 1. */
 export const save = (): Range | null => {
   const sel = window.getSelection()
   const range = sel && sel.rangeCount > 0 ? sel?.getRangeAt(0) : null
@@ -203,6 +215,13 @@ export const set = (
 
   const range = document.createRange()
   const sel = window.getSelection() || new Selection()
+
+  // bail if already selected
+  // compare closest element node, since there is no need to update the selection if it is on either the text node or element node
+  const focusElementNew = focusNode.nodeType === Node.TEXT_NODE ? focusNode.parentElement : focusNode
+  const focusElementOld = sel.focusNode?.nodeType === Node.TEXT_NODE ? sel.focusNode.parentElement : sel.focusNode
+  if (focusElementNew === focusElementOld) return
+
   // automatically constrain offset to text length
   // this may still throw an error if the text node does no exist any longer
   if (focusNode !== null) {

@@ -23,9 +23,9 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
     getChildren(state, pathToContext(state, hoveringPath)).length > 0
 
   /** Clears active delayed dispatch. */
-  const clearTimeout = () => {
+  const clearTimer = () => {
     if (expandBottomTimer) {
-      window.clearTimeout(expandBottomTimer)
+      clearTimeout(expandBottomTimer)
       expandBottomTimer = null
     }
   }
@@ -35,7 +35,7 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
   if (shouldCancel) dispatch(clearExpandBottom())
 
   if (!shouldExpand) {
-    clearTimeout()
+    clearTimer()
     return
   }
 
@@ -57,7 +57,7 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
   const isAlreadyExpanded = () => hoveringContext && expandHoverBottomPaths[parentId]
 
   if (shouldExpand && hoveringPath && !isAlreadyExpanded()) {
-    clearTimeout()
+    clearTimer()
     delayedDispatch(hoveringPath)
   }
 }

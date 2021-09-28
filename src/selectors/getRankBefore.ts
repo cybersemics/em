@@ -1,5 +1,5 @@
 import { getChildrenRanked } from '../selectors'
-import { head, pathToContext } from '../util'
+import { head, isRoot, pathToContext } from '../util'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
 import { getThoughtById } from './getThought'
@@ -11,6 +11,12 @@ const getRankBefore = (state: State, simplePath: SimplePath) => {
   const { value, rank } = thought
   const parentPath = rootedParentOf(state, simplePath)
   const children = getChildrenRanked(state, pathToContext(state, parentPath))
+
+  if (isRoot(simplePath)) {
+    throw new Error(
+      'Cannot get the rank before the home context since it has no siblings. You probably want to pass the first child of the home context, or use getPrevRank.',
+    )
+  }
 
   // if there are no children, start with rank 0
   if (children.length === 0) {
