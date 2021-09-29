@@ -81,7 +81,7 @@ export const commonStyles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 10,
+    fontSize: 30,
   },
   centerText: { textAlign: 'center' },
   underlineText: { textDecorationLine: 'underline' },

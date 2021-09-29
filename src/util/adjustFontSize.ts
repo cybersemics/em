@@ -13,8 +13,8 @@ export const adjustFontSize = (baseFontSize: number, style: TextStyle, originalF
     : style
   const currentFontSize = mergedStyle.fontSize || originalFontSize
 
-  // Factor should be cakculated by the difference between current base font size and original base font size.
-  const factor = Math.abs(baseFontSize - originalFontSize)
+  // Factor should be calculated by the difference between current base font size and original base font size.
+  const factor = baseFontSize - originalFontSize
 
   return { ...mergedStyle, fontSize: currentFontSize + factor }
 }

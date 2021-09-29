@@ -5,7 +5,6 @@ import AppComponent from './AppComponent'
 import syncStorage from '../util/nativeStorageHelper'
 import ErrorBoundaryContainer from './ErrorBoundaryContainer'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import ThemeProvider from '../themeProvider'
 
 /**
  * App container.
@@ -26,15 +25,13 @@ const App: React.FC = () => {
   if (loading) return null
 
   return (
-    <ThemeProvider>
-      <Provider store={store}>
-        <ErrorBoundaryContainer>
-          <SafeAreaProvider>
-            <AppComponent />
-          </SafeAreaProvider>
-        </ErrorBoundaryContainer>
-      </Provider>
-    </ThemeProvider>
+    <Provider store={store}>
+      <ErrorBoundaryContainer>
+        <SafeAreaProvider>
+          <AppComponent />
+        </SafeAreaProvider>
+      </ErrorBoundaryContainer>
+    </Provider>
   )
 }
 

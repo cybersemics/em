@@ -11,10 +11,7 @@ import { storage } from '../util/storage'
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 import { State } from '../@types'
-import tw from 'tailwind-react-native-classnames'
-import styled from 'styled-components/native'
-import themeSpecific from '../styled-helpers/themeSpecific'
-import { useToggleThemeMode } from '../themeProvider'
+import tw from 'twrnc'
 
 const isLocalNetwork = Boolean(__DEV__)
 
@@ -62,20 +59,6 @@ const validateInviteCode = (code: string) =>
 // }
 // }
 
-const GrayedText = styled(Text)`
-  text-decoration: underline;
-  ${themeSpecific({
-    light: tw`text-gray-700`,
-    dark: tw`text-gray-200`,
-  })}
-`
-
-const ThemedButton = styled(ActionButton)`
-  ${themeSpecific({
-    light: tw`bg-blue-800`,
-    dark: tw`bg-green-400`,
-  })}
-`
 /** A modal that welcomes the user to em. */
 const ModalWelcome = () => {
   const [inviteCode, setInviteCode] = useState(storage.getItem('inviteCode') || '')
@@ -137,8 +120,6 @@ const ModalWelcome = () => {
       }),
     )
 
-  const toggleTheme = useToggleThemeMode()
-
   return (
     <Modal
       id='welcome'
@@ -161,10 +142,9 @@ const ModalWelcome = () => {
               }
               style={styles.helperActionButton}
             >
-              <GrayedText>This ain’t my first rodeo. Skip it.</GrayedText>
+              <Text style={tw`underline text-gray-700 dark:text-gray-200`}>This ain’t my first rodeo. Skip it.</Text>
             </TouchableOpacity>
           }
-          <ThemedButton title='CHANGE THEME' onClick={() => toggleTheme()}></ThemedButton>
         </View>
       )}
     >

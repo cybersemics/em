@@ -27,10 +27,15 @@ import { isGestureHint, inputHandlers } from '../shortcuts'
 import Tutorial from './Tutorial'
 import { isTutorial } from '../selectors'
 import { storage } from '../util'
+<<<<<<< HEAD
 import * as selection from '../device/selection'
 import { useTheme } from 'styled-components/native'
 import { Theme } from '../themeProvider'
 import tw from 'tailwind-react-native-classnames'
+=======
+import tw from 'twrnc'
+import { useDeviceContextCustom } from '../hooks/useDeviceContextCustom'
+>>>>>>> ddd7a4b4 (upgrade twrnc and add dark mode utility classes)
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 
@@ -54,6 +59,8 @@ const handleGestureCancel = () => {
  * AppComponent container.
  */
 const AppComponent: React.FC = () => {
+  useDeviceContextCustom(tw)
+
   const drawerRef = useRef<DrawerLayout>(null)
 
   const dispatch = useDispatch()
@@ -86,21 +93,13 @@ const AppComponent: React.FC = () => {
     height: height - 125,
   }
 
-  const theme = useTheme() as Theme
-
   return (
     <>
       <StatusBar
         // eslint-disable-next-line react/style-prop-object
         style='light'
       />
-      <SafeAreaView
-        style={tw.style({
-          'bg-black': theme.mode === 'dark',
-          'bg-white': theme.mode === 'light',
-          'flex-1': true,
-        })}
-      >
+      <SafeAreaView style={tw`bg-white dark:bg-black flex-1`}>
         <DrawerLayout
           ref={drawerRef}
           drawerWidth={300}

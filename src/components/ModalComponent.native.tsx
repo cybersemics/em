@@ -8,9 +8,7 @@ import { useDispatch } from 'react-redux'
 import { Modal, View, StyleSheet, ScrollView } from 'react-native'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
-import tw from 'tailwind-react-native-classnames'
-import styled from 'styled-components/native'
-import themeSpecific from '../styled-helpers/themeSpecific'
+import tw from 'twrnc'
 
 const { title: titleStyle } = commonStyles
 
@@ -28,13 +26,6 @@ export interface ModalProps {
   title: string
   preventCloseOnEscape?: boolean
 }
-
-const ModalWrapper = styled.View`
-  ${themeSpecific({
-    light: tw`bg-white`,
-    dark: tw`bg-black`,
-  })}
-`
 
 /** A generic modal component. */
 const ModalComponent: React.FC<ModalProps> = props => {
@@ -55,7 +46,7 @@ const ModalComponent: React.FC<ModalProps> = props => {
 
   return (
     <Modal animationType='slide' visible={show} onRequestClose={close}>
-      <ModalWrapper style={tw`flex-1 py-10 px-4 `}>
+      <View style={tw`flex-1 py-10 px-4 bg-white dark:bg-black `}>
         {!props.preventCloseOnEscape && (
           <Text style={styles.close} onPress={close}>
             ✕
@@ -68,7 +59,7 @@ const ModalComponent: React.FC<ModalProps> = props => {
 
           <View>{!hideModalActions && actions && actions({ close })}</View>
         </ScrollView>
-      </ModalWrapper>
+      </View>
     </Modal>
   )
 }
