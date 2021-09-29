@@ -6,7 +6,7 @@ import Modal from './Modal'
 import { alert } from '../action-creators'
 import { AxiosError } from 'axios'
 import { State } from '../@types'
-import TextArea from '../TextArea'
+import TextArea from './TextArea'
 import TextLink from './TextLink'
 
 // Needs to import twin.macro for tw prop to work

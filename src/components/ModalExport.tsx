@@ -33,7 +33,7 @@ import tw from 'twin.macro'
 import { ActionButton } from './ActionButton'
 import TextLink from './TextLink'
 import styled from 'styled-components'
-import TextArea from '../TextArea'
+import TextArea from './TextArea'
 
 /******************************************************************************
  * Contexts
