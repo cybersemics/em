@@ -19,7 +19,7 @@ import {
   textToHtml,
   reducerFlow,
 } from '../util'
-import fifoCache from '../util/fifoCache'
+// import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Child, Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State, ThoughtContext } from '../@types'
 import { isMobile } from '../util/isMobile'
@@ -41,8 +41,8 @@ export interface UpdateThoughtsOptions {
 
 const rootEncoded = hashContext([HOME_TOKEN])
 
-const contextCache = fifoCache<string>(10000)
-const lexemeCache = fifoCache<string>(10000)
+// const contextCache = fifoCache<string>(10000)
+// const lexemeCache = fifoCache<string>(10000)
 
 /**
  * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants so they are never deleted from the thought cache when not present on the remote data source.
@@ -137,20 +137,20 @@ const updateThoughts = (
   // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
   // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and thoughtIndex
 
-  const contextIndexInvalidated = contextCache.addMany(Object.keys(contextIndexUpdates))
-  const thoughtIndexInvalidated = lexemeCache.addMany(Object.keys(thoughtIndexUpdates))
+  // const contextIndexInvalidated = contextCache.addMany(Object.keys(contextIndexUpdates))
+  // const thoughtIndexInvalidated = lexemeCache.addMany(Object.keys(thoughtIndexUpdates))
 
-  contextIndexInvalidated.forEach(key => {
-    if (!getWhitelistedThoughts().contextIndex[key] && !state.expanded[key]) {
-      delete contextIndexOld[key] // eslint-disable-line fp/no-delete
-    }
-  })
+  // contextIndexInvalidated.forEach(key => {
+  //   if (!getWhitelistedThoughts().contextIndex[key] && !state.expanded[key]) {
+  //     delete contextIndexOld[key] // eslint-disable-line fp/no-delete
+  //   }
+  // })
 
-  thoughtIndexInvalidated.forEach(key => {
-    if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
-      delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
-    }
-  })
+  // thoughtIndexInvalidated.forEach(key => {
+  //   if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
+  //     delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
+  //   }
+  // })
 
   const contextIndex = mergeUpdates(contextIndexOld, contextIndexUpdates)
   const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates)
