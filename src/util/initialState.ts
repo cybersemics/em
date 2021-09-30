@@ -5,6 +5,7 @@ import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, tim
 import { getSessionId } from './sessionManager'
 import { storage } from './storage'
 import { State, ThoughtsInterface, Timestamp } from '../@types'
+import { isLocalNetwork } from '../device/router'
 
 /** Safely gets a value from localStorage if it is in the environment. */
 const getLocal = (key: string) => {
@@ -144,7 +145,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
 
   // welcome modal
   if (isDocumentEditable() && canShowModal(state, 'welcome')) {
-    state.showModal = 'welcome'
+    state.showModal = isLocalNetwork ? 'welcome' : 'auth'
   }
 
   // Show sign up modal if the app is loaded with signup path

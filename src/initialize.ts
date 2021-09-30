@@ -16,6 +16,7 @@ import {
   loadLocalState,
   preloadSources,
   updateThoughtsFromSubscription,
+  showModal,
 } from './action-creators'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
@@ -28,6 +29,7 @@ import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
 import * as selection from './device/selection'
+import { isLocalNetwork } from './device/router'
 
 // enable to collect moize usage stats
 // do not enable in production
@@ -61,6 +63,10 @@ export const initFirebase = async (): Promise<void> => {
         if (store.getState().authenticated) {
           store.dispatch(logout())
         }
+        /**
+         * Redirecting unauthenticated user to login screen if not on local network.
+         */
+        if (!isLocalNetwork) store.dispatch(showModal({ id: 'auth' }))
         store.dispatch(authenticate({ value: false }))
         store.dispatch(setRemoteSearch({ value: false }))
       }
