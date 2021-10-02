@@ -2665,10 +2665,6 @@ code,
   padding: 3px 0;
 }
 
-.table-view > .children > .child > .thought-container > .bullet {
-  background-color: var(--bullet-overlay-color);
-}
-
 /* column 2 */
 .table-view > .children > .child > .children {
   display: table-cell;
@@ -2693,10 +2689,6 @@ code,
   padding-top: 3px;
   padding-left: 40px;
   margin-left: 0;
-}
-
-.table-view > .children > .child > .children > .child > .thought-container > .bullet {
-  background-color: var(--bullet-overlay-color);
 }
 
 /* pre-thought .drop-hover of column 1 */
