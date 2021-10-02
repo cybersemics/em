@@ -1,23 +1,18 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import {
-  clear,
-  editThought,
-  deleteThought,
-  moveThought,
-  importText,
-  newThought,
-  setCursor,
-} from '../../action-creators'
-import { getAllChildren, getParent, rankThoughtsFirstMatch } from '../../selectors'
+import { clear, importText, newThought, setCursor } from '../../action-creators'
+import { getAllChildren, getParent } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
+import getParentDB from '../../data-providers/data-helpers/getParent'
 import { DataProvider } from '../../data-providers/DataProvider'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { SimplePath } from '../../@types'
+import { Context, Parent } from '../../@types'
 import testTimer from '../../test-helpers/testTimer'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
-import { hashContext } from '../../util'
+import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
+import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
+import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
@@ -28,6 +23,16 @@ const fakeTimer = testTimer()
 
 const db = dexie as DataProvider
 
+/**
+ * Match given children with for given context.
+ */
+const matchContextsChildren = async (provider: DataProvider, context: Context, children: Partial<Parent>[]) => {
+  const parentThought = (await getContext(provider, context))!
+  expect(parentThought).toBeTruthy()
+  const childrenThoughts = await provider.getContextsByIds(parentThought.children)
+  expect(childrenThoughts).toMatchObject(children)
+}
+
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
@@ -37,7 +42,7 @@ it('disable isLoading after initialize', async () => {
 
 it('load thought', async () => {
   const parentEntryRoot1 = await getContext(db, [HOME_TOKEN])
-  expect(parentEntryRoot1).toBeUndefined()
+  expect(parentEntryRoot1).toBeFalsy()
 
   fakeTimer.useFakeTimer()
 
@@ -47,45 +52,42 @@ it('load thought', async () => {
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
+  const thoughtA = getParent(store.getState(), ['a'])
+
   const parentEntryRoot = await getContext(db, [HOME_TOKEN])
   expect(parentEntryRoot).toMatchObject({
-    children: [{ value: 'a', rank: 0 }],
+    children: [thoughtA?.id],
   })
 
   fakeTimer.useFakeTimer()
   // clear state
   store.dispatch(clear())
   await fakeTimer.runAllAsync()
+  fakeTimer.useRealTimer()
 
   const children = getAllChildren(store.getState(), [HOME_TOKEN])
   expect(children).toHaveLength(0)
 
   // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
-  fakeTimer.useRealTimer()
 
   // confirm thought is still in local db after state has been cleared
   const parentEntryRootAfterReload = await getContext(db, [HOME_TOKEN])
   expect(parentEntryRootAfterReload).toMatchObject({
-    children: [{ value: 'a' }],
+    children: [thoughtA?.id],
   })
 
   await refreshTestApp()
 
   const childrenAfterInitialize = getAllChildren(store.getState(), [HOME_TOKEN])
-  expect(childrenAfterInitialize).toMatchObject([{ value: 'a' }])
+  expect(childrenAfterInitialize).toMatchObject([thoughtA?.id])
 })
 
-// TODO
-it.skip('do not repopulate deleted thought', async () => {
+it('do not repopulate deleted thought', async () => {
   fakeTimer.useFakeTimer()
 
   store.dispatch([
-    { type: 'newThought', value: '' },
-    {
-      type: 'deleteThought',
-      context: [HOME_TOKEN],
-      thoughtRanked: { value: '', rank: 0 },
-    },
+    newThought({}),
+    deleteThoughtAtFirstMatchActionCreator(['']),
     // Need to setCursor to trigger the pullQueue
     // Must set cursor manually since deleteThought does not.
     // (The cursor is normally set after deleting via the deleteThoughtWithCursor reducer).
@@ -93,12 +95,15 @@ it.skip('do not repopulate deleted thought', async () => {
   ])
 
   await fakeTimer.runAllAsync()
+  fakeTimer.useRealTimer()
 
   const parentEntryRoot = getParent(store.getState(), [HOME_TOKEN])
-  expect(parentEntryRoot).toBe(undefined)
+  expect(parentEntryRoot).toMatchObject({
+    children: [],
+  })
 
   const parentEntryChild = getParent(store.getState(), [''])
-  expect(parentEntryChild).toBe(undefined)
+  expect(parentEntryChild).toBe(null)
 })
 
 it('load buffered thoughts', async () => {
@@ -116,15 +121,20 @@ it('load buffered thoughts', async () => {
   )
 
   await fakeTimer.runAllAsync()
-
   fakeTimer.useRealTimer()
 
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'a' }] })
-  expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
-  expect(await getContext(db, ['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-  expect(await getContext(db, ['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
+  const thoughtA = getParent(store.getState(), ['a'])!
+  const thoughtB = getParent(store.getState(), ['a', 'b'])!
+  const thoughtC = getParent(store.getState(), ['a', 'b', 'c'])!
+  const thoughtD = getParent(store.getState(), ['a', 'b', 'c', 'd'])!
+  const thoughtE = getParent(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
+
+  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'a' }])
+  await matchContextsChildren(db, ['a'], [{ value: 'b' }])
+  await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])
+  await matchContextsChildren(db, ['a', 'b', 'c'], [{ value: 'd' }])
+  await matchContextsChildren(db, ['a', 'b', 'c', 'd'], [{ value: 'e' }])
+  await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
 
   // clear state
   // call initialize again to reload from db (simulating page refresh)
@@ -132,11 +142,11 @@ it('load buffered thoughts', async () => {
   await refreshTestApp()
 
   const state = store.getState()
-  expect(getAllChildren(state, [HOME_TOKEN])).toMatchObject([{ value: 'a' }])
-  expect(getAllChildren(state, ['a'])).toMatchObject([{ value: 'b' }])
-  expect(getAllChildren(state, ['a', 'b'])).toMatchObject([{ value: 'c' }])
-  expect(getAllChildren(state, ['a', 'b', 'c'])).toMatchObject([{ value: 'd' }])
-  expect(getAllChildren(state, ['a', 'b', 'c', 'd'])).toMatchObject([{ value: 'e' }])
+  expect(getAllChildren(state, [HOME_TOKEN])).toMatchObject([thoughtA.id])
+  expect(getAllChildren(state, ['a'])).toMatchObject([thoughtB.id])
+  expect(getAllChildren(state, ['a', 'b'])).toMatchObject([thoughtC.id])
+  expect(getAllChildren(state, ['a', 'b', 'c'])).toMatchObject([thoughtD.id])
+  expect(getAllChildren(state, ['a', 'b', 'c', 'd'])).toMatchObject([thoughtE.id])
   expect(getAllChildren(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
 })
 
@@ -158,34 +168,26 @@ it('delete thought with buffered descendants', async () => {
   ])
 
   await fakeTimer.runAllAsync()
+  fakeTimer.useRealTimer()
 
-  fakeTimer.runAllAsync()
-
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
-  expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
-  expect(await getContext(db, ['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-  expect(await getContext(db, ['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
+  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
+  await matchContextsChildren(db, ['a'], [{ value: 'b' }])
+  await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])
+  await matchContextsChildren(db, ['a', 'b', 'c'], [{ value: 'd' }])
+  await matchContextsChildren(db, ['a', 'b', 'c', 'd'], [{ value: 'e' }])
+  await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
 
   await refreshTestApp()
 
   fakeTimer.useFakeTimer()
 
   // delete thought with buffered descendants
-  store.dispatch(
-    deleteThought({
-      context: [HOME_TOKEN],
-      thoughtRanked: { id: hashContext(['a']), value: 'a', rank: 1 },
-    }),
-  )
+  store.dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
   await fakeTimer.runAllAsync()
 
   fakeTimer.useRealTimer()
 
-  expect(getAllChildren(store.getState(), [HOME_TOKEN])).toMatchObject([{ value: 'x' }])
-
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
+  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
   expect(await getContext(db, ['a'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
@@ -215,24 +217,32 @@ it('move thought with buffered descendants', async () => {
 
   fakeTimer.useRealTimer()
 
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
-  expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'm' }, { value: 'b' }] })
-  expect(await getContext(db, ['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-  expect(await getContext(db, ['a', 'm'])).toBeUndefined()
-  expect(await getContext(db, ['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
+  const thoughtX = getParent(store.getState(), ['x'])!
+  const thoughtA = getParent(store.getState(), ['a'])!
+  const thoughtM = getParent(store.getState(), ['a', 'm'])!
+  const thoughtB = getParent(store.getState(), ['a', 'b'])!
+  const thoughtC = getParent(store.getState(), ['a', 'b', 'c'])!
+  const thoughtD = getParent(store.getState(), ['a', 'b', 'c', 'd'])!
+  const thoughtE = getParent(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
+
+  expect(await getParentDB(db, HOME_TOKEN)).toMatchObject({ children: [thoughtX.id, thoughtA.id] })
+  expect(await getParentDB(db, thoughtA.id)).toMatchObject({ children: [thoughtM.id, thoughtB.id] })
+  expect(await getParentDB(db, thoughtB.id)).toMatchObject({ children: [thoughtC.id] })
+  expect(await getParentDB(db, thoughtM.id)).toMatchObject({ children: [] })
+  expect(await getParentDB(db, thoughtC.id)).toMatchObject({ children: [thoughtD.id] })
+  expect(await getParentDB(db, thoughtD.id)).toMatchObject({ children: [thoughtE.id] })
+  expect(await getParentDB(db, thoughtE.id)).toMatchObject({ children: [] })
 
   await refreshTestApp()
 
   fakeTimer.useFakeTimer()
+
   // delete thought with buffered descendants
-  const aPath = rankThoughtsFirstMatch(store.getState(), ['a'])
-  const xPath = rankThoughtsFirstMatch(store.getState(), ['x'])
   store.dispatch(
-    moveThought({
-      oldPath: aPath,
-      newPath: [...xPath, ...aPath],
+    moveThoughtAtFirstMatchActionCreator({
+      from: ['a'],
+      to: ['x', 'a'],
+      newRank: 0,
     }),
   )
 
@@ -240,25 +250,22 @@ it('move thought with buffered descendants', async () => {
 
   fakeTimer.useRealTimer()
 
-  expect(getAllChildren(store.getState(), [HOME_TOKEN])).toMatchObject([{ value: 'x' }])
-
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
+  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
   expect(await getContext(db, ['a'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 
-  expect(await getContext(db, ['x'])).toMatchObject({ children: [{ value: 'a' }] })
-  expect(await getContext(db, ['x', 'a'])).toMatchObject({ children: [{ value: 'm' }, { value: 'b' }] })
-  expect(await getContext(db, ['x', 'a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-  expect(await getContext(db, ['x', 'a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-  expect(await getContext(db, ['x', 'a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
-  expect(await getContext(db, ['x', 'a', 'b', 'c', 'd', 'e'])).toBeUndefined()
+  await matchContextsChildren(db, ['x'], [{ value: 'a' }])
+  await matchContextsChildren(db, ['x', 'a'], [{ value: 'm' }, { value: 'b' }])
+  await matchContextsChildren(db, ['x', 'a', 'b'], [{ value: 'c' }])
+  await matchContextsChildren(db, ['x', 'a', 'b', 'c'], [{ value: 'd' }])
+  await matchContextsChildren(db, ['x', 'a', 'b', 'c', 'd'], [{ value: 'e' }])
+  await matchContextsChildren(db, ['x', 'a', 'b', 'c', 'd', 'e'], [])
 })
 
-// TODO
-it.skip('edit thought with buffered descendants', async () => {
+it('edit thought with buffered descendants', async () => {
   fakeTimer.useFakeTimer()
 
   store.dispatch([
@@ -280,24 +287,23 @@ it.skip('edit thought with buffered descendants', async () => {
 
   fakeTimer.useRealTimer()
 
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
-  expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'm' }, { value: 'b' }] })
-  expect(await getContext(db, ['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-  expect(await getContext(db, ['a', 'm'])).toBeUndefined()
-  expect(await getContext(db, ['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
+  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
+  await matchContextsChildren(db, ['a'], [{ value: 'm' }, { value: 'b' }])
+  await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])
+  await matchContextsChildren(db, ['a', 'm'], [])
+  await matchContextsChildren(db, ['a', 'b', 'c'], [{ value: 'd' }])
+  await matchContextsChildren(db, ['a', 'b', 'c', 'd'], [{ value: 'e' }])
+  await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
 
   await refreshTestApp()
   fakeTimer.useFakeTimer()
 
   // delete thought with buffered descendants
   store.dispatch(
-    editThought({
+    editThoughtAtFirstMatchActionCreator({
+      at: ['a'],
       oldValue: 'a',
       newValue: 'k',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 1 }] as SimplePath,
     }),
   )
 
@@ -305,20 +311,18 @@ it.skip('edit thought with buffered descendants', async () => {
 
   fakeTimer.useRealTimer()
 
-  expect(getAllChildren(store.getState(), [HOME_TOKEN])).toMatchObject([{ value: 'x' }, { value: 'k' }])
-
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'k' }] })
+  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'k' }])
   expect(await getContext(db, ['a'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 
-  expect(await getContext(db, ['k'])).toMatchObject({ children: [{ value: 'm' }, { value: 'b' }] })
-  expect(await getContext(db, ['k!', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-  expect(await getContext(db, ['k!', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-  expect(await getContext(db, ['k!', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
-  expect(await getContext(db, ['k!', 'b', 'c', 'd', 'e'])).toBeUndefined()
+  await matchContextsChildren(db, ['k'], [{ value: 'm' }, { value: 'b' }])
+  await matchContextsChildren(db, ['k!', 'b'], [{ value: 'c' }])
+  await matchContextsChildren(db, ['k!', 'b', 'c'], [{ value: 'd' }])
+  await matchContextsChildren(db, ['k!', 'b', 'c', 'd'], [{ value: 'e' }])
+  await matchContextsChildren(db, ['k!', 'b', 'c', 'd', 'e'], [])
 })
 
 it('export thought with buffered descendants', async () => {
@@ -342,23 +346,18 @@ it('export thought with buffered descendants', async () => {
 
   fakeTimer.useRealTimer()
 
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }, { value: 'a' }] })
-  expect(await getContext(db, ['a'])).toMatchObject({ children: [{ value: 'b' }] })
-  expect(await getContext(db, ['a', 'b'])).toMatchObject({ children: [{ value: 'c' }] })
-  expect(await getContext(db, ['a', 'b', 'c'])).toMatchObject({ children: [{ value: 'd' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toMatchObject({ children: [{ value: 'e' }] })
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeUndefined()
+  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
+  await matchContextsChildren(db, ['a'], [{ value: 'b' }])
+  await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])
+  await matchContextsChildren(db, ['a', 'b', 'c'], [{ value: 'd' }])
+  await matchContextsChildren(db, ['a', 'b', 'c', 'd'], [{ value: 'e' }])
+  await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
 
   await refreshTestApp()
   fakeTimer.useFakeTimer()
 
   // delete thought with buffered descendants
-  store.dispatch(
-    deleteThought({
-      context: [HOME_TOKEN],
-      thoughtRanked: { id: hashContext(['a']), value: 'a', rank: 1 },
-    }),
-  )
+  store.dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
 
   await fakeTimer.runAllAsync()
 
@@ -367,9 +366,7 @@ it('export thought with buffered descendants', async () => {
 
   fakeTimer.useRealTimer()
 
-  expect(getAllChildren(store.getState(), [HOME_TOKEN])).toMatchObject([{ value: 'x' }])
-
-  expect(await getContext(db, [HOME_TOKEN])).toMatchObject({ children: [{ value: 'x' }] })
+  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
   expect(await getContext(db, ['a'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b'])).toBeFalsy()
   expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()

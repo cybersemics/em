@@ -61,6 +61,7 @@ export {
   getAllChildrenByContextHash,
   getChildren,
   getChildrenRanked,
+  getChildrenRankedById,
   getAllChildrenSorted,
   getChildrenSorted,
   getParent,

@@ -1,14 +1,14 @@
 import _ from 'lodash'
-// import * as db from '../data-providers/dexie'
-// import getFirebaseProvider from '../data-providers/firebase'
-// import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
+import * as db from '../data-providers/dexie'
+import getFirebaseProvider from '../data-providers/firebase'
+import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { HOME_TOKEN } from '../constants'
 import { hashContext, keyValueBy, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
 import { getDescendantContexts, isPending } from '../selectors'
 import { Thunk, Context, Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
 
-// const BUFFER_DEPTH = 2
+const BUFFER_DEPTH = 2
 const ROOT_ENCODED = HOME_TOKEN
 
 export interface PullOptions {
@@ -25,17 +25,6 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
   // eslint-disable-next-line fp/no-loops
   for await (const item of it) {
     callback(item)
-  }
-}
-
-// @MIGRATION_TODO: Data providers are yet to be migrated. So just faking the calls rn.
-/**
- * Fake generator function to return empty thought interface.
- */
-async function* fakeAsyncIterable(): AsyncIterable<ThoughtsInterface> {
-  yield {
-    contextIndex: {},
-    thoughtIndex: {},
   }
 }
 
@@ -74,9 +63,7 @@ const pull =
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    // @MIGRATION_TODO: Data providers are yet to be migrated. So just faking the calls rn.
-    // const thoughtsLocalIterable = getManyDescendants(db, contextMap, getState(), { maxDepth: maxDepth || BUFFER_DEPTH })
-    const thoughtsLocalIterable = fakeAsyncIterable()
+    const thoughtsLocalIterable = getManyDescendants(db, contextMap, getState(), { maxDepth: maxDepth || BUFFER_DEPTH })
 
     // const thoughtsLocalIterable = getManyDescendants(db, contextMapFiltered, { maxDepth: maxDepth || BUFFER_DEPTH })
     // eslint-disable-next-line fp/no-loops
@@ -107,11 +94,14 @@ const pull =
     // get remote thoughts and reconcile with local
     const status = getState().status
     if (status === 'loading' || status === 'loaded') {
-      // @MIGRATION_TODO: Data providers are yet to be migrated. So just faking the calls rn.
-      const thoughtsRemoteIterable = fakeAsyncIterable()
-      // const thoughtsRemoteIterable = getManyDescendants(getFirebaseProvider(getState(), dispatch), contextMapFiltered, {
-      //   maxDepth: maxDepth || BUFFER_DEPTH,
-      // })
+      const thoughtsRemoteIterable = getManyDescendants(
+        getFirebaseProvider(getState(), dispatch),
+        contextMapFiltered,
+        getState(),
+        {
+          maxDepth: maxDepth || BUFFER_DEPTH,
+        },
+      )
 
       const thoughtRemoteChunks: ThoughtsInterface[] = []
 

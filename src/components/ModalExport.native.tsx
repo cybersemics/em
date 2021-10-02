@@ -178,7 +178,6 @@ const ModalExport = () => {
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
-    // console.log('setExportContentFromCursor', { titleChild })
     const exported = exportContext(store.getState(), context, selected?.type, {
       title: titleChild ? titleChild.value : undefined,
       excludeMeta: !shouldIncludeMetaAttributes,

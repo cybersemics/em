@@ -448,7 +448,6 @@ export const SubthoughtsComponent = ({
   const resolvedPath = path ?? simplePath
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
-  // console.log({ depth: MAX_DEPTH })
 
   // useEffect(() => {
   //   if (isHovering) {

@@ -22,7 +22,7 @@ import { getThoughtById } from './getThought'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (state: State, child: Child | ThoughtContext, showContexts: boolean) =>
-  showContexts ? getParentThought(state, child)!.value : getThoughtById(state, child).value
+  showContexts ? getParentThought(state, child)!.value : getThoughtById(state, child)?.value
 
 /** Returns true if the context is in table view. */
 const isTable = (state: State, context: Context) => attributeEquals(state, context, '=view', 'Table')
@@ -118,7 +118,6 @@ function expandThoughtsRecursive(
   const simpleContext = pathToContext(state, simplePath)
   const context = pathToContext(state, path)
 
-  const rootedPath = path || HOME_PATH
   const showContexts = isContextViewActive(state, simpleContext)
 
   const childrenUnfiltered = getAllChildrenAsThoughts(state, simpleContext)
@@ -160,7 +159,7 @@ function expandThoughtsRecursive(
   const isOnlyChildNoUrl =
     grandchildren &&
     !isTableColumn1(state, simpleContext) &&
-    (grandchildren.length !== 1 || !isURL(childValue(state, grandchildren[0], showContexts)))
+    (grandchildren.length >= 1 || !isURL(childValue(state, grandchildren[0], showContexts)))
 
   const childrenPinned =
     isOnlyChildNoUrl ||
@@ -203,7 +202,7 @@ function expandThoughtsRecursive(
 
   const initialExpanded = {
     // expand current thought
-    [headId(rootedPath)]: returnContexts ? simpleContext : rootedPath,
+    [headId(path)]: returnContexts ? simpleContext : context,
   }
 
   return keyValueBy(

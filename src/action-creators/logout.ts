@@ -1,7 +1,7 @@
 import { clearAll } from '../data-providers/dexie'
 import { never } from '../util'
 import { clear, importText } from '../action-creators'
-import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { EM_TOKEN, INITIAL_SETTINGS, INITIAL_SETTING_KEY } from '../constants'
 import { Thunk } from '../@types'
 import { storage } from '../util/storage'
 import scrollTo from '../device/scrollTo'
@@ -13,6 +13,7 @@ const logout = (): Thunk => (dispatch, getState) => {
 
   // clear local db
   clearAll().catch(err => {
+    localStorage.removeItem(INITIAL_SETTING_KEY)
     throw new Error(err)
   })
 

@@ -5,14 +5,14 @@ import { editThoughtPayload } from '../reducers/editThought'
 import { htmlToJson, importJSON, isRoot, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { Child, Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
+import { Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
 import { isMobile } from '../util/isMobile'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>
   contextIndexUpdates: Index<Parent | null>
   recentlyEdited?: Index
-  pendingDeletes?: { context: Context; child: Child }[]
+  pendingDeletes?: { context: Context; thought: Parent }[]
   pendingEdits?: editThoughtPayload[]
   pendingPulls?: { path: Path }[]
   descendantMoves?: { pathOld: Path; pathNew: Path }[]
@@ -164,8 +164,6 @@ const updateThoughts = (
     recentlyEdited: recentlyEditedNew,
     updates,
     pendingDeletes,
-    pendingEdits,
-    descendantMoves,
     pendingPulls,
     local,
     remote,

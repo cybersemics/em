@@ -469,3 +469,5 @@ export enum VIEW_MODE {
   Table = 'Table',
   Prose = 'Prose',
 }
+
+export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'

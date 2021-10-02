@@ -285,7 +285,7 @@ const ThoughtContainer = ({
   // See: <Subthoughts> render
 
   const children = childrenForced
-    ? childIdsToThoughts(state, childrenForced)
+    ? childIdsToThoughts(state, childrenForced) ?? []
     : getChildrenRanked(state, pathToContext(state, contextBinding || simplePathLive))
 
   const showContextBreadcrumbs =

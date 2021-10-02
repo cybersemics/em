@@ -4,6 +4,10 @@ import { Child, State } from '../@types'
 /**
  * For the given array of thought ids returns the parent entries.
  */
-const childIdsToThoughts = (state: State, childIds: Child[]) => childIds.map(id => getThoughtById(state, id))
+const childIdsToThoughts = (state: State, childIds: Child[]) => {
+  const thoughts = childIds.map(id => getThoughtById(state, id)).filter(Boolean)
+  // If any one of the thoughts are not found return null
+  return thoughts.length < childIds.length ? null : thoughts
+}
 
 export default childIdsToThoughts

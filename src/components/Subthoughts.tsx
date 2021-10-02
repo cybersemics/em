@@ -157,6 +157,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const allChildren = getAllChildren(state, contextLive)
 
+  const firstChilId = allChildren[0]
+
+  const hasChildrenLoaded = firstChilId && getThoughtById(state, firstChilId)
+
   const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
 
   const isAncestorOfCursor =
@@ -264,10 +268,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     sortDirection: sortPreference.direction,
     zoomCursor,
     zoomParent,
-    // Re-render if children change.
+    // Re-render if children change and when children parent entry in contextIndex is available.
     // Uses getAllChildren for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
-    __allChildren: allChildren,
+    __allChildren: hasChildrenLoaded ? allChildren : [],
     // We need to re-render when actualDistance changes, but it is complicated and expensive.
     // Until actualDistance gets refactored and optimized, we can provide a quick fix for any observed rendering issues.
     // The only rendering issue observed so far is when the cursor changes from a leaf thought in the home context (actualDistance: 1) to null (actualDistance: 0).

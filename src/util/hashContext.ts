@@ -54,7 +54,9 @@ const recursiveParentFinder = (
 ): Parent | null => {
   if (target.length === 0 && parent.children.length === 0) return null
 
-  const children = childIdsToThoughts(state, parent.children)
+  const children = childIdsToThoughts(state, parent.children) ?? []
+
+  if (parent.children.length > children.length) return null
 
   const child = children.find(child => {
     const targetValue = target[targetIndex]

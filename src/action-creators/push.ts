@@ -54,9 +54,8 @@ const pushLocal = (
         }
       }
 
-      return parentEntry?.children && parentEntry.children.length > 0
-        ? db.updateContext(contextEncoded, parentEntry)
-        : db.deleteContext(contextEncoded)
+      // Note: Since all the data of a thought is now on Parent instead of Child and ThoughtIndex, so the parent entry should not be deleted if they don't have children
+      return parentEntry ? db.updateContext(contextEncoded, parentEntry) : db.deleteContext(contextEncoded)
     }),
     db.updateLastUpdated(timestamp()),
   ]

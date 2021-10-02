@@ -22,17 +22,17 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): SimplePat
       const lexeme = getLexeme(state, value)
 
       const prevParentId = acc[acc.length - 1] || startingContext
-
       // get all thoughts that have the desired value within the current context
-      const thoughts = childIdsToThoughts(state, (lexeme && lexeme.contexts) || [])
-        // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
-        .filter(thought => thought?.parentId === prevParentId)
+      const allThoughts = childIdsToThoughts(state, (lexeme && lexeme.contexts) || [])
+
+      if (!allThoughts) throw Error('Thought not found')
+
+      // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
+      const thoughts = allThoughts.filter(thought => thought?.parentId === prevParentId)
 
       const finalThought = thoughts[0]
 
       const isEm = i === 0 && value === EM_TOKEN
-
-      if (!finalThought) throw Error('Thought not found')
 
       return appendToPath(acc, isEm ? EM_TOKEN : finalThought.id)
     }, [] as any as SimplePath)

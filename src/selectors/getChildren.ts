@@ -51,7 +51,7 @@ export const getAllChildrenByContextHash = (state: State, contextEncoded: Contex
 
 /** Returns the subthoughts (as Parent) of the given context unordered. . */
 export const getAllChildrenAsThoughts = (state: State, context: Context) =>
-  childIdsToThoughts(state, getAllChildren(state, context))
+  childIdsToThoughts(state, getAllChildren(state, context)) ?? []
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {
@@ -162,6 +162,13 @@ const resortEmptyInPlace = (sorted: Parent[]): Parent[] => {
 /** Gets all children of a context sorted by their ranking. Returns a new object reference even if the children have not changed. */
 export const getChildrenRanked = (state: State, context: Context): Parent[] =>
   getChildrenSortedBy(state, context, compareByRank)
+
+/** Gets all children of a context sorted by their ranking using thought id. Returns a new object reference even if the children have not changed. */
+// @MIGRATION_TODO: Currently we are migrating to access by id instead of context.
+export const getChildrenRankedById = (state: State, thoughtId: string): Parent[] => {
+  const allChildren = childIdsToThoughts(state, getAllChildrenByContextHash(state, thoughtId as ContextHash)) || []
+  return sort(allChildren, compareByRank)
+}
 
 /** Returns the first visible child of a context. */
 export const firstVisibleChild = (state: State, context: Context) => getChildrenSorted(state, context)[0]

@@ -150,9 +150,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   const isCursorAtOldPath = isPathInCursor && state.cursor?.length === oldPath.length
 
-  /**
-   *
-   */
+  // eslint-disable-next-line jsdoc/require-jsdoc
   const getUpdateCursor = () => {
     if (!state.cursor) return null
     return [...newPath, ...state.cursor.slice(newPath.length)] as Path

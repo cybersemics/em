@@ -1,28 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, parentOf, reducerFlow } from '../../util'
-import { getContexts, getAllChildren, getParent, getThoughtByPath, rankThoughtsFirstMatch } from '../../selectors'
-import { newSubthought, newThought, deleteThought } from '../../reducers'
+import { initialState, reducerFlow } from '../../util'
+import { getContexts, getAllChildren, getParent } from '../../selectors'
+import { newSubthought, newThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
-import { State } from '../../@types'
-import _ from 'lodash'
-
-/**
- * Delete thought at the given unranked path first matched.
- */
-const deleteThoughtAtFirstMatch = _.curryRight((state: State, at: string[]) => {
-  const path = rankThoughtsFirstMatch(state, at)
-
-  if (!path) throw new Error(`Ranked thoughts not found for context: ${at}`)
-
-  const thought = getThoughtByPath(state, path)
-
-  const context = at.length > 1 ? parentOf(at) : [HOME_TOKEN]
-
-  return deleteThought(state, {
-    context,
-    thoughtId: thought.id,
-  })
-})
+import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 
 it('delete from root', () => {
   const steps = [newThought('a'), newThought('b'), deleteThoughtAtFirstMatch(['b'])]
