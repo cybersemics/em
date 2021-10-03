@@ -68,6 +68,7 @@ import { TouchableOpacity } from 'react-native'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
+  actualDistance: number
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
   childrenForced?: Child[]
@@ -633,6 +634,7 @@ export const SubthoughtsComponent = ({
                 style={[{ marginLeft: depth * 25 }]}
               >
                 <Thought
+                  actualDistance={actualDistance()}
                   allowSingleContext={allowSingleContextParent}
                   depth={depth + 1}
                   env={env}

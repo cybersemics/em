@@ -60,6 +60,7 @@ import {
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
+  actualDistance?: number
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
   childrenForced?: Child[]
@@ -508,6 +509,7 @@ export const SubthoughtsComponent = ({
    * - distance-from-cursor-3 shiifted left and hidden
    * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
    */
+
   const actualDistance = once(() => {
     /*
     Note:
@@ -651,6 +653,7 @@ export const SubthoughtsComponent = ({
 
             return child ? (
               <Thought
+                actualDistance={actualDistance()}
                 allowSingleContext={allowSingleContextParent}
                 depth={depth + 1}
                 env={env}

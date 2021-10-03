@@ -10,6 +10,7 @@ import { Context, SimplePath, State } from '../@types'
 // •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
+  actualDistance: number
   glyph?: string | null
   isEditing?: boolean
   leaf?: boolean
@@ -40,6 +41,8 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
+  isEditing,
+  actualDistance,
   showContexts,
   glyph,
   invalid,
@@ -49,42 +52,48 @@ const Bullet = ({
   pending,
   isDragging,
   fontSize,
-}: BulletProps & ReturnType<typeof mapStateToProps>) => (
-  <span
-    className={classNames({
-      bullet: true,
-      // Since Parents and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
-      // Therefore render in a simple gray rather than an error color.
-      // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
-      gray: missing,
-      graypulse: pending,
-      'show-contexts': showContexts,
-      'invalid-option': invalid,
-      'bullet-highlighted': isDragging,
-    })}
-  >
+}: BulletProps & ReturnType<typeof mapStateToProps>) => {
+  const color =
+    actualDistance === 0 || (actualDistance === 1 && isEditing) ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.5)'
+  return (
     <span
-      className='glyph'
-      style={{ width: `${Math.round(fontSize / 2) * 2}px`, height: `${Math.round(fontSize / 2) * 2}px` }}
-      onClick={onClick}
+      className={classNames({
+        bullet: true,
+        // Since Parents and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
+        // Therefore render in a simple gray rather than an error color.
+        // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
+        gray: missing,
+        graypulse: pending,
+        'show-contexts': showContexts,
+        'invalid-option': invalid,
+        'bullet-highlighted': isDragging,
+      })}
     >
       {
-        // The shape of text '•' and '▸' is a rectangle. The triangles/dots are not centered vertically inside the rectangle on all browsers. Hence, we replace them with svg.
-        glyph ||
-          (isLeaf ? (
-            <Circle
-              fill={showContexts ? 'none' : '#C4C4C4'}
-              size={fontSize > 4 ? Math.round(fontSize * 0.18 + 1.2) * 2 : 2}
-            />
-          ) : (
-            <Triangle
-              fill={showContexts ? 'none' : '#C4C4C4'}
-              size={fontSize > 4 ? Math.round(fontSize * 0.29) * 2 : 2}
-            />
-          ))
+        <span
+          className='glyph'
+          style={{ width: `${Math.round(fontSize / 2) * 2}px`, height: `${Math.round(fontSize / 2) * 2}px` }}
+          onClick={onClick}
+        >
+          {
+            // The shape of text '•' and '▸' is a rectangle. The triangles/dots are not centered vertically inside the rectangle on all browsers. Hence, we replace them with svg.
+            glyph ||
+              (isLeaf ? (
+                <Circle
+                  fill={showContexts ? 'none' : color}
+                  size={fontSize > 4 ? Math.round(fontSize * 0.18 + 1.2) * 2 : 2}
+                />
+              ) : (
+                <Triangle
+                  fill={showContexts ? 'none' : color}
+                  size={fontSize > 4 ? Math.round(fontSize * 0.29) * 2 : 2}
+                />
+              ))
+          }
+        </span>
       }
     </span>
-  </span>
-)
+  )
+}
 
 export default connect(mapStateToProps)(Bullet)

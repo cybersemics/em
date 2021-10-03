@@ -60,6 +60,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
  **********************************************************************/
 
 export interface ThoughtContainerProps {
+  actualDistance: number
   allowSingleContext?: boolean
   childrenForced?: Child[]
   contextBinding?: Path
@@ -91,6 +92,7 @@ export interface ThoughtContainerProps {
 }
 
 interface ThoughtProps {
+  actualDistance: number
   cursorOffset?: number | null
   env?: Index<Context>
   hideBullet?: boolean
@@ -200,6 +202,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props:
   @param allowSingleContext  Pass through to Subthoughts since the SearchSubthoughts component does not have direct access to the Subthoughts of the Subthoughts of the search. Default: false.
  */
 const ThoughtContainer = ({
+  actualDistance,
   allowSingleContext,
   childrenForced,
   contextBinding,
@@ -388,6 +391,7 @@ const ThoughtContainer = ({
                 store.dispatch(setCursor({ path: simplePath }))
               }
             }}
+            actualDistance={actualDistance}
             isDragging={isDragging}
             simplePath={simplePath}
           />
@@ -408,6 +412,7 @@ const ThoughtContainer = ({
         /> */}
 
         <StaticThought
+          actualDistance={actualDistance}
           env={env}
           path={path}
           cursorOffset={cursorOffset}
@@ -433,6 +438,7 @@ const ThoughtContainer = ({
       {publish && context.length === 0 && <Byline context={thoughts} />}
 
       <Subthoughts
+        actualDistance={actualDistance}
         allowSingleContext={allowSingleContext}
         childrenForced={childrenForced}
         env={env}
