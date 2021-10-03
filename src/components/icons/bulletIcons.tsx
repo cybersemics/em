@@ -24,6 +24,6 @@ export const Circle = ({ size = 8, fill = 'none' }: Icon) => (
  */
 export const Triangle = ({ size = 12, fill = 'none' }: Icon) => (
   <svg width={size} height={size} viewBox='0 0 12 12' fill={fill}>
-    <polygon points='3,1 3,11 12,6' fill={fill} stroke='#fcfaf8' strokeWidth='0.12' />
+    <polygon points='4,0 4,12 10,6' fill={fill} stroke='#fcfaf8' strokeWidth='0.12' />
   </svg>
 )

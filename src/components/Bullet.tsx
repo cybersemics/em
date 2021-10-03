@@ -79,7 +79,7 @@ const Bullet = ({
           ) : (
             <Triangle
               fill={showContexts ? 'none' : '#C4C4C4'}
-              size={fontSize > 4 ? Math.round(fontSize * 0.35) * 2 : 2}
+              size={fontSize > 4 ? Math.round(fontSize * 0.29) * 2 : 2}
             />
           ))
       }
