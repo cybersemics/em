@@ -1,8 +1,12 @@
 import { attribute, getChildrenRanked } from '../selectors'
-import { head, isFunction, unroot } from '../util'
+import { head, isFunction, unroot, isHome } from '../util'
 import { Child, Context, MimeType, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
+import TurndownService from 'turndown'
+
+// Default emDelimiter is _ hence setting this option is needed to overwrite it to *
+const turndownService = new TurndownService({ emDelimiter: '*' })
 
 /** Replaces the root value with a given title. */
 const replaceTitle = (text: string, title: string, format: MimeType) => {
@@ -78,10 +82,16 @@ export const exportContext = (
         }`
       : ''
 
+  // Get the thought under process
+  // If it is root, then do not convert it to markdown
+  const currentThought = head(context)
+  const markdownText: string =
+    format === 'text/markdown' && !isHome([currentThought]) ? turndownService.turndown(currentThought) : currentThought
+
   // Handle newlines in thoughts.
   // This should never happen (newlines are converted to separate thoughts on import) but guard against newlines just in case.
   // Otherwise re-importing is disastrous (additional lines of text in a thought are moved to the root).
-  const lines = head(context).split('\n')
+  const lines = markdownText.split('\n')
   const firstLine = `${tab0}${linePrefix}${lines[0]}`
   const otherLines = lines
     .slice(1)
