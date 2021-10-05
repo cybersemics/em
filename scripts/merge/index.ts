@@ -294,8 +294,7 @@ const main = () => {
 
     try {
       console.info(`Reading thoughts: ${file}`)
-      const thoughtsImportedRaw = readThoughts(file)
-      thoughtsImported = recreateParents(thoughtsImportedRaw)
+      thoughtsImported = recreateParents(readThoughts(file))
     } catch (e) {
       console.error('Error reading')
       errors.push({ e: e as Error, file, message: 'Error reading' })
@@ -304,8 +303,7 @@ const main = () => {
     }
 
     try {
-      const stateImported = mergeThoughts(stateNew, thoughtsImported)
-      stateNew = stateImported
+      stateNew = mergeThoughts(stateNew, thoughtsImported)
 
       // if we made it this far, there was no error
       success.push(file)
