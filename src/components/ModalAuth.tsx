@@ -4,6 +4,7 @@ import { alert, login } from '../action-creators'
 import { FIREBASE_REDIRECT_URL } from '../constants'
 import { ActionButton } from './ActionButton'
 import { Index } from '../@types'
+import { storage } from '../util/storage'
 import Modal from './Modal'
 
 const firebaseErrorsIndex = {
@@ -73,6 +74,7 @@ const ModalAuth = () => {
     updateIsSubmitting(true)
     try {
       await window.firebase.auth().signInWithEmailAndPassword(email, password!)
+      storage.setItem('modal-to-show', 'welcome')
       updateIsSubmitting(false)
       closeModal()
     } catch (error) {

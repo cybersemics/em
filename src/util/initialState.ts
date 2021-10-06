@@ -145,8 +145,14 @@ export const initialState = (created: Timestamp = timestamp()) => {
 
   // welcome modal
   if (isDocumentEditable() && canShowModal(state, 'welcome')) {
-    state.showModal = isLocalNetwork ? 'welcome' : 'auth'
+    state.showModal = 'welcome'
   }
+
+  /**
+   * When user was being logged in using google, it was showing auth screen for few seconds and then flip to welcome.
+   * Using localStorage to get the value of modal to show to avoid the flip second auth screen.
+   */
+  if (!isLocalNetwork) state.showModal = getLocal('modal-to-show') || 'auth'
 
   // Show sign up modal if the app is loaded with signup path
   if (typeof window !== 'undefined' && window.location.pathname.substr(1) === 'signup') {
