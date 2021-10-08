@@ -28,6 +28,11 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
   // Also supports ranking thoughts from EM context
   const isEmContext = pathUnranked[0] === EM_TOKEN
 
+  if (isEmContext && pathUnranked.length === 1) {
+    const emThought = await provider.getContextById(EM_TOKEN)
+    return [emThought]
+  }
+
   const startingContext = isEmContext ? EM_TOKEN : HOME_TOKEN
   const context = pathUnranked.slice(isEmContext ? 1 : 0)
 

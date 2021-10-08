@@ -1,22 +1,22 @@
-// import getFirebaseProvider from '../firebase'
-// import dataProviderTest from '../../test-helpers/dataProviderTest'
-// import { store } from '../../store'
+import getFirebaseProvider from '../firebase'
+import dataProviderTest from '../../test-helpers/dataProviderTest'
+import { store } from '../../store'
 
-// jest.useFakeTimers()
+jest.useFakeTimers()
 
-// // mock getUserRef (firebase's database.ref)
-// jest.mock('../../util/getUserRef')
-// declare global {
-//   // eslint-disable-next-line @typescript-eslint/no-namespace
-//   namespace NodeJS {
-//     interface Global {
-//       clearMockFirebaseStore: () => void
-//     }
-//   }
-// }
+// mock getUserRef (firebase's database.ref)
+jest.mock('../../util/getUserRef')
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface Global {
+      clearMockFirebaseStore: () => void
+    }
+  }
+}
 
-// afterEach(() => {
-//   global.clearMockFirebaseStore()
-// })
+afterEach(() => {
+  global.clearMockFirebaseStore()
+})
 
-// dataProviderTest(getFirebaseProvider(store.getState(), store.dispatch))
+dataProviderTest(getFirebaseProvider(store.getState(), store.dispatch))
