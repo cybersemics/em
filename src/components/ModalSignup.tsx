@@ -5,7 +5,7 @@ import { Index, InviteCode } from '../@types'
 import { showModal } from '../action-creators'
 import Modal from './Modal'
 import { getInviteById, updateInviteCode } from '../apis/invites'
-import { getQueryParam, timestamp } from '../util'
+import { getQueryParam, timestamp, storage } from '../util'
 
 interface Mode {
   name: string
@@ -107,6 +107,7 @@ const ModalSignup = () => {
 
         closeModal()
         updateIsSubmitting(false)
+        storage.setItem('modal-to-show', 'welcome')
 
         // TODO: May be use react router ?
         window.history.pushState({}, '', window.location.origin)
