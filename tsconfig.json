@@ -1,7 +1,7 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js"],
   // @MIGRATION_TODO: Remove exclude here. At the current phase of migration, all the native parts has not been fixed yet.
-  "exclude": ["src/**/*.native.ts", "src/**/*.native.tsx"],
+  "exclude": ["src/**/*.native.ts", "src/**/*.native.tsx", "checkDataIntegrity.ts"],
   "compilerOptions": {
     "strict": true,
     "lib": ["dom", "es2019"],
@@ -18,7 +18,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
   },
   "extends": "expo/tsconfig.base"
 }

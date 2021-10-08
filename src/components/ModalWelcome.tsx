@@ -1,23 +1,12 @@
 /* eslint-disable no-unmodified-loop-condition */
-import React, { useState } from 'react'
-import * as murmurHash3 from 'murmurhash3js'
-import classNames from 'classnames'
+import React from 'react'
 import Modal from './Modal'
-import { BETA_HASH, EM_TOKEN } from '../constants'
+import { EM_TOKEN } from '../constants'
 import { ActionButton } from './ActionButton'
 import { useDispatch, useSelector } from 'react-redux'
 import { tutorial } from '../action-creators'
 import { getAllChildren } from '../selectors'
-import { storage } from '../util/storage'
-import { isLocalNetwork } from '../device/router'
 import { State } from '../@types'
-
-/** Wait for a fixed number of milliseconds. */
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-/** Validates an invite code entered by the user. */
-const validateInviteCode = (code: string) =>
-  murmurHash3.x64.hash128(code.substring(code.lastIndexOf('-') + 1)) === BETA_HASH
 
 /** Shrink modal text and logos to fit container vertically. */
 const onRef = (el: HTMLDivElement) => {
@@ -58,57 +47,11 @@ const onRef = (el: HTMLDivElement) => {
 
 /** A modal that welcomes the user to em. */
 const ModalWelcome = () => {
-  const [inviteCode, setInviteCode] = useState(storage.getItem('inviteCode') || '')
-  const [loading, setLoading] = useState(false)
-  const [invited, setInvited] = useState(isLocalNetwork || validateInviteCode(inviteCode))
-  const [inviteTransition, setInviteTransition] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const isTutorialSettingsLoaded = useSelector(
     (state: State) => getAllChildren(state, [EM_TOKEN, 'Settings', 'Tutorial']).length > 0,
   )
 
   const dispatch = useDispatch()
-
-  /** Submit a beta invite code. */
-  const submitInviteCode = async () => {
-    if (!inviteCode) {
-      setError('Invite code required')
-      return
-    }
-
-    setError(null)
-    setLoading(true)
-
-    await delay(1000)
-    setLoading(false)
-
-    if (!validateInviteCode(inviteCode)) {
-      setError('Invalid code')
-      return
-    }
-
-    storage.setItem('inviteCode', inviteCode)
-
-    // wait for fade animation to complete
-    setInviteTransition(true)
-    await delay(1000)
-    setInvited(true)
-    await delay(100)
-    setInviteTransition(false)
-  }
-
-  /** Handle invite code change event. */
-  const onInviteCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null)
-    setInviteCode(e.target.value)
-  }
-
-  /** Handles KeyDown event. */
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      submitInviteCode()
-    }
-  }
 
   /**
    * End tutorial.
@@ -126,7 +69,7 @@ const ModalWelcome = () => {
         id='welcome'
         title='Welcome to em'
         className='popup'
-        hideModalActions={!invited}
+        hideModalActions={false}
         center
         preventCloseOnEscape={true}
         actions={({ complete }) => (
@@ -153,73 +96,10 @@ const ModalWelcome = () => {
         )}
       >
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div
-            style={{ maxWidth: 560 }}
-            className={classNames({
-              'animate-slow': inviteTransition,
-              'animate-fadeout': inviteTransition && !invited,
-            })}
-          >
-            {invited ? (
-              <p>
-                <b>em</b> is a process-oriented writing tool for personal sensemaking.
-              </p>
-            ) : (
-              <div>
-                <p style={{ marginBottom: 60 }}>Oh, you’re here early.</p>
-
-                <div>
-                  <input
-                    type='text'
-                    placeholder='Enter an invite code'
-                    value={inviteCode}
-                    onKeyDown={onKeyDown}
-                    onChange={onInviteCodeChange}
-                    style={{
-                      backgroundColor: '#333',
-                      borderRadius: 999,
-                      boxSizing: 'border-box',
-                      color: 'white',
-                      fontSize: '20px',
-                      marginBottom: 20,
-                      maxWidth: '100%',
-                      outline: 'none',
-                      padding: '1rem',
-                      textAlign: 'center',
-                      width: 320,
-                      ...((loading || inviteTransition) && {
-                        opacity: 0.5,
-                      }),
-                    }}
-                  />
-
-                  <div className='modal-actions' style={{ marginBottom: 20 }}>
-                    <a
-                      onClick={submitInviteCode}
-                      className={classNames({
-                        button: true,
-                        disabled: loading,
-                      })}
-                      style={{
-                        boxSizing: 'border-box',
-                        fontSize: '18px',
-                        maxWidth: '100%',
-                        width: 320,
-                        textTransform: 'uppercase',
-                        ...((loading || inviteTransition) && {
-                          cursor: 'default',
-                          opacity: 0.5,
-                        }),
-                      }}
-                    >
-                      Submit
-                    </a>
-                  </div>
-
-                  {error && <p className='error'>{error}</p>}
-                </div>
-              </div>
-            )}
+          <div style={{ maxWidth: 560 }}>
+            <p>
+              <b>em</b> is a process-oriented writing tool for personal sensemaking.
+            </p>
           </div>
         </div>
       </Modal>

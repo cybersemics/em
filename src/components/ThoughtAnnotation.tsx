@@ -1,5 +1,5 @@
 import React from 'react'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
@@ -131,8 +131,25 @@ const ThoughtAnnotation = ({
   const isExpanded = !!state.expanded[headId(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, thoughts).filter(child => isURL(child.value)))
 
-  // no contexts if thought is empty
-  const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []
+  /**
+   * Adding dependency on thoughtIndex as the fetch for thought is async await.
+   * ThoughtAnnotation wasn't waiting for all the thoughtIndex to be set before it was rendered.
+   * And hence the superscript wasn't rendering properly on load.
+   * So now subscribing to get context so that StaticSuperscript is not re-rendered for all thoughtIndex change.
+   * It will re-render only when respective Lexeme is changed.
+   * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
+   */
+
+  /** Returns true if the thought is not archived. */
+  const isNotArchive = (thoughtContext: ThoughtContext) =>
+    // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
+    showHiddenThoughts || !getAncestorByValue(state, thoughtContext, '=archive')
+
+  const numContexts = useSelector((state: State) => {
+    // no contexts if thought is empty
+    const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []
+    return contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
+  })
 
   const url = isURL(value)
     ? value
@@ -140,13 +157,6 @@ const ThoughtAnnotation = ({
     !isExpanded && childrenUrls().length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
     ? childrenUrls()[0].value
     : null
-
-  /** Returns true if the thought is not archived. */
-  const isNotArchive = (thoughtContext: ThoughtContext) =>
-    // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
-    showHiddenThoughts || !getAncestorByValue(state, thoughtContext, '=archive')
-
-  const numContexts = contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
 
   return (
     <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
