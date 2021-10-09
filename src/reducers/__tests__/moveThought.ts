@@ -13,7 +13,6 @@ import {
   childIdsToThoughts,
 } from '../../selectors'
 import { importText, newSubthought, newThought } from '../../reducers'
-// import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import { State } from '../../@types'
 import { store as appStore } from '../../store'
 import testTimer from '../../test-helpers/testTimer'
@@ -23,6 +22,7 @@ import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../tes
 
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
+import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 const timer = testTimer()
 
@@ -559,36 +559,28 @@ it.skip('move with nested duplicate thoughts and merge their children', () => {
   expect(getChildrenRanked(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
 })
 
-// @MIGRATION_TODO: Nested duplciate merge doesn't work rn with intermediate changes.
 // Issue: https://github.com/cybersemics/em/issues/1096
-it.skip('data integrity test', () => {
-  // const text = `
-  // - k
-  //   - a
-  //     - b
-  //       - c
-  // - m`
-  // const steps = [
-  //   importText({ text }),
-  //   (newState: State) =>
-  //     moveThought(newState, {
-  //       oldPath: [
-  //         { id: hashContext(newState, ['k']) || '', value: 'k', rank: 0 },
-  //         { id: hashContext(newState, ['k', 'a']) || '', value: 'a', rank: 0 },
-  //       ],
-  //       newPath: [
-  //         { id: hashContext(newState, ['m']) || '', value: 'm', rank: 1 },
-  //         { id: hashContext(newState, ['m', 'a']) || '', value: 'a', rank: 0 },
-  //       ],
-  //     }),
-  // ]
+it.only('data integrity test', () => {
+  const text = `
+  - k
+    - a
+      - b
+        - c
+  - m`
+  const steps = [
+    importText({ text }),
+    moveThoughtAtFirstMatch({
+      from: ['k', 'a'],
+      to: ['m', 'a'],
+      newRank: 0,
+    }),
+  ]
   // run steps through reducer flow and export as plaintext for readable test
-  // const stateNew = reducerFlow(steps)(initialState())
-  // const { thoughtIndexUpdates, contextIndexUpdates } = checkDataIntegrity(stateNew)
-  // const thoughtUpdates = Object.keys(thoughtIndexUpdates).length
-  // const contextUpdates = Object.keys(contextIndexUpdates).length
-  // expect(thoughtUpdates).toBe(0)
-  // expect(contextUpdates).toBe(0)
+  const stateNew = reducerFlow(steps)(initialState())
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
+
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
 })
 
 // skip until fixed: Importing duplicate uncle missing ThoughtContext (#1407)

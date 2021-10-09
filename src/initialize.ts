@@ -182,7 +182,6 @@ const windowEm = {
   hashContext,
   hashThought,
   isPending: withState(isPending),
-  // checkDataIntegrity: withState(checkDataIntegrity),
   moize,
 }
 

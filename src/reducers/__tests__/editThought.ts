@@ -6,8 +6,8 @@ import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
-// import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
+import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 it('edit a thought', () => {
   const steps = [
@@ -299,92 +299,62 @@ it('do not duplicate children when new and old context are same', () => {
     - b`)
 })
 
-// @MIGRATION_TODO: checkDataIntegrity will change later. So fix integrity tests after migration is complete.
-
 // Issue: https://github.com/cybersemics/em/issues/1095
-// it('data integrity test', () => {
-//   const text = `
-//     - a
-//       - b
-//         - d
-//       - d`
+it('data integrity test', () => {
+  const text = `
+    - a
+      - b
+        - d
+      - d`
 
-//   const steps = [
-//     importText({
-//       text,
-//     }),
-//     (newState: State) =>
-//       setCursor(newState, {
-//         path: [
-//           {
-//             id: hashContext(newState, ['a']) || '',
-//             value: 'a',
-//             rank: 0,
-//           },
-//         ],
-//       }),
-//     (newState: State) =>
-//       editThought(newState, {
-//         newValue: 'azkaban',
-//         oldValue: 'a',
-//         context: [HOME_TOKEN],
-//         path: [{ value: 'a', rank: 0, id: hashContext(newState, ['a']) }] as SimplePath,
-//       }),
-//   ]
+  const steps = [
+    importText({
+      text,
+    }),
+    setCursorFirstMatch(['a']),
+    editThoughtAtFirstMatch({
+      at: ['a'],
+      oldValue: 'a',
+      newValue: 'azkaban',
+    }),
+  ]
 
-//   // run steps through reducer flow and export as plaintext for readable test
-//   const stateNew = reducerFlow(steps)(initialState())
-//   const { thoughtIndexUpdates, contextIndexUpdates } = checkDataIntegrity(stateNew)
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
 
-//   const thoughtUpdates = Object.keys(thoughtIndexUpdates).length
-//   const contextUpdates = Object.keys(contextIndexUpdates).length
-
-//   expect(thoughtUpdates).toBe(0)
-//   expect(contextUpdates).toBe(0)
-// })
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
+})
 
 // Issue: https://github.com/cybersemics/em/issues/1144
-// it('data integrity test after editing a parent with multiple descendants with same value and depth', () => {
-//   const text = `
-//   - ${' '}
-//     - a
-//       - m
-//     - b
-//       - m`
+it('data integrity test after editing a parent with multiple descendants with same value and depth', () => {
+  const text = `
+  - ${' '}
+    - a
+      - m
+    - b
+      - m`
 
-//   const steps = [
-//     importText({
-//       text,
-//     }),
-//     (newState: State) =>
-//       setCursor(newState, {
-//         path: [
-//           {
-//             id: hashContext(newState, ['']) || '',
-//             value: '',
-//             rank: 0,
-//           },
-//         ],
-//       }),
-//     (newState: State) =>
-//       editThought(newState, {
-//         newValue: 'x',
-//         oldValue: '',
-//         context: [HOME_TOKEN],
-//         path: [{ value: '', rank: 0, id: hashContext(newState, ['']) }] as SimplePath,
-//       }),
-//   ]
+  const steps = [
+    importText({
+      text,
+    }),
+    setCursorFirstMatch(['']),
+    editThoughtAtFirstMatch({
+      at: [''],
+      oldValue: '',
+      newValue: 'x',
+    }),
+  ]
 
-//   // run steps through reducer flow and export as plaintext for readable test
-//   const stateNew = reducerFlow(steps)(initialState())
-//   const { thoughtIndexUpdates, contextIndexUpdates } = checkDataIntegrity(stateNew)
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
 
-//   const thoughtUpdates = Object.keys(thoughtIndexUpdates).length
-//   const contextUpdates = Object.keys(contextIndexUpdates).length
-
-//   expect(thoughtUpdates).toBe(0)
-//   expect(contextUpdates).toBe(0)
-// })
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
+})
 
 describe('changing thought with duplicate descendent', () => {
   it('adding', () => {
