@@ -6,6 +6,7 @@ import { showModal } from '../action-creators'
 import Modal from './Modal'
 import { getInviteById, updateInviteCode } from '../apis/invites'
 import { getQueryParam, timestamp, storage } from '../util'
+import InvitesIcon from './icons/InvitesIcon'
 
 interface Mode {
   name: string
@@ -165,8 +166,8 @@ const ModalSignup = () => {
       )}
     >
       {/* Show validation in progress */}
-      {isValidatingCode && <div style={{ fontSize: '18px' }}>Invitation code is being validated ☑️ ...</div>}
-      {/* Show validation or sunmit error. */}
+      {isValidatingCode && <div style={{ fontSize: '18px' }}>Validating...</div>}
+      {/* Show validation or submit error. */}
       {(validationError || submitError) && (
         <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
           <span style={{ color: 'crimson', paddingBottom: '30px', fontSize: '18px' }}>
@@ -179,12 +180,12 @@ const ModalSignup = () => {
         <>
           <div
             style={{
-              fontWeight: 'bold',
               fontSize: '18px',
               marginBottom: '60px',
             }}
           >
-            You have a valid invite code. You can sign up 🎉
+            You have have been gifted an invitation to <b>em</b>!{' '}
+            <InvitesIcon style={{ marginLeft: 5, verticalAlign: 'middle' }} />
           </div>
           <form style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
             <input name='email' type='email' placeholder='email' value={formData.email} onChange={formChangeHandler} />
