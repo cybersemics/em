@@ -14,7 +14,10 @@ import {
   strip,
   unroot,
   validateRoam,
+  isFormattingTag,
+  formattingNodeToHtml,
 } from '../util'
+import { parse, HimalayaNode } from 'himalaya'
 import { editThought, setCursor, updateThoughts } from '../reducers'
 import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
 import { Path, SimplePath, State, Timestamp } from '../@types'
@@ -84,10 +87,21 @@ const importText = (
   if (numLines <= 1 && !isRoam && !isRoot(path)) {
     const textNormalized = strip(convertedText, { preserveFormatting: true })
 
+    let mergedContent = textNormalized
+    const nodes = parse(textNormalized)
+
+    if (nodes.some(isFormattingTag)) {
+      const tagsToMerge = _.takeWhile(nodes, node => isFormattingTag(node) || node.type === 'text')
+      mergedContent = tagsToMerge.reduce((accum: string, current: HimalayaNode) => {
+        const appendContent =
+          current.type === 'text' ? current.content : current.type === 'comment' ? '' : formattingNodeToHtml(current)
+        return accum + appendContent
+      }, '')
+    }
+
     // insert the textNormalized into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
-
-    const left = (destValue.slice(0, replaceStart ?? 0) + textNormalized).trimLeft()
+    const left = (destValue.slice(0, replaceStart ?? 0) + mergedContent).trimLeft()
     const right = destValue.slice(replaceEnd ?? 0).trimRight()
     const newValue = left + right
 
