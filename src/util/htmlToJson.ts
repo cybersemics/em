@@ -13,12 +13,12 @@ const getAttribute = (key: string, node: Element) => {
 const allowedFormattingTags = ['i', 'b', 'em', 'strong', 'u']
 
 /** Check whether node is formatting tag element (<i>...</i>, <b>...</b> or <span>...</span>). */
-const isFormattingTag = (node: HimalayaNode) =>
+export const isFormattingTag = (node: HimalayaNode) =>
   node.type === 'element' &&
   (allowedFormattingTags.includes(node.tagName) || (node.tagName === 'span' && getAttribute('class', node) !== 'note'))
 
 /** Strip span and encode a <i> or <b> element as HTML. */
-const formattingNodeToHtml = (node: Element) => {
+export const formattingNodeToHtml = (node: Element) => {
   const content: string = node.children.reduce((acc, child) => {
     return acc + (child.type === 'text' ? child.content : child.type === 'comment' ? '' : formattingNodeToHtml(child))
   }, '')
