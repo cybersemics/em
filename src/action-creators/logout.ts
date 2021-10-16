@@ -22,6 +22,9 @@ const logout = (): Thunk => dispatch => {
   // clear state variables
   dispatch(clear())
 
+  // Setting the modal value to auth when user is not logged in.
+  storage.setItem('modal-to-show', 'auth')
+
   // reset initial settings
   dispatch(
     importText({

@@ -28,7 +28,6 @@ import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
 import * as selection from './device/selection'
-import { storage } from './util/storage'
 
 // enable to collect moize usage stats
 // do not enable in production
@@ -60,11 +59,6 @@ export const initFirebase = async (): Promise<void> => {
         // if the authentication state changes while the user is still logged in, it means that they logged out from another tab
         // we should log them out of all tabs
         if (store.getState().authenticated) store.dispatch(logout())
-
-        /**
-         * Setting the modal value to auth when user is not logged in.
-         */
-        storage.setItem('modal-to-show', 'auth')
 
         store.dispatch(authenticate({ value: false }))
         store.dispatch(setRemoteSearch({ value: false }))
