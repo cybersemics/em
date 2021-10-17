@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { ThunkDispatch } from 'redux-thunk'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import globals from '../globals'
@@ -330,7 +330,7 @@ const ThoughtContainer = ({
 
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
-  const styleSelf = getStyle(state, thoughts)
+  const styleSelf = useSelector((state: State) => getStyle(state, thoughts))
   const styleContainer = getStyle(state, thoughts, { container: true })
   const styleContainerZoom = isEditingPath
     ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true })
