@@ -8,10 +8,10 @@ const login = (): Thunk => dispatch => {
   const provider = new firebase.auth.GoogleAuthProvider()
   dispatch(status({ value: 'connecting' }))
   firebase.auth().signInWithRedirect(provider)
+  storage.setItem('modal-to-show', 'welcome')
 
   // for some reason a delay is needed and this needs to go after signInWithRedirect, otherwise the alert flickers and is hidden
   setTimeout(() => {
-    storage.setItem('modal-to-show', 'welcome')
     dispatch(alert('Redirecting to login...'))
   })
 }
