@@ -7,7 +7,7 @@ export interface IconProps {
   dark?: boolean
   fill?: string
   size?: number
-  style?: Index<string>
+  style?: Index<string | number>
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

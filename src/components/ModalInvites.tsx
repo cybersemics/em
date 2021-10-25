@@ -144,7 +144,7 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
     >
       <div className='modal-wrapper'>
         <p className='modal-description'>
-          You get three shinny gift codes to share <b>em</b> with anyone you choose!
+          You get three shiny gift codes to share <b>em</b> with anyone you choose!
         </p>
         {isFetchingInvites && <p style={{ fontSize: '18px' }}>Fetching your shiny codes ✨...</p>}
         {Object.values(inviteCodes).map(({ used, id, hasSeen }, idx) => {
