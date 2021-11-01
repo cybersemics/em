@@ -498,9 +498,9 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
                 <input
                   type='checkbox'
                   id={id}
-                  checked={checked}
+                  checked={!!checked}
                   onChange={onChangeFunc}
-                  defaultChecked={defaultChecked}
+                  defaultChecked={!!defaultChecked}
                 />
                 <span className='checkmark'></span>
               </label>
