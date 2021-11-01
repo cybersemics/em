@@ -152,3 +152,16 @@ it('export multi-line thoughts as separate thoughts', () => {
       - Hello
       - world`)
 })
+
+it('exported as markdown', () => {
+  const text = `Hello <b>wor<i>ld</i></b>`
+
+  const steps = [importText({ text }), setCursor({ path: [{ value: text, rank: 0 }] })]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [text], 'text/markdown', { excludeMeta: true })
+
+  expect(exported).toBe(`Hello **wor*ld***`)
+})

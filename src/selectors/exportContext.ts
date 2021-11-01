@@ -86,7 +86,9 @@ export const exportContext = (
   // If it is root, then do not convert it to markdown
   const currentThought = head(context)
   const markdownText: string =
-    format === 'text/markdown' && !isHome([currentThought]) ? turndownService.turndown(currentThought) : currentThought
+    format === 'text/markdown' && !isHome([currentThought]) && !currentThought.includes('=')
+      ? turndownService.turndown(currentThought)
+      : currentThought
 
   // Handle newlines in thoughts.
   // This should never happen (newlines are converted to separate thoughts on import) but guard against newlines just in case.
