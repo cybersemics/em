@@ -90,7 +90,10 @@ const parseBodyContent = (html: string) => {
   if (regexpListItem.test(content)) {
     return content
   }
-  const stripped = strip(content, { preserveFormatting: true }).split('\n').map(moveLeadingSpacesToBeginning).join('\n')
+  const stripped = strip(content, { preserveFormatting: true, stripAttributes: true })
+    .split('\n')
+    .map(moveLeadingSpacesToBeginning)
+    .join('\n')
 
   return blocksToHtml(parse(unescape(stripped)))
 }
