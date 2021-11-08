@@ -24,7 +24,7 @@ const allowedStyleProperties = [
   {
     property: 'font',
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
-      if (styleProperty.value === 'normal') {
+      if (styleProperty.value === 'normal' || styleProperty.value === '300') {
         return false
       }
       return ['font-style', 'font-weight'].includes(styleProperty.name)
@@ -41,6 +41,9 @@ const allowedStyleProperties = [
   {
     property: 'text',
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
+      if (styleProperty.value === 'none') {
+        return false
+      }
       return ['text-decoration'].includes(styleProperty.name)
     },
   },
