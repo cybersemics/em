@@ -82,7 +82,9 @@ const importText = (
 
   // if we are only importing a single line of html, then simply modify the current thought
   if (numLines <= 1 && !isRoam && !isRoot(path)) {
-    const textNormalized = strip(convertedText, { preserveFormatting: true, stripAttributes: true })
+    // TODO: textToHtml already strips the text, but one test fails if we remove it
+    // See: "single-line nested html tags" in importText test
+    const textNormalized = strip(convertedText, { preserveFormatting: true })
 
     // insert the textNormalized into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
