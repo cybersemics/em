@@ -153,15 +153,26 @@ it('export multi-line thoughts as separate thoughts', () => {
       - world`)
 })
 
-it('exported as markdown', () => {
+it('export as markdown', () => {
   const text = `Hello <b>wor<i>ld</i></b>`
 
   const steps = [importText({ text }), setCursor({ path: [{ value: text, rank: 0 }] })]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-
-  const exported = exportContext(stateNew, [text], 'text/markdown', { excludeMeta: true })
+  const exported = exportContext(stateNew, [text], 'text/markdown')
 
   expect(exported).toBe(`Hello **wor*ld***`)
+})
+
+it('export as markdown without escaping metaprogramming attributes', () => {
+  const text = `- Hello <b>wor<i>ld</i></b>
+  - =readonly`
+
+  const steps = [importText({ text }), setCursor({ path: [{ value: text, rank: 0 }] })]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, ['Hello <b>wor<i>ld</i></b>'], 'text/markdown')
+
+  expect(exported).toBe(`- Hello **wor*ld***
+  - =readonly`)
 })
