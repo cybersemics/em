@@ -122,7 +122,7 @@ interface AdvancedSetting {
 const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
-  { type: 'text/markdown', label: 'Markdown', extension: 'txt' },
+  { type: 'text/markdown', label: 'Markdown', extension: 'md' },
 ]
 
 /******************************************************************************
