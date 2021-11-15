@@ -27,15 +27,9 @@ import { isGestureHint, inputHandlers } from '../shortcuts'
 import Tutorial from './Tutorial'
 import { isTutorial } from '../selectors'
 import { storage } from '../util'
-<<<<<<< HEAD
 import * as selection from '../device/selection'
-import { useTheme } from 'styled-components/native'
-import { Theme } from '../themeProvider'
-import tw from 'tailwind-react-native-classnames'
-=======
 import tw from 'twrnc'
 import { useDeviceContextCustom } from '../hooks/useDeviceContextCustom'
->>>>>>> ddd7a4b4 (upgrade twrnc and add dark mode utility classes)
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 
