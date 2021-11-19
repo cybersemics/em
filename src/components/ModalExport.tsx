@@ -128,6 +128,7 @@ interface AdvancedSetting {
 const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
+  { type: 'text/markdown', label: 'Markdown', extension: 'md' },
 ]
 
 /******************************************************************************
@@ -280,7 +281,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
     if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
 
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
-    if (selected.type === 'text/html') {
+    if (selected.type === 'text/html' || selected.type === 'text/markdown') {
       setNumDescendantsInState(
         getDescendantPaths(state, simplePath, {
           filterFunction: and(
@@ -504,9 +505,9 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
                 <input
                   type='checkbox'
                   id={id}
-                  checked={checked}
+                  checked={!!checked}
                   onChange={onChangeFunc}
-                  defaultChecked={defaultChecked}
+                  defaultChecked={!!defaultChecked}
                 />
                 <span className='checkmark'></span>
               </label>

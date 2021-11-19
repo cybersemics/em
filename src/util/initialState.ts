@@ -5,6 +5,7 @@ import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from
 import { getSessionId } from './sessionManager'
 import { storage } from './storage'
 import { State, Timestamp, ThoughtsInterface, Parent, Index } from '../@types'
+import { isLocalNetwork } from '../device/router'
 
 /** Safely gets a value from localStorage if it is in the environment. */
 const getLocal = (key: string) => {
@@ -158,6 +159,12 @@ export const initialState = (created: Timestamp = timestamp()) => {
   if (isDocumentEditable() && canShowModal(state, 'welcome')) {
     state.showModal = 'welcome'
   }
+
+  /**
+   * When user was being logged in using google, it was showing auth screen for few seconds and then flip to welcome.
+   * Using localStorage to get the value of modal to show to avoid the flip second auth screen.
+   */
+  if (!isLocalNetwork) state.showModal = getLocal('modal-to-show') || 'auth'
 
   // Show sign up modal if the app is loaded with signup path
   if (typeof window !== 'undefined' && window.location.pathname.substr(1) === 'signup') {

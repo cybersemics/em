@@ -1069,3 +1069,18 @@ it('import multiple thoughts to end of home context with other thoughts', () => 
     - d
   - e`)
 })
+
+it('import single line with style attributes', () => {
+  const text = `<span style="caret-color:rgb(255, 255, 255);color:rgb(255, 255, 255);font-family:Helvetica;font-size:13px;font-style:normal;font-variant-caps:normal;font-weight:bold;letter-spacing:normal;orphans:auto;text-align:left;text-indent:0px;text-transform:none;white-space:pre-wrap;widows:auto;word-spacing:0px;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);-webkit-text-size-adjust:none;-webkit-text-stroke-width:0px;background-color:rgb(0, 0, 0);text-decoration:none;display:inline;float:none">Atonement</span>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
+
+  expect(exported).toBe(`<ul>
+  <li>__ROOT__${EMPTY_SPACE}
+    <ul>
+      <li><span style="font-weight: bold;">Atonement</span></li>
+    </ul>
+  </li>
+</ul>`)
+})

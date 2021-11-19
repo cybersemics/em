@@ -23,6 +23,9 @@ const logout = (): Thunk => (dispatch, getState) => {
   // clear state variables
   dispatch(clear())
 
+  // When the user logs out, set the startup modal to auth so that the user is prompted to log in again on refresh.
+  storage.setItem('modal-to-show', 'auth')
+
   // reset initial settings
   dispatch(
     importText({
