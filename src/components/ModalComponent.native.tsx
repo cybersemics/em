@@ -1,11 +1,8 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
-/* import classNames from 'classnames'
-import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
-import { Connected } from '../@types' */
-import { /* closeModal */ modalComplete /* tutorial */ } from '../action-creators'
+import { modalComplete } from '../action-creators'
 import { useDispatch } from 'react-redux'
-import { Modal, View, StyleSheet, ScrollView } from 'react-native'
+import { Modal, View, ScrollView } from 'react-native'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
 import tw from 'twrnc'
@@ -48,7 +45,7 @@ const ModalComponent: React.FC<ModalProps> = props => {
     <Modal animationType='slide' visible={show} onRequestClose={close}>
       <View style={tw`flex-1 py-10 px-4 bg-white dark:bg-black `}>
         {!props.preventCloseOnEscape && (
-          <Text style={styles.close} onPress={close}>
+          <Text style={tw`text-white font-bold text-right font-base`} onPress={close}>
             ✕
           </Text>
         )}
@@ -63,14 +60,5 @@ const ModalComponent: React.FC<ModalProps> = props => {
     </Modal>
   )
 }
-
-const styles = StyleSheet.create({
-  close: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'right',
-    fontSize: 16,
-  },
-})
 
 export default ModalComponent

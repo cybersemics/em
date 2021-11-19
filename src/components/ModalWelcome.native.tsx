@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { tutorial } from '../action-creators'
 import { getAllChildren } from '../selectors'
 import { storage } from '../util/storage'
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TextInput, TouchableOpacity } from 'react-native'
 import { Text } from './Text.native'
 import { State } from '../@types'
 import tw from 'twrnc'
@@ -128,7 +128,7 @@ const ModalWelcome = () => {
       center
       preventCloseOnEscape={true}
       actions={({ close }) => (
-        <View style={styles.alignItemsCentre}>
+        <View style={tw`flex-col items-center text-center`}>
           <ActionButton title='START TUTORIAL' onClick={() => close()} />
           {
             <TouchableOpacity
@@ -140,7 +140,7 @@ const ModalWelcome = () => {
                     }
                   : undefined
               }
-              style={styles.helperActionButton}
+              style={tw`mt-4.5 opacity-50`}
             >
               <Text style={tw`underline text-gray-700 dark:text-gray-200`}>This ain’t my first rodeo. Skip it.</Text>
             </TouchableOpacity>
@@ -148,15 +148,14 @@ const ModalWelcome = () => {
         </View>
       )}
     >
-      <View style={styles.content}>
+      <View style={tw`text-center my-10`}>
         {invited ? (
           <Text style={tw`text-center`}>
             <Text style={tw`font-bold`}>em</Text> is a process-oriented writing tool for personal sensemaking.
           </Text>
         ) : (
           <View>
-            <Text style={styles.earlyWelcomeText}>Oh, you’re here early.</Text>
-
+            <Text style={tw`mb-15 text-white text-center font-xs mb-4`}>Oh, you’re here early.</Text>
             <View>
               <TextInput
                 placeholder='Enter an invite code'
@@ -165,16 +164,19 @@ const ModalWelcome = () => {
                 onSubmitEditing={onKeyDown}
                 returnKeyType='done'
                 onChangeText={onInviteCodeChange}
-                style={styles.codeInput}
+                style={tw`
+                  bg-gray-800
+                  rounded-2xl
+                  text-white
+                  font-lg
+                  mb-5
+                  p-4
+                  text-center
+                  w-full
+                `}
               />
-
-              <View style={styles.submitButtonContainer}>
-                <TouchableOpacity onPress={submitInviteCode} style={styles.submitButton}>
-                  <Text style={styles.uppercaseText}> Submit</Text>
-                </TouchableOpacity>
-              </View>
-
-              {error && <Text style={styles.errorText}>{error}</Text>}
+              <ActionButton title={'Submit'} style={tw`w-full mt-5`}></ActionButton>
+              {error && <Text style={tw`text-red-500`}>{error}</Text>}
             </View>
           </View>
         )}
@@ -182,41 +184,5 @@ const ModalWelcome = () => {
     </Modal>
   )
 }
-
-const styles = StyleSheet.create({
-  content: { alignItems: 'center', marginVertical: 40 },
-  alignItemsCentre: { alignItems: 'center' },
-  helperActionButton: { marginTop: 10, opacity: 0.5 },
-  helperActionButtonText: {
-    color: 'white',
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-  },
-  errorText: { color: 'red' },
-  uppercaseText: { textTransform: 'uppercase' },
-  bold: { fontWeight: 'bold' },
-  earlyWelcomeText: { marginBottom: 60, color: 'white', textAlign: 'center', fontSize: 6 },
-  codeInput: {
-    backgroundColor: '#333',
-    borderRadius: 999,
-    color: 'white',
-    fontSize: 20,
-    marginBottom: 20,
-    maxWidth: '100%',
-    padding: 10,
-    textAlign: 'center',
-    width: 320,
-  },
-  submitButton: {
-    backgroundColor: 'white',
-    padding: 10,
-    alignItems: 'center',
-    borderRadius: 20,
-    marginVertical: 10,
-    maxWidth: '100%',
-    width: 320,
-  },
-  submitButtonContainer: { marginBottom: 20 },
-})
 
 export default ModalWelcome

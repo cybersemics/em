@@ -31,7 +31,7 @@ export const ActionButton = ({
 }: ActionButtonProps) => (
   <TouchableOpacity
     onPress={!disabled ? onClick : undefined}
-    style={[tw`p-2 my-4 items-center rounded-lg w-6/12 bg-black dark:bg-white`, style]}
+    style={[tw`px-4 py-3 my-4 items-center rounded-2xl w-6/12 bg-black dark:bg-white`, style]}
   >
     {isLoading ? (
       <ActivityIndicator size={35} />

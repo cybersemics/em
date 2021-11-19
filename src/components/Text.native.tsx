@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { State } from '../@types'
 import { adjustFontSize } from '../util/adjustFontSize'
 import tw from 'twrnc'
+
 /** Custom text component. */
 export const Text: FC<React.ComponentProps<typeof RNText> & { alternate?: boolean }> = ({ style = {}, ...props }) => {
   const fontSize = useSelector((state: State) => state.fontSize)

@@ -9,7 +9,6 @@ import { theme } from '../selectors'
  */
 export function useDeviceContextCustom(tw: TailwindFn): void {
   const themeMode = useSelector((state: State) => theme(state))
-
   const themeModeToRNColorScheme = themeMode.toLowerCase() as RnColorScheme
 
   const window = useWindowDimensions()
