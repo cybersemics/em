@@ -60,7 +60,7 @@ const ShortcutTable = () => {
 }
 
 const ModalActionsContainer = tw.div`
-  flex justify-center align-items[center]
+  flex justify-center items-center
   space-x-2.5
 `
 
@@ -71,14 +71,13 @@ const ModalHelpContainer = styled.section`
 const ModalSubtitle = styled.h2<{ compact?: boolean }>`
   ${tw`
     text-2xl
-    font-weight[300]
+    font-light
   `};
 
   ${props =>
     props.compact
       ? tw`
           space-y-3.5
-          text-base
         `
       : tw`space-y-6`}
 `
@@ -87,11 +86,18 @@ const Code = tw.code`
     bg-gray-200 dark:bg-gray-700
 `
 
-// TODO: Should prose styling be used ?
 const ModalProse = styled.div`
   p {
     ${tw`mb-2.5 text-sm`}
   }
+`
+
+const CreditLink = styled.a`
+  ${tw`underline text-blue-300 text-opacity-70 italic`}
+`
+
+const MiscLink = styled.a`
+  ${tw`underline text-blue-300`}
 `
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
@@ -118,8 +124,7 @@ const ModalHelp = ({
     <Modal
       id='help'
       title='Help'
-      // className='popup'
-      actions={({ close }) => <ActionButton key='close' title='Close' />}
+      actions={({ close }) => <ActionButton onClick={() => close()} key='close' title='Close' />}
     >
       <ModalProse>
         <ModalHelpContainer>
@@ -151,11 +156,9 @@ const ModalHelp = ({
             ></ActionButton>
           </ModalActionsContainer>
         </ModalHelpContainer>
-
-        <ModalSubtitle compact>{isTouch ? 'Gesture' : 'Keyboard'} Shortcuts</ModalSubtitle>
-
+        <div css={tw`mt-16`}></div>
+        <ModalSubtitle compact>{isTouch ? 'Gesture' : 'Keyboard'} Shortcuts </ModalSubtitle>
         <ShortcutTable />
-
         <ModalSubtitle compact>Metaprogramming</ModalSubtitle>
         <Code>=bullets</Code>
         <p>
@@ -260,108 +263,122 @@ const ModalHelp = ({
           </label>
         </form>
 
-        <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
+        <IconCreditSection>
           <div>
             Context View icon by{' '}
-            <a href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>Travis Avery</a>{' '}
-            from the <a href='https://thenounproject.com'>Noun Project</a>
+            <CreditLink href='https://thenounproject.com/travisavery/collection/connection-power/?i=2184164'>
+              Travis Avery
+            </CreditLink>{' '}
+            from the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
             Export icon by{' '}
-            <a href='https://www.flaticon.com/authors/those-icons' title='Those Icons'>
+            <CreditLink href='https://www.flaticon.com/authors/those-icons' title='Those Icons'>
               Those Icons
-            </a>{' '}
+            </CreditLink>{' '}
             from{' '}
-            <a href='https://www.flaticon.com/' title='Flaticon'>
+            <CreditLink href='https://www.flaticon.com/' title='Flaticon'>
               www.flaticon.com
-            </a>
+            </CreditLink>
           </div>
           <div>
-            Export icon by <a href='https://thenounproject.com/tgtdesign18'>Mahesh Keshvala</a> from the{' '}
-            <a href='https://thenounproject.com'>Noun Project</a>
+            Export icon by <CreditLink href='https://thenounproject.com/tgtdesign18'>Mahesh Keshvala</CreditLink> from
+            the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
-            Feedback icon by <a href='https://thenounproject.com/deanmtam'>Dean Mocha</a> from the{' '}
-            <a href='https://thenounproject.com'>Noun Project</a>
+            Feedback icon by <CreditLink href='https://thenounproject.com/deanmtam'>Dean Mocha</CreditLink> from the{' '}
+            <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
-            Hidden Thoughts icon by <a href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</a>{' '}
-            from the <a href='https://thenounproject.com'>Noun Project</a>
+            Hidden Thoughts icon by{' '}
+            <CreditLink href='https://thenounproject.com/search/?q=show%20hidden&i=1791510'>Joyce Lau</CreditLink> from
+            the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
             Indent icons by{' '}
-            <a href='https://www.flaticon.com/authors/bqlqn' title='bqlqn'>
+            <CreditLink href='https://www.flaticon.com/authors/bqlqn' title='bqlqn'>
               bqlqn
-            </a>{' '}
+            </CreditLink>{' '}
             from{' '}
-            <a href='https://www.flaticon.com/' title='Flaticon'>
+            <CreditLink href='https://www.flaticon.com/' title='Flaticon'>
               flaticon.com
-            </a>
+            </CreditLink>
           </div>
           <div>
-            Note icon by <a href='https://thenounproject.com/iconsphere/collection/populars/?i=2321491'>iconsphere</a>{' '}
-            from the <a href='https://thenounproject.com'>Noun Project</a>
+            Note icon by{' '}
+            <CreditLink href='https://thenounproject.com/iconsphere/collection/populars/?i=2321491'>
+              iconsphere
+            </CreditLink>{' '}
+            from the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
-            Pin icon by <a href='https://thenounproject.com/search/?q=%22pin%20many%22&i=496735'>Hea Poh Lin</a> from
-            the <a href='https://thenounproject.com'>Noun Project</a>
+            Pin icon by{' '}
+            <CreditLink href='https://thenounproject.com/search/?q=%22pin%20many%22&i=496735'>Hea Poh Lin</CreditLink>{' '}
+            from the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
-            Prose View icon by <a href='https://thenounproject.com/coquet_adrien'>Adrien Coquet</a> from the{' '}
-            <a href='https://thenounproject.com'>Noun Project</a>
+            Prose View icon by <CreditLink href='https://thenounproject.com/coquet_adrien'>Adrien Coquet</CreditLink>{' '}
+            from the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
-            Search icon by <a href='https://icons8.com/icon/7695/search'>Icons8</a>
+            Search icon by <CreditLink href='https://icons8.com/icon/7695/search'>Icons8</CreditLink>
           </div>
           <div>
-            Subcategorize icons by <a href='https://thenounproject.com/term/circuit/1685927/'>Hare Krishna</a> from the{' '}
-            <a href='https://thenounproject.com'>Noun Project</a>
+            Subcategorize icons by{' '}
+            <CreditLink href='https://thenounproject.com/term/circuit/1685927/'>Hare Krishna</CreditLink> from the{' '}
+            <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
             Table icon by{' '}
-            <a href='https://thenounproject.com/icon54app/collection/table-light-icon-set/?i=2762107'>icon 54</a> from
-            the <a href='https://thenounproject.com'>Noun Project</a>
+            <CreditLink href='https://thenounproject.com/icon54app/collection/table-light-icon-set/?i=2762107'>
+              icon 54
+            </CreditLink>{' '}
+            from the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
             Undo and Redo Icons by{' '}
-            <a href='https://www.flaticon.com/authors/pixel-perfect' title='Pixel perfect'>
+            <CreditLink href='https://www.flaticon.com/authors/pixel-perfect' title='Pixel perfect'>
               Pixel perfect
-            </a>{' '}
+            </CreditLink>{' '}
             from{' '}
-            <a href='https://www.flaticon.com/' title='Flaticon'>
+            <CreditLink href='https://www.flaticon.com/' title='Flaticon'>
               {' '}
               www.flaticon.com
-            </a>
+            </CreditLink>
           </div>
           <div>
-            Share icon by <a href='https://thenounproject.com/term/share/1058861/'>Тимур Минвалеев</a> from the{' '}
-            <a href='https://thenounproject.com'>Noun Project</a>
+            Share icon by <CreditLink href='https://thenounproject.com/term/share/1058861/'>Тимур Минвалеев</CreditLink>{' '}
+            from the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
-            Gift icon by <a href='https://thenounproject.com/search/?q=gift&i=2221484'> Sarote Impheng</a> from the{' '}
-            <a href='https://thenounproject.com'>Noun Project</a>
+            Gift icon by{' '}
+            <CreditLink href='https://thenounproject.com/search/?q=gift&i=2221484'> Sarote Impheng</CreditLink> from the{' '}
+            <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
             Copy to clipboard icon by{' '}
-            <a href='https://thenounproject.com/search/?q=copy+to+clipboard&i=1669410'>Hare Krishna</a> from the{' '}
-            <a href='https://thenounproject.com'>Noun Project</a>
+            <CreditLink href='https://thenounproject.com/search/?q=copy+to+clipboard&i=1669410'>
+              Hare Krishna
+            </CreditLink>{' '}
+            from the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
           <div>
-            Checkmark icon by <a href='https://thenounproject.com/search/?q=checkmark&i=870288'>arif fajar yulianto</a>{' '}
-            from the <a href='https://thenounproject.com'>Noun Project</a>
+            Checkmark icon by{' '}
+            <CreditLink href='https://thenounproject.com/search/?q=checkmark&i=870288'>arif fajar yulianto</CreditLink>{' '}
+            from the <CreditLink href='https://thenounproject.com'>Noun Project</CreditLink>
           </div>
-        </div>
+        </IconCreditSection>
 
         <br />
 
         <p>
-          <a tabIndex={-1} onClick={refresh}>
+          <MiscLink tabIndex={-1} onClick={refresh}>
             Refresh
-          </a>
+          </MiscLink>
           <br />
-          <a tabIndex={-1} onClick={toggleLogs}>
+          <MiscLink tabIndex={-1} onClick={toggleLogs}>
             Logs
-          </a>
+          </MiscLink>
           {logs && <Logs logs={logs ?? []} />}
         </p>
       </ModalProse>
@@ -369,4 +386,7 @@ const ModalHelp = ({
   )
 }
 
+const IconCreditSection = styled.div`
+  ${tw`mt-8 text-xs italic text-gray-400`}
+`
 export default connect(mapStateToProps)(ModalHelp)

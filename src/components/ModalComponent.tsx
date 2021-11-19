@@ -35,6 +35,7 @@ const ModalWrapper = styled(motion.div)<{ center?: boolean; opaque?: boolean }>`
   ${tw`
     relative
     p-10
+    pt-20
     bg-white
     dark:bg-black
     z-modal
@@ -63,7 +64,7 @@ const ModalContent = styled.div`
 `
 
 const ModalTitle = tw.h1`
-    mb-24
+    mb-10
     text-center
     text-3xl
     font-bold

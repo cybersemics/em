@@ -9,8 +9,6 @@ import { State } from '../@types'
 import TextArea from './TextArea'
 import TextLink from './TextLink'
 
-// Needs to import twin.macro for tw prop to work
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import tw from 'twin.macro'
 
 const FEEDBACK_MIN_LENGTH = 10
@@ -87,7 +85,7 @@ const ModalFeedback = () => {
             disabled={isDisabled}
             onClick={() => onSubmit({ close })}
           />
-          <div key='cancel' tw='mt-2.5'>
+          <div key='cancel' css={tw`mt-2.5`}>
             <TextLink onClick={() => close()} colorVariant='gray'>
               Cancel
             </TextLink>
@@ -95,7 +93,7 @@ const ModalFeedback = () => {
         </div>
       )}
     >
-      <p tw='text-lg mb-5 text-center'>Send us your bugs, hopes, and dreams!</p>
+      <p css={tw`text-lg mb-5 text-center`}>Send us your bugs, hopes, and dreams!</p>
       <TextArea
         placeholder={'Enter your message'}
         rows={1}

@@ -15,6 +15,7 @@ import { baseUrl } from '../device/router'
 import Message from './Message'
 import Input from './Input'
 import tw from 'twin.macro'
+import styled from 'styled-components'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -146,7 +147,7 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
       className='popup'
       center
       actions={({ close }) => (
-        <div style={undefined}>
+        <div>
           <ActionButton key='close' title='Close' onClick={() => close()} />
         </div>
       )}
@@ -164,12 +165,11 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
             const link = `${baseUrl}/signup?code=${id}`
             return (
               <GiftCodeWrapper key={`${id}-gift-code`}>
-                <div
-                  style={{ display: 'inline-flex' }}
+                <InviteIconWrapper
                   onClick={() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id))}
                 >
                   <InvitesIcon fill={selectedIconFill} size={26} />
-                </div>
+                </InviteIconWrapper>
                 <Input
                   type={hasSeen ? 'text' : 'password'}
                   placeholder='gift-code'
@@ -182,18 +182,9 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
                 ) : (
                   <CheckmarkIcon fill={dark ? 'black' : 'white'} size={21} />
                 )}
-                <div
-                  css={`
-                    display-inline: flex;
-
-                    svg {
-                      cursor: pointer;
-                    }
-                  `}
-                  onClick={() => updateCopy(link)}
-                >
-                  <CopyClipboard fill={selectedIconFill} size={26} />
-                </div>
+                <ClipboardWrapper onClick={() => updateCopy(link)}>
+                  <StyledCopyClipboardIcon fill={selectedIconFill} size={26} />
+                </ClipboardWrapper>
               </GiftCodeWrapper>
             )
           })}
@@ -202,5 +193,17 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
     </Modal>
   )
 }
+
+const InviteIconWrapper = styled.div`
+  ${tw`inline-flex`}
+`
+
+const ClipboardWrapper = styled.div`
+  ${tw`flex`}
+`
+
+const StyledCopyClipboardIcon = styled(CopyClipboard)`
+  ${tw`cursor-pointer`}
+`
 
 export default connect(mapStateToProps)(ModalInvites)

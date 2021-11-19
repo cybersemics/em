@@ -1,7 +1,7 @@
 import tw from 'twin.macro'
 
 const TextArea = tw.textarea`
-  min-height[20rem]
+  max-height[15rem]
   w-full
   border-none rounded-lg
   text-base text-gray-300

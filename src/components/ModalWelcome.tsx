@@ -8,6 +8,8 @@ import { tutorial } from '../action-creators'
 import { getAllChildren } from '../selectors'
 import { State } from '../@types'
 import TextLink from './TextLink'
+import styled from 'styled-components'
+import tw from 'twin.macro'
 
 /** Shrink modal text and logos to fit container vertically. */
 const onRef = (el: HTMLDivElement) => {
@@ -76,9 +78,11 @@ const ModalWelcome = () => {
           <div>
             <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
             {
-              <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}>
+              <SkipWrapper key='skip'>
                 <TextLink
                   id='skip-tutorial'
+                  variant='gray'
+                  underline
                   onClick={
                     isTutorialSettingsLoaded
                       ? () => {
@@ -90,21 +94,25 @@ const ModalWelcome = () => {
                 >
                   This ain’t my first rodeo. Skip it.
                 </TextLink>
-              </div>
+              </SkipWrapper>
             }
           </div>
         )}
       >
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div style={{ maxWidth: 560 }}>
-            <p>
-              <b>em</b> is a process-oriented writing tool for personal sensemaking.
-            </p>
-          </div>
-        </div>
+        <Description>
+          <b>em</b> is a process-oriented writing tool for personal sensemaking.
+        </Description>
       </Modal>
     </div>
   )
 }
+
+const SkipWrapper = styled.div`
+  ${tw`mt-2.5 opacity-50`}
+`
+
+const Description = styled.p`
+  ${tw`text-xl text-center`}
+`
 
 export default ModalWelcome

@@ -536,7 +536,9 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       {/* Copy to clipboard */}
       <ClipboardWrapper>
         {exportContent !== null ? (
-          <TextLink data-clipboard-text={exportContent}>Copy to clipboard</TextLink>
+          <TextLink underline={true} data-clipboard-text={exportContent}>
+            Copy to clipboard
+          </TextLink>
         ) : (
           <LoadingEllipsis />
         )}
