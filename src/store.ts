@@ -10,7 +10,7 @@ import thunk from 'redux-thunk'
 import multi from './redux-middleware/multi'
 import pushQueue from './redux-middleware/pushQueue'
 import pullQueue from './redux-middleware/pullQueue'
-// import updateUrlHistory from './redux-middleware/updateUrlHistory'
+import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import sessionManager from './redux-middleware/sessionManager'
 import appReducer from './reducers/app'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
@@ -22,11 +22,10 @@ if (!appReducer) {
   throw new Error('appReducer is undefined. This probably means there is a circular import.')
 }
 
-// @MIGRATION_NOTE: Disabling push and pull until the migration is complete
 export const store = createStore(
   appReducer,
   composeEnhancers(
-    applyMiddleware(multi, thunk, sessionManager, pushQueue, pullQueue),
+    applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory, sessionManager),
     undoRedoReducerEnhancer,
     cursorChangedEnhancer,
   ),

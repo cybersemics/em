@@ -179,8 +179,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
-      clearTimeout(globals.errorTimer)
-      globals.errorTimer = setTimeout(() => store.dispatch(alert(null)), 5000)
+      globals.errorTimer && clearTimeout(globals.errorTimer)
+      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
     }, 100)
   }
 }
