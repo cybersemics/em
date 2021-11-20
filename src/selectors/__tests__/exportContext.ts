@@ -153,7 +153,7 @@ it('export multi-line thoughts as separate thoughts', () => {
 it('export as markdown', () => {
   const text = `Hello <b>wor<i>ld</i></b>`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: text, rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [text], 'text/markdown')
@@ -165,7 +165,7 @@ it('export as markdown without escaping metaprogramming attributes', () => {
   const text = `- Hello <b>wor<i>ld</i></b>
   - =readonly`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: text, rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, ['Hello <b>wor<i>ld</i></b>'], 'text/markdown')

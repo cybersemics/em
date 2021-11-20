@@ -1,15 +1,15 @@
 import appendChildPath from '../appendChildPath'
-import { initialState, reducerFlow, pathToContext, hashContext } from '../../util'
+import { initialState, reducerFlow, pathToContext, getT, getThoughtIdByContexthoughtIdByContext } from '../../util'
 import { Path, SimplePath } from '../../@types'
 import { toggleContextView, setCursor } from '../../reducers'
 
 // @MIGRATION_TODO: Depends on context view and it's implementation will probably change later.
 it.skip('get child resolved path', () => {
   const parentPath: Path = [
-    { id: hashContext(['m']), value: 'm', rank: 0 },
-    { id: hashContext(['m', 'n']), value: 'n', rank: 0 },
-    { id: hashContext(['m', 'n', 'o']), value: 'o', rank: 0 },
-    { id: hashContext(['m', 'n', 'o', 'p']), value: 'p', rank: 0 },
+    { id: getThoughtIdByContext(['m']), value: 'm', rank: 0 },
+    { id: getThoughtIdByContext(['m', 'n']), value: 'n', rank: 0 },
+    { id: getThoughtIdByContext(['m', 'n', 'o']), value: 'o', rank: 0 },
+    { id: getThoughtIdByContext(['m', 'n', 'o', 'p']), value: 'p', rank: 0 },
   ]
 
   const childSimplePath = [
@@ -27,9 +27,9 @@ it.skip('get child resolved path', () => {
 
 it.skip('get child resolved path when parent has active context view', () => {
   const parentPath: Path = [
-    { id: hashContext(['i']), value: 'i', rank: 0 },
-    { id: hashContext(['i', 'j']), value: 'j', rank: 0 },
-    { id: hashContext(['i', 'j', 'k']), value: 'k', rank: 0 },
+    { id: getThoughtIdByContext(['i']), value: 'i', rank: 0 },
+    { id: getThoughtIdByContext(['i', 'j']), value: 'j', rank: 0 },
+    { id: getThoughtIdByContext(['i', 'j', 'k']), value: 'k', rank: 0 },
   ]
 
   const childSimplePath = [

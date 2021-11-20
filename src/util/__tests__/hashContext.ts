@@ -1,7 +1,7 @@
 import { State } from '../../@types'
 import { HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import { createId } from '../createId'
-import { hashContext } from '../hashContext'
+import { getThoughtIdByContext } from '../getThoughtIdByContext'
 import { initialState } from '../initialState'
 import { timestamp } from '../timestamp'
 
@@ -23,6 +23,7 @@ it('hashContext', () => {
           value: HOME_TOKEN,
           rank: 0,
           parentId: ROOT_PARENT_ID,
+          updatedBy: '',
         },
         [ids[0]]: {
           id: ids[0],
@@ -31,6 +32,7 @@ it('hashContext', () => {
           lastUpdated: timestamp(),
           rank: 0,
           parentId: HOME_TOKEN,
+          updatedBy: '',
         },
         [ids[1]]: {
           id: ids[1],
@@ -39,10 +41,11 @@ it('hashContext', () => {
           lastUpdated: timestamp(),
           parentId: ids[0],
           rank: 0,
+          updatedBy: '',
         },
       },
     },
   }
 
-  expect(hashContext(updatedState, ['A', 'B'])).toBe(ids[1])
+  expect(getThoughtIdByContext(updatedState, ['A', 'B'])).toBe(ids[1])
 })

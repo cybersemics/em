@@ -25,12 +25,10 @@ import useLongPress from '../hooks/useLongPress'
 import {
   equalArrays,
   equalPath,
-  hashContext,
   head,
   headId,
   headValue,
   isDescendantPath,
-  isDivider,
   isFunction,
   isRoot,
   parentOf,

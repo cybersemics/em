@@ -48,7 +48,6 @@ import {
   ellipsize,
   ellipsizeUrl,
   equalPath,
-  // hashContext,
   head,
   headValue,
   isDivider,

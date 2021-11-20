@@ -4,7 +4,7 @@ import moize from 'moize'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import { getContexts, getParent, getLexeme, getChildrenRanked, isPending } from './selectors'
-import { hashContext, hashThought, initEvents, owner, urlDataSource } from './util'
+import { getThoughtIdByContext, hashThought, initEvents, owner, urlDataSource } from './util'
 import {
   authenticate,
   loadPublicThoughts,
@@ -31,7 +31,7 @@ import { getAllChildrenAsThoughts } from './selectors/getChildren'
 
 // enable to collect moize usage stats
 // do not enable in production
-// execute moize.getStats in the console to analyze cache hits, e.g. moize.getStats('hashContext')
+// execute moize.getStats in the console to analyze cache hits, e.g. moize.getStats('getThoughtIdByContext')
 // moize.collectStats()
 
 /** Initialize firebase and event handlers. */
@@ -178,7 +178,7 @@ const windowEm = {
   getParent: withState(getParent),
   getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
   getChildrenRanked: withState(getChildrenRanked),
-  hashContext,
+  getThoughtIdByContext,
   hashThought,
   isPending: withState(isPending),
   moize,

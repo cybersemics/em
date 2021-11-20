@@ -1,4 +1,4 @@
-import { pathToContext, keyValueBy, hashContext } from '../util'
+import { pathToContext, keyValueBy, getThoughtIdByContext } from '../util'
 import { decodeContextUrl } from '../selectors'
 import { Index, Context, State } from '../@types'
 
@@ -17,7 +17,7 @@ const getVisibleContexts = (state: State, expandedContexts: Index<Context>): Ind
     // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
     ...keyValueBy(contextCursor, (value, i) => {
       const subcontext = contextCursor.slice(0, contextCursor.length - i)
-      return subcontext.length > 0 ? { [hashContext(state, subcontext)!]: subcontext } : null
+      return subcontext.length > 0 ? { [getThoughtIdByContext(state, subcontext)!]: subcontext } : null
     }),
   }
 }

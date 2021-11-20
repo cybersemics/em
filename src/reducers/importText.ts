@@ -28,7 +28,7 @@ import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
-interface Options {
+export interface ImportTextPayload {
   path?: Path
 
   // Set the lastUpdated timestamp on the imported thoughts. Default: now.
@@ -68,7 +68,7 @@ const importText = (
     replaceStart,
     skipRoot,
     updatedBy = getSessionId(),
-  }: Options,
+  }: ImportTextPayload,
 ): State => {
   const isRoam = validateRoam(text)
 

@@ -10,7 +10,7 @@ import {
   hasPushes,
   isContextViewActive,
 } from '../selectors'
-import { equalArrays, hashContext, head, keyValueBy, unroot } from '../util'
+import { equalArrays, getThoughtIdByContext, head, keyValueBy, unroot } from '../util'
 import { pull } from '../action-creators'
 import { Child, Context, ContextHash, Index, State, ThoughtContext } from '../@types'
 
@@ -52,7 +52,7 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
         // because only parents are specified by visibleContexts, we need to queue the children as well
         ...keyValueBy(children, child => {
           const contextChild = showContexts ? getContextForThought(state, child)! : unroot([...context, child])
-          const keyChildId = hashContext(state, contextChild)
+          const keyChildId = getThoughtIdByContext(state, contextChild)
           return keyChildId && contextIndex[keyChildId] && contextIndex[keyChildId].pending
             ? { [keyChildId]: contextChild }
             : null

@@ -1,7 +1,7 @@
 import 'react-native-get-random-values'
 import { validate as uuidValidate } from 'uuid'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
-import { hashContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
+import { getThoughtIdByContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
 import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newThought } from '../../reducers'
@@ -46,7 +46,7 @@ it('basic import with proper thought structure', () => {
   const childBId = getParent(stateNew, ['a'])?.children[0]
 
   expect(contextIndex).toMatchObject({
-    [hashContext(stateNew, [EM_TOKEN])!]: {
+    [getThoughtIdByContext(stateNew, [EM_TOKEN])!]: {
       id: EM_TOKEN,
       children: [],
       lastUpdated: never(),
@@ -54,22 +54,22 @@ it('basic import with proper thought structure', () => {
       pending: true,
       rank: 0,
     },
-    [hashContext(stateNew, [HOME_TOKEN])!]: {
+    [getThoughtIdByContext(stateNew, [HOME_TOKEN])!]: {
       children: [childAId],
     },
-    [hashContext(stateNew, [ABSOLUTE_TOKEN])!]: {
+    [getThoughtIdByContext(stateNew, [ABSOLUTE_TOKEN])!]: {
       id: ABSOLUTE_TOKEN,
       children: [],
       lastUpdated: never(),
       pending: true,
     },
-    [hashContext(stateNew, ['a'])!]: {
+    [getThoughtIdByContext(stateNew, ['a'])!]: {
       id: childAId,
       value: 'a',
       rank: 0,
       children: [childBId],
     },
-    [hashContext(stateNew, ['a', 'b'])!]: {
+    [getThoughtIdByContext(stateNew, ['a', 'b'])!]: {
       id: childBId,
       value: 'b',
       rank: 0,
@@ -77,7 +77,7 @@ it('basic import with proper thought structure', () => {
     },
   })
 
-  expect(contextIndex[hashContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
+  expect(contextIndex[getThoughtIdByContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
 
   // Note: Child.id is hashedContext instead of uuid. Change this after migration is complete.
   expect(uuidValidate(childAId!)).toBe(true)
@@ -164,7 +164,7 @@ it.skip('merge descendants', () => {
   const { contextIndex } = newState.thoughts
 
   expect(contextIndex).toMatchObject({
-    [hashContext(newState, [HOME_TOKEN])!]: {
+    [getThoughtIdByContext(newState, [HOME_TOKEN])!]: {
       children: [
         {
           value: 'a',
@@ -175,7 +175,7 @@ it.skip('merge descendants', () => {
         },
       ],
     },
-    [hashContext(newState, ['a'])!]: {
+    [getThoughtIdByContext(newState, ['a'])!]: {
       children: [
         {
           value: 'b',
@@ -188,7 +188,7 @@ it.skip('merge descendants', () => {
         },
       ],
     },
-    [hashContext(newState, ['a', 'b'])!]: {
+    [getThoughtIdByContext(newState, ['a', 'b'])!]: {
       children: [
         {
           value: 'c',
@@ -200,7 +200,7 @@ it.skip('merge descendants', () => {
         },
       ],
     },
-    [hashContext(newState, ['a', 'x'])!]: {
+    [getThoughtIdByContext(newState, ['a', 'x'])!]: {
       children: [
         {
           value: 'y',
@@ -533,7 +533,10 @@ it('replace empty cursor without affecting siblings', () => {
     - y
     - d`)
 
-  expect(stateNew.cursor).toMatchObject([hashContext(stateNew, ['a']), hashContext(stateNew, ['a', 'y'])])
+  expect(stateNew.cursor).toMatchObject([
+    getThoughtIdByContext(stateNew, ['a']),
+    getThoughtIdByContext(stateNew, ['a', 'y']),
+  ])
 })
 
 it('import as subthoughts of non-empty cursor', () => {

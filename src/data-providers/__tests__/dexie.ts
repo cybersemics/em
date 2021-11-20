@@ -8,7 +8,7 @@ import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getLexeme'
 import testTimer from '../../test-helpers/testTimer'
-import { hashContext } from '../../util'
+import { getThoughtIdByContext } from '../../util'
 import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
 
 /*
@@ -58,7 +58,7 @@ describe('integration', () => {
 
     fakeTimer.useRealTimer()
 
-    const thoughtAId = hashContext(store.getState(), ['a'])
+    const thoughtAId = getThoughtIdByContext(store.getState(), ['a'])
 
     // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
@@ -83,7 +83,7 @@ describe('integration', () => {
 
     await fakeTimer.runAllAsync()
 
-    const thoughtAId = hashContext(store.getState(), ['a'])
+    const thoughtAId = getThoughtIdByContext(store.getState(), ['a'])
 
     fakeTimer.useRealTimer()
 

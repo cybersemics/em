@@ -21,7 +21,7 @@ import { childIdsToThoughts, getThoughtById } from '../selectors'
 //   ) as ContextHash
 
 /** Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. */
-export const hashContext = (state: State, thoughts: Context, rank?: number): string | null => {
+export const getThoughtIdByContext = (state: State, thoughts: Context, rank?: number): string | null => {
   const root = isRoot(thoughts)
   if (root) return thoughts[0]
 

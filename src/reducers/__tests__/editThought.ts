@@ -1,5 +1,5 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { hashContext, initialState, reducerFlow } from '../../util'
+import { getThoughtIdByContext, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getAllChildren, getLexeme, getParent, getParentThought } from '../../selectors'
 import { newThought, importText } from '../../reducers'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
@@ -40,13 +40,13 @@ it('edit a thought', () => {
 
   expect(getAllChildrenAsThoughts(stateNew, [HOME_TOKEN])).toMatchObject([
     {
-      id: hashContext(stateNew, ['b'])!,
+      id: getThoughtIdByContext(stateNew, ['b'])!,
       value: 'b',
       parentId: HOME_TOKEN,
       rank: 1,
     },
     {
-      id: hashContext(stateNew, ['aa'])!,
+      id: getThoughtIdByContext(stateNew, ['aa'])!,
       value: 'aa',
       parentId: HOME_TOKEN,
       rank: 0,
@@ -54,7 +54,7 @@ it('edit a thought', () => {
   ])
 
   // cursor should be at /aa
-  expect(stateNew.cursor).toMatchObject([hashContext(stateNew, ['aa'])])
+  expect(stateNew.cursor).toMatchObject([getThoughtIdByContext(stateNew, ['aa'])])
 })
 
 it('edit a descendant', () => {
@@ -80,8 +80,8 @@ it('edit a descendant', () => {
     - aa1
   - b`)
 
-  const aId = hashContext(stateNew, ['a'])!
-  const aa1Id = hashContext(stateNew, ['a', 'aa1'])!
+  const aId = getThoughtIdByContext(stateNew, ['a'])!
+  const aa1Id = getThoughtIdByContext(stateNew, ['a', 'aa1'])!
 
   // aa1 should exist in context a
   expect(getContexts(stateNew, 'aa1')).toMatchObject([aa1Id])
@@ -174,7 +174,7 @@ it('edit a thought existing in mutliple contexts', () => {
   // aa should exist in ROOT context
 
   expect(thoughtABC).not.toBeNull()
-  expect(thoughtABC!.parentId).toBe(hashContext(stateNew, ['a']))
+  expect(thoughtABC!.parentId).toBe(getThoughtIdByContext(stateNew, ['a']))
 
   // abc should exist in context a
   expect(getContexts(stateNew, 'abc')).toMatchObject([thoughtABC.id])

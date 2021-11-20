@@ -4,7 +4,7 @@ import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
-import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
+import { getUserRef, getThoughtIdByContext, isFunction, logWithTime, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Parent, State } from '../@types'
@@ -185,11 +185,11 @@ const push =
     // store the hashes of the localStorage Settings contexts for quick lookup
     // settings that are propagated to localStorage for faster load on startup
     // e.g. {
-    //   [hashContext([EM_TOKEN, 'Settings', 'Tutorial'])]: 'Tutorial',
+    //   [getThoughtIdByContext([EM_TOKEN, 'Settings', 'Tutorial'])]: 'Tutorial',
     //   ...
     // }
     const localStorageSettingsContexts = ['Tutorial', 'Last Updated'].reduce((acc, value) => {
-      const id = hashContext(state, [EM_TOKEN, 'Settings', value])
+      const id = getThoughtIdByContext(state, [EM_TOKEN, 'Settings', value])
       return {
         ...acc,
         ...(id

@@ -4,7 +4,7 @@ import {
   compareByRank,
   compareThought,
   compareThoughtDescending,
-  hashContext,
+  getThoughtIdByContext,
   isAbsolute,
   isFunction,
   sort,
@@ -41,7 +41,7 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Pa
 
 /** Gets a Parent from the contextIndex. */
 export const getParent = (state: State, context: Context): Parent | null => {
-  const id = hashContext(state, context)
+  const id = getThoughtIdByContext(state, context)
   return id ? getThoughtById(state, id) : null
 }
 
@@ -55,7 +55,7 @@ export const getAllChildrenAsThoughts = (state: State, context: Context) =>
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {
-  const hash = hashContext(state, context)
+  const hash = getThoughtIdByContext(state, context)
   return getAllChildrenByContextHash(state, hash as ContextHash)
 }
 

@@ -3,7 +3,7 @@ import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { HOME_TOKEN } from '../constants'
-import { hashContext, keyValueBy, mergeThoughts } from '../util'
+import { getThoughtIdByContext, keyValueBy, mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
 import { getDescendantContexts, isPending } from '../selectors'
 import { Thunk, Context, Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
@@ -40,7 +40,7 @@ const getPendingContexts = (state: State, contextMap: Index<Context>): Index<Con
 
   // convert context array to contextMap
   return keyValueBy(contextsFiltered, context => ({
-    [hashContext(state, context)!]: context,
+    [getThoughtIdByContext(state, context)!]: context,
   }))
 }
 

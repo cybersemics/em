@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
 
-import { hashContext } from '../../util'
+import { getThoughtIdByContext } from '../../util'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 
 // selectors
@@ -25,7 +25,7 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) 
       {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" or "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}" to show it again.
     </p>
   ) : !contextViews[
-      hashContext(store.getState(), [
+      getThoughtIdByContext(store.getState(), [
         (cursor && cursor[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
           ? TUTORIAL_CONTEXT1_PARENT
           : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
