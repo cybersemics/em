@@ -11,6 +11,7 @@ import { getContexts, getSetting } from '../../selectors'
 import { Path } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
+import { useStore } from 'react-redux'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT
 
@@ -33,16 +34,19 @@ const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }: IComponentPr
     getContexts(store.getState(), TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
+
+  const state = useStore().getState()
+
   return (
     <Fragment>
-      {!cursor || headValue(cursor) !== caseSensitiveValue ? (
+      {!cursor || headValue(state, cursor) !== caseSensitiveValue ? (
         <Text style={smallText}>First select "{caseSensitiveValue}".</Text>
       ) : (
         <Fragment>
           {isHint() ? (
             <Text style={smallText}>
               You did the right gesture, but somehow "{caseSensitiveValue}" wasn't selected. Try
-              {!cursor || headValue(cursor) !== caseSensitiveValue ? (
+              {!cursor || headValue(state, cursor) !== caseSensitiveValue ? (
                 <Text style={smallText}>selecting "{caseSensitiveValue}" and trying</Text>
               ) : null}{' '}
               again.

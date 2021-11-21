@@ -1,4 +1,4 @@
-import { getThoughtById } from '.'
+import { getThoughtById } from './index'
 import { State, Context, ThoughtId } from '../@types'
 import { ROOT_PARENT_ID } from '../constants'
 

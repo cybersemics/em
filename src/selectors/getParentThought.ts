@@ -1,4 +1,4 @@
-import { getThoughtById } from '.'
+import { getThoughtById } from './index'
 import { State, Parent, ThoughtId } from '../@types'
 
 /**

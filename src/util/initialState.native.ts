@@ -1,9 +1,9 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PARENT_ID } from '../constants'
 import globals from '../globals'
 // import { canShowModal } from '../selectors'
-import { hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from '.'
+import { hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from './index'
 import { getSessionId } from './sessionManager'
-import { Timestamp, ThoughtsInterface, State, Parent, Index } from '../@types'
+import { Timestamp, ThoughtsInterface, State, Parent, Index, ThoughtId } from '../@types'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -20,10 +20,10 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
 
   const contextIndex: Index<Parent> = {
     [HOME_TOKEN_HASH]: {
-      id: HOME_TOKEN_HASH,
+      id: HOME_TOKEN_HASH as ThoughtId,
       value: HOME_TOKEN,
       children: [],
-      parentId: ROOT_PARENT_ID,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
@@ -31,9 +31,9 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       updatedBy: getSessionId(),
     },
     [ABSOLUTE_TOKEN_HASH]: {
-      id: ABSOLUTE_TOKEN_HASH,
+      id: ABSOLUTE_TOKEN_HASH as ThoughtId,
       value: ABSOLUTE_TOKEN,
-      parentId: ROOT_PARENT_ID,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -42,9 +42,9 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       updatedBy: getSessionId(),
     },
     [EM_TOKEN_HASH]: {
-      id: EM_TOKEN_HASH,
+      id: EM_TOKEN_HASH as ThoughtId,
       value: EM_TOKEN,
-      parentId: ROOT_PARENT_ID,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,

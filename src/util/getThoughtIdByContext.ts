@@ -7,7 +7,7 @@ import { EM_TOKEN } from '../constants'
 import { Context, Parent, State, ThoughtId } from '../@types'
 // import { normalizeThought } from './normalizeThought'
 // import { getAllChildren } from '../selectors'
-import { isRoot } from '.'
+import { isRoot } from './isRoot'
 import { normalizeThought } from './normalizeThought'
 import { childIdsToThoughts, getThoughtById } from '../selectors'
 

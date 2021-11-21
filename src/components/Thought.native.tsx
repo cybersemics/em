@@ -7,7 +7,7 @@ import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG, VIEW_MODE } from '../constants'
 import { compareReasonable } from '../util/compareThought'
-import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { ThoughtId, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // components
 import Bullet from './Bullet'
@@ -62,7 +62,7 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
-  childrenForced?: Child[]
+  childrenForced?: ThoughtId[]
   contextBinding?: Path
   path: Path
   cursor?: Path | null
@@ -81,7 +81,7 @@ export interface ThoughtContainerProps {
   isHovering?: boolean
   isParentHovering?: boolean
   isVisible?: boolean
-  prevChild?: Child | ThoughtContext
+  prevChild?: ThoughtId | ThoughtContext
   publish?: boolean
   rank: number
   showContexts?: boolean
@@ -282,7 +282,7 @@ const ThoughtContainer = ({
   // See: <Subthoughts> render
 
   const children = childrenForced
-    ? childIdsToThoughts(state, childrenForced)
+    ? childIdsToThoughts(state, childrenForced) ?? []
     : getChildrenRanked(state, pathToContext(state, contextBinding || simplePathLive))
 
   const showContextBreadcrumbs =

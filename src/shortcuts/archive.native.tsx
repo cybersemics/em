@@ -43,7 +43,8 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
         if (state.alert && state.alert.alertType === 'undoArchive') {
           dispatch(alert(null))
         }
-      }, 5000)
+        // TODO: Fix global setTimeout type issue
+      }, 5000) as any as number
 
       // archive the thought
       dispatch(archiveThought({ path: state.cursor ?? undefined }))

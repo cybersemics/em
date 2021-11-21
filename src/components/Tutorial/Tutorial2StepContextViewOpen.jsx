@@ -5,7 +5,8 @@ import { getThoughtIdByContext } from '../../util'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 
 // selectors
-import { getContexts } from '../../selectors'
+import { childIdsToThoughts, getContexts } from '../../selectors'
+import { useStore } from 'react-redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) => {
@@ -13,8 +14,11 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) 
     getContexts(store.getState(), TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
-  return !cursor ||
-    !cursor.some(
+  const state = useStore().getState()
+  const cursorThoughts = childIdsToThoughts(state, cursor)
+
+  return !cursorThoughts ||
+    !cursorThoughts.some(
       child =>
         child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ||
         child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase() ||
@@ -26,7 +30,8 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) 
     </p>
   ) : !contextViews[
       getThoughtIdByContext(store.getState(), [
-        (cursor && cursor[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
+        (cursorThoughts &&
+        cursorThoughts[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
           ? TUTORIAL_CONTEXT1_PARENT
           : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
         TUTORIAL_CONTEXT[tutorialChoice],

@@ -103,12 +103,13 @@ const duplicateAlertToggler = () => {
   let timeoutId: number | undefined // eslint-disable-line fp/no-let
   return (show: boolean, dispatch: Dispatch<Alert>) => {
     if (show) {
+      // TODO: Fix global setTimeout type
       timeoutId = setTimeout(() => {
         dispatch(
           alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }),
         )
         timeoutId = undefined
-      }, 2000)
+      }, 2000) as any as number
       return
     }
     if (timeoutId) {

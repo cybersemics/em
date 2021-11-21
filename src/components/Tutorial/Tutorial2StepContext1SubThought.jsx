@@ -8,7 +8,7 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 import { headValue } from '../../util'
-import { getChildrenRanked } from '../../selectors'
+import { childIdsToThoughts, getChildrenRanked } from '../../selectors'
 
 import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
@@ -18,6 +18,8 @@ import { useStore } from 'react-redux'
 const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren }) => {
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
   const store = useStore()
+
+  const children = childIdsToThoughts(store.getState(), rootChildren) ?? []
 
   if (context1SubthoughtisCreated) {
     return (
@@ -42,9 +44,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
       </p>
       {
         // e.g. Home
-        rootChildren.find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
-        ) &&
+        children.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
         // e.g. Home/To Do
         getChildrenRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(
           child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),

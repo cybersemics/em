@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { hasLexeme, getContexts, rootedParentOf, getAncestorByValue } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
-import { Child, Context, Index, SimplePath, State } from '../@types'
+import { ThoughtId, Context, Index, SimplePath, State } from '../@types'
 import { StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
@@ -19,7 +19,7 @@ interface SuperscriptProps {
   thoughts?: Context
   simplePath: SimplePath
   simplePathLive?: SimplePath
-  thoughtRaw?: Child
+  thoughtRaw?: ThoughtId
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

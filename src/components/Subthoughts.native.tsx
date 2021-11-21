@@ -7,7 +7,7 @@ import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, VIEW_MODE } from '../constants'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import {
-  Child,
+  ThoughtId,
   Context,
   GesturePath,
   Index,
@@ -72,7 +72,7 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 interface SubthoughtsProps {
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
-  childrenForced?: Child[]
+  childrenForced?: ThoughtId[]
   depth?: number
   env?: Index<Context>
   expandable?: boolean
@@ -87,9 +87,10 @@ interface SubthoughtsProps {
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
-const toggleContextViewShortcut = shortcutById('toggleContextView')
 if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
-if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
+// @MIGRATION_TODO: context view is disabled for migration
+// const toggleContextViewShortcut = shortcutById('toggleContextView')
+// if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
 const PAGINATION_SIZE = 100
 const EMPTY_OBJECT = {}
@@ -324,7 +325,7 @@ const NoChildren = ({
   simplePath,
 }: {
   allowSingleContext?: boolean
-  children: Child[]
+  children: ThoughtId[]
   simplePath: SimplePath
 }) => {
   const store = useStore<State>()
@@ -340,19 +341,19 @@ const NoChildren = ({
         to add "{headValue(store.getState(), simplePath)}" to a new context.
       </Text>
 
-      {allowSingleContext ? (
-        'A floating context... how interesting.'
-      ) : (
-        <Text>
-          Swipe
-          <GestureDiagram
-            path={toggleContextViewShortcut.gesture as GesturePath}
-            size={30}
-            color='darkgray' /* mtach .children-subheading color */
-          />
-          to return to the normal view.
-        </Text>
-      )}
+      {
+        allowSingleContext ? 'A floating context... how interesting.' : null
+        // @MIGRATION_NOTE: toogle view is disabled for the migration
+        // <Text>
+        //   Swipe
+        //   <GestureDiagram
+        //     path={toggleContextViewShortcut.gesture as GesturePath}
+        //     size={30}
+        //     color='darkgray' /* mtach .children-subheading color */
+        //   />
+        //   to return to the normal view.
+        // </Text>
+      }
     </View>
   )
 }
@@ -484,7 +485,7 @@ export const SubthoughtsComponent = ({
         ...accum,
         [child.rank]: [...match, child],
       }
-    }, {} as Index<Child[] | ThoughtContext[]>)
+    }, {} as Index<ThoughtId[] | ThoughtContext[]>)
   }
 
   const cursorThoughtArray = cursor && childIdsToThoughts(state, cursor)
@@ -597,7 +598,7 @@ export const SubthoughtsComponent = ({
           // No children
           <NoChildren
             allowSingleContext={allowSingleContext}
-            children={children.map(({ value }) => value)}
+            children={children.map(({ id }) => id)}
             simplePath={simplePath}
           />
         ) : null

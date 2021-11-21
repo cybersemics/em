@@ -5,9 +5,10 @@ import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } 
 import TutorialHint from './TutorialHint'
 
 import { headValue } from '../../util'
-import { Path } from '../../@types'
+import { Path, State } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
+import { useStore } from 'react-redux'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 
@@ -30,19 +31,22 @@ const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }: IComponentProps
   // @ts-ignore
   const selectedTutorial = tutorialChoiceMap[tutorialChoice] || null
 
+  const state = useStore<State>().getState()
+
   return (
     <Fragment>
       <Text style={smallText}>Now we are going to create a different "{TUTORIAL_CONTEXT[tutorialChoice]}" list.</Text>
       <Text style={smallText}>
         {selectedTutorial}
         Create a new thought with the text “{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”
-        {cursor && headValue(cursor).startsWith('"') ? ' (without quotes)' : null}{' '}
+        {cursor && headValue(state, cursor).startsWith('"') ? ' (without quotes)' : null}{' '}
         <Text style={[smallText, italic]}>after</Text> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}" (but at the same
         level).
       </Text>
       <TutorialHint>
         <>
-          {!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ? (
+          {!cursor ||
+          headValue(state, cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ? (
             <Text style={smallText}>Select "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}." </Text>
           ) : (
             <Text style={smallText}>

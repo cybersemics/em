@@ -2,7 +2,16 @@ import React, { createContext, FC, useCallback, useContext, useEffect, useRef, u
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { and } from 'fp-and-or'
 import { HOME_PATH } from '../constants'
-import { exportPhrase, getThoughtIdByContext, head, isFunction, isRoot, pathToContext, removeHome, unroot } from '../util'
+import {
+  exportPhrase,
+  getThoughtIdByContext,
+  head,
+  isFunction,
+  isRoot,
+  pathToContext,
+  removeHome,
+  unroot,
+} from '../util'
 import { alert, error, pull, modalComplete } from '../action-creators'
 import { exportContext, getDescendantPaths, getThoughtById, simplifyPath } from '../selectors'
 import Modal from './Modal'
@@ -78,21 +87,23 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
     const id = getThoughtIdByContext(store.getState(), context)
 
-    dispatch(
-      pull(
-        { [id]: context },
-        {
-          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
-          // TODO: onRemoteThoughts ??
-          maxDepth: Infinity,
-        },
-      ),
-    ).then(() => {
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-      if (isMounted.current) {
-        setIsPulling(false)
-      }
-    })
+    if (id) {
+      dispatch(
+        pull(
+          { [id]: context },
+          {
+            onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+            // TODO: onRemoteThoughts ??
+            maxDepth: Infinity,
+          },
+        ),
+      ).then(() => {
+        // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+        if (isMounted.current) {
+          setIsPulling(false)
+        }
+      })
+    }
 
     return () => {
       isMounted.current = false

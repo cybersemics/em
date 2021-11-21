@@ -1,4 +1,4 @@
-import { getThoughtById } from '.'
+import { getThoughtById } from './index'
 import { Index, Parent, State, ThoughtId } from '../@types'
 import { EM_TOKEN, ROOT_PARENT_ID } from '../constants'
 import { normalizeThought } from '../util'

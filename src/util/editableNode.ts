@@ -1,4 +1,4 @@
-import { head } from '.'
+import { head } from './head'
 import { Path } from '../@types'
 import { isMobile } from './isMobile'
 
