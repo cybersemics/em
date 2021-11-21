@@ -4,7 +4,7 @@ import { canShowModal } from '../selectors'
 import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 import { getSessionId } from './sessionManager'
 import { storage } from './storage'
-import { State, Timestamp, ThoughtsInterface, Parent, Index } from '../@types'
+import { State, Timestamp, ThoughtsInterface, Parent, Index, ThoughtId } from '../@types'
 import { isLocalNetwork } from '../device/router'
 
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -20,9 +20,9 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   const EM_TOKEN_HASH = EM_TOKEN
   const contextIndex: Index<Parent> = {
     [HOME_TOKEN_HASH]: {
-      id: HOME_TOKEN,
+      id: HOME_TOKEN as ThoughtId,
       value: HOME_TOKEN,
-      parentId: ROOT_PARENT_ID,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -31,9 +31,9 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       updatedBy: getSessionId(),
     },
     [ABSOLUTE_TOKEN_HASH]: {
-      id: ABSOLUTE_TOKEN,
+      id: ABSOLUTE_TOKEN as ThoughtId,
       value: ABSOLUTE_TOKEN,
-      parentId: ROOT_PARENT_ID,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -42,9 +42,9 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       updatedBy: getSessionId(),
     },
     [EM_TOKEN_HASH]: {
-      id: EM_TOKEN,
+      id: EM_TOKEN as ThoughtId,
       value: EM_TOKEN,
-      parentId: ROOT_PARENT_ID,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,

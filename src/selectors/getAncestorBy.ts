@@ -1,5 +1,5 @@
 import { getThoughtById } from '.'
-import { Index, Parent, State } from '../@types'
+import { Index, Parent, State, ThoughtId } from '../@types'
 import { EM_TOKEN, ROOT_PARENT_ID } from '../constants'
 import { normalizeThought } from '../util'
 
@@ -8,7 +8,7 @@ import { normalizeThought } from '../util'
  */
 const getAncestorBy = (
   state: State,
-  thoughtId: string,
+  thoughtId: ThoughtId,
   checkFn: (thought: Parent) => boolean,
   traversedIds: Index<boolean> = {},
 ): Parent | null => {
@@ -36,13 +36,13 @@ const getAncestorBy = (
 /**
  * Check if thought is the descendant of the em context.
  */
-export const isDescendantOfEmContext = (state: State, thoughtId: string) =>
+export const isDescendantOfEmContext = (state: State, thoughtId: ThoughtId) =>
   getAncestorBy(state, thoughtId, thought => thought.value === EM_TOKEN && thought.parentId === ROOT_PARENT_ID)
 
 /**
  * Get ancestor by normalized value.
  */
-export const getAncestorByValue = (state: State, thoughtId: string, normalizedValue: string) =>
+export const getAncestorByValue = (state: State, thoughtId: ThoughtId, normalizedValue: string) =>
   getAncestorBy(state, thoughtId, thought => normalizeThought(thought.value) === normalizedValue)
 
 export default getAncestorBy

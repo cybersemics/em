@@ -1,11 +1,11 @@
 import { getThoughtById } from '.'
-import { State, Context } from '../@types'
+import { State, Context, ThoughtId } from '../@types'
 import { ROOT_PARENT_ID } from '../constants'
 
 /**
  * Traverses the thought tree upwards from the given thought and returns the rooted context.
  */
-const getContextForThought = (state: State, thoughtId: string): Context | null => {
+const getContextForThought = (state: State, thoughtId: ThoughtId): Context | null => {
   if (thoughtId === ROOT_PARENT_ID) return []
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return null

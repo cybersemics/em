@@ -4,10 +4,10 @@ import { store } from '../store'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import { hasLexeme } from '../selectors'
 import { searchContexts, searchLimit as setSearchLimit, error } from '../action-creators'
-import { createId, escapeRegExp, formatNumber, isArchived, isDocumentEditable, sort } from '../util'
+import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
-import { Connected, Index, Lexeme, SimplePath, State } from '../@types'
+import { Connected, Index, Lexeme, SimplePath, State, ThoughtId } from '../@types'
 import { getRemoteSearch } from '../search/algoliaSearch'
 import { getLocalSearch } from '../search/localSearch'
 import getFirebaseProvider from '../data-providers/firebase'
@@ -107,8 +107,9 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
               lexeme.value !== EM_TOKEN &&
               searchRegexp.test(lexeme.value),
           )
-          .map(
-            (lexeme, i) => ({ id: lexeme.id || createId(), value: lexeme.value, rank: i }),
+          .map<{ id: ThoughtId; value: string; rank: number }>(
+            // TODO: Should lexeme.id be explictly typed as ThoughtId
+            (lexeme, i) => ({ id: lexeme.contexts[0], value: lexeme.value, rank: i }),
             // cannot group cases by return value because conditionals must be checked in order of precedence
             comparator,
           ),

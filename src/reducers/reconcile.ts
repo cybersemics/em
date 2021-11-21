@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
-import { Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
+import { Index, Lexeme, Parent, State, ThoughtId, ThoughtsInterface } from '../@types'
 import { getThoughtById } from '../selectors'
 
 interface ReconcileOptions {
@@ -63,7 +63,7 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
     _.pickBy(
       thoughtsLocal.contextIndex,
       (parentEntry: Parent, key: string) =>
-        !getThoughtById(state, key) &&
+        !getThoughtById(state, key as ThoughtId) &&
         !contextIndexLocalOnly[key] &&
         (thoughtsRemote.contextIndex || {})[key] &&
         parentEntry.pending,

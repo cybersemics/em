@@ -1,10 +1,10 @@
-import { Child, Path, State } from '../@types'
+import { ThoughtId, Path, State } from '../@types'
 import { head } from '../util'
 
 /**
  * Get parent entry for the given thought id.
  */
-export const getThoughtById = (state: State, id: Child) => state.thoughts.contextIndex[id]
+export const getThoughtById = (state: State, id: ThoughtId) => state.thoughts.contextIndex[id]
 
 /**
  * Get parent entry for the given path.

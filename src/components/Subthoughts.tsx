@@ -10,7 +10,7 @@ import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import { Child, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { ThoughtId, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {
@@ -65,7 +65,7 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 interface SubthoughtsProps {
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
-  childrenForced?: Child[]
+  childrenForced?: ThoughtId[]
   depth?: number
   env?: Index<Context>
   expandable?: boolean
@@ -388,7 +388,7 @@ const NoChildren = ({
   simplePath,
 }: {
   allowSingleContext?: boolean
-  children: Child[]
+  children: ThoughtId[]
   simplePath: SimplePath
 }) => {
   const store = useStore<State>()
@@ -556,7 +556,7 @@ export const SubthoughtsComponent = ({
         ...accum,
         [child.rank]: [...match, child],
       }
-    }, {} as Index<Child[] | ThoughtContext[]>)
+    }, {} as Index<ThoughtId[] | ThoughtContext[]>)
   }
 
   const cursorThoughtArray = cursor && childIdsToThoughts(state, cursor)
@@ -669,7 +669,7 @@ export const SubthoughtsComponent = ({
           // No children
           <NoChildren
             allowSingleContext={allowSingleContext}
-            children={children.map(({ value }) => value)}
+            children={children.map(({ id }) => id)}
             simplePath={simplePath}
           />
         ) : null

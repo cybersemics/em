@@ -1,4 +1,4 @@
-import { Context, Parent } from '../../@types'
+import { Context, Parent, ThoughtId } from '../../@types'
 import { EM_TOKEN, HOME_TOKEN } from '../../constants'
 import { hashThought, head, isRoot } from '../../util'
 import { DataProvider } from '../DataProvider'
@@ -9,7 +9,7 @@ import { DataProvider } from '../DataProvider'
 /**
  * For the given array of thought ids returns the parent entries.
  */
-const childIdsToThoughts = async (provider: DataProvider, childIds: string[]) => {
+const childIdsToThoughts = async (provider: DataProvider, childIds: ThoughtId[]) => {
   const thoughts = await provider.getContextsByIds(childIds)
   // If any one of the thoughts are not found return null
   return thoughts.length < childIds.length ? null : thoughts
@@ -21,7 +21,7 @@ const childIdsToThoughts = async (provider: DataProvider, childIds: string[]) =>
  */
 const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: string[]) => {
   if (isRoot(pathUnranked)) {
-    const rootThought = await provider.getContextById(pathUnranked[0])
+    const rootThought = await provider.getContextById(pathUnranked[0] as ThoughtId)
     return rootThought ? [rootThought] : null
   }
 

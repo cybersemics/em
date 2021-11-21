@@ -14,17 +14,7 @@ import {
   splice,
   head,
 } from '../util'
-import {
-  Child,
-  ComparatorFunction,
-  Context,
-  ContextHash,
-  ThoughtContext,
-  Parent,
-  Path,
-  State,
-  SimplePath,
-} from '../@types'
+import { ThoughtId, ComparatorFunction, Context, ThoughtContext, Parent, Path, State, SimplePath } from '../@types'
 import childIdsToThoughts from './childIdsToThoughts'
 import { getThoughtById } from './getThought'
 
@@ -46,17 +36,17 @@ export const getParent = (state: State, context: Context): Parent | null => {
 }
 
 /** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
-export const getAllChildrenByContextHash = (state: State, contextEncoded: ContextHash): Child[] =>
-  getThoughtById(state, contextEncoded)?.children || noChildren
+export const getAllChildrenByContextHash = (state: State, thoughtId: ThoughtId): ThoughtId[] =>
+  getThoughtById(state, thoughtId)?.children || noChildren
 
 /** Returns the subthoughts (as Parent) of the given context unordered. . */
 export const getAllChildrenAsThoughts = (state: State, context: Context) =>
-  childIdsToThoughts(state, getAllChildren(state, context)) ?? []
+  childIdsToThoughts(state, getAllChildren(state, context) || []) ?? []
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {
-  const hash = getThoughtIdByContext(state, context)
-  return getAllChildrenByContextHash(state, hash as ContextHash)
+  const id = getThoughtIdByContext(state, context)
+  return id ? getAllChildrenByContextHash(state, id) : []
 }
 
 /** Makes a getAllChildren function that only returns visible thoughts. */
@@ -165,8 +155,8 @@ export const getChildrenRanked = (state: State, context: Context): Parent[] =>
 
 /** Gets all children of a context sorted by their ranking using thought id. Returns a new object reference even if the children have not changed. */
 // @MIGRATION_TODO: Currently we are migrating to access by id instead of context.
-export const getChildrenRankedById = (state: State, thoughtId: string): Parent[] => {
-  const allChildren = childIdsToThoughts(state, getAllChildrenByContextHash(state, thoughtId as ContextHash)) || []
+export const getChildrenRankedById = (state: State, thoughtId: ThoughtId): Parent[] => {
+  const allChildren = childIdsToThoughts(state, getAllChildrenByContextHash(state, thoughtId)) || []
   return sort(allChildren, compareByRank)
 }
 
@@ -206,7 +196,7 @@ const isChildVisibleWithCursorCheck = _.curry((state: State, path: SimplePath, t
 }, 3)
 
 /** Checks if the child is created after latest absolute context toggle. */
-const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: Child | ThoughtContext) => {
+const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: ThoughtId | ThoughtContext) => {
   const thought = getThoughtById(state, child)
   return thought.lastUpdated && state.absoluteContextTime && thought.lastUpdated > state.absoluteContextTime
 })

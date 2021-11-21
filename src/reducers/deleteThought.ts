@@ -9,14 +9,14 @@ import {
   rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
-import { Child, Context, Index, Lexeme, Parent, State } from '../@types'
+import { ThoughtId, Context, Index, Lexeme, Parent, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 import { hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface Payload {
   context: Context
-  thoughtId: Child
+  thoughtId: ThoughtId
   orphaned?: boolean
   showContexts?: boolean
 }

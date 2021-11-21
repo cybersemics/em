@@ -2,7 +2,7 @@ import { DataProvider } from '../DataProvider'
 import { yieldAll } from '../../util'
 import { EM_TOKEN } from '../../constants'
 import getDescendantThoughts from './getDescendantThoughts'
-import { State, Context, Index, ThoughtsInterface } from '../../@types'
+import { State, Context, Index, ThoughtsInterface, ThoughtId } from '../../@types'
 
 // hash the EM context once on load
 const emContextEncoded = EM_TOKEN
@@ -21,7 +21,7 @@ const getManyDescendants = async function* getManyDescendants(
   // fetch descendant thoughts for each context in contextMap
   yield* yieldAll(
     Object.keys(contextMap).map(key =>
-      getDescendantThoughts(provider, key, state, {
+      getDescendantThoughts(provider, key as ThoughtId, state, {
         // do not limit the depth of the em context
         maxDepth: key === emContextEncoded ? Infinity : maxDepth,
       }),

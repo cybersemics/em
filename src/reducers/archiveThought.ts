@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { HOME_PATH } from '../constants'
-import { Child, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { ThoughtId, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {
@@ -142,7 +142,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
         [appendToPath(parentOf(path), prev.id), 0]
       : // Case II: set cursor on next thought
       next
-      ? [unroot(showContexts ? appendToPath(parentOf(path), next) : appendToPath(parentOf(path), next as Child)), 0]
+      ? [unroot(showContexts ? appendToPath(parentOf(path), next) : appendToPath(parentOf(path), next as ThoughtId)), 0]
       : // Case III: delete last thought in context; set cursor on context
       thoughts.length > 1
       ? [rootedParentOf(state, path), head(context).length]

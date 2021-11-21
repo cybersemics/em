@@ -1,7 +1,16 @@
 import { Dispatch } from 'react'
 import { hashThought, keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
-import { Firebase, Index, Lexeme, Parent, State, ThoughtIndices, ThoughtSubscriptionUpdates } from '../@types'
+import {
+  Firebase,
+  Index,
+  Lexeme,
+  Parent,
+  State,
+  ThoughtId,
+  ThoughtIndices,
+  ThoughtSubscriptionUpdates,
+} from '../@types'
 
 export enum FirebaseChangeTypes {
   Create = 'child_added',
@@ -133,7 +142,7 @@ const parentSubscriptionHandler =
               : {
                   // pass id from snapshot since snapshot only contains changed fields
                   ...parentPartial,
-                  id: snapshot.key,
+                  id: snapshot.key as ThoughtId,
                 },
         },
       },

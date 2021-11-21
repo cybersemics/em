@@ -12,7 +12,7 @@ import {
 } from '../selectors'
 import { equalArrays, getThoughtIdByContext, head, keyValueBy, unroot } from '../util'
 import { pull } from '../action-creators'
-import { Child, Context, ContextHash, Index, State, ThoughtContext } from '../@types'
+import { ThoughtId, Context, Index, State, ThoughtContext } from '../@types'
 
 /** Debounce visible thought checks to avoid checking on every action. */
 const updatePullQueueDelay = 10
@@ -33,7 +33,7 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
   } = state
 
   // get the encoded context keys that are not in the contextIndex
-  const expandedKeys = Object.keys(visibleContexts) as ContextHash[]
+  const expandedKeys = Object.keys(visibleContexts) as ThoughtId[]
 
   return keyValueBy(
     expandedKeys,
@@ -43,7 +43,7 @@ const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleC
 
       const children = showContexts
         ? getContexts(state, head(context))
-        : (getAllChildrenByContextHash(state, key) as (Child | ThoughtContext)[])
+        : (getAllChildrenByContextHash(state, key) as (ThoughtId | ThoughtContext)[])
 
       return {
         // current thought

@@ -4,7 +4,7 @@ import { EM_TOKEN } from '../constants'
 
 // util
 // import { escapeSelector } from './escapeSelector'
-import { Context, Parent, State } from '../@types'
+import { Context, Parent, State, ThoughtId } from '../@types'
 // import { normalizeThought } from './normalizeThought'
 // import { getAllChildren } from '../selectors'
 import { isRoot } from '.'
@@ -21,12 +21,12 @@ import { childIdsToThoughts, getThoughtById } from '../selectors'
 //   ) as ContextHash
 
 /** Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. */
-export const getThoughtIdByContext = (state: State, thoughts: Context, rank?: number): string | null => {
+export const getThoughtIdByContext = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {
   const root = isRoot(thoughts)
-  if (root) return thoughts[0]
+  if (root) return thoughts[0] as ThoughtId
 
   const startsWithEM = thoughts[0] === EM_TOKEN
-  const rootParent = getThoughtById(state, startsWithEM ? EM_TOKEN : state.rootContext[0])
+  const rootParent = getThoughtById(state, startsWithEM ? EM_TOKEN : (state.rootContext[0] as ThoughtId))
 
   if (!rootParent) {
     console.error(

@@ -6,7 +6,16 @@ import { ICreateChange, IDatabaseChange, IDeleteChange, IUpdateChange } from 'de
 import { hashThought, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import win from './win'
-import { Context, Index, Lexeme, Parent, ThoughtWordsIndex, ThoughtSubscriptionUpdates, Timestamp } from '../@types'
+import {
+  Context,
+  Index,
+  Lexeme,
+  Parent,
+  ThoughtWordsIndex,
+  ThoughtSubscriptionUpdates,
+  Timestamp,
+  ThoughtId,
+} from '../@types'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -170,7 +179,10 @@ export const getThoughtIndex = async () => {
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
-export const updateContext = async (id: string, { children, lastUpdated, value, parentId, archived, rank }: Parent) =>
+export const updateContext = async (
+  id: ThoughtId,
+  { children, lastUpdated, value, parentId, archived, rank }: Parent,
+) =>
   db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
     return db.contextIndex.put({ id, value, parentId, rank, children, updatedBy: getSessionId(), lastUpdated })
@@ -183,7 +195,7 @@ export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) 
     const contextsArray = Object.keys(contextIndexMap).map(key => ({
       ...(contextIndexMap[key] as Parent),
       updatedBy: getSessionId(),
-      id: key,
+      id: key as ThoughtId,
     }))
     return db.contextIndex.bulkPut(contextsArray)
   })

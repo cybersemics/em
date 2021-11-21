@@ -2,14 +2,14 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { getNextRank, getLexeme, getAllChildren, getParent, getThoughtById } from '../selectors'
 import { createId, hashThought, head, timestamp } from '../util'
-import { Context, Index, Lexeme, Parent, State } from '../@types'
+import { Context, Index, Lexeme, Parent, State, ThoughtId } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 
 interface Payload {
   context: Context
   value: string
   rank: number
-  id?: string
+  id?: ThoughtId
   addAsContext?: boolean
 }
 /**

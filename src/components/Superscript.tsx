@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { hasLexeme, getContexts, rootedParentOf, getAncestorByValue } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
-import { Child, Context, Index, SimplePath, State } from '../@types'
+import { ThoughtId, Context, Index, SimplePath, State } from '../@types'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>
@@ -16,7 +16,7 @@ interface SuperscriptProps {
   thoughts?: Context
   simplePath: SimplePath
   simplePathLive?: SimplePath
-  thoughtRaw?: Child
+  thoughtRaw?: ThoughtId
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

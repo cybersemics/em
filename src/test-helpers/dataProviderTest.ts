@@ -12,7 +12,7 @@ import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
 import { getSessionId } from '../util/sessionManager'
-import { Context, Lexeme, Parent } from '../@types'
+import { Context, Lexeme, Parent, ThoughtId } from '../@types'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -161,10 +161,10 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('getContext', async () => {
-    const nocontext = await getParent(provider, 'test')
+    const nocontext = await getParent(provider, 'test' as ThoughtId)
     expect(nocontext).toBeUndefined()
 
-    const parentEntry: Parent = {
+    const parentEntry = {
       id: 'test',
       children: ['child1', 'child2', 'child3'],
       lastUpdated: timestamp(),
@@ -172,37 +172,37 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'x',
       parentId: 'parentId',
       rank: 0,
-    }
+    } as Parent
 
-    await provider.updateContext('test', parentEntry)
+    await provider.updateContext('test' as ThoughtId, parentEntry)
 
-    const dbContext = await getParent(provider, 'test')
+    const dbContext = await getParent(provider, 'test' as ThoughtId)
     expect(dbContext).toEqual(parentEntry)
   })
 
   test('getContextsByIds', async () => {
     const parentEntryX: Parent = {
-      id: 'testIdX',
-      children: ['child1', 'child2'],
+      id: 'testIdX' as ThoughtId,
+      children: ['child1', 'child2'] as ThoughtId[],
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
       value: 'x',
       rank: 0,
-      parentId: 'parent1',
+      parentId: 'parent1' as ThoughtId,
     }
 
     const parentEntryA: Parent = {
-      id: 'testIdA',
+      id: 'testIdA' as ThoughtId,
       children: [],
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
       value: 'a',
       rank: 1,
-      parentId: 'parent2',
+      parentId: 'parent2' as ThoughtId,
     }
 
-    await provider.updateContext('testIdX', parentEntryX)
-    await provider.updateContext('testIdA', parentEntryA)
+    await provider.updateContext('testIdX' as ThoughtId, parentEntryX)
+    await provider.updateContext('testIdA' as ThoughtId, parentEntryA)
 
     const dbContexts = await provider.getContextsByIds([parentEntryX.id, parentEntryA.id])
     expect(dbContexts).toEqual([parentEntryX, parentEntryA])
@@ -242,7 +242,7 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('updateContextIndex', async () => {
-    const parentEntryX: Parent = {
+    const parentEntryX = {
       id: 'idX',
       children: ['childId1', 'childId2', 'childId3'],
       value: 'x',
@@ -250,9 +250,9 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
-    }
+    } as Parent
 
-    const parentEntryY: Parent = {
+    const parentEntryY = {
       id: 'idY',
       children: ['childId1', 'childId2', 'childId3'],
       value: 'y',
@@ -260,17 +260,17 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent2',
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
-    }
+    } as Parent
 
     await provider.updateContextIndex({
       idX: parentEntryX,
       idY: parentEntryY,
     })
 
-    const contextX = await getParent(provider, 'idX')
+    const contextX = await getParent(provider, 'idX' as ThoughtId)
     expect(contextX).toEqual(parentEntryX)
 
-    const contextY = await getParent(provider, 'idY')
+    const contextY = await getParent(provider, 'idY' as ThoughtId)
     expect(contextY).toEqual(parentEntryY)
   })
 
@@ -287,7 +287,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN, initialState()))
+      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.contextIndex).toEqual(_.omit(contextIndex, EM_TOKEN, ABSOLUTE_TOKEN))
@@ -314,7 +314,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN, initialState()))
+      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.contextIndex).toEqual(_.omit(contextIndex, EM_TOKEN, ABSOLUTE_TOKEN))
@@ -465,7 +465,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN, initialState()))
+      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
 
       // flatten the thought chunks
       // preserve chunk order

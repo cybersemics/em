@@ -7,7 +7,7 @@ import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
-import { Child, Context, Index, Parent, Path, SimplePath, State } from '../@types'
+import { ThoughtId, Context, Index, Parent, Path, SimplePath, State } from '../@types'
 
 // components
 import Bullet from './Bullet'
@@ -60,7 +60,7 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
-  childrenForced?: Child[]
+  childrenForced?: ThoughtId[]
   contextBinding?: Path
   path: Path
   cursor?: Path | null

@@ -1,4 +1,4 @@
-import { Child } from './Child'
+import { ThoughtId } from './ThoughtId'
 
 /** A sequence of children with ranks. */
-export type Path = [Child, ...Child[]]
+export type Path = [ThoughtId, ...ThoughtId[]]

@@ -1,13 +1,13 @@
-import { Child } from './Child'
+import { ThoughtId } from './ThoughtId'
 import { Timestamp } from './Timestamp'
 
 /** An object that contains a list of children within a context. */
 export interface Parent {
-  id: string
+  id: ThoughtId
   value: string
   rank: number
-  parentId: string
-  children: Child[]
+  parentId: ThoughtId
+  children: ThoughtId[]
   lastUpdated: Timestamp
   pending?: boolean
   archived?: Timestamp

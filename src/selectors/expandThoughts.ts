@@ -1,6 +1,6 @@
 import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, MAX_EXPAND_DEPTH } from '../constants'
 import { attribute, attributeEquals, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
-import { Child, Context, Index, Path, State, ThoughtContext } from '../@types'
+import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   appendToPath,
   equalArrays,
@@ -21,7 +21,7 @@ import { getAllChildrenAsThoughts } from './getChildren'
 import { getThoughtById } from './getThought'
 
 /** Get the value of the Child | ThoughtContext. */
-const childValue = (state: State, child: Child | ThoughtContext, showContexts: boolean) =>
+const childValue = (state: State, child: ThoughtId | ThoughtContext, showContexts: boolean) =>
   showContexts ? getParentThought(state, child)!.value : getThoughtById(state, child)?.value
 
 /** Returns true if the context is in table view. */
@@ -110,7 +110,7 @@ function expandThoughtsRecursive(
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
 
   /** Returns true if the child should be pinned open. */
-  const isPinned = (child: Child | ThoughtContext) => {
+  const isPinned = (child: ThoughtId | ThoughtContext) => {
     const context = pathToContext(state, appendToPath(simplePath, child))
     return attribute(state, context, '=pin')
   }

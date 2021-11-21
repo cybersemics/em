@@ -28,7 +28,7 @@ const loadFromUrl =
     const { path: decodedPath } = decodeThoughtsUrl(state, { exists: true })
 
     // set cursor to first child if cursor is not provided via url
-    const firstChild = decodedPath ? getAllChildren(state, pathToContext(state, decodedPath))[0] : null
+    const firstChild = decodedPath ? getAllChildren(state, pathToContext(state, decodedPath))?.[0] : null
 
     if (decodedPath) {
       dispatch(

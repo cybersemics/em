@@ -2,7 +2,7 @@ import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { hashThought, isFunction, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
-import { Parent, State, ThoughtsInterface } from '../../@types'
+import { Parent, State, ThoughtId, ThoughtsInterface } from '../../@types'
 import { getContextForThought, getThoughtById } from '../../selectors'
 import { getSessionId } from '../../util/sessionManager'
 
@@ -45,7 +45,7 @@ const isUnbuffered = (state: State, parent: Parent) => {
  */
 async function* getDescendantThoughts(
   provider: DataProvider,
-  thoughtId: string,
+  thoughtId: ThoughtId,
   state: State,
   { maxDepth = MAX_DEPTH }: Options = {},
 ): AsyncIterable<ThoughtsInterface> {

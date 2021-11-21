@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { applyPatch, compare } from 'fast-json-patch'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
-import { Index, Patch, State } from '../@types'
+import { Index, Patch, State, ThoughtId } from '../@types'
 import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
 import { produce } from 'immer'
@@ -23,14 +23,14 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
     const [thoughtId] = path.slice(thoughtIndexPath.length).split('/')
     return {
       ...acc,
-      [thoughtId]: getThoughtById(state, thoughtId) || null,
+      [thoughtId]: getThoughtById(state, thoughtId as ThoughtId) || null,
     }
   }, {})
   const contextIndexUpdates = contextIndexChanges.reduce((acc, { path }) => {
     const [contextId] = path.slice(contextIndexPath.length).split('/')
     return {
       ...acc,
-      [contextId]: getThoughtById(state, contextId) || null,
+      [contextId]: getThoughtById(state, contextId as ThoughtId) || null,
     }
   }, {})
   return {

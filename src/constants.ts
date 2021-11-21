@@ -1,6 +1,6 @@
 /** Defines app-wide constants. */
 import { emojiRegex } from './emojiRegex'
-import { Index, SimplePath } from './@types'
+import { Index, SimplePath, ThoughtId } from './@types'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
 
@@ -113,7 +113,7 @@ export const HOME_TOKEN = '__ROOT__'
 export const ROOT_PARENT_ID = '__ROOT_PARENT_ID__'
 
 // token for hidden system context
-export const EM_TOKEN = '__EM__'
+export const EM_TOKEN = '__EM__' as ThoughtId
 
 export const ABSOLUTE_TOKEN = '__ABSOLUTE__'
 

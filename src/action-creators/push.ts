@@ -7,7 +7,7 @@ import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
 import { getUserRef, getThoughtIdByContext, isFunction, logWithTime, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
-import { Thunk, Index, Lexeme, Parent, State } from '../@types'
+import { Thunk, Index, Lexeme, Parent, State, ThoughtId } from '../@types'
 import { storage } from '../util/storage'
 
 /** Syncs thought updates to the local database. */
@@ -55,7 +55,7 @@ const pushLocal = (
       }
 
       // Note: Since all the data of a thought is now on Parent instead of Child and ThoughtIndex, so the parent entry should not be deleted if they don't have children
-      return parentEntry ? db.updateContext(contextEncoded, parentEntry) : db.deleteContext(contextEncoded)
+      return parentEntry ? db.updateContext(contextEncoded as ThoughtId, parentEntry) : db.deleteContext(contextEncoded)
     }),
     db.updateLastUpdated(timestamp()),
   ]

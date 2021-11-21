@@ -1,6 +1,6 @@
 import React from 'react'
 import { ancestors, isRoot, strip } from '../util'
-import { Index, SimplePath } from '../@types'
+import { Index, SimplePath, ThoughtId } from '../@types'
 import classNames from 'classnames'
 
 // components
@@ -20,7 +20,7 @@ export interface ContextBreadcrumbProps {
 }
 
 type OverflowChild = {
-  id: string
+  id: ThoughtId
   value: string
   label?: string
   isOverflow?: boolean
