@@ -133,7 +133,8 @@ const Footer = () => {
 const FooterWrapper = tw.footer`
   p-5
   m-0
-  bg-gray-900
+  bg-gray-200
+  dark:bg-gray-900
 `
 
 const UnorderedList = tw.li`

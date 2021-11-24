@@ -30,7 +30,10 @@ const TextLinkBase = styled.a<{ underline?: boolean }>`
 `
 
 const BlueTextLink = styled(TextLinkBase)`
-  ${tw`text-blue-200`}
+  ${tw`
+    text-blue-500
+    dark:text-blue-200
+  `}
 `
 
 const GrayTextLink = styled(TextLinkBase)`
