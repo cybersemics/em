@@ -636,7 +636,6 @@ body.dark {
   color: #e3e3e3;
 }
 
-.dark .footer a,
 .dark .tutorial-text a {
   color: #87ceeb;
 }
@@ -1891,58 +1890,9 @@ h1 .num-contexts {
   position: relative;
 }
 
-/* Footer styles - START */
-
-.footer {
-  padding: 1.75em;
-  margin: 0;
-  text-align: right;
-  font-size: 75%;
-  list-style: none;
-  background-color: #e4e4e4; /* 80% of #ddd */
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.dark .footer a {
-  color: skyblue;
-}
-
-.footer .support-link {
-  color: inherit;
-}
-
-.dark .footer {
-  background-color: #1a1a1a; /* 80% of #212121 */
-  color: white;
-}
-
-.dark .footer .support-link {
-  color: white;
-}
-
-.footer .support-link:hover {
-  text-decoration: underline;
-}
-
-.footer-divider {
-  margin: 0 6px;
-}
-
-.increase-font {
-  font-size: 1.6em;
-  padding-right: 12px;
-}
-
-.decrease-font {
-  padding-left: 12px;
-  padding-right: 12px;
-}
-
 .floatLeft {
   float: left;
 }
-/* .footer .floatLeft a { text-decoration: none; } may be better with underline*/
 
 /* Footer styles - END */
 

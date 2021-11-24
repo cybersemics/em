@@ -6,6 +6,8 @@ import { alert, logout, showModal } from '../action-creators'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 import scrollTo from '../device/scrollTo'
+import tw, { styled } from 'twin.macro'
+import TextLink from './TextLink'
 
 /** A footer component with some useful links. */
 const Footer = () => {
@@ -32,58 +34,69 @@ const Footer = () => {
   if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
   return (
-    <ul className='footer list-none'>
-      <li>
-        <span className='floatLeft'>
-          <a className='increase-font expand-click-area-left no-select' onClick={() => dispatch(scaleFontUp())}>
-            A
-          </a>
-          <a className='decrease-font expand-click-area-right no-select' onClick={() => dispatch(scaleFontDown())}>
-            A
-          </a>
-        </span>
-        <a
-          tabIndex={-1}
-          onClick={() => dispatch(showModal({ id: 'feedback' }))}
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          Feedback
-        </a>
-        <span className='footer-divider'> | </span>
-        <a tabIndex={-1} onClick={() => dispatch(showModal({ id: 'help' }))}>
-          Help
-        </a>
-        {window.firebase ? (
-          <span>
-            <span className='footer-divider'> | </span>
-            {authenticated ? (
-              <a tabIndex={-1} onClick={() => dispatch(logout())}>
-                Log Out
-              </a>
-            ) : (
-              <a tabIndex={-1} onClick={() => dispatch(showModal({ id: 'auth' }))}>
-                Log In
-              </a>
-            )}
-          </span>
-        ) : null}
-      </li>
+    <FooterWrapper>
+      <UnorderedList>
+        <li>
+          <FontChangeWrapper>
+            <FontIncreaseItem colorVariant='blue' underline onClick={() => dispatch(scaleFontUp())}>
+              A
+            </FontIncreaseItem>
+            <FontDecreaseItem colorVariant='blue' underline onClick={() => dispatch(scaleFontDown())}>
+              A
+            </FontDecreaseItem>
+          </FontChangeWrapper>
+        </li>
+        <li>
+          <Footerlink
+            colorVariant='blue'
+            underline
+            tabIndex={-1}
+            onClick={() => dispatch(showModal({ id: 'feedback' }))}
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            Feedback
+          </Footerlink>
+          <Divider> | </Divider>
+          <Footerlink colorVariant='blue' underline tabIndex={-1} onClick={() => dispatch(showModal({ id: 'help' }))}>
+            Help
+          </Footerlink>
+          {window.firebase ? (
+            <span>
+              <Divider> | </Divider>
+              {authenticated ? (
+                <Footerlink colorVariant='blue' underline tabIndex={-1} onClick={() => dispatch(logout())}>
+                  Log Out
+                </Footerlink>
+              ) : (
+                <Footerlink
+                  colorVariant='blue'
+                  underline
+                  tabIndex={-1}
+                  onClick={() => dispatch(showModal({ id: 'auth' }))}
+                >
+                  Log In
+                </Footerlink>
+              )}
+            </span>
+          ) : null}
+        </li>
+      </UnorderedList>
       <br />
 
       {user && (
         <>
-          <li>
-            <span className='dim'>Status: </span>
-            <span
-              className={
+          <InfoWrapper>
+            <InfoLabel>Status: </InfoLabel>
+            <StatusDescriptionText
+              status={
                 status === 'offline'
-                  ? 'dim'
+                  ? 'offline'
                   : !isPushQueueEmpty && !isPushing
                   ? 'error'
                   : status === 'loaded'
                   ? 'online'
-                  : undefined
+                  : 'offline'
               }
             >
               {
@@ -96,25 +109,89 @@ const Footer = () => {
                   ? 'Online'
                   : status[0].toUpperCase() + status.substring(1)
               }
-            </span>
-          </li>
-          <li>
-            <span className='dim'>Logged in as: </span>
+            </StatusDescriptionText>
+          </InfoWrapper>
+          <InfoWrapper>
+            <InfoLabel>Logged in as: </InfoLabel>
             {user.email}
-          </li>
-          <li>
-            <span className='dim'>User ID: </span>
-            <span className='mono'>{user.uid.slice(0, 6)}</span>
-          </li>
+          </InfoWrapper>
+          <InfoWrapper>
+            <InfoLabel>User ID: </InfoLabel>
+            <MonoInfoDescription>{user.uid.slice(0, 6)}</MonoInfoDescription>
+          </InfoWrapper>
         </>
       )}
 
-      <li>
-        <span className='dim'>Version: </span>
+      <InfoWrapper>
+        <InfoLabel>Version: </InfoLabel>
         <span>{pkg.version}</span>
-      </li>
-    </ul>
+      </InfoWrapper>
+    </FooterWrapper>
   )
 }
+
+const FooterWrapper = tw.footer`
+  p-5
+  m-0
+  bg-gray-900
+`
+
+const UnorderedList = tw.li`
+  text-right
+  text-sm
+  list-none
+  w-full
+
+  flex
+  items-end
+  justify-between
+`
+
+const FontChangeWrapper = tw.div`
+  text-2xl
+`
+
+const FontIncreaseItem = tw(TextLink)`
+  font-size[1em]
+  p-2.5
+`
+
+const FontDecreaseItem = tw(TextLink)`
+  font-size[0.7em]
+  p-2.5
+  -ml-1.5
+`
+
+const Footerlink = tw(TextLink)`
+  text-sm
+`
+
+const InfoWrapper = tw.div`
+  text-right
+  text-sm
+  m-1
+`
+
+const InfoLabel = tw.span`
+  text-gray-400
+`
+
+const MonoInfoDescription = tw.span`
+  font-family[monospace]
+`
+
+const statusDescriptionVaraint = {
+  offline: tw`text-gray-500 text-opacity-70`,
+  online: tw`text-green-400`,
+  error: tw`text-red-400`,
+}
+
+const StatusDescriptionText = styled.span<{ status: 'offline' | 'online' | 'error' }>`
+  ${props => statusDescriptionVaraint[props.status]}
+`
+
+const Divider = tw.span`
+  mx-1.5
+`
 
 export default Footer

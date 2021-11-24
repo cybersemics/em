@@ -7,7 +7,7 @@ module.exports = {
         modal: '10',
       },
       colors: {
-        gray: colors.gray,
+        gray: colors.trueGray,
       },
     },
   },
