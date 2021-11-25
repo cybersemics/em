@@ -234,11 +234,6 @@ a.text-link {
   margin-right: -0.5em;
 }
 
-.breadcrumbs a {
-  color: inherit;
-  text-decoration: none;
-}
-
 .recently-edited-breadcrumbs a {
   color: inherit;
   text-decoration: none;
@@ -644,76 +639,9 @@ body.dark {
   width: 24px;
 }
 
-/* Navigation styles */
-.nav {
-  position: sticky;
-  z-index: 1;
-  padding: 0 15px 0 10px;
-  bottom: 0;
-}
-
-.nav-container {
-  position: absolute;
-  width: calc(100% - 30px); /* offset .nav padding */
-  transition: background-color 0.2s ease-out;
-}
-
-.nav-container .nav-right-button-group {
-  display: grid;
-  grid-auto-flow: column;
-  grid-column-gap: 15px;
-  align-items: center;
-}
-
-.nav-fill {
-  background-color: white;
-}
-
-.dark .nav-fill {
-  background-color: black;
-}
-
-.nav-top {
-  top: 0;
-}
-
-.nav-bottom-wrapper {
-  position: sticky;
-  /* cannot use safe-area-inset here because of mobile Safari z-index issues. */
-  bottom: 0;
-}
-
-.nav-bottom {
-  padding: 0 15px;
-}
-
-.nav-bottom .nav-container {
-  position: relative;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-  /* rounded screens */
-  padding-bottom: calc(max(10px, env(safe-area-inset-bottom)));
-}
-
 .home .logo-wrapper {
   display: flex;
   align-items: center;
-}
-
-.nav .home {
-  position: relative;
-  z-index: 1;
-}
-
-.nav-top .home {
-  float: left;
-  margin-right: 2px; /* spacing before breadcrumbs */
-}
-
-.nav-bottom .home {
-  position: absolute;
-  left: -2px;
 }
 
 .modal .home {
@@ -816,12 +744,6 @@ body.dark {
 /* to remove padding from breadcrumbs used inside sidebar recenlty edited thoughts  */
 .thoughts-tab .nav-breadcrumbs {
   padding: 0;
-}
-
-/** offset logo */
-.nav-bottom .nav-breadcrumbs {
-  width: calc(100% - 40px);
-  padding-left: 35px;
 }
 
 .nav-breadcrumbs a {

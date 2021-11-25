@@ -33,6 +33,7 @@ import ModalInvites from './ModalInvites'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import { storage } from '../util/storage'
 import { State } from '../@types'
+import tw from 'twin.macro'
 
 const Content = React.lazy(() => import('./Content'))
 
@@ -59,14 +60,13 @@ interface DispatchProps {
 /** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
 const SidebarGutter = () => {
   return (
-    <div style={{ position: 'relative' }}>
-      <div
+    <SidebarGutterWrapper>
+      <GutterInner
         onClick={() => {
           store.dispatch(toggleSidebar())
         }}
-        style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
-      ></div>
-    </div>
+      ></GutterInner>
+    </SidebarGutterWrapper>
   )
 }
 
@@ -228,12 +228,12 @@ const AppComponent: FC<Props> = props => {
               )}
             </SplitPane>
 
-            <div className='nav-bottom-wrapper'>
+            <NavBottomWrapper>
               {isTouch && <SidebarGutter />}
               <Scale amount={scale!} origin='bottom left'>
                 <NavBar position='bottom' />
               </Scale>
-            </div>
+            </NavBottomWrapper>
           </>
         )}
 
@@ -246,5 +246,14 @@ const AppComponent: FC<Props> = props => {
     </div>
   )
 }
+
+const SidebarGutterWrapper = tw.div`relative`
+
+const GutterInner = tw.div`absolute height[9999px] width[30] top[30] z-index[1]`
+
+const NavBottomWrapper = tw.div`
+ sticky
+ bottom-0
+`
 
 export default connect(mapStateToProps, mapDispatchToProps)(AppComponent)

@@ -1,20 +1,19 @@
 import React from 'react'
 import { ancestors, isRoot, strip } from '../util'
-import { Child, Index, SimplePath } from '../@types'
-import classNames from 'classnames'
+import { Child, SimplePath } from '../@types'
 
 // components
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import tw from 'twin.macro'
 
 export interface ContextBreadcrumbProps {
   homeContext?: boolean
   simplePath: SimplePath
   thoughtsLimit?: number
   charLimit?: number
-  classNamesObject?: Index<boolean>
 }
 
 type OverflowChild = Child & {
@@ -25,13 +24,7 @@ type OverflowChild = Child & {
 type OverflowPath = OverflowChild[]
 
 /** Breadcrumbs for contexts within the context views. */
-export const ContextBreadcrumbs = ({
-  homeContext,
-  simplePath,
-  thoughtsLimit,
-  charLimit,
-  classNamesObject,
-}: ContextBreadcrumbProps) => {
+export const ContextBreadcrumbs = ({ homeContext, simplePath, thoughtsLimit, charLimit }: ContextBreadcrumbProps) => {
   // if thoughtsLimit or charLimit is not passed , the default value of ellipsize will be false and component will have default behaviour
   const [ellipsize, setEllipsize] = React.useState(thoughtsLimit !== undefined && charLimit !== undefined)
 
@@ -57,12 +50,7 @@ export const ContextBreadcrumbs = ({
       : charLimitedArray
 
   return (
-    <div
-      className={classNames({
-        'breadcrumbs context-breadcrumbs': true,
-        ...classNamesObject,
-      })}
-    >
+    <Wrapper>
       {isRoot(simplePath) ? (
         /*
       If the path is the root context, check homeContext which is true if the context is directly in the root (in which case the HomeLink is already displayed as the thought)
@@ -93,17 +81,14 @@ export const ContextBreadcrumbs = ({
               <CSSTransition key={i} timeout={600} classNames='fade-600'>
                 {!thoughtRanked.isOverflow ? (
                   <span>
-                    {i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
+                    {i > 0 ? <BreadcrumbDivider> • </BreadcrumbDivider> : null}
                     {subthoughts && <Link simplePath={subthoughts} label={thoughtRanked.label} />}
                     {subthoughts && <Superscript simplePath={subthoughts} />}
                   </span>
                 ) : (
                   <span>
-                    <span className='breadcrumb-divider'> • </span>
-                    <span onClick={() => setEllipsize(false)} style={{ cursor: 'pointer' }}>
-                      {' '}
-                      ...{' '}
-                    </span>
+                    <BreadcrumbDivider> • </BreadcrumbDivider>
+                    <Ellipsis onClick={() => setEllipsize(false)}> ... </Ellipsis>
                   </span>
                 )}
               </CSSTransition>
@@ -111,8 +96,25 @@ export const ContextBreadcrumbs = ({
           })}
         </TransitionGroup>
       )}
-    </div>
+    </Wrapper>
   )
 }
+
+const Wrapper = tw.div`
+  text-gray-300
+  text-sm
+`
+
+const BreadcrumbDivider = tw.span`
+  font-size[8px]
+  line-height[16px]
+  margin[0 3px]
+  text-gray-500
+`
+
+const Ellipsis = tw.span`
+  cursor-pointer
+  text-gray-500
+`
 
 export default ContextBreadcrumbs

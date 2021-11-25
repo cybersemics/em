@@ -6,6 +6,8 @@ import { decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToConte
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import { SimplePath } from '../@types'
+import TextLink from './TextLink'
+import tw from 'twin.macro'
 
 interface LinkProps {
   charLimit?: number
@@ -14,17 +16,19 @@ interface LinkProps {
 }
 
 /** Renders a link with the appropriate label to the given context. */
-const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
+const Link = ({ simplePath, label, charLimit = 32, ...delegated }: LinkProps) => {
   const emContext = equalArrays(pathToContext(simplePath), [EM_TOKEN])
   const value = label || strip(headValue(simplePath))
   const dispatch = useDispatch()
 
   // TODO: Fix tabIndex for accessibility
   return (
-    <a
+    <ContextLink
       tabIndex={-1}
+      colorVariant='gray'
       className='link'
-      onClick={e => {
+      // TODO: Fix this type workaround after fixing TextLink type issue.
+      onClick={(e: any) => {
         // eslint-disable-line react/no-danger-with-children
         e.preventDefault()
         selection.clear()
@@ -35,10 +39,16 @@ const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
         scrollCursorIntoView()
       }}
       dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : undefined}
+      {...delegated}
     >
       {!emContext ? ellipsize(decodeCharacterEntities(value), charLimit!) : null}
-    </a>
+    </ContextLink>
   )
 }
+
+const ContextLink = tw(TextLink)`
+  transition-colors
+  hover:(text-white)
+`
 
 export default Link
