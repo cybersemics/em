@@ -919,25 +919,6 @@ h1 .num-contexts {
   padding-top: 0;
 }
 
-.center-in-content {
-  text-align: center;
-  margin-left: -30px;
-}
-
-.absolute-center {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 10%; /* slightly above the fold */
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  user-select: none;
-  cursor: default;
-}
-
 .text-note,
 .placeholder,
 [placeholder]:empty::before {
@@ -2686,11 +2667,6 @@ code,
   border-color: #333;
 }
 
-.gesture-container svg {
-  position: relative;
-  top: 10px;
-}
-
 /* Table View */
 
 .table-view > .children {
@@ -3175,24 +3151,6 @@ code,
   transform: rotate(135deg);
 }
 
-@keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
-}
-
-.loading-ellipsis:after {
-  overflow: hidden;
-  position: absolute;
-  display: inline-block;
-  vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4, end) 1000ms infinite;
-  animation: ellipsis steps(4, end) 1000ms infinite;
-  content: '\2026'; /* ascii code for the ellipsis character */
-  width: 0;
-  margin-left: 0.1em;
-}
-
 @keyframes toblack {
   to {
     color: black;
@@ -3220,23 +3178,6 @@ code,
 
 .no-select {
   user-select: none;
-}
-
-@keyframes delayed-fadein {
-  0% {
-    opacity: 0;
-  }
-  72% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/** Delay the onset of the fade-in so the instructions and loading ellipsis do not appear at lal if the thoughts are loaded in under 1s. */
-.new-thought-instructions {
-  animation: 1.4s ease-out 0s normal forwards 1 delayed-fadein;
 }
 
 @keyframes preventAutoscroll {

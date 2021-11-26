@@ -7,6 +7,8 @@ import { getSetting } from '../selectors'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
 import { GesturePath, State } from '../@types'
+import styled, { keyframes } from 'styled-components'
+import tw from 'twin.macro'
 
 interface NewThoughtInstructionsProps {
   childrenLength: number
@@ -34,11 +36,9 @@ type NewThoughtInstructionsComponent = FC<NewThoughtInstructionsProps & ReturnTy
 
 /** An absolutely centered LoadingEllipsis. */
 const CenteredLoadingEllipsis = () => (
-  <div className='absolute-center'>
-    <i className='text-note'>
-      <LoadingEllipsis />
-    </i>
-  </div>
+  <AbsoluteCenteredWrapper>
+    <LoadingEllipsis />
+  </AbsoluteCenteredWrapper>
 )
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
@@ -54,7 +54,7 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
   return (
-    <div className='new-thought-instructions'>
+    <NewThoughtInstructionWrapper>
       {(localLoading || remoteLoading) && childrenLength === 0 ? (
         // show loading ellipsis when loading
         <CenteredLoadingEllipsis />
@@ -62,28 +62,73 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({
       // show special message when there are no children in tutorial
       isTutorial ? (
         childrenLength === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isTouch) ? (
-          <div className='center-in-content'>
-            <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
-          </div>
+          <NoteText>Ahhh. Open space. Unlimited possibilities.</NoteText>
         ) : // hide on mobile during TUTORIAL_STEP_FIRSTTHOUGHT since the gesture diagram is displayed
         null
       ) : (
         // default
         <>
-          <span style={{ userSelect: 'none' }}>
+          <SelectNoneContainer>
             {isTouch ? (
-              <span className='gesture-container'>
-                Swipe <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
-              </span>
+              <GestureContainer>
+                Swipe
+                <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
+                to add a new thought.
+              </GestureContainer>
             ) : (
-              <span>Hit the Enter key</span>
+              <span>Hit the Enter key to add a new thought.</span>
             )}{' '}
-            to add a new thought.
-          </span>
+          </SelectNoneContainer>
         </>
       )}
-    </div>
+    </NewThoughtInstructionWrapper>
   )
 }
+
+const DelayedFadeIn = keyframes`
+  0% {
+    opacity: 0;
+  }
+  72% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+`
+
+const NewThoughtInstructionWrapper = styled.div`
+  animation: 1.4s ease-out 0s normal forwards 1 ${DelayedFadeIn};
+`
+
+const GestureContainer = tw.span`
+  flex
+  items-center
+`
+
+const SelectNoneContainer = tw.span`
+  select-none
+`
+
+const NoteText = tw.div`
+  italic
+  text-gray-400
+  text-opacity-80
+  text-center
+`
+
+const AbsoluteCenteredWrapper = tw.div`
+  absolute  
+  top-0
+  bottom[10%]
+  right-0
+  left-0
+  flex
+  justify-center
+  items-center
+  text-center
+  select-none
+  cursor-default
+`
 
 export default connect(mapStateToProps)(NewThoughtInstructions)
