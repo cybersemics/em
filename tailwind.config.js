@@ -3,6 +3,9 @@ const colors = require('tailwindcss/colors')
 module.exports = {
   theme: {
     extend: {
+      transitionProperty: {
+        spacing: 'margin, padding',
+      },
       zIndex: {
         modal: '10',
       },

@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useRef, useState } from 'react'
+import React, { FC, useRef, useState } from 'react'
 import { connect, useDispatch } from 'react-redux'
 import classNames from 'classnames'
 import { isTouch } from '../browser'
@@ -16,6 +16,8 @@ import Editable from './Editable'
 import { SimplePath, State } from '../@types'
 import { storage } from '../util/storage'
 import * as selection from '../device/selection'
+import styled from 'styled-components'
+import tw from 'twin.macro'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
@@ -91,24 +93,18 @@ const Content: ContentComponent = props => {
       expandContextThought(null)
     }
   }
-
-  /** Generate class names. */
-  const contentClassNames = useMemo(
-    () =>
-      classNames({
-        content: true,
-        'content-tutorial': isTouch && isTutorialLocal && tutorialStep !== TUTORIAL2_STEP_SUCCESS,
-        publish: publishMode(),
-      }),
-    [tutorialStep, isTutorialLocal],
-  )
+  const isPublishMode = publishMode()
 
   return (
     <div id='content-wrapper'>
-      <div
+      <ContentWrapper
         id='content'
         ref={contentRef}
-        className={contentClassNames}
+        isTutorial={isTouch && isTutorialLocal && tutorialStep !== TUTORIAL2_STEP_SUCCESS}
+        // TODO: Fix publish mode css
+        className={classNames({
+          publish: isPublishMode,
+        })}
         onClick={clickOnEmptySpace}
         onMouseDown={() => setIsPressed(true)}
       >
@@ -127,9 +123,54 @@ const Content: ContentComponent = props => {
             )}
           </>
         )}
-      </div>
+      </ContentWrapper>
     </div>
   )
 }
+
+const ContentWrapper = styled.div<{ isTutorial?: boolean }>`
+  ${tw`
+    bg-white
+    pt-20
+    pr-2.5
+    pb-40
+    pl-12
+
+    /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */
+    relative
+    transition-transform
+
+    /* forces footer to bottom when there is little content */
+    box-border
+
+    /* prevent expanded click areas from adding scroll-x */
+    overflow-hidden
+    mx-auto
+    max-width[50em]
+
+    /* forces footer to bottom when there is little content */
+    min-height[100vh]
+
+    sm:(
+      max-width[80%]
+    )
+
+    lg:(
+      max-width[66%]
+    )
+
+    dark:(
+      bg-black
+    )
+  `}
+
+  /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
+  ${props =>
+    props.isTutorial &&
+    tw`
+      min-height[auto]
+      pb-5
+  `}
+`
 
 export default connect(mapStateToProps)(Content)

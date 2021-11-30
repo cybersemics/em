@@ -586,46 +586,12 @@ a.text-link {
   top: 2px;
 }
 
-.content {
-  background-color: white;
-  color: #111;
-  padding: 75px 10px 153px 50px
-    /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
-  position: relative;
-  transition: transform 0 ease-out, margin 0 ease-out; /* add transition time after initial load and scroll into place */
-  overflow: hidden; /* prevent expanded click areas from adding scroll-x */
-  box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
-  max-width: 66%;
-  margin: 0 auto;
-  min-height: 100vh; /* forces footer to bottom when there is little content */
-}
-
-@media (max-width: 960px) {
-  .content {
-    max-width: 80%;
-  }
-}
-
-@media (max-width: 560px) {
-  .content {
-    max-width: 50em;
-    padding-left: 40px;
-  }
-}
-
-/* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
-.content-tutorial {
-  min-height: auto;
-  padding-bottom: 20px;
-}
-
 body.dark {
   color: white;
   background-color: black;
 }
 
 .dark .root,
-.dark .content,
 .dark .modal {
   background-color: black;
   color: #e3e3e3;
@@ -950,29 +916,9 @@ h1 .num-contexts {
   padding: 0.2em 0 0.2em 100px;
 }
 
-.child > .thought-container > .bullet {
-  transition: transform 0.1s ease-in-out;
-}
-
-/* In context view, make room for breadcrumbs. */
-.child.show-contexts > .thought-container .bullet {
-  position: relative;
-  top: 1.6em;
-}
-
 .child.show-contexts > .thought-container .bullet-cursor-overlay {
   /** use transform to not interfere with existing margin-top calculation */
   transform: translateY(0.58em);
-}
-
-.child > .thought-container > .bullet .glyph {
-  position: relative;
-  /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
-  opacity: 0.8;
-  line-height: 1;
-  transition: opacity 0.75s ease-in-out;
-  margin-right: -5px; /* increase click area */
-  padding-right: 5px;
 }
 
 .search-container > .bullet-search {
@@ -983,53 +929,6 @@ h1 .num-contexts {
 
 .mobile .child > .thought-container > .bullet.show-contexts {
   margin-right: -1.5px;
-}
-
-.mobile .child > .thought-container > .bullet.show-contexts .glyph {
-  font-size: 80%;
-  left: -0.08em;
-  top: 0.05em;
-}
-
-.child.expanded:not(.leaf) > .thought-container > .bullet,
-.child.editing:not(.leaf) > .thought-container > .bullet,
-.child.cursor-parent:not(.leaf) > .thought-container > .bullet,
-.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-  display: inline-block;
-  /*margin-right: -7px; !* compensate for inline-block *!*/
-  transform: rotate(90deg);
-  transform-origin: 0.3em 0.5em;
-}
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-  transform-origin: 55% 60%;
-}
-
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
-  left: 0.06em;
-}
-
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
-  left: -0.02em;
-}
-
-.child.leaf > .thought-container > .bullet.show-contexts .glyph {
-  font-size: 90%;
-  top: -0.05em;
-}
-
-.mobile .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-  top: 0;
-  left: -0.3em;
-  margin-right: calc(-0.48em - 5px); /* offset from .child > .thought-container > .bullet .glyph margin-right */
 }
 
 .archive-check {
@@ -1054,76 +953,10 @@ h1 .num-contexts {
     padding: 0.2em 0 0.2em 100px;
   }
 
-  .android .child > .thought-container > .bullet {
-    transition: transform 0.1s ease-in-out;
-    margin-left: -3px;
-  }
-
-  .android .child.leaf > .thought-container > .bullet .glyph {
-    left: 1.7px;
-    top: -7px;
-    font-size: 26px;
-  }
-
-  .android .child > .thought-container > .bullet .glyph {
-    position: relative;
-    margin-left: -16.8px;
-    opacity: 0.8;
-    transition: opacity 0.75s ease-in-out;
-    margin-right: -5px; /* increase click area */
-    padding-right: 10.1px;
-    left: 3px;
-    font-size: 16px;
-    top: -1px;
-  }
-
-  /* Contexted Styles */
-  .android .child > .thought-container > .bullet.show-contexts .glyph {
-    font-size: 149%;
-    left: 2px;
-    top: -5.1px;
-  }
-
-  .android .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-    position: relative;
-    font-size: 160%;
-    left: 1px;
-    top: -8.1px;
-    margin-right: -5px;
-    padding-right: 10px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
-    left: 2px;
-    font-size: 20px;
-    top: -2.5px;
-  }
-
-  .android .expanded:not(.leaf) > .thought-container > .bullet,
-  .android .editing:not(.leaf) > .thought-container > .bullet,
-  .android .cursor-parent:not(.leaf) > .thought-container > .bullet,
-  .android .cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-    display: inline-block;
-    margin-right: -1px; /* compensate for inline-block */
-    transform: rotate(90deg);
-    transform-origin: -11px 9px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
-    left: 2px;
-    top: -1.6px;
-    font-size: 19px;
-  }
-
   .android .thought .bullet-cursor-overlay {
     display: none;
   }
+  
   .android .child.editing > .thought-container > .thought .bullet-cursor-overlay,
   .android .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
     display: inline;
@@ -1168,18 +1001,6 @@ h1 .num-contexts {
     top: -21.6px;
     left: -24.5px;
   }
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    content: '+';
-    left: -0.15em;
-    top: -0.05em;
-    margin-right: -0.3em;
-  }
-
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    left: 0.05em;
-    top: -0.1em;
-    margin-right: -0.1em;
-  }
 
   .android .thought,
   .android .thought-annotation {
@@ -1213,70 +1034,6 @@ h1 .num-contexts {
 /* Tablet Properties */
 
 @media (min-width: 560px) and (max-width: 1024px) {
-  .android .child > .thought-container > .bullet {
-    transition: transform 0.1s ease-in-out;
-    margin-left: -3px;
-  }
-
-  .android .child.leaf > .thought-container > .bullet .glyph {
-    left: 1.7px;
-    top: -1px;
-    font-size: 19px;
-  }
-
-  .android .child > .thought-container > .bullet .glyph {
-    position: relative;
-    margin-left: -16.8px;
-    opacity: 0.8;
-    transition: opacity 0.75s ease-in-out;
-    margin-right: -5px; /* increase click area */
-    padding-right: 10.1px;
-    left: 4px;
-    font-size: 28px;
-    top: -9px;
-  }
-
-  /* Contexted Styles */
-  .android .child > .thought-container > .bullet.show-contexts .glyph {
-    font-size: 149%;
-    left: 2px;
-    top: -5.1px;
-  }
-
-  .android .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-    position: relative;
-    font-size: 171%;
-    left: 2px;
-    top: -7.1px;
-    margin-right: -5px;
-    padding-right: 10px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
-    left: 3px;
-    top: -5.1px;
-  }
-
-  .android .expanded:not(.leaf) > .thought-container > .bullet,
-  .android .editing:not(.leaf) > .thought-container > .bullet,
-  .android .cursor-parent:not(.leaf) > .thought-container > .bullet,
-  .android .cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-    display: inline-block;
-    margin-right: -1px; /* compensate for inline-block */
-    transform: rotate(90deg);
-    transform-origin: -11px 9px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
-    left: 2px;
-    top: -9.5px;
-  }
 
   .android .thought .bullet-cursor-overlay {
     display: none;
@@ -1327,18 +1084,7 @@ h1 .num-contexts {
     top: -21.6px;
     left: -24.5px;
   }
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    content: '+';
-    left: -0.15em;
-    top: -0.05em;
-    margin-right: -0.3em;
-  }
 
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    left: 0.05em;
-    top: -0.1em;
-    margin-right: -0.1em;
-  }
   .android .thought,
   .android .thought-annotation {
     margin-top: -0.1px;
@@ -1362,35 +1108,6 @@ h1 .num-contexts {
   }
 }
 
-/*.context-chain > .child > .thought-container > .bullet .glyph {
-  font-size: 10px;
-  content: '◀';
-  top: -0.1em;
-  left: -0.1em;
-  margin-right: -0.30em;
-}
-
-.mobile .context-chain > .child > .thought-container > .bullet .glyph {
-  font-size: 14px;
-  content: '◄';
-  margin-left: -16px;
-  margin-right: -0.15em;
-}
-
-.context-chain > .child.leaf::before {
-  font-size: 12px;
-  content: '◁';
-  top: -0.05em;
-  margin-right: -0.25em;
-}
-
-.mobile .context-chain > .child.leaf::before {
-  content: '◅';
-  margin-right: 0.05em;
-  margin-left: -17px;
-  top: -0.15em;
-}
-*/
 
 /* overlay bullet for cursor */
 
@@ -1435,18 +1152,6 @@ h1 .num-contexts {
   opacity: 0.25;
 }
 
-.children-new .child > .thought-container > .bullet .glyph {
-  content: '+';
-  left: -0.15em;
-  top: -0.05em;
-  margin-right: -0.3em;
-}
-
-.mobile .children-new .child > .thought-container > .bullet .glyph {
-  left: 0.05em;
-  top: -0.1em;
-  margin-right: -0.1em;
-}
 
 /* autofocus */
 /* NOTE: distance-from-cursor-2 > .child:not(.editing) is for =focus/Zoom; */
@@ -1473,12 +1178,6 @@ h1 .num-contexts {
   cursor: pointer;
 }
 
-.distance-from-cursor-2 > .child:not(.editing):not(.cursor-parent) > .thought-container > .bullet .glyph,
-.distance-from-cursor-3 > .child:not(.cursor-parent) > .thought-container > .bullet .glyph {
-  opacity: 0;
-  pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden thought */
-}
-
 /* child */
 .distance-from-cursor-0 > .child {
   color: rgba(0, 0, 0, 1);
@@ -1503,12 +1202,7 @@ h1 .num-contexts {
 }
 
 /* sibling of cursor in =focus Zoom */
-.distance-from-cursor-2.zoomCursor > .child:not(.editing).cursor-parent > .thought-container {
-  color: rgba(0, 0, 0, 0);
-}
-.distance-from-cursor-2.zoomParent > .child:not(.editing).cursor-grandparent > .thought-container {
-  color: rgba(0, 0, 0, 0);
-}
+
 .distance-from-cursor-2.zoomCursor > .child:not(.editing) > .thought-container > .note {
   color: rgba(0, 0, 0, 0);
 }
@@ -1516,11 +1210,7 @@ h1 .num-contexts {
   color: rgba(0, 0, 0, 0);
 }
 
-/* =focus Zoom in table column 1 */
-/* hide nieces when cursor is in column 1 */
-.distance-from-cursor-1.zoomCursor > .child:not(.editing) > .thought-container {
-  color: rgba(0, 0, 0, 0);
-}
+
 /* hide cousins when cursor is in column 2 */
 .table-view > .children > .child:not(.cursor-parent) > .distance-from-cursor-1.zoomParent > .child:not(.editing) {
   color: rgba(0, 0, 0, 0);
@@ -2448,17 +2138,6 @@ code,
   transition: text-indent 0.4s ease-in-out, padding 0.4s ease-in-out, line-height 0.4s ease-in-out;
 }
 
-.children > .child > .thought-container > .bullet {
-  transition: transform 0.1s ease-in-out, text-indent 0.4s ease-in-out, left 0.4s ease-in-out, top 0.4s ease-in-out,
-    opacity 0.4s ease-in-out;
-
-  /* necessary for transition start */
-  left: 0;
-  display: inline-block;
-  margin-left: -15px;
-  line-height: 1;
-}
-
 .children > .child > * > .thought-container > .bullet-cursor-overlay {
   transition: text-indent 0.4s ease-in-out, opacity 0.4s ease-in-out;
 }
@@ -2482,16 +2161,6 @@ code,
   line-height: 1.5;
 }
 
-.prose > .children > .child > .thought-container > .bullet {
-  position: relative;
-  left: 27px;
-  top: -2px;
-  opacity: 0.5;
-}
-
-.prose > .children > .child.leaf > .thought-container > .bullet {
-  opacity: 0;
-}
 
 .prose > .children > .child > .thought-container > .thought > .thought-container > .bullet-cursor-overlay {
   opacity: 0;
@@ -2677,18 +2346,6 @@ code,
 .table-view > .children > .child {
   display: table-row;
   /* margin and padding do not work on table-row. Must apply to each cell. */
-}
-
-.table-view > .children > .child > .thought-container > .bullet {
-  display: none;
-}
-
-/* column 1 */
-.table-view > .children > .child > .thought-container {
-  display: table-cell;
-  text-align: right;
-  position: relative; /* used to constrain .drop-hover width */
-  padding-bottom: 10px; /* padding must go on column 1 cell since it may be a leaf */
 }
 
 .table-view > .children > .child > .thought-container > .thought > .editable,
@@ -2983,10 +2640,6 @@ code,
 .publish > .children > .child {
   font-family: Lora, Georgia, Times New Roman;
   left: -1.5em; /* offset parent (ul.children) margin-left */
-}
-
-.publish > .children > .child > .thought-container {
-  font-size: 28px;
 }
 
 /* title */

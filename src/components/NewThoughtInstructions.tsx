@@ -9,6 +9,7 @@ import LoadingEllipsis from './LoadingEllipsis'
 import { GesturePath, State } from '../@types'
 import styled, { keyframes } from 'styled-components'
 import tw from 'twin.macro'
+import NoteText from './NoteText'
 
 interface NewThoughtInstructionsProps {
   childrenLength: number
@@ -108,13 +109,6 @@ const GestureContainer = tw.span`
 
 const SelectNoneContainer = tw.span`
   select-none
-`
-
-const NoteText = tw.div`
-  italic
-  text-gray-400
-  text-opacity-80
-  text-center
 `
 
 const AbsoluteCenteredWrapper = tw.div`

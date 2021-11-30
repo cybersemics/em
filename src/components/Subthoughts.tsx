@@ -57,6 +57,7 @@ import {
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
+import NoteText from './NoteText'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -583,7 +584,7 @@ export const SubthoughtsComponent = ({
   return (
     <>
       {contextBinding && showContexts ? (
-        <div className='text-note text-small'>(Bound to {pathToContext(contextBinding!).join('/')})</div>
+        <NoteText>(Bound to {pathToContext(contextBinding!).join('/')})</NoteText>
       ) : null}
       {show && showContexts && !(filteredChildren.length === 0 && isRoot(simplePath)) ? (
         filteredChildren.length < (allowSingleContext ? 1 : 2) ? (
