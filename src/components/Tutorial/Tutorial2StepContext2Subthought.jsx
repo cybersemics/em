@@ -10,10 +10,10 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { head, headValue, isRoot, joinConjunction } from '../../util'
+import { headValue, isRoot, joinConjunction } from '../../util'
 
 // selectors
-import { getContexts, getChildrenRanked, childIdsToThoughts } from '../../selectors'
+import { getContexts, getChildrenRanked, childIdsToThoughts, getParentThought } from '../../selectors'
 
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
@@ -41,8 +41,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
   const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
   const contexts = getContexts(state, caseSensitiveValue)
-
-  const children = childIdsToThoughts(state, rootChildren) ?? []
+  const contextParentThoughts = contexts.map(thoughtId => getParentThought(state, thoughtId))
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
 
@@ -61,7 +60,8 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
         Notice the small number (<StaticSuperscript n={contexts.length} />
         ). This means that “{caseSensitiveValue}” appears in {contexts.length} place{contexts.length === 1 ? '' : 's'},
         or <i>contexts</i> (in our case{' '}
-        {joinConjunction(contexts.filter(parent => !isRoot(parent)).map(parent => `"${head(parent.context)}"`))}).
+        {joinConjunction(contextParentThoughts.filter(parent => !isRoot(parent)).map(parent => `"${parent.value}"`))}
+        ).
       </p>
       <p>
         Imagine{' '}
@@ -76,7 +76,9 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
       </p>
       {
         // e.g. Work
-        children.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
+        rootChildren.find(
+          child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),
+        ) &&
         // e.g. Work/To Do
         getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(
           child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),

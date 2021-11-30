@@ -16,7 +16,7 @@ import { useStore } from 'react-redux'
 const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootChildren }) => {
   const store = useStore()
 
-  const value = headValue(store.getState(), store)
+  const value = cursor && headValue(store.getState(), cursor)
 
   return (
     <Fragment>

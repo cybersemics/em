@@ -13,7 +13,6 @@ import { childIdsToThoughts } from '../../selectors'
 const Tutorial2StepContext2 = ({ tutorialChoice, rootChildren, cursor }) => {
   const store = useStore()
   const cursorThought = childIdsToThoughts(store.getState(), cursor)
-  const children = (rootChildren && childIdsToThoughts(store.getState(), rootChildren)) ?? []
 
   return (
     <Fragment>
@@ -23,7 +22,9 @@ const Tutorial2StepContext2 = ({ tutorialChoice, rootChildren, cursor }) => {
       </p>
       {
         // e.g. Work
-        children.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ? (
+        rootChildren.find(
+          child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),
+        ) ? (
           <p>
             Do you remember how to do it?
             <TutorialHint>
