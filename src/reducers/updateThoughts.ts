@@ -15,7 +15,6 @@ export interface UpdateThoughtsOptions {
   pendingDeletes?: { context: Context; thought: Parent }[]
   pendingEdits?: editThoughtPayload[]
   pendingPulls?: { path: Path }[]
-  descendantMoves?: { pathOld: Path; pathNew: Path }[]
   contextChain?: SimplePath[]
   updates?: Index<string>
   local?: boolean
@@ -69,8 +68,6 @@ const updateThoughts = (
     recentlyEdited,
     updates,
     pendingDeletes,
-    pendingEdits,
-    descendantMoves,
     pendingPulls,
     local = true,
     remote = true,

@@ -38,14 +38,11 @@ const getManyDescendantsByContext = async (
   contextArray: Context[],
   options?: { maxDepth?: number },
 ) => {
-  const thoughts = await Promise.all(contextArray.map(context => getContext(provider, context)))
+  const thoughtIds = (await Promise.all(contextArray.map(context => getContext(provider, context))))
+    .filter(Boolean)
+    .map(parent => parent!.id)
 
-  const indexMap = _.zipObject(
-    thoughts.map(thought => thought!.id),
-    contextArray,
-  )
-
-  return all(getManyDescendants(provider, indexMap, initialState(), options))
+  return all(getManyDescendants(provider, thoughtIds, initialState(), options))
 }
 
 expect.extend({

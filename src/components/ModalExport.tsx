@@ -19,7 +19,7 @@ import {
   unroot,
 } from '../util'
 import { alert, error, closeModal, pull } from '../action-creators'
-import { exportContext, getDescendantPaths, getThoughtById, simplifyPath, theme } from '../selectors'
+import { exportContext, getDescendantThoughtIds, getThoughtById, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
@@ -75,14 +75,11 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
     if (id)
       dispatch(
-        pull(
-          { [id]: context },
-          {
-            onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
-            // TODO: onRemoteThoughts ??
-            maxDepth: Infinity,
-          },
-        ),
+        pull([id], {
+          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+          // TODO: onRemoteThoughts ??
+          maxDepth: Infinity,
+        }),
       ).then(() => {
         // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
         if (isMounted.current) {
@@ -283,7 +280,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
     if (selected.type === 'text/html' || selected.type === 'text/markdown') {
       setNumDescendantsInState(
-        getDescendantPaths(state, simplePath, {
+        getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
             shouldIncludeMetaAttributes || ((thought: Parent) => !isFunction(thought.value)),
             shouldIncludeArchived || ((thought: Parent) => thought.value !== '=archive'),
@@ -555,7 +552,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
             )}
           </div>
 
-          <div className='modal-export-btns-wrapper'>
+          <div className='modal-export-btns-  '>
             <button
               className='modal-btn-export'
               disabled={!exportContent || publishing || publishedCIDs.length > 0}

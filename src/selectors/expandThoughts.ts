@@ -4,8 +4,8 @@ import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@type
 import {
   appendToPath,
   equalArrays,
+  hashContext,
   head,
-  headId,
   isDescendant,
   isFunction,
   isURL,
@@ -200,9 +200,11 @@ function expandThoughtsRecursive(
           )
         })
 
+  const contextHash = hashContext(context)
+
   const initialExpanded = {
     // expand current thought
-    [headId(path)]: returnContexts ? simpleContext : context,
+    [contextHash]: returnContexts ? context : path,
   }
 
   return keyValueBy(

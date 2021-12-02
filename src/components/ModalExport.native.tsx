@@ -13,7 +13,7 @@ import {
   unroot,
 } from '../util'
 import { alert, error, pull, modalComplete } from '../action-creators'
-import { exportContext, getDescendantPaths, getThoughtById, simplifyPath } from '../selectors'
+import { exportContext, getDescendantThoughtIds, getThoughtById, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
 import { Context, ExportOption, Parent, State, ThoughtsInterface } from '../@types'
@@ -89,14 +89,11 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
     if (id) {
       dispatch(
-        pull(
-          { [id]: context },
-          {
-            onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
-            // TODO: onRemoteThoughts ??
-            maxDepth: Infinity,
-          },
-        ),
+        pull([id], {
+          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+          // TODO: onRemoteThoughts ??
+          maxDepth: Infinity,
+        }),
       ).then(() => {
         // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
         if (isMounted.current) {
@@ -209,7 +206,7 @@ const ModalExport = () => {
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
     if (selected?.type === 'text/html') {
       setNumDescendantsInState(
-        getDescendantPaths(state, simplePath, {
+        getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
             shouldIncludeMetaAttributes || ((child: Parent) => !isFunction(child.value)),
             shouldIncludeArchived || ((child: Parent) => child.value !== '=archive'),

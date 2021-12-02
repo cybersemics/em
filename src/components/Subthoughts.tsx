@@ -19,8 +19,8 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
+  hashContext,
   head,
-  headId,
   headValue,
   isAbsolute,
   isDescendant,
@@ -120,6 +120,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const isEditing = equalPath(cursor, resolvedPath)
 
   const pathLive = isEditing ? cursor! : resolvedPath
+
+  // @MIGRATION_TODO: Access the context through nestered iteration instead of generating everytime here.
   const thoughtsLive = pathToContext(state, pathLive)
   const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
   const showContextsParent = isContextViewActive(state, parentOf(thoughtsLive))
@@ -152,8 +154,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const distance = referenceDepth
     ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, referenceDepth - (props.depth ?? 0)))
     : 0
-
-  const contextHash = headId(resolvedPath)
 
   const allChildren = getAllChildren(state, contextLive)
 
@@ -249,6 +249,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
 
   const sortPreference = getSortPreference(state, pathToContext(state, simplePathLive))
+
+  const contextHash = hashContext(thoughtsLive)
 
   return {
     contextBinding,

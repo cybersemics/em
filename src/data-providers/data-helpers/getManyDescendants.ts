@@ -2,7 +2,7 @@ import { DataProvider } from '../DataProvider'
 import { yieldAll } from '../../util'
 import { EM_TOKEN } from '../../constants'
 import getDescendantThoughts from './getDescendantThoughts'
-import { State, Context, Index, ThoughtsInterface, ThoughtId } from '../../@types'
+import { State, ThoughtsInterface, ThoughtId } from '../../@types'
 
 // hash the EM context once on load
 const emContextEncoded = EM_TOKEN
@@ -13,15 +13,15 @@ const emContextEncoded = EM_TOKEN
  */
 const getManyDescendants = async function* getManyDescendants(
   provider: DataProvider,
-  contextMap: Index<Context>,
+  thoughtIds: ThoughtId[],
   // @MIGRATION_TODO: Is removing this state dependency possible ??
   state: State,
   { maxDepth = 100 } = {},
 ): AsyncIterable<ThoughtsInterface> {
   // fetch descendant thoughts for each context in contextMap
   yield* yieldAll(
-    Object.keys(contextMap).map(key =>
-      getDescendantThoughts(provider, key as ThoughtId, state, {
+    thoughtIds.map(key =>
+      getDescendantThoughts(provider, key, state, {
         // do not limit the depth of the em context
         maxDepth: key === emContextEncoded ? Infinity : maxDepth,
       }),

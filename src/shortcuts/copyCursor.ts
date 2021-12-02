@@ -23,7 +23,7 @@ const copyCursorShortcut: Shortcut = {
     // otherwise copy whatever is in state
     if (someDescendants(state, context, (child, context) => isPending(state, [...context, child.value]))) {
       dispatch(alert('Loading thoughts...', { alertType: 'clipboard' }))
-      await dispatch(pull({ [head(simplePath)]: context }, { maxDepth: Infinity }))
+      await dispatch(pull([head(simplePath)], { maxDepth: Infinity }))
     }
 
     // get new state after pull

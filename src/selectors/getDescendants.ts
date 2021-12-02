@@ -1,11 +1,13 @@
 import _ from 'lodash'
-import { appendToPath, pathToContext, unroot } from '../util'
+import { compareByRank, sort, unroot } from '../util'
 import { getChildrenRanked } from '../selectors'
-import { Context, Parent, SimplePath, State } from '../@types'
+import { Context, Parent, State, ThoughtId } from '../@types'
 import { getAllChildrenAsThoughts } from './getChildren'
+import childIdsToThoughts from './childIdsToThoughts'
+import { getThoughtById } from './getThought'
 
 interface OptionsPath {
-  filterFunction?: (thought: Parent, simplePath: SimplePath) => boolean
+  filterFunction?: (thought: Parent) => boolean
   ordered?: boolean
 }
 
@@ -42,15 +44,23 @@ export const getDescendantContexts = (state: State, context: Context, options: O
 }
 
 /** Generates a flat list of all descendant Paths. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed. */
-export const getDescendantPaths = (state: State, simplePath: SimplePath, options: OptionsPath = {}): SimplePath[] => {
+export const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, options: OptionsPath = {}): ThoughtId[] => {
   const { filterFunction, ordered, recur } = options as OptionsPathInternal
-  const context = pathToContext(state, simplePath)
-  const children = (ordered ? getChildrenRanked : getAllChildrenAsThoughts)(state, context)
-  const filteredChildren = filterFunction ? children.filter(thought => filterFunction(thought, simplePath)) : children
+  const thought = getThoughtById(state, thoughtId)
+
+  if (!thought) return []
+
+  const thoughts = childIdsToThoughts(state, thought.children) || []
+
+  const children = ordered ? sort(thoughts, compareByRank) : thoughts
+
+  if (!children) return []
+
+  const filteredChildren = filterFunction ? children.filter(thought => filterFunction(thought)) : children
   // only append current thought in recursive calls
-  return (recur ? [simplePath] : []).concat(
+  return (recur ? [thoughtId] : []).concat(
     _.flatMap(filteredChildren, child =>
-      getDescendantPaths(state, appendToPath(simplePath, child.id), {
+      getDescendantThoughtIds(state, child.id, {
         filterFunction,
         recur: true,
         ordered,
