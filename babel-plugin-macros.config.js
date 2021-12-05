@@ -1,13 +1,9 @@
 module.exports = {
   twin: {
-    preset: 'styled-components',
+    preset: 'emotion',
     styled: {
       import: 'default',
-      from: 'styled-components/macro',
-    },
-    css: {
-      import: 'css',
-      from: 'styled-components/macro',
+      from: '@emotion/styled/macro',
     },
   },
 }

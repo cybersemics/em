@@ -1,7 +1,6 @@
 import React from 'react'
 import Loader from './Loader'
-import tw, { styled } from 'twin.macro'
-import { css } from 'styled-components'
+import tw, { styled, css } from 'twin.macro'
 
 interface ActionButtonProps {
   title: string

@@ -14,8 +14,7 @@ import _ from 'lodash'
 import { baseUrl } from '../device/router'
 import Message from './Message'
 import Input from './Input'
-import tw from 'twin.macro'
-import styled from 'styled-components'
+import tw, { styled } from 'twin.macro'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {

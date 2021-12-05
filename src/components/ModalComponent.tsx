@@ -4,8 +4,7 @@ import classNames from 'classnames'
 import { FADEOUT_DURATION } from '../constants'
 import { Connected } from '../@types'
 import { closeModal, modalComplete } from '../action-creators'
-import styled, { css } from 'styled-components'
-import tw from 'twin.macro'
+import tw, { styled, css } from 'twin.macro'
 import { AnimatePresence, motion } from 'framer-motion'
 
 interface ModalActionHelpers {

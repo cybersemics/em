@@ -1,9 +1,7 @@
 import React, { CSSProperties } from 'react'
-
 import { Icon } from 'react-icons-kit'
 import { chevronDown } from 'react-icons-kit/feather/chevronDown'
-import styled from 'styled-components'
-import tw from 'twin.macro'
+import tw, { styled } from 'twin.macro'
 
 interface ChevronProps {
   onClickHandle: () => void

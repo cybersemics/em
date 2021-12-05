@@ -7,8 +7,8 @@ import { getSetting } from '../selectors'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
 import { GesturePath, State } from '../@types'
-import styled, { keyframes } from 'styled-components'
-import tw from 'twin.macro'
+import { keyframes } from '@emotion/react'
+import tw, { styled } from 'twin.macro'
 import NoteText from './NoteText'
 
 interface NewThoughtInstructionsProps {

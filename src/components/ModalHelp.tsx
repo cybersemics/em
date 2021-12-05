@@ -14,8 +14,7 @@ import GestureDiagram from './GestureDiagram'
 import Logs from './Logs'
 import Modal from './Modal'
 import { ActionButton } from './ActionButton'
-import styled from 'styled-components'
-import tw from 'twin.macro'
+import tw, { styled } from 'twin.macro'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {

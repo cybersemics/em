@@ -1,6 +1,6 @@
 import React from 'react'
-import styled, { keyframes } from 'styled-components'
-import tw from 'twin.macro'
+import { keyframes } from '@emotion/react'
+import tw, { styled } from 'twin.macro'
 
 /** Renders text with an animated '...'. */
 const LoadingEllipsis = ({ text = 'Loading' }) => <EllipsisWrapper>{text}</EllipsisWrapper>

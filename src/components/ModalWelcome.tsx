@@ -8,8 +8,7 @@ import { tutorial } from '../action-creators'
 import { getAllChildren } from '../selectors'
 import { State } from '../@types'
 import TextLink from './TextLink'
-import styled from 'styled-components'
-import tw from 'twin.macro'
+import tw, { styled } from 'twin.macro'
 
 /** Shrink modal text and logos to fit container vertically. */
 const onRef = (el: HTMLDivElement) => {

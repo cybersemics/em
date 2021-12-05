@@ -2,25 +2,25 @@ import React, { useEffect } from 'react'
 import { ThunkDispatch } from 'redux-thunk'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
-import { store } from '../store'
-import globals from '../globals'
-import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
-import { compareReasonable } from '../util/compareThought'
-import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { store } from '../../store'
+import globals from '../../globals'
+import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../../action-creators'
+import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../../constants'
+import { compareReasonable } from '../../util/compareThought'
+import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../../@types'
 
 // components
-import Bullet from './Bullet'
-import Byline from './Byline'
-import Note from './Note'
-import StaticThought from './StaticThought'
-import Subthoughts from './Subthoughts'
-import ThoughtAnnotation from './ThoughtAnnotation'
-import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
+import Bullet from '../Bullet'
+import Byline from '../Byline'
+import Note from '../Note'
+import StaticThought from '../StaticThought'
+import Subthoughts from '../Subthoughts'
+import ThoughtAnnotation from '../ThoughtAnnotation'
+import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from '../DragAndDropThought'
 
 // hooks
-import useIsChildHovering from '../hooks/useIsChildHovering'
-import useLongPress from '../hooks/useLongPress'
+import useIsChildHovering from '../../hooks/useIsChildHovering'
+import useLongPress from '../../hooks/useLongPress'
 
 // util
 import {
@@ -37,7 +37,7 @@ import {
   parseJsonSafe,
   pathToContext,
   publishMode,
-} from '../util'
+} from '../../util'
 
 // selectors
 import {
@@ -50,8 +50,10 @@ import {
   hasChildren,
   isContextViewActive,
   rootedParentOf,
-} from '../selectors'
-import styled from 'styled-components'
+} from '../../selectors'
+
+import { styled } from 'twin.macro'
+import { ThoughtComponentWrapper } from './styles'
 
 /**********************************************************************
  * Redux
@@ -376,116 +378,113 @@ const ThoughtContainer = ({
       ? styleEnv
       : style
 
-  return dropTarget(
-    dragSource(
-      <li
-        style={{
-          ...styleContainer,
-          ...styleContainerZoom,
-        }}
-        className={classNames({
-          child: true,
-          'child-divider': isDivider(value),
-          'cursor-parent': isCursorParent,
-          'cursor-grandparent': isCursorGrandparent,
-          // used so that the autofocus can properly highlight the immediate parent of the cursor
-          editing: isEditing,
-          expanded: isExpanded,
-          function: isFunction(value), // eslint-disable-line quote-props
-          'has-only-child': children.length === 1,
-          'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
-          // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
-          // this is a bit of a hack since the bullet transform checks leaf instead of expanded
-          // TODO: Consolidate with isLeaf if possible
-          leaf: isLeaf || (isEditing && globals.suppressExpansion),
-          // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
-          prose: view === 'Prose',
-          'show-contexts': showContexts,
-          'show-contexts-no-breadcrumbs': simplePath.length === 2,
-          // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
-          'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(path)),
-        })}
-        ref={el => {
-          if (el) {
-            dragPreview()
-          }
-        }}
-        // disable to test if this solves the app switch touch issue on mobile PWA
-        // { ...longPressHandlerProps }
-      >
-        <ThoughtContainerWrapper className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
-          {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
-            <Bullet
-              isEditing={isEditing}
-              context={pathToContext(simplePath)}
-              leaf={isLeaf}
-              onClick={(e: React.MouseEvent) => {
-                if (!isEditing || children.length === 0) {
-                  e.stopPropagation()
-                  store.dispatch(setCursor({ path: simplePath }))
-                }
-              }}
-            />
-          )}
-
-          <span
-            className='drop-hover'
-            style={{
-              display: shouldDisplayHover ? 'inline' : 'none',
-            }}
-          ></span>
-
-          <ThoughtAnnotation
-            env={env}
-            path={path}
-            homeContext={homeContext}
-            minContexts={allowSingleContext ? 0 : 2}
-            showContextBreadcrumbs={showContextBreadcrumbs}
-            showContexts={showContexts}
-            style={styleNew}
-            simplePath={simplePath}
-          />
-
-          <StaticThought
-            env={env}
-            path={path}
-            cursorOffset={cursorOffset}
-            hideBullet={hideBullet}
-            homeContext={homeContext}
-            isDragging={isDragging}
-            isPublishChild={isPublishChild}
+  return (
+    <ThoughtComponentWrapper
+      style={{
+        ...styleContainer,
+        ...styleContainerZoom,
+      }}
+      className={classNames({
+        child: true,
+        'child-divider': isDivider(value),
+        'cursor-parent': isCursorParent,
+        'cursor-grandparent': isCursorGrandparent,
+        // used so that the autofocus can properly highlight the immediate parent of the cursor
+        editing: isEditing,
+        expanded: isExpanded,
+        function: isFunction(value), // eslint-disable-line quote-props
+        'has-only-child': children.length === 1,
+        'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
+        // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
+        // this is a bit of a hack since the bullet transform checks leaf instead of expanded
+        // TODO: Consolidate with isLeaf if possible
+        leaf: isLeaf || (isEditing && globals.suppressExpansion),
+        // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
+        prose: view === 'Prose',
+        'show-contexts': showContexts,
+        'show-contexts-no-breadcrumbs': simplePath.length === 2,
+        // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
+        'table-view': view === 'Table' && !isContextViewActive(state, pathToContext(path)),
+      })}
+      ref={el => {
+        if (el) {
+          dropTarget(dragSource(el))
+          dragPreview()
+        }
+      }}
+      // disable to test if this solves the app switch touch issue on mobile PWA
+      // { ...longPressHandlerProps }
+    >
+      <ThoughtContainerWrapper className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
+        {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
+          <Bullet
             isEditing={isEditing}
-            isLeaf={isLeaf}
-            isVisible={isVisible}
-            publish={publish}
-            rank={rank}
-            showContextBreadcrumbs={showContextBreadcrumbs}
-            showContexts={showContexts}
-            style={styleNew}
-            simplePath={simplePath}
-            toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
-            view={view}
-            editing={editing}
+            context={pathToContext(simplePath)}
+            leaf={isLeaf}
+            onClick={(e: React.MouseEvent) => {
+              if (!isEditing || children.length === 0) {
+                e.stopPropagation()
+                store.dispatch(setCursor({ path: simplePath }))
+              }
+            }}
           />
+        )}
 
-          <Note path={simplePathLive} />
-        </ThoughtContainerWrapper>
+        <span
+          className='drop-hover'
+          style={{
+            display: shouldDisplayHover ? 'inline' : 'none',
+          }}
+        ></span>
 
-        {publish && context.length === 0 && <Byline context={thoughts} />}
-
-        {/* Recursive Subthoughts */}
-        <Subthoughts
-          allowSingleContext={allowSingleContext}
-          childrenForced={childrenForced}
+        <ThoughtAnnotation
           env={env}
           path={path}
-          depth={depth}
-          isParentHovering={isAnyChildHovering}
-          showContexts={allowSingleContext}
+          homeContext={homeContext}
+          minContexts={allowSingleContext ? 0 : 2}
+          showContextBreadcrumbs={showContextBreadcrumbs}
+          showContexts={showContexts}
+          style={styleNew}
           simplePath={simplePath}
         />
-      </li>,
-    ),
+
+        <StaticThought
+          env={env}
+          path={path}
+          cursorOffset={cursorOffset}
+          hideBullet={hideBullet}
+          homeContext={homeContext}
+          isDragging={isDragging}
+          isPublishChild={isPublishChild}
+          isEditing={isEditing}
+          isLeaf={isLeaf}
+          isVisible={isVisible}
+          publish={publish}
+          rank={rank}
+          showContextBreadcrumbs={showContextBreadcrumbs}
+          showContexts={showContexts}
+          style={styleNew}
+          simplePath={simplePath}
+          toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
+          view={view}
+          editing={editing}
+        />
+
+        <Note path={simplePathLive} />
+      </ThoughtContainerWrapper>
+      {publish && context.length === 0 && <Byline context={thoughts} />}
+      {/* Recursive Subthoughts */}
+      <Subthoughts
+        allowSingleContext={allowSingleContext}
+        childrenForced={childrenForced}
+        env={env}
+        path={path}
+        depth={depth}
+        isParentHovering={isAnyChildHovering}
+        showContexts={allowSingleContext}
+        simplePath={simplePath}
+      />
+    </ThoughtComponentWrapper>
   )
 }
 
@@ -495,28 +494,28 @@ ThoughtContainer.displayName = 'ThoughtContainer'
 const ThoughtComponent = connect(mapStateToProps, mapDispatchToProps)(DragAndDropThought(ThoughtContainer))
 
 const ThoughtContainerWrapper = styled.div`
-  .distance-from-cursor-2.zoomCursor > .child:not(.editing).cursor-parent > & {
+  .distance-from-cursor-2.zoomCursor > ${ThoughtComponentWrapper}:not(.editing).cursor-parent > & {
     color: rgba(0, 0, 0, 0);
   }
 
-  .distance-from-cursor-2.zoomParent > .child:not(.editing).cursor-grandparent > & {
+  .distance-from-cursor-2.zoomParent > ${ThoughtComponentWrapper}:not(.editing).cursor-grandparent > & {
     color: rgba(0, 0, 0, 0);
   }
 
   /* =focus Zoom in table column 1 */
   /* hide nieces when cursor is in column 1 */
-  .distance-from-cursor-1.zoomCursor > .child:not(.editing) > & {
+  .distance-from-cursor-1.zoomCursor > ${ThoughtComponentWrapper}:not(.editing) > & {
     color: rgba(0, 0, 0, 0);
   }
   /* Table view */
-  .table-view > .children > .child > & {
+  .table-view > .children > ${ThoughtComponentWrapper} > & {
     display: table-cell;
     text-align: right;
     position: relative; /* used to constrain .drop-hover width */
     padding-bottom: 10px; /* padding must go on column 1 cell since it may be a leaf */
   }
 
-  .publish > .children > .child > & {
+  .publish > .children > ${ThoughtComponentWrapper} > & {
     font-size: 28px;
   }
 `

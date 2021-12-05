@@ -29,10 +29,9 @@ import useOnClickOutside from 'use-onclickoutside'
 import download from '../device/download'
 import * as selection from '../device/selection'
 import { Child, Context, ExportOption, Path, SimplePath, State, ThoughtsInterface } from '../@types'
-import tw from 'twin.macro'
+import tw, { styled } from 'twin.macro'
 import { ActionButton } from './ActionButton'
 import TextLink from './TextLink'
-import styled from 'styled-components'
 import TextArea from './TextArea'
 
 /******************************************************************************
