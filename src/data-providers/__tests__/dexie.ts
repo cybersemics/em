@@ -8,6 +8,8 @@ import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getLexeme'
 import testTimer from '../../test-helpers/testTimer'
+import { getThoughtIdByContext } from '../../util'
+import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
@@ -45,9 +47,6 @@ describe('integration', () => {
     const thoughtDB = await dbGetThought(db, 'Settings')
 
     expect(thoughtDB).not.toBeUndefined()
-    expect(thoughtDB!.contexts).toHaveLength(1)
-
-    expect(thoughtState!.contexts[0].id).toEqual(thoughtDB!.contexts[0].id)
   })
 
   it('persist newThought', async () => {
@@ -59,11 +58,13 @@ describe('integration', () => {
 
     fakeTimer.useRealTimer()
 
+    const thoughtAId = getThoughtIdByContext(store.getState(), ['a'])
+
     // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
-      children: [{ value: 'a', rank: 0 }],
+      children: [thoughtAId],
     })
   })
 
@@ -72,23 +73,24 @@ describe('integration', () => {
 
     store.dispatch([
       { type: 'newThought', value: '' },
-      {
-        type: 'editThought',
-        context: [HOME_TOKEN],
+      editThoughtAtFirstMatchActionCreator({
+        at: [''],
         oldValue: '',
         newValue: 'a',
-        path: [{ value: '', rank: 0 }],
-      },
+        rankInContext: 0,
+      }),
     ])
 
     await fakeTimer.runAllAsync()
+
+    const thoughtAId = getThoughtIdByContext(store.getState(), ['a'])
 
     fakeTimer.useRealTimer()
 
     const parentEntryRoot = await getContext(db, [HOME_TOKEN])
 
     expect(parentEntryRoot).toMatchObject({
-      children: [{ value: 'a', rank: 0 }],
+      children: [thoughtAId],
     })
   })
 })

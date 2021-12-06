@@ -5,17 +5,21 @@ export { default as attribute } from './attribute'
 export { default as attributeEquals } from './attributeEquals'
 export { default as canShowModal } from './canShowModal'
 export { default as chain } from './chain'
+export { default as childIdsToThoughts } from './childIdsToThoughts'
 export { default as decodeContextUrl } from './decodeContextUrl'
 export { default as decodeThoughtsUrl } from './decodeThoughtsUrl'
 export { default as expandThoughts } from './expandThoughts'
 export { default as exportContext } from './exportContext'
+export { default as getAncestorBy, getAncestorByValue, isDescendantOfEmContext } from './getAncestorBy'
 export { default as getChildPath } from './getChildPath'
 export { default as getContexts } from './getContexts'
+export { default as getContextForThought } from './getContextForThought'
 export { default as getContextsSortedAndRanked } from './getContextsSortedAndRanked'
-export { getDescendantContexts, getDescendantPaths, someDescendants } from './getDescendants'
+export { getDescendantContexts, getDescendantThoughtIds, someDescendants } from './getDescendants'
 export { default as getEditingPath } from './getEditingPath'
 export { default as getNextRank } from './getNextRank'
 export { default as getNgrams } from './getNgrams'
+export { default as getParentThought } from './getParentThought'
 export { default as getPrevRank } from './getPrevRank'
 export { default as getRankAfter } from './getRankAfter'
 export { default as getRankBefore } from './getRankBefore'
@@ -27,7 +31,8 @@ export { default as getStyle } from './getStyle'
 export { default as getLexeme } from './getLexeme'
 export { default as getThoughtAfter } from './getThoughtAfter'
 export { default as getThoughtBefore } from './getThoughtBefore'
-export { default as getVisibleContexts } from './getVisibleContexts'
+export { default as getVisiblePaths } from './getVisiblePaths'
+export { getThoughtByPath, getThoughtById } from './getThought'
 export { default as hasChild } from './hasChild'
 export { default as hasLexeme } from './hasLexeme'
 export { default as hashContextUrl } from './hashContextUrl'
@@ -56,6 +61,7 @@ export {
   getAllChildrenByContextHash,
   getChildren,
   getChildrenRanked,
+  getChildrenRankedById,
   getAllChildrenSorted,
   getChildrenSorted,
   getParent,

@@ -3,15 +3,15 @@ import { ThunkMiddleware } from 'redux-thunk'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import {
   expandThoughts,
-  getAllChildrenByContextHash,
   getContexts,
-  getVisibleContexts,
+  getThoughtById,
+  getVisiblePaths,
   hasPushes,
   isContextViewActive,
 } from '../selectors'
-import { equalArrays, hashContext, head, keyValueBy, unroot } from '../util'
+import { equalArrays, head, keyValueBy } from '../util'
 import { pull } from '../action-creators'
-import { Child, Context, ContextHash, Index, State, ThoughtContext } from '../@types'
+import { ThoughtId, Context, Index, State, Path } from '../@types'
 
 /** Debounce visible thought checks to avoid checking on every action. */
 const updatePullQueueDelay = 10
@@ -20,41 +20,44 @@ const updatePullQueueDelay = 10
 const flushPullQueueDelay = 500
 
 /** Creates the initial pullQueue with only the em and root contexts. */
-const initialPullQueue = (): Index<Context> => ({
-  [hashContext([EM_TOKEN])]: [EM_TOKEN],
-  [hashContext([HOME_TOKEN])]: [HOME_TOKEN],
+const initialPullQueue = (): Record<ThoughtId, true> => ({
+  [EM_TOKEN]: true,
+  [HOME_TOKEN]: true,
 })
 
-/** Appends all visible contexts and their children to the pullQueue. */
-const appendVisibleContexts = (state: State, pullQueue: Index<Context>, visibleContexts: Index<Context>) => {
-  const {
-    thoughts: { contextIndex },
-  } = state
-
+/** Appends all visible paths and their children to the pullQueue. */
+const appendVisiblePathsChildren = (
+  state: State,
+  pullQueue: Record<ThoughtId, true>,
+  visiblePaths: Index<Path>,
+): Record<ThoughtId, true> => {
   // get the encoded context keys that are not in the contextIndex
-  const expandedKeys = Object.keys(visibleContexts) as ContextHash[]
+  const expandedKeys = Object.keys(visiblePaths)
 
   return keyValueBy(
     expandedKeys,
-    key => {
-      const context = visibleContexts[key]
-      const showContexts = isContextViewActive(state, context)
+    contextHash => {
+      const path = visiblePaths[contextHash]
 
-      const children = showContexts
-        ? getContexts(state, head(context))
-        : (getAllChildrenByContextHash(state, key) as (Child | ThoughtContext)[])
+      const thoughtId = head(path)
+
+      // @MIGRATION-TODO: Fix this after context view starts working
+      const showContexts = isContextViewActive(state, [])
+      const thought = getThoughtById(state, thoughtId)
+
+      const children = thought
+        ? showContexts
+          ? getContexts(state, thought.value)
+          : state.thoughts.contextIndex[thoughtId].children
+        : []
 
       return {
         // current thought
-        ...(!contextIndex[key] || contextIndex[key].pending ? { [key]: context } : null),
-
+        ...(!thought || thought.pending ? { [thoughtId]: true } : null),
         // because only parents are specified by visibleContexts, we need to queue the children as well
-        ...keyValueBy(children, child => {
-          const contextChild = showContexts
-            ? (child as ThoughtContext).context
-            : unroot([...context, (child as Child).value])
-          const keyChild = hashContext(contextChild)
-          return contextIndex[keyChild]?.pending ? { [keyChild]: contextChild } : null
+        ...keyValueBy(children, childId => {
+          const childThought = getThoughtById(state, childId)
+          return !childThought || childThought.pending ? { [childId]: true } : null
         }),
       }
     },
@@ -75,8 +78,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // track when expanded changes
   let lastExpanded: Index<Context> = {} // eslint-disable-line fp/no-let
 
-  // track when visible contexts change
-  let lastVisibleContexts: Index<Context> = {} // eslint-disable-line fp/no-let
+  // track when visible paths change
+  let lastVisiblePaths: Index<Path> = {} // eslint-disable-line fp/no-let
 
   // track when search contexts change
   let lastSearchContexts: State['searchContexts'] = {} // eslint-disable-line fp/no-let
@@ -89,15 +92,14 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
   const flushPullQueue = async ({ forcePull }: { forcePull?: boolean } = {}) => {
     // expand pull queue to include visible descendants and search contexts
-    const extendedPullQueue = appendVisibleContexts(getState(), pullQueue, {
-      ...lastVisibleContexts,
-      ...lastSearchContexts,
-    })
+    const extendedPullQueue = appendVisiblePathsChildren(getState(), pullQueue, lastVisiblePaths)
 
     pullQueue = {}
 
+    const toBePulledThoughtIds = Object.keys(extendedPullQueue) as ThoughtId[]
+
     // if there are any pending thoughts remaining after the pull, we need to add them to the pullQueue and immediately flush
-    const hasMorePending = await dispatch(pull(extendedPullQueue, { force: forcePull }))
+    const hasMorePending = await dispatch(pull(toBePulledThoughtIds, { force: forcePull }))
 
     const { user } = getState()
     if (!user && hasMorePending) {
@@ -131,9 +133,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       state.searchContexts === lastSearchContexts ||
       equalArrays(Object.keys(state.searchContexts ?? {}), Object.keys(lastSearchContexts ?? {}))
 
-    const expandedContexts = expandThoughts(state, state.cursor, {
-      returnContexts: true,
-    })
+    const expandedContexts = expandThoughts(state, state.cursor)
 
     // return if expanded is the same, unless force is specified or expanded is empty
     if (
@@ -150,18 +150,18 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     lastExpanded = expandedContexts
 
-    const visibleContexts = getVisibleContexts(state, expandedContexts)
+    const visiblePaths = getVisiblePaths(state, expandedContexts)
 
     if (
       !forceFlush &&
       !forcePull &&
-      equalArrays(Object.keys(visibleContexts), Object.keys(lastVisibleContexts)) &&
+      equalArrays(Object.keys(visiblePaths), Object.keys(lastVisiblePaths)) &&
       isSearchSame
     )
       return
 
     // update last visibleContexts
-    lastVisibleContexts = visibleContexts
+    lastVisiblePaths = visiblePaths
 
     // update last searchContexts
     lastSearchContexts = state.searchContexts
@@ -184,7 +184,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // reset internal state variables when clear action is dispatched
     if (action.type === 'clear') {
       lastExpanded = {}
-      lastVisibleContexts = {}
+      lastVisiblePaths = {}
       pullQueue = initialPullQueue()
     }
     // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.

@@ -43,7 +43,7 @@ const cursorUpShortcut: Shortcut = {
 
     // use default browser behavior in prose mode
     const contextRanked = parentOf(cursor)
-    const isProseView = attributeEquals(state, pathToContext(contextRanked), '=view', 'Prose')
+    const isProseView = attributeEquals(state, pathToContext(state, contextRanked), '=view', 'Prose')
     const isProseMode = isProseView && selection.offset()! > 0
     if (isProseMode) return false
 

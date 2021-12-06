@@ -52,6 +52,7 @@ let fixContextIndex = (max = 100000) => {
                 },
               ],
               lastUpdated: lastUpdated,
+              id: parentEntryAccum.id
             }
           }
         })

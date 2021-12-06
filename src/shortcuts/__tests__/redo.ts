@@ -1,8 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext } from '../../selectors'
+import { childIdsToThoughts, exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
 
 it('redo thought change', () => {
   const store = createTestStore()
@@ -14,13 +15,11 @@ it('redo thought change', () => {
         - b`,
     }),
     { type: 'cursorUp' },
-    {
-      type: 'editThought',
+    editThoughtAtFirstMatchActionCreator({
       newValue: 'aa',
       oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }],
-    },
+      at: ['a'],
+    }),
     { type: 'undoAction' },
   ])
 
@@ -57,27 +56,21 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },
-    {
-      type: 'editThought',
+    editThoughtAtFirstMatchActionCreator({
       newValue: 'arizona',
       oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }],
-    },
+      at: ['a'],
+    }),
     setCursorFirstMatchActionCreator(['arizona', 'b']),
     { type: 'cursorBack' },
     { type: 'cursorUp' },
     { type: 'cursorDown' },
-    {
-      type: 'editThought',
+
+    editThoughtAtFirstMatchActionCreator({
       newValue: 'boston',
       oldValue: 'b',
-      context: ['arizona'],
-      path: [
-        { value: 'arizona', rank: 0 },
-        { value: 'b', rank: 0 },
-      ],
-    },
+      at: ['arizona', 'b'],
+    }),
     { type: 'cursorDown' },
     { type: 'undoAction' },
     { type: 'undoAction' },
@@ -85,12 +78,12 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'redoAction' },
   ])
 
-  const cursorAfterFirstRedo = store.getState().cursor
+  const cursorAfterFirstRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
   expect(cursorAfterFirstRedo).toMatchObject([{ value: 'arizona', rank: 0 }])
 
   store.dispatch({ type: 'redoAction' })
   const state = store.getState()
-  const cursorAfterSecondRedo = store.getState().cursor
+  const cursorAfterSecondRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
   expect(cursorAfterSecondRedo).toMatchObject([{ value: 'arizona' }, { value: 'boston' }])
 
   const exportedAfterRedo = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -111,27 +104,21 @@ it('redo contiguous changes', () => {
         - A
         - B`,
     }),
-    {
-      type: 'editThought',
+    editThoughtAtFirstMatchActionCreator({
       newValue: 'Atlantic',
       oldValue: 'A',
-      context: [HOME_TOKEN],
-      path: [{ value: 'A', rank: 0 }],
-    },
-    {
-      type: 'editThought',
+      at: ['A'],
+    }),
+    editThoughtAtFirstMatchActionCreator({
       newValue: 'Atlantic ',
       oldValue: 'Atlantic',
-      context: [HOME_TOKEN],
-      path: [{ value: 'Atlantic', rank: 0 }],
-    },
-    {
-      type: 'editThought',
+      at: ['Atlantic'],
+    }),
+    editThoughtAtFirstMatchActionCreator({
       newValue: 'Atlantic City',
       oldValue: 'Atlantic ',
-      context: [HOME_TOKEN],
-      path: [{ value: 'Atlantic ', rank: 0 }],
-    },
+      at: ['Atlantic'],
+    }),
     { type: 'undoAction' },
   ])
 

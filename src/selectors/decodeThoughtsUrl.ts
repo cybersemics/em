@@ -1,7 +1,8 @@
 import { HOME_TOKEN } from '../constants'
-import { componentToThought, hashContext, keyValueBy, owner } from '../util'
+import { componentToThought, keyValueBy, owner } from '../util'
 import { pathExists, rankThoughtsFirstMatch } from '../selectors'
 import { State } from '../@types'
+import { getParent } from './getChildren'
 
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null
@@ -25,14 +26,16 @@ const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
   }
 
   const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [HOME_TOKEN]
+
   const pathUnranked = urlPath.map(componentToThought)
-  const contextViews = keyValueBy(urlPath, (cur, i) =>
-    /~$/.test(cur)
+  const contextViews = keyValueBy(urlPath, (cur, i) => {
+    const parent = getParent(state, pathUnranked.slice(0, i + 1))
+    return parent && /~$/.test(cur)
       ? {
-          [hashContext(pathUnranked.slice(0, i + 1))]: true,
+          [parent.id]: true,
         }
-      : null,
-  )
+      : null
+  })
 
   // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
   // if exists is specified and the thoughts are not yet loaded into state, return null

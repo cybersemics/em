@@ -8,8 +8,8 @@ import {
   ellipsize,
   exportPhrase,
   getPublishUrl,
-  hashContext,
-  headValue,
+  getThoughtIdByContext,
+  head,
   isDocumentEditable,
   isFunction,
   isRoot,
@@ -19,7 +19,7 @@ import {
   unroot,
 } from '../util'
 import { alert, error, closeModal, pull } from '../action-creators'
-import { exportContext, getAllChildren, getDescendantPaths, simplifyPath, theme } from '../selectors'
+import { exportContext, getDescendantThoughtIds, getThoughtById, simplifyPath, theme } from '../selectors'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
@@ -28,7 +28,8 @@ import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
 import download from '../device/download'
 import * as selection from '../device/selection'
-import { Child, Context, ExportOption, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+import { Context, ExportOption, Parent, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /******************************************************************************
  * Contexts
@@ -52,6 +53,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
   const dispatch = useDispatch()
   const isMounted = useRef(false)
+  const store = useStore()
 
   /** Handle new thoughts pulled. */
   const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
@@ -68,21 +70,22 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
     if (isMounted.current) return
 
     isMounted.current = true
-    dispatch(
-      pull(
-        { [hashContext(context)]: context },
-        {
+
+    const id = getThoughtIdByContext(store.getState(), context)
+
+    if (id)
+      dispatch(
+        pull([id], {
           onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
           // TODO: onRemoteThoughts ??
           maxDepth: Infinity,
-        },
-      ),
-    ).then(() => {
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-      if (isMounted.current) {
-        setIsPulling(false)
-      }
-    })
+        }),
+      ).then(() => {
+        // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+        if (isMounted.current) {
+          setIsPulling(false)
+        }
+      })
 
     return () => {
       isMounted.current = false
@@ -221,8 +224,9 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
   const dispatch = useDispatch()
   const state = store.getState()
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getAllChildren(state, contextTitle)[0]
-  const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
+  const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
+  const cursorThought = getThoughtById(state, head(cursor))
+  const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
   const titleShort = ellipsize(title)
   const titleMedium = ellipsize(title, 25)
 
@@ -276,10 +280,10 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
     if (selected.type === 'text/html' || selected.type === 'text/markdown') {
       setNumDescendantsInState(
-        getDescendantPaths(state, simplePath, {
+        getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
-            shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
-            shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
+            shouldIncludeMetaAttributes || ((thought: Parent) => !isFunction(thought.value)),
+            shouldIncludeArchived || ((thought: Parent) => thought.value !== '=archive'),
           ),
         }).length,
       )
@@ -310,7 +314,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       dispatch(error({ value: 'Error copying thoughts' }))
 
       clearTimeout(globals.errorTimer)
-      globals.errorTimer = setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
+      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
     })
 
     return () => {
@@ -548,7 +552,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
             )}
           </div>
 
-          <div className='modal-export-btns-wrapper'>
+          <div className='modal-export-btns-  '>
             <button
               className='modal-btn-export'
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
@@ -587,7 +591,7 @@ const ModalExportWrapper = () => {
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
 
   return (
     <PullProvider context={context}>

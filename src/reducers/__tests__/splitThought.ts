@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { childIdsToThoughts, exportContext } from '../../selectors'
 
 // reducers
 import newThought from '../newThought'
@@ -90,5 +90,7 @@ it('cursor moves to second thought', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'ple', rank: 1 }])
+  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(cursorThoughts).toMatchObject([{ value: 'ple', rank: 1 }])
 })

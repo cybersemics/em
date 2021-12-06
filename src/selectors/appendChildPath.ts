@@ -8,7 +8,7 @@ import isContextViewActive from './isContextViewActive'
 const resolve = (state: State, childPath: SimplePath, parentThoughtsResolved?: Path) =>
   resolveArray([
     // slow, but ensures appendChildPath doesn't get memoized when context view changes
-    parentThoughtsResolved ? isContextViewActive(state, pathToContext(parentThoughtsResolved)) : '',
+    parentThoughtsResolved ? isContextViewActive(state, pathToContext(state, parentThoughtsResolved)) : '',
     resolvePath(childPath),
     resolvePath(parentThoughtsResolved || ([] as unknown as SimplePath)),
   ])
@@ -31,7 +31,7 @@ const resolve = (state: State, childPath: SimplePath, parentThoughtsResolved?: P
 const appendChildPath = _.memoize((state: State, childPath: SimplePath, parentThoughtsResolved?: Path): Path => {
   if (!parentThoughtsResolved) return childPath as Path
 
-  const isParentContextViewActive = isContextViewActive(state, pathToContext(parentThoughtsResolved))
+  const isParentContextViewActive = isContextViewActive(state, pathToContext(state, parentThoughtsResolved))
   return unroot([...parentThoughtsResolved, head(isParentContextViewActive ? parentOf(childPath) : childPath)])
 }, resolve)
 

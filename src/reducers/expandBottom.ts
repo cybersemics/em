@@ -1,6 +1,6 @@
 import { expandThoughts } from '../selectors'
 import { Path, State } from '../@types'
-import { hashContext, pathToContext } from '../util'
+import { headId } from '../util'
 
 interface Options {
   path: Path
@@ -10,7 +10,7 @@ interface Options {
  * Calculates the expanded context due to hover expansion on empty child drop.
  */
 const expandBottom = (state: State, { path }: Options): State => {
-  const contextHash = hashContext(pathToContext(path))
+  const contextHash = headId(path)
   const expandHoverBottomPaths = { ...state.expandHoverBottomPaths, [contextHash]: path }
 
   const expandedBottomPaths = Object.values(expandHoverBottomPaths)

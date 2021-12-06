@@ -1,11 +1,5 @@
-import { Context } from './Context'
-import { Timestamp } from './Timestamp'
+import { ThoughtId } from './ThoughtId'
 
+// @MIGRATION_TODO: Maybe remove ThoughtContext and directly use ThoughtId ??
 /** An entry in thoughtIndex[].contexts. */
-export interface ThoughtContext {
-  context: Context
-  rank: number
-  lastUpdated?: Timestamp
-  id?: string
-  archived?: Timestamp
-}
+export type ThoughtContext = ThoughtId

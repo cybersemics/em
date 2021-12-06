@@ -1,11 +1,11 @@
 import { DataProvider } from '../DataProvider'
-import { hashContext, yieldAll } from '../../util'
+import { yieldAll } from '../../util'
 import { EM_TOKEN } from '../../constants'
 import getDescendantThoughts from './getDescendantThoughts'
-import { Context, ContextHash, Index, ThoughtsInterface } from '../../@types'
+import { State, ThoughtsInterface, ThoughtId } from '../../@types'
 
 // hash the EM context once on load
-const emContextEncoded = hashContext([EM_TOKEN])
+const emContextEncoded = EM_TOKEN
 
 /** Gets descendants of many contexts, returning them in a single ThoughtsInterface. Does not limit the depth of the em context.
  *
@@ -13,13 +13,15 @@ const emContextEncoded = hashContext([EM_TOKEN])
  */
 const getManyDescendants = async function* getManyDescendants(
   provider: DataProvider,
-  contextMap: Index<Context>,
+  thoughtIds: ThoughtId[],
+  // @MIGRATION_TODO: Is removing this state dependency possible ??
+  state: State,
   { maxDepth = 100 } = {},
 ): AsyncIterable<ThoughtsInterface> {
   // fetch descendant thoughts for each context in contextMap
   yield* yieldAll(
-    (Object.keys(contextMap) as ContextHash[]).map(key =>
-      getDescendantThoughts(provider, contextMap[key], {
+    thoughtIds.map(key =>
+      getDescendantThoughts(provider, key, state, {
         // do not limit the depth of the em context
         maxDepth: key === emContextEncoded ? Infinity : maxDepth,
       }),

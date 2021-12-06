@@ -16,15 +16,17 @@ const outdent = (state: State) => {
     })
   }
   // cancel if parent is readonly or unextendable
-  else if (hasChild(state, pathToContext(parentOf(cursor)), '=readonly')) {
+  else if (hasChild(state, pathToContext(state, parentOf(cursor)), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(parentOf(cursor)))}" is read-only so "${headValue(
+      value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is read-only so "${headValue(
+        state,
         cursor,
       )}" may not be de-indented.`,
     })
-  } else if (hasChild(state, pathToContext(parentOf(cursor)), '=unextendable')) {
+  } else if (hasChild(state, pathToContext(state, parentOf(cursor)), '=unextendable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(parentOf(cursor)))}" is unextendable so "${headValue(
+      value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is unextendable so "${headValue(
+        state,
         cursor,
       )}" may not be de-indented.`,
     })
@@ -33,18 +35,13 @@ const outdent = (state: State) => {
   // store selection offset before moveThought is dispatched
   const offset = selection.offset()
 
-  const cursorNew: Path = [
-    ...unroot(rootedParentOf(state, parentOf(cursor))),
-    {
-      ...head(cursor),
-      rank: getRankAfter(state, parentOf(simplifyPath(state, cursor))),
-    },
-  ]
+  const cursorNew: Path = [...unroot(rootedParentOf(state, parentOf(cursor))), head(cursor)]
 
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
+    newRank: getRankAfter(state, parentOf(simplifyPath(state, cursor))),
   })
 }
 

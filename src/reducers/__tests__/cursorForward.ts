@@ -6,30 +6,26 @@ import cursorForward from '../cursorForward'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('reverse cursorBack', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack, cursorForward]
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
     { value: 'a', rank: 0 },
     { value: 'b', rank: 0 },
   ])
 })
 
 it('move to first child if there is no history', () => {
-  const steps = [
-    newThought('a'),
-    newSubthought('b'),
-    newThought('c'),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
-    cursorForward,
-  ]
+  const steps = [newThought('a'), newSubthought('b'), newThought('c'), setCursorFirstMatch(['a']), cursorForward]
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
     { value: 'a', rank: 0 },
     { value: 'b', rank: 0 },
   ])
@@ -40,5 +36,5 @@ it('move to first child if there is no cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
 })

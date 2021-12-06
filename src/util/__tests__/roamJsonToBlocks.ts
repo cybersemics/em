@@ -1,10 +1,11 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { hashContext, hashThought, removeHome } from '../../util'
+import { hashThought, removeHome } from '../../util'
 import { exportContext } from '../../selectors'
 import { initialState } from '../initialState'
 import { RoamBlock, RoamPage, roamJsonToBlocks } from '../roamJsonToBlocks'
 import { importJSON } from '../importJSON'
 import { SimplePath, State } from '../../@types'
+import { keyValueBy } from '../keyValueBy'
 
 jest.mock('../timestamp', () => ({
   timestamp: () => '2020-11-02T01:11:58.869Z',
@@ -229,17 +230,20 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
     return editTimeOf?.toISOString()
   }
 
-  expect(contextIndex).toMatchObject({
-    // RoamPages acquire the edit time of their last child
-    [hashContext(['Fruits'])]: { lastUpdated: editTimeOf('Banana') },
-    [hashContext(['Veggies'])]: { lastUpdated: editTimeOf('Spinach') },
+  const contextIndexEntries = keyValueBy(contextIndex, (key, thought) => ({
+    [thought.value]: thought,
+  }))
 
+  expect(contextIndexEntries).toMatchObject({
+    // RoamPages acquire the edit time of their last child
+    Fruits: { lastUpdated: editTimeOf('Banana') },
+    Veggies: { lastUpdated: editTimeOf('Spinach') },
     // RoamBlocks use specified edit time
-    [hashContext(['Fruits', 'Apple'])]: { lastUpdated: editTimeOf('Apple') },
-    [hashContext(['Fruits', 'Orange'])]: { lastUpdated: editTimeOf('Orange') },
-    [hashContext(['Fruits', 'Banana'])]: { lastUpdated: editTimeOf('Banana') },
-    [hashContext(['Veggies', 'Broccoli'])]: { lastUpdated: editTimeOf('Broccoli') },
-    [hashContext(['Veggies', 'Spinach'])]: { lastUpdated: editTimeOf('Spinach') },
+    Apple: { lastUpdated: editTimeOf('Apple') },
+    Orange: { lastUpdated: editTimeOf('Orange') },
+    Banana: { lastUpdated: editTimeOf('Banana') },
+    Broccoli: { lastUpdated: editTimeOf('Broccoli') },
+    Spinach: { lastUpdated: editTimeOf('Spinach') },
   })
 
   expect(thoughtIndex).toMatchObject({

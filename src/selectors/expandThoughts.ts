@@ -1,21 +1,11 @@
 import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, MAX_EXPAND_DEPTH } from '../constants'
-import {
-  attribute,
-  attributeEquals,
-  getAllChildren,
-  getChildPath,
-  getContexts,
-  isContextViewActive,
-  simplifyPath,
-} from '../selectors'
-import { Child, Context, Index, Path, State, ThoughtContext } from '../@types'
+import { attribute, attributeEquals, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
+import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   appendToPath,
   equalArrays,
-  equalThoughtRanked,
   hashContext,
   head,
-  headValue,
   isDescendant,
   isFunction,
   isURL,
@@ -26,10 +16,13 @@ import {
   strip,
   unroot,
 } from '../util'
+import getParentThought from './getParentThought'
+import { getAllChildrenAsThoughts } from './getChildren'
+import { getThoughtById } from './getThought'
 
 /** Get the value of the Child | ThoughtContext. */
-const childValue = (child: Child | ThoughtContext, showContexts: boolean) =>
-  showContexts ? head((child as ThoughtContext).context) : (child as Child).value
+const childValue = (state: State, child: ThoughtId | ThoughtContext, showContexts: boolean) =>
+  showContexts ? getParentThought(state, child)!.value : getThoughtById(state, child)?.value
 
 /** Returns true if the context is in table view. */
 const isTable = (state: State, context: Context) => attributeEquals(state, context, '=view', 'Table')
@@ -72,10 +65,15 @@ function expandThoughts(
   options?: { returnContexts?: boolean },
 ): Index<Path | Context> {
   const firstVisibleThoughtPath = path && (path.slice(0, -MAX_DISTANCE_FROM_CURSOR) as Path)
-  const expansionBasePath =
+  const expanstionStartingPath =
     firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
 
-  return expandThoughtsRecursive(state, path || HOME_PATH, expansionBasePath, options)
+  if (path && !getThoughtById(state, head(path))) {
+    console.error(`expandThought: Base path head thought not found!`)
+    return {}
+  }
+
+  return expandThoughtsRecursive(state, path || HOME_PATH, expanstionStartingPath || HOME_PATH, options)
 }
 
 /**
@@ -103,7 +101,7 @@ function expandThoughtsRecursive(
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
     console.error(new Error('expandThoughtsRecursive: Invalid empty Path received.'))
     return {}
-  } else if (path && path.length > 1 && equalThoughtRanked(path[0], HOME_PATH[0])) {
+  } else if (path && path.length > 1 && path[0] === HOME_TOKEN) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
     console.error(new Error('expandThoughtsRecursive: Invalid Path; Non-root Paths should omit ' + HOME_TOKEN))
     return {}
@@ -112,26 +110,33 @@ function expandThoughtsRecursive(
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
 
   /** Returns true if the child should be pinned open. */
-  const isPinned = (child: Child | ThoughtContext) =>
-    attribute(state, pathToContext(getChildPath(state, child, simplePath)), '=pin')
+  const isPinned = (child: ThoughtId | ThoughtContext) => {
+    const context = pathToContext(state, appendToPath(simplePath, child))
+    return attribute(state, context, '=pin')
+  }
 
-  const simpleContext = pathToContext(simplePath)
-  const context = pathToContext(path)
+  const simpleContext = pathToContext(state, simplePath)
+  const context = pathToContext(state, path)
 
-  const rootedPath = path || HOME_PATH
   const showContexts = isContextViewActive(state, simpleContext)
 
-  const childrenUnfiltered = showContexts
-    ? getContexts(state, headValue(simplePath))
-    : (getAllChildren(state, simpleContext) as (Child | ThoughtContext)[])
+  const childrenUnfiltered = getAllChildrenAsThoughts(state, simpleContext)
 
-  const expansionBasePathContext = unroot(pathToContext(expansionBasePath))
+  const expansionBasePathContext = unroot(pathToContext(state, expansionBasePath))
 
   // Note: A path that is ancestor of the expansion path or expansion path itself should always be expanded.
   const visibleChildren = state.showHiddenThoughts
     ? childrenUnfiltered
     : childrenUnfiltered.filter(child => {
-        const value = strip(childValue(child, showContexts))
+        // const valueRaw = childValue(state, child, showContexts)
+        const valueRaw = child.value
+        if (valueRaw == null) {
+          console.error('Invalid child', child)
+          console.error('Children', childrenUnfiltered)
+        }
+
+        const value = strip(valueRaw)
+
         const childContext = unroot([...context, value])
 
         /** Check of the path is the ancestor of the expansion path. */
@@ -144,16 +149,17 @@ function expandThoughtsRecursive(
       })
 
   // expand if child is only child and its child is not url
-  const firstChild = visibleChildren[0] as Child
+  const firstChild = visibleChildren[0]
+
   const grandchildren =
-    visibleChildren.length === 1 && firstChild.value != null && isPinned(firstChild) !== 'false'
+    visibleChildren.length === 1 && firstChild.value != null && isPinned(firstChild.id) !== 'false'
       ? getAllChildren(state, unroot([...simpleContext, firstChild.value]))
       : null
 
   const isOnlyChildNoUrl =
     grandchildren &&
     !isTableColumn1(state, simpleContext) &&
-    (grandchildren.length !== 1 || !isURL(childValue(grandchildren[0], showContexts)))
+    (grandchildren.length >= 1 || !isURL(childValue(state, grandchildren[0], showContexts)))
 
   const childrenPinned =
     isOnlyChildNoUrl ||
@@ -162,12 +168,11 @@ function expandThoughtsRecursive(
     publishPinChildren(state, simpleContext)
       ? visibleChildren
       : visibleChildren.filter(child => {
-          const value = childValue(child, showContexts)
+          const value = child.value
 
-          const childNew = { ...child, value }
-          const childPath = path ? appendToPath(path, childNew) : ([childNew] as Path)
+          const childPath = path ? appendToPath(path, child.id) : ([child.id] as Path)
 
-          const childContext = unroot(pathToContext(childPath))
+          const childContext = unroot(pathToContext(state, childPath))
 
           /** Check of the path is the ancestor of the expansion path. */
           const isAncestor = () => isDescendant(childContext, expansionBasePathContext)
@@ -175,7 +180,7 @@ function expandThoughtsRecursive(
           /** Check if the path is equal to the expansion path. */
           const isExpansionBasePath = () => equalArrays(childContext, expansionBasePathContext)
 
-          const isChildPinned = isPinned(child) === 'true'
+          const isChildPinned = isPinned(child.id) === 'true'
 
           /**
             Only meta thoughts that are ancestor of expansionBasePath or expansionBasePath itself are visible when shouldHiddenThoughts is false. They are also automatically expanded.
@@ -195,20 +200,18 @@ function expandThoughtsRecursive(
           )
         })
 
+  const contextHash = hashContext(context)
+
   const initialExpanded = {
     // expand current thought
-    [hashContext(pathToContext(rootedPath))]: returnContexts ? simpleContext : rootedPath,
+    [contextHash]: returnContexts ? context : path,
   }
 
   return keyValueBy(
     childrenPinned,
     childOrContext => {
-      const newPath = unroot([
-        ...(path || []),
-        (childOrContext as Child).value != null
-          ? (childOrContext as Child)
-          : { ...childOrContext, value: head((childOrContext as ThoughtContext).context) },
-      ])
+      // @MIGRATION_TODO: Check if this new path is correct
+      const newPath = unroot([...(path || []), childOrContext.id])
       // RECURSIVE
       // passing contextChain here creates an infinite loop
       return expandThoughtsRecursive(state, expansionBasePath, newPath, { returnContexts })

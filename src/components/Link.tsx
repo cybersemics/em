@@ -2,10 +2,12 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import { EM_TOKEN } from '../constants'
 import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import { decodeCharacterEntities, ellipsize, equalArrays, headValue, pathToContext, strip } from '../util'
+import { decodeCharacterEntities, ellipsize, head, strip } from '../util'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import { SimplePath } from '../@types'
+import { store } from '../store'
+import { getThoughtById } from '../selectors'
 
 interface LinkProps {
   charLimit?: number
@@ -15,8 +17,9 @@ interface LinkProps {
 
 /** Renders a link with the appropriate label to the given context. */
 const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
-  const emContext = equalArrays(pathToContext(simplePath), [EM_TOKEN])
-  const value = label || strip(headValue(simplePath))
+  const emContext = simplePath.length === 1 && head(simplePath) === EM_TOKEN
+  const thought = getThoughtById(store.getState(), head(simplePath))
+  const value = label || strip(thought.value)
   const dispatch = useDispatch()
 
   // TODO: Fix tabIndex for accessibility

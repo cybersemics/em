@@ -38,7 +38,7 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ path }: NoteProps) => {
   const state = store.getState()
-  const context = pathToContext(path)
+  const context = pathToContext(state, path)
   const dispatch = useDispatch()
   const [justPasted, setJustPasted] = useState(false)
 
@@ -52,7 +52,11 @@ const Note = ({ path }: NoteProps) => {
   useEffect(() => {
     const state = store.getState()
     // cursor must be true if editing
-    if (state.editing && state.noteFocus && equalArrays(pathToContext(simplifyPath(state, state.cursor!)), context)) {
+    if (
+      state.editing &&
+      state.noteFocus &&
+      equalArrays(pathToContext(state, simplifyPath(state, state.cursor!)), context)
+    ) {
       // TODO: Set the caret to the end of the note
     }
   }, [state.cursor, state.editing, state.noteFocus])

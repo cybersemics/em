@@ -14,12 +14,11 @@ const cursorChangedEnhancer: StoreEnhancer<any> =
      */
     const cursorChangedReducer = (state: State | undefined = initialState, action: A): State => {
       if (!state) return reducer(initialState, action)
-
       const updatedState = reducer(state, action)
       if (
         updatedState.cursor &&
         !equalPath(state.cursor, updatedState.cursor) &&
-        isDivider(headValue(updatedState.cursor))
+        isDivider(headValue(updatedState, updatedState.cursor))
       ) {
         selection.clear()
       }

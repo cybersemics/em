@@ -1,9 +1,11 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import { headValue, strip } from '../util'
+import { head, strip } from '../util'
 import { StyleSheet } from 'react-native'
 import { Text } from './Text.native'
+import { store } from '../store'
+import { getThoughtById } from '../selectors'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import { SimplePath } from '../@types'
@@ -16,7 +18,9 @@ interface LinkProps {
 
 /** Renders a link with the appropriate label to the given context. */
 const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
-  const value = label || strip(headValue(simplePath))
+  const thought = getThoughtById(store.getState(), head(simplePath))
+
+  const value = label || strip(thought.value)
 
   const dispatch = useDispatch()
 

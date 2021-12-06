@@ -1,7 +1,16 @@
 import { Dispatch } from 'react'
-import { hashContext, hashThought, keyValueBy, getUserRef } from '../util'
+import { hashThought, keyValueBy, getUserRef } from '../util'
 import { error } from '../action-creators'
-import { Firebase, Index, Lexeme, Parent, State, ThoughtIndices, ThoughtSubscriptionUpdates } from '../@types'
+import {
+  Firebase,
+  Index,
+  Lexeme,
+  Parent,
+  State,
+  ThoughtId,
+  ThoughtIndices,
+  ThoughtSubscriptionUpdates,
+} from '../@types'
 
 export enum FirebaseChangeTypes {
   Create = 'child_added',
@@ -124,7 +133,7 @@ const parentSubscriptionHandler =
     if (!parentPartial) return null
     const updates = {
       contextIndex: {
-        [hashContext(parentPartial.context)]: {
+        [parentPartial.id]: {
           // snapshot contains updatedBy of deleted thought
           updatedBy: parentPartial.updatedBy,
           value:
@@ -132,8 +141,8 @@ const parentSubscriptionHandler =
               ? value
               : {
                   // pass id from snapshot since snapshot only contains changed fields
-                  id: snapshot.key,
                   ...parentPartial,
+                  id: snapshot.key as ThoughtId,
                 },
         },
       },

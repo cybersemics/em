@@ -4,7 +4,6 @@ import { ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToCo
 import {
   getChildren,
   getThoughtBefore,
-  getAllChildren,
   getChildrenRanked,
   hasChild,
   isContextViewActive,
@@ -17,6 +16,7 @@ import { isTouch } from '../browser'
 import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
 import { Icon as IconType, Shortcut, State, Thunk } from '../@types'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import * as selection from '../device/selection'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
@@ -32,15 +32,15 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   const simplePath = simplifyPath(state, cursor)
 
   // can delete if the current thought is a divider
-  if (isDivider(headValue(cursor))) return true
+  if (isDivider(headValue(state, cursor))) return true
 
   // can't delete in context view (TODO)
-  const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
+  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
   if (showContexts) return false
 
   const contextChain = splitChain(state, cursor)
   const path = lastThoughtsFromContextChain(state, contextChain)
-  const hasChildren = getChildrenRanked(state, pathToContext(path)).length > 0
+  const hasChildren = getChildrenRanked(state, pathToContext(state, path)).length > 0
   const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
@@ -58,17 +58,21 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
   const simplePath = simplifyPath(state, cursor)
   const prevThought = getThoughtBefore(state, simplePath)
   // Determine if thought at cursor is uneditable
-  const contextOfCursor = pathToContext(cursor)
+  const contextOfCursor = pathToContext(state, cursor)
   const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
   const children = getChildren(state, contextOfCursor)
 
   if (prevThought && uneditable) {
-    dispatch(error({ value: `'${ellipsize(headValue(cursor))}' is uneditable and cannot be merged.` }))
+    dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))
     return
   }
 
   // empty thought on mobile
-  if (isTouch && editing && ((headValue(cursor) === '' && children.length === 0) || isDivider(headValue(cursor)))) {
+  if (
+    isTouch &&
+    editing &&
+    ((headValue(state, cursor) === '' && children.length === 0) || isDivider(headValue(state, cursor)))
+  ) {
     asyncFocus()
   }
 
@@ -85,8 +89,8 @@ const canExecuteOutdent = (state: State) => {
     cursor &&
     selection.offset() === 0 &&
     isDocumentEditable() &&
-    headValue(cursor).length !== 0 &&
-    getChildren(state, parentOf(pathToContext(cursor))).length === 1
+    headValue(state, cursor).length !== 0 &&
+    getChildren(state, parentOf(pathToContext(state, cursor))).length === 1
   )
 }
 
@@ -95,23 +99,24 @@ const isMergedThoughtDuplicate = (state: State) => {
   const { cursor, editingValue } = state
   if (!cursor) return false
   // If we are going to delete empty thought
-  if (headValue(cursor) === '' || editingValue === '') return false
+  if (headValue(state, cursor) === '' || editingValue === '') return false
 
   const simplePath = simplifyPath(state, cursor)
   const prevThought = getThoughtBefore(state, simplePath)
   if (!prevThought) return false
   const contextChain = splitChain(state, cursor)
-  const showContexts = isContextViewActive(state, pathToContext(parentOf(cursor)))
+  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
   const path = lastThoughtsFromContextChain(state, contextChain)
-  const mergedThoughtValue = prevThought.value + headValue(cursor)
+  const mergedThoughtValue = prevThought.value + headValue(state, cursor)
   const context = pathToContext(
+    state,
     showContexts && contextChain.length > 1
       ? contextChain[contextChain.length - 2]
       : !showContexts && path.length > 1
       ? parentOf(path)
       : HOME_PATH,
   )
-  const siblings = getAllChildren(state, context)
+  const siblings = getAllChildrenAsThoughts(state, context)
   const isDuplicate = !siblings.every(child => child.value !== mergedThoughtValue)
   return isDuplicate
 }

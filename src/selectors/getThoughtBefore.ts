@@ -1,14 +1,15 @@
-import { headRank, headValue, pathToContext } from '../util'
+import { head, pathToContext } from '../util'
 import { getChildrenSorted } from '../selectors'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
+import { getThoughtById } from './getThought'
 
 /** Gets a new rank before the given thought in a list but after the previous thought. */
 const getThoughtBefore = (state: State, simplePath: SimplePath) => {
-  const value = headValue(simplePath)
-  const rank = headRank(simplePath)
+  const cursorThought = getThoughtById(state, head(simplePath))
+  const { value, rank } = cursorThought
   const parentPath = rootedParentOf(state, simplePath)
-  const children = getChildrenSorted(state, pathToContext(parentPath))
+  const children = getChildrenSorted(state, pathToContext(state, parentPath))
 
   // if there are no children, start with rank 0
   if (children.length === 0) {

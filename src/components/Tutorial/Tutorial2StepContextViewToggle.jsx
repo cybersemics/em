@@ -25,14 +25,14 @@ const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
   return (
     <Fragment>
-      {!cursor || headValue(cursor) !== caseSensitiveValue ? (
+      {!cursor || headValue(store.getState(), cursor) !== caseSensitiveValue ? (
         <p>First select "{caseSensitiveValue}".</p>
       ) : (
         <Fragment>
           {isHint() ? (
             <p>
               You did the right gesture, but somehow "{caseSensitiveValue}" wasn't selected. Try
-              {!cursor || headValue(cursor) !== caseSensitiveValue ? (
+              {!cursor || headValue(store.getState(), cursor) !== caseSensitiveValue ? (
                 <Fragment> selecting "{caseSensitiveValue}" and trying</Fragment>
               ) : null}{' '}
               again.

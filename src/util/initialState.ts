@@ -1,10 +1,10 @@
-import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PARENT_ID } from '../constants'
 import globals from '../globals'
 import { canShowModal } from '../selectors'
-import { hashContext, hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
+import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 import { getSessionId } from './sessionManager'
 import { storage } from './storage'
-import { State, ThoughtsInterface, Timestamp } from '../@types'
+import { State, Timestamp, ThoughtsInterface, Parent, Index, ThoughtId } from '../@types'
 import { isLocalNetwork } from '../device/router'
 
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -15,30 +15,41 @@ const getLocal = (key: string) => {
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
 export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
-  const contextIndex = {
-    [hashContext([HOME_TOKEN])]: {
-      context: [HOME_TOKEN],
+  const HOME_TOKEN_HASH = HOME_TOKEN
+  const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
+  const EM_TOKEN_HASH = EM_TOKEN
+  const contextIndex: Index<Parent> = {
+    [HOME_TOKEN_HASH]: {
+      id: HOME_TOKEN as ThoughtId,
+      value: HOME_TOKEN,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
       updatedBy: getSessionId(),
     },
-    [hashContext([ABSOLUTE_TOKEN])]: {
-      context: [ABSOLUTE_TOKEN],
+    [ABSOLUTE_TOKEN_HASH]: {
+      id: ABSOLUTE_TOKEN as ThoughtId,
+      value: ABSOLUTE_TOKEN,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
       updatedBy: getSessionId(),
     },
-    [hashContext([EM_TOKEN])]: {
-      id: hashContext([EM_TOKEN]),
-      context: [EM_TOKEN],
+    [EM_TOKEN_HASH]: {
+      id: EM_TOKEN as ThoughtId,
+      value: EM_TOKEN,
+      parentId: ROOT_PARENT_ID as ThoughtId,
       children: [],
       // start pending to trigger pullQueue fetch
       pending: true,
       lastUpdated: never(),
+      rank: 0,
       updatedBy: getSessionId(),
     },
   }
@@ -102,7 +113,8 @@ export const initialState = (created: Timestamp = timestamp()) => {
     expandHoverBottomPaths: {},
     invalidState: false,
     inversePatches: [],
-    isLoading: true,
+    // @MIGRATIION_TODO: Pull is disabled, so preventing app getting stucked on loading for now.
+    isLoading: false,
     isPushing: false,
     latestShortcuts: [],
     modals: {},

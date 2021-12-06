@@ -1,33 +1,23 @@
-import { Context, Lexeme, Timestamp } from '../@types'
-import { concatOne, equalArrays, timestamp } from '../util'
-import { getSessionId } from '../util/sessionManager'
+import { Lexeme, State } from '../@types'
+import { getThoughtById } from '../selectors'
+import { concatOne, timestamp } from '../util'
+import { getSessionId } from './sessionManager'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. Changed rank). Removes duplicates with the same { value, rank }. */
-export const moveLexemeThought = (
-  lexeme: Lexeme,
-  oldContext: Context,
-  newContext: Context,
-  oldRank: number,
-  newRank: number,
-  id: string | null,
-  archived: Timestamp,
-) => ({
+export const moveLexemeThought = (state: State, lexeme: Lexeme, oldRank: number, newRank: number, id: string) => ({
   ...lexeme,
   contexts: concatOne(
-    (lexeme.contexts || []).filter(
-      parent =>
+    (lexeme.contexts || []).filter(child => {
+      const thought = getThoughtById(state, child)
+      return (
         // remove old context
-        (parent.rank !== oldRank || !equalArrays(parent.context, oldContext)) &&
+        (thought.rank !== oldRank || child !== id) &&
         // remove new context with duplicate rank
-        (parent.rank !== newRank || !equalArrays(parent.context, newContext)),
-    ),
+        (thought.rank !== newRank || child !== id)
+      )
+    }),
     // add new context
-    {
-      context: newContext,
-      rank: newRank,
-      ...(id ? { id } : null),
-      ...(archived ? { archived } : {}),
-    },
+    id,
   ),
   created: lexeme.created || timestamp(),
   lastUpdated: timestamp(),

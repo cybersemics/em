@@ -1,10 +1,13 @@
 import _ from 'lodash'
-import { appendToPath, pathToContext, unroot } from '../util'
-import { getAllChildren, getChildrenRanked } from '../selectors'
-import { Child, Context, SimplePath, State } from '../@types'
+import { compareByRank, sort, unroot } from '../util'
+import { getChildrenRanked } from '../selectors'
+import { Context, Parent, State, ThoughtId } from '../@types'
+import { getAllChildrenAsThoughts } from './getChildren'
+import childIdsToThoughts from './childIdsToThoughts'
+import { getThoughtById } from './getThought'
 
 interface OptionsPath {
-  filterFunction?: (child: Child, simplePath: SimplePath) => boolean
+  filterFunction?: (thought: Parent) => boolean
   ordered?: boolean
 }
 
@@ -14,7 +17,7 @@ interface OptionsPathInternal extends OptionsPath {
 }
 
 interface OptionsContext {
-  filterFunction?: (child: Child, context: Context) => boolean
+  filterFunction?: (thought: Parent, context: Context) => boolean
   ordered?: boolean
 }
 
@@ -26,8 +29,8 @@ interface OptionsContextInternal extends OptionsContext {
 /** Generates a flat list of all descendant Contexts. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed. */
 export const getDescendantContexts = (state: State, context: Context, options: OptionsContext = {}): Context[] => {
   const { filterFunction, ordered, recur } = options as OptionsContextInternal
-  const children = (ordered ? getChildrenRanked : getAllChildren)(state, context)
-  const filteredChildren = filterFunction ? children.filter(child => filterFunction(child, context)) : children
+  const children = (ordered ? getChildrenRanked : getAllChildrenAsThoughts)(state, context)
+  const filteredChildren = filterFunction ? children.filter(thought => filterFunction(thought, context)) : children
   // only append current thought in recursive calls
   return (recur ? [context] : []).concat(
     _.flatMap(filteredChildren, child =>
@@ -41,15 +44,23 @@ export const getDescendantContexts = (state: State, context: Context, options: O
 }
 
 /** Generates a flat list of all descendant Paths. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed. */
-export const getDescendantPaths = (state: State, simplePath: SimplePath, options: OptionsPath = {}): SimplePath[] => {
+export const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, options: OptionsPath = {}): ThoughtId[] => {
   const { filterFunction, ordered, recur } = options as OptionsPathInternal
-  const context = pathToContext(simplePath)
-  const children = (ordered ? getChildrenRanked : getAllChildren)(state, context)
-  const filteredChildren = filterFunction ? children.filter(child => filterFunction(child, simplePath)) : children
+  const thought = getThoughtById(state, thoughtId)
+
+  if (!thought) return []
+
+  const thoughts = childIdsToThoughts(state, thought.children) || []
+
+  const children = ordered ? sort(thoughts, compareByRank) : thoughts
+
+  if (!children) return []
+
+  const filteredChildren = filterFunction ? children.filter(thought => filterFunction(thought)) : children
   // only append current thought in recursive calls
-  return (recur ? [simplePath] : []).concat(
+  return (recur ? [thoughtId] : []).concat(
     _.flatMap(filteredChildren, child =>
-      getDescendantPaths(state, appendToPath(simplePath, child), {
+      getDescendantThoughtIds(state, child.id, {
         filterFunction,
         recur: true,
         ordered,
@@ -62,14 +73,14 @@ export const getDescendantPaths = (state: State, simplePath: SimplePath, options
 export const someDescendants = (
   state: State,
   context: Context,
-  predicate: (child: Child, context: Context) => boolean,
+  predicate: (thought: Parent, context: Context) => boolean,
 ) => {
   let found = false
   // ignore the return value of getDescendants
   // we are just using its filterFunction to check pending
   getDescendantContexts(state, context, {
-    filterFunction: (child, context) => {
-      if (predicate(child, context)) {
+    filterFunction: (thought, context) => {
+      if (predicate(thought, context)) {
         found = true
       }
       // if pending has been found, return false to filter out all remaining children and short circuit

@@ -1,6 +1,4 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
-
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
@@ -9,20 +7,21 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 import { headValue } from '../../util'
-import { getChildrenRanked } from '../../selectors'
+import { childIdsToThoughts, getChildrenRanked } from '../../selectors'
 
 import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
-import { Child, Path } from '../../@types'
+import { ThoughtId, Path, State } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { doStringsMatch } from '../../util/doStringsMatch'
+import { useStore } from 'react-redux'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 
 interface IComponentProps {
   cursor: Path
-  rootChildren: Child[]
+  rootChildren: ThoughtId[]
   tutorialChoice: keyof TutorialChoice
 }
 
@@ -31,6 +30,9 @@ const { smallText, italic } = commonStyles
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren }: IComponentProps) => {
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
+
+  const store = useStore<State>()
+  const children = childIdsToThoughts(store.getState(), rootChildren) ?? []
 
   if (context1SubthoughtisCreated) {
     return (
@@ -54,7 +56,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
       </Text>
       {
         // e.g. Home
-        rootChildren.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) &&
+        children.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) &&
         // e.g. Home/To Do
         getChildrenRanked(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]]).find(child =>
           doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
@@ -63,7 +65,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
             Do you remember how to do it?
             <TutorialHint>
               <Text style={smallText}>
-                {!cursor || !doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT[tutorialChoice])
+                {!cursor || !doStringsMatch(headValue(store.getState(), cursor), TUTORIAL_CONTEXT[tutorialChoice])
                   ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". `
                   : null}
                 Trace the line below with your finger to create a new thought{' '}

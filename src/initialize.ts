@@ -3,8 +3,8 @@ import _ from 'lodash'
 import moize from 'moize'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
-import { getContexts, getParent, getLexeme, getAllChildren, getChildrenRanked, isPending } from './selectors'
-import { hashContext, hashThought, initEvents, owner, urlDataSource } from './util'
+import { getContexts, getParent, getLexeme, getChildrenRanked, isPending } from './selectors'
+import { getThoughtIdByContext, hashThought, initEvents, owner, urlDataSource } from './util'
 import {
   authenticate,
   loadPublicThoughts,
@@ -19,7 +19,6 @@ import {
 } from './action-creators'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
-import checkDataIntegrity from './test-helpers/checkDataIntegrity'
 import { SessionType } from './util/sessionManager'
 import * as sessionManager from './util/sessionManager'
 import { Firebase, State, ThoughtSubscriptionUpdates, Thunk } from './@types'
@@ -28,10 +27,11 @@ import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
 import * as selection from './device/selection'
+import { getAllChildrenAsThoughts } from './selectors/getChildren'
 
 // enable to collect moize usage stats
 // do not enable in production
-// execute moize.getStats in the console to analyze cache hits, e.g. moize.getStats('hashContext')
+// execute moize.getStats in the console to analyze cache hits, e.g. moize.getStats('getThoughtIdByContext')
 // moize.collectStats()
 
 /** Initialize firebase and event handlers. */
@@ -97,7 +97,7 @@ export const initFirebase = async (): Promise<void> => {
   }
 
   // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
-  globals.offlineTimer = setTimeout(() => {
+  globals.offlineTimer = window.setTimeout(() => {
     store.dispatch(statusActionCreator({ value: 'offline' }))
   }, OFFLINE_TIMEOUT)
 }
@@ -176,12 +176,11 @@ const windowEm = {
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   getParent: withState(getParent),
-  getAllChildren: withState(getAllChildren),
+  getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
   getChildrenRanked: withState(getChildrenRanked),
-  hashContext,
+  getThoughtIdByContext,
   hashThought,
   isPending: withState(isPending),
-  checkDataIntegrity: withState(checkDataIntegrity),
   moize,
 }
 

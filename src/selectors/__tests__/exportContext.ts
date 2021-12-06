@@ -1,8 +1,9 @@
 import { initialState, reducerFlow } from '../../util'
-import { editThought, importText, setCursor } from '../../reducers'
+import { importText } from '../../reducers'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
-import { SimplePath } from '../../@types'
 import exportContext from '../exportContext'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
 
 it('meta and archived thoughts are included', () => {
   const text = `- a
@@ -12,7 +13,7 @@ it('meta and archived thoughts are included', () => {
     - true
   - b`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -35,7 +36,7 @@ it('meta is included but archived thoughts are excluded', () => {
     - true
   - b`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -56,7 +57,7 @@ it('meta is excluded', () => {
     - true
   - b`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -78,7 +79,7 @@ it('meta is excluded but archived is included', () => {
     - true
   - b`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -93,7 +94,7 @@ it('exported as plain text', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -108,7 +109,7 @@ it('exported as html', () => {
   const text = `- a
   - Hello <b>world</b>`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: 'a', rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -133,14 +134,10 @@ it('export multi-line thoughts as separate thoughts', () => {
 
   const steps = [
     importText({ text }),
-    editThought({
+    editThoughtAtFirstMatch({
       oldValue: 'Hello',
       newValue: 'Hello\nworld',
-      context: ['a', 'b'],
-      path: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
-      ] as SimplePath,
+      at: ['a', 'b', 'hello'],
     }),
   ]
   const stateNew = reducerFlow(steps)(initialState())
@@ -156,7 +153,7 @@ it('export multi-line thoughts as separate thoughts', () => {
 it('export as markdown', () => {
   const text = `Hello <b>wor<i>ld</i></b>`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: text, rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [text], 'text/markdown')
@@ -168,7 +165,7 @@ it('export as markdown without escaping metaprogramming attributes', () => {
   const text = `- Hello <b>wor<i>ld</i></b>
   - =readonly`
 
-  const steps = [importText({ text }), setCursor({ path: [{ value: text, rank: 0 }] })]
+  const steps = [importText({ text }), setCursorFirstMatch([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, ['Hello <b>wor<i>ld</i></b>'], 'text/markdown')

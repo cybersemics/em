@@ -4,28 +4,20 @@ import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
-import { getUserRef, hashContext, isFunction, logWithTime, timestamp } from '../util'
+import { getUserRef, getThoughtIdByContext, isFunction, logWithTime, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
-import { Thunk, Index, Lexeme, Parent } from '../@types'
+import { Thunk, Index, Lexeme, Parent, State, ThoughtId } from '../@types'
 import { storage } from '../util/storage'
-
-// store the hashes of the localStorage Settings contexts for quick lookup
-// settings that are propagated to localStorage for faster load on startup
-// e.g. {
-//   [hashContext([EM_TOKEN, 'Settings', 'Tutorial'])]: 'Tutorial',
-//   ...
-// }
-const localStorageSettingsContexts = _.keyBy(['Tutorial', 'Last Updated'], value =>
-  hashContext([EM_TOKEN, 'Settings', value]),
-)
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (
+  state: State,
   contextIndexUpdates: Index<Parent | null> = {},
   thoughtIndexUpdates: Index<Lexeme | null> = {},
   recentlyEdited: Index,
   updates: Index = {},
+  localStorageSettingsContexts: Index<string>,
 ): Promise<any> => {
   // thoughtIndex
   const thoughtIndexPromises = [
@@ -40,6 +32,10 @@ const pushLocal = (
 
   logWithTime('sync: thoughtIndexPromises generated')
 
+  const updatedContextIndex = {
+    ...state.thoughts.contextIndex,
+    ...contextIndexUpdates,
+  }
   // contextIndex
   const contextIndexPromises = [
     ...Object.keys(contextIndexUpdates).map(contextEncoded => {
@@ -48,15 +44,18 @@ const pushLocal = (
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[contextEncoded]
       if (name) {
-        const firstChild = parentEntry?.children.find(child => !isFunction(child.value))
+        const firstChild = parentEntry?.children.find(child => {
+          const thought = updatedContextIndex[child]
+          return thought && !isFunction(thought.value)
+        })
         if (firstChild) {
-          storage.setItem(`Settings/${name}`, firstChild.value)
+          const thought = updatedContextIndex[firstChild]
+          storage.setItem(`Settings/${name}`, thought!.value)
         }
       }
 
-      return parentEntry?.children && parentEntry.children.length > 0
-        ? db.updateContext(contextEncoded, parentEntry)
-        : db.deleteContext(contextEncoded)
+      // Note: Since all the data of a thought is now on Parent instead of Child and ThoughtIndex, so the parent entry should not be deleted if they don't have children
+      return parentEntry ? db.updateContext(contextEncoded as ThoughtId, parentEntry) : db.deleteContext(contextEncoded)
     }),
     db.updateLastUpdated(timestamp()),
   ]
@@ -112,9 +111,13 @@ const pushRemote =
         accum['contextIndex/' + key] =
           children && children.length > 0
             ? {
-                context: parentUpdate!.context,
-                children,
+                id: parentUpdate!.id,
+                value: parentUpdate!.value,
+                parentId: parentUpdate!.parentId,
                 lastUpdated: parentUpdate!.lastUpdated || timestamp(),
+                archived: parentUpdate!.archived,
+                rank: parentUpdate!.rank,
+                children,
                 updatedBy: parentUpdate!.updatedBy || getSessionId(),
               }
             : null
@@ -179,9 +182,35 @@ const push =
     // Why not filter them out upstream in updateThoughts? Pending Parents sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
     const contextIndexUpdatesNotPending = _.pickBy(contextIndexUpdates, parent => !parent?.pending)
 
+    // store the hashes of the localStorage Settings contexts for quick lookup
+    // settings that are propagated to localStorage for faster load on startup
+    // e.g. {
+    //   [getThoughtIdByContext([EM_TOKEN, 'Settings', 'Tutorial'])]: 'Tutorial',
+    //   ...
+    // }
+    const localStorageSettingsContexts = ['Tutorial', 'Last Updated'].reduce((acc, value) => {
+      const id = getThoughtIdByContext(state, [EM_TOKEN, 'Settings', value])
+      return {
+        ...acc,
+        ...(id
+          ? {
+              [id]: value,
+            }
+          : {}),
+      }
+    }, {})
+
     return Promise.all([
       // push local
-      local && pushLocal(contextIndexUpdatesNotPending, thoughtIndexUpdates, recentlyEdited, updates),
+      local &&
+        pushLocal(
+          getState(),
+          contextIndexUpdatesNotPending,
+          thoughtIndexUpdates,
+          recentlyEdited,
+          updates,
+          localStorageSettingsContexts,
+        ),
 
       // push remote
       remote &&

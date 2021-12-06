@@ -1,22 +1,21 @@
 import React from 'react'
 import { store } from '../../store'
-import { getAllChildren, getChildrenRanked } from '../../selectors'
+import { childIdsToThoughts, getAllChildren, getChildrenRanked } from '../../selectors'
 import { ellipsize } from '../../util'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
-import { Child, Path } from '../../@types'
+import { ThoughtId, Path } from '../../@types'
 
 const { smallText, bold } = commonStyles
 
 interface IComponentProps {
   cursor: Path
-  rootChildren: Child[]
+  rootChildren: ThoughtId[]
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }: IComponentProps) => {
   const uncle = thoughtsNoCursorWithChild(cursor, rootChildren)[0]
-
   /** Gets the first child of the first thought in the root that is not the cursor. */
   const childWithNoCursorParent = uncle ? getChildrenRanked(store.getState(), [uncle.value])[0] : null
 
@@ -30,7 +29,8 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }: IComponentP
         are connected in one big thoughtspace, but kept tidy through autofocus.
       </Text>
       <Text style={smallText}>
-        Tap {uncle ? `"${ellipsize(uncle.value)}"` : 'a thought'} to reveal its subthought "{hiddenChild}".
+        Tap {uncle ? `"${ellipsize(uncle.value)}"` : 'a thought'} to reveal its subthought "{hiddenChild}
+        ".
       </Text>
     </>
   )
@@ -41,8 +41,11 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }: IComponentP
  * @param rootChildren The object array that show all the root thoughts.
  * @returns The array that holds all the thoughts that that don't have a cursor, but have children.
  */
-const thoughtsNoCursorWithChild = (cursor: Path, rootChildren: Child[]) => {
-  const noCursorThoughts = cursor ? rootChildren.filter(c => c.value !== cursor[0].value) : rootChildren
+const thoughtsNoCursorWithChild = (cursor: Path, rootChildren: ThoughtId[]) => {
+  const children = childIdsToThoughts(store.getState(), rootChildren) ?? []
+
+  const cursorThought = childIdsToThoughts(store.getState(), cursor)
+  const noCursorThoughts = cursorThought ? children.filter(c => c.value !== cursorThought[0].value) : children
   return noCursorThoughts.filter(t => getAllChildren(store.getState(), [t.value]).length > 0)
 }
 

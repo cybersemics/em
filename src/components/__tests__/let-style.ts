@@ -133,7 +133,7 @@ it('multiple definitions in same =let', async () => {
           - =fizzle
       `,
     }),
-    setCursorFirstMatchActionCreator(['Shoozle']),
+    setCursorFirstMatchActionCreator(['Razzle']),
   ])
 
   const thoughtRazzle = await findThoughtByText('Razzle')

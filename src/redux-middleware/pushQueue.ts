@@ -1,19 +1,10 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import {
-  clearPushQueue,
-  editThought,
-  deleteThought,
-  moveThought,
-  isPushing,
-  pull,
-  push,
-  updateThoughts,
-} from '../action-creators'
+import { clearPushQueue, deleteThought, isPushing, pull, push, updateThoughts } from '../action-creators'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
-import { equalArrays, hashContext, keyValueBy, pathToContext, getDepth } from '../util'
-import { Thunk, Context, Index, Lexeme, PushBatch, State } from '../@types'
+import { keyValueBy } from '../util'
+import { Thunk, Index, Lexeme, PushBatch, State, ThoughtId } from '../@types'
 
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only thoughtIndexUpdates. */
 const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
@@ -31,8 +22,6 @@ const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => (
     ...batch.recentlyEdited,
   },
   pendingDeletes: [...(accum.pendingDeletes || []), ...(batch.pendingDeletes || [])],
-  pendingEdits: [...(accum.pendingEdits || []), ...(batch.pendingEdits || [])],
-  descendantMoves: [...(accum.descendantMoves || []), ...(batch.descendantMoves || [])],
   pendingLexemes: {
     ...(accum.pendingLexemes || {}),
     ...(batch.pendingLexemes || {}),
@@ -60,10 +49,8 @@ const mergeConflictingThoughtIndexUpdates = (
     if (!lexemeA || !lexemeB) return acc
 
     /** Returns the lexeme's contexts in the pulled state without the lexemeA contexts. */
-    const lexemeBcontextsDiff = lexemeB.contexts.filter(thoughtContextB => {
-      const isInA = lexemeA.contexts.some(thoughtContextA =>
-        equalArrays(thoughtContextA.context, thoughtContextB.context),
-      )
+    const lexemeBcontextsDiff = lexemeB.contexts.filter(thoughtIdB => {
+      const isInA = lexemeA.contexts.some(thoughtIdA => thoughtIdA === thoughtIdB)
       return !isInA
     })
 
@@ -143,89 +130,28 @@ const flushDeletes =
     // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
     const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
     if (pendingDeletes?.length) {
-      const pending: Index<Context> = keyValueBy(pendingDeletes, ({ context }) => ({
-        [hashContext(context)]: context,
+      const pending: Record<ThoughtId, true> = keyValueBy(pendingDeletes, ({ context, thought }) => ({
+        [thought.id]: true,
       }))
+
+      const toBePulledThoughts = Object.keys(pending) as ThoughtId[]
 
       // In a 2-part delete, all of the descendants that are in the Redux store are deleted in Part I, and pending descendants are pulled and then deleted in Part II. (See flushDeletes)
       // With the old style pull, Part II pulled the pending descendants as expected. With the new style pull that only pulls pending thoughts, pull will short circuit in Part II since there is no Parent to be marked as pending (it was deleted in Part I).
       // We cannot simply include missing Parents in pull addition to pending Parents though. Some Parents are missing when a context is edited after it was added to the pullQueue but before the pullQueue was flushed. If pull includes missing Parents, we get data integrity issues when outdated local thoughts get pulled.
       // Therefore, force the pull here to fetch all descendants to delete in Part II.
-      await dispatch(pull(pending, { force: true, maxDepth: Infinity }))
+      await dispatch(pull(toBePulledThoughts, { force: true, maxDepth: Infinity }))
 
-      pendingDeletes.forEach(({ context, child }) => {
+      pendingDeletes.forEach(({ context, thought }) => {
         dispatch(
           deleteThought({
             context,
-            thoughtRanked: child,
+            thoughtId: thought.id,
+            orphaned: true,
           }),
         )
       })
     }
-  }
-
-/** Pull all descendants of pending edits and dispatch editThought to edit descendant contexts. */
-const flushEdits =
-  (pushQueue: PushBatch[]): Thunk<Promise<void>> =>
-  async (dispatch, getState) => {
-    // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
-    const pendingEdits = pushQueue.map(batch => batch.pendingEdits || []).flat()
-
-    if (pendingEdits?.length) {
-      const pending: Index<Context> = keyValueBy(pendingEdits, ({ context }) => {
-        return { [hashContext(context)]: context }
-      })
-
-      await dispatch(pull(pending, { maxDepth: Infinity }))
-
-      pendingEdits.forEach(payload => {
-        dispatch(editThought(payload))
-      })
-    }
-  }
-
-/** Pull all descendants of pending moves and dispatch moveThought to fully move. */
-const flushMoves =
-  (pushQueue: PushBatch[]): Thunk =>
-  async (dispatch, getState) => {
-    const state = getState()
-    // if there are pending thoughts that need to be moved, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another moveThought
-    const descendantMoves = pushQueue.map(batch => batch.descendantMoves || []).flat()
-    const pendingPulls = pushQueue.map(batch => batch.pendingPulls || []).flat()
-
-    let maxDepth = Infinity
-
-    // pull all children of source context
-    if (descendantMoves?.length) {
-      const pending: Index<Context> = keyValueBy(descendantMoves, ({ pathOld }) => {
-        const context = pathToContext(pathOld)
-        // skip the pull for loaded descendants
-        return { [hashContext(context)]: context }
-      })
-      await dispatch(pull(pending, { maxDepth: Infinity }))
-      maxDepth = Math.max(...descendantMoves.map(({ pathOld }) => getDepth(state, pathToContext(pathOld))))
-    }
-
-    // pull all children of destination (upto max depth of possibly conflcited path) context before moving any thoughts
-    if (pendingPulls.length) {
-      const pathToLoad = keyValueBy(pendingPulls, ({ path }) => {
-        const context = pathToContext(path)
-        return {
-          [hashContext(context)]: context,
-        }
-      })
-
-      await dispatch(pull(pathToLoad, { maxDepth }))
-    }
-
-    descendantMoves.forEach(({ pathOld, pathNew }) => {
-      dispatch(
-        moveThought({
-          oldPath: pathOld,
-          newPath: pathNew,
-        }),
-      )
-    })
   }
 
 /** Push queued updates to the local and remote. Make sure to clear the queue synchronously after calling this to prevent redundant pushes. */
@@ -244,9 +170,7 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
   const mergedBatch = { thoughtIndexUpdates: thoughtIndexUpdatesMerged } as PushBatch
 
   // Note: pushQueue needs to be passed to the flush action creators as lexemeSyncedPushQueue is asychronous and pushQueue is emptied as soon as dispatched.
-  dispatch(flushDeletes(pushQueue))
-  dispatch(flushEdits(pushQueue))
-  dispatch(flushMoves(pushQueue))
+  await dispatch(flushDeletes(pushQueue))
 
   // filter batches by data provider
   const localBatches = pushQueue.filter(batch => batch.local)
@@ -299,6 +223,7 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // if state has queued updates, flush the queue
     // do not trigger on isPushing to prevent infinite loop
     const state = getState()
+
     if (state.pushQueue.length > 0 && action.type !== 'isPushing') {
       flushQueueDebounced()
     }

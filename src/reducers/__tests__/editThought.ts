@@ -1,20 +1,23 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getAllChildren, getLexeme } from '../../selectors'
-import { editThought, newThought, setCursor, importText } from '../../reducers'
-import { SimplePath } from '../../@types'
+import { getThoughtIdByContext, initialState, reducerFlow } from '../../util'
+import { exportContext, getContexts, getAllChildren, getLexeme, getParent, getParentThought } from '../../selectors'
+import { newThought, importText } from '../../reducers'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 it('edit a thought', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
-    editThought({
+    setCursorFirstMatch(['a']),
+    editThoughtAtFirstMatch({
       newValue: 'aa',
       oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }] as SimplePath,
+      at: ['a'],
     }),
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -25,34 +28,47 @@ it('edit a thought', () => {
   - aa
   - b`)
 
+  const thought = getParent(stateNew, ['aa'])
+
+  // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
   // aa should exist in ROOT context
-  expect(getContexts(stateNew, 'aa')).toMatchObject([
+
+  expect(thought).toBeDefined()
+  expect(thought!.parentId).toBe(HOME_TOKEN)
+
+  expect(getContexts(stateNew, 'aa')).toMatchObject([thought!.id])
+
+  expect(getAllChildrenAsThoughts(stateNew, [HOME_TOKEN])).toMatchObject([
     {
-      context: [HOME_TOKEN],
+      id: getThoughtIdByContext(stateNew, ['b'])!,
+      value: 'b',
+      parentId: HOME_TOKEN,
+      rank: 1,
     },
-  ])
-  expect(getAllChildren(stateNew, [HOME_TOKEN])).toMatchObject([
-    { value: 'b', rank: 1 },
-    { value: 'aa', rank: 0 },
+    {
+      id: getThoughtIdByContext(stateNew, ['aa'])!,
+      value: 'aa',
+      parentId: HOME_TOKEN,
+      rank: 0,
+    },
   ])
 
   // cursor should be at /aa
-  expect(stateNew.cursor).toMatchObject([{ value: 'aa', rank: 0 }])
+  expect(stateNew.cursor).toMatchObject([getThoughtIdByContext(stateNew, ['aa'])])
 })
 
 it('edit a descendant', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
-    editThought({
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
+    editThoughtAtFirstMatch({
       newValue: 'aa1',
       oldValue: 'a1',
-      context: ['a'],
-      path: [
-        { value: 'a', rank: 1 },
-        { value: 'a1', rank: 0 },
-      ] as SimplePath,
+      at: ['a', 'a1'],
     }),
   ]
   // run steps through reducer flow and export as plaintext for readable test
@@ -64,14 +80,16 @@ it('edit a descendant', () => {
     - aa1
   - b`)
 
+  const aId = getThoughtIdByContext(stateNew, ['a'])!
+  const aa1Id = getThoughtIdByContext(stateNew, ['a', 'aa1'])!
+
   // aa1 should exist in context a
-  expect(getContexts(stateNew, 'aa1')).toMatchObject([
-    {
-      context: ['a'],
-      rank: 0,
-    },
-  ])
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'aa1', rank: 0 }])
+  expect(getContexts(stateNew, 'aa1')).toMatchObject([aa1Id])
+
+  const parent = getParentThought(stateNew, aa1Id)
+  expect(parent?.id).toBe(aId)
+
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([aa1Id])
 })
 
 it('edit a thought with descendants', () => {
@@ -79,11 +97,10 @@ it('edit a thought with descendants', () => {
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a2' }),
-    editThought({
+    editThoughtAtFirstMatch({
       newValue: 'aa',
       oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }] as SimplePath,
+      at: ['a'],
     }),
   ]
 
@@ -96,15 +113,32 @@ it('edit a thought with descendants', () => {
     - a1
     - a2`)
 
+  const thought = getParent(stateNew, ['aa'])
+  const thoughtA1 = getParent(stateNew, ['aa', 'a1'])
+  const thoughtA2 = getParent(stateNew, ['aa', 'a2'])
+
+  // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
   // aa should exist in ROOT context
-  expect(getContexts(stateNew, 'aa')).toMatchObject([
+
+  expect(thought).toBeDefined()
+  expect(thought!.parentId).toBe(HOME_TOKEN)
+
+  // aa should exist in ROOT context
+  expect(getContexts(stateNew, 'aa')).toMatchObject([thought!.id])
+
+  expect(thought?.parentId).toBe(HOME_TOKEN)
+
+  expect(getAllChildrenAsThoughts(stateNew, ['aa'])).toMatchObject([
     {
-      context: [HOME_TOKEN],
+      value: 'a1',
+      rank: 0,
+      id: thoughtA1?.id,
     },
-  ])
-  expect(getAllChildren(stateNew, ['aa'])).toMatchObject([
-    { value: 'a1', rank: 0 },
-    { value: 'a2', rank: 1 },
+    {
+      value: 'a2',
+      rank: 1,
+      id: thoughtA2?.id,
+    },
   ])
 })
 
@@ -112,13 +146,15 @@ it('edit a thought existing in mutliple contexts', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    editThought({
+    editThoughtAtFirstMatch({
       newValue: 'abc',
       oldValue: 'ab',
-      context: ['a'],
-      path: [{ value: 'a', rank: 0 }] as SimplePath,
+      at: ['a', 'ab'],
     }),
   ]
 
@@ -132,29 +168,39 @@ it('edit a thought existing in mutliple contexts', () => {
   - b
     - ab`)
 
+  const thoughtABC = getParent(stateNew, ['a', 'abc'])!
+
+  // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
+  // aa should exist in ROOT context
+
+  expect(thoughtABC).not.toBeNull()
+  expect(thoughtABC!.parentId).toBe(getThoughtIdByContext(stateNew, ['a']))
+
   // abc should exist in context a
-  expect(getContexts(stateNew, 'abc')).toMatchObject([
+  expect(getContexts(stateNew, 'abc')).toMatchObject([thoughtABC.id])
+
+  expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject([
     {
-      context: ['a'],
+      value: 'abc',
+      rank: 0,
+      id: thoughtABC.id,
     },
   ])
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'abc', rank: 0 }])
 })
 
 it('edit a thought that exists in another context', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    editThought({
+    editThoughtAtFirstMatch({
       newValue: 'ab',
       oldValue: 'a',
-      context: ['b'],
-      path: [
-        { value: 'b', rank: 1 },
-        { value: 'a', rank: 0 },
-      ] as SimplePath,
+      at: ['b', 'a'],
     }),
   ]
 
@@ -168,35 +214,34 @@ it('edit a thought that exists in another context', () => {
   - b
     - ab`)
 
+  const thoughtInContextA = getParent(stateNew, ['a', 'ab'])!
+  const thoughtInContextB = getParent(stateNew, ['b', 'ab'])!
+
+  expect(thoughtInContextA).toBeTruthy()
+  expect(thoughtInContextB).toBeTruthy()
+
   // ab should exist in both contexts a and b
-  expect(getContexts(stateNew, 'ab')).toMatchObject([
+  expect(getContexts(stateNew, 'ab')).toMatchObject([thoughtInContextA!.id, thoughtInContextB!.id])
+
+  expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject([
     {
-      context: ['a'],
+      value: 'ab',
       rank: 0,
-    },
-    {
-      context: ['b'],
-      rank: 0,
+      id: thoughtInContextA.id,
     },
   ])
 
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0 }])
-
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0 }])
+  expect(getAllChildrenAsThoughts(stateNew, ['b'])).toMatchObject([{ value: 'ab', rank: 0, id: thoughtInContextB.id }])
 })
 
 it('edit a child with the same value as its parent', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    editThought({
+    editThoughtAtFirstMatch({
       newValue: 'ab',
       oldValue: 'a',
-      context: ['a'],
-      path: [
-        { value: 'a', rank: 0 },
-        { value: 'a', rank: 0 },
-      ] as SimplePath,
+      at: ['a', 'a'],
     }),
   ]
 
@@ -208,19 +253,24 @@ it('edit a child with the same value as its parent', () => {
   - a
     - ab`)
 
+  const thoughtInContextA = getParent(stateNew, ['a', 'ab'])!
+  const thoughtA = getParent(stateNew, ['a'])!
+
+  expect(thoughtInContextA).toBeTruthy()
   // ab should exist in context a
-  expect(getContexts(stateNew, 'ab')).toMatchObject([
-    {
-      context: ['a'],
-      rank: 0,
-    },
-  ])
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0 }])
+  expect(getContexts(stateNew, 'ab')).toMatchObject([thoughtInContextA!.id])
+
+  expect(thoughtInContextA?.parentId).toBe(thoughtA.id)
+  expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0, id: thoughtInContextA.id }])
 
   // cursor should be /a/ab
-  expect(stateNew.cursor).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'ab', rank: 0 },
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    {
+      value: 'a',
+    },
+    {
+      value: 'ab',
+    },
   ])
 })
 
@@ -228,17 +278,15 @@ it('do not duplicate children when new and old context are same', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b', insertNewSubthought: true }),
-    editThought({
+    editThoughtAtFirstMatch({
       newValue: 'as',
       oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }] as SimplePath,
+      at: ['a'],
     }),
-    editThought({
+    editThoughtAtFirstMatch({
       newValue: 'a',
       oldValue: 'as',
-      context: [HOME_TOKEN],
-      path: [{ value: 'as', rank: 0 }] as SimplePath,
+      at: ['as'],
     }),
   ]
 
@@ -263,31 +311,20 @@ it('data integrity test', () => {
     importText({
       text,
     }),
-    setCursor({
-      path: [
-        {
-          value: 'a',
-          rank: 0,
-        },
-      ],
-    }),
-    editThought({
-      newValue: 'azkaban',
+    setCursorFirstMatch(['a']),
+    editThoughtAtFirstMatch({
+      at: ['a'],
       oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }] as SimplePath,
+      newValue: 'azkaban',
     }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const { thoughtIndexUpdates, contextIndexUpdates } = checkDataIntegrity(stateNew)
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
 
-  const thoughtUpdates = Object.keys(thoughtIndexUpdates).length
-  const contextUpdates = Object.keys(contextIndexUpdates).length
-
-  expect(thoughtUpdates).toBe(0)
-  expect(contextUpdates).toBe(0)
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
 })
 
 // Issue: https://github.com/cybersemics/em/issues/1144
@@ -303,31 +340,20 @@ it('data integrity test after editing a parent with multiple descendants with sa
     importText({
       text,
     }),
-    setCursor({
-      path: [
-        {
-          value: '',
-          rank: 0,
-        },
-      ],
-    }),
-    editThought({
-      newValue: 'x',
+    setCursorFirstMatch(['']),
+    editThoughtAtFirstMatch({
+      at: [''],
       oldValue: '',
-      context: [HOME_TOKEN],
-      path: [{ value: '', rank: 0 }] as SimplePath,
+      newValue: 'x',
     }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
-  const { thoughtIndexUpdates, contextIndexUpdates } = checkDataIntegrity(stateNew)
+  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
 
-  const thoughtUpdates = Object.keys(thoughtIndexUpdates).length
-  const contextUpdates = Object.keys(contextIndexUpdates).length
-
-  expect(thoughtUpdates).toBe(0)
-  expect(contextUpdates).toBe(0)
+  expect(missingLexemeValues).toHaveLength(0)
+  expect(missingParentIds).toHaveLength(0)
 })
 
 describe('changing thought with duplicate descendent', () => {
@@ -340,11 +366,10 @@ describe('changing thought with duplicate descendent', () => {
         - b
           - ac`,
       }),
-      editThought({
+      editThoughtAtFirstMatch({
         newValue: 'ac',
         oldValue: 'a',
-        context: [HOME_TOKEN],
-        path: [{ value: 'a', rank: 0 }] as SimplePath,
+        at: ['a'],
       }),
     ]
 
@@ -372,11 +397,10 @@ describe('changing thought with duplicate descendent', () => {
         - b
           - a`,
       }),
-      editThought({
+      editThoughtAtFirstMatch({
         newValue: 'ac',
         oldValue: 'a',
-        context: [HOME_TOKEN],
-        path: [{ value: 'a', rank: 0 }] as SimplePath,
+        at: ['a'],
       }),
     ]
 

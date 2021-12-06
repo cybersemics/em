@@ -1,6 +1,6 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { childIdsToThoughts, exportContext } from '../../selectors'
 
 // reducers
 import newSubthought from '../newSubthought'
@@ -55,7 +55,9 @@ it('set cursor on new empty thought', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(cursorThoughts).toMatchObject([
     { value: 'a', rank: 0 },
     { value: '', rank: -1 },
   ])

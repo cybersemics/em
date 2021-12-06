@@ -1,8 +1,8 @@
 import { Tree, Leaf, findTreeDescendants } from '../recentlyEditedTree'
 import { timestamp } from '../timestamp'
-import { createId } from '../createId'
+import {} from '../'
 
-it('Hide meta and ROOT thoughts for recently edited tree', () => {
+it.skip('Hide meta and ROOT thoughts for recently edited tree', () => {
   const tree: Tree = {
     a: {
       b: {
@@ -10,13 +10,13 @@ it('Hide meta and ROOT thoughts for recently edited tree', () => {
         lastUpdated: timestamp(),
         path: [
           {
-            id: createId(),
+            id: 'ola',
             lastUpdated: timestamp(),
             value: 'ola',
             rank: 1,
           },
           {
-            id: createId(),
+            id: 'amigo',
             lastUpdated: timestamp(),
             value: 'amigo',
             rank: 2,
@@ -25,15 +25,17 @@ it('Hide meta and ROOT thoughts for recently edited tree', () => {
       } as Leaf,
       c: {
         d: {
+          leaf: true,
+          lastUpdated: timestamp(),
           path: [
             {
-              id: createId(),
+              id: 'ola',
               lastUpdated: timestamp(),
               value: 'ola',
               rank: 1,
             },
             {
-              id: createId(),
+              id: '=hidden',
               lastUpdated: timestamp(),
               value: '=hidden',
               rank: 2,

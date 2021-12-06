@@ -1,5 +1,4 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
 import { isMac, isTouch } from '../../browser'
 import {
   TUTORIAL_CONTEXT,
@@ -13,10 +12,12 @@ import { getChildrenRanked } from '../../selectors'
 
 import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
+import { useStore } from 'react-redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren }) => {
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
+  const store = useStore()
 
   if (context1SubthoughtisCreated) {
     return (
@@ -26,6 +27,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
       </Fragment>
     )
   }
+
   return (
     <Fragment>
       <p>
@@ -52,7 +54,8 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
             <TutorialHint>
               <br />
               <br />
-              {!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+              {!cursor ||
+              headValue(store.getState(), cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
                 ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". `
                 : null}
               {isTouch ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}

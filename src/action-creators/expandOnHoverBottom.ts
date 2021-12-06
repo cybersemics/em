@@ -1,7 +1,7 @@
 import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
-import { hashContext, pathToContext } from '../util'
+import { headId, pathToContext } from '../util'
 import { getChildren } from '../selectors'
-import { clearExpandBottom, expandBottom } from '.'
+import { clearExpandBottom, expandBottom } from './index'
 import { Path, Thunk, Timer } from '../@types'
 
 // eslint-disable-next-line prefer-const
@@ -15,10 +15,12 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
 
   const { hoveringPath, hoverId, expandHoverBottomPaths, dragInProgress } = state
 
-  const hoveringContext = hoveringPath && pathToContext(hoveringPath)
+  const hoveringContext = hoveringPath && pathToContext(state, hoveringPath)
 
   const shouldExpand =
-    hoverId === DROP_TARGET.EmptyDrop && hoveringPath && getChildren(state, pathToContext(hoveringPath)).length > 0
+    hoverId === DROP_TARGET.EmptyDrop &&
+    hoveringPath &&
+    getChildren(state, pathToContext(state, hoveringPath)).length > 0
 
   /** Clears active delayed dispatch. */
   const clearTimer = () => {
@@ -49,8 +51,10 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
     }, EXPAND_HOVER_DELAY)
   }
 
+  const parentId = headId(hoveringPath!)
+
   /** Check if current hovering context is already has active expansion. */
-  const isAlreadyExpanded = () => hoveringContext && expandHoverBottomPaths[hashContext(hoveringContext)]
+  const isAlreadyExpanded = () => hoveringContext && expandHoverBottomPaths[parentId]
 
   if (shouldExpand && hoveringPath && !isAlreadyExpanded()) {
     clearTimer()

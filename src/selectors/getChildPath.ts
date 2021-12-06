@@ -1,35 +1,41 @@
 import _ from 'lodash'
 import { getAllChildren, rankThoughtsFirstMatch } from '../selectors'
-import { hashThought, head, headValue, unroot } from '../util'
-import { resolveArray, resolvePath, resolveShallow } from '../util/memoizeResolvers'
-import { Child, SimplePath, State, ThoughtContext } from '../@types'
+import { hashThought, head, unroot } from '../util'
+import { resolveArray, resolvePath } from '../util/memoizeResolvers'
+import { ThoughtId, SimplePath, State, ThoughtContext } from '../@types'
+import getParentThought from './getParentThought'
+import getContextForThought from './getContextForThought'
+import { getAllChildrenAsThoughts } from './getChildren'
+import { getThoughtById } from './getThought'
 
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */
-const resolve = (state: State, child: Child | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>
+const resolve = (state: State, child: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>
   resolveArray([
     // slow, but ensures getChildPath doesn't get memoized when children change
-    showContexts && (child as ThoughtContext).context
-      ? resolvePath(getAllChildren(state, (child as ThoughtContext).context))
+    showContexts && getParentThought(state, child)!.value
+      ? resolvePath(getAllChildren(state, getContextForThought(state, child)!))
       : '',
-    resolveShallow(child),
+    child,
     resolvePath(simplePath),
     showContexts,
   ])
 
 /** Because the current thought only needs to hash match another thought we need to use the exact value of the child from the other context child.context SHOULD always be defined when showContexts is true. */
 const getChildPath = _.memoize(
-  (state: State, child: Child | ThoughtContext, simplePath: SimplePath, showContexts?: boolean): SimplePath => {
-    const otherSubthought =
-      (showContexts && (child as ThoughtContext).context
-        ? getAllChildren(state, (child as ThoughtContext).context)
+  (state: State, child: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean): SimplePath => {
+    const simplePathHeadThought = getThoughtById(state, head(simplePath))
+    const otherSubthought = (
+      showContexts && getParentThought(state, child)!.id
+        ? getAllChildrenAsThoughts(state, getContextForThought(state, child)!)
         : []
-      ).find(child => hashThought(child.value) === hashThought(headValue(simplePath))) || head(simplePath)
+    ).find(child => hashThought(child.value) === hashThought(simplePathHeadThought.value))?.id
 
+    const path = showContexts && rankThoughtsFirstMatch(state, getContextForThought(state, child)!)
     const childPath = (
-      showContexts
+      showContexts && path
         ? // rankThoughtsFirstMatch not accounted for by memoize resolver
-          rankThoughtsFirstMatch(state, (child as ThoughtContext).context).concat(otherSubthought)
-        : unroot(simplePath).concat(child as Child)
+          path.concat(otherSubthought!)
+        : unroot(simplePath).concat(child as ThoughtId)
     ) as SimplePath
 
     return childPath

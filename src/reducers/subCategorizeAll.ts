@@ -22,7 +22,7 @@ const subCategorizeAll = (state: State) => {
   if (!cursor) return state
 
   const cursorParent = parentOf(cursor)
-  const context = pathToContext(cursorParent)
+  const context = pathToContext(state, cursorParent)
 
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
@@ -33,11 +33,15 @@ const subCategorizeAll = (state: State) => {
   // cancel if parent is readonly
   else if (hasChild(state, context, '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(cursorParent))}" is read-only so "${headValue(cursor)}" cannot be subcategorized.`,
+      value: `"${ellipsize(headValue(state, cursorParent))}" is read-only so "${headValue(
+        state,
+        cursor,
+      )}" cannot be subcategorized.`,
     })
   } else if (hasChild(state, context, '=unextendable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(cursorParent))}" is unextendable so "${headValue(
+      value: `"${ellipsize(headValue(state, cursorParent))}" is unextendable so "${headValue(
+        state,
         cursor,
       )}" cannot be subcategorized.`,
     })
@@ -49,7 +53,7 @@ const subCategorizeAll = (state: State) => {
       ? parentOf(contextChain.length > 1 ? lastThoughtsFromContextChain(state, contextChain) : cursor)
       : HOME_PATH
 
-  const children = getChildrenRanked(state, pathToContext(simplifyPath(state, path)))
+  const children = getChildrenRanked(state, pathToContext(state, simplifyPath(state, path)))
   const pathParent = cursor.length > 1 ? cursorParent : HOME_PATH
 
   // filter out meta children that should not be moved
@@ -59,7 +63,7 @@ const subCategorizeAll = (state: State) => {
   // use fresh state
   const getThoughtNew = once((state: State) => {
     const parentPath = simplifyPath(state, pathParent)
-    const childrenNew = getChildrenRanked(state, pathToContext(parentPath))
+    const childrenNew = getChildrenRanked(state, pathToContext(state, parentPath))
     return childrenNew[0]
   })
 
@@ -78,8 +82,9 @@ const subCategorizeAll = (state: State) => {
     ...filteredChildren.map(
       child => (state: State) =>
         moveThought(state, {
-          oldPath: appendToPath(cursorParent, child),
-          newPath: appendToPath(cursorParent, getThoughtNew(state), child),
+          oldPath: appendToPath(cursorParent, child.id),
+          newPath: appendToPath(cursorParent, getThoughtNew(state).id, child.id),
+          newRank: child.rank,
         }),
     ),
   ]

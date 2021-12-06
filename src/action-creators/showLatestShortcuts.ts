@@ -1,4 +1,4 @@
-import { clearLatestShortcuts, addLatestShortcuts } from '.'
+import { clearLatestShortcuts, addLatestShortcuts } from './index'
 import { Shortcut, Thunk, Timer } from '../@types'
 import { LATEST_SHORTCUT_DIAGRAM_DURATION, LATEST_SHORTCUT_LIMIT } from '../constants'
 

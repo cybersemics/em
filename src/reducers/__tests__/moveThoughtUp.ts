@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { childIdsToThoughts, exportContext } from '../../selectors'
 
 // reducers
 import newSubthought from '../newSubthought'
@@ -8,6 +8,8 @@ import newThought from '../newThought'
 import moveThoughtUp from '../moveThoughtUp'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtUp]
@@ -38,7 +40,10 @@ it('move to prev uncle', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newSubthought('b1'),
     moveThoughtUp,
   ]
@@ -58,7 +63,10 @@ it('move to prev uncle in sorted list', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     toggleAttribute({ context: ['b'], key: '=sort', value: 'Alphabetical' }),
     newSubthought('b1'),
     moveThoughtUp,
@@ -103,10 +111,13 @@ it('move descendants', () => {
     newThought('a'),
     newSubthought('a1'),
     newSubthought('a1.1'),
-    newThought({ value: 'b', at: [{ value: 'a', rank: 0 }] }),
+    newThoughtAtFirstMatch({
+      value: 'b',
+      at: ['a'],
+    }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursor({ path: [{ value: 'b', rank: 1 }] }),
+    setCursorFirstMatch(['b']),
     moveThoughtUp,
   ]
 
@@ -124,7 +135,7 @@ it('move descendants', () => {
 })
 
 it('trying to move last thought of root should do nothing', () => {
-  const steps = [newThought('a'), newThought('b'), setCursor({ path: [{ value: 'a', rank: 0 }] }), moveThoughtUp]
+  const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), moveThoughtUp]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -167,7 +178,9 @@ it('move cursor thought should update cursor', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(thoughts).toMatchObject([
     { value: 'a', rank: 0 },
     { value: 'a2', rank: -1 },
   ])

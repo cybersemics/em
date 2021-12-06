@@ -94,15 +94,15 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     (insertNewSubthought && Math.floor(tutorialStep) === TUTORIAL_STEP_SUBTHOUGHT) ||
     // enter after typing text
     (state.cursor &&
-      headValue(state.cursor).length > 0 &&
+      headValue(state, state.cursor).length > 0 &&
       (tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER || tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER))
 
   const path = at || state.cursor || getRootPath(state)
 
   const simplePath = simplifyPath(state, path)
 
-  const thoughts = pathToContext(simplePath)
-  const context = pathToContext(rootedParentOf(state, simplePath))
+  const thoughts = pathToContext(state, simplePath)
+  const context = pathToContext(state, rootedParentOf(state, simplePath))
 
   // prevent adding Subthought to readonly or unextendable Thought
   const sourceContext = insertNewSubthought ? thoughts : context
@@ -117,12 +117,12 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   }
 
   const showContexts = isContextViewActive(state, thoughts)
-  const showContextsParent = isContextViewActive(state, pathToContext(parentOf(simplePath)))
+  const showContextsParent = isContextViewActive(state, pathToContext(state, parentOf(simplePath)))
 
   /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
   const getLastSortedChildPath = once((): SimplePath | null => {
     const lastChild = _.last(getChildrenSorted(state, thoughts))
-    return lastChild ? appendToPath(simplePath, lastChild) : null
+    return lastChild ? appendToPath(simplePath, lastChild.id) : null
   })
 
   // use the live-edited value
@@ -150,8 +150,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
         : getNextRank(state, thoughts)
       : getRankAfter(state, simplePath)
 
-  const id = createId()
-
+  const newThoughtId = createId()
   const reducers = [
     // createThought
     createThought({
@@ -160,18 +159,19 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
       rank: newRank,
       value,
-      id,
+      id: newThoughtId,
     }),
+    (newState: State) => {
+      const parentPath = !preventSetCursor ? unroot(insertNewSubthought ? path : parentOf(path)) : null
 
-    // setCursor
-    !preventSetCursor
-      ? setCursor({
-          editing: true,
-          path: unroot([...(insertNewSubthought ? path : parentOf(path)), { value, rank: newRank, id }]),
-          offset: isMobile() ? 0 : offset != null ? offset : getTextContentFromHTML(value).length,
-        })
-      : null,
-
+      return !preventSetCursor
+        ? setCursor(newState, {
+            editing: true,
+            path: unroot([...parentPath!, newThoughtId]),
+            offset: isMobile() ? 0 : offset != null ? offset : getTextContentFromHTML(value).length,
+          })
+        : null
+    },
     // tutorial step 1
     tutorialStepNewThoughtCompleted
       ? tutorialNext({})

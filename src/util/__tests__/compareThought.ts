@@ -10,7 +10,7 @@ import {
   makeOrderedComparator,
   compareThoughtDescending,
 } from '../../util/compareThought'
-import { Child } from '../../@types/Child'
+import { Child } from '../../@types'
 
 it('compareNumberAndOther', () => {
   expect(compareNumberAndOther(1, 2)).toBe(0)

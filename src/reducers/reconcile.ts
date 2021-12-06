@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { hashContext, reducerFlow } from '../util'
+import { reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
-import { Index, Lexeme, Parent, State, ThoughtsInterface } from '../@types'
+import { Index, Lexeme, Parent, State, ThoughtId, ThoughtsInterface } from '../@types'
+import { getThoughtById } from '../selectors'
 
 interface ReconcileOptions {
   thoughtsResults: [ThoughtsInterface, ThoughtsInterface]
@@ -12,7 +13,7 @@ interface ReconcileOptions {
   remote?: boolean
 }
 
-const emContextEncoded = hashContext([EM_TOKEN])
+const emContextEncoded = EM_TOKEN
 
 /** Returns true if the source object is has been updated more recently than the destination object. */
 const isNewer = (src: Parent | Lexeme, dest: Parent | Lexeme) => src.lastUpdated > dest.lastUpdated
@@ -62,7 +63,7 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
     _.pickBy(
       thoughtsLocal.contextIndex,
       (parentEntry: Parent, key: string) =>
-        !state.thoughts.contextIndex[key] &&
+        !getThoughtById(state, key as ThoughtId) &&
         !contextIndexLocalOnly[key] &&
         (thoughtsRemote.contextIndex || {})[key] &&
         parentEntry.pending,

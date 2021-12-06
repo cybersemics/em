@@ -30,7 +30,7 @@ const toggleTableViewShortcut: Shortcut = {
     if (!cursor) return
 
     const simplePath = simplifyPath(state, cursor)
-    const context = pathToContext(simplePath)
+    const context = pathToContext(state, simplePath)
 
     dispatch(
       toggleAttribute({
@@ -43,7 +43,7 @@ const toggleTableViewShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
+    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
     return attributeEquals(state, context, '=view', 'Table')
   },
 }

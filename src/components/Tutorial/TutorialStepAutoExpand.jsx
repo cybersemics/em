@@ -9,13 +9,13 @@ import { HOME_TOKEN } from '../../constants'
 import { parentOf, ellipsize, head, headValue, pathToContext } from '../../util'
 
 // selectors
-import { getAllChildren } from '../../selectors'
+import { getAllChildren, getAllChildrenByContextHash } from '../../selectors'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpand = ({ cursor } = {}) => {
   const state = store.getState()
-  const cursorContext = pathToContext(cursor || [])
-  const cursorChildren = getAllChildren(state, cursorContext)
+  const cursorContext = pathToContext(state, cursor || [])
+  const cursorChildren = getAllChildrenByContextHash(state, cursorContext)
   const isCursorLeaf = cursorChildren.length === 0
   const ancestorThought = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
 
@@ -26,7 +26,7 @@ const TutorialStepAutoExpand = ({ cursor } = {}) => {
 
   /** Gets the subthought that is not the cursor. */
   const subThoughtNotCursor = subthoughts =>
-    subthoughts.find(child => pathToContext(cursor).indexOf(child.value) === -1)
+    subthoughts.find(child => pathToContext(state, cursor).indexOf(child.value) === -1)
 
   return (
     <Fragment>
@@ -42,8 +42,9 @@ const TutorialStepAutoExpand = ({ cursor } = {}) => {
               </Fragment>
               <Fragment>
                 {' '}
-                to hide{(isCursorLeaf ? headValue(cursor) : cursorChildren[0].value).length === 0 && ' the empty '}{' '}
-                subthought {isCursorLeaf ? headValue(cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.
+                to hide
+                {(isCursorLeaf ? headValue(state, cursor) : cursorChildren[0].value).length === 0 && ' the empty '}{' '}
+                subthought {isCursorLeaf ? headValue(state, cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.
               </Fragment>
             </Fragment>
           ) : (

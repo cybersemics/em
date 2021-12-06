@@ -2,9 +2,9 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
-import { headValue, isDocumentEditable } from '../util'
+import { head, isDocumentEditable, isRoot } from '../util'
 import { alert, newThought, outdent } from '../action-creators'
-import { isLastVisibleChild, simplifyPath } from '../selectors'
+import { getThoughtById, isLastVisibleChild, rootedParentOf, simplifyPath } from '../selectors'
 import * as selection from '../device/selection'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -31,8 +31,10 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   const state = getState()
   const { cursor, editingValue } = state
 
+  const cursorHeadThought = cursor && getThoughtById(state, head(cursor))
+
   // if current edited thought is duplicate and user hits enter
-  if (cursor && editingValue && headValue(cursor) !== editingValue) {
+  if (cursor && editingValue && cursorHeadThought && cursorHeadThought.value !== editingValue) {
     dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }))
     return
   }
@@ -41,7 +43,9 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   if (
     type === 'keyboard' &&
     cursor &&
-    headValue(cursor).length === 0 &&
+    // outdent should not get triggered if the cursor is child of root context
+    !isRoot(rootedParentOf(state, cursor)) &&
+    cursorHeadThought?.value.length === 0 &&
     isLastVisibleChild(state, simplifyPath(state, cursor))
   ) {
     dispatch(outdent())

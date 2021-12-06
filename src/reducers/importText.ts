@@ -16,19 +16,19 @@ import {
   validateRoam,
 } from '../util'
 import { editThought, setCursor, updateThoughts } from '../reducers'
-import { getAllChildren, rankThoughtsFirstMatch, simplifyPath, rootedParentOf } from '../selectors'
+import { getAllChildren, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
 import { Path, SimplePath, State, Timestamp } from '../@types'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
 import { getSessionId } from '../util/sessionManager'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
-
-interface Options {
+export interface ImportTextPayload {
   path?: Path
 
   // Set the lastUpdated timestamp on the imported thoughts. Default: now.
@@ -68,16 +68,17 @@ const importText = (
     replaceStart,
     skipRoot,
     updatedBy = getSessionId(),
-  }: Options,
+  }: ImportTextPayload,
 ): State => {
   const isRoam = validateRoam(text)
 
   path = path || HOME_PATH
   const simplePath = simplifyPath(state, path)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   const convertedText = isRoam ? text : textToHtml(text)
   const numLines = (convertedText.match(regexpListItem) || []).length
-  const destThought = head(path)
+  const thoughtId = head(path)
+  const destThought = getThoughtById(state, thoughtId)
   const destValue = rawDestValue || destThought.value
 
   // if we are only importing a single line of html, then simply modify the current thought
@@ -98,13 +99,13 @@ const importText = (
       editThought({
         oldValue: destValue,
         newValue,
-        context: rootedParentOf(state, pathToContext(path)),
+        context: rootedParentOf(state, pathToContext(state, path)),
         path: simplePath,
       }),
 
       !preventSetCursor && path
         ? setCursor({
-            path: [...parentOf(path), { ...destThought, value: newValue }],
+            path: [...parentOf(path), thoughtId],
             offset,
           })
         : null,
@@ -146,8 +147,8 @@ const importText = (
      */
     const getDestinationPath = (): SimplePath => {
       if (!shouldImportIntoDummy) return simplePath
-      const newDummyThought = getAllChildren(updatedState, context).find(child => child.value === uuid)
-      return newDummyThought ? unroot([...simplePath, newDummyThought] as unknown as SimplePath) : simplePath
+      const newDummyThought = getAllChildrenAsThoughts(updatedState, context).find(child => child.value === uuid)
+      return (newDummyThought ? [...simplePath, newDummyThought.id] : simplePath) as SimplePath
     }
 
     const newDestinationPath = getDestinationPath()
@@ -156,19 +157,16 @@ const importText = (
 
     /** Set cursor to the last imported path. */
     const setLastImportedCursor = (state: State) => {
-      const lastImportedContext = pathToContext(imported.lastImported)
+      const lastImportedContext = imported.lastImported
 
       /** Get last iumported cursor after using collapse. */
       const getLastImportedAfterCollapse = () => {
         const cursorContextHead = lastImportedContext.slice(0, newDestinationPath.length - (destEmpty ? 2 : 1))
         const cursorContextTail = lastImportedContext.slice(newDestinationPath.length)
-        return unroot([...cursorContextHead, ...cursorContextTail])
+        return unroot([...cursorContextHead, ...cursorContextTail]) as SimplePath
       }
 
-      const newCursor = rankThoughtsFirstMatch(
-        state,
-        shouldImportIntoDummy ? getLastImportedAfterCollapse() : lastImportedContext,
-      )
+      const newCursor = shouldImportIntoDummy ? getLastImportedAfterCollapse() : lastImportedContext
 
       return setCursor(state, {
         path: newCursor,
@@ -180,7 +178,7 @@ const importText = (
     return reducerFlow([
       updateThoughts(imported),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
-      shouldImportIntoDummy ? collapseContext({ deleteCursor: true, at: newDestinationPath }) : null,
+      shouldImportIntoDummy ? collapseContext({ deleteCursor: true, at: unroot(newDestinationPath) }) : null,
       // if original destination has empty then collapse once more.
       shouldImportIntoDummy && destEmpty ? collapseContext({ deleteCursor: true, at: parentOfDestination }) : null,
       // restore the cursor to the last imported thought on the first level

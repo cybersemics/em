@@ -10,7 +10,7 @@ const canExecute = (getState: () => State) => {
   const { cursor } = state
   if (!cursor) return false
 
-  const cursorContext = pathToContext(cursor)
+  const cursorContext = pathToContext(state, cursor)
 
   // eslint-disable-next-line
   const immovable = () => hasChild(state, cursorContext, '=immovable')

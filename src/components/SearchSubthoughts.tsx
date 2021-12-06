@@ -7,9 +7,9 @@ import { searchContexts, searchLimit as setSearchLimit, error } from '../action-
 import { escapeRegExp, formatNumber, isArchived, isDocumentEditable, sort } from '../util'
 import Subthoughts from './Subthoughts'
 import NewThought from './NewThought'
-import { Connected, Index, Lexeme, SimplePath, State } from '../@types'
+import { Connected, Index, Lexeme, SimplePath, State, ThoughtId } from '../@types'
 import { getRemoteSearch } from '../search/algoliaSearch'
-import * as searchLocal from '../search/localSearch'
+import { getLocalSearch } from '../search/localSearch'
 import getFirebaseProvider from '../data-providers/firebase'
 
 interface SearchSubthoughtsProps {
@@ -47,7 +47,9 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
    * Search thoughts remotely or locally and add it to pullQueue.
    */
   const searchThoughts = async (value: string) => {
-    const searchRemote = getRemoteSearch(getFirebaseProvider(store.getState(), store.dispatch))
+    const searchRemote = getRemoteSearch(store.getState(), getFirebaseProvider(store.getState(), store.dispatch))
+
+    const searchLocal = getLocalSearch(store.getState())
 
     const setLoadingState = remoteSearch ? setIsRemoteSearching : setIsLocalSearching
     setLoadingState(true)
@@ -100,13 +102,14 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
         Object.values(thoughtIndex)
           .filter(
             lexeme =>
-              (archived || !isArchived(lexeme)) &&
+              (archived || !isArchived(store.getState(), lexeme)) &&
               lexeme.value !== HOME_TOKEN &&
               lexeme.value !== EM_TOKEN &&
               searchRegexp.test(lexeme.value),
           )
-          .map(
-            (lexeme, i) => ({ id: lexeme.id, value: lexeme.value, rank: i }),
+          .map<{ id: ThoughtId; value: string; rank: number }>(
+            // TODO: Should lexeme.id be explictly typed as ThoughtId
+            (lexeme, i) => ({ id: lexeme.contexts[0], value: lexeme.value, rank: i }),
             // cannot group cases by return value because conditionals must be checked in order of precedence
             comparator,
           ),
@@ -134,7 +137,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
         {formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"
       </span>
       <Subthoughts
-        childrenForced={children.slice(0, searchLimit)}
+        childrenForced={children.slice(0, searchLimit).map(({ id }) => id)}
         simplePath={HOME_PATH}
         allowSingleContextParent={true}
         expandable={true}

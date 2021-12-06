@@ -1,8 +1,8 @@
 /* eslint-disable */
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
-import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf } from '../selectors'
-import { appendToPath, parentOf, headValue, pathToContext, reducerFlow } from '../util'
+import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
+import { appendToPath, parentOf, headValue, pathToContext, reducerFlow, headId, head } from '../util'
 import { Path, SimplePath, State } from '../@types'
 
 /** Clears a thought's text, moving it to its first child. */
@@ -10,10 +10,12 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   if (!simplePath && !state.cursor) return state
 
   simplePath = simplePath || simplifyPath(state, state.cursor!)
-  const value = headValue(simplePath)
+
+  const headThought = getThoughtById(state, head(simplePath))
+  const { value } = headThought
 
   // const rank = headRank(simplePath)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   const children = getAllChildren(state, context)
 
   // if there are no children
@@ -26,23 +28,21 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
 
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
-  const simplePathWithNewRank: SimplePath = appendToPath(parentPath, { value, rank: getRankBefore(state, simplePath) })
-  const simplePathWithNewRankAndValue: Path = appendToPath(parentPath, {
-    value: '',
-    rank: getRankBefore(state, simplePath),
-  })
+  const simplePathWithNewRank: SimplePath = appendToPath(parentPath, headId(simplePath))
+  const simplePathWithNewRankAndValue: Path = appendToPath(parentPath, headId(simplePathWithNewRank))
 
   return reducerFlow([
     // modify the rank to get the thought to re-render (via the Subthoughts child key)
     moveThought({
       oldPath: simplePath,
       newPath: simplePathWithNewRank,
+      newRank: getRankBefore(state, simplePath)
     }),
 
     // new thought
     state => {
       // the context of the new empty thought
-      const contextEmpty = pathToContext(simplePath as Path)
+      const contextEmpty = pathToContext(state, simplePath as Path)
       return createThought(state, {
         context: contextEmpty,
         rank: getPrevRank(state, contextEmpty),

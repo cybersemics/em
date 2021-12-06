@@ -22,7 +22,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   const { cursor, editingValue } = state
 
   // if current edited thought is duplicate and user hits enter
-  if (cursor && editingValue && headValue(cursor) !== editingValue) {
+  if (cursor && editingValue && headValue(state, cursor) !== editingValue) {
     dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }))
     return
   }
@@ -31,7 +31,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
   if (
     type === 'keyboard' &&
     cursor &&
-    headValue(cursor).length === 0 &&
+    headValue(state, cursor).length === 0 &&
     isLastVisibleChild(state, simplifyPath(state, cursor))
   ) {
     dispatch(outdent())

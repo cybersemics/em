@@ -5,7 +5,7 @@ import { State } from '../@types/State'
 
 /** Toggle the caret between the cursor and its note. Set the selection to the end. If the note is empty, delete it. */
 const toggleNote = (state: State) => {
-  const context = pathToContext(state.cursor!)
+  const context = pathToContext(state, state.cursor!)
   const hasNote = hasChild(state, context, '=note')
 
   return reducerFlow([

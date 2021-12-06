@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { headRank, headValue, pathToContext, reducerFlow } from '../util'
+import { head, pathToContext, reducerFlow } from '../util'
 import editThought from './editThought'
 import newThought from './newThought'
-import { rootedParentOf, simplifyPath } from '../selectors'
+import { getThoughtById, rootedParentOf, simplifyPath } from '../selectors'
 import alert from './alert'
 import { State } from '../@types'
 import * as selection from '../device/selection'
@@ -22,13 +22,19 @@ const extractThought = (state: State) => {
     return alert(state, { value: 'No text selected to extract' })
   }
 
-  const value = headValue(cursor)
+  const cursorThought = getThoughtById(state, head(cursor))
+
+  if (!cursorThought) {
+    console.warn('Cursor thought not found!')
+    return state
+  }
+
+  const { value, rank } = cursorThought
   const newValue = `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim()
   const childValue = value.slice(selectionStart, selectionEnd)
 
-  const thoughts = pathToContext(cursor)
+  const thoughts = pathToContext(state, cursor)
   const cursorContext = rootedParentOf(state, thoughts)
-  const rank = headRank(cursor)
 
   const reducers = [
     editThought({

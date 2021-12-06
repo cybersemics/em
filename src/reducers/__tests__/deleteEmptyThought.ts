@@ -1,5 +1,5 @@
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
 import { importText } from '../../action-creators'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -96,8 +96,8 @@ it("archive thought with archived and hidden children - arvhive all children in 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
     - =a
-    - b
-    - =c`)
+    - =c
+    - b`)
 })
 
 it('do nothing if there is no cursor', () => {
@@ -180,10 +180,7 @@ it('cursor should move to prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'a1', rank: 0 },
-  ])
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a1'])!)
 })
 
 it('cursor should move to next sibling if there is no prev sibling', () => {
@@ -200,10 +197,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'a2', rank: 1 },
-  ])
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2'])!)
 })
 
 it('cursor should move to parent if the deleted thought has no siblings', () => {
@@ -212,7 +206,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
+  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a'])!)
 })
 
 it('cursor should be removed if the last thought is deleted', () => {
@@ -229,7 +223,7 @@ describe('mount', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
-  it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
+  it.only('after deleteEmptyThought, caret should move to end of previous thought', async () => {
     store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
     jest.runOnlyPendingTimers()
 

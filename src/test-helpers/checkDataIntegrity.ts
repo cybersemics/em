@@ -1,63 +1,30 @@
-import { hashContext, hashThought } from '../util'
-import { getSessionId } from '../util/sessionManager'
-import { Index, Lexeme, Parent, State, Timestamp } from '../@types'
+import { hashThought } from '../util'
+import { Index, Parent, State } from '../@types'
+import { ROOT_PARENT_ID } from '../constants'
+/**
+ * Recurively get all the thought ids that are not available in the contextIndex.
+ */
+const recursiveCheckParent = (contextIndex: Index<Parent>, thoughtIds: string[]): string[] => {
+  return thoughtIds.reduce<string[]>((accum, thoughtId) => {
+    const thought = contextIndex[thoughtId]
+    if (!thought) return [...accum, thoughtId]
+    if (thought.parentId === ROOT_PARENT_ID) return []
+    return [...accum, ...recursiveCheckParent(contextIndex, [thought.parentId])]
+  }, [])
+}
 
-/** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the updates if indexes are not in sync. */
+/** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the migging parent ids and missing lexemes values. */
 const checkDataIntegrity = (state: State, max = 100000) => {
   const { contextIndex, thoughtIndex } = state.thoughts
-  const contextIndexUpdates: Index<Parent> = {}
-  const thoughtIndexUpdates: Index<Lexeme> = {}
+  let missingParentIds: string[] = []
+  let missingLexemeValues: string[] = []
 
   Object.keys(thoughtIndex)
     .slice(0, max)
     .forEach(key => {
       const lexeme = thoughtIndex[key]
       if (!lexeme.contexts) return
-
-      // check that each of the lexeme's contexts and its ancestors exist in contextIndex
-      lexeme.contexts.forEach(cx => {
-        if (!cx.context)
-          return // subcontexts
-          // Note: Concat lexeme value too else it won't check for it's ancestor io contextIndex
-        ;[...cx.context, lexeme.value].forEach((value, i) => {
-          // don't check root
-          if (i === 0) return
-
-          const context = cx.context.slice(0, i)
-          // get children of the lexeme context
-          const encoded = hashContext(context)
-          const parentEntry = contextIndex[encoded]
-          const parentEntryAccum = contextIndexUpdates[encoded]
-          const children =
-            (parentEntryAccum && parentEntryAccum.children) || (parentEntry && parentEntry.children) || []
-          const isInContextIndex = children.some(
-            child => hashThought(child.value) === hashThought(value) /* && child.rank === cx.rank */,
-          )
-
-          // if the lexeme context is not in the contextIndex it is supposed to be, then generate an update to add it
-          if (!isInContextIndex) {
-            const lastUpdated = cx.lastUpdated || lexeme.lastUpdated || ('' as Timestamp)
-            // if we're at the last context, which is the whole cx.context, use cx.rank
-            // otherwise generate a large rank so it doesn't conflict
-            const rank = i === cx.context.length - 1 ? cx.rank : i + 1000
-            const valueNew = value
-            contextIndexUpdates[encoded] = {
-              context,
-              children: [
-                ...children.filter(child => hashThought(child.value) !== hashThought(valueNew)),
-                {
-                  // guard against undefined
-                  lastUpdated,
-                  rank,
-                  value: valueNew,
-                },
-              ],
-              lastUpdated,
-              updatedBy: getSessionId(),
-            }
-          }
-        })
-      }, {})
+      missingParentIds = [...missingParentIds, ...recursiveCheckParent(contextIndex, lexeme.contexts)]
     })
 
   Object.keys(contextIndex)
@@ -65,33 +32,30 @@ const checkDataIntegrity = (state: State, max = 100000) => {
     .forEach(key => {
       const parent = contextIndex[key]
 
-      const parentContextHash = hashContext(parent.context)
+      const thoughtHash = hashThought(parent.value)
+
+      const lexemeParent = thoughtIndex[thoughtHash]
+
+      if (!lexemeParent) missingLexemeValues = [...missingLexemeValues, parent.value]
 
       if (!parent.children) return
 
-      parent.children.forEach(child => {
-        const thoughtHash = hashThought(child.value)
-        const lexeme = thoughtIndexUpdates[thoughtHash] || thoughtIndex[thoughtHash]
+      parent.children.forEach(childId => {
+        const thought = contextIndex[childId]
 
-        const hasThoughtIndexEntry =
-          lexeme && lexeme.contexts.some(thoughtContext => hashContext(thoughtContext.context) === parentContextHash)
+        if (!thought) return
 
-        if (!hasThoughtIndexEntry) {
-          thoughtIndexUpdates[thoughtHash] = {
-            ...lexeme,
-            contexts: [
-              ...lexeme.contexts,
-              {
-                context: parent.context,
-                rank: child.rank,
-              },
-            ],
-          }
-        }
-      }, {})
+        const thoughtHash = hashThought(thought.value)
+
+        const lexeme = thoughtIndex[thoughtHash]
+
+        if (!lexeme) missingLexemeValues = [...missingLexemeValues, thought.value]
+      })
     })
 
-  return { contextIndexUpdates, thoughtIndexUpdates }
+  return { missingParentIds, missingLexemeValues }
 }
 
 export default checkDataIntegrity
+
+export {}

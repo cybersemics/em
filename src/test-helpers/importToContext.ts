@@ -11,13 +11,18 @@ function importToContext(pathUnranked: string | string[], text?: string): Thunk 
   const _pathUnranked = typeof pathUnranked === 'string' ? [HOME_TOKEN] : (pathUnranked as string[])
   const _text = typeof pathUnranked === 'string' ? pathUnranked : text!
 
-  return (dispatch, getState) =>
-    dispatch(
-      importText({
-        path: rankThoughtsFirstMatch(getState(), _pathUnranked),
-        text: _text,
-      }),
+  return (dispatch, getState) => {
+    const path = rankThoughtsFirstMatch(getState(), _pathUnranked)
+    return (
+      path &&
+      dispatch(
+        importText({
+          path,
+          text: _text,
+        }),
+      )
     )
+  }
 }
 
 export default importToContext

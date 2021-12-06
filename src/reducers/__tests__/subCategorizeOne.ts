@@ -1,6 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { childIdsToThoughts, exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { State } from '../../@types'
 
 // reducers
 import newSubthought from '../newSubthought'
@@ -52,7 +53,9 @@ it('set cursor on new empty thought', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(cursorThoughts).toMatchObject([
     { value: 'a', rank: 0 },
     { value: '', rank: -1 },
   ])
@@ -70,12 +73,10 @@ it('subcategorize within alphabteically sorted context', () => {
         - C
         - E`,
     }),
-    setCursor({
-      path: [
-        { value: 'A', rank: 0 },
-        { value: 'E', rank: 4 },
-      ],
-    }),
+    (newState: State) =>
+      setCursor(newState, {
+        path: rankThoughtsFirstMatch(newState, ['A', 'E']),
+      }),
     subCategorizeOne,
   ]
 

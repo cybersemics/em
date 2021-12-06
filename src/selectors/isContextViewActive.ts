@@ -1,11 +1,13 @@
-import { hashContext } from '../util'
+import { getThoughtIdByContext } from '../util'
 import { State } from '../@types'
 
 /** Return true if the context view is active for the given key, including selected subthoughts. */
 const isContextViewActive = (state: State, unrankedPath: string[]) => {
   if (unrankedPath.length === 0) return false
 
-  return !!state.contextViews[hashContext(unrankedPath)]
+  const id = getThoughtIdByContext(state, unrankedPath)
+
+  return !!id && !!state.contextViews[id]
 
   // disable intrathought linking until add, edit, delete, and expansion can be implemented
   // TODO: Figure out why this causes unwanted re-rendering during editing

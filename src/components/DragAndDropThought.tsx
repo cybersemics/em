@@ -21,13 +21,14 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  headValue,
+  head,
   isDescendantPath,
   isDocumentEditable,
   isEM,
   isRoot,
   parentOf,
   pathToContext,
+  unroot,
 } from '../util'
 
 // selectors
@@ -35,6 +36,8 @@ import {
   getNextRank,
   getRankBefore,
   getSortPreference,
+  getThoughtById,
+  getThoughtByPath,
   hasChild,
   isBefore,
   rootedParentOf,
@@ -49,8 +52,8 @@ export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerP
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ConnectedThoughtContainerProps) => {
   const state = store.getState()
-  const thoughts = pathToContext(props.simplePathLive!)
-  const context = parentOf(pathToContext(props.simplePathLive!))
+  const thoughts = pathToContext(state, props.simplePathLive!)
+  const context = parentOf(pathToContext(state, props.simplePathLive!))
   const isDraggable = props.isVisible || props.isCursorParent
 
   return (
@@ -90,13 +93,13 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 })
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
-const canDrop = (props: ConnectedThoughtContainerProps, monitor: DropTargetMonitor) => {
+const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
   const { cursor, expandHoverTopPath } = state
   const { path } = props
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
-  const simpleThoughts = pathToContext(props.simplePathLive!)
+  const simpleThoughts = pathToContext(state, props.simplePathLive!)
   const context = parentOf(simpleThoughts)
   const isSorted = getSortPreference(state, context).type !== 'None'
 
@@ -130,6 +133,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
+  const toThought = getThoughtByPath(state, thoughtsTo)
+  const fromThought = getThoughtByPath(state, thoughtsFrom)
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedParentOf(state, thoughtsFrom)
   const newContext = rootedParentOf(state, thoughtsTo)
@@ -146,34 +151,36 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // drop on itself or after itself is a noop
   if (equalPath(thoughtsFrom, thoughtsTo) || isBefore(state, thoughtsFrom, thoughtsTo)) return
 
-  const newPath = appendToPath(parentOf(thoughtsTo), {
-    value: headValue(thoughtsFrom),
-    rank: getRankBefore(state, thoughtsTo),
-  })
+  const parent = unroot(rootedParentOf(state, thoughtsTo))
+  const newPath = appendToPath(parent, head(thoughtsFrom))
 
+  const newRank = getRankBefore(state, thoughtsTo)
   store.dispatch(
     props.showContexts
       ? createThought({
-          value: headValue(thoughtsTo),
-          context: pathToContext(thoughtsFrom),
+          value: toThought.value,
+          context: pathToContext(state, thoughtsFrom),
           rank: getNextRank(state, thoughtsFrom),
         })
       : moveThought({
           oldPath: thoughtsFrom,
           newPath,
+          newRank,
         }),
   )
+
+  const parentThought = getThoughtById(state, head(parentOf(thoughtsTo)))
 
   // alert user of move to another context
   if (!sameContext) {
     // wait until after MultiGesture has cleared the error so this alert does not get cleared
     setTimeout(() => {
-      const alertFrom = '"' + ellipsize(headValue(thoughtsFrom)) + '"'
-      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(headValue(parentOf(thoughtsTo))) + '"'
+      const alertFrom = '"' + ellipsize(fromThought.value) + '"'
+      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
-      clearTimeout(globals.errorTimer)
-      globals.errorTimer = setTimeout(() => store.dispatch(alert(null)), 5000)
+      globals.errorTimer && clearTimeout(globals.errorTimer)
+      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
     }, 100)
   }
 }

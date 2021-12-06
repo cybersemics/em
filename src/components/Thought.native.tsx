@@ -7,7 +7,7 @@ import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG, VIEW_MODE } from '../constants'
 import { compareReasonable } from '../util/compareThought'
-import { Child, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { ThoughtId, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // components
 import Bullet from './Bullet'
@@ -25,11 +25,10 @@ import useLongPress from '../hooks/useLongPress'
 import {
   equalArrays,
   equalPath,
-  hashContext,
   head,
+  headId,
   headValue,
   isDescendantPath,
-  isDivider,
   isFunction,
   isRoot,
   parentOf,
@@ -41,6 +40,7 @@ import {
 // selectors
 import {
   attribute,
+  childIdsToThoughts,
   getAllChildren,
   getChildren,
   getChildrenRanked,
@@ -54,6 +54,7 @@ import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
 import { StyleSheet } from 'react-native'
 import ThoughtAnnotation from './ThoughtAnnotation'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /**********************************************************************
  * Redux
@@ -61,7 +62,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
-  childrenForced?: Child[]
+  childrenForced?: ThoughtId[]
   contextBinding?: Path
   path: Path
   cursor?: Path | null
@@ -80,7 +81,7 @@ export interface ThoughtContainerProps {
   isHovering?: boolean
   isParentHovering?: boolean
   isVisible?: boolean
-  prevChild?: Child | ThoughtContext
+  prevChild?: ThoughtId | ThoughtContext
   publish?: boolean
   rank: number
   showContexts?: boolean
@@ -140,7 +141,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const simplePathLive = isEditing
     ? (parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath)
     : simplePath
-  const contextLive = pathToContext(simplePathLive)
+  const contextLive = pathToContext(state, simplePathLive)
 
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
 
@@ -153,7 +154,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
       (distance === 2
         ? // grandparent
           equalPath(rootedParentOf(state, parentOf(cursor)), path) &&
-          getChildren(state, pathToContext(cursor)).length === 0
+          getChildren(state, pathToContext(state, cursor)).length === 0
         : // parent
           equalPath(parentOf(cursor), path)))
 
@@ -163,7 +164,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isCursorGrandparent =
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
-  const isExpanded = !!expanded[hashContext(pathToContext(path))]
+  const isExpanded = !!expanded[headId(path)]
   const isLeaf = !hasChildren(state, contextLive)
 
   return {
@@ -271,7 +272,7 @@ const ThoughtContainer = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
-  const value = headValue(simplePathLive!)
+  const value = headValue(state, simplePathLive!)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
@@ -280,14 +281,16 @@ const ThoughtContainer = ({
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
 
-  const children = childrenForced || getChildrenRanked(state, pathToContext(contextBinding || simplePathLive))
+  const children = childrenForced
+    ? childIdsToThoughts(state, childrenForced) ?? []
+    : getChildrenRanked(state, pathToContext(state, contextBinding || simplePathLive))
 
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  const thoughts = pathToContext(simplePath)
+  const thoughts = pathToContext(state, simplePath)
   const context = parentOf(thoughts)
-  const childrenOptions = getAllChildren(state, [...context, '=options'])
+  const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
   const options =
     !isFunction(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
 
@@ -336,7 +339,7 @@ const ThoughtContainer = ({
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
-  const draggingThoughtValue = state.draggingThought ? head(pathToContext(state.draggingThought)) : null
+  const draggingThoughtValue = state.draggingThought ? head(pathToContext(state, state.draggingThought)) : null
 
   const isAnyChildHovering = useIsChildHovering(thoughts, isHovering, isDeepHovering)
 
@@ -356,7 +359,7 @@ const ThoughtContainer = ({
       // check if it's alphabetically previous to current thought
       compareReasonable(draggingThoughtValue, value) <= 0 &&
       // check if it's alphabetically next to previous thought if it exists
-      (!prevChild || compareReasonable(draggingThoughtValue, (prevChild as Child).value) === 1)
+      (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
     : // if alphabetical sort is disabled just check if current thought is hovering
       globals.simulateDropHover || isHovering
 
@@ -381,7 +384,7 @@ const ThoughtContainer = ({
         {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
           <Bullet
             isEditing={isEditing}
-            context={pathToContext(simplePath)}
+            context={pathToContext(state, simplePath)}
             leaf={isLeaf}
             onClick={() => {
               if (!isEditing || children.length === 0) {

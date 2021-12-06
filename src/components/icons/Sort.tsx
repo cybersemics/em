@@ -9,7 +9,7 @@ import { pathToContext } from '../../util'
 const getCursorSortDirection = (state: State) => {
   const { cursor } = state
   const simplePath = simplifyPath(state, cursor || HOME_PATH)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   return getSortPreference(state, context).direction
 }
 

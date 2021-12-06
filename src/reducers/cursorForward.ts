@@ -15,10 +15,10 @@ const cursorForward = (state: State) => {
   else {
     const cursor = state.cursor || HOME_PATH
 
-    const firstChild = firstVisibleChild(state, pathToContext(cursor))
+    const firstChild = firstVisibleChild(state, pathToContext(state, cursor))
     if (!firstChild) return state
 
-    const cursorNew = unroot([...cursor, firstChild])
+    const cursorNew = unroot([...cursor, firstChild.id])
     return setCursor(state, { path: cursorNew })
   }
 }

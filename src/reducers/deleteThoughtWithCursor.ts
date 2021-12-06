@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { cursorBack, deleteThought, setCursor } from '../reducers'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import { Child, Path, State, ThoughtContext } from '../@types'
+import { Path, State } from '../@types'
 
 // util
 import { appendToPath, parentOf, head, headValue, pathToContext, once, reducerFlow, unroot } from '../util'
@@ -9,56 +9,57 @@ import { appendToPath, parentOf, head, headValue, pathToContext, once, reducerFl
 // selectors
 import {
   firstVisibleChild,
-  getContexts,
   getContextsSortedAndRanked,
   isContextViewActive,
   rootedParentOf,
   prevSibling,
-  rankThoughtsFirstMatch,
   simplifyPath,
   thoughtsEditingFromChain,
+  getParentThought,
+  getThoughtById,
 } from '../selectors'
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   if (!state.cursor && !payload.path) return state
 
-  let path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
+  const path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, pathToContext(parentOf(path)))
+  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(path)))
+  // @MIGRATION_TODO: Fix the context view related logic here.
   if (showContexts) {
     // Get thought in ContextView
-    const thoughtInContextView = head(parentOf(path))
-    // Get context from which we are going to delete thought
-    const context = getContexts(state, thoughtInContextView.value)
-      .map(({ context }) => context)
-      .find(context => head(context) === headValue(path))
-    if (context) {
-      // Convert to path
-      path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
-    }
+    // const thoughtInContextView = head(parentOf(path))
+    // // Get context from which we are going to delete thought
+    // const context = getContexts(state, thoughtInContextView.value)
+    //   .map(({ context }) => context)
+    //   .find(context => head(context) === headValue(path))
+    // if (context) {
+    //   // Convert to path
+    //   path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
+    // }
   }
   const simplePath = simplifyPath(state, path)
-  const thoughts = pathToContext(simplePath)
+  const thoughts = pathToContext(state, simplePath)
   const context = rootedParentOf(state, thoughts)
-  const { value, rank } = head(simplePath)
+
+  const thought = getThoughtById(state, head(simplePath))
+  const { value, rank } = thought
 
   /** Calculates the previous context within a context view. */
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, simplePath)
     const prevContext = once(() => {
-      const contexts = getContextsSortedAndRanked(state, headValue(thoughtsContextView))
-      const removedContextIndex = contexts.findIndex(context => head(context.context) === value)
+      const contexts = getContextsSortedAndRanked(state, headValue(state, thoughtsContextView))
+      const removedContextIndex = contexts.findIndex(({ id }) => {
+        const parentThought = getParentThought(state, id)
+        return parentThought?.value === value
+      })
       return contexts[removedContextIndex - 1]
     })
     const context = prevContext()
     return context
-      ? ({
-          value: head(context.context),
-          rank: prevContext().rank,
-        } as Child)
-      : null
   }
 
   // prev must be calculated before dispatching deleteThought
@@ -78,16 +79,16 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   return reducerFlow([
     // delete thought
     deleteThought({
-      context: parentOf(pathToContext(simplePath)),
+      context: parentOf(pathToContext(state, simplePath)),
       showContexts,
-      thoughtRanked: head(simplePath),
+      thoughtId: head(simplePath),
     }),
 
     // move cursor
     state => {
       const next = once(() =>
         showContexts
-          ? getContextsSortedAndRanked(state, headValue(parentOf(simplePath)))[0]
+          ? getContextsSortedAndRanked(state, headValue(state, parentOf(simplePath)))[0]
           : firstVisibleChild(state, context),
       )
 
@@ -96,15 +97,11 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       return setCursorOrBack.apply(
         null,
         prev
-          ? [appendToPath(parentOf(path), prev), { offset: prev.value.length }]
+          ? [appendToPath(parentOf(path), prev.id), { offset: prev.value.length }]
           : // Case II: set cursor on next thought
           next()
           ? [
-              unroot(
-                showContexts
-                  ? appendToPath(parentOf(path), { value: head((next() as ThoughtContext).context), rank: next().rank })
-                  : appendToPath(parentOf(path), next() as Child),
-              ),
+              unroot(showContexts ? appendToPath(parentOf(path), next().id) : appendToPath(parentOf(path), next().id)),
               { offset: 0 },
             ]
           : // Case III: delete last thought in context; set cursor on context

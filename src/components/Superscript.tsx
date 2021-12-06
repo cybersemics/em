@@ -1,9 +1,9 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-import { hasLexeme, getContexts, rootedParentOf } from '../selectors'
+import { hasLexeme, getContexts, rootedParentOf, getAncestorByValue } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
-import { Child, Context, Index, SimplePath, State } from '../@types'
+import { ThoughtId, Context, Index, SimplePath, State } from '../@types'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>
@@ -16,20 +16,22 @@ interface SuperscriptProps {
   thoughts?: Context
   simplePath: SimplePath
   simplePathLive?: SimplePath
-  thoughtRaw?: Child
+  thoughtRaw?: ThoughtId
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: SuperscriptProps) => {
   const { contextViews, cursor, showHiddenThoughts, showModal } = state
-  const cursorContext = cursor ? pathToContext(cursor) : [HOME_TOKEN]
+  const cursorContext = cursor ? pathToContext(state, cursor) : [HOME_TOKEN]
 
   const editing =
-    cursor && equalArrays(cursorContext, pathToContext(props.simplePath || [])) && hasLexeme(state, headValue(cursor))
+    cursor &&
+    equalArrays(cursorContext, pathToContext(state, props.simplePath || [])) &&
+    hasLexeme(state, headValue(state, cursor))
 
   const simplePath = props.showContexts && props.simplePath ? rootedParentOf(state, props.simplePath) : props.simplePath
 
-  const thoughts = props.thoughts || pathToContext(simplePath)
+  const thoughts = props.thoughts || pathToContext(state, simplePath)
 
   const thoughtsLive = editing ? (props.showContexts ? parentOf(cursorContext) : cursorContext) : thoughts
 
@@ -39,8 +41,11 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
   const numContexts = () => {
     const contexts = getContexts(state, head(thoughtsLive))
     // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
-    return (showHiddenThoughts ? contexts : contexts.filter(cx => !cx.context || cx.context.indexOf('=archive') === -1))
-      .length
+    return (
+      showHiddenThoughts
+        ? contexts
+        : contexts.filter(thoughtContext => !getAncestorByValue(state, thoughtContext, '=archive'))
+    ).length
   }
 
   return {

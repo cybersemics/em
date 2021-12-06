@@ -12,26 +12,30 @@ import { getAllChildren } from '../../selectors'
 
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
-import { Child, Path } from '../../@types'
+import { Path, Parent } from '../../@types'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 
 const { smallText, italic } = commonStyles
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
   const state = store.getState()
-  const cursorContext = pathToContext(cursor || [])
-  const cursorChildren = getAllChildren(state, cursorContext)
+  const cursorContext = pathToContext(state, cursor || [])
+  const cursorChildren = getAllChildrenAsThoughts(state, cursorContext)
   const isCursorLeaf = cursorChildren.length === 0
   const ancestorThought = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
 
-  const ancestorThoughtChildren = getAllChildren(state, ancestorThought.length === 0 ? [HOME_TOKEN] : ancestorThought)
+  const ancestorThoughtChildren = getAllChildrenAsThoughts(
+    state,
+    ancestorThought.length === 0 ? [HOME_TOKEN] : ancestorThought,
+  )
   const isCursorRootChildren = (cursor || []).length === 1
 
   const isCursorCollapsePossible = ancestorThoughtChildren.length > 1 && !(isCursorRootChildren && isCursorLeaf)
 
   /** Gets the subthought that is not the cursor. */
-  const subThoughtNotCursor = (subthoughts: Child[]) =>
-    subthoughts.find(child => pathToContext(cursor).indexOf(child.value) === -1)
+  const subThoughtNotCursor = (subthoughts: Parent[]) =>
+    subthoughts.find(child => cursorContext.indexOf(child.value) === -1)
 
   return (
     <Fragment>
@@ -47,8 +51,9 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
               </Fragment>
               <Fragment>
                 {' '}
-                to hide{(isCursorLeaf ? headValue(cursor) : cursorChildren[0].value).length === 0 && ' the empty '}{' '}
-                subthought {isCursorLeaf ? headValue(cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.
+                to hide
+                {(isCursorLeaf ? headValue(state, cursor) : cursorChildren[0].value).length === 0 && ' the empty '}{' '}
+                subthought {isCursorLeaf ? headValue(state, cursor) : ` "${ellipsize(cursorChildren[0].value)}"`}.
               </Fragment>
             </Fragment>
           ) : (

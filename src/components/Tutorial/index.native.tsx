@@ -1,5 +1,5 @@
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector, useStore } from 'react-redux'
 import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
 import { headValue, once } from '../../util'
@@ -58,6 +58,9 @@ const Tutorial = () => {
       tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
     }
   })
+
+  const { getState } = useStore<State>()
+  const state = getState()
 
   const dispatch = useDispatch()
 
@@ -123,19 +126,19 @@ const Tutorial = () => {
         tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT &&
           cursor &&
-          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) ||
+          doStringsMatch(headValue(state, cursor), TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT &&
           cursor &&
-          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT[tutorialChoice])) ||
+          doStringsMatch(headValue(state, cursor), TUTORIAL_CONTEXT[tutorialChoice])) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT &&
           cursor &&
-          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) ||
+          doStringsMatch(headValue(state, cursor), TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT &&
           cursor &&
-          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) ||
+          doStringsMatch(headValue(state, cursor), TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) ||
         (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT &&
           cursor &&
-          doStringsMatch(headValue(cursor), TUTORIAL_CONTEXT[tutorialChoice]))) &&
+          doStringsMatch(headValue(state, cursor), TUTORIAL_CONTEXT[tutorialChoice]))) &&
       gesture() ? (
         <View style={alignItemsCenter}>
           <GestureDiagram path={gesture()!} size={40} strokeWidth={1} arrowSize={5} />

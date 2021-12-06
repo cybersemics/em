@@ -1,10 +1,11 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
 import { HOME_PATH } from '../constants'
-import { getAllChildren, hasChild } from '../selectors'
-import { appendToPath, ellipsize, isDocumentEditable, headValue, isEM, isRoot, pathToContext } from '../util'
+import { getThoughtById, hasChild } from '../selectors'
+import { appendToPath, ellipsize, head, isDocumentEditable, isEM, isRoot, pathToContext } from '../util'
 import { alert, archiveThought, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
 
@@ -14,19 +15,20 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   const { cursor, noteFocus } = state
 
   if (cursor) {
-    const context = pathToContext(cursor)
+    const cursorThought = getThoughtById(state, head(cursor))
+    const context = pathToContext(state, cursor)
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
     } else if (hasChild(state, context, '=readonly')) {
-      dispatch(error({ value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be archived.` }))
+      dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
-      const context = pathToContext(path)
-      const allChildren = getAllChildren(state, context)
+      const context = pathToContext(state, path)
+      const allChildren = getAllChildrenAsThoughts(state, context)
       const childNote = allChildren.find(child => child.value === '=note')
       // we know there is a =note child if noteFocus is true
       // we just need to get the Child object so that archiveThought has the full path
-      const pathNote = appendToPath(path, childNote!)
+      const pathNote = appendToPath(path, childNote!.id)
       dispatch(archiveThought({ path: pathNote }))
     } else {
       // clear the undo alert timer to prevent previously cleared undo alert from closing this one
@@ -34,7 +36,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
 
       // close the alert after a delay
       // only close the alert if it is an undo alert
-      undoArchiveTimer = setTimeout(() => {
+      undoArchiveTimer = window.setTimeout(() => {
         const state = getState()
         if (state.alert && state.alert.alertType === 'undoArchive') {
           dispatch(alert(null))

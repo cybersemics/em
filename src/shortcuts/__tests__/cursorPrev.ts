@@ -2,6 +2,7 @@ import { cursorPrev, importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import globals from '../../globals'
+import { childIdsToThoughts } from '../../selectors'
 
 describe('normal view', () => {
   it('move cursor to previous sibling', () => {
@@ -19,7 +20,9 @@ describe('normal view', () => {
     setCursorFirstMatch(['b'])(store.getState())
     store.dispatch(cursorPrev())
 
-    expect(store.getState().cursor).toMatchObject([{ value: 'a' }])
+    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+
+    expect(cursorThoughts).toMatchObject([{ value: 'a' }])
   })
 
   it('move to first root child when there is no cursor', () => {
@@ -35,7 +38,9 @@ describe('normal view', () => {
       cursorPrev(),
     ])
 
-    expect(store.getState().cursor).toMatchObject([{ value: 'a' }])
+    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+
+    expect(cursorThoughts).toMatchObject([{ value: 'a' }])
   })
 
   it('do nothing when the cursor on the first sibling', () => {
@@ -51,7 +56,9 @@ describe('normal view', () => {
       cursorPrev(),
     ])
 
-    expect(store.getState().cursor).toMatchObject([{ value: 'a' }])
+    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+
+    expect(cursorThoughts).toMatchObject([{ value: 'a' }])
   })
 
   it('do nothing when there are no thoughts', () => {
@@ -84,7 +91,9 @@ describe('normal view', () => {
       cursorPrev(),
     ])
 
-    expect(store.getState().cursor).toMatchObject([{ value: 'SORT' }, { value: 'b' }])
+    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+
+    expect(cursorThoughts).toMatchObject([{ value: 'SORT' }, { value: 'b' }])
   })
 
   it('skip descendants', () => {
@@ -101,7 +110,9 @@ describe('normal view', () => {
     setCursorFirstMatch(['b'])(store.getState())
     store.dispatch(cursorPrev())
 
-    expect(store.getState().cursor).toMatchObject([{ value: 'a' }])
+    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+
+    expect(cursorThoughts).toMatchObject([{ value: 'a' }])
   })
 })
 

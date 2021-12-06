@@ -41,7 +41,7 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ path }: NoteProps) => {
   const state = store.getState()
-  const context = pathToContext(path)
+  const context = pathToContext(state, path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
   const [justPasted, setJustPasted] = useState(false)
@@ -56,7 +56,7 @@ const Note = ({ path }: NoteProps) => {
   useEffect(() => {
     const state = store.getState()
     // cursor must be true if note is focused
-    if (state.noteFocus && equalArrays(pathToContext(simplifyPath(state, state.cursor!)), context)) {
+    if (state.noteFocus && equalArrays(pathToContext(state, simplifyPath(state, state.cursor!)), context)) {
       selection.set(noteRef.current!, { end: true })
     }
   }, [state.noteFocus])

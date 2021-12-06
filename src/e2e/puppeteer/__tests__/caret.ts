@@ -125,7 +125,8 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
-  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
+  // @MIGRATION_TODO
+  it.skip('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
     const importText = `
     - a
     - b`

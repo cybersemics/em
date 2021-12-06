@@ -2,6 +2,7 @@ import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import { bumpThoughtDown, cursorBack, newSubthought, newThought } from '../index'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 
 it('bump leaf', () => {
   const steps = [newThought('a'), newSubthought('b'), bumpThoughtDown({})]
@@ -22,7 +23,7 @@ it('cursor should stay in empty thought', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
     { value: 'a', rank: 0 },
     { value: '', rank: -1 },
   ])

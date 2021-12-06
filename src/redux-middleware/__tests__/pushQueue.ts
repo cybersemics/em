@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { importText, editThought } from '../../action-creators'
-import { getLexeme as getLexemeState, rankThoughtsFirstMatch } from '../../selectors'
+import { getLexeme as getLexemeState, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getLexemeDb from '../../data-providers/data-helpers/getLexeme'
 import { DataProvider } from '../../data-providers/DataProvider'
@@ -45,6 +45,9 @@ it('editing a thought should load the lexeme and merge contexts', async () => {
 
   expect((await getLexemeDb(db, 'f'))?.contexts).toHaveLength(1)
 
+  const thoughtH = getParent(store.getState(), ['g', 'h'])
+  const thoughtF = getParent(store.getState(), ['a', 'b', 'c', 'd', 'e', 'f'])
+
   // refresh test app
   await refreshTestApp()
 
@@ -72,22 +75,14 @@ it('editing a thought should load the lexeme and merge contexts', async () => {
   // both db and state should have same updated lexeme
   const thoughtContextsState = getLexemeState(store.getState(), 'f')?.contexts
 
+  // Note: Thought h has been changed to f but the id remains the same
   // check that state has the correct contexts, ignoring order and ids
-  expect(thoughtContextsState).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ context: ['g'] }),
-      expect.objectContaining({ context: ['a', 'b', 'c', 'd', 'e'] }),
-    ]),
-  )
+  expect(thoughtContextsState).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
   expect(thoughtContextsState).toHaveLength(2)
 
   // check that db has the correct contexts, ignoring order and ids
   const thoughtContextsDb = (await getLexemeDb(db, 'f'))?.contexts
-  expect(thoughtContextsDb).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({ context: ['g'] }),
-      expect.objectContaining({ context: ['a', 'b', 'c', 'd', 'e'] }),
-    ]),
-  )
+  expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
+
   expect(thoughtContextsState).toHaveLength(2)
 })

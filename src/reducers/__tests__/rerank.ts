@@ -1,7 +1,8 @@
 import { initialState, reducerFlow } from '../../util'
-import { cursorDown, deleteThoughtWithCursor, moveThought, newThought, rerank } from '../../reducers'
+import { cursorDown, deleteThoughtWithCursor, newThought, rerank } from '../../reducers'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { getChildrenRanked } from '../../selectors'
+import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 
 it('recalculate absolute ranks while preserving relative order to avoid rank precision errors', () => {
   // add two thoughts normally then use insertBefore to cut the rank in half
@@ -25,7 +26,7 @@ it('recalculate absolute ranks while preserving relative order to avoid rank pre
   ])
 })
 
-it('rerank on moveThought if rnaks are too close', () => {
+it('rerank on moveThought if ranks are too close', () => {
   /** Creates a new thought above and deletes the thought below in a way that decreases the new thought's rank. */
   const halveRank = (value: string) =>
     reducerFlow([newThought({ value, insertBefore: true }), cursorDown, deleteThoughtWithCursor({})])
@@ -33,16 +34,19 @@ it('rerank on moveThought if rnaks are too close', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
-
     // first use the halving technique to create a thought with an extremely small rank
     // ranks becomes too close after about 24 halvings
-    ...new Array(24).fill(halveRank('c')),
+    ...new Array(25).fill(halveRank('c')),
 
     // create a new thought above which will create a thought halfway between rank 0 and the extremely small rank
     newThought({ value: 'b', insertBefore: true }),
 
     // move any thought to trigger a rerank
-    moveThought({ oldPath: [{ value: 'a', rank: 0 }], newPath: [{ value: 'a', rank: 99 }] }),
+    moveThoughtAtFirstMatch({
+      from: ['a'],
+      to: ['a'],
+      newRank: 99,
+    }),
   ]
 
   const state = reducerFlow(steps)(initialState())

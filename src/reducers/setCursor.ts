@@ -8,7 +8,7 @@ import {
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
 import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
-import { equalPath, equalThoughtRanked, hashContext, headValue, isDescendant, pathToContext } from '../util'
+import { equalPath, headId, headValue, isDescendant, pathToContext } from '../util'
 import { settings } from '../reducers'
 import { Index, Path, SimplePath, State, TutorialChoice } from '../@types'
 import globals from '../globals'
@@ -38,18 +38,20 @@ const setCursor = (
     path: Path | null
   },
 ): State => {
-  if (path && path.length > 1 && equalThoughtRanked(path[0], HOME_PATH[0])) {
+  if (path && path.length > 1 && path[0] === HOME_TOKEN) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
     console.error(
       new Error(
-        `setCursor: Invalid Path ${JSON.stringify(pathToContext(path))}. Non-root Paths should omit ${HOME_TOKEN}`,
+        `setCursor: Invalid Path ${JSON.stringify(
+          pathToContext(state, path),
+        )}. Non-root Paths should omit ${HOME_TOKEN}`,
       ),
     )
     return state
   }
 
   const simplePath = path ? simplifyPath(state, path) : HOME_PATH
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   const thoughtsResolved = path && contextChain.length > 0 ? chain(state, contextChain, simplePath!) : path
 
   // sync replaceContextViews with state.contextViews
@@ -94,11 +96,11 @@ const setCursor = (
    */
   const hasThoughtCollapsed = () =>
     state.cursor &&
-    !expanded[hashContext(pathToContext(state.cursor))] &&
+    !expanded[headId(state.cursor)] &&
     (getAllChildren(state, context).length > 0 ||
       (state.cursor.length > (thoughtsResolved || []).length &&
         thoughtsResolved &&
-        !isDescendant(pathToContext(thoughtsResolved), context)))
+        !isDescendant(pathToContext(state, thoughtsResolved), context)))
 
   const tutorialNext =
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && hasThoughtCollapsed()) ||
@@ -106,7 +108,8 @@ const setCursor = (
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
       thoughtsResolved &&
       thoughtsResolved.length >= 1 &&
-      headValue(thoughtsResolved).toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+      headValue(state, thoughtsResolved).toLowerCase().replace(/"/g, '') ===
+        TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
 
   const updatedOffset = offset ?? (state.editingValue !== null ? 0 : null)
 

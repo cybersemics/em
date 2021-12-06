@@ -1,4 +1,3 @@
-import { equalThoughtRanked } from '../util'
 import { Path } from '../@types'
 
 /** Checks if the two paths share a subcontext. */
@@ -14,7 +13,7 @@ export const checkIfPathShareSubcontext = (rankedThoughtsA: Path, rankedThoughts
   // // checking if common majoity subcontext is possible to avoid iteration
   // if (shortPath.length < middle) return -1
 
-  const firstDiff = shortPath.findIndex((_, i) => !equalThoughtRanked(shortPath[i], longPath[i]))
+  const firstDiff = shortPath.findIndex((_, i) => shortPath[i] !== longPath[i])
 
   // if firstDiff is -1 it means shortPath is a subset of longPath so index must be shortPath.length - 1
 

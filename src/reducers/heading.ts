@@ -1,19 +1,20 @@
 import { deleteThought, setAttribute } from '../reducers'
-import { getAllChildren, simplifyPath } from '../selectors'
+import { simplifyPath } from '../selectors'
 import { pathToContext, reducerFlow } from '../util'
 import { HeadingLevel } from '../shortcuts/headings'
 import { State } from '../@types'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Set or remove a heading on the cursor. */
 const heading = (state: State, { level }: { level: HeadingLevel }): State => {
-  const context = pathToContext(simplifyPath(state, state.cursor!))
-  const headingChildren = getAllChildren(state, context).filter(child => /^=heading[1-9]$/.test(child.value))
+  const context = pathToContext(state, simplifyPath(state, state.cursor!))
+  const headingChildren = getAllChildrenAsThoughts(state, context).filter(child => /^=heading[1-9]$/.test(child.value))
   return reducerFlow([
     // delete other headings
-    ...headingChildren.map(child =>
+    ...headingChildren.map(thought =>
       deleteThought({
         context,
-        thoughtRanked: child,
+        thoughtId: thought.id,
       }),
     ),
 

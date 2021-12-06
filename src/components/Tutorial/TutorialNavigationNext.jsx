@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
 import { headValue } from '../../util'
-import { getSetting, getAllChildren } from '../../selectors'
+import { getSetting } from '../../selectors'
 import { tutorialNext } from '../../action-creators'
 
 import {
@@ -21,6 +21,7 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
@@ -31,17 +32,17 @@ const mapStateToProps = state => {
   } = state
   return {
     contextIndex,
-    cursor,
     expanded,
-    rootChildren: getAllChildren(state, [HOME_TOKEN]),
+    rootChildren: getAllChildrenAsThoughts(state, [HOME_TOKEN]),
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
     tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
+    cursorValue: cursor && headValue(state, cursor),
   }
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationNext = connect(mapStateToProps)(
-  ({ contextIndex, cursor, expanded, rootChildren, tutorialChoice, tutorialStep, dispatch }) => {
+  ({ cursorValue, expanded, rootChildren, tutorialChoice, tutorialStep, dispatch }) => {
     return [
       TUTORIAL_STEP_START,
       TUTORIAL_STEP_SUCCESS,
@@ -54,7 +55,7 @@ const TutorialNavigationNext = connect(mapStateToProps)(
       ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
-        (!cursor || headValue(cursor).length > 0)) ||
+        (!cursorValue || cursorValue.length > 0)) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
         context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&

@@ -3,6 +3,7 @@ import { store } from '../../store'
 import { deleteThoughtWithCursor, importText } from '../../action-creators'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
+import { rankThoughtsFirstMatch } from '../../selectors'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
@@ -33,7 +34,7 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
 
   store.dispatch(
     deleteThoughtWithCursor({
-      path: [{ value: 'a', rank: 0 }],
+      path: rankThoughtsFirstMatch(store.getState(), ['b'])!,
     }),
   )
 
@@ -42,7 +43,7 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
 
   store.dispatch(
     deleteThoughtWithCursor({
-      path: [{ value: 'b', rank: 1 }],
+      path: rankThoughtsFirstMatch(store.getState(), ['b'])!,
     }),
   )
 

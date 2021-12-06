@@ -1,5 +1,5 @@
 import { lower } from './lower'
-import { Child, ComparatorFunction, ComparatorValue } from '../@types'
+import { ComparatorFunction, ComparatorValue, Parent } from '../@types'
 import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../constants'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
@@ -139,7 +139,7 @@ const reverse =
     comparator(b, a)
 
 /** Compare the value of two thoughts. */
-export const compareThought = (a: Child, b: Child) => compareReasonable(a.value, b.value)
+export const compareThought = (a: Parent, b: Parent) => compareReasonable(a.value, b.value)
 
 /** A comparator that sorts in descending order. */
 export const compareThoughtDescending = reverse(compareThought)

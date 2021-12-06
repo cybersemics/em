@@ -36,7 +36,7 @@ const pinOpenShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const context = pathToContext(cursor)
+    const context = pathToContext(state, cursor)
 
     // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
@@ -56,7 +56,7 @@ const pinOpenShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
+    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
     return attributeEquals(state, context, '=pin', 'true')
   },
 }

@@ -10,7 +10,7 @@ import { equalArrays, pathToContext } from '../../util'
 import { exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { Context, SimplePath } from '../../@types'
+import { Context, SimplePath, State } from '../../@types'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {
@@ -27,8 +27,8 @@ declare module 'react' {
 }
 
 /** A filterWhere predicate that returns true for Thought or Subthought nodes that match the given context. */
-const whereContext = (context: Context) => (node: ComponentWithSimplePath) =>
-  equalArrays(pathToContext(node.props().simplePath), context)
+const whereContext = (state: State, context: Context) => (node: ComponentWithSimplePath) =>
+  equalArrays(pathToContext(state, node.props().simplePath), context)
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
@@ -39,15 +39,15 @@ beforeEach(async () => {
 afterEach(cleanupTestApp)
 
 /** Find DragSource inside Thoughts component. */
-const findThoughtSource = (context: Context) =>
-  wrapper.find(Thought).filterWhere(whereContext(context)).at(0).childAt(0)
+const findThoughtSource = (state: State, context: Context) =>
+  wrapper.find(Thought).filterWhere(whereContext(state, context)).at(0).childAt(0)
 
 /** Find DropTarget inside Thoughts component. */
-const findThoughtSiblingTarget = (context: Context) => findThoughtSource(context).childAt(0)
+const findThoughtSiblingTarget = (state: State, context: Context) => findThoughtSource(state, context).childAt(0)
 
 /** Find DropTarget used for child drop inside Subthoughts. */
-const findDropEndTarget = (context: Context) =>
-  wrapper.find(Subthoughts).filterWhere(whereContext(context)).at(0).childAt(0)
+const findDropEndTarget = (state: State, context: Context) =>
+  wrapper.find(Subthoughts).filterWhere(whereContext(state, context)).at(0).childAt(0)
 
 /** Simulate Drag And Drop.
  *
@@ -55,9 +55,19 @@ const findDropEndTarget = (context: Context) =>
  * @param drop - Context which will be used to select drop target.
  * @param type - Type of drop target i.e child or sibling.
  */
-const simulateDragAndDrop = ({ source, drop, type }: { source: Context; drop: Context; type: 'child' | 'sibling' }) => {
+const simulateDragAndDrop = ({
+  state,
+  source,
+  drop,
+  type,
+}: {
+  state: State
+  source: Context
+  drop: Context
+  type: 'child' | 'sibling'
+}) => {
   const backend = document.DND.getManager().getBackend()
-  const sourceId = findThoughtSource(source).instance().getHandlerId()
+  const sourceId = findThoughtSource(state, source).instance().getHandlerId()
   backend.simulateBeginDrag([sourceId])
   wrapper.update()
 
@@ -66,7 +76,7 @@ const simulateDragAndDrop = ({ source, drop, type }: { source: Context; drop: Co
     sibling: findThoughtSiblingTarget,
   }
 
-  const targetId = targetFunction[type](drop).instance().getHandlerId()
+  const targetId = targetFunction[type](state, drop).instance().getHandlerId()
   backend.simulateHover([targetId])
 
   wrapper.update()
@@ -90,6 +100,7 @@ it('drop as sibling', () => {
   wrapper.update()
 
   simulateDragAndDrop({
+    state: store.getState(),
     source: ['a'],
     drop: ['c'],
     type: 'sibling',
@@ -121,6 +132,7 @@ it('drop as child (Drop end)', () => {
   wrapper.update()
 
   simulateDragAndDrop({
+    state: store.getState(),
     source: ['b'],
     drop: ['a'],
     type: 'child',
@@ -151,6 +163,7 @@ it('prevent drop into descendants', () => {
   wrapper.update()
 
   simulateDragAndDrop({
+    state: store.getState(),
     source: ['a'],
     drop: ['a', 'b'],
     type: 'child',

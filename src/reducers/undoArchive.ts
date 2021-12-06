@@ -9,8 +9,8 @@ const undoArchive = (
   state: State,
   { originalPath, currPath, offset }: { originalPath: Path; currPath: Path; offset?: number },
 ) => {
-  const context = rootedParentOf(state, pathToContext(currPath))
-  const archiveContext = rootedParentOf(state, pathToContext(originalPath))
+  const context = rootedParentOf(state, pathToContext(state, currPath))
+  const archiveContext = rootedParentOf(state, pathToContext(state, originalPath))
 
   return reducerFlow([
     // set the cursor to the original path before restoring the thought
@@ -26,6 +26,8 @@ const undoArchive = (
       oldPath: currPath,
       newPath: originalPath,
       offset,
+      // @MIGRATION_TODO: Fix rank here
+      newRank: 0,
     }),
 
     // delete =archive if empty
@@ -33,7 +35,7 @@ const undoArchive = (
       getAllChildren(state, context).length === 0
         ? deleteThought(state, {
             context: archiveContext,
-            thoughtRanked: getChildrenRanked(state, archiveContext)[0],
+            thoughtId: getChildrenRanked(state, archiveContext)[0].id,
           })
         : state,
 

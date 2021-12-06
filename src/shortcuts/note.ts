@@ -25,7 +25,7 @@ const noteShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = pathToContext(cursor ? simplifyPath(state, cursor) : HOME_PATH)
+    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
     return attribute(state, context, '=note') != null
   },
 }

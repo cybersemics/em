@@ -1,11 +1,11 @@
 import React from 'react'
-import { connect } from 'react-redux'
+import { connect, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { isTouch } from '../../browser'
 import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
 import { headValue, once } from '../../util'
-import { getParent, getSetting } from '../../selectors'
+import { getSetting } from '../../selectors'
 import { tutorial } from '../../action-creators'
 import { Connected, GesturePath, State } from '../../@types'
 
@@ -33,6 +33,7 @@ import {
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
@@ -46,7 +47,7 @@ const mapStateToProps = (state: State) => {
   return {
     contextViews,
     cursor,
-    rootChildren: getParent(state, [HOME_TOKEN])?.children,
+    rootChildren: getAllChildrenAsThoughts(state, [HOME_TOKEN]),
     tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT1_PARENT,
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
   }
@@ -93,6 +94,8 @@ const Tutorial = ({
         : null) || null) as GesturePath | null, // Why does it add 'string' to the type union without this?
   )
 
+  const store = useStore<State>()
+  const cursorHeadValue = cursor && headValue(store.getState(), cursor)
   return (
     <div className='tutorial'>
       <div className='tutorial-inner'>
@@ -129,19 +132,24 @@ const Tutorial = ({
           tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
           (tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT &&
             cursor &&
-            headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+            cursorHeadValue &&
+            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
           (tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT &&
             cursor &&
-            headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) ||
+            cursorHeadValue &&
+            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()) ||
           (tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT &&
             cursor &&
-            headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+            cursorHeadValue &&
+            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
           (tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT &&
             cursor &&
-            headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+            cursorHeadValue &&
+            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
           (tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT &&
             cursor &&
-            headValue(cursor).toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
+            cursorHeadValue &&
+            cursorHeadValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())) &&
         gesture() ? (
           <div className='tutorial-trace-gesture'>
             <GestureDiagram path={gesture()!} size={160} strokeWidth={10} arrowSize={5} className='animate-pulse' />

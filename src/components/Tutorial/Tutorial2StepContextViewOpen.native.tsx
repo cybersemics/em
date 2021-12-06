@@ -1,22 +1,23 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
 
-import { hashContext } from '../../util'
+import { getThoughtIdByContext } from '../../util'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 
 // selectors
-import { getContexts } from '../../selectors'
+import { childIdsToThoughts, getContexts } from '../../selectors'
 
-import { Child, Path } from '../../@types'
+import { ThoughtId, Path, State } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { doStringsMatch } from '../../util/doStringsMatch'
+import { useStore } from 'react-redux'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 
 interface IComponentProps {
   cursor: Path
-  contextViews: Child[]
+  contextViews: ThoughtId[]
   tutorialChoice: keyof TutorialChoice
 }
 
@@ -29,15 +30,18 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }: 
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
 
-  const context = hashContext([
-    (cursor && doStringsMatch(cursor[0].value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])
+  const state = useStore<State>().getState()
+
+  const cursorThoughts = childIdsToThoughts(state, cursor)
+  const context = getThoughtIdByContext(state, [
+    (cursorThoughts && doStringsMatch(cursorThoughts[0].value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])
       ? TUTORIAL_CONTEXT1_PARENT
       : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],
     TUTORIAL_CONTEXT[tutorialChoice],
   ]) as unknown as number
 
-  return !cursor ||
-    !cursor.some(
+  return !cursorThoughts ||
+    !cursorThoughts.some(
       child =>
         doStringsMatch(child.value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice]) ||
         doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice]) ||

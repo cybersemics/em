@@ -1,19 +1,20 @@
 import _ from 'lodash'
 import { newThought } from '../reducers'
-import { getAllChildren } from '../selectors'
 import { appendToPath, concatOne, getPublishUrl, pathToContext, reducerFlow, unroot } from '../util'
-import { Child, Path, State } from '../@types'
+import { Path, State } from '../@types'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */
 const prependRevision = (state: State, { path, cid }: { path: Path; cid: string }) => {
-  const context = pathToContext(path)
+  const context = pathToContext(state, path)
 
   /** Gets the =publish thought. */
-  const publishChild = (state: State) => getAllChildren(state, context).find(child => child.value === '=publish')
+  const publishChild = (state: State) =>
+    getAllChildrenAsThoughts(state, context).find(child => child.value === '=publish')
 
   /** Gets the =publish/Revisions thought. */
   const revisionsChild = (state: State) =>
-    getAllChildren(state, unroot(concatOne(context, '=publish'))).find(child => child.value === 'Revisions')
+    getAllChildrenAsThoughts(state, unroot(concatOne(context, '=publish'))).find(child => child.value === 'Revisions')
 
   return reducerFlow([
     // insert =publish if it does not exist
@@ -34,7 +35,7 @@ const prependRevision = (state: State, { path, cid }: { path: Path; cid: string 
     state =>
       !revisionsChild(state)
         ? newThought(state, {
-            at: appendToPath(path, publishChild(state)!),
+            at: appendToPath(path, publishChild(state)!.id),
             insertNewSubthought: true,
             insertBefore: true,
             value: 'Revisions',
@@ -44,7 +45,7 @@ const prependRevision = (state: State, { path, cid }: { path: Path; cid: string 
 
     // insert revision url
     newThought({
-      at: appendToPath(path, publishChild(state) as Child, revisionsChild(state) as Child),
+      at: appendToPath(path, publishChild(state)!.id, revisionsChild(state)!.id),
       insertNewSubthought: true,
       insertBefore: true,
       value: getPublishUrl(cid),

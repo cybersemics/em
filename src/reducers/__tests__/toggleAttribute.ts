@@ -5,8 +5,8 @@ import { exportContext } from '../../selectors'
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on', () => {
   const steps = [
@@ -80,7 +80,7 @@ it('add attribute if key has already been created', () => {
   const steps = [
     newThought('a'),
     newSubthought('=test'),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setCursorFirstMatch(['a']),
     toggleAttribute({
       context: ['a'],
       key: '=test',

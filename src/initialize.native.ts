@@ -9,7 +9,7 @@ import { never } from './util'
 export const initialize = () => {
   store.dispatch(
     importText({
-      path: [{ value: EM_TOKEN, rank: 0 }],
+      path: [EM_TOKEN],
       text: INITIAL_SETTINGS,
       lastUpdated: never(),
       preventSetCursor: true,

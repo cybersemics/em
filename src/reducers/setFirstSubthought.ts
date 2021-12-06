@@ -1,21 +1,22 @@
 import _ from 'lodash'
-import { getPrevRank, getAllChildren, rankThoughtsFirstMatch } from '../selectors'
+import { getPrevRank, rankThoughtsFirstMatch } from '../selectors'
 import { editThought, createThought } from '../reducers'
 import { Context, SimplePath, State } from '../@types'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Sets the value of the first subthought in the given context. */
 const setFirstSubthoughts = (state: State, { context, value }: { context: Context; value: string }) => {
-  const oldFirstThoughtRanked = getAllChildren(state, context)[0]
-  return oldFirstThoughtRanked
+  const oldFirstThoughtRanked = getAllChildrenAsThoughts(state, context)[0]
+
+  const path = rankThoughtsFirstMatch(state, context)
+
+  return path && oldFirstThoughtRanked
     ? // context has a first and must be changed
       editThought(state, {
         context,
         oldValue: oldFirstThoughtRanked.value,
         newValue: value,
-        path: rankThoughtsFirstMatch(state, context).concat({
-          value,
-          rank: oldFirstThoughtRanked.rank,
-        }) as SimplePath,
+        path: path.concat(oldFirstThoughtRanked.id) as SimplePath,
       })
     : // context is empty and so first thought must be created
       // assume context exists

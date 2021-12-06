@@ -36,7 +36,7 @@ const tutorialSteps = [
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationNext = () => {
-  const { cursor, expanded, rootChildren, tutorialChoice, tutorialStep } = useSelector((state: State) => {
+  const { cursorValue, expanded, rootChildren, tutorialChoice, tutorialStep } = useSelector((state: State) => {
     const {
       thoughts: { contextIndex },
       cursor,
@@ -45,13 +45,14 @@ const TutorialNavigationNext = () => {
 
     return {
       contextIndex,
-      cursor,
       expanded,
       rootChildren: getAllChildren(state, [HOME_TOKEN]),
       tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0),
       tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
+      cursorValue: cursor && headValue(state, cursor),
     }
   })
+
   const dispatch = useDispatch()
 
   /** Check if user has completed a tutorial step. */
@@ -62,7 +63,7 @@ const TutorialNavigationNext = () => {
       ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_ENTER ||
         tutorialStep === TUTORIAL_STEP_SUBTHOUGHT_ENTER) &&
-        (!cursor || headValue(cursor).length > 0)) ||
+        (!cursorValue || cursorValue.length > 0)) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT &&
         context1SubthoughtCreated({ rootChildren, tutorialChoice })) ||
       (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&

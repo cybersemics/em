@@ -7,6 +7,7 @@ import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import clearThoughtShortcut from '../clearThought'
+import { Thunk } from '../../@types'
 
 it('do nothing when there is no cursor', () => {
   const store = createTestStore()
@@ -90,7 +91,7 @@ describe('DOM', () => {
     store.dispatch([
       newThought({ value: 'a' }),
       newThought({ value: 'b', insertNewSubthought: true }),
-      setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b']) }),
+      (): Thunk => (_, getState) => setCursor({ path: rankThoughtsFirstMatch(getState(), ['a', 'b']) }),
     ])
 
     // This ensures that the thought b exists so we can confirm later that it is deleted.

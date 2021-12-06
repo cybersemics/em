@@ -50,15 +50,14 @@ import {
   ellipsize,
   ellipsizeUrl,
   equalPath,
-  hashContext,
   head,
-  headValue,
   isDivider,
   isHTML,
   isURL,
   pathToContext,
   strip,
   normalizeThought,
+  headId,
 } from '../util'
 
 // selectors
@@ -67,11 +66,13 @@ import {
   getContexts,
   getSetting,
   getLexeme,
-  getAllChildren,
   hasChild,
   isContextViewActive,
   rootedParentOf,
+  getThoughtById,
 } from '../selectors'
+
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -147,7 +148,7 @@ const duplicateAlertToggler = () => {
   let timeoutId: number | undefined // eslint-disable-line fp/no-let
   return (show: boolean, dispatch: Dispatch<Alert>) => {
     if (show) {
-      timeoutId = setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         dispatch(
           alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }),
         )
@@ -177,11 +178,14 @@ let blurring = false
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: EditableProps) => {
+  // TODO: This is neede to rerender when value changes. Refactor is needed here.
+  const thought = getThoughtById(state, head(props.simplePath))
   const hasNoteFocus = state.noteFocus && equalPath(state.cursor, props.path)
   return {
+    isCursorCleared: props.isEditing && state.cursorCleared,
+    thought,
     // re-render when noteFocus changes in order to set the selection
     hasNoteFocus,
-    isCursorCleared: props.isEditing && state.cursorCleared,
   }
 }
 
@@ -205,10 +209,11 @@ const Editable = ({
   dispatch,
   transient,
   editing,
-}: Connected<EditableProps> & ReturnType<typeof mapStateToProps>) => {
+  thought,
+}: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
   const state = store.getState()
-  const thoughts = pathToContext(simplePath)
-  const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
+  const thoughts = pathToContext(state, simplePath)
+  const value = thought.value || ''
   const readonly = hasChild(state, thoughts, '=readonly')
   const uneditable = hasChild(state, thoughts, '=uneditable')
   const context =
@@ -217,8 +222,8 @@ const Editable = ({
       : !showContexts && thoughts.length > 1
       ? parentOf(thoughts)
       : state.rootContext
-  const childrenOptions = getAllChildren(state, [...context, '=options'])
-  const options = childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
+  const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
+  const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -230,7 +235,7 @@ const Editable = ({
   }, [state.editableNonce])
 
   const lexeme = getLexeme(state, value)
-  const childrenLabel = getAllChildren(state, [...thoughts, '=label'])
+  const childrenLabel = getAllChildrenAsThoughts(state, [...thoughts, '=label'])
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef<HTMLInputElement>(null)
@@ -244,13 +249,8 @@ const Editable = ({
 
   // side effect to set old value ref to head value from updated simplePath.
   useEffect(() => {
-    oldValueRef.current = headValue(simplePath)
-  }, [headValue(simplePath)])
-
-  useEffect(() => {
-    // set value to old value
     oldValueRef.current = value
-  }, [simplePath])
+  }, [value])
 
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
@@ -476,7 +476,7 @@ const Editable = ({
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
 
-    const thoughtsInContext = getAllChildren(state, context)
+    const thoughtsInContext = getAllChildrenAsThoughts(state, context)
 
     const normalizedNewValue = normalizeThought(newValue)
 
@@ -703,7 +703,7 @@ const Editable = ({
 
     const state = store.getState()
 
-    showContexts = showContexts || isContextViewActive(state, pathToContext(simplePath))
+    showContexts = showContexts || isContextViewActive(state, pathToContext(state, simplePath))
 
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
@@ -744,7 +744,7 @@ const Editable = ({
       className={classNames({
         preventAutoscroll: true,
         editable: true,
-        ['editable-' + hashContext(pathToContext(path), rank)]: true,
+        ['editable-' + headId(path)]: true,
         empty: value.length === 0,
       })}
       forceUpdate={editableNonceRef.current !== state.editableNonce}

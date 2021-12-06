@@ -5,8 +5,8 @@ import { exportContext } from '../../selectors'
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import setCursor from '../setCursor'
 import setAttribute from '../setAttribute'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('set', () => {
   const steps = [
@@ -57,7 +57,7 @@ it('add attribute if key has already been created', () => {
   const steps = [
     newThought('a'),
     newSubthought('=test'),
-    setCursor({ path: [{ value: 'a', rank: 0 }] }),
+    setCursorFirstMatch(['a']),
     setAttribute({
       context: ['a'],
       key: '=test',

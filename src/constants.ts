@@ -1,6 +1,6 @@
 /** Defines app-wide constants. */
 import { emojiRegex } from './emojiRegex'
-import { Index, SimplePath } from './@types'
+import { Index, SimplePath, ThoughtId } from './@types'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
 
@@ -108,17 +108,19 @@ export const SCHEMA_LATEST = SCHEMA_META_SETTINGS
 export const EMPTY_TOKEN = '__EMPTY__'
 
 // store the root string as a token that is not likely to be written by the user (bad things will happen)
-export const HOME_TOKEN = '__ROOT__'
+export const HOME_TOKEN = '__ROOT__' as ThoughtId
+
+export const ROOT_PARENT_ID = '__ROOT_PARENT_ID__'
 
 // token for hidden system context
-export const EM_TOKEN = '__EM__'
+export const EM_TOKEN = '__EM__' as ThoughtId
 
 export const ABSOLUTE_TOKEN = '__ABSOLUTE__'
 
 export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 
-export const HOME_PATH = [{ value: HOME_TOKEN, rank: 0 }] as SimplePath
-export const ABSOLUTE_PATH = [{ value: ABSOLUTE_TOKEN, rank: 0 }] as SimplePath
+export const HOME_PATH = [HOME_TOKEN] as SimplePath
+export const ABSOLUTE_PATH = [ABSOLUTE_TOKEN] as SimplePath
 
 export const ALLOW_SINGLE_CONTEXT = false
 
@@ -208,7 +210,8 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'pinSubthoughts',
   'note',
   'archive',
-  'toggleContextView',
+  // @MIGRATION_NOTE: context view is disable for the migration.
+  // 'toggleContextView',
   'proseView',
   // 'toggleSplitView',
   'splitSentences',
@@ -466,3 +469,5 @@ export enum VIEW_MODE {
   Table = 'Table',
   Prose = 'Prose',
 }
+
+export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'

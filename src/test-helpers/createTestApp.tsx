@@ -105,7 +105,10 @@ export const cleanupTestApp = async () => {
 
     store.dispatch(clear({ full: true }))
 
-    await db.clearAll()
+    fakeTimer.useFakeTimer()
+    db.clearAll()
+    await fakeTimer.runAllAsync()
+    fakeTimer.useRealTimer()
     document.body.innerHTML = ''
 
     // set url back to home

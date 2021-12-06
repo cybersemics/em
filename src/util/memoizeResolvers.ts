@@ -1,4 +1,4 @@
-import { Child, Index } from '../@types'
+import { ThoughtId, Index } from '../@types'
 
 /** A memoize resolver that encodes an array of objects based on their toString values. */
 export const resolveArray = (items: any[]): string => items.join('__RESOLVE__')
@@ -7,5 +7,5 @@ export const resolveArray = (items: any[]): string => items.join('__RESOLVE__')
 export const resolveShallow = (o: Index<any>): string => resolveArray(Object.values(o))
 
 /** A memoize resolver for Paths and Child[]. */
-export const resolvePath = (pathlike: Child[] | null): string | null =>
-  pathlike ? resolveArray(pathlike.map(resolveShallow)) : pathlike
+export const resolvePath = (pathlike: ThoughtId[] | null): string | null =>
+  pathlike ? resolveArray(pathlike) : pathlike

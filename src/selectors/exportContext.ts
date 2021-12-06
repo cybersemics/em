@@ -1,6 +1,6 @@
 import { attribute, getChildrenRanked } from '../selectors'
 import { head, isFunction, unroot, isHome } from '../util'
-import { Child, Context, MimeType, State } from '../@types'
+import { Context, MimeType, Parent, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
 import TurndownService from 'turndown'
@@ -50,9 +50,9 @@ export const exportContext = (
 
   const childrenFiltered = children.filter(
     and(
-      excludeSrc && attribute(state, context, '=src') ? (child: Child) => isFunction(child.value) : true,
-      !excludeMeta && excludeArchived ? (child: Child) => child.value !== '=archive' : true,
-      excludeMeta ? (child: Child) => !isFunction(child.value) || child.value === '=note' : true,
+      excludeSrc && attribute(state, context, '=src') ? (child: Parent) => isFunction(child.value) : true,
+      !excludeMeta && excludeArchived ? (child: Parent) => child.value !== '=archive' : true,
+      excludeMeta ? (child: Parent) => !isFunction(child.value) || child.value === '=note' : true,
     ),
   )
 
@@ -60,7 +60,7 @@ export const exportContext = (
   const linePrefix = format === 'text/html' ? '<li>' : depth === 0 && childrenFiltered.length === 0 ? '' : '- '
 
   /** Outputs an exported child. */
-  const exportChild = (child: Child) =>
+  const exportChild = (child: Parent) =>
     (isNoteAndMetaExcluded ? '' : '  ') +
     exportContext(state, unroot(context.concat(child.value)) as Context, format, {
       excludeSrc,

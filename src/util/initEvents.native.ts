@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { Store } from 'redux'
 import { inputHandlers /* isGestureHint */ } from '../shortcuts'
 import * as db from '../data-providers/dexie'
-import { isRoot, pathToContext } from '.'
+import { isRoot, pathToContext } from './index'
 import { decodeThoughtsUrl, pathExists } from '../selectors'
 import { /* alert */ error, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
@@ -32,11 +32,11 @@ export const initEvents = (store: Store<State, any>) => {
       lastPath = state.cursor
     }
 
-    if (!path || !pathExists(state, pathToContext(path)) || equalPath(lastPath, path)) {
+    if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(lastPath, path)) {
       window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
     }
 
-    lastPath = path && pathExists(state, pathToContext(path)) ? path : lastPath
+    lastPath = path && pathExists(state, pathToContext(state, path)) ? path : lastPath
     lastState = e.state
 
     const toRoot = !path || isRoot(path)

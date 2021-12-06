@@ -4,13 +4,13 @@ import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getContexts, getAllChildren, theme, rootedParentOf } from '../selectors'
+import { decodeThoughtsUrl, getContexts, theme, rootedParentOf, getAncestorByValue } from '../selectors'
 import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } from '../@types'
 import {
   ellipsizeUrl,
   equalPath,
-  hashContext,
   head,
+  headId,
   headValue,
   isURL,
   once,
@@ -25,6 +25,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 import { isInternalLink } from '../device/router'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface ThoughtAnnotationProps {
   dark?: boolean
@@ -45,7 +46,7 @@ interface ThoughtAnnotationProps {
 
 /** Sets the innerHTML of the ngram text. */
 const getTextMarkup = (state: State, isEditing: boolean, value: string, thoughts: Context) => {
-  const labelChildren = getAllChildren(state, [...thoughts, '=label'])
+  const labelChildren = getAllChildrenAsThoughts(state, [...thoughts, '=label'])
   const { editingValue } = state
   return {
     __html: isEditing
@@ -102,7 +103,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     showHiddenThoughts,
     path: simplePathLive,
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
-    isThoughtValueEditing: editingValue === headValue(simplePathLive),
+    isThoughtValueEditing: editingValue === headValue(state, simplePathLive),
   }
 }
 
@@ -125,11 +126,10 @@ const ThoughtAnnotation = ({
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const state = store.getState()
-  const value = headValue(showContexts ? parentOf(simplePath) : simplePath)
-
-  const thoughts = pathToContext(simplePath)
-  const isExpanded = !!state.expanded[hashContext(thoughts)]
-  const childrenUrls = once(() => getAllChildren(state, thoughts).filter(child => isURL(child.value)))
+  const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
+  const thoughts = pathToContext(state, simplePath)
+  const isExpanded = !!state.expanded[headId(simplePath)]
+  const childrenUrls = once(() => getAllChildrenAsThoughts(state, thoughts).filter(child => isURL(child.value)))
 
   /**
    * Adding dependency on thoughtIndex as the fetch for thought is async await.
@@ -143,13 +143,14 @@ const ThoughtAnnotation = ({
   /** Returns true if the thought is not archived. */
   const isNotArchive = (thoughtContext: ThoughtContext) =>
     // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
-    showHiddenThoughts || !thoughtContext.context || thoughtContext.context.indexOf('=archive') === -1
+    showHiddenThoughts || !getAncestorByValue(state, thoughtContext, '=archive')
 
   const numContexts = useSelector((state: State) => {
     // no contexts if thought is empty
     const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []
     return contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
   })
+
   const url = isURL(value)
     ? value
     : // if the only subthought is a url and the thought is not expanded, link the thought

@@ -9,15 +9,15 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { head, headValue, isRoot, joinConjunction } from '../../util'
+import { headValue } from '../../util'
 
 // selectors
-import { getContexts, getChildrenRanked } from '../../selectors'
+import { getContexts, getChildrenRanked, childIdsToThoughts } from '../../selectors'
 
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 
-import { Child, Path, ThoughtContext } from '../../@types'
+import { ThoughtId, Path } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { doStringsMatch } from '../../util/doStringsMatch'
@@ -25,7 +25,7 @@ import { doStringsMatch } from '../../util/doStringsMatch'
 type TutorialChoice = typeof TUTORIAL_CONTEXT2_PARENT
 
 interface IComponentProps {
-  rootChildren: Child[]
+  rootChildren: ThoughtId[]
   tutorialChoice: keyof TutorialChoice
   cursor?: Path
 }
@@ -35,9 +35,11 @@ const { smallText, italic } = commonStyles
 // eslint-disable-next-line jsdoc/require-jsdoc
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }: IComponentProps) => {
   const state = store.getState()
+
+  const children = childIdsToThoughts(state, rootChildren) ?? []
   // e.g. Work
   return (
-    rootChildren.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
+    children.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
     // e.g. Work/To Do
     getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child =>
       doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
@@ -56,6 +58,8 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
 
+  const children = childIdsToThoughts(state, rootChildren) ?? []
+
   if (isContext2SubthoughtCreated) {
     return (
       <Fragment>
@@ -71,11 +75,12 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
         Notice the small number (<StaticSuperscript n={contexts.length} />
         ). This means that “{caseSensitiveValue}” appears in {contexts.length} place{contexts.length === 1 ? '' : 's'},
         or <Text style={[smallText, italic]}>contexts</Text> (in our case{' '}
-        {joinConjunction(
+        {/* @MIGRATION_TODO: How to get contexts here ?? */}
+        {/* {joinConjunction(
           contexts
             .filter(parent => !isRoot(parent as unknown as ThoughtContext[]))
-            .map(parent => `"${head(parent.context)}"`),
-        )}
+            .map(parent => `"${head(parent.contexts)}"`),
+        )} */}
         ).
       </Text>
       <Text style={smallText}>
@@ -91,7 +96,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
       </Text>
       {
         // e.g. Work
-        rootChildren.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
+        children.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
         // e.g. Work/To Do
         getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child =>
           doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
@@ -100,7 +105,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
             <Text style={smallText}>Do you remember how to do it?</Text>
             <TutorialHint>
               <Text style={smallText}>
-                {!cursor || headValue(cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
+                {!cursor || headValue(state, cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
                   ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". `
                   : null}
                 Trace the line below with your finger and hit Enter to create a new thought{' '}

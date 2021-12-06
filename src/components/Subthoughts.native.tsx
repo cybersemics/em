@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { connect } from 'react-redux'
+import { connect, useStore } from 'react-redux'
 import { store } from '../store'
 import { shortcutById } from '../shortcuts'
 import globals from '../globals'
@@ -7,7 +7,7 @@ import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, VIEW_MODE } from '../constants'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
 import {
-  Child,
+  ThoughtId,
   Context,
   GesturePath,
   Index,
@@ -26,7 +26,7 @@ import {
   // ellipsize,
   // equalArrays,
   equalPath,
-  hashContext,
+  headId,
   // head,
   headValue,
   isAbsolute,
@@ -49,6 +49,7 @@ import {
   appendChildPath,
   attribute,
   attributeEquals,
+  childIdsToThoughts,
   childrenFilterPredicate,
   getAllChildren,
   getAllChildrenSorted,
@@ -65,12 +66,13 @@ import { View } from 'moti'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
 import { TouchableOpacity } from 'react-native'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
-  childrenForced?: Child[]
+  childrenForced?: ThoughtId[]
   depth?: number
   env?: Index<Context>
   expandable?: boolean
@@ -85,9 +87,10 @@ interface SubthoughtsProps {
 
 // assert shortcuts at load time
 const subthoughtShortcut = shortcutById('newSubthought')
-const toggleContextViewShortcut = shortcutById('toggleContextView')
 if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
-if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
+// @MIGRATION_TODO: context view is disabled for migration
+// const toggleContextViewShortcut = shortcutById('toggleContextView')
+// if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
 const PAGINATION_SIZE = 100
 const EMPTY_OBJECT = {}
@@ -100,7 +103,7 @@ const findFirstEnvContextWithZoom = (
   state: State,
   { context, env }: { context: Context; env: LazyEnv },
 ): Context | null => {
-  const children = getAllChildren(state, context)
+  const children = getAllChildrenAsThoughts(state, context)
   const child = children.find(
     child => isFunction(child.value) && child.value in env && attribute(state, env[child.value], '=focus') === 'Zoom',
   )
@@ -127,7 +130,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const isEditing = equalPath(cursor, resolvedPath)
 
   const pathLive = isEditing ? cursor! : resolvedPath
-  const thoughtsLive = pathToContext(pathLive)
+  const thoughtsLive = pathToContext(state, pathLive)
   const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
   const showContextsParent = isContextViewActive(state, parentOf(thoughtsLive))
 
@@ -136,8 +139,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
-  const contextLive = pathToContext(simplePathLive)
-  const cursorContext = cursor ? pathToContext(cursor) : null
+  const contextLive = pathToContext(state, simplePathLive)
+  const cursorContext = cursor ? pathToContext(state, cursor) : null
 
   const contextBinding = parseJsonSafe(attribute(state, contextLive, '=bindContext') ?? '', undefined) as
     | Path
@@ -160,14 +163,14 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, referenceDepth - (props.depth ?? 0)))
     : 0
 
-  const contextHash = hashContext(pathToContext(resolvedPath))
+  const contextHash = headId(resolvedPath)
 
   const allChildren = getAllChildren(state, contextLive)
 
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
-  const envSelf = parseLet(state, pathToContext(simplePath))
+  const envSelf = parseLet(state, pathToContext(state, simplePath))
   const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
 
   /*
@@ -185,7 +188,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     cursorContext &&
     (attributeEquals(state, parentOf(cursorContext), '=focus', 'Zoom') ||
       attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
-      findFirstEnvContextWithZoom(state, { context: pathToContext(rootedParentOf(state, cursor!)), env }))
+      findFirstEnvContextWithZoom(state, { context: pathToContext(state, rootedParentOf(state, cursor!)), env }))
 
   return {
     contextBinding,
@@ -322,34 +325,38 @@ const NoChildren = ({
   simplePath,
 }: {
   allowSingleContext?: boolean
-  children: Child[]
+  children: ThoughtId[]
   simplePath: SimplePath
-}) => (
-  <View>
-    <Text> This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.</Text>
+}) => {
+  const store = useStore<State>()
 
-    <Text>
-      <Text>
-        Swipe <GestureDiagram path={subthoughtShortcut?.gesture as GesturePath} size={30} color='darkgray' />
-      </Text>
-      to add "{headValue(simplePath)}" to a new context.
-    </Text>
+  return (
+    <View>
+      <Text> This thought is not found in any {children.length === 0 ? '' : 'other'} contexts.</Text>
 
-    {allowSingleContext ? (
-      'A floating context... how interesting.'
-    ) : (
       <Text>
-        Swipe
-        <GestureDiagram
-          path={toggleContextViewShortcut.gesture as GesturePath}
-          size={30}
-          color='darkgray' /* mtach .children-subheading color */
-        />
-        to return to the normal view.
+        <Text>
+          Swipe <GestureDiagram path={subthoughtShortcut?.gesture as GesturePath} size={30} color='darkgray' />
+        </Text>
+        to add "{headValue(store.getState(), simplePath)}" to a new context.
       </Text>
-    )}
-  </View>
-)
+
+      {
+        allowSingleContext ? 'A floating context... how interesting.' : null
+        // @MIGRATION_NOTE: toogle view is disabled for the migration
+        // <Text>
+        //   Swipe
+        //   <GestureDiagram
+        //     path={toggleContextViewShortcut.gesture as GesturePath}
+        //     size={30}
+        //     color='darkgray' /* mtach .children-subheading color */
+        //   />
+        //   to return to the normal view.
+        // </Text>
+      }
+    </View>
+  )
+}
 
 /** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
 // const EmptyChildrenDropTarget = ({
@@ -437,12 +444,11 @@ export const SubthoughtsComponent = ({
     }) ||
     globalSort
   const { cursor } = state
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   //  const value = headValue(simplePath)
   const resolvedPath = path ?? simplePath
 
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
-  // console.log({ depth: MAX_DEPTH })
 
   // useEffect(() => {
   //   if (isHovering) {
@@ -461,10 +467,10 @@ export const SubthoughtsComponent = ({
   // const subthought = once(() => getSubthoughtUnderSelection(headValue(simplePath), 3))
   const children =
     childrenForced || showContexts
-      ? getContextsSortedAndRanked(state, headValue(simplePath))
+      ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : sortPreference?.type !== 'None'
-      ? getAllChildrenSorted(state, pathToContext(contextBinding || simplePath))
-      : (getChildrenRanked(state, pathToContext(contextBinding || simplePath)) as (Child | ThoughtContext)[])
+      ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
+      : getChildrenRanked(state, pathToContext(state, contextBinding || simplePath))
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -479,20 +485,19 @@ export const SubthoughtsComponent = ({
         ...accum,
         [child.rank]: [...match, child],
       }
-    }, {} as Index<Child[] | ThoughtContext[]>)
+    }, {} as Index<ThoughtId[] | ThoughtContext[]>)
   }
 
+  const cursorThoughtArray = cursor && childIdsToThoughts(state, cursor)
   // Ensure that editable newThought is visible.
   const editIndex =
-    cursor && children && show
+    cursor && children && show && cursorThoughtArray
       ? children.findIndex(child => {
-          return cursor[depth] && cursor[depth].rank === child.rank
+          return cursor[depth] && cursorThoughtArray[depth].rank === child.rank
         })
       : 0
 
-  const filteredChildren = children.filter(
-    childrenFilterPredicate(state, resolvedPath, pathToContext(simplePath), showContexts),
-  )
+  const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
   const proposedPageSize = isRoot(simplePath) ? Infinity : PAGINATION_SIZE * page
   if (editIndex > proposedPageSize - 1) {
@@ -533,7 +538,7 @@ export const SubthoughtsComponent = ({
     Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
     */
 
-    const isCursorLeaf = cursor && isLeaf(state, pathToContext(cursor))
+    const isCursorLeaf = cursor && isLeaf(state, pathToContext(state, cursor))
 
     const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
@@ -542,8 +547,8 @@ export const SubthoughtsComponent = ({
 
     const isDescendantOfFirstVisiblePath = isDescendant(
       // TODO: Add support for [ROOT] to isDescendant
-      pathToContext(firstVisiblePath || ([] as unknown as Path)),
-      pathToContext(resolvedPath),
+      pathToContext(state, firstVisiblePath || ([] as unknown as Path)),
+      pathToContext(state, resolvedPath),
     )
 
     const cursorSubcontextIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
@@ -586,12 +591,16 @@ export const SubthoughtsComponent = ({
   return (
     <>
       {contextBinding && showContexts ? (
-        <Text style={commonStyles.whiteText}>(Bound to {pathToContext(contextBinding!)?.join('/')})</Text>
+        <Text style={commonStyles.whiteText}>(Bound to {pathToContext(state, contextBinding!)?.join('/')})</Text>
       ) : null}
       {show && showContexts && !(filteredChildren.length === 0 && isRoot(simplePath)) ? (
         filteredChildren.length < (allowSingleContext ? 1 : 2) ? (
           // No children
-          <NoChildren allowSingleContext={allowSingleContext} children={children as Child[]} simplePath={simplePath} />
+          <NoChildren
+            allowSingleContext={allowSingleContext}
+            children={children.map(({ id }) => id)}
+            simplePath={simplePath}
+          />
         ) : null
       ) : null}
 
@@ -601,8 +610,8 @@ export const SubthoughtsComponent = ({
               return null
             }
 
-            const childPath = getChildPath(state, child, simplePath, showContexts)
-            const childContext = pathToContext(childPath)
+            const childPath = getChildPath(state, child.id, simplePath, showContexts)
+            const childContext = pathToContext(state, childPath)
             const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(state, { context: childContext, env }))
             /** Returns true if the cursor in in the child path. */
             const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
@@ -628,10 +637,7 @@ export const SubthoughtsComponent = ({
             const isProseView = view === VIEW_MODE.Prose
 
             return child ? (
-              <View
-                key={`${child.id || child.rank}${(child as ThoughtContext).context ? '-context' : ''}`}
-                style={[{ marginLeft: depth * 25 }]}
-              >
+              <View key={`${child.id || child.rank}${child.id ? '-context' : ''}`} style={[{ marginLeft: depth * 25 }]}>
                 <Thought
                   allowSingleContext={allowSingleContextParent}
                   depth={depth + 1}

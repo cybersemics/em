@@ -4,6 +4,7 @@ import { initialState, reducerFlow } from '../../util'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import cursorBack from '../cursorBack'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 
 it('move cursor to parent', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack]
@@ -11,7 +12,7 @@ it('move cursor to parent', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([{ value: 'a', rank: 0 }])
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
 })
 
 it('remove cursor from root thought', () => {

@@ -2,18 +2,28 @@ import React, { createContext, FC, useCallback, useContext, useEffect, useRef, u
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { and } from 'fp-and-or'
 import { HOME_PATH } from '../constants'
-import { exportPhrase, hashContext, headValue, isFunction, isRoot, pathToContext, removeHome, unroot } from '../util'
+import {
+  exportPhrase,
+  getThoughtIdByContext,
+  head,
+  isFunction,
+  isRoot,
+  pathToContext,
+  removeHome,
+  unroot,
+} from '../util'
 import { alert, error, pull, modalComplete } from '../action-creators'
-import { exportContext, getAllChildren, getDescendantPaths, simplifyPath } from '../selectors'
+import { exportContext, getDescendantThoughtIds, getThoughtById, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
-import { Child, Context, ExportOption, State, ThoughtsInterface } from '../@types'
+import { Context, ExportOption, Parent, State, ThoughtsInterface } from '../@types'
 import { View, StyleSheet, TextInput, TouchableOpacity, Share } from 'react-native'
 import RNPickerSelect from 'react-native-picker-select'
 import { FontAwesome5 } from '@expo/vector-icons'
 import { ActionButton } from './ActionButton'
 import Clipboard from 'expo-clipboard'
 import { Text } from './Text.native'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface AdvancedSetting {
   id: string
@@ -57,6 +67,8 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
   const dispatch = useDispatch()
   const isMounted = useRef(false)
 
+  const store = useStore()
+
   /** Handle new thoughts pulled. */
   const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
     // count the total number of new children pulled
@@ -72,21 +84,23 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
     if (isMounted.current) return
 
     isMounted.current = true
-    dispatch(
-      pull(
-        { [hashContext(context)]: context },
-        {
+
+    const id = getThoughtIdByContext(store.getState(), context)
+
+    if (id) {
+      dispatch(
+        pull([id], {
           onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
           // TODO: onRemoteThoughts ??
           maxDepth: Infinity,
-        },
-      ),
-    ).then(() => {
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-      if (isMounted.current) {
-        setIsPulling(false)
-      }
-    })
+        }),
+      ).then(() => {
+        // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+        if (isMounted.current) {
+          setIsPulling(false)
+        }
+      })
+    }
 
     return () => {
       isMounted.current = false
@@ -147,10 +161,11 @@ const ModalExport = () => {
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getAllChildren(state, contextTitle)[0]
-  const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : headValue(cursor)
+  const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
+  const cursorThought = getThoughtById(state, head(cursor))
+  const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
 
   const [selected, setSelected] = useState(exportOptions[1])
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(0)
@@ -171,7 +186,6 @@ const ModalExport = () => {
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
-    // console.log('setExportContentFromCursor', { titleChild })
     const exported = exportContext(store.getState(), context, selected?.type, {
       title: titleChild ? titleChild.value : undefined,
       excludeMeta: !shouldIncludeMetaAttributes,
@@ -192,10 +206,10 @@ const ModalExport = () => {
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
     if (selected?.type === 'text/html') {
       setNumDescendantsInState(
-        getDescendantPaths(state, simplePath, {
+        getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
-            shouldIncludeMetaAttributes || ((child: Child) => !isFunction(child.value)),
-            shouldIncludeArchived || ((child: Child) => child.value !== '=archive'),
+            shouldIncludeMetaAttributes || ((child: Parent) => !isFunction(child.value)),
+            shouldIncludeArchived || ((child: Parent) => child.value !== '=archive'),
           ),
         }).length,
       )
@@ -440,7 +454,7 @@ const ModalExportWrapper = () => {
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
-  const context = pathToContext(simplePath)
+  const context = pathToContext(state, simplePath)
 
   return (
     <PullProvider context={context}>

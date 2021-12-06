@@ -1,4 +1,4 @@
-import { exportPhrase, hashContext, isDocumentEditable, pathToContext } from '../util'
+import { exportPhrase, head, isDocumentEditable, pathToContext } from '../util'
 import { exportContext, someDescendants, isPending, simplifyPath } from '../selectors'
 import { alert, pull } from '../action-creators'
 import copy from '../device/copy'
@@ -17,13 +17,13 @@ const copyCursorShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     const simplePath = simplifyPath(state, cursor!)
-    const context = pathToContext(simplePath)
+    const context = pathToContext(state, simplePath)
 
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
     if (someDescendants(state, context, (child, context) => isPending(state, [...context, child.value]))) {
       dispatch(alert('Loading thoughts...', { alertType: 'clipboard' }))
-      await dispatch(pull({ [hashContext(context)]: context }, { maxDepth: Infinity }))
+      await dispatch(pull([head(simplePath)], { maxDepth: Infinity }))
     }
 
     // get new state after pull

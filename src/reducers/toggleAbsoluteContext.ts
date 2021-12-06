@@ -1,6 +1,8 @@
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../constants'
+import { State, ThoughtId } from '../@types'
 import { isHome, timestamp } from '../util'
-import { State } from '../@types'
+
+const TRANSIENT_THOUGHT_ID = 'TRANSIENT_THOUGHT' as ThoughtId
 
 /** Toggles starting context. */
 const toggleAbsoluteContext = (state: State): State => ({
@@ -8,7 +10,8 @@ const toggleAbsoluteContext = (state: State): State => ({
   rootContext: isHome(state.rootContext) ? [ABSOLUTE_TOKEN] : [HOME_TOKEN],
   cursorBeforeQuickAdd: state.cursor,
   absoluteContextTime: timestamp(),
-  cursor: isHome(state.rootContext) ? [{ value: '', rank: 0 }] : state.cursorBeforeQuickAdd,
+  // @MIGRATION_TODO: What id should be provided for tranisient thought ?
+  cursor: isHome(state.rootContext) ? [TRANSIENT_THOUGHT_ID] : state.cursorBeforeQuickAdd,
 })
 
 export default toggleAbsoluteContext
