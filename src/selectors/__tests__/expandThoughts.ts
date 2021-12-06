@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../../constants'
-import { getThoughtIdByContext, hashContext, initialState, reducerFlow } from '../../util'
+import { hashContext, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newSubthought, newThought, setCursor } from '../../reducers'
 import { Context, State } from '../../@types'
