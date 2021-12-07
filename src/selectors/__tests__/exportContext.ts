@@ -174,7 +174,7 @@ it('export as markdown without escaping metaprogramming attributes', () => {
   - =readonly`)
 })
 
-it('export as plain text replacing html tags only from thoughts and not from the whole exported content.', () => {
+it('export as plain and markdown text replacing html tags only from thoughts and not from the whole exported content.', () => {
   const text = `
   - a
   - <
@@ -186,9 +186,18 @@ it('export as plain text replacing html tags only from thoughts and not from the
   const steps = [importText({ text }), setCursorFirstMatch([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  const exportedPlain = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${HOME_TOKEN}
+  expect(exportedPlain).toBe(`- ${HOME_TOKEN}
+  - a
+  - <
+  - b
+  - />
+  - c`)
+
+  const exportedMarkdown = exportContext(stateNew, [HOME_TOKEN], 'text/markdown')
+
+  expect(exportedMarkdown).toBe(`- ${HOME_TOKEN}
   - a
   - <
   - b
