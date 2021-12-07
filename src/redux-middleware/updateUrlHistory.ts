@@ -1,10 +1,10 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
-import { equalArrays, equalPath, headId, pathToContext } from '../util'
-import { decodeThoughtsUrl, hashContextUrl } from '../selectors'
+import { equalArrays, equalPath, headId } from '../util'
+import { decodeThoughtsUrl, hashPathURL } from '../selectors'
 import { deleteCursor, updateCursor } from '../data-providers/dexie'
-import { Context, Index, Path, State } from '../@types'
+import { Index, Path, State } from '../@types'
 
 interface Options {
   // if true, replaces the last history state; otherwise pushes history state
@@ -23,10 +23,11 @@ const THROTTLE_DB_WRITE = 400
 // The last path that is passed to updateUrlHistory that is different from the current path. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
 let pathPrev: Path | null = null
 
-const updateCursorThrottled = _.throttle((state: State, context: Context) => {
+const updateCursorThrottled = _.throttle((state: State, path: Path) => {
   // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
   // ensure the location does not change through refreshes in standalone PWA mode
-  const updateCursorPromise = state.cursor ? updateCursor(hashContextUrl(state, context)) : deleteCursor()
+  const updateCursorPromise = state.cursor ? updateCursor(hashPathURL(state, path)) : deleteCursor()
+
   updateCursorPromise.catch(err => {
     throw new Error(err)
   })
@@ -36,24 +37,20 @@ const updateCursorThrottled = _.throttle((state: State, context: Context) => {
  * Sets the url to the given Path.
  * SIDE EFFECTS: window.history.
  */
-const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextViews }: Options = {}) => {
+const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: Options = {}) => {
   // wait until local state has loaded before updating the url
   // nothing to update if the cursor hasn't changed
   if (state.isLoading || equalPath(pathPrev, path)) return
   pathPrev = path
 
   const decoded = decodeThoughtsUrl(state)
-  const context = path ? pathToContext(state, path) : [HOME_TOKEN]
   const encoded = headId(path || HOME_PATH)
 
   // convert decoded root thought to null cursor
-  const contextDecoded = decoded.path ? pathToContext(state, decoded.path) : [HOME_TOKEN]
+  const decodedPath = decoded.path || [HOME_TOKEN]
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (
-    equalArrays(contextDecoded, context) &&
-    decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded]
-  )
+  if (equalArrays(path, decodedPath) && decoded.contextViews[encoded] === (contextViews || state.contextViews)[encoded])
     return
 
   const stateWithNewContextViews = {
@@ -61,7 +58,7 @@ const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextView
     contextViews: contextViews || state.contextViews || decoded.contextViews,
   }
 
-  updateCursorThrottled(stateWithNewContextViews, context)
+  updateCursorThrottled(stateWithNewContextViews, path)
 
   // if PWA, do not update browser URL as it causes a special browser navigation bar to appear
   // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
@@ -74,7 +71,7 @@ const updateUrlHistory = (state: State, path = HOME_PATH, { replace, contextView
       // an incrementing ID to track back or forward browser actions
       (window.history.state || 0) + 1,
       '',
-      hashContextUrl(stateWithNewContextViews, path ? context : [HOME_TOKEN]),
+      hashPathURL(stateWithNewContextViews, path || [HOME_TOKEN]),
     )
   } catch (e) {
     // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'

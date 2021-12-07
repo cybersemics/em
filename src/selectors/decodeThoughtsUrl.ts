@@ -1,8 +1,8 @@
 import { HOME_TOKEN } from '../constants'
 import { componentToThought, keyValueBy, owner } from '../util'
-import { pathExists, rankThoughtsFirstMatch } from '../selectors'
-import { State } from '../@types'
+import { Path, State } from '../@types'
 import { getParent } from './getChildren'
+import childIdsToThoughts from './childIdsToThoughts'
 
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null
@@ -27,7 +27,8 @@ const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
 
   const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [HOME_TOKEN]
 
-  const pathUnranked = urlPath.map(componentToThought)
+  const pathUnranked = urlPath.map(componentToThought) as Path
+
   const contextViews = keyValueBy(urlPath, (cur, i) => {
     const parent = getParent(state, pathUnranked.slice(0, i + 1))
     return parent && /~$/.test(cur)
@@ -37,10 +38,10 @@ const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
       : null
   })
 
+  const thoughtRanked = childIdsToThoughts(state, pathUnranked)
   // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
   // if exists is specified and the thoughts are not yet loaded into state, return null
-  const path =
-    !exists || pathExists(state, urlPath) ? rankThoughtsFirstMatch({ ...state, contextViews }, pathUnranked) : null
+  const path = !exists || thoughtRanked ? pathUnranked : null
 
   return {
     contextViews,

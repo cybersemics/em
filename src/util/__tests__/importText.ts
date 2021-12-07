@@ -1,5 +1,4 @@
 import 'react-native-get-random-values'
-import { validate as uuidValidate } from 'uuid'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { getThoughtIdByContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
@@ -78,10 +77,6 @@ it('basic import with proper thought structure', () => {
   })
 
   expect(contextIndex[getThoughtIdByContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
-
-  // Note: Child.id is hashedContext instead of uuid. Change this after migration is complete.
-  expect(uuidValidate(childAId!)).toBe(true)
-  expect(uuidValidate(childBId!)).toBe(true)
 
   expect(thoughtIndex).toMatchObject({
     [hashThought(HOME_TOKEN)]: {
@@ -368,9 +363,6 @@ it('duplicate thoughts', () => {
 
   const childAId = lexeme.contexts[0]
   const childBId = lexeme.contexts[1]
-
-  expect(uuidValidate(childAId!)).toBe(true)
-  expect(uuidValidate(childBId!)).toBe(true)
 
   expect(lexeme).toMatchObject({
     value: 'm',

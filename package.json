@@ -69,6 +69,7 @@
     "moize": "^6.0.3",
     "moti": "0.6.0",
     "murmurhash3js": "^3.0.1",
+    "nanoid": "^3.1.30",
     "page-lifecycle": "git+https://git@github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "react": "17.0.2",
@@ -104,7 +105,6 @@
     "ts-key-enum": "^2.0.6",
     "turndown": "^7.1.1",
     "use-onclickoutside": "^0.3.2",
-    "uuid": "^8.3.2",
     "xhtml-purifier": "^0.4.1",
     "yallist": "^4.0.0"
   },
