@@ -173,3 +173,34 @@ it('export as markdown without escaping metaprogramming attributes', () => {
   expect(exported).toBe(`- Hello **wor*ld***
   - =readonly`)
 })
+
+it('export as plain and markdown text replacing html tags only from thoughts and not from the whole exported content.', () => {
+  const text = `
+  - a
+  - <
+  - b
+  - />
+  - c
+  `
+
+  const steps = [importText({ text }), setCursorFirstMatch([text])]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exportedPlain = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exportedPlain).toBe(`- ${HOME_TOKEN}
+  - a
+  - <
+  - b
+  - />
+  - c`)
+
+  const exportedMarkdown = exportContext(stateNew, [HOME_TOKEN], 'text/markdown')
+
+  expect(exportedMarkdown).toBe(`- ${HOME_TOKEN}
+  - a
+  - <
+  - b
+  - />
+  - c`)
+})
