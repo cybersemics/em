@@ -85,10 +85,12 @@ export const exportContext = (
   // Get the thought under process
   // If it is root, then do not convert it to markdown
   const currentThought = head(context)
+  const value = format === 'text/plain' ? currentThought.replace(REGEXP_TAGS, '') : currentThought
+
   const markdownText: string =
     format === 'text/markdown' && !isHome([currentThought]) && !currentThought.includes('=')
       ? turndownService.turndown(currentThought)
-      : currentThought
+      : value
 
   // Handle newlines in thoughts.
   // This should never happen (newlines are converted to separate thoughts on import) but guard against newlines just in case.
@@ -103,9 +105,7 @@ export const exportContext = (
     exportedChildren && format === 'text/html' ? tab1 : ''
   }${exportedChildren}${linePostfix}`
 
-  const textFinal = format === 'text/plain' ? textWithChildren.replace(REGEXP_TAGS, '') : textWithChildren
-
-  const output = indent === 0 && format === 'text/html' ? `<ul>\n  ${textFinal}\n</ul>` : textFinal
+  const output = indent === 0 && format === 'text/html' ? `<ul>\n  ${textWithChildren}\n</ul>` : textWithChildren
 
   /** Replaces the title of the output. */
   const outputReplaceTitle = (output: string) => (title ? replaceTitle(output, title, format) : output)
