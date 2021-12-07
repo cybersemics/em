@@ -1,6 +1,6 @@
 import 'react-native-get-random-values'
-import { v4 as uuidv4 } from 'uuid'
+import { nanoid } from 'nanoid'
 import { ThoughtId } from '../@types'
 
 /** Creates uuid. */
-export const createId = () => uuidv4() as ThoughtId
+export const createId = () => nanoid() as ThoughtId

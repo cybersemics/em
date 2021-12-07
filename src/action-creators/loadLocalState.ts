@@ -29,7 +29,7 @@ const loadLocalState = (): Thunk<Promise<void>> => async (dispatch, getState) =>
     }
 
     dispatch([
-      // set em thought pending status to false if not found in the local state\
+      // set em thought pending status to false if not found in the local state
       updateThoughts({
         contextIndexUpdates: {
           [EM_TOKEN]: updatedEMParent,
@@ -46,7 +46,6 @@ const loadLocalState = (): Thunk<Promise<void>> => async (dispatch, getState) =>
         preventSetCursor: true,
       }),
     ])
-
     storage.setItem(INITIAL_SETTING_KEY, 'Loaded')
   }
 }
