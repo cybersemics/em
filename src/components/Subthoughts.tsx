@@ -728,6 +728,8 @@ export const SubthoughtsComponent = ({
               (attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None' ||
                 (!!childContextEnvZoom() && attribute(state, childContextEnvZoom()!, '=bullet') === 'None'))
 
+            const appendedChildPath = appendChildPath(state, childPath, path)
+            const isChildCursor = cursor && equalPath(appendedChildPath, state.cursor)
             /*
             simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
             The main problem is that when a new Thought is added it will get key (index) of the previous thought,
@@ -747,12 +749,15 @@ export const SubthoughtsComponent = ({
                 // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
                 key={`${child.rank}${child.id ? '-context' : ''}`}
                 rank={child.rank}
-                isVisible={actualDistance() < 2 || (distance === 2 && isEditingChildPath())}
+                isVisible={
+                  // if thought is a zoomed cursor then it is visible
+                  (isChildCursor && !!zoomCursor) || actualDistance() < 2 || (distance === 2 && isEditingChildPath())
+                }
                 showContexts={showContexts}
                 prevChild={filteredChildren[i - 1]}
                 isParentHovering={isParentHovering}
                 style={Object.keys(style).length > 0 ? style : undefined}
-                path={appendChildPath(state, childPath, path)}
+                path={appendedChildPath}
                 simplePath={childPath}
               />
             ) : null
