@@ -769,5 +769,40 @@ describe('DOM', () => {
         .join('')
       expect(childrenString).toMatch('_bcdef')
     })
+
+    it('preserve sort order when thought is edited to empty instead of moving it back to its insertion point', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - test
+              - =sort
+                - Alphabetical
+              - c
+              - b
+              - a
+          `,
+        }),
+        setCursorFirstMatchActionCreator(['test', 'a']),
+        // wrap in a thunk in order to access fresh state
+        (dispatch, getState) =>
+          dispatch(
+            editThought({
+              context: ['test'],
+              oldValue: 'a',
+              newValue: '',
+              path: rankThoughtsFirstMatch(getState(), ['test', 'a']) as SimplePath,
+            }),
+          ),
+      ])
+
+      const thought = await findThoughtByText('b')
+      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
+      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const childrenString = thoughts
+        .map((child: HTMLElement) => child.textContent)
+        .map(value => value || '_')
+        .join('')
+      expect(childrenString).toMatch('_bc')
+    })
   })
 })

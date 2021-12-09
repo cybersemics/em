@@ -12,4 +12,7 @@ export interface Parent {
   pending?: boolean
   archived?: Timestamp
   updatedBy: string
+  // takes precedence over value for sorting purposes
+  // used to preserve the sort order of thoughts that are edited to empty instead of moving them back to their insertion point
+  sortValue?: string
 }

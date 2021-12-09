@@ -138,8 +138,9 @@ const reverse =
   (a: T, b: T) =>
     comparator(b, a)
 
-/** Compare the value of two thoughts. */
-export const compareThought = (a: Parent, b: Parent) => compareReasonable(a.value, b.value)
+/** Compare the value of two thoughts. If the thought has a sortValue, it takes precedence over value. This preserves the sort order of a thought edited to empty instead of moving it to the top of thi list. */
+export const compareThought = (a: Parent, b: Parent) =>
+  compareReasonable(a.sortValue || a.value, b.sortValue || b.value)
 
 /** A comparator that sorts in descending order. */
 export const compareThoughtDescending = reverse(compareThought)

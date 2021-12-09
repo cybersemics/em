@@ -119,6 +119,16 @@ const resortEmptyInPlace = (sorted: Parent[]): Parent[] => {
 
   // eslint-disable-next-line fp/no-loops
   while (emptyIndex !== -1 && i++ < numEmpties) {
+    // ignore empty thoughts that have an explicit sortOrder
+    // sortOrder is set when editing a thought to the empty thought in order to preserve their sort order
+    if (sorted[emptyIndex]?.sortValue) {
+      // not sure why the linter fails here since emptyIndex and i are declared outside the loop
+      // See: https://eslint.org/docs/rules/no-loop-func
+      // eslint-disable-next-line no-loop-func
+      emptyIndex = sortedFinal.findIndex((child, i) => i < emptyIndex && !child.value)
+      continue
+    }
+
     // add an index to each thought
     const sortedWithIndex = sortedFinal.map((child, i) => ({ ...child, i }))
 

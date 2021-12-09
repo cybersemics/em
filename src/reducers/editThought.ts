@@ -118,6 +118,8 @@ const editThought = (
     [editedThought.id]: {
       ...editedThought,
       value: newValue,
+      // store the last non-empty value to preserve the sort order of thoughts edited to empty
+      sortValue: newValue || oldValue || editedThought.sortValue,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     },
