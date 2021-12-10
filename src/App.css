@@ -2937,6 +2937,11 @@ code,
   padding-bottom: 15px;
 }
 
+/* multi column does not use full width */
+.table-view > .children > .child.is-multi-column > .children {
+  width: auto;
+}
+
 /* nested table */
 .table-view > .children > .table-view > .children {
   padding-top: 40px; /* TODO: Calculate dynamically based on column 1 cell height */

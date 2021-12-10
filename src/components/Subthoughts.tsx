@@ -69,6 +69,7 @@ interface SubthoughtsProps {
   depth?: number
   env?: Index<Context>
   expandable?: boolean
+  isHeader?: boolean
   isParentHovering?: boolean
   showContexts?: boolean
   simplePath: SimplePath
@@ -252,15 +253,46 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const contextHash = hashContext(thoughtsLive)
 
+  /** Returns true if the thought is in table view and has more than two columns. This is the case when every row has at least two matching children in column 2. If this is the case, it will get rendered in multi column mode where grandchildren are used as header columns. */
+  const isMultiColumnTable = () => {
+    const view = attribute(state, thoughtsLive, '=view')
+    if (view !== 'Table') return false
+    const childrenFiltered = allChildren
+      .map(childId => getThoughtById(state, childId))
+      .filter(child => !isFunction(child.value))
+
+    const firstColumnChildren = getAllChildren(state, [...contextLive, childrenFiltered[0].value])
+      .map(childId => getThoughtById(state, childId))
+      .filter(child => child && !isFunction(child.value))
+
+    // create a map of column headers from the first row for O(1) lookup when checking other rows
+    const columnMap = firstColumnChildren.reduce((accum, child) => ({ ...accum, [child.value]: true }), {})
+
+    const otherChildren = childrenFiltered.slice(1).map(child => {
+      const childContext = [...contextLive, child.value]
+      const grandchildren = getAllChildren(state, childContext)
+        .map(childId => getThoughtById(state, childId))
+        .filter(child => child && !isFunction(child.value))
+      return grandchildren
+    })
+
+    const isMultiColumn = otherChildren.every(
+      children => children.filter(child => child.value in columnMap).length >= 2,
+    )
+
+    return isMultiColumn
+  }
+
   return {
     contextBinding,
     distance,
     actualDistance,
     env,
+    isAbsoluteContext,
     isEditingAncestor,
     // expand thought due to cursor and hover expansion
     isExpanded: !!state.expanded[contextHash] || !!expandedBottom?.[contextHash],
-    isAbsoluteContext,
+    isMultiColumnTable: isMultiColumnTable(),
     showContexts,
     showHiddenThoughts,
     simplePath: simplePathLive,
@@ -502,7 +534,9 @@ export const SubthoughtsComponent = ({
   isDragInProgress,
   isEditingAncestor,
   isExpanded,
+  isHeader,
   isHovering,
+  isMultiColumnTable,
   isParentHovering,
   path,
   showContexts,
@@ -661,6 +695,11 @@ export const SubthoughtsComponent = ({
   const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
+  const headerChildren = getAllChildren(state, [...unroot(context), filteredChildren[0]?.value])
+    .map(childId => getThoughtById(state, childId))
+    .filter(x => x && !isFunction(x.value))
+  const headerChildrenWithFirstColumn = [{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren
+
   return (
     <>
       {contextBinding && showContexts ? (
@@ -688,6 +727,96 @@ export const SubthoughtsComponent = ({
             zoomParent,
           })}
         >
+          {
+            /* TODO: Consolidate with filteredChildren items */
+            isMultiColumnTable && (
+              <li className='child is-multi-column'>
+                {headerChildrenWithFirstColumn.map((child, i) => {
+                  if ((child as any).headerFirstColumn) {
+                    return <ul key=''></ul>
+                  }
+
+                  if (i >= proposedPageSize) {
+                    return null
+                  }
+
+                  // TODO: childPath should be unrooted, but if we change it it breaks
+                  // figure out what is incorrectly depending on childPath being rooted
+                  const childPath = getChildPath(state, child.id, simplePath, showContexts)
+                  const childContext = pathToContext(state, childPath)
+                  const childContextEnvZoom = once(() =>
+                    findFirstEnvContextWithZoom(state, { context: childContext, env }),
+                  )
+
+                  /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
+                  const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
+
+                  /** Gets the =focus/Zoom/=style of the child path. */
+                  const styleZoom = () => getStyle(state, [...childContext, '=focus', 'Zoom'])
+
+                  /** Gets the style of the Zoom applied via env. */
+                  const styleEnvZoom = () => (childContextEnvZoom() ? getStyle(state, childContextEnvZoom()!) : null)
+
+                  const style = {
+                    ...styleGrandChildren,
+                    ...styleChildren,
+                    ...(isEditingChildPath()
+                      ? {
+                          ...styleZoom(),
+                          ...styleEnvZoom(),
+                        }
+                      : null),
+                  }
+
+                  const appendedChildPath = appendChildPath(state, childPath, path)
+                  const isChildCursor = cursor && equalPath(appendedChildPath, state.cursor)
+                  /*
+            simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
+            The main problem is that when a new Thought is added it will get key (index) of the previous thought,
+            causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
+
+            By using child's rank we have unique key for every new thought.
+            Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
+            re-renders.
+          */
+                  return child ? (
+                    <ul className='children' key={child.id}>
+                      <Thought
+                        allowSingleContext={allowSingleContextParent}
+                        depth={depth + 1}
+                        env={env}
+                        hideBullet={true}
+                        // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
+                        key={`${child.rank}${child.id ? '-context' : ''}-header`}
+                        rank={child.rank}
+                        isVisible={
+                          // if thought is a zoomed cursor then it is visible
+                          (isChildCursor && !!zoomCursor) ||
+                          actualDistance() < 2 ||
+                          (distance === 2 && isEditingChildPath())
+                        }
+                        showContexts={showContexts}
+                        prevChild={filteredChildren[i - 1]}
+                        isParentHovering={isParentHovering}
+                        style={{
+                          // disable pointer interaction until we can handle column header editing
+                          // otherwise it edits them only for the first row (and seems to create a circular context for some reason)
+                          cursor: 'default',
+                          fontWeight: 'bold',
+                          pointerEvents: 'none',
+                          ...style,
+                        }}
+                        path={appendedChildPath}
+                        simplePath={childPath}
+                        isMultiColumnTable={isMultiColumnTable}
+                        isHeader={isHeader}
+                      />
+                    </ul>
+                  ) : null
+                })}
+              </li>
+            )
+          }
           {filteredChildren.map((child, i) => {
             if (i >= proposedPageSize) {
               return null
@@ -739,7 +868,6 @@ export const SubthoughtsComponent = ({
             Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
             re-renders.
           */
-
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
@@ -759,6 +887,8 @@ export const SubthoughtsComponent = ({
                 style={Object.keys(style).length > 0 ? style : undefined}
                 path={appendedChildPath}
                 simplePath={childPath}
+                isMultiColumnTable={isMultiColumnTable}
+                isHeader={isHeader}
               />
             ) : null
           })}

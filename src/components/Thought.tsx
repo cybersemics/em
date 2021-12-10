@@ -24,6 +24,7 @@ import useLongPress from '../hooks/useLongPress'
 
 // util
 import {
+  appendToPath,
   equalArrays,
   equalPath,
   head,
@@ -76,7 +77,9 @@ export interface ThoughtContainerProps {
   isEditing?: boolean
   isEditingPath?: boolean
   isExpanded?: boolean
+  isHeader?: boolean
   isHovering?: boolean
+  isMultiColumnTable?: boolean
   isParentHovering?: boolean
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
@@ -185,6 +188,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     publish: !search && publishMode(),
     simplePathLive,
     view: attribute(state, contextLive, '=view'),
+    parentView: attribute(state, parentOf(contextLive), '=view'),
     editing,
   }
 }
@@ -226,9 +230,12 @@ const ThoughtContainer = ({
   isEditingPath,
   isBeingHoveredOver,
   isExpanded,
+  isHeader,
   isHovering,
   isLeaf,
+  isMultiColumnTable,
   isParentHovering,
+  parentView,
   prevChild,
   publish,
   rank,
@@ -403,6 +410,7 @@ const ThoughtContainer = ({
           function: isFunction(value), // eslint-disable-line quote-props
           'has-only-child': children.length === 1,
           'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
+          'is-multi-column': isMultiColumnTable,
           // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
           // this is a bit of a hack since the bullet transform checks leaf instead of expanded
           // TODO: Consolidate with isLeaf if possible
@@ -482,17 +490,37 @@ const ThoughtContainer = ({
 
         {publish && context.length === 0 && <Byline context={thoughts} />}
 
-        {/* Recursive Subthoughts */}
-        <Subthoughts
-          allowSingleContext={allowSingleContext}
-          childrenForced={childrenForced}
-          env={env}
-          path={path}
-          depth={depth}
-          isParentHovering={isAnyChildHovering}
-          showContexts={allowSingleContext}
-          simplePath={simplePath}
-        />
+        {/* In a multi column view, a table's grandchildren are rendered as additional columns. Since the Subthoughts component is styled as a table-cell, we render a separate Subthoughts component for each column. We use childPath instead of path in order to skip the repeated grandchild which serves as the column name and rendered separately as a header row. */}
+        {isMultiColumnTable ? (
+          children.map((child, i) => {
+            const childPath = appendToPath(path, child.id)
+            const childSimplePath = appendToPath(simplePath, child.id)
+            return (
+              <Subthoughts
+                key={i}
+                allowSingleContext={allowSingleContext}
+                env={env}
+                path={isHeader ? path : childPath}
+                depth={depth}
+                isHeader={isHeader}
+                isParentHovering={isAnyChildHovering}
+                showContexts={allowSingleContext}
+                simplePath={isHeader ? simplePath : childSimplePath}
+              />
+            )
+          })
+        ) : (
+          <Subthoughts
+            allowSingleContext={allowSingleContext}
+            childrenForced={childrenForced}
+            env={env}
+            path={path}
+            depth={depth}
+            isParentHovering={isAnyChildHovering}
+            showContexts={allowSingleContext}
+            simplePath={simplePath}
+          />
+        )}
       </li>,
     ),
   )
