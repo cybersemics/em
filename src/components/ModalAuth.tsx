@@ -163,7 +163,14 @@ const ModalAuth = () => {
             key='cancel'
             style={{ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }}
           >
-            <a id='cancel-login' onClick={() => closeModal()}>
+            <a
+              id='cancel-login'
+              onClick={() => {
+                // prevent the login modal on refresh once working offline
+                storage.setItem('modal-to-show', '')
+                closeModal()
+              }}
+            >
               Work Offline
             </a>
           </button>
