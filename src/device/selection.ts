@@ -18,7 +18,22 @@ const getElementPaddings = (element: HTMLElement): number[] =>
   window.getComputedStyle(element, null).getPropertyValue('padding').split('px ').map(Number)
 
 /** Clears the selection. */
-export const clear = (): void => window.getSelection()?.removeAllRanges()
+export const clear = (): void => {
+  const focusNode = window.getSelection()?.focusNode
+
+  // we need to blur the element otherwise onBlur is not called (#1466)
+  // if the selection is on a text node, blur its parent
+  const focusElement =
+    focusNode?.nodeType === Node.ELEMENT_NODE
+      ? (focusNode as HTMLElement)
+      : focusNode?.parentNode?.nodeType === Node.ELEMENT_NODE
+      ? (focusNode.parentNode as HTMLElement)
+      : null
+  if (focusElement) {
+    focusElement.blur()
+  }
+  window.getSelection()?.removeAllRanges()
+}
 
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
 export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
