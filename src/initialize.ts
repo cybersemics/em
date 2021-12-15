@@ -24,8 +24,8 @@ import {
   loadLocalState,
   preloadSources,
   updateThoughtsFromSubscription,
-  setCursorInitialized,
   pull,
+  setCursor,
 } from './action-creators'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
@@ -121,17 +121,15 @@ const initializeCursor = () => {
 
     // if no path in decoded from the url initialize the cursor with null
     if (!path || isRoot(path)) {
-      store.dispatch(setCursorInitialized({ cursor: null, cursorInitialized: true }))
+      store.dispatch(setCursor({ path: null }))
     } else {
       // pull the path thoughts
-      store.dispatch(pull(path, { force: true })).then(() => {
+      store.dispatch(pull(path, { maxDepth: 0 })).then(() => {
         const newState = store.getState()
         const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
-
         store.dispatch(
-          setCursorInitialized({
-            cursor: isCursorLoaded ? path : null,
-            cursorInitialized: true,
+          setCursor({
+            path: isCursorLoaded ? path : null,
           }),
         )
       })
