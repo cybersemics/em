@@ -26,7 +26,7 @@ const isUnbuffered = (state: State, parent: Parent) => {
   // @MIGRATION_TODO: Is it okay to prevent buffering if context is not found ?
   if (!context) {
     console.warn(`isUnbuffered: Context not found for thought ${parent.id}`)
-    return true
+    return false
   }
 
   return (

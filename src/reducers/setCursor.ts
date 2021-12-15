@@ -145,6 +145,7 @@ const setCursor = (
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,
+    cursorInitialized: true,
   }
 
   return stateNew
