@@ -115,27 +115,24 @@ export const initFirebase = async (): Promise<void> => {
 /**
  * Decode cursor from url, pull and initialize the cursor.
  */
-const initializeCursor = () => {
-  if (!store.getState().cursorInitialized) {
-    const { path } = decodeThoughtsUrl(store.getState())
-
-    // if no path in decoded from the url initialize the cursor with null
-    if (!path || isRoot(path)) {
-      store.dispatch(setCursor({ path: null }))
-    } else {
-      // pull the path thoughts
-      store.dispatch(pull(path, { maxDepth: 0 })).then(() => {
-        const newState = store.getState()
-        const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
-        store.dispatch(
-          setCursor({
-            path: isCursorLoaded ? path : null,
-          }),
-        )
-      })
-    }
+const initializeCursor = async () => {
+  const { path } = decodeThoughtsUrl(store.getState())
+  // if no path in decoded from the url initialize the cursor with null
+  if (!path || isRoot(path)) {
+    store.dispatch(setCursor({ path: null }))
+  } else {
+    // pull the path thoughts
+    await store.dispatch(pull(path, { maxDepth: 0 }))
+    const newState = store.getState()
+    const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
+    store.dispatch(
+      setCursor({
+        path: isCursorLoaded ? path : null,
+      }),
+    )
   }
 }
+
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
   // initialize the session id
@@ -174,7 +171,7 @@ export const initialize = async () => {
 
   await thoughtsLocalPromise
 
-  initializeCursor()
+  await initializeCursor()
 
   return {
     thoughtsLocalPromise,
