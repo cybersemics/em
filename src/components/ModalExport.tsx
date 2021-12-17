@@ -125,7 +125,6 @@ interface AdvancedSetting {
 const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
-  { type: 'text/markdown', label: 'Markdown', extension: 'md' },
 ]
 
 /******************************************************************************
@@ -233,6 +232,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
   const [exportContent, setExportContent] = useState<string | null>(null)
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
+  const [shouldIncludeMarkdownFormatting, setShouldIncludeMarkdownFormatting] = useState(true)
   const [selected, setSelected] = useState(exportOptions[0])
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
@@ -264,6 +264,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       title: titleChild ? titleChild.value : undefined,
       excludeMeta: !shouldIncludeMetaAttributes,
       excludeArchived: !shouldIncludeArchived,
+      excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
     })
 
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
@@ -278,7 +279,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
     if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
 
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
-    if (selected.type === 'text/html' || selected.type === 'text/markdown') {
+    if (selected.type === 'text/html') {
       setNumDescendantsInState(
         getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
@@ -292,7 +293,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
     if (!isPulling) {
       setExportContentFromCursor()
     }
-  }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived])
+  }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived, shouldIncludeMarkdownFormatting])
 
   useEffect(() => {
     const clipboard = new ClipboardJS('.copy-clipboard-btn')
@@ -361,6 +362,7 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       excludeSrc: true,
       excludeMeta: !shouldIncludeMetaAttributes,
       excludeArchived: !shouldIncludeArchived,
+      excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
       title: titleChild ? titleChild.value : undefined,
     })
 
@@ -394,24 +396,36 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
   /** Updates archived checkbox value when clicked and set the appropriate value in the selected option. */
   const onChangeArchivedCheckbox = () => setShouldIncludeArchived(!shouldIncludeArchived)
 
+  /** Updates archived checkbox value when clicked and set the appropriate value in the selected option. */
+  const onChangeFormattingCheckbox = () => setShouldIncludeMarkdownFormatting(!shouldIncludeMarkdownFormatting)
+
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
   const advancedSettingsArray: AdvancedSetting[] = [
     {
-      id: 'lossless-checkbox',
+      id: 'lossless',
       onChangeFunc: onChangeLosslessCheckbox,
       defaultChecked: true,
       checked: shouldIncludeMetaAttributes,
       title: 'Lossless',
       description:
-        'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or exporting to platforms that do not support em metaprogramming attributes. Which is, uh, all of them.',
+        'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or public display. ',
     },
     {
-      id: 'archived-checkbox',
+      id: 'archived',
       onChangeFunc: onChangeArchivedCheckbox,
       defaultChecked: true,
       checked: shouldIncludeArchived,
       title: 'Archived',
       description: 'When checked, the exported thoughts include archived thoughts.',
+    },
+    {
+      id: 'formatting',
+      onChangeFunc: onChangeFormattingCheckbox,
+      defaultChecked: true,
+      checked: shouldIncludeMarkdownFormatting,
+      title: 'Formatting Characters',
+      description:
+        'Include **double asteriskss** for bold and *single asterisks* for italics. If unchecked, formatting will be lost.',
     },
   ]
 

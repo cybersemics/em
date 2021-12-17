@@ -20,24 +20,21 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
 
 interface Options {
   indent?: number
+  // replaces the value of the root thought with a new title.
   title?: string
+  excludeMarkdownFormatting?: boolean
   excludeSrc?: boolean
   excludeMeta?: boolean
   depth?: number
   excludeArchived?: boolean
 }
 
-/** Exports the navigable subtree of the given context.
- *
- * @param context
- * @param format
- * @param title     Replace the value of the root thought with a new title.
- */
+/** Exports the navigable subtree of the given context. */
 export const exportContext = (
   state: State,
   context: Context,
   format: MimeType = 'text/html',
-  { indent = 0, title, excludeSrc, excludeMeta, depth = 0, excludeArchived }: Options = {},
+  { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeSrc, depth = 0, excludeArchived }: Options = {},
 ): string => {
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -66,6 +63,7 @@ export const exportContext = (
       excludeSrc,
       excludeMeta,
       excludeArchived,
+      excludeMarkdownFormatting,
       indent: indent + (isNoteAndMetaExcluded ? 0 : format === 'text/html' ? (indent === 0 ? 3 : 2) : 1),
       depth: depth + 1,
     })
@@ -88,8 +86,10 @@ export const exportContext = (
   const value = format === 'text/plain' ? currentThought.replace(REGEXP_TAGS, '') : currentThought
 
   const markdownText: string =
-    format === 'text/markdown' && !isHome([currentThought]) && !currentThought.includes('=')
-      ? turndownService.turndown(currentThought)
+    format === 'text/plain' && !excludeMarkdownFormatting && !isHome([currentThought]) && !currentThought.includes('=')
+      ? // turndown will remove newlines as described here: https://github.com/mixmark-io/turndown/issues/264
+        // replace newlines with a dummy token before converting, then replace them back to newlines
+        turndownService.turndown(currentThought.replace(/\n/g, '--EM-NEWLINE--')).replace(/--EM-NEWLINE--/g, '\n')
       : value
 
   // Handle newlines in thoughts.
