@@ -365,7 +365,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const fromThought = getThoughtByPath(state, thoughtsFrom)
 
   // cannot drop on itself
-  if (equalPath(thoughtsFrom, newPath)) return
+  if (equalPath(thoughtsFrom, thoughtsTo)) return
 
   // cannot move root or em context or target is divider
   if (isDivider(toThought.value) || (isRootOrEM && !sameContext)) {
