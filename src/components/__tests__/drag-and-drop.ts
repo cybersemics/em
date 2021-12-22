@@ -178,3 +178,32 @@ it('prevent drop into descendants', () => {
 
   expect(exported).toEqual(expectedExport)
 })
+
+it("drop a thought into it's own context drop-end", () => {
+  store.dispatch(
+    importText({
+      text: `
+      - a
+        - b
+        - c`,
+    }),
+  )
+
+  wrapper.update()
+
+  simulateDragAndDrop({
+    state: store.getState(),
+    source: ['a', 'b'],
+    drop: ['a'],
+    type: 'child',
+  })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  const expectedExport = `- ${HOME_TOKEN}
+  - a
+    - c
+    - b`
+
+  expect(exported).toEqual(expectedExport)
+})
