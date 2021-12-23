@@ -9,7 +9,9 @@ import { Path } from '../../@types'
 const importExport = (html: string, isHTML = true) => {
   const state = initialState()
   const stateNew = importText(state, { path: HOME_PATH, text: html })
-  const exported = exportContext(stateNew, [HOME_TOKEN], isHTML ? 'text/html' : 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], isHTML ? 'text/html' : 'text/plain', {
+    excludeMarkdownFormatting: true,
+  })
 
   // remove root, de-indent (trim), and append newline to make tests cleaner
   return removeHome(exported)

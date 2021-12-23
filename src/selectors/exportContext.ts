@@ -1,12 +1,8 @@
 import { attribute, getChildrenRanked } from '../selectors'
-import { head, isFunction, unroot, isHome } from '../util'
+import { head, isFunction, unroot } from '../util'
 import { Context, MimeType, Parent, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
-import TurndownService from 'turndown'
-
-// Default emDelimiter is _ hence setting this option is needed to overwrite it to *
-const turndownService = new TurndownService({ emDelimiter: '*' })
 
 /** Replaces the root value with a given title. */
 const replaceTitle = (text: string, title: string, format: MimeType) => {
@@ -17,6 +13,9 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
     ? `- ${title}${text.slice(text.indexOf('\n'))}`
     : text
 }
+
+/** Convert formatting HTML tags to markdown asterisks. */
+const formattingTagsToMarkdown = (s: string) => s.replace(/(<\/?(b|strong)>)/gi, '**').replace(/(<\/?(i|em)>)/gi, '*')
 
 interface Options {
   indent?: number
@@ -83,19 +82,15 @@ export const exportContext = (
   // Get the thought under process
   // If it is root, then do not convert it to markdown
   const currentThought = head(context)
-  const value = format === 'text/plain' ? currentThought.replace(REGEXP_TAGS, '') : currentThought
-
-  const markdownText: string =
-    format === 'text/plain' && !excludeMarkdownFormatting && !isHome([currentThought]) && !currentThought.includes('=')
-      ? // turndown will remove newlines as described here: https://github.com/mixmark-io/turndown/issues/264
-        // replace newlines with a dummy token before converting, then replace them back to newlines
-        turndownService.turndown(currentThought.replace(/\n/g, '--EM-NEWLINE--')).replace(/--EM-NEWLINE--/g, '\n')
-      : value
+  const value =
+    format === 'text/html'
+      ? currentThought
+      : (excludeMarkdownFormatting ? currentThought : formattingTagsToMarkdown(currentThought)).replace(REGEXP_TAGS, '')
 
   // Handle newlines in thoughts.
   // This should never happen (newlines are converted to separate thoughts on import) but guard against newlines just in case.
   // Otherwise re-importing is disastrous (additional lines of text in a thought are moved to the root).
-  const lines = markdownText.split('\n')
+  const lines = value.split('\n')
   const firstLine = `${tab0}${linePrefix}${lines[0]}`
   const otherLines = lines
     .slice(1)

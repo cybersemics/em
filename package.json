@@ -42,7 +42,6 @@
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "@react-native-async-storage/async-storage": "^1.13.0",
     "@react-native-community/hooks": "^2.6.0",
-    "@types/turndown": "^5.0.1",
     "algoliasearch": "^4.9.2",
     "axios": "^0.21.1",
     "classnames": "^2.3.1",
@@ -103,7 +102,6 @@
     "sanitize-html": "^2.4.0",
     "truncate-html": "^1.0.3",
     "ts-key-enum": "^2.0.6",
-    "turndown": "^7.1.1",
     "use-onclickoutside": "^0.3.2",
     "xhtml-purifier": "^0.4.1",
     "yallist": "^4.0.0"
