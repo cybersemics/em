@@ -193,9 +193,10 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       pullQueue = { ...pullQueue, ...initialPullQueue() }
       updatePullQueue({ forcePull: true })
     }
+    // do not pull before cursor has been initialized
     // do not updatePullQueue if there are syncs queued or in progress
     // this gets checked again in updatePullQueue, but short circuit here if possible
-    else if (!hasPushes(getState())) {
+    else if (getState().cursorInitialized && !hasPushes(getState())) {
       updatePullQueueDebounced()
     }
   }

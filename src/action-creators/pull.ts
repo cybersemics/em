@@ -67,7 +67,7 @@ const pull =
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
     const thoughtsLocalIterable = getManyDescendants(db, filteredThoughtIds, getState(), {
-      maxDepth: maxDepth || BUFFER_DEPTH,
+      maxDepth: maxDepth !== undefined ? maxDepth : BUFFER_DEPTH,
     })
 
     // const thoughtsLocalIterable = getManyDescendants(db, pathMapFiltered, { maxDepth: maxDepth || BUFFER_DEPTH })

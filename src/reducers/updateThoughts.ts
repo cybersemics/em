@@ -1,12 +1,11 @@
 import _ from 'lodash'
 import { initialState } from '../util/initialState'
-import { decodeThoughtsUrl, expandThoughts, getLexeme, isDescendantOfEmContext } from '../selectors'
+import { expandThoughts, isDescendantOfEmContext } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
-import { htmlToJson, importJSON, isRoot, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
+import { htmlToJson, importJSON, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
-import { isMobile } from '../util/isMobile'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>
@@ -220,31 +219,6 @@ const updateThoughts = (
     //   })
     //   return state
     // },
-
-    // Reset cursor on first load. The pullQueue can determine which contexts to load from the url, but cannot determine the full cursor (with ranks) until the thoughts have been loaded. To make it source agnostic, we decode the url here.
-    !state.cursorInitialized
-      ? state => {
-          if (isMobile()) return { ...state, cursorInitialized: true }
-
-          const { contextViews, path } = decodeThoughtsUrl(state)
-
-          const cursorNew = !path || isRoot(path) ? null : path
-          const isCursorLoaded = cursorNew?.every(child => getLexeme(state, child))
-
-          return isCursorLoaded || !cursorNew
-            ? {
-                ...state,
-                contextViews,
-                cursor: cursorNew,
-                cursorInitialized: true,
-              }
-            : {
-                ...state,
-                cursor: cursorNew,
-              }
-        }
-      : null,
-
     // calculate expanded using fresh thoughts and cursor
     state => ({
       ...state,

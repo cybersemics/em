@@ -90,7 +90,7 @@ it('meta is excluded but archived is included', () => {
   - b`)
 })
 
-it('exported as plain text', () => {
+it('exported as plain text with no formatting', () => {
   const text = `- a
   - Hello <b>world</b>`
 
@@ -99,7 +99,7 @@ it('exported as plain text', () => {
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
-  const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true })
+  const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true, excludeMarkdownFormatting: true })
 
   expect(exported).toBe(`- a
   - Hello world`)
@@ -156,7 +156,7 @@ it('export as markdown', () => {
   const steps = [importText({ text }), setCursorFirstMatch([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [text], 'text/markdown')
+  const exported = exportContext(stateNew, [text], 'text/plain')
 
   expect(exported).toBe(`Hello **wor*ld***`)
 })
@@ -168,7 +168,7 @@ it('export as markdown without escaping metaprogramming attributes', () => {
   const steps = [importText({ text }), setCursorFirstMatch([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, ['Hello <b>wor<i>ld</i></b>'], 'text/markdown')
+  const exported = exportContext(stateNew, ['Hello <b>wor<i>ld</i></b>'], 'text/plain')
 
   expect(exported).toBe(`- Hello **wor*ld***
   - =readonly`)
@@ -195,7 +195,7 @@ it('export as plain and markdown text replacing html tags only from thoughts and
   - />
   - c`)
 
-  const exportedMarkdown = exportContext(stateNew, [HOME_TOKEN], 'text/markdown')
+  const exportedMarkdown = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exportedMarkdown).toBe(`- ${HOME_TOKEN}
   - a

@@ -3,8 +3,16 @@ import _ from 'lodash'
 import moize from 'moize'
 import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
-import { getContexts, getParent, getLexeme, getChildrenRanked, isPending } from './selectors'
-import { getThoughtIdByContext, hashThought, initEvents, owner, urlDataSource } from './util'
+import {
+  getContexts,
+  getParent,
+  getLexeme,
+  getChildrenRanked,
+  isPending,
+  decodeThoughtsUrl,
+  getThoughtById,
+} from './selectors'
+import { getThoughtIdByContext, hashThought, initEvents, isRoot, owner, urlDataSource } from './util'
 import {
   authenticate,
   loadPublicThoughts,
@@ -16,6 +24,8 @@ import {
   loadLocalState,
   preloadSources,
   updateThoughtsFromSubscription,
+  pull,
+  setCursor,
 } from './action-creators'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
@@ -101,6 +111,28 @@ export const initFirebase = async (): Promise<void> => {
     store.dispatch(statusActionCreator({ value: 'offline' }))
   }, OFFLINE_TIMEOUT)
 }
+
+/**
+ * Decode cursor from url, pull and initialize the cursor.
+ */
+const initializeCursor = async () => {
+  const { path } = decodeThoughtsUrl(store.getState())
+  // if no path in decoded from the url initialize the cursor with null
+  if (!path || isRoot(path)) {
+    store.dispatch(setCursor({ path: null }))
+  } else {
+    // pull the path thoughts
+    await store.dispatch(pull(path, { maxDepth: 0 }))
+    const newState = store.getState()
+    const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
+    store.dispatch(
+      setCursor({
+        path: isCursorLoaded ? path : null,
+      }),
+    )
+  }
+}
+
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
   // initialize the session id
@@ -138,6 +170,8 @@ export const initialize = async () => {
   })
 
   await thoughtsLocalPromise
+
+  await initializeCursor()
 
   return {
     thoughtsLocalPromise,

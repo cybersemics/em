@@ -6,7 +6,7 @@ import helpers from '../helpers'
 
 jest.setTimeout(20000)
 
-const { paste, getEditingText, refresh, waitForEditable, waitForThoughtExistInDb, waitForState, clickThought } =
+const { paste, getEditingText, refresh, waitForEditable, waitForThoughtExistInDb, waitForState, clickThought, press } =
   helpers()
 
 // @MIGRATION_TODO
@@ -67,8 +67,7 @@ it.skip('set the cursor on a subthought on load', async () => {
   expect(thoughtValue).toBe('z')
 })
 
-// @MIGRATION_TODO
-it.skip('set the cursor on the cursor uncle', async () => {
+it('set the cursor on the cursor uncle', async () => {
   const importText = `
   - a
     - b
@@ -87,8 +86,7 @@ it.skip('set the cursor on the cursor uncle', async () => {
   expect(thoughtValue).toBe('d')
 })
 
-// @MIGRATION_TODO
-it.skip('set the cursor on the cursor grandparent', async () => {
+it('set the cursor on the cursor grandparent', async () => {
   const importText = `
   - a
     - b
@@ -102,9 +100,7 @@ it.skip('set the cursor on the cursor grandparent', async () => {
   expect(thoughtValue).toBe('a')
 })
 
-// @MIGRATION_TODO
-
-it.skip('move the cursor up one level when clicking on a hidden ancestor', async () => {
+it('move the cursor up one level when clicking on a hidden ancestor', async () => {
   const importText = `
   - a
     - b
@@ -119,9 +115,7 @@ it.skip('move the cursor up one level when clicking on a hidden ancestor', async
   expect(thoughtValue).toBe('c')
 })
 
-// @MIGRATION_TODO
-
-it.skip('move the cursor up one level when clicking on a hidden great uncle', async () => {
+it('move the cursor up one level when clicking on a hidden great uncle', async () => {
   const importText = `
   - a
     - b
@@ -137,4 +131,18 @@ it.skip('move the cursor up one level when clicking on a hidden great uncle', as
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('b')
+})
+
+it('set the cursor on click after cursorBack sets it to null', async () => {
+  const importText = `
+  - a
+    - b`
+  await paste(importText)
+  await waitForEditable('b')
+  await clickThought('a')
+  await press('Escape')
+  await clickThought('a')
+
+  const thoughtValue = await getEditingText()
+  expect(thoughtValue).toBe('a')
 })

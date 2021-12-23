@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "222.0.0",
+  "version": "223.0.0",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -42,7 +42,6 @@
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "@react-native-async-storage/async-storage": "^1.13.0",
     "@react-native-community/hooks": "^2.6.0",
-    "@types/turndown": "^5.0.1",
     "algoliasearch": "^4.9.2",
     "axios": "^0.21.1",
     "classnames": "^2.3.1",
@@ -69,6 +68,7 @@
     "moize": "^6.0.3",
     "moti": "0.6.0",
     "murmurhash3js": "^3.0.1",
+    "nanoid": "^3.1.30",
     "page-lifecycle": "git+https://git@github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "react": "17.0.2",
@@ -102,9 +102,7 @@
     "sanitize-html": "^2.4.0",
     "truncate-html": "^1.0.3",
     "ts-key-enum": "^2.0.6",
-    "turndown": "^7.1.1",
     "use-onclickoutside": "^0.3.2",
-    "uuid": "^8.3.2",
     "xhtml-purifier": "^0.4.1",
     "yallist": "^4.0.0"
   },
