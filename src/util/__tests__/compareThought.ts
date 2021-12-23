@@ -10,7 +10,8 @@ import {
   makeOrderedComparator,
   compareThoughtDescending,
 } from '../../util/compareThought'
-import { Child } from '../../@types'
+import { Parent, ThoughtId } from '../../@types'
+import { timestamp } from '../../util'
 
 it('compareNumberAndOther', () => {
   expect(compareNumberAndOther(1, 2)).toBe(0)
@@ -99,12 +100,12 @@ it('makeOrderedComparator', () => {
   expect(makeOrderedComparator([compare])(1, 2)).toBe(-1)
   expect(makeOrderedComparator([compare])(1, 1)).toBe(0)
 
-  expect(makeOrderedComparator([compare, compareNumberAndOther])(1, 2)).toBe(-1)
-  expect(makeOrderedComparator([compare, compareNumberAndOther])(2, 1)).toBe(1)
-  expect(makeOrderedComparator([compare, compareNumberAndOther])(2, 1)).toBe(1)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(1, 2)).toBe(-1)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(2, 1)).toBe(1)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(2, 1)).toBe(1)
   expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(1, 'a')).toBe(-1)
   expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])('a', 1)).toBe(1)
-  expect(makeOrderedComparator([compare, compareNumberAndOther])('a', 'a')).toBe(0)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])('a', 'a')).toBe(0)
 
   expect(makeOrderedComparator<string | number>([compareNumberAndOther, compare])(1, 'a')).toBe(-1)
   expect(makeOrderedComparator<string | number>([compareNumberAndOther, compare])('a', 1)).toBe(1)
@@ -134,9 +135,17 @@ describe('compareReasonable', () => {
 
 describe('compareReasonableDescending', () => {
   /**
-   * Build Child object for tests.
+   * Build Parent object for tests.
    */
-  const buildChild = (value: string): Child => ({ id: '0', rank: 0, value: value })
+  const buildChild = (value: string): Parent => ({
+    id: '0' as ThoughtId,
+    rank: 0,
+    value: value,
+    parentId: 'ROOT' as ThoughtId,
+    children: [],
+    lastUpdated: timestamp(),
+    updatedBy: timestamp(),
+  })
 
   it('sort emojis above non-emojis and sort within emoji group in descending order', () => {
     expect(compareThoughtDescending(buildChild('a'), buildChild('a'))).toBe(0)

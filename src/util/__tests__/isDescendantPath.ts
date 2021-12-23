@@ -1,16 +1,20 @@
 import { isDescendantPath } from '../../util'
+import { Path } from '../../@types'
+
+/** Coerce an array of strings to a Path. */
+const asPath = (ids: string[]) => ids as any as Path
 
 it('equal returns true', () => {
-  expect(isDescendantPath(['id1'], ['id1'])).toBe(true)
+  expect(isDescendantPath(asPath(['id1']), asPath(['id1']))).toBe(true)
 })
 
 it('descendant returns true', () => {
-  expect(isDescendantPath(['test-id1', 'test-id2'], ['test-id1'])).toBe(true)
-  expect(isDescendantPath(['test-id1', 'test-id2', 'test-id3'], ['test-id1', 'test-id2'])).toBe(true)
+  expect(isDescendantPath(asPath(['test-id1', 'test-id2']), asPath(['test-id1']))).toBe(true)
+  expect(isDescendantPath(asPath(['test-id1', 'test-id2', 'test-id3']), asPath(['test-id1', 'test-id2']))).toBe(true)
 })
 
 it('subset returns false', () => {
-  expect(isDescendantPath(['id1', 'id2', 'id3'], ['id2', 'id3'])).toBe(false)
+  expect(isDescendantPath(asPath(['id1', 'id2', 'id3']), asPath(['id2', 'id3']))).toBe(false)
 })
 
 // it('value mismatch returns false', () => {
@@ -22,11 +26,11 @@ it('subset returns false', () => {
 // })
 
 it('non-contiguous descendant returns false', () => {
-  expect(isDescendantPath(['id1', 'id2', 'id3', 'id4'], ['id2', 'id4'])).toBe(false)
+  expect(isDescendantPath(asPath(['id1', 'id2', 'id3', 'id4']), asPath(['id2', 'id4']))).toBe(false)
 })
 
 // TODO: Fix type error here.
 it('empty list returns false', () => {
-  expect(isDescendantPath([], [])).toBe(false)
-  expect(isDescendantPath(['id1'], [])).toBe(false)
+  expect(isDescendantPath(asPath([]), asPath([]))).toBe(false)
+  expect(isDescendantPath(asPath(['id1']), asPath([]))).toBe(false)
 })

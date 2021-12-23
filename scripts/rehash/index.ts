@@ -11,6 +11,10 @@ Subcommands: contexts, thoughts, format
 Outputs to a file with a ".[subcommand]" suffix.
 `
 
+type ParentOld = Parent & {
+  context?: Context
+}
+
 interface RemoteState {
   thoughtIndex: State['thoughts']['thoughtIndex']
   contextIndex: State['thoughts']['contextIndex']
@@ -25,7 +29,7 @@ const subcommands = {
 
     const contextIndexNew = _.transform(
       state.contextIndex,
-      (accum, parent, contextEncoded) => {
+      (accum, parent: ParentOld, contextEncoded) => {
         // missing context is from legacy data and is presumed to already be unreachable
         if (!parent.context) {
           accum[contextEncoded] = parent
@@ -33,7 +37,7 @@ const subcommands = {
           return
         }
 
-        const contextEncodedNew = hashContext(parent.context)
+        const contextEncodedNew = hashContext(parent.context!)
         accum[contextEncodedNew] = parent
         converted++
       },
