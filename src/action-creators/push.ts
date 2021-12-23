@@ -115,7 +115,7 @@ const pushRemote =
                 value: parentUpdate!.value,
                 parentId: parentUpdate!.parentId,
                 lastUpdated: parentUpdate!.lastUpdated || timestamp(),
-                archived: parentUpdate!.archived,
+                ...(parentUpdate!.archived ? { archived: parentUpdate!.archived } : null),
                 rank: parentUpdate!.rank,
                 children,
                 updatedBy: parentUpdate!.updatedBy || getSessionId(),
