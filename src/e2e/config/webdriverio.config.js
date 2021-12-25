@@ -6,7 +6,10 @@ if (!process.env.BROWSERSTACK_USERNAME) {
 
 const user = process.env.BROWSERSTACK_USERNAME
 
-const config = {
+/**
+ * Generate a webdriverio config with the given local identifier.
+ */
+const config = localIdentifier => ({
   user,
   key: process.env.BROWSERSTACK_ACCESS_KEY,
   capabilities: {
@@ -17,8 +20,8 @@ const config = {
     unicodeKeyboard: true,
     build: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${new Date().toISOString().slice(0, 10)}`,
     project: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
-    'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || 'local-' + new Date().getTime(),
-    'browserstack.local': 'true',
+    'browserstack.localIdentifier': localIdentifier,
+    'browserstack.local': true,
     'browserstack.idleTimeout': 30,
     // 'browserstack.debug': 'true',
     // 'browserstack.console': 'verbose',
@@ -31,6 +34,6 @@ const config = {
   connectionRetryTimeout: 90000,
   connectionRetryCount: 10,
   hostname: 'hub.browserstack.com',
-}
+})
 
 module.exports = config

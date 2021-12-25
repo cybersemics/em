@@ -7,6 +7,7 @@ const portUsed = require('tcp-port-used')
 const chalk = require('chalk')
 const wdio = require('webdriverio')
 const browserstack = require('browserstack-local')
+const { nanoid } = require('nanoid')
 
 const config = require('./config/webdriverio.config')
 
@@ -43,9 +44,13 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
     }
 
     try {
-      await this.startBrowserStackLocal()
+      const localIdentifier = 'local-' + nanoid()
+      // Note: Since jest run tests in parallel creating local testing with same identifier for all the parallel tests causes intermittent failure. So we are creating unique identifier for every test setup.
+      const wdioConfig = config(localIdentifier)
+
+      await this.startBrowserStackLocal(localIdentifier, wdioConfig.key)
       // Note: this.global is not global to all test suites; it is sandboxed to a single test module, e.g. caret.ts
-      this.global.browser = await wdio.remote(config)
+      this.global.browser = await wdio.remote(wdioConfig)
     } catch (e) {
       console.error(e)
       throw e
@@ -63,11 +68,8 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
     await super.teardown()
   }
 
-  startBrowserStackLocal() {
-    if (
-      !config.capabilities['browserstack.localIdentifier'] ||
-      !config.capabilities['browserstack.localIdentifier'].startsWith('local')
-    ) {
+  startBrowserStackLocal(localIdentifier, key) {
+    if (!localIdentifier) {
       return
     }
 
@@ -76,7 +78,8 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
       this.bsLocal = new browserstack.Local()
       this.bsLocal.start(
         {
-          localIdentifier: config.capabilities['browserstack.localIdentifier'],
+          key,
+          localIdentifier,
         },
         e => {
           if (e) {
