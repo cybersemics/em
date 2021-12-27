@@ -125,6 +125,7 @@ interface AdvancedSetting {
 const exportOptions: ExportOption[] = [
   { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
   { type: 'text/html', label: 'HTML', extension: 'html' },
+  { type: 'application/json', label: 'JSON Snapshot', extension: 'json' },
 ]
 
 /******************************************************************************
@@ -260,12 +261,16 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
-    const exported = exportContext(store.getState(), context, selected.type, {
-      title: titleChild ? titleChild.value : undefined,
-      excludeMeta: !shouldIncludeMetaAttributes,
-      excludeArchived: !shouldIncludeArchived,
-      excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
-    })
+    const state = store.getState()
+    const exported =
+      selected.type === 'application/json'
+        ? JSON.stringify(state.thoughts, null, 2)
+        : exportContext(state, context, selected.type, {
+            title: titleChild ? titleChild.value : undefined,
+            excludeMeta: !shouldIncludeMetaAttributes,
+            excludeArchived: !shouldIncludeArchived,
+            excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
+          })
 
     setExportContent(titleChild ? exported : removeHome(exported).trimStart())
   }
@@ -435,7 +440,15 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>
           <span>
-            {exportWord} <ExportThoughtsPhrase context={context} numDescendantsFinal={numDescendants} title={title} />
+            {exportWord}{' '}
+            {
+              // application/json will ignore the cursor and downlaod the raw thought state as-is
+              selected.type === 'application/json' ? (
+                'state'
+              ) : (
+                <ExportThoughtsPhrase context={context} numDescendantsFinal={numDescendants} title={title} />
+              )
+            }
             <span>
               {' '}
               as <ExportDropdown selected={selected} onSelect={setSelected} />
