@@ -5,6 +5,7 @@ import {
   createId,
   head,
   importJSON,
+  initialState,
   isRoot,
   parentOf,
   pathToContext,
@@ -80,6 +81,24 @@ const importText = (
   const thoughtId = head(path)
   const destThought = getThoughtById(state, thoughtId)
   const destValue = rawDestValue || destThought.value
+
+  // import raw thoughts
+  // overwrite all state
+  if (
+    text.startsWith(`{
+  "contextIndex": {
+    "__ROOT__": {`)
+  ) {
+    const thoughts = JSON.parse(text)
+    const stateNew = initialState()
+    return {
+      ...stateNew,
+      thoughts: {
+        ...stateNew.thoughts,
+        ...thoughts,
+      },
+    }
+  }
 
   // if we are only importing a single line of html, then simply modify the current thought
   if (numLines <= 1 && !isRoam && !isRoot(path)) {

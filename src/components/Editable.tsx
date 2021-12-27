@@ -539,6 +539,18 @@ const Editable = ({
     const plainText = e.clipboardData.getData('text/plain')
     const htmlText = e.clipboardData.getData('text/html')
 
+    // import raw thoughts: confirm before overwriting state
+    if (
+      typeof window !== 'undefined' &&
+      plainText.startsWith(`{
+  "contextIndex": {
+    "__ROOT__": {`) &&
+      !window.confirm('Import raw thought state? Current state will be overwritten.')
+    ) {
+      e.preventDefault()
+      return
+    }
+
     // pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") results in blank plainText and htmlText
     // the text will still be pasted if we do not preventDefault, it just won't get stripped of html properly
     // See: https://github.com/cybersemics/em/issues/286
