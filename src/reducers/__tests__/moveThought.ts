@@ -17,11 +17,13 @@ import { State } from '../../@types'
 import { store as appStore } from '../../store'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
-import { clear, importText as importTextAction, moveThought as existingThoughtMoveAction } from '../../action-creators'
+import { clear, importText as importTextAction } from '../../action-creators'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
+import moveThoughtAtFirstMatch, {
+  moveThoughtAtFirstMatchActionCreator,
+} from '../../test-helpers/moveThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 const timer = testTimer()
@@ -334,8 +336,7 @@ it('move descendants with siblings', () => {
   expect(getContexts(stateNew, 'd')).toMatchObject([thoughtD.id])
 })
 
-// @MIGRATION_TODO: Merge logic has not been fixed.
-it.skip('merge duplicate with new rank', () => {
+it('merge duplicate with new rank', () => {
   const text = `
   - a
     - m
@@ -354,6 +355,7 @@ it.skip('merge duplicate with new rank', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
+
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -362,19 +364,19 @@ it.skip('merge duplicate with new rank', () => {
       - x
       - y`)
 
+  const thoughtM = getParent(stateNew, ['a', 'm'])!
+  const thoughtA = getParent(stateNew, ['a'])!
+
   // use destinate rank of duplicate thoughts
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'm', rank: 0 }])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([thoughtM.id])
+
+  expect(thoughtM.parentId).toBe(thoughtA.id)
 
   // merged thought should only exist in destination context
-  expect(getContexts(stateNew, 'm')).toMatchObject([
-    {
-      context: ['a'],
-      rank: 0,
-    },
-  ])
+  expect(getContexts(stateNew, 'm')).toMatchObject([thoughtM.id])
 })
 
-it.skip('merge with duplicate with duplicate rank', () => {
+it('merge with duplicate with duplicate rank', () => {
   const text = `
   - a
     - m
@@ -401,16 +403,13 @@ it.skip('merge with duplicate with duplicate rank', () => {
       - x
       - y`)
 
+  const thoughtM = getParent(stateNew, ['a', 'm'])
+
   // use destinate rank of duplicate thoughts
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'm', rank: 0 }])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([thoughtM?.id])
 
   // merged thought should only exist in destination context
-  expect(getContexts(stateNew, 'm')).toMatchObject([
-    {
-      context: ['a'],
-      rank: 0,
-    },
-  ])
+  expect(getContexts(stateNew, 'm')).toMatchObject([thoughtM?.id])
 })
 
 it('move with duplicate descendant', () => {
@@ -481,8 +480,7 @@ it('move with hash matched descendant', () => {
   expect(getContexts(stateNew, 'note')).toMatchObject([thoughtNoteFirst.id, thoughtNoteSecond.id])
 })
 
-// @MIGRATION_TODO: Duplicate merging has not been fixed yet.
-it.skip('move with nested duplicate thoughts', () => {
+it('move with nested duplicate thoughts', () => {
   const text = `
   - a
     - b
@@ -507,12 +505,14 @@ it.skip('move with nested duplicate thoughts', () => {
     - b
   - c`)
 
-  // b should be in in the context of a
-  expect(getContexts(stateNew, 'b')).toMatchObject([{ context: ['a'], rank: 0 }])
+  const thoughtA = getParent(stateNew, ['a'])!
+  const thoughtB = getParent(stateNew, ['a', 'b'])!
+
+  expect(thoughtB.parentId).toBe(thoughtA.id)
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 })
 
-// @MIGRATION_TODO: Nested duplciate merge doesn't work rn with intermediate changes.
-it.skip('move with nested duplicate thoughts and merge their children', () => {
+it('move with nested duplicate thoughts and merge their children', () => {
   const text = `
   - a
     - b
@@ -546,21 +546,27 @@ it.skip('move with nested duplicate thoughts and merge their children', () => {
       - d
   - p`)
 
+  const thoughtA = getParent(stateNew, ['a'])!
+  const thoughtB = getParent(stateNew, ['a', 'b'])!
+
+  expect(thoughtB.parentId).toBe(thoughtA.id)
   // b should only be in context ['a']
-  expect(getContexts(stateNew, 'b')).toMatchObject([{ context: ['a'], rank: 0 }])
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 
   // context ['p', 'a'] should not have any garbage children
   expect(getChildrenRanked(stateNew, ['p', 'a'])).toHaveLength(0)
 
+  const thoughtC = getParent(stateNew, ['a', 'b', 'c'])!
+
+  expect(thoughtC.parentId).toBe(thoughtB.id)
   // c should only be in context ['a', 'b']
-  expect(getContexts(stateNew, 'c')).toMatchObject([{ context: ['a', 'b'], rank: 0 }])
+  expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC.id])
 
   // context ['p', 'a', 'b'] should not have any garbage children
   expect(getChildrenRanked(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
 })
 
-// Issue: https://github.com/cybersemics/em/issues/1096
-it.only('data integrity test', () => {
+it('data integrity test', () => {
   const text = `
   - k
     - a
@@ -583,9 +589,7 @@ it.only('data integrity test', () => {
   expect(missingParentIds).toHaveLength(0)
 })
 
-// skip until fixed: Importing duplicate uncle missing ThoughtContext (#1407)
-// @MIGRATION_TODO: Duplicate merge is not working yet.
-it.skip('consistent rank between thoughtIndex and contextIndex on duplicate merge', () => {
+it('consistent rank between thoughtIndex and contextIndex on duplicate merge', () => {
   const text = `
   - a
     - b
@@ -607,15 +611,12 @@ it.skip('consistent rank between thoughtIndex and contextIndex on duplicate merg
   const contextsOfB = getContexts(stateNew, 'b')
 
   expect(contextsOfB).toHaveLength(1)
-
-  // const rankFromContextIndex = getChildren(stateNew, [HOME_TOKEN]).find(child => child.value === 'b')?.rank
-
-  // expect(contextsOfB[0].rank).toBe(rankFromContextIndex)
 })
 
-// @MIGRATION_TODO
-it.skip('pending destination should be merged correctly (fetch pending before move)', async () => {
+it('pending destination should be merged correctly (fetch pending before move)', async () => {
+  timer.useFakeTimer()
   initialize()
+  await timer.runAllAsync()
 
   const text = `
   - a
@@ -629,12 +630,11 @@ it.skip('pending destination should be merged correctly (fetch pending before mo
         - three
         - four`
 
-  timer.useFakeTimer()
-
   appStore.dispatch(importTextAction({ text }))
   await timer.runAllAsync()
 
   timer.useFakeTimer()
+
   // clear and call initialize again to reload from local db (simulating page refresh)
   appStore.dispatch(clear())
   await timer.runAllAsync()
@@ -643,38 +643,44 @@ it.skip('pending destination should be merged correctly (fetch pending before mo
 
   await timer.runAllAsync()
 
-  timer.useFakeTimer()
-
   appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
 
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
-  const pathAB = rankThoughtsFirstMatch(appStore.getState(), ['a', 'b'])
-  const pathDB = rankThoughtsFirstMatch(appStore.getState(), ['d', 'b'])
+  timer.useFakeTimer()
+
   appStore.dispatch([
-    existingThoughtMoveAction({
-      oldPath: pathAB!,
-      newPath: pathDB!,
+    moveThoughtAtFirstMatchActionCreator({
+      from: ['a', 'b'],
+      to: ['d', 'b'],
       newRank: 1,
     }),
   ])
+
   await timer.runAllAsync()
 
   timer.useRealTimer()
 
-  const mergedChildren = getAllChildren(appStore.getState(), ['d', 'b', 'c'])
-  expect(mergedChildren).toMatchObject([
-    { value: 'three', rank: 0 },
-    { value: 'four', rank: 1 },
-    { value: 'one', rank: 2 },
-    { value: 'two', rank: 3 },
-  ])
+  const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
+
+  const expected = `- ${HOME_TOKEN}
+  - a
+  - d
+    - b
+      - c
+        - three
+        - four
+        - one
+        - two`
+
+  expect(exported).toBe(expected)
 })
 
-// @MIGRATION_TODO: Pull needs to be enabled.
-it.skip('only fetch the descendants up to the possible conflicting path', async () => {
+it('only fetch the descendants up to the possible conflicting path', async () => {
+  timer.useFakeTimer()
   initialize()
+  await timer.runAllAsync()
 
   const text = `
   - a
@@ -691,8 +697,6 @@ it.skip('only fetch the descendants up to the possible conflicting path', async 
             - 3.2.1
         - 4
   - z`
-
-  timer.useFakeTimer()
 
   appStore.dispatch(importTextAction({ text }))
   await timer.runAllAsync()
@@ -714,15 +718,14 @@ it.skip('only fetch the descendants up to the possible conflicting path', async 
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
-  const pathAB = rankThoughtsFirstMatch(appStore.getState(), ['a', 'b'])
-  const pathPB = rankThoughtsFirstMatch(appStore.getState(), ['p', 'b'])
   appStore.dispatch([
-    existingThoughtMoveAction({
-      oldPath: pathAB!,
-      newPath: pathPB!,
+    moveThoughtAtFirstMatchActionCreator({
+      from: ['a', 'b'],
+      to: ['p', 'b'],
       newRank: 1,
     }),
   ])
+
   await timer.runAllAsync()
 
   timer.useRealTimer()

@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { clearPushQueue, deleteThought, isPushing, pull, push, updateThoughts } from '../action-creators'
+import { clearPushQueue, deleteThought, isPushing, mergePending, pull, push, updateThoughts } from '../action-creators'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
-import { keyValueBy } from '../util'
+import { head, keyValueBy } from '../util'
 import { Thunk, Index, Lexeme, PushBatch, State, ThoughtId } from '../@types'
 
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only thoughtIndexUpdates. */
@@ -154,6 +154,33 @@ const flushDeletes =
     }
   }
 
+/** Pull children of pending merges and dispatch move to fully merge. */
+const flushPendingMerges =
+  (pushQueue: PushBatch[]): Thunk<Promise<void>> =>
+  async (dispatch, getState) => {
+    const pendingMerges = pushQueue.map(({ pendingMerges }) => pendingMerges || []).flat()
+
+    if (pendingMerges.length > 0) {
+      const pending: Record<ThoughtId, true> = keyValueBy(pendingMerges, ({ sourcePath, targetPath }) => ({
+        [head(targetPath)]: true,
+        [head(sourcePath)]: true,
+      }))
+
+      const toBePulledThoughts = Object.keys(pending) as ThoughtId[]
+
+      await dispatch(pull(toBePulledThoughts, { force: true, maxDepth: 1 }))
+
+      pendingMerges.forEach(({ sourcePath, targetPath }) => {
+        dispatch(
+          mergePending({
+            sourceThoughtPath: sourcePath,
+            targetThoughtPath: targetPath,
+          }),
+        )
+      })
+    }
+  }
+
 /** Push queued updates to the local and remote. Make sure to clear the queue synchronously after calling this to prevent redundant pushes. */
 const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) => {
   const { pushQueue } = getState()
@@ -167,6 +194,7 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
   // Pull all the pending lexemes that are not available in state yet, merge and update the thoughtIndexUpdates. Prevents local and remote lexemes getting overriden by incomplete application state (due to lazy loading). Dispatched updateThoughts
   // Related issue: https://github.com/cybersemics/em/issues/1074
   const thoughtIndexUpdatesMerged = await dispatch(pullPendingLexemes(combinedBatch))
+
   const mergedBatch = { thoughtIndexUpdates: thoughtIndexUpdatesMerged } as PushBatch
 
   // Note: pushQueue needs to be passed to the flush action creators as lexemeSyncedPushQueue is asychronous and pushQueue is emptied as soon as dispatched.
@@ -191,6 +219,9 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
     // push will detect that these are only remote updates
     Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(remoteMergedBatch)),
   ])
+
+  // Note: Pending merges should be flushed after the updates has been pushed. It is because it requires pulling some already existing thoughts. These thoughts have updates in these batches, so pulling before the the batches has been pushed to data layers will result in stale application state.
+  await dispatch(flushPendingMerges(pushQueue))
 
   // turn off isPushing at the end
   dispatch((dispatch, getState) => {

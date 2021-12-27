@@ -8,7 +8,7 @@ import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getLexeme'
 import testTimer from '../../test-helpers/testTimer'
-import { getThoughtIdByContext } from '../../util'
+import { getThoughtIdByContext, storage } from '../../util'
 import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
 
 /*
@@ -36,6 +36,7 @@ describe('integration', () => {
     fakeTimer.useRealTimer()
     store.dispatch(clear())
     await db.clearAll()
+    storage.clear()
   })
 
   it('load settings into indexedDB on initialization', async () => {

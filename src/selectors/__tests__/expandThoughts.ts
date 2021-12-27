@@ -13,7 +13,11 @@ const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) 
 )
 
 /** Returns true if a context is expanded. */
-const isContextExpanded = (state: State, context: Context) => expandThoughts(state, state.cursor)[hashContext(context)]
+const isContextExpanded = (state: State, context: Context) => {
+  const path = rankThoughtsFirstMatch(state, context)
+  if (!path) return false
+  return expandThoughts(state, state.cursor)[hashContext(path)]
+}
 
 describe('normal view', () => {
   it('ROOT is always expanded', () => {

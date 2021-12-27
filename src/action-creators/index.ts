@@ -47,6 +47,7 @@ export const insertMultipleThoughts = reducerToThunk<typeof reducers.insertMulti
 export const isPushing = reducerToThunk<typeof reducers.isPushing>('isPushing')
 export const join = reducerToThunk<typeof reducers.join>('join')
 export const closeModal = reducerToThunk<typeof reducers.closeModal>('closeModal')
+export const mergePending = reducerToThunk<typeof reducers.mergePending>('mergePending')
 export const moveThought = reducerToThunk<typeof reducers.moveThought>('moveThought')
 export const moveThoughtDown = reducerToThunk<typeof reducers.moveThoughtDown>('moveThoughtDown')
 export const moveThoughtUp = reducerToThunk<typeof reducers.moveThoughtUp>('moveThoughtUp')

@@ -35,13 +35,18 @@ export const getParent = (state: State, context: Context): Parent | null => {
   return id ? getThoughtById(state, id) : null
 }
 
-/** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
+// TODO: Rename this to something better.
+/** Returns the thoughts for the given thought id. */
 export const getAllChildrenByContextHash = (state: State, thoughtId: ThoughtId): ThoughtId[] =>
   getThoughtById(state, thoughtId)?.children || noChildren
 
 /** Returns the subthoughts (as Parent) of the given context unordered. . */
 export const getAllChildrenAsThoughts = (state: State, context: Context) =>
   childIdsToThoughts(state, getAllChildren(state, context) || []) ?? []
+
+/** Returns the subthoughts (as Parent) of the given context unordered. . */
+export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) =>
+  childIdsToThoughts(state, getAllChildrenByContextHash(state, id) || []) ?? []
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {

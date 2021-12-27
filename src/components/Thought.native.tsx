@@ -25,6 +25,7 @@ import useLongPress from '../hooks/useLongPress'
 import {
   equalArrays,
   equalPath,
+  hashContext,
   head,
   headId,
   headValue,
@@ -164,7 +165,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isCursorGrandparent =
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
-  const isExpanded = !!expanded[headId(path)]
+  const isExpanded = !!expanded[hashContext(path)]
   const isLeaf = !hasChildren(state, contextLive)
 
   return {

@@ -20,6 +20,9 @@
     ]
   },
   "main": "mobile/index.tsx",
+  "jest": {
+    "resetMocks": false
+  },
   "scripts": {
     "start:expo": "expo start",
     "start": "react-scripts start",

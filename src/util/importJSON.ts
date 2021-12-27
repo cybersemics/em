@@ -115,21 +115,6 @@ const saveThoughts = (
       contextIndex: {},
     }
 
-  const stateNew: State = {
-    ...state,
-    thoughts: {
-      ...state.thoughts,
-      contextIndex: {
-        ...state.thoughts.contextIndex,
-        ...contextIndexUpdates,
-      },
-      thoughtIndex: {
-        ...state.thoughts.thoughtIndex,
-        ...thoughtIndexUpdates,
-      },
-    },
-  }
-
   const updates = blocks.reduce<SaveThoughtsUpdate>(
     (accum, block, index) => {
       const skipLevel = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
@@ -142,14 +127,26 @@ const saveThoughts = (
       const nonDuplicateValue =
         duplicateValueCount && duplicateValueCount > 0 ? `${value}(${duplicateValueCount})` : value
 
-      if (!skipLevel) {
-        const accumContextIndex = {
-          ...state.thoughts.contextIndex,
-          ...contextIndexUpdates,
-          ...accum.contextIndex,
-        }
+      const stateNewBeforeInsert: State = {
+        ...state,
+        thoughts: {
+          ...state.thoughts,
+          contextIndex: {
+            ...state.thoughts.contextIndex,
+            ...accum.contextIndex,
+          },
+          thoughtIndex: {
+            ...state.thoughts.thoughtIndex,
+            ...accum.thoughtIndex,
+          },
+        },
+      }
 
-        const existingParent = accumContextIndex[contextEncoded]
+      /**
+       *
+       */
+      const insert = () => {
+        const existingParent = stateNewBeforeInsert.thoughts.contextIndex[contextEncoded]
 
         const childLastUpdated = block.children[0]?.lastUpdated
         const childCreated = block.children[0]?.created
@@ -157,7 +154,7 @@ const saveThoughts = (
         const createdInherited = block.created || childCreated || lastUpdated
 
         const { lexeme, parent, newThought } = insertThought(
-          stateNew,
+          stateNewBeforeInsert,
           existingParent,
           nonDuplicateValue,
           unroot(pathToContext(state, path)),
@@ -167,42 +164,59 @@ const saveThoughts = (
           updatedBy,
         )
 
-        // TODO: remove mutations
-        contextIndexUpdates[contextEncoded] = parent
-        // `Parent` entry for the newly created thought.
-        contextIndexUpdates[newThought.id] = newThought
-
-        thoughtIndexUpdates[hashThought(nonDuplicateValue)] = lexeme
+        return {
+          thoughtIndexUpdates: {
+            [hashThought(nonDuplicateValue)]: lexeme,
+          },
+          contextIndexUpdates: {
+            [contextEncoded]: parent,
+            [newThought.id]: newThought,
+          },
+        }
       }
+
+      const insertUpdates = !skipLevel ? insert() : null
+
+      const updatedState = insertUpdates
+        ? {
+            ...stateNewBeforeInsert,
+            thoughts: {
+              ...stateNewBeforeInsert.thoughts,
+              contextIndex: {
+                ...stateNewBeforeInsert.thoughts.contextIndex,
+                ...insertUpdates.contextIndexUpdates,
+              },
+              thoughtIndex: {
+                ...stateNewBeforeInsert.thoughts.thoughtIndex,
+                ...insertUpdates.thoughtIndexUpdates,
+              },
+            },
+          }
+        : stateNewBeforeInsert
 
       const updatedDuplicateIndex = {
         ...accum.duplicateIndex,
         [hashedValue]: duplicateValueCount ? duplicateValueCount + 1 : 1,
       }
 
-      const updatedState: State = {
-        ...state,
-        thoughts: {
-          ...state.thoughts,
-          contextIndex: {
-            ...state.thoughts.contextIndex,
-            ...contextIndexUpdates,
-          },
-          thoughtIndex: {
-            ...state.thoughts.thoughtIndex,
-            ...thoughtIndexUpdates,
-          },
-        },
-      }
-
       /**
        *
        */
       const getLastAddedChild = () => {
-        const parent = contextIndexUpdates[contextEncoded]
+        const parent = updatedState.thoughts.contextIndex[contextEncoded]
         return (childIdsToThoughts(updatedState, parent.children) ?? []).find(
           child => child.value === nonDuplicateValue,
         )
+      }
+
+      const updatedContextIndexUpdates = {
+        ...accum.contextIndex,
+        ...insertUpdates?.contextIndexUpdates,
+      }
+
+      const udpatedThoughtIndexUpdates = {
+        ...accum.thoughtIndex,
+        ...insertUpdates?.thoughtIndexUpdates,
       }
 
       const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()!.id]
@@ -211,8 +225,8 @@ const saveThoughts = (
         return {
           ...saveThoughts(
             updatedState,
-            contextIndexUpdates,
-            thoughtIndexUpdates,
+            updatedContextIndexUpdates,
+            udpatedThoughtIndexUpdates,
             childPath,
             block.children,
             rankIncrement,
@@ -224,6 +238,8 @@ const saveThoughts = (
       } else {
         return {
           ...accum,
+          thoughtIndex: udpatedThoughtIndexUpdates,
+          contextIndex: updatedContextIndexUpdates,
           duplicateIndex: updatedDuplicateIndex,
         }
       }

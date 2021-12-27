@@ -17,7 +17,7 @@ import {
   unroot,
 } from '../util'
 import getParentThought from './getParentThought'
-import { getAllChildrenAsThoughts } from './getChildren'
+import { getAllChildrenAsThoughtsById } from './getChildren'
 import { getThoughtById } from './getThought'
 
 /** Get the value of the Child | ThoughtContext. */
@@ -123,9 +123,7 @@ function expandThoughtsRecursive(
 
   const showContexts = isContextViewActive(state, simpleContext)
 
-  const childrenUnfiltered = getAllChildrenAsThoughts(state, simpleContext)
-
-  const expansionBasePathContext = unroot(pathToContext(state, expansionBasePath))
+  const childrenUnfiltered = getAllChildrenAsThoughtsById(state, head(simplePath))
 
   // Note: A path that is ancestor of the expansion path or expansion path itself should always be expanded.
   const visibleChildren = state.showHiddenThoughts
@@ -140,13 +138,13 @@ function expandThoughtsRecursive(
 
         const value = strip(valueRaw)
 
-        const childContext = unroot([...context, value])
+        const childPath = unroot([...path, child.id])
 
         /** Check of the path is the ancestor of the expansion path. */
-        const isAncestor = () => isDescendant(childContext, expansionBasePathContext)
+        const isAncestor = () => isDescendant(childPath, expansionBasePath)
 
         /** Check if the path is equal to the expansion path. */
-        const isExpansionBasePath = () => equalArrays(childContext, expansionBasePathContext)
+        const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
         return (
           (!isFunction(value) || isExpansionBasePath() || isAncestor()) &&
@@ -178,13 +176,11 @@ function expandThoughtsRecursive(
 
           const childPath = path ? appendToPath(path, child.id) : ([child.id] as Path)
 
-          const childContext = unroot(pathToContext(state, childPath))
-
           /** Check of the path is the ancestor of the expansion path. */
-          const isAncestor = () => isDescendant(childContext, expansionBasePathContext)
+          const isAncestor = () => isDescendant(childPath, expansionBasePath)
 
           /** Check if the path is equal to the expansion path. */
-          const isExpansionBasePath = () => equalArrays(childContext, expansionBasePathContext)
+          const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
           const isChildPinned = isPinned(child.id) === 'true'
 
@@ -206,7 +202,8 @@ function expandThoughtsRecursive(
           )
         })
 
-  const contextHash = hashContext(context)
+  // Note: Since a thought can have duplicate valued children can have duplicate in some cases like pending merges, we need to make expanded key based on the hash of the path instead.
+  const contextHash = hashContext(path)
 
   const initialExpanded = {
     // expand current thought

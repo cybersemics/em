@@ -27,6 +27,7 @@ import {
   appendToPath,
   equalArrays,
   equalPath,
+  hashContext,
   head,
   headId,
   headValue,
@@ -170,7 +171,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isCursorGrandparent =
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
-  const isExpanded = !!expanded[headId(path)]
+  const isExpanded = !!expanded[hashContext(path)]
   const isLeaf = !hasChildren(state, contextLive)
 
   return {
@@ -354,7 +355,9 @@ const ThoughtContainer = ({
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
-  const draggingThoughtValue = state.draggingThought ? getThoughtById(state, headId(state.draggingThought)).value : null
+  const draggingThoughtValue = state.draggingThought
+    ? getThoughtById(state, headId(state.draggingThought))?.value
+    : null
 
   const isAnyChildHovering = useIsChildHovering(thoughts, isHovering, isDeepHovering)
 

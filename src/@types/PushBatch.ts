@@ -1,3 +1,4 @@
+import { PendingMerge } from '.'
 import { Context } from './Context'
 import { Index } from './IndexType'
 import { Lexeme } from './Lexeme'
@@ -16,4 +17,5 @@ export interface PushBatch {
   pendingPulls?: { path: Path }[]
   updates?: Index<string>
   pendingLexemes?: Index<boolean>
+  pendingMerges?: PendingMerge[]
 }

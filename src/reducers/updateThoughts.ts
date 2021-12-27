@@ -5,7 +5,7 @@ import { editThoughtPayload } from '../reducers/editThought'
 import { htmlToJson, importJSON, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
+import { Context, Index, Lexeme, Parent, Path, PendingMerge, PushBatch, SimplePath, State } from '../@types'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>
@@ -14,6 +14,7 @@ export interface UpdateThoughtsOptions {
   pendingDeletes?: { context: Context; thought: Parent }[]
   pendingEdits?: editThoughtPayload[]
   pendingPulls?: { path: Path }[]
+  pendingMerges?: PendingMerge[]
   contextChain?: SimplePath[]
   updates?: Index<string>
   local?: boolean
@@ -66,6 +67,7 @@ const updateThoughts = (
     updates,
     pendingDeletes,
     pendingPulls,
+    pendingMerges,
     local = true,
     remote = true,
     isLoading,
@@ -136,12 +138,14 @@ const updateThoughts = (
   const thoughtIndexInvalidated = lexemeCache.addMany(Object.keys(thoughtIndexUpdates))
 
   contextIndexInvalidated.forEach(key => {
+    // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
     if (!getWhitelistedThoughts().contextIndex[key] && !state.expanded[key]) {
       delete contextIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
 
   thoughtIndexInvalidated.forEach(key => {
+    // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
     if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
       delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
     }
@@ -169,6 +173,7 @@ const updateThoughts = (
     updates,
     pendingDeletes,
     pendingPulls,
+    pendingMerges,
     local,
     remote,
     pendingLexemes,
