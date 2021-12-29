@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
 import { appendToPath, parentOf, pathToContext, reducerFlow, strip, head } from '../util'
-import { getThoughtAfter, getChildrenRanked, simplifyPath, getThoughtById } from '../selectors'
+import { getChildrenRanked, simplifyPath, getThoughtById } from '../selectors'
 import { editableRender, editThought, moveThought, newThought } from '../reducers'
 import { Path, SplitResult, State } from '../@types'
 
@@ -42,20 +42,23 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
       at: pathLeft,
       // selection offset
       offset: 0,
+      // must allow the cursor to be set since it is used as the destination for the children
+      preventSetCursor: false,
     }),
 
     // move children
     state => {
-      const childNew = getThoughtAfter(state, simplifyPath(state, pathLeft))
-      const pathRight = appendToPath(parentOf(simplePath), childNew!.id)
+      // we can safely assume that the cursor has been set to the newly created thought that contains valueRight
+      const childNew = getThoughtById(state, head(state.cursor!))
+      const pathRight = appendToPath(parentOf(simplePath), childNew.id)
       const children = getChildrenRanked(state, pathToContext(state, pathLeft))
 
       return reducerFlow(
-        children.map(child =>
+        children.map((child, i) =>
           moveThought({
             oldPath: appendToPath(pathLeft, child.id),
             newPath: appendToPath(pathRight, child.id),
-            newRank: childNew!.rank,
+            newRank: i,
           }),
         ),
       )(state)

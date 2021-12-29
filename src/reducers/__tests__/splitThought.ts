@@ -1,10 +1,19 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { childIdsToThoughts, exportContext } from '../../selectors'
+import { childIdsToThoughts, exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { State } from '../../@types'
 
 // reducers
+import setCursor from '../setCursor'
+import importText from '../importText'
 import newThought from '../newThought'
 import splitThought from '../splitThought'
+
+/** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
+const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
+  setCursor(state, {
+    path: rankThoughtsFirstMatch(state, pathUnranked),
+  })
 
 it('split thought', () => {
   const steps = [
@@ -93,4 +102,45 @@ it('cursor moves to second thought', () => {
   const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
   expect(cursorThoughts).toMatchObject([{ value: 'ple', rank: 1 }])
+})
+
+it('move children to the new sibling even when the context is sorted and the new sibling is not the next sibling', () => {
+  const steps = [
+    importText({
+      text: `
+      - Louisiana
+        - =sort
+          - Alphabetical
+            - Asc
+        - Baton Rouge
+          - A
+          - B
+          - C
+        - New Orleans
+      `,
+    }),
+    (state: State) => setCursorFirstMatch(state, ['Louisiana', 'Baton Rouge']),
+    splitThought({
+      splitResult: {
+        left: 'Baton ',
+        right: 'Rouge',
+      },
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - Louisiana
+    - =sort
+      - Alphabetical
+        - Asc
+    - Baton
+    - Rouge
+      - A
+      - B
+      - C
+    - New Orleans`)
 })
