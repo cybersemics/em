@@ -9,7 +9,7 @@ Test:
 
 */
 
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { shortcutById } from '../shortcuts'
@@ -19,7 +19,6 @@ import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators
 import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { subtree, theme } from '../selectors'
 import { Icon, State, Timer } from '../@types'
-import { createSelector } from 'reselect'
 
 // components
 import TriangleLeft from './TriangleLeft'
@@ -56,20 +55,6 @@ interface ToolbarIconProps {
 }
 
 /**
- * Selects thoughts from the state.
- */
-const thoughtsSelector = (state: State) => state.thoughts
-/**
- * Selects cursor from the state.
- */
-const cursorSelector = (state: State) => state.cursor
-
-/**
- * Creates new memoized selector with a boolean function as a tranform function. It  only recomputes on change in thoughts and cursor.
- */
-const makeBooleanSelector = (check: () => boolean) => createSelector([thoughtsSelector, cursorSelector], () => check())
-
-/**
  * ToolbarIcon component.
  */
 const ToolbarIcon: FC<ToolbarIconProps> = ({
@@ -91,18 +76,8 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
-  const isActiveSelector = useCallback(isActive ? makeBooleanSelector(() => isActive(store.getState)) : () => true, [
-    isActive,
-  ])
-
-  const canExecuteSelector = useCallback(
-    canExecute ? makeBooleanSelector(() => canExecute(store.getState)) : () => true,
-    [canExecute],
-  )
-
-  const isButtonActive = useSelector((state: State) => isActiveSelector(state))
-
-  const isButtonExecutable = useSelector((state: State) => canExecuteSelector(state))
+  const isButtonActive = useSelector((state: State) => !isActive || isActive(() => state))
+  const isButtonExecutable = useSelector((state: State) => !canExecute || canExecute(() => state))
 
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
