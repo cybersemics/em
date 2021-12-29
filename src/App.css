@@ -3391,21 +3391,8 @@ code,
   user-select: none;
 }
 
-@keyframes delayed-fadein {
-  0% {
-    opacity: 0;
-  }
-  72% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/** Delay the onset of the fade-in so the instructions and loading ellipsis do not appear at lal if the thoughts are loaded in under 1s. */
 .new-thought-instructions {
-  animation: 1.4s ease-out 0s normal forwards 1 delayed-fadein;
+  animation: 0.4s ease-out 0s normal forwards fadein;
 }
 
 @keyframes preventAutoscroll {

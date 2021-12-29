@@ -53,6 +53,7 @@ const mapStateToProps = (state: State) => {
     rootThoughtsLength,
     noteFocus,
     isAbsoluteContext,
+    isLoading,
     rootContext,
   }
 }
@@ -61,7 +62,16 @@ type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const { search, isTutorialLocal, tutorialStep, showModal, rootThoughtsLength, noteFocus, isAbsoluteContext } = props
+  const {
+    search,
+    isLoading,
+    isTutorialLocal,
+    tutorialStep,
+    showModal,
+    rootThoughtsLength,
+    noteFocus,
+    isAbsoluteContext,
+  } = props
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
@@ -111,7 +121,7 @@ const Content: ContentComponent = props => {
           <Search />
         ) : (
           <>
-            {rootThoughtsLength === 0 ? (
+            {rootThoughtsLength === 0 && !isLoading ? (
               isAbsoluteContext ? (
                 TransientEditable
               ) : (

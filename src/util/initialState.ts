@@ -113,6 +113,9 @@ export const initialState = (created: Timestamp = timestamp()) => {
     expandHoverBottomPaths: {},
     invalidState: false,
     inversePatches: [],
+    // Displays a loading screen when the app starts.
+    // This is disabled by updateThoughts once it detects that the root thought is loaded.
+    // Used by the Content component to determine if there are no root children and NewThoughtInstructions should be displayed.
     isLoading: true,
     isPushing: false,
     latestShortcuts: [],

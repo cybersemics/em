@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { initialState } from '../util/initialState'
-import { expandThoughts, isDescendantOfEmContext } from '../selectors'
+import { expandThoughts } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import { htmlToJson, importJSON, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
@@ -20,8 +20,6 @@ export interface UpdateThoughtsOptions {
   remote?: boolean
   isLoading?: boolean
 }
-
-const rootEncoded = HOME_TOKEN
 
 const contextCache = fifoCache<string>(10000)
 const lexemeCache = fifoCache<string>(10000)
@@ -168,20 +166,26 @@ const updateThoughts = (
 
   logWithTime('updateThoughts: merge pushQueue')
 
-  /** Returns true if the root is no longer pending or the contextIndex has at least one non-EM thought. */
-  const cursorParent = contextIndex[rootEncoded] as Parent | null
-  const thoughtsLoaded =
-    !cursorParent?.pending ||
-    Object.keys(contextIndex).some(key => key !== rootEncoded && isDescendantOfEmContext(state, contextIndex[key].id))
-  const stillLoading = state.isLoading ? isLoading ?? !thoughtsLoaded : false
+  /** Returns false if the root thought is loaded and not pending. */
+  const isStillLoading = () => {
+    const rootThought = contextIndex[HOME_TOKEN] as Parent | null
+    const thoughtsLoaded =
+      rootThought &&
+      !rootThought.pending &&
+      // Disable isLoading if the root children have been loaded.
+      // Otherwise NewThoughtInstructions will still be shown since there are no children to render.
+      // If the root has no children and is no longer pending, we can disable isLoading immediately.
+      (rootThought.children.length === 0 || rootThought.children.find(childId => contextIndex[childId]))
+    return isLoading ?? !thoughtsLoaded
+  }
 
   return reducerFlow([
     // update recentlyEdited, pushQueue, and thoughts
     state => ({
       ...state,
-      // disable loading screen as soon as the root or the first non-EM thought is loaded
+      // disable loading screen as soon as the root is loaded
       // or isLoading can be forced by passing it directly to updateThoughts
-      isLoading: stillLoading,
+      isLoading: state.isLoading && isStillLoading(),
       recentlyEdited: recentlyEditedNew,
       // only push the batch to the pushQueue if syncing at least local or remote
       ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),

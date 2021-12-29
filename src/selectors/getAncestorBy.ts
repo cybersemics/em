@@ -1,6 +1,5 @@
 import { getThoughtById } from './index'
 import { Index, Parent, State, ThoughtId } from '../@types'
-import { EM_TOKEN, ROOT_PARENT_ID } from '../constants'
 import { normalizeThought } from '../util'
 
 /**
@@ -33,11 +32,6 @@ const getAncestorBy = (
         [parentThought.id]: true,
       })
 }
-/**
- * Check if thought is the descendant of the em context.
- */
-export const isDescendantOfEmContext = (state: State, thoughtId: ThoughtId) =>
-  getAncestorBy(state, thoughtId, thought => thought.value === EM_TOKEN && thought.parentId === ROOT_PARENT_ID)
 
 /**
  * Get ancestor by normalized value.
