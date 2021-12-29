@@ -113,8 +113,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     expandHoverBottomPaths: {},
     invalidState: false,
     inversePatches: [],
-    // @MIGRATIION_TODO: Pull is disabled, so preventing app getting stucked on loading for now.
-    isLoading: false,
+    isLoading: true,
     isPushing: false,
     latestShortcuts: [],
     modals: {},
