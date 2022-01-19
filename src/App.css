@@ -782,6 +782,22 @@ body.dark {
   z-index: 11; /* above breadcrumbs, toolbar, export modal and status */
 }
 
+.alert-inline {
+  position: absolute;
+  top: 6px;
+  padding: 10px 0;
+  z-index: 11;
+  align-self: center;
+  left: 40%;
+}
+
+.alert-inline-text {
+  padding: 4px 15px;
+  border-radius: 8px;
+  border: 1px solid gray;
+  text-transform: capitalize;
+}
+
 .dark .alert {
   background-color: rgba(0, 0, 0, 0.8);
 }

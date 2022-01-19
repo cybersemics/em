@@ -145,6 +145,8 @@ export const initialState = (created: Timestamp = timestamp()) => {
     pushQueue: [],
     thoughts: initialThoughts(created),
     toolbarOverlay: null,
+    undoLastAction: null,
+    redoLastAction: null,
   }
   Object.keys(MODALS).forEach(key => {
     // initial modal states
