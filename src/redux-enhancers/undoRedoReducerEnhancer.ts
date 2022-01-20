@@ -82,10 +82,10 @@ const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
 /**
  * Adds last action as undo/redo to the state.
  */
-const addLastAction = (state: State, lastAction: string, type: string) => {
+const addLastAction = (state: State, lastAction: string) => {
   return {
     ...state,
-    ...(type === 'undo' ? { undoLastAction: lastAction } : { redoLastAction: lastAction }),
+    lastActionType: lastAction,
   }
 }
 
@@ -131,6 +131,7 @@ const redoReducer = (state: State) => {
 const undoHandler = (state: State, inversePatches: Patch[]) => {
   const lastInversePatch = nthLast(inversePatches, 1)
   const lastAction = lastInversePatch && getPatchAction(lastInversePatch)
+
   const penultimateInversePatch = nthLast(inversePatches, 2)
   const penultimateAction = penultimateInversePatch && getPatchAction(penultimateInversePatch)
 
@@ -148,7 +149,7 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
     undoTwice ? undoReducer : null,
     undoReducer,
     newState => restorePushQueueFromPatches(newState, state, poppedInversePatches.flat()),
-    newState => addLastAction(newState, lastAction, 'undo'),
+    newState => addLastAction(newState, lastAction),
   ])(state)
 }
 
@@ -168,7 +169,7 @@ const redoHandler = (state: State, patches: Patch[]) => {
     redoTwice ? redoReducer : null,
     redoReducer,
     newState => restorePushQueueFromPatches(newState, state, poppedPatches.flat()),
-    newState => addLastAction(newState, lastAction, 'redo'),
+    newState => addLastAction(newState, lastAction),
   ])(state)
 }
 

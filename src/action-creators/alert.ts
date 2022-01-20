@@ -1,13 +1,15 @@
 import { FunctionComponent } from 'react'
 import { Thunk } from '../@types'
+import { ALERT_TIMEOUT_VALUE } from '../constants'
 
 interface Options {
   alertType?: string
   showCloseLink?: boolean
   clearDelay?: number
+  isInline?: boolean
 }
 
-let clearAlertTimeoutId: number | null = null // eslint-disable-line fp/no-let
+let clearAlertTimeoutId: number // eslint-disable-line fp/no-let
 
 /**
  * Dispatches an alert action.
@@ -18,32 +20,31 @@ let clearAlertTimeoutId: number | null = null // eslint-disable-line fp/no-let
  * @param clearDelay Timeout after which alert will be cleared.
  */
 const alert =
-  (value: string | FunctionComponent | null, { alertType, showCloseLink, clearDelay }: Options = {}): Thunk =>
+  (value: string | FunctionComponent | null, { alertType, showCloseLink, isInline = false }: Options = {}): Thunk =>
   (dispatch, getState) => {
-    const { alert } = getState()
-
-    if (clearTimeout) {
-      // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
-      clearAlertTimeoutId && clearTimeout(clearAlertTimeoutId)
-      clearAlertTimeoutId = setTimeout(() => {
-        dispatch({
-          type: 'alert',
-          alertType,
-          showCloseLink,
-          value: null,
-        })
-        clearAlertTimeoutId = null
-      }, clearTimeout)
-    }
-
-    if (alert && alert.value === value) return
-
     dispatch({
       type: 'alert',
       alertType,
       showCloseLink,
       value,
+      isInline,
     })
+
+    clearTimeout(clearAlertTimeoutId)
+
+    // close the alert after a delay
+    clearAlertTimeoutId = window.setTimeout(() => {
+      const { alert } = getState()
+      if (alert && alert.alertType === alertType) {
+        dispatch({
+          type: 'alert',
+          alertType,
+          showCloseLink,
+          value: null,
+          isInline,
+        })
+      }
+    }, ALERT_TIMEOUT_VALUE)
   }
 
 export default alert
