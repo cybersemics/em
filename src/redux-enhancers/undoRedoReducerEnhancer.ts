@@ -121,7 +121,6 @@ const redoReducer = (state: State) => {
 const undoHandler = (state: State, inversePatches: Patch[]) => {
   const lastInversePatch = nthLast(inversePatches, 1)
   const lastAction = lastInversePatch && getPatchAction(lastInversePatch)
-
   const penultimateInversePatch = nthLast(inversePatches, 2)
   const penultimateAction = penultimateInversePatch && getPatchAction(penultimateInversePatch)
 
