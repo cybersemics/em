@@ -2,6 +2,7 @@ import UndoIcon from '../components/UndoIcon'
 import { Shortcut } from '../@types'
 import { isUndoEnabled } from '../selectors/isUndoEnabled'
 import { alert as alertAction } from '../action-creators'
+import { NAVIGATION_ACTIONS } from '../constants'
 
 const undoShortcut: Shortcut = {
   id: 'undo',
@@ -10,10 +11,18 @@ const undoShortcut: Shortcut = {
   svg: UndoIcon,
   exec: (dispatch, getState) => {
     if (!isUndoEnabled(getState())) return
+
+    const { inversePatches } = getState()
+
+    // Checks the last action type from inverse patch history.
+    const lastActionType = inversePatches[inversePatches.length - 1]?.[0]?.actions[0]
     dispatch({ type: 'undoAction' })
 
-    const lastActionType = getState().lastActionType
     if (!lastActionType) return
+
+    // Ignore navigation actions
+    if (NAVIGATION_ACTIONS[lastActionType]) return
+
     dispatch(alertAction(`Undo: ${lastActionType}`, { isInline: true }))
   },
   isActive: getState => isUndoEnabled(getState()),

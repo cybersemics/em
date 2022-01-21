@@ -83,6 +83,4 @@ export interface State {
   user?: User
   latestShortcuts: Shortcut[]
   enableLatestShorcutsDiagram: boolean
-  // state variables to track last actionType executed
-  lastActionType: string | null | undefined
 }

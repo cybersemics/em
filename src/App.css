@@ -784,15 +784,17 @@ body.dark {
 
 .alert-inline {
   position: absolute;
-  top: 6px;
+  top: 45px;
   padding: 10px 0;
   z-index: 11;
-  align-self: center;
-  left: 40%;
+  color: gray;
+  width: 100%;
+  text-align: center;
+  font-size: small;
 }
 
 .alert-inline-text {
-  padding: 4px 15px;
+  padding: 4px 10px;
   border-radius: 8px;
   border: 1px solid gray;
   text-transform: capitalize;
