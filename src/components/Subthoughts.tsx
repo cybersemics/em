@@ -261,6 +261,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
       .map(childId => getThoughtById(state, childId))
       .filter(child => !isFunction(child.value))
 
+    if (childrenFiltered.length === 0) return false
+
     const firstColumnChildren = getAllChildren(state, [...contextLive, childrenFiltered[0].value])
       .map(childId => getThoughtById(state, childId))
       .filter(child => child && !isFunction(child.value))
