@@ -1,5 +1,6 @@
 import React, { FC, useCallback, useEffect, useRef, useState, createContext, useContext } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
+import _ from 'lodash'
 import { and } from 'fp-and-or'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
@@ -31,6 +32,21 @@ import * as selection from '../device/selection'
 import { Context, ExportOption, Parent, Path, SimplePath, State, ThoughtsInterface } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
+/** Use a throttled callback. */
+// https://stackoverflow.com/a/62017005/480608
+function useThrottle(cb: any, delay: number) {
+  const options = { leading: true, trailing: false } // add custom lodash options
+  const cbRef = useRef(cb)
+  // use mutable ref to make useCallback/throttle not depend on `cb` dep
+  useEffect(() => {
+    cbRef.current = cb
+  })
+  return useCallback(
+    _.throttle((...args) => cbRef.current(...args), delay, options),
+    [delay],
+  )
+}
+
 /******************************************************************************
  * Contexts
  *****************************************************************************/
@@ -48,8 +64,13 @@ const DescendantNumberContext = createContext<number | null>(null)
  */
 const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
   const [isPulling, setIsPulling] = useState<boolean>(true)
-  // update numDescendants as descendants are pulled
+  // Update numDescendantsUnthrottled as descendants are pulled.
+  // Copy numDescendantsUnthrottled over to numDescendants every 100ms to throttle re-renders.
+  // This results in a ~10% decrease in pull time on 6k thoughts.
+  // There are only marginal performance gains at delays above 100ms, and steeply diminishing gains below 100ms.
+  const [numDescendantsUnthrottled, setNumDescendantsUnthrottled] = useState<number | null>(null)
   const [numDescendants, setNumDescendants] = useState<number | null>(null)
+  const updateNumDescendantsThrottled = useThrottle(() => setNumDescendants(numDescendantsUnthrottled), 100)
 
   const dispatch = useDispatch()
   const isMounted = useRef(false)
@@ -61,7 +82,11 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
     const numDescendantsNew = Object.values(thoughts.contextIndex).reduce((accum, parent) => {
       return accum + parent.children.length
     }, 0)
-    setNumDescendants(numDescendants => (numDescendants ?? 0) + numDescendantsNew)
+
+    // do not update numDescendants directly, since this callback has a high throughput
+    // instead, set numDescendantsUnthrottled and copy them over to numDescendants every 100ms with updateNumDescendantsThrottled
+    setNumDescendantsUnthrottled(numDescendantsUnthrottled => (numDescendantsUnthrottled ?? 0) + numDescendantsNew)
+    updateNumDescendantsThrottled()
   }, [])
 
   // fetch all pending descendants of the cursor once for all components
@@ -73,7 +98,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
     const id = getThoughtIdByContext(store.getState(), context)
 
-    if (id)
+    if (id) {
       dispatch(
         pull([id], {
           onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
@@ -86,6 +111,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
           setIsPulling(false)
         }
       })
+    }
 
     return () => {
       isMounted.current = false
