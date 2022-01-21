@@ -23,7 +23,7 @@ const undoShortcut: Shortcut = {
     // Ignore navigation actions
     if (NAVIGATION_ACTIONS[lastActionType]) return
 
-    dispatch(alertAction(`Undo: ${lastActionType}`, { isInline: true }))
+    dispatch(alertAction(`Undo: ${lastActionType}`, { isInline: true, clearDelay: 3000 }))
   },
   isActive: getState => isUndoEnabled(getState()),
 }

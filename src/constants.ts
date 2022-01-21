@@ -471,5 +471,3 @@ export enum VIEW_MODE {
 }
 
 export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
-
-export const ALERT_TIMEOUT_VALUE = 3000

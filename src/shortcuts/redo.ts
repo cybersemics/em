@@ -24,7 +24,7 @@ const redoShortcut: Shortcut = {
     // Ignore navigation actions
     if (NAVIGATION_ACTIONS[lastActionType]) return
 
-    dispatch(alertAction(`Redo: ${lastActionType}`, { isInline: true }))
+    dispatch(alertAction(`Redo: ${lastActionType}`, { isInline: true, clearDelay: 3000 }))
   },
   isActive: getState => isRedoEnabled(getState()),
 }
