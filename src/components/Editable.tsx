@@ -249,7 +249,7 @@ const Editable = ({
 
   // side effect to set old value ref to head value from updated simplePath.
   useEffect(() => {
-    oldValueRef.current = value
+    oldValueRef.current = isEditing ? removeMarkdownFormatting(value) : formatMarkdown(value)
   }, [value])
 
   /** Set or reset invalid state. */
@@ -768,10 +768,10 @@ const Editable = ({
           isCursorCleared
           ? ''
           : isEditing
-          ? value
+          ? removeMarkdownFormatting(value)
           : childrenLabel.length > 0
           ? childrenLabel[0].value
-          : ellipsizeUrl(value)
+          : ellipsizeUrl(formatMarkdown(value))
       }
       placeholder={
         isCursorCleared
@@ -796,6 +796,18 @@ const Editable = ({
       style={style || {}}
     />
   )
+}
+
+/** Replaces markdown features like bold and italics via double asterisks and single asterisks with <b> and <i> tags respectively. */
+const formatMarkdown = (value: string) => {
+  return value
+    .replace(/\*\*(.*)\*\*/g, `<b class="md-bold">$1</b>`)
+    .replace(/\*(.*)\*/g, `<i class="md-italics">$1</i>`)
+}
+
+/** Replaces converted bold and italic tags from the html to double asterisks and single asterisks respectivtively. */
+const removeMarkdownFormatting = (value: string) => {
+  return value.replace(/<b class="md-bold">(.*)<\/b>/g, `**$1**`).replace(/<i class="md-italics">(.*)<\/i>/g, `*$1*`)
 }
 
 export default connect(mapStateToProps)(Editable)
