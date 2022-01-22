@@ -150,7 +150,7 @@ const ThoughtAnnotation = ({
   /** Returns true if the thought is not archived. */
   const isNotArchive = (thoughtContext: ThoughtContext) =>
     // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
-    showHiddenThoughts || !getAncestorByValue(state, thoughtContext, '=archieve')
+    showHiddenThoughts || !getAncestorByValue(state, thoughtContext, '=archive')
 
   const numContexts = contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
 
