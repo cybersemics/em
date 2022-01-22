@@ -1,17 +1,16 @@
-import { reducerFlow } from './../util/reducerFlow'
+import { State } from '../@types'
 import { expandThoughts } from '../selectors'
 
 /** Shows or hides all hidden and metaprogramming thoughts. */
-const toggleHiddenThoughts = reducerFlow([
-  state => ({
+const toggleHiddenThoughts = (state: State) => {
+  const toggledState = {
     ...state,
     showHiddenThoughts: !state.showHiddenThoughts,
-  }),
-  // calculate expanded with the toggled showHiddenThoughts
-  state => ({
-    ...state,
-    expanded: expandThoughts(state, state.cursor),
-  }),
-])
+  }
+  return {
+    ...toggledState,
+    expanded: expandThoughts(toggledState, toggledState.cursor),
+  }
+}
 
 export default toggleHiddenThoughts
