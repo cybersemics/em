@@ -784,8 +784,7 @@ body.dark {
 
 .alert-inline {
   width: auto;
-  left: 50%;
-  transform: translateX(-50%) !important;
+  left: 45%;
 }
 
 .dark .alert {
@@ -796,7 +795,6 @@ body.dark {
   padding: 5px 10px;
   background-color: rgba(255, 255, 255, 0.8);
   display: inline-block;
-  text-transform: capitalize;
 }
 
 .dark .alert-text {
