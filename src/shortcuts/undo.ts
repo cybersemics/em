@@ -1,8 +1,17 @@
 import UndoIcon from '../components/UndoIcon'
-import { Shortcut } from '../@types'
+import { Patch, Shortcut } from '../@types'
 import { isUndoEnabled } from '../selectors/isUndoEnabled'
 import { alert as alertAction } from '../action-creators'
 import { NAVIGATION_ACTIONS } from '../constants'
+
+/**
+ * Recursively calculates last action type from inversePatches history if it is one of the navigation actions and finally returns the action.
+ */
+const getActionTypeRecursively = (inversePatches: Patch[], n = 1): string => {
+  const lastActionType = inversePatches[inversePatches.length - n]?.[0]?.actions[0]
+  if (NAVIGATION_ACTIONS[lastActionType]) return getActionTypeRecursively(inversePatches, n + 1)
+  return lastActionType
+}
 
 const undoShortcut: Shortcut = {
   id: 'undo',
@@ -12,18 +21,13 @@ const undoShortcut: Shortcut = {
   exec: (dispatch, getState) => {
     if (!isUndoEnabled(getState())) return
 
-    const { inversePatches } = getState()
+    const lastActionType = getActionTypeRecursively(getState().inversePatches)
 
-    // Checks the last action type from inverse patch history.
-    const lastActionType = inversePatches[inversePatches.length - 1]?.[0]?.actions[0]
     dispatch({ type: 'undoAction' })
 
     if (!lastActionType) return
 
-    // Ignore navigation actions
-    if (NAVIGATION_ACTIONS[lastActionType]) return
-
-    dispatch(alertAction(`Undo: ${lastActionType}`, { isInline: true, clearDelay: 3000 }))
+    dispatch(alertAction(`Undo: ${lastActionType}`, { isInline: true, clearDelay: 3000, showCloseLink: false }))
   },
   isActive: getState => isUndoEnabled(getState()),
 }

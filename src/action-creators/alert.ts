@@ -8,7 +8,7 @@ interface Options {
   isInline?: boolean
 }
 
-let clearAlertTimeoutId: number | null = null // eslint-disable-line fp/no-let
+let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null // eslint-disable-line fp/no-let
 
 /**
  * Dispatches an alert action.
@@ -19,17 +19,14 @@ let clearAlertTimeoutId: number | null = null // eslint-disable-line fp/no-let
  * @param clearDelay Timeout after which alert will be cleared.
  */
 const alert =
-  (
-    value: string | FunctionComponent | null,
-    { alertType, showCloseLink, clearDelay, isInline = false }: Options = {},
-  ): Thunk =>
+  (value: string | FunctionComponent | null, { alertType, showCloseLink, clearDelay, isInline }: Options = {}): Thunk =>
   (dispatch, getState) => {
     const { alert } = getState()
 
     if (clearTimeout) {
       // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
       clearAlertTimeoutId && clearTimeout(clearAlertTimeoutId)
-      setTimeout(() => {
+      clearAlertTimeoutId = setTimeout(() => {
         dispatch({
           type: 'alert',
           alertType,
