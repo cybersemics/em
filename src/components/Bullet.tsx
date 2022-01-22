@@ -25,7 +25,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     // if being edited and meta validation error has occured
     invalid: !!props.isEditing && invalidState,
     // re-render when leaf status changes
-    isLeaf: !hasChildren(state, props.context),
+    isLeaf: props.leaf && !hasChildren(state, props.context),
     missing: !lexeme,
     pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
