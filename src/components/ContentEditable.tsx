@@ -13,10 +13,19 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
 /**
  * Content Editable Component.
  */
-const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...props }: ContentEditableProps) => {
+const ContentEditable = ({
+  style,
+  html,
+  disabled,
+  innerRef,
+  forceUpdate,
+  isEditing,
+  ...props
+}: ContentEditableProps) => {
   const newContentRef = useRef<HTMLDivElement>(null)
   const contentRef = innerRef || newContentRef
   const prevHtmlRef = useRef<string>(html)
+  const prevIsEditing = useRef<boolean | undefined>()
   const allowInnerHTMLChange = useRef<boolean>(true)
 
   React.useEffect(() => {
@@ -24,12 +33,18 @@ const ContentEditable = ({ style, html, disabled, innerRef, forceUpdate, ...prop
   }, [])
 
   React.useEffect(() => {
-    // prevent innerHTML update when editing
-    if (forceUpdate || (prevHtmlRef.current !== html && allowInnerHTMLChange.current)) {
-      contentRef.current!.innerHTML = html
-      prevHtmlRef.current = html
+    // prevent innerHTML update when editing, but allow innerHTML update when isEditing is changed
+    if (
+      forceUpdate ||
+      prevIsEditing.current !== isEditing ||
+      (prevHtmlRef.current !== html && allowInnerHTMLChange.current)
+    ) {
+      prevIsEditing.current = isEditing
+      const markdownFormattedHtml = isEditing ? html : formatMarkdown(html)
+      contentRef.current!.innerHTML = markdownFormattedHtml
+      prevHtmlRef.current = markdownFormattedHtml
     }
-  }, [html, forceUpdate])
+  }, [html, forceUpdate, isEditing])
 
   // eslint-disable-next-line jsdoc/require-jsdoc
   const handleInput = (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {
@@ -83,6 +98,13 @@ export declare type ContentEditableEvent = React.SyntheticEvent<HTMLInputElement
   target: {
     value: string
   }
+}
+
+/** Replaces markdown features like bold and italics via double asterisks and single asterisks with <b> and <i> tags respectively. */
+const formatMarkdown = (value: string) => {
+  return value
+    .replace(/\*\*(.*)\*\*/g, `<b class="md-bold">$1</b>`)
+    .replace(/\*(.*)\*/g, `<i class="md-italics">$1</i>`)
 }
 
 export default ContentEditable

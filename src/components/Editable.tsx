@@ -249,7 +249,7 @@ const Editable = ({
 
   // side effect to set old value ref to head value from updated simplePath.
   useEffect(() => {
-    oldValueRef.current = isEditing ? removeMarkdownFormatting(value) : formatMarkdown(value)
+    oldValueRef.current = value
   }, [value])
 
   /** Set or reset invalid state. */
@@ -610,8 +610,9 @@ const Editable = ({
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
-    // if there was an ephemeral duplicate state, reset the rendered value to previous non-duplicate
-    if (contentRef.current?.innerHTML !== oldValueRef.current) {
+    // if there was an ephemeral duplicate state, reset the rendered value to previous non-duplicate.
+    // There can be markdown formatted html, so it needs removing before checking with the previous value.
+    if (removeMarkdownFormatting(contentRef.current?.innerHTML ?? '') !== oldValueRef.current) {
       contentRef.current!.innerHTML = oldValueRef.current
       contentRef.current!.style.opacity = '1.0'
       showDuplicationAlert(false, dispatch)
@@ -759,6 +760,7 @@ const Editable = ({
         ['editable-' + headId(path)]: true,
         empty: value.length === 0,
       })}
+      isEditing={isEditing && selection.isThought()}
       forceUpdate={editableNonceRef.current !== state.editableNonce}
       html={
         value === EM_TOKEN
@@ -768,10 +770,10 @@ const Editable = ({
           isCursorCleared
           ? ''
           : isEditing
-          ? removeMarkdownFormatting(value)
+          ? value
           : childrenLabel.length > 0
           ? childrenLabel[0].value
-          : ellipsizeUrl(formatMarkdown(value))
+          : ellipsizeUrl(value)
       }
       placeholder={
         isCursorCleared
@@ -796,13 +798,6 @@ const Editable = ({
       style={style || {}}
     />
   )
-}
-
-/** Replaces markdown features like bold and italics via double asterisks and single asterisks with <b> and <i> tags respectively. */
-const formatMarkdown = (value: string) => {
-  return value
-    .replace(/\*\*(.*)\*\*/g, `<b class="md-bold">$1</b>`)
-    .replace(/\*(.*)\*/g, `<i class="md-italics">$1</i>`)
 }
 
 /** Replaces converted bold and italic tags from the html to double asterisks and single asterisks respectivtively. */
