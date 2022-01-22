@@ -5,9 +5,10 @@ interface Options {
   alertType?: string
   showCloseLink?: boolean
   clearDelay?: number
+  isInline?: boolean
 }
 
-let clearAlertTimeoutId: number | null = null // eslint-disable-line fp/no-let
+let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null // eslint-disable-line fp/no-let
 
 /**
  * Dispatches an alert action.
@@ -18,7 +19,7 @@ let clearAlertTimeoutId: number | null = null // eslint-disable-line fp/no-let
  * @param clearDelay Timeout after which alert will be cleared.
  */
 const alert =
-  (value: string | FunctionComponent | null, { alertType, showCloseLink, clearDelay }: Options = {}): Thunk =>
+  (value: string | FunctionComponent | null, { alertType, showCloseLink, clearDelay, isInline }: Options = {}): Thunk =>
   (dispatch, getState) => {
     const { alert } = getState()
 
@@ -31,9 +32,10 @@ const alert =
           alertType,
           showCloseLink,
           value: null,
+          isInline,
         })
         clearAlertTimeoutId = null
-      }, clearTimeout)
+      }, clearDelay)
     }
 
     if (alert && alert.value === value) return
@@ -43,6 +45,7 @@ const alert =
       alertType,
       showCloseLink,
       value,
+      isInline,
     })
   }
 

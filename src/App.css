@@ -782,6 +782,11 @@ body.dark {
   z-index: 11; /* above breadcrumbs, toolbar, export modal and status */
 }
 
+.alert-inline {
+  width: auto;
+  left: 45%;
+}
+
 .dark .alert {
   background-color: rgba(0, 0, 0, 0.8);
 }
