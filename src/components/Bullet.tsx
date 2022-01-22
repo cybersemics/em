@@ -1,7 +1,7 @@
 import React, { MouseEvent } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
+import { getLexeme, isContextViewActive, isPending } from '../selectors'
 import { head } from '../util'
 import { Context, State } from '../@types'
 
@@ -24,8 +24,6 @@ const mapStateToProps = (state: State, props: BulletProps) => {
   return {
     // if being edited and meta validation error has occured
     invalid: !!props.isEditing && invalidState,
-    // re-render when leaf status changes
-    isLeaf: props.leaf && !hasChildren(state, props.context),
     missing: !lexeme,
     pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
@@ -37,7 +35,7 @@ const Bullet = ({
   showContexts,
   glyph,
   invalid,
-  isLeaf,
+  leaf,
   missing,
   onClick,
   pending,
@@ -55,7 +53,7 @@ const Bullet = ({
     })}
   >
     <span className='glyph' onClick={onClick}>
-      {glyph || (showContexts ? (isLeaf ? '◦' : '▹') : isLeaf ? '•' : '▸')}
+      {glyph || (showContexts ? (leaf ? '◦' : '▹') : leaf ? '•' : '▸')}
     </span>
   </span>
 )
