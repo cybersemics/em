@@ -1,9 +1,18 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { clearPushQueue, deleteThought, isPushing, mergePending, pull, push, updateThoughts } from '../action-creators'
+import {
+  clearPushQueue,
+  deleteThought,
+  isPushing,
+  mergeThoughts,
+  pull,
+  push,
+  setCursor,
+  updateThoughts,
+} from '../action-creators'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
-import { head, keyValueBy } from '../util'
+import { equalArrays, head, keyValueBy } from '../util'
 import { Thunk, Index, Lexeme, PushBatch, State, ThoughtId } from '../@types'
 
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only thoughtIndexUpdates. */
@@ -171,12 +180,23 @@ const flushPendingMerges =
       await dispatch(pull(toBePulledThoughts, { force: true, maxDepth: 1 }))
 
       pendingMerges.forEach(({ sourcePath, targetPath }) => {
-        dispatch(
-          mergePending({
+        dispatch([
+          mergeThoughts({
             sourceThoughtPath: sourcePath,
             targetThoughtPath: targetPath,
           }),
-        )
+          (): Thunk => (dispatch, getState) => {
+            // source thought would be deleted after merge, so changing the cursor to the target thought
+            const newState = getState()
+            const isSourceCursor = newState.cursor && equalArrays(newState.cursor, sourcePath)
+            isSourceCursor &&
+              dispatch(
+                setCursor({
+                  path: targetPath,
+                }),
+              )
+          },
+        ])
       })
     }
   }

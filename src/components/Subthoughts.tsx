@@ -19,7 +19,7 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  hashContext,
+  hashPath,
   head,
   headValue,
   isAbsolute,
@@ -59,6 +59,7 @@ import {
   rootedParentOf,
 } from '../selectors'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getNextRankById } from '../selectors/getNextRank'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -250,7 +251,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const sortPreference = getSortPreference(state, pathToContext(state, simplePathLive))
 
-  const contextHash = hashContext(pathLive)
+  const hashedPath = hashPath(pathLive)
 
   /** Returns true if the thought is in table view and has more than two columns. This is the case when every row has at least two matching children in column 2. If this is the case, it will get rendered in multi column mode where grandchildren are used as header columns. */
   const isMultiColumnTable = () => {
@@ -292,7 +293,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     isAbsoluteContext,
     isEditingAncestor,
     // expand thought due to cursor and hover expansion
-    isExpanded: !!state.expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isExpanded: !!state.expanded[hashedPath] || !!expandedBottom?.[hashedPath],
     isMultiColumnTable: isMultiColumnTable(),
     showContexts,
     showHiddenThoughts,
@@ -382,12 +383,13 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
           type: 'createThought',
           value: toThought.value,
           context: pathToContext(state, thoughtsFrom),
-          rank: getNextRank(state, pathToContext(state, thoughtsFrom)),
+          newRank: getNextRank(state, pathToContext(state, thoughtsFrom)),
         }
       : {
           type: 'moveThought',
           oldPath: thoughtsFrom,
           newPath,
+          newRank: getNextRankById(state, head(thoughtsTo)),
         },
   )
 

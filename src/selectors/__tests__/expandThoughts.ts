@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../../constants'
-import { hashContext, initialState, reducerFlow } from '../../util'
+import { hashPath, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newSubthought, newThought, setCursor } from '../../reducers'
 import { Context, State } from '../../@types'
@@ -16,7 +16,7 @@ const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) 
 const isContextExpanded = (state: State, context: Context) => {
   const path = rankThoughtsFirstMatch(state, context)
   if (!path) return false
-  return expandThoughts(state, state.cursor)[hashContext(path)]
+  return expandThoughts(state, state.cursor)[hashPath(path)]
 }
 
 describe('normal view', () => {

@@ -26,7 +26,7 @@ import {
   // ellipsize,
   // equalArrays,
   equalPath,
-  hashContext,
+  hashPath,
   // head,
   headValue,
   isAbsolute,
@@ -163,7 +163,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, referenceDepth - (props.depth ?? 0)))
     : 0
 
-  const contextHash = hashContext(resolvedPath)
+  const hashedPath = hashPath(resolvedPath)
 
   const allChildren = getAllChildren(state, contextLive)
 
@@ -199,7 +199,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showHiddenThoughts,
     simplePath: simplePathLive,
     // expand thought due to cursor and hover expansion
-    isExpanded: !!store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isExpanded: !!store.getState().expanded[hashedPath] || !!expandedBottom?.[hashedPath],
     isAbsoluteContext,
     zoomCursor,
     zoomParent,

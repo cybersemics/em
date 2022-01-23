@@ -4,7 +4,7 @@ import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@type
 import {
   appendToPath,
   equalArrays,
-  hashContext,
+  hashPath,
   head,
   isDescendant,
   isFunction,
@@ -202,8 +202,8 @@ function expandThoughtsRecursive(
           )
         })
 
-  // Note: Since a thought can have duplicate valued children can have duplicate in some cases like pending merges, we need to make expanded key based on the hash of the path instead.
-  const contextHash = hashContext(path)
+  // Note: Since a thought can have duplicate valued children in some cases like pending merges, we need to make expanded key based on the hash of the path instead.
+  const contextHash = hashPath(path)
 
   const initialExpanded = {
     // expand current thought
