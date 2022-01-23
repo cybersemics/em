@@ -261,6 +261,26 @@ describe('=pin', () => {
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
   })
+  it('thoughts with =pin/false is not expanded even if ancestor has =pinChildren/true', () => {
+    const text = `
+    - a
+      - =pinChildren
+        - true
+      - b
+        - =pin
+          - false
+        - c
+      - d
+    `
+
+    const steps = [importText({ text }), setCursorFirstMatch(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
+  })
 })
 
 describe('=pinChildren', () => {
