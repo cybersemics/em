@@ -1030,6 +1030,55 @@ it('import single thought into empty home context', () => {
   - a`)
 })
 
+it('import single thought with markdown into the home context', () => {
+  const text = 'This is **bold** text!'
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN])
+
+  expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}  
+    <ul>
+      <li>This is <b>bold</b> text!</li>
+    </ul>
+  </li>
+</ul>`)
+})
+
+it('import multiple thoughts with markdown into the home context', () => {
+  // Note: Markdown replacing should not span over multiple lines
+  const text = `- *This is a reference to a footnote.
+- This is *italic* text!`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN])
+
+  expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}  
+    <ul>
+      <li>*This is a reference to a footnote.</li>
+      <li>This is <i>italic</i> text!</li>
+    </ul>
+  </li>
+</ul>`)
+})
+
+it('import single thought with invalid markdown into the home context', () => {
+  // No change in text should be observed.
+  const text = 'What?!?**'
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN])
+
+  expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}  
+    <ul>
+      <li>What?!?**</li>
+    </ul>
+  </li>
+</ul>`)
+})
+
 it('import multiple thoughts to empty home context', () => {
   const text = `
   - a

@@ -17,6 +17,14 @@ const regexStartsWithClosedTag = /^<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)<\/\1>/ims
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
 
+// Text content enclosed in double asterisks '**' representing markdown bold.
+// Example: **markdown bold**
+const regexpMarkdownBold = /\*\*(.+)\*\*/g
+
+// Text content enclosed in single asterisks '*' representing markdown italics.
+// Example: *markdown italics*
+const regexpMarkdownItalics = /\*(.+)\*/g
+
 /** Retrieves the content within the body tags of the given HTML. Returns the full string if no body tags are found. */
 const bodyContent = (html: string) => {
   const matches = html.match(/<body[^>]*>([\w|\W]*)<\/body>/)
@@ -63,7 +71,7 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
       const childrenHtml = block.children.length > 0 ? `<ul>${blocksToHtml(block.children)}</ul>` : ''
       return value || childrenHtml ? `<li>${value}${childrenHtml}</li>` : ''
     })
-    .join('')
+    .join('\n')
 /**
  * Move leading spaces and bullet indicator to the beginning.
  *
@@ -112,7 +120,14 @@ export const textToHtml = (text: string) => {
   return !isHTML
     ? parsedInputText
         .split('\n')
-        .map(line => `${line.replace(regexpPlaintextBullet, '').trim()}`)
+        .map(
+          line =>
+            `${line
+              .replace(regexpPlaintextBullet, '')
+              .replace(regexpMarkdownBold, '<b>$1</b>')
+              .replace(regexpMarkdownItalics, '<i>$1</i>')
+              .trim()}`,
+        )
         .join('')
     : // if it's an entire HTML page, ignore everything outside the body tags
       parseBodyContent(text)
