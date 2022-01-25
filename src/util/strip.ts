@@ -15,11 +15,7 @@ const regexSpanTagOnlyContainsWhitespaces = /<span[^>]*>([\s]+)<\/span>/gim
 /** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim. */
 export const strip = (
   html: string,
-  { preserveFormatting, preventTrim, stripAttributes }: StripOptions = {
-    preserveFormatting: false,
-    preventTrim: false,
-    stripAttributes: true,
-  },
+  { preserveFormatting = false, preventTrim = false, stripAttributes = true }: StripOptions = {},
 ) => {
   const replacedHtml = html
     .replace(/<\/p><p/g, '</p>\n<p') // <p> is a block element, if there is no newline between <p> tags add newline.

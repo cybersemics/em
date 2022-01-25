@@ -1129,6 +1129,21 @@ it('import single line with style attributes', () => {
 </ul>`)
 })
 
+it('import single line with style attributes and a single br tag', () => {
+  const text = `<br><span style="color: pink;">Marcel Duchamp: The Art of the Possible</span>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
+
+  expect(exported).toBe(`<ul>
+  <li>__ROOT__${EMPTY_SPACE}
+    <ul>
+      <li>Marcel Duchamp: The Art of the Possible</li>
+    </ul>
+  </li>
+</ul>`)
+})
+
 it('import raw state', () => {
   // raw thought state with two thoughts: a/b
   // most of this is settings, but keep them for completeness
