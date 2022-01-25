@@ -1,6 +1,5 @@
 import { getThoughtById } from './index'
 import { Index, Parent, State, ThoughtId } from '../@types'
-import { normalizeThought } from '../util'
 
 /**
  * Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function.
@@ -34,9 +33,9 @@ const getAncestorBy = (
 }
 
 /**
- * Get ancestor by normalized value.
+ * Get ancestor by value.
  */
-export const getAncestorByValue = (state: State, thoughtId: ThoughtId, normalizedValue: string) =>
-  getAncestorBy(state, thoughtId, thought => normalizeThought(thought.value) === normalizedValue)
+export const getAncestorByValue = (state: State, thoughtId: ThoughtId, value: string) =>
+  getAncestorBy(state, thoughtId, thought => thought.value === value)
 
 export default getAncestorBy
