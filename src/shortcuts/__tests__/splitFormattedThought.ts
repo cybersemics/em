@@ -1,13 +1,10 @@
 import { editingValue, newThought } from '../../action-creators'
-import { store } from '../../store'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { exportContext } from '../../selectors'
 import { HOME_TOKEN } from '../../constants'
-
-beforeEach(createTestApp)
-afterEach(cleanupTestApp)
+import { createTestStore } from '../../test-helpers/createTestStore'
 
 it('Split formatted thought', async () => {
+  const store = createTestStore()
   store.dispatch([
     newThought({
       value: '<b>Hello World</b>',
