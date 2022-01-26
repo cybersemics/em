@@ -6,7 +6,6 @@ import { alert } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
 import { Thunk, Context, Path, SplitResult, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import * as selection from '../device/selection'
 
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (splitResult: SplitResult, context: Context | null, state: State) => {
@@ -75,7 +74,6 @@ const newThought =
     const split =
       !preventSplit &&
       path &&
-      selection.isThought() &&
       !showContexts &&
       !value &&
       editingValue &&
