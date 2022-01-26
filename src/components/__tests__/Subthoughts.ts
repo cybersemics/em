@@ -9,6 +9,7 @@ import Subthoughts from '../Subthoughts'
 import { Context, Path, SimplePath, State } from '../../@types'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { getAllChildren } from '../../selectors'
+import { screen } from '@testing-library/dom'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ThoughtOrSubthoughtsComponent {
@@ -591,5 +592,55 @@ describe('expand thoughts', () => {
 
     // on change of isExpanded the Subthought should re-render and render it's children
     expect(thoughtB()).toHaveLength(1)
+  })
+})
+
+describe('multi-column mode', () => {
+  it('Multi-column mode must not be active on single nested thought', () => {
+    // import thoughts
+    store.dispatch([
+      importText({
+        text: `- a
+        - =view
+          - Table
+        - b
+          - c
+            - e`,
+      }),
+    ])
+
+    const thoughtB = screen.getAllByText('b').filter(element => element.classList.contains('editable'))[0]
+
+    expect(thoughtB.closest('.is-multi-column')).toBeFalsy()
+  })
+
+  it('Multi-column mode must be active on muliple levels of nested thought', () => {
+    // import thoughts
+    store.dispatch([
+      importText({
+        text: `- Fruit
+        - =view
+          - Table
+        - Apple
+          - Color
+            - Red
+          - Type
+            - Seed
+        - Banana
+          - Color
+            - Yellow
+          - Type
+            - Tropical
+        - Tangerine
+          - Color
+            - Orange
+          - Type
+            - Citrus`,
+      }),
+    ])
+
+    const thoughtRed = screen.getAllByText('Color').filter(element => element.classList.contains('editable'))[0]
+
+    expect(thoughtRed.closest('.is-multi-column')).toBeTruthy()
   })
 })
