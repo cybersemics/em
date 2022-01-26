@@ -278,11 +278,11 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
       return grandchildren
     })
 
-    const isMultiColumn = otherChildren.every(
-      children => children.filter(child => child.value in columnMap).length >= 2,
-    )
+    const isMultiColumn =
+      otherChildren.length > 0 &&
+      otherChildren.every(children => children.filter(child => child.value in columnMap).length >= 2)
 
-    return otherChildren.length > 0 && isMultiColumn
+    return isMultiColumn
   }
 
   return {
