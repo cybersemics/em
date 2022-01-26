@@ -282,7 +282,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
       children => children.filter(child => child.value in columnMap).length >= 2,
     )
 
-    return isMultiColumn
+    return otherChildren.length > 0 && isMultiColumn
   }
 
   return {
