@@ -109,7 +109,8 @@ const importText = (
     // insert the textNormalized into the destValue in the correct place
     // trim after concatenating in case destValue has whitespace
     const left = (destValue.slice(0, replaceStart ?? 0) + textNormalized).trimLeft()
-    const right = destValue.slice(replaceEnd ?? 0).trimRight()
+    // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
+    const right = state.cursorCleared ? '' : destValue.slice(replaceEnd ?? 0).trimRight()
     const newValue = left + right
 
     const offset = getTextContentFromHTML(left).length
