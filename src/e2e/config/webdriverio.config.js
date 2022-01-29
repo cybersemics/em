@@ -30,7 +30,7 @@ const config = localIdentifier => ({
 
   // logLevel: 'trace',
   baseUrl: '',
-  waitforTimeout: 10000,
+  waitforTimeout: 20000,
   connectionRetryTimeout: 90000,
   connectionRetryCount: 10,
   hostname: 'hub.browserstack.com',
