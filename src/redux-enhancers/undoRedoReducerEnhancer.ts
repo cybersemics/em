@@ -16,8 +16,8 @@ const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch) => {
   const thoughtIndexPath = '/thoughts/thoughtIndex/'
   const contextIndexPath = '/thoughts/contextIndex/'
-  const thoughtIndexChanges = patch.filter(p => p.path.indexOf(thoughtIndexPath) === 0)
-  const contextIndexChanges = patch.filter(p => p.path.indexOf(contextIndexPath) === 0)
+  const thoughtIndexChanges = patch.filter(p => p?.path.indexOf(thoughtIndexPath) === 0)
+  const contextIndexChanges = patch.filter(p => p?.path.indexOf(contextIndexPath) === 0)
 
   const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
     const [thoughtId] = path.slice(thoughtIndexPath.length).split('/')
@@ -72,7 +72,7 @@ const addActionsToPatch = (patch: Patch, actions: string[]) => patch.map(operati
 /**
  * Gets the first action from a patch.
  */
-const getPatchAction = (patch: Patch) => patch[0].actions[0]
+const getPatchAction = (patch: Patch) => patch[0]?.actions[0]
 
 /**
  * Gets the nth item from the end of an array.
