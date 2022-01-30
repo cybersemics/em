@@ -19,7 +19,10 @@ let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null // eslint-d
  * @param clearDelay Timeout after which alert will be cleared.
  */
 const alert =
-  (value: string | FunctionComponent | null, { alertType, showCloseLink, clearDelay, isInline }: Options = {}): Thunk =>
+  (
+    value: string | FunctionComponent | null,
+    { alertType, showCloseLink, clearDelay = 2000, isInline }: Options = {},
+  ): Thunk =>
   (dispatch, getState) => {
     const { alert } = getState()
 
