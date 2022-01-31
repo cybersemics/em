@@ -23,7 +23,7 @@ const redoShortcut: Shortcut = {
       alertAction(`Redo: ${startCase(lastActionType)}`, { isInline: true, clearDelay: 3000, showCloseLink: false }),
     )
   },
-  isActive: getState => isRedoEnabled(getState()),
+  canExecute: getState => isRedoEnabled(getState()),
 }
 
 export default redoShortcut

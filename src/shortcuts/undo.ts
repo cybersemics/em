@@ -23,7 +23,7 @@ const undoShortcut: Shortcut = {
       alertAction(`Undo: ${startCase(lastActionType)}`, { isInline: true, clearDelay: 3000, showCloseLink: false }),
     )
   },
-  isActive: getState => isUndoEnabled(getState()),
+  canExecute: getState => isUndoEnabled(getState()),
 }
 
 export default undoShortcut
