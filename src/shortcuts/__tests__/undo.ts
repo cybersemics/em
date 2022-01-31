@@ -20,7 +20,7 @@ describe('undo shortcut', () => {
 
   it('dispatches undo action on shortcut if undo is enabled', () => {
     // enable undo
-    isUndoEnabled.mockImplementationOnce(() => true)
+    isUndoEnabled.mockReturnValue(true)
 
     const mockStore = createMockStore()
     const store = mockStore(initialState())
