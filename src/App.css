@@ -1661,20 +1661,6 @@ h1 .num-contexts {
 .distance-from-cursor-1.zoomCursor > .child:not(.editing) > .thought-container {
   color: rgba(0, 0, 0, 0);
 }
-/* hide cousins when cursor is in column 2 */
-.table-view > .children > .child:not(.cursor-parent) > .distance-from-cursor-1.zoomParent > .child:not(.editing) {
-  color: rgba(0, 0, 0, 0);
-}
-/* hide children of cousins when cursor is in column 2 */
-.table-view
-  > .children
-  > .child
-  > .children
-  > .child:not(.cursor-parent)
-  > .distance-from-cursor-1.zoomParent
-  > .child:not(.editing) {
-  color: rgba(0, 0, 0, 0);
-}
 
 /* depth-bar */
 .distance-from-cursor-0 > .child > .thought-container > .thought .depth-bar {
