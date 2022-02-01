@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { getLexeme, isContextViewActive, isPending } from '../selectors'
 import { head } from '../util'
-import { Context, State } from '../@types'
+import { Context, State, SimplePath } from '../@types'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -15,6 +15,9 @@ interface BulletProps {
   onClick: (event: React.MouseEvent) => void
   showContexts?: boolean
   context: Context
+  publish?: boolean
+  simplePath: SimplePath
+  hideBullet?: boolean
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -39,23 +42,38 @@ const Bullet = ({
   missing,
   onClick,
   pending,
-}: BulletProps & ReturnType<typeof mapStateToProps>) => (
-  <span
-    className={classNames({
-      bullet: true,
-      // Since Parents and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
-      // Therefore render in a simple gray rather than an error color.
-      // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
-      gray: missing,
-      graypulse: pending,
-      'show-contexts': showContexts,
-      'invalid-option': invalid,
-    })}
-  >
-    <span className='glyph' onClick={onClick}>
-      {glyph || (showContexts ? (leaf ? '◦' : '▹') : leaf ? '•' : '▸')}
+  simplePath,
+  publish,
+  hideBullet,
+}: BulletProps & ReturnType<typeof mapStateToProps>) => {
+  const isRoot = simplePath.length === 1
+  const isRootChildLeaf = simplePath.length === 2 && leaf
+
+  return (
+    <span
+      className={classNames({
+        bullet: true,
+        // Since Parents and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
+        // Therefore render in a simple gray rather than an error color.
+        // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
+        gray: missing,
+        graypulse: pending,
+        'show-contexts': showContexts,
+        'invalid-option': invalid,
+      })}
+    >
+      <span className='glyph' onClick={onClick}>
+        {glyph || (showContexts ? (leaf ? '◦' : '▹') : leaf ? '•' : '▸')}
+        <span
+          className={classNames('glyph-bg', {
+            active: !(publish && (isRoot || isRootChildLeaf)) && !hideBullet,
+          })}
+        >
+          •
+        </span>
+      </span>
     </span>
-  </span>
-)
+  )
+}
 
 export default connect(mapStateToProps)(Bullet)

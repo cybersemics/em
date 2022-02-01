@@ -1613,6 +1613,17 @@ h1 .num-contexts {
   cursor: pointer;
 }
 
+.glyph-bg {
+  color: transparent;
+  position: absolute;
+  top: 3.5px;
+  transform: scale(3) translateX(-33%);
+  transition: 0.2s;
+  pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
+}
+.child.editing > .thought-container .glyph-bg.active {
+  color: rgba(255, 255, 255, 0.25);
+}
 .distance-from-cursor-2 > .child:not(.editing):not(.cursor-parent) > .thought-container > .bullet .glyph,
 .distance-from-cursor-3 > .child:not(.cursor-parent) > .thought-container > .bullet .glyph {
   opacity: 0;
