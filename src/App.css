@@ -1616,10 +1616,12 @@ h1 .num-contexts {
 .glyph-bg {
   color: transparent;
   position: absolute;
-  top: 3.5px;
-  transform: scale(3) translateX(-33%);
+  transform: translateX(-100%) translateY(3%) scale(3);
   transition: 0.2s;
   pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
+}
+.glyph-bg.expanded {
+  transform: translateX(-110%) translateY(11%) scale(3);
 }
 .child.editing > .thought-container .glyph-bg.active {
   color: rgba(255, 255, 255, 0.25);

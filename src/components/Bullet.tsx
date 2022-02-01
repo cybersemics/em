@@ -66,6 +66,7 @@ const Bullet = ({
         {glyph || (showContexts ? (leaf ? '◦' : '▹') : leaf ? '•' : '▸')}
         <span
           className={classNames('glyph-bg', {
+            expanded: !leaf,
             active: !(publish && (isRoot || isRootChildLeaf)) && !hideBullet,
           })}
         >
