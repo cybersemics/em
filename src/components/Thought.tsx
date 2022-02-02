@@ -445,6 +445,7 @@ const ThoughtContainer = ({
               simplePath={simplePath}
               hideBullet={hideBullet}
               publish={publish}
+              isDragging={isDragging}
             />
           )}
 
