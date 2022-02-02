@@ -96,18 +96,13 @@ export interface ThoughtContainerProps {
 
 interface ThoughtProps {
   cursorOffset?: number | null
-  env?: Index<Context>
-  hideBullet?: boolean
   homeContext?: boolean
-  isDragging?: boolean
   isPublishChild?: boolean
   isEditing?: boolean
-  isLeaf?: boolean
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
   path: Path
-  publish?: boolean
   rank: number
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
@@ -468,17 +463,12 @@ const ThoughtContainer = ({
           />
 
           <StaticThought
-            env={env}
             path={path}
             cursorOffset={cursorOffset}
-            hideBullet={hideBullet}
             homeContext={homeContext}
-            isDragging={isDragging}
             isPublishChild={isPublishChild}
             isEditing={isEditing}
-            isLeaf={isLeaf}
             isVisible={isVisible}
-            publish={publish}
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs}
             showContexts={showContexts}
