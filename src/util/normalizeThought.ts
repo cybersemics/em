@@ -2,9 +2,11 @@ import _ from 'lodash'
 import * as pluralize from 'pluralize'
 import { REGEXP_TAGS } from '../constants'
 import emojiStrip from 'emoji-strip'
+import { isFunction } from '.'
 
 /** Trims a string. */
-export const trim = (s: string) => s.replace(s.length > 0 && s.replace(/\W/g, '').length > 0 ? /\W/g : /s/g, '')
+export const trim = (s: string) =>
+  isFunction(s) ? s.replace(/ /g, '') : s.replace(s.length > 0 && s.replace(/\W/g, '').length > 0 ? /\W/g : /s/g, '')
 
 /** Strips emoji from text. Preserves emoji on its own. */
 export const stripEmojiFromText = (s: string) => {
