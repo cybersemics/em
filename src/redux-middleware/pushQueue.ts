@@ -163,7 +163,7 @@ const flushDeletes =
     }
   }
 
-/** Pull children of pending merges and dispatch move to fully merge. */
+/** When a thought is moved to another context, duplicates are recursively merged. This function pulls children of pending merges and dispatches move to fully merge. */
 const flushPendingMerges =
   (pushQueue: PushBatch[]): Thunk<Promise<void>> =>
   async (dispatch, getState) => {

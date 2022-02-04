@@ -54,23 +54,15 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const childrenOfDestination = getChildrenRankedById(state, destinationThoughtId)
 
   /**
-   * Find duplicate thought.
+   * Find first normalized duplicate thought.
    */
   const duplicateSubthought = () =>
     childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
   // if thought is being moved to the same context that is not a duplicate case
-  const duplicateThought = !sameContext ? duplicateSubthought() : undefined
+  const duplicateThought = !sameContext ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
-
-  const newStateAfterMerge =
-    !!duplicateThought &&
-    !isPendingMerge &&
-    mergeThoughts(state, {
-      sourceThoughtPath,
-      targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
-    })
 
   const destinationContext = pathToContext(state, destinationThoughtPath)
 
@@ -79,10 +71,16 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   // if move is used for archive then update the archived field to latest timestamp
   const archived = isArchived ? timestamp() : destinationThought.archived
 
-  const contextIndexUpdates = newStateAfterMerge
-    ? {}
-    : {
-        // if moved within same context we don't need to remove and add source thought from source parent to the destination
+  return reducerFlow([
+    state => {
+      // Note: Incase of duplicate merge, the mergeThoughts handles both the merge, move logic and also calls updateThoughts. So we don't need to handle move logic if duplicate thoughts are merged.
+      if (!!duplicateThought && !isPendingMerge)
+        return mergeThoughts(state, {
+          sourceThoughtPath,
+          targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
+        })
+
+      const contextIndexUpdates = {
         ...(!sameContext
           ? {
               // remove source thought from the previous source parent children array
@@ -112,30 +110,26 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         },
       }
 
-  return reducerFlow([
+      return updateThoughts(state, {
+        contextIndexUpdates,
+        thoughtIndexUpdates: {},
+        recentlyEdited,
+        pendingMerges:
+          isPendingMerge && duplicateThought
+            ? [
+                {
+                  sourcePath: appendToPath(destinationThoughtPath, sourceThought.id),
+                  targetPath: appendToPath(destinationThoughtPath, duplicateThought.id),
+                },
+              ]
+            : [],
+      })
+    },
     state => ({
       ...state,
       cursor: newCursorPath,
       ...(offset != null ? { cursorOffset: offset } : null),
     }),
-    // update thoughts
-    newStateAfterMerge
-      ? null
-      : updateThoughts({
-          contextIndexUpdates,
-          thoughtIndexUpdates: {},
-          recentlyEdited,
-          pendingMerges:
-            isPendingMerge && duplicateThought
-              ? [
-                  {
-                    sourcePath: appendToPath(destinationThoughtPath, sourceThought.id),
-                    targetPath: appendToPath(destinationThoughtPath, duplicateThought.id),
-                  },
-                ]
-              : [],
-        }),
-
     // rerank context if ranks are too close
     // skip if this moveThought originated from a rerank
     // otherwise we get an infinite loop
@@ -152,7 +146,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
           return ranksTooClose ? rerank(state, rootedParentOf(state, newPath) as SimplePath) : state
         }
       : null,
-  ])(newStateAfterMerge || state)
+  ])(state)
 }
 
 export default _.curryRight(moveThought, 2)

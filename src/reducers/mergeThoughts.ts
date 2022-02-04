@@ -7,7 +7,7 @@ import { appendToPath, hashThought, head, normalizeThought, reducerFlow, timesta
 import { getSessionId } from '../util/sessionManager'
 
 /**
- * Merges two given thoughts with same value.
+ * Merges two given thoughts with same value by moving all the children of the source thought to the end of the desination context.
  */
 const mergeThoughts = (
   state: State,
@@ -33,6 +33,7 @@ const mergeThoughts = (
 
   const nextRank = getNextRankById(state, targetThought.id)
 
+  // moving the children of the source thought to the end of the target context.
   const newStateAfterMove = reducerFlow(
     sourceThought.children.map(
       (childId, index) => (updatedState: State) =>

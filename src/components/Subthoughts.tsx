@@ -383,7 +383,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
           type: 'createThought',
           value: toThought.value,
           context: pathToContext(state, thoughtsFrom),
-          newRank: getNextRank(state, pathToContext(state, thoughtsFrom)),
+          rank: getNextRank(state, pathToContext(state, thoughtsFrom)),
         }
       : {
           type: 'moveThought',

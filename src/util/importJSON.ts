@@ -15,6 +15,8 @@ import {
 } from '../util'
 import { createId } from './createId'
 import { getSessionId } from './sessionManager'
+import { mergeThoughts } from './mergeThoughts'
+import { mergeUpdates } from './mergeUpdates'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp
@@ -129,21 +131,11 @@ const saveThoughts = (
 
       const stateNewBeforeInsert: State = {
         ...state,
-        thoughts: {
-          ...state.thoughts,
-          contextIndex: {
-            ...state.thoughts.contextIndex,
-            ...accum.contextIndex,
-          },
-          thoughtIndex: {
-            ...state.thoughts.thoughtIndex,
-            ...accum.thoughtIndex,
-          },
-        },
+        thoughts: mergeThoughts(state.thoughts, accum),
       }
 
       /**
-       *
+       * Insert thought and return thought indices updates.
        */
       const insert = () => {
         const existingParent = stateNewBeforeInsert.thoughts.contextIndex[contextEncoded]
@@ -182,14 +174,8 @@ const saveThoughts = (
             ...stateNewBeforeInsert,
             thoughts: {
               ...stateNewBeforeInsert.thoughts,
-              contextIndex: {
-                ...stateNewBeforeInsert.thoughts.contextIndex,
-                ...insertUpdates.contextIndexUpdates,
-              },
-              thoughtIndex: {
-                ...stateNewBeforeInsert.thoughts.thoughtIndex,
-                ...insertUpdates.thoughtIndexUpdates,
-              },
+              contextIndex: mergeUpdates(stateNewBeforeInsert.thoughts.contextIndex, insertUpdates.contextIndexUpdates),
+              thoughtIndex: mergeUpdates(stateNewBeforeInsert.thoughts.thoughtIndex, insertUpdates.thoughtIndexUpdates),
             },
           }
         : stateNewBeforeInsert
@@ -209,15 +195,8 @@ const saveThoughts = (
         )
       }
 
-      const updatedContextIndexUpdates = {
-        ...accum.contextIndex,
-        ...insertUpdates?.contextIndexUpdates,
-      }
-
-      const udpatedThoughtIndexUpdates = {
-        ...accum.thoughtIndex,
-        ...insertUpdates?.thoughtIndexUpdates,
-      }
+      const updatedContextIndexUpdates = mergeUpdates(accum.contextIndex, insertUpdates?.contextIndexUpdates || {})
+      const udpatedThoughtIndexUpdates = mergeUpdates(accum.thoughtIndex, insertUpdates?.thoughtIndexUpdates || {})
 
       const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()!.id]
 
