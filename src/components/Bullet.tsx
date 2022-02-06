@@ -1,4 +1,4 @@
-import React, { MouseEvent } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { getLexeme, isContextViewActive, isPending } from '../selectors'
@@ -50,6 +50,19 @@ const Bullet = ({
   isDragging,
   fontSize,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => {
+  const bulletRef = useRef<HTMLSpanElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [top, setTop] = useState(0)
+
+  useEffect(() => {
+    if (bulletRef.current && svgRef.current) {
+      const { y: bulletYPosition } = bulletRef.current.getBoundingClientRect()
+      const { y: svgYPosition } = svgRef.current.getBoundingClientRect()
+      const topValue = bulletYPosition - svgYPosition
+      setTop(topValue)
+    }
+  }, [fontSize])
+
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
   const scale = fontSize / 15
@@ -64,6 +77,7 @@ const Bullet = ({
         stroke: 'none',
         fill: '#ffffff',
       }
+
   const foregroundShape = leaf ? (
     <ellipse className='glyph-fg' ry='110' rx='110' cy='298' cx='297' {...foregroundShapeProps} />
   ) : (
@@ -76,6 +90,7 @@ const Bullet = ({
 
   return (
     <span
+      ref={bulletRef}
       className={classNames({
         bullet: true,
         // Since Parents and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
@@ -88,12 +103,15 @@ const Bullet = ({
       })}
     >
       <svg
+        ref={svgRef}
         className={classNames('glyph', {
           'glyph-highlighted': isDragging,
         })}
         viewBox='0 0 600 600'
-        xmlns='http://www.w3.org/2000/svg'
-        style={{ transform: `scale(${scale})` }}
+        style={{
+          transform: `scale(${scale})`,
+          top: `${top}px`,
+        }}
         onClick={onClick}
       >
         <g>
