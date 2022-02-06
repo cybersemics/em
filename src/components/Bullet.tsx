@@ -88,7 +88,9 @@ const Bullet = ({
       })}
     >
       <svg
-        className='glyph'
+        className={classNames('glyph', {
+          'glyph-highlighted': isDragging,
+        })}
         width='15'
         height='15'
         viewBox='0 0 600 600'
@@ -99,9 +101,7 @@ const Bullet = ({
         <g>
           {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && (
             <ellipse
-              className={classNames('bullet-cursor-overlay', {
-                'bullet-cursor-overlay-highlighted': isDragging,
-              })}
+              className='bullet-cursor-overlay'
               fillOpacity='0'
               ry='280'
               rx='280'

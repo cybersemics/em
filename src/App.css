@@ -1113,6 +1113,12 @@ h1 .num-contexts {
   fill-opacity: 0.25;
 }
 
+.child > .thought-container > .bullet .glyph.glyph-highlighted {
+  fill-opacity: 1;
+  fill: lightblue;
+  stroke: lightblue;
+}
+
 .search-container > .bullet-search {
   position: absolute;
   margin-top: -2px;
@@ -1123,7 +1129,6 @@ h1 .num-contexts {
   margin-right: -1.5px;
 }
 
-/* TODO: investigate in mobile mode */
 .mobile .child > .thought-container > .bullet.show-contexts .glyph {
   font-size: 80%;
   left: -0.08em;
@@ -1198,12 +1203,6 @@ h1 .num-contexts {
     margin-left: -3px;
   }
 
-  .android .child.leaf > .thought-container > .bullet .glyph {
-    left: 1.7px;
-    top: -7px;
-    font-size: 26px;
-  }
-
   .android .child > .thought-container > .bullet .glyph {
     position: relative;
     margin-left: -16.8px;
@@ -1213,7 +1212,7 @@ h1 .num-contexts {
     padding-right: 10.1px;
     left: 3px;
     font-size: 16px;
-    top: -1px;
+    top: -3px;
   }
 
   /* Contexted Styles */
@@ -1247,8 +1246,8 @@ h1 .num-contexts {
   .android .cursor-grandparent:not(.leaf) > .thought-container > .bullet {
     display: inline-block;
     margin-right: -1px; /* compensate for inline-block */
-    transform: rotate(90deg);
-    transform-origin: -11px 9px;
+    /* transform: rotate(90deg);
+    transform-origin: -11px 9px; */
   }
 
   .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
@@ -1260,41 +1259,13 @@ h1 .num-contexts {
     font-size: 19px;
   }
 
-  .android .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    display: inline;
-    position: absolute;
-    opacity: 0.2;
-    pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
-    margin-left: 111px; /* match drop-hover */
-    margin-top: -2px;
-    font-size: 67px;
-  }
-
   /* overlay bullet for drag */
   /* specificity to beat ".dark .child.editing > .thought .bullet-cursor-overlay" */
-  .android .child.child.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    color: lightblue;
-    opacity: 1;
-  }
-
-  /* Our Awesome first child (overlay) independent with its own properties */
-  .android
-    .child:first-of-type
-    > .thought-container
-    > .thought
-    .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    margin-top: 8.11px;
-    left: -37px;
-    top: -34px;
-    font-size: 70px;
-  }
-
-  .android
-    .child.show-contexts:first-of-type
-    > .thought-container
-    > .thought
-    .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    margin-top: calc(0.18em - 4px); /* */
+  .android .child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .bullet-cursor-overlay,
+  .android .child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .glyph-fg {
+    fill-opacity: 1;
+    fill: lightblue;
+    stroke: lightblue;
   }
 
   .android .children-new .child > .thought-container > .bullet .glyph {
@@ -1347,12 +1318,6 @@ h1 .num-contexts {
     margin-left: -3px;
   }
 
-  .android .child.leaf > .thought-container > .bullet .glyph {
-    left: 1.7px;
-    top: -1px;
-    font-size: 19px;
-  }
-
   .android .child > .thought-container > .bullet .glyph {
     position: relative;
     margin-left: -16.8px;
@@ -1362,7 +1327,7 @@ h1 .num-contexts {
     padding-right: 10.1px;
     left: 4px;
     font-size: 28px;
-    top: -9px;
+    top: -3px;
   }
 
   /* Contexted Styles */
@@ -1389,53 +1354,13 @@ h1 .num-contexts {
     top: -5.1px;
   }
 
-  .android .expanded:not(.leaf) > .thought-container > .bullet,
-  .android .editing:not(.leaf) > .thought-container > .bullet,
-  .android .cursor-parent:not(.leaf) > .thought-container > .bullet,
-  .android .cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-    display: inline-block;
-    margin-right: -1px; /* compensate for inline-block */
-    transform: rotate(90deg);
-    transform-origin: -11px 9px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
-    left: 2px;
-    top: -9.5px;
-  }
-
-  .android .child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    display: inline;
-    position: absolute;
-    top: -0.38em;
-    left: -0.52em;
-    font-size: 295%;
-    opacity: 0.2;
-    pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
-    margin-left: 100px; /* match drop-hover */
-    margin-top: 0.08em;
-  }
-
   /* overlay bullet for drag */
   /* specificity to beat ".dark .child.editing > .thought-container > .thought .bullet-cursor-overlay" */
-  .android .child.child.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    color: lightblue;
-    opacity: 1;
-  }
-
-  /* Our Awesome first child (overlay) independent with its own properties */
-  .android
-    .child:first-of-type
-    > .thought-container
-    > .thought
-    .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-    margin-top: 9.11px;
-    left: -25px;
-    top: -20px;
-    font-size: 46px;
+  .android .child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .bullet-cursor-overlay,
+  .android .child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .glyph-fg {
+    fill-opacity: 1;
+    fill: lightblue;
+    stroke: lightblue;
   }
 
   .android
@@ -1513,34 +1438,13 @@ h1 .num-contexts {
 
 /* overlay bullet for cursor */
 
-.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-  display: inline;
-  position: absolute;
-  font-size: 280%;
-  opacity: 0.2;
-  pointer-events: none; /* prevent overlay bullet from overlapping with the element above it. Cannot be fixed with height, width, or line-height */
-  line-height: 1;
-  top: -0.4em;
-  margin-top: 0.2em;
-  margin-left: -0.575em;
-}
-
 /* overlay bullet for drag */
 /* specificity to beat ".dark .child.editing > .thought-container > .thought .bullet-cursor-overlay" */
-.child.child.child > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-  color: lightblue;
-  opacity: 1;
-}
-
-.child:first-of-type > .thought-container > .thought .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-  margin-top: 0.32em;
-}
-
-.child.show-contexts:first-of-type
-  > .thought-container
-  > .thought
-  .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
-  margin-top: calc(0.3em - 4px); /* */
+.child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .bullet-cursor-overlay,
+.child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .glyph-fg {
+  fill-opacity: 1;
+  fill: lightblue;
+  stroke: lightblue;
 }
 
 .children-new .child > .thought-container > .bullet .glyph {
@@ -1874,15 +1778,12 @@ h1 .num-contexts {
   fill-opacity: 1;
 }
 .dark .distance-from-cursor-1 > .child > .thought-container > .bullet .glyph .glyph-fg {
-  color: rgba(255, 255, 255, 0.5);
   fill-opacity: 0.5;
 }
 .dark .distance-from-cursor-1 > .child.editing > .thought-container > .bullet .glyph .glyph-fg {
-  color: rgba(255, 255, 255, 1);
   fill-opacity: 1;
 }
 .dark .distance-from-cursor-1 > .child.cursor-parent > .thought-container > .bullet .glyph .glyph-fg {
-  color: rgba(255, 255, 255, 1);
   fill-opacity: 1;
 }
 .dark .distance-from-cursor-2 > .child:not(.editing) > .thought-container > .bullet .glyph .glyph-fg {
