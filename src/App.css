@@ -1142,14 +1142,7 @@ h1 .num-contexts {
 .child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
 .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
 .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg {
-  transform: rotate(90deg);
-}
-
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-gh,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg {
-  left: 0.06em;
+  transform: rotate(90deg) translateX(40px);
 }
 
 .mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
@@ -1199,7 +1192,7 @@ h1 .num-contexts {
   .android .child > .thought-container > .bullet .glyph {
     position: relative;
     margin-left: -16.8px;
-    opacity: 0.8;
+    opacity: 0.9;
     transition: opacity 0.75s ease-in-out;
     margin-right: -5px; /* increase click area */
     left: 3px;
@@ -2517,7 +2510,6 @@ code,
   /* necessary for transition start */
   left: 0;
   display: inline-block;
-  margin-left: -15px;
   line-height: 1;
 }
 
