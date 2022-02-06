@@ -91,8 +91,6 @@ const Bullet = ({
         className={classNames('glyph', {
           'glyph-highlighted': isDragging,
         })}
-        width='15'
-        height='15'
         viewBox='0 0 600 600'
         xmlns='http://www.w3.org/2000/svg'
         style={{ transform: `scale(${scale})` }}

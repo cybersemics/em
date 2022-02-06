@@ -1090,8 +1090,9 @@ h1 .num-contexts {
   padding: 0.2em 0 0.2em 100px;
 }
 
-.child > .thought-container > .bullet {
+.child > .thought-container > .bullet .glyph .glyph-fg {
   transition: transform 0.1s ease-in-out;
+  transform-origin: center;
 }
 
 /* In context view, make room for breadcrumbs. */
@@ -1103,10 +1104,12 @@ h1 .num-contexts {
 .child > .thought-container > .bullet .glyph {
   position: relative;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
-  opacity: 0.8;
+  opacity: 0.9;
   transition: opacity 0.75s ease-in-out;
+  margin-left: -16.8px;
   margin-right: -5px; /* increase click area */
   padding-right: 5px;
+  left: 4px;
 }
 
 .child.editing > .thought-container .glyph .bullet-cursor-overlay {
@@ -1135,33 +1138,24 @@ h1 .num-contexts {
   top: 0.05em;
 }
 
-.child.expanded:not(.leaf) > .thought-container > .bullet,
-.child.editing:not(.leaf) > .thought-container > .bullet,
-.child.cursor-parent:not(.leaf) > .thought-container > .bullet,
-.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-  display: inline-block;
-  /*margin-right: -7px; !* compensate for inline-block *!*/
+.child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
+.child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
+.child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
+.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg {
   transform: rotate(90deg);
-  transform-origin: center;
-}
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-  transform-origin: 55% 60%;
 }
 
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
+.mobile .child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
+.mobile .child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-gh,
+.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
+.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg {
   left: 0.06em;
 }
 
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
+.mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
+.mobile .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
+.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
+.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg {
   left: -0.02em;
 }
 
@@ -1199,7 +1193,6 @@ h1 .num-contexts {
   }
 
   .android .child > .thought-container > .bullet {
-    transition: transform 0.1s ease-in-out;
     margin-left: -3px;
   }
 
@@ -1209,10 +1202,8 @@ h1 .num-contexts {
     opacity: 0.8;
     transition: opacity 0.75s ease-in-out;
     margin-right: -5px; /* increase click area */
-    padding-right: 10.1px;
     left: 3px;
     font-size: 16px;
-    top: -3px;
   }
 
   /* Contexted Styles */
@@ -1238,16 +1229,6 @@ h1 .num-contexts {
     left: 2px;
     font-size: 20px;
     top: -2.5px;
-  }
-
-  .android .expanded:not(.leaf) > .thought-container > .bullet,
-  .android .editing:not(.leaf) > .thought-container > .bullet,
-  .android .cursor-parent:not(.leaf) > .thought-container > .bullet,
-  .android .cursor-grandparent:not(.leaf) > .thought-container > .bullet {
-    display: inline-block;
-    margin-right: -1px; /* compensate for inline-block */
-    /* transform: rotate(90deg);
-    transform-origin: -11px 9px; */
   }
 
   .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
@@ -1324,10 +1305,8 @@ h1 .num-contexts {
     opacity: 0.8;
     transition: opacity 0.75s ease-in-out;
     margin-right: -5px; /* increase click area */
-    padding-right: 10.1px;
     left: 4px;
     font-size: 28px;
-    top: -3px;
   }
 
   /* Contexted Styles */
