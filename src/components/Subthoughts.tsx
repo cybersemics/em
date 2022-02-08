@@ -399,9 +399,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
       const alertFrom = '"' + ellipsize(fromThought.value) + '"'
       const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(toThought.value) + '"'
 
-      store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`))
-      clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
+      store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`, { alertType: 'moveThought', clearDelay: 5000 }))
     }, 100)
   }
 }

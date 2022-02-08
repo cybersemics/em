@@ -82,7 +82,7 @@ const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
 
 /** Handles drag end. */
 const endDrag = () => {
-  store.dispatch([dragInProgress({ value: false }), dragHold({ value: false }), alert(null)])
+  store.dispatch([dragInProgress({ value: false }), dragHold({ value: false })])
 }
 
 /** Collects props from the DragSource. */
@@ -178,9 +178,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       const alertFrom = '"' + ellipsize(fromThought.value) + '"'
       const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
 
-      store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
-      globals.errorTimer && clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
+      store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`, { alertType: 'moveThought', clearDelay: 5000 }))
     }, 100)
   }
 }
