@@ -12,6 +12,8 @@ type StripOptions = { preserveFormatting?: boolean; preventTrim?: boolean; strip
 
 const regexSpanTagOnlyContainsWhitespaces = /<span[^>]*>([\s]+)<\/span>/gim
 
+const regexExpForEmptyFormattingTags = /<[^/>][^>]*>\s*<\/[^>]+>/gim
+
 /** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim. */
 export const strip = (
   html: string,
@@ -23,6 +25,7 @@ export const strip = (
     .replace(regexSpanTagOnlyContainsWhitespaces, '$1') // Replace span tags contain whitespaces
     .replace(regexNbsp, ' ')
     .replace(regexDecimalSpace, ' ') // Some text editors use decimal code for space character
+    .replace(regexExpForEmptyFormattingTags, '') // Remove empty formatting tags
 
   const sanitizedHtml = unescape(
     sanitize(replacedHtml, {
