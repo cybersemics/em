@@ -70,12 +70,12 @@ const Bullet = ({
   const foregroundShapeProps = showContexts
     ? {
         strokeWidth: '30',
-        stroke: '#ffffff',
+        stroke: '#d9d9d9',
         fill: 'none',
       }
     : {
         stroke: 'none',
-        fill: '#ffffff',
+        fill: '#d9d9d9',
       }
 
   const foregroundShape = leaf ? (
