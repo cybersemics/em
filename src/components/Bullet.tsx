@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { getLexeme, isContextViewActive, isPending } from '../selectors'
+import { theme, getLexeme, isContextViewActive, isPending } from '../selectors'
 import { head } from '../util'
 import { Context, State, SimplePath } from '../@types'
 
@@ -32,6 +32,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
     fontSize: state.fontSize,
+    dark: theme(state) !== 'Light',
   }
 }
 
@@ -49,6 +50,7 @@ const Bullet = ({
   hideBullet,
   isDragging,
   fontSize,
+  dark,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => {
   const bulletRef = useRef<HTMLSpanElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -70,12 +72,12 @@ const Bullet = ({
   const foregroundShapeProps = showContexts
     ? {
         strokeWidth: '30',
-        stroke: '#d9d9d9',
+        stroke: dark ? '#d9d9d9' : '#000',
         fill: 'none',
       }
     : {
         stroke: 'none',
-        fill: '#d9d9d9',
+        fill: dark ? '#d9d9d9' : '#000',
       }
 
   const foregroundShape = leaf ? (
@@ -123,7 +125,7 @@ const Bullet = ({
               rx='280'
               cy='301'
               cx='297'
-              fill='#ffffff'
+              fill={dark ? '#ffffff' : '#000'}
             />
           )}
           {foregroundShape}

@@ -1112,9 +1112,13 @@ h1 .num-contexts {
   transform-origin: center;
 }
 
-.child.editing > .thought-container .glyph .bullet-cursor-overlay {
-  fill-opacity: 0.25;
+.dark .child.editing > .thought-container .glyph .bullet-cursor-overlay {
+  fill-opacity: 0.247;
 }
+.child.editing > .thought-container .glyph .bullet-cursor-overlay {
+  fill-opacity: 0.2;
+}
+
 .child.editing > .thought-container .glyph {
   opacity: 1;
 }
@@ -1748,26 +1752,26 @@ h1 .num-contexts {
   color: rgba(255, 255, 255, 0);
 }
 
-/* dark glyph-fg */
-.dark .distance-from-cursor-0 > .child > .thought-container > .bullet .glyph .glyph-fg {
+/* glyph-fg */
+.distance-from-cursor-0 > .child > .thought-container > .bullet .glyph .glyph-fg {
   fill-opacity: 1;
 }
-.dark .distance-from-cursor-1 > .child > .thought-container > .bullet .glyph .glyph-fg {
+.distance-from-cursor-1 > .child > .thought-container > .bullet .glyph .glyph-fg {
   fill-opacity: 0.5;
 }
-.dark .distance-from-cursor-1 > .child.editing > .thought-container > .bullet .glyph .glyph-fg {
+.distance-from-cursor-1 > .child.editing > .thought-container > .bullet .glyph .glyph-fg {
   fill-opacity: 1;
 }
-.dark .distance-from-cursor-1 > .child.cursor-parent > .thought-container > .bullet .glyph .glyph-fg {
+.distance-from-cursor-1 > .child.cursor-parent > .thought-container > .bullet .glyph .glyph-fg {
   fill-opacity: 1;
 }
-.dark .distance-from-cursor-2 > .child:not(.editing) > .thought-container > .bullet .glyph .glyph-fg {
+.distance-from-cursor-2 > .child:not(.editing) > .thought-container > .bullet .glyph .glyph-fg {
   fill-opacity: 0;
 }
-.dark .distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .bullet .glyph .glyph-fg {
+.distance-from-cursor-2 > .child:not(.editing).cursor-parent > .thought-container > .bullet .glyph .glyph-fg {
   fill-opacity: 0.5;
 }
-.dark .distance-from-cursor-3 > .child > .thought-container > .bullet .glyph .glyph-fg {
+.distance-from-cursor-3 > .child > .thought-container > .bullet .glyph .glyph-fg {
   fill-opacity: 0;
 }
 
