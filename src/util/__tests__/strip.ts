@@ -60,19 +60,6 @@ it('empty formatting tags multiline', () => {
   ).toBe('')
 })
 
-it('leading and trailing whitespaces in multiline formatting tags', () => {
-  expect(
-    strip(
-      `<b>
-      
-      Hello
-
-      </b>`,
-      { preserveFormatting: true },
-    ),
-  ).toBe('<b> Hello </b>')
-})
-
 // This fails here, but succeeds on regex101.com (???)
 it.skip('preserve bold with newlines in attribute', () => {
   expect(
