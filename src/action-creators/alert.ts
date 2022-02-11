@@ -24,7 +24,7 @@ const alert =
     const { alert } = getState()
 
     // if clearDelay is not provided i.e undefined alert should not dismiss.
-    if (clearTimeout && clearDelay) {
+    if (clearDelay) {
       // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
       clearAlertTimeoutId && clearTimeout(clearAlertTimeoutId)
       clearAlertTimeoutId = setTimeout(() => {
