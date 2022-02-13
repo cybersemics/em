@@ -370,10 +370,7 @@ const Editable = ({
     const valueAfterStrippingEmptyTags = stripEmptyFormattingTags(currentThought.value)
     // if thought is empty, set offset to 0 else this may cause caret to disappear
     selection.set(contentRef.current, {
-      offset:
-        valueAfterStrippingEmptyTags.length === 0
-          ? 0
-          : cursorOffset || state.cursorOffset || valueAfterStrippingEmptyTags.trim().length,
+      offset: valueAfterStrippingEmptyTags.length === 0 ? 0 : cursorOffset || state.cursorOffset || 0,
     })
   }
 
