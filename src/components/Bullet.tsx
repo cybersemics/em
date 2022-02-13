@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { theme, getLexeme, isContextViewActive, isPending } from '../selectors'
@@ -9,7 +9,6 @@ import { Context, State, SimplePath } from '../@types'
 // •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
-  glyph?: string | null
   isEditing?: boolean
   leaf?: boolean
   onClick: (event: React.MouseEvent) => void
@@ -19,6 +18,7 @@ interface BulletProps {
   simplePath: SimplePath
   hideBullet?: boolean
   isDragging?: boolean
+  thoughtRef?: React.RefObject<HTMLDivElement>
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -29,9 +29,9 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     // if being edited and meta validation error has occured
     invalid: !!props.isEditing && invalidState,
     missing: !lexeme,
+    fontSize: state.fontSize,
     pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
-    fontSize: state.fontSize,
     dark: theme(state) !== 'Light',
   }
 }
@@ -39,7 +39,6 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
   showContexts,
-  glyph,
   invalid,
   leaf,
   missing,
@@ -49,25 +48,26 @@ const Bullet = ({
   publish,
   hideBullet,
   isDragging,
-  fontSize,
   dark,
+  thoughtRef,
+  fontSize,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => {
-  const bulletRef = useRef<HTMLSpanElement>(null)
-  const svgRef = useRef<SVGSVGElement>(null)
-  const [top, setTop] = useState(0)
-
-  useEffect(() => {
-    if (bulletRef.current && svgRef.current) {
-      const { y: bulletYPosition } = bulletRef.current.getBoundingClientRect()
-      const { y: svgYPosition } = svgRef.current.getBoundingClientRect()
-      const topValue = bulletYPosition - svgYPosition
-      setTop(topValue)
-    }
-  }, [fontSize])
-
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
-  const scale = fontSize / 15
+
+  const { height: thoughtHeight } = thoughtRef?.current?.getBoundingClientRect() || {}
+  const svgSizeStyle = thoughtHeight
+    ? {
+        height: thoughtHeight,
+        width: thoughtHeight,
+        marginLeft: -thoughtHeight,
+        // Required to make the distance between bullet and thought scale properly at all font sizes.
+        left: (190 / 600) * thoughtHeight,
+      }
+    : {}
+
+  // Calculate position of thought for different font sizes
+  const bulletMarginLeft = -20 + (9 + 0.5 * (fontSize - 9))
 
   const foregroundShapeProps = showContexts
     ? {
@@ -81,18 +81,17 @@ const Bullet = ({
       }
 
   const foregroundShape = leaf ? (
-    <ellipse className='glyph-fg' ry='110' rx='110' cy='298' cx='297' {...foregroundShapeProps} />
+    <ellipse className='glyph-fg' ry='92' rx='92' cy='298' cx='297' {...foregroundShapeProps} />
   ) : (
     <path
       className='glyph-fg'
-      d='M204.42407570595685,130.78832632408995 L204.42407445512805,469.2116604183803 L395.71819111834185,297.256020029863 L204.42407570595685,130.78832632408995 z'
+      d='M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
       {...foregroundShapeProps}
     />
   )
 
   return (
     <span
-      ref={bulletRef}
       className={classNames({
         bullet: true,
         // Since Parents and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
@@ -103,16 +102,18 @@ const Bullet = ({
         'show-contexts': showContexts,
         'invalid-option': invalid,
       })}
+      style={{
+        marginLeft: bulletMarginLeft,
+      }}
     >
       <svg
-        ref={svgRef}
         className={classNames('glyph', {
           'glyph-highlighted': isDragging,
         })}
         viewBox='0 0 600 600'
         style={{
-          transform: `scale(${scale})`,
-          top: `${top}px`,
+          ...svgSizeStyle,
+          marginBottom: '-0.3em',
         }}
         onClick={onClick}
       >

@@ -27,6 +27,7 @@ const StaticThought = ({
   simplePath,
   toggleTopControlsAndBreadcrumbs,
   editing,
+  thoughtRef,
 }: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
 
@@ -35,7 +36,7 @@ const StaticThought = ({
   const { value } = getThoughtByPath(state, simplePath)
 
   return (
-    <div className='thought'>
+    <div className='thought' ref={thoughtRef}>
       {showContextBreadcrumbs && !isRoot ? (
         <ContextBreadcrumbs
           simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}
