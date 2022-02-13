@@ -70,9 +70,11 @@ import {
   isContextViewActive,
   rootedParentOf,
   getThoughtById,
+  getThoughtByPath,
 } from '../selectors'
 
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { stripEmptyFormattingTags } from '../util/normalizeThought'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -364,7 +366,15 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
-    selection.set(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
+    const currentThought = getThoughtByPath(state, path)
+    const valueAfterStrippingEmptyTags = stripEmptyFormattingTags(currentThought.value)
+    // if thought is empty, set offset to 0 else this may cause caret to disappear
+    selection.set(contentRef.current, {
+      offset:
+        valueAfterStrippingEmptyTags.length === 0
+          ? 0
+          : cursorOffset || state.cursorOffset || valueAfterStrippingEmptyTags.trim().length,
+    })
   }
 
   useEffect(() => {
@@ -757,7 +767,7 @@ const Editable = ({
         preventAutoscroll: true,
         editable: true,
         ['editable-' + headId(path)]: true,
-        empty: value.length === 0,
+        empty: stripEmptyFormattingTags(value).length === 0,
       })}
       forceUpdate={editableNonceRef.current !== state.editableNonce}
       html={
@@ -768,7 +778,7 @@ const Editable = ({
           isCursorCleared
           ? ''
           : isEditing
-          ? value
+          ? stripEmptyFormattingTags(value)
           : childrenLabel.length > 0
           ? childrenLabel[0].value
           : ellipsizeUrl(value)
