@@ -2758,7 +2758,7 @@ code,
 
 .table-view > .children > .child.editing > .thought-container > .thought > .editable:before {
   position: absolute;
-  margin-left: -30px; /* TODO: change margin-left based on font-size once font-size is available as global css variable. */
+  margin-left: -1em;
   color: #838283;
   content: '▸';
   vertical-align: middle;
