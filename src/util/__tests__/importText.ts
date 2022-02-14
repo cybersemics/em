@@ -2,7 +2,7 @@ import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { getThoughtIdByContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, getLexeme, getParent, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
@@ -114,8 +114,7 @@ it('basic import with proper thought structure', () => {
   expect(thoughtIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
 })
 
-// @MIGRATION_TODO: Allow this test after move merge nest duplicates is fixed.
-it.skip('merge descendants', () => {
+it('merge descendants', () => {
   const initialText = `
   - a
     - b
@@ -158,52 +157,31 @@ it.skip('merge descendants', () => {
 
   const { contextIndex } = newState.thoughts
 
+  const thoughtA = getParent(newState, ['a'])!
+  const thoughtB = getParent(newState, ['a', 'b'])!
+  const thoughtC = getParent(newState, ['a', 'b', 'c'])!
+  const thoughtQ = getParent(newState, ['a', 'b', 'q'])!
+  const thoughtX = getParent(newState, ['a', 'x'])!
+  const thoughtY = getParent(newState, ['a', 'x', 'y'])!
+  const thoughtJ = getParent(newState, ['j'])!
+
   expect(contextIndex).toMatchObject({
     [getThoughtIdByContext(newState, [HOME_TOKEN])!]: {
-      children: [
-        {
-          value: 'a',
-          rank: 0,
-        },
-        {
-          value: 'j',
-        },
-      ],
+      children: [thoughtA.id, thoughtJ.id],
     },
-    [getThoughtIdByContext(newState, ['a'])!]: {
-      children: [
-        {
-          value: 'b',
-          rank: 0,
-        },
-        {
-          value: 'x',
-          // Note: x has rank two because exisitingThoughtMove doesn't account for duplicate merges for calualting rank. In this case b value is a duplicate merge in the context of ['a']
-          rank: 2,
-        },
-      ],
+    [thoughtA.id]: {
+      children: [thoughtB.id, thoughtX.id],
     },
-    [getThoughtIdByContext(newState, ['a', 'b'])!]: {
-      children: [
-        {
-          value: 'c',
-          rank: 0,
-        },
-        {
-          value: 'q',
-          rank: 1,
-        },
-      ],
+    [thoughtB.id]: {
+      children: [thoughtC.id, thoughtQ.id],
     },
-    [getThoughtIdByContext(newState, ['a', 'x'])!]: {
-      children: [
-        {
-          value: 'y',
-          rank: 0,
-        },
-      ],
+    [thoughtX.id]: {
+      children: [thoughtY.id],
     },
   })
+
+  expect(getLexeme(newState, 'a')?.contexts).toMatchObject([thoughtA.id])
+  expect(getLexeme(newState, 'b')?.contexts).toMatchObject([thoughtB.id])
 })
 
 it('initialSettings', () => {
@@ -1893,4 +1871,29 @@ it('import raw state', () => {
   - b
 `,
   )
+})
+
+it('properly add lexeme entries for multiple thoughts with same value on import', () => {
+  const text = `
+  - a
+    - m
+      - x
+  - m
+   - y`
+
+  const stateNew = reducerFlow([importText({ text })])(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  const thoughtMFirst = getParent(stateNew, ['a', 'm'])
+  const thoughtMSecond = getParent(stateNew, ['m'])
+
+  const lexemeM = getLexeme(stateNew, 'm')
+
+  expect(lexemeM?.contexts).toMatchObject([thoughtMFirst?.id, thoughtMSecond?.id])
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - m
+    - y`)
 })

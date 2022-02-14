@@ -19,7 +19,7 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  hashContext,
+  hashPath,
   head,
   headValue,
   isAbsolute,
@@ -48,18 +48,18 @@ import {
   getAllChildrenSorted,
   getChildPath,
   getChildren,
-  getChildrenRanked,
+  getChildrenRankedById,
   getContextsSortedAndRanked,
   getEditingPath,
   getNextRank,
   getSortPreference,
   getStyle,
   getThoughtById,
-  getThoughtByPath,
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getNextRankById } from '../selectors/getNextRank'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -251,7 +251,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const sortPreference = getSortPreference(state, pathToContext(state, simplePathLive))
 
-  const contextHash = hashContext(thoughtsLive)
+  const hashedPath = hashPath(pathLive)
 
   /** Returns true if the thought is in table view and has more than two columns. This is the case when every row has at least two matching children in column 2. If this is the case, it will get rendered in multi column mode where grandchildren are used as header columns. */
   const isMultiColumnTable = () => {
@@ -293,7 +293,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     isAbsoluteContext,
     isEditingAncestor,
     // expand thought due to cursor and hover expansion
-    isExpanded: !!state.expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isExpanded: !!state.expanded[hashedPath] || !!expandedBottom?.[hashedPath],
     isMultiColumnTable: isMultiColumnTable(),
     showContexts,
     showHiddenThoughts,
@@ -363,8 +363,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const newContext = rootedParentOf(state, pathToContext(state, newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
-  const toThought = getThoughtByPath(state, thoughtsTo)
-  const fromThought = getThoughtByPath(state, thoughtsFrom)
+  const toThought = getThoughtById(state, head(thoughtsTo))
+  const fromThought = getThoughtById(state, head(thoughtsFrom))
 
   // cannot drop on itself
   if (equalPath(thoughtsFrom, thoughtsTo)) return
@@ -389,6 +389,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
           type: 'moveThought',
           oldPath: thoughtsFrom,
           newPath,
+          newRank: getNextRankById(state, head(thoughtsTo)),
         },
   )
 
@@ -551,7 +552,7 @@ export const SubthoughtsComponent = ({
   const [page, setPage] = useState(1)
   const { cursor } = state
   const context = pathToContext(state, simplePath)
-  const thought = getThoughtByPath(state, simplePath)
+  const thought = getThoughtById(state, head(simplePath))
   const { value } = thought
   const resolvedPath = path ?? simplePath
 
@@ -577,7 +578,12 @@ export const SubthoughtsComponent = ({
       ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : contextSortType !== 'None'
       ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
-      : getChildrenRanked(state, pathToContext(state, contextBinding || simplePath))
+      : /*
+          @MIGRATION_TODO: Thought should be accessed using path or id instead of context.
+          Due to pending merge mechanism, sometimes a context can have duplicates for a brief moment. So access by context can be problematic.
+          Migrate all possible context based selectors to use path or thought ids.
+        */
+        getChildrenRankedById(state, head(simplePath))
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -780,14 +786,12 @@ export const SubthoughtsComponent = ({
             re-renders.
           */
                   return child ? (
-                    <ul className='children' key={child.id}>
+                    <ul className='children'>
                       <Thought
                         allowSingleContext={allowSingleContextParent}
                         depth={depth + 1}
                         env={env}
                         hideBullet={true}
-                        // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
-                        key={`${child.rank}${child.id ? '-context' : ''}-header`}
                         rank={child.rank}
                         isVisible={
                           // if thought is a zoomed cursor then it is visible
@@ -874,8 +878,7 @@ export const SubthoughtsComponent = ({
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
-                // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
-                key={`${child.rank}${child.id ? '-context' : ''}`}
+                key={child.id}
                 rank={child.rank}
                 isVisible={
                   // if thought is a zoomed cursor then it is visible

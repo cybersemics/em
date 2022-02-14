@@ -20,6 +20,7 @@ import { getThoughtById } from './getThought'
 
 // use global instance of empty array so object reference doesn't change
 const noChildren: Parent[] = []
+const noThoughtIds: ThoughtId[] = []
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Parent[]
@@ -35,18 +36,23 @@ export const getParent = (state: State, context: Context): Parent | null => {
   return id ? getThoughtById(state, id) : null
 }
 
-/** Returns the thoughts for the context that has already been encoded (such as Firebase keys). */
+// TODO: Rename this to something better.
+/** Returns the thoughts for the given thought id. */
 export const getAllChildrenByContextHash = (state: State, thoughtId: ThoughtId): ThoughtId[] =>
   getThoughtById(state, thoughtId)?.children || noChildren
 
 /** Returns the subthoughts (as Parent) of the given context unordered. . */
 export const getAllChildrenAsThoughts = (state: State, context: Context) =>
-  childIdsToThoughts(state, getAllChildren(state, context) || []) ?? []
+  childIdsToThoughts(state, getAllChildren(state, context)) ?? noChildren
+
+/** Returns the subthoughts (as Parent) of the given context unordered. . */
+export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) =>
+  childIdsToThoughts(state, getAllChildrenByContextHash(state, id)) ?? noChildren
 
 /** Returns the subthoughts of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {
   const id = getThoughtIdByContext(state, context)
-  return id ? getAllChildrenByContextHash(state, id) : []
+  return id ? getAllChildrenByContextHash(state, id) : noThoughtIds
 }
 
 /** Makes a getAllChildren function that only returns visible thoughts. */
