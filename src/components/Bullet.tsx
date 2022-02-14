@@ -122,10 +122,10 @@ const Bullet = ({
             <ellipse
               className='bullet-cursor-overlay'
               fillOpacity='0'
-              ry='280'
-              rx='280'
-              cy='301'
-              cx='297'
+              ry='245'
+              rx='245'
+              cy='300'
+              cx='300'
               fill={dark ? '#ffffff' : '#000'}
             />
           )}
