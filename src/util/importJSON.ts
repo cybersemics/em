@@ -100,8 +100,6 @@ const insertThought = (
 /** Recursively iterate through blocks and call insertThought for each block individually to save it. */
 const saveThoughts = (
   state: State,
-  contextIndexUpdates: Index<Parent>,
-  thoughtIndexUpdates: Index<Lexeme>,
   path: Path,
   blocks: Block[],
   rankIncrement = 1,
@@ -157,10 +155,10 @@ const saveThoughts = (
         )
 
         return {
-          thoughtIndexUpdates: {
+          thoughtIndex: {
             [hashThought(nonDuplicateValue)]: lexeme,
           },
-          contextIndexUpdates: {
+          contextIndex: {
             [contextEncoded]: parent,
             [newThought.id]: newThought,
           },
@@ -174,8 +172,8 @@ const saveThoughts = (
             ...stateNewBeforeInsert,
             thoughts: {
               ...stateNewBeforeInsert.thoughts,
-              contextIndex: mergeUpdates(stateNewBeforeInsert.thoughts.contextIndex, insertUpdates.contextIndexUpdates),
-              thoughtIndex: mergeUpdates(stateNewBeforeInsert.thoughts.thoughtIndex, insertUpdates.thoughtIndexUpdates),
+              contextIndex: mergeUpdates(stateNewBeforeInsert.thoughts.contextIndex, insertUpdates.contextIndex),
+              thoughtIndex: mergeUpdates(stateNewBeforeInsert.thoughts.thoughtIndex, insertUpdates.thoughtIndex),
             },
           }
         : stateNewBeforeInsert
@@ -186,7 +184,7 @@ const saveThoughts = (
       }
 
       /**
-       *
+       * Get the last added child.
        */
       const getLastAddedChild = () => {
         const parent = updatedState.thoughts.contextIndex[contextEncoded]
@@ -195,41 +193,47 @@ const saveThoughts = (
         )
       }
 
-      const updatedContextIndexUpdates = mergeUpdates(accum.contextIndex, insertUpdates?.contextIndexUpdates || {})
-      const udpatedThoughtIndexUpdates = mergeUpdates(accum.thoughtIndex, insertUpdates?.thoughtIndexUpdates || {})
-
       const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()!.id]
 
+      const updatedAccumulatedContextIndex = {
+        ...accum.contextIndex,
+        ...(insertUpdates?.contextIndex || {}),
+      }
+
+      const updatedAccumulatedThoughtIndex = {
+        ...accum.thoughtIndex,
+        ...(insertUpdates?.thoughtIndex || {}),
+      }
+
       if (block.children.length > 0) {
+        const updates = saveThoughts(updatedState, childPath, block.children, rankIncrement, startRank, lastUpdated)
+
         return {
-          ...saveThoughts(
-            updatedState,
-            updatedContextIndexUpdates,
-            udpatedThoughtIndexUpdates,
-            childPath,
-            block.children,
-            rankIncrement,
-            startRank,
-            lastUpdated,
-          ),
+          thoughtIndex: {
+            ...updatedAccumulatedThoughtIndex,
+            ...updates.thoughtIndex,
+          },
+          contextIndex: {
+            ...updatedAccumulatedContextIndex,
+            ...updates.contextIndex,
+          },
           duplicateIndex: updatedDuplicateIndex,
         }
       } else {
         return {
           ...accum,
-          thoughtIndex: udpatedThoughtIndexUpdates,
-          contextIndex: updatedContextIndexUpdates,
+          thoughtIndex: updatedAccumulatedThoughtIndex,
+          contextIndex: updatedAccumulatedContextIndex,
           duplicateIndex: updatedDuplicateIndex,
         }
       }
     },
     {
-      contextIndex: contextIndexUpdates,
-      thoughtIndex: thoughtIndexUpdates,
+      contextIndex: {},
+      thoughtIndex: {},
       duplicateIndex: {},
     },
   )
-
   return {
     contextIndex: updates.contextIndex,
     thoughtIndex: updates.thoughtIndex,
@@ -285,13 +289,19 @@ export const importJSON = (
     }
   }
 
+  const stateUpdated: State = {
+    ...state,
+    thoughts: mergeThoughts(state.thoughts, {
+      thoughtIndex: initialThoughtIndex,
+      contextIndex: initialContextIndex,
+    }),
+  }
+
   const importPath = destEmpty ? rootedParentOf(state, simplePath) : simplePath
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
 
   const { contextIndex, thoughtIndex } = saveThoughts(
-    state,
-    { ...initialContextIndex },
-    { ...initialThoughtIndex },
+    stateUpdated,
     importPath,
     blocksNormalized,
     rankIncrement,
@@ -308,8 +318,8 @@ export const importJSON = (
   const lastImported = appendToPath(importPath, lastChildFirstLevel)
 
   return {
-    contextIndexUpdates: contextIndex,
-    thoughtIndexUpdates: thoughtIndex,
+    contextIndexUpdates: { ...initialContextIndex, ...contextIndex },
+    thoughtIndexUpdates: { ...initialThoughtIndex, ...thoughtIndex },
     lastImported,
   }
 }
