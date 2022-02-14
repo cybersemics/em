@@ -11,8 +11,9 @@ import {
 } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
-import { hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
+import { equalArrays, hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { treeDelete } from '../util/recentlyEditedTree'
 
 interface Payload {
   context: Context
@@ -216,10 +217,13 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     ...descendantUpdatesResult.thoughtIndex,
   }
 
+  const isDeletedThoughtCursor = !!oldRankedThoughts && !!state.cursor && equalArrays(oldRankedThoughts, state.cursor)
+  const newCursor = isDeletedThoughtCursor ? rootedParentOf(state, oldRankedThoughts!) : state.cursor
   return reducerFlow([
     state => ({
       ...state,
       contextViews: contextViewsNew,
+      cursor: newCursor,
     }),
     updateThoughts({
       thoughtIndexUpdates,

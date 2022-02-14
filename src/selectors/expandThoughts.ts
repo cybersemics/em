@@ -75,7 +75,6 @@ function expandThoughts(
     firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
 
   if (path && !getThoughtById(state, head(path))) {
-    console.error(`expandThought: Base path head thought not found!`)
     return {}
   }
 
