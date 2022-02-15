@@ -366,9 +366,6 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
-    // const currentThought = getThoughtByPath(state, path)
-    // const valueAfterStrippingEmptyTags = stripEmptyFormattingTags(currentThought.value)
-    // if thought is empty, set offset to 0 else this may cause caret to disappear
     selection.set(contentRef.current, {
       offset: cursorOffset || state.cursorOffset || 0,
     })
