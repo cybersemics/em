@@ -71,6 +71,7 @@ import {
 } from '../selectors'
 import { ViewStyle } from 'react-native'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { stripEmptyFormattingTags } from '../util/stripEmptyFormattingTags'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -363,7 +364,7 @@ const Editable = ({
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     const oldValue = oldValueRef.current
-    const newValue = addEmojiSpace(unescape(strip(e, { preserveFormatting: true }))) // : oldValue
+    const newValue = stripEmptyFormattingTags(addEmojiSpace(unescape(strip(e, { preserveFormatting: true })))) // : oldValue
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
