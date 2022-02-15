@@ -70,7 +70,6 @@ import {
   isContextViewActive,
   rootedParentOf,
   getThoughtById,
-  // getThoughtByPath,
 } from '../selectors'
 
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
