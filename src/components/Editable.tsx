@@ -454,7 +454,7 @@ const Editable = ({
     const oldValue = oldValueRef.current
     const newValue = e.target
       ? stripEmptyFormattingTags(addEmojiSpace(unescape(strip(e.target.value, { preserveFormatting: true }))))
-      : stripEmptyFormattingTags(oldValue)
+      : oldValue
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
