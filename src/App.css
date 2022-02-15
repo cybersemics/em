@@ -1141,11 +1141,19 @@ h1 .num-contexts {
   top: 0.05em;
 }
 
-.child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
-.child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
-.child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg,
-.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg {
+.child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
+.child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
+.child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
+.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle {
   transform: rotate(90deg) translateX(10px);
+}
+
+/* Because although transform-origin is set to center, Safari on MacOSX rotates svg from different center.*/
+.child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle.osx,
+.child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle.osx,
+.child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle.osx,
+.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle.osx {
+  transform: rotate(90deg) translate(10px, -75px);
 }
 
 .mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,

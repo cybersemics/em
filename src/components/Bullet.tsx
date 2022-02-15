@@ -4,6 +4,7 @@ import classNames from 'classnames'
 import { theme, getLexeme, isContextViewActive, isPending } from '../selectors'
 import { head } from '../util'
 import { Context, State, SimplePath } from '../@types'
+import { isMac, isSafari } from '../browser'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -84,7 +85,7 @@ const Bullet = ({
     <ellipse className='glyph-fg' ry='92' rx='92' cy='298' cx='297' {...foregroundShapeProps} />
   ) : (
     <path
-      className='glyph-fg'
+      className={classNames('glyph-fg', 'triangle', { osx: isMac && isSafari() })}
       d='M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
       {...foregroundShapeProps}
     />
