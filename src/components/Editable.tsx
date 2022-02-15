@@ -366,9 +366,7 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
-    selection.set(contentRef.current, {
-      offset: cursorOffset || state.cursorOffset || 0,
-    })
+    selection.set(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
   }
 
   useEffect(() => {
