@@ -17,11 +17,6 @@ export const stripTags = (s: string) => {
   return s.replace(REGEXP_TAGS, '')
 }
 
-/** Strips all empty formatting tags. */
-export const stripEmptyFormattingTags = (s: string) => {
-  return s.replace(/(((<\w+>)+[ \n(<br>)]*(<\/\w+>)+)+)|<br>/g, '')
-}
-
 /**
  * Making character 's' will just become an empty value ''.
  * Skip it else it will cause "s" character to have same no of context as empty thoughts in the entire tree. */

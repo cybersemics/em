@@ -26,7 +26,6 @@ import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 import { isInternalLink } from '../device/router'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { stripEmptyFormattingTags } from '../util/normalizeThought'
 
 interface ThoughtAnnotationProps {
   dark?: boolean
@@ -127,7 +126,7 @@ const ThoughtAnnotation = ({
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const state = store.getState()
-  const value = stripEmptyFormattingTags(headValue(state, showContexts ? parentOf(simplePath) : simplePath))
+  const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
   const thoughts = pathToContext(state, simplePath)
   const isExpanded = !!state.expanded[headId(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, thoughts).filter(child => isURL(child.value)))

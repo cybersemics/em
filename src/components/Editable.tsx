@@ -70,11 +70,11 @@ import {
   isContextViewActive,
   rootedParentOf,
   getThoughtById,
-  getThoughtByPath,
+  // getThoughtByPath,
 } from '../selectors'
 
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { stripEmptyFormattingTags } from '../util/normalizeThought'
+import { stripEmptyFormattingTags } from '../util/stripEmptyFormattingTags'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -366,11 +366,11 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
-    const currentThought = getThoughtByPath(state, path)
-    const valueAfterStrippingEmptyTags = stripEmptyFormattingTags(currentThought.value)
+    // const currentThought = getThoughtByPath(state, path)
+    // const valueAfterStrippingEmptyTags = stripEmptyFormattingTags(currentThought.value)
     // if thought is empty, set offset to 0 else this may cause caret to disappear
     selection.set(contentRef.current, {
-      offset: valueAfterStrippingEmptyTags.length === 0 ? 0 : cursorOffset || state.cursorOffset || 0,
+      offset: cursorOffset || state.cursorOffset || 0,
     })
   }
 
@@ -458,7 +458,9 @@ const Editable = ({
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     const oldValue = oldValueRef.current
-    const newValue = e.target ? addEmojiSpace(unescape(strip(e.target.value, { preserveFormatting: true }))) : oldValue
+    const newValue = e.target
+      ? stripEmptyFormattingTags(addEmojiSpace(unescape(strip(e.target.value, { preserveFormatting: true }))))
+      : stripEmptyFormattingTags(oldValue)
 
     // TODO: Disable keypress
     // e.preventDefault() does not work
@@ -764,7 +766,7 @@ const Editable = ({
         preventAutoscroll: true,
         editable: true,
         ['editable-' + headId(path)]: true,
-        empty: stripEmptyFormattingTags(value).length === 0,
+        empty: value.length === 0,
       })}
       forceUpdate={editableNonceRef.current !== state.editableNonce}
       html={
@@ -775,7 +777,7 @@ const Editable = ({
           isCursorCleared
           ? ''
           : isEditing
-          ? stripEmptyFormattingTags(value)
+          ? value
           : childrenLabel.length > 0
           ? childrenLabel[0].value
           : ellipsizeUrl(value)
