@@ -1,12 +1,12 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { treeDelete } from '../util/recentlyEditedTree'
+// import { treeDelete } from '../util/recentlyEditedTree'
 import {
   getChildrenRankedById,
   getLexeme,
   getThoughtById,
   hasLexeme,
-  rankThoughtsFirstMatch,
+  // rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Parent, State } from '../@types'
@@ -71,7 +71,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
-  const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
+  // const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
   const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 
@@ -82,13 +82,13 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
-  try {
-    recentlyEdited = treeDelete(state, state.recentlyEdited, oldRankedThoughts)
-  } catch (e) {
-    console.error('deleteThought: treeDelete immer error')
-    console.error(e)
-  }
+  // let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  // try {
+  //   recentlyEdited = treeDelete(state, state.recentlyEdited, oldRankedThoughts)
+  // } catch (e) {
+  //   console.error('deleteThought: treeDelete immer error')
+  //   console.error(e)
+  // }
 
   // the old thought less the context
   const newOldThought =
@@ -224,7 +224,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     updateThoughts({
       contextIndexUpdates,
       thoughtIndexUpdates,
-      recentlyEdited,
+      // recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
     }),
   ])(state)
