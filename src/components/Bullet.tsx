@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
 import { theme, getLexeme, isContextViewActive, isPending } from '../selectors'
@@ -55,6 +55,7 @@ const Bullet = ({
 }: BulletProps & ReturnType<typeof mapStateToProps>) => {
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
+  const svgElement = useRef<SVGSVGElement>(null)
 
   const { height: thoughtHeight } = thoughtRef?.current?.getBoundingClientRect() || {}
   const svgSizeStyle = thoughtHeight
@@ -70,26 +71,39 @@ const Bullet = ({
   // Calculate position of thought for different font sizes
   const bulletMarginLeft = -20 + (9 + 0.5 * (fontSize - 9))
 
-  const foregroundShapeProps = showContexts
-    ? {
-        strokeWidth: '30',
-        stroke: dark ? '#d9d9d9' : '#000',
-        fill: 'none',
-      }
-    : {
-        stroke: 'none',
-        fill: dark ? '#d9d9d9' : '#000',
-      }
+  /** Get pixel based center for OSX safari as it can't handle "center" or percentage based values in SVGs. */
+  const calculateTransformOrigin = () => {
+    const isOSXSafari = isMac && isSafari()
+    const currentScale = svgElement.current?.currentScale || 1
+    const svgCenter = 300
+    const transformOrigin = isOSXSafari ? `${currentScale * svgCenter}px ${currentScale * svgCenter}px` : 'center'
+    return transformOrigin
+  }
 
-  const foregroundShape = leaf ? (
-    <ellipse className='glyph-fg' ry='92' rx='92' cy='298' cx='297' {...foregroundShapeProps} />
-  ) : (
-    <path
-      className={classNames('glyph-fg', 'triangle', { osx: isMac && isSafari() })}
-      d='M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
-      {...foregroundShapeProps}
-    />
-  )
+  /** Return circle or triangle for the bullet. */
+  const foregroundShape = () => {
+    const foregroundShapeProps = showContexts
+      ? {
+          strokeWidth: '30',
+          stroke: dark ? '#d9d9d9' : '#000',
+          fill: 'none',
+        }
+      : {
+          stroke: 'none',
+          fill: dark ? '#d9d9d9' : '#000',
+        }
+
+    return leaf ? (
+      <ellipse className='glyph-fg' ry='92' rx='92' cy='298' cx='297' {...foregroundShapeProps} />
+    ) : (
+      <path
+        className={classNames('glyph-fg', 'triangle')}
+        style={{ transformOrigin: calculateTransformOrigin() }}
+        d='M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
+        {...foregroundShapeProps}
+      />
+    )
+  }
 
   return (
     <span
@@ -117,6 +131,7 @@ const Bullet = ({
           marginBottom: '-0.3em',
         }}
         onClick={onClick}
+        ref={svgElement}
       >
         <g>
           {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && (
@@ -130,7 +145,7 @@ const Bullet = ({
               fill={dark ? '#ffffff' : '#000'}
             />
           )}
-          {foregroundShape}
+          {foregroundShape()}
         </g>
       </svg>
     </span>

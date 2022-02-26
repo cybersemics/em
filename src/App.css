@@ -1099,24 +1099,26 @@ h1 .num-contexts {
 .child > .thought-container > .bullet .glyph {
   position: relative;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
-  opacity: 0.8;
-  transition: opacity 0.75s ease-out, fill-opacity 0.5s ease-out;
 }
 
 .child > .thought-container > .bullet .glyph .glyph-fg {
   transition: transform 0.1s ease-out, fill-opacity 0.5s ease-out;
-  transform-origin: center;
 }
 
+@keyframes overlay-opacity {
+  from {
+    fill-opacity: 0.15;
+  }
+}
 .dark .child.editing > .thought-container .glyph .bullet-cursor-overlay {
   fill-opacity: 0.247;
+  animation-name: overlay-opacity;
+  animation-duration: 0.75s;
 }
 .child.editing > .thought-container .glyph .bullet-cursor-overlay {
   fill-opacity: 0.25;
-}
-
-.child.editing > .thought-container .glyph {
-  opacity: 1;
+  animation-name: overlay-opacity;
+  animation-duration: 0.75s;
 }
 
 .child > .thought-container > .bullet .glyph.glyph-highlighted {
@@ -1146,14 +1148,6 @@ h1 .num-contexts {
 .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
 .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle {
   transform: rotate(90deg) translateX(10px);
-}
-
-/* Because although transform-origin is set to center, Safari on MacOSX rotates svg from different center.*/
-.child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle.osx,
-.child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle.osx,
-.child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle.osx,
-.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle.osx {
-  transform: rotate(90deg) translate(10px, -75px);
 }
 
 .mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
@@ -1761,7 +1755,7 @@ h1 .num-contexts {
   fill-opacity: 1;
 }
 .distance-from-cursor-1 > .child > .thought-container > .bullet .glyph .glyph-fg {
-  fill-opacity: 0.5;
+  fill-opacity: 0.45;
 }
 .distance-from-cursor-1 > .child.editing > .thought-container > .bullet .glyph .glyph-fg {
   fill-opacity: 1;
