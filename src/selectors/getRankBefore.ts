@@ -2,7 +2,7 @@ import { getChildrenRanked } from '../selectors'
 import { head, isRoot, pathToContext } from '../util'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
-import { getThoughtById } from './getThought'
+import { getThoughtById } from './getThoughtById'
 
 /** Gets a new rank before the given thought in a list but after the previous thought. */
 const getRankBefore = (state: State, simplePath: SimplePath) => {

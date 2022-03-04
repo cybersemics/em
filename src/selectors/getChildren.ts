@@ -16,7 +16,7 @@ import {
 } from '../util'
 import { ThoughtId, ComparatorFunction, Context, ThoughtContext, Thought, Path, State, SimplePath } from '../@types'
 import childIdsToThoughts from './childIdsToThoughts'
-import { getThoughtById } from './getThought'
+import { getThoughtById } from './getThoughtById'
 
 // use global instance of empty array so object reference doesn't change
 const noChildren: Thought[] = []

@@ -221,7 +221,7 @@ const updateThoughts = (
     //     // loop through each ThoughtContext of each Lexeme
     //     lexeme?.contexts.forEach(cx => {
     //       // find the Child with the same value and rank in the Thought
-    //       const parent = getThought(state, cx.context)
+    //       const parent = getThoughtById(state, cx.context)
     //       const child = parent?.children.find(
     //         child => normalizeThought(child.value) === normalizeThought(lexeme.value) && child.rank === cx.rank,
     //       )

@@ -18,7 +18,7 @@ import {
 } from '../util'
 import getParentThought from './getParentThought'
 import { getAllChildrenAsThoughtsById } from './getChildren'
-import { getThoughtById } from './getThought'
+import { getThoughtById } from './getThoughtById'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (state: State, child: ThoughtId | ThoughtContext, showContexts: boolean) =>

@@ -2,7 +2,7 @@ import { unroot } from '../util'
 import { getContexts, isAncestorsVisible } from '../selectors'
 import { ContextThought, State } from '../@types'
 import getContextForThought from './getContextForThought'
-import { getThoughtById } from './getThought'
+import { getThoughtById } from './getThoughtById'
 
 /** Gets all contexts that the given thought is in, sorted and ranked. */
 const getContextsSortedAndRanked = (state: State, value: string): ContextThought[] =>
