@@ -43,7 +43,7 @@ const Bullet = ({
   <span
     className={classNames({
       bullet: true,
-      // Since Parents and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
+      // Since Thoughts and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
       // Therefore render in a simple gray rather than an error color.
       // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
       gray: missing,

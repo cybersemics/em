@@ -30,26 +30,26 @@ const checkDataIntegrity = (state: State, max = 100000) => {
   Object.keys(contextIndex)
     .slice(0, max)
     .forEach(key => {
-      const parent = contextIndex[key]
+      const thought = contextIndex[key]
 
-      const thoughtHash = hashThought(parent.value)
+      const thoughtHash = hashThought(thought.value)
 
       const lexemeParent = thoughtIndex[thoughtHash]
 
-      if (!lexemeParent) missingLexemeValues = [...missingLexemeValues, parent.value]
+      if (!lexemeParent) missingLexemeValues = [...missingLexemeValues, thought.value]
 
-      if (!parent.children) return
+      if (!thought.children) return
 
-      parent.children.forEach(childId => {
-        const thought = contextIndex[childId]
+      thought.children.forEach(childId => {
+        const childThought = contextIndex[childId]
 
-        if (!thought) return
+        if (!childThought) return
 
-        const thoughtHash = hashThought(thought.value)
+        const thoughtHash = hashThought(childThought.value)
 
         const lexeme = thoughtIndex[thoughtHash]
 
-        if (!lexeme) missingLexemeValues = [...missingLexemeValues, thought.value]
+        if (!lexeme) missingLexemeValues = [...missingLexemeValues, childThought.value]
       })
     })
 

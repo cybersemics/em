@@ -35,9 +35,9 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
 
   // store children indexed by the encoded context for O(1) lookup of children
   // @MIGRATION_NOTE: getThought cannot find paths with context views.
-  const parent = getThought(state, contextActual)
+  const thought = getThought(state, contextActual)
 
-  if (!parent) return state
+  if (!thought) return state
 
   const contextIndexUpdates: Index<Thought> = {}
 
@@ -48,9 +48,9 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       .filter(child => child !== id)
       .concat(id)
 
-    contextIndexUpdates[parent.id] = {
-      ...getThoughtById(state, parent.id),
-      id: parent.id,
+    contextIndexUpdates[thought.id] = {
+      ...getThoughtById(state, thought.id),
+      id: thought.id,
       children,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
@@ -58,7 +58,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
 
     contextIndexUpdates[id] = {
       id,
-      parentId: parent.id,
+      parentId: thought.id,
       children: [],
       lastUpdated: timestamp(),
       rank: addAsContext ? getNextRank(state, [value]) : rank,

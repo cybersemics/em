@@ -13,10 +13,10 @@ it('delete from root', () => {
   const stateNew = reducerFlow(steps)(state)
 
   /** Gets the root Parent from a state's contextIndex. */
-  const rootParent = getThought(stateNew, [HOME_TOKEN])!
+  const thought = getThought(stateNew, [HOME_TOKEN])!
 
   // contextIndex
-  matchChildIdsWithThoughts(stateNew, rootParent.children, [
+  matchChildIdsWithThoughts(stateNew, thought.children, [
     {
       value: 'a',
     },

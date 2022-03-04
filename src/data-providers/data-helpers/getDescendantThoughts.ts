@@ -19,18 +19,18 @@ interface Options {
  * - Context contains the em context.
  * - Context has a non-archive metaprogramming attribute.
  */
-const isUnbuffered = (state: State, parent: Thought) => {
-  // Note: Since parent does not have context and we have to generate context from available state. May not work as intended if the we pull a thought whose ancestors has not been pulled yet.
-  const context = getContextForThought(state, parent.id)
+const isUnbuffered = (state: State, thought: Thought) => {
+  // Note: Since thought does not have context and we have to generate context from available state. May not work as intended if the we pull a thought whose ancestors has not been pulled yet.
+  const context = getContextForThought(state, thought.id)
 
   // @MIGRATION_TODO: Is it okay to prevent buffering if context is not found ?
   if (!context) {
-    console.warn(`isUnbuffered: Context not found for thought ${parent.id}`)
+    console.warn(`isUnbuffered: Context not found for thought ${thought.id}`)
     return false
   }
 
   return (
-    parent.children.length === 0 ||
+    thought.children.length === 0 ||
     context.includes(EM_TOKEN) ||
     (context.find(isFunction) && !context.includes('=archive'))
   )
@@ -61,7 +61,7 @@ async function* getDescendantThoughts(
     const providerParents = (await provider.getContextsByIds(pullThoughtIds)).filter(Boolean) as Thought[]
 
     if (providerParents.length < pullThoughtIds.length) {
-      console.error(`getDescendantThoughts: Cannot get parent for some ids.`, pullThoughtIds, providerParents)
+      console.error(`getDescendantThoughts: Cannot get thought for some ids.`, pullThoughtIds, providerParents)
       yield {
         contextIndex: {},
         thoughtIndex: {},
@@ -69,7 +69,7 @@ async function* getDescendantThoughts(
       return
     }
 
-    // all pulled parent entries
+    // all pulled thought entries
     const pulledContextIndex = keyValueBy(pullThoughtIds, (id, i) => {
       return { [id]: providerParents[i] }
     })
@@ -87,12 +87,12 @@ async function* getDescendantThoughts(
       },
     }
 
-    const parents =
+    const thoughts =
       currentMaxDepth > 0
         ? providerParents
-        : providerParents.map(parent => ({
-            ...parent,
-            ...(!isUnbuffered(updatedState, parent)
+        : providerParents.map(thought => ({
+            ...thought,
+            ...(!isUnbuffered(updatedState, thought)
               ? {
                   // @MIGRATION_TODO: Previouss implementaion kept the meta children. But now we cannot determine the meta children just by id, without pulling the data from the db.
                   children: [],
@@ -105,7 +105,7 @@ async function* getDescendantThoughts(
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
     const contextIndex = keyValueBy(pullThoughtIds, (id, i) => {
-      return { [id]: parents[i] }
+      return { [id]: thoughts[i] }
     })
 
     const thoughtHashes = pullThoughtIds.map(id => {
@@ -120,16 +120,16 @@ async function* getDescendantThoughts(
 
     const thoughtIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
-    const thoughts = {
+    const thoughtsIndices = {
       contextIndex,
       thoughtIndex,
     }
 
     // enqueue children
-    pullThoughtIds = parents.map(parent => parent.children).flat()
+    pullThoughtIds = thoughts.map(thought => thought.children).flat()
 
     // yield thought
-    yield thoughts
+    yield thoughtsIndices
 
     currentMaxDepth--
   }

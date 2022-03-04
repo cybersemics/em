@@ -26,7 +26,7 @@ export interface ImportJSONOptions {
 
 interface ThoughtPair {
   lexeme: Lexeme
-  parent: Thought
+  thought: Thought
   newThought: Thought
 }
 
@@ -43,11 +43,11 @@ const skipRootThought = (blocks: Block[]) => {
   return head.children.length > 0 ? [...head.children, ...tail] : tail
 }
 
-// MIGRATION_TODO: This function now also returns another parent so that for each Child entry a Thought entry is also created.
+// MIGRATION_TODO: This function now also returns another thought so that for each Child entry a Thought entry is also created.
 /** Generates a Thought and Lexeme for inserting a new thought into a context. */
 const insertThought = (
   state: State,
-  parentOld: Thought,
+  thoughtOld: Thought,
   value: string,
   context: Context,
   rank: number,
@@ -70,12 +70,12 @@ const insertThought = (
     updatedBy,
   }
 
-  const parentNew: Thought = {
-    // TODO: merging parentOld results in pending: true when importing into initialState. Is that correct?
-    ...parentOld,
+  const thoughtNew: Thought = {
+    // TODO: merging thoughtOld results in pending: true when importing into initialState. Is that correct?
+    ...thoughtOld,
     value: head(rootContext),
-    parentId: parentOld.parentId,
-    children: [...parentOld.children, newThoughtId],
+    parentId: thoughtOld.parentId,
+    children: [...thoughtOld.children, newThoughtId],
     lastUpdated,
     updatedBy,
   }
@@ -84,7 +84,7 @@ const insertThought = (
     id: newThoughtId,
     value: value,
     children: [],
-    parentId: parentOld.id,
+    parentId: thoughtOld.id,
     lastUpdated,
     updatedBy,
     rank,
@@ -92,7 +92,7 @@ const insertThought = (
 
   return {
     lexeme: lexemeNew,
-    parent: parentNew,
+    thought: thoughtNew,
     newThought,
   }
 }
@@ -143,7 +143,7 @@ const saveThoughts = (
         const lastUpdatedInherited = block.lastUpdated || childLastUpdated || existingParent.lastUpdated || lastUpdated
         const createdInherited = block.created || childCreated || lastUpdated
 
-        const { lexeme, parent, newThought } = insertThought(
+        const { lexeme, thought, newThought } = insertThought(
           stateNewBeforeInsert,
           existingParent,
           nonDuplicateValue,
@@ -159,7 +159,7 @@ const saveThoughts = (
             [hashThought(nonDuplicateValue)]: lexeme,
           },
           contextIndex: {
-            [contextEncoded]: parent,
+            [contextEncoded]: thought,
             [newThought.id]: newThought,
           },
         }
@@ -187,8 +187,8 @@ const saveThoughts = (
        * Get the last added child.
        */
       const getLastAddedChild = () => {
-        const parent = updatedState.thoughts.contextIndex[contextEncoded]
-        return (childIdsToThoughts(updatedState, parent.children) ?? []).find(
+        const thought = updatedState.thoughts.contextIndex[contextEncoded]
+        return (childIdsToThoughts(updatedState, thought.children) ?? []).find(
           child => child.value === nonDuplicateValue,
         )
       }
@@ -311,8 +311,8 @@ export const importJSON = (
   )
 
   // get the last child imported in the first level so the cursor can be set
-  const parent = initialContextIndex[contextEncoded]
-  const lastChildIndex = (parent?.children.length || 0) + blocksNormalized.length - 1
+  const thought = initialContextIndex[contextEncoded]
+  const lastChildIndex = (thought?.children.length || 0) + blocksNormalized.length - 1
   const importContextEncoded = headId(importPath)
   const lastChildFirstLevel = contextIndex[importContextEncoded]?.children[lastChildIndex]
   const lastImported = appendToPath(importPath, lastChildFirstLevel)

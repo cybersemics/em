@@ -147,7 +147,7 @@ const flushDeletes =
 
       // In a 2-part delete, all of the descendants that are in the Redux store are deleted in Part I, and pending descendants are pulled and then deleted in Part II. (See flushDeletes)
       // With the old style pull, Part II pulled the pending descendants as expected. With the new style pull that only pulls pending thoughts, pull will short circuit in Part II since there is no Parent to be marked as pending (it was deleted in Part I).
-      // We cannot simply include missing Parents in pull addition to pending Parents though. Some Parents are missing when a context is edited after it was added to the pullQueue but before the pullQueue was flushed. If pull includes missing Parents, we get data integrity issues when outdated local thoughts get pulled.
+      // We cannot simply include missing Thoughts in pull addition to pending Thoughts though. Some Thoughts are missing when a context is edited after it was added to the pullQueue but before the pullQueue was flushed. If pull includes missing Thoughts, we get data integrity issues when outdated local thoughts get pulled.
       // Therefore, force the pull here to fetch all descendants to delete in Part II.
       await dispatch(pull(toBePulledThoughts, { force: true, maxDepth: Infinity }))
 

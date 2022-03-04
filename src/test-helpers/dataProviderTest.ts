@@ -40,15 +40,15 @@ const getManyDescendantsByContext = async (
 ) => {
   const thoughtIds = (await Promise.all(contextArray.map(context => getContext(provider, context))))
     .filter(Boolean)
-    .map(parent => parent!.id)
+    .map(thought => thought!.id)
 
   return all(getManyDescendants(provider, thoughtIds, initialState(), options))
 }
 
 expect.extend({
-  /** Passes if a Context appears before another Context in the Parents array. */
+  /** Passes if a Context appears before another Context in the Thoughts array. */
   toHaveOrderedContexts: async (
-    parents: Thought[],
+    thoughts: Thought[],
     provider: DataProvider,
     context1: Context,
     context2: Context,
@@ -58,7 +58,7 @@ expect.extend({
       ...[context1, context2].map(context => getContext(provider, context)),
     ])
     /** Finds the index of a context within the contexts array. */
-    const indexOfContext = (thought: Thought) => parents.findIndex(parent => parent.id === thought.id)
+    const indexOfContext = (thought: Thought) => thoughts.findIndex(parent => parent.id === thought.id)
 
     const index1 = indexOfContext(thought1!)
     const index2 = indexOfContext(thought2!)
@@ -66,12 +66,12 @@ expect.extend({
     return index1 === -1
       ? {
           pass: false,
-          message: () => `expected ${JSON.stringify(context1)} to be in the given parents array`,
+          message: () => `expected ${JSON.stringify(context1)} to be in the given thoughts array`,
         }
       : index2 === -1
       ? {
           pass: false,
-          message: () => `expected ${JSON.stringify(context2)} to be in the given parents array`,
+          message: () => `expected ${JSON.stringify(context2)} to be in the given thoughts array`,
         }
       : index1 >= index2
       ? {
@@ -79,14 +79,14 @@ expect.extend({
           message: () =>
             `expected ${JSON.stringify(context1)} to appear before ${JSON.stringify(
               context2,
-            )} in the given parents array`,
+            )} in the given thoughts array`,
         }
       : {
           pass: true,
           message: () =>
             `expected ${JSON.stringify(context1)} to not appear before ${JSON.stringify(
               context2,
-            )} in the given parents array`,
+            )} in the given thoughts array`,
         }
   },
 })
@@ -467,12 +467,12 @@ const dataProviderTest = (provider: DataProvider) => {
       // flatten the thought chunks
       // preserve chunk order
       // contexts within a chunk are unordered
-      const parents = thoughtChunks.map(({ contextIndex }) => Object.values(contextIndex)).flat()
+      const thoughts = thoughtChunks.map(({ contextIndex }) => Object.values(contextIndex)).flat()
 
       // siblings may be unordered
-      await expect(parents).toHaveOrderedContexts(provider, ['x'], ['x', 'y'])
-      await expect(parents).toHaveOrderedContexts(provider, ['t'], ['x', 'y'])
-      await expect(parents).toHaveOrderedContexts(provider, ['t', 'u'], ['x', 'y', 'z'])
+      await expect(thoughts).toHaveOrderedContexts(provider, ['x'], ['x', 'y'])
+      await expect(thoughts).toHaveOrderedContexts(provider, ['t'], ['x', 'y'])
+      await expect(thoughts).toHaveOrderedContexts(provider, ['t', 'u'], ['x', 'y', 'z'])
     })
   })
 

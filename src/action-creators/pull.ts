@@ -115,7 +115,7 @@ const pull =
         // eslint-disable-next-line fp/no-mutating-methods
         thoughtRemoteChunks.push(thoughtsRemoteChunk)
 
-        // find the corresponding Parents from the local store (if any exist) so it can be reconciled with the remote Parents
+        // find the corresponding Thoughts from the local store (if any exist) so it can be reconciled with the remote Thoughts
         const thoughtsLocalContextIndexChunk = _.transform(
           thoughtsRemoteChunk.contextIndex,
           (accum, parentEntryRemote, key) => {

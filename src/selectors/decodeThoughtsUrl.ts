@@ -30,10 +30,10 @@ const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
   const pathUnranked = urlPath.map(componentToThought) as Path
 
   const contextViews = keyValueBy(urlPath, (cur, i) => {
-    const parent = getThought(state, pathUnranked.slice(0, i + 1))
-    return parent && /~$/.test(cur)
+    const thought = getThought(state, pathUnranked.slice(0, i + 1))
+    return thought && /~$/.test(cur)
       ? {
-          [parent.id]: true,
+          [thought.id]: true,
         }
       : null
   })

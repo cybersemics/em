@@ -178,9 +178,9 @@ const push =
     const authenticated = { state }
     const userRef = getUserRef(state)
 
-    // Filter out pending Parents so they are not persisted.
-    // Why not filter them out upstream in updateThoughts? Pending Parents sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
-    const contextIndexUpdatesNotPending = _.pickBy(contextIndexUpdates, parent => !parent?.pending)
+    // Filter out pending Thoughts so they are not persisted.
+    // Why not filter them out upstream in updateThoughts? Pending Thoughts sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
+    const contextIndexUpdatesNotPending = _.pickBy(contextIndexUpdates, thought => !thought?.pending)
 
     // store the hashes of the localStorage Settings contexts for quick lookup
     // settings that are propagated to localStorage for faster load on startup
