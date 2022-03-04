@@ -117,7 +117,7 @@ it('redo contiguous changes', () => {
     editThoughtAtFirstMatchActionCreator({
       newValue: 'Atlantic City',
       oldValue: 'Atlantic ',
-      at: ['Atlantic'],
+      at: ['Atlantic '],
     }),
     { type: 'undoAction' },
   ])

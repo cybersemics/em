@@ -360,7 +360,7 @@ describe('expand with : char', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b:'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'x'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['x'])).toBeFalsy()
   })
@@ -381,9 +381,9 @@ describe('expand with : char', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b', 'c'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b', 'c', 'x'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['b:'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b:', 'c:'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b', 'c:', 'x'])).toBeFalsy()
   })
 
   it('thougts that contain html and end with ":" are expanded', () => {
@@ -400,8 +400,8 @@ describe('expand with : char', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b', 'c'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['<b>b:</b>'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['<b>b:</b>', '<b><i>c:</i></b>'])).toBeTruthy()
   })
 })
 
