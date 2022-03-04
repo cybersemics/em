@@ -1,9 +1,8 @@
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { appendToPath, isRoot } from '../util'
-import { getLexeme } from '../selectors'
 import { SimplePath, State } from '../@types'
 import getRootPath from './getRootPath'
-import childIdsToThoughts from './childIdsToThoughts'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 /** Ranks the thoughts from their rank in their context. */
 // if there is a duplicate thought in the same context, takes the first
@@ -14,27 +13,20 @@ const rankThoughtsFirstMatch = (state: State, pathUnranked: string[]): SimplePat
   // Also supports ranking thoughts from EM context
   const isEmContext = pathUnranked[0] === EM_TOKEN
 
-  const startingContext = isEmContext ? EM_TOKEN : HOME_TOKEN
+  const startingThoughtId = isEmContext ? EM_TOKEN : HOME_TOKEN
   const context = pathUnranked.slice(isEmContext ? 1 : 0)
 
   try {
     return context.reduce<SimplePath>((acc, value, i) => {
-      const lexeme = getLexeme(state, value)
+      const prevParentId = acc[acc.length - 1] || startingThoughtId
+      const children = getAllChildrenAsThoughtsById(state, prevParentId)
+      const firstChild = children.find(child => child.value === value)
 
-      const prevParentId = acc[acc.length - 1] || startingContext
-      // get all thoughts that have the desired value within the current context
-      const allThoughts = childIdsToThoughts(state, (lexeme && lexeme.contexts) || [])
-
-      if (!allThoughts) throw Error('Thought not found')
-
-      // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
-      const thoughts = allThoughts.filter(thought => thought?.parentId === prevParentId)
-
-      const finalThought = thoughts[0]
+      if (!firstChild) throw Error('Thought not found')
 
       const isEm = i === 0 && value === EM_TOKEN
 
-      return appendToPath(acc, isEm ? EM_TOKEN : finalThought.id)
+      return appendToPath(acc, isEm ? EM_TOKEN : firstChild.id)
     }, [] as any as SimplePath)
   } catch (err) {
     return null
