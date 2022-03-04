@@ -303,7 +303,7 @@ it('state.alert is omitted from the undo patch', () => {
           - A
           - B`,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursorFirstMatchActionCreator(['A']),
     { type: 'archiveThought' },
   ])
   const { inversePatches } = store.getState()

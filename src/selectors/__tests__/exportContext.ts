@@ -137,7 +137,7 @@ it('export multi-line thoughts as separate thoughts', () => {
     editThoughtAtFirstMatch({
       oldValue: 'Hello',
       newValue: 'Hello\nworld',
-      at: ['a', 'b', 'hello'],
+      at: ['a', 'b', 'Hello'],
     }),
   ]
   const stateNew = reducerFlow(steps)(initialState())
