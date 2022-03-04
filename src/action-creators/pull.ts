@@ -6,7 +6,7 @@ import { HOME_TOKEN } from '../constants'
 import { mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
 import { getDescendantThoughtIds, getThoughtById, isPending } from '../selectors'
-import { Thunk, Index, Lexeme, Parent, State, ThoughtsInterface, ThoughtId } from '../@types'
+import { Thunk, Index, Lexeme, Thought, State, ThoughtsInterface, ThoughtId } from '../@types'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = HOME_TOKEN
@@ -124,7 +124,7 @@ const pull =
               accum[key] = parentEntryLocal
             }
           },
-          {} as Index<Parent>,
+          {} as Index<Thought>,
         )
 
         // find the corresponding Lexemes from the local store (if any exist) so it can be reconciled with the remote Lexemes

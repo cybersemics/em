@@ -1,4 +1,4 @@
-import { Context, Parent, ThoughtId } from '../../@types'
+import { Context, Thought, ThoughtId } from '../../@types'
 import { EM_TOKEN, HOME_TOKEN } from '../../constants'
 import { hashThought, head, isRoot } from '../../util'
 import { DataProvider } from '../DataProvider'
@@ -37,7 +37,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
   const context = pathUnranked.slice(isEmContext ? 1 : 0)
 
   try {
-    return await context.reduce<Promise<Parent[]>>(async (accPromise, value, i) => {
+    return await context.reduce<Promise<Thought[]>>(async (accPromise, value, i) => {
       const acc = await accPromise
       const lexeme = await provider.getThoughtById(hashThought(value))
 
@@ -49,7 +49,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
       if (!allThoughts) throw Error('Thought not found')
 
       // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
-      const thoughts = (allThoughts as Parent[]).filter(thought => thought?.parentId === prevParentId)
+      const thoughts = (allThoughts as Thought[]).filter(thought => thought?.parentId === prevParentId)
 
       const finalThought = thoughts[0]
 

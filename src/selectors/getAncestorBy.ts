@@ -1,5 +1,5 @@
 import { getThoughtById } from './index'
-import { Index, Parent, State, ThoughtId } from '../@types'
+import { Index, Thought, State, ThoughtId } from '../@types'
 
 /**
  * Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function.
@@ -7,9 +7,9 @@ import { Index, Parent, State, ThoughtId } from '../@types'
 const getAncestorBy = (
   state: State,
   thoughtId: ThoughtId,
-  checkFn: (thought: Parent) => boolean,
+  checkFn: (thought: Thought) => boolean,
   traversedIds: Index<boolean> = {},
-): Parent | null => {
+): Thought | null => {
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return null
   const parentThought = getThoughtById(state, thought.parentId)

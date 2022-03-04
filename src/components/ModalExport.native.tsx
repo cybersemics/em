@@ -16,7 +16,7 @@ import { alert, error, pull, modalComplete } from '../action-creators'
 import { exportContext, getDescendantThoughtIds, getThoughtById, simplifyPath } from '../selectors'
 import Modal from './Modal'
 
-import { Context, ExportOption, Parent, State, ThoughtsInterface } from '../@types'
+import { Context, ExportOption, Thought, State, ThoughtsInterface } from '../@types'
 import { View, StyleSheet, TextInput, TouchableOpacity, Share } from 'react-native'
 import RNPickerSelect from 'react-native-picker-select'
 import { FontAwesome5 } from '@expo/vector-icons'
@@ -208,8 +208,8 @@ const ModalExport = () => {
       setNumDescendantsInState(
         getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
-            shouldIncludeMetaAttributes || ((child: Parent) => !isFunction(child.value)),
-            shouldIncludeArchived || ((child: Parent) => child.value !== '=archive'),
+            shouldIncludeMetaAttributes || ((child: Thought) => !isFunction(child.value)),
+            shouldIncludeArchived || ((child: Thought) => child.value !== '=archive'),
           ),
         }).length,
       )

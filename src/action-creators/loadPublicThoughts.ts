@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { createId, getThoughtIdByContext, hashThought, owner } from '../util'
 import { loadRemoteState } from '../action-creators'
-import { Firebase, Parent, State, Thunk } from '../@types'
+import { Firebase, Thought, State, Thunk } from '../@types'
 import { getThoughtById } from '../selectors'
 
 /**
@@ -24,8 +24,8 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
   const publicContextRef = window.firebase.database().ref(`users/${urlOwner}/contextIndex/${contextEncoded}`)
 
   // fetch children
-  publicContextRef.once('value', (snapshot: Firebase.Snapshot<Parent>) => {
-    const parentEntry: Parent = snapshot.val()
+  publicContextRef.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
+    const parentEntry: Thought = snapshot.val()
 
     const state = getState()
     const remoteState: State = {

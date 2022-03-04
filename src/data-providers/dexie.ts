@@ -10,7 +10,7 @@ import {
   Context,
   Index,
   Lexeme,
-  Parent,
+  Thought,
   ThoughtWordsIndex,
   ThoughtSubscriptionUpdates,
   Timestamp,
@@ -25,7 +25,7 @@ import {
 /** Extend Dexie class for proper typing. See https://dexie.org/docs/Typescript. */
 // eslint-disable-next-line fp/no-class
 class EM extends Dexie {
-  contextIndex: Dexie.Table<Parent, string>
+  contextIndex: Dexie.Table<Thought, string>
   thoughtIndex: Dexie.Table<Lexeme, string>
   thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>
   helpers: Dexie.Table<Helper, string>
@@ -181,7 +181,7 @@ export const getThoughtIndex = async () => {
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
 export const updateContext = async (
   id: ThoughtId,
-  { children, lastUpdated, value, parentId, archived, rank }: Parent,
+  { children, lastUpdated, value, parentId, archived, rank }: Thought,
 ) =>
   db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
@@ -189,11 +189,11 @@ export const updateContext = async (
   })
 
 /** Updates multiple thoughts in the contextIndex. */
-export const updateContextIndex = async (contextIndexMap: Index<Parent | null>) =>
+export const updateContextIndex = async (contextIndexMap: Index<Thought | null>) =>
   db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
     const contextsArray = Object.keys(contextIndexMap).map(key => ({
-      ...(contextIndexMap[key] as Parent),
+      ...(contextIndexMap[key] as Thought),
       updatedBy: getSessionId(),
       id: key as ThoughtId,
     }))
@@ -282,7 +282,7 @@ const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) =>
         ? {
             [key]: {
               updatedBy: source,
-              value: obj as Parent,
+              value: obj as Thought,
             },
           }
         : {},

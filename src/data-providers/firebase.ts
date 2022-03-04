@@ -5,7 +5,7 @@ import {
   Firebase,
   Index,
   Lexeme,
-  Parent,
+  Thought,
   State,
   ThoughtId,
   ThoughtIndices,
@@ -61,19 +61,19 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
    *
    * @param conte,xt
    */
-  async getContextById(id: string): Promise<Parent | undefined> {
+  async getContextById(id: string): Promise<Thought | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('contextIndex').child<Parent>(id)
+    const ref = userRef!.child('contextIndex').child<Thought>(id)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Firebase.Snapshot<Parent>) => {
+      ref.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
         resolve(snapshot.val())
       }),
     )
   },
   /** Gets multiple PrentEntry objects by ids. */
-  getContextsByIds: async (ids: string[]): Promise<(Parent | undefined)[]> => {
+  getContextsByIds: async (ids: string[]): Promise<(Thought | undefined)[]> => {
     const userRef = getUserRef(state)
-    const snapshots = await Promise.all(ids.map(id => userRef?.child('contextIndex').child<Parent>(id).once('value')))
+    const snapshots = await Promise.all(ids.map(id => userRef?.child('contextIndex').child<Thought>(id).once('value')))
     return snapshots.map(snapshot => snapshot?.val())
   },
   /** Updates Firebase data. */
@@ -92,7 +92,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     })
   },
   /** Updates a context in the contextIndex. */
-  async updateContext(id: string, parentEntry: Parent): Promise<unknown> {
+  async updateContext(id: string, parentEntry: Thought): Promise<unknown> {
     return this.update({
       ['contextIndex/' + id]: parentEntry,
     })
@@ -104,7 +104,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     })
   },
   /** Updates the contextIndex. */
-  async updateContextIndex(contextIndex: Index<Parent>): Promise<unknown> {
+  async updateContextIndex(contextIndex: Index<Thought>): Promise<unknown> {
     return this.update(
       keyValueBy(Object.entries(contextIndex), ([key, value]) => ({
         ['contextIndex/' + key]: value,
@@ -126,8 +126,8 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
  * @param value The Parent value to set in the update. Defaults to the snapshot Parent. Useful for setting to null.
  */
 const parentSubscriptionHandler =
-  (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Parent | null } = {}) =>
-  (snapshot: Firebase.Snapshot<Parent>) => {
+  (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Thought | null } = {}) =>
+  (snapshot: Firebase.Snapshot<Thought>) => {
     // only contains fields that have changed
     const parentPartial = snapshot.val()
     if (!parentPartial) return null
@@ -183,7 +183,7 @@ const lexemeSubscriptionHandler =
 /** Subscribe to firebase. */
 export const subscribe = (userId: string, onUpdate: (updates: ThoughtSubscriptionUpdates) => void) => {
   const thoughtsRef: Firebase.Ref<ThoughtIndices> = window.firebase?.database().ref(`users/${userId}`)
-  const contextIndexRef: Firebase.Ref<Parent> = thoughtsRef.child('contextIndex')
+  const contextIndexRef: Firebase.Ref<Thought> = thoughtsRef.child('contextIndex')
   const thoughtIndexRef: Firebase.Ref<Lexeme> = thoughtsRef.child('thoughtIndex')
 
   // contextIndex subscriptions

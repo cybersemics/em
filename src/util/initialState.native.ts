@@ -3,7 +3,7 @@ import globals from '../globals'
 // import { canShowModal } from '../selectors'
 import { hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from './index'
 import { getSessionId } from './sessionManager'
-import { Timestamp, ThoughtsInterface, State, Parent, Index, ThoughtId } from '../@types'
+import { Timestamp, ThoughtsInterface, State, Thought, Index, ThoughtId } from '../@types'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -18,7 +18,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN
 
-  const contextIndex: Index<Parent> = {
+  const contextIndex: Index<Thought> = {
     [HOME_TOKEN_HASH]: {
       id: HOME_TOKEN_HASH as ThoughtId,
       value: HOME_TOKEN,

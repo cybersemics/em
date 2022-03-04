@@ -12,7 +12,7 @@ import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
 import { getSessionId } from '../util/sessionManager'
-import { Context, Lexeme, Parent, ThoughtId } from '../@types'
+import { Context, Lexeme, Thought, ThoughtId } from '../@types'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -48,7 +48,7 @@ const getManyDescendantsByContext = async (
 expect.extend({
   /** Passes if a Context appears before another Context in the Parents array. */
   toHaveOrderedContexts: async (
-    parents: Parent[],
+    parents: Thought[],
     provider: DataProvider,
     context1: Context,
     context2: Context,
@@ -58,7 +58,7 @@ expect.extend({
       ...[context1, context2].map(context => getContext(provider, context)),
     ])
     /** Finds the index of a context within the contexts array. */
-    const indexOfContext = (thought: Parent) => parents.findIndex(parent => parent.id === thought.id)
+    const indexOfContext = (thought: Thought) => parents.findIndex(parent => parent.id === thought.id)
 
     const index1 = indexOfContext(thought1!)
     const index2 = indexOfContext(thought2!)
@@ -169,7 +169,7 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'x',
       parentId: 'parentId',
       rank: 0,
-    } as Parent
+    } as Thought
 
     await provider.updateContext('test' as ThoughtId, parentEntry)
 
@@ -178,7 +178,7 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('getContextsByIds', async () => {
-    const parentEntryX: Parent = {
+    const parentEntryX: Thought = {
       id: 'testIdX' as ThoughtId,
       children: ['child1', 'child2'] as ThoughtId[],
       lastUpdated: timestamp(),
@@ -188,7 +188,7 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent1' as ThoughtId,
     }
 
-    const parentEntryA: Parent = {
+    const parentEntryA: Thought = {
       id: 'testIdA' as ThoughtId,
       children: [],
       lastUpdated: timestamp(),
@@ -247,7 +247,7 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
-    } as Parent
+    } as Thought
 
     const parentEntryY = {
       id: 'idY',
@@ -257,7 +257,7 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent2',
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
-    } as Parent
+    } as Thought
 
     await provider.updateContextIndex({
       idX: parentEntryX,

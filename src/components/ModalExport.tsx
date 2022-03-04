@@ -29,7 +29,7 @@ import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
 import download from '../device/download'
 import * as selection from '../device/selection'
-import { Context, ExportOption, Parent, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+import { Context, ExportOption, Thought, Path, SimplePath, State, ThoughtsInterface } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Use a throttled callback. */
@@ -314,8 +314,8 @@ const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }
       setNumDescendantsInState(
         getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
-            shouldIncludeMetaAttributes || ((thought: Parent) => !isFunction(thought.value)),
-            shouldIncludeArchived || ((thought: Parent) => thought.value !== '=archive'),
+            shouldIncludeMetaAttributes || ((thought: Thought) => !isFunction(thought.value)),
+            shouldIncludeArchived || ((thought: Thought) => thought.value !== '=archive'),
           ),
         }).length,
       )

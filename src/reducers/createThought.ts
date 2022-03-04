@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { getNextRank, getLexeme, getAllChildren, getParent, getThoughtById } from '../selectors'
 import { createId, hashThought, head, timestamp } from '../util'
-import { Context, Index, Lexeme, Parent, State, ThoughtId } from '../@types'
+import { Context, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 
 interface Payload {
@@ -39,7 +39,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
 
   if (!parent) return state
 
-  const contextIndexUpdates: Index<Parent> = {}
+  const contextIndexUpdates: Index<Thought> = {}
 
   if (context.length > 0) {
     const newValue = addAsContext ? head(context) : value

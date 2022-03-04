@@ -9,7 +9,7 @@ import {
   // rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
-import { ThoughtId, Context, Index, Lexeme, Parent, State } from '../@types'
+import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 import { hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -22,9 +22,9 @@ interface Payload {
 }
 
 interface ThoughtUpdates {
-  contextIndex: Index<Parent | null>
+  contextIndex: Index<Thought | null>
   thoughtIndex: Index<Lexeme | null>
-  pendingDeletes?: { context: Context; thought: Parent }[]
+  pendingDeletes?: { context: Context; thought: Thought }[]
 }
 
 // @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directlty. Find a better way to handle this.
@@ -108,7 +108,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   const subthoughts = getAllChildrenAsThoughts(state, context).filter(child => child.id !== deletedThought.id)
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
-  const recursiveDeletes = (thought: Parent, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
+  const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
     // modify the state to use the thoughtIndex with newOldLexeme
     // this ensures that contexts are calculated correctly for descendants with duplicate values
     const stateNew: State = {
@@ -209,7 +209,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
         children: subthoughts.map(({ id }) => id),
         lastUpdated: timestamp(),
         updatedBy: getSessionId(),
-      } as Parent,
+      } as Thought,
     }),
     [deletedThought.id]: null,
     // descendants

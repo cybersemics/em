@@ -10,7 +10,7 @@ import {
   makeOrderedComparator,
   compareThoughtDescending,
 } from '../../util/compareThought'
-import { Parent, ThoughtId } from '../../@types'
+import { Thought, ThoughtId } from '../../@types'
 import { timestamp } from '../../util'
 
 it('compareNumberAndOther', () => {
@@ -137,7 +137,7 @@ describe('compareReasonableDescending', () => {
   /**
    * Build Parent object for tests.
    */
-  const buildChild = (value: string): Parent => ({
+  const buildChild = (value: string): Thought => ({
     id: '0' as ThoughtId,
     rank: 0,
     value: value,

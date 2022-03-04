@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf, childIdsToThoughts } from '../selectors'
-import { Block, Context, Index, Lexeme, Parent, SimplePath, State, Timestamp, ThoughtIndices, Path } from '../@types'
+import { Block, Context, Index, Lexeme, Thought, SimplePath, State, Timestamp, ThoughtIndices, Path } from '../@types'
 import {
   appendToPath,
   hashThought,
@@ -26,8 +26,8 @@ export interface ImportJSONOptions {
 
 interface ThoughtPair {
   lexeme: Lexeme
-  parent: Parent
-  newThought: Parent
+  parent: Thought
+  newThought: Thought
 }
 
 type SaveThoughtsUpdate = ThoughtIndices & {
@@ -43,11 +43,11 @@ const skipRootThought = (blocks: Block[]) => {
   return head.children.length > 0 ? [...head.children, ...tail] : tail
 }
 
-// MIGRATION_TODO: This function now also returns another parent so that for each Child entry a Parent entry is also created.
-/** Generates a Parent and Lexeme for inserting a new thought into a context. */
+// MIGRATION_TODO: This function now also returns another parent so that for each Child entry a Thought entry is also created.
+/** Generates a Thought and Lexeme for inserting a new thought into a context. */
 const insertThought = (
   state: State,
-  parentOld: Parent,
+  parentOld: Thought,
   value: string,
   context: Context,
   rank: number,
@@ -70,7 +70,7 @@ const insertThought = (
     updatedBy,
   }
 
-  const parentNew: Parent = {
+  const parentNew: Thought = {
     // TODO: merging parentOld results in pending: true when importing into initialState. Is that correct?
     ...parentOld,
     value: head(rootContext),
@@ -80,7 +80,7 @@ const insertThought = (
     updatedBy,
   }
 
-  const newThought: Parent = {
+  const newThought: Thought = {
     id: newThoughtId,
     value: value,
     children: [],
@@ -248,7 +248,7 @@ const getContextsNum = (blocks: Block[]): number => {
 }
 
 /** Calculate rankIncrement value based on rank of next sibling or its absence. */
-const getRankIncrement = (state: State, blocks: Block[], context: Context, destThought: Parent, rankStart: number) => {
+const getRankIncrement = (state: State, blocks: Block[], context: Context, destThought: Thought, rankStart: number) => {
   const destValue = destThought.value
   const destRank = destThought.rank
   const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
@@ -264,7 +264,7 @@ export const importJSON = (
   { lastUpdated = timestamp(), updatedBy = getSessionId(), skipRoot = false }: ImportJSONOptions = {},
 ) => {
   const initialThoughtIndex: Index<Lexeme> = {}
-  const initialContextIndex: Index<Parent> = {}
+  const initialContextIndex: Index<Thought> = {}
   const context = pathToContext(state, parentOf(simplePath))
   const destThought = state.thoughts.contextIndex[head(simplePath)]
   const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(state, simplePath)).length === 0

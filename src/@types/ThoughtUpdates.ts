@@ -1,8 +1,8 @@
 import { Index } from './IndexType'
-import { Parent } from './Parent'
+import { Thought } from './Thought'
 import { Lexeme } from './Lexeme'
 
 export interface ThoughtUpdates {
-  contextIndex: Index<Parent | null>
+  contextIndex: Index<Thought | null>
   thoughtIndex: Index<Lexeme | null>
 }

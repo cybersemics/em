@@ -4,7 +4,7 @@ import { EM_TOKEN } from '../constants'
 
 // util
 // import { escapeSelector } from './escapeSelector'
-import { Context, Parent, State, ThoughtId } from '../@types'
+import { Context, Thought, State, ThoughtId } from '../@types'
 // import { normalizeThought } from './normalizeThought'
 // import { getAllChildren } from '../selectors'
 import { isRoot } from './isRoot'
@@ -46,11 +46,11 @@ export const getThoughtIdByContext = (state: State, thoughts: Context, rank?: nu
  */
 const recursiveParentFinder = (
   state: State,
-  parent: Parent,
+  parent: Thought,
   target: Context,
   targetIndex = 0,
   visitedId: string[] = [],
-): Parent | null => {
+): Thought | null => {
   if (target.length === 0 && parent.children.length === 0) return null
 
   const children = childIdsToThoughts(state, parent.children) ?? []

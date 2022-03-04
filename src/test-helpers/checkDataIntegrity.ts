@@ -1,10 +1,10 @@
 import { hashThought } from '../util'
-import { Index, Parent, State } from '../@types'
+import { Index, Thought, State } from '../@types'
 import { ROOT_PARENT_ID } from '../constants'
 /**
  * Recurively get all the thought ids that are not available in the contextIndex.
  */
-const recursiveCheckParent = (contextIndex: Index<Parent>, thoughtIds: string[]): string[] => {
+const recursiveCheckParent = (contextIndex: Index<Thought>, thoughtIds: string[]): string[] => {
   return thoughtIds.reduce<string[]>((accum, thoughtId) => {
     const thought = contextIndex[thoughtId]
     if (!thought) return [...accum, thoughtId]

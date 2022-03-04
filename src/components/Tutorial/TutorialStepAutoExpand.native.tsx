@@ -12,7 +12,7 @@ import { getAllChildren } from '../../selectors'
 
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
-import { Path, Parent } from '../../@types'
+import { Path, Thought } from '../../@types'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 
 const { smallText, italic } = commonStyles
@@ -34,7 +34,7 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
   const isCursorCollapsePossible = ancestorThoughtChildren.length > 1 && !(isCursorRootChildren && isCursorLeaf)
 
   /** Gets the subthought that is not the cursor. */
-  const subThoughtNotCursor = (subthoughts: Parent[]) =>
+  const subThoughtNotCursor = (subthoughts: Thought[]) =>
     subthoughts.find(child => cursorContext.indexOf(child.value) === -1)
 
   return (

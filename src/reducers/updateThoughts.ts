@@ -5,13 +5,13 @@ import { editThoughtPayload } from '../reducers/editThought'
 import { htmlToJson, importJSON, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { Context, Index, Lexeme, Parent, Path, PendingMerge, PushBatch, SimplePath, State } from '../@types'
+import { Context, Index, Lexeme, Thought, Path, PendingMerge, PushBatch, SimplePath, State } from '../@types'
 
 export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Lexeme | null>
-  contextIndexUpdates: Index<Parent | null>
+  contextIndexUpdates: Index<Thought | null>
   recentlyEdited?: Index
-  pendingDeletes?: { context: Context; thought: Parent }[]
+  pendingDeletes?: { context: Context; thought: Thought }[]
   pendingEdits?: editThoughtPayload[]
   pendingPulls?: { path: Path }[]
   pendingMerges?: PendingMerge[]
@@ -87,7 +87,7 @@ const updateThoughts = (
   //     const thought = state.thoughts.contextIndex[childId]
 
   //     if (!thought) {
-  //       throw new Error(`Parent entry for id ${childId} not found!`)
+  //       throw new Error(`Thought entry for id ${childId} not found!`)
   //     }
   //     if (thought.value == null || thought.rank == null) {
   //       console.error('child', thought)
@@ -119,7 +119,7 @@ const updateThoughts = (
   // }
   // }
 
-  // There is a bug that is saving full Parents into Lexeme.contexts.
+  // There is a bug that is saving full Thoughts into Lexeme.contexts.
   // Throw here to help identify the upstream problem.
 
   Object.values(thoughtIndexUpdates).forEach(lexemeUpdate => {
@@ -183,7 +183,7 @@ const updateThoughts = (
 
   /** Returns false if the root thought is loaded and not pending. */
   const isStillLoading = () => {
-    const rootThought = contextIndex[HOME_TOKEN] as Parent | null
+    const rootThought = contextIndex[HOME_TOKEN] as Thought | null
     const thoughtsLoaded =
       rootThought &&
       !rootThought.pending &&
@@ -211,7 +211,7 @@ const updateThoughts = (
     }),
 
     // Data Integrity Check
-    // Catch Lexeme-Parent rank mismatches on empty thought.
+    // Catch Lexeme-Thought rank mismatches on empty thought.
     // Disable since 2-part moves rely on temporary invalid state.
     // Re-enable after Independent Editing (#495)
 
@@ -220,8 +220,8 @@ const updateThoughts = (
     //   Object.values(thoughtIndexUpdates).forEach(lexeme => {
     //     // loop through each ThoughtContext of each Lexeme
     //     lexeme?.contexts.forEach(cx => {
-    //       // find the Child with the same value and rank in the Parent
-    //       const parent = getParent(state, cx.context)
+    //       // find the Child with the same value and rank in the Thought
+    //       const parent = getThought(state, cx.context)
     //       const child = parent?.children.find(
     //         child => normalizeThought(child.value) === normalizeThought(lexeme.value) && child.rank === cx.rank,
     //       )
@@ -231,7 +231,7 @@ const updateThoughts = (
     //         throw new Error(
     //           `ThoughtContext for "${lexeme.value}" in ${JSON.stringify(cx.context)} with rank ${
     //             cx.rank
-    //           } is not found in corresponding Parent.`,
+    //           } is not found in corresponding Thought.`,
     //         )
     //       }
     //     })

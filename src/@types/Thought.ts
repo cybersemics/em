@@ -2,7 +2,7 @@ import { ThoughtId } from './ThoughtId'
 import { Timestamp } from './Timestamp'
 
 /** An object that contains a list of children within a context. */
-export interface Parent {
+export interface Thought {
   id: ThoughtId
   value: string
   rank: number

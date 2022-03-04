@@ -7,13 +7,13 @@ import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
 import { getUserRef, getThoughtIdByContext, isFunction, logWithTime, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
-import { Thunk, Index, Lexeme, Parent, State, ThoughtId } from '../@types'
+import { Thunk, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { storage } from '../util/storage'
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (
   state: State,
-  contextIndexUpdates: Index<Parent | null> = {},
+  contextIndexUpdates: Index<Thought | null> = {},
   thoughtIndexUpdates: Index<Lexeme | null> = {},
   recentlyEdited: Index,
   updates: Index = {},
@@ -76,7 +76,7 @@ const pushLocal = (
 /** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
 const pushRemote =
   (
-    contextIndexUpdates: Index<Parent | null> = {},
+    contextIndexUpdates: Index<Thought | null> = {},
     thoughtIndexUpdates: Index<Lexeme | null> = {},
     recentlyEdited: Index | undefined,
     updates: Index = {},
@@ -122,7 +122,7 @@ const pushRemote =
               }
             : null
       },
-      {} as Index<Parent | null>,
+      {} as Index<Thought | null>,
     )
 
     logWithTime('pushRemote: prepend contextIndex key')
@@ -165,7 +165,7 @@ const pushRemote =
 /** Syncs updates to local database and Firebase. */
 const push =
   (
-    contextIndexUpdates: Index<Parent | null> = {},
+    contextIndexUpdates: Index<Thought | null> = {},
     thoughtIndexUpdates: Index<Lexeme | null> = {},
     { local = true, remote = true, updates = {}, recentlyEdited = {} } = {},
   ): Thunk =>

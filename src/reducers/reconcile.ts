@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
-import { Index, Lexeme, Parent, State, ThoughtId, ThoughtsInterface } from '../@types'
+import { Index, Lexeme, Thought, State, ThoughtId, ThoughtsInterface } from '../@types'
 import { getThoughtById } from '../selectors'
 
 interface ReconcileOptions {
@@ -16,10 +16,10 @@ interface ReconcileOptions {
 const emContextEncoded = EM_TOKEN
 
 /** Returns true if the source object is has been updated more recently than the destination object. */
-const isNewer = (src: Parent | Lexeme, dest: Parent | Lexeme) => src.lastUpdated > dest.lastUpdated
+const isNewer = (src: Thought | Lexeme, dest: Thought | Lexeme) => src.lastUpdated > dest.lastUpdated
 
 /** Returns true if the em context should be updated. */
-const shouldUpdateEm = (src: Parent, dest: Parent, key: string) =>
+const shouldUpdateEm = (src: Thought, dest: Thought, key: string) =>
   key === emContextEncoded && src.children.length > dest.children.length
 
 /** Compares local and remote and updates missing thoughts or those with older timestamps. */
@@ -30,15 +30,15 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
 
   /** Returns a predicate that returns true if a key is missing from the given destination object or it was updated more recently than the value in the destination object. */
   const shouldUpdateDest =
-    (destObj: Index<Parent | Lexeme> = {}) =>
-    (src: Parent | Lexeme, key: string) => {
+    (destObj: Index<Thought | Lexeme> = {}) =>
+    (src: Thought | Lexeme, key: string) => {
       const dest = destObj[key]
       return (
         src &&
         (!(key in destObj) ||
           isNewer(src, dest) ||
           // allow EM context to be updated if source
-          shouldUpdateEm(src as Parent, dest as Parent, key))
+          shouldUpdateEm(src as Thought, dest as Thought, key))
       )
     }
 
@@ -62,7 +62,7 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
     // get pending, non-updated thoughts
     _.pickBy(
       thoughtsLocal.contextIndex,
-      (parentEntry: Parent, key: string) =>
+      (parentEntry: Thought, key: string) =>
         !getThoughtById(state, key as ThoughtId) &&
         !contextIndexLocalOnly[key] &&
         (thoughtsRemote.contextIndex || {})[key] &&

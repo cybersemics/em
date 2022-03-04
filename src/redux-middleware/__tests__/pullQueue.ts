@@ -7,7 +7,7 @@ import getContext from '../../data-providers/data-helpers/getContext'
 import getParentDB from '../../data-providers/data-helpers/getParent'
 import { DataProvider } from '../../data-providers/DataProvider'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { Context, Parent } from '../../@types'
+import { Context, Thought } from '../../@types'
 import testTimer from '../../test-helpers/testTimer'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
@@ -26,7 +26,7 @@ const db = dexie as DataProvider
 /**
  * Match given children with for given context.
  */
-const matchContextsChildren = async (provider: DataProvider, context: Context, children: Partial<Parent>[]) => {
+const matchContextsChildren = async (provider: DataProvider, context: Context, children: Partial<Thought>[]) => {
   const parentThought = (await getContext(provider, context))!
   expect(parentThought).toBeTruthy()
   const childrenThoughts = await provider.getContextsByIds(parentThought.children)

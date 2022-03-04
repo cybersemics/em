@@ -4,7 +4,7 @@ import { canShowModal } from '../selectors'
 import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
 import { getSessionId } from './sessionManager'
 import { storage } from './storage'
-import { State, Timestamp, ThoughtsInterface, Parent, Index, ThoughtId } from '../@types'
+import { State, Timestamp, ThoughtsInterface, Thought, Index, ThoughtId } from '../@types'
 import { isLocalNetwork } from '../device/router'
 
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -18,7 +18,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN
-  const contextIndex: Index<Parent> = {
+  const contextIndex: Index<Thought> = {
     [HOME_TOKEN_HASH]: {
       id: HOME_TOKEN as ThoughtId,
       value: HOME_TOKEN,

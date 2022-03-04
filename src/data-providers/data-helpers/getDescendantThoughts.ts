@@ -2,7 +2,7 @@ import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { hashThought, isFunction, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
-import { Parent, State, ThoughtId, ThoughtsInterface } from '../../@types'
+import { Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
 import { getContextForThought, getThoughtById } from '../../selectors'
 import { getSessionId } from '../../util/sessionManager'
 
@@ -19,7 +19,7 @@ interface Options {
  * - Context contains the em context.
  * - Context has a non-archive metaprogramming attribute.
  */
-const isUnbuffered = (state: State, parent: Parent) => {
+const isUnbuffered = (state: State, parent: Thought) => {
   // Note: Since parent does not have context and we have to generate context from available state. May not work as intended if the we pull a thought whose ancestors has not been pulled yet.
   const context = getContextForThought(state, parent.id)
 
@@ -58,7 +58,7 @@ async function* getDescendantThoughts(
   // eslint-disable-next-line fp/no-loops
   while (pullThoughtIds.length > 0) {
     // TODO: Find better way to remove null from the type here.
-    const providerParents = (await provider.getContextsByIds(pullThoughtIds)).filter(Boolean) as Parent[]
+    const providerParents = (await provider.getContextsByIds(pullThoughtIds)).filter(Boolean) as Thought[]
 
     if (providerParents.length < pullThoughtIds.length) {
       console.error(`getDescendantThoughts: Cannot get parent for some ids.`, pullThoughtIds, providerParents)
