@@ -3,7 +3,7 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
 import { headValue, once } from '../../util'
-import { getParent, getSetting } from '../../selectors'
+import { getThought, getSetting } from '../../selectors'
 import { tutorial } from '../../action-creators'
 import { GesturePath, State } from '../../@types'
 import { StyleSheet } from 'react-native'
@@ -53,7 +53,7 @@ const Tutorial = () => {
     return {
       contextViews,
       cursor,
-      rootChildren: getParent(state, [HOME_TOKEN])?.children,
+      rootChildren: getThought(state, [HOME_TOKEN])?.children,
       tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT1_PARENT,
       tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
     }

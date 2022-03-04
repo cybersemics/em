@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { importText, editThought } from '../../action-creators'
-import { getLexeme as getLexemeState, getParent, rankThoughtsFirstMatch } from '../../selectors'
+import { getLexeme as getLexemeState, getThought, rankThoughtsFirstMatch } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getLexemeDb from '../../data-providers/data-helpers/getLexeme'
 import { DataProvider } from '../../data-providers/DataProvider'
@@ -45,8 +45,8 @@ it('editing a thought should load the lexeme and merge contexts', async () => {
 
   expect((await getLexemeDb(db, 'f'))?.contexts).toHaveLength(1)
 
-  const thoughtH = getParent(store.getState(), ['g', 'h'])
-  const thoughtF = getParent(store.getState(), ['a', 'b', 'c', 'd', 'e', 'f'])
+  const thoughtH = getThought(store.getState(), ['g', 'h'])
+  const thoughtF = getThought(store.getState(), ['a', 'b', 'c', 'd', 'e', 'f'])
 
   // refresh test app
   await refreshTestApp()

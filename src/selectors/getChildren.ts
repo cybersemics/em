@@ -31,7 +31,7 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Th
 })
 
 /** Gets a Thought from the contextIndex. */
-export const getParent = (state: State, context: Context): Thought | null => {
+export const getThought = (state: State, context: Context): Thought | null => {
   const id = getThoughtIdByContext(state, context)
   return id ? getThoughtById(state, id) : null
 }

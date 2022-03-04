@@ -2,7 +2,7 @@ import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { getThoughtIdByContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getLexeme, getParent, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, getLexeme, getThought, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
@@ -41,8 +41,8 @@ it('basic import with proper thought structure', () => {
   const stateNew = importText(initialState(now), { text, lastUpdated: now })
   const { contextIndex, thoughtIndex } = stateNew.thoughts
 
-  const childAId = getParent(stateNew, [HOME_TOKEN])?.children[0]
-  const childBId = getParent(stateNew, ['a'])?.children[0]
+  const childAId = getThought(stateNew, [HOME_TOKEN])?.children[0]
+  const childBId = getThought(stateNew, ['a'])?.children[0]
 
   expect(contextIndex).toMatchObject({
     [getThoughtIdByContext(stateNew, [EM_TOKEN])!]: {
@@ -157,13 +157,13 @@ it('merge descendants', () => {
 
   const { contextIndex } = newState.thoughts
 
-  const thoughtA = getParent(newState, ['a'])!
-  const thoughtB = getParent(newState, ['a', 'b'])!
-  const thoughtC = getParent(newState, ['a', 'b', 'c'])!
-  const thoughtQ = getParent(newState, ['a', 'b', 'q'])!
-  const thoughtX = getParent(newState, ['a', 'x'])!
-  const thoughtY = getParent(newState, ['a', 'x', 'y'])!
-  const thoughtJ = getParent(newState, ['j'])!
+  const thoughtA = getThought(newState, ['a'])!
+  const thoughtB = getThought(newState, ['a', 'b'])!
+  const thoughtC = getThought(newState, ['a', 'b', 'c'])!
+  const thoughtQ = getThought(newState, ['a', 'b', 'q'])!
+  const thoughtX = getThought(newState, ['a', 'x'])!
+  const thoughtY = getThought(newState, ['a', 'x', 'y'])!
+  const thoughtJ = getThought(newState, ['j'])!
 
   expect(contextIndex).toMatchObject({
     [getThoughtIdByContext(newState, [HOME_TOKEN])!]: {
@@ -1884,8 +1884,8 @@ it('properly add lexeme entries for multiple thoughts with same value on import'
   const stateNew = reducerFlow([importText({ text })])(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  const thoughtMFirst = getParent(stateNew, ['a', 'm'])
-  const thoughtMSecond = getParent(stateNew, ['m'])
+  const thoughtMFirst = getThought(stateNew, ['a', 'm'])
+  const thoughtMSecond = getThought(stateNew, ['m'])
 
   const lexemeM = getLexeme(stateNew, 'm')
 
