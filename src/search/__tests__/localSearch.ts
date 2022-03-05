@@ -8,7 +8,7 @@ import { getLocalSearch } from '../localSearch'
 const importThoughts = (text: string) => {
   const stateNew = importText(initialState(), { text })
   return {
-    contextIndex: stateNew.thoughts.contextIndex,
+    thoughtIndex: stateNew.thoughts.thoughtIndex,
     lexemeIndex: stateNew.thoughts.lexemeIndex,
   }
 }
@@ -18,7 +18,7 @@ describe('local search', () => {
   afterEach(db.clearAll)
 
   it('full text search with single word', async () => {
-    const { lexemeIndex, contextIndex } = importThoughts(`
+    const { lexemeIndex, thoughtIndex } = importThoughts(`
     - LP
       - Lost on you
       - One last time
@@ -43,7 +43,7 @@ describe('local search', () => {
       thoughts: {
         ...state.thoughts,
         lexemeIndex,
-        contextIndex,
+        thoughtIndex,
       },
     })
 
@@ -58,7 +58,7 @@ describe('local search', () => {
   })
 
   it('full text search with multiple words', async () => {
-    const { lexemeIndex, contextIndex } = importThoughts(`
+    const { lexemeIndex, thoughtIndex } = importThoughts(`
     - Tasks
       - Errands
         - Get apple juice
@@ -81,7 +81,7 @@ describe('local search', () => {
       thoughts: {
         ...state.thoughts,
         lexemeIndex,
-        contextIndex,
+        thoughtIndex,
       },
     })
 
@@ -99,7 +99,7 @@ describe('local search', () => {
   })
 
   it('full text search with ignore case', async () => {
-    const { lexemeIndex, contextIndex } = importThoughts(`
+    const { lexemeIndex, thoughtIndex } = importThoughts(`
     - Anime Characters
       - Naruto
         - Knucklehead
@@ -122,7 +122,7 @@ describe('local search', () => {
       thoughts: {
         ...state.thoughts,
         lexemeIndex,
-        contextIndex,
+        thoughtIndex,
       },
     })
 

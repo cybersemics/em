@@ -68,7 +68,7 @@ const testData = [
 const importExport = (roamJson: RoamPage[]) => {
   const thoughtsJSON = roamJsonToBlocks(roamJson)
   const state = initialState()
-  const { contextIndexUpdates: contextIndex, lexemeIndexUpdates: lexemeIndex } = importJSON(
+  const { thoughtIndexUpdates: thoughtIndex, lexemeIndexUpdates: lexemeIndex } = importJSON(
     state,
     HOME_PATH as SimplePath,
     thoughtsJSON,
@@ -79,7 +79,7 @@ const importExport = (roamJson: RoamPage[]) => {
     ...initialState(),
     thoughts: {
       ...state.thoughts,
-      contextIndex,
+      thoughtIndex,
       lexemeIndex,
     },
   }
@@ -207,7 +207,7 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
 
   const blocks = roamJsonToBlocks(testData)
 
-  const { contextIndexUpdates: contextIndex, lexemeIndexUpdates: lexemeIndex } = importJSON(
+  const { thoughtIndexUpdates: thoughtIndex, lexemeIndexUpdates: lexemeIndex } = importJSON(
     initialState(),
     HOME_PATH as SimplePath,
     blocks,
@@ -230,11 +230,11 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
     return editTimeOf?.toISOString()
   }
 
-  const contextIndexEntries = keyValueBy(contextIndex, (key, thought) => ({
+  const thoughtIndexEntries = keyValueBy(thoughtIndex, (key, thought) => ({
     [thought.value]: thought,
   }))
 
-  expect(contextIndexEntries).toMatchObject({
+  expect(thoughtIndexEntries).toMatchObject({
     // RoamPages acquire the edit time of their last child
     Fruits: { lastUpdated: editTimeOf('Banana') },
     Veggies: { lastUpdated: editTimeOf('Spinach') },
@@ -248,7 +248,7 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
 
   expect(lexemeIndex).toMatchObject({
     // RoamPages acquire the edit time of their first child for thoughts
-    // TODO: This differs from contextIndex incidentally. Should normalize the edit times used for contextIndex and lexemeIndex.
+    // TODO: This differs from thoughtIndex incidentally. Should normalize the edit times used for thoughtIndex and lexemeIndex.
     [hashThought('Fruits')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
     [hashThought('Veggies')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
 

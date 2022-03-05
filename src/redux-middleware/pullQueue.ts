@@ -31,7 +31,7 @@ const appendVisiblePathsChildren = (
   pullQueue: Record<ThoughtId, true>,
   visiblePaths: Index<Path>,
 ): Record<ThoughtId, true> => {
-  // get the encoded context keys that are not in the contextIndex
+  // get the encoded context keys that are not in the thoughtIndex
   const expandedKeys = Object.keys(visiblePaths)
 
   return keyValueBy(
@@ -48,7 +48,7 @@ const appendVisiblePathsChildren = (
       const children = thought
         ? showContexts
           ? getContexts(state, thought.value)
-          : state.thoughts.contextIndex[thoughtId].children
+          : state.thoughts.thoughtIndex[thoughtId].children
         : []
 
       return {

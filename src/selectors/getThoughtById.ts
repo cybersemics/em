@@ -4,7 +4,7 @@ import { head } from '../util'
 /**
  * Get parent entry for the given thought id.
  */
-export const getThoughtById = (state: State, id: ThoughtId) => state.thoughts.contextIndex[id]
+export const getThoughtById = (state: State, id: ThoughtId) => state.thoughts.thoughtIndex[id]
 
 /**
  * Get parent entry for the given path.

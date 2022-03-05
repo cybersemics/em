@@ -108,7 +108,7 @@ const editThought = (
     [newKey]: lexemeNew,
   }
 
-  const contextIndexUpdates = {
+  const thoughtIndexUpdates = {
     [parentofEditedThought.id]: {
       ...parentofEditedThought,
       children: thoughtNewSubthoughts,
@@ -123,7 +123,7 @@ const editThought = (
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     },
-    // ...contextIndexDescendantUpdates,
+    // ...thoughtIndexDescendantUpdates,
   }
 
   // preserve contextViews
@@ -145,7 +145,7 @@ const editThought = (
 
   return updateThoughts(stateNew, {
     lexemeIndexUpdates,
-    contextIndexUpdates,
+    thoughtIndexUpdates,
     // recentlyEdited,
   })
 }

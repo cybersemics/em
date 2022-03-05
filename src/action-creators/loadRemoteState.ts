@@ -41,8 +41,8 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
   logWithTime('loadRemoteState: updateLexemeIndex')
 
   // contextEncodedRaw is firebase encoded
-  const contextIndexUpdates: Index<Thought | null> = keyValueBy(
-    newState.thoughts.contextIndex || {},
+  const thoughtIndexUpdates: Index<Thought | null> = keyValueBy(
+    newState.thoughts.thoughtIndex || {},
     (contextEncodedRaw, parentEntryNew) => {
       const contextEncoded =
         newState.schemaVersion < SCHEMA_HASHKEYS
@@ -50,7 +50,7 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
             ? ''
             : firebaseDecode(contextEncodedRaw)
           : contextEncodedRaw
-      const parentEntryOld = oldState.thoughts.contextIndex[contextEncoded]
+      const parentEntryOld = oldState.thoughts.thoughtIndex[contextEncoded]
       const updated =
         !parentEntryOld ||
         parentEntryNew.lastUpdated > parentEntryOld.lastUpdated ||
@@ -63,33 +63,33 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
     },
   )
 
-  logWithTime('loadRemoteState: contextIndexUpdates generated')
+  logWithTime('loadRemoteState: thoughtIndexUpdates generated')
 
   // update local database in background
   if (isDocumentEditable()) {
-    db.updateContextIndex(contextIndexUpdates)
+    db.updateThoughtIndex(thoughtIndexUpdates)
   }
 
-  logWithTime('loadRemoteState: updateContextIndex')
+  logWithTime('loadRemoteState: updateThoughtIndex')
 
-  // delete local contextIndex that no longer exists in firebase
+  // delete local thoughtIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (oldState.lastUpdated! <= newState.lastUpdated!) {
-    Object.keys(oldState.thoughts.contextIndex).forEach(contextEncoded => {
-      if (!(contextEncoded in (newState.thoughts.contextIndex || {}))) {
-        contextIndexUpdates[contextEncoded] = null
+    Object.keys(oldState.thoughts.thoughtIndex).forEach(contextEncoded => {
+      if (!(contextEncoded in (newState.thoughts.thoughtIndex || {}))) {
+        thoughtIndexUpdates[contextEncoded] = null
       }
     })
   }
 
-  logWithTime('loadRemoteState: local contextIndex entries deleted')
+  logWithTime('loadRemoteState: local thoughtIndex entries deleted')
 
   if (Object.keys(lexemeIndexUpdates).length > 0) {
     logWithTime('updateThoughts')
     dispatch(
       updateThoughts({
         lexemeIndexUpdates,
-        contextIndexUpdates,
+        thoughtIndexUpdates,
         recentlyEdited: newState.recentlyEdited,
         remote: false,
       }),
@@ -120,7 +120,7 @@ const loadRemoteState =
 
 //   logWithTime('loadRemoteState: migrated')
 
-//   const { lexemeIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
+//   const { lexemeIndexUpdates, thoughtIndexUpdates, schemaVersion } = newStateUpdates
 
 //   // eslint-disable-next-line fp/no-let
 //   let output = [newState, oldState]
@@ -129,7 +129,7 @@ const loadRemoteState =
 //   if (schemaVersion > schemaVersionOriginal) {
 
 //     const updateThoughtsArgs = {
-//       contextIndexUpdates,
+//       thoughtIndexUpdates,
 //       lexemeIndexUpdates,
 //       remote: false,
 //       updates: { schemaVersion },

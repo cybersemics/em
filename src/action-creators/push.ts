@@ -13,7 +13,7 @@ import { storage } from '../util/storage'
 /** Syncs thought updates to the local database. */
 const pushLocal = (
   state: State,
-  contextIndexUpdates: Index<Thought | null> = {},
+  thoughtIndexUpdates: Index<Thought | null> = {},
   lexemeIndexUpdates: Index<Lexeme | null> = {},
   recentlyEdited: Index,
   updates: Index = {},
@@ -32,24 +32,24 @@ const pushLocal = (
 
   logWithTime('sync: lexemeIndexPromises generated')
 
-  const updatedContextIndex = {
-    ...state.thoughts.contextIndex,
-    ...contextIndexUpdates,
+  const updatedThoughtIndex = {
+    ...state.thoughts.thoughtIndex,
+    ...thoughtIndexUpdates,
   }
-  // contextIndex
-  const contextIndexPromises = [
-    ...Object.keys(contextIndexUpdates).map(contextEncoded => {
-      const parentEntry = contextIndexUpdates[contextEncoded]
+  // thoughtIndex
+  const thoughtIndexPromises = [
+    ...Object.keys(thoughtIndexUpdates).map(contextEncoded => {
+      const parentEntry = thoughtIndexUpdates[contextEncoded]
 
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[contextEncoded]
       if (name) {
         const firstChild = parentEntry?.children.find(child => {
-          const thought = updatedContextIndex[child]
+          const thought = updatedThoughtIndex[child]
           return thought && !isFunction(thought.value)
         })
         if (firstChild) {
-          const thought = updatedContextIndex[firstChild]
+          const thought = updatedThoughtIndex[firstChild]
           storage.setItem(`Settings/${name}`, thought!.value)
         }
       }
@@ -60,7 +60,7 @@ const pushLocal = (
     db.updateLastUpdated(timestamp()),
   ]
 
-  logWithTime('sync: contextIndexPromises generated')
+  logWithTime('sync: thoughtIndexPromises generated')
 
   // recentlyEdited
   const recentlyEditedPromise = recentlyEdited ? db.updateRecentlyEdited(recentlyEdited) : null
@@ -70,13 +70,13 @@ const pushLocal = (
 
   logWithTime('sync: localPromises generated')
 
-  return Promise.all([...lexemeIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise])
+  return Promise.all([...lexemeIndexPromises, ...thoughtIndexPromises, recentlyEditedPromise, schemaVersionPromise])
 }
 
-/** Prepends lexemeIndex and contextIndex keys for syncing to Firebase. */
+/** Prepends lexemeIndex and thoughtIndex keys for syncing to Firebase. */
 const pushRemote =
   (
-    contextIndexUpdates: Index<Thought | null> = {},
+    thoughtIndexUpdates: Index<Thought | null> = {},
     lexemeIndexUpdates: Index<Lexeme | null> = {},
     recentlyEdited: Index | undefined,
     updates: Index = {},
@@ -86,7 +86,7 @@ const pushRemote =
 
     const hasUpdates =
       Object.keys(lexemeIndexUpdates).length > 0 ||
-      Object.keys(contextIndexUpdates).length > 0 ||
+      Object.keys(thoughtIndexUpdates).length > 0 ||
       Object.keys(updates).length > 0
 
     // prepend lexemeIndex/ and encode key
@@ -103,12 +103,12 @@ const pushRemote =
 
     logWithTime('pushRemote: prepend lexemeIndex key')
 
-    const prependedContextIndexUpdates = _.transform(
-      contextIndexUpdates,
+    const prependedThoughtIndexUpdates = _.transform(
+      thoughtIndexUpdates,
       (accum, parentUpdate, key) => {
         // fix undefined/NaN rank
         const children = parentUpdate && parentUpdate.children
-        accum['contextIndex/' + key] =
+        accum['thoughtIndex/' + key] =
           children && children.length > 0
             ? {
                 id: parentUpdate!.id,
@@ -125,7 +125,7 @@ const pushRemote =
       {} as Index<Thought | null>,
     )
 
-    logWithTime('pushRemote: prepend contextIndex key')
+    logWithTime('pushRemote: prepend thoughtIndex key')
 
     // add updates to queue appending clientId and timestamp
     const allUpdates = {
@@ -134,7 +134,7 @@ const pushRemote =
         ? {
             ...updates,
             ...prependedDataUpdates,
-            ...prependedContextIndexUpdates,
+            ...prependedThoughtIndexUpdates,
             ...(recentlyEdited ? { recentlyEdited } : null),
             // do not update lastClientId and lastUpdated if there are no lexemeIndex updates (e.g. just a settings update)
             // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore lexemeIndex updates from the remote thinking it is already up-to-speed
@@ -165,7 +165,7 @@ const pushRemote =
 /** Syncs updates to local database and Firebase. */
 const push =
   (
-    contextIndexUpdates: Index<Thought | null> = {},
+    thoughtIndexUpdates: Index<Thought | null> = {},
     lexemeIndexUpdates: Index<Lexeme | null> = {},
     { local = true, remote = true, updates = {}, recentlyEdited = {} } = {},
   ): Thunk =>
@@ -180,7 +180,7 @@ const push =
 
     // Filter out pending Thoughts so they are not persisted.
     // Why not filter them out upstream in updateThoughts? Pending Thoughts sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
-    const contextIndexUpdatesNotPending = _.pickBy(contextIndexUpdates, thought => !thought?.pending)
+    const thoughtIndexUpdatesNotPending = _.pickBy(thoughtIndexUpdates, thought => !thought?.pending)
 
     // store the hashes of the localStorage Settings contexts for quick lookup
     // settings that are propagated to localStorage for faster load on startup
@@ -205,7 +205,7 @@ const push =
       local &&
         pushLocal(
           getState(),
-          contextIndexUpdatesNotPending,
+          thoughtIndexUpdatesNotPending,
           lexemeIndexUpdates,
           recentlyEdited,
           updates,
@@ -216,7 +216,7 @@ const push =
       remote &&
         authenticated &&
         userRef &&
-        pushRemote(contextIndexUpdatesNotPending, lexemeIndexUpdates, recentlyEdited, updates)(dispatch, getState),
+        pushRemote(thoughtIndexUpdatesNotPending, lexemeIndexUpdates, recentlyEdited, updates)(dispatch, getState),
     ])
   }
 

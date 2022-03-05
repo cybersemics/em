@@ -26,12 +26,12 @@ import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
   const {
-    thoughts: { contextIndex },
+    thoughts: { thoughtIndex },
     cursor,
     expanded = {},
   } = state
   return {
-    contextIndex,
+    thoughtIndex,
     expanded,
     rootChildren: getAllChildrenAsThoughts(state, [HOME_TOKEN]),
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,

@@ -38,13 +38,13 @@ const tutorialSteps = [
 const TutorialNavigationNext = () => {
   const { cursorValue, expanded, rootChildren, tutorialChoice, tutorialStep } = useSelector((state: State) => {
     const {
-      thoughts: { contextIndex },
+      thoughts: { thoughtIndex },
       cursor,
       expanded = {},
     } = state
 
     return {
-      contextIndex,
+      thoughtIndex,
       expanded,
       rootChildren: getAllChildren(state, [HOME_TOKEN]),
       tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0),

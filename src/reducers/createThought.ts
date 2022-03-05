@@ -39,7 +39,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
 
   if (!thought) return state
 
-  const contextIndexUpdates: Index<Thought> = {}
+  const thoughtIndexUpdates: Index<Thought> = {}
 
   if (context.length > 0) {
     const newValue = addAsContext ? head(context) : value
@@ -48,7 +48,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       .filter(child => child !== id)
       .concat(id)
 
-    contextIndexUpdates[thought.id] = {
+    thoughtIndexUpdates[thought.id] = {
       ...getThoughtById(state, thought.id),
       id: thought.id,
       children,
@@ -56,7 +56,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       updatedBy: getSessionId(),
     }
 
-    contextIndexUpdates[id] = {
+    thoughtIndexUpdates[id] = {
       id,
       parentId: thought.id,
       children: [],
@@ -96,7 +96,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       : null),
   }
 
-  return updateThoughts(state, { lexemeIndexUpdates, contextIndexUpdates })
+  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates })
 }
 
 export default _.curryRight(createThought)

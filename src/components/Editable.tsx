@@ -546,7 +546,7 @@ const Editable = ({
     if (
       typeof window !== 'undefined' &&
       plainText.startsWith(`{
-  "contextIndex": {
+  "thoughtIndex": {
     "__ROOT__": {`) &&
       !window.confirm('Import raw thought state? Current state will be overwritten.')
     ) {

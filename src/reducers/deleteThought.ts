@@ -22,7 +22,7 @@ interface Payload {
 }
 
 interface ThoughtUpdates {
-  contextIndex: Index<Thought | null>
+  thoughtIndex: Index<Thought | null>
   lexemeIndex: Index<Lexeme | null>
   pendingDeletes?: { context: Context; thought: Thought }[]
 }
@@ -107,7 +107,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
 
   const subthoughts = getAllChildrenAsThoughts(state, context).filter(child => child.id !== deletedThought.id)
 
-  /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
+  /** Generates a firebase update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
   const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
     // modify the state to use the lexemeIndex with newOldLexeme
     // this ensures that contexts are calculated correctly for descendants with duplicate values
@@ -169,16 +169,16 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
             ...recursiveResults.lexemeIndex,
             [hashedKey]: childNew,
           },
-          contextIndex: {
-            ...accum.contextIndex,
-            ...recursiveResults.contextIndex,
+          thoughtIndex: {
+            ...accum.thoughtIndex,
+            ...recursiveResults.thoughtIndex,
           },
         }
       },
       {
         lexemeIndex: accumRecursive.lexemeIndex,
-        contextIndex: {
-          ...accumRecursive.contextIndex,
+        thoughtIndex: {
+          ...accumRecursive.thoughtIndex,
           [thought.id]: null,
         },
       } as ThoughtUpdates,
@@ -191,7 +191,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     ? recursiveDeletes(deletedThought)
     : ({
         lexemeIndex: {},
-        contextIndex: {},
+        thoughtIndex: {},
       } as ThoughtUpdates)
 
   const lexemeIndexUpdates = {
@@ -200,7 +200,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     // emptyContextDelete
   }
 
-  const contextIndexUpdates = {
+  const thoughtIndexUpdates = {
     // Deleted thought's parent
     // Note: Thoughts in pending deletes won't have it's parent in the state. So orphaned thoughts doesn't need to care about its parent update.
     ...(parent && {
@@ -213,7 +213,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     }),
     [deletedThought.id]: null,
     // descendants
-    ...descendantUpdatesResult.contextIndex,
+    ...descendantUpdatesResult.thoughtIndex,
   }
 
   return reducerFlow([
@@ -222,7 +222,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
       contextViews: contextViewsNew,
     }),
     updateThoughts({
-      contextIndexUpdates,
+      thoughtIndexUpdates,
       lexemeIndexUpdates,
       // recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,

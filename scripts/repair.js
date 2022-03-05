@@ -2,15 +2,15 @@
  * This script runs client-side (in the browser console) and operate directly on in-memory data using window.em and then dispatching updateThoughts to sync.
  */
 
-/** Recursively traverses the contextIndex starting with the root, and performs several automatic fixes on all reachable descendants (with the corresponding context in lexemeIndex as needed):
+/** Recursively traverses the thoughtIndex starting with the root, and performs several automatic fixes on all reachable descendants (with the corresponding context in lexemeIndex as needed):
  *   - missing lexeme
  *   - missing rank
  *   - missing id
- *   - inconsistent rank between contextIndex and lexemeIndex (BREAKS when a duplicate value exists in the same context)
+ *   - inconsistent rank between thoughtIndex and lexemeIndex (BREAKS when a duplicate value exists in the same context)
  */
 let repair = (maxDepth = 100) => {
-  const { contextIndex, lexemeIndex } = em.store.getState().thoughts
-  const contextIndexUpdates = {}
+  const { thoughtIndex, lexemeIndex } = em.store.getState().thoughts
+  const thoughtIndexUpdates = {}
   const lexemeIndexUpdates = {}
 
   let duplicateRanks = 0
@@ -49,12 +49,12 @@ let repair = (maxDepth = 100) => {
     if (depth >= maxDepth) return
 
     const contextEncoded = em.hashContext(context)
-    const parentEntry = contextIndexUpdates[contextEncoded] || contextIndex[contextEncoded]
+    const parentEntry = thoughtIndexUpdates[contextEncoded] || thoughtIndex[contextEncoded]
     const children = parentEntry?.children ?? []
 
     children.forEach((child, i) => {
-      // use contextIndexUpdates since children may have been updated
-      const parentEntry = contextIndexUpdates[contextEncoded] || contextIndex[contextEncoded]
+      // use thoughtIndexUpdates since children may have been updated
+      const parentEntry = thoughtIndexUpdates[contextEncoded] || thoughtIndex[contextEncoded]
       const rankRandom = Math.floor(Math.random() * 100000000000)
       const idRandom = Math.floor(Math.random() * 100000000000).toString()
       const noRank = child.rank == null
@@ -65,16 +65,16 @@ let repair = (maxDepth = 100) => {
       const hasDuplicateValue = parentEntry.children.some(
         childInner => childInner !== child && childInner.value === child.value,
       )
-      const updateContextIndex = noId || noRank || hasDuplicateRank
+      const updateThoughtIndex = noId || noRank || hasDuplicateRank
 
       if (noId) missingChildIds++
       if (noRank) missingChildRanks++
       if (hasDuplicateRank) duplicateRanks++
       if (hasDuplicateValue) duplicateValues++
 
-      // fix null or undefined rank in contextIndex
-      if (updateContextIndex) {
-        contextIndexUpdates[contextEncoded] = {
+      // fix null or undefined rank in thoughtIndex
+      if (updateThoughtIndex) {
+        thoughtIndexUpdates[contextEncoded] = {
           context,
           children: parentEntry.children.map((childInner, j) => {
             if (i === j) {
@@ -140,8 +140,8 @@ let repair = (maxDepth = 100) => {
             // fix inconsistent rank
             // TODO: Disabled since it breaks when there are multiple children with the same value in a context
             // hasInconsistentRank ||
-            // if the contextIndex child was updated, then we need to set the lexemeIndex rank and id to match even if the lexeme is otherwise correct
-            updateContextIndex
+            // if the thoughtIndex child was updated, then we need to set the lexemeIndex rank and id to match even if the lexeme is otherwise correct
+            updateThoughtIndex
           ) {
             // flag shouldUpdate so the lexeme is replaced
             shouldUpdate = true
@@ -214,16 +214,16 @@ let repair = (maxDepth = 100) => {
   // console.info(`Inconsistent ranks: ${inconsistentRanks}`)
   console.info(`Duplicate ThoughtContext ids: ${duplicateThoughtContextIds}`)
 
-  const numParentUpdates = Object.keys(contextIndexUpdates).length
+  const numParentUpdates = Object.keys(thoughtIndexUpdates).length
   const numLexemeUpdates = Object.keys(lexemeIndexUpdates).length
   if (numParentUpdates > 0 || numLexemeUpdates > 0) {
     console.info(`Updating ${numParentUpdates} parents.`)
     console.info(`Updating ${numLexemeUpdates} lexemes.`)
-    // console.info('contextIndexUpdates', contextIndexUpdates)
+    // console.info('thoughtIndexUpdates', thoughtIndexUpdates)
     // console.info('lexemeIndexUpdates', lexemeIndexUpdates)
     // em.store.dispatch({
     //   type: 'updateThoughts',
-    //   contextIndexUpdates,
+    //   thoughtIndexUpdates,
     //   lexemeIndexUpdates,
     // })
   } else {

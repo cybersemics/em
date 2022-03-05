@@ -86,7 +86,7 @@ const importText = (
   // overwrite all state
   if (
     text.startsWith(`{
-  "contextIndex": {
+  "thoughtIndex": {
     "__ROOT__": {`)
   ) {
     const thoughts = JSON.parse(text)

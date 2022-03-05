@@ -3,6 +3,6 @@ import { Thought } from './Thought'
 import { Lexeme } from './Lexeme'
 
 export interface ThoughtIndices {
-  contextIndex: Index<Thought>
+  thoughtIndex: Index<Thought>
   lexemeIndex: Index<Lexeme>
 }

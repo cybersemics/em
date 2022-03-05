@@ -432,7 +432,7 @@ it('move with duplicate descendant', () => {
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-  // contextIndex
+  // thoughtIndex
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
@@ -589,7 +589,7 @@ it('data integrity test', () => {
   expect(missingParentIds).toHaveLength(0)
 })
 
-it('consistent rank between lexemeIndex and contextIndex on duplicate merge', () => {
+it('consistent rank between lexemeIndex and thoughtIndex on duplicate merge', () => {
   const text = `
   - a
     - b

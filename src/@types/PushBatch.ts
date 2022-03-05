@@ -9,7 +9,7 @@ import { RecentlyEditedTree } from './RecentlyEditedTree'
 /** Defines a single batch of updates added to the push queue. */
 export interface PushBatch {
   lexemeIndexUpdates: Index<Lexeme | null>
-  contextIndexUpdates: Index<Thought | null>
+  thoughtIndexUpdates: Index<Thought | null>
   local?: boolean
   remote?: boolean
   recentlyEdited: RecentlyEditedTree

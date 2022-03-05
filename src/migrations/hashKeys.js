@@ -43,11 +43,11 @@ export const migrate = state => {
     {},
   )
 
-  console.info(`Migrating ${Object.keys(contextThoughts).length} contextIndex keys...`)
+  console.info(`Migrating ${Object.keys(contextThoughts).length} thoughtIndex keys...`)
 
   // hashContext now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
-  const contextIndexUpdates = _.transform(
+  const thoughtIndexUpdates = _.transform(
     contextThoughts,
     (accum, value, key) => {
       accum[key] = null
@@ -56,11 +56,11 @@ export const migrate = state => {
     {},
   )
 
-  console.info('Deleting old contextIndex from localStorage...')
+  console.info('Deleting old thoughtIndex from localStorage...')
 
   return Promise.resolve({
     lexemeIndexUpdates,
-    contextIndexUpdates,
+    thoughtIndexUpdates,
     schemaVersion: SCHEMA_HASHKEYS,
   })
 }

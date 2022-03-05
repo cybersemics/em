@@ -24,7 +24,7 @@ interface Database {
 
 interface UserState {
   lexemeIndex: Index<FirebaseLexeme>
-  contextIndex: Index<FirebaseParent>
+  thoughtIndex: Index<FirebaseParent>
   recentlyEdited: unknown
 }
 
@@ -60,8 +60,8 @@ const anonymizeValue = (value: string): string => {
 }
 
 const anonymize = {
-  contextIndex: (contextIndex: Index<FirebaseParent>) => {
-    const parentEntries = Object.entries(contextIndex)
+  thoughtIndex: (thoughtIndex: Index<FirebaseParent>) => {
+    const parentEntries = Object.entries(thoughtIndex)
     parentEntries.forEach(([id, parent]) => {
       if (limit-- <= 0) {
         console.error('Limit reached')
@@ -85,8 +85,8 @@ const anonymize = {
       //   After being anonymized, they do not.
       if (!parentIsRoot) {
         const idNew = hashContext(contextNew)
-        contextIndex[idNew] = parent
-        delete contextIndex[id]
+        thoughtIndex[idNew] = parent
+        delete thoughtIndex[id]
       }
     })
   },
@@ -121,10 +121,10 @@ const anonymize = {
 
 /** Anonymizes all thoughts and user information in user state. Preserves ranks, lastUpdated, and shape. */
 const anonymizeState = (state: UserState, options: Options = {}) => {
-  anonymize.contextIndex(state.contextIndex)
+  anonymize.thoughtIndex(state.thoughtIndex)
   anonymize.lexemeIndex(state.lexemeIndex)
 
-  return _.pick(state, ['contextIndex', 'lexemeIndex', 'lastUpdated']) as UserState
+  return _.pick(state, ['thoughtIndex', 'lexemeIndex', 'lastUpdated']) as UserState
 }
 
 /*****************************************************************
@@ -155,7 +155,7 @@ const main = () => {
   const stateNew = anonymizeState(state, options)
 
   console.log('')
-  console.log('Parents:', Object.values(stateNew.contextIndex).length)
+  console.log('Parents:', Object.values(stateNew.thoughtIndex).length)
   console.log('Lexemes:', Object.values(stateNew.lexemeIndex).length)
   console.log('')
 

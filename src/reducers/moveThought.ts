@@ -80,7 +80,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
           targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
         })
 
-      const contextIndexUpdates = {
+      const thoughtIndexUpdates = {
         ...(!sameContext
           ? {
               // remove source thought from the previous source parent children array
@@ -111,7 +111,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
       }
 
       return updateThoughts(state, {
-        contextIndexUpdates,
+        thoughtIndexUpdates,
         lexemeIndexUpdates: {},
         recentlyEdited,
         pendingMerges:

@@ -39,12 +39,12 @@ it('basic import with proper thought structure', () => {
   const now = timestamp()
 
   const stateNew = importText(initialState(now), { text, lastUpdated: now })
-  const { contextIndex, lexemeIndex } = stateNew.thoughts
+  const { thoughtIndex, lexemeIndex } = stateNew.thoughts
 
   const childAId = getThought(stateNew, [HOME_TOKEN])?.children[0]
   const childBId = getThought(stateNew, ['a'])?.children[0]
 
-  expect(contextIndex).toMatchObject({
+  expect(thoughtIndex).toMatchObject({
     [getThoughtIdByContext(stateNew, [EM_TOKEN])!]: {
       id: EM_TOKEN,
       children: [],
@@ -76,7 +76,7 @@ it('basic import with proper thought structure', () => {
     },
   })
 
-  expect(contextIndex[getThoughtIdByContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
+  expect(thoughtIndex[getThoughtIdByContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
 
   expect(lexemeIndex).toMatchObject({
     [hashThought(HOME_TOKEN)]: {
@@ -155,7 +155,7 @@ it('merge descendants', () => {
 
   expect(exported).toBe(expectedExport)
 
-  const { contextIndex } = newState.thoughts
+  const { thoughtIndex } = newState.thoughts
 
   const thoughtA = getThought(newState, ['a'])!
   const thoughtB = getThought(newState, ['a', 'b'])!
@@ -165,7 +165,7 @@ it('merge descendants', () => {
   const thoughtY = getThought(newState, ['a', 'x', 'y'])!
   const thoughtJ = getThought(newState, ['j'])!
 
-  expect(contextIndex).toMatchObject({
+  expect(thoughtIndex).toMatchObject({
     [getThoughtIdByContext(newState, [HOME_TOKEN])!]: {
       children: [thoughtA.id, thoughtJ.id],
     },
@@ -1126,7 +1126,7 @@ it('import raw state', () => {
   // raw thought state with two thoughts: a/b
   // most of this is settings, but keep them for completeness
   const text = `{
-  "contextIndex": {
+  "thoughtIndex": {
     "__ROOT__": {
       "id": "__ROOT__",
       "value": "__ROOT__",

@@ -9,7 +9,7 @@ import { Context, Index, Lexeme, Thought, Path, PendingMerge, PushBatch, SimpleP
 
 export interface UpdateThoughtsOptions {
   lexemeIndexUpdates: Index<Lexeme | null>
-  contextIndexUpdates: Index<Thought | null>
+  thoughtIndexUpdates: Index<Thought | null>
   recentlyEdited?: Index
   pendingDeletes?: { context: Context; thought: Thought }[]
   pendingEdits?: editThoughtPayload[]
@@ -36,9 +36,9 @@ export const getWhitelistedThoughts = once(() => {
   const settingsImported = importJSON(state, [EM_TOKEN] as SimplePath, jsonSettings)
 
   return {
-    contextIndex: {
-      ...state.thoughts.contextIndex,
-      ...settingsImported.contextIndexUpdates,
+    thoughtIndex: {
+      ...state.thoughts.thoughtIndex,
+      ...settingsImported.thoughtIndexUpdates,
     },
     lexemeIndex: {
       ...state.thoughts.lexemeIndex,
@@ -53,7 +53,7 @@ export const getWhitelistedThoughts = once(() => {
 // }
 
 /**
- * Updates lexemeIndex and contextIndex with any number of thoughts.
+ * Updates lexemeIndex and thoughtIndex with any number of thoughts.
  *
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
@@ -62,7 +62,7 @@ const updateThoughts = (
   state: State,
   {
     lexemeIndexUpdates,
-    contextIndexUpdates,
+    thoughtIndexUpdates,
     recentlyEdited,
     updates,
     pendingDeletes,
@@ -73,18 +73,18 @@ const updateThoughts = (
     isLoading,
   }: UpdateThoughtsOptions,
 ) => {
-  if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
+  if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
-  const contextIndexOld = { ...state.thoughts.contextIndex }
+  const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
 
   // Data Integrity Checks
 
   // Sometimes Child objects are missing their value property
   // Check all updates in case the problem is in the subscription logic
-  // Object.values(contextIndexUpdates).forEach(parentUpdate =>
+  // Object.values(thoughtIndexUpdates).forEach(parentUpdate =>
   //   parentUpdate?.children.forEach(childId => {
-  //     const thought = state.thoughts.contextIndex[childId]
+  //     const thought = state.thoughts.thoughtIndex[childId]
 
   //     if (!thought) {
   //       throw new Error(`Thought entry for id ${childId} not found!`)
@@ -129,18 +129,18 @@ const updateThoughts = (
     }
   })
 
-  // The contextIndex and lexemeIndex can consume more and more memory as thoughts are pulled from the db.
-  // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and lexemeIndex.
+  // The thoughtIndex and lexemeIndex can consume more and more memory as thoughts are pulled from the db.
+  // The contextCache and thoughtCache are used as a queue that is parallel to the thoughtIndex and lexemeIndex.
   // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
-  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and lexemeIndex
+  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from thoughtIndex and lexemeIndex
 
-  const contextIndexInvalidated = contextCache.addMany(Object.keys(contextIndexUpdates))
+  const thoughtIndexInvalidated = contextCache.addMany(Object.keys(thoughtIndexUpdates))
   const lexemeIndexInvalidated = lexemeCache.addMany(Object.keys(lexemeIndexUpdates))
 
-  contextIndexInvalidated.forEach(key => {
+  thoughtIndexInvalidated.forEach(key => {
     // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
-    if (!getWhitelistedThoughts().contextIndex[key] && !state.expanded[key]) {
-      delete contextIndexOld[key] // eslint-disable-line fp/no-delete
+    if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
+      delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
 
@@ -151,7 +151,7 @@ const updateThoughts = (
     }
   })
 
-  const contextIndex = mergeUpdates(contextIndexOld, contextIndexUpdates)
+  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates)
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates)
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
@@ -168,7 +168,7 @@ const updateThoughts = (
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
     lexemeIndexUpdates,
-    contextIndexUpdates,
+    thoughtIndexUpdates,
     recentlyEdited: recentlyEditedNew,
     updates,
     pendingDeletes,
@@ -183,14 +183,14 @@ const updateThoughts = (
 
   /** Returns false if the root thought is loaded and not pending. */
   const isStillLoading = () => {
-    const rootThought = contextIndex[HOME_TOKEN] as Thought | null
+    const rootThought = thoughtIndex[HOME_TOKEN] as Thought | null
     const thoughtsLoaded =
       rootThought &&
       !rootThought.pending &&
       // Disable isLoading if the root children have been loaded.
       // Otherwise NewThoughtInstructions will still be shown since there are no children to render.
       // If the root has no children and is no longer pending, we can disable isLoading immediately.
-      (rootThought.children.length === 0 || rootThought.children.find(childId => contextIndex[childId]))
+      (rootThought.children.length === 0 || rootThought.children.find(childId => thoughtIndex[childId]))
     return isLoading ?? !thoughtsLoaded
   }
 
@@ -205,7 +205,7 @@ const updateThoughts = (
       // only push the batch to the pushQueue if syncing at least local or remote
       ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
       thoughts: {
-        contextIndex,
+        thoughtIndex,
         lexemeIndex,
       },
     }),

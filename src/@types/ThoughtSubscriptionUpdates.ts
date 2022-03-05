@@ -4,6 +4,6 @@ import { Thought } from './Thought'
 import { Lexeme } from './Lexeme'
 
 export interface ThoughtSubscriptionUpdates {
-  contextIndex: Index<SubscriptionUpdate<Thought>>
+  thoughtIndex: Index<SubscriptionUpdate<Thought>>
   lexemeIndex: Index<SubscriptionUpdate<Lexeme>>
 }

@@ -21,7 +21,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
 
   // create a ref to a public context
   const contextEncoded = urlComponents[2]
-  const publicContextRef = window.firebase.database().ref(`users/${urlOwner}/contextIndex/${contextEncoded}`)
+  const publicContextRef = window.firebase.database().ref(`users/${urlOwner}/thoughtIndex/${contextEncoded}`)
 
   // fetch children
   publicContextRef.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
@@ -31,7 +31,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
     const remoteState: State = {
       ...state,
       thoughts: {
-        contextIndex: {
+        thoughtIndex: {
           [HOME_TOKEN]: parentEntry,
         },
         lexemeIndex: parentEntry.children.reduce((accum, child) => {

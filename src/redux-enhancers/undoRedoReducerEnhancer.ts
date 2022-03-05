@@ -11,13 +11,13 @@ import { getThoughtById } from '../selectors'
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 
 /**
- * Manually recreate the pushQueue for thought and context index updates from patches.
+ * Manually recreate the pushQueue for thought and thought index updates from patches.
  */
 const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch) => {
   const lexemeIndexPath = '/thoughts/lexemeIndex/'
-  const contextIndexPath = '/thoughts/contextIndex/'
+  const thoughtIndexPath = '/thoughts/thoughtIndex/'
   const lexemeIndexChanges = patch.filter(p => p?.path.indexOf(lexemeIndexPath) === 0)
-  const contextIndexChanges = patch.filter(p => p?.path.indexOf(contextIndexPath) === 0)
+  const thoughtIndexChanges = patch.filter(p => p?.path.indexOf(thoughtIndexPath) === 0)
 
   const lexemeIndexUpdates = lexemeIndexChanges.reduce((acc, { path }) => {
     const [thoughtId] = path.slice(lexemeIndexPath.length).split('/')
@@ -26,8 +26,8 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
       [thoughtId]: getThoughtById(state, thoughtId as ThoughtId) || null,
     }
   }, {})
-  const contextIndexUpdates = contextIndexChanges.reduce((acc, { path }) => {
-    const [contextId] = path.slice(contextIndexPath.length).split('/')
+  const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
+    const [contextId] = path.slice(thoughtIndexPath.length).split('/')
     return {
       ...acc,
       [contextId]: getThoughtById(state, contextId as ThoughtId) || null,
@@ -35,7 +35,7 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
   }, {})
   return {
     ...state,
-    pushQueue: updateThoughts({ lexemeIndexUpdates, contextIndexUpdates })(oldState).pushQueue,
+    pushQueue: updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates })(oldState).pushQueue,
   }
 }
 

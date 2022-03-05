@@ -30,7 +30,7 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Th
   return !isFunction(child.value) && !hasChild(state, unroot([...context, child.value]), '=hidden')
 })
 
-/** Gets a Thought from the contextIndex. */
+/** Gets a Thought from the thoughtIndex. */
 export const getThought = (state: State, context: Context): Thought | null => {
   const id = getThoughtIdByContext(state, context)
   return id ? getThoughtById(state, id) : null

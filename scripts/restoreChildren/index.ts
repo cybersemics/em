@@ -23,7 +23,7 @@ interface Database {
 
 interface UserState {
   lexemeIndex: Index<FirebaseLexeme>
-  contextIndex: Index<FirebaseParent>
+  thoughtIndex: Index<FirebaseParent>
 }
 
 interface Options {
@@ -106,7 +106,7 @@ const repair = {
       lastUpdated: timestamp(),
     }
     // arrays can be safely saved to Firebase
-    state.contextIndex[id] = parentNew as unknown as FirebaseParent
+    state.thoughtIndex[id] = parentNew as unknown as FirebaseParent
     cx.rank = rankNew
 
     if (options.verbose) {
@@ -173,7 +173,7 @@ const restoreChildren = (state: UserState, options: Options = {}) => {
       }
 
       const context = Object.values(cx.context || {})
-      const parent = state.contextIndex[hashContext(context)]
+      const parent = state.thoughtIndex[hashContext(context)]
       if (!parent) {
         repair.missingParents(state, lexeme, cx, options)
         return

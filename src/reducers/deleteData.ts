@@ -14,7 +14,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
   updateLastUpdated(timestamp())
 
   // delete value from all contexts
-  const contextIndex = { ...state.thoughts.contextIndex }
+  const thoughtIndex = { ...state.thoughts.thoughtIndex }
   if (lexeme && lexeme.contexts && lexeme.contexts.length > 0) {
     lexeme.contexts.forEach(thoughtId => {
       const thought = getThoughtById(state, thoughtId)
@@ -31,12 +31,12 @@ const deleteData = (state: State, { value }: { value: string }) => {
 
       // delete the entry if there are no more children
       if (childrenNew.length === 0) {
-        delete contextIndex[contextEncoded] // eslint-disable-line fp/no-delete
+        delete thoughtIndex[contextEncoded] // eslint-disable-line fp/no-delete
       }
       // otherwise update with new children
       else {
-        contextIndex[contextEncoded] = {
-          ...contextIndex[contextEncoded],
+        thoughtIndex[contextEncoded] = {
+          ...thoughtIndex[contextEncoded],
           children: childrenNew.map(({ id }) => id),
           lastUpdated: timestamp(),
         }
@@ -47,7 +47,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
   return {
     ...state,
     lexemeIndex,
-    contextIndex,
+    thoughtIndex,
     lastUpdated: timestamp(),
   }
 }

@@ -14,8 +14,8 @@ it('hashContext', () => {
     ...state,
     thoughts: {
       ...state.thoughts,
-      contextIndex: {
-        ...state.thoughts.contextIndex,
+      thoughtIndex: {
+        ...state.thoughts.thoughtIndex,
         [HOME_TOKEN]: {
           id: HOME_TOKEN,
           children: [ids[0]],

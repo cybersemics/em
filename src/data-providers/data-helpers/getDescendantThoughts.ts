@@ -37,7 +37,7 @@ const isUnbuffered = (state: State, thought: Thought) => {
 }
 
 /**
- * Returns buffered lexemeIndex and contextIndex for all descendants using async iterables.
+ * Returns buffered lexemeIndex and thoughtIndex for all descendants using async iterables.
  *
  * @param context
  * @param children
@@ -53,7 +53,7 @@ async function* getDescendantThoughts(
   let pullThoughtIds = [thoughtId] // eslint-disable-line fp/no-let
   let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
 
-  let accumulatedContextIndex = state.thoughts.contextIndex
+  let accumulatedThoughtIndex = state.thoughts.thoughtIndex
 
   // eslint-disable-next-line fp/no-loops
   while (pullThoughtIds.length > 0) {
@@ -63,27 +63,27 @@ async function* getDescendantThoughts(
     if (providerParents.length < pullThoughtIds.length) {
       console.error(`getDescendantThoughts: Cannot get thought for some ids.`, pullThoughtIds, providerParents)
       yield {
-        contextIndex: {},
+        thoughtIndex: {},
         lexemeIndex: {},
       }
       return
     }
 
     // all pulled thought entries
-    const pulledContextIndex = keyValueBy(pullThoughtIds, (id, i) => {
+    const pulledThoughtIndex = keyValueBy(pullThoughtIds, (id, i) => {
       return { [id]: providerParents[i] }
     })
 
-    accumulatedContextIndex = {
-      ...accumulatedContextIndex,
-      ...pulledContextIndex,
+    accumulatedThoughtIndex = {
+      ...accumulatedThoughtIndex,
+      ...pulledThoughtIndex,
     }
 
     const updatedState: State = {
       ...state,
       thoughts: {
         ...state.thoughts,
-        contextIndex: accumulatedContextIndex,
+        thoughtIndex: accumulatedThoughtIndex,
       },
     }
 
@@ -104,7 +104,7 @@ async function* getDescendantThoughts(
           }))
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
-    const contextIndex = keyValueBy(pullThoughtIds, (id, i) => {
+    const thoughtIndex = keyValueBy(pullThoughtIds, (id, i) => {
       return { [id]: thoughts[i] }
     })
 
@@ -121,7 +121,7 @@ async function* getDescendantThoughts(
     const lexemeIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
     const thoughtsIndices = {
-      contextIndex,
+      thoughtIndex,
       lexemeIndex,
     }
 

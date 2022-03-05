@@ -8,9 +8,9 @@ export const mergeThoughts = (...thoughtsArgs: ThoughtsInterface[]): ThoughtsInt
         {
           ...thoughtsArgs[0],
           ...thoughtsArgs[1],
-          contextIndex: {
-            ...thoughtsArgs[0].contextIndex,
-            ...thoughtsArgs[1].contextIndex,
+          thoughtIndex: {
+            ...thoughtsArgs[0].thoughtIndex,
+            ...thoughtsArgs[1].thoughtIndex,
           },
           lexemeIndex: {
             ...thoughtsArgs[0].lexemeIndex,

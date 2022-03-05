@@ -112,7 +112,7 @@ const saveThoughts = (
   if (!contextEncoded)
     return {
       lexemeIndex: {},
-      contextIndex: {},
+      thoughtIndex: {},
     }
 
   const updates = blocks.reduce<SaveThoughtsUpdate>(
@@ -136,7 +136,7 @@ const saveThoughts = (
        * Insert thought and return thought indices updates.
        */
       const insert = () => {
-        const existingParent = stateNewBeforeInsert.thoughts.contextIndex[contextEncoded]
+        const existingParent = stateNewBeforeInsert.thoughts.thoughtIndex[contextEncoded]
 
         const childLastUpdated = block.children[0]?.lastUpdated
         const childCreated = block.children[0]?.created
@@ -158,7 +158,7 @@ const saveThoughts = (
           lexemeIndex: {
             [hashThought(nonDuplicateValue)]: lexeme,
           },
-          contextIndex: {
+          thoughtIndex: {
             [contextEncoded]: thought,
             [newThought.id]: newThought,
           },
@@ -172,7 +172,7 @@ const saveThoughts = (
             ...stateNewBeforeInsert,
             thoughts: {
               ...stateNewBeforeInsert.thoughts,
-              contextIndex: mergeUpdates(stateNewBeforeInsert.thoughts.contextIndex, insertUpdates.contextIndex),
+              thoughtIndex: mergeUpdates(stateNewBeforeInsert.thoughts.thoughtIndex, insertUpdates.thoughtIndex),
               lexemeIndex: mergeUpdates(stateNewBeforeInsert.thoughts.lexemeIndex, insertUpdates.lexemeIndex),
             },
           }
@@ -187,7 +187,7 @@ const saveThoughts = (
        * Get the last added child.
        */
       const getLastAddedChild = () => {
-        const thought = updatedState.thoughts.contextIndex[contextEncoded]
+        const thought = updatedState.thoughts.thoughtIndex[contextEncoded]
         return (childIdsToThoughts(updatedState, thought.children) ?? []).find(
           child => child.value === nonDuplicateValue,
         )
@@ -195,9 +195,9 @@ const saveThoughts = (
 
       const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()!.id]
 
-      const updatedAccumulatedContextIndex = {
-        ...accum.contextIndex,
-        ...(insertUpdates?.contextIndex || {}),
+      const updatedAccumulatedThoughtIndex = {
+        ...accum.thoughtIndex,
+        ...(insertUpdates?.thoughtIndex || {}),
       }
 
       const updatedAccumulatedLexemeIndex = {
@@ -213,9 +213,9 @@ const saveThoughts = (
             ...updatedAccumulatedLexemeIndex,
             ...updates.lexemeIndex,
           },
-          contextIndex: {
-            ...updatedAccumulatedContextIndex,
-            ...updates.contextIndex,
+          thoughtIndex: {
+            ...updatedAccumulatedThoughtIndex,
+            ...updates.thoughtIndex,
           },
           duplicateIndex: updatedDuplicateIndex,
         }
@@ -223,19 +223,19 @@ const saveThoughts = (
         return {
           ...accum,
           lexemeIndex: updatedAccumulatedLexemeIndex,
-          contextIndex: updatedAccumulatedContextIndex,
+          thoughtIndex: updatedAccumulatedThoughtIndex,
           duplicateIndex: updatedDuplicateIndex,
         }
       }
     },
     {
-      contextIndex: {},
+      thoughtIndex: {},
       lexemeIndex: {},
       duplicateIndex: {},
     },
   )
   return {
-    contextIndex: updates.contextIndex,
+    thoughtIndex: updates.thoughtIndex,
     lexemeIndex: updates.lexemeIndex,
   }
 }
@@ -264,9 +264,9 @@ export const importJSON = (
   { lastUpdated = timestamp(), updatedBy = getSessionId(), skipRoot = false }: ImportJSONOptions = {},
 ) => {
   const initialLexemeIndex: Index<Lexeme> = {}
-  const initialContextIndex: Index<Thought> = {}
+  const initialThoughtIndex: Index<Thought> = {}
   const context = pathToContext(state, parentOf(simplePath))
-  const destThought = state.thoughts.contextIndex[head(simplePath)]
+  const destThought = state.thoughts.thoughtIndex[head(simplePath)]
   const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(state, simplePath)).length === 0
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, pathToContext(state, simplePath))
@@ -280,8 +280,8 @@ export const importJSON = (
     const lexeme = getLexeme(state, '')
     if (lexeme) {
       initialLexemeIndex[hashThought('')] = removeContext(state, lexeme, destThought.id)
-      initialContextIndex[contextEncoded] = {
-        ...state.thoughts.contextIndex[contextEncoded],
+      initialThoughtIndex[contextEncoded] = {
+        ...state.thoughts.thoughtIndex[contextEncoded],
         children: getAllChildren(state, rootedContext).filter(child => child !== destThought.id),
         lastUpdated,
         updatedBy,
@@ -293,14 +293,14 @@ export const importJSON = (
     ...state,
     thoughts: mergeThoughts(state.thoughts, {
       lexemeIndex: initialLexemeIndex,
-      contextIndex: initialContextIndex,
+      thoughtIndex: initialThoughtIndex,
     }),
   }
 
   const importPath = destEmpty ? rootedParentOf(state, simplePath) : simplePath
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
 
-  const { contextIndex, lexemeIndex } = saveThoughts(
+  const { thoughtIndex, lexemeIndex } = saveThoughts(
     stateUpdated,
     importPath,
     blocksNormalized,
@@ -311,14 +311,14 @@ export const importJSON = (
   )
 
   // get the last child imported in the first level so the cursor can be set
-  const thought = initialContextIndex[contextEncoded]
+  const thought = initialThoughtIndex[contextEncoded]
   const lastChildIndex = (thought?.children.length || 0) + blocksNormalized.length - 1
   const importContextEncoded = headId(importPath)
-  const lastChildFirstLevel = contextIndex[importContextEncoded]?.children[lastChildIndex]
+  const lastChildFirstLevel = thoughtIndex[importContextEncoded]?.children[lastChildIndex]
   const lastImported = appendToPath(importPath, lastChildFirstLevel)
 
   return {
-    contextIndexUpdates: { ...initialContextIndex, ...contextIndex },
+    thoughtIndexUpdates: { ...initialThoughtIndex, ...thoughtIndex },
     lexemeIndexUpdates: { ...initialLexemeIndex, ...lexemeIndex },
     lastImported,
   }

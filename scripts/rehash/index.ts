@@ -17,7 +17,7 @@ type ParentOld = Parent & {
 
 interface RemoteState {
   lexemeIndex: State['thoughts']['lexemeIndex']
-  contextIndex: State['thoughts']['contextIndex']
+  thoughtIndex: State['thoughts']['thoughtIndex']
 }
 
 const subcommands = {
@@ -27,8 +27,8 @@ const subcommands = {
     let converted = 0
     let missing = 0
 
-    const contextIndexNew = _.transform(
-      state.contextIndex,
+    const thoughtIndexNew = _.transform(
+      state.thoughtIndex,
       (accum, parent: ParentOld, contextEncoded) => {
         // missing context is from legacy data and is presumed to already be unreachable
         if (!parent.context) {
@@ -49,7 +49,7 @@ const subcommands = {
 
     return {
       ...state,
-      contextIndex: contextIndexNew,
+      thoughtIndex: thoughtIndexNew,
     }
   },
 

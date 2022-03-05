@@ -17,14 +17,14 @@ import {
 } from '../selectors'
 
 const disableAll = true
-const deleteDuplicateContextIndex = true
-const recreateMissingContextIndex = true
+const deleteDuplicateThoughtIndex = true
+const recreateMissingThoughtIndex = true
 const recreateMissingLexemeIndex = true
 const recreateMissingThoughtContexts = true
 const syncDivergentRanks = true
 
 // @MIGRATION_TODO: Logic has not been fixed properly.
-/** Performs a data integrity check and is able to fix minor problems with lexemeIndex and contextIndex being out of sync. */
+/** Performs a data integrity check and is able to fix minor problems with lexemeIndex and thoughtIndex being out of sync. */
 const dataIntegrityCheck =
   (path: Path): Thunk =>
   (dispatch, getState) => {
@@ -37,7 +37,7 @@ const dataIntegrityCheck =
     // do not perform Data Integrity Check within context view otherwise chaos will ensue
     if (splitChain(state, path).length > 1) return
 
-    const contextIndex = state.thoughts.contextIndex ?? {}
+    const thoughtIndex = state.thoughts.thoughtIndex ?? {}
 
     const thought = getThoughtById(state, head(path))
     const { rank, value } = thought
@@ -49,19 +49,19 @@ const dataIntegrityCheck =
 
     const thoughtId = headId(path)
 
-    // delete duplicate thoughts in contextIndex
-    if (deleteDuplicateContextIndex) {
-      const parentEntry = contextIndex[encoded]
+    // delete duplicate thoughts in thoughtIndex
+    if (deleteDuplicateThoughtIndex) {
+      const parentEntry = thoughtIndex[encoded]
       const children = (parentEntry || {}).children || []
       const childrenUnique = _.uniqBy(children, child => {
         const thought = getThoughtById(state, child)
         return thought.value + '__SEP' + thought.rank
       })
       if (parentEntry && childrenUnique.length < children.length) {
-        console.warn('Deleting duplicate thoughts in contextIndex:', value)
+        console.warn('Deleting duplicate thoughts in thoughtIndex:', value)
         dispatch({
           type: 'updateThoughts',
-          contextIndexUpdates: {
+          thoughtIndexUpdates: {
             [encoded]: {
               children: childrenUnique,
               lastUpdated: parentEntry.lastUpdated,
@@ -75,7 +75,7 @@ const dataIntegrityCheck =
 
     // recreate thoughts missing in lexemeIndex
     if (recreateMissingLexemeIndex) {
-      const children = (contextIndex[encoded] || {}).children || []
+      const children = (thoughtIndex[encoded] || {}).children || []
       // eslint-disable-next-line fp/no-loops,fp/no-let
       for (const child of children) {
         const thought = getThoughtById(state, child)
@@ -109,10 +109,10 @@ const dataIntegrityCheck =
         }
       }
 
-      // recreate thoughts missing in contextIndex
+      // recreate thoughts missing in thoughtIndex
       // const contextSubthoughts = getChildrenRanked(state, pathContext)
-      if (recreateMissingContextIndex) {
-        const contextIndexUpdates = lexeme.contexts.reduce((accum: any, cx: ThoughtContext) => {
+      if (recreateMissingThoughtIndex) {
+        const thoughtIndexUpdates = lexeme.contexts.reduce((accum: any, cx: ThoughtContext) => {
           const otherContextChildren = getThoughtById(state, cx).children
           const contextThought = getThoughtById(state, cx)
 
@@ -121,11 +121,11 @@ const dataIntegrityCheck =
             return hashThought(thought.value) === hashThought(lexeme.value) && thought.rank === contextThought.rank
           })
           const encoded = cx
-          const parentEntry = contextIndex[encoded]
+          const parentEntry = thoughtIndex[encoded]
           const parentEntryAccum = accum[encoded]
           const children =
             (parentEntryAccum && parentEntryAccum.children) || (parentEntry && parentEntry.children) || []
-          const contextIndexUpdatesNew = !otherContextHasThought
+          const thoughtIndexUpdatesNew = !otherContextHasThought
             ? {
                 [encoded]: {
                   id: encoded,
@@ -145,15 +145,15 @@ const dataIntegrityCheck =
             : {}
           return {
             ...accum,
-            ...contextIndexUpdatesNew,
+            ...thoughtIndexUpdatesNew,
           }
         }, {})
 
-        if (Object.keys(contextIndexUpdates).length > 0) {
-          console.warn('Recreating missing thoughts in contextIndex:', contextIndexUpdates)
+        if (Object.keys(thoughtIndexUpdates).length > 0) {
+          console.warn('Recreating missing thoughts in thoughtIndex:', thoughtIndexUpdates)
           dispatch({
             type: 'updateThoughts',
-            contextIndexUpdates,
+            thoughtIndexUpdates,
           })
         }
         return
@@ -161,20 +161,20 @@ const dataIntegrityCheck =
 
       // sync divergent ranks
       if (syncDivergentRanks) {
-        const contextIndexThoughtsMatchingValue = getChildrenRanked(
+        const thoughtIndexThoughtsMatchingValue = getChildrenRanked(
           state,
           rootedParentOf(state, pathToContext(state, simplePath)),
         ).filter(equalThoughtValue(value))
 
-        if (contextIndexThoughtsMatchingValue.length > 0) {
-          const thoughtsMatchingValueAndRank = contextIndexThoughtsMatchingValue.filter(
+        if (thoughtIndexThoughtsMatchingValue.length > 0) {
+          const thoughtsMatchingValueAndRank = thoughtIndexThoughtsMatchingValue.filter(
             thought => thought.id === thoughtId,
           )
           if (thoughtsMatchingValueAndRank.length === 0) {
-            // const contextIndexRank = contextIndexThoughtsMatchingValue[0].rank
+            // const thoughtIndexRank = thoughtIndexThoughtsMatchingValue[0].rank
             const thoughtEncoded = hashThought(value)
 
-            // change rank in lexemeIndex to that from contextIndex
+            // change rank in lexemeIndex to that from thoughtIndex
             console.warn('Syncing divergent ranks:', value)
             dispatch({
               type: 'updateThoughts',

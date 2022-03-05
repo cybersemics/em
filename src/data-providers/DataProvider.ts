@@ -9,6 +9,6 @@ export interface DataProvider {
   getContextsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
   updateThought: (id: string, thought: Lexeme) => Promise<unknown>
   updateContext: (id: ThoughtId, Parent: Thought) => Promise<unknown>
-  updateContextIndex: (contextIndex: Index<Thought>) => Promise<unknown>
+  updateThoughtIndex: (thoughtIndex: Index<Thought>) => Promise<unknown>
   updateLexemeIndex: (lexemeIndex: Index<Lexeme>) => Promise<unknown>
 }

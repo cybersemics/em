@@ -162,19 +162,19 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const hasChildrenLoaded = firstChilId && getThoughtById(state, firstChilId)
 
-  const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
+  const cursorSubthoughtIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
 
   const isAncestorOfCursor =
-    cursor && resolvedPath.length === cursorSubcontextIndex + 1 && cursor?.length > resolvedPath.length
+    cursor && resolvedPath.length === cursorSubthoughtIndex + 1 && cursor?.length > resolvedPath.length
 
   const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
   /** First visible thought at the top. */
   const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path
 
   const isDescendantOfCursor =
-    cursor && cursor.length === cursorSubcontextIndex + 1 && resolvedPath.length > cursor?.length
+    cursor && cursor.length === cursorSubthoughtIndex + 1 && resolvedPath.length > cursor?.length
 
-  const isCursor = cursor && resolvedPath.length === cursorSubcontextIndex + 1 && resolvedPath.length === cursor?.length
+  const isCursor = cursor && resolvedPath.length === cursorSubthoughtIndex + 1 && resolvedPath.length === cursor?.length
   const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
 
   const isDescendantOfFirstVisiblePath = isDescendant(
@@ -304,7 +304,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     sortDirection: sortPreference.direction,
     zoomCursor,
     zoomParent,
-    // Re-render if children change and when children parent entry in contextIndex is available.
+    // Re-render if children change and when children parent entry in thoughtIndex is available.
     // Uses getAllChildren for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
     __allChildren: hasChildrenLoaded ? allChildren : [],
@@ -339,7 +339,7 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   // there is no self thought to check since this is <Subthoughts>
   const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
 
-  const toThought = thoughts.contextIndex[head(thoughtsTo)]
+  const toThought = thoughts.thoughtIndex[head(thoughtsTo)]
   const divider = isDivider(toThought.value)
 
   // do not drop on descendants or thoughts hidden by autofocus
@@ -662,17 +662,17 @@ export const SubthoughtsComponent = ({
       pathToContext(state, resolvedPath),
     )
 
-    const cursorSubcontextIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
+    const cursorSubthoughtIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
 
     const isAncestorOfCursor =
-      cursor && cursor.length > resolvedPath.length && resolvedPath.length === cursorSubcontextIndex() + 1
+      cursor && cursor.length > resolvedPath.length && resolvedPath.length === cursorSubthoughtIndex() + 1
 
     const isCursor =
-      cursor && resolvedPath.length === cursorSubcontextIndex() + 1 && resolvedPath.length === cursor?.length
+      cursor && resolvedPath.length === cursorSubthoughtIndex() + 1 && resolvedPath.length === cursor?.length
 
     /** Returns true if the resolvedPath is a descendant of the cursor. */
     const isDescendantOfCursor = () =>
-      cursor && resolvedPath.length > cursor.length && cursor.length === cursorSubcontextIndex() + 1
+      cursor && resolvedPath.length > cursor.length && cursor.length === cursorSubthoughtIndex() + 1
 
     // thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
     const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath

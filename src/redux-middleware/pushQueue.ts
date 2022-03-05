@@ -18,9 +18,9 @@ import { Thunk, Index, Lexeme, PushBatch, State, ThoughtId } from '../@types'
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only lexemeIndexUpdates. */
 const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
   ...accum,
-  contextIndexUpdates: {
-    ...accum.contextIndexUpdates,
-    ...batch.contextIndexUpdates,
+  thoughtIndexUpdates: {
+    ...accum.thoughtIndexUpdates,
+    ...batch.thoughtIndexUpdates,
   },
   lexemeIndexUpdates: {
     ...accum.lexemeIndexUpdates,
@@ -112,7 +112,7 @@ const pullPendingLexemes =
     if (Object.keys(lexemeIndexUpdatesMerged).length > 0) {
       dispatch(
         updateThoughts({
-          contextIndexUpdates: {},
+          thoughtIndexUpdates: {},
           lexemeIndexUpdates: lexemeIndexUpdatesMerged,
           remote: false,
           local: false,
@@ -125,7 +125,7 @@ const pullPendingLexemes =
 
 /** Push a batch to the local and/or remote. */
 const pushBatch = (batch: PushBatch) =>
-  push(batch.contextIndexUpdates, batch.lexemeIndexUpdates, {
+  push(batch.thoughtIndexUpdates, batch.lexemeIndexUpdates, {
     recentlyEdited: batch.recentlyEdited,
     local: batch.local !== false,
     remote: batch.remote !== false,

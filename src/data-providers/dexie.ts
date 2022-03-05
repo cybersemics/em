@@ -25,7 +25,7 @@ import {
 /** Extend Dexie class for proper typing. See https://dexie.org/docs/Typescript. */
 // eslint-disable-next-line fp/no-class
 class EM extends Dexie {
-  contextIndex: Dexie.Table<Thought, string>
+  thoughtIndex: Dexie.Table<Thought, string>
   lexemeIndex: Dexie.Table<Lexeme, string>
   thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>
   helpers: Dexie.Table<Helper, string>
@@ -42,14 +42,14 @@ class EM extends Dexie {
     }
 
     this.version(1).stores({
-      contextIndex: 'id, *children, lastUpdated, updatedBy',
+      thoughtIndex: 'id, *children, lastUpdated, updatedBy',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       logs: '++id, created, message, stack',
     })
 
-    this.contextIndex = this.table('contextIndex')
+    this.thoughtIndex = this.table('thoughtIndex')
     this.lexemeIndex = this.table('lexemeIndex')
     this.thoughtWordsIndex = this.table('thoughtWordsIndex')
     this.helpers = this.table('helpers')
@@ -96,7 +96,7 @@ const initHelpers = async () => {
 const initDB = async () => {
   if (!db.isOpen()) {
     await db.version(1).stores({
-      contextIndex: 'id, *children, lastUpdated',
+      thoughtIndex: 'id, *children, lastUpdated',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       thoughtWordsIndex: 'id, *words',
@@ -138,7 +138,7 @@ const initDB = async () => {
 }
 
 /** Clears all thoughts and contexts from the indices. */
-export const clearAll = () => Promise.all([db.lexemeIndex.clear(), db.contextIndex.clear(), db.helpers.clear()])
+export const clearAll = () => Promise.all([db.lexemeIndex.clear(), db.thoughtIndex.clear(), db.helpers.clear()])
 
 /** Updates a single thought in the lexemeIndex. */
 export const updateThought = async (id: string, thought: Lexeme) =>
@@ -178,46 +178,46 @@ export const getLexemeIndex = async () => {
   return _.keyBy(lexemeIndexMap, 'id')
 }
 
-/** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
+/** Updates a single thought in the thoughtIndex. Ignores parentEntry.pending. */
 export const updateContext = async (
   id: ThoughtId,
   { children, lastUpdated, value, parentId, archived, rank }: Thought,
 ) =>
-  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    return db.contextIndex.put({ id, value, parentId, rank, children, updatedBy: getSessionId(), lastUpdated })
+    return db.thoughtIndex.put({ id, value, parentId, rank, children, updatedBy: getSessionId(), lastUpdated })
   })
 
-/** Updates multiple thoughts in the contextIndex. */
-export const updateContextIndex = async (contextIndexMap: Index<Thought | null>) =>
-  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+/** Updates multiple thoughts in the thoughtIndex. */
+export const updateThoughtIndex = async (thoughtIndexMap: Index<Thought | null>) =>
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    const contextsArray = Object.keys(contextIndexMap).map(key => ({
-      ...(contextIndexMap[key] as Thought),
+    const contextsArray = Object.keys(thoughtIndexMap).map(key => ({
+      ...(thoughtIndexMap[key] as Thought),
       updatedBy: getSessionId(),
       id: key as ThoughtId,
     }))
-    return db.contextIndex.bulkPut(contextsArray)
+    return db.thoughtIndex.bulkPut(contextsArray)
   })
 
-/** Deletes a single thought from the contextIndex. */
+/** Deletes a single thought from the thoughtIndex. */
 export const deleteContext = async (id: string) =>
-  db.transaction('rw', db.contextIndex, (tx: ObservableTransaction) => {
+  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    return db.contextIndex.delete(id)
+    return db.thoughtIndex.delete(id)
   })
 
 /** Get a context by id. */
-export const getContextById = async (id: string) => db.contextIndex.get(id)
+export const getContextById = async (id: string) => db.thoughtIndex.get(id)
 
-/** Gets multiple contexts from the contextIndex by ids. */
-export const getContextsByIds = async (ids: string[]) => db.contextIndex.bulkGet(ids)
+/** Gets multiple contexts from the thoughtIndex by ids. */
+export const getContextsByIds = async (ids: string[]) => db.thoughtIndex.bulkGet(ids)
 
-/** Gets the entire contextIndex. DEPRECATED. Use data-helpers/getDescendantThoughts. */
-export const getContextIndex = async () => {
-  const contextIndexMap = await db.contextIndex.toArray()
+/** Gets the entire thoughtIndex. DEPRECATED. Use data-helpers/getDescendantThoughts. */
+export const getThoughtIndex = async () => {
+  const thoughtIndexMap = await db.thoughtIndex.toArray()
   // mapValues + keyBy much more efficient than reduce + merge
-  return _.mapValues(_.keyBy(contextIndexMap, 'id'), 'context')
+  return _.mapValues(_.keyBy(thoughtIndexMap, 'id'), 'context')
 }
 
 /** Updates the recentlyEdited helper. */
@@ -277,8 +277,8 @@ const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) =>
   // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
   const { key, obj, source, table } = change as IUpdateChange
   return {
-    contextIndexUpdates:
-      table === 'contextIndex'
+    thoughtIndexUpdates:
+      table === 'thoughtIndex'
         ? {
             [key]: {
               updatedBy: source,
@@ -304,8 +304,8 @@ const deletedChangeUpdates = (change: IDeleteChange) => {
   // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
   const { key, oldObj, source, table } = change
   return {
-    contextIndexUpdates:
-      table === 'contextIndex' && oldObj?.id
+    thoughtIndexUpdates:
+      table === 'thoughtIndex' && oldObj?.id
         ? {
             [key]: {
               updatedBy: source,
@@ -336,11 +336,11 @@ export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => voi
           ? deletedChangeUpdates(change as IDeleteChange)
           : null
       const thoughtSubscriptionUpdates = {
-        contextIndex: updates?.contextIndexUpdates || {},
+        thoughtIndex: updates?.thoughtIndexUpdates || {},
         lexemeIndex: updates?.lexemeIndexUpdates || {},
       }
       if (
-        Object.keys(thoughtSubscriptionUpdates.contextIndex).length === 0 &&
+        Object.keys(thoughtSubscriptionUpdates.thoughtIndex).length === 0 &&
         Object.keys(thoughtSubscriptionUpdates.lexemeIndex).length === 0
       )
         return
