@@ -17,18 +17,18 @@ interface SearchSubthoughtsProps {
   archived?: boolean
   searchLimit?: number
   remoteSearch: boolean
-  thoughtIndex: Index<Lexeme>
+  lexemeIndex: Index<Lexeme>
 }
 /** Number of thoughts to limit the search results to by default. */
 const DEFAULT_SEARCH_LIMIT = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ archived, search, remoteSearch, searchLimit, thoughts: { thoughtIndex } }: State) => ({
+const mapStateToProps = ({ archived, search, remoteSearch, searchLimit, thoughts: { lexemeIndex } }: State) => ({
   archived,
   search,
   remoteSearch,
   searchLimit,
-  thoughtIndex,
+  lexemeIndex,
 })
 
 /** Subthoughts of search. */
@@ -37,7 +37,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
   search,
   archived,
   searchLimit = DEFAULT_SEARCH_LIMIT,
-  thoughtIndex,
+  lexemeIndex,
   dispatch,
 }) => {
   const [isRemoteSearching, setIsRemoteSearching] = useState(false)
@@ -99,7 +99,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
 
   const children = search
     ? sort(
-        Object.values(thoughtIndex)
+        Object.values(lexemeIndex)
           .filter(
             lexeme =>
               (archived || !isArchived(store.getState(), lexeme)) &&

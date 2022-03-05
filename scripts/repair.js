@@ -2,16 +2,16 @@
  * This script runs client-side (in the browser console) and operate directly on in-memory data using window.em and then dispatching updateThoughts to sync.
  */
 
-/** Recursively traverses the contextIndex starting with the root, and performs several automatic fixes on all reachable descendants (with the corresponding context in thoughtIndex as needed):
+/** Recursively traverses the contextIndex starting with the root, and performs several automatic fixes on all reachable descendants (with the corresponding context in lexemeIndex as needed):
  *   - missing lexeme
  *   - missing rank
  *   - missing id
- *   - inconsistent rank between contextIndex and thoughtIndex (BREAKS when a duplicate value exists in the same context)
+ *   - inconsistent rank between contextIndex and lexemeIndex (BREAKS when a duplicate value exists in the same context)
  */
 let repair = (maxDepth = 100) => {
-  const { contextIndex, thoughtIndex } = em.store.getState().thoughts
+  const { contextIndex, lexemeIndex } = em.store.getState().thoughts
   const contextIndexUpdates = {}
-  const thoughtIndexUpdates = {}
+  const lexemeIndexUpdates = {}
 
   let duplicateRanks = 0
   let duplicateValues = 0
@@ -95,12 +95,12 @@ let repair = (maxDepth = 100) => {
       }
 
       const thoughtEncoded = em.hashThought(child.value)
-      const lexeme = thoughtIndexUpdates[thoughtEncoded] || em.getLexeme(child.value)
+      const lexeme = lexemeIndexUpdates[thoughtEncoded] || em.getLexeme(child.value)
 
       // recreate missing lexeme
       if (!lexeme) {
         missingLexemes++
-        thoughtIndexUpdates[thoughtEncoded] = {
+        lexemeIndexUpdates[thoughtEncoded] = {
           value: child.value,
           created: parentEntry.lastUpdated,
           lastUpdated: timestamp(),
@@ -140,7 +140,7 @@ let repair = (maxDepth = 100) => {
             // fix inconsistent rank
             // TODO: Disabled since it breaks when there are multiple children with the same value in a context
             // hasInconsistentRank ||
-            // if the contextIndex child was updated, then we need to set the thoughtIndex rank and id to match even if the lexeme is otherwise correct
+            // if the contextIndex child was updated, then we need to set the lexemeIndex rank and id to match even if the lexeme is otherwise correct
             updateContextIndex
           ) {
             // flag shouldUpdate so the lexeme is replaced
@@ -169,7 +169,7 @@ let repair = (maxDepth = 100) => {
 
         // if any of the contexts within the lexeme have changed, update the lexeme
         if (shouldUpdate) {
-          thoughtIndexUpdates[thoughtEncoded] = {
+          lexemeIndexUpdates[thoughtEncoded] = {
             value: lexeme.value || child.value,
             created: parentEntry.lastUpdated,
             lastUpdated: timestamp(),
@@ -190,7 +190,7 @@ let repair = (maxDepth = 100) => {
             ],
             lastUpdated: timestamp(),
           }
-          thoughtIndexUpdates[thoughtEncoded] = lexemeNew
+          lexemeIndexUpdates[thoughtEncoded] = lexemeNew
         }
       }
 
@@ -215,16 +215,16 @@ let repair = (maxDepth = 100) => {
   console.info(`Duplicate ThoughtContext ids: ${duplicateThoughtContextIds}`)
 
   const numParentUpdates = Object.keys(contextIndexUpdates).length
-  const numLexemeUpdates = Object.keys(thoughtIndexUpdates).length
+  const numLexemeUpdates = Object.keys(lexemeIndexUpdates).length
   if (numParentUpdates > 0 || numLexemeUpdates > 0) {
     console.info(`Updating ${numParentUpdates} parents.`)
     console.info(`Updating ${numLexemeUpdates} lexemes.`)
     // console.info('contextIndexUpdates', contextIndexUpdates)
-    // console.info('thoughtIndexUpdates', thoughtIndexUpdates)
+    // console.info('lexemeIndexUpdates', lexemeIndexUpdates)
     // em.store.dispatch({
     //   type: 'updateThoughts',
     //   contextIndexUpdates,
-    //   thoughtIndexUpdates,
+    //   lexemeIndexUpdates,
     // })
   } else {
     console.info('No updates.')

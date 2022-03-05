@@ -16,7 +16,7 @@ type ParentOld = Parent & {
 }
 
 interface RemoteState {
-  thoughtIndex: State['thoughts']['thoughtIndex']
+  lexemeIndex: State['thoughts']['lexemeIndex']
   contextIndex: State['thoughts']['contextIndex']
 }
 

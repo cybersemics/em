@@ -25,7 +25,7 @@ const editThought = (
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value
-  const thoughtIndex = { ...state.thoughts.thoughtIndex }
+  const lexemeIndex = { ...state.thoughts.lexemeIndex }
   const editedThoughtId = headId(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
@@ -86,15 +86,15 @@ const editThought = (
       ? addContext(lexemeNewWithoutContext, rank, editedThoughtId, archived as Timestamp)
       : lexemeNewWithoutContext
 
-  // update local thoughtIndex so that we do not have to wait for firebase
-  thoughtIndex[newKey] = lexemeNew
+  // update local lexemeIndex so that we do not have to wait for firebase
+  lexemeIndex[newKey] = lexemeNew
 
-  // do not do anything with old thoughtIndex if hashes match, as the above line already took care of it
+  // do not do anything with old lexemeIndex if hashes match, as the above line already took care of it
   if (oldKey !== newKey) {
     if (newOldThought) {
-      thoughtIndex[oldKey] = newOldThought
+      lexemeIndex[oldKey] = newOldThought
     } else {
-      delete thoughtIndex[oldKey] // eslint-disable-line fp/no-delete
+      delete lexemeIndex[oldKey] // eslint-disable-line fp/no-delete
     }
   }
 
@@ -102,7 +102,7 @@ const editThought = (
     .filter(child => child !== editedThought.id)
     .concat(editedThoughtId)
 
-  const thoughtIndexUpdates = {
+  const lexemeIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, lexemeNew takes precedence since it contains the updated thought
     [oldKey]: newOldThought,
     [newKey]: lexemeNew,
@@ -144,7 +144,7 @@ const editThought = (
   }
 
   return updateThoughts(stateNew, {
-    thoughtIndexUpdates,
+    lexemeIndexUpdates,
     contextIndexUpdates,
     // recentlyEdited,
   })

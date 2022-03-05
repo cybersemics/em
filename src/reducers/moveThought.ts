@@ -112,7 +112,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
       return updateThoughts(state, {
         contextIndexUpdates,
-        thoughtIndexUpdates: {},
+        lexemeIndexUpdates: {},
         recentlyEdited,
         pendingMerges:
           isPendingMerge && duplicateThought

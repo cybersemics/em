@@ -87,7 +87,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       : lexeme.contexts
   }
 
-  const thoughtIndexUpdates = {
+  const lexemeIndexUpdates = {
     [hashThought(lexeme.value)]: lexeme,
     ...(lexemeNew
       ? {
@@ -96,7 +96,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       : null),
   }
 
-  return updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates })
+  return updateThoughts(state, { lexemeIndexUpdates, contextIndexUpdates })
 }
 
 export default _.curryRight(createThought)

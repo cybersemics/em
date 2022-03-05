@@ -49,11 +49,11 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
   const contextIndexRemoteOnly = updateLocal
     ? _.pickBy(thoughtsRemote.contextIndex, shouldUpdateDest(thoughtsLocal.contextIndex))
     : {}
-  const thoughtIndexLocalOnly = updateRemote
-    ? _.pickBy(thoughtsLocal.thoughtIndex, shouldUpdateDest(thoughtsRemote.thoughtIndex))
+  const lexemeIndexLocalOnly = updateRemote
+    ? _.pickBy(thoughtsLocal.lexemeIndex, shouldUpdateDest(thoughtsRemote.lexemeIndex))
     : {}
-  const thoughtIndexRemoteOnly = updateLocal
-    ? _.pickBy(thoughtsRemote.thoughtIndex, shouldUpdateDest(thoughtsLocal.thoughtIndex))
+  const lexemeIndexRemoteOnly = updateLocal
+    ? _.pickBy(thoughtsRemote.lexemeIndex, shouldUpdateDest(thoughtsLocal.lexemeIndex))
     : {}
 
   // get local pending thoughts that are returned by the remote but are not updateable
@@ -81,18 +81,18 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
       ? state =>
           updateThoughts(state, {
             contextIndexUpdates: contextIndexPending,
-            thoughtIndexUpdates: {},
+            lexemeIndexUpdates: {},
             local: false,
             remote: false,
           })
       : null,
 
     // update local (thoughts that were found to only be on remote)
-    Object.keys(contextIndexRemoteOnly).length > 0 || Object.keys(thoughtIndexRemoteOnly).length > 0
+    Object.keys(contextIndexRemoteOnly).length > 0 || Object.keys(lexemeIndexRemoteOnly).length > 0
       ? state =>
           updateThoughts(state, {
             contextIndexUpdates: contextIndexRemoteOnly,
-            thoughtIndexUpdates: thoughtIndexRemoteOnly,
+            lexemeIndexUpdates: lexemeIndexRemoteOnly,
             // flags default to true, but use explicit values for clarity
             local: true,
             remote: false,
@@ -100,11 +100,11 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
       : null,
 
     // update remote (thoughts that were found to only be on local)
-    Object.keys(contextIndexLocalOnly).length > 0 || Object.keys(thoughtIndexLocalOnly).length > 0
+    Object.keys(contextIndexLocalOnly).length > 0 || Object.keys(lexemeIndexLocalOnly).length > 0
       ? state =>
           updateThoughts(state, {
             contextIndexUpdates: contextIndexLocalOnly,
-            thoughtIndexUpdates: thoughtIndexLocalOnly,
+            lexemeIndexUpdates: lexemeIndexLocalOnly,
             // flags default to true, but use explicit values for clarity
             local: false,
             remote: true,

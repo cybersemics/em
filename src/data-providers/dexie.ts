@@ -26,7 +26,7 @@ import {
 // eslint-disable-next-line fp/no-class
 class EM extends Dexie {
   contextIndex: Dexie.Table<Thought, string>
-  thoughtIndex: Dexie.Table<Lexeme, string>
+  lexemeIndex: Dexie.Table<Lexeme, string>
   thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>
   helpers: Dexie.Table<Helper, string>
   logs: Dexie.Table<Log, number>
@@ -43,14 +43,14 @@ class EM extends Dexie {
 
     this.version(1).stores({
       contextIndex: 'id, *children, lastUpdated, updatedBy',
-      thoughtIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
+      lexemeIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       logs: '++id, created, message, stack',
     })
 
     this.contextIndex = this.table('contextIndex')
-    this.thoughtIndex = this.table('thoughtIndex')
+    this.lexemeIndex = this.table('lexemeIndex')
     this.thoughtWordsIndex = this.table('thoughtWordsIndex')
     this.helpers = this.table('helpers')
     this.logs = this.table('logs')
@@ -97,7 +97,7 @@ const initDB = async () => {
   if (!db.isOpen()) {
     await db.version(1).stores({
       contextIndex: 'id, *children, lastUpdated',
-      thoughtIndex: 'id, value, *contexts, created, lastUpdated',
+      lexemeIndex: 'id, value, *contexts, created, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       thoughtWordsIndex: 'id, *words',
       logs: '++id, created, message, stack',
@@ -106,7 +106,7 @@ const initDB = async () => {
     // Hooks to add full text index
     // Related resource: https://github.com/dfahlander/Dexie.js/blob/master/samples/full-text-search/FullTextSearch.js
 
-    db.thoughtIndex.hook('creating', (primaryKey, lexeme, transaction) => {
+    db.lexemeIndex.hook('creating', (primaryKey, lexeme, transaction) => {
       transaction.on('complete', () => {
         db.thoughtWordsIndex.put({
           id: hashThought(lexeme.value),
@@ -115,7 +115,7 @@ const initDB = async () => {
       })
     })
 
-    db.thoughtIndex.hook('updating', (modificationObject, primaryKey, lexeme, transaction) => {
+    db.lexemeIndex.hook('updating', (modificationObject, primaryKey, lexeme, transaction) => {
       transaction.on('complete', () => {
         // eslint-disable-next-line no-prototype-builtins
         if (modificationObject.hasOwnProperty('value')) {
@@ -126,7 +126,7 @@ const initDB = async () => {
       })
     })
 
-    db.thoughtIndex.hook('deleting', (primaryKey, lexeme, transaction) => {
+    db.lexemeIndex.hook('deleting', (primaryKey, lexeme, transaction) => {
       transaction.on('complete', () => {
         // Sometimes lexeme is undefined ??
         if (lexeme) db.thoughtWordsIndex.delete(hashThought(lexeme.value))
@@ -138,44 +138,44 @@ const initDB = async () => {
 }
 
 /** Clears all thoughts and contexts from the indices. */
-export const clearAll = () => Promise.all([db.thoughtIndex.clear(), db.contextIndex.clear(), db.helpers.clear()])
+export const clearAll = () => Promise.all([db.lexemeIndex.clear(), db.contextIndex.clear(), db.helpers.clear()])
 
-/** Updates a single thought in the thoughtIndex. */
+/** Updates a single thought in the lexemeIndex. */
 export const updateThought = async (id: string, thought: Lexeme) =>
-  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+  db.transaction('rw', db.lexemeIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    return db.thoughtIndex.put({ id, ...thought, updatedBy: getSessionId() })
+    return db.lexemeIndex.put({ id, ...thought, updatedBy: getSessionId() })
   })
 
-/** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndexMap: Index<Lexeme | null>) =>
-  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+/** Updates multiple thoughts in the lexemeIndex. */
+export const updateLexemeIndex = async (lexemeIndexMap: Index<Lexeme | null>) =>
+  db.transaction('rw', db.lexemeIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
-      ...(thoughtIndexMap[key] as Lexeme),
+    const thoughtsArray = Object.keys(lexemeIndexMap).map(key => ({
+      ...(lexemeIndexMap[key] as Lexeme),
       updatedBy: getSessionId(),
       id: key,
     }))
-    return db.thoughtIndex.bulkPut(thoughtsArray)
+    return db.lexemeIndex.bulkPut(thoughtsArray)
   })
 
-/** Deletes a single thought from the thoughtIndex. */
+/** Deletes a single thought from the lexemeIndex. */
 export const deleteThought = (id: string) =>
-  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+  db.transaction('rw', db.lexemeIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    return db.thoughtIndex.delete(id)
+    return db.lexemeIndex.delete(id)
   })
 
-/** Gets a single thought from the thoughtIndex by its id. */
-export const getThoughtById = (id: string) => db.thoughtIndex.get(id)
+/** Gets a single thought from the lexemeIndex by its id. */
+export const getThoughtById = (id: string) => db.lexemeIndex.get(id)
 
-/** Gets multiple thoughts from the thoughtIndex by ids. */
-export const getThoughtsByIds = (ids: string[]) => db.thoughtIndex.bulkGet(ids)
+/** Gets multiple thoughts from the lexemeIndex by ids. */
+export const getThoughtsByIds = (ids: string[]) => db.lexemeIndex.bulkGet(ids)
 
-/** Gets the entire thoughtIndex. */
-export const getThoughtIndex = async () => {
-  const thoughtIndexMap = await db.thoughtIndex.toArray()
-  return _.keyBy(thoughtIndexMap, 'id')
+/** Gets the entire lexemeIndex. */
+export const getLexemeIndex = async () => {
+  const lexemeIndexMap = await db.lexemeIndex.toArray()
+  return _.keyBy(lexemeIndexMap, 'id')
 }
 
 /** Updates a single thought in the contextIndex. Ignores parentEntry.pending. */
@@ -248,12 +248,12 @@ export const fullTextSearch = async (value: string) => {
   // Related resource: https://github.com/dfahlander/Dexie.js/issues/281
   const words = _.uniq(value.split(' '))
 
-  const lexemes = await db.transaction('r', db.thoughtWordsIndex, db.thoughtIndex, async () => {
+  const lexemes = await db.transaction('r', db.thoughtWordsIndex, db.lexemeIndex, async () => {
     const matchedKeysArray = await Dexie.Promise.all(
       words.map(word => db.thoughtWordsIndex.where('words').startsWithIgnoreCase(word).primaryKeys()),
     )
     const intersectionKeys = matchedKeysArray.reduce((acc, keys) => acc.filter(key => keys.includes(key)))
-    return db.thoughtIndex.bulkGet(intersectionKeys)
+    return db.lexemeIndex.bulkGet(intersectionKeys)
   })
 
   return lexemes
@@ -286,8 +286,8 @@ const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) =>
             },
           }
         : {},
-    thoughtIndexUpdates:
-      table === 'thoughtIndex'
+    lexemeIndexUpdates:
+      table === 'lexemeIndex'
         ? {
             [key]: {
               updatedBy: source,
@@ -313,7 +313,7 @@ const deletedChangeUpdates = (change: IDeleteChange) => {
             },
           }
         : {},
-    thoughtIndexUpdates: table === 'thoughtIndex' && oldObj?.id ? { [key]: { updatedBy: source, value: null } } : {},
+    lexemeIndexUpdates: table === 'lexemeIndex' && oldObj?.id ? { [key]: { updatedBy: source, value: null } } : {},
   }
 }
 
@@ -337,11 +337,11 @@ export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => voi
           : null
       const thoughtSubscriptionUpdates = {
         contextIndex: updates?.contextIndexUpdates || {},
-        thoughtIndex: updates?.thoughtIndexUpdates || {},
+        lexemeIndex: updates?.lexemeIndexUpdates || {},
       }
       if (
         Object.keys(thoughtSubscriptionUpdates.contextIndex).length === 0 &&
-        Object.keys(thoughtSubscriptionUpdates.thoughtIndex).length === 0
+        Object.keys(thoughtSubscriptionUpdates.lexemeIndex).length === 0
       )
         return
       onUpdate(thoughtSubscriptionUpdates)

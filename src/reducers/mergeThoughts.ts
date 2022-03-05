@@ -47,7 +47,7 @@ const mergeThoughts = (
 
   const hashedThought = hashThought(sourceThought.value)
 
-  const sourceThoughtlexeme = newStateAfterMove.thoughts.thoughtIndex[hashedThought]!
+  const sourceThoughtlexeme = newStateAfterMove.thoughts.lexemeIndex[hashedThought]!
 
   // remove source thought from the lexeme entry as it's context index entry will be deleted
   const updatedLexeme: Lexeme = {
@@ -55,7 +55,7 @@ const mergeThoughts = (
     contexts: sourceThoughtlexeme!.contexts.filter(thoughtId => thoughtId !== sourceThought.id),
   }
 
-  const thoughtIndexUpdates = {
+  const lexemeIndexUpdates = {
     [hashedThought]: updatedLexeme,
   }
 
@@ -73,7 +73,7 @@ const mergeThoughts = (
 
   return updateThoughts(newStateAfterMove, {
     contextIndexUpdates,
-    thoughtIndexUpdates,
+    lexemeIndexUpdates,
   })
 }
 

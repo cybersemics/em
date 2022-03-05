@@ -39,7 +39,7 @@ it('basic import with proper thought structure', () => {
   const now = timestamp()
 
   const stateNew = importText(initialState(now), { text, lastUpdated: now })
-  const { contextIndex, thoughtIndex } = stateNew.thoughts
+  const { contextIndex, lexemeIndex } = stateNew.thoughts
 
   const childAId = getThought(stateNew, [HOME_TOKEN])?.children[0]
   const childBId = getThought(stateNew, ['a'])?.children[0]
@@ -78,7 +78,7 @@ it('basic import with proper thought structure', () => {
 
   expect(contextIndex[getThoughtIdByContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
 
-  expect(thoughtIndex).toMatchObject({
+  expect(lexemeIndex).toMatchObject({
     [hashThought(HOME_TOKEN)]: {
       value: HOME_TOKEN,
       contexts: [],
@@ -110,8 +110,8 @@ it('basic import with proper thought structure', () => {
   })
 
   // Note: Jest doesn't have lexicographic string comparison yet :(
-  expect(thoughtIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
-  expect(thoughtIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
+  expect(lexemeIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
+  expect(lexemeIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
 })
 
 it('merge descendants', () => {
@@ -337,7 +337,7 @@ it('duplicate thoughts', () => {
 
   const now = timestamp()
   const imported = importText(initialState(), { text, lastUpdated: now })
-  const lexeme = imported.thoughts.thoughtIndex[hashThought('m')]
+  const lexeme = imported.thoughts.lexemeIndex[hashThought('m')]
 
   const childAId = lexeme.contexts[0]
   const childBId = lexeme.contexts[1]
@@ -1586,7 +1586,7 @@ it('import raw state', () => {
       "sortValue": "b"
     }
   },
-  "thoughtIndex": {
+  "lexemeIndex": {
     "323720a6648d6a2272003af034bc823a": {
       "value": "__ROOT__",
       "contexts": [],

@@ -5,11 +5,11 @@ import { getLexeme, getContextForThought, getThoughtById } from '../selectors'
 import { State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
-/** Deletes the value from the thoughtIndex. */
+/** Deletes the value from the lexemeIndex. */
 const deleteData = (state: State, { value }: { value: string }) => {
-  const thoughtIndex = { ...state.thoughts.thoughtIndex }
+  const lexemeIndex = { ...state.thoughts.lexemeIndex }
   const lexeme = getLexeme(state, value)
-  delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
+  delete lexemeIndex[hashThought(value)] // eslint-disable-line fp/no-delete
   deleteThought(hashThought(value))
   updateLastUpdated(timestamp())
 
@@ -46,7 +46,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
 
   return {
     ...state,
-    thoughtIndex,
+    lexemeIndex,
     contextIndex,
     lastUpdated: timestamp(),
   }

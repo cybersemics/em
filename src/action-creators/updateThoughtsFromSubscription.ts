@@ -20,7 +20,7 @@ const isValidSource = <T extends Updateable>(state: State, update: SubscriptionU
     // updatedBy may not have changed, and thus is not included in the child_changed snapshot.
     // In this case updatedBy from Redux state.
     (update.value ? state.thoughts.contextIndex[update.value.id!]?.updatedBy : null) ||
-    (update.value ? state.thoughts.thoughtIndex[update.value.id!]?.updatedBy : null)
+    (update.value ? state.thoughts.lexemeIndex[update.value.id!]?.updatedBy : null)
 
   // on a change event, the firebase snapshot only contains updated fields, which may not include updatedBy
   // if we don't have the record in Redux state, return true so it gets added
@@ -49,24 +49,24 @@ const updateThoughtsFromSubscription =
         : null,
     )
 
-    const thoughtIndexUpdates = keyValueBy(updates.thoughtIndex, (key, lexemeUpdate) =>
+    const lexemeIndexUpdates = keyValueBy(updates.lexemeIndex, (key, lexemeUpdate) =>
       isValidSource(state, lexemeUpdate, sessionType)
         ? {
             // merge partial Lexeme from update with Redux Lexeme
             // TODO: Fix Updateable type to indicate that all fields are optional
             [key]: lexemeUpdate.value
-              ? { ...state.thoughts.thoughtIndex[lexemeUpdate.value.id!], ...lexemeUpdate.value }
+              ? { ...state.thoughts.lexemeIndex[lexemeUpdate.value.id!], ...lexemeUpdate.value }
               : lexemeUpdate.value,
           }
         : null,
     )
 
-    if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(thoughtIndexUpdates).length === 0) return
+    if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return
 
     dispatch(
       updateThoughts({
         contextIndexUpdates,
-        thoughtIndexUpdates,
+        lexemeIndexUpdates,
         // sync remote updates to local
         local: sessionType === SessionType.REMOTE,
         // do not sync local updates to remote since Firebase handles offline writes

@@ -19,12 +19,12 @@ import {
 const disableAll = true
 const deleteDuplicateContextIndex = true
 const recreateMissingContextIndex = true
-const recreateMissingThoughtIndex = true
+const recreateMissingLexemeIndex = true
 const recreateMissingThoughtContexts = true
 const syncDivergentRanks = true
 
 // @MIGRATION_TODO: Logic has not been fixed properly.
-/** Performs a data integrity check and is able to fix minor problems with thoughtIndex and contextIndex being out of sync. */
+/** Performs a data integrity check and is able to fix minor problems with lexemeIndex and contextIndex being out of sync. */
 const dataIntegrityCheck =
   (path: Path): Thunk =>
   (dispatch, getState) => {
@@ -73,15 +73,15 @@ const dataIntegrityCheck =
       }
     }
 
-    // recreate thoughts missing in thoughtIndex
-    if (recreateMissingThoughtIndex) {
+    // recreate thoughts missing in lexemeIndex
+    if (recreateMissingLexemeIndex) {
       const children = (contextIndex[encoded] || {}).children || []
       // eslint-disable-next-line fp/no-loops,fp/no-let
       for (const child of children) {
         const thought = getThoughtById(state, child)
         const childExists = hasLexeme(state, thought.value)
         if (!childExists) {
-          console.warn('Recreating missing lexeme in thoughtIndex:', thought.value)
+          console.warn('Recreating missing lexeme in lexemeIndex:', thought.value)
           dispatch({
             type: 'createThought',
             context,
@@ -174,11 +174,11 @@ const dataIntegrityCheck =
             // const contextIndexRank = contextIndexThoughtsMatchingValue[0].rank
             const thoughtEncoded = hashThought(value)
 
-            // change rank in thoughtIndex to that from contextIndex
+            // change rank in lexemeIndex to that from contextIndex
             console.warn('Syncing divergent ranks:', value)
             dispatch({
               type: 'updateThoughts',
-              thoughtIndexUpdates: {
+              lexemeIndexUpdates: {
                 [thoughtEncoded]: {
                   ...lexeme,
                 },

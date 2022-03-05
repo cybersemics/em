@@ -99,14 +99,14 @@ export const initFirebase = async (): Promise<void> => {
         }
       }
 
-      // if thoughtIndex was already loaded and we go offline, enter offline mode immediately
+      // if lexemeIndex was already loaded and we go offline, enter offline mode immediately
       else if (status === 'loaded') {
         store.dispatch(statusActionCreator({ value: 'offline' }))
       }
     })
   }
 
-  // before thoughtIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
+  // before lexemeIndex has been loaded, wait a bit before going into offline mode to avoid flashing the Offline status message
   globals.offlineTimer = window.setTimeout(() => {
     store.dispatch(statusActionCreator({ value: 'offline' }))
   }, OFFLINE_TIMEOUT)

@@ -9,16 +9,16 @@ export const schemaVersionTo = SCHEMA_HASHKEYS
 /** Migrates unhashed keys to hashed keys. */
 export const migrate = state => {
   const {
-    thoughts: { thoughtIndex, contextThoughts },
+    thoughts: { lexemeIndex, contextThoughts },
   } = state
 
-  console.info(`Migrating ${Object.keys(thoughtIndex).length} thoughtIndex keys...`)
+  console.info(`Migrating ${Object.keys(lexemeIndex).length} lexemeIndex keys...`)
 
-  // hash the thoughtIndex key using hashThought
+  // hash the lexemeIndex key using hashThought
 
   // TODO: Handle collisions
-  const thoughtIndexUpdates = _.transform(
-    thoughtIndex,
+  const lexemeIndexUpdates = _.transform(
+    lexemeIndex,
     (accum, lexeme, key) => {
       const hash = hashThought(key)
 
@@ -59,7 +59,7 @@ export const migrate = state => {
   console.info('Deleting old contextIndex from localStorage...')
 
   return Promise.resolve({
-    thoughtIndexUpdates,
+    lexemeIndexUpdates,
     contextIndexUpdates,
     schemaVersion: SCHEMA_HASHKEYS,
   })

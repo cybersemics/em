@@ -68,7 +68,7 @@ const testData = [
 const importExport = (roamJson: RoamPage[]) => {
   const thoughtsJSON = roamJsonToBlocks(roamJson)
   const state = initialState()
-  const { contextIndexUpdates: contextIndex, thoughtIndexUpdates: thoughtIndex } = importJSON(
+  const { contextIndexUpdates: contextIndex, lexemeIndexUpdates: lexemeIndex } = importJSON(
     state,
     HOME_PATH as SimplePath,
     thoughtsJSON,
@@ -80,7 +80,7 @@ const importExport = (roamJson: RoamPage[]) => {
     thoughts: {
       ...state.thoughts,
       contextIndex,
-      thoughtIndex,
+      lexemeIndex,
     },
   }
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -207,7 +207,7 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
 
   const blocks = roamJsonToBlocks(testData)
 
-  const { contextIndexUpdates: contextIndex, thoughtIndexUpdates: thoughtIndex } = importJSON(
+  const { contextIndexUpdates: contextIndex, lexemeIndexUpdates: lexemeIndex } = importJSON(
     initialState(),
     HOME_PATH as SimplePath,
     blocks,
@@ -246,9 +246,9 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
     Spinach: { lastUpdated: editTimeOf('Spinach') },
   })
 
-  expect(thoughtIndex).toMatchObject({
+  expect(lexemeIndex).toMatchObject({
     // RoamPages acquire the edit time of their first child for thoughts
-    // TODO: This differs from contextIndex incidentally. Should normalize the edit times used for contextIndex and thoughtIndex.
+    // TODO: This differs from contextIndex incidentally. Should normalize the edit times used for contextIndex and lexemeIndex.
     [hashThought('Fruits')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
     [hashThought('Veggies')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
 

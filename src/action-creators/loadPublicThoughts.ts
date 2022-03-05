@@ -34,7 +34,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
         contextIndex: {
           [HOME_TOKEN]: parentEntry,
         },
-        thoughtIndex: parentEntry.children.reduce((accum, child) => {
+        lexemeIndex: parentEntry.children.reduce((accum, child) => {
           const thought = getThoughtById(state, child)
           return {
             ...accum,

@@ -81,7 +81,7 @@ const pull =
       dispatch(
         updateThoughts({
           contextIndexUpdates: thoughts.contextIndex,
-          thoughtIndexUpdates: thoughts.thoughtIndex,
+          lexemeIndexUpdates: thoughts.lexemeIndex,
           local: false,
           remote: false,
           // if the root is in the pathMap, force isLoading: false
@@ -128,10 +128,10 @@ const pull =
         )
 
         // find the corresponding Lexemes from the local store (if any exist) so it can be reconciled with the remote Lexemes
-        const thoughtsLocalThoughtIndexChunk = _.transform(
-          thoughtsRemoteChunk.thoughtIndex,
+        const thoughtsLocalLexemeIndexChunk = _.transform(
+          thoughtsRemoteChunk.lexemeIndex,
           (accum, lexemeRemote, key) => {
-            const lexemeLocal = thoughtsLocal.thoughtIndex[key]
+            const lexemeLocal = thoughtsLocal.lexemeIndex[key]
             if (lexemeLocal) {
               accum[key] = lexemeLocal
             }
@@ -143,7 +143,7 @@ const pull =
             thoughtsResults: [
               {
                 contextIndex: thoughtsLocalContextIndexChunk,
-                thoughtIndex: thoughtsLocalThoughtIndexChunk,
+                lexemeIndex: thoughtsLocalLexemeIndexChunk,
               },
               thoughtsRemoteChunk,
             ],
@@ -185,7 +185,7 @@ const pull =
               pending: false,
             },
           },
-          thoughtIndexUpdates: {},
+          lexemeIndexUpdates: {},
           local: false,
           remote: false,
         }),

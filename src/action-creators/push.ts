@@ -14,14 +14,14 @@ import { storage } from '../util/storage'
 const pushLocal = (
   state: State,
   contextIndexUpdates: Index<Thought | null> = {},
-  thoughtIndexUpdates: Index<Lexeme | null> = {},
+  lexemeIndexUpdates: Index<Lexeme | null> = {},
   recentlyEdited: Index,
   updates: Index = {},
   localStorageSettingsContexts: Index<string>,
 ): Promise<any> => {
-  // thoughtIndex
-  const thoughtIndexPromises = [
-    ...Object.entries(thoughtIndexUpdates).map(([key, lexeme]) => {
+  // lexemeIndex
+  const lexemeIndexPromises = [
+    ...Object.entries(lexemeIndexUpdates).map(([key, lexeme]) => {
       if (lexeme != null) {
         return db.updateThought(key, lexeme)
       }
@@ -30,7 +30,7 @@ const pushLocal = (
     db.updateLastUpdated(timestamp()),
   ] as Promise<unknown>[]
 
-  logWithTime('sync: thoughtIndexPromises generated')
+  logWithTime('sync: lexemeIndexPromises generated')
 
   const updatedContextIndex = {
     ...state.thoughts.contextIndex,
@@ -54,7 +54,7 @@ const pushLocal = (
         }
       }
 
-      // Note: Since all the data of a thought is now on Parent instead of Child and ThoughtIndex, so the parent entry should not be deleted if they don't have children
+      // Note: Since all the data of a thought is now on Parent instead of Child and LexemeIndex, so the parent entry should not be deleted if they don't have children
       return parentEntry ? db.updateContext(contextEncoded as ThoughtId, parentEntry) : db.deleteContext(contextEncoded)
     }),
     db.updateLastUpdated(timestamp()),
@@ -70,14 +70,14 @@ const pushLocal = (
 
   logWithTime('sync: localPromises generated')
 
-  return Promise.all([...thoughtIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise])
+  return Promise.all([...lexemeIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise])
 }
 
-/** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
+/** Prepends lexemeIndex and contextIndex keys for syncing to Firebase. */
 const pushRemote =
   (
     contextIndexUpdates: Index<Thought | null> = {},
-    thoughtIndexUpdates: Index<Lexeme | null> = {},
+    lexemeIndexUpdates: Index<Lexeme | null> = {},
     recentlyEdited: Index | undefined,
     updates: Index = {},
   ): Thunk<Promise<unknown>> =>
@@ -85,23 +85,23 @@ const pushRemote =
     const state = getState()
 
     const hasUpdates =
-      Object.keys(thoughtIndexUpdates).length > 0 ||
+      Object.keys(lexemeIndexUpdates).length > 0 ||
       Object.keys(contextIndexUpdates).length > 0 ||
       Object.keys(updates).length > 0
 
-    // prepend thoughtIndex/ and encode key
+    // prepend lexemeIndex/ and encode key
     const prependedDataUpdates = _.transform(
-      thoughtIndexUpdates,
+      lexemeIndexUpdates,
       (accum, lexemeUpdate, key) => {
         if (!key) {
           console.error('Unescaped empty key', lexemeUpdate, new Error())
         }
-        accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = lexemeUpdate
+        accum['lexemeIndex/' + (key || EMPTY_TOKEN)] = lexemeUpdate
       },
       {} as Index<Lexeme | null>,
     )
 
-    logWithTime('pushRemote: prepend thoughtIndex key')
+    logWithTime('pushRemote: prepend lexemeIndex key')
 
     const prependedContextIndexUpdates = _.transform(
       contextIndexUpdates,
@@ -136,10 +136,10 @@ const pushRemote =
             ...prependedDataUpdates,
             ...prependedContextIndexUpdates,
             ...(recentlyEdited ? { recentlyEdited } : null),
-            // do not update lastClientId and lastUpdated if there are no thoughtIndex updates (e.g. just a settings update)
-            // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore thoughtIndex updates from the remote thinking it is already up-to-speed
+            // do not update lastClientId and lastUpdated if there are no lexemeIndex updates (e.g. just a settings update)
+            // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore lexemeIndex updates from the remote thinking it is already up-to-speed
             // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
-            ...(Object.keys(thoughtIndexUpdates).length > 0
+            ...(Object.keys(lexemeIndexUpdates).length > 0
               ? {
                   lastClientId: clientId,
                   lastUpdated: timestamp(),
@@ -166,7 +166,7 @@ const pushRemote =
 const push =
   (
     contextIndexUpdates: Index<Thought | null> = {},
-    thoughtIndexUpdates: Index<Lexeme | null> = {},
+    lexemeIndexUpdates: Index<Lexeme | null> = {},
     { local = true, remote = true, updates = {}, recentlyEdited = {} } = {},
   ): Thunk =>
   (dispatch, getState) => {
@@ -206,7 +206,7 @@ const push =
         pushLocal(
           getState(),
           contextIndexUpdatesNotPending,
-          thoughtIndexUpdates,
+          lexemeIndexUpdates,
           recentlyEdited,
           updates,
           localStorageSettingsContexts,
@@ -216,7 +216,7 @@ const push =
       remote &&
         authenticated &&
         userRef &&
-        pushRemote(contextIndexUpdatesNotPending, thoughtIndexUpdates, recentlyEdited, updates)(dispatch, getState),
+        pushRemote(contextIndexUpdatesNotPending, lexemeIndexUpdates, recentlyEdited, updates)(dispatch, getState),
     ])
   }
 

@@ -21,7 +21,7 @@ interface Database {
 }
 
 interface UserState {
-  thoughtIndex: State['thoughts']['thoughtIndex']
+  lexemeIndex: State['thoughts']['lexemeIndex']
   contextIndex: State['thoughts']['contextIndex']
 }
 

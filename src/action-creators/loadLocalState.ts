@@ -34,7 +34,7 @@ const loadLocalState = (): Thunk<Promise<void>> => async (dispatch, getState) =>
         contextIndexUpdates: {
           [EM_TOKEN]: updatedEMParent,
         },
-        thoughtIndexUpdates: {},
+        lexemeIndexUpdates: {},
         local: false,
         remote: false,
       }),

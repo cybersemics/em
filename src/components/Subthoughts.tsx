@@ -724,7 +724,7 @@ export const SubthoughtsComponent = ({
 
       {show && filteredChildren.length > (showContexts && !allowSingleContext ? 1 : 0) ? (
         <ul
-          // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(simplePath))) : null}
+          // lexemeIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(simplePath))) : null}
           className={classNames({
             children: true,
             'context-chain': showContexts,

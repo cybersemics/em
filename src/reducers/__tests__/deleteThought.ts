@@ -22,7 +22,7 @@ it('delete from root', () => {
     },
   ])
 
-  // thoughtIndex
+  // lexemeIndex
   expect(getContexts(stateNew, 'b')).toEqual([])
 })
 
@@ -37,7 +37,7 @@ it('delete descendants of root thought', () => {
   expect(getAllChildren(stateNew, ['a'])).toEqual([])
   expect(getAllChildren(stateNew, ['b', 'c'])).toEqual([])
 
-  // thoughtIndex
+  // lexemeIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
   expect(getContexts(stateNew, 'b')).toEqual([])
   expect(getContexts(stateNew, 'c')).toEqual([])
@@ -53,6 +53,6 @@ it('delete thought with duplicate child', () => {
   expect(getAllChildren(stateNew, [HOME_TOKEN])).toEqual([])
   expect(getAllChildren(stateNew, ['a'])).toEqual([])
 
-  // thoughtIndex
+  // lexemeIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
 })

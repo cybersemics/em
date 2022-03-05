@@ -13,16 +13,16 @@ const recursiveCheckParent = (contextIndex: Index<Thought>, thoughtIds: string[]
   }, [])
 }
 
-/** Checks if there exists a entry in thoughtIndex for each entry in contextIndex and vice versa, and returns the migging parent ids and missing lexemes values. */
+/** Checks if there exists a entry in lexemeIndex for each entry in contextIndex and vice versa, and returns the migging parent ids and missing lexemes values. */
 const checkDataIntegrity = (state: State, max = 100000) => {
-  const { contextIndex, thoughtIndex } = state.thoughts
+  const { contextIndex, lexemeIndex } = state.thoughts
   let missingParentIds: string[] = []
   let missingLexemeValues: string[] = []
 
-  Object.keys(thoughtIndex)
+  Object.keys(lexemeIndex)
     .slice(0, max)
     .forEach(key => {
-      const lexeme = thoughtIndex[key]
+      const lexeme = lexemeIndex[key]
       if (!lexeme.contexts) return
       missingParentIds = [...missingParentIds, ...recursiveCheckParent(contextIndex, lexeme.contexts)]
     })
@@ -34,7 +34,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
 
       const thoughtHash = hashThought(thought.value)
 
-      const lexemeParent = thoughtIndex[thoughtHash]
+      const lexemeParent = lexemeIndex[thoughtHash]
 
       if (!lexemeParent) missingLexemeValues = [...missingLexemeValues, thought.value]
 
@@ -47,7 +47,7 @@ const checkDataIntegrity = (state: State, max = 100000) => {
 
         const thoughtHash = hashThought(childThought.value)
 
-        const lexeme = thoughtIndex[thoughtHash]
+        const lexeme = lexemeIndex[thoughtHash]
 
         if (!lexeme) missingLexemeValues = [...missingLexemeValues, childThought.value]
       })

@@ -37,7 +37,7 @@ const isUnbuffered = (state: State, thought: Thought) => {
 }
 
 /**
- * Returns buffered thoughtIndex and contextIndex for all descendants using async iterables.
+ * Returns buffered lexemeIndex and contextIndex for all descendants using async iterables.
  *
  * @param context
  * @param children
@@ -64,7 +64,7 @@ async function* getDescendantThoughts(
       console.error(`getDescendantThoughts: Cannot get thought for some ids.`, pullThoughtIds, providerParents)
       yield {
         contextIndex: {},
-        thoughtIndex: {},
+        lexemeIndex: {},
       }
       return
     }
@@ -118,11 +118,11 @@ async function* getDescendantThoughts(
 
     const lexemes = await provider.getThoughtsByIds(thoughtHashes)
 
-    const thoughtIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
+    const lexemeIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
     const thoughtsIndices = {
       contextIndex,
-      thoughtIndex,
+      lexemeIndex,
     }
 
     // enqueue children

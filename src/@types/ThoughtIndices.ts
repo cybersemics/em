@@ -4,5 +4,5 @@ import { Lexeme } from './Lexeme'
 
 export interface ThoughtIndices {
   contextIndex: Index<Thought>
-  thoughtIndex: Index<Lexeme>
+  lexemeIndex: Index<Lexeme>
 }

@@ -10,35 +10,35 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
   // delete local thoughts that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (oldState.lastUpdated! <= newState.lastUpdated!) {
-    Object.keys(oldState.thoughts.thoughtIndex).forEach(key => {
-      if (!(key in newState.thoughts.thoughtIndex)) {
+    Object.keys(oldState.thoughts.lexemeIndex).forEach(key => {
+      if (!(key in newState.thoughts.lexemeIndex)) {
         // do not force render here, but after all values have been deleted
-        dispatch(deleteData({ value: oldState.thoughts.thoughtIndex[key].value }))
+        dispatch(deleteData({ value: oldState.thoughts.lexemeIndex[key].value }))
       }
     })
   }
 
-  logWithTime('loadRemoteState: local thoughtIndex entries deleted')
+  logWithTime('loadRemoteState: local lexemeIndex entries deleted')
 
-  // thoughtIndex
+  // lexemeIndex
   // keyRaw is firebase encoded
-  const thoughtIndexUpdates = keyValueBy(newState.thoughts.thoughtIndex, (keyRaw, lexemeNew) => {
+  const lexemeIndexUpdates = keyValueBy(newState.thoughts.lexemeIndex, (keyRaw, lexemeNew) => {
     const key =
       newState.schemaVersion < SCHEMA_HASHKEYS ? (keyRaw === EMPTY_TOKEN ? '' : firebaseDecode(keyRaw)) : keyRaw
-    const lexemeOld = oldState.thoughts.thoughtIndex[key]
+    const lexemeOld = oldState.thoughts.lexemeIndex[key]
     const updated = lexemeNew && (!lexemeOld || lexemeNew.lastUpdated > lexemeOld.lastUpdated)
 
     return updated ? { [key]: lexemeNew } : null
   })
 
-  logWithTime('loadRemoteState: thoughtIndexUpdates generated')
+  logWithTime('loadRemoteState: lexemeIndexUpdates generated')
 
   // update local database in background
   if (isDocumentEditable()) {
-    db.updateThoughtIndex(thoughtIndexUpdates)
+    db.updateLexemeIndex(lexemeIndexUpdates)
   }
 
-  logWithTime('loadRemoteState: updateThoughtIndex')
+  logWithTime('loadRemoteState: updateLexemeIndex')
 
   // contextEncodedRaw is firebase encoded
   const contextIndexUpdates: Index<Thought | null> = keyValueBy(
@@ -84,11 +84,11 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
 
   logWithTime('loadRemoteState: local contextIndex entries deleted')
 
-  if (Object.keys(thoughtIndexUpdates).length > 0) {
+  if (Object.keys(lexemeIndexUpdates).length > 0) {
     logWithTime('updateThoughts')
     dispatch(
       updateThoughts({
-        thoughtIndexUpdates,
+        lexemeIndexUpdates,
         contextIndexUpdates,
         recentlyEdited: newState.recentlyEdited,
         remote: false,
@@ -120,7 +120,7 @@ const loadRemoteState =
 
 //   logWithTime('loadRemoteState: migrated')
 
-//   const { thoughtIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
+//   const { lexemeIndexUpdates, contextIndexUpdates, schemaVersion } = newStateUpdates
 
 //   // eslint-disable-next-line fp/no-let
 //   let output = [newState, oldState]
@@ -130,7 +130,7 @@ const loadRemoteState =
 
 //     const updateThoughtsArgs = {
 //       contextIndexUpdates,
-//       thoughtIndexUpdates,
+//       lexemeIndexUpdates,
 //       remote: false,
 //       updates: { schemaVersion },
 //     }

@@ -10,5 +10,5 @@ export interface DataProvider {
   updateThought: (id: string, thought: Lexeme) => Promise<unknown>
   updateContext: (id: ThoughtId, Parent: Thought) => Promise<unknown>
   updateContextIndex: (contextIndex: Index<Thought>) => Promise<unknown>
-  updateThoughtIndex: (thoughtIndex: Index<Lexeme>) => Promise<unknown>
+  updateLexemeIndex: (lexemeIndex: Index<Lexeme>) => Promise<unknown>
 }

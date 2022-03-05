@@ -23,12 +23,12 @@ interface Payload {
 
 interface ThoughtUpdates {
   contextIndex: Index<Thought | null>
-  thoughtIndex: Index<Lexeme | null>
+  lexemeIndex: Index<Lexeme | null>
   pendingDeletes?: { context: Context; thought: Thought }[]
 }
 
 // @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directlty. Find a better way to handle this.
-/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions.
+/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the lexemeIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions.
  *
  * @param orphaned - In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated.
  */
@@ -70,7 +70,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     return state
   }
 
-  const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
+  const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
   // const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
   const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
@@ -96,9 +96,9 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
 
   // update state so that we do not have to wait for firebase
   if (newOldThought) {
-    thoughtIndexNew[key] = newOldThought
+    lexemeIndexNew[key] = newOldThought
   } else {
-    delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
+    delete lexemeIndexNew[key] // eslint-disable-line fp/no-delete
   }
 
   // remove thought from contextViews
@@ -109,13 +109,13 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
   const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
-    // modify the state to use the thoughtIndex with newOldLexeme
+    // modify the state to use the lexemeIndex with newOldLexeme
     // this ensures that contexts are calculated correctly for descendants with duplicate values
     const stateNew: State = {
       ...state,
       thoughts: {
         ...state.thoughts,
-        thoughtIndex: thoughtIndexNew,
+        lexemeIndex: lexemeIndexNew,
       },
     }
 
@@ -130,11 +130,11 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
             : // if this was the only context of the child, delete the child
               null
 
-        // update local thoughtIndex so that we do not have to wait for firebase
+        // update local lexemeIndex so that we do not have to wait for firebase
         if (childNew) {
-          thoughtIndexNew[hashedKey] = childNew
+          lexemeIndexNew[hashedKey] = childNew
         } else {
-          delete thoughtIndexNew[hashedKey] // eslint-disable-line fp/no-delete
+          delete lexemeIndexNew[hashedKey] // eslint-disable-line fp/no-delete
         }
 
         // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
@@ -164,9 +164,9 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
             ...(accumRecursive.pendingDeletes || []),
             ...(recursiveResults.pendingDeletes || []),
           ],
-          thoughtIndex: {
-            ...accum.thoughtIndex,
-            ...recursiveResults.thoughtIndex,
+          lexemeIndex: {
+            ...accum.lexemeIndex,
+            ...recursiveResults.lexemeIndex,
             [hashedKey]: childNew,
           },
           contextIndex: {
@@ -176,7 +176,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
         }
       },
       {
-        thoughtIndex: accumRecursive.thoughtIndex,
+        lexemeIndex: accumRecursive.lexemeIndex,
         contextIndex: {
           ...accumRecursive.contextIndex,
           [thought.id]: null,
@@ -190,13 +190,13 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(deletedThought)
     : ({
-        thoughtIndex: {},
+        lexemeIndex: {},
         contextIndex: {},
       } as ThoughtUpdates)
 
-  const thoughtIndexUpdates = {
+  const lexemeIndexUpdates = {
     [key]: newOldThought,
-    ...descendantUpdatesResult.thoughtIndex,
+    ...descendantUpdatesResult.lexemeIndex,
     // emptyContextDelete
   }
 
@@ -223,7 +223,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     }),
     updateThoughts({
       contextIndexUpdates,
-      thoughtIndexUpdates,
+      lexemeIndexUpdates,
       // recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
     }),

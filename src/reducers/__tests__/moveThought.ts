@@ -589,7 +589,7 @@ it('data integrity test', () => {
   expect(missingParentIds).toHaveLength(0)
 })
 
-it('consistent rank between thoughtIndex and contextIndex on duplicate merge', () => {
+it('consistent rank between lexemeIndex and contextIndex on duplicate merge', () => {
   const text = `
   - a
     - b

@@ -9,7 +9,7 @@ const importThoughts = (text: string) => {
   const stateNew = importText(initialState(), { text })
   return {
     contextIndex: stateNew.thoughts.contextIndex,
-    thoughtIndex: stateNew.thoughts.thoughtIndex,
+    lexemeIndex: stateNew.thoughts.lexemeIndex,
   }
 }
 
@@ -18,7 +18,7 @@ describe('local search', () => {
   afterEach(db.clearAll)
 
   it('full text search with single word', async () => {
-    const { thoughtIndex, contextIndex } = importThoughts(`
+    const { lexemeIndex, contextIndex } = importThoughts(`
     - LP
       - Lost on you
       - One last time
@@ -34,7 +34,7 @@ describe('local search', () => {
       - East To Be Hard
       - One`)
 
-    await Promise.all(Object.keys(thoughtIndex).map(hash => db.updateThought(hash, thoughtIndex[hash])))
+    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateThought(hash, lexemeIndex[hash])))
 
     const state = initialState()
 
@@ -42,7 +42,7 @@ describe('local search', () => {
       ...state,
       thoughts: {
         ...state.thoughts,
-        thoughtIndex,
+        lexemeIndex,
         contextIndex,
       },
     })
@@ -58,7 +58,7 @@ describe('local search', () => {
   })
 
   it('full text search with multiple words', async () => {
-    const { thoughtIndex, contextIndex } = importThoughts(`
+    const { lexemeIndex, contextIndex } = importThoughts(`
     - Tasks
       - Errands
         - Get apple juice
@@ -72,7 +72,7 @@ describe('local search', () => {
         - Update CV and check emails
     `)
 
-    await Promise.all(Object.keys(thoughtIndex).map(hash => db.updateThought(hash, thoughtIndex[hash])))
+    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateThought(hash, lexemeIndex[hash])))
 
     const state = initialState()
 
@@ -80,7 +80,7 @@ describe('local search', () => {
       ...state,
       thoughts: {
         ...state.thoughts,
-        thoughtIndex,
+        lexemeIndex,
         contextIndex,
       },
     })
@@ -99,7 +99,7 @@ describe('local search', () => {
   })
 
   it('full text search with ignore case', async () => {
-    const { thoughtIndex, contextIndex } = importThoughts(`
+    const { lexemeIndex, contextIndex } = importThoughts(`
     - Anime Characters
       - Naruto
         - Knucklehead
@@ -113,7 +113,7 @@ describe('local search', () => {
         - Bold
     `)
 
-    await Promise.all(Object.keys(thoughtIndex).map(hash => db.updateThought(hash, thoughtIndex[hash])))
+    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateThought(hash, lexemeIndex[hash])))
 
     const state = initialState()
 
@@ -121,7 +121,7 @@ describe('local search', () => {
       ...state,
       thoughts: {
         ...state.thoughts,
-        thoughtIndex,
+        lexemeIndex,
         contextIndex,
       },
     })

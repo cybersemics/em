@@ -8,7 +8,7 @@ import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { Context, Index, Lexeme, Thought, Path, PendingMerge, PushBatch, SimplePath, State } from '../@types'
 
 export interface UpdateThoughtsOptions {
-  thoughtIndexUpdates: Index<Lexeme | null>
+  lexemeIndexUpdates: Index<Lexeme | null>
   contextIndexUpdates: Index<Thought | null>
   recentlyEdited?: Index
   pendingDeletes?: { context: Context; thought: Thought }[]
@@ -40,9 +40,9 @@ export const getWhitelistedThoughts = once(() => {
       ...state.thoughts.contextIndex,
       ...settingsImported.contextIndexUpdates,
     },
-    thoughtIndex: {
-      ...state.thoughts.thoughtIndex,
-      ...settingsImported.thoughtIndexUpdates,
+    lexemeIndex: {
+      ...state.thoughts.lexemeIndex,
+      ...settingsImported.lexemeIndexUpdates,
     },
   }
 })
@@ -53,7 +53,7 @@ export const getWhitelistedThoughts = once(() => {
 // }
 
 /**
- * Updates thoughtIndex and contextIndex with any number of thoughts.
+ * Updates lexemeIndex and contextIndex with any number of thoughts.
  *
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
@@ -61,7 +61,7 @@ export const getWhitelistedThoughts = once(() => {
 const updateThoughts = (
   state: State,
   {
-    thoughtIndexUpdates,
+    lexemeIndexUpdates,
     contextIndexUpdates,
     recentlyEdited,
     updates,
@@ -73,10 +73,10 @@ const updateThoughts = (
     isLoading,
   }: UpdateThoughtsOptions,
 ) => {
-  if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(thoughtIndexUpdates).length === 0) return state
+  if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
   const contextIndexOld = { ...state.thoughts.contextIndex }
-  const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
+  const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
 
   // Data Integrity Checks
 
@@ -103,8 +103,8 @@ const updateThoughts = (
   // if (local && remote) {
   // A non-root context should never begin with HOME_TOKEN.
   // If one is found, it means there was a data integrity error that needs to be identified immediately.
-  // if (Object.values(thoughtIndexUpdates).some(lexeme => lexeme?.contexts.some(isInvalidContext))) {
-  //   const invalidLexemes = Object.values(thoughtIndexUpdates).filter(lexeme =>
+  // if (Object.values(lexemeIndexUpdates).some(lexeme => lexeme?.contexts.some(isInvalidContext))) {
+  //   const invalidLexemes = Object.values(lexemeIndexUpdates).filter(lexeme =>
   //     lexeme?.contexts.some(isInvalidContext),
   //   ) as Lexeme[]
   //   if (invalidLexemes.length > 0) {
@@ -122,20 +122,20 @@ const updateThoughts = (
   // There is a bug that is saving full Thoughts into Lexeme.contexts.
   // Throw here to help identify the upstream problem.
 
-  Object.values(thoughtIndexUpdates).forEach(lexemeUpdate => {
+  Object.values(lexemeIndexUpdates).forEach(lexemeUpdate => {
     if (lexemeUpdate?.contexts.some(id => typeof id !== 'string')) {
       console.error('Invalid Lexeme context', lexemeUpdate)
       throw new Error('Invalid Lexeme context')
     }
   })
 
-  // The contextIndex and thoughtIndex can consume more and more memory as thoughts are pulled from the db.
-  // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and thoughtIndex.
+  // The contextIndex and lexemeIndex can consume more and more memory as thoughts are pulled from the db.
+  // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and lexemeIndex.
   // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
-  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and thoughtIndex
+  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and lexemeIndex
 
   const contextIndexInvalidated = contextCache.addMany(Object.keys(contextIndexUpdates))
-  const thoughtIndexInvalidated = lexemeCache.addMany(Object.keys(thoughtIndexUpdates))
+  const lexemeIndexInvalidated = lexemeCache.addMany(Object.keys(lexemeIndexUpdates))
 
   contextIndexInvalidated.forEach(key => {
     // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
@@ -144,21 +144,21 @@ const updateThoughts = (
     }
   })
 
-  thoughtIndexInvalidated.forEach(key => {
+  lexemeIndexInvalidated.forEach(key => {
     // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
-    if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
-      delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
+    if (!getWhitelistedThoughts().lexemeIndex[key] && !state.expanded[key]) {
+      delete lexemeIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
 
   const contextIndex = mergeUpdates(contextIndexOld, contextIndexUpdates)
-  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates)
+  const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates)
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
   //  lexemes from the updates that are not available in the state yet.
-  const pendingLexemes = Object.keys(thoughtIndexUpdates).reduce<Index<boolean>>((acc, thoughtId) => {
-    const lexemeInState = state.thoughts.thoughtIndex[thoughtId]
+  const pendingLexemes = Object.keys(lexemeIndexUpdates).reduce<Index<boolean>>((acc, thoughtId) => {
+    const lexemeInState = state.thoughts.lexemeIndex[thoughtId]
     return {
       ...acc,
       ...(lexemeInState ? {} : { [thoughtId]: true }),
@@ -167,7 +167,7 @@ const updateThoughts = (
 
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
-    thoughtIndexUpdates,
+    lexemeIndexUpdates,
     contextIndexUpdates,
     recentlyEdited: recentlyEditedNew,
     updates,
@@ -206,7 +206,7 @@ const updateThoughts = (
       ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
       thoughts: {
         contextIndex,
-        thoughtIndex,
+        lexemeIndex,
       },
     }),
 
@@ -217,7 +217,7 @@ const updateThoughts = (
 
     // state => {
     //   // loop through all Lexemes that are being updated
-    //   Object.values(thoughtIndexUpdates).forEach(lexeme => {
+    //   Object.values(lexemeIndexUpdates).forEach(lexeme => {
     //     // loop through each ThoughtContext of each Lexeme
     //     lexeme?.contexts.forEach(cx => {
     //       // find the Child with the same value and rank in the Thought

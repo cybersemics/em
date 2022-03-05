@@ -54,11 +54,11 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
     },
   }
 
-  const thoughtIndex = {
+  const lexemeIndex = {
     [hashThought(HOME_TOKEN)]: {
       value: HOME_TOKEN,
       contexts: [],
-      // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
+      // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
       created,
       lastUpdated: never(),
       updatedBy: getSessionId(),
@@ -66,13 +66,13 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
     [hashThought(ABSOLUTE_TOKEN)]: {
       value: ABSOLUTE_TOKEN,
       contexts: [],
-      // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
+      // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
       created,
       lastUpdated: never(),
       updatedBy: getSessionId(),
     },
     // this will get populated by importText in loadLocalState
-    // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
+    // unfortunately that's the best way currently to create nested thoughts and ensure that lexemeIndex and contextIndex are correct
     [hashThought(EM_TOKEN)]: {
       value: EM_TOKEN,
       contexts: [],
@@ -84,7 +84,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
 
   return {
     contextIndex,
-    thoughtIndex,
+    lexemeIndex,
   }
 }
 
