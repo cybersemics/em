@@ -304,7 +304,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     sortDirection: sortPreference.direction,
     zoomCursor,
     zoomParent,
-    // Re-render if children change and when children parent entry in thoughtIndex is available.
+    // Re-render if children change and when children Thought entry in thoughtIndex is available.
     // Uses getAllChildren for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
     __allChildren: hasChildrenLoaded ? allChildren : [],

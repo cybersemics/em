@@ -54,7 +54,7 @@ const pushLocal = (
         }
       }
 
-      // Note: Since all the data of a thought is now on Parent instead of Child and LexemeIndex, so the parent entry should not be deleted if they don't have children
+      // Note: Since all the data of a thought is now on Parent instead of Child and LexemeIndex, so the thought should not be deleted if they don't have children
       return parentEntry ? db.updateContext(contextEncoded as ThoughtId, parentEntry) : db.deleteContext(contextEncoded)
     }),
     db.updateLastUpdated(timestamp()),

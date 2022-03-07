@@ -4,7 +4,7 @@ import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { getAllChildren, getThoughtByContext } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
-import getParentDB from '../../data-providers/data-helpers/getParent'
+import getThoughtByIdFromDB from '../../data-providers/data-helpers/getThoughtById'
 import { DataProvider } from '../../data-providers/DataProvider'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { Context, Thought } from '../../@types'
@@ -225,13 +225,13 @@ it('move thought with buffered descendants', async () => {
   const thoughtD = getThoughtByContext(store.getState(), ['a', 'b', 'c', 'd'])!
   const thoughtE = getThoughtByContext(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
 
-  expect(await getParentDB(db, HOME_TOKEN)).toMatchObject({ children: [thoughtX.id, thoughtA.id] })
-  expect(await getParentDB(db, thoughtA.id)).toMatchObject({ children: [thoughtM.id, thoughtB.id] })
-  expect(await getParentDB(db, thoughtB.id)).toMatchObject({ children: [thoughtC.id] })
-  expect(await getParentDB(db, thoughtM.id)).toMatchObject({ children: [] })
-  expect(await getParentDB(db, thoughtC.id)).toMatchObject({ children: [thoughtD.id] })
-  expect(await getParentDB(db, thoughtD.id)).toMatchObject({ children: [thoughtE.id] })
-  expect(await getParentDB(db, thoughtE.id)).toMatchObject({ children: [] })
+  expect(await getThoughtByIdFromDB(db, HOME_TOKEN)).toMatchObject({ children: [thoughtX.id, thoughtA.id] })
+  expect(await getThoughtByIdFromDB(db, thoughtA.id)).toMatchObject({ children: [thoughtM.id, thoughtB.id] })
+  expect(await getThoughtByIdFromDB(db, thoughtB.id)).toMatchObject({ children: [thoughtC.id] })
+  expect(await getThoughtByIdFromDB(db, thoughtM.id)).toMatchObject({ children: [] })
+  expect(await getThoughtByIdFromDB(db, thoughtC.id)).toMatchObject({ children: [thoughtD.id] })
+  expect(await getThoughtByIdFromDB(db, thoughtD.id)).toMatchObject({ children: [thoughtE.id] })
+  expect(await getThoughtByIdFromDB(db, thoughtE.id)).toMatchObject({ children: [] })
 
   await refreshTestApp()
 

@@ -5,7 +5,7 @@ import getDescendantThoughts from '../data-providers/data-helpers/getDescendantT
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
 import getLexeme from '../data-providers/data-helpers/getLexeme'
-import getParent from '../data-providers/data-helpers/getParent'
+import getThoughtById from '../data-providers/data-helpers/getThoughtById'
 
 import { hashThought, keyValueBy, mergeThoughts, never, reducerFlow, timestamp } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
@@ -158,7 +158,7 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('getContext', async () => {
-    const nocontext = await getParent(provider, 'test' as ThoughtId)
+    const nocontext = await getThoughtById(provider, 'test' as ThoughtId)
     expect(nocontext).toBeUndefined()
 
     const parentEntry = {
@@ -173,7 +173,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     await provider.updateContext('test' as ThoughtId, parentEntry)
 
-    const dbContext = await getParent(provider, 'test' as ThoughtId)
+    const dbContext = await getThoughtById(provider, 'test' as ThoughtId)
     expect(dbContext).toEqual(parentEntry)
   })
 
@@ -264,10 +264,10 @@ const dataProviderTest = (provider: DataProvider) => {
       idY: parentEntryY,
     })
 
-    const contextX = await getParent(provider, 'idX' as ThoughtId)
+    const contextX = await getThoughtById(provider, 'idX' as ThoughtId)
     expect(contextX).toEqual(parentEntryX)
 
-    const contextY = await getParent(provider, 'idY' as ThoughtId)
+    const contextY = await getThoughtById(provider, 'idY' as ThoughtId)
     expect(contextY).toEqual(parentEntryY)
   })
 
