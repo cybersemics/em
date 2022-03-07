@@ -29,7 +29,7 @@ const db = dexie as DataProvider
 const matchContextsChildren = async (provider: DataProvider, context: Context, children: Partial<Thought>[]) => {
   const parentThought = (await getContext(provider, context))!
   expect(parentThought).toBeTruthy()
-  const childrenThoughts = await provider.getContextsByIds(parentThought.children)
+  const childrenThoughts = await provider.getThoughtsByIds(parentThought.children)
   expect(childrenThoughts).toMatchObject(children)
 }
 

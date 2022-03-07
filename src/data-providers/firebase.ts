@@ -57,11 +57,9 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 
   /**
-   * Gets a context by id.
-   *
-   * @param conte,xt
+   * Gets a Thought by id.
    */
-  async getContextById(id: string): Promise<Thought | undefined> {
+  async getThoughtById(id: string): Promise<Thought | undefined> {
     const userRef = getUserRef(state)
     const ref = userRef!.child('thoughtIndex').child<Thought>(id)
     return new Promise(resolve =>
@@ -71,7 +69,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     )
   },
   /** Gets multiple PrentEntry objects by ids. */
-  getContextsByIds: async (ids: string[]): Promise<(Thought | undefined)[]> => {
+  getThoughtsByIds: async (ids: string[]): Promise<(Thought | undefined)[]> => {
     const userRef = getUserRef(state)
     const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child<Thought>(id).once('value')))
     return snapshots.map(snapshot => snapshot?.val())
@@ -92,13 +90,13 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     })
   },
   /** Updates a context in the thoughtIndex. */
-  async updateContext(id: string, parentEntry: Thought): Promise<unknown> {
+  async updateThought(id: string, parentEntry: Thought): Promise<unknown> {
     return this.update({
       ['thoughtIndex/' + id]: parentEntry,
     })
   },
   /** Updates a thought in the lexemeIndex. */
-  async updateThought(id: string, lexeme: Lexeme): Promise<unknown> {
+  async updateLexeme(id: string, lexeme: Lexeme): Promise<unknown> {
     return this.update({
       ['lexemeIndex/' + id]: lexeme,
     })

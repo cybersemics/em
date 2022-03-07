@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { deleteThought, updateLastUpdated } from '../data-providers/dexie'
+import { deleteLexeme, updateLastUpdated } from '../data-providers/dexie'
 import { hashThought, timestamp } from '../util'
 import { getLexeme, getContextForThought, getThoughtById } from '../selectors'
 import { State } from '../@types'
@@ -10,7 +10,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
   const lexemeIndex = { ...state.thoughts.lexemeIndex }
   const lexeme = getLexeme(state, value)
   delete lexemeIndex[hashThought(value)] // eslint-disable-line fp/no-delete
-  deleteThought(hashThought(value))
+  deleteLexeme(hashThought(value))
   updateLastUpdated(timestamp())
 
   // delete value from all contexts

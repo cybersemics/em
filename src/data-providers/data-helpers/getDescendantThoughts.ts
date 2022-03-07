@@ -58,7 +58,7 @@ async function* getDescendantThoughts(
   // eslint-disable-next-line fp/no-loops
   while (pullThoughtIds.length > 0) {
     // TODO: Find better way to remove null from the type here.
-    const providerParents = (await provider.getContextsByIds(pullThoughtIds)).filter(Boolean) as Thought[]
+    const providerParents = (await provider.getThoughtsByIds(pullThoughtIds)).filter(Boolean) as Thought[]
 
     if (providerParents.length < pullThoughtIds.length) {
       console.error(`getDescendantThoughts: Cannot get thought for some ids.`, pullThoughtIds, providerParents)

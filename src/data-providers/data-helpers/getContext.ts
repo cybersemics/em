@@ -10,7 +10,7 @@ import { DataProvider } from '../DataProvider'
  * For the given array of thought ids returns the parent entries.
  */
 const childIdsToThoughts = async (provider: DataProvider, childIds: ThoughtId[]) => {
-  const thoughts = await provider.getContextsByIds(childIds)
+  const thoughts = await provider.getThoughtsByIds(childIds)
   // If any one of the thoughts are not found return null
   return thoughts.length < childIds.length ? null : thoughts
 }
@@ -21,7 +21,7 @@ const childIdsToThoughts = async (provider: DataProvider, childIds: ThoughtId[])
  */
 const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: string[]) => {
   if (isRoot(pathUnranked)) {
-    const rootThought = await provider.getContextById(pathUnranked[0] as ThoughtId)
+    const rootThought = await provider.getThoughtById(pathUnranked[0] as ThoughtId)
     return rootThought ? [rootThought] : null
   }
 
@@ -29,7 +29,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
   const isEmContext = pathUnranked[0] === EM_TOKEN
 
   if (isEmContext && pathUnranked.length === 1) {
-    const emThought = await provider.getContextById(EM_TOKEN)
+    const emThought = await provider.getThoughtById(EM_TOKEN)
     return [emThought]
   }
 
@@ -57,7 +57,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
 
       const isEm = i === 0 && value === EM_TOKEN
 
-      const emThought = await provider.getContextById(EM_TOKEN)
+      const emThought = await provider.getThoughtById(EM_TOKEN)
 
       if (!emThought) throw new Error(`Em thought not found`)
 

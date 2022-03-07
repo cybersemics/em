@@ -34,7 +34,7 @@ describe('local search', () => {
       - East To Be Hard
       - One`)
 
-    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateThought(hash, lexemeIndex[hash])))
+    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateLexeme(hash, lexemeIndex[hash])))
 
     const state = initialState()
 
@@ -72,7 +72,7 @@ describe('local search', () => {
         - Update CV and check emails
     `)
 
-    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateThought(hash, lexemeIndex[hash])))
+    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateLexeme(hash, lexemeIndex[hash])))
 
     const state = initialState()
 
@@ -113,7 +113,7 @@ describe('local search', () => {
         - Bold
     `)
 
-    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateThought(hash, lexemeIndex[hash])))
+    await Promise.all(Object.keys(lexemeIndex).map(hash => db.updateLexeme(hash, lexemeIndex[hash])))
 
     const state = initialState()
 

@@ -23,9 +23,9 @@ const pushLocal = (
   const lexemeIndexPromises = [
     ...Object.entries(lexemeIndexUpdates).map(([key, lexeme]) => {
       if (lexeme != null) {
-        return db.updateThought(key, lexeme)
+        return db.updateLexeme(key, lexeme)
       }
-      return db.deleteThought(key)
+      return db.deleteLexeme(key)
     }),
     db.updateLastUpdated(timestamp()),
   ] as Promise<unknown>[]
@@ -55,7 +55,7 @@ const pushLocal = (
       }
 
       // Note: Since all the data of a thought is now on Parent instead of Child and LexemeIndex, so the thought should not be deleted if they don't have children
-      return parentEntry ? db.updateContext(contextEncoded as ThoughtId, parentEntry) : db.deleteContext(contextEncoded)
+      return parentEntry ? db.updateThought(contextEncoded as ThoughtId, parentEntry) : db.deleteThought(contextEncoded)
     }),
     db.updateLastUpdated(timestamp()),
   ]

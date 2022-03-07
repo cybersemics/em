@@ -141,7 +141,7 @@ const initDB = async () => {
 export const clearAll = () => Promise.all([db.lexemeIndex.clear(), db.thoughtIndex.clear(), db.helpers.clear()])
 
 /** Updates a single thought in the lexemeIndex. */
-export const updateThought = async (id: string, thought: Lexeme) =>
+export const updateLexeme = async (id: string, thought: Lexeme) =>
   db.transaction('rw', db.lexemeIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
     return db.lexemeIndex.put({ id, ...thought, updatedBy: getSessionId() })
@@ -160,7 +160,7 @@ export const updateLexemeIndex = async (lexemeIndexMap: Index<Lexeme | null>) =>
   })
 
 /** Deletes a single thought from the lexemeIndex. */
-export const deleteThought = (id: string) =>
+export const deleteLexeme = (id: string) =>
   db.transaction('rw', db.lexemeIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
     return db.lexemeIndex.delete(id)
@@ -179,7 +179,7 @@ export const getLexemeIndex = async () => {
 }
 
 /** Updates a single thought in the thoughtIndex. Ignores parentEntry.pending. */
-export const updateContext = async (
+export const updateThought = async (
   id: ThoughtId,
   { children, lastUpdated, value, parentId, archived, rank }: Thought,
 ) =>
@@ -201,17 +201,17 @@ export const updateThoughtIndex = async (thoughtIndexMap: Index<Thought | null>)
   })
 
 /** Deletes a single thought from the thoughtIndex. */
-export const deleteContext = async (id: string) =>
+export const deleteThought = async (id: string) =>
   db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
     return db.thoughtIndex.delete(id)
   })
 
 /** Get a context by id. */
-export const getContextById = async (id: string) => db.thoughtIndex.get(id)
+export const getThoughtById = async (id: string) => db.thoughtIndex.get(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. */
-export const getContextsByIds = async (ids: string[]) => db.thoughtIndex.bulkGet(ids)
+export const getThoughtsByIds = async (ids: string[]) => db.thoughtIndex.bulkGet(ids)
 
 /** Gets the entire thoughtIndex. DEPRECATED. Use data-helpers/getDescendantThoughts. */
 export const getThoughtIndex = async () => {

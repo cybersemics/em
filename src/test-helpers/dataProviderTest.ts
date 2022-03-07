@@ -116,7 +116,7 @@ const dataProviderTest = (provider: DataProvider) => {
       updatedBy: getSessionId(),
     }
 
-    await provider.updateThought('12345', lexeme)
+    await provider.updateLexeme('12345', lexeme)
 
     const dbThought = await provider.getLexemeById('12345')
     expect(dbThought).toEqual(lexeme)
@@ -130,15 +130,15 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const thoughtX = lexemeIndex[hashThought('x')]
     const thoughtY = lexemeIndex[hashThought('y')]
-    await provider.updateThought(hashThought('x'), thoughtX)
-    await provider.updateThought(hashThought('y'), thoughtY)
+    await provider.updateLexeme(hashThought('x'), thoughtX)
+    await provider.updateLexeme(hashThought('y'), thoughtY)
 
     const dbThoughts = await provider.getLexemesByIds([hashThought('x'), hashThought('y')])
 
     expect(dbThoughts).toMatchObject([thoughtX, thoughtY])
   })
 
-  test('updateThought', async () => {
+  test('updateLexeme', async () => {
     const nothought = await getLexeme(provider, 'x')
     expect(nothought).toBeUndefined()
 
@@ -151,7 +151,7 @@ const dataProviderTest = (provider: DataProvider) => {
       updatedBy: getSessionId(),
     }
 
-    await provider.updateThought(lexeme.id!, lexeme)
+    await provider.updateLexeme(lexeme.id!, lexeme)
 
     const remoteThought = await getLexeme(provider, 'x')
     expect(remoteThought).toEqual(lexeme)
@@ -171,13 +171,13 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
     } as Thought
 
-    await provider.updateContext('test' as ThoughtId, parentEntry)
+    await provider.updateThought('test' as ThoughtId, parentEntry)
 
     const dbContext = await getThoughtById(provider, 'test' as ThoughtId)
     expect(dbContext).toEqual(parentEntry)
   })
 
-  test('getContextsByIds', async () => {
+  test('getThoughtsByIds', async () => {
     const parentEntryX: Thought = {
       id: 'testIdX' as ThoughtId,
       children: ['child1', 'child2'] as ThoughtId[],
@@ -198,10 +198,10 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent2' as ThoughtId,
     }
 
-    await provider.updateContext('testIdX' as ThoughtId, parentEntryX)
-    await provider.updateContext('testIdA' as ThoughtId, parentEntryA)
+    await provider.updateThought('testIdX' as ThoughtId, parentEntryX)
+    await provider.updateThought('testIdA' as ThoughtId, parentEntryA)
 
-    const dbContexts = await provider.getContextsByIds([parentEntryX.id, parentEntryA.id])
+    const dbContexts = await provider.getThoughtsByIds([parentEntryX.id, parentEntryA.id])
     expect(dbContexts).toEqual([parentEntryX, parentEntryA])
   })
 
