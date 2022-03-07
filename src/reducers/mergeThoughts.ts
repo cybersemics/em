@@ -3,7 +3,7 @@ import { moveThought, updateThoughts } from '.'
 import { Lexeme, Path, State } from '../@types'
 import { getThoughtById } from '../selectors'
 import { getNextRankById } from '../selectors/getNextRank'
-import { appendToPath, hashThought, head, normalizeThought, reducerFlow, timestamp } from '../util'
+import { appendToPath, equalPath, hashThought, head, normalizeThought, reducerFlow, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 
 /**
@@ -34,8 +34,8 @@ const mergeThoughts = (
   const nextRank = getNextRankById(state, targetThought.id)
 
   // moving the children of the source thought to the end of the target context.
-  const newStateAfterMove = reducerFlow(
-    sourceThought.children.map(
+  const newStateAfterMove = reducerFlow([
+    ...sourceThought.children.map(
       (childId, index) => (updatedState: State) =>
         moveThought(updatedState, {
           oldPath: appendToPath(sourceThoughtPath, childId),
@@ -43,7 +43,15 @@ const mergeThoughts = (
           newRank: nextRank + index,
         }),
     ),
-  )(state)
+    (state: State) =>
+      // if the cursor is on the duplicate that gets deleted (sourceThoughtPath), we need to update it to the preserved thought (targetThoughtPath)
+      equalPath(state.cursor, sourceThoughtPath)
+        ? {
+            ...state,
+            cursor: targetThoughtPath,
+          }
+        : state,
+  ])(state)
 
   const hashedThought = hashThought(sourceThought.value)
 

@@ -3,8 +3,6 @@ import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, updateThoughts, mergeThoughts } from '../reducers'
 import { rootedParentOf, getThoughtById, getChildrenRankedById } from '../selectors'
 import { Path, SimplePath, State } from '../@types'
-
-// util
 import { appendToPath, head, isDescendantPath, normalizeThought, pathToContext, reducerFlow, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 
@@ -28,18 +26,6 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
     console.error('moveThought: treeMove immer error')
     console.error(e)
   }
-
-  const isPathInCursor = state.cursor && isDescendantPath(state.cursor, oldPath)
-
-  const isCursorAtOldPath = isPathInCursor && state.cursor?.length === oldPath.length
-
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  const getUpdateCursor = () => {
-    if (!state.cursor) return null
-    return [...newPath, ...state.cursor.slice(newPath.length)] as Path
-  }
-
-  const newCursorPath = isPathInCursor ? (isCursorAtOldPath ? newPath : getUpdateCursor()) : state.cursor
 
   const sourceThoughtPath = oldPath
   const destinationThoughtPath = rootedParentOf(state, newPath)
@@ -125,11 +111,24 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
             : [],
       })
     },
-    state => ({
-      ...state,
-      cursor: newCursorPath,
-      ...(offset != null ? { cursorOffset: offset } : null),
-    }),
+    // update cursor
+    state => {
+      if (!state.cursor) return state
+
+      const isPathInCursor = isDescendantPath(state.cursor, oldPath)
+      const isCursorAtOldPath = state.cursor.length === oldPath.length
+      const newCursorPath = isPathInCursor
+        ? isCursorAtOldPath
+          ? newPath
+          : ([...newPath, ...state.cursor.slice(newPath.length)] as Path)
+        : state.cursor
+
+      return {
+        ...state,
+        cursor: newCursorPath,
+        ...(offset != null ? { cursorOffset: offset } : null),
+      }
+    },
     // rerank context if ranks are too close
     // skip if this moveThought originated from a rerank
     // otherwise we get an infinite loop

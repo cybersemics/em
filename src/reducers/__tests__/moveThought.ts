@@ -9,6 +9,7 @@ import {
   getRankAfter,
   isPending,
   getThought,
+  getThoughtByPath,
   rankThoughtsFirstMatch,
   childIdsToThoughts,
 } from '../../selectors'
@@ -732,4 +733,32 @@ it('only fetch the descendants up to the possible conflicting path', async () =>
 
   expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(false)
   expect(isPending(appStore.getState(), ['p', 'b', 'c', '3'])).toEqual(true)
+})
+
+it('update cursor if duplicate thought with cursor is deleted', () => {
+  const text = `
+  - a
+    - b
+  - b`
+
+  const steps = [
+    importText({ text }),
+    setCursorFirstMatch(['b']),
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['a', 'b'],
+      newRank: 0,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b`)
+
+  expect(stateNew.cursor).toBeTruthy()
+  const cursorThought = getThoughtByPath(stateNew, stateNew.cursor!)
+  expect(cursorThought).toBeTruthy()
 })
