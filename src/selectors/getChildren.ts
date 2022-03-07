@@ -16,7 +16,7 @@ import {
 } from '../util'
 import { ThoughtId, ComparatorFunction, Context, ThoughtContext, Thought, Path, State, SimplePath } from '../@types'
 import childIdsToThoughts from './childIdsToThoughts'
-import { getThoughtById } from './getThoughtById'
+import getThoughtById from './getThoughtById'
 
 // use global instance of empty array so object reference doesn't change
 const noChildren: Thought[] = []
@@ -29,12 +29,6 @@ type GetThoughts = (state: State, context: Context) => Thought[]
 export const isChildVisible = _.curry((state: State, context: Context, child: Thought) => {
   return !isFunction(child.value) && !hasChild(state, unroot([...context, child.value]), '=hidden')
 })
-
-/** Gets a Thought from the thoughtIndex. */
-export const getThought = (state: State, context: Context): Thought | null => {
-  const id = getThoughtIdByContext(state, context)
-  return id ? getThoughtById(state, id) : null
-}
 
 // TODO: Rename this to something better.
 /** Returns the thoughts for the given thought id. */

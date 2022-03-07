@@ -1,8 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { componentToThought, keyValueBy, owner } from '../util'
 import { Path, State } from '../@types'
-import { getThought } from './getChildren'
-import childIdsToThoughts from './childIdsToThoughts'
+import { childIdsToThoughts, getThoughtByContext } from '../selectors'
 
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null
@@ -30,7 +29,7 @@ const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
   const pathUnranked = urlPath.map(componentToThought) as Path
 
   const contextViews = keyValueBy(urlPath, (cur, i) => {
-    const thought = getThought(state, pathUnranked.slice(0, i + 1))
+    const thought = getThoughtByContext(state, pathUnranked.slice(0, i + 1))
     return thought && /~$/.test(cur)
       ? {
           [thought.id]: true,

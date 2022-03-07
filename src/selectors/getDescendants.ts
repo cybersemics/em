@@ -4,7 +4,7 @@ import { getChildrenRanked } from '../selectors'
 import { Context, Thought, State, ThoughtId } from '../@types'
 import { getAllChildrenAsThoughts } from './getChildren'
 import childIdsToThoughts from './childIdsToThoughts'
-import { getThoughtById } from './getThoughtById'
+import getThoughtById from './getThoughtById'
 
 interface OptionsPath {
   filterFunction?: (thought: Thought) => boolean

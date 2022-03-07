@@ -8,7 +8,7 @@ import {
   getChildrenRanked,
   getRankAfter,
   isPending,
-  getThought,
+  getThoughtByContext,
   getThoughtByPath,
   rankThoughtsFirstMatch,
   childIdsToThoughts,
@@ -48,7 +48,7 @@ it('move within root', () => {
   - b
   - a`)
 
-  const thoughtB = getThought(stateNew, ['b'])!
+  const thoughtB = getThoughtByContext(stateNew, ['b'])!
 
   // b should exist in the ROOT context
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
@@ -60,7 +60,7 @@ it('persist id on move', () => {
 
   const stateNew1 = reducerFlow(steps1)(initialState())
 
-  const thoughtA2 = getThought(stateNew1, ['a', 'a1', 'a2'])!
+  const thoughtA2 = getThoughtByContext(stateNew1, ['a', 'a1', 'a2'])!
 
   expect(getLexeme(stateNew1, 'a2')!.contexts).toEqual([thoughtA2.id])
 
@@ -74,7 +74,7 @@ it('persist id on move', () => {
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
 
-  const thoughtA2New = getThought(stateNew2, ['a1', 'a2'])!
+  const thoughtA2New = getThoughtByContext(stateNew2, ['a1', 'a2'])!
   expect(getLexeme(stateNew2, 'a2')!.contexts).toEqual([thoughtA2New.id])
 
   expect(thoughtA2New.id).toEqual(thoughtA2!.id)
@@ -101,8 +101,8 @@ it('move within context (rank only)', () => {
     - a2
     - a1`)
 
-  const thoughtA = getThought(stateNew, ['a'])!
-  const thoughtA2 = getThought(stateNew, ['a', 'a2'])!
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtA2 = getThoughtByContext(stateNew, ['a', 'a2'])!
 
   expect(thoughtA2.parentId).toBe(thoughtA.id)
 
@@ -135,8 +135,8 @@ it('move across contexts', () => {
     - b1
   - b`)
 
-  const thoughtA = getThought(stateNew, ['a'])!
-  const thoughtB1 = getThought(stateNew, ['a', 'b1'])!
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtB1 = getThoughtByContext(stateNew, ['a', 'b1'])!
 
   // b1 should exist in context a
   expect(thoughtB1!.parentId).toBe(thoughtA.id)
@@ -174,9 +174,9 @@ it('move descendants', () => {
     - a1
       - a1.1`)
 
-  const thoughtB = getThought(stateNew, ['b'])
-  const thoughtB1 = getThought(stateNew, ['b', 'b1'])
-  const thoughtB11 = getThought(stateNew, ['b', 'b1', 'b1.1'])
+  const thoughtB = getThoughtByContext(stateNew, ['b'])
+  const thoughtB1 = getThoughtByContext(stateNew, ['b', 'b1'])
+  const thoughtB11 = getThoughtByContext(stateNew, ['b', 'b1', 'b1.1'])
 
   expect(thoughtB).not.toBeNull()
   expect(thoughtB1).not.toBeNull()
@@ -284,10 +284,10 @@ it('move root thought into another root thought', () => {
       - b
         - c`)
 
-  const thoughtX = getThought(stateNew, ['x'])!
-  const thoughtA = getThought(stateNew, ['x', 'a'])!
-  const thoughtB = getThought(stateNew, ['x', 'a', 'b'])!
-  const thoughtC = getThought(stateNew, ['x', 'a', 'b', 'c'])!
+  const thoughtX = getThoughtByContext(stateNew, ['x'])!
+  const thoughtA = getThoughtByContext(stateNew, ['x', 'a'])!
+  const thoughtB = getThoughtByContext(stateNew, ['x', 'a', 'b'])!
+  const thoughtC = getThoughtByContext(stateNew, ['x', 'a', 'b', 'c'])!
 
   expect(getContexts(stateNew, 'a')).toMatchObject([thoughtA.id])
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB!.id])
@@ -325,9 +325,9 @@ it('move descendants with siblings', () => {
     - c
     - d`)
 
-  const thoughtB = getThought(stateNew, ['b'])!
-  const thoughtC = getThought(stateNew, ['b', 'c'])!
-  const thoughtD = getThought(stateNew, ['b', 'd'])!
+  const thoughtB = getThoughtByContext(stateNew, ['b'])!
+  const thoughtC = getThoughtByContext(stateNew, ['b', 'c'])!
+  const thoughtD = getThoughtByContext(stateNew, ['b', 'd'])!
 
   expect(thoughtC.parentId).toBe(thoughtB.id)
   expect(thoughtD.parentId).toBe(thoughtB.id)
@@ -365,8 +365,8 @@ it('merge duplicate with new rank', () => {
       - x
       - y`)
 
-  const thoughtM = getThought(stateNew, ['a', 'm'])!
-  const thoughtA = getThought(stateNew, ['a'])!
+  const thoughtM = getThoughtByContext(stateNew, ['a', 'm'])!
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
 
   // use destinate rank of duplicate thoughts
   expect(getAllChildren(stateNew, ['a'])).toMatchObject([thoughtM.id])
@@ -404,7 +404,7 @@ it('merge with duplicate with duplicate rank', () => {
       - x
       - y`)
 
-  const thoughtM = getThought(stateNew, ['a', 'm'])
+  const thoughtM = getThoughtByContext(stateNew, ['a', 'm'])
 
   // use destinate rank of duplicate thoughts
   expect(getAllChildren(stateNew, ['a'])).toMatchObject([thoughtM?.id])
@@ -441,8 +441,8 @@ it('move with duplicate descendant', () => {
       - y
         - x`)
 
-  const thoughtXUnderB = getThought(stateNew, ['a', 'b', 'x'])!
-  const thoughtXUnderY = getThought(stateNew, ['a', 'b', 'y', 'x'])!
+  const thoughtXUnderB = getThoughtByContext(stateNew, ['a', 'b', 'x'])!
+  const thoughtXUnderY = getThoughtByContext(stateNew, ['a', 'b', 'y', 'x'])!
 
   // x should have contexts a/b and a/b/y
   expect(getContexts(stateNew, 'x')).toMatchObject([thoughtXUnderB.id, thoughtXUnderY.id])
@@ -473,8 +473,8 @@ it('move with hash matched descendant', () => {
       - =note
         - note`)
 
-  const thoughtNoteFirst = getThought(stateNew, ['a', 'b', '=note'])!
-  const thoughtNoteSecond = getThought(stateNew, ['a', 'b', '=note', 'note'])!
+  const thoughtNoteFirst = getThoughtByContext(stateNew, ['a', 'b', '=note'])!
+  const thoughtNoteSecond = getThoughtByContext(stateNew, ['a', 'b', '=note', 'note'])!
 
   expect(thoughtNoteSecond?.parentId).toBe(thoughtNoteFirst.id)
 
@@ -506,8 +506,8 @@ it('move with nested duplicate thoughts', () => {
     - b
   - c`)
 
-  const thoughtA = getThought(stateNew, ['a'])!
-  const thoughtB = getThought(stateNew, ['a', 'b'])!
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtB = getThoughtByContext(stateNew, ['a', 'b'])!
 
   expect(thoughtB.parentId).toBe(thoughtA.id)
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
@@ -547,8 +547,8 @@ it('move with nested duplicate thoughts and merge their children', () => {
       - d
   - p`)
 
-  const thoughtA = getThought(stateNew, ['a'])!
-  const thoughtB = getThought(stateNew, ['a', 'b'])!
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtB = getThoughtByContext(stateNew, ['a', 'b'])!
 
   expect(thoughtB.parentId).toBe(thoughtA.id)
   // b should only be in context ['a']
@@ -557,7 +557,7 @@ it('move with nested duplicate thoughts and merge their children', () => {
   // context ['p', 'a'] should not have any garbage children
   expect(getChildrenRanked(stateNew, ['p', 'a'])).toHaveLength(0)
 
-  const thoughtC = getThought(stateNew, ['a', 'b', 'c'])!
+  const thoughtC = getThoughtByContext(stateNew, ['a', 'b', 'c'])!
 
   expect(thoughtC.parentId).toBe(thoughtB.id)
   // c should only be in context ['a', 'b']

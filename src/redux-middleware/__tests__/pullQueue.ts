@@ -1,7 +1,7 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
-import { getAllChildren, getThought } from '../../selectors'
+import { getAllChildren, getThoughtByContext } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import getParentDB from '../../data-providers/data-helpers/getParent'
@@ -52,7 +52,7 @@ it('load thought', async () => {
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const thoughtA = getThought(store.getState(), ['a'])
+  const thoughtA = getThoughtByContext(store.getState(), ['a'])
 
   const parentEntryRoot = await getContext(db, [HOME_TOKEN])
   expect(parentEntryRoot).toMatchObject({
@@ -97,12 +97,12 @@ it('do not repopulate deleted thought', async () => {
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const parentEntryRoot = getThought(store.getState(), [HOME_TOKEN])
+  const parentEntryRoot = getThoughtByContext(store.getState(), [HOME_TOKEN])
   expect(parentEntryRoot).toMatchObject({
     children: [],
   })
 
-  const parentEntryChild = getThought(store.getState(), [''])
+  const parentEntryChild = getThoughtByContext(store.getState(), [''])
   expect(parentEntryChild).toBe(null)
 })
 
@@ -123,11 +123,11 @@ it('load buffered thoughts', async () => {
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const thoughtA = getThought(store.getState(), ['a'])!
-  const thoughtB = getThought(store.getState(), ['a', 'b'])!
-  const thoughtC = getThought(store.getState(), ['a', 'b', 'c'])!
-  const thoughtD = getThought(store.getState(), ['a', 'b', 'c', 'd'])!
-  const thoughtE = getThought(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
+  const thoughtA = getThoughtByContext(store.getState(), ['a'])!
+  const thoughtB = getThoughtByContext(store.getState(), ['a', 'b'])!
+  const thoughtC = getThoughtByContext(store.getState(), ['a', 'b', 'c'])!
+  const thoughtD = getThoughtByContext(store.getState(), ['a', 'b', 'c', 'd'])!
+  const thoughtE = getThoughtByContext(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'b' }])
@@ -217,13 +217,13 @@ it('move thought with buffered descendants', async () => {
 
   fakeTimer.useRealTimer()
 
-  const thoughtX = getThought(store.getState(), ['x'])!
-  const thoughtA = getThought(store.getState(), ['a'])!
-  const thoughtM = getThought(store.getState(), ['a', 'm'])!
-  const thoughtB = getThought(store.getState(), ['a', 'b'])!
-  const thoughtC = getThought(store.getState(), ['a', 'b', 'c'])!
-  const thoughtD = getThought(store.getState(), ['a', 'b', 'c', 'd'])!
-  const thoughtE = getThought(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
+  const thoughtX = getThoughtByContext(store.getState(), ['x'])!
+  const thoughtA = getThoughtByContext(store.getState(), ['a'])!
+  const thoughtM = getThoughtByContext(store.getState(), ['a', 'm'])!
+  const thoughtB = getThoughtByContext(store.getState(), ['a', 'b'])!
+  const thoughtC = getThoughtByContext(store.getState(), ['a', 'b', 'c'])!
+  const thoughtD = getThoughtByContext(store.getState(), ['a', 'b', 'c', 'd'])!
+  const thoughtE = getThoughtByContext(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
 
   expect(await getParentDB(db, HOME_TOKEN)).toMatchObject({ children: [thoughtX.id, thoughtA.id] })
   expect(await getParentDB(db, thoughtA.id)).toMatchObject({ children: [thoughtM.id, thoughtB.id] })

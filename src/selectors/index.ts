@@ -32,7 +32,9 @@ export { default as getLexeme } from './getLexeme'
 export { default as getThoughtAfter } from './getThoughtAfter'
 export { default as getThoughtBefore } from './getThoughtBefore'
 export { default as getVisiblePaths } from './getVisiblePaths'
-export { getThoughtByPath, getThoughtById } from './getThoughtById'
+export { default as getThoughtByContext } from './getThoughtByContext'
+export { default as getThoughtById } from './getThoughtById'
+export { default as getThoughtByPath } from './getThoughtByPath'
 export { default as hasChild } from './hasChild'
 export { default as hasLexeme } from './hasLexeme'
 export { default as hashPathURL } from './hashPathURL'
@@ -64,7 +66,6 @@ export {
   getChildrenRankedById,
   getAllChildrenSorted,
   getChildrenSorted,
-  getThought,
   hasChildren,
   isChildVisible,
   childrenFilterPredicate,

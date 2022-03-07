@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { getContexts, getAllChildren, getThought } from '../../selectors'
+import { getContexts, getAllChildren, getThoughtByContext } from '../../selectors'
 import { newSubthought, newThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
@@ -13,7 +13,7 @@ it('delete from root', () => {
   const stateNew = reducerFlow(steps)(state)
 
   /** Gets the root Parent from a state's thoughtIndex. */
-  const thought = getThought(stateNew, [HOME_TOKEN])!
+  const thought = getThoughtByContext(stateNew, [HOME_TOKEN])!
 
   // thoughtIndex
   matchChildIdsWithThoughts(stateNew, thought.children, [

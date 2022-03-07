@@ -1,5 +1,12 @@
 import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, MAX_EXPAND_DEPTH } from '../constants'
-import { attribute, attributeEquals, getAllChildren, isContextViewActive, simplifyPath } from '../selectors'
+import {
+  attribute,
+  attributeEquals,
+  getAllChildren,
+  getThoughtById,
+  isContextViewActive,
+  simplifyPath,
+} from '../selectors'
 import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   appendToPath,
@@ -18,7 +25,6 @@ import {
 } from '../util'
 import getParentThought from './getParentThought'
 import { getAllChildrenAsThoughtsById } from './getChildren'
-import { getThoughtById } from './getThoughtById'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (state: State, child: ThoughtId | ThoughtContext, showContexts: boolean) =>
