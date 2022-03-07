@@ -89,9 +89,9 @@ const pullPendingLexemes =
 
     // pull local and remote Lexemes
     const [localLexemes, remoteLexemes] = await Promise.all([
-      db.getThoughtsByIds(pendingLexemeIds),
+      db.getLexemesByIds(pendingLexemeIds),
       state.status === 'loaded'
-        ? getFirebaseProvider(state, dispatch).getThoughtsByIds(pendingLexemeIds)
+        ? getFirebaseProvider(state, dispatch).getLexemesByIds(pendingLexemeIds)
         : Promise.resolve({} as (Lexeme | undefined)[]),
     ])
 

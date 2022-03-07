@@ -116,7 +116,7 @@ async function* getDescendantThoughts(
       return hashThought(thought.value)
     })
 
-    const lexemes = await provider.getThoughtsByIds(thoughtHashes)
+    const lexemes = await provider.getLexemesByIds(thoughtHashes)
 
     const lexemeIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 

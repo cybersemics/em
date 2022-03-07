@@ -42,7 +42,7 @@ describe.skip('remote search', () => {
 
   it('return context map from the remote search hits', async () => {
     const firebaseProvider = getFirebaseProvider(initialState(), NOOP)
-    // firebaseProvider.getThoughtsByIds = jest.fn().mockReturnValue([
+    // firebaseProvider.getLexemesByIds = jest.fn().mockReturnValue([
     //   {
     //     value: 'test',
     //     contexts: [

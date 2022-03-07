@@ -103,7 +103,7 @@ const importThoughts = (text: string) => {
 /** Runs tests for a module that conforms to the data-provider API. */
 const dataProviderTest = (provider: DataProvider) => {
   test('getThoughtById', async () => {
-    const nothought = await provider.getThoughtById('12345')
+    const nothought = await provider.getLexemeById('12345')
     expect(nothought).toBeUndefined()
 
     const lexeme = {
@@ -118,11 +118,11 @@ const dataProviderTest = (provider: DataProvider) => {
 
     await provider.updateThought('12345', lexeme)
 
-    const dbThought = await provider.getThoughtById('12345')
+    const dbThought = await provider.getLexemeById('12345')
     expect(dbThought).toEqual(lexeme)
   })
 
-  test('getThoughtsByIds', async () => {
+  test('getLexemesByIds', async () => {
     const { lexemeIndex } = importThoughts(`
       - x
         - y
@@ -133,7 +133,7 @@ const dataProviderTest = (provider: DataProvider) => {
     await provider.updateThought(hashThought('x'), thoughtX)
     await provider.updateThought(hashThought('y'), thoughtY)
 
-    const dbThoughts = await provider.getThoughtsByIds([hashThought('x'), hashThought('y')])
+    const dbThoughts = await provider.getLexemesByIds([hashThought('x'), hashThought('y')])
 
     expect(dbThoughts).toMatchObject([thoughtX, thoughtY])
   })

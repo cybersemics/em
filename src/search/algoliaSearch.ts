@@ -20,7 +20,7 @@ export const getRemoteSearch = (state: State, remoteDataProvider: DataProvider) 
     if (!searchIndex) throw new Error('Algolia search index has not be initiated.')
     const result = await searchIndex.search(value)
     const hits = result.hits as any as Record<'thoughtHash' | 'value', string>[]
-    const lexemes = await remoteDataProvider.getThoughtsByIds(hits.map(hit => hit.thoughtHash))
+    const lexemes = await remoteDataProvider.getLexemesByIds(hits.map(hit => hit.thoughtHash))
     return getContextMap(state, lexemes)
   }
 

@@ -39,7 +39,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
   try {
     return await context.reduce<Promise<Thought[]>>(async (accPromise, value, i) => {
       const acc = await accPromise
-      const lexeme = await provider.getThoughtById(hashThought(value))
+      const lexeme = await provider.getLexemeById(hashThought(value))
 
       const prevParentId = acc[acc.length - 1]?.id || startingContext
 

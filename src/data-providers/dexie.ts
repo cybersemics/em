@@ -167,10 +167,10 @@ export const deleteThought = (id: string) =>
   })
 
 /** Gets a single thought from the lexemeIndex by its id. */
-export const getThoughtById = (id: string) => db.lexemeIndex.get(id)
+export const getLexemeById = (id: string) => db.lexemeIndex.get(id)
 
 /** Gets multiple thoughts from the lexemeIndex by ids. */
-export const getThoughtsByIds = (ids: string[]) => db.lexemeIndex.bulkGet(ids)
+export const getLexemesByIds = (ids: string[]) => db.lexemeIndex.bulkGet(ids)
 
 /** Gets the entire lexemeIndex. */
 export const getLexemeIndex = async () => {

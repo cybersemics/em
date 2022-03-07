@@ -40,7 +40,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 
   /** Gets the Lexeme object by id. */
-  async getThoughtById(id: string): Promise<Lexeme | undefined> {
+  async getLexemeById(id: string): Promise<Lexeme | undefined> {
     const userRef = getUserRef(state)
     const ref = userRef!.child('lexemeIndex').child<Lexeme>(id)
     return new Promise(resolve =>
@@ -50,7 +50,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     )
   },
   /** Gets multiple Lexeme objects by ids. */
-  async getThoughtsByIds(ids: string[]): Promise<(Lexeme | undefined)[]> {
+  async getLexemesByIds(ids: string[]): Promise<(Lexeme | undefined)[]> {
     const userRef = getUserRef(state)
     const snapshots = await Promise.all(ids.map(id => userRef?.child('lexemeIndex').child<Lexeme>(id).once('value')))
     return snapshots.map(snapshot => snapshot?.val())
