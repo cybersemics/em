@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { theme, getLexeme, isContextViewActive, isPending } from '../selectors'
 import { head } from '../util'
 import { Context, State, SimplePath } from '../@types'
-import { isMac, isSafari } from '../browser'
+import { isTouch, isMac, isSafari, isiPhone } from '../browser'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -58,6 +58,7 @@ const Bullet = ({
   const svgElement = useRef<SVGSVGElement>(null)
 
   const { height: thoughtHeight } = thoughtRef?.current?.getBoundingClientRect() || {}
+  const isIOSSafari = isTouch && isiPhone && isSafari()
   const svgSizeStyle = thoughtHeight
     ? {
         height: thoughtHeight,
@@ -80,6 +81,25 @@ const Bullet = ({
     return transformOrigin
   }
 
+  /* Props to pass based on different platforms */
+  const vendorSpecificData = isIOSSafari
+    ? {
+        foregroundShape: {
+          ellipseRadius: '105',
+          path: 'M194.95196151422277,180.42647327382525 L194.95196151422277,419.57354223877866 L413.24607972032067,298.0609718441649 L194.95196151422277,180.42646533261976 L194.95196151422277,180.42647327382525 z',
+        },
+        bulletOverlayRadius: '300',
+        glyphMarginBottom: '-0.1em',
+      }
+    : {
+        foregroundShape: {
+          ellipseRadius: '92',
+          path: 'M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z',
+        },
+        bulletOverlayRadius: '245',
+        glyphMarginBottom: '-0.3em',
+      }
+
   /** Return circle or triangle for the bullet. */
   const foregroundShape = () => {
     const foregroundShapeProps = showContexts
@@ -93,13 +113,14 @@ const Bullet = ({
           fill: dark ? '#d9d9d9' : '#000',
         }
 
+    const { ellipseRadius, path } = vendorSpecificData.foregroundShape
     return leaf ? (
-      <ellipse className='glyph-fg' ry='92' rx='92' cy='298' cx='297' {...foregroundShapeProps} />
+      <ellipse className='glyph-fg' ry={ellipseRadius} rx={ellipseRadius} cy='298' cx='297' {...foregroundShapeProps} />
     ) : (
       <path
         className={classNames('glyph-fg', 'triangle')}
         style={{ transformOrigin: calculateTransformOrigin() }}
-        d='M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
+        d={path}
         {...foregroundShapeProps}
       />
     )
@@ -128,7 +149,7 @@ const Bullet = ({
         viewBox='0 0 600 600'
         style={{
           ...svgSizeStyle,
-          marginBottom: '-0.3em',
+          marginBottom: vendorSpecificData.glyphMarginBottom,
         }}
         onClick={onClick}
         ref={svgElement}
@@ -138,8 +159,8 @@ const Bullet = ({
             <ellipse
               className='bullet-cursor-overlay'
               fillOpacity='0'
-              ry='245'
-              rx='245'
+              ry={vendorSpecificData.bulletOverlayRadius}
+              rx={vendorSpecificData.bulletOverlayRadius}
               cy='300'
               cx='300'
               fill={dark ? '#ffffff' : '#000'}

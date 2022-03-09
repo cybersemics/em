@@ -11,6 +11,9 @@ export const isAndroid = typeof navigator !== 'undefined' && navigator.platform 
 /** Returns true if the navigator platform contains 'MacIntel'. */
 export const isMac = typeof navigator !== 'undefined' && navigator.platform === 'MacIntel'
 
+/** Returns true if the navigator platform contains 'iPhone'. */
+export const isiPhone = typeof navigator !== 'undefined' && navigator.platform === 'iPhone'
+
 /** Returns true if the navigator vendor contains 'Apple'. */
 export const isSafari = () => typeof navigator !== 'undefined' && navigator.vendor.includes('Apple')
 
