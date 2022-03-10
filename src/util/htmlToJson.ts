@@ -200,9 +200,35 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
   return result
 }
 
+/** Gets all unique tag lists that is included in the text that we import. */
+const allTagsFinder = (nodes: Element[]): string[] => {
+  const tagLists = nodes.reduce((accum, current) => {
+    if (current?.children?.length) return [...accum, current.tagName, ...allTagsFinder(current.children as Element[])]
+    return current.tagName ? [...accum, current.tagName] : [...accum]
+  }, [] as string[])
+  return _.uniq(tagLists)
+}
+
+const tagsThatIsNotToBeStripped = [...allowedFormattingTags, 'span', 'li', 'ul']
+
+/** Generates dynamic regex expression. */
+const regexGenerator = (tags: string[]): RegExp => {
+  const regexString = tags
+    .reduce((accum, current) => {
+      return [...accum, `<${current}>`, `</${current}>`]
+    }, [] as string[])
+    .join('|')
+  return new RegExp(regexString, 'gim')
+}
+
 /** Parses input HTML and saves in JSON array using Himalaya. */
 export const htmlToJson = (html: string) => {
-  const nodes = parse(html)
-  const blocks = himalayaToBlock(removeEmptyNodesAndComments(nodes))
+  const nodes = parse(html) as Element[]
+
+  const tags = allTagsFinder(nodes)
+  const tagsToBeStripped = tags.filter((tag: string) => !tagsThatIsNotToBeStripped.includes(tag))
+  const regex = regexGenerator(tagsToBeStripped)
+  const strippedHtml = html.replace(regex, '')
+  const blocks = himalayaToBlock(removeEmptyNodesAndComments(parse(strippedHtml)))
   return Array.isArray(blocks) ? blocks : [blocks]
 }
