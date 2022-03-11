@@ -709,6 +709,23 @@ it('text that contains br tag that has note children', () => {
   )
 })
 
+it('text that contains one or more than one not allowed formattting tags', () => {
+  const text = `
+- a
+- b <sup>c</sup>
+- c (<sub>d</sub>)
+  - d <pre>123</pre>
+  `
+  const exported = importExport(text, false)
+  const expected = `
+- a
+- b c
+- c (d)
+  - d 123
+  `
+  expect(exported.trim()).toBe(expected.trim())
+})
+
 describe('HTML content', () => {
   it('should paste plain text that contains formatting', () => {
     const paste = `<b>a</b>

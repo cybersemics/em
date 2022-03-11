@@ -201,23 +201,22 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 }
 
 /** Gets all unique tag lists that is included in the text that we import. */
-const allTagsFinder = (nodes: Element[]): string[] => {
+const findUniqueTags = (nodes: Element[]): string[] => {
   const tagLists = nodes.reduce((accum, current) => {
-    if (current?.children?.length) return [...accum, current.tagName, ...allTagsFinder(current.children as Element[])]
-    return current.tagName ? [...accum, current.tagName] : [...accum]
+    return current?.children?.length
+      ? [...accum, current.tagName, ...findUniqueTags(current.children as Element[])]
+      : current.tagName
+      ? [...accum, current.tagName]
+      : [...accum]
   }, [] as string[])
   return _.uniq(tagLists)
 }
 
-const tagsThatIsNotToBeStripped = [...allowedFormattingTags, 'span', 'li', 'ul']
+const tagsThatAreNotToBeStripped = [...allowedFormattingTags, 'span', 'li', 'ul']
 
 /** Generates dynamic regex expression. */
-const regexGenerator = (tags: string[]): RegExp => {
-  const regexString = tags
-    .reduce((accum, current) => {
-      return [...accum, `<${current}>`, `</${current}>`]
-    }, [] as string[])
-    .join('|')
+const generateRegexToMatchTags = (tags: string[]): RegExp => {
+  const regexString = `</?(?:${tags.join('|')})>`
   return new RegExp(regexString, 'gim')
 }
 
@@ -225,9 +224,9 @@ const regexGenerator = (tags: string[]): RegExp => {
 export const htmlToJson = (html: string) => {
   const nodes = parse(html) as Element[]
 
-  const tags = allTagsFinder(nodes)
-  const tagsToBeStripped = tags.filter((tag: string) => !tagsThatIsNotToBeStripped.includes(tag))
-  const regex = regexGenerator(tagsToBeStripped)
+  const tags = findUniqueTags(nodes)
+  const tagsToBeStripped = tags.filter((tag: string) => !tagsThatAreNotToBeStripped.includes(tag))
+  const regex = generateRegexToMatchTags(tagsToBeStripped)
   const strippedHtml = html.replace(regex, '')
   const blocks = himalayaToBlock(removeEmptyNodesAndComments(parse(strippedHtml)))
   return Array.isArray(blocks) ? blocks : [blocks]
