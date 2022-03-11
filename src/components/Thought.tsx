@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { ThunkDispatch } from 'redux-thunk'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
@@ -97,18 +97,13 @@ export interface ThoughtContainerProps {
 
 interface ThoughtProps {
   cursorOffset?: number | null
-  env?: Index<Context>
-  hideBullet?: boolean
   homeContext?: boolean
-  isDragging?: boolean
   isPublishChild?: boolean
   isEditing?: boolean
-  isLeaf?: boolean
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
   path: Path
-  publish?: boolean
   rank: number
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
@@ -116,6 +111,7 @@ interface ThoughtProps {
   simplePath: SimplePath
   view?: string | null
   editing?: boolean | null
+  thoughtRef?: React.Ref<HTMLDivElement>
 }
 
 export type ConnectedThoughtProps = ThoughtProps &
@@ -249,6 +245,7 @@ const ThoughtContainer = ({
   editing,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
+  const thoughtRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isBeingHoveredOver) {
@@ -445,6 +442,11 @@ const ThoughtContainer = ({
                   store.dispatch(setCursor({ path: simplePath }))
                 }
               }}
+              simplePath={simplePath}
+              hideBullet={hideBullet}
+              publish={publish}
+              isDragging={isDragging}
+              thoughtRef={thoughtRef}
             />
           )}
 
@@ -467,17 +469,12 @@ const ThoughtContainer = ({
           />
 
           <StaticThought
-            env={env}
             path={path}
             cursorOffset={cursorOffset}
-            hideBullet={hideBullet}
             homeContext={homeContext}
-            isDragging={isDragging}
             isPublishChild={isPublishChild}
             isEditing={isEditing}
-            isLeaf={isLeaf}
             isVisible={isVisible}
-            publish={publish}
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs}
             showContexts={showContexts}
@@ -486,6 +483,7 @@ const ThoughtContainer = ({
             toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
             view={view}
             editing={editing}
+            thoughtRef={thoughtRef}
           />
 
           <Note path={simplePathLive} />

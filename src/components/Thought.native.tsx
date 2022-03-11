@@ -393,6 +393,9 @@ const ThoughtContainer = ({
                 store.dispatch(setCursor({ path: simplePath }))
               }
             }}
+            simplePath={simplePath}
+            hideBullet={hideBullet}
+            publish={publish}
           />
         )}
 
@@ -411,17 +414,12 @@ const ThoughtContainer = ({
         /> */}
 
         <StaticThought
-          env={env}
           path={path}
           cursorOffset={cursorOffset}
-          hideBullet
           homeContext={homeContext}
           isVisible={isVisible}
-          isDragging={isDragging}
           isPublishChild={isPublishChild}
           isEditing={isEditing}
-          isLeaf={isLeaf}
-          publish={publish}
           rank={rank}
           showContextBreadcrumbs={showContextBreadcrumbs}
           showContexts={showContexts}

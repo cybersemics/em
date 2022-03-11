@@ -6,7 +6,6 @@ import { expandContextThought } from '../action-creators'
 import { isDivider, isDocumentEditable } from '../util'
 
 // components
-import BulletCursorOverlay from './BulletCursorOverlay'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
 import Editable from './Editable'
@@ -17,15 +16,10 @@ import { ConnectedThoughtProps } from './Thought'
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   cursorOffset,
-  env,
-  hideBullet,
   homeContext,
-  isDragging,
   isEditing,
-  isLeaf,
   isVisible,
   path,
-  publish,
   rank,
   showContextBreadcrumbs,
   showContexts,
@@ -33,20 +27,16 @@ const StaticThought = ({
   simplePath,
   toggleTopControlsAndBreadcrumbs,
   editing,
+  thoughtRef,
 }: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
-  const isRootChildLeaf = simplePath.length === 2 && isLeaf
 
   const state = store.getState()
 
   const { value } = getThoughtByPath(state, simplePath)
 
   return (
-    <div className='thought'>
-      {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && (
-        <BulletCursorOverlay simplePath={simplePath} isDragging={isDragging} />
-      )}
-
+    <div className='thought' ref={thoughtRef}>
       {showContextBreadcrumbs && !isRoot ? (
         <ContextBreadcrumbs
           simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}
