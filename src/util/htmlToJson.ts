@@ -215,10 +215,7 @@ const findUniqueTags = (nodes: Element[]): string[] => {
 const tagsThatAreNotToBeStripped = [...allowedFormattingTags, 'span', 'li', 'ul']
 
 /** Generates dynamic regex expression. */
-const generateRegexToMatchTags = (tags: string[]): RegExp => {
-  const regexString = `</?(?:${tags.join('|')})>`
-  return new RegExp(regexString, 'gim')
-}
+const generateRegexToMatchTags = (tags: string[]): RegExp => new RegExp(`</?(?:${tags.join('|')})>`, 'gim')
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
 export const htmlToJson = (html: string) => {
