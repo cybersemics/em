@@ -1,19 +1,9 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
-import { rerank, updateThoughts } from '../reducers'
-import {
-  getLexeme,
-  getChildrenRanked,
-  isPending,
-  simplifyPath,
-  rootedParentOf,
-  getAllChildren,
-  getThoughtById,
-} from '../selectors'
-import { Index, Parent, Path, State } from '../@types'
-
-// util
-import { head, headId, isDescendantPath, pathToContext, reducerFlow, timestamp } from '../util'
+import { rerank, updateThoughts, mergeThoughts } from '../reducers'
+import { rootedParentOf, getThoughtById, getChildrenRankedById } from '../selectors'
+import { Path, SimplePath, State } from '../@types'
+import { appendToPath, head, isDescendantPath, normalizeThought, pathToContext, reducerFlow, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 
 export interface MoveThoughtPayload {
@@ -25,77 +15,9 @@ export interface MoveThoughtPayload {
   newRank: number
 }
 
-// @MIGRATION_TODO: Nested merge logic doesn't work properly.
+// @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank }: MoveThoughtPayload) => {
-  const oldSimplePath = simplifyPath(state, oldPath)
-  const newSimplePath = simplifyPath(state, newPath)
-
-  const movingThoughtId = headId(oldSimplePath)
-  const oldThoughts = pathToContext(state, oldSimplePath)
-  const newThoughts = pathToContext(state, newSimplePath)
-  const value = head(oldThoughts)
-  const oldContext = rootedParentOf(state, oldThoughts)
-
-  const newParentId = head(rootedParentOf(state, newSimplePath))
-
-  const newContext = rootedParentOf(state, newThoughts)
-  // const sameContext = equalArrays(oldContext, newContext)
-  const lexemeOld = getLexeme(state, value) || {
-    // guard against missing lexeme (data integrity issue)
-    contexts: [],
-    value,
-    created: timestamp(),
-    lastUpdated: timestamp(),
-    updatedBy: getSessionId(),
-  }
-
-  const movingThought = getThoughtById(state, movingThoughtId)
-
-  if (!movingThought) {
-    console.error('moveThought: Parent entry for moved thought not found!', oldThoughts)
-    return state
-  }
-
-  if (!lexemeOld) {
-    console.error('Lexeme not found', oldPath)
-    return state
-  }
-
-  const oldParentThought = getThoughtById(state, movingThought.parentId)
-
-  if (!oldParentThought) {
-    console.error('Old parent entry of moving thought not found!')
-    return state
-  }
-
-  const newParentThought = getThoughtById(state, newParentId)
-
-  if (!newParentThought) {
-    console.error('New parent entry for moving not found!')
-    return state
-  }
-
-  //  @MIGRATION_TODO: Fix duplicate merge.
-
-  // const duplicateSubthought = getChildrenRanked(state, newContext).find(
-  //   child => normalizeThought(child.value) === normalizeThought(value),
-  // )
-
-  // const isDuplicateMerge = duplicateSubthought && !sameContext
-
-  const isArchived = newThoughts.indexOf('=archive') !== -1
-
-  // find exact thought from thoughtIndex\
-  const exactThought = lexemeOld.contexts.find(thoughtContext => thoughtContext === movingThoughtId)
-
-  if (!exactThought) {
-    console.warn('moveThought: Exact thought was not found in the lexeme.')
-  }
-
-  // if move is used for archive then update the archived field to latest timestamp
-  const archived = isArchived ? timestamp() : movingThought.archived
-
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   try {
@@ -105,89 +27,122 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
     console.error(e)
   }
 
-  // if the contexts have changed, remove the value from the old contextIndex and add it to the new
-  const updatedChildrenOldParent = getAllChildren(state, oldContext).filter(child => child !== movingThoughtId)
+  const sourceThoughtPath = oldPath
+  const destinationThoughtPath = rootedParentOf(state, newPath)
+  const sourceThoughtId = head(sourceThoughtPath)
+  const destinationThoughtId = head(destinationThoughtPath)
 
-  const updatedChildrenNewParent = getAllChildren(state, newContext)
-    .filter(child => child !== movingThoughtId)
-    .concat(movingThoughtId)
+  const sourceThought = getThoughtById(state, sourceThoughtId)
+  const sourceParentThought = getThoughtById(state, sourceThought.parentId)
+  const destinationThought = getThoughtById(state, destinationThoughtId)
 
-  const isNewContextPending = isPending(state, newThoughts)
+  const sameContext = sourceParentThought.id === destinationThoughtId
+  const childrenOfDestination = getChildrenRankedById(state, destinationThoughtId)
 
-  const contextIndexUpdates: Index<Parent | null> = {
-    // @MIGRATION_NOTE: Do not delete parent entry if the children is empty
-    [oldParentThought.id]: {
-      ...oldParentThought,
-      children: updatedChildrenOldParent,
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
-    },
-    [newParentThought.id]: {
-      ...newParentThought,
-      children: updatedChildrenNewParent,
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
-    },
-    [movingThought.id]: {
-      ...movingThought,
-      parentId: newParentThought.id,
-      rank: newRank,
-      archived,
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
-    },
-  }
+  /**
+   * Find first normalized duplicate thought.
+   */
+  const duplicateSubthought = () =>
+    childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
-  // preserve contextViews
-  const contextViewsNew = { ...state.contextViews }
-  // @MIGRATION_TODO: This may not be required after migration.
-  // if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
-  //   contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
-  //   delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
-  // }
+  // if thought is being moved to the same context that is not a duplicate case
+  const duplicateThought = !sameContext ? duplicateSubthought() : null
 
-  const isPathInCursor = state.cursor && isDescendantPath(state.cursor, oldPath)
+  const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
 
-  const isCursorAtOldPath = isPathInCursor && state.cursor?.length === oldPath.length
+  const destinationContext = pathToContext(state, destinationThoughtPath)
 
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  const getUpdateCursor = () => {
-    if (!state.cursor) return null
-    return [...newPath, ...state.cursor.slice(newPath.length)] as Path
-  }
+  const isArchived = destinationContext?.indexOf('=archive') !== -1
 
-  const newCursorPath = isPathInCursor ? (isCursorAtOldPath ? newPath : getUpdateCursor()) : state.cursor
+  // if move is used for archive then update the archived field to latest timestamp
+  const archived = isArchived ? timestamp() : destinationThought.archived
 
   return reducerFlow([
-    state => ({
-      ...state,
-      contextViews: contextViewsNew,
-      cursor: newCursorPath,
-      ...(offset != null ? { cursorOffset: offset } : null),
-    }),
+    state => {
+      // Note: Incase of duplicate merge, the mergeThoughts handles both the merge, move logic and also calls updateThoughts. So we don't need to handle move logic if duplicate thoughts are merged.
+      if (!!duplicateThought && !isPendingMerge)
+        return mergeThoughts(state, {
+          sourceThoughtPath,
+          targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
+        })
 
-    // update thoughts
-    updateThoughts({
-      contextIndexUpdates,
-      thoughtIndexUpdates: {},
-      recentlyEdited,
-      // load the children of the conflicted path if it's pending
-      pendingPulls: isNewContextPending ? [{ path: newPath }] : [],
-    }),
+      const thoughtIndexUpdates = {
+        ...(!sameContext
+          ? {
+              // remove source thought from the previous source parent children array
+              [sourceParentThought.id]: {
+                ...sourceParentThought,
+                children: sourceParentThought.children.filter(thoughtId => thoughtId !== sourceThought.id),
+                lastUpdated: timestamp(),
+                updatedBy: getSessionId(),
+              },
+              // add source thought to the destination thought children array
+              [destinationThought.id]: {
+                ...destinationThought,
+                children: [...destinationThought.children, sourceThought.id],
+                lastUpdated: timestamp(),
+                updatedBy: getSessionId(),
+              },
+            }
+          : {}),
+        // update source thought parent id, rank and other stuffs
+        [sourceThought.id]: {
+          ...sourceThought,
+          parentId: destinationThought.id,
+          rank: newRank,
+          archived,
+          lastUpdated: timestamp(),
+          updatedBy: getSessionId(),
+        },
+      }
 
+      return updateThoughts(state, {
+        thoughtIndexUpdates,
+        lexemeIndexUpdates: {},
+        recentlyEdited,
+        pendingMerges:
+          isPendingMerge && duplicateThought
+            ? [
+                {
+                  sourcePath: appendToPath(destinationThoughtPath, sourceThought.id),
+                  targetPath: appendToPath(destinationThoughtPath, duplicateThought.id),
+                },
+              ]
+            : [],
+      })
+    },
+    // update cursor
+    state => {
+      if (!state.cursor) return state
+
+      const isPathInCursor = isDescendantPath(state.cursor, oldPath)
+      const isCursorAtOldPath = state.cursor.length === oldPath.length
+      const newCursorPath = isPathInCursor
+        ? isCursorAtOldPath
+          ? newPath
+          : ([...newPath, ...state.cursor.slice(newPath.length)] as Path)
+        : state.cursor
+
+      return {
+        ...state,
+        cursor: newCursorPath,
+        ...(offset != null ? { cursorOffset: offset } : null),
+      }
+    },
     // rerank context if ranks are too close
     // skip if this moveThought originated from a rerank
     // otherwise we get an infinite loop
     !skipRerank
       ? state => {
           const rankPrecision = 10e-8
-          const children = getChildrenRanked(state, newContext)
+          const children = getChildrenRankedById(state, head(rootedParentOf(state, newPath)))
           const ranksTooClose = children.some((thought, i) => {
             if (i === 0) return false
             const secondThought = getThoughtById(state, children[i - 1].id)
             return Math.abs(thought.rank - secondThought.rank) < rankPrecision
           })
-          return ranksTooClose ? rerank(state, rootedParentOf(state, newSimplePath)) : state
+          // TODO: Explicitly converting to simplePath becauase context view has not been implemented yet and later we would want to change oldPath and newPath to be sourceThoughtId and destinationThoughtId instead.
+          return ranksTooClose ? rerank(state, rootedParentOf(state, newPath) as SimplePath) : state
         }
       : null,
   ])(state)

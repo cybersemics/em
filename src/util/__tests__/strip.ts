@@ -45,6 +45,21 @@ it('preserve bold with attribute', () => {
   )
 })
 
+it('empty formatting tags', () => {
+  expect(strip('<b></b>', { preserveFormatting: true })).toBe('')
+})
+
+it('empty formatting tags multiline', () => {
+  expect(
+    strip(
+      `<b>
+  
+      </b>`,
+      { preserveFormatting: true },
+    ),
+  ).toBe('')
+})
+
 // This fails here, but succeeds on regex101.com (???)
 it.skip('preserve bold with newlines in attribute', () => {
   expect(

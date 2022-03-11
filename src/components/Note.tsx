@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { attribute, getEditingPath, getParent, isContextViewActive, simplifyPath } from '../selectors'
+import { attribute, getEditingPath, getThoughtByContext, isContextViewActive, simplifyPath } from '../selectors'
 import {
   cursorDown,
   deleteAttribute,
@@ -48,7 +48,7 @@ const Note = ({ path }: NoteProps) => {
 
   /** Returns true if this context has a non-pending note.. */
   const hasNote = useSelector((state: State) => {
-    const noteThought = getParent(state, [...context, '=note'])
+    const noteThought = getThoughtByContext(state, [...context, '=note'])
     return noteThought && !noteThought.pending
   })
 

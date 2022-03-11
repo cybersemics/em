@@ -6,7 +6,7 @@ import { HOME_TOKEN } from '../constants'
 import { mergeThoughts } from '../util'
 import { reconcile, updateThoughts } from '../action-creators'
 import { getDescendantThoughtIds, getThoughtById, isPending } from '../selectors'
-import { Thunk, Index, Lexeme, Parent, State, ThoughtsInterface, ThoughtId } from '../@types'
+import { Thunk, Index, Lexeme, Thought, State, ThoughtsInterface, ThoughtId } from '../@types'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = HOME_TOKEN
@@ -80,8 +80,8 @@ const pull =
       // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
       dispatch(
         updateThoughts({
-          contextIndexUpdates: thoughts.contextIndex,
           thoughtIndexUpdates: thoughts.thoughtIndex,
+          lexemeIndexUpdates: thoughts.lexemeIndex,
           local: false,
           remote: false,
           // if the root is in the pathMap, force isLoading: false
@@ -115,23 +115,23 @@ const pull =
         // eslint-disable-next-line fp/no-mutating-methods
         thoughtRemoteChunks.push(thoughtsRemoteChunk)
 
-        // find the corresponding Parents from the local store (if any exist) so it can be reconciled with the remote Parents
-        const thoughtsLocalContextIndexChunk = _.transform(
-          thoughtsRemoteChunk.contextIndex,
+        // find the corresponding Thoughts from the local store (if any exist) so it can be reconciled with the remote Thoughts
+        const thoughtsLocalThoughtIndexChunk = _.transform(
+          thoughtsRemoteChunk.thoughtIndex,
           (accum, parentEntryRemote, key) => {
-            const parentEntryLocal = thoughtsLocal.contextIndex[key]
+            const parentEntryLocal = thoughtsLocal.thoughtIndex[key]
             if (parentEntryLocal) {
               accum[key] = parentEntryLocal
             }
           },
-          {} as Index<Parent>,
+          {} as Index<Thought>,
         )
 
         // find the corresponding Lexemes from the local store (if any exist) so it can be reconciled with the remote Lexemes
-        const thoughtsLocalThoughtIndexChunk = _.transform(
-          thoughtsRemoteChunk.thoughtIndex,
+        const thoughtsLocalLexemeIndexChunk = _.transform(
+          thoughtsRemoteChunk.lexemeIndex,
           (accum, lexemeRemote, key) => {
-            const lexemeLocal = thoughtsLocal.thoughtIndex[key]
+            const lexemeLocal = thoughtsLocal.lexemeIndex[key]
             if (lexemeLocal) {
               accum[key] = lexemeLocal
             }
@@ -142,8 +142,8 @@ const pull =
           reconcile({
             thoughtsResults: [
               {
-                contextIndex: thoughtsLocalContextIndexChunk,
                 thoughtIndex: thoughtsLocalThoughtIndexChunk,
+                lexemeIndex: thoughtsLocalLexemeIndexChunk,
               },
               thoughtsRemoteChunk,
             ],
@@ -167,8 +167,8 @@ const pull =
     }
 
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
-    const hasPending = Object.keys(thoughtsLocal.contextIndex || {}).some(
-      key => (thoughtsLocal.contextIndex || {})[key].pending,
+    const hasPending = Object.keys(thoughtsLocal.thoughtIndex || {}).some(
+      key => (thoughtsLocal.thoughtIndex || {})[key].pending,
     )
 
     // if we are pulling the home context and there are no pending thoughts, but the home parent is marked a pending, it means there are no children and we need to clear the pending status manually
@@ -178,14 +178,14 @@ const pull =
     if (thoughtIds.includes(ROOT_ENCODED) && !hasPending && isPending(stateNew, [HOME_TOKEN])) {
       dispatch(
         updateThoughts({
-          contextIndexUpdates: {
-            ...stateNew.thoughts.contextIndex,
+          thoughtIndexUpdates: {
+            ...stateNew.thoughts.thoughtIndex,
             [ROOT_ENCODED]: {
-              ...stateNew.thoughts.contextIndex[ROOT_ENCODED],
+              ...stateNew.thoughts.thoughtIndex[ROOT_ENCODED],
               pending: false,
             },
           },
-          thoughtIndexUpdates: {},
+          lexemeIndexUpdates: {},
           local: false,
           remote: false,
         }),

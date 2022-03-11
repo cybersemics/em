@@ -2,7 +2,7 @@ import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { getThoughtIdByContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getParent, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, getLexeme, getThoughtByContext, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
@@ -39,12 +39,12 @@ it('basic import with proper thought structure', () => {
   const now = timestamp()
 
   const stateNew = importText(initialState(now), { text, lastUpdated: now })
-  const { contextIndex, thoughtIndex } = stateNew.thoughts
+  const { thoughtIndex, lexemeIndex } = stateNew.thoughts
 
-  const childAId = getParent(stateNew, [HOME_TOKEN])?.children[0]
-  const childBId = getParent(stateNew, ['a'])?.children[0]
+  const childAId = getThoughtByContext(stateNew, [HOME_TOKEN])?.children[0]
+  const childBId = getThoughtByContext(stateNew, ['a'])?.children[0]
 
-  expect(contextIndex).toMatchObject({
+  expect(thoughtIndex).toMatchObject({
     [getThoughtIdByContext(stateNew, [EM_TOKEN])!]: {
       id: EM_TOKEN,
       children: [],
@@ -76,9 +76,9 @@ it('basic import with proper thought structure', () => {
     },
   })
 
-  expect(contextIndex[getThoughtIdByContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
+  expect(thoughtIndex[getThoughtIdByContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
 
-  expect(thoughtIndex).toMatchObject({
+  expect(lexemeIndex).toMatchObject({
     [hashThought(HOME_TOKEN)]: {
       value: HOME_TOKEN,
       contexts: [],
@@ -110,12 +110,11 @@ it('basic import with proper thought structure', () => {
   })
 
   // Note: Jest doesn't have lexicographic string comparison yet :(
-  expect(thoughtIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
-  expect(thoughtIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
+  expect(lexemeIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
+  expect(lexemeIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
 })
 
-// @MIGRATION_TODO: Allow this test after move merge nest duplicates is fixed.
-it.skip('merge descendants', () => {
+it('merge descendants', () => {
   const initialText = `
   - a
     - b
@@ -156,54 +155,33 @@ it.skip('merge descendants', () => {
 
   expect(exported).toBe(expectedExport)
 
-  const { contextIndex } = newState.thoughts
+  const { thoughtIndex } = newState.thoughts
 
-  expect(contextIndex).toMatchObject({
+  const thoughtA = getThoughtByContext(newState, ['a'])!
+  const thoughtB = getThoughtByContext(newState, ['a', 'b'])!
+  const thoughtC = getThoughtByContext(newState, ['a', 'b', 'c'])!
+  const thoughtQ = getThoughtByContext(newState, ['a', 'b', 'q'])!
+  const thoughtX = getThoughtByContext(newState, ['a', 'x'])!
+  const thoughtY = getThoughtByContext(newState, ['a', 'x', 'y'])!
+  const thoughtJ = getThoughtByContext(newState, ['j'])!
+
+  expect(thoughtIndex).toMatchObject({
     [getThoughtIdByContext(newState, [HOME_TOKEN])!]: {
-      children: [
-        {
-          value: 'a',
-          rank: 0,
-        },
-        {
-          value: 'j',
-        },
-      ],
+      children: [thoughtA.id, thoughtJ.id],
     },
-    [getThoughtIdByContext(newState, ['a'])!]: {
-      children: [
-        {
-          value: 'b',
-          rank: 0,
-        },
-        {
-          value: 'x',
-          // Note: x has rank two because exisitingThoughtMove doesn't account for duplicate merges for calualting rank. In this case b value is a duplicate merge in the context of ['a']
-          rank: 2,
-        },
-      ],
+    [thoughtA.id]: {
+      children: [thoughtB.id, thoughtX.id],
     },
-    [getThoughtIdByContext(newState, ['a', 'b'])!]: {
-      children: [
-        {
-          value: 'c',
-          rank: 0,
-        },
-        {
-          value: 'q',
-          rank: 1,
-        },
-      ],
+    [thoughtB.id]: {
+      children: [thoughtC.id, thoughtQ.id],
     },
-    [getThoughtIdByContext(newState, ['a', 'x'])!]: {
-      children: [
-        {
-          value: 'y',
-          rank: 0,
-        },
-      ],
+    [thoughtX.id]: {
+      children: [thoughtY.id],
     },
   })
+
+  expect(getLexeme(newState, 'a')?.contexts).toMatchObject([thoughtA.id])
+  expect(getLexeme(newState, 'b')?.contexts).toMatchObject([thoughtB.id])
 })
 
 it('initialSettings', () => {
@@ -359,7 +337,7 @@ it('duplicate thoughts', () => {
 
   const now = timestamp()
   const imported = importText(initialState(), { text, lastUpdated: now })
-  const lexeme = imported.thoughts.thoughtIndex[hashThought('m')]
+  const lexeme = imported.thoughts.lexemeIndex[hashThought('m')]
 
   const childAId = lexeme.contexts[0]
   const childBId = lexeme.contexts[1]
@@ -729,6 +707,23 @@ it('text that contains br tag that has note children', () => {
   - =note
     - This is c!`,
   )
+})
+
+it('text that contains one or more than one not allowed formattting tags', () => {
+  const text = `
+- a
+- b <sup>c</sup>
+- c (<sub>d</sub>)
+  - d <pre>123</pre>
+  `
+  const exported = importExport(text, false)
+  const expected = `
+- a
+- b c
+- c (d)
+  - d 123
+  `
+  expect(exported.trim()).toBe(expected.trim())
 })
 
 describe('HTML content', () => {
@@ -1148,7 +1143,7 @@ it('import raw state', () => {
   // raw thought state with two thoughts: a/b
   // most of this is settings, but keep them for completeness
   const text = `{
-  "contextIndex": {
+  "thoughtIndex": {
     "__ROOT__": {
       "id": "__ROOT__",
       "value": "__ROOT__",
@@ -1608,7 +1603,7 @@ it('import raw state', () => {
       "sortValue": "b"
     }
   },
-  "thoughtIndex": {
+  "lexemeIndex": {
     "323720a6648d6a2272003af034bc823a": {
       "value": "__ROOT__",
       "contexts": [],
@@ -1893,4 +1888,29 @@ it('import raw state', () => {
   - b
 `,
   )
+})
+
+it('properly add lexeme entries for multiple thoughts with same value on import', () => {
+  const text = `
+  - a
+    - m
+      - x
+  - m
+   - y`
+
+  const stateNew = reducerFlow([importText({ text })])(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  const thoughtMFirst = getThoughtByContext(stateNew, ['a', 'm'])
+  const thoughtMSecond = getThoughtByContext(stateNew, ['m'])
+
+  const lexemeM = getLexeme(stateNew, 'm')
+
+  expect(lexemeM?.contexts).toMatchObject([thoughtMFirst?.id, thoughtMSecond?.id])
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - m
+    - y`)
 })

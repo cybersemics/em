@@ -5,7 +5,7 @@ import {
   Firebase,
   Index,
   Lexeme,
-  Parent,
+  Thought,
   State,
   ThoughtId,
   ThoughtIndices,
@@ -19,12 +19,12 @@ export enum FirebaseChangeTypes {
 }
 
 export interface FirebaseChangeHandlers {
-  contextIndex?: {
+  thoughtIndex?: {
     [FirebaseChangeTypes.Create]?: (updates: ThoughtSubscriptionUpdates) => void
     [FirebaseChangeTypes.Update]?: (updates: ThoughtSubscriptionUpdates) => void
     [FirebaseChangeTypes.Delete]?: (updates: ThoughtSubscriptionUpdates) => void
   }
-  thoughtIndex?: {
+  lexemeIndex?: {
     [FirebaseChangeTypes.Create]?: (updates: ThoughtSubscriptionUpdates) => void
     [FirebaseChangeTypes.Update]?: (updates: ThoughtSubscriptionUpdates) => void
     [FirebaseChangeTypes.Delete]?: (updates: ThoughtSubscriptionUpdates) => void
@@ -40,9 +40,9 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 
   /** Gets the Lexeme object by id. */
-  async getThoughtById(id: string): Promise<Lexeme | undefined> {
+  async getLexemeById(id: string): Promise<Lexeme | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('thoughtIndex').child<Lexeme>(id)
+    const ref = userRef!.child('lexemeIndex').child<Lexeme>(id)
     return new Promise(resolve =>
       ref.once('value', (snapshot: Firebase.Snapshot<Lexeme>) => {
         resolve(snapshot.val())
@@ -50,30 +50,28 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     )
   },
   /** Gets multiple Lexeme objects by ids. */
-  async getThoughtsByIds(ids: string[]): Promise<(Lexeme | undefined)[]> {
+  async getLexemesByIds(ids: string[]): Promise<(Lexeme | undefined)[]> {
     const userRef = getUserRef(state)
-    const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child<Lexeme>(id).once('value')))
+    const snapshots = await Promise.all(ids.map(id => userRef?.child('lexemeIndex').child<Lexeme>(id).once('value')))
     return snapshots.map(snapshot => snapshot?.val())
   },
 
   /**
-   * Gets a context by id.
-   *
-   * @param conte,xt
+   * Gets a Thought by id.
    */
-  async getContextById(id: string): Promise<Parent | undefined> {
+  async getThoughtById(id: string): Promise<Thought | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('contextIndex').child<Parent>(id)
+    const ref = userRef!.child('thoughtIndex').child<Thought>(id)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Firebase.Snapshot<Parent>) => {
+      ref.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
         resolve(snapshot.val())
       }),
     )
   },
   /** Gets multiple PrentEntry objects by ids. */
-  getContextsByIds: async (ids: string[]): Promise<(Parent | undefined)[]> => {
+  getThoughtsByIds: async (ids: string[]): Promise<(Thought | undefined)[]> => {
     const userRef = getUserRef(state)
-    const snapshots = await Promise.all(ids.map(id => userRef?.child('contextIndex').child<Parent>(id).once('value')))
+    const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child<Thought>(id).once('value')))
     return snapshots.map(snapshot => snapshot?.val())
   },
   /** Updates Firebase data. */
@@ -91,31 +89,31 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
       })
     })
   },
-  /** Updates a context in the contextIndex. */
-  async updateContext(id: string, parentEntry: Parent): Promise<unknown> {
+  /** Updates a context in the thoughtIndex. */
+  async updateThought(id: string, parentEntry: Thought): Promise<unknown> {
     return this.update({
-      ['contextIndex/' + id]: parentEntry,
+      ['thoughtIndex/' + id]: parentEntry,
     })
   },
-  /** Updates a thought in the thoughtIndex. */
-  async updateThought(id: string, lexeme: Lexeme): Promise<unknown> {
+  /** Updates a thought in the lexemeIndex. */
+  async updateLexeme(id: string, lexeme: Lexeme): Promise<unknown> {
     return this.update({
-      ['thoughtIndex/' + id]: lexeme,
+      ['lexemeIndex/' + id]: lexeme,
     })
-  },
-  /** Updates the contextIndex. */
-  async updateContextIndex(contextIndex: Index<Parent>): Promise<unknown> {
-    return this.update(
-      keyValueBy(Object.entries(contextIndex), ([key, value]) => ({
-        ['contextIndex/' + key]: value,
-      })),
-    )
   },
   /** Updates the thoughtIndex. */
-  async updateThoughtIndex(thoughtIndex: Index<Lexeme>): Promise<unknown> {
+  async updateThoughtIndex(thoughtIndex: Index<Thought>): Promise<unknown> {
     return this.update(
       keyValueBy(Object.entries(thoughtIndex), ([key, value]) => ({
         ['thoughtIndex/' + key]: value,
+      })),
+    )
+  },
+  /** Updates the lexemeIndex. */
+  async updateLexemeIndex(lexemeIndex: Index<Lexeme>): Promise<unknown> {
+    return this.update(
+      keyValueBy(Object.entries(lexemeIndex), ([key, value]) => ({
+        ['lexemeIndex/' + key]: value,
       })),
     )
   },
@@ -126,13 +124,13 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
  * @param value The Parent value to set in the update. Defaults to the snapshot Parent. Useful for setting to null.
  */
 const parentSubscriptionHandler =
-  (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Parent | null } = {}) =>
-  (snapshot: Firebase.Snapshot<Parent>) => {
+  (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Thought | null } = {}) =>
+  (snapshot: Firebase.Snapshot<Thought>) => {
     // only contains fields that have changed
     const parentPartial = snapshot.val()
     if (!parentPartial) return null
     const updates = {
-      contextIndex: {
+      thoughtIndex: {
         [parentPartial.id]: {
           // snapshot contains updatedBy of deleted thought
           updatedBy: parentPartial.updatedBy,
@@ -146,7 +144,7 @@ const parentSubscriptionHandler =
                 },
         },
       },
-      thoughtIndex: {},
+      lexemeIndex: {},
     }
     onUpdate(updates)
   }
@@ -161,8 +159,8 @@ const lexemeSubscriptionHandler =
     const lexemePartial = snapshot.val()
     if (!lexemePartial) return null
     const updates = {
-      contextIndex: {},
-      thoughtIndex: {
+      thoughtIndex: {},
+      lexemeIndex: {
         [hashThought(lexemePartial.value)]: {
           // snapshot contains updatedBy of deleted thought
           updatedBy: lexemePartial.updatedBy,
@@ -183,24 +181,24 @@ const lexemeSubscriptionHandler =
 /** Subscribe to firebase. */
 export const subscribe = (userId: string, onUpdate: (updates: ThoughtSubscriptionUpdates) => void) => {
   const thoughtsRef: Firebase.Ref<ThoughtIndices> = window.firebase?.database().ref(`users/${userId}`)
-  const contextIndexRef: Firebase.Ref<Parent> = thoughtsRef.child('contextIndex')
-  const thoughtIndexRef: Firebase.Ref<Lexeme> = thoughtsRef.child('thoughtIndex')
-
-  // contextIndex subscriptions
-  contextIndexRef
-    .orderByChild('lastUpdated')
-    .startAt(new Date().toISOString())
-    .on('child_added', parentSubscriptionHandler(onUpdate))
-  contextIndexRef.on('child_changed', parentSubscriptionHandler(onUpdate))
-  contextIndexRef.on('child_removed', parentSubscriptionHandler(onUpdate, { value: null }))
+  const thoughtIndexRef: Firebase.Ref<Thought> = thoughtsRef.child('thoughtIndex')
+  const lexemeIndexRef: Firebase.Ref<Lexeme> = thoughtsRef.child('lexemeIndex')
 
   // thoughtIndex subscriptions
   thoughtIndexRef
     .orderByChild('lastUpdated')
     .startAt(new Date().toISOString())
+    .on('child_added', parentSubscriptionHandler(onUpdate))
+  thoughtIndexRef.on('child_changed', parentSubscriptionHandler(onUpdate))
+  thoughtIndexRef.on('child_removed', parentSubscriptionHandler(onUpdate, { value: null }))
+
+  // lexemeIndex subscriptions
+  lexemeIndexRef
+    .orderByChild('lastUpdated')
+    .startAt(new Date().toISOString())
     .on('child_added', lexemeSubscriptionHandler(onUpdate))
-  thoughtIndexRef.on('child_changed', lexemeSubscriptionHandler(onUpdate))
-  thoughtIndexRef.on('child_removed', lexemeSubscriptionHandler(onUpdate, { value: null }))
+  lexemeIndexRef.on('child_changed', lexemeSubscriptionHandler(onUpdate))
+  lexemeIndexRef.on('child_removed', lexemeSubscriptionHandler(onUpdate, { value: null }))
 }
 
 export default getFirebaseProvider

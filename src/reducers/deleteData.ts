@@ -1,20 +1,20 @@
 import _ from 'lodash'
-import { deleteThought, updateLastUpdated } from '../data-providers/dexie'
+import { deleteLexeme, updateLastUpdated } from '../data-providers/dexie'
 import { hashThought, timestamp } from '../util'
 import { getLexeme, getContextForThought, getThoughtById } from '../selectors'
 import { State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
-/** Deletes the value from the thoughtIndex. */
+/** Deletes the value from the lexemeIndex. */
 const deleteData = (state: State, { value }: { value: string }) => {
-  const thoughtIndex = { ...state.thoughts.thoughtIndex }
+  const lexemeIndex = { ...state.thoughts.lexemeIndex }
   const lexeme = getLexeme(state, value)
-  delete thoughtIndex[hashThought(value)] // eslint-disable-line fp/no-delete
-  deleteThought(hashThought(value))
+  delete lexemeIndex[hashThought(value)] // eslint-disable-line fp/no-delete
+  deleteLexeme(hashThought(value))
   updateLastUpdated(timestamp())
 
   // delete value from all contexts
-  const contextIndex = { ...state.thoughts.contextIndex }
+  const thoughtIndex = { ...state.thoughts.thoughtIndex }
   if (lexeme && lexeme.contexts && lexeme.contexts.length > 0) {
     lexeme.contexts.forEach(thoughtId => {
       const thought = getThoughtById(state, thoughtId)
@@ -31,12 +31,12 @@ const deleteData = (state: State, { value }: { value: string }) => {
 
       // delete the entry if there are no more children
       if (childrenNew.length === 0) {
-        delete contextIndex[contextEncoded] // eslint-disable-line fp/no-delete
+        delete thoughtIndex[contextEncoded] // eslint-disable-line fp/no-delete
       }
       // otherwise update with new children
       else {
-        contextIndex[contextEncoded] = {
-          ...contextIndex[contextEncoded],
+        thoughtIndex[contextEncoded] = {
+          ...thoughtIndex[contextEncoded],
           children: childrenNew.map(({ id }) => id),
           lastUpdated: timestamp(),
         }
@@ -46,8 +46,8 @@ const deleteData = (state: State, { value }: { value: string }) => {
 
   return {
     ...state,
+    lexemeIndex,
     thoughtIndex,
-    contextIndex,
     lastUpdated: timestamp(),
   }
 }

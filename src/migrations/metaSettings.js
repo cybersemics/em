@@ -14,7 +14,7 @@ export const schemaVersionTo = SCHEMA_TO
 
 /** Migrates the settings to metaprogramming attributes. */
 export const migrate = async state => {
-  const { thoughtIndexUpdates, contextIndexUpdates } = store.dispatch(
+  const { lexemeIndexUpdates, thoughtIndexUpdates } = store.dispatch(
     importText({
       path: [{ value: EM_TOKEN, rank: 0 }],
       text: INITIAL_SETTINGS,
@@ -55,13 +55,13 @@ export const migrate = async state => {
     // merge initial settings thought structure
     thoughts: {
       ...state.thoughts,
-      contextIndex: {
-        ...state.thoughts.contextIndex,
-        ...contextIndexUpdates,
-      },
       thoughtIndex: {
         ...state.thoughts.thoughtIndex,
         ...thoughtIndexUpdates,
+      },
+      lexemeIndex: {
+        ...state.thoughts.lexemeIndex,
+        ...lexemeIndexUpdates,
       },
     },
   }

@@ -1,4 +1,4 @@
-/** Traverses the contextIndex of a JSON file exported from Firebase and adds missing contexts. */
+/** Traverses the thoughtIndex of a JSON file exported from Firebase and adds missing contexts. */
 
 const fs = require('fs')
 const path = require('path')
@@ -20,9 +20,9 @@ const hashContext = (thoughts, rank) =>
       (typeof rank === 'number' ? SEPARATOR_TOKEN + rank : ''),
   )
 
-/** Traverses the contextIndex, calling a function for each context. */
+/** Traverses the thoughtIndex, calling a function for each context. */
 const traverseContext = (state, context, f) => {
-  const parent = state.contextIndex[hashContext(context)]
+  const parent = state.thoughtIndex[hashContext(context)]
   if (parent) {
     f(context, parent)
     ;(parent.children || []).forEach(child => traverseContext(state, appendContext(context, child.value), f))

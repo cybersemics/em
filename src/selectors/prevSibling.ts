@@ -8,7 +8,7 @@ import {
   getSortPreference,
 } from '../selectors'
 import { head } from '../util'
-import { Context, Parent, State } from '../@types'
+import { Context, Thought, State } from '../@types'
 import getContextForThought from './getContextForThought'
 
 /**
@@ -16,7 +16,7 @@ import getContextForThought from './getContextForThought'
  *
  * @param context   Can be a context or path.
  */
-const prevSibling = (state: State, value: string, context: Context, rank: number): Parent | null => {
+const prevSibling = (state: State, value: string, context: Context, rank: number): Thought | null => {
   const { showHiddenThoughts } = state
   const contextViewActive = isContextViewActive(state, context)
 
@@ -45,7 +45,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   })
   // redeclare prev to convince typescript that the type changed after `siblings.find`
   // otherwise it assumes that `find` has no side effect`
-  const prevChild = prev as Parent | null
+  const prevChild = prev as Thought | null
 
   return prevChild
 }

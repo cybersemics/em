@@ -223,7 +223,7 @@ describe('mount', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
-  it.only('after deleteEmptyThought, caret should move to end of previous thought', async () => {
+  it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
     store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
     jest.runOnlyPendingTimers()
 

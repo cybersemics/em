@@ -5,15 +5,16 @@ import { editThoughtPayload } from '../reducers/editThought'
 import { htmlToJson, importJSON, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { Context, Index, Lexeme, Parent, Path, PushBatch, SimplePath, State } from '../@types'
+import { Context, Index, Lexeme, Thought, Path, PendingMerge, PushBatch, SimplePath, State } from '../@types'
 
 export interface UpdateThoughtsOptions {
-  thoughtIndexUpdates: Index<Lexeme | null>
-  contextIndexUpdates: Index<Parent | null>
+  lexemeIndexUpdates: Index<Lexeme | null>
+  thoughtIndexUpdates: Index<Thought | null>
   recentlyEdited?: Index
-  pendingDeletes?: { context: Context; thought: Parent }[]
+  pendingDeletes?: { context: Context; thought: Thought }[]
   pendingEdits?: editThoughtPayload[]
   pendingPulls?: { path: Path }[]
+  pendingMerges?: PendingMerge[]
   contextChain?: SimplePath[]
   updates?: Index<string>
   local?: boolean
@@ -35,13 +36,13 @@ export const getWhitelistedThoughts = once(() => {
   const settingsImported = importJSON(state, [EM_TOKEN] as SimplePath, jsonSettings)
 
   return {
-    contextIndex: {
-      ...state.thoughts.contextIndex,
-      ...settingsImported.contextIndexUpdates,
-    },
     thoughtIndex: {
       ...state.thoughts.thoughtIndex,
       ...settingsImported.thoughtIndexUpdates,
+    },
+    lexemeIndex: {
+      ...state.thoughts.lexemeIndex,
+      ...settingsImported.lexemeIndexUpdates,
     },
   }
 })
@@ -52,7 +53,7 @@ export const getWhitelistedThoughts = once(() => {
 // }
 
 /**
- * Updates thoughtIndex and contextIndex with any number of thoughts.
+ * Updates lexemeIndex and thoughtIndex with any number of thoughts.
  *
  * @param local    If false, does not persist to local database. Default: true.
  * @param remote   If false, does not persist to remote database. Default: true.
@@ -60,32 +61,33 @@ export const getWhitelistedThoughts = once(() => {
 const updateThoughts = (
   state: State,
   {
+    lexemeIndexUpdates,
     thoughtIndexUpdates,
-    contextIndexUpdates,
     recentlyEdited,
     updates,
     pendingDeletes,
     pendingPulls,
+    pendingMerges,
     local = true,
     remote = true,
     isLoading,
   }: UpdateThoughtsOptions,
 ) => {
-  if (Object.keys(contextIndexUpdates).length === 0 && Object.keys(thoughtIndexUpdates).length === 0) return state
+  if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
-  const contextIndexOld = { ...state.thoughts.contextIndex }
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
+  const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
 
   // Data Integrity Checks
 
   // Sometimes Child objects are missing their value property
   // Check all updates in case the problem is in the subscription logic
-  // Object.values(contextIndexUpdates).forEach(parentUpdate =>
+  // Object.values(thoughtIndexUpdates).forEach(parentUpdate =>
   //   parentUpdate?.children.forEach(childId => {
-  //     const thought = state.thoughts.contextIndex[childId]
+  //     const thought = state.thoughts.thoughtIndex[childId]
 
   //     if (!thought) {
-  //       throw new Error(`Parent entry for id ${childId} not found!`)
+  //       throw new Error(`Thought entry for id ${childId} not found!`)
   //     }
   //     if (thought.value == null || thought.rank == null) {
   //       console.error('child', thought)
@@ -101,8 +103,8 @@ const updateThoughts = (
   // if (local && remote) {
   // A non-root context should never begin with HOME_TOKEN.
   // If one is found, it means there was a data integrity error that needs to be identified immediately.
-  // if (Object.values(thoughtIndexUpdates).some(lexeme => lexeme?.contexts.some(isInvalidContext))) {
-  //   const invalidLexemes = Object.values(thoughtIndexUpdates).filter(lexeme =>
+  // if (Object.values(lexemeIndexUpdates).some(lexeme => lexeme?.contexts.some(isInvalidContext))) {
+  //   const invalidLexemes = Object.values(lexemeIndexUpdates).filter(lexeme =>
   //     lexeme?.contexts.some(isInvalidContext),
   //   ) as Lexeme[]
   //   if (invalidLexemes.length > 0) {
@@ -117,44 +119,46 @@ const updateThoughts = (
   // }
   // }
 
-  // There is a bug that is saving full Parents into Lexeme.contexts.
+  // There is a bug that is saving full Thoughts into Lexeme.contexts.
   // Throw here to help identify the upstream problem.
 
-  Object.values(thoughtIndexUpdates).forEach(lexemeUpdate => {
+  Object.values(lexemeIndexUpdates).forEach(lexemeUpdate => {
     if (lexemeUpdate?.contexts.some(id => typeof id !== 'string')) {
       console.error('Invalid Lexeme context', lexemeUpdate)
       throw new Error('Invalid Lexeme context')
     }
   })
 
-  // The contextIndex and thoughtIndex can consume more and more memory as thoughts are pulled from the db.
-  // The contextCache and thoughtCache are used as a queue that is parallel to the contextIndex and thoughtIndex.
+  // The thoughtIndex and lexemeIndex can consume more and more memory as thoughts are pulled from the db.
+  // The contextCache and thoughtCache are used as a queue that is parallel to the thoughtIndex and lexemeIndex.
   // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
-  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from contextIndex and thoughtIndex
+  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from thoughtIndex and lexemeIndex
 
-  const contextIndexInvalidated = contextCache.addMany(Object.keys(contextIndexUpdates))
-  const thoughtIndexInvalidated = lexemeCache.addMany(Object.keys(thoughtIndexUpdates))
-
-  contextIndexInvalidated.forEach(key => {
-    if (!getWhitelistedThoughts().contextIndex[key] && !state.expanded[key]) {
-      delete contextIndexOld[key] // eslint-disable-line fp/no-delete
-    }
-  })
+  const thoughtIndexInvalidated = contextCache.addMany(Object.keys(thoughtIndexUpdates))
+  const lexemeIndexInvalidated = lexemeCache.addMany(Object.keys(lexemeIndexUpdates))
 
   thoughtIndexInvalidated.forEach(key => {
+    // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
     if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
       delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
     }
   })
 
-  const contextIndex = mergeUpdates(contextIndexOld, contextIndexUpdates)
+  lexemeIndexInvalidated.forEach(key => {
+    // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
+    if (!getWhitelistedThoughts().lexemeIndex[key] && !state.expanded[key]) {
+      delete lexemeIndexOld[key] // eslint-disable-line fp/no-delete
+    }
+  })
+
   const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates)
+  const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates)
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
   //  lexemes from the updates that are not available in the state yet.
-  const pendingLexemes = Object.keys(thoughtIndexUpdates).reduce<Index<boolean>>((acc, thoughtId) => {
-    const lexemeInState = state.thoughts.thoughtIndex[thoughtId]
+  const pendingLexemes = Object.keys(lexemeIndexUpdates).reduce<Index<boolean>>((acc, thoughtId) => {
+    const lexemeInState = state.thoughts.lexemeIndex[thoughtId]
     return {
       ...acc,
       ...(lexemeInState ? {} : { [thoughtId]: true }),
@@ -163,12 +167,13 @@ const updateThoughts = (
 
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
+    lexemeIndexUpdates,
     thoughtIndexUpdates,
-    contextIndexUpdates,
     recentlyEdited: recentlyEditedNew,
     updates,
     pendingDeletes,
     pendingPulls,
+    pendingMerges,
     local,
     remote,
     pendingLexemes,
@@ -178,14 +183,14 @@ const updateThoughts = (
 
   /** Returns false if the root thought is loaded and not pending. */
   const isStillLoading = () => {
-    const rootThought = contextIndex[HOME_TOKEN] as Parent | null
+    const rootThought = thoughtIndex[HOME_TOKEN] as Thought | null
     const thoughtsLoaded =
       rootThought &&
       !rootThought.pending &&
       // Disable isLoading if the root children have been loaded.
       // Otherwise NewThoughtInstructions will still be shown since there are no children to render.
       // If the root has no children and is no longer pending, we can disable isLoading immediately.
-      (rootThought.children.length === 0 || rootThought.children.find(childId => contextIndex[childId]))
+      (rootThought.children.length === 0 || rootThought.children.find(childId => thoughtIndex[childId]))
     return isLoading ?? !thoughtsLoaded
   }
 
@@ -200,23 +205,23 @@ const updateThoughts = (
       // only push the batch to the pushQueue if syncing at least local or remote
       ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
       thoughts: {
-        contextIndex,
         thoughtIndex,
+        lexemeIndex,
       },
     }),
 
     // Data Integrity Check
-    // Catch Lexeme-Parent rank mismatches on empty thought.
+    // Catch Lexeme-Thought rank mismatches on empty thought.
     // Disable since 2-part moves rely on temporary invalid state.
     // Re-enable after Independent Editing (#495)
 
     // state => {
     //   // loop through all Lexemes that are being updated
-    //   Object.values(thoughtIndexUpdates).forEach(lexeme => {
+    //   Object.values(lexemeIndexUpdates).forEach(lexeme => {
     //     // loop through each ThoughtContext of each Lexeme
     //     lexeme?.contexts.forEach(cx => {
-    //       // find the Child with the same value and rank in the Parent
-    //       const parent = getParent(state, cx.context)
+    //       // find the Child with the same value and rank in the Thought
+    //       const parent = getThoughtById(state, cx.context)
     //       const child = parent?.children.find(
     //         child => normalizeThought(child.value) === normalizeThought(lexeme.value) && child.rank === cx.rank,
     //       )
@@ -226,7 +231,7 @@ const updateThoughts = (
     //         throw new Error(
     //           `ThoughtContext for "${lexeme.value}" in ${JSON.stringify(cx.context)} with rank ${
     //             cx.rank
-    //           } is not found in corresponding Parent.`,
+    //           } is not found in corresponding Thought.`,
     //         )
     //       }
     //     })

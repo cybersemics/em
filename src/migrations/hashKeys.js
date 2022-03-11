@@ -9,16 +9,16 @@ export const schemaVersionTo = SCHEMA_HASHKEYS
 /** Migrates unhashed keys to hashed keys. */
 export const migrate = state => {
   const {
-    thoughts: { thoughtIndex, contextThoughts },
+    thoughts: { lexemeIndex, contextThoughts },
   } = state
 
-  console.info(`Migrating ${Object.keys(thoughtIndex).length} thoughtIndex keys...`)
+  console.info(`Migrating ${Object.keys(lexemeIndex).length} lexemeIndex keys...`)
 
-  // hash the thoughtIndex key using hashThought
+  // hash the lexemeIndex key using hashThought
 
   // TODO: Handle collisions
-  const thoughtIndexUpdates = _.transform(
-    thoughtIndex,
+  const lexemeIndexUpdates = _.transform(
+    lexemeIndex,
     (accum, lexeme, key) => {
       const hash = hashThought(key)
 
@@ -43,11 +43,11 @@ export const migrate = state => {
     {},
   )
 
-  console.info(`Migrating ${Object.keys(contextThoughts).length} contextIndex keys...`)
+  console.info(`Migrating ${Object.keys(contextThoughts).length} thoughtIndex keys...`)
 
   // hashContext now uses murmurhash to limit key length
   // hash each old contextEncoded to get them to match
-  const contextIndexUpdates = _.transform(
+  const thoughtIndexUpdates = _.transform(
     contextThoughts,
     (accum, value, key) => {
       accum[key] = null
@@ -56,11 +56,11 @@ export const migrate = state => {
     {},
   )
 
-  console.info('Deleting old contextIndex from localStorage...')
+  console.info('Deleting old thoughtIndex from localStorage...')
 
   return Promise.resolve({
+    lexemeIndexUpdates,
     thoughtIndexUpdates,
-    contextIndexUpdates,
     schemaVersion: SCHEMA_HASHKEYS,
   })
 }

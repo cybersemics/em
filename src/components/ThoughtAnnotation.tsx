@@ -9,8 +9,8 @@ import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } fr
 import {
   ellipsizeUrl,
   equalPath,
+  hashContext,
   head,
-  headId,
   headValue,
   isURL,
   once,
@@ -128,14 +128,14 @@ const ThoughtAnnotation = ({
   const state = store.getState()
   const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
   const thoughts = pathToContext(state, simplePath)
-  const isExpanded = !!state.expanded[headId(simplePath)]
+  const isExpanded = !!state.expanded[hashContext(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, thoughts).filter(child => isURL(child.value)))
 
   /**
-   * Adding dependency on thoughtIndex as the fetch for thought is async await.
-   * ThoughtAnnotation wasn't waiting for all the thoughtIndex to be set before it was rendered.
+   * Adding dependency on lexemeIndex as the fetch for thought is async await.
+   * ThoughtAnnotation wasn't waiting for all the lexemeIndex to be set before it was rendered.
    * And hence the superscript wasn't rendering properly on load.
-   * So now subscribing to get context so that StaticSuperscript is not re-rendered for all thoughtIndex change.
+   * So now subscribing to get context so that StaticSuperscript is not re-rendered for all lexemeIndex change.
    * It will re-render only when respective Lexeme is changed.
    * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
    */

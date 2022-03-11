@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer'
-import { Context, Parent } from '../../../@types'
+import { Context, Thought } from '../../../@types'
 import { WindowEm } from '../../../initialize'
 
 /**
@@ -10,7 +10,7 @@ const waitForContextHasChildWithValue = async (page: Page, context: Context, chi
     (context: [], childValue: string) =>
       (window.em as WindowEm)
         .getAllChildrenAsThoughts(context)
-        .some((thought: Parent) => thought.value === childValue) && (window.em as WindowEm).getLexeme(childValue),
+        .some((thought: Thought) => thought.value === childValue) && (window.em as WindowEm).getLexeme(childValue),
     {},
     context,
     childValue,

@@ -4,7 +4,7 @@ import TutorialHint from './TutorialHint'
 import { ellipsize, headValue, joinConjunction } from '../../util'
 
 import { TUTORIAL_CONTEXT1_PARENT } from '../../constants'
-import { Parent, Path, State } from '../../@types'
+import { Thought, Path, State } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { useStore } from 'react-redux'
@@ -13,7 +13,7 @@ type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 
 interface IComponentProps {
   cursor: Path
-  rootChildren: Parent[]
+  rootChildren: Thought[]
   tutorialChoice: keyof TutorialChoice
 }
 

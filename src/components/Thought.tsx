@@ -7,7 +7,7 @@ import globals from '../globals'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
-import { ThoughtId, Context, Index, Parent, Path, SimplePath, State } from '../@types'
+import { ThoughtId, Context, Index, Thought, Path, SimplePath, State } from '../@types'
 
 // components
 import Bullet from './Bullet'
@@ -27,6 +27,7 @@ import {
   appendToPath,
   equalArrays,
   equalPath,
+  hashPath,
   head,
   headId,
   headValue,
@@ -84,7 +85,7 @@ export interface ThoughtContainerProps {
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
-  prevChild?: Parent
+  prevChild?: Thought
   publish?: boolean
   rank: number
   showContexts?: boolean
@@ -166,7 +167,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isCursorGrandparent =
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
-  const isExpanded = !!expanded[headId(path)]
+  const isExpanded = !!expanded[hashPath(path)]
   const isLeaf = !hasChildren(state, contextLive)
 
   return {
@@ -351,7 +352,9 @@ const ThoughtContainer = ({
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
-  const draggingThoughtValue = state.draggingThought ? getThoughtById(state, headId(state.draggingThought)).value : null
+  const draggingThoughtValue = state.draggingThought
+    ? getThoughtById(state, headId(state.draggingThought))?.value
+    : null
 
   const isAnyChildHovering = useIsChildHovering(thoughts, isHovering, isDeepHovering)
 

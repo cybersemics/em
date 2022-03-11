@@ -104,7 +104,7 @@ it('permanently delete archive', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
 
-  // ensure =archive is removed from thoughtIndex
+  // ensure =archive is removed from lexemeIndex
   expect(getContexts(stateNew, '=archive')).toHaveLength(0)
 })
 
@@ -124,10 +124,10 @@ it('permanently delete archive with descendants', () => {
 
   expect(exported).toBe(`${HOME_TOKEN}`)
 
-  // ensure =archive is removed from thoughtIndex
+  // ensure =archive is removed from lexemeIndex
   expect(getContexts(stateNew, '=archive')).toHaveLength(0)
 
-  // ensure descendants are remvoed from thoughtIndex
+  // ensure descendants are remvoed from lexemeIndex
   expect(getContexts(stateNew, 'a')).toHaveLength(0)
 })
 

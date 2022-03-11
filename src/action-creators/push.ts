@@ -7,60 +7,60 @@ import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
 import { getUserRef, getThoughtIdByContext, isFunction, logWithTime, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
-import { Thunk, Index, Lexeme, Parent, State, ThoughtId } from '../@types'
+import { Thunk, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { storage } from '../util/storage'
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (
   state: State,
-  contextIndexUpdates: Index<Parent | null> = {},
-  thoughtIndexUpdates: Index<Lexeme | null> = {},
+  thoughtIndexUpdates: Index<Thought | null> = {},
+  lexemeIndexUpdates: Index<Lexeme | null> = {},
   recentlyEdited: Index,
   updates: Index = {},
   localStorageSettingsContexts: Index<string>,
 ): Promise<any> => {
-  // thoughtIndex
-  const thoughtIndexPromises = [
-    ...Object.entries(thoughtIndexUpdates).map(([key, lexeme]) => {
+  // lexemeIndex
+  const lexemeIndexPromises = [
+    ...Object.entries(lexemeIndexUpdates).map(([key, lexeme]) => {
       if (lexeme != null) {
-        return db.updateThought(key, lexeme)
+        return db.updateLexeme(key, lexeme)
       }
-      return db.deleteThought(key)
+      return db.deleteLexeme(key)
     }),
     db.updateLastUpdated(timestamp()),
   ] as Promise<unknown>[]
 
-  logWithTime('sync: thoughtIndexPromises generated')
+  logWithTime('sync: lexemeIndexPromises generated')
 
-  const updatedContextIndex = {
-    ...state.thoughts.contextIndex,
-    ...contextIndexUpdates,
+  const updatedThoughtIndex = {
+    ...state.thoughts.thoughtIndex,
+    ...thoughtIndexUpdates,
   }
-  // contextIndex
-  const contextIndexPromises = [
-    ...Object.keys(contextIndexUpdates).map(contextEncoded => {
-      const parentEntry = contextIndexUpdates[contextEncoded]
+  // thoughtIndex
+  const thoughtIndexPromises = [
+    ...Object.keys(thoughtIndexUpdates).map(contextEncoded => {
+      const parentEntry = thoughtIndexUpdates[contextEncoded]
 
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[contextEncoded]
       if (name) {
         const firstChild = parentEntry?.children.find(child => {
-          const thought = updatedContextIndex[child]
+          const thought = updatedThoughtIndex[child]
           return thought && !isFunction(thought.value)
         })
         if (firstChild) {
-          const thought = updatedContextIndex[firstChild]
+          const thought = updatedThoughtIndex[firstChild]
           storage.setItem(`Settings/${name}`, thought!.value)
         }
       }
 
-      // Note: Since all the data of a thought is now on Parent instead of Child and ThoughtIndex, so the parent entry should not be deleted if they don't have children
-      return parentEntry ? db.updateContext(contextEncoded as ThoughtId, parentEntry) : db.deleteContext(contextEncoded)
+      // Note: Since all the data of a thought is now on Parent instead of Child and LexemeIndex, so the thought should not be deleted if they don't have children
+      return parentEntry ? db.updateThought(contextEncoded as ThoughtId, parentEntry) : db.deleteThought(contextEncoded)
     }),
     db.updateLastUpdated(timestamp()),
   ]
 
-  logWithTime('sync: contextIndexPromises generated')
+  logWithTime('sync: thoughtIndexPromises generated')
 
   // recentlyEdited
   const recentlyEditedPromise = recentlyEdited ? db.updateRecentlyEdited(recentlyEdited) : null
@@ -70,14 +70,14 @@ const pushLocal = (
 
   logWithTime('sync: localPromises generated')
 
-  return Promise.all([...thoughtIndexPromises, ...contextIndexPromises, recentlyEditedPromise, schemaVersionPromise])
+  return Promise.all([...lexemeIndexPromises, ...thoughtIndexPromises, recentlyEditedPromise, schemaVersionPromise])
 }
 
-/** Prepends thoughtIndex and contextIndex keys for syncing to Firebase. */
+/** Prepends lexemeIndex and thoughtIndex keys for syncing to Firebase. */
 const pushRemote =
   (
-    contextIndexUpdates: Index<Parent | null> = {},
-    thoughtIndexUpdates: Index<Lexeme | null> = {},
+    thoughtIndexUpdates: Index<Thought | null> = {},
+    lexemeIndexUpdates: Index<Lexeme | null> = {},
     recentlyEdited: Index | undefined,
     updates: Index = {},
   ): Thunk<Promise<unknown>> =>
@@ -85,30 +85,30 @@ const pushRemote =
     const state = getState()
 
     const hasUpdates =
+      Object.keys(lexemeIndexUpdates).length > 0 ||
       Object.keys(thoughtIndexUpdates).length > 0 ||
-      Object.keys(contextIndexUpdates).length > 0 ||
       Object.keys(updates).length > 0
 
-    // prepend thoughtIndex/ and encode key
+    // prepend lexemeIndex/ and encode key
     const prependedDataUpdates = _.transform(
-      thoughtIndexUpdates,
+      lexemeIndexUpdates,
       (accum, lexemeUpdate, key) => {
         if (!key) {
           console.error('Unescaped empty key', lexemeUpdate, new Error())
         }
-        accum['thoughtIndex/' + (key || EMPTY_TOKEN)] = lexemeUpdate
+        accum['lexemeIndex/' + (key || EMPTY_TOKEN)] = lexemeUpdate
       },
       {} as Index<Lexeme | null>,
     )
 
-    logWithTime('pushRemote: prepend thoughtIndex key')
+    logWithTime('pushRemote: prepend lexemeIndex key')
 
-    const prependedContextIndexUpdates = _.transform(
-      contextIndexUpdates,
+    const prependedThoughtIndexUpdates = _.transform(
+      thoughtIndexUpdates,
       (accum, parentUpdate, key) => {
         // fix undefined/NaN rank
         const children = parentUpdate && parentUpdate.children
-        accum['contextIndex/' + key] =
+        accum['thoughtIndex/' + key] =
           children && children.length > 0
             ? {
                 id: parentUpdate!.id,
@@ -122,10 +122,10 @@ const pushRemote =
               }
             : null
       },
-      {} as Index<Parent | null>,
+      {} as Index<Thought | null>,
     )
 
-    logWithTime('pushRemote: prepend contextIndex key')
+    logWithTime('pushRemote: prepend thoughtIndex key')
 
     // add updates to queue appending clientId and timestamp
     const allUpdates = {
@@ -134,12 +134,12 @@ const pushRemote =
         ? {
             ...updates,
             ...prependedDataUpdates,
-            ...prependedContextIndexUpdates,
+            ...prependedThoughtIndexUpdates,
             ...(recentlyEdited ? { recentlyEdited } : null),
-            // do not update lastClientId and lastUpdated if there are no thoughtIndex updates (e.g. just a settings update)
-            // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore thoughtIndex updates from the remote thinking it is already up-to-speed
+            // do not update lastClientId and lastUpdated if there are no lexemeIndex updates (e.g. just a settings update)
+            // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore lexemeIndex updates from the remote thinking it is already up-to-speed
             // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
-            ...(Object.keys(thoughtIndexUpdates).length > 0
+            ...(Object.keys(lexemeIndexUpdates).length > 0
               ? {
                   lastClientId: clientId,
                   lastUpdated: timestamp(),
@@ -165,8 +165,8 @@ const pushRemote =
 /** Syncs updates to local database and Firebase. */
 const push =
   (
-    contextIndexUpdates: Index<Parent | null> = {},
-    thoughtIndexUpdates: Index<Lexeme | null> = {},
+    thoughtIndexUpdates: Index<Thought | null> = {},
+    lexemeIndexUpdates: Index<Lexeme | null> = {},
     { local = true, remote = true, updates = {}, recentlyEdited = {} } = {},
   ): Thunk =>
   (dispatch, getState) => {
@@ -178,9 +178,9 @@ const push =
     const authenticated = { state }
     const userRef = getUserRef(state)
 
-    // Filter out pending Parents so they are not persisted.
-    // Why not filter them out upstream in updateThoughts? Pending Parents sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
-    const contextIndexUpdatesNotPending = _.pickBy(contextIndexUpdates, parent => !parent?.pending)
+    // Filter out pending Thoughts so they are not persisted.
+    // Why not filter them out upstream in updateThoughts? Pending Thoughts sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
+    const thoughtIndexUpdatesNotPending = _.pickBy(thoughtIndexUpdates, thought => !thought?.pending)
 
     // store the hashes of the localStorage Settings contexts for quick lookup
     // settings that are propagated to localStorage for faster load on startup
@@ -205,8 +205,8 @@ const push =
       local &&
         pushLocal(
           getState(),
-          contextIndexUpdatesNotPending,
-          thoughtIndexUpdates,
+          thoughtIndexUpdatesNotPending,
+          lexemeIndexUpdates,
           recentlyEdited,
           updates,
           localStorageSettingsContexts,
@@ -216,7 +216,7 @@ const push =
       remote &&
         authenticated &&
         userRef &&
-        pushRemote(contextIndexUpdatesNotPending, thoughtIndexUpdates, recentlyEdited, updates)(dispatch, getState),
+        pushRemote(thoughtIndexUpdatesNotPending, lexemeIndexUpdates, recentlyEdited, updates)(dispatch, getState),
     ])
   }
 

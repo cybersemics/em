@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import { compareByRank, sort, unroot } from '../util'
 import { getChildrenRanked } from '../selectors'
-import { Context, Parent, State, ThoughtId } from '../@types'
+import { Context, Thought, State, ThoughtId } from '../@types'
 import { getAllChildrenAsThoughts } from './getChildren'
 import childIdsToThoughts from './childIdsToThoughts'
-import { getThoughtById } from './getThought'
+import getThoughtById from './getThoughtById'
 
 interface OptionsPath {
-  filterFunction?: (thought: Parent) => boolean
+  filterFunction?: (thought: Thought) => boolean
   ordered?: boolean
 }
 
@@ -17,7 +17,7 @@ interface OptionsPathInternal extends OptionsPath {
 }
 
 interface OptionsContext {
-  filterFunction?: (thought: Parent, context: Context) => boolean
+  filterFunction?: (thought: Thought, context: Context) => boolean
   ordered?: boolean
 }
 
@@ -73,7 +73,7 @@ export const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, opti
 export const someDescendants = (
   state: State,
   context: Context,
-  predicate: (thought: Parent, context: Context) => boolean,
+  predicate: (thought: Thought, context: Context) => boolean,
 ) => {
   let found = false
   // ignore the return value of getDescendants

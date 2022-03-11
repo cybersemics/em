@@ -1,4 +1,4 @@
-Run this script to recalculate contextIndex and thoughtIndex hashes.
+Run this script to recalculate thoughtIndex and lexemeIndex hashes.
 
 ## Build
 

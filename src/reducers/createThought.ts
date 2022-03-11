@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getLexeme, getAllChildren, getParent, getThoughtById } from '../selectors'
+import { getNextRank, getLexeme, getAllChildren, getThoughtByContext, getThoughtById } from '../selectors'
 import { createId, hashThought, head, timestamp } from '../util'
-import { Context, Index, Lexeme, Parent, State, ThoughtId } from '../@types'
+import { Context, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 
 interface Payload {
@@ -34,12 +34,12 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
   const contextActual = addAsContext ? [value] : context
 
   // store children indexed by the encoded context for O(1) lookup of children
-  // @MIGRATION_NOTE: getParent cannot find paths with context views.
-  const parent = getParent(state, contextActual)
+  // @MIGRATION_NOTE: getThought cannot find paths with context views.
+  const thought = getThoughtByContext(state, contextActual)
 
-  if (!parent) return state
+  if (!thought) return state
 
-  const contextIndexUpdates: Index<Parent> = {}
+  const thoughtIndexUpdates: Index<Thought> = {}
 
   if (context.length > 0) {
     const newValue = addAsContext ? head(context) : value
@@ -48,17 +48,17 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       .filter(child => child !== id)
       .concat(id)
 
-    contextIndexUpdates[parent.id] = {
-      ...getThoughtById(state, parent.id),
-      id: parent.id,
+    thoughtIndexUpdates[thought.id] = {
+      ...getThoughtById(state, thought.id),
+      id: thought.id,
       children,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     }
 
-    contextIndexUpdates[id] = {
+    thoughtIndexUpdates[id] = {
       id,
-      parentId: parent.id,
+      parentId: thought.id,
       children: [],
       lastUpdated: timestamp(),
       rank: addAsContext ? getNextRank(state, [value]) : rank,
@@ -87,7 +87,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       : lexeme.contexts
   }
 
-  const thoughtIndexUpdates = {
+  const lexemeIndexUpdates = {
     [hashThought(lexeme.value)]: lexeme,
     ...(lexemeNew
       ? {
@@ -96,7 +96,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       : null),
   }
 
-  return updateThoughts(state, { thoughtIndexUpdates, contextIndexUpdates })
+  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates })
 }
 
 export default _.curryRight(createThought)

@@ -10,7 +10,7 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-import { Parent, Path, State } from '../../@types'
+import { Thought, Path, State } from '../../@types'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
 import { doStringsMatch } from '../../util/doStringsMatch'
@@ -20,7 +20,7 @@ type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 
 interface IComponentProps {
   cursor: Path
-  rootChildren: Parent[]
+  rootChildren: Thought[]
   tutorialChoice: keyof TutorialChoice
 }
 

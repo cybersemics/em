@@ -101,12 +101,12 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       const parentThought = getParentThought(state, id)
       return parentThought?.value !== '=archive'
     })
-    const removedContextIndex = contextsFiltered.findIndex(({ id }) => {
+    const removedThoughtIndex = contextsFiltered.findIndex(({ id }) => {
       const parentThought = getParentThought(state, id)
       return parentThought?.value === headValue(state, path)
     })
 
-    const prevContext = contextsFiltered[removedContextIndex - 1]
+    const prevContext = contextsFiltered[removedThoughtIndex - 1]
     return prevContext
   }
 
@@ -118,11 +118,11 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       const parentThought = getParentThought(state, id)
       return parentThought?.value !== '=archive'
     })
-    const removedContextIndex = contextsFiltered.findIndex(({ id }) => {
+    const removedThoughtIndex = contextsFiltered.findIndex(({ id }) => {
       const parentThought = getParentThought(state, id)
       return parentThought?.value === headValue(state, path)
     })
-    const nextContext = contextsFiltered[removedContextIndex + 1]
+    const nextContext = contextsFiltered[removedThoughtIndex + 1]
     return nextContext.id
   }
 

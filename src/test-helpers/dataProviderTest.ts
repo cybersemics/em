@@ -5,14 +5,14 @@ import getDescendantThoughts from '../data-providers/data-helpers/getDescendantT
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getContext from '../data-providers/data-helpers/getContext'
 import getLexeme from '../data-providers/data-helpers/getLexeme'
-import getParent from '../data-providers/data-helpers/getParent'
+import getThoughtById from '../data-providers/data-helpers/getThoughtById'
 
 import { hashThought, keyValueBy, mergeThoughts, never, reducerFlow, timestamp } from '../util'
 import { DataProvider } from '../data-providers/DataProvider'
 import { importText } from '../reducers'
 import { initialState } from '../util/initialState'
 import { getSessionId } from '../util/sessionManager'
-import { Context, Lexeme, Parent, ThoughtId } from '../@types'
+import { Context, Lexeme, Thought, ThoughtId } from '../@types'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -40,15 +40,15 @@ const getManyDescendantsByContext = async (
 ) => {
   const thoughtIds = (await Promise.all(contextArray.map(context => getContext(provider, context))))
     .filter(Boolean)
-    .map(parent => parent!.id)
+    .map(thought => thought!.id)
 
   return all(getManyDescendants(provider, thoughtIds, initialState(), options))
 }
 
 expect.extend({
-  /** Passes if a Context appears before another Context in the Parents array. */
+  /** Passes if a Context appears before another Context in the Thoughts array. */
   toHaveOrderedContexts: async (
-    parents: Parent[],
+    thoughts: Thought[],
     provider: DataProvider,
     context1: Context,
     context2: Context,
@@ -58,7 +58,7 @@ expect.extend({
       ...[context1, context2].map(context => getContext(provider, context)),
     ])
     /** Finds the index of a context within the contexts array. */
-    const indexOfContext = (thought: Parent) => parents.findIndex(parent => parent.id === thought.id)
+    const indexOfContext = (thought: Thought) => thoughts.findIndex(parent => parent.id === thought.id)
 
     const index1 = indexOfContext(thought1!)
     const index2 = indexOfContext(thought2!)
@@ -66,12 +66,12 @@ expect.extend({
     return index1 === -1
       ? {
           pass: false,
-          message: () => `expected ${JSON.stringify(context1)} to be in the given parents array`,
+          message: () => `expected ${JSON.stringify(context1)} to be in the given thoughts array`,
         }
       : index2 === -1
       ? {
           pass: false,
-          message: () => `expected ${JSON.stringify(context2)} to be in the given parents array`,
+          message: () => `expected ${JSON.stringify(context2)} to be in the given thoughts array`,
         }
       : index1 >= index2
       ? {
@@ -79,14 +79,14 @@ expect.extend({
           message: () =>
             `expected ${JSON.stringify(context1)} to appear before ${JSON.stringify(
               context2,
-            )} in the given parents array`,
+            )} in the given thoughts array`,
         }
       : {
           pass: true,
           message: () =>
             `expected ${JSON.stringify(context1)} to not appear before ${JSON.stringify(
               context2,
-            )} in the given parents array`,
+            )} in the given thoughts array`,
         }
   },
 })
@@ -95,15 +95,15 @@ expect.extend({
 const importThoughts = (text: string) => {
   const stateNew = importText(initialState(), { text })
   return {
-    contextIndex: stateNew.thoughts.contextIndex,
     thoughtIndex: stateNew.thoughts.thoughtIndex,
+    lexemeIndex: stateNew.thoughts.lexemeIndex,
   }
 }
 
 /** Runs tests for a module that conforms to the data-provider API. */
 const dataProviderTest = (provider: DataProvider) => {
   test('getThoughtById', async () => {
-    const nothought = await provider.getThoughtById('12345')
+    const nothought = await provider.getLexemeById('12345')
     expect(nothought).toBeUndefined()
 
     const lexeme = {
@@ -116,29 +116,29 @@ const dataProviderTest = (provider: DataProvider) => {
       updatedBy: getSessionId(),
     }
 
-    await provider.updateThought('12345', lexeme)
+    await provider.updateLexeme('12345', lexeme)
 
-    const dbThought = await provider.getThoughtById('12345')
+    const dbThought = await provider.getLexemeById('12345')
     expect(dbThought).toEqual(lexeme)
   })
 
-  test('getThoughtsByIds', async () => {
-    const { thoughtIndex } = importThoughts(`
+  test('getLexemesByIds', async () => {
+    const { lexemeIndex } = importThoughts(`
       - x
         - y
     `)
 
-    const thoughtX = thoughtIndex[hashThought('x')]
-    const thoughtY = thoughtIndex[hashThought('y')]
-    await provider.updateThought(hashThought('x'), thoughtX)
-    await provider.updateThought(hashThought('y'), thoughtY)
+    const thoughtX = lexemeIndex[hashThought('x')]
+    const thoughtY = lexemeIndex[hashThought('y')]
+    await provider.updateLexeme(hashThought('x'), thoughtX)
+    await provider.updateLexeme(hashThought('y'), thoughtY)
 
-    const dbThoughts = await provider.getThoughtsByIds([hashThought('x'), hashThought('y')])
+    const dbThoughts = await provider.getLexemesByIds([hashThought('x'), hashThought('y')])
 
     expect(dbThoughts).toMatchObject([thoughtX, thoughtY])
   })
 
-  test('updateThought', async () => {
+  test('updateLexeme', async () => {
     const nothought = await getLexeme(provider, 'x')
     expect(nothought).toBeUndefined()
 
@@ -151,14 +151,14 @@ const dataProviderTest = (provider: DataProvider) => {
       updatedBy: getSessionId(),
     }
 
-    await provider.updateThought(lexeme.id!, lexeme)
+    await provider.updateLexeme(lexeme.id!, lexeme)
 
     const remoteThought = await getLexeme(provider, 'x')
     expect(remoteThought).toEqual(lexeme)
   })
 
   test('getContext', async () => {
-    const nocontext = await getParent(provider, 'test' as ThoughtId)
+    const nocontext = await getThoughtById(provider, 'test' as ThoughtId)
     expect(nocontext).toBeUndefined()
 
     const parentEntry = {
@@ -169,16 +169,16 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'x',
       parentId: 'parentId',
       rank: 0,
-    } as Parent
+    } as Thought
 
-    await provider.updateContext('test' as ThoughtId, parentEntry)
+    await provider.updateThought('test' as ThoughtId, parentEntry)
 
-    const dbContext = await getParent(provider, 'test' as ThoughtId)
+    const dbContext = await getThoughtById(provider, 'test' as ThoughtId)
     expect(dbContext).toEqual(parentEntry)
   })
 
-  test('getContextsByIds', async () => {
-    const parentEntryX: Parent = {
+  test('getThoughtsByIds', async () => {
+    const parentEntryX: Thought = {
       id: 'testIdX' as ThoughtId,
       children: ['child1', 'child2'] as ThoughtId[],
       lastUpdated: timestamp(),
@@ -188,7 +188,7 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent1' as ThoughtId,
     }
 
-    const parentEntryA: Parent = {
+    const parentEntryA: Thought = {
       id: 'testIdA' as ThoughtId,
       children: [],
       lastUpdated: timestamp(),
@@ -198,14 +198,14 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent2' as ThoughtId,
     }
 
-    await provider.updateContext('testIdX' as ThoughtId, parentEntryX)
-    await provider.updateContext('testIdA' as ThoughtId, parentEntryA)
+    await provider.updateThought('testIdX' as ThoughtId, parentEntryX)
+    await provider.updateThought('testIdA' as ThoughtId, parentEntryA)
 
-    const dbContexts = await provider.getContextsByIds([parentEntryX.id, parentEntryA.id])
+    const dbContexts = await provider.getThoughtsByIds([parentEntryX.id, parentEntryA.id])
     expect(dbContexts).toEqual([parentEntryX, parentEntryA])
   })
 
-  test('updateThoughtIndex', async () => {
+  test('updateLexemeIndex', async () => {
     const thoughtX = {
       id: hashThought('x'),
       value: 'x',
@@ -226,7 +226,7 @@ const dataProviderTest = (provider: DataProvider) => {
       updatedBy: getSessionId(),
     }
 
-    await provider.updateThoughtIndex({
+    await provider.updateLexemeIndex({
       [hashThought(thoughtX.value)]: thoughtX,
       [hashThought(thoughtY.value)]: thoughtY,
     })
@@ -238,7 +238,7 @@ const dataProviderTest = (provider: DataProvider) => {
     expect(dbThought2).toEqual(thoughtY)
   })
 
-  test('updateContextIndex', async () => {
+  test('updateThoughtIndex', async () => {
     const parentEntryX = {
       id: 'idX',
       children: ['childId1', 'childId2', 'childId3'],
@@ -247,7 +247,7 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
-    } as Parent
+    } as Thought
 
     const parentEntryY = {
       id: 'idY',
@@ -257,23 +257,23 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent2',
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
-    } as Parent
+    } as Thought
 
-    await provider.updateContextIndex({
+    await provider.updateThoughtIndex({
       idX: parentEntryX,
       idY: parentEntryY,
     })
 
-    const contextX = await getParent(provider, 'idX' as ThoughtId)
+    const contextX = await getThoughtById(provider, 'idX' as ThoughtId)
     expect(contextX).toEqual(parentEntryX)
 
-    const contextY = await getParent(provider, 'idY' as ThoughtId)
+    const contextY = await getThoughtById(provider, 'idY' as ThoughtId)
     expect(contextY).toEqual(parentEntryY)
   })
 
   describe('getDescendantThoughts', () => {
     test('default', async () => {
-      const { contextIndex, thoughtIndex } = importThoughts(`
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
           - x
             - y
               - z
@@ -281,60 +281,60 @@ const dataProviderTest = (provider: DataProvider) => {
               - b
         `)
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts.contextIndex).toEqual(_.omit(contextIndex, EM_TOKEN, ABSOLUTE_TOKEN))
+      expect(thoughts.thoughtIndex).toEqual(_.omit(thoughtIndex, EM_TOKEN, ABSOLUTE_TOKEN))
 
       // do not match em context, since we are just asserting the imported thoughts
-      const thoughtIndexWithoutEm = _.omit(thoughtIndex, hashThought(EM_TOKEN), hashThought(ABSOLUTE_TOKEN))
+      const lexemeIndexWithoutEm = _.omit(lexemeIndex, hashThought(EM_TOKEN), hashThought(ABSOLUTE_TOKEN))
 
       // support optional id property
       // dexie returns an id while firebase does not
-      const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(thoughtIndexLocalWithoutIds).toEqual(thoughtIndexWithoutEm)
+      expect(lexemeIndexLocalWithoutIds).toEqual(lexemeIndexWithoutEm)
     })
 
     test('unroot descendant contexts', async () => {
-      const { contextIndex, thoughtIndex } = importThoughts(`
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
         - x
           - y
             - z
       `)
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts.contextIndex).toEqual(_.omit(contextIndex, EM_TOKEN, ABSOLUTE_TOKEN))
+      expect(thoughts.thoughtIndex).toEqual(_.omit(thoughtIndex, EM_TOKEN, ABSOLUTE_TOKEN))
 
       // support optional id property
       // dexie returns an id while firebase does not
-      const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(thoughtIndexLocalWithoutIds).toEqual(thoughtIndexLocalWithoutIds)
+      expect(lexemeIndexLocalWithoutIds).toEqual(lexemeIndexLocalWithoutIds)
     })
 
     test('maxDepth: 1', async () => {
-      const { contextIndex, thoughtIndex } = importThoughts(`
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
         - x
           - y
             - z
               - m
       `)
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtX = (await getContext(provider, ['x']))!
       const thoughtY = (await getContext(provider, ['x', 'y']))!
@@ -344,8 +344,8 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(it)
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts.contextIndex).toEqual({
-        [thoughtX.id]: contextIndex[thoughtX.id],
+      expect(thoughts.thoughtIndex).toEqual({
+        [thoughtX.id]: thoughtIndex[thoughtX.id],
         [thoughtY.id]: {
           id: thoughtY.id,
           children: [],
@@ -360,23 +360,23 @@ const dataProviderTest = (provider: DataProvider) => {
 
       // support optional id property
       // dexie returns an id while firebase does not
-      const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(thoughtIndexLocalWithoutIds).toEqual(_.pick(thoughtIndex, ['x', 'y'].map(hashThought)))
+      expect(lexemeIndexLocalWithoutIds).toEqual(_.pick(lexemeIndex, ['x', 'y'].map(hashThought)))
     })
 
     test('maxDepth: 2', async () => {
-      const { contextIndex, thoughtIndex } = importThoughts(`
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
         - x
           - y
             - z
               - m
       `)
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtX = (await getContext(provider, ['x']))!
       const thoughtY = (await getContext(provider, ['x', 'y']))!
@@ -386,8 +386,8 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(getDescendantThoughts(provider, thoughtX.id, initialState(), { maxDepth: 2 }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts.contextIndex).toEqual({
-        ..._.pick(contextIndex, [thoughtX.id, thoughtY.id]),
+      expect(thoughts.thoughtIndex).toEqual({
+        ..._.pick(thoughtIndex, [thoughtX.id, thoughtY.id]),
         // grandchildren are pending
         [thoughtZ.id]: {
           id: thoughtZ.id,
@@ -403,22 +403,22 @@ const dataProviderTest = (provider: DataProvider) => {
 
       // support optional id property
       // dexie returns an id while firebase does not
-      const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(thoughtIndexLocalWithoutIds).toEqual(_.pick(thoughtIndex, ['x', 'y', 'z'].map(hashThought)))
+      expect(lexemeIndexLocalWithoutIds).toEqual(_.pick(lexemeIndex, ['x', 'y', 'z'].map(hashThought)))
     })
 
     test('do not buffer leaves', async () => {
-      const { contextIndex, thoughtIndex } = importThoughts(`
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
         - x
           - y
             - z
       `)
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtX = (await getContext(provider, ['x']))!
       const thoughtY = (await getContext(provider, ['x', 'y']))!
@@ -428,10 +428,10 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(it)
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts.contextIndex).toEqual({
-        [thoughtX.id]: contextIndex[thoughtX.id],
+      expect(thoughts.thoughtIndex).toEqual({
+        [thoughtX.id]: thoughtIndex[thoughtX.id],
         [thoughtY.id]: {
-          ...contextIndex[thoughtY.id],
+          ...thoughtIndex[thoughtY.id],
           children: [],
           lastUpdated: never(),
           pending: true,
@@ -440,15 +440,15 @@ const dataProviderTest = (provider: DataProvider) => {
 
       // support optional id property
       // dexie returns an id while firebase does not
-      const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(thoughtIndexLocalWithoutIds).toEqual(_.pick(thoughtIndex, ['x', 'y'].map(hashThought)))
+      expect(lexemeIndexLocalWithoutIds).toEqual(_.pick(lexemeIndex, ['x', 'y'].map(hashThought)))
     })
 
     test('yield thoughts breadth-first', async () => {
-      const { contextIndex, thoughtIndex } = importThoughts(`
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
         - x
           - y
             - z
@@ -459,26 +459,26 @@ const dataProviderTest = (provider: DataProvider) => {
               - w
       `)
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
 
       // flatten the thought chunks
       // preserve chunk order
       // contexts within a chunk are unordered
-      const parents = thoughtChunks.map(({ contextIndex }) => Object.values(contextIndex)).flat()
+      const thoughts = thoughtChunks.map(({ thoughtIndex }) => Object.values(thoughtIndex)).flat()
 
       // siblings may be unordered
-      await expect(parents).toHaveOrderedContexts(provider, ['x'], ['x', 'y'])
-      await expect(parents).toHaveOrderedContexts(provider, ['t'], ['x', 'y'])
-      await expect(parents).toHaveOrderedContexts(provider, ['t', 'u'], ['x', 'y', 'z'])
+      await expect(thoughts).toHaveOrderedContexts(provider, ['x'], ['x', 'y'])
+      await expect(thoughts).toHaveOrderedContexts(provider, ['t'], ['x', 'y'])
+      await expect(thoughts).toHaveOrderedContexts(provider, ['t', 'u'], ['x', 'y', 'z'])
     })
   })
 
   describe('getManyDescendants', () => {
     test('default', async () => {
-      const { contextIndex, thoughtIndex } = importThoughts(`
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
         - x
           - y
             - z
@@ -490,15 +490,15 @@ const dataProviderTest = (provider: DataProvider) => {
                 - n
       `)
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']])
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts.contextIndex).toEqual(
+      expect(thoughts.thoughtIndex).toEqual(
         _.pick(
-          contextIndex,
+          thoughtIndex,
           ...(await getThoughtIdsForContexts(provider, [
             ['x'],
             ['x', 'y'],
@@ -518,17 +518,17 @@ const dataProviderTest = (provider: DataProvider) => {
 
       // support optional id property
       // dexie returns an id while firebase does not
-      const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(thoughtIndexLocalWithoutIds).toEqual(
-        _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'm', 'u', 'v', 'm', 'n'].map(hashThought)),
+      expect(lexemeIndexLocalWithoutIds).toEqual(
+        _.pick(lexemeIndex, ['x', 'y', 'z', 't', 'm', 'u', 'v', 'm', 'n'].map(hashThought)),
       )
     })
 
     test('maxDepth', async () => {
-      const { contextIndex, thoughtIndex } = importThoughts(`
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
         - x
           - y
             - z
@@ -540,8 +540,8 @@ const dataProviderTest = (provider: DataProvider) => {
                 - n
       `)
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
@@ -551,34 +551,34 @@ const dataProviderTest = (provider: DataProvider) => {
         getContext(provider, ['t', 'u', 'v']),
       ])
 
-      expect(thoughts.contextIndex).toEqual({
-        ..._.pick(contextIndex, ...(await getThoughtIdsForContexts(provider, [['x'], ['x', 'y'], ['t'], ['t', 'u']]))),
+      expect(thoughts.thoughtIndex).toEqual({
+        ..._.pick(thoughtIndex, ...(await getThoughtIdsForContexts(provider, [['x'], ['x', 'y'], ['t'], ['t', 'u']]))),
         [thoughtZ!.id]: {
-          ...contextIndex[thoughtZ!.id],
+          ...thoughtIndex[thoughtZ!.id],
           children: [],
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
         },
         [thoughtV!.id]: {
-          ...contextIndex[thoughtV!.id],
+          ...thoughtIndex[thoughtV!.id],
           children: [],
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
         },
         // empty contexts are present in local state but not provider state
-        // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],
-        // [hashContext(['t', 'u', 'v', 'm', 'n'])]: contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
+        // [hashContext(['x', 'y', 'z', 'm'])]: thoughtIndex[hashContext(['x', 'y', 'z', 'm'])],
+        // [hashContext(['t', 'u', 'v', 'm', 'n'])]: thoughtIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
       })
 
       // support optional id property
       // dexie returns an id while firebase does not
-      const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(thoughtIndexLocalWithoutIds).toEqual(_.pick(thoughtIndex, ['x', 'y', 'z', 't', 'u', 'v'].map(hashThought)))
+      expect(lexemeIndexLocalWithoutIds).toEqual(_.pick(lexemeIndex, ['x', 'y', 'z', 't', 'u', 'v'].map(hashThought)))
     })
 
     test('ignore maxDepth on EM context', async () => {
@@ -599,19 +599,19 @@ const dataProviderTest = (provider: DataProvider) => {
         initialState(),
       )
 
-      const { contextIndex, thoughtIndex } = stateNew.thoughts
+      const { thoughtIndex, lexemeIndex } = stateNew.thoughts
 
-      await provider.updateContextIndex(contextIndex)
       await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], [EM_TOKEN]], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       const thoughtZ = await getContext(provider, ['x', 'y', 'z'])
 
-      expect(thoughts.contextIndex).toEqual({
+      expect(thoughts.thoughtIndex).toEqual({
         ..._.pick(
-          contextIndex,
+          thoughtIndex,
           ...(await getThoughtIdsForContexts(provider, [
             ['x'],
             ['x', 'y'],
@@ -623,30 +623,30 @@ const dataProviderTest = (provider: DataProvider) => {
           ])),
         ),
         [thoughtZ!.id]: {
-          ...contextIndex[thoughtZ!.id],
+          ...thoughtIndex[thoughtZ!.id],
           children: [],
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
         },
         // empty contexts are present in local state but not provider state
-        // [hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])]: contextIndex[hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])],
+        // [hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])]: thoughtIndex[hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])],
       })
 
       // support optional id property
       // dexie returns an id while firebase does not
-      const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(thoughtIndexLocalWithoutIds).toEqual(
-        _.pick(thoughtIndex, [EM_TOKEN, 'x', 'y', 'z', 'Settings', 'Theme', 'Dark'].map(hashThought)),
+      expect(lexemeIndexLocalWithoutIds).toEqual(
+        _.pick(lexemeIndex, [EM_TOKEN, 'x', 'y', 'z', 'Settings', 'Theme', 'Dark'].map(hashThought)),
       )
     })
 
     // @MIGRATION-TODO: Currently we are dependent on local state fot checking if the parent context has any meta attributes. This is because parent doesn't have context field anymore.
     // test('ignore maxDepth on metaprogramming attributes', async () => {
-    //   const { contextIndex, thoughtIndex } = importThoughts(`
+    //   const { thoughtIndex, lexemeIndex } = importThoughts(`
     //     - x
     //       - y
     //         - z
@@ -660,8 +660,8 @@ const dataProviderTest = (provider: DataProvider) => {
     //             - n
     //   `)
 
-    //   await provider.updateContextIndex(contextIndex)
     //   await provider.updateThoughtIndex(thoughtIndex)
+    //   await provider.updateLexemeIndex(lexemeIndex)
 
     //   const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
     //   const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
@@ -671,9 +671,9 @@ const dataProviderTest = (provider: DataProvider) => {
     //     getContext(provider, ['t', 'u', 'v']),
     //   ])
 
-    //   expect(thoughts.contextIndex).toEqual({
+    //   expect(thoughts.thoughtIndex).toEqual({
     //     ..._.pick(
-    //       contextIndex,
+    //       thoughtIndex,
     //       ...(await getThoughtIdsForContexts(provider, [
     //         ['x'],
     //         ['x', 'y'],
@@ -683,37 +683,37 @@ const dataProviderTest = (provider: DataProvider) => {
     //       ])),
     //     ),
     //     [thoughtZ!.id]: {
-    //       ...contextIndex[thoughtZ!.id],
+    //       ...thoughtIndex[thoughtZ!.id],
     //       children: [
-    //         // take the =note Child from contextIndex so that ids match
-    //         contextIndex[hashContext(['x', 'y', 'z'])].children.find(child => isFunction(child.value)),
+    //         // take the =note Child from thoughtIndex so that ids match
+    //         thoughtIndex[hashContext(['x', 'y', 'z'])].children.find(child => isFunction(child.value)),
     //       ],
     //       pending: true,
     //       lastUpdated: never(),
     //       updatedBy: getSessionId(),
     //     },
     //     [hashContext(['t', 'u', 'v'])]: {
-    //       ...contextIndex[hashContext(['t', 'u', 'v'])],
+    //       ...thoughtIndex[hashContext(['t', 'u', 'v'])],
     //       children: [],
     //       pending: true,
     //       lastUpdated: never(),
     //       updatedBy: getSessionId(),
     //     },
     //     // empty contexts are present in local state but not provider state
-    //     // [hashContext(['x', 'y', 'z', 'm'])]: contextIndex[hashContext(['x', 'y', 'z', 'm'])],
-    //     // [hashContext(['x', 'y', 'z', '=note', 'content'])]: contextIndex[hashContext(['x', 'y', 'z', '=note', 'content'])],
-    //     // [hashContext(['t', 'u', 'v', 'm', 'n'])]: contextIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
+    //     // [hashContext(['x', 'y', 'z', 'm'])]: thoughtIndex[hashContext(['x', 'y', 'z', 'm'])],
+    //     // [hashContext(['x', 'y', 'z', '=note', 'content'])]: thoughtIndex[hashContext(['x', 'y', 'z', '=note', 'content'])],
+    //     // [hashContext(['t', 'u', 'v', 'm', 'n'])]: thoughtIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
     //   })
 
     //   // support optional id property
     //   // dexie returns an id while firebase does not
-    //   const thoughtIndexLocalWithoutIds = keyValueBy(thoughts.thoughtIndex, (key, value) => ({
+    //   const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
     //     [key]: _.omit(value, 'id'),
     //   }))
 
     //   // 'm' is not loaded since ['x', 'y', 'z'] and ['t', 'u', 'v'] are pending
-    //   expect(thoughtIndexLocalWithoutIds).toEqual(
-    //     _.pick(thoughtIndex, ['x', 'y', 'z', 't', 'u', 'v', '=note', 'content'].map(hashThought)),
+    //   expect(lexemeIndexLocalWithoutIds).toEqual(
+    //     _.pick(lexemeIndex, ['x', 'y', 'z', 't', 'u', 'v', '=note', 'content'].map(hashThought)),
     //   )
     // })
   })

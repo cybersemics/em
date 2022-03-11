@@ -26,7 +26,7 @@ import {
   // ellipsize,
   // equalArrays,
   equalPath,
-  headId,
+  hashPath,
   // head,
   headValue,
   isAbsolute,
@@ -163,7 +163,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, referenceDepth - (props.depth ?? 0)))
     : 0
 
-  const contextHash = headId(resolvedPath)
+  const hashedPath = hashPath(resolvedPath)
 
   const allChildren = getAllChildren(state, contextLive)
 
@@ -199,7 +199,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     showHiddenThoughts,
     simplePath: simplePathLive,
     // expand thought due to cursor and hover expansion
-    isExpanded: !!store.getState().expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isExpanded: !!store.getState().expanded[hashedPath] || !!expandedBottom?.[hashedPath],
     isAbsoluteContext,
     zoomCursor,
     zoomParent,
@@ -551,17 +551,17 @@ export const SubthoughtsComponent = ({
       pathToContext(state, resolvedPath),
     )
 
-    const cursorSubcontextIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
+    const cursorSubthoughtIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
 
     const isAncestorOfCursor =
-      cursor && cursor.length > resolvedPath.length && resolvedPath.length === cursorSubcontextIndex() + 1
+      cursor && cursor.length > resolvedPath.length && resolvedPath.length === cursorSubthoughtIndex() + 1
 
     const isCursor =
-      cursor && resolvedPath.length === cursorSubcontextIndex() + 1 && resolvedPath.length === cursor?.length
+      cursor && resolvedPath.length === cursorSubthoughtIndex() + 1 && resolvedPath.length === cursor?.length
 
     /** Returns true if the resolvedPath is a descendant of the cursor. */
     const isDescendantOfCursor = () =>
-      cursor && resolvedPath.length > cursor.length && cursor.length === cursorSubcontextIndex() + 1
+      cursor && resolvedPath.length > cursor.length && cursor.length === cursorSubthoughtIndex() + 1
 
     // thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
     const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath

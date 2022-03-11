@@ -8,7 +8,8 @@ import {
   getChildrenRanked,
   getRankAfter,
   isPending,
-  getParent,
+  getThoughtByContext,
+  getThoughtByPath,
   rankThoughtsFirstMatch,
   childIdsToThoughts,
 } from '../../selectors'
@@ -17,11 +18,13 @@ import { State } from '../../@types'
 import { store as appStore } from '../../store'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
-import { clear, importText as importTextAction, moveThought as existingThoughtMoveAction } from '../../action-creators'
+import { clear, importText as importTextAction } from '../../action-creators'
 import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
+import moveThoughtAtFirstMatch, {
+  moveThoughtAtFirstMatchActionCreator,
+} from '../../test-helpers/moveThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 
 const timer = testTimer()
@@ -45,7 +48,7 @@ it('move within root', () => {
   - b
   - a`)
 
-  const thoughtB = getParent(stateNew, ['b'])!
+  const thoughtB = getThoughtByContext(stateNew, ['b'])!
 
   // b should exist in the ROOT context
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
@@ -57,7 +60,7 @@ it('persist id on move', () => {
 
   const stateNew1 = reducerFlow(steps1)(initialState())
 
-  const thoughtA2 = getParent(stateNew1, ['a', 'a1', 'a2'])!
+  const thoughtA2 = getThoughtByContext(stateNew1, ['a', 'a1', 'a2'])!
 
   expect(getLexeme(stateNew1, 'a2')!.contexts).toEqual([thoughtA2.id])
 
@@ -71,7 +74,7 @@ it('persist id on move', () => {
 
   const stateNew2 = reducerFlow(steps2)(stateNew1)
 
-  const thoughtA2New = getParent(stateNew2, ['a1', 'a2'])!
+  const thoughtA2New = getThoughtByContext(stateNew2, ['a1', 'a2'])!
   expect(getLexeme(stateNew2, 'a2')!.contexts).toEqual([thoughtA2New.id])
 
   expect(thoughtA2New.id).toEqual(thoughtA2!.id)
@@ -98,8 +101,8 @@ it('move within context (rank only)', () => {
     - a2
     - a1`)
 
-  const thoughtA = getParent(stateNew, ['a'])!
-  const thoughtA2 = getParent(stateNew, ['a', 'a2'])!
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtA2 = getThoughtByContext(stateNew, ['a', 'a2'])!
 
   expect(thoughtA2.parentId).toBe(thoughtA.id)
 
@@ -132,8 +135,8 @@ it('move across contexts', () => {
     - b1
   - b`)
 
-  const thoughtA = getParent(stateNew, ['a'])!
-  const thoughtB1 = getParent(stateNew, ['a', 'b1'])!
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtB1 = getThoughtByContext(stateNew, ['a', 'b1'])!
 
   // b1 should exist in context a
   expect(thoughtB1!.parentId).toBe(thoughtA.id)
@@ -171,9 +174,9 @@ it('move descendants', () => {
     - a1
       - a1.1`)
 
-  const thoughtB = getParent(stateNew, ['b'])
-  const thoughtB1 = getParent(stateNew, ['b', 'b1'])
-  const thoughtB11 = getParent(stateNew, ['b', 'b1', 'b1.1'])
+  const thoughtB = getThoughtByContext(stateNew, ['b'])
+  const thoughtB1 = getThoughtByContext(stateNew, ['b', 'b1'])
+  const thoughtB11 = getThoughtByContext(stateNew, ['b', 'b1', 'b1.1'])
 
   expect(thoughtB).not.toBeNull()
   expect(thoughtB1).not.toBeNull()
@@ -281,10 +284,10 @@ it('move root thought into another root thought', () => {
       - b
         - c`)
 
-  const thoughtX = getParent(stateNew, ['x'])!
-  const thoughtA = getParent(stateNew, ['x', 'a'])!
-  const thoughtB = getParent(stateNew, ['x', 'a', 'b'])!
-  const thoughtC = getParent(stateNew, ['x', 'a', 'b', 'c'])!
+  const thoughtX = getThoughtByContext(stateNew, ['x'])!
+  const thoughtA = getThoughtByContext(stateNew, ['x', 'a'])!
+  const thoughtB = getThoughtByContext(stateNew, ['x', 'a', 'b'])!
+  const thoughtC = getThoughtByContext(stateNew, ['x', 'a', 'b', 'c'])!
 
   expect(getContexts(stateNew, 'a')).toMatchObject([thoughtA.id])
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB!.id])
@@ -322,9 +325,9 @@ it('move descendants with siblings', () => {
     - c
     - d`)
 
-  const thoughtB = getParent(stateNew, ['b'])!
-  const thoughtC = getParent(stateNew, ['b', 'c'])!
-  const thoughtD = getParent(stateNew, ['b', 'd'])!
+  const thoughtB = getThoughtByContext(stateNew, ['b'])!
+  const thoughtC = getThoughtByContext(stateNew, ['b', 'c'])!
+  const thoughtD = getThoughtByContext(stateNew, ['b', 'd'])!
 
   expect(thoughtC.parentId).toBe(thoughtB.id)
   expect(thoughtD.parentId).toBe(thoughtB.id)
@@ -334,8 +337,7 @@ it('move descendants with siblings', () => {
   expect(getContexts(stateNew, 'd')).toMatchObject([thoughtD.id])
 })
 
-// @MIGRATION_TODO: Merge logic has not been fixed.
-it.skip('merge duplicate with new rank', () => {
+it('merge duplicate with new rank', () => {
   const text = `
   - a
     - m
@@ -354,6 +356,7 @@ it.skip('merge duplicate with new rank', () => {
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
+
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -362,19 +365,19 @@ it.skip('merge duplicate with new rank', () => {
       - x
       - y`)
 
+  const thoughtM = getThoughtByContext(stateNew, ['a', 'm'])!
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+
   // use destinate rank of duplicate thoughts
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'm', rank: 0 }])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([thoughtM.id])
+
+  expect(thoughtM.parentId).toBe(thoughtA.id)
 
   // merged thought should only exist in destination context
-  expect(getContexts(stateNew, 'm')).toMatchObject([
-    {
-      context: ['a'],
-      rank: 0,
-    },
-  ])
+  expect(getContexts(stateNew, 'm')).toMatchObject([thoughtM.id])
 })
 
-it.skip('merge with duplicate with duplicate rank', () => {
+it('merge with duplicate with duplicate rank', () => {
   const text = `
   - a
     - m
@@ -401,16 +404,13 @@ it.skip('merge with duplicate with duplicate rank', () => {
       - x
       - y`)
 
+  const thoughtM = getThoughtByContext(stateNew, ['a', 'm'])
+
   // use destinate rank of duplicate thoughts
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([{ value: 'm', rank: 0 }])
+  expect(getAllChildren(stateNew, ['a'])).toMatchObject([thoughtM?.id])
 
   // merged thought should only exist in destination context
-  expect(getContexts(stateNew, 'm')).toMatchObject([
-    {
-      context: ['a'],
-      rank: 0,
-    },
-  ])
+  expect(getContexts(stateNew, 'm')).toMatchObject([thoughtM?.id])
 })
 
 it('move with duplicate descendant', () => {
@@ -433,7 +433,7 @@ it('move with duplicate descendant', () => {
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-  // contextIndex
+  // thoughtIndex
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
@@ -441,8 +441,8 @@ it('move with duplicate descendant', () => {
       - y
         - x`)
 
-  const thoughtXUnderB = getParent(stateNew, ['a', 'b', 'x'])!
-  const thoughtXUnderY = getParent(stateNew, ['a', 'b', 'y', 'x'])!
+  const thoughtXUnderB = getThoughtByContext(stateNew, ['a', 'b', 'x'])!
+  const thoughtXUnderY = getThoughtByContext(stateNew, ['a', 'b', 'y', 'x'])!
 
   // x should have contexts a/b and a/b/y
   expect(getContexts(stateNew, 'x')).toMatchObject([thoughtXUnderB.id, thoughtXUnderY.id])
@@ -473,16 +473,15 @@ it('move with hash matched descendant', () => {
       - =note
         - note`)
 
-  const thoughtNoteFirst = getParent(stateNew, ['a', 'b', '=note'])!
-  const thoughtNoteSecond = getParent(stateNew, ['a', 'b', '=note', 'note'])!
+  const thoughtNoteFirst = getThoughtByContext(stateNew, ['a', 'b', '=note'])!
+  const thoughtNoteSecond = getThoughtByContext(stateNew, ['a', 'b', '=note', 'note'])!
 
   expect(thoughtNoteSecond?.parentId).toBe(thoughtNoteFirst.id)
 
   expect(getContexts(stateNew, 'note')).toMatchObject([thoughtNoteFirst.id, thoughtNoteSecond.id])
 })
 
-// @MIGRATION_TODO: Duplicate merging has not been fixed yet.
-it.skip('move with nested duplicate thoughts', () => {
+it('move with nested duplicate thoughts', () => {
   const text = `
   - a
     - b
@@ -507,12 +506,14 @@ it.skip('move with nested duplicate thoughts', () => {
     - b
   - c`)
 
-  // b should be in in the context of a
-  expect(getContexts(stateNew, 'b')).toMatchObject([{ context: ['a'], rank: 0 }])
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtB = getThoughtByContext(stateNew, ['a', 'b'])!
+
+  expect(thoughtB.parentId).toBe(thoughtA.id)
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 })
 
-// @MIGRATION_TODO: Nested duplciate merge doesn't work rn with intermediate changes.
-it.skip('move with nested duplicate thoughts and merge their children', () => {
+it('move with nested duplicate thoughts and merge their children', () => {
   const text = `
   - a
     - b
@@ -546,21 +547,27 @@ it.skip('move with nested duplicate thoughts and merge their children', () => {
       - d
   - p`)
 
+  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtB = getThoughtByContext(stateNew, ['a', 'b'])!
+
+  expect(thoughtB.parentId).toBe(thoughtA.id)
   // b should only be in context ['a']
-  expect(getContexts(stateNew, 'b')).toMatchObject([{ context: ['a'], rank: 0 }])
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 
   // context ['p', 'a'] should not have any garbage children
   expect(getChildrenRanked(stateNew, ['p', 'a'])).toHaveLength(0)
 
+  const thoughtC = getThoughtByContext(stateNew, ['a', 'b', 'c'])!
+
+  expect(thoughtC.parentId).toBe(thoughtB.id)
   // c should only be in context ['a', 'b']
-  expect(getContexts(stateNew, 'c')).toMatchObject([{ context: ['a', 'b'], rank: 0 }])
+  expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC.id])
 
   // context ['p', 'a', 'b'] should not have any garbage children
   expect(getChildrenRanked(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
 })
 
-// Issue: https://github.com/cybersemics/em/issues/1096
-it.only('data integrity test', () => {
+it('data integrity test', () => {
   const text = `
   - k
     - a
@@ -583,9 +590,7 @@ it.only('data integrity test', () => {
   expect(missingParentIds).toHaveLength(0)
 })
 
-// skip until fixed: Importing duplicate uncle missing ThoughtContext (#1407)
-// @MIGRATION_TODO: Duplicate merge is not working yet.
-it.skip('consistent rank between thoughtIndex and contextIndex on duplicate merge', () => {
+it('consistent rank between lexemeIndex and thoughtIndex on duplicate merge', () => {
   const text = `
   - a
     - b
@@ -607,15 +612,12 @@ it.skip('consistent rank between thoughtIndex and contextIndex on duplicate merg
   const contextsOfB = getContexts(stateNew, 'b')
 
   expect(contextsOfB).toHaveLength(1)
-
-  // const rankFromContextIndex = getChildren(stateNew, [HOME_TOKEN]).find(child => child.value === 'b')?.rank
-
-  // expect(contextsOfB[0].rank).toBe(rankFromContextIndex)
 })
 
-// @MIGRATION_TODO
-it.skip('pending destination should be merged correctly (fetch pending before move)', async () => {
+it('pending destination should be merged correctly (fetch pending before move)', async () => {
+  timer.useFakeTimer()
   initialize()
+  await timer.runAllAsync()
 
   const text = `
   - a
@@ -629,12 +631,11 @@ it.skip('pending destination should be merged correctly (fetch pending before mo
         - three
         - four`
 
-  timer.useFakeTimer()
-
   appStore.dispatch(importTextAction({ text }))
   await timer.runAllAsync()
 
   timer.useFakeTimer()
+
   // clear and call initialize again to reload from local db (simulating page refresh)
   appStore.dispatch(clear())
   await timer.runAllAsync()
@@ -643,38 +644,44 @@ it.skip('pending destination should be merged correctly (fetch pending before mo
 
   await timer.runAllAsync()
 
-  timer.useFakeTimer()
-
   appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
 
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
-  const pathAB = rankThoughtsFirstMatch(appStore.getState(), ['a', 'b'])
-  const pathDB = rankThoughtsFirstMatch(appStore.getState(), ['d', 'b'])
+  timer.useFakeTimer()
+
   appStore.dispatch([
-    existingThoughtMoveAction({
-      oldPath: pathAB!,
-      newPath: pathDB!,
+    moveThoughtAtFirstMatchActionCreator({
+      from: ['a', 'b'],
+      to: ['d', 'b'],
       newRank: 1,
     }),
   ])
+
   await timer.runAllAsync()
 
   timer.useRealTimer()
 
-  const mergedChildren = getAllChildren(appStore.getState(), ['d', 'b', 'c'])
-  expect(mergedChildren).toMatchObject([
-    { value: 'three', rank: 0 },
-    { value: 'four', rank: 1 },
-    { value: 'one', rank: 2 },
-    { value: 'two', rank: 3 },
-  ])
+  const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
+
+  const expected = `- ${HOME_TOKEN}
+  - a
+  - d
+    - b
+      - c
+        - three
+        - four
+        - one
+        - two`
+
+  expect(exported).toBe(expected)
 })
 
-// @MIGRATION_TODO: Pull needs to be enabled.
-it.skip('only fetch the descendants up to the possible conflicting path', async () => {
+it('only fetch the descendants up to the possible conflicting path', async () => {
+  timer.useFakeTimer()
   initialize()
+  await timer.runAllAsync()
 
   const text = `
   - a
@@ -691,8 +698,6 @@ it.skip('only fetch the descendants up to the possible conflicting path', async 
             - 3.2.1
         - 4
   - z`
-
-  timer.useFakeTimer()
 
   appStore.dispatch(importTextAction({ text }))
   await timer.runAllAsync()
@@ -714,19 +719,46 @@ it.skip('only fetch the descendants up to the possible conflicting path', async 
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
-  const pathAB = rankThoughtsFirstMatch(appStore.getState(), ['a', 'b'])
-  const pathPB = rankThoughtsFirstMatch(appStore.getState(), ['p', 'b'])
   appStore.dispatch([
-    existingThoughtMoveAction({
-      oldPath: pathAB!,
-      newPath: pathPB!,
+    moveThoughtAtFirstMatchActionCreator({
+      from: ['a', 'b'],
+      to: ['p', 'b'],
       newRank: 1,
     }),
   ])
+
   await timer.runAllAsync()
 
   timer.useRealTimer()
 
   expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(false)
   expect(isPending(appStore.getState(), ['p', 'b', 'c', '3'])).toEqual(true)
+})
+
+it('update cursor if duplicate thought with cursor is deleted', () => {
+  const text = `
+  - a
+    - b
+  - b`
+
+  const steps = [
+    importText({ text }),
+    setCursorFirstMatch(['b']),
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['a', 'b'],
+      newRank: 0,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b`)
+
+  expect(stateNew.cursor).toBeTruthy()
+  const cursorThought = getThoughtByPath(stateNew, stateNew.cursor!)
+  expect(cursorThought).toBeTruthy()
 })

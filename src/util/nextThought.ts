@@ -40,9 +40,9 @@ interface NextThoughtResult {
 //  */
 // const nextSiblingContext = (state: State, rank: number, context: Context) => {
 //   const contextSiblings = getContextsSortedAndRanked(state, head(context))
-//   const currentContextIndex = contextSiblings.findIndex(context => context.rank === rank)
+//   const currentThoughtIndex = contextSiblings.findIndex(context => context.rank === rank)
 //   // const currentIndex = contextSiblings.findIndex(thoughts => thoughts.find(thought => thought.value === value))
-//   const nextSibling = contextSiblings[currentContextIndex + 1] ? contextSiblings[currentContextIndex + 1] : null
+//   const nextSibling = contextSiblings[currentThoughtIndex + 1] ? contextSiblings[currentThoughtIndex + 1] : null
 //   return contextWithThoughtRank(state, nextSibling)
 // }
 

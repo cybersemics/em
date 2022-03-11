@@ -1,6 +1,6 @@
 import { attribute, getChildrenRanked } from '../selectors'
 import { head, isFunction, unroot } from '../util'
-import { Context, MimeType, Parent, State } from '../@types'
+import { Context, MimeType, Thought, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
 
@@ -46,9 +46,9 @@ export const exportContext = (
 
   const childrenFiltered = children.filter(
     and(
-      excludeSrc && attribute(state, context, '=src') ? (child: Parent) => isFunction(child.value) : true,
-      !excludeMeta && excludeArchived ? (child: Parent) => child.value !== '=archive' : true,
-      excludeMeta ? (child: Parent) => !isFunction(child.value) || child.value === '=note' : true,
+      excludeSrc && attribute(state, context, '=src') ? (child: Thought) => isFunction(child.value) : true,
+      !excludeMeta && excludeArchived ? (child: Thought) => child.value !== '=archive' : true,
+      excludeMeta ? (child: Thought) => !isFunction(child.value) || child.value === '=note' : true,
     ),
   )
 
@@ -56,7 +56,7 @@ export const exportContext = (
   const linePrefix = format === 'text/html' ? '<li>' : depth === 0 && childrenFiltered.length === 0 ? '' : '- '
 
   /** Outputs an exported child. */
-  const exportChild = (child: Parent) =>
+  const exportChild = (child: Thought) =>
     (isNoteAndMetaExcluded ? '' : '  ') +
     exportContext(state, unroot(context.concat(child.value)) as Context, format, {
       excludeSrc,

@@ -1,4 +1,4 @@
-import { Context, Parent, ThoughtId } from '../../@types'
+import { Context, Thought, ThoughtId } from '../../@types'
 import { EM_TOKEN, HOME_TOKEN } from '../../constants'
 import { hashThought, head, isRoot } from '../../util'
 import { DataProvider } from '../DataProvider'
@@ -10,7 +10,7 @@ import { DataProvider } from '../DataProvider'
  * For the given array of thought ids returns the parent entries.
  */
 const childIdsToThoughts = async (provider: DataProvider, childIds: ThoughtId[]) => {
-  const thoughts = await provider.getContextsByIds(childIds)
+  const thoughts = await provider.getThoughtsByIds(childIds)
   // If any one of the thoughts are not found return null
   return thoughts.length < childIds.length ? null : thoughts
 }
@@ -21,7 +21,7 @@ const childIdsToThoughts = async (provider: DataProvider, childIds: ThoughtId[])
  */
 const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: string[]) => {
   if (isRoot(pathUnranked)) {
-    const rootThought = await provider.getContextById(pathUnranked[0] as ThoughtId)
+    const rootThought = await provider.getThoughtById(pathUnranked[0] as ThoughtId)
     return rootThought ? [rootThought] : null
   }
 
@@ -29,7 +29,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
   const isEmContext = pathUnranked[0] === EM_TOKEN
 
   if (isEmContext && pathUnranked.length === 1) {
-    const emThought = await provider.getContextById(EM_TOKEN)
+    const emThought = await provider.getThoughtById(EM_TOKEN)
     return [emThought]
   }
 
@@ -37,9 +37,9 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
   const context = pathUnranked.slice(isEmContext ? 1 : 0)
 
   try {
-    return await context.reduce<Promise<Parent[]>>(async (accPromise, value, i) => {
+    return await context.reduce<Promise<Thought[]>>(async (accPromise, value, i) => {
       const acc = await accPromise
-      const lexeme = await provider.getThoughtById(hashThought(value))
+      const lexeme = await provider.getLexemeById(hashThought(value))
 
       const prevParentId = acc[acc.length - 1]?.id || startingContext
 
@@ -49,7 +49,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
       if (!allThoughts) throw Error('Thought not found')
 
       // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
-      const thoughts = (allThoughts as Parent[]).filter(thought => thought?.parentId === prevParentId)
+      const thoughts = (allThoughts as Thought[]).filter(thought => thought?.parentId === prevParentId)
 
       const finalThought = thoughts[0]
 
@@ -57,7 +57,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
 
       const isEm = i === 0 && value === EM_TOKEN
 
-      const emThought = await provider.getContextById(EM_TOKEN)
+      const emThought = await provider.getThoughtById(EM_TOKEN)
 
       if (!emThought) throw new Error(`Em thought not found`)
 

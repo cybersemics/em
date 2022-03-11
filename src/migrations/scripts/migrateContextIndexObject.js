@@ -4,14 +4,14 @@ const _ = require('lodash')
 const prettyPrint = false
 
 /**
- * Converts contextIndex array into { children, lastUpdated } object.
+ * Converts thoughtIndex array into { children, lastUpdated } object.
  * Manually migrates data exported from Firebase.
  * See: https://github.com/cybersemics/em/pull/722/.
  */
 const migrate = data => ({
   users: _.mapValues(data.users, userData => ({
     ...userData,
-    contextIndex: _.mapValues(userData.contextIndex, children =>
+    thoughtIndex: _.mapValues(userData.thoughtIndex, children =>
       children.children
         ? // already migrated
           children
@@ -35,7 +35,7 @@ const run = () => {
   const path = process.argv[2]
 
   if (!path) {
-    console.error('Usage: node migrateContextIndexObject.js firebase-data.json')
+    console.error('Usage: node migrateThoughtIndexObject.js firebase-data.json')
     process.exit(1)
   }
 

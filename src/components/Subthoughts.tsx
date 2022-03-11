@@ -19,7 +19,7 @@ import {
   ellipsize,
   equalArrays,
   equalPath,
-  hashContext,
+  hashPath,
   head,
   headValue,
   isAbsolute,
@@ -48,18 +48,18 @@ import {
   getAllChildrenSorted,
   getChildPath,
   getChildren,
-  getChildrenRanked,
+  getChildrenRankedById,
   getContextsSortedAndRanked,
   getEditingPath,
   getNextRank,
   getSortPreference,
   getStyle,
   getThoughtById,
-  getThoughtByPath,
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getNextRankById } from '../selectors/getNextRank'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -162,19 +162,19 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const hasChildrenLoaded = firstChilId && getThoughtById(state, firstChilId)
 
-  const cursorSubcontextIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
+  const cursorSubthoughtIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
 
   const isAncestorOfCursor =
-    cursor && resolvedPath.length === cursorSubcontextIndex + 1 && cursor?.length > resolvedPath.length
+    cursor && resolvedPath.length === cursorSubthoughtIndex + 1 && cursor?.length > resolvedPath.length
 
   const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
   /** First visible thought at the top. */
   const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path
 
   const isDescendantOfCursor =
-    cursor && cursor.length === cursorSubcontextIndex + 1 && resolvedPath.length > cursor?.length
+    cursor && cursor.length === cursorSubthoughtIndex + 1 && resolvedPath.length > cursor?.length
 
-  const isCursor = cursor && resolvedPath.length === cursorSubcontextIndex + 1 && resolvedPath.length === cursor?.length
+  const isCursor = cursor && resolvedPath.length === cursorSubthoughtIndex + 1 && resolvedPath.length === cursor?.length
   const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
 
   const isDescendantOfFirstVisiblePath = isDescendant(
@@ -251,7 +251,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const sortPreference = getSortPreference(state, pathToContext(state, simplePathLive))
 
-  const contextHash = hashContext(thoughtsLive)
+  const hashedPath = hashPath(pathLive)
 
   /** Returns true if the thought is in table view and has more than two columns. This is the case when every row has at least two matching children in column 2. If this is the case, it will get rendered in multi column mode where grandchildren are used as header columns. */
   const isMultiColumnTable = () => {
@@ -293,7 +293,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     isAbsoluteContext,
     isEditingAncestor,
     // expand thought due to cursor and hover expansion
-    isExpanded: !!state.expanded[contextHash] || !!expandedBottom?.[contextHash],
+    isExpanded: !!state.expanded[hashedPath] || !!expandedBottom?.[hashedPath],
     isMultiColumnTable: isMultiColumnTable(),
     showContexts,
     showHiddenThoughts,
@@ -304,7 +304,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     sortDirection: sortPreference.direction,
     zoomCursor,
     zoomParent,
-    // Re-render if children change and when children parent entry in contextIndex is available.
+    // Re-render if children change and when children Thought entry in thoughtIndex is available.
     // Uses getAllChildren for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
     __allChildren: hasChildrenLoaded ? allChildren : [],
@@ -339,7 +339,7 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   // there is no self thought to check since this is <Subthoughts>
   const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
 
-  const toThought = thoughts.contextIndex[head(thoughtsTo)]
+  const toThought = thoughts.thoughtIndex[head(thoughtsTo)]
   const divider = isDivider(toThought.value)
 
   // do not drop on descendants or thoughts hidden by autofocus
@@ -363,8 +363,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const newContext = rootedParentOf(state, pathToContext(state, newPath))
   const sameContext = equalArrays(oldContext, newContext)
 
-  const toThought = getThoughtByPath(state, thoughtsTo)
-  const fromThought = getThoughtByPath(state, thoughtsFrom)
+  const toThought = getThoughtById(state, head(thoughtsTo))
+  const fromThought = getThoughtById(state, head(thoughtsFrom))
 
   // cannot drop on itself
   if (equalPath(thoughtsFrom, thoughtsTo)) return
@@ -389,6 +389,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
           type: 'moveThought',
           oldPath: thoughtsFrom,
           newPath,
+          newRank: getNextRankById(state, head(thoughtsTo)),
         },
   )
 
@@ -399,9 +400,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
       const alertFrom = '"' + ellipsize(fromThought.value) + '"'
       const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(toThought.value) + '"'
 
-      store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`))
-      clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => store.dispatch(alert(null)), 5000)
+      store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`, { alertType: 'moveThought', clearDelay: 5000 }))
     }, 100)
   }
 }
@@ -553,7 +552,7 @@ export const SubthoughtsComponent = ({
   const [page, setPage] = useState(1)
   const { cursor } = state
   const context = pathToContext(state, simplePath)
-  const thought = getThoughtByPath(state, simplePath)
+  const thought = getThoughtById(state, head(simplePath))
   const { value } = thought
   const resolvedPath = path ?? simplePath
 
@@ -579,7 +578,12 @@ export const SubthoughtsComponent = ({
       ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : contextSortType !== 'None'
       ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
-      : getChildrenRanked(state, pathToContext(state, contextBinding || simplePath))
+      : /*
+          @MIGRATION_TODO: Thought should be accessed using path or id instead of context.
+          Due to pending merge mechanism, sometimes a context can have duplicates for a brief moment. So access by context can be problematic.
+          Migrate all possible context based selectors to use path or thought ids.
+        */
+        getChildrenRankedById(state, head(simplePath))
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding
@@ -658,17 +662,17 @@ export const SubthoughtsComponent = ({
       pathToContext(state, resolvedPath),
     )
 
-    const cursorSubcontextIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
+    const cursorSubthoughtIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
 
     const isAncestorOfCursor =
-      cursor && cursor.length > resolvedPath.length && resolvedPath.length === cursorSubcontextIndex() + 1
+      cursor && cursor.length > resolvedPath.length && resolvedPath.length === cursorSubthoughtIndex() + 1
 
     const isCursor =
-      cursor && resolvedPath.length === cursorSubcontextIndex() + 1 && resolvedPath.length === cursor?.length
+      cursor && resolvedPath.length === cursorSubthoughtIndex() + 1 && resolvedPath.length === cursor?.length
 
     /** Returns true if the resolvedPath is a descendant of the cursor. */
     const isDescendantOfCursor = () =>
-      cursor && resolvedPath.length > cursor.length && cursor.length === cursorSubcontextIndex() + 1
+      cursor && resolvedPath.length > cursor.length && cursor.length === cursorSubthoughtIndex() + 1
 
     // thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
     const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
@@ -720,7 +724,7 @@ export const SubthoughtsComponent = ({
 
       {show && filteredChildren.length > (showContexts && !allowSingleContext ? 1 : 0) ? (
         <ul
-          // thoughtIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(simplePath))) : null}
+          // lexemeIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(simplePath))) : null}
           className={classNames({
             children: true,
             'context-chain': showContexts,
@@ -782,14 +786,12 @@ export const SubthoughtsComponent = ({
             re-renders.
           */
                   return child ? (
-                    <ul className='children' key={child.id}>
+                    <ul className='children'>
                       <Thought
                         allowSingleContext={allowSingleContextParent}
                         depth={depth + 1}
                         env={env}
                         hideBullet={true}
-                        // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
-                        key={`${child.rank}${child.id ? '-context' : ''}-header`}
                         rank={child.rank}
                         isVisible={
                           // if thought is a zoomed cursor then it is visible
@@ -876,8 +878,7 @@ export const SubthoughtsComponent = ({
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
-                // @MIGRATION_TODO: Child.id changes based on context due to intermediate migration steps. So we cannot use child.id as key. Fix this after migration is complete.
-                key={`${child.rank}${child.id ? '-context' : ''}`}
+                key={child.id}
                 rank={child.rank}
                 isVisible={
                   // if thought is a zoomed cursor then it is visible

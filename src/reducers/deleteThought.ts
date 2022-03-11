@@ -1,15 +1,15 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { treeDelete } from '../util/recentlyEditedTree'
+// import { treeDelete } from '../util/recentlyEditedTree'
 import {
   getChildrenRankedById,
   getLexeme,
   getThoughtById,
   hasLexeme,
-  rankThoughtsFirstMatch,
+  // rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
-import { ThoughtId, Context, Index, Lexeme, Parent, State } from '../@types'
+import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 import { hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -22,13 +22,13 @@ interface Payload {
 }
 
 interface ThoughtUpdates {
-  contextIndex: Index<Parent | null>
-  thoughtIndex: Index<Lexeme | null>
-  pendingDeletes?: { context: Context; thought: Parent }[]
+  thoughtIndex: Index<Thought | null>
+  lexemeIndex: Index<Lexeme | null>
+  pendingDeletes?: { context: Context; thought: Thought }[]
 }
 
 // @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directlty. Find a better way to handle this.
-/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the thoughtIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions.
+/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the lexemeIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions.
  *
  * @param orphaned - In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated.
  */
@@ -70,8 +70,8 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     return state
   }
 
-  const thoughtIndexNew = { ...state.thoughts.thoughtIndex }
-  const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
+  const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
+  // const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
   const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 
@@ -82,13 +82,13 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
-  try {
-    recentlyEdited = treeDelete(state, state.recentlyEdited, oldRankedThoughts)
-  } catch (e) {
-    console.error('deleteThought: treeDelete immer error')
-    console.error(e)
-  }
+  // let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  // try {
+  //   recentlyEdited = treeDelete(state, state.recentlyEdited, oldRankedThoughts)
+  // } catch (e) {
+  //   console.error('deleteThought: treeDelete immer error')
+  //   console.error(e)
+  // }
 
   // the old thought less the context
   const newOldThought =
@@ -96,9 +96,9 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
 
   // update state so that we do not have to wait for firebase
   if (newOldThought) {
-    thoughtIndexNew[key] = newOldThought
+    lexemeIndexNew[key] = newOldThought
   } else {
-    delete thoughtIndexNew[key] // eslint-disable-line fp/no-delete
+    delete lexemeIndexNew[key] // eslint-disable-line fp/no-delete
   }
 
   // remove thought from contextViews
@@ -107,15 +107,15 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
 
   const subthoughts = getAllChildrenAsThoughts(state, context).filter(child => child.id !== deletedThought.id)
 
-  /** Generates a firebase update object that can be used to delete/update all descendants and delete/update contextIndex. */
-  const recursiveDeletes = (thought: Parent, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
-    // modify the state to use the thoughtIndex with newOldLexeme
+  /** Generates a firebase update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
+  const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
+    // modify the state to use the lexemeIndex with newOldLexeme
     // this ensures that contexts are calculated correctly for descendants with duplicate values
     const stateNew: State = {
       ...state,
       thoughts: {
         ...state.thoughts,
-        thoughtIndex: thoughtIndexNew,
+        lexemeIndex: lexemeIndexNew,
       },
     }
 
@@ -130,11 +130,11 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
             : // if this was the only context of the child, delete the child
               null
 
-        // update local thoughtIndex so that we do not have to wait for firebase
+        // update local lexemeIndex so that we do not have to wait for firebase
         if (childNew) {
-          thoughtIndexNew[hashedKey] = childNew
+          lexemeIndexNew[hashedKey] = childNew
         } else {
-          delete thoughtIndexNew[hashedKey] // eslint-disable-line fp/no-delete
+          delete lexemeIndexNew[hashedKey] // eslint-disable-line fp/no-delete
         }
 
         // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
@@ -164,21 +164,21 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
             ...(accumRecursive.pendingDeletes || []),
             ...(recursiveResults.pendingDeletes || []),
           ],
+          lexemeIndex: {
+            ...accum.lexemeIndex,
+            ...recursiveResults.lexemeIndex,
+            [hashedKey]: childNew,
+          },
           thoughtIndex: {
             ...accum.thoughtIndex,
             ...recursiveResults.thoughtIndex,
-            [hashedKey]: childNew,
-          },
-          contextIndex: {
-            ...accum.contextIndex,
-            ...recursiveResults.contextIndex,
           },
         }
       },
       {
-        thoughtIndex: accumRecursive.thoughtIndex,
-        contextIndex: {
-          ...accumRecursive.contextIndex,
+        lexemeIndex: accumRecursive.lexemeIndex,
+        thoughtIndex: {
+          ...accumRecursive.thoughtIndex,
           [thought.id]: null,
         },
       } as ThoughtUpdates,
@@ -190,17 +190,17 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(deletedThought)
     : ({
+        lexemeIndex: {},
         thoughtIndex: {},
-        contextIndex: {},
       } as ThoughtUpdates)
 
-  const thoughtIndexUpdates = {
+  const lexemeIndexUpdates = {
     [key]: newOldThought,
-    ...descendantUpdatesResult.thoughtIndex,
+    ...descendantUpdatesResult.lexemeIndex,
     // emptyContextDelete
   }
 
-  const contextIndexUpdates = {
+  const thoughtIndexUpdates = {
     // Deleted thought's parent
     // Note: Thoughts in pending deletes won't have it's parent in the state. So orphaned thoughts doesn't need to care about its parent update.
     ...(parent && {
@@ -209,11 +209,11 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
         children: subthoughts.map(({ id }) => id),
         lastUpdated: timestamp(),
         updatedBy: getSessionId(),
-      } as Parent,
+      } as Thought,
     }),
     [deletedThought.id]: null,
     // descendants
-    ...descendantUpdatesResult.contextIndex,
+    ...descendantUpdatesResult.thoughtIndex,
   }
 
   return reducerFlow([
@@ -222,9 +222,9 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
       contextViews: contextViewsNew,
     }),
     updateThoughts({
-      contextIndexUpdates,
       thoughtIndexUpdates,
-      recentlyEdited,
+      lexemeIndexUpdates,
+      // recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
     }),
   ])(state)

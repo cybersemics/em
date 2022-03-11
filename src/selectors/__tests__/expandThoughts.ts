@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../../constants'
-import { hashContext, initialState, reducerFlow } from '../../util'
+import { hashPath, initialState, reducerFlow } from '../../util'
 import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
 import { importText, newSubthought, newThought, setCursor } from '../../reducers'
 import { Context, State } from '../../@types'
@@ -13,7 +13,11 @@ const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) 
 )
 
 /** Returns true if a context is expanded. */
-const isContextExpanded = (state: State, context: Context) => expandThoughts(state, state.cursor)[hashContext(context)]
+const isContextExpanded = (state: State, context: Context) => {
+  const path = rankThoughtsFirstMatch(state, context)
+  if (!path) return false
+  return expandThoughts(state, state.cursor)[hashPath(path)]
+}
 
 describe('normal view', () => {
   it('ROOT is always expanded', () => {
@@ -356,7 +360,7 @@ describe('expand with : char', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b:'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'x'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['x'])).toBeFalsy()
   })
@@ -377,9 +381,9 @@ describe('expand with : char', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b', 'c'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b', 'c', 'x'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['b:'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b:', 'c:'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['b', 'c:', 'x'])).toBeFalsy()
   })
 
   it('thougts that contain html and end with ":" are expanded', () => {
@@ -396,8 +400,8 @@ describe('expand with : char', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['b', 'c'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['<b>b:</b>'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['<b>b:</b>', '<b><i>c:</i></b>'])).toBeTruthy()
   })
 })
 

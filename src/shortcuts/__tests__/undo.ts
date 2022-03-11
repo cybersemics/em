@@ -20,7 +20,7 @@ describe('undo shortcut', () => {
 
   it('dispatches undo action on shortcut if undo is enabled', () => {
     // enable undo
-    isUndoEnabled.mockImplementationOnce(() => true)
+    isUndoEnabled.mockReturnValue(true)
 
     const mockStore = createMockStore()
     const store = mockStore(initialState())
@@ -303,7 +303,7 @@ it('state.alert is omitted from the undo patch', () => {
           - A
           - B`,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursorFirstMatchActionCreator(['A']),
     { type: 'archiveThought' },
   ])
   const { inversePatches } = store.getState()

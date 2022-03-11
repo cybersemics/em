@@ -1,9 +1,9 @@
 import { SubscriptionUpdate } from './SubscriptionUpdate'
 import { Index } from './IndexType'
-import { Parent } from './Parent'
+import { Thought } from './Thought'
 import { Lexeme } from './Lexeme'
 
 export interface ThoughtSubscriptionUpdates {
-  contextIndex: Index<SubscriptionUpdate<Parent>>
-  thoughtIndex: Index<SubscriptionUpdate<Lexeme>>
+  thoughtIndex: Index<SubscriptionUpdate<Thought>>
+  lexemeIndex: Index<SubscriptionUpdate<Lexeme>>
 }

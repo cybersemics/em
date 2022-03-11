@@ -21,20 +21,20 @@ interface Database {
 }
 
 interface UserState {
+  lexemeIndex: State['thoughts']['lexemeIndex']
   thoughtIndex: State['thoughts']['thoughtIndex']
-  contextIndex: State['thoughts']['contextIndex']
 }
 
 const appendContext = (context: Context, child: string) => unroot([...context, child])
 
-/** Traverses the contextIndex, calling a function for each context. */
+/** Traverses the thoughtIndex, calling a function for each context. */
 const traverse = (
   state: UserState,
   f: (parent: Parent) => void,
   options: { context: Context } = { context: [HOME_TOKEN] },
 ) => {
   const context = options.context
-  const parent = state.contextIndex[hashContext(context)]
+  const parent = state.thoughtIndex[hashContext(context)]
   if (parent) {
     f(parent)
     ;(parent.children ? Object.values(parent.children) : []).forEach(child =>
@@ -122,7 +122,7 @@ const main = () => {
   // diff
   traverse(state1, (parent1: Parent) => {
     const context = Object.values(parent1.context)
-    const parent2 = state2.contextIndex[hashContext(context)]
+    const parent2 = state2.thoughtIndex[hashContext(context)]
 
     // ignore archived thoughts
     if (context.includes('=archive')) return

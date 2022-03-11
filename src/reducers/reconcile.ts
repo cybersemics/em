@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
 import { EM_TOKEN } from '../constants'
-import { Index, Lexeme, Parent, State, ThoughtId, ThoughtsInterface } from '../@types'
+import { Index, Lexeme, Thought, State, ThoughtId, ThoughtsInterface } from '../@types'
 import { getThoughtById } from '../selectors'
 
 interface ReconcileOptions {
@@ -16,10 +16,10 @@ interface ReconcileOptions {
 const emContextEncoded = EM_TOKEN
 
 /** Returns true if the source object is has been updated more recently than the destination object. */
-const isNewer = (src: Parent | Lexeme, dest: Parent | Lexeme) => src.lastUpdated > dest.lastUpdated
+const isNewer = (src: Thought | Lexeme, dest: Thought | Lexeme) => src.lastUpdated > dest.lastUpdated
 
 /** Returns true if the em context should be updated. */
-const shouldUpdateEm = (src: Parent, dest: Parent, key: string) =>
+const shouldUpdateEm = (src: Thought, dest: Thought, key: string) =>
   key === emContextEncoded && src.children.length > dest.children.length
 
 /** Compares local and remote and updates missing thoughts or those with older timestamps. */
@@ -30,42 +30,42 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
 
   /** Returns a predicate that returns true if a key is missing from the given destination object or it was updated more recently than the value in the destination object. */
   const shouldUpdateDest =
-    (destObj: Index<Parent | Lexeme> = {}) =>
-    (src: Parent | Lexeme, key: string) => {
+    (destObj: Index<Thought | Lexeme> = {}) =>
+    (src: Thought | Lexeme, key: string) => {
       const dest = destObj[key]
       return (
         src &&
         (!(key in destObj) ||
           isNewer(src, dest) ||
           // allow EM context to be updated if source
-          shouldUpdateEm(src as Parent, dest as Parent, key))
+          shouldUpdateEm(src as Thought, dest as Thought, key))
       )
     }
 
   // get the thoughts that are missing from either local or remote
-  const contextIndexLocalOnly = updateRemote
-    ? _.pickBy(thoughtsLocal.contextIndex, shouldUpdateDest(thoughtsRemote.contextIndex))
-    : {}
-  const contextIndexRemoteOnly = updateLocal
-    ? _.pickBy(thoughtsRemote.contextIndex, shouldUpdateDest(thoughtsLocal.contextIndex))
-    : {}
   const thoughtIndexLocalOnly = updateRemote
     ? _.pickBy(thoughtsLocal.thoughtIndex, shouldUpdateDest(thoughtsRemote.thoughtIndex))
     : {}
   const thoughtIndexRemoteOnly = updateLocal
     ? _.pickBy(thoughtsRemote.thoughtIndex, shouldUpdateDest(thoughtsLocal.thoughtIndex))
     : {}
+  const lexemeIndexLocalOnly = updateRemote
+    ? _.pickBy(thoughtsLocal.lexemeIndex, shouldUpdateDest(thoughtsRemote.lexemeIndex))
+    : {}
+  const lexemeIndexRemoteOnly = updateLocal
+    ? _.pickBy(thoughtsRemote.lexemeIndex, shouldUpdateDest(thoughtsLocal.lexemeIndex))
+    : {}
 
   // get local pending thoughts that are returned by the remote but are not updateable
   // so that we can clear pending
-  const contextIndexPending = _.mapValues(
+  const thoughtIndexPending = _.mapValues(
     // get pending, non-updated thoughts
     _.pickBy(
-      thoughtsLocal.contextIndex,
-      (parentEntry: Parent, key: string) =>
+      thoughtsLocal.thoughtIndex,
+      (parentEntry: Thought, key: string) =>
         !getThoughtById(state, key as ThoughtId) &&
-        !contextIndexLocalOnly[key] &&
-        (thoughtsRemote.contextIndex || {})[key] &&
+        !thoughtIndexLocalOnly[key] &&
+        (thoughtsRemote.thoughtIndex || {})[key] &&
         parentEntry.pending,
     ),
     // clear pending
@@ -77,22 +77,22 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
 
   return reducerFlow([
     // update state pending
-    Object.keys(contextIndexPending).length > 0
+    Object.keys(thoughtIndexPending).length > 0
       ? state =>
           updateThoughts(state, {
-            contextIndexUpdates: contextIndexPending,
-            thoughtIndexUpdates: {},
+            thoughtIndexUpdates: thoughtIndexPending,
+            lexemeIndexUpdates: {},
             local: false,
             remote: false,
           })
       : null,
 
     // update local (thoughts that were found to only be on remote)
-    Object.keys(contextIndexRemoteOnly).length > 0 || Object.keys(thoughtIndexRemoteOnly).length > 0
+    Object.keys(thoughtIndexRemoteOnly).length > 0 || Object.keys(lexemeIndexRemoteOnly).length > 0
       ? state =>
           updateThoughts(state, {
-            contextIndexUpdates: contextIndexRemoteOnly,
             thoughtIndexUpdates: thoughtIndexRemoteOnly,
+            lexemeIndexUpdates: lexemeIndexRemoteOnly,
             // flags default to true, but use explicit values for clarity
             local: true,
             remote: false,
@@ -100,11 +100,11 @@ const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOp
       : null,
 
     // update remote (thoughts that were found to only be on local)
-    Object.keys(contextIndexLocalOnly).length > 0 || Object.keys(thoughtIndexLocalOnly).length > 0
+    Object.keys(thoughtIndexLocalOnly).length > 0 || Object.keys(lexemeIndexLocalOnly).length > 0
       ? state =>
           updateThoughts(state, {
-            contextIndexUpdates: contextIndexLocalOnly,
             thoughtIndexUpdates: thoughtIndexLocalOnly,
+            lexemeIndexUpdates: lexemeIndexLocalOnly,
             // flags default to true, but use explicit values for clarity
             local: false,
             remote: true,

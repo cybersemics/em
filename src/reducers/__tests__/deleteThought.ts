@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { getContexts, getAllChildren, getParent } from '../../selectors'
+import { getContexts, getAllChildren, getThoughtByContext } from '../../selectors'
 import { newSubthought, newThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
@@ -12,17 +12,17 @@ it('delete from root', () => {
   const state = initialState()
   const stateNew = reducerFlow(steps)(state)
 
-  /** Gets the root Parent from a state's contextIndex. */
-  const rootParent = getParent(stateNew, [HOME_TOKEN])!
+  /** Gets the root Parent from a state's thoughtIndex. */
+  const thought = getThoughtByContext(stateNew, [HOME_TOKEN])!
 
-  // contextIndex
-  matchChildIdsWithThoughts(stateNew, rootParent.children, [
+  // thoughtIndex
+  matchChildIdsWithThoughts(stateNew, thought.children, [
     {
       value: 'a',
     },
   ])
 
-  // thoughtIndex
+  // lexemeIndex
   expect(getContexts(stateNew, 'b')).toEqual([])
 })
 
@@ -37,7 +37,7 @@ it('delete descendants of root thought', () => {
   expect(getAllChildren(stateNew, ['a'])).toEqual([])
   expect(getAllChildren(stateNew, ['b', 'c'])).toEqual([])
 
-  // thoughtIndex
+  // lexemeIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
   expect(getContexts(stateNew, 'b')).toEqual([])
   expect(getContexts(stateNew, 'c')).toEqual([])
@@ -53,6 +53,6 @@ it('delete thought with duplicate child', () => {
   expect(getAllChildren(stateNew, [HOME_TOKEN])).toEqual([])
   expect(getAllChildren(stateNew, ['a'])).toEqual([])
 
-  // thoughtIndex
+  // lexemeIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
 })

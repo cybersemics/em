@@ -80,8 +80,8 @@ export const getSearchKey = functions.https.onRequest((request, response) => {
   })
 })
 
-export const addIndexOnCreateThoughtIndex = functions.database
-  .ref('users/{userId}/thoughtIndex/{thoughtHash}')
+export const addIndexOnCreateLexemeIndex = functions.database
+  .ref('users/{userId}/lexemeIndex/{thoughtHash}')
   .onCreate(async (snapshot, context) => {
     // Note: Create separate shared types module to allow sharing between app and functions. Right now src/types.ts imports other dependencies which causes problem in the build.
     const lexeme = snapshot.val() as { value: string }
@@ -102,8 +102,8 @@ export const addIndexOnCreateThoughtIndex = functions.database
     }
   })
 
-export const deleteIndexOnThoughtIndexDelete = functions.database
-  .ref('users/{userId}/thoughtIndex/{thoughtHash}')
+export const deleteIndexOnLexemeIndexDelete = functions.database
+  .ref('users/{userId}/lexemeIndex/{thoughtHash}')
   .onDelete(async (_, context) => {
     const { thoughtHash } = context.params
     try {

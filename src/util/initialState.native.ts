@@ -3,7 +3,7 @@ import globals from '../globals'
 // import { canShowModal } from '../selectors'
 import { hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from './index'
 import { getSessionId } from './sessionManager'
-import { Timestamp, ThoughtsInterface, State, Parent, Index, ThoughtId } from '../@types'
+import { Timestamp, ThoughtsInterface, State, Thought, Index, ThoughtId } from '../@types'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -18,7 +18,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN
 
-  const contextIndex: Index<Parent> = {
+  const thoughtIndex: Index<Thought> = {
     [HOME_TOKEN_HASH]: {
       id: HOME_TOKEN_HASH as ThoughtId,
       value: HOME_TOKEN,
@@ -54,11 +54,11 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
     },
   }
 
-  const thoughtIndex = {
+  const lexemeIndex = {
     [hashThought(HOME_TOKEN)]: {
       value: HOME_TOKEN,
       contexts: [],
-      // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
+      // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
       created,
       lastUpdated: never(),
       updatedBy: getSessionId(),
@@ -66,13 +66,13 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
     [hashThought(ABSOLUTE_TOKEN)]: {
       value: ABSOLUTE_TOKEN,
       contexts: [],
-      // set to beginning of epoch to ensure that server thoughtIndex is always considered newer from init thoughtIndex
+      // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
       created,
       lastUpdated: never(),
       updatedBy: getSessionId(),
     },
     // this will get populated by importText in loadLocalState
-    // unfortunately that's the best way currently to create nested thoughts and ensure that thoughtIndex and contextIndex are correct
+    // unfortunately that's the best way currently to create nested thoughts and ensure that lexemeIndex and thoughtIndex are correct
     [hashThought(EM_TOKEN)]: {
       value: EM_TOKEN,
       contexts: [],
@@ -83,8 +83,8 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
   }
 
   return {
-    contextIndex,
     thoughtIndex,
+    lexemeIndex,
   }
 }
 

@@ -22,8 +22,8 @@ interface Database {
 }
 
 interface UserState {
-  thoughtIndex: Index<FirebaseLexeme>
-  contextIndex: Index<FirebaseParent>
+  lexemeIndex: Index<FirebaseLexeme>
+  thoughtIndex: Index<FirebaseParent>
 }
 
 interface Options {
@@ -62,7 +62,7 @@ const repair = {
     }
 
     // delete lexeme since there are no contexts to restore it to
-    delete state.thoughtIndex[hashThought(lexeme.value)]
+    delete state.lexemeIndex[hashThought(lexeme.value)]
   },
 
   missingThoughtContext: (
@@ -106,7 +106,7 @@ const repair = {
       lastUpdated: timestamp(),
     }
     // arrays can be safely saved to Firebase
-    state.contextIndex[id] = parentNew as unknown as FirebaseParent
+    state.thoughtIndex[id] = parentNew as unknown as FirebaseParent
     cx.rank = rankNew
 
     if (options.verbose) {
@@ -156,7 +156,7 @@ const repair = {
 
 /** Restore missing children by traversing all lexemes in an exported em db. Mutates given state. */
 const restoreChildren = (state: UserState, options: Options = {}) => {
-  const lexemes = Object.values(state.thoughtIndex)
+  const lexemes = Object.values(state.lexemeIndex)
   lexemes.forEach(lexeme => {
     if (limit-- <= 0) {
       console.error('Limit reached')
@@ -173,7 +173,7 @@ const restoreChildren = (state: UserState, options: Options = {}) => {
       }
 
       const context = Object.values(cx.context || {})
-      const parent = state.contextIndex[hashContext(context)]
+      const parent = state.thoughtIndex[hashContext(context)]
       if (!parent) {
         repair.missingParents(state, lexeme, cx, options)
         return
@@ -225,7 +225,7 @@ const main = () => {
   restoreChildren(state, options)
 
   console.log('')
-  console.log('Lexemes:', Object.values(state.thoughtIndex).length)
+  console.log('Lexemes:', Object.values(state.lexemeIndex).length)
   console.log('Missing lexeme.contexts:', missingLexemeContexts)
   console.log('Missing cx.context:', missingThoughtContexts)
   console.log('Missing parent:', missingParents)
