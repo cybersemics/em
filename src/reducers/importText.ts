@@ -25,7 +25,7 @@ import sanitize from 'sanitize-html'
 import { getSessionId } from '../util/sessionManager'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import getTextContentFromHTML from '../device/getTextContentFromHTML'
+import * as selection from '../device/selection'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
@@ -107,14 +107,15 @@ const importText = (
     const textNormalized = strip(convertedText, { preserveFormatting: true })
 
     // insert the textNormalized into the destValue in the correct place
-    // trim after concatenating in case destValue has whitespace
-    const left = (destValue.slice(0, replaceStart ?? 0) + textNormalized).trimLeft()
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
-    const right = state.cursorCleared ? '' : destValue.slice(replaceEnd ?? 0).trimRight()
-    const newValue = left + right
-
-    const offset = getTextContentFromHTML(left).length
-
+    const replacedDestValue = state.cursorCleared
+      ? ''
+      : destValue.slice(0, replaceStart || 0) + destValue.slice(replaceEnd || 0)
+    const caretPosition = replaceStart || selection.offset() || 0
+    const newValue = `${replacedDestValue.slice(0, caretPosition)}${textNormalized}${replacedDestValue.slice(
+      caretPosition,
+    )}`
+    const offset = caretPosition + textNormalized.length
     return reducerFlow([
       editThought({
         oldValue: destValue,

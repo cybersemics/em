@@ -231,12 +231,6 @@ export const set = (
   const range = document.createRange()
   const sel = window.getSelection() || new Selection()
 
-  // bail if already selected
-  // compare closest element node, since there is no need to update the selection if it is on either the text node or element node
-  const focusElementNew = focusNode.nodeType === Node.TEXT_NODE ? focusNode.parentElement : focusNode
-  const focusElementOld = sel.focusNode?.nodeType === Node.TEXT_NODE ? sel.focusNode.parentElement : sel.focusNode
-  if (focusElementNew === focusElementOld) return
-
   // automatically constrain offset to text length
   // this may still throw an error if the text node does no exist any longer
   if (focusNode !== null) {
