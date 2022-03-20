@@ -75,7 +75,7 @@ function expandThoughts(
     firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
 
   if (path && !getThoughtById(state, head(path))) {
-    throw new Error(`Incorrect path provided: ${path}`)
+    throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
   return expandThoughtsRecursive(state, path || HOME_PATH, expanstionStartingPath || HOME_PATH, options)
