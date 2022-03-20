@@ -6,7 +6,7 @@ import { Index, Patch, State, ThoughtId } from '../@types'
 import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
 import { produce } from 'immer'
-import { getThoughtById } from '../selectors'
+import { getThoughtById, rankThoughtsFirstMatch } from '../selectors'
 
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 
@@ -33,9 +33,22 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
       [contextId]: getThoughtById(state, contextId as ThoughtId) || null,
     }
   }, {})
+
+  /* 
+    Note: Computed thoughtIndexUpdates and contextIndexUpdates will take store to the identical state
+    after patches are applied by undo or redo handler. This is done to create push batches using updateThoughts generates.
+
+    However we also need to update the state like cursor that depends on the new thought indices changes. Else
+    logic depending on those states will break.
+  */
+  const oldStateWithUpdatedCursor = {
+    ...oldState,
+    cursor: state.cursor,
+  }
+
   return {
     ...state,
-    pushQueue: updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates })(oldState).pushQueue,
+    pushQueue: updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates })(oldStateWithUpdatedCursor).pushQueue,
   }
 }
 
@@ -87,6 +100,7 @@ const undoReducer = (state: State) => {
   const lastInversePatch = nthLast(inversePatches, 1)
   if (!lastInversePatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastInversePatch).newDocument)
+  console.log(newState.cursor, 'afk cursor after patch')
   const correspondingPatch = addActionsToPatch(compareWithOmit(newState as Index, state), [
     ...lastInversePatch[0].actions,
   ])
@@ -134,6 +148,9 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
     )
 
   const poppedInversePatches = undoTwice ? [penultimateInversePatch, lastInversePatch] : [lastInversePatch]
+
+  console.log('before undo', rankThoughtsFirstMatch(state, ['d']), rankThoughtsFirstMatch(state, ['d1']))
+
   return reducerFlow([
     undoTwice ? undoReducer : null,
     undoReducer,

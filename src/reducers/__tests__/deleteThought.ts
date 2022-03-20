@@ -4,6 +4,8 @@ import { getContexts, getAllChildren, getThoughtByContext } from '../../selector
 import { newSubthought, newThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
+import { State } from '../../@types'
+import { head } from 'lodash'
 
 it('delete from root', () => {
   const steps = [newThought('a'), newThought('b'), deleteThoughtAtFirstMatch(['b'])]
@@ -55,4 +57,28 @@ it('delete thought with duplicate child', () => {
 
   // lexemeIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
+})
+
+it('update cursor after thought deletion', () => {
+  const steps = [newThought('a'), newSubthought('b')]
+
+  const state = initialState()
+  const stateNew = reducerFlow(steps)(state)
+
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    {
+      value: 'a',
+    },
+    {
+      value: 'b',
+    },
+  ])
+
+  const stateAfterDeletion = reducerFlow([deleteThoughtAtFirstMatch(['a', 'b'])])(stateNew)
+
+  matchChildIdsWithThoughts(stateAfterDeletion, stateAfterDeletion.cursor!, [
+    {
+      value: 'a',
+    },
+  ])
 })

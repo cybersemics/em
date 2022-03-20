@@ -6,12 +6,22 @@ import {
   getLexeme,
   getThoughtById,
   hasLexeme,
+  rankThoughtsFirstMatch,
   // rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
-import { equalArrays, hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
+import {
+  checkIfPathShareSubcontext,
+  equalArrays,
+  hashThought,
+  isDescendant,
+  reducerFlow,
+  removeContext,
+  timestamp,
+  unroot,
+} from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import { treeDelete } from '../util/recentlyEditedTree'
 
@@ -72,7 +82,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
-  // const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
+  const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
 
   const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 
@@ -217,8 +227,17 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     ...descendantUpdatesResult.thoughtIndex,
   }
 
-  const isDeletedThoughtCursor = !!oldRankedThoughts && !!state.cursor && equalArrays(oldRankedThoughts, state.cursor)
-  const newCursor = isDeletedThoughtCursor ? rootedParentOf(state, oldRankedThoughts!) : state.cursor
+  const isDeletedThoughtCursor = !!oldRankedThoughts && !!state.cursor && equalArrays(state.cursor, oldRankedThoughts)
+
+  const isCursorDescendantOfDeletedThought =
+    !!oldRankedThoughts && !!state.cursor && isDescendant(oldRankedThoughts, state.cursor)
+
+  // Note: If the deleted thought is the cursor or ancestor of the cursor, we need to calculate new cursor.
+  const newCursor =
+    isDeletedThoughtCursor || isCursorDescendantOfDeletedThought
+      ? rootedParentOf(state, oldRankedThoughts!)
+      : state.cursor
+
   return reducerFlow([
     state => ({
       ...state,
