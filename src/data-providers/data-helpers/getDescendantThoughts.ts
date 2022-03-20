@@ -50,19 +50,22 @@ async function* getDescendantThoughts(
   { maxDepth = MAX_DEPTH }: Options = {},
 ): AsyncIterable<ThoughtsInterface> {
   // use queue for breadth-first search
-  let pullThoughtIds = [thoughtId] // eslint-disable-line fp/no-let
+  let thoughtIdQueue = [thoughtId] // eslint-disable-line fp/no-let
   let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
 
   let accumulatedThoughtIndex = state.thoughts.thoughtIndex
 
   // eslint-disable-next-line fp/no-loops
-  while (pullThoughtIds.length > 0) {
-    // TODO: Find better way to remove null from the type here.
-    const providerParents = (await provider.getThoughtsByIds(pullThoughtIds)).filter(Boolean) as Thought[]
+  while (thoughtIdQueue.length > 0) {
+    // thoughts may be missing, such as __ROOT__ on first load, or deleted ids
+    // filter out the missing thought ids and proceed as usual
+    const providerParentsRaw = await provider.getThoughtsByIds(thoughtIdQueue)
+    const thoughtIdsValidated = thoughtIdQueue.filter((value, i) => providerParentsRaw[i])
+    const providerParentsValidated = providerParentsRaw.filter(Boolean) as Thought[]
 
     // all pulled thought entries
-    const pulledThoughtIndex = keyValueBy(pullThoughtIds, (id, i) => {
-      return { [id]: providerParents[i] }
+    const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => {
+      return { [id]: providerParentsValidated[i] }
     })
 
     accumulatedThoughtIndex = {
@@ -80,8 +83,8 @@ async function* getDescendantThoughts(
 
     const thoughts =
       currentMaxDepth > 0
-        ? providerParents
-        : providerParents.map(thought => ({
+        ? providerParentsValidated
+        : providerParentsValidated.map(thought => ({
             ...thought,
             ...(!isUnbuffered(updatedState, thought)
               ? {
@@ -95,11 +98,11 @@ async function* getDescendantThoughts(
           }))
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
-    const thoughtIndex = keyValueBy(pullThoughtIds, (id, i) => {
+    const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => {
       return { [id]: thoughts[i] }
     })
 
-    const thoughtHashes = pullThoughtIds.map(id => {
+    const thoughtHashes = thoughtIdsValidated.map(id => {
       const thought = getThoughtById(updatedState, id)
       if (!thought) {
         throw new Error(`Thought not found for id${id}`)
@@ -117,7 +120,7 @@ async function* getDescendantThoughts(
     }
 
     // enqueue children
-    pullThoughtIds = thoughts.map(thought => thought.children).flat()
+    thoughtIdQueue = thoughts.map(thought => thought.children).flat()
 
     // yield thought
     yield thoughtsIndices
