@@ -60,15 +60,6 @@ async function* getDescendantThoughts(
     // TODO: Find better way to remove null from the type here.
     const providerParents = (await provider.getThoughtsByIds(pullThoughtIds)).filter(Boolean) as Thought[]
 
-    if (providerParents.length < pullThoughtIds.length) {
-      console.error(`getDescendantThoughts: Cannot get thought for some ids.`, pullThoughtIds, providerParents)
-      yield {
-        thoughtIndex: {},
-        lexemeIndex: {},
-      }
-      return
-    }
-
     // all pulled thought entries
     const pulledThoughtIndex = keyValueBy(pullThoughtIds, (id, i) => {
       return { [id]: providerParents[i] }
