@@ -9,7 +9,7 @@ export function keyValueBy<T, R>(
   initialValue?: Index<R>,
 ): Index<R>
 
-/** Generates an object from an array or object. Simpler than reduce or _.transform. */
+/** Generates an object from an array or object. Simpler than reduce or _.transform. The return object from each iteration is merged into the accumulated object. Return null to skip an item. */
 export function keyValueBy<T, R>(
   input: T[] | Index<T>,
   keyValue: KeyValueGenerator<T | string, number | T, R>,
