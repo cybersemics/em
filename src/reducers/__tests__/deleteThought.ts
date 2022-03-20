@@ -56,3 +56,27 @@ it('delete thought with duplicate child', () => {
   // lexemeIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
 })
+
+it('update cursor after thought deletion', () => {
+  const steps = [newThought('a'), newSubthought('b')]
+
+  const state = initialState()
+  const stateNew = reducerFlow(steps)(state)
+
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    {
+      value: 'a',
+    },
+    {
+      value: 'b',
+    },
+  ])
+
+  const stateAfterDeletion = reducerFlow([deleteThoughtAtFirstMatch(['a', 'b'])])(stateNew)
+
+  matchChildIdsWithThoughts(stateAfterDeletion, stateAfterDeletion.cursor!, [
+    {
+      value: 'a',
+    },
+  ])
+})

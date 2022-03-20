@@ -7,7 +7,6 @@ import {
   getAllChildren,
   getChildrenRanked,
   getRankAfter,
-  isPending,
   getThoughtByContext,
   getThoughtByPath,
   rankThoughtsFirstMatch,
@@ -15,19 +14,11 @@ import {
 } from '../../selectors'
 import { importText, newSubthought, newThought } from '../../reducers'
 import { State } from '../../@types'
-import { store as appStore } from '../../store'
-import testTimer from '../../test-helpers/testTimer'
-import { initialize } from '../../initialize'
-import { clear, importText as importTextAction } from '../../action-creators'
-import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import moveThoughtAtFirstMatch, {
-  moveThoughtAtFirstMatchActionCreator,
-} from '../../test-helpers/moveThoughtAtFirstMatch'
+import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
-
-const timer = testTimer()
 
 it('move within root', () => {
   const steps = [
@@ -612,127 +603,6 @@ it('consistent rank between lexemeIndex and thoughtIndex on duplicate merge', ()
   const contextsOfB = getContexts(stateNew, 'b')
 
   expect(contextsOfB).toHaveLength(1)
-})
-
-it('pending destination should be merged correctly (fetch pending before move)', async () => {
-  timer.useFakeTimer()
-  initialize()
-  await timer.runAllAsync()
-
-  const text = `
-  - a
-    - b
-      -c
-        - one
-        - two
-  - d
-    - b
-      - c
-        - three
-        - four`
-
-  appStore.dispatch(importTextAction({ text }))
-  await timer.runAllAsync()
-
-  timer.useFakeTimer()
-
-  // clear and call initialize again to reload from local db (simulating page refresh)
-  appStore.dispatch(clear())
-  await timer.runAllAsync()
-
-  initialize()
-
-  await timer.runAllAsync()
-
-  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
-
-  // wait for pullBeforeMove middleware to execute
-  await timer.runAllAsync()
-
-  timer.useFakeTimer()
-
-  appStore.dispatch([
-    moveThoughtAtFirstMatchActionCreator({
-      from: ['a', 'b'],
-      to: ['d', 'b'],
-      newRank: 1,
-    }),
-  ])
-
-  await timer.runAllAsync()
-
-  timer.useRealTimer()
-
-  const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
-
-  const expected = `- ${HOME_TOKEN}
-  - a
-  - d
-    - b
-      - c
-        - three
-        - four
-        - one
-        - two`
-
-  expect(exported).toBe(expected)
-})
-
-it('only fetch the descendants up to the possible conflicting path', async () => {
-  timer.useFakeTimer()
-  initialize()
-  await timer.runAllAsync()
-
-  const text = `
-  - a
-    - b
-      - c
-        - 1
-        - 2
-  - p
-    - b
-      - c
-        - 3
-          - 3.1
-          - 3.2
-            - 3.2.1
-        - 4
-  - z`
-
-  appStore.dispatch(importTextAction({ text }))
-  await timer.runAllAsync()
-
-  timer.useFakeTimer()
-  // clear and call initialize again to reload from local db (simulating page refresh)
-  appStore.dispatch(clear())
-  await timer.runAllAsync()
-
-  initialize()
-
-  await timer.runAllAsync()
-
-  timer.useFakeTimer()
-
-  expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(true)
-  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
-
-  // wait for pullBeforeMove middleware to execute
-  await timer.runAllAsync()
-
-  appStore.dispatch([
-    moveThoughtAtFirstMatchActionCreator({
-      from: ['a', 'b'],
-      to: ['p', 'b'],
-      newRank: 1,
-    }),
-  ])
-
-  await timer.runAllAsync()
-
-  timer.useRealTimer()
-
-  expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(false)
-  expect(isPending(appStore.getState(), ['p', 'b', 'c', '3'])).toEqual(true)
 })
 
 it('update cursor if duplicate thought with cursor is deleted', () => {

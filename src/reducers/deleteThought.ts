@@ -6,12 +6,12 @@ import {
   getLexeme,
   getThoughtById,
   hasLexeme,
-  // rankThoughtsFirstMatch,
+  rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
-import { hashThought, reducerFlow, removeContext, timestamp, unroot } from '../util'
+import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface Payload {
@@ -71,7 +71,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
-  // const oldRankedThoughts = rankThoughtsFirstMatch(state, thoughts as string[])
+  const path = rankThoughtsFirstMatch(state, thoughts as string[])
 
   const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 
@@ -81,10 +81,11 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     return state
   }
 
+  // TODO: Re-enable Recently Edited
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   // let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   // try {
-  //   recentlyEdited = treeDelete(state, state.recentlyEdited, oldRankedThoughts)
+  //   recentlyEdited = treeDelete(state, state.recentlyEdited, path)
   // } catch (e) {
   //   console.error('deleteThought: treeDelete immer error')
   //   console.error(e)
@@ -216,10 +217,19 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     ...descendantUpdatesResult.thoughtIndex,
   }
 
+  const isDeletedThoughtCursor = !!path && !!state.cursor && equalArrays(state.cursor, path)
+
+  const isCursorDescendantOfDeletedThought = !!path && !!state.cursor && isDescendant(path, state.cursor)
+
+  // if the deleted thought is the cursor or a descendant of the cursor, we need to calculate a new cursor.
+  const cursorNew =
+    isDeletedThoughtCursor || isCursorDescendantOfDeletedThought ? rootedParentOf(state, path!) : state.cursor
+
   return reducerFlow([
     state => ({
       ...state,
       contextViews: contextViewsNew,
+      cursor: cursorNew,
     }),
     updateThoughts({
       thoughtIndexUpdates,

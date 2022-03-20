@@ -33,9 +33,22 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
       [contextId]: getThoughtById(state, contextId as ThoughtId) || null,
     }
   }, {})
+
+  /* 
+    Note: Computed thoughtIndexUpdates and contextIndexUpdates will take store to the identical state
+    after patches are applied by undo or redo handler. This is done to create push batches using updateThoughts generates.
+
+    However we also need to update the state like cursor that depends on the new thought indices changes. Else
+    logic depending on those states will break.
+  */
+  const oldStateWithUpdatedCursor = {
+    ...oldState,
+    cursor: state.cursor,
+  }
+
   return {
     ...state,
-    pushQueue: updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates })(oldState).pushQueue,
+    pushQueue: updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates })(oldStateWithUpdatedCursor).pushQueue,
   }
 }
 
@@ -134,6 +147,7 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
     )
 
   const poppedInversePatches = undoTwice ? [penultimateInversePatch, lastInversePatch] : [lastInversePatch]
+
   return reducerFlow([
     undoTwice ? undoReducer : null,
     undoReducer,
