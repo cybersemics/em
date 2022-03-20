@@ -4,8 +4,6 @@ import { getContexts, getAllChildren, getThoughtByContext } from '../../selector
 import { newSubthought, newThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
-import { State } from '../../@types'
-import { head } from 'lodash'
 
 it('delete from root', () => {
   const steps = [newThought('a'), newThought('b'), deleteThoughtAtFirstMatch(['b'])]

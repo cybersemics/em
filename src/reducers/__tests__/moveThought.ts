@@ -26,6 +26,7 @@ import moveThoughtAtFirstMatch, {
   moveThoughtAtFirstMatchActionCreator,
 } from '../../test-helpers/moveThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+import { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 const timer = testTimer()
 
@@ -614,12 +615,16 @@ it('consistent rank between lexemeIndex and thoughtIndex on duplicate merge', ()
   expect(contextsOfB).toHaveLength(1)
 })
 
-it('pending destination should be merged correctly (fetch pending before move)', async () => {
-  timer.useFakeTimer()
-  initialize()
-  await timer.runAllAsync()
+describe('db dependent test', () => {
+  // Note: Since we are using intialize for these tests, we need to make sure to cleanup dbs, storage and window location.
+  afterEach(async () => await cleanupTestApp())
 
-  const text = `
+  it('pending destination should be merged correctly (fetch pending before move)', async () => {
+    timer.useFakeTimer()
+    initialize()
+    await timer.runAllAsync()
+
+    const text = `
   - a
     - b
       -c
@@ -631,41 +636,41 @@ it('pending destination should be merged correctly (fetch pending before move)',
         - three
         - four`
 
-  appStore.dispatch(importTextAction({ text }))
-  await timer.runAllAsync()
+    appStore.dispatch(importTextAction({ text }))
+    await timer.runAllAsync()
 
-  timer.useFakeTimer()
+    timer.useFakeTimer()
 
-  // clear and call initialize again to reload from local db (simulating page refresh)
-  appStore.dispatch(clear())
-  await timer.runAllAsync()
+    // clear and call initialize again to reload from local db (simulating page refresh)
+    appStore.dispatch(clear())
+    await timer.runAllAsync()
 
-  initialize()
+    initialize()
 
-  await timer.runAllAsync()
+    await timer.runAllAsync()
 
-  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+    appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
 
-  // wait for pullBeforeMove middleware to execute
-  await timer.runAllAsync()
+    // wait for pullBeforeMove middleware to execute
+    await timer.runAllAsync()
 
-  timer.useFakeTimer()
+    timer.useFakeTimer()
 
-  appStore.dispatch([
-    moveThoughtAtFirstMatchActionCreator({
-      from: ['a', 'b'],
-      to: ['d', 'b'],
-      newRank: 1,
-    }),
-  ])
+    appStore.dispatch([
+      moveThoughtAtFirstMatchActionCreator({
+        from: ['a', 'b'],
+        to: ['d', 'b'],
+        newRank: 1,
+      }),
+    ])
 
-  await timer.runAllAsync()
+    await timer.runAllAsync()
 
-  timer.useRealTimer()
+    timer.useRealTimer()
 
-  const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
+    const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expected = `- ${HOME_TOKEN}
+    const expected = `- ${HOME_TOKEN}
   - a
   - d
     - b
@@ -675,15 +680,14 @@ it('pending destination should be merged correctly (fetch pending before move)',
         - one
         - two`
 
-  expect(exported).toBe(expected)
-})
+    expect(exported).toBe(expected)
+  })
 
-it('only fetch the descendants up to the possible conflicting path', async () => {
-  timer.useFakeTimer()
-  initialize()
-  await timer.runAllAsync()
-
-  const text = `
+  it('only fetch the descendants up to the possible conflicting path', async () => {
+    timer.useFakeTimer()
+    initialize()
+    await timer.runAllAsync()
+    const text = `
   - a
     - b
       - c
@@ -699,40 +703,39 @@ it('only fetch the descendants up to the possible conflicting path', async () =>
         - 4
   - z`
 
-  appStore.dispatch(importTextAction({ text }))
-  await timer.runAllAsync()
+    appStore.dispatch(importTextAction({ text }))
+    await timer.runAllAsync()
 
-  timer.useFakeTimer()
-  // clear and call initialize again to reload from local db (simulating page refresh)
-  appStore.dispatch(clear())
-  await timer.runAllAsync()
+    timer.useFakeTimer()
+    // clear and call initialize again to reload from local db (simulating page refresh)
+    appStore.dispatch(clear())
+    await timer.runAllAsync()
 
-  initialize()
+    initialize()
 
-  await timer.runAllAsync()
+    await timer.runAllAsync()
 
-  timer.useFakeTimer()
+    expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(true)
+    appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
 
-  expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(true)
-  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+    // wait for pullBeforeMove middleware to execute
+    await timer.runAllAsync()
 
-  // wait for pullBeforeMove middleware to execute
-  await timer.runAllAsync()
+    appStore.dispatch([
+      moveThoughtAtFirstMatchActionCreator({
+        from: ['a', 'b'],
+        to: ['p', 'b'],
+        newRank: 1,
+      }),
+    ])
 
-  appStore.dispatch([
-    moveThoughtAtFirstMatchActionCreator({
-      from: ['a', 'b'],
-      to: ['p', 'b'],
-      newRank: 1,
-    }),
-  ])
+    await timer.runAllAsync()
 
-  await timer.runAllAsync()
+    timer.useRealTimer()
 
-  timer.useRealTimer()
-
-  expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(false)
-  expect(isPending(appStore.getState(), ['p', 'b', 'c', '3'])).toEqual(true)
+    expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(false)
+    expect(isPending(appStore.getState(), ['p', 'b', 'c', '3'])).toEqual(true)
+  })
 })
 
 it('update cursor if duplicate thought with cursor is deleted', () => {

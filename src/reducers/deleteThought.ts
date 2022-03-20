@@ -12,18 +12,8 @@ import {
 } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
-import {
-  checkIfPathShareSubcontext,
-  equalArrays,
-  hashThought,
-  isDescendant,
-  reducerFlow,
-  removeContext,
-  timestamp,
-  unroot,
-} from '../util'
+import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { treeDelete } from '../util/recentlyEditedTree'
 
 interface Payload {
   context: Context

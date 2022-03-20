@@ -6,7 +6,7 @@ import { Index, Patch, State, ThoughtId } from '../@types'
 import { updateThoughts } from '../reducers'
 import { reducerFlow } from '../util'
 import { produce } from 'immer'
-import { getThoughtById, rankThoughtsFirstMatch } from '../selectors'
+import { getThoughtById } from '../selectors'
 
 const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
 
@@ -100,7 +100,6 @@ const undoReducer = (state: State) => {
   const lastInversePatch = nthLast(inversePatches, 1)
   if (!lastInversePatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastInversePatch).newDocument)
-  console.log(newState.cursor, 'afk cursor after patch')
   const correspondingPatch = addActionsToPatch(compareWithOmit(newState as Index, state), [
     ...lastInversePatch[0].actions,
   ])
@@ -148,8 +147,6 @@ const undoHandler = (state: State, inversePatches: Patch[]) => {
     )
 
   const poppedInversePatches = undoTwice ? [penultimateInversePatch, lastInversePatch] : [lastInversePatch]
-
-  console.log('before undo', rankThoughtsFirstMatch(state, ['d']), rankThoughtsFirstMatch(state, ['d1']))
 
   return reducerFlow([
     undoTwice ? undoReducer : null,
