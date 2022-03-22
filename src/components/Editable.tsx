@@ -74,6 +74,7 @@ import {
 
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import { stripEmptyFormattingTags } from '../util/stripEmptyFormattingTags'
+import { setNativeCaretSelection } from '../action-creators/setNativeCaretSelection'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -747,6 +748,11 @@ const Editable = ({
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key in MODIFIER_KEYS) return
     onKeyDownAction!()
+
+    // dispatch setNativeCaretSelection as true so that we use selection.offset() for tracking caret position while importing/pasting
+    if (['ArrowRight', 'ArrowLeft', ' '].includes(e.key)) {
+      dispatch(setNativeCaretSelection(true))
+    }
   }
 
   // strip formatting tags for clearThought placeholder

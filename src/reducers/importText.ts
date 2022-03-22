@@ -111,11 +111,14 @@ const importText = (
     const replacedDestValue = state.cursorCleared
       ? ''
       : destValue.slice(0, replaceStart || 0) + destValue.slice(replaceEnd || 0)
-    const caretPosition = replaceStart || selection.offset() || 0
+
+    const caretPosition = (replaceStart || state.useNativeCaretSelection ? selection.offset() : state.cursorOffset) || 0
+
     const newValue = `${replacedDestValue.slice(0, caretPosition)}${textNormalized}${replacedDestValue.slice(
       caretPosition,
     )}`
     const offset = caretPosition + textNormalized.length
+
     return reducerFlow([
       editThought({
         oldValue: destValue,
