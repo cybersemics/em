@@ -16,7 +16,7 @@ import {
   unroot,
   validateRoam,
 } from '../util'
-import { editThought, setCursor, updateThoughts } from '../reducers'
+import { editThought, setCursor, updateThoughts, editingValue } from '../reducers'
 import { getAllChildren, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
 import { Path, SimplePath, State, Timestamp } from '../@types'
 import newThought from './newThought'
@@ -121,6 +121,10 @@ const importText = (
         newValue,
         context: rootedParentOf(state, pathToContext(state, path)),
         path: simplePath,
+      }),
+
+      editingValue({
+        value: newValue,
       }),
 
       !preventSetCursor && path
