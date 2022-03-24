@@ -593,6 +593,9 @@ const Editable = ({
                 replaceEnd: selection.offsetEnd()!,
               }
             : null),
+          // pass caret position to correctly track the last navigated point for caret
+          // calculated on the basis of node type we are currently focused on. `state.cursorOffset` doesn't really keeps track of updated caret position when navigating within single thought. Hence selection.offset() is also used depending upon which node type we are on.
+          caretPosition: (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0,
         }),
       )
 

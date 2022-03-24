@@ -54,6 +54,8 @@ export interface ImportTextPayload {
 
   // A user session id to associate with the update. Defaults to the current session.
   updatedBy?: string
+
+  caretPosition?: number
 }
 
 /** Imports thoughts from html or raw text. */
@@ -69,6 +71,7 @@ const importText = (
     replaceStart,
     skipRoot,
     updatedBy = getSessionId(),
+    caretPosition = 0,
   }: ImportTextPayload,
 ): State => {
   const isRoam = validateRoam(text)
@@ -107,13 +110,16 @@ const importText = (
     const textNormalized = strip(convertedText, { preserveFormatting: true })
 
     // insert the textNormalized into the destValue in the correct place
-    // trim after concatenating in case destValue has whitespace
-    const left = (destValue.slice(0, replaceStart ?? 0) + textNormalized).trimLeft()
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
-    const right = state.cursorCleared ? '' : destValue.slice(replaceEnd ?? 0).trimRight()
-    const newValue = left + right
+    const replacedDestValue = state.cursorCleared
+      ? ''
+      : destValue.slice(0, replaceStart || 0) + destValue.slice(replaceEnd || 0)
 
-    const offset = getTextContentFromHTML(left).length
+    const newValue = `${replacedDestValue.slice(
+      0,
+      replaceStart || caretPosition,
+    )}${textNormalized}${replacedDestValue.slice(replaceStart || caretPosition)}`
+    const offset = caretPosition + getTextContentFromHTML(textNormalized).length
 
     return reducerFlow([
       editThought({
