@@ -25,7 +25,7 @@ import sanitize from 'sanitize-html'
 import { getSessionId } from '../util/sessionManager'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import * as selection from '../device/selection'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
@@ -54,6 +54,8 @@ export interface ImportTextPayload {
 
   // A user session id to associate with the update. Defaults to the current session.
   updatedBy?: string
+
+  caretPosition?: number
 }
 
 /** Imports thoughts from html or raw text. */
@@ -69,6 +71,7 @@ const importText = (
     replaceStart,
     skipRoot,
     updatedBy = getSessionId(),
+    caretPosition = 0,
   }: ImportTextPayload,
 ): State => {
   const isRoam = validateRoam(text)
@@ -112,15 +115,11 @@ const importText = (
       ? ''
       : destValue.slice(0, replaceStart || 0) + destValue.slice(replaceEnd || 0)
 
-    const caretPosition =
-      (replaceStart || window.getSelection()?.focusNode?.nodeType === Node.TEXT_NODE
-        ? selection.offset()
-        : state.cursorOffset) || 0
-
-    const newValue = `${replacedDestValue.slice(0, caretPosition)}${textNormalized}${replacedDestValue.slice(
-      caretPosition,
-    )}`
-    const offset = caretPosition + textNormalized.length
+    const newValue = `${replacedDestValue.slice(
+      0,
+      replaceStart || caretPosition,
+    )}${textNormalized}${replacedDestValue.slice(replaceStart || caretPosition)}`
+    const offset = caretPosition + getTextContentFromHTML(textNormalized).length
 
     return reducerFlow([
       editThought({

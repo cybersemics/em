@@ -593,6 +593,7 @@ const Editable = ({
                 replaceEnd: selection.offsetEnd()!,
               }
             : null),
+          caretPosition: (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0,
         }),
       )
 
