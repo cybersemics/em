@@ -83,5 +83,4 @@ export interface State {
   user?: User
   latestShortcuts: Shortcut[]
   enableLatestShorcutsDiagram: boolean
-  useNativeCaretSelection?: boolean
 }

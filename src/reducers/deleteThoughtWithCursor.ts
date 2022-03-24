@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { cursorBack, deleteThought, setCursor, setNativeCaretSelection } from '../reducers'
+import { cursorBack, deleteThought, setCursor } from '../reducers'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { Path, State } from '../@types'
 
@@ -111,8 +111,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
             [null],
       )(state)
     },
-
-    setNativeCaretSelection({ value: false }),
   ])(state)
 }
 

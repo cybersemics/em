@@ -64,8 +64,6 @@ export const searchLimit = reducerToThunk<typeof reducers.searchLimit>('searchLi
 export const selectionChange = reducerToThunk<typeof reducers.selectionChange>('selectionChange')
 export const setAttribute = reducerToThunk<typeof reducers.setAttribute>('setAttribute')
 export const setCursor = reducerToThunk<typeof reducers.setCursor>('setCursor')
-export const setNativeCaretSelection =
-  reducerToThunk<typeof reducers.setNativeCaretSelection>('setNativeCaretSelection')
 export const setFirstSubthought = reducerToThunk<typeof reducers.setFirstSubthought>('setFirstSubthought')
 export const setNoteFocus = reducerToThunk<typeof reducers.setNoteFocus>('setNoteFocus')
 export const setResourceCache = reducerToThunk<typeof reducers.setResourceCache>('setResourceCache')
