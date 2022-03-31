@@ -19,7 +19,6 @@ interface BulletProps {
   simplePath: SimplePath
   hideBullet?: boolean
   isDragging?: boolean
-  thoughtRef?: React.RefObject<HTMLDivElement>
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -50,29 +49,25 @@ const Bullet = ({
   hideBullet,
   isDragging,
   dark,
-  thoughtRef,
   fontSize,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => {
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
   const svgElement = useRef<SVGSVGElement>(null)
 
-  const { height: thoughtHeight } = thoughtRef?.current?.getBoundingClientRect() || {}
-  const isIOSSafari = isTouch && isiPhone && isSafari()
-  const svgSizeStyle = thoughtHeight
-    ? {
-        height: thoughtHeight,
-        width: thoughtHeight,
-        marginLeft: -thoughtHeight,
-        // Required to make the distance between bullet and thought scale properly at all font sizes.
-        left: (190 / 600) * thoughtHeight,
-      }
-    : {}
+  const lineHeight = fontSize * 1.25
+  const svgSizeStyle = {
+    height: lineHeight,
+    width: lineHeight,
+    marginLeft: -lineHeight,
+    // required to make the distance between bullet and thought scale properly at all font sizes.
+    left: lineHeight * 0.317,
+  }
 
-  // Calculate position of thought for different font sizes
-  const bulletMarginLeft = -20 + (9 + 0.5 * (fontSize - 9))
+  // calculate position of thought for different font sizes
+  const bulletMarginLeft = (fontSize - 9) * 0.5 - 11
 
-  /** Get pixel based center for OSX safari as it can't handle "center" or percentage based values in SVGs. */
+  /** Gets pixel based center for OSX safari as it can't handle "center" or percentage based values in SVGs. */
   const calculateTransformOrigin = () => {
     const isOSXSafari = isMac && isSafari()
     const currentScale = svgElement.current?.currentScale || 1
@@ -81,7 +76,8 @@ const Bullet = ({
     return transformOrigin
   }
 
-  /* Props to pass based on different platforms */
+  // props to pass based on different platforms
+  const isIOSSafari = isTouch && isiPhone && isSafari()
   const vendorSpecificData = isIOSSafari
     ? {
         foregroundShape: {
@@ -114,6 +110,7 @@ const Bullet = ({
         }
 
     const { ellipseRadius, path } = vendorSpecificData.foregroundShape
+
     return leaf ? (
       <ellipse className='glyph-fg' ry={ellipseRadius} rx={ellipseRadius} cy='298' cx='297' {...foregroundShapeProps} />
     ) : (

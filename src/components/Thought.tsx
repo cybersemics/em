@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import { ThunkDispatch } from 'redux-thunk'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
@@ -111,7 +111,6 @@ interface ThoughtProps {
   simplePath: SimplePath
   view?: string | null
   editing?: boolean | null
-  thoughtRef?: React.Ref<HTMLDivElement>
 }
 
 export type ConnectedThoughtProps = ThoughtProps &
@@ -245,7 +244,6 @@ const ThoughtContainer = ({
   editing,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
-  const thoughtRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isBeingHoveredOver) {
@@ -446,7 +444,6 @@ const ThoughtContainer = ({
               hideBullet={hideBullet}
               publish={publish}
               isDragging={isDragging}
-              thoughtRef={thoughtRef}
             />
           )}
 
@@ -483,7 +480,6 @@ const ThoughtContainer = ({
             toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
             view={view}
             editing={editing}
-            thoughtRef={thoughtRef}
           />
 
           <Note path={simplePathLive} />
