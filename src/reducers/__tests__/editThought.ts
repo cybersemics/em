@@ -15,6 +15,7 @@ import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 
 it('edit a thought', () => {
   const steps = [
@@ -62,6 +63,24 @@ it('edit a thought', () => {
 
   // cursor should be at /aa
   expect(stateNew.cursor).toMatchObject([getThoughtIdByContext(stateNew, ['aa'])])
+})
+
+it('edit and format a character', () => {
+  const steps = [
+    newThought('ab'),
+    editThoughtAtFirstMatch({
+      newValue: 'a<b>b</b>',
+      oldValue: 'ab',
+      at: ['ab'],
+    }),
+    newThought(''),
+    deleteThoughtAtFirstMatch(['']),
+  ]
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a**b**`)
 })
 
 it('edit a descendant', () => {
