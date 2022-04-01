@@ -60,7 +60,6 @@ it('create, edit, format and delete empty thought', async () => {
   const editable = wrapper.find('div.editable')
   await editable.simulate('change', { target: { value: 'a<b>b</b>' } })
   windowEvent('keydown', { key: 'Enter' })
-  windowEvent('keydown', { key: 'Backspace' })
 
   // DOM
   wrapper.update()
