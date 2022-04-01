@@ -15,6 +15,7 @@ import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+
 it('edit a thought', () => {
   const steps = [
     newThought({ value: 'a' }),
