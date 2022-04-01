@@ -54,6 +54,19 @@ it('create, navigate, and edit thoughts', async () => {
   expect(aSubthoughts.at(1).text()).toBe('a1')
 })
 
+it('create, edit, format and delete empty thought', async () => {
+  windowEvent('keydown', { key: 'Enter' })
+  wrapper.update()
+  const editable = wrapper.find('div.editable')
+  await editable.simulate('change', { target: { value: 'a<b>b</b>' } })
+  windowEvent('keydown', { key: 'Enter' })
+
+  // DOM
+  wrapper.update()
+  const aEditable = wrapper.find('div.editable')
+  expect(aEditable.at(0).text()).toBe('ab')
+})
+
 // Intermittent test failure. Unable to reproduce locally.
 //   Expected: ""
 //   Received: "Hit the Enter key to add a new thought.A  AFeedback | HelpVersion: 162.0.0"
