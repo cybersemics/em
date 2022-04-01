@@ -65,24 +65,6 @@ it('edit a thought', () => {
   expect(stateNew.cursor).toMatchObject([getThoughtIdByContext(stateNew, ['aa'])])
 })
 
-it('edit and format a character', () => {
-  const steps = [
-    newThought('ab'),
-    editThoughtAtFirstMatch({
-      newValue: 'a<b>b</b>',
-      oldValue: 'ab',
-      at: ['ab'],
-    }),
-    newThought(''),
-    deleteThoughtAtFirstMatch(['']),
-  ]
-  const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a**b**`)
-})
-
 it('edit a descendant', () => {
   const steps = [
     newThought({ value: 'a' }),
