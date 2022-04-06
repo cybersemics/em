@@ -12,7 +12,7 @@ const copyCursorShortcut: Shortcut = {
   keyboard: { key: 'c', meta: true },
   canExecute: getState =>
     // do not copy cursor if there is a browser selection
-    !selection.isActive() && !!getState().cursor && isDocumentEditable(),
+    selection.isCollapsed() && !!getState().cursor && isDocumentEditable(),
   exec: async (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
