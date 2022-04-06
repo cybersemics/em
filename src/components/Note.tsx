@@ -20,6 +20,7 @@ import { Path, State } from '../@types'
 
 interface NoteProps {
   path: Path
+  state: State
 }
 
 /** Sets the cursor on the note's thought as it is being edited. */
@@ -39,8 +40,7 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ path }: NoteProps) => {
-  const state = store.getState()
+const Note = ({ path, state }: NoteProps) => {
   const context = pathToContext(state, path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
