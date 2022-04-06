@@ -3,6 +3,8 @@ import FakeTimer, { InstalledClock } from '@sinonjs/fake-timers'
 
 /**
  * Wraps sinon fake clock to reuse in a test file.
+ * Supposedly the Jest timer is fixed in v28.0.0-alpha.8.
+ * See: https://github.com/facebook/jest/issues/10221.
  */
 const testTimer = () => {
   // eslint-disable-next-line fp/no-let
