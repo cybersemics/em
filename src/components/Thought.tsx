@@ -245,6 +245,7 @@ const ThoughtContainer = ({
   editing,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
+
   useEffect(() => {
     if (isBeingHoveredOver) {
       store.dispatch(

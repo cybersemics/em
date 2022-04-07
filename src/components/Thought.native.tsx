@@ -241,6 +241,7 @@ const ThoughtContainer = ({
   toggleTopControlsAndBreadcrumbs,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
+
   useEffect(() => {
     if (isBeingHoveredOver) {
       store.dispatch(
