@@ -186,7 +186,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     view: attribute(state, contextLive, '=view'),
     parentView: attribute(state, parentOf(contextLive), '=view'),
     editing,
-    state,
+    contextLive,
   }
 }
 
@@ -243,8 +243,8 @@ const ThoughtContainer = ({
   view,
   toggleTopControlsAndBreadcrumbs,
   editing,
-  state,
 }: ConnectedDraggableThoughtContainerProps) => {
+  const state = store.getState()
   useEffect(() => {
     if (isBeingHoveredOver) {
       store.dispatch(
@@ -482,7 +482,7 @@ const ThoughtContainer = ({
             editing={editing}
           />
 
-          <Note state={state} path={simplePathLive} />
+          <Note path={simplePathLive} />
         </div>
 
         {publish && context.length === 0 && <Byline context={thoughts} />}
