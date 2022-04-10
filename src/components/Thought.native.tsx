@@ -184,8 +184,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     publish: !search && publishMode(),
     simplePathLive,
     view: attribute(state, contextLive, '=view'),
-    // Re-renders when context changes. This is necessary because the note component rendered inside Thought Container must be re-rendered to get correct context value to get note attribute value
-    context: contextLive,
   }
 }
 

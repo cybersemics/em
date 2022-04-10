@@ -46,12 +46,6 @@ const Note = ({ path }: NoteProps) => {
   const noteRef: { current: HTMLElement | null } = useRef(null)
   const [justPasted, setJustPasted] = useState(false)
 
-  /** Returns true if this context has a non-pending note.. */
-  const hasNote = useSelector((state: State) => {
-    const noteThought = getThoughtByContext(state, [...context, '=note'])
-    return noteThought && !noteThought.pending
-  })
-
   // set the caret on the note if editing this thought and noteFocus is true
   useEffect(() => {
     const state = store.getState()
@@ -61,9 +55,15 @@ const Note = ({ path }: NoteProps) => {
     }
   }, [state.noteFocus])
 
-  if (!hasNote || isContextViewActive(state, context)) return null
+  /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
+  const note: string | null = useSelector((state: State) => {
+    if (isContextViewActive(state, context)) return null
+    const noteThought = getThoughtByContext(state, [...context, '=note'])
+    if (noteThought?.pending) return null
+    return attribute(state, context, '=note')
+  })
 
-  const note = attribute(state, context, '=note')
+  if (note === null) return null
 
   /** Handles note keyboard shortcuts. */
   const onKeyDown = (e: React.KeyboardEvent) => {
