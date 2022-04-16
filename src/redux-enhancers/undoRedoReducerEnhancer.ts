@@ -212,6 +212,15 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
+      // if an undoable action is of type importText, update inversePatches by removing the last set of patch as this set of patch contains unwanted operations for keys in lexemeIndex which doesn't exist after importText
+      if (actionType === 'importText') {
+        const { inversePatches } = newState
+        return {
+          ...newState,
+          inversePatches: [...newState.inversePatches.slice(0, inversePatches.length - 1)],
+        }
+      }
+
       // combine navigation and thoughtChange actions
       if (
         (NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) ||
