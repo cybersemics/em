@@ -150,10 +150,7 @@ const importText = (
       }),
     )
 
-    // flatten is necessary because htmlToJson can return array within array which in turns causes block.scope to be undefined in importJSON.ts L123
-    const json = isRoam
-      ? _.flatten(roamJsonToBlocks(JSON.parse(sanitizedConvertedText)))
-      : _.flatten(htmlToJson(sanitizedConvertedText))
+    const json = isRoam ? roamJsonToBlocks(JSON.parse(sanitizedConvertedText)) : htmlToJson(sanitizedConvertedText)
 
     const uuid = createId()
 
