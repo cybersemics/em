@@ -195,10 +195,7 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 
   // retrieve first chunk, if the first element is Block and the second is Block[], join children (Block[]) with parent (Block), else return blocks as is.
   const [first, rest] = blocks
-  console.log('rest :', rest)
-  console.log('first :', first)
   const result = !Array.isArray(first) && Array.isArray(rest) ? joinChildren(blocks as Block[]) : (blocks as Block[])
-  console.log('result :', result)
 
   return result
 }
