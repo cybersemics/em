@@ -42,6 +42,7 @@ export { default as search } from './search'
 export { default as splitSentences } from './splitSentences'
 export { default as subcategorizeAll } from './subcategorizeAll'
 export { default as subcategorizeOne, subCategorizeOneShortcutAlias } from './subcategorizeOne'
+export { default as toggleDone } from './toggleDone'
 // @MIGRATION_NOTE: Context view is disabled for the migration.
 // export { default as toggleContextView } from './toggleContextView'
 export { default as toggleHiddenThoughts } from './toggleHiddenThoughts'

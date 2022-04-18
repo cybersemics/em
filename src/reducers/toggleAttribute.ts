@@ -4,13 +4,17 @@ import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '
 import { head, reducerFlow, unroot } from '../util'
 import { Context, State } from '../@types'
 
-/** Toggles the given attribute. */
-const toggleAttribute = (state: State, { context, key, value }: { context: Context; key: string; value: string }) => {
+/** Toggles the given attribute value. If the attribute value exists, deletes the entire attribute. If value is not specified, just toggles the attribute itself. */
+const toggleAttribute = (state: State, { context, key, value }: { context: Context; key: string; value?: string }) => {
   if (!context) return state
 
-  const path = rankThoughtsFirstMatch(state, context.concat(key))
+  const isNullaryAttribute = value === undefined
 
-  return path && attributeEquals(state, context, key, value)
+  const path = rankThoughtsFirstMatch(state, [...context, key])
+
+  const exists = !isNullaryAttribute ? attributeEquals(state, context, key, value!) : hasChild(state, context, key)
+
+  return path && exists
     ? // delete existing attribute
       deleteThought(state, {
         context,
@@ -29,10 +33,12 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
           : null,
 
         // set attribute value
-        setFirstSubthought({
-          context: [...unroot(context), key],
-          value,
-        }),
+        !isNullaryAttribute
+          ? setFirstSubthought({
+              context: [...unroot(context), key],
+              value: value!,
+            })
+          : null,
       ])(state)
 }
 
