@@ -494,7 +494,7 @@ const ThoughtContainer = ({
             const childSimplePath = appendToPath(simplePath, child.id)
             return (
               <Subthoughts
-                key={i}
+                key={child.id}
                 allowSingleContext={allowSingleContext}
                 env={env}
                 path={isHeader ? path : childPath}

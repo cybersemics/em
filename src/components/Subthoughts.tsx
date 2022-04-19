@@ -156,7 +156,17 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, referenceDepth - (props.depth ?? 0)))
     : 0
 
+  // TODO: Memoize childrenFiltered and pass to render instead of using dummy values to force a re-render
   const allChildren = getAllChildren(state, contextLive)
+
+  // encode the children's values and ranks, since the allChildren array will not change when ranks change (i.e. moveThoughtUp/Down)
+  // this can be removed once childrenFiltered is memoized and passed to render
+  const allChildrenValuesAndRanks = allChildren
+    .map(childId => {
+      const child = getThoughtById(state, childId)
+      return `${child?.value}-${child?.rank}`
+    })
+    .join('__SEP__')
 
   const firstChilId = allChildren[0]
 
@@ -307,7 +317,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     // Re-render if children change and when children Thought entry in thoughtIndex is available.
     // Uses getAllChildren for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
-    __allChildren: hasChildrenLoaded ? allChildren : [],
+    __allChildren: hasChildrenLoaded ? allChildren : null,
+    __allChildrenValuesAndRanks: hasChildrenLoaded ? allChildrenValuesAndRanks : null,
     // We need to re-render when actualDistance changes, but it is complicated and expensive.
     // Until actualDistance gets refactored and optimized, we can provide a quick fix for any observed rendering issues.
     // The only rendering issue observed so far is when the cursor changes from a leaf thought in the home context (actualDistance: 1) to null (actualDistance: 0).
@@ -878,7 +889,7 @@ export const SubthoughtsComponent = ({
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
-                key={child.id}
+                key={`${child.id}-${child.rank}`}
                 rank={child.rank}
                 isVisible={
                   // if thought is a zoomed cursor then it is visible
