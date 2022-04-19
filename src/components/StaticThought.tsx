@@ -25,7 +25,7 @@ const StaticThought = ({
   showContexts,
   style,
   simplePath,
-  toggleTopControlsAndBreadcrumbs,
+  onKeyDown,
   editing,
 }: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
@@ -71,7 +71,7 @@ const StaticThought = ({
           showContexts={showContexts}
           style={style}
           simplePath={simplePath}
-          onKeyDownAction={isTouch ? undefined : toggleTopControlsAndBreadcrumbs}
+          onKeyDownAction={isTouch ? undefined : onKeyDown}
         />
       )}
 

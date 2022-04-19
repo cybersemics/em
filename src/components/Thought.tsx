@@ -113,8 +113,7 @@ interface ThoughtProps {
   editing?: boolean | null
 }
 
-export type ConnectedThoughtProps = ThoughtProps &
-  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
+export type ConnectedThoughtProps = ThoughtProps & Pick<ReturnType<typeof mapDispatchToProps>, 'onKeyDown'>
 
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
 
@@ -191,7 +190,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
-  toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
+  onKeyDown: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
 })
 
 /**********************************************************************
@@ -206,42 +205,42 @@ const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
   contextBinding,
-  path,
   cursor,
   cursorOffset,
   depth = 0,
   dragPreview,
   dragSource,
   dropTarget,
+  editing,
   env,
   expandedContextThought,
   hideBullet: hideBulletProp,
-  isDeepHovering,
-  isPublishChild,
+  isBeingHoveredOver,
   isCursorGrandparent,
   isCursorParent,
-  isVisible,
+  isDeepHovering,
   isDragging,
   isEditing,
   isEditingPath,
-  isBeingHoveredOver,
   isExpanded,
   isHeader,
   isHovering,
   isLeaf,
   isMultiColumnTable,
   isParentHovering,
+  isPublishChild,
+  isVisible,
+  onKeyDown,
   parentView,
+  path,
   prevChild,
   publish,
   rank,
   showContexts,
-  style,
   simplePath,
   simplePathLive,
+  style,
   view,
-  toggleTopControlsAndBreadcrumbs,
-  editing,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
 
@@ -477,7 +476,7 @@ const ThoughtContainer = ({
             showContexts={showContexts}
             style={styleNew}
             simplePath={simplePath}
-            toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
+            onKeyDown={onKeyDown}
             view={view}
             editing={editing}
           />

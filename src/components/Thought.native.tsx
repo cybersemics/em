@@ -113,8 +113,7 @@ interface ThoughtProps {
   view?: string | null
 }
 
-export type ConnectedThoughtProps = ThoughtProps &
-  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
+export type ConnectedThoughtProps = ThoughtProps & Pick<ReturnType<typeof mapDispatchToProps>, 'onKeyDown'>
 
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
 
@@ -191,7 +190,7 @@ const { directionRow, alignItemsCenter, marginBottom } = commonStyles
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
-  toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
+  onKeyDown: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
 })
 
 /**********************************************************************
@@ -206,7 +205,6 @@ const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
   contextBinding,
-  path,
   cursor,
   cursorOffset,
   depth = 0,
@@ -216,28 +214,29 @@ const ThoughtContainer = ({
   env,
   expandedContextThought,
   hideBullet: hideBulletProp,
-  isDeepHovering,
-  isPublishChild,
+  isBeingHoveredOver,
   isCursorGrandparent,
   isCursorParent,
+  isDeepHovering,
   isDragging,
   isEditing,
   isEditingPath,
-  isBeingHoveredOver,
   isExpanded,
   isHovering,
   isLeaf,
   isParentHovering,
+  isPublishChild,
   isVisible,
+  onKeyDown,
+  path,
   prevChild,
   publish,
   rank,
   showContexts,
-  style,
   simplePath,
   simplePathLive,
+  style,
   view,
-  toggleTopControlsAndBreadcrumbs,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
 
@@ -420,12 +419,12 @@ const ThoughtContainer = ({
           isVisible={isVisible}
           isPublishChild={isPublishChild}
           isEditing={isEditing}
+          onKeyDown={onKeyDown}
           rank={rank}
           showContextBreadcrumbs={showContextBreadcrumbs}
           showContexts={showContexts}
           style={styleNew}
           simplePath={simplePath}
-          toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
           view={view}
         />
       </View>
