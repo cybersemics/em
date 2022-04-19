@@ -26,7 +26,7 @@
     "build": "react-scripts build",
     "clean": "rm -rf ./node_modules/.cache/eslint-loader",
     "docs": "typedoc --options typedoc.json",
-    "deploy": "npm version major && npm run build && firebase deploy --only hosting",
+    "deploy": "npm run lint && npm version major && npm run build && firebase deploy --only hosting",
     "deploy:functions": "cat ./firebase-config.json | node ./scripts/setFirebaseConfig.js && cd ./functions && npm run build && firebase deploy --only functions",
     "postinstall": "husky install",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output lint:*",
