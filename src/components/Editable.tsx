@@ -133,7 +133,7 @@ interface EditableProps {
     2. It also sets focus to itself on render.
   */
   transient?: boolean
-  onEdit?: () => void
+  onEdit?: (args: { context: Context; path: Path; oldValue: string; newValue: string }) => void
   editing?: boolean | null
 }
 
@@ -357,7 +357,7 @@ const Editable = ({
         dispatch(tutorialNext({}))
       }
 
-      onEdit?.()
+      onEdit?.({ context, path, oldValue, newValue })
     }
   }
 

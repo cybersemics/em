@@ -89,7 +89,7 @@ interface EditableProps {
     2. It also sets focus to itself on render.
   */
   transient?: boolean
-  onEdit?: () => void
+  onEdit?: (args: { context: Context; path: Path; oldValue: string; newValue: string }) => void
 }
 
 interface Alert {
@@ -299,7 +299,7 @@ const Editable = ({
       }
     }
 
-    onEdit?.()
+    onEdit?.({ context, path, oldValue, newValue })
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly

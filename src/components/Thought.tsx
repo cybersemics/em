@@ -191,7 +191,13 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
-  onEdit: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
+  // when the thought is edited, hide the top controls and breadcrumbs for distraction-free typing
+  onEdit: ({ context, oldValue, newValue }: { context: Context; oldValue: string; newValue: string }) => {
+    // only hide when typing, not when deleting
+    if (newValue.length > oldValue.length) {
+      dispatch(toggleTopControlsAndBreadcrumbs(false))
+    }
+  },
 })
 
 /**********************************************************************
