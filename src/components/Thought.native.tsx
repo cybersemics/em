@@ -4,7 +4,7 @@ import { ThunkDispatch } from 'redux-thunk'
 import { connect } from 'react-redux'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import { alert, dragHold, dragInProgress, setCursor } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG, VIEW_MODE } from '../constants'
 import { compareReasonable } from '../util/compareThought'
 import { ThoughtId, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
@@ -113,11 +113,12 @@ interface ThoughtProps {
   view?: string | null
 }
 
-export type ConnectedThoughtProps = ThoughtProps & Pick<ReturnType<typeof mapDispatchToProps>, 'onKeyDown'>
+export type ConnectedThoughtProps = ThoughtProps
 
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
 
-export type ConnectedThoughtDispatchProps = ReturnType<typeof mapDispatchToProps>
+// placeholder since mobile Thought component does not have mapDispatchToProps
+export type ConnectedThoughtDispatchProps = Record<string, never>
 
 const EMPTY_OBJECT = {}
 
@@ -188,11 +189,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
 const { directionRow, alignItemsCenter, marginBottom } = commonStyles
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
-  onKeyDown: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
-})
-
 /**********************************************************************
  * Components
  **********************************************************************/
@@ -227,7 +223,7 @@ const ThoughtContainer = ({
   isParentHovering,
   isPublishChild,
   isVisible,
-  onKeyDown,
+  onEdit,
   path,
   prevChild,
   publish,
@@ -419,7 +415,7 @@ const ThoughtContainer = ({
           isVisible={isVisible}
           isPublishChild={isPublishChild}
           isEditing={isEditing}
-          onKeyDown={onKeyDown}
+          onEdit={onEdit}
           rank={rank}
           showContextBreadcrumbs={showContextBreadcrumbs}
           showContexts={showContexts}
@@ -463,6 +459,6 @@ const styles = (isEditing?: boolean) =>
 ThoughtContainer.displayName = 'ThoughtContainer'
 
 // export connected, drag and drop higher order thought component
-const ThoughtComponent = connect(mapStateToProps, mapDispatchToProps)(ThoughtContainer)
+const ThoughtComponent = connect(mapStateToProps)(ThoughtContainer)
 
 export default ThoughtComponent

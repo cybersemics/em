@@ -32,7 +32,6 @@ import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
-  MODIFIER_KEYS,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -134,7 +133,7 @@ interface EditableProps {
     2. It also sets focus to itself on render.
   */
   transient?: boolean
-  onKeyDownAction?: () => void
+  onEdit?: () => void
   editing?: boolean | null
 }
 
@@ -206,7 +205,7 @@ const Editable = ({
   showContexts,
   rank,
   style,
-  onKeyDownAction,
+  onEdit,
   dispatch,
   transient,
   editing,
@@ -357,6 +356,8 @@ const Editable = ({
       ) {
         dispatch(tutorialNext({}))
       }
+
+      onEdit?.()
     }
   }
 
@@ -744,14 +745,6 @@ const Editable = ({
     }
   }
 
-  /**
-   * Prevents onKeyDownAction call for shift, alt or ctrl keys.
-   */
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key in MODIFIER_KEYS) return
-    onKeyDownAction!()
-  }
-
   // strip formatting tags for clearThought placeholder
   const valueStripped = isCursorCleared ? unescape(strip(value, { preserveFormatting: false })) : null
 
@@ -798,7 +791,6 @@ const Editable = ({
       onBlur={onBlur}
       onChange={onChangeHandler}
       onPaste={onPaste}
-      onKeyDown={onKeyDownAction ? onKeyDown : undefined}
       style={style || {}}
     />
   )

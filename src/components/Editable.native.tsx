@@ -29,7 +29,6 @@ import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
-  MODIFIER_KEYS,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -90,7 +89,7 @@ interface EditableProps {
     2. It also sets focus to itself on render.
   */
   transient?: boolean
-  onKeyDownAction?: () => void
+  onEdit?: () => void
 }
 
 interface Alert {
@@ -154,7 +153,7 @@ const Editable = ({
   showContexts,
   rank,
   style,
-  onKeyDownAction,
+  onEdit,
   dispatch,
   transient,
 }: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
@@ -299,6 +298,8 @@ const Editable = ({
         dispatch(tutorialNext({}))
       }
     }
+
+    onEdit?.()
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
@@ -540,14 +541,6 @@ const Editable = ({
     dispatch(setEditingValue(value))
   }
 
-  /**
-   * Prevents onKeyDownAction call for shift, alt or ctrl keys.
-   */
-  const onKeyDown = ({ key }: { keyCode: number; key: string }) => {
-    if (key in MODIFIER_KEYS) return
-    onKeyDownAction!()
-  }
-
   return (
     <ContentEditable
       disabled={disabled}
@@ -581,7 +574,6 @@ const Editable = ({
       onChange={onChangeHandler}
       onPaste={onPaste}
       isTable={isTableColumn1}
-      onKeyDown={onKeyDownAction ? onKeyDown : undefined}
       style={style || {}}
       isEditing={isEditing}
     />

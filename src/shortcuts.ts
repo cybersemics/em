@@ -2,9 +2,9 @@
 
 import Emitter from 'emitter20'
 import { Store } from 'redux'
-import { isMac, isTouch } from './browser'
+import { isMac } from './browser'
 import globals from './globals'
-import { alert, suppressExpansion, showLatestShortcuts, toggleTopControlsAndBreadcrumbs } from './action-creators'
+import { alert, suppressExpansion, showLatestShortcuts } from './action-creators'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
 import { keyValueBy } from './util/keyValueBy'
 import { GestureResponderEvent } from 'react-native'
@@ -224,11 +224,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
       if (!shortcut.canExecute || shortcut.canExecute(store.getState)) {
         e.preventDefault()
-
-        // dispatch action to hide toolbar and breadcrumbs
-        if (!isTouch) {
-          store.dispatch(toggleTopControlsAndBreadcrumbs(false))
-        }
 
         // execute shortcut
         shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })

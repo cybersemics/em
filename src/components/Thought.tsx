@@ -4,6 +4,7 @@ import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import globals from '../globals'
+import { isTouch } from '../browser'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
@@ -113,7 +114,7 @@ interface ThoughtProps {
   editing?: boolean | null
 }
 
-export type ConnectedThoughtProps = ThoughtProps & Pick<ReturnType<typeof mapDispatchToProps>, 'onKeyDown'>
+export type ConnectedThoughtProps = ThoughtProps & Partial<ReturnType<typeof mapDispatchToProps>>
 
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
 
@@ -190,7 +191,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
-  onKeyDown: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
+  onEdit: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
 })
 
 /**********************************************************************
@@ -230,7 +231,7 @@ const ThoughtContainer = ({
   isParentHovering,
   isPublishChild,
   isVisible,
-  onKeyDown,
+  onEdit,
   parentView,
   path,
   prevChild,
@@ -476,7 +477,7 @@ const ThoughtContainer = ({
             showContexts={showContexts}
             style={styleNew}
             simplePath={simplePath}
-            onKeyDown={onKeyDown}
+            onEdit={!isTouch ? onEdit : undefined}
             view={view}
             editing={editing}
           />
