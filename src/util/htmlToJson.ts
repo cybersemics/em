@@ -120,11 +120,11 @@ const handleBr = (nodes: HimalayaNode[], brIndex: number): HimalayaNode[] => {
 }
 
 /** Append children to parent as children property if it's necessary. */
-const joinChildren = (nodes: Block[] | Block[][]) => {
+const joinChildren = (nodes: (Block | Block[])[]) => {
   // split by chunk with size of 2, first element in chunk is Block - parent, the second is Block[] - children
-  const chunks = _.chunk(nodes as Block[], 2)
+  const chunks = _.chunk(nodes, 2)
   const parentsWithChildren = chunks.map(chunk =>
-    chunk.reduce((accum, node, index) => {
+    chunk.flat().reduce((accum, node, index) => {
       if (index === 0) return node
       return {
         ...accum,
@@ -133,7 +133,7 @@ const joinChildren = (nodes: Block[] | Block[][]) => {
     }),
   )
 
-  return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren.flat()
+  return parentsWithChildren.length === 1 ? parentsWithChildren[0] : parentsWithChildren
 }
 
 /** Converts an <li> element to a Block. */
@@ -195,8 +195,7 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 
   // retrieve first chunk, if the first element is Block and the second is Block[], join children (Block[]) with parent (Block), else return blocks as is.
   const [first, rest] = blocks
-  const result =
-    !Array.isArray(first) && Array.isArray(rest) ? joinChildren(blocks as Block[] | Block[][]) : (blocks as Block[])
+  const result = !Array.isArray(first) && Array.isArray(rest) ? joinChildren(blocks) : (blocks as Block[])
 
   return result
 }
