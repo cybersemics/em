@@ -247,9 +247,12 @@ const Editable = ({
   const setContentInvalidState = (value: boolean) =>
     contentRef.current && contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
 
-  // side effect to set old value ref to head value from updated simplePath.
+  // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
   useEffect(() => {
     oldValueRef.current = value
+    if (isEditing && selection.isThought() && state.editingValue !== value) {
+      dispatch(setEditingValue(value))
+    }
   }, [value])
 
   /** Set or reset invalid state. */
