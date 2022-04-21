@@ -25,13 +25,14 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
   if (!next) return
 
   const path = appendToPath(parentOf(cursor), next.id)
-
+  const context = pathToContext(state, path)
+  const contextParent = pathToContext(state, parentOf(path))
   const isCursorPinned =
-    attributeEquals(state, pathToContext(state, path), '=pin', 'true') ||
-    attributeEquals(state, pathToContext(state, parentOf(path)), '=pinChildren', 'true')
+    attributeEquals(state, context, '=pin', 'true') || attributeEquals(state, contextParent, '=pinChildren', 'true')
+  const isTable = attributeEquals(state, contextParent, '=view', 'Table')
 
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession
-  if (!isCursorPinned) dispatch(suppressExpansion({ duration: 100 }))
+  if (!isCursorPinned && !isTable) dispatch(suppressExpansion({ duration: 100 }))
 
   dispatch(setCursor({ path }))
   scrollCursorIntoView()
