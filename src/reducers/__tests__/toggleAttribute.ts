@@ -97,3 +97,42 @@ it('add attribute if key has already been created', () => {
     - =test
       - hello`)
 })
+
+it('toggle nullary attribute on', () => {
+  const steps = [
+    newThought('a'),
+    toggleAttribute({
+      context: ['a'],
+      key: '=test',
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =test`)
+})
+
+it('toggle nullary attribute off', () => {
+  const steps = [
+    newThought('a'),
+    toggleAttribute({
+      context: ['a'],
+      key: '=test',
+    }),
+    toggleAttribute({
+      context: ['a'],
+      key: '=test',
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a`)
+})

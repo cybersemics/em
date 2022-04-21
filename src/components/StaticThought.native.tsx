@@ -1,5 +1,4 @@
 import React from 'react'
-import { isTouch } from '../browser'
 import { store } from '../store'
 import { getThoughtById, rootedParentOf } from '../selectors'
 import { expandContextThought } from '../action-creators'
@@ -26,7 +25,7 @@ const StaticThought = ({
   showContexts,
   style,
   simplePath,
-  toggleTopControlsAndBreadcrumbs,
+  onEdit,
 }: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
 
@@ -69,7 +68,7 @@ const StaticThought = ({
           showContexts={showContexts}
           style={style}
           simplePath={simplePath}
-          onKeyDownAction={isTouch ? undefined : toggleTopControlsAndBreadcrumbs}
+          onEdit={onEdit}
         />
       )}
 

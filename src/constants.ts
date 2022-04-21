@@ -463,6 +463,13 @@ export const GLOBAL_STYLE_ENV = {
     },
     bullet: 'None',
   },
+  '=done': {
+    style: {
+      color: 'gray',
+      textDecoration: 'line-through',
+    },
+    bullet: null,
+  },
 }
 
 export enum VIEW_MODE {

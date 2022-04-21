@@ -4,6 +4,7 @@ import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import globals from '../globals'
+import { isTouch } from '../browser'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
@@ -113,8 +114,7 @@ interface ThoughtProps {
   editing?: boolean | null
 }
 
-export type ConnectedThoughtProps = ThoughtProps &
-  Pick<ReturnType<typeof mapDispatchToProps>, 'toggleTopControlsAndBreadcrumbs'>
+export type ConnectedThoughtProps = ThoughtProps & Partial<ReturnType<typeof mapDispatchToProps>>
 
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
 
@@ -191,7 +191,13 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
-  toggleTopControlsAndBreadcrumbs: () => dispatch(toggleTopControlsAndBreadcrumbs(false)),
+  // when the thought is edited, hide the top controls and breadcrumbs for distraction-free typing
+  onEdit: ({ context, oldValue, newValue }: { context: Context; oldValue: string; newValue: string }) => {
+    // only hide when typing, not when deleting
+    if (newValue.length > oldValue.length) {
+      dispatch(toggleTopControlsAndBreadcrumbs(false))
+    }
+  },
 })
 
 /**********************************************************************
@@ -206,42 +212,42 @@ const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
   contextBinding,
-  path,
   cursor,
   cursorOffset,
   depth = 0,
   dragPreview,
   dragSource,
   dropTarget,
+  editing,
   env,
   expandedContextThought,
   hideBullet: hideBulletProp,
-  isDeepHovering,
-  isPublishChild,
+  isBeingHoveredOver,
   isCursorGrandparent,
   isCursorParent,
-  isVisible,
+  isDeepHovering,
   isDragging,
   isEditing,
   isEditingPath,
-  isBeingHoveredOver,
   isExpanded,
   isHeader,
   isHovering,
   isLeaf,
   isMultiColumnTable,
   isParentHovering,
+  isPublishChild,
+  isVisible,
+  onEdit,
   parentView,
+  path,
   prevChild,
   publish,
   rank,
   showContexts,
-  style,
   simplePath,
   simplePathLive,
+  style,
   view,
-  toggleTopControlsAndBreadcrumbs,
-  editing,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
 
@@ -477,7 +483,7 @@ const ThoughtContainer = ({
             showContexts={showContexts}
             style={styleNew}
             simplePath={simplePath}
-            toggleTopControlsAndBreadcrumbs={toggleTopControlsAndBreadcrumbs}
+            onEdit={!isTouch ? onEdit : undefined}
             view={view}
             editing={editing}
           />
@@ -494,7 +500,7 @@ const ThoughtContainer = ({
             const childSimplePath = appendToPath(simplePath, child.id)
             return (
               <Subthoughts
-                key={i}
+                key={child.id}
                 allowSingleContext={allowSingleContext}
                 env={env}
                 path={isHeader ? path : childPath}
