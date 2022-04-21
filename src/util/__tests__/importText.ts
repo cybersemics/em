@@ -1139,6 +1139,24 @@ it('import single line with style attributes and a single br tag', () => {
 </ul>`)
 })
 
+it('import nested list', () => {
+  const html = `<div>
+	A
+  <ul>
+		<li>B</li>
+	</ul>
+	<ul>
+		<li>C</li>
+	</ul>
+</div>`
+  const stateNew = importText(initialState(), { text: html })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - B
+  - C`)
+})
+
 it('import raw state', () => {
   // raw thought state with two thoughts: a/b
   // most of this is settings, but keep them for completeness
