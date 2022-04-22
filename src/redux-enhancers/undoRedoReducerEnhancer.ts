@@ -212,12 +212,17 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // if an undoable action is of type importText, update inversePatches by removing the last set of patch as this set of patch contains unwanted operations for keys in lexemeIndex which doesn't exist after importText
+      // if an undoable action is of type importText, update inversePatches adding latest patch of actions which contains accurate patches for importText action
       if (actionType === 'importText') {
-        const { inversePatches } = newState
+        // we do not want to update inversePatches  when importText runs initially for tutorial event
+        if (!newState.inversePatches.length) {
+          return newState
+        }
+        lastActionType = actionType
+        const inversePatch = compareWithOmit(newState as Index, state)
         return {
           ...newState,
-          inversePatches: [...newState.inversePatches.slice(0, inversePatches.length - 1)],
+          inversePatches: [...state.inversePatches.slice(0, -1), addActionsToPatch(inversePatch, [actionType])],
         }
       }
 
@@ -273,7 +278,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         ? {
             ...newState,
             patches: [],
-            inversePatches: [...newState.inversePatches, addActionsToPatch(inversePatch, [action.type])],
+            inversePatches: [...newState.inversePatches, addActionsToPatch(inversePatch, [lastActionType])],
           }
         : newState
     }
