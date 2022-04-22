@@ -212,17 +212,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // if an undoable action is of type importText, update inversePatches adding latest patch of actions which contains accurate patches for importText action
+      // importText undoable action type requires a particular check before updating inverse patches as it runs a first time during app initialisation. We want to avoid this because it clutters inverse patches with a lot of unwanted actions that are specifically related with app initialisation and not particularly with NAVIGATION or other UNDOABLE actions.
+      // Cluttering inverse patches wirh unwanted actions can lead to undoing/redoing of actions such as showing up tutorial sections upon further undoing (as it is still executable beacuse of those inverse patches) which we want to avoid here.
       if (actionType === 'importText') {
-        // we do not want to update inversePatches  when importText runs initially for tutorial event
+        // we do not want to update inversePatches  when importText runs initially (during app initialisation)
         if (!newState.inversePatches.length) {
           return newState
-        }
-        lastActionType = actionType
-        const inversePatch = compareWithOmit(newState as Index, state)
-        return {
-          ...newState,
-          inversePatches: [...state.inversePatches.slice(0, -1), addActionsToPatch(inversePatch, [actionType])],
         }
       }
 
