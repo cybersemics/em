@@ -303,7 +303,11 @@ const Toolbar = ({
                       <Shortcut {...shortcut} />
                     </div>
                   ) : null}
-                  <div className='overlay-body'>{shortcut.description}</div>
+                  <div className='overlay-body'>
+                    {typeof shortcut.description === 'function'
+                      ? shortcut.description(store.getState)
+                      : shortcut.description}
+                  </div>
                 </div>
               </CSSTransition>
             ) : null}
