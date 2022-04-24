@@ -212,7 +212,15 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // combine navigation and thoughtChange actions
+      // ignore the first importText since it is part of app initialization and should not be undone
+      // otherwise the edit merge logic below will create an inverse patch with an invalid lexemeIndex/000
+      // https://github.com/cybersemics/em/issues/1494
+      if (actionType === 'importText' && !newState.inversePatches.length) {
+        return newState
+      }
+
+      // edit merge logic
+      // combine navigation and thoughtChange actions into single patches
       if (
         (NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) ||
         (iseditThought(lastActionType) && iseditThought(actionType)) ||
@@ -264,7 +272,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         ? {
             ...newState,
             patches: [],
-            inversePatches: [...newState.inversePatches, addActionsToPatch(inversePatch, [action.type])],
+            inversePatches: [...newState.inversePatches, addActionsToPatch(inversePatch, [lastActionType])],
           }
         : newState
     }

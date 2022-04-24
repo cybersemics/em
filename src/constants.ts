@@ -277,6 +277,7 @@ export const UNDOABLE_ACTIONS: Index<string> = {
   moveThought: 'moveThought',
   expandContextThought: 'expandContextThought',
   indent: 'indent',
+  importText: 'importText',
   moveThoughtDown: 'moveThoughtDown',
   moveThoughtUp: 'moveThoughtUp',
   newThought: 'newThought',
