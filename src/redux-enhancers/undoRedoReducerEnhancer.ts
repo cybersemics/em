@@ -212,16 +212,15 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // importText undoable action type requires a particular check before updating inverse patches as it runs a first time during app initialisation. We want to avoid this because it clutters inverse patches with a lot of unwanted actions that are specifically related with app initialisation and not particularly with NAVIGATION or other UNDOABLE actions.
-      // Cluttering inverse patches wirh unwanted actions can lead to undoing/redoing of actions such as showing up tutorial sections upon further undoing (as it is still executable beacuse of those inverse patches) which we want to avoid here.
-      if (actionType === 'importText') {
-        // we do not want to update inversePatches  when importText runs initially (during app initialisation)
-        if (!newState.inversePatches.length) {
-          return newState
-        }
+      // ignore the first importText since it is part of app initialization and should not be undone
+      // otherwise the edit merge logic below will create an inverse patch with an invalid lexemeIndex/000
+      // https://github.com/cybersemics/em/issues/1494
+      if (actionType === 'importText' && !newState.inversePatches.length) {
+        return newState
       }
 
-      // combine navigation and thoughtChange actions
+      // edit merge logic
+      // combine navigation and thoughtChange actions into single patches
       if (
         (NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) ||
         (iseditThought(lastActionType) && iseditThought(actionType)) ||
