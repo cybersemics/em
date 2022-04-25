@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { applyPatch, compare } from 'fast-json-patch'
+import { Operation, applyPatch, compare } from 'fast-json-patch'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import { Index, Patch, State, ThoughtId } from '../@types'
@@ -8,7 +8,8 @@ import { reducerFlow } from '../util'
 import { produce } from 'immer'
 import { getThoughtById } from '../selectors'
 
-const stateSectionsToOmit = ['alert', 'pushQueue', 'user']
+/** These properties are ignored when generating state patches. */
+const statePropertiesToOmit = ['alert', 'pushQueue', 'user']
 
 /**
  * Manually recreate the pushQueue for thought and thought index updates from patches.
@@ -52,35 +53,18 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
   }
 }
 
-const deadActionChecks: Index<(patch: Patch) => boolean> = {
-  // None
-}
+/**
+ * Returns the diff between two states as a json-fast-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
+ */
+const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
+  compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
 
 /**
- * Checks if the patch only includes the opearations that don't impact the UI, and can be dispensed.
+ * Append action names to all operations of a Patch.
  */
-const isDispensable = (patch: Patch) => Object.values(deadActionChecks).reduce((acc, curr) => acc || curr(patch), false)
-
-/**
- * Combines two patches by appending operations from the latter to the former.
- */
-const appendPatch = (patch: Patch, toAppend: Patch) => [...patch, ...toAppend]
-
-/**
- * Returns the diff between two state values after omitting certain parts of them.
- */
-const compareWithOmit = <T>(newValue: Index<T>, value: Index<T>): Patch =>
-  compare(_.omit(newValue, stateSectionsToOmit), _.omit(value, stateSectionsToOmit)) as Patch
-
-/**
- * Checks if the action type is editThought.
- */
-const iseditThought = (actionType: string) => actionType === 'editThought'
-
-/**
- * Append actions to all operations of a patch.
- */
-const addActionsToPatch = (patch: Patch, actions: string[]) => patch.map(operation => ({ ...operation, actions }))
+const addActionsToPatch = (patch: Operation[], actions: string[]): Patch =>
+  // TODO: Fix Patch type to support any Operation, not just GetOperation. See Patch.ts.
+  patch.map(operation => ({ ...operation, actions })) as Patch
 
 /**
  * Gets the first action from a patch.
@@ -93,83 +77,79 @@ const getPatchAction = (patch: Patch) => patch[0]?.actions[0]
 const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
 
 /**
- * Applies the last inverse-patch to get the next state and adds a corresponding reverse-patch for the same.
+ * Undoes a single action. Applies the last inverse-patch to get the next state and adds a corresponding reverse-patch for the same.
  */
-const undoReducer = (state: State) => {
-  const { patches, inversePatches } = state
-  const lastInversePatch = nthLast(inversePatches, 1)
-  if (!lastInversePatch) return state
-  const newState = produce(state, (state: State) => applyPatch(state, lastInversePatch).newDocument)
-  const correspondingPatch = addActionsToPatch(compareWithOmit(newState as Index, state), [
-    ...lastInversePatch[0].actions,
-  ])
+const undoOneReducer = (state: State) => {
+  const { redoPatches, undoPatches } = state
+  const lastUndoPatch = nthLast(undoPatches, 1)
+  if (!lastUndoPatch) return state
+  const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
+  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0].actions])
   return {
     ...newState,
-    patches: [...patches, correspondingPatch],
-    inversePatches: inversePatches.slice(0, -1),
+    redoPatches: [...redoPatches, correspondingRedoPatch],
+    undoPatches: undoPatches.slice(0, -1),
   }
 }
 
 /**
- * Applies the last patch to get the next state and adds a corresponding inverse patch for the same.
+ * Redoes a single action. Applies the last patch to get the next state and adds a corresponding undo patch for the same.
  */
-const redoReducer = (state: State) => {
-  const { patches, inversePatches } = state
-  const lastPatch = nthLast(patches, 1)
-  if (!lastPatch) return state
-  const newState = produce(state, (state: State) => applyPatch(state, lastPatch).newDocument)
-  const correspondingInversePatch = addActionsToPatch(compareWithOmit(newState as Index, state), [
-    ...lastPatch[0].actions,
-  ])
+const redoOneReducer = (state: State) => {
+  const { redoPatches, undoPatches } = state
+  const lastRedoPatch = nthLast(redoPatches, 1)
+  if (!lastRedoPatch) return state
+  const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
+  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0].actions])
   return {
     ...newState,
-    patches: patches.slice(0, -1),
-    inversePatches: [...inversePatches, correspondingInversePatch],
+    redoPatches: redoPatches.slice(0, -1),
+    undoPatches: [...undoPatches, correspondingUndoPatch],
   }
 }
 
 /**
- * Controls the number of undo operations based on the inversepatch history.
+ * Controls the number of undo operations based on the undo history.
  */
-const undoHandler = (state: State, inversePatches: Patch[]) => {
-  const lastInversePatch = nthLast(inversePatches, 1)
-  const lastAction = lastInversePatch && getPatchAction(lastInversePatch)
-  const penultimateInversePatch = nthLast(inversePatches, 2)
-  const penultimateAction = penultimateInversePatch && getPatchAction(penultimateInversePatch)
+const undoReducer = (state: State, undoPatches: Patch[]) => {
+  const lastUndoPatch = nthLast(undoPatches, 1)
+  const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
+  const penultimateUndoPatch = nthLast(undoPatches, 2)
+  const penultimateAction = penultimateUndoPatch && getPatchAction(penultimateUndoPatch)
 
-  if (!inversePatches.length) return state
+  if (!undoPatches.length) return state
 
   const undoTwice =
-    penultimateInversePatch &&
+    penultimateUndoPatch &&
     !!(
       (lastAction && NAVIGATION_ACTIONS[lastAction]) ||
       (penultimateAction && (NAVIGATION_ACTIONS[penultimateAction] || penultimateAction === 'newThought'))
     )
 
-  const poppedInversePatches = undoTwice ? [penultimateInversePatch, lastInversePatch] : [lastInversePatch]
+  const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 
   return reducerFlow([
-    undoTwice ? undoReducer : null,
-    undoReducer,
-    newState => restorePushQueueFromPatches(newState, state, poppedInversePatches.flat()),
+    undoTwice ? undoOneReducer : null,
+    undoOneReducer,
+    newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
   ])(state)
 }
 
 /**
  * Controls the number of redo operations based on the patch history.
  */
-const redoHandler = (state: State, patches: Patch[]) => {
-  const lastPatch = nthLast(patches, 1)
-  const lastAction = lastPatch && getPatchAction(lastPatch)
+const redoReducer = (state: State, redoPatches: Patch[]) => {
+  const lastRedoPatch = nthLast(redoPatches, 1)
+  const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
 
-  if (!patches.length) return state
+  if (!redoPatches.length) return state
 
   const redoTwice = lastAction && (NAVIGATION_ACTIONS[lastAction] || lastAction === 'newThought')
 
-  const poppedPatches = redoTwice ? [nthLast(patches, 2), lastPatch] : [lastPatch]
+  const poppedPatches = redoTwice ? [nthLast(redoPatches, 2), lastRedoPatch] : [lastRedoPatch]
   return reducerFlow([
-    redoTwice ? redoReducer : null,
-    redoReducer,
+    redoTwice ? redoOneReducer : null,
+    redoOneReducer,
     newState => restorePushQueueFromPatches(newState, state, poppedPatches.flat()),
   ])(state)
 }
@@ -184,25 +164,25 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
     let lastActionType: string
 
     /**
-     * Reducer to handle undo/redo actions and add/merge inverse-patches for other actions.
+     * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
      */
     const undoAndRedoReducer = (state: State | undefined = initialState, action: A): State => {
       if (!state) return reducer(initialState, action)
-      const { patches, inversePatches } = state as State
+      const { redoPatches, undoPatches } = state as State
       const actionType = action.type
 
       const undoOrRedoState =
         actionType === 'undoAction'
-          ? undoHandler(state, inversePatches)
+          ? undoReducer(state, undoPatches)
           : actionType === 'redoAction'
-          ? redoHandler(state, patches)
+          ? redoReducer(state, redoPatches)
           : null
 
       if (undoOrRedoState) {
         // do not omit pushQueue because that includes updates added by updateThoughts
         const omitted = _.pick(
           state,
-          stateSectionsToOmit.filter(k => k !== 'pushQueue'),
+          statePropertiesToOmit.filter(k => k !== 'pushQueue'),
         )
         return { ...undoOrRedoState, ...omitted }
       }
@@ -213,32 +193,32 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       }
 
       // ignore the first importText since it is part of app initialization and should not be undone
-      // otherwise the edit merge logic below will create an inverse patch with an invalid lexemeIndex/000
+      // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
       // https://github.com/cybersemics/em/issues/1494
-      if (actionType === 'importText' && !newState.inversePatches.length) {
+      if (actionType === 'importText' && !newState.undoPatches.length) {
         return newState
       }
 
       // edit merge logic
-      // combine navigation and thoughtChange actions into single patches
+      // combine navigation and thoughtChange actions into single redoPatches
       if (
         (NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) ||
-        (iseditThought(lastActionType) && iseditThought(actionType)) ||
+        (lastActionType === 'editThought' && actionType === 'editThought') ||
         actionType === 'closeAlert'
       ) {
         lastActionType = actionType
-        const lastInversePatch = nthLast(state.inversePatches, 1)
+        const lastUndoPatch = nthLast(state.undoPatches, 1)
         const lastState =
-          lastInversePatch && lastInversePatch.length > 0
-            ? produce(state, (state: State) => applyPatch(state, lastInversePatch).newDocument)
+          lastUndoPatch && lastUndoPatch.length > 0
+            ? produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
             : state
-        const combinedInversePatch = compareWithOmit(newState as Index, lastState)
+        const combinedUndoPatch = diffState(newState as Index, lastState)
         return {
           ...newState,
-          inversePatches: [
-            ...newState.inversePatches.slice(0, -1),
-            addActionsToPatch(combinedInversePatch, [
-              ...(lastInversePatch && lastInversePatch.length > 0 ? lastInversePatch[0].actions : []),
+          undoPatches: [
+            ...newState.undoPatches.slice(0, -1),
+            addActionsToPatch(combinedUndoPatch, [
+              ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0].actions : []),
               actionType,
             ]),
           ],
@@ -247,32 +227,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       lastActionType = actionType
 
-      // add a new inverse patch
-      const inversePatch = compareWithOmit(newState as Index, state)
+      // add a new undo patch
+      const undoPatch = diffState(newState as Index, state)
 
-      // if the patch is dispensable, combine it with the last patch
-      // Note: we can't simply ignore a dispensable patch because that would result in
-      // inconsistencies between the original state, and the one built using patches
-      if (isDispensable(inversePatch)) {
-        const lastPatch = nthLast(inversePatches, 1)
-        return {
-          ...newState,
-          patches: [],
-          inversePatches: [
-            ...newState.inversePatches.slice(0, -1),
-            addActionsToPatch(lastPatch ? appendPatch(lastPatch, inversePatch) : inversePatch, [
-              ...(lastPatch ? lastPatch[0].actions : []),
-              actionType,
-            ]),
-          ],
-        }
-      }
-
-      return inversePatch.length
+      return undoPatch.length
         ? {
             ...newState,
-            patches: [],
-            inversePatches: [...newState.inversePatches, addActionsToPatch(inversePatch, [lastActionType])],
+            redoPatches: [],
+            undoPatches: [...newState.undoPatches, addActionsToPatch(undoPatch, [lastActionType])],
           }
         : newState
     }
