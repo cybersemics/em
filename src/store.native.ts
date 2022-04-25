@@ -15,7 +15,7 @@ import appReducer from './reducers/app'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
 
 // disabled until deepClone performance can be fixed
-// import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
+// import undoRedoEnhancer from './redux-enhancers/undoRedoEnhancer'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -33,6 +33,6 @@ export const store = createStore(
       pullQueue, */
       // updateUrlHistory
     ),
-    /* undoRedoReducerEnhancer, */ cursorChangedEnhancer,
+    /* undoRedoEnhancer, */ cursorChangedEnhancer,
   ),
 )
