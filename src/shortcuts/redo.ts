@@ -8,7 +8,15 @@ import { getLatestActionType } from '../util/getLastActionType'
 const redoShortcut: Shortcut = {
   id: 'redo',
   label: 'Redo',
-  description: 'Redo',
+  description: getState => {
+    const lastActionType = getLatestActionType(getState().patches)
+
+    if (lastActionType) {
+      return `Redo ${startCase(lastActionType)}`
+    }
+
+    return 'Redo'
+  },
   svg: RedoIcon,
   exec: (dispatch, getState) => {
     if (!isRedoEnabled(getState())) return
