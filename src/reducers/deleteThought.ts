@@ -217,7 +217,8 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     ...descendantUpdatesResult.thoughtIndex,
   }
 
-  const isDeletedThoughtCursor = !!path && !!state.cursor && equalArrays(state.cursor, path)
+  const isDeletedThoughtCursor =
+    (!!path && !!state.cursor && equalArrays(state.cursor, path)) || !deletedThought.sortValue // checks whether it is an empty thought or not, if deletedThought doesn't have sortValue then it's an empty thought
 
   const isCursorDescendantOfDeletedThought = !!path && !!state.cursor && isDescendant(path, state.cursor)
 
