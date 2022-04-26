@@ -6,10 +6,11 @@ import {
   getLexeme,
   getThoughtById,
   hasLexeme,
+  prevSibling,
   rankThoughtsFirstMatch,
   rootedParentOf,
 } from '../selectors'
-import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
+import { ThoughtId, Context, Index, Lexeme, Thought, State, Path } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -217,8 +218,10 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     ...descendantUpdatesResult.thoughtIndex,
   }
 
-  const isDeletedThoughtCursor =
-    (!!path && !!state.cursor && equalArrays(state.cursor, path)) || !deletedThought.sortValue // checks whether it is an empty thought or not, if deletedThought doesn't have sortValue then it's an empty thought
+  // calculate prev thought to update the correct cursor path after thought deletion
+  const prevThought = prevSibling(state, deletedThought.value, [deletedThought.parentId], deletedThought.rank)
+
+  const isDeletedThoughtCursor = !!path && !!state.cursor && equalArrays(state.cursor, path)
 
   const isCursorDescendantOfDeletedThought = !!path && !!state.cursor && isDescendant(path, state.cursor)
 
@@ -230,7 +233,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     state => ({
       ...state,
       contextViews: contextViewsNew,
-      cursor: cursorNew,
+      cursor: prevThought ? ([prevThought.id] as Path) : cursorNew,
     }),
     updateThoughts({
       thoughtIndexUpdates,
