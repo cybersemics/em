@@ -12,7 +12,16 @@ import {
 } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State, Path } from '../@types'
 import { getSessionId } from '../util/sessionManager'
-import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
+import {
+  equalArrays,
+  hashThought,
+  isDescendant,
+  parentOf,
+  reducerFlow,
+  removeContext,
+  timestamp,
+  unroot,
+} from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface Payload {
@@ -226,14 +235,19 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   const isCursorDescendantOfDeletedThought = !!path && !!state.cursor && isDescendant(path, state.cursor)
 
   // if the deleted thought is the cursor or a descendant of the cursor, we need to calculate a new cursor.
+  // if prevThought exists infer path from deleted thought to cursorNew.
   const cursorNew =
-    isDeletedThoughtCursor || isCursorDescendantOfDeletedThought ? rootedParentOf(state, path!) : state.cursor
+    prevThought && state.cursor
+      ? [...parentOf(state.cursor), prevThought.id]
+      : isDeletedThoughtCursor || isCursorDescendantOfDeletedThought
+      ? rootedParentOf(state, path!)
+      : state.cursor
 
   return reducerFlow([
     state => ({
       ...state,
       contextViews: contextViewsNew,
-      cursor: prevThought ? ([prevThought.id] as Path) : cursorNew,
+      cursor: cursorNew as Path,
     }),
     updateThoughts({
       thoughtIndexUpdates,
