@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getLexeme, getAllChildren, getThoughtByContext, getThoughtById } from '../selectors'
+import { getNextRank, getLexeme, getAllChildren, contextToThought, getThoughtById } from '../selectors'
 import { createId, hashThought, head, timestamp } from '../util'
 import { Context, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { getSessionId } from '../util/sessionManager'
@@ -35,7 +35,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
 
   // store children indexed by the encoded context for O(1) lookup of children
   // @MIGRATION_NOTE: getThought cannot find paths with context views.
-  const thought = getThoughtByContext(state, contextActual)
+  const thought = contextToThought(state, contextActual)
 
   if (!thought) return state
 

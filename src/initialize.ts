@@ -5,7 +5,7 @@ import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import {
   getContexts,
-  getThoughtByContext,
+  contextToThought,
   getLexeme,
   getChildrenRanked,
   isPending,
@@ -209,7 +209,7 @@ const windowEm = {
   testHelpers,
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
-  getThoughtByContext: withState(getThoughtByContext),
+  contextToThought: withState(contextToThought),
   getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
   getChildrenRanked: withState(getChildrenRanked),
   getThoughtIdByContext,
