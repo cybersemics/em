@@ -6,7 +6,7 @@ import {
   getAllChildren,
   getLexeme,
   contextToThought,
-  getParentThought,
+  parentOfThought,
 } from '../../selectors'
 import { newThought, importText } from '../../reducers'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
@@ -93,7 +93,7 @@ it('edit a descendant', () => {
   // aa1 should exist in context a
   expect(getContexts(stateNew, 'aa1')).toMatchObject([aa1Id])
 
-  const parent = getParentThought(stateNew, aa1Id)
+  const parent = parentOfThought(stateNew, aa1Id)
   expect(parent?.id).toBe(aId)
 
   expect(getAllChildren(stateNew, ['a'])).toMatchObject([aa1Id])

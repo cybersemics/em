@@ -15,7 +15,7 @@ import {
   prevSibling,
   simplifyPath,
   thoughtsEditingFromChain,
-  getParentThought,
+  parentOfThought,
   getThoughtById,
 } from '../selectors'
 
@@ -53,7 +53,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     const prevContext = once(() => {
       const contexts = getContextsSortedAndRanked(state, headValue(state, thoughtsContextView))
       const removedThoughtIndex = contexts.findIndex(({ id }) => {
-        const parentThought = getParentThought(state, id)
+        const parentThought = parentOfThought(state, id)
         return parentThought?.value === value
       })
       return contexts[removedThoughtIndex - 1]

@@ -19,7 +19,7 @@ export { getDescendantContexts, getDescendantThoughtIds, someDescendants } from 
 export { default as getEditingPath } from './getEditingPath'
 export { default as getNextRank } from './getNextRank'
 export { default as getNgrams } from './getNgrams'
-export { default as getParentThought } from './getParentThought'
+export { default as parentOfThought } from './parentOfThought'
 export { default as getPrevRank } from './getPrevRank'
 export { default as getRankAfter } from './getRankAfter'
 export { default as getRankBefore } from './getRankBefore'

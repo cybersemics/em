@@ -23,12 +23,12 @@ import {
   strip,
   unroot,
 } from '../util'
-import getParentThought from './getParentThought'
+import parentOfThought from './parentOfThought'
 import { getAllChildrenAsThoughtsById } from './getChildren'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (state: State, child: ThoughtId | ThoughtContext, showContexts: boolean) =>
-  showContexts ? getParentThought(state, child)!.value : getThoughtById(state, child)?.value
+  showContexts ? parentOfThought(state, child)!.value : getThoughtById(state, child)?.value
 
 /** Returns true if the context is in table view. */
 const isTable = (state: State, context: Context) => attributeEquals(state, context, '=view', 'Table')

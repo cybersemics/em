@@ -3,7 +3,7 @@ import { getAllChildren, getThoughtById, contextToPath } from '../selectors'
 import { hashThought, head, unroot } from '../util'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import { ThoughtId, SimplePath, State, ThoughtContext } from '../@types'
-import getParentThought from './getParentThought'
+import parentOfThought from './parentOfThought'
 import thoughtToContext from './thoughtToContext'
 import { getAllChildrenAsThoughts } from './getChildren'
 
@@ -11,7 +11,7 @@ import { getAllChildrenAsThoughts } from './getChildren'
 const resolve = (state: State, child: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>
   resolveArray([
     // slow, but ensures getChildPath doesn't get memoized when children change
-    showContexts && getParentThought(state, child)!.value
+    showContexts && parentOfThought(state, child)!.value
       ? resolvePath(getAllChildren(state, thoughtToContext(state, child)!))
       : '',
     child,
@@ -24,7 +24,7 @@ const getChildPath = _.memoize(
   (state: State, child: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean): SimplePath => {
     const simplePathHeadThought = getThoughtById(state, head(simplePath))
     const otherSubthought = (
-      showContexts && getParentThought(state, child)!.id
+      showContexts && parentOfThought(state, child)!.id
         ? getAllChildrenAsThoughts(state, thoughtToContext(state, child)!)
         : []
     ).find(child => hashThought(child.value) === hashThought(simplePathHeadThought.value))?.id

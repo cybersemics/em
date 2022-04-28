@@ -29,7 +29,7 @@ import {
   prevSibling,
   splitChain,
   thoughtsEditingFromChain,
-  getParentThought,
+  parentOfThought,
   getPrevRank,
   getThoughtById,
 } from '../selectors'
@@ -98,11 +98,11 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
     const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(state, thoughtsContextView)) : []
     const contextsFiltered = contexts.filter(({ id }) => {
-      const parentThought = getParentThought(state, id)
+      const parentThought = parentOfThought(state, id)
       return parentThought?.value !== '=archive'
     })
     const removedThoughtIndex = contextsFiltered.findIndex(({ id }) => {
-      const parentThought = getParentThought(state, id)
+      const parentThought = parentOfThought(state, id)
       return parentThought?.value === headValue(state, path)
     })
 
@@ -115,11 +115,11 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     const thoughtsContextView = thoughtsEditingFromChain(state, path)
     const contexts = showContexts ? getContextsSortedAndRanked(state, headValue(state, thoughtsContextView)) : []
     const contextsFiltered = contexts.filter(({ id }) => {
-      const parentThought = getParentThought(state, id)
+      const parentThought = parentOfThought(state, id)
       return parentThought?.value !== '=archive'
     })
     const removedThoughtIndex = contextsFiltered.findIndex(({ id }) => {
-      const parentThought = getParentThought(state, id)
+      const parentThought = parentOfThought(state, id)
       return parentThought?.value === headValue(state, path)
     })
     const nextContext = contextsFiltered[removedThoughtIndex + 1]
