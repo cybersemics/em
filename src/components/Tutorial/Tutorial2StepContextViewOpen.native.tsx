@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
 
-import { getThoughtIdByContext } from '../../util'
+import { contextToThoughtId } from '../../util'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 
 // selectors
@@ -33,7 +33,7 @@ const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }: 
   const state = useStore<State>().getState()
 
   const cursorThoughts = childIdsToThoughts(state, cursor)
-  const context = getThoughtIdByContext(state, [
+  const context = contextToThoughtId(state, [
     (cursorThoughts && doStringsMatch(cursorThoughts[0].value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])
       ? TUTORIAL_CONTEXT1_PARENT
       : TUTORIAL_CONTEXT2_PARENT)[tutorialChoice],

@@ -1,6 +1,6 @@
 import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
-import { getThoughtIdByContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
+import { contextToThoughtId, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
 import { exportContext, getLexeme, contextToThought, contextToPath } from '../../selectors'
 import { importText, newThought } from '../../reducers'
@@ -45,7 +45,7 @@ it('basic import with proper thought structure', () => {
   const childBId = contextToThought(stateNew, ['a'])?.children[0]
 
   expect(thoughtIndex).toMatchObject({
-    [getThoughtIdByContext(stateNew, [EM_TOKEN])!]: {
+    [contextToThoughtId(stateNew, [EM_TOKEN])!]: {
       id: EM_TOKEN,
       children: [],
       lastUpdated: never(),
@@ -53,22 +53,22 @@ it('basic import with proper thought structure', () => {
       pending: true,
       rank: 0,
     },
-    [getThoughtIdByContext(stateNew, [HOME_TOKEN])!]: {
+    [contextToThoughtId(stateNew, [HOME_TOKEN])!]: {
       children: [childAId],
     },
-    [getThoughtIdByContext(stateNew, [ABSOLUTE_TOKEN])!]: {
+    [contextToThoughtId(stateNew, [ABSOLUTE_TOKEN])!]: {
       id: ABSOLUTE_TOKEN,
       children: [],
       lastUpdated: never(),
       pending: true,
     },
-    [getThoughtIdByContext(stateNew, ['a'])!]: {
+    [contextToThoughtId(stateNew, ['a'])!]: {
       id: childAId,
       value: 'a',
       rank: 0,
       children: [childBId],
     },
-    [getThoughtIdByContext(stateNew, ['a', 'b'])!]: {
+    [contextToThoughtId(stateNew, ['a', 'b'])!]: {
       id: childBId,
       value: 'b',
       rank: 0,
@@ -76,7 +76,7 @@ it('basic import with proper thought structure', () => {
     },
   })
 
-  expect(thoughtIndex[getThoughtIdByContext(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
+  expect(thoughtIndex[contextToThoughtId(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
 
   expect(lexemeIndex).toMatchObject({
     [hashThought(HOME_TOKEN)]: {
@@ -166,7 +166,7 @@ it('merge descendants', () => {
   const thoughtJ = contextToThought(newState, ['j'])!
 
   expect(thoughtIndex).toMatchObject({
-    [getThoughtIdByContext(newState, [HOME_TOKEN])!]: {
+    [contextToThoughtId(newState, [HOME_TOKEN])!]: {
       children: [thoughtA.id, thoughtJ.id],
     },
     [thoughtA.id]: {
@@ -503,10 +503,7 @@ it('replace empty cursor without affecting siblings', () => {
     - y
     - d`)
 
-  expect(stateNew.cursor).toMatchObject([
-    getThoughtIdByContext(stateNew, ['a']),
-    getThoughtIdByContext(stateNew, ['a', 'y']),
-  ])
+  expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['a']), contextToThoughtId(stateNew, ['a', 'y'])])
 })
 
 it('import as subthoughts of non-empty cursor', () => {
@@ -1141,13 +1138,13 @@ it('import single line with style attributes and a single br tag', () => {
 
 it('import nested list', () => {
   const html = `<div>
-	A
+  A
   <ul>
-		<li>B</li>
-	</ul>
-	<ul>
-		<li>C</li>
-	</ul>
+    <li>B</li>
+  </ul>
+  <ul>
+    <li>C</li>
+  </ul>
 </div>`
   const stateNew = importText(initialState(), { text: html })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')

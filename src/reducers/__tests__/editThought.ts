@@ -1,5 +1,5 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { getThoughtIdByContext, initialState, reducerFlow } from '../../util'
+import { contextToThoughtId, initialState, reducerFlow } from '../../util'
 import {
   exportContext,
   getContexts,
@@ -47,13 +47,13 @@ it('edit a thought', () => {
 
   expect(getAllChildrenAsThoughts(stateNew, [HOME_TOKEN])).toMatchObject([
     {
-      id: getThoughtIdByContext(stateNew, ['b'])!,
+      id: contextToThoughtId(stateNew, ['b'])!,
       value: 'b',
       parentId: HOME_TOKEN,
       rank: 1,
     },
     {
-      id: getThoughtIdByContext(stateNew, ['aa'])!,
+      id: contextToThoughtId(stateNew, ['aa'])!,
       value: 'aa',
       parentId: HOME_TOKEN,
       rank: 0,
@@ -61,7 +61,7 @@ it('edit a thought', () => {
   ])
 
   // cursor should be at /aa
-  expect(stateNew.cursor).toMatchObject([getThoughtIdByContext(stateNew, ['aa'])])
+  expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['aa'])])
 })
 
 it('edit a descendant', () => {
@@ -87,8 +87,8 @@ it('edit a descendant', () => {
     - aa1
   - b`)
 
-  const aId = getThoughtIdByContext(stateNew, ['a'])!
-  const aa1Id = getThoughtIdByContext(stateNew, ['a', 'aa1'])!
+  const aId = contextToThoughtId(stateNew, ['a'])!
+  const aa1Id = contextToThoughtId(stateNew, ['a', 'aa1'])!
 
   // aa1 should exist in context a
   expect(getContexts(stateNew, 'aa1')).toMatchObject([aa1Id])
@@ -181,7 +181,7 @@ it('edit a thought existing in mutliple contexts', () => {
   // aa should exist in ROOT context
 
   expect(thoughtABC).not.toBeNull()
-  expect(thoughtABC!.parentId).toBe(getThoughtIdByContext(stateNew, ['a']))
+  expect(thoughtABC!.parentId).toBe(contextToThoughtId(stateNew, ['a']))
 
   // abc should exist in context a
   expect(getContexts(stateNew, 'abc')).toMatchObject([thoughtABC.id])

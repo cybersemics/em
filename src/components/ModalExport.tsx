@@ -9,7 +9,7 @@ import {
   ellipsize,
   exportPhrase,
   getPublishUrl,
-  getThoughtIdByContext,
+  contextToThoughtId,
   head,
   isDocumentEditable,
   isFunction,
@@ -96,7 +96,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
     isMounted.current = true
 
-    const id = getThoughtIdByContext(store.getState(), context)
+    const id = contextToThoughtId(store.getState(), context)
 
     if (id) {
       dispatch(
