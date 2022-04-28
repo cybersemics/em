@@ -1,6 +1,6 @@
 import { unroot } from '../util'
 import { loadResource } from '../action-creators'
-import { getContextForThought, getContexts, getThoughtById, rankThoughtsFirstMatch } from '../selectors'
+import { getContextForThought, getContexts, getThoughtById, contextToPath } from '../selectors'
 import { Thunk } from '../@types'
 
 /** Fetch and import all =src attributes with =preload. */
@@ -18,7 +18,7 @@ const preloadSources = (): Thunk => (dispatch, getState) => {
       const thought = getThoughtById(state, thoughtContext)
       const parentThought = getThoughtById(state, thought.parentId)
       const context = getContextForThought(state, parentThought.id)
-      return rankThoughtsFirstMatch(state, unroot(context!))
+      return contextToPath(state, unroot(context!))
     })
 
   // preload sources

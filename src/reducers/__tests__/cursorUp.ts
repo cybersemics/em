@@ -8,7 +8,7 @@ import {
   toggleContextView,
   toggleHiddenThoughts,
 } from '../../reducers'
-import { childIdsToThoughts, rankThoughtsFirstMatch } from '../../selectors'
+import { childIdsToThoughts, contextToPath } from '../../selectors'
 import { State } from '../../@types'
 
 it('move cursor to previous sibling', () => {
@@ -17,7 +17,7 @@ it('move cursor to previous sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a'])!)
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
 })
 
 it('move cursor to previous attribute when showHiddenThoughts is true', () => {
@@ -47,7 +47,7 @@ it('move cursor from first child to parent', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a'])!)
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
 })
 
 it('move to last root child when there is no cursor', () => {
@@ -56,7 +56,7 @@ it('move to last root child when there is no cursor', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['b'])!)
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['b'])!)
 })
 
 it('do nothing when there are no thoughts', () => {
@@ -77,9 +77,9 @@ describe.skip('context view', () => {
 
     const steps = [
       importText({ text }),
-      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm']) }),
+      (state: State) => setCursor(state, { path: contextToPath(state, ['a', 'm']) }),
       toggleContextView,
-      (state: State) => setCursor(state, { path: rankThoughtsFirstMatch(state, ['a', 'm', 'a']) }),
+      (state: State) => setCursor(state, { path: contextToPath(state, ['a', 'm', 'a']) }),
       cursorUp,
     ]
 

@@ -1,4 +1,4 @@
-import { getLexeme, rankThoughtsFirstMatch } from '../selectors'
+import { getLexeme, contextToPath } from '../selectors'
 import { parentOf, head, headValue, splice } from '../util'
 import { SimplePath, State, ThoughtContext } from '../@types'
 import getContextForThought from './getContextForThought'
@@ -18,7 +18,7 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
   const ult = contextChain[contextChain.length - 1]
   const thought = lexeme.contexts.find(thought => thought === ult[0]) as ThoughtContext
   // MIGRATION_TODO: Write a function that returns path given the thought id.
-  const path = rankThoughtsFirstMatch(state, getContextForThought(state, thought)!)
+  const path = contextToPath(state, getContextForThought(state, thought)!)
   if (!path) throw new Error(`Path not found for thought id: ${thought}`)
   const pathPrepend = parentOf(path)
   return pathPrepend.concat(splice(ult, 1, 0, head(penult))) as SimplePath

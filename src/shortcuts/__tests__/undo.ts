@@ -1,6 +1,6 @@
 import { store as appStore } from '../../store'
 import { MODALS, HOME_TOKEN } from '../../constants'
-import { childIdsToThoughts, exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { childIdsToThoughts, exportContext, contextToPath } from '../../selectors'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
@@ -132,7 +132,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
         oldValue: 'b',
         context: ['a'],
         rankInContext: 0,
-        path: rankThoughtsFirstMatch(state, ['a', 'b']),
+        path: contextToPath(state, ['a', 'b']),
       })
     },
     { type: 'cursorBack' },

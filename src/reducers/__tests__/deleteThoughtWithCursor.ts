@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, contextToPath } from '../../selectors'
 
 // reducers
 import cursorBack from '../cursorBack'
@@ -61,7 +61,7 @@ it('cursor should move to prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2'])!)
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)
 })
 
 it('cursor should move to next sibling if there is no prev sibling', () => {
@@ -78,7 +78,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a2'])!)
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)
 })
 
 it('cursor should move to parent if the deleted thought has no siblings', () => {
@@ -87,7 +87,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a'])!)
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
 })
 
 it('cursor should be removed if the last thought is deleted', () => {

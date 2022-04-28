@@ -1,7 +1,7 @@
 import moveThought, { MoveThoughtPayload } from '../reducers/moveThought'
 import { moveThought as moveThoughtActionCreator } from '../action-creators'
 import _ from 'lodash'
-import { rankThoughtsFirstMatch, rootedParentOf } from '../selectors'
+import { contextToPath, rootedParentOf } from '../selectors'
 import { appendToPath, head } from '../util'
 import { Path, State, Thunk } from '../@types'
 
@@ -11,13 +11,13 @@ type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath'> & { from: string[
  * Get ranked old and new paths for the unranked paths.
  */
 const getMovePaths = (state: State, from: string[], to: string[]): [Path, Path] => {
-  const oldPath = rankThoughtsFirstMatch(state, from)
+  const oldPath = contextToPath(state, from)
 
   if (!oldPath) throw new Error(`Ranked thoughts not found for context: ${from}`)
 
   if (head(to) !== head(from)) throw new Error('The head of the old path and new path does not match.')
 
-  const toPath = rankThoughtsFirstMatch(state, rootedParentOf(state, to))
+  const toPath = contextToPath(state, rootedParentOf(state, to))
 
   if (!toPath) throw new Error(`Ranked thoughts not found for context: ${to}`)
 

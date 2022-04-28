@@ -19,7 +19,7 @@ const childIdsToThoughts = async (provider: DataProvider, childIds: ThoughtId[])
 /**
  * Finds the path for the given unranked path from the given data provider directly.
  */
-const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: string[]) => {
+const contextToPath = async (provider: DataProvider, pathUnranked: string[]) => {
   if (isRoot(pathUnranked)) {
     const rootThought = await provider.getThoughtById(pathUnranked[0] as ThoughtId)
     return rootThought ? [rootThought] : null
@@ -70,7 +70,7 @@ const rankThoughtsFirstMatch = async (provider: DataProvider, pathUnranked: stri
 
 /** Gets the Parent for a context. */
 const getContext = async (provider: DataProvider, context: Context) => {
-  const rankedThoughts = await rankThoughtsFirstMatch(provider, context)
+  const rankedThoughts = await contextToPath(provider, context)
   return rankedThoughts ? head(rankedThoughts) : null
 }
 

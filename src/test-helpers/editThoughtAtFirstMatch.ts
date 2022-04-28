@@ -1,4 +1,4 @@
-import { rankThoughtsFirstMatch } from '../selectors'
+import { contextToPath } from '../selectors'
 
 import { State, Thunk } from '../@types'
 import editThought, { editThoughtPayload } from '../reducers/editThought'
@@ -15,7 +15,7 @@ import { editThought as editThoughtThunk } from '../action-creators'
  */
 const editThoughtAtFirstMatch = _.curryRight(
   (state: State, payload: Omit<editThoughtPayload, 'context' | 'path'> & { at: string[] }) => {
-    const path = rankThoughtsFirstMatch(state, payload.at)
+    const path = contextToPath(state, payload.at)
     if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
 
     const context = payload.at.length > 1 ? parentOf(payload.at) : [HOME_TOKEN]
@@ -37,7 +37,7 @@ export const editThoughtAtFirstMatchActionCreator = (
   payload: Omit<editThoughtPayload, 'context' | 'path'> & { at: string[] },
 ): Thunk => {
   return (dispatch, getState) => {
-    const path = rankThoughtsFirstMatch(getState(), payload.at)
+    const path = contextToPath(getState(), payload.at)
     if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
 
     const context = payload.at.length > 1 ? parentOf(payload.at) : [HOME_TOKEN]

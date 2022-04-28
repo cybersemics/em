@@ -9,7 +9,7 @@ import {
   getRankAfter,
   getThoughtByContext,
   getThoughtByPath,
-  rankThoughtsFirstMatch,
+  contextToPath,
   childIdsToThoughts,
 } from '../../selectors'
 import { importText, newSubthought, newThought } from '../../reducers'
@@ -594,7 +594,7 @@ it('consistent rank between lexemeIndex and thoughtIndex on duplicate merge', ()
         from: ['a', 'b'],
         to: ['b'],
         // Note: Here new rank will be 0.5 because it's calculated between a (0) and b (1)
-        newRank: getRankAfter(newState, rankThoughtsFirstMatch(newState, ['a'])!) as number,
+        newRank: getRankAfter(newState, contextToPath(newState, ['a'])!) as number,
       }),
   ]
 

@@ -2,7 +2,7 @@ import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { getThoughtIdByContext, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getLexeme, getThoughtByContext, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, getLexeme, getThoughtByContext, contextToPath } from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
@@ -22,7 +22,7 @@ const importExport = (text: string, isHTML = true) => {
  */
 const importTextAtFirstMatch = _.curryRight(
   (state: State, payload: Omit<ImportTextPayload, 'path'> & { at: string[] }) => {
-    const path = rankThoughtsFirstMatch(state, payload.at)
+    const path = contextToPath(state, payload.at)
 
     if (!path) throw new Error(`Path not found for ${payload.at}`)
     return importText(state, {
@@ -530,7 +530,7 @@ it('import as subthoughts of non-empty cursor', () => {
     - x
     - y`)
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'y'])!)
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'y'])!)
 })
 
 it('decode HTML entities', () => {

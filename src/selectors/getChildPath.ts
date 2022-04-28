@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { getAllChildren, getThoughtById, rankThoughtsFirstMatch } from '../selectors'
+import { getAllChildren, getThoughtById, contextToPath } from '../selectors'
 import { hashThought, head, unroot } from '../util'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import { ThoughtId, SimplePath, State, ThoughtContext } from '../@types'
@@ -29,10 +29,10 @@ const getChildPath = _.memoize(
         : []
     ).find(child => hashThought(child.value) === hashThought(simplePathHeadThought.value))?.id
 
-    const path = showContexts && rankThoughtsFirstMatch(state, getContextForThought(state, child)!)
+    const path = showContexts && contextToPath(state, getContextForThought(state, child)!)
     const childPath = (
       showContexts && path
-        ? // rankThoughtsFirstMatch not accounted for by memoize resolver
+        ? // contextToPath not accounted for by memoize resolver
           path.concat(otherSubthought!)
         : unroot(simplePath).concat(child as ThoughtId)
     ) as SimplePath

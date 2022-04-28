@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { importText, editThought } from '../../action-creators'
-import { getLexeme as getLexemeState, getThoughtByContext, rankThoughtsFirstMatch } from '../../selectors'
+import { getLexeme as getLexemeState, getThoughtByContext, contextToPath } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getLexemeDb from '../../data-providers/data-helpers/getLexeme'
 import { DataProvider } from '../../data-providers/DataProvider'
@@ -56,7 +56,7 @@ it('editing a thought should load the lexeme and merge contexts', async () => {
   // lexeme for 'f' should not be loaded into the state yet.
   expect(getLexemeState(store.getState(), 'f')).toBeFalsy()
 
-  const pathGH = rankThoughtsFirstMatch(store.getState(), ['g', 'h']) as SimplePath
+  const pathGH = contextToPath(store.getState(), ['g', 'h']) as SimplePath
 
   store.dispatch(
     editThought({

@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import { setCursor } from '../reducers'
-import { rankThoughtsFirstMatch } from '../selectors'
+import { contextToPath } from '../selectors'
 import { setCursor as setCursorThunk } from '../action-creators'
 import { State, Thunk } from '../@types'
 
-/** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
+/** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */
 const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
   setCursor(state, {
-    path: rankThoughtsFirstMatch(state, pathUnranked),
+    path: contextToPath(state, pathUnranked),
   })
 
 /** A Thunk that sets the cursor to the given unranked path. */
@@ -16,7 +16,7 @@ export const setCursorFirstMatchActionCreator =
   (dispatch, getState) =>
     dispatch(
       setCursorThunk({
-        path: rankThoughtsFirstMatch(getState(), pathUnranked),
+        path: contextToPath(getState(), pathUnranked),
       }),
     )
 

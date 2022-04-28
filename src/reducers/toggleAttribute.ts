@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { deleteThought, createThought, setFirstSubthought } from '../reducers'
-import { attributeEquals, getPrevRank, hasChild, rankThoughtsFirstMatch } from '../selectors'
+import { attributeEquals, getPrevRank, hasChild, contextToPath } from '../selectors'
 import { head, reducerFlow, unroot } from '../util'
 import { Context, State } from '../@types'
 
@@ -10,7 +10,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
 
   const isNullaryAttribute = value === undefined
 
-  const path = rankThoughtsFirstMatch(state, [...context, key])
+  const path = contextToPath(state, [...context, key])
 
   const exists = !isNullaryAttribute ? attributeEquals(state, context, key, value!) : hasChild(state, context, key)
 

@@ -3,14 +3,14 @@ import { Context, Thought, State, Thunk } from '../@types'
 import { HOME_TOKEN } from '../constants'
 import { deleteThought } from '../reducers'
 import { deleteThought as deleteThoughtActionCreator } from '../action-creators'
-import { getThoughtByPath, rankThoughtsFirstMatch } from '../selectors'
+import { getThoughtByPath, contextToPath } from '../selectors'
 import { parentOf } from '../util'
 
 /**
  * Get thought and context for the given unranked path.
  */
 const getThoughtAndContext = (state: State, at: string[]): [Thought, Context] => {
-  const path = rankThoughtsFirstMatch(state, at)
+  const path = contextToPath(state, at)
 
   if (!path) throw new Error(`Ranked thoughts not found for context: ${at}`)
 

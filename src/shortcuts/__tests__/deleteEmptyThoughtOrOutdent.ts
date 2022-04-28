@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, contextToPath } from '../../selectors'
 import { importText, setCursor, newThought } from '../../action-creators'
 import { store } from '../../store'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -38,7 +38,7 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
     }),
   )
 
-  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'c']) }))
+  store.dispatch(setCursor({ path: contextToPath(store.getState(), ['a', 'b', 'c']) }))
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
@@ -66,7 +66,7 @@ it('do not outdent thought with siblings', () => {
     }),
   )
 
-  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
+  store.dispatch(setCursor({ path: contextToPath(store.getState(), ['a', 'b', 'd']) }))
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
@@ -91,7 +91,7 @@ describe('DOM', () => {
     store.dispatch([
       newThought({ value: 'a' }),
       newThought({ value: 'b', insertNewSubthought: true }),
-      (): Thunk => (_, getState) => setCursor({ path: rankThoughtsFirstMatch(getState(), ['a', 'b']) }),
+      (): Thunk => (_, getState) => setCursor({ path: contextToPath(getState(), ['a', 'b']) }),
     ])
 
     // This ensures that the thought b exists so we can confirm later that it is deleted.

@@ -1,4 +1,4 @@
-import { isContextViewActive, getContexts, rankThoughtsFirstMatch } from '../selectors'
+import { isContextViewActive, getContexts, contextToPath } from '../selectors'
 import { pathToContext } from '../util'
 import { Path, SimplePath, State } from '../@types'
 import getContextForThought from './getContextForThought'
@@ -26,11 +26,11 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
       const matchingContext = contexts.find(cx => cx.id === pathThoughtsArray[i + 1].id)
 
       const context = matchingContext && getContextForThought(state, matchingContext.id)
-      // NOTE: rankThoughtsFirstMatch will call splitChain, creating indirect recursion
-      // Since we are only passing a SimplePath to rankThoughtsFirstMatch, it will not create an infinite loop (hopefully)
+      // NOTE: contextToPath will call splitChain, creating indirect recursion
+      // Since we are only passing a SimplePath to contextToPath, it will not create an infinite loop (hopefully)
 
       // eslint-disable-next-line fp/no-mutating-methods
-      contextChain.push((context ? rankThoughtsFirstMatch(state, context.slice(0, -1)) : []) as SimplePath)
+      contextChain.push((context ? contextToPath(state, context.slice(0, -1)) : []) as SimplePath)
     }
   })
 

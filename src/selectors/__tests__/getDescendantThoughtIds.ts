@@ -3,7 +3,7 @@ import { HOME_TOKEN } from '../../constants'
 import { getDescendantThoughtIds } from '..'
 import { importText, newThought } from '../../reducers'
 import { SimplePath } from '../../@types'
-import rankThoughtsFirstMatch from '../rankThoughtsFirstMatch'
+import contextToPath from '../contextToPath'
 import childIdsToThoughts from '../childIdsToThoughts'
 
 it('get descendants', () => {
@@ -28,7 +28,7 @@ it('get descendants', () => {
     { value: 'f', rank: 0 },
   ])
 
-  const descendantsIdsOfA = getDescendantThoughtIds(state, head(rankThoughtsFirstMatch(state, ['a']) as SimplePath))
+  const descendantsIdsOfA = getDescendantThoughtIds(state, head(contextToPath(state, ['a']) as SimplePath))
   const descendantsAThoughts = childIdsToThoughts(state, descendantsIdsOfA)
 
   expect(descendantsAThoughts).toMatchObject([

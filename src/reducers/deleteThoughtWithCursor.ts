@@ -37,7 +37,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     //   .find(context => head(context) === headValue(path))
     // if (context) {
     //   // Convert to path
-    //   path = rankThoughtsFirstMatch(state, [...context, thoughtInContextView.value])
+    //   path = contextToPath(state, [...context, thoughtInContextView.value])
     // }
   }
   const simplePath = simplifyPath(state, path)

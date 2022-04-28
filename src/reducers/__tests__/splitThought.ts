@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { childIdsToThoughts, exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { childIdsToThoughts, exportContext, contextToPath } from '../../selectors'
 import { State } from '../../@types'
 
 // reducers
@@ -9,10 +9,10 @@ import importText from '../importText'
 import newThought from '../newThought'
 import splitThought from '../splitThought'
 
-/** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
+/** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */
 const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
   setCursor(state, {
-    path: rankThoughtsFirstMatch(state, pathUnranked),
+    path: contextToPath(state, pathUnranked),
   })
 
 it('split thought', () => {
