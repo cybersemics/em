@@ -8,7 +8,7 @@ import {
   getChildrenRanked,
   getRankAfter,
   contextToThought,
-  getThoughtByPath,
+  pathToThought,
   contextToPath,
   childIdsToThoughts,
 } from '../../selectors'
@@ -629,6 +629,6 @@ it('update cursor if duplicate thought with cursor is deleted', () => {
     - b`)
 
   expect(stateNew.cursor).toBeTruthy()
-  const cursorThought = getThoughtByPath(stateNew, stateNew.cursor!)
+  const cursorThought = pathToThought(stateNew, stateNew.cursor!)
   expect(cursorThought).toBeTruthy()
 })

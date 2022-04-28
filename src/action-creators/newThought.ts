@@ -1,6 +1,6 @@
 import { isTouch, isSafari } from '../browser'
 import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
-import { getSetting, getThoughtByPath, hasChild, isContextViewActive } from '../selectors'
+import { getSetting, pathToThought, hasChild, isContextViewActive } from '../selectors'
 import { parentOf, ellipsize, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
@@ -50,7 +50,7 @@ const newThought =
 
     const path = at || cursor
 
-    const thought = path && getThoughtByPath(state, path)
+    const thought = path && pathToThought(state, path)
 
     // cancel if tutorial has just started
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return

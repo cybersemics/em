@@ -3,7 +3,7 @@ import { Context, Thought, State, Thunk } from '../@types'
 import { HOME_TOKEN } from '../constants'
 import { deleteThought } from '../reducers'
 import { deleteThought as deleteThoughtActionCreator } from '../action-creators'
-import { getThoughtByPath, contextToPath } from '../selectors'
+import { pathToThought, contextToPath } from '../selectors'
 import { parentOf } from '../util'
 
 /**
@@ -14,7 +14,7 @@ const getThoughtAndContext = (state: State, at: string[]): [Thought, Context] =>
 
   if (!path) throw new Error(`Ranked thoughts not found for context: ${at}`)
 
-  const thought = getThoughtByPath(state, path)
+  const thought = pathToThought(state, path)
 
   const context = at.length > 1 ? parentOf(at) : [HOME_TOKEN]
 

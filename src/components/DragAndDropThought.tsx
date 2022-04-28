@@ -37,7 +37,7 @@ import {
   getRankBefore,
   getSortPreference,
   getThoughtById,
-  getThoughtByPath,
+  pathToThought,
   hasChild,
   isBefore,
   rootedParentOf,
@@ -133,8 +133,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
-  const toThought = getThoughtByPath(state, thoughtsTo)
-  const fromThought = getThoughtByPath(state, thoughtsFrom)
+  const toThought = pathToThought(state, thoughtsTo)
+  const fromThought = pathToThought(state, thoughtsFrom)
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const oldContext = rootedParentOf(state, thoughtsFrom)
   const newContext = rootedParentOf(state, thoughtsTo)
