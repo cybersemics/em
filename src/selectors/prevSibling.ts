@@ -12,9 +12,7 @@ import { Context, Thought, State } from '../@types'
 import thoughtToContext from './thoughtToContext'
 
 /**
- * Gets a context's previous sibling with its rank.
- *
- * @param context   Can be a context or path.
+ * Gets the previous sibling of a thought according to its parent's sort preference.
  */
 const prevSibling = (state: State, value: string, context: Context, rank: number): Thought | null => {
   const { showHiddenThoughts } = state

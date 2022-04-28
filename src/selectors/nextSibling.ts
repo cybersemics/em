@@ -2,7 +2,7 @@ import { getChildrenSorted, getSortPreference } from '../selectors'
 import { equalThoughtRanked, equalThoughtSorted } from '../util'
 import { Context, State } from '../@types'
 
-/** Gets thoughts's next sibling with its rank. */
+/** Gets the next sibling after a thought according to its parent's sort preference. */
 const nextSibling = (state: State, value: string, context: Context, rank: number) => {
   const siblings = getChildrenSorted(state, context)
   const i = siblings.findIndex(child =>
