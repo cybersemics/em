@@ -9,7 +9,7 @@ import {
 } from '../selectors'
 import { head } from '../util'
 import { Context, Thought, State } from '../@types'
-import getContextForThought from './getContextForThought'
+import thoughtToContext from './thoughtToContext'
 
 /**
  * Gets a context's previous sibling with its rank.
@@ -34,7 +34,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
       return true
     } else if (
       !(contextViewActive
-        ? isAncestorsVisible(state, getContextForThought(state, child.id)!)
+        ? isAncestorsVisible(state, thoughtToContext(state, child.id)!)
         : showHiddenThoughts || isChildVisible(state, context, child))
     ) {
       return false

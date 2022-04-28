@@ -1,5 +1,5 @@
 import { Context, Index, Lexeme, State } from '../@types'
-import { getContextForThought, getThoughtById } from '../selectors'
+import { thoughtToContext, getThoughtById } from '../selectors'
 import { unroot } from './unroot'
 
 /**
@@ -13,7 +13,7 @@ export const getContextMap = (state: State, lexemes: (Lexeme | undefined)[]) => 
         const thought = getThoughtById(state, thoughtId)
         return {
           ...accInner,
-          [thought.parentId]: unroot(getContextForThought(state, thought.parentId)!),
+          [thought.parentId]: unroot(thoughtToContext(state, thought.parentId)!),
         }
       }, {}),
     }

@@ -1,7 +1,7 @@
 import { isContextViewActive, getContexts, contextToPath } from '../selectors'
 import { pathToContext } from '../util'
 import { Path, SimplePath, State } from '../@types'
-import getContextForThought from './getContextForThought'
+import thoughtToContext from './thoughtToContext'
 import childIdsToThoughts from './childIdsToThoughts'
 
 /**
@@ -25,7 +25,7 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
       const contexts = (i > 0 && childIdsToThoughts(state, getContexts(state, pathThoughtsArray[i + 1].value))) || []
       const matchingContext = contexts.find(cx => cx.id === pathThoughtsArray[i + 1].id)
 
-      const context = matchingContext && getContextForThought(state, matchingContext.id)
+      const context = matchingContext && thoughtToContext(state, matchingContext.id)
       // NOTE: contextToPath will call splitChain, creating indirect recursion
       // Since we are only passing a SimplePath to contextToPath, it will not create an infinite loop (hopefully)
 
