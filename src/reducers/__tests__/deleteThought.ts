@@ -32,7 +32,6 @@ it('delete descendants of root thought', () => {
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
-  console.log('getAllChildren(stateNew, [HOME_TOKEN]) :', getAllChildren(stateNew, [HOME_TOKEN]))
   // cnntextIndex
   expect(getAllChildren(stateNew, [HOME_TOKEN])).toEqual([])
   expect(getAllChildren(stateNew, ['a'])).toEqual([])

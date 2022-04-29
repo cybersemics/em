@@ -6,7 +6,6 @@ import {
   getLexeme,
   getThoughtById,
   hasLexeme,
-  // contextToPath,
   rootedParentOf,
   thoughtToPath,
 } from '../selectors'
