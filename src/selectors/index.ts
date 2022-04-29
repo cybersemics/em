@@ -55,6 +55,7 @@ export { default as simplifyPath } from './simplifyPath'
 export { default as splitChain } from './splitChain'
 export { default as subtree } from './subtree'
 export { default as theme } from './theme'
+export { default as thoughtToPath } from './thoughtToPath'
 export { default as thoughtsEditingFromChain } from './thoughtsEditingFromChain'
 export { default as visibleDistanceAboveCursor } from './visibleDistanceAboveCursor'
 export {
