@@ -15,6 +15,8 @@ export interface UpdateThoughtsOptions {
   pendingEdits?: editThoughtPayload[]
   pendingPulls?: { path: Path }[]
   pendingMerges?: PendingMerge[]
+  // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.
+  preventExpandThoughts?: boolean
   contextChain?: SimplePath[]
   updates?: Index<string>
   local?: boolean
@@ -68,6 +70,7 @@ const updateThoughts = (
     pendingDeletes,
     pendingPulls,
     pendingMerges,
+    preventExpandThoughts,
     local = true,
     remote = true,
     isLoading,
@@ -78,50 +81,8 @@ const updateThoughts = (
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
 
-  // Data Integrity Checks
-
-  // Sometimes Child objects are missing their value property
-  // Check all updates in case the problem is in the subscription logic
-  // Object.values(thoughtIndexUpdates).forEach(parentUpdate =>
-  //   parentUpdate?.children.forEach(childId => {
-  //     const thought = state.thoughts.thoughtIndex[childId]
-
-  //     if (!thought) {
-  //       throw new Error(`Thought entry for id ${childId} not found!`)
-  //     }
-  //     if (thought.value == null || thought.rank == null) {
-  //       console.error('child', thought)
-  //       console.error('parent', parentUpdate)
-  //       throw new Error('Thought is missing a value property')
-  //     }
-  //   }),
-  // )
-
-  // TODO: FIx this data integrity check.
-  // For efficiency, only check new updates, i.e. when local && remote are true.
-  // This will stop these data integrity issues from ever getting persisted.
-  // if (local && remote) {
-  // A non-root context should never begin with HOME_TOKEN.
-  // If one is found, it means there was a data integrity error that needs to be identified immediately.
-  // if (Object.values(lexemeIndexUpdates).some(lexeme => lexeme?.contexts.some(isInvalidContext))) {
-  //   const invalidLexemes = Object.values(lexemeIndexUpdates).filter(lexeme =>
-  //     lexeme?.contexts.some(isInvalidContext),
-  //   ) as Lexeme[]
-  //   if (invalidLexemes.length > 0) {
-  //     invalidLexemes.forEach(lexeme => {
-  //       console.error(
-  //         `Invalid ThoughtContext found in Lexeme: '${lexeme.value}'. HOME_TOKEN should be omitted from the beginning; it is only valid to refer to the home context itself, i.e. [HOME_TOKEN].`,
-  //         lexeme.contexts,
-  //       )
-  //     })
-  //     throw new Error('Invalid ThoughtContext')
-  //   }
-  // }
-  // }
-
   // There is a bug that is saving full Thoughts into Lexeme.contexts.
   // Throw here to help identify the upstream problem.
-
   Object.values(lexemeIndexUpdates).forEach(lexemeUpdate => {
     if (lexemeUpdate?.contexts.some(id => typeof id !== 'string')) {
       console.error('Invalid Lexeme context', lexemeUpdate)
@@ -239,10 +200,12 @@ const updateThoughts = (
     //   return state
     // },
     // calculate expanded using fresh thoughts and cursor
-    state => ({
-      ...state,
-      expanded: expandThoughts(state, state.cursor),
-    }),
+    !preventExpandThoughts
+      ? state => ({
+          ...state,
+          expanded: expandThoughts(state, state.cursor),
+        })
+      : null,
   ])(state)
 }
 

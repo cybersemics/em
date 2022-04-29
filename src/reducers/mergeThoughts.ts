@@ -82,6 +82,7 @@ const mergeThoughts = (
   return updateThoughts(newStateAfterMove, {
     thoughtIndexUpdates,
     lexemeIndexUpdates,
+    preventExpandThoughts: true,
   })
 }
 

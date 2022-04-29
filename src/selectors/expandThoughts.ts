@@ -71,20 +71,20 @@ function expandThoughts(
   options?: { returnContexts?: boolean },
 ): Index<Path | Context> {
   const firstVisibleThoughtPath = path && (path.slice(0, -MAX_DISTANCE_FROM_CURSOR) as Path)
-  const expanstionStartingPath =
+  const expansionStartingPath =
     firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
 
   if (path && !getThoughtById(state, head(path))) {
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  return expandThoughtsRecursive(state, path || HOME_PATH, expanstionStartingPath || HOME_PATH, options)
+  return expandThoughtsRecursive(state, path || HOME_PATH, expansionStartingPath || HOME_PATH, options)
 }
 
 /**
  * Recursively generate expansion map based by checking if the children of the current path should expand based on the given expansion path.
  *
- * @param expansionPath - The path based on which expansion happens.
+ * @param expansionBasePath - The base path for the original, nonrecursive call to expandThoughts.
  * @param path - Current path.
  */
 function expandThoughtsRecursive(
@@ -208,11 +208,11 @@ function expandThoughtsRecursive(
         })
 
   // Note: Since a thought can have duplicate valued children in some cases like pending merges, we need to make expanded key based on the hash of the path instead.
-  const contextHash = hashPath(path)
+  const pathEncoded = hashPath(path)
 
   const initialExpanded = {
     // expand current thought
-    [contextHash]: returnContexts ? context : path,
+    [pathEncoded]: returnContexts ? context : path,
   }
 
   return keyValueBy(

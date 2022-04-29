@@ -632,3 +632,33 @@ it('update cursor if duplicate thought with cursor is deleted', () => {
   const cursorThought = pathToThought(stateNew, stateNew.cursor!)
   expect(cursorThought).toBeTruthy()
 })
+
+it('re-expand after moving across contexts', () => {
+  const text = `
+  - a
+    - b
+      - c`
+
+  const steps = [
+    importText({ text }),
+    setCursorFirstMatch(['a', 'b']),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'b'],
+      to: ['b'],
+      newRank: 1,
+    }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+    - c`)
+
+  // b should be expanded even though it has a new Path
+  const thoughtB = contextToThought(stateNew, ['b'])!
+  expect(stateNew.expanded[thoughtB.id]).toBeTruthy()
+})

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
-import { rerank, updateThoughts, mergeThoughts } from '../reducers'
-import { rootedParentOf, getThoughtById, getChildrenRankedById } from '../selectors'
+import { rerank, mergeThoughts, updateThoughts } from '../reducers'
+import { expandThoughts, getThoughtById, getChildrenRankedById, rootedParentOf } from '../selectors'
 import { Path, SimplePath, State } from '../@types'
 import { appendToPath, head, isDescendantPath, normalizeThought, pathToContext, reducerFlow, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
@@ -109,6 +109,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
                 },
               ]
             : [],
+        preventExpandThoughts: true,
       })
     },
     // update cursor
@@ -129,6 +130,11 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         ...(offset != null ? { cursorOffset: offset } : null),
       }
     },
+    // expand thoughts after cursor has been updated
+    state => ({
+      ...state,
+      expanded: expandThoughts(state, state.cursor),
+    }),
     // rerank context if ranks are too close
     // skip if this moveThought originated from a rerank
     // otherwise we get an infinite loop
