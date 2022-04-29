@@ -6,24 +6,14 @@ import {
   getLexeme,
   getThoughtById,
   hasLexeme,
-  prevSibling,
-  contextToPath,
+  // contextToPath,
   rootedParentOf,
+  thoughtToPath,
 } from '../selectors'
-import { ThoughtId, Context, Index, Lexeme, Thought, State, Path } from '../@types'
+import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
-import {
-  equalArrays,
-  hashThought,
-  isDescendant,
-  parentOf,
-  reducerFlow,
-  removeContext,
-  timestamp,
-  unroot,
-} from '../util'
+import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { HOME_TOKEN } from '../constants'
 
 interface Payload {
   context: Context
@@ -82,6 +72,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
+  const path = thoughtToPath(state, deletedThought.id)
 
   const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 
@@ -227,35 +218,19 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     ...descendantUpdatesResult.thoughtIndex,
   }
 
-  // calculate prev thought to update the correct cursor path after thought deletion
-  const prevThought = prevSibling(state, deletedThought.value, [deletedThought.parentId], deletedThought.rank)
-
-  console.log(state, 's')
-
-  const path = contextToPath(state, thoughts as string[])
-  console.log('path :', path)
-
   const isDeletedThoughtCursor = !!path && !!state.cursor && equalArrays(state.cursor, path)
-  console.log('isDeletedThoughtCursor :', isDeletedThoughtCursor)
 
   const isCursorDescendantOfDeletedThought = !!path && !!state.cursor && isDescendant(path, state.cursor)
-  console.log('isCursorDescendantOfDeletedThought :', isCursorDescendantOfDeletedThought)
 
   // if the deleted thought is the cursor or a descendant of the cursor, we need to calculate a new cursor.
-  // if prevThought exists infer path from deleted thought to cursorNew.
   const cursorNew =
-    prevThought && state.cursor
-      ? [...parentOf(state.cursor), prevThought.id]
-      : state.cursor?.slice(0, -1).length
-      ? state.cursor?.slice(0, -1)
-      : [HOME_TOKEN]
+    isDeletedThoughtCursor || isCursorDescendantOfDeletedThought ? rootedParentOf(state, path!) : state.cursor
 
-  console.log('cursorNew :', cursorNew)
   return reducerFlow([
     state => ({
       ...state,
       contextViews: contextViewsNew,
-      cursor: cursorNew as Path,
+      cursor: cursorNew,
     }),
     updateThoughts({
       thoughtIndexUpdates,

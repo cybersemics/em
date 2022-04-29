@@ -9,7 +9,11 @@ import { HOME_PATH } from '../constants'
 const thoughtToPath = (state: State, thoughtId: ThoughtId): Path => {
   if (isRoot([thoughtId])) return HOME_PATH
   const thought = getThoughtById(state, thoughtId)
-  return isRoot([thought.parentId]) ? [thoughtId] : [...thoughtToPath(state, thought.parentId), thoughtId]
+  return thought
+    ? isRoot([thought.parentId])
+      ? [thoughtId]
+      : [...thoughtToPath(state, thought.parentId), thoughtId]
+    : HOME_PATH
 }
 
 export default thoughtToPath
