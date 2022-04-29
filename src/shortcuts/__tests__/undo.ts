@@ -1,5 +1,5 @@
 import { store as appStore } from '../../store'
-import { MODALS, HOME_TOKEN } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import { childIdsToThoughts, exportContext, contextToPath } from '../../selectors'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -346,11 +346,7 @@ it('clear patches when any undoable action is dispatched', () => {
 
 it('non-undoable actions are ignored', () => {
   const store = createTestStore()
-  store.dispatch([
-    { type: 'search', value: 'New' },
-    { type: 'showModal', id: MODALS.welcome },
-    { type: 'toggleSidebar' },
-  ])
+  store.dispatch([{ type: 'search', value: 'New' }, { type: 'showModal', id: 'welcome' }, { type: 'toggleSidebar' }])
 
   expect(store.getState().undoPatches.length).toEqual(0)
 })

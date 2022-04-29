@@ -4,7 +4,7 @@ import { theme } from '../selectors'
 import { home, modalComplete } from '../action-creators'
 import { Connected, State } from '../@types'
 import Modal from './Modal'
-import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
+import { MODAL_CLOSE_DURATION } from '../constants'
 
 interface HomeLinkProps {
   color?: string
@@ -54,7 +54,7 @@ const HomeLink = ({ dark, color, showModal, size, style, dispatch }: Connected<H
           arrow='arrow arrow-top arrow-topleft'
           actions={({ close }) => (
             <span key='span'>
-              <a onClick={() => dispatch(modalComplete(MODALS.home))}>Got it!</a>
+              <a onClick={() => dispatch(modalComplete('home'))}>Got it!</a>
               <a onClick={() => close && close(MODAL_CLOSE_DURATION)}>Remind me later</a>
             </span>
           )}

@@ -151,9 +151,9 @@ export const initialState = (created: Timestamp = timestamp()) => {
   }
   Object.keys(MODALS).forEach(key => {
     // initial modal states
-    state.modals[MODALS[key]] = {
+    state.modals[key] = {
       // eslint-disable-next-line no-mixed-operators
-      complete: globals.disableTutorial || JSON.parse(getLocal('modal-complete-' + MODALS[key]) || 'false'),
+      complete: globals.disableTutorial || JSON.parse(getLocal('modal-complete-' + key) || 'false'),
     }
   })
 
