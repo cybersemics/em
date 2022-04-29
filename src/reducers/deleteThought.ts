@@ -7,7 +7,7 @@ import {
   getThoughtById,
   hasLexeme,
   prevSibling,
-  rankThoughtsFirstMatch,
+  contextToPath,
   rootedParentOf,
 } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State, Path } from '../@types'
@@ -23,6 +23,7 @@ import {
   unroot,
 } from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { HOME_TOKEN } from '../constants'
 
 interface Payload {
   context: Context
@@ -81,7 +82,6 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
-  const path = rankThoughtsFirstMatch(state, thoughts as string[])
 
   const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 
@@ -230,19 +230,27 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   // calculate prev thought to update the correct cursor path after thought deletion
   const prevThought = prevSibling(state, deletedThought.value, [deletedThought.parentId], deletedThought.rank)
 
+  console.log(state, 's')
+
+  const path = contextToPath(state, thoughts as string[])
+  console.log('path :', path)
+
   const isDeletedThoughtCursor = !!path && !!state.cursor && equalArrays(state.cursor, path)
+  console.log('isDeletedThoughtCursor :', isDeletedThoughtCursor)
 
   const isCursorDescendantOfDeletedThought = !!path && !!state.cursor && isDescendant(path, state.cursor)
+  console.log('isCursorDescendantOfDeletedThought :', isCursorDescendantOfDeletedThought)
 
   // if the deleted thought is the cursor or a descendant of the cursor, we need to calculate a new cursor.
   // if prevThought exists infer path from deleted thought to cursorNew.
   const cursorNew =
     prevThought && state.cursor
       ? [...parentOf(state.cursor), prevThought.id]
-      : isDeletedThoughtCursor || isCursorDescendantOfDeletedThought
-      ? rootedParentOf(state, path!)
-      : state.cursor
+      : state.cursor?.slice(0, -1).length
+      ? state.cursor?.slice(0, -1)
+      : [HOME_TOKEN]
 
+  console.log('cursorNew :', cursorNew)
   return reducerFlow([
     state => ({
       ...state,

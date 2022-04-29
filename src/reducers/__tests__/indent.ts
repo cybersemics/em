@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, contextToPath } from '../../selectors'
 import { indent, newSubthought, newThought, setCursor } from '../../reducers'
 
 it('indent within root', () => {
@@ -58,5 +58,5 @@ it('indent on cursor thought should update cursor', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject(rankThoughtsFirstMatch(stateNew, ['a', 'a1', 'a2'])!)
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a1', 'a2'])!)
 })

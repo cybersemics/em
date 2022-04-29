@@ -10,7 +10,7 @@ import { View } from 'moti'
 import { Text } from './Text.native'
 import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
-import { getParentThought } from '../selectors'
+import { parentOfThought } from '../selectors'
 import { store } from '../store'
 
 export interface ContextBreadcrumbProps {
@@ -51,7 +51,7 @@ export const ContextBreadcrumbs = ({
 
   // if charLimit is exceeded then replace the remaining characters by ellipsis
   const charLimitedArray: OverflowPath = simplePath.map(child => ({
-    value: getParentThought(state, child)!.value,
+    value: parentOfThought(state, child)!.value,
     // subtract 2 so that additional '...' is still within the char limit
     id: child,
     ...(ellipsize

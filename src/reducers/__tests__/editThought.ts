@@ -1,12 +1,12 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { getThoughtIdByContext, initialState, reducerFlow } from '../../util'
+import { contextToThoughtId, initialState, reducerFlow } from '../../util'
 import {
   exportContext,
   getContexts,
   getAllChildren,
   getLexeme,
-  getThoughtByContext,
-  getParentThought,
+  contextToThought,
+  parentOfThought,
 } from '../../selectors'
 import { newThought, importText } from '../../reducers'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
@@ -35,7 +35,7 @@ it('edit a thought', () => {
   - aa
   - b`)
 
-  const thought = getThoughtByContext(stateNew, ['aa'])
+  const thought = contextToThought(stateNew, ['aa'])
 
   // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
   // aa should exist in ROOT context
@@ -47,13 +47,13 @@ it('edit a thought', () => {
 
   expect(getAllChildrenAsThoughts(stateNew, [HOME_TOKEN])).toMatchObject([
     {
-      id: getThoughtIdByContext(stateNew, ['b'])!,
+      id: contextToThoughtId(stateNew, ['b'])!,
       value: 'b',
       parentId: HOME_TOKEN,
       rank: 1,
     },
     {
-      id: getThoughtIdByContext(stateNew, ['aa'])!,
+      id: contextToThoughtId(stateNew, ['aa'])!,
       value: 'aa',
       parentId: HOME_TOKEN,
       rank: 0,
@@ -61,7 +61,7 @@ it('edit a thought', () => {
   ])
 
   // cursor should be at /aa
-  expect(stateNew.cursor).toMatchObject([getThoughtIdByContext(stateNew, ['aa'])])
+  expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['aa'])])
 })
 
 it('edit a descendant', () => {
@@ -87,13 +87,13 @@ it('edit a descendant', () => {
     - aa1
   - b`)
 
-  const aId = getThoughtIdByContext(stateNew, ['a'])!
-  const aa1Id = getThoughtIdByContext(stateNew, ['a', 'aa1'])!
+  const aId = contextToThoughtId(stateNew, ['a'])!
+  const aa1Id = contextToThoughtId(stateNew, ['a', 'aa1'])!
 
   // aa1 should exist in context a
   expect(getContexts(stateNew, 'aa1')).toMatchObject([aa1Id])
 
-  const parent = getParentThought(stateNew, aa1Id)
+  const parent = parentOfThought(stateNew, aa1Id)
   expect(parent?.id).toBe(aId)
 
   expect(getAllChildren(stateNew, ['a'])).toMatchObject([aa1Id])
@@ -120,9 +120,9 @@ it('edit a thought with descendants', () => {
     - a1
     - a2`)
 
-  const thought = getThoughtByContext(stateNew, ['aa'])
-  const thoughtA1 = getThoughtByContext(stateNew, ['aa', 'a1'])
-  const thoughtA2 = getThoughtByContext(stateNew, ['aa', 'a2'])
+  const thought = contextToThought(stateNew, ['aa'])
+  const thoughtA1 = contextToThought(stateNew, ['aa', 'a1'])
+  const thoughtA2 = contextToThought(stateNew, ['aa', 'a2'])
 
   // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
   // aa should exist in ROOT context
@@ -175,13 +175,13 @@ it('edit a thought existing in mutliple contexts', () => {
   - b
     - ab`)
 
-  const thoughtABC = getThoughtByContext(stateNew, ['a', 'abc'])!
+  const thoughtABC = contextToThought(stateNew, ['a', 'abc'])!
 
   // Note: Lexeme now stores refrence to the actual thought instead of the context of the thought. A thought's parent can directly backlinked from Parent.parentId
   // aa should exist in ROOT context
 
   expect(thoughtABC).not.toBeNull()
-  expect(thoughtABC!.parentId).toBe(getThoughtIdByContext(stateNew, ['a']))
+  expect(thoughtABC!.parentId).toBe(contextToThoughtId(stateNew, ['a']))
 
   // abc should exist in context a
   expect(getContexts(stateNew, 'abc')).toMatchObject([thoughtABC.id])
@@ -221,8 +221,8 @@ it('edit a thought that exists in another context', () => {
   - b
     - ab`)
 
-  const thoughtInContextA = getThoughtByContext(stateNew, ['a', 'ab'])!
-  const thoughtInContextB = getThoughtByContext(stateNew, ['b', 'ab'])!
+  const thoughtInContextA = contextToThought(stateNew, ['a', 'ab'])!
+  const thoughtInContextB = contextToThought(stateNew, ['b', 'ab'])!
 
   expect(thoughtInContextA).toBeTruthy()
   expect(thoughtInContextB).toBeTruthy()
@@ -260,8 +260,8 @@ it('edit a child with the same value as its parent', () => {
   - a
     - ab`)
 
-  const thoughtInContextA = getThoughtByContext(stateNew, ['a', 'ab'])!
-  const thoughtA = getThoughtByContext(stateNew, ['a'])!
+  const thoughtInContextA = contextToThought(stateNew, ['a', 'ab'])!
+  const thoughtA = contextToThought(stateNew, ['a'])!
 
   expect(thoughtInContextA).toBeTruthy()
   // ab should exist in context a

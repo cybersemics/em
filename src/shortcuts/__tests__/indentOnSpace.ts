@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, contextToPath } from '../../selectors'
 import { importText, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import indentOnSpace from '../indentOnSpace'
@@ -19,7 +19,7 @@ it('indent on adding space at the beginning of the thought', () => {
     }),
   )
 
-  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
+  store.dispatch(setCursor({ path: contextToPath(store.getState(), ['a', 'b', 'd']) }))
 
   executeShortcut(indentOnSpace, { store })
 
@@ -49,7 +49,7 @@ it('prevent indent on adding space at the beginning of the immovable thought', (
     }),
   )
 
-  store.dispatch(setCursor({ path: rankThoughtsFirstMatch(store.getState(), ['a', 'b', 'd']) }))
+  store.dispatch(setCursor({ path: contextToPath(store.getState(), ['a', 'b', 'd']) }))
 
   executeShortcut(indentOnSpace, { store })
 

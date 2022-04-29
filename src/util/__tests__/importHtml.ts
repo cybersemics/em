@@ -1,6 +1,6 @@
 import { HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { removeHome } from '../../util'
-import { exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { exportContext, contextToPath } from '../../selectors'
 import { importText } from '../../reducers'
 import { initialState } from '../../util/initialState'
 import { Path } from '../../@types'
@@ -356,7 +356,7 @@ it('paste multiple thoughts in non-empty cursor', () => {
 
   const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
 
-  const simplePath: Path = rankThoughtsFirstMatch(state1, ['a', 'b'])!
+  const simplePath: Path = contextToPath(state1, ['a', 'b'])!
 
   const state2 = importText(state1, { path: simplePath, text: importedHtml })
 
@@ -383,7 +383,7 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
 
   const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
 
-  const simplePath = rankThoughtsFirstMatch(state1, ['a', 'b'])!
+  const simplePath = contextToPath(state1, ['a', 'b'])!
   const state2 = importText(state1, { path: simplePath, text: importedHtml })
 
   const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')

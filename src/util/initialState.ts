@@ -112,7 +112,6 @@ export const initialState = (created: Timestamp = timestamp()) => {
     expandedBottom: {},
     expandHoverBottomPaths: {},
     invalidState: false,
-    inversePatches: [],
     // Displays a loading screen when the app starts.
     // This is disabled by updateThoughts once it detects that the root thought is loaded.
     // Used by the Content component to determine if there are no root children and NewThoughtInstructions should be displayed.
@@ -121,9 +120,17 @@ export const initialState = (created: Timestamp = timestamp()) => {
     latestShortcuts: [],
     modals: {},
     noteFocus: false,
-    patches: [],
     recentlyEdited: {},
+    redoPatches: [],
     resourceCache: {},
+    rootContext: [HOME_TOKEN],
+    /* status:
+      'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
+      'connecting'     Connecting to firebase.
+      'loading'        Connected, authenticated, and waiting for first user data payload.
+      'loaded'         User data payload received (may or may not be offline).
+      'offline'        Disconnected and working in offline mode.
+    */
     schemaVersion: SCHEMA_LATEST,
     scrollPrioritized: false,
     search: null,
@@ -136,18 +143,11 @@ export const initialState = (created: Timestamp = timestamp()) => {
     showBreadcrumbs: true,
     // eslint-disable-next-line no-mixed-operators
     splitPosition: parseJsonSafe(getLocal('splitPosition') || null, 0),
-    rootContext: [HOME_TOKEN],
-    /* status:
-      'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
-      'connecting'     Connecting to firebase.
-      'loading'        Connected, authenticated, and waiting for first user data payload.
-      'loaded'         User data payload received (may or may not be offline).
-      'offline'        Disconnected and working in offline mode.
-    */
     status: 'disconnected',
     pushQueue: [],
     thoughts: initialThoughts(created),
     toolbarOverlay: null,
+    undoPatches: [],
   }
   Object.keys(MODALS).forEach(key => {
     // initial modal states

@@ -1,5 +1,5 @@
 import { initialState, pathToContext, reducerFlow } from '../../util'
-import { rankThoughtsFirstMatch } from '../../selectors'
+import { contextToPath } from '../../selectors'
 import { State } from '../../@types'
 
 // reducers
@@ -106,7 +106,7 @@ describe.skip('context view', () => {
       importText({ text }),
       (newState: State) =>
         setCursor(newState, {
-          path: rankThoughtsFirstMatch(newState, ['a', 'm']),
+          path: contextToPath(newState, ['a', 'm']),
         }),
       toggleContextView,
       cursorDown,
@@ -174,7 +174,7 @@ describe.skip('context view', () => {
       importText({ text }),
       (newState: State) =>
         setCursor(newState, {
-          path: rankThoughtsFirstMatch(newState, ['a', 'm']),
+          path: contextToPath(newState, ['a', 'm']),
         }),
       toggleContextView,
       setCursorFirstMatch(['a', 'm', 'a']),

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { deleteLexeme, updateLastUpdated } from '../data-providers/dexie'
 import { hashThought, timestamp } from '../util'
-import { getLexeme, getContextForThought, getThoughtById } from '../selectors'
+import { getLexeme, thoughtToContext, getThoughtById } from '../selectors'
 import { State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
@@ -25,7 +25,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
         return state
       }
       const contextEncoded = parent.id
-      const childrenNew = getAllChildrenAsThoughts(state, getContextForThought(state, parent.id)!).filter(
+      const childrenNew = getAllChildrenAsThoughts(state, thoughtToContext(state, parent.id)!).filter(
         child => hashThought(child.value) !== hashThought(value),
       )
 

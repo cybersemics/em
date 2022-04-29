@@ -13,6 +13,7 @@ import { Timestamp } from './Timestamp'
 import { User } from './Firebase'
 
 export interface State {
+  absoluteContextTime?: Timestamp
   alert?: Alert
   archived?: boolean
   authenticated: boolean
@@ -38,6 +39,7 @@ export interface State {
   editableNonce: number
   editing: boolean | null
   editingValue: string | null
+  enableLatestShorcutsDiagram: boolean
   error?: string | null
   expanded: Index<Path>
   expandedBottom: Index<Path>
@@ -48,18 +50,19 @@ export interface State {
   hoveringPath?: Path
   hoverId?: DROP_TARGET
   invalidState: boolean
-  inversePatches: Patch[]
   isLoading: boolean
   isPushing?: boolean
   lastUpdated?: string
+  latestShortcuts: Shortcut[]
   modals: Index<{ complete?: boolean }>
   // noteFocus is true if the caret is on the note
   noteFocus: boolean
-  patches: Patch[]
   pushQueue: PushBatch[]
   recentlyEdited: RecentlyEditedTree
+  redoPatches: Patch[]
   remoteSearch: boolean
   resourceCache: Index<string>
+  rootContext: Context
   schemaVersion: number
   scrollPrioritized: boolean
   search: string | null
@@ -73,14 +76,11 @@ export interface State {
   showTopControls: boolean
   showBreadcrumbs: boolean
   splitPosition: number
-  rootContext: Context
-  absoluteContextTime?: Timestamp
-  transientFocus?: boolean
   status: string
   thoughts: ThoughtsInterface
   toolbarOverlay?: string | null
+  transientFocus?: boolean
   tutorialStep?: number
+  undoPatches: Patch[]
   user?: User
-  latestShortcuts: Shortcut[]
-  enableLatestShorcutsDiagram: boolean
 }

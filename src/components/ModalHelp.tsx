@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { isTouch } from '../browser'
+import { store } from '../store'
 import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
 import * as db from '../data-providers/dexie'
 import { makeCompareByProp, sort } from '../util'
@@ -30,7 +31,7 @@ const ShortcutRows = (shortcut: Shortcut, i: number) => (
   <tr key={i}>
     <th>
       <b>{shortcut.label}</b>
-      <p>{shortcut.description}</p>
+      <p>{typeof shortcut.description === 'function' ? shortcut.description(store.getState) : shortcut.description}</p>
     </th>
     <td>
       {isTouch && shortcut.gesture ? (

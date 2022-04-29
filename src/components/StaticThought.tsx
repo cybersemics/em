@@ -1,6 +1,6 @@
 import React from 'react'
 import { store } from '../store'
-import { getThoughtByPath, rootedParentOf } from '../selectors'
+import { pathToThought, rootedParentOf } from '../selectors'
 import { expandContextThought } from '../action-creators'
 import { isDivider, isDocumentEditable } from '../util'
 
@@ -31,7 +31,7 @@ const StaticThought = ({
 
   const state = store.getState()
 
-  const { value } = getThoughtByPath(state, simplePath)
+  const { value } = pathToThought(state, simplePath)
 
   return (
     <div className='thought'>

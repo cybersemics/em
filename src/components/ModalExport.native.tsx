@@ -2,16 +2,7 @@ import React, { createContext, FC, useCallback, useContext, useEffect, useRef, u
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { and } from 'fp-and-or'
 import { HOME_PATH } from '../constants'
-import {
-  exportPhrase,
-  getThoughtIdByContext,
-  head,
-  isFunction,
-  isRoot,
-  pathToContext,
-  removeHome,
-  unroot,
-} from '../util'
+import { exportPhrase, contextToThoughtId, head, isFunction, isRoot, pathToContext, removeHome, unroot } from '../util'
 import { alert, error, pull, modalComplete } from '../action-creators'
 import { exportContext, getDescendantThoughtIds, getThoughtById, simplifyPath } from '../selectors'
 import Modal from './Modal'
@@ -85,7 +76,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
     isMounted.current = true
 
-    const id = getThoughtIdByContext(store.getState(), context)
+    const id = contextToThoughtId(store.getState(), context)
 
     if (id) {
       dispatch(

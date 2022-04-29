@@ -14,7 +14,7 @@ import updateUrlHistory from './redux-middleware/updateUrlHistory'
 import sessionManager from './redux-middleware/sessionManager'
 import appReducer from './reducers/app'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
-import undoRedoReducerEnhancer from './redux-enhancers/undoRedoReducerEnhancer'
+import undoRedoEnhancer from './redux-enhancers/undoRedoEnhancer'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 
@@ -26,7 +26,7 @@ export const store = createStore(
   appReducer,
   composeEnhancers(
     applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory, sessionManager),
-    undoRedoReducerEnhancer,
+    undoRedoEnhancer,
     cursorChangedEnhancer,
   ),
 )

@@ -5,14 +5,14 @@ import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import {
   getContexts,
-  getThoughtByContext,
+  contextToThought,
   getLexeme,
   getChildrenRanked,
   isPending,
   decodeThoughtsUrl,
   getThoughtById,
 } from './selectors'
-import { getThoughtIdByContext, hashThought, initEvents, isRoot, owner, urlDataSource } from './util'
+import { contextToThoughtId, hashThought, initEvents, isRoot, owner, urlDataSource } from './util'
 import {
   authenticate,
   loadPublicThoughts,
@@ -41,7 +41,7 @@ import { getAllChildrenAsThoughts } from './selectors/getChildren'
 
 // enable to collect moize usage stats
 // do not enable in production
-// execute moize.getStats in the console to analyze cache hits, e.g. moize.getStats('getThoughtIdByContext')
+// execute moize.getStats in the console to analyze cache hits, e.g. moize.getStats('contextToThoughtId')
 // moize.collectStats()
 
 /** Initialize firebase and event handlers. */
@@ -209,10 +209,10 @@ const windowEm = {
   testHelpers,
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
-  getThoughtByContext: withState(getThoughtByContext),
+  contextToThought: withState(contextToThought),
   getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
   getChildrenRanked: withState(getChildrenRanked),
-  getThoughtIdByContext,
+  contextToThoughtId,
   hashThought,
   isPending: withState(isPending),
   moize,

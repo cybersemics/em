@@ -1,4 +1,4 @@
-import { rankThoughtsFirstMatch } from '../selectors'
+import { contextToPath } from '../selectors'
 import { importText } from '../action-creators'
 import { Thunk } from '../@types'
 import { HOME_TOKEN } from '../constants'
@@ -12,7 +12,7 @@ function importToContext(pathUnranked: string | string[], text?: string): Thunk 
   const _text = typeof pathUnranked === 'string' ? pathUnranked : text!
 
   return (dispatch, getState) => {
-    const path = rankThoughtsFirstMatch(getState(), _pathUnranked)
+    const path = contextToPath(getState(), _pathUnranked)
     return (
       path &&
       dispatch(

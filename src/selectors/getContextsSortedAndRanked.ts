@@ -1,13 +1,13 @@
 import { unroot } from '../util'
 import { getContexts, getThoughtById, isAncestorsVisible } from '../selectors'
 import { ContextThought, State } from '../@types'
-import getContextForThought from './getContextForThought'
+import thoughtToContext from './thoughtToContext'
 
 /** Gets all contexts that the given thought is in, sorted and ranked. */
 const getContextsSortedAndRanked = (state: State, value: string): ContextThought[] =>
   // @MIGRATION_TODO: Sort
   getContexts(state, value)
-    .filter(id => isAncestorsVisible(state, unroot(getContextForThought(state, id)!)))
+    .filter(id => isAncestorsVisible(state, unroot(thoughtToContext(state, id)!)))
     // generate dynamic ranks
     .map((thoughtContext, i) => {
       const thought = {

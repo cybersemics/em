@@ -2,7 +2,7 @@
 import { initialState, reducerFlow } from '../../util'
 import { importText, setCursor, toggleContextView } from '../../reducers'
 import { State } from '../../@types'
-import { childIdsToThoughts, rankThoughtsFirstMatch } from '../../selectors'
+import { childIdsToThoughts, contextToPath } from '../../selectors'
 
 it('set the cursor to a SimplePath', () => {
   const text = `
@@ -14,7 +14,7 @@ it('set the cursor to a SimplePath', () => {
     importText({ text }),
     (newState: State) =>
       setCursor(newState, {
-        path: rankThoughtsFirstMatch(newState, ['a', 'b', 'c']),
+        path: contextToPath(newState, ['a', 'b', 'c']),
       }),
     toggleContextView,
   ]
@@ -46,7 +46,7 @@ it.skip('set the cursor to a Path across a context view', () => {
     importText({ text }),
     (newState: State) =>
       setCursor(newState, {
-        path: rankThoughtsFirstMatch(newState, ['a', 'm', 'b', 'y']),
+        path: contextToPath(newState, ['a', 'm', 'b', 'y']),
       }),
     toggleContextView,
   ]

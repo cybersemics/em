@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { getThoughtIdByContext, initialState, reducerFlow } from '../../util'
+import { contextToThoughtId, initialState, reducerFlow } from '../../util'
 import { exportContext } from '../../selectors'
 import newThought from '../newThought'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
@@ -88,7 +88,7 @@ it('new thought to top of home context', () => {
 it('update cursor to first new thought', () => {
   const stateNew = newThought(initialState(), { value: 'a' })
 
-  expect(stateNew.cursor).toMatchObject([getThoughtIdByContext(stateNew, ['a'])!])
+  expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['a'])!])
 })
 
 it('update cursor to new thought', () => {
@@ -97,5 +97,5 @@ it('update cursor to new thought', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expect(stateNew.cursor).toMatchObject([getThoughtIdByContext(stateNew, ['b'])!])
+  expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['b'])!])
 })

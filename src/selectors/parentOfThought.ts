@@ -1,14 +1,12 @@
 import { getThoughtById } from './index'
 import { State, Thought, ThoughtId } from '../@types'
 
-/**
- * Returns the parent thought.
- */
-const getParentThought = (state: State, thoughtId: ThoughtId): Thought | null => {
+/** Returns the parent Thought of a given ThoughtId. */
+const parentOfThought = (state: State, thoughtId: ThoughtId): Thought | null => {
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return null
   const parentThought = getThoughtById(state, thought.parentId)
   return parentThought
 }
 
-export default getParentThought
+export default parentOfThought

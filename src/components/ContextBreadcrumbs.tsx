@@ -9,7 +9,7 @@ import Link from './Link'
 import Superscript from './Superscript'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { store } from '../store'
-import { getParentThought } from '../selectors'
+import { parentOfThought } from '../selectors'
 
 export interface ContextBreadcrumbProps {
   homeContext?: boolean
@@ -47,7 +47,7 @@ export const ContextBreadcrumbs = ({
 
   // if charLimit is exceeded then replace the remaining characters by ellipsis
   const charLimitedArray: OverflowPath = simplePath.map(child => ({
-    value: getParentThought(state, child)!.value,
+    value: parentOfThought(state, child)!.value,
     // subtract 2 so that additional '...' is still within the char limit
     id: child,
     ...(ellipsize

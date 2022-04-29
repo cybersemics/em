@@ -5,14 +5,14 @@ import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { importText } from '../action-creators'
 import appReducer from '../reducers/app'
 import { never } from '../util'
-import undoRedoReducerEnhancer from '../redux-enhancers/undoRedoReducerEnhancer'
+import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import { State } from '../@types'
 
 /**
  * Returns new store for test.
  */
 export const createTestStore = () => {
-  const store = createStore(appReducer, compose(applyMiddleware(multi, thunk), undoRedoReducerEnhancer))
+  const store = createStore(appReducer, compose(applyMiddleware(multi, thunk), undoRedoEnhancer))
 
   store.dispatch([
     importText({

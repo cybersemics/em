@@ -1,2 +1,2 @@
-/** Gets the signifying label of the given context. */
+/** Gets the last ThoughtId or value in a Path or Context. */
 export const head = <T>(list: T[]) => list[list.length - 1]

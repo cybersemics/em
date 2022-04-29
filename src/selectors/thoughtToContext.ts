@@ -3,15 +3,15 @@ import { State, Context, ThoughtId } from '../@types'
 import { ROOT_PARENT_ID } from '../constants'
 
 /**
- * Traverses the thought tree upwards from the given thought and returns the rooted context.
+ * Generates the Context for a Thought by traversing upwards to the ROOT thought.
  */
-const getContextForThought = (state: State, thoughtId: ThoughtId): Context | null => {
+const thoughtToContext = (state: State, thoughtId: ThoughtId): Context | null => {
   if (thoughtId === ROOT_PARENT_ID) return []
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return null
-  const recursiveContext = getContextForThought(state, thought.parentId)
+  const recursiveContext = thoughtToContext(state, thought.parentId)
   if (!recursiveContext) return null
   return [...recursiveContext, thought.value]
 }
 
-export default getContextForThought
+export default thoughtToContext

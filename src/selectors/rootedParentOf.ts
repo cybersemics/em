@@ -10,7 +10,7 @@ const RootPathMap: Record<string, Path> = {
 /** Checks if an object is of type Path. */
 const isPath = (o: Context | Path): o is Path => o.length > 0 && Object.prototype.hasOwnProperty.call(o[0], 'value')
 
-/** Get the parentOf thoughts or the root ranked path  if there are none. */
+/** Gets the parent Context/Path of a given Context/Path. If passed a child of the root thought, returns [HOME_TOKEN] or [ABSOLUTE_TOKEN] as appropriate. */
 const rootedParentOf = <T extends Context | Path>(state: State, thoughts: T): T => {
   const startingRankedRoot = RootPathMap[state.rootContext[0]]
 

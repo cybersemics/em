@@ -3,7 +3,7 @@ import { DataProvider } from '../DataProvider'
 import { hashThought, isFunction, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
 import { Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
-import { getContextForThought, getThoughtById } from '../../selectors'
+import { thoughtToContext, getThoughtById } from '../../selectors'
 import { getSessionId } from '../../util/sessionManager'
 
 const MAX_DEPTH = 100
@@ -21,7 +21,7 @@ interface Options {
  */
 const isUnbuffered = (state: State, thought: Thought) => {
   // Note: Since thought does not have context and we have to generate context from available state. May not work as intended if the we pull a thought whose ancestors has not been pulled yet.
-  const context = getContextForThought(state, thought.id)
+  const context = thoughtToContext(state, thought.id)
 
   // @MIGRATION_TODO: Is it okay to prevent buffering if context is not found ?
   if (!context) {

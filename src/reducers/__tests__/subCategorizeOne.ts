@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { childIdsToThoughts, exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { childIdsToThoughts, exportContext, contextToPath } from '../../selectors'
 import { State } from '../../@types'
 
 // reducers
@@ -75,7 +75,7 @@ it('subcategorize within alphabteically sorted context', () => {
     }),
     (newState: State) =>
       setCursor(newState, {
-        path: rankThoughtsFirstMatch(newState, ['A', 'E']),
+        path: contextToPath(newState, ['A', 'E']),
       }),
     subCategorizeOne,
   ]

@@ -1,6 +1,6 @@
 import { store as appStore } from '../../store'
 import { MODALS, HOME_TOKEN } from '../../constants'
-import { childIdsToThoughts, exportContext, rankThoughtsFirstMatch } from '../../selectors'
+import { childIdsToThoughts, exportContext, contextToPath } from '../../selectors'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
@@ -132,7 +132,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
         oldValue: 'b',
         context: ['a'],
         rankInContext: 0,
-        path: rankThoughtsFirstMatch(state, ['a', 'b']),
+        path: contextToPath(state, ['a', 'b']),
       })
     },
     { type: 'cursorBack' },
@@ -225,7 +225,7 @@ it('state remains unchanged if there are no inverse patches', () => {
   )
 
   const prevState = store.getState()
-  expect(prevState.inversePatches.length).toEqual(0)
+  expect(prevState.undoPatches.length).toEqual(0)
 
   store.dispatch({ type: 'undoAction' })
 
@@ -306,8 +306,8 @@ it('state.alert is omitted from the undo patch', () => {
     setCursorFirstMatchActionCreator(['A']),
     { type: 'archiveThought' },
   ])
-  const { inversePatches } = store.getState()
-  const lastPatch = inversePatches[inversePatches.length - 1]
+  const { undoPatches } = store.getState()
+  const lastPatch = undoPatches[undoPatches.length - 1]
 
   const thoughtsExists = lastPatch.some(({ path }) => path.includes('/thoughts'))
   expect(thoughtsExists).toEqual(true)
@@ -336,12 +336,12 @@ it('clear patches when any undoable action is dispatched', () => {
     { type: 'undoAction' },
   ])
 
-  expect(store.getState().patches.length).toEqual(2)
+  expect(store.getState().redoPatches.length).toEqual(2)
 
   // dispatch an undoable action
   store.dispatch(newThought({ value: 'Atlantic City' }))
 
-  expect(store.getState().patches.length).toEqual(0)
+  expect(store.getState().redoPatches.length).toEqual(0)
 })
 
 it('non-undoable actions are ignored', () => {
@@ -352,5 +352,37 @@ it('non-undoable actions are ignored', () => {
     { type: 'toggleSidebar' },
   ])
 
-  expect(store.getState().inversePatches.length).toEqual(0)
+  expect(store.getState().undoPatches.length).toEqual(0)
+})
+
+it('undo redo importText action', () => {
+  const store = createTestStore()
+
+  store.dispatch([
+    newThought({}),
+    importText({
+      text: `
+        - A
+        - B`,
+    }),
+    { type: 'undoAction' },
+  ])
+
+  const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  const expectedOutputAfterUndo = `${HOME_TOKEN}`
+
+  expect(exportedBeforeRedo).toEqual(expectedOutputAfterUndo)
+
+  // redo thought change
+  store.dispatch({ type: 'redoAction' })
+
+  const exportedAfterRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  const expectedOutputAfterRedo = `- ${HOME_TOKEN}
+  - ${''}
+  - A
+  - B`
+
+  expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
 })

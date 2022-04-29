@@ -18,7 +18,7 @@ export interface Shortcut {
   conflicts?: string[]
 
   // a description of what the shortcut does that is shown in the Help modal
-  description?: string
+  description?: string | ((getState: () => State) => string)
 
   // executes the shortcut
   exec: (

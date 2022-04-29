@@ -1,20 +1,20 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../../constants'
 import { hashPath, initialState, reducerFlow } from '../../util'
-import { expandThoughts, rankThoughtsFirstMatch } from '../../selectors'
+import { expandThoughts, contextToPath } from '../../selectors'
 import { importText, newSubthought, newThought, setCursor } from '../../reducers'
 import { Context, State } from '../../@types'
 
-/** A reducer that sets the cursor to the given unranked path. Uses rankThoughtsFirstMatch. */
+/** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */
 const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) =>
   setCursor(state, {
-    path: rankThoughtsFirstMatch(state, pathUnranked),
+    path: contextToPath(state, pathUnranked),
   }),
 )
 
 /** Returns true if a context is expanded. */
 const isContextExpanded = (state: State, context: Context) => {
-  const path = rankThoughtsFirstMatch(state, context)
+  const path = contextToPath(state, context)
   if (!path) return false
   return expandThoughts(state, state.cursor)[hashPath(path)]
 }

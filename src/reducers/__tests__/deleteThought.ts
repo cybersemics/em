@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { getContexts, getAllChildren, getThoughtByContext } from '../../selectors'
+import { getContexts, getAllChildren, contextToThought } from '../../selectors'
 import { newSubthought, newThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
@@ -13,7 +13,7 @@ it('delete from root', () => {
   const stateNew = reducerFlow(steps)(state)
 
   /** Gets the root Parent from a state's thoughtIndex. */
-  const thought = getThoughtByContext(stateNew, [HOME_TOKEN])!
+  const thought = contextToThought(stateNew, [HOME_TOKEN])!
 
   // thoughtIndex
   matchChildIdsWithThoughts(stateNew, thought.children, [
@@ -32,6 +32,7 @@ it('delete descendants of root thought', () => {
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
+  console.log('getAllChildren(stateNew, [HOME_TOKEN]) :', getAllChildren(stateNew, [HOME_TOKEN]))
   // cnntextIndex
   expect(getAllChildren(stateNew, [HOME_TOKEN])).toEqual([])
   expect(getAllChildren(stateNew, ['a'])).toEqual([])

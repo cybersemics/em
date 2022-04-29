@@ -13,7 +13,7 @@ import {
 import { headValue, isRoot, joinConjunction } from '../../util'
 
 // selectors
-import { getContexts, getChildrenRanked, childIdsToThoughts, getParentThought } from '../../selectors'
+import { getContexts, getChildrenRanked, childIdsToThoughts, parentOfThought } from '../../selectors'
 
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
@@ -41,7 +41,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
   const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
   const contexts = getContexts(state, caseSensitiveValue)
-  const contextParentThoughts = contexts.map(thoughtId => getParentThought(state, thoughtId))
+  const contextParentThoughts = contexts.map(thoughtId => parentOfThought(state, thoughtId))
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
 

@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../constants'
-import { createId, getThoughtIdByContext, hashThought, owner } from '../util'
+import { createId, contextToThoughtId, hashThought, owner } from '../util'
 import { loadRemoteState } from '../action-creators'
 import { Firebase, Thought, State, Thunk } from '../@types'
 import { getThoughtById } from '../selectors'
@@ -43,7 +43,7 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
               value: thought.value,
               contexts: [
                 {
-                  id: getThoughtIdByContext(state, [thought.value]),
+                  id: contextToThoughtId(state, [thought.value]),
                   context: [HOME_TOKEN],
                   rank: thought.rank,
                 },
