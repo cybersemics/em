@@ -1,20 +1,23 @@
 import _ from 'lodash'
 import { deleteThought } from '../reducers'
-import { hasChild, contextToPath } from '../selectors'
-import { head } from '../util'
-import { Context, State } from '../@types'
+import { hasChild } from '../selectors'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { head, pathToContext } from '../util'
+import { Path, State } from '../@types'
 
 /** Deletes an attribute. */
-const deleteAtribute = (state: State, { context, key }: { context: Context; key: string }) => {
-  if (!context) return state
+const deleteAtribute = (state: State, { path, key }: { path: Path; key: string }) => {
+  if (!path) return state
 
-  const path = contextToPath(state, [...context, key])
+  const context = pathToContext(state, path)
+  const thoughtAttribute = getAllChildrenAsThoughtsById(state, head(path)).find(child => child.value === key)
+  const pathAttribute = thoughtAttribute ? [...path, thoughtAttribute.id] : null
 
-  return path && hasChild(state, context, key)
+  return pathAttribute && hasChild(state, context, key)
     ? deleteThought(state, {
         context,
         showContexts: false,
-        thoughtId: head(path),
+        thoughtId: head(pathAttribute),
       })
     : state
 }

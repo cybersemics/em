@@ -84,7 +84,7 @@ const Note = ({ path }: NoteProps) => {
       e.stopPropagation() // prevent delete thought
       e.preventDefault()
       asyncFocus()
-      dispatch(deleteAttribute({ context, key: '=note' }))
+      dispatch(deleteAttribute({ path, key: '=note' }))
       dispatch(setNoteFocus({ value: false }))
     } else if (e.key === 'ArrowDown') {
       e.stopPropagation()

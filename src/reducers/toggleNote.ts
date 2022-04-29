@@ -18,7 +18,7 @@ const toggleNote = (state: State) => {
         })
       : // delete an empty note that already exists
       state.noteFocus && !attribute(state, context, '=note')
-      ? deleteAttribute({ context, key: '=note' })
+      ? deleteAttribute({ path: state.cursor!, key: '=note' })
       : null,
 
     // toggle state.noteFocus, which will trigger the Editable and Note to re-render and set the selection appropriately

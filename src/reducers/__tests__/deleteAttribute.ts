@@ -1,6 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { contextToPath, exportContext } from '../../selectors'
+import { State } from '../../@types'
 
 // reducers
 import deleteAttribute from '../deleteAttribute'
@@ -20,10 +21,11 @@ it('delete attribute', () => {
     }),
 
     // delete attribute
-    deleteAttribute({
-      context: ['a'],
-      key: '=test',
-    }),
+    (state: State) =>
+      deleteAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
