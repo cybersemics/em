@@ -32,7 +32,7 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Th
 
 // TODO: Rename this to something better.
 /** Returns the thoughts for the given thought id. */
-export const getAllChildrenByContextHash = (state: State, thoughtId: ThoughtId): ThoughtId[] =>
+export const getAllChildrenById = (state: State, thoughtId: ThoughtId): ThoughtId[] =>
   getThoughtById(state, thoughtId)?.children || noChildren
 
 /** Returns the subthoughts (as Thoughts) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
@@ -41,12 +41,12 @@ export const getAllChildrenAsThoughts = (state: State, context: Context) =>
 
 /** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) =>
-  childIdsToThoughts(state, getAllChildrenByContextHash(state, id)) ?? noChildren
+  childIdsToThoughts(state, getAllChildrenById(state, id)) ?? noChildren
 
 /** Returns the subthoughts (as ThoughtIds) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {
   const id = contextToThoughtId(state, context)
-  return id ? getAllChildrenByContextHash(state, id) : noThoughtIds
+  return id ? getAllChildrenById(state, id) : noThoughtIds
 }
 
 /** Makes a getAllChildren function that only returns visible thoughts. */
@@ -166,7 +166,7 @@ export const getChildrenRanked = (state: State, context: Context): Thought[] =>
 /** Gets all children of a context sorted by their ranking using thought id. Returns a new object reference even if the children have not changed. */
 // @MIGRATION_TODO: Currently we are migrating to access by id instead of context.
 export const getChildrenRankedById = (state: State, thoughtId: ThoughtId): Thought[] => {
-  const allChildren = childIdsToThoughts(state, getAllChildrenByContextHash(state, thoughtId)) || []
+  const allChildren = childIdsToThoughts(state, getAllChildrenById(state, thoughtId)) || []
   return sort(allChildren, compareByRank)
 }
 
