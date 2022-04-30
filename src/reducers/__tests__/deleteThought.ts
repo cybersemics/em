@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
 import { getContexts, getAllChildren, contextToThought } from '../../selectors'
-import { newSubthought, newThought } from '../../reducers'
+import { newSubthought, newThought, deleteEmptyThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 
@@ -79,4 +79,21 @@ it('update cursor after thought deletion', () => {
       value: 'a',
     },
   ])
+})
+it('deletion of empty thought', () => {
+  const steps = [newThought(''), newThought('')]
+
+  const state = initialState()
+  const stateNew = reducerFlow(steps)(state)
+  const rootChildren = stateNew.thoughts.thoughtIndex[HOME_TOKEN].children
+
+  // root children before deletion
+  expect(rootChildren.length).toBe(2)
+
+  const stateAfterDeletion = reducerFlow([deleteEmptyThought])(stateNew)
+
+  //root children after deletion
+  const rootChildrenAfterDeletion = stateAfterDeletion.thoughts.thoughtIndex[HOME_TOKEN].children
+
+  expect(rootChildrenAfterDeletion.length).toBe(1)
 })
