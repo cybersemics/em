@@ -6,8 +6,8 @@ import {
   getLexeme,
   getThoughtById,
   hasLexeme,
-  contextToPath,
   rootedParentOf,
+  thoughtToPath,
 } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
@@ -71,7 +71,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
-  const path = contextToPath(state, thoughts as string[])
+  const path = thoughtToPath(state, deletedThought.id)
 
   const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
 

@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { getContexts, getAllChildren, contextToThought } from '../../selectors'
-import { newSubthought, newThought } from '../../reducers'
+import { getContexts, getAllChildren, contextToThought, getThoughtById } from '../../selectors'
+import { newSubthought, newThought, deleteEmptyThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 
@@ -79,4 +79,23 @@ it('update cursor after thought deletion', () => {
       value: 'a',
     },
   ])
+})
+
+it('delete the intended empty thought when there are multiple', () => {
+  const steps = [newThought(''), newThought('')]
+
+  const state = initialState()
+  const stateNew = reducerFlow(steps)(state)
+  const rootChildren = getAllChildren(stateNew, [HOME_TOKEN])
+  const thoughtIdToBeDeleted = rootChildren[rootChildren.length - 1]
+
+  const thoughtToBeDeleted = getThoughtById(stateNew, thoughtIdToBeDeleted)
+
+  expect(thoughtToBeDeleted).toBeDefined()
+
+  const stateAfterDeletion = reducerFlow([deleteEmptyThought])(stateNew)
+
+  const thoughtAfterDeletion = getThoughtById(stateAfterDeletion, thoughtIdToBeDeleted)
+
+  expect(thoughtAfterDeletion).toBeUndefined()
 })
