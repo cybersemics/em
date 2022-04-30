@@ -92,7 +92,7 @@ it('deletion of empty thought', () => {
 
   const stateAfterDeletion = reducerFlow([deleteEmptyThought])(stateNew)
 
-  //root children after deletion
+  // root children after deletion
   const rootChildrenAfterDeletion = stateAfterDeletion.thoughts.thoughtIndex[HOME_TOKEN].children
 
   expect(rootChildrenAfterDeletion.length).toBe(1)
