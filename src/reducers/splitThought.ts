@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
 import { appendToPath, parentOf, pathToContext, reducerFlow, strip, head } from '../util'
 import { getChildrenRanked, simplifyPath, getThoughtById } from '../selectors'
-import { editableRender, editThought, moveThought, newThought } from '../reducers'
+import { editableRender, editThought, moveThought, newThought, deleteData } from '../reducers'
 import { Path, SplitResult, State } from '../@types'
 
 /** Splits a thought into two thoughts.
@@ -28,6 +28,10 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   const pathLeft = path
 
   return reducerFlow([
+    // always delete current lexeme value as we don't want any lexeme value duplication after split
+    deleteData({
+      value,
+    }),
     // set the thought's text to the left of the selection
     editThought({
       oldValue: value,
