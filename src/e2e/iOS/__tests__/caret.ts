@@ -26,11 +26,7 @@ const {
   waitUntil,
 } = helpers()
 
-// tests succeeds individually, but fails when there are too many tests running in parallel
-// https://github.com/cybersemics/em/issues/1475
-// https://github.com/cybersemics/em/issues/1523
-
-it.skip('Enter edit mode ', async () => {
+it('Enter edit mode ', async () => {
   await newThought('foo')
   await hideKeyboardByTappingDone()
 
@@ -42,7 +38,7 @@ it.skip('Enter edit mode ', async () => {
   expect(selectionTextContent).toBe('foo')
 })
 
-it.skip('Preserve Editing: true', async () => {
+it('Preserve Editing: true', async () => {
   await newThought('foo')
   await newThought('bar', { insertNewSubthought: true })
 
@@ -54,7 +50,7 @@ it.skip('Preserve Editing: true', async () => {
   expect(selectionTextContent).toBe('foo')
 })
 
-it.skip('Preserve Editing: false', async () => {
+it('Preserve Editing: false', async () => {
   await newThought('foo')
   await newThought('bar', { insertNewSubthought: true })
   await hideKeyboardByTappingDone()
@@ -66,7 +62,7 @@ it.skip('Preserve Editing: false', async () => {
   expect(selectionTextContent).toBe(null)
 })
 
-it.skip('No uncle loop', async () => {
+it('No uncle loop', async () => {
   const importText = `
     - a
       - b
@@ -85,7 +81,7 @@ it.skip('No uncle loop', async () => {
   expect(selectionTextContent).toBe('c')
 })
 
-it.skip('Tap hidden root thought', async () => {
+it('Tap hidden root thought', async () => {
   const importText = `
   - a
     - b
@@ -105,7 +101,7 @@ it.skip('Tap hidden root thought', async () => {
   expect(editingText).toBe('b')
 })
 
-it.skip('Tap hidden uncle', async () => {
+it('Tap hidden uncle', async () => {
   const importText = `
     - a
       - b
@@ -125,7 +121,7 @@ it.skip('Tap hidden uncle', async () => {
   expect(selectionTextContent).toBe('d')
 })
 
-it.skip('Tap empty content while keyboard up', async () => {
+it('Tap empty content while keyboard up', async () => {
   const importText = `
     - a
       - b
@@ -147,7 +143,7 @@ it.skip('Tap empty content while keyboard up', async () => {
   expect(selectionTextContent).toBe('b')
 })
 
-it.skip('Tap empty content while keyboard down', async () => {
+it('Tap empty content while keyboard down', async () => {
   const importText = `
     - a
       - b
@@ -168,7 +164,7 @@ it.skip('Tap empty content while keyboard down', async () => {
   expect(await isKeyboardShown()).toBeFalsy()
 })
 
-it.skip('Swipe over cursor', async () => {
+it('Swipe over cursor', async () => {
   await newThought('foo')
   await hideKeyboardByTappingDone()
 
@@ -191,7 +187,7 @@ it.skip('Swipe over cursor', async () => {
   expect(selectionTextContent).toBe(null)
 })
 
-it.skip('Swipe over hidden thought', async () => {
+it('Swipe over hidden thought', async () => {
   const importText = `
     - a
       - x
@@ -235,7 +231,7 @@ it.skip('Swipe over hidden thought', async () => {
   expect(previousSibling).toBe('y')
 })
 
-it.skip('Bump Thought Down on a thought that has children', async () => {
+it('Bump Thought Down on a thought that has children', async () => {
   await newThought('foo')
   await newThought('bar', { insertNewSubthought: true })
   await hideKeyboardByTappingDone()

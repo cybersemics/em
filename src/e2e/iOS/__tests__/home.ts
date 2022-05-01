@@ -8,10 +8,7 @@ jest.setTimeout(90000)
 
 const { $, clickThought, paste, waitForEditable } = helpers()
 
-// test succeeds individually, but fails when there are too many tests running in parallel
-// https://github.com/cybersemics/em/issues/1475
-// https://github.com/cybersemics/em/issues/1523
-it.skip('click home link to set the cursor to null', async () => {
+it('click home link to set the cursor to null', async () => {
   const text = `
   - a
     - b`
