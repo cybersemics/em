@@ -1,17 +1,19 @@
-import { getThoughtById } from './index'
-import { State, Context, ThoughtId } from '../@types'
-import { ROOT_PARENT_ID } from '../constants'
+import { getThoughtById } from '../selectors'
+import { isRoot } from '../util'
+import { Context, State, ThoughtId } from '../@types'
+import { HOME_PATH } from '../constants'
 
 /**
- * Generates the Context for a Thought by traversing upwards to the ROOT thought.
+ * Generates the Context for a Thought by traversing upwards to the root thought.
  */
-const thoughtToContext = (state: State, thoughtId: ThoughtId): Context | null => {
-  if (thoughtId === ROOT_PARENT_ID) return []
+const thoughtToContext = (state: State, thoughtId: ThoughtId): Context => {
+  if (isRoot([thoughtId])) return HOME_PATH
   const thought = getThoughtById(state, thoughtId)
-  if (!thought) return null
-  const recursiveContext = thoughtToContext(state, thought.parentId)
-  if (!recursiveContext) return null
-  return [...recursiveContext, thought.value]
+  return thought
+    ? isRoot([thought.parentId])
+      ? [thought.value]
+      : [...thoughtToContext(state, thought.parentId), thought.value]
+    : HOME_PATH
 }
 
 export default thoughtToContext
