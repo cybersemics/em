@@ -9,7 +9,7 @@ const fakeTimer = testTimer()
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('Splitting thought right after non word character', async () => {
+it('split thought after non-word character', async () => {
   fakeTimer.useFakeTimer()
 
   store.dispatch([
@@ -19,10 +19,6 @@ it('Splitting thought right after non word character', async () => {
   ])
 
   await fakeTimer.runAllAsync()
-
-  await fakeTimer.useRealTimer()
-
-  fakeTimer.useFakeTimer()
 
   store.dispatch({
     type: 'splitThought',
@@ -36,5 +32,6 @@ it('Splitting thought right after non word character', async () => {
 
   await fakeTimer.useRealTimer()
 
+  // ensure that the Lexeme is not duplicated since it is the same as the source thought
   expect(() => screen.getByText('2')).toThrow('Unable to find an element')
 })
