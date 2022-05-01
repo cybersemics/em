@@ -79,7 +79,6 @@ export const toggleNote = reducerToThunk<typeof reducers.toggleNote>('toggleNote
 export const toggleShortcutsDiagram = reducerToThunk<typeof reducers.toggleShortcutsDiagram>('toggleShortcutsDiagram')
 export const toggleSidebar = reducerToThunk<typeof reducers.toggleSidebar>('toggleSidebar')
 export const toggleSplitView = reducerToThunk<typeof reducers.toggleSplitView>('toggleSplitView')
-export const tutorial = reducerToThunk<typeof reducers.tutorial>('tutorial')
 export const tutorialChoice = reducerToThunk<typeof reducers.tutorialChoice>('tutorialChoice')
 export const tutorialNext = reducerToThunk<typeof reducers.tutorialNext>('tutorialNext')
 export const tutorialPrev = reducerToThunk<typeof reducers.tutorialPrev>('tutorialPrev')
@@ -120,6 +119,7 @@ export { default as showModal } from './showModal'
 export { default as subCategorizeAll } from './subCategorizeAll'
 export { default as subCategorizeOne } from './subCategorizeOne'
 export { default as suppressExpansion } from './suppressExpansion'
+export { default as tutorial } from './tutorial'
 export { default as updateSplitPosition } from './updateSplitPosition'
 export { default as updateThoughtsFromSubscription } from './updateThoughtsFromSubscription'
 export { default as userAuthenticated } from './userAuthenticated'

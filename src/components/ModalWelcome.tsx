@@ -1,12 +1,9 @@
 /* eslint-disable no-unmodified-loop-condition */
 import React from 'react'
 import Modal from './Modal'
-import { EM_TOKEN } from '../constants'
 import { ActionButton } from './ActionButton'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { tutorial } from '../action-creators'
-import { getAllChildren } from '../selectors'
-import { State } from '../@types'
 
 /** Shrink modal text and logos to fit container vertically. */
 const onRef = (el: HTMLDivElement) => {
@@ -47,15 +44,9 @@ const onRef = (el: HTMLDivElement) => {
 
 /** A modal that welcomes the user to em. */
 const ModalWelcome = () => {
-  const isTutorialSettingsLoaded = useSelector(
-    (state: State) => getAllChildren(state, [EM_TOKEN, 'Settings', 'Tutorial']).length > 0,
-  )
-
   const dispatch = useDispatch()
 
-  /**
-   * End tutorial.
-   */
+  /** End the tutorial. */
   const endTutorial = () =>
     dispatch(
       tutorial({
@@ -79,14 +70,10 @@ const ModalWelcome = () => {
               <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}>
                 <a
                   id='skip-tutorial'
-                  onClick={
-                    isTutorialSettingsLoaded
-                      ? () => {
-                          endTutorial()
-                          complete()
-                        }
-                      : undefined
-                  }
+                  onClick={() => {
+                    endTutorial()
+                    complete()
+                  }}
                 >
                   This ain’t my first rodeo. Skip it.
                 </a>

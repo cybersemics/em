@@ -2,15 +2,13 @@
 import React, { useState } from 'react'
 import * as murmurHash3 from 'murmurhash3js'
 import Modal from './Modal'
-import { BETA_HASH, EM_TOKEN } from '../constants'
+import { BETA_HASH } from '../constants'
 import { ActionButton } from './ActionButton'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { tutorial } from '../action-creators'
-import { getAllChildren } from '../selectors'
 import { storage } from '../util/storage'
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from './Text.native'
-import { State } from '../@types'
 
 const isLocalNetwork = Boolean(__DEV__)
 
@@ -65,9 +63,6 @@ const ModalWelcome = () => {
   const [invited, setInvited] = useState(isLocalNetwork || validateInviteCode(inviteCode))
   const [, setInviteTransition] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const isTutorialSettingsLoaded = useSelector(
-    (state: State) => getAllChildren(state, [EM_TOKEN, 'Settings', 'Tutorial']).length > 0,
-  )
   const dispatch = useDispatch()
 
   /** Submit a beta invite code. */
@@ -131,14 +126,10 @@ const ModalWelcome = () => {
           <ActionButton title='START TUTORIAL' onClick={() => close()} />
           {
             <TouchableOpacity
-              onPress={
-                isTutorialSettingsLoaded
-                  ? () => {
-                      endTutorial()
-                      close()
-                    }
-                  : undefined
-              }
+              onPress={() => {
+                endTutorial()
+                close()
+              }}
               style={styles.helperActionButton}
             >
               <Text style={styles.helperActionButtonText}>This ain’t my first rodeo. Skip it.</Text>
