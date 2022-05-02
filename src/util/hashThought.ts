@@ -18,5 +18,5 @@ import { normalizeThought } from './normalizeThought'
  * Use schemaVersion to manage migrations.
  */
 export const hashThought: (s: string) => ThoughtHash = _.memoize((value: string) =>
-  _.flow([normalizeThought, ...(globals.disableThoughtHashing ? [] : [murmurHash3.x64.hash128])])(value),
+  _.flow([normalizeThought, ...(globals.debugIds ? [] : [murmurHash3.x64.hash128])])(value),
 )

@@ -30,8 +30,9 @@ const simulateDropHover = false
 // disable the tutorial for debugging
 const disableTutorial = false
 
-// disable key hashing for easier debugging of lexemeIndex and thoughtIndex
-const disableThoughtHashing = false
+// Use autoincrement ids for Thoughts and normalize values without hashing for Lexemes to make debugging easier.
+// Autoincrement ids are not globally unique and will conflict with multilpe devices, so only use for debugging purposes.
+const debugIds = false
 
 // Ellipsize the thoughts in the context view. They can be expanded by clicking on the ellipsis.
 // TODO: Default to false but add a setting to enable.
@@ -43,7 +44,7 @@ const checkDuplicateRanks = false
 
 const globals = {
   checkDuplicateRanks,
-  disableThoughtHashing,
+  debugIds,
   disableTutorial,
   ellipsizeContextThoughts,
   errorTimer,

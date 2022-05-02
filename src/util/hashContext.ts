@@ -22,7 +22,7 @@ const encodeHashedContext = (context: Context, rank?: number): ContextHash => {
 }
 
 /** Returns a hashContext function with or without hashing at compile-time for performance. */
-const hashContextFunction = globals.disableThoughtHashing ? encodePlainContext : encodeHashedContext
+const hashContextFunction = globals.debugIds ? encodePlainContext : encodeHashedContext
 
 // memoization overhead is too great
 // strict equal has far fewer cache hits, so is the slowest
