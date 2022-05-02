@@ -67,11 +67,13 @@ const mergeThoughts = (
     [hashedThought]: updatedLexeme,
   }
 
+  const sourceParentThoughtUpdated = getThoughtById(newStateAfterMove, sourceParentThought.id)
+
   const thoughtIndexUpdates = {
     // delete source thought from the source parent's children array,
     [sourceParentThought.id]: {
-      ...sourceParentThought,
-      children: sourceParentThought.children.filter(thoughtId => thoughtId !== sourceThought.id),
+      ...sourceParentThoughtUpdated,
+      children: sourceParentThoughtUpdated.children.filter(thoughtId => thoughtId !== sourceThought.id),
       updatedAt: timestamp(),
       updatedBy: getSessionId(),
     },

@@ -60,11 +60,12 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   return reducerFlow([
     state => {
       // Note: Incase of duplicate merge, the mergeThoughts handles both the merge, move logic and also calls updateThoughts. So we don't need to handle move logic if duplicate thoughts are merged.
-      if (!!duplicateThought && !isPendingMerge)
+      if (duplicateThought && !isPendingMerge) {
         return mergeThoughts(state, {
           sourceThoughtPath,
           targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
         })
+      }
 
       const thoughtIndexUpdates = {
         ...(!sameContext
@@ -96,19 +97,21 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         },
       }
 
+      const pendingMerges =
+        isPendingMerge && duplicateThought
+          ? [
+              {
+                sourcePath: appendToPath(destinationThoughtPath, sourceThought.id),
+                targetPath: appendToPath(destinationThoughtPath, duplicateThought.id),
+              },
+            ]
+          : []
+
       return updateThoughts(state, {
         thoughtIndexUpdates,
         lexemeIndexUpdates: {},
         recentlyEdited,
-        pendingMerges:
-          isPendingMerge && duplicateThought
-            ? [
-                {
-                  sourcePath: appendToPath(destinationThoughtPath, sourceThought.id),
-                  targetPath: appendToPath(destinationThoughtPath, duplicateThought.id),
-                },
-              ]
-            : [],
+        pendingMerges,
         preventExpandThoughts: true,
       })
     },

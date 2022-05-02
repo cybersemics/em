@@ -504,6 +504,41 @@ it('move with nested duplicate thoughts', () => {
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 })
 
+it('merge thought with duplicate parent', () => {
+  const text = `
+  - a
+    - b
+      - b
+        - c
+  `
+
+  const steps = [
+    importText({ text }),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'b', 'b'],
+      to: ['a', 'b'],
+      newRank: 1,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - c`)
+
+  const thoughtA = contextToThought(stateNew, ['a'])!
+  const thoughtB = contextToThought(stateNew, ['a', 'b'])!
+  const thoughtC = contextToThought(stateNew, ['a', 'b', 'c'])!
+
+  expect(thoughtB.parentId).toBe(thoughtA.id)
+  expect(thoughtC.parentId).toBe(thoughtB.id)
+  expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
+  expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC.id])
+})
+
 it('move with nested duplicate thoughts and merge their children', () => {
   const text = `
   - a
