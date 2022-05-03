@@ -21,7 +21,6 @@ export const clearPushQueue = reducerToThunk<typeof reducers.clearPushQueue>('cl
 export const collapseContext = reducerToThunk<typeof reducers.collapseContext>('collapseContext')
 export const cursorBeforeSearch = reducerToThunk<typeof reducers.cursorBeforeSearch>('cursorBeforeSearch')
 export const cursorBack = reducerToThunk<typeof reducers.cursorBack>('cursorBack')
-export const cursorCleared = reducerToThunk<typeof reducers.cursorCleared>('cursorCleared')
 export const cursorDown = reducerToThunk<typeof reducers.cursorDown>('cursorDown')
 export const cursorForward = reducerToThunk<typeof reducers.cursorForward>('cursorForward')
 export const cursorHistory = reducerToThunk<typeof reducers.cursorHistory>('cursorHistory')
@@ -89,6 +88,7 @@ export const updateThoughts = reducerToThunk<typeof reducers.updateThoughts>('up
 
 // export custom action-creators
 export { default as alert } from './alert'
+export { default as cursorCleared } from './cursorCleared'
 export { default as cursorNext } from './cursorNext'
 export { default as cursorPrev } from './cursorPrev'
 export { default as dataIntegrityCheck } from './dataIntegrityCheck'
