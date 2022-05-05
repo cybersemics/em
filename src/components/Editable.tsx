@@ -634,6 +634,7 @@ const Editable = ({
     }
 
     // if we know that the focus is changing to another editable or note then do not set editing to false
+    // (does not work when clicking a bullet as it is set to null)
     const isRelatedTargetEditableOrNote =
       e.relatedTarget &&
       ((e.relatedTarget as Element).classList.contains('editable') ||
@@ -671,16 +672,19 @@ const Editable = ({
     // if related target is not editable wait until the next render to determine if we have really blurred
     // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
     setTimeout(() => {
-      // only setEditingValue if blur is not immediately followed by focus
       if (blurring) {
         blurring = false
-        dispatch(setEditingValue(null))
+        // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
+        // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
+        if (isTouch) {
+          dispatch(setEditingValue(null))
+        }
         // temporary states such as duplicate error states and cursorCleared are reset on blur
         dispatch(cursorCleared({ value: false }))
       }
 
       if (isTouch) {
-        // Set editing value to false if user exit editing mode by tapping on other elements other than editable.
+        // Set editing value to false if user exits editing mode by tapping on a non-editable element.
         if (!selection.isThought()) {
           dispatch(editingAction({ value: false }))
         }
