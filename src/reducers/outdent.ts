@@ -32,8 +32,8 @@ const outdent = (state: State) => {
     })
   }
 
-  // store selection offset before moveThought is dispatched
-  const offset = selection.offset()
+  // calculate offset value based upon selection node before moveThought is dispatched
+  const offset = (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0
 
   const cursorNew: Path = [...unroot(rootedParentOf(state, parentOf(cursor))), head(cursor)]
 

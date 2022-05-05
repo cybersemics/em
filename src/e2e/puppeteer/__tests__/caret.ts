@@ -12,6 +12,7 @@ describe('all platforms', () => {
     click,
     clickBullet,
     clickThought,
+    down,
     getSelection,
     paste,
     press,
@@ -148,6 +149,26 @@ describe('all platforms', () => {
 
     const textContext = await getSelection().focusNode?.textContent
     expect(textContext).toBe('b')
+  })
+
+  // https://github.com/cybersemics/em/issues/1568
+  it('caret at the end of a thought should be preserved on indent and outdent', async () => {
+    const importText = `
+    - a
+    - chicago`
+    await paste(importText)
+    await clickThought('chicago')
+
+    // await press('Enter')
+    await press('End')
+    await press('Tab')
+    await down('Shift')
+    await press('Tab')
+
+    const nodeType = await getSelection().focusNode?.nodeType
+    expect(nodeType).toBe(Node.ELEMENT_NODE)
+    const offset = await getSelection().focusOffset
+    expect(offset).toBe(1)
   })
 })
 

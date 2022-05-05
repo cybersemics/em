@@ -7,6 +7,7 @@ import { BrowserEnvironment } from '../types'
  * await getSelection().focusOffset
  * await getSelection().focusNode
  * await getSelection().focusNode?.textContent
+ * await getSelection().focusNode?.nodeType
  *
  **/
 const getSelection = (browser: BrowserEnvironment) => {
@@ -33,11 +34,21 @@ const getSelection = (browser: BrowserEnvironment) => {
         },
       })
 
+      // eslint-disable-next-line fp/no-mutating-methods
+      Object.defineProperty(focusNodePromise, 'nodeType', {
+        get: function (): Promise<number | undefined> {
+          // short-circuit the focusNodePromise since we are accessing a property
+          propertyAccessed = true
+          return browser.execute(() => window.getSelection()?.focusNode?.nodeType)
+        },
+      })
+
       // add the textContent property
       // add undefined to match the native browser api
       return focusNodePromise as
         | (typeof focusNodePromise & {
             textContent: Promise<string | null | undefined>
+            nodeType: Promise<number | undefined>
           })
         | undefined
     },
