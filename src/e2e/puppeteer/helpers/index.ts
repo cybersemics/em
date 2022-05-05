@@ -6,6 +6,7 @@ import $ from './$'
 import click from './click'
 import clickBullet from './clickBullet'
 import clickThought from './clickThought'
+import down from './down'
 import getComputedColor from './getComputedColor'
 import getEditable from './getEditable'
 import getEditingText from './getEditingText'
@@ -36,6 +37,7 @@ const helpers = {
   click,
   clickBullet,
   clickThought,
+  down,
   getComputedColor,
   getEditable,
   getEditingText,
