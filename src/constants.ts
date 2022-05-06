@@ -95,13 +95,14 @@ export const TUTORIAL_CONTEXT2_PARENT = {
   [TUTORIAL_VERSION_BOOK]: 'Books',
 }
 
-// constants for different lexemeIndex schema versions
+// constants for different schema versions
 // export const SCHEMA_INITIAL = 0 // DEPRECATED
 // export const SCHEMA_CONTEXTCHILDREN = 1 // DEPRECATED
 export const SCHEMA_ROOT = 2 // change root → __ROOT__
 export const SCHEMA_HASHKEYS = 3 // hash lexemeIndex keys
 export const SCHEMA_META_SETTINGS = 4 // load settings from hidden thoughts via metaprogramming
-export const SCHEMA_LATEST = SCHEMA_META_SETTINGS
+export const SCHEMA_UNIQUE_IDS = 5 // add unique ids to thoughts for independent editing (#1495)
+export const SCHEMA_LATEST = 5
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
