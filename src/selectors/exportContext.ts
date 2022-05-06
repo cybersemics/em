@@ -1,5 +1,5 @@
 import { attribute, getChildrenRanked } from '../selectors'
-import { head, isFunction, unroot } from '../util'
+import { head, isFunction, isRoot, unroot } from '../util'
 import { Context, MimeType, Thought, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
@@ -53,7 +53,8 @@ export const exportContext = (
   )
 
   // Note: export single thought without bullet
-  const linePrefix = format === 'text/html' ? '<li>' : depth === 0 && childrenFiltered.length === 0 ? '' : '- '
+  const linePrefix =
+    format === 'text/html' ? '<li>' : depth === 0 && childrenFiltered.length === 0 && !isRoot(context) ? '' : '- '
 
   /** Outputs an exported child. */
   const exportChild = (child: Thought) =>

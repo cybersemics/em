@@ -128,7 +128,7 @@ const joinChildren = (nodes: (Block | Block[])[]) => {
       if (index === 0) return node
       return {
         ...accum,
-        children: [...accum.children, ...(Array.isArray(node) ? node : [node])],
+        children: [...(accum.children || []), ...(Array.isArray(node) ? node : [node])],
       }
     }),
   )
@@ -141,7 +141,7 @@ const liToBlock = (node: Element): Block | Block[] => {
   const [firstChild] = node.children
   return firstChild.type === 'text'
     ? {
-        scope: firstChild.content,
+        scope: firstChild.content.trim(),
         children: [],
       }
     : // only add empty parent if the li node is empty and has nested list

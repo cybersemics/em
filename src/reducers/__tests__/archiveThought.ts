@@ -122,7 +122,7 @@ it('permanently delete archive with descendants', () => {
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`${HOME_TOKEN}`)
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
 
   // ensure =archive is removed from lexemeIndex
   expect(getContexts(stateNew, '=archive')).toHaveLength(0)

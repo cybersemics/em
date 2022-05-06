@@ -366,7 +366,7 @@ it('undo redo importText action', () => {
 
   const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-  const expectedOutputAfterUndo = `${HOME_TOKEN}`
+  const expectedOutputAfterUndo = `- ${HOME_TOKEN}`
 
   expect(exportedBeforeRedo).toEqual(expectedOutputAfterUndo)
 

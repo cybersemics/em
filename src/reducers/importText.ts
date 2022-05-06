@@ -187,6 +187,7 @@ const importText = (
 
     /** Set cursor to the last imported path. */
     const setLastImportedCursor = (state: State) => {
+      if (!imported.lastImported) return state
       const lastImportedContext = imported.lastImported
 
       /** Get last iumported cursor after using collapse. */

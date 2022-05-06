@@ -242,9 +242,13 @@ const saveThoughts = (
 
 /** Return number of contexts in blocks array. */
 const getContextsNum = (blocks: Block[]): number => {
-  return blocks
-    .map(block => (block.children.length > 0 ? 1 + getContextsNum(block.children) : 1))
-    .reduce((acc, val) => acc + val, 0)
+  return (
+    blocks
+      // TODO: block.children can be undefined because there are some empty arrays that can slip in instead of Block.
+      // Unfortunately removing them causes other tests to fail, so fixing this is a more significant effort.
+      .map(block => (!block.children ? 0 : block.children.length > 0 ? 1 + getContextsNum(block.children) : 1))
+      .reduce((acc, val) => acc + val, 0)
+  )
 }
 
 /** Calculate rankIncrement value based on rank of next sibling or its absence. */
@@ -315,7 +319,9 @@ export const importJSON = (
   const lastChildIndex = (thought?.children.length || 0) + blocksNormalized.length - 1
   const importContextEncoded = headId(importPath)
   const lastChildFirstLevel = thoughtIndex[importContextEncoded]?.children[lastChildIndex]
-  const lastImported = appendToPath(importPath, lastChildFirstLevel)
+
+  // there may be no last child even if there are imported blocks, i.e. a lone __ROOT__
+  const lastImported = lastChildFirstLevel ? appendToPath(importPath, lastChildFirstLevel) : null
 
   return {
     thoughtIndexUpdates: { ...initialThoughtIndex, ...thoughtIndex },

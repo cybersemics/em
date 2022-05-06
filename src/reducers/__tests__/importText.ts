@@ -1929,3 +1929,86 @@ it('properly add lexeme entries for multiple thoughts with same value on import'
   - m
     - y`)
 })
+
+it(`import "${HOME_TOKEN}"`, () => {
+  const text = HOME_TOKEN
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
+})
+
+it(`import "- ${HOME_TOKEN}"`, () => {
+  const text = `- ${HOME_TOKEN}`
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
+})
+
+it(`import HOME token with children`, () => {
+  const text = `- ${HOME_TOKEN}
+  - a
+    - b`
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b`)
+})
+
+it(`import HTML with "${HOME_TOKEN}"`, () => {
+  const text = `<ul>
+  <li>${HOME_TOKEN}</li>
+</ul>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
+})
+
+it(`import HTML with untrimmed "${HOME_TOKEN}  "`, () => {
+  const text = `<ul>
+  <li>${HOME_TOKEN}  </li>
+</ul>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}`)
+})
+
+it(`remove nested HOME token but keep descendants`, () => {
+  const text = `- a
+  - b
+    - c
+  - ${HOME_TOKEN}
+    - d`
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - c
+    - d`)
+})
+
+it(`import sibling empty thoughts`, () => {
+  const text = `<ul>
+  <li>a</li>
+  <li></li>
+  <li></li>
+  <li>b</li>
+</ul>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b`)
+})

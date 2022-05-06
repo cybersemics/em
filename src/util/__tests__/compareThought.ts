@@ -96,9 +96,10 @@ it('compareStringsWithEmoji', () => {
 })
 
 it('makeOrderedComparator', () => {
-  expect(makeOrderedComparator([compare])(1, 1)).toBe(0)
-  expect(makeOrderedComparator([compare])(1, 2)).toBe(-1)
-  expect(makeOrderedComparator([compare])(1, 1)).toBe(0)
+  // set type explicitly, otherwise it infers too general a type from the first item in the array
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(1, 2)).toBe(-1)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(2, 1)).toBe(1)
+  expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(2, 1)).toBe(1)
 
   expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(1, 2)).toBe(-1)
   expect(makeOrderedComparator<string | number>([compare, compareNumberAndOther])(2, 1)).toBe(1)
