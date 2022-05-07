@@ -102,7 +102,8 @@ export const ContextBreadcrumbs = ({
                   <span>
                     {i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
                     {subthoughts && <Link simplePath={subthoughts} label={label} />}
-                    {subthoughts && <Superscript simplePath={subthoughts} />}
+                    {/* Render when there are subthoughts and only when contextView is enabled */}
+                    {Object.keys(state.contextViews).length && subthoughts && <Superscript simplePath={subthoughts} />}
                   </span>
                 ) : (
                   <span>
