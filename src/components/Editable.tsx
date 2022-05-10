@@ -543,7 +543,8 @@ const Editable = ({
 
   /** Imports text that is pasted onto the thought. */
   const onPaste = (e: React.ClipboardEvent) => {
-    const plainText = e.clipboardData.getData('text/plain')
+    // mobile Safari copies URLs as 'text/uri-list' when the share button is used
+    const plainText = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
     const htmlText = e.clipboardData.getData('text/html')
 
     // import raw thoughts: confirm before overwriting state
