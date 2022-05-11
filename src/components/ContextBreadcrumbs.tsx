@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { FC } from 'react'
 import { ancestors, isRoot, strip } from '../util'
 import { Index, SimplePath, ThoughtId } from '../@types'
 import classNames from 'classnames'
@@ -63,6 +63,56 @@ export const ContextBreadcrumbs = ({
           .concat({ isOverflow: true } as OverflowChild, charLimitedArray.slice(charLimitedArray.length - 1))
       : charLimitedArray
 
+  /** Function to properly animate in and out (handled rapid deletion animating process). */
+  const renderBreadcrumbs = () => {
+    /** Renders BreadCrumbs that has access to isDeleting prop. */
+    const BreadCrumbs: FC<{
+      isOverflow?: boolean
+      subthoughts: SimplePath
+      label?: string
+      isDeleting?: boolean
+      id: string
+      index: number
+    }> = ({ isOverflow, subthoughts, label, isDeleting, id, index }) => {
+      return !isOverflow ? (
+        <span>
+          {index > 0 ? <span className='breadcrumb-divider'> • </span> : null}
+          {subthoughts && !isDeleting && <Link simplePath={subthoughts} label={label} />}
+          {subthoughts && !isDeleting && <Superscript simplePath={subthoughts} />}
+        </span>
+      ) : (
+        <span>
+          <span className='breadcrumb-divider'> • </span>
+          <span onClick={() => setEllipsize(false)} style={{ cursor: 'pointer' }}>
+            {' '}
+            ...{' '}
+          </span>
+        </span>
+      )
+    }
+
+    const children = overflowArray.map(({ isOverflow, id, label }, i) => {
+      const subthoughts = ancestors(simplePath, id) as SimplePath
+
+      return (
+        <CSSTransition key={i} timeout={600} classNames='fade-600'>
+          <BreadCrumbs isOverflow={isOverflow} subthoughts={subthoughts} label={label} id={id} index={i} />
+        </CSSTransition>
+      )
+    })
+
+    /** Note: This function clones the direct breadcrumb children to inject isDeleting animation state. */
+    const factoryManager = (child: React.ReactElement) => {
+      const updatedGrandChild = React.cloneElement(child.props.children, {
+        ...child.props.children.props,
+        isDeleting: !child.props.in,
+      })
+
+      return React.cloneElement(child, { ...child.props }, updatedGrandChild)
+    }
+    return <TransitionGroup childFactory={factoryManager}>{children}</TransitionGroup>
+  }
+
   return (
     <div
       className={classNames({
@@ -93,30 +143,7 @@ export const ContextBreadcrumbs = ({
           <HomeLink color='gray' size={16} style={{ position: 'relative', left: -5, top: 2 }} />
         ) : null
       ) : (
-        <TransitionGroup>
-          {overflowArray.map(({ isOverflow, id, label }, i) => {
-            const subthoughts = ancestors(simplePath, id) as SimplePath
-            return (
-              <CSSTransition key={i} timeout={600} classNames='fade-600'>
-                {!isOverflow ? (
-                  <span>
-                    {i > 0 ? <span className='breadcrumb-divider'> • </span> : null}
-                    {subthoughts && <Link simplePath={subthoughts} label={label} />}
-                    {subthoughts && <Superscript simplePath={subthoughts} />}
-                  </span>
-                ) : (
-                  <span>
-                    <span className='breadcrumb-divider'> • </span>
-                    <span onClick={() => setEllipsize(false)} style={{ cursor: 'pointer' }}>
-                      {' '}
-                      ...{' '}
-                    </span>
-                  </span>
-                )}
-              </CSSTransition>
-            )
-          })}
-        </TransitionGroup>
+        renderBreadcrumbs()
       )}
     </div>
   )
