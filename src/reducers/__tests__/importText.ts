@@ -1136,7 +1136,7 @@ it('import single line with style attributes and a single br tag', () => {
 </ul>`)
 })
 
-it('import nested list', () => {
+it('import plaintext + list as nested list', () => {
   const html = `<div>
   A
   <ul>
@@ -1151,7 +1151,7 @@ it('import nested list', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - A
     - B
-  - C`)
+    - C`)
 })
 
 it('import raw state', () => {

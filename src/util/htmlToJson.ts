@@ -121,8 +121,11 @@ const handleBr = (nodes: HimalayaNode[], brIndex: number): HimalayaNode[] => {
 
 /** Append children to parent as children property if it's necessary. */
 const joinChildren = (nodes: (Block | Block[])[]) => {
-  // split by chunk with size of 2, first element in chunk is Block - parent, the second is Block[] - children
-  const chunks = _.chunk(nodes, 2)
+  // filters out empty array in the nodes if exist
+  const filteredNodes = nodes.filter(node => (Array.isArray(node) ? node.length : node))
+
+  // split by chunk with size of filteredNodes, first element in chunk is Block - parent, the rest is Block[] - children
+  const chunks = _.chunk(nodes, filteredNodes.length <= 1 ? 2 : filteredNodes.length)
   const parentsWithChildren = chunks.map(chunk =>
     chunk.flat().reduce((accum, node, index) => {
       if (index === 0) return node
