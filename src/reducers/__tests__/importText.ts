@@ -1136,7 +1136,7 @@ it('import single line with style attributes and a single br tag', () => {
 </ul>`)
 })
 
-it('import nested list', () => {
+it('import plaintext + list as nested list', () => {
   const html = `<div>
   A
   <ul>
