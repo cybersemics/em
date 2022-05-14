@@ -121,8 +121,11 @@ const handleBr = (nodes: HimalayaNode[], brIndex: number): HimalayaNode[] => {
 
 /** Append children to parent as children property if it's necessary. */
 const joinChildren = (nodes: (Block | Block[])[]) => {
-  // split by chunk with size of 2, first element in chunk is Block - parent, the second is Block[] - children
-  const chunks = _.chunk(nodes, 2)
+  // filters out empty array in the nodes if exist
+  const filteredNodes = nodes.filter(node => (Array.isArray(node) ? node.length : node))
+
+  // split by chunk with size of filteredNodes, first element in chunk is Block - parent, the rest is Block[] - children
+  const chunks = _.chunk(nodes, filteredNodes.length <= 1 ? 2 : filteredNodes.length)
   const parentsWithChildren = chunks.map(chunk =>
     chunk.flat().reduce((accum, node, index) => {
       if (index === 0) return node
@@ -190,11 +193,14 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
       ? liToBlock(node)
       : himalayaToBlock(node.children),
   )
+  console.log('blocks :', blocks)
 
   if (Array.isArray(blocks[0])) return blocks.flat()
 
   // retrieve first chunk, if the first element is Block and the second is Block[], join children (Block[]) with parent (Block), else return blocks as is.
   const [first, rest] = blocks
+  console.log('first :', first)
+  console.log('rest :', rest)
   const result = !Array.isArray(first) && Array.isArray(rest) ? joinChildren(blocks) : (blocks as Block[])
 
   return result
@@ -219,7 +225,9 @@ const generateRegexToMatchTags = (tags: string[]): RegExp => new RegExp(`</?(?:$
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
 export const htmlToJson = (html: string) => {
+  console.log('html :', html)
   const nodes = parse(html) as Element[]
+  console.log('nodes [ORIGINAL] :', nodes)
 
   const tags = findUniqueTags(nodes)
   const tagsToBeStripped = tags.filter((tag: string) => !tagsThatAreNotToBeStripped.includes(tag))

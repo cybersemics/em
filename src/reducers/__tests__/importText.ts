@@ -1151,7 +1151,7 @@ it('import nested list', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - A
     - B
-  - C`)
+    - C`)
 })
 
 it('import raw state', () => {
