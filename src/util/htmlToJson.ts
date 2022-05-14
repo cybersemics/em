@@ -193,14 +193,11 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
       ? liToBlock(node)
       : himalayaToBlock(node.children),
   )
-  console.log('blocks :', blocks)
 
   if (Array.isArray(blocks[0])) return blocks.flat()
 
   // retrieve first chunk, if the first element is Block and the second is Block[], join children (Block[]) with parent (Block), else return blocks as is.
   const [first, rest] = blocks
-  console.log('first :', first)
-  console.log('rest :', rest)
   const result = !Array.isArray(first) && Array.isArray(rest) ? joinChildren(blocks) : (blocks as Block[])
 
   return result
@@ -225,9 +222,7 @@ const generateRegexToMatchTags = (tags: string[]): RegExp => new RegExp(`</?(?:$
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
 export const htmlToJson = (html: string) => {
-  console.log('html :', html)
   const nodes = parse(html) as Element[]
-  console.log('nodes [ORIGINAL] :', nodes)
 
   const tags = findUniqueTags(nodes)
   const tagsToBeStripped = tags.filter((tag: string) => !tagsThatAreNotToBeStripped.includes(tag))
