@@ -15,7 +15,7 @@ interface NodeOffset {
 
 /** Gets the padding of an element as an array of numbers. */
 const getElementPaddings = (element: HTMLElement): number[] =>
-  window.getComputedStyle(element, null).getPropertyValue('padding').split('px ').map(Number)
+  window.getComputedStyle(element, null).getPropertyValue('padding').split('px').map(Number)
 
 /** Clears the selection. */
 export const clear = (): void => {
@@ -55,7 +55,7 @@ export const isThought = (): boolean => {
   return isEditable(focusNode) || isEditable(focusNode.parentNode)
 }
 
-/** Returns true if the selection is not on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
+/** Returns true if the selection is  on the first line of a multi-line text node. Returns true if there is no selection or if the text node is only a single line. */
 export const isOnFirstLine = (): boolean => {
   const selection = window.getSelection()
   if (!selection) return true
