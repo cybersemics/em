@@ -1,4 +1,5 @@
-import 'react-native-get-random-values'
+// disabled for merge-dbs script
+// import 'react-native-get-random-values'
 import { nanoid } from 'nanoid'
 import { ThoughtId } from '../@types'
 import globals from '../globals'

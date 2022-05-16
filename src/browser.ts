@@ -1,5 +1,7 @@
+// disabled for merge-dbs script
+// import 'react-native-get-random-values'
+
 /** Defines client/browser-specific variables that do not change over the course of a session. */
-import 'react-native-get-random-values'
 import { v4 as uuid } from 'uuid'
 
 /** Returns true if the user's device is touch screen. */
