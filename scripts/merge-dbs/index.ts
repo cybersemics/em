@@ -34,10 +34,21 @@ global.localStorage = memoryStore()
  ************************************************************************/
 
 import { HOME_TOKEN } from '../../src/constants'
-import { hashContext, hashThought, head, initialState, isRoot, timestamp, unroot } from '../../src/util'
-import { exportContext, getAllChildren, getThoughtById, hasLexeme } from '../../src/selectors'
+import {
+  contextToThoughtId,
+  createId,
+  hashContext,
+  hashThought,
+  head,
+  initialState,
+  isRoot,
+  parentOf,
+  timestamp,
+  unroot,
+} from '../../src/util'
+import { contextToPath, exportContext, getAllChildren, getLexeme, getThoughtById, hasLexeme } from '../../src/selectors'
 import { importText } from '../../src/reducers'
-import { Context, Index, Lexeme, State, Timestamp, ThoughtContext, ThoughtIndices } from '../../src/@types'
+import { Context, Index, Lexeme, State, Timestamp, Thought, ThoughtContext, ThoughtIndices } from '../../src/@types'
 
 /*************************************************************************
  * TYPES
@@ -47,11 +58,18 @@ interface Database {
   users: Index<RawThoughts>
 }
 
+interface Child {
+  id: string
+  lastUpdated: Timestamp
+  rank: number
+  value: string
+}
+
 interface FirebaseParent {
   id?: string
   // firebase stores arrays as objects
-  children: Index<unknown>
-  context: Context
+  children: Index<Child>
+  context: Index<string>
   lastUpdated: Timestamp
   pending?: boolean
   updatedBy: string
@@ -81,6 +99,8 @@ const helpText = `Usage:
   node build/scripts/merge-dbs/index.js ~/em-backups/2022-05-16.json  ~/em-backups/backups\ 2021-01-01\ -\ 2021-01-31
 `
 
+const sessionId = createId()
+
 let prevContext: Context = []
 
 const stateStart = initialState()
@@ -97,11 +117,8 @@ const stateStart = initialState()
 // const numParents = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughts) =>
 //   Object.keys(((stateOrThoughts as State).thoughts || (stateOrThoughts as ThoughtIndices)).contextIndex).length
 
-// /** Checks if the contextIndex uses the most up-to-date hash function by checking the existence of the root context hash. This is NOT sufficient to determine if all Parents have a context property, which was added incrementally without a schemaVersion change. */
-// const isModernHash = (thoughts: RawThoughts) => '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
-
 /** Read a thought database from file. Normalizes contextIndex and thoughtIndex property names. */
-const readThoughts = (file: string): FirebaseThoughts => {
+const readThoughts = (file: string): RawThoughts => {
   const input = fs.readFileSync(file, 'utf-8')
   const db = JSON.parse(input)
   const state = db.users?.[userId] || db
@@ -119,7 +136,7 @@ const readThoughts = (file: string): FirebaseThoughts => {
   }
 
   // console.info(`${chalk.blue(numParents(state))} Parents read`)
-  console.info('Thoughts read')
+  // console.info('Done reading')
 
   return state
 }
@@ -227,32 +244,146 @@ const recreateParents = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIn
 //   }
 // }
 
+/** Recursively reconstructs the context and all its ancestors. */
+const reconstructThought = (state: State, context: Context, { rank }: { rank?: number } = {}): State => {
+  // reconstruct each ancestor and then the thought itself
+  context.forEach((value, i) => {
+    const contextAncestor = context.slice(0, i + 1)
+    const pathAncestor = contextToPath(state, contextAncestor)
+
+    // reconstruct thought
+    if (!pathAncestor) {
+      // console.log('Creating thought', contextAncestor)
+
+      // TODO: Avoid redundant contextToPath
+      const parentId = (() => {
+        if (contextAncestor.length <= 1) return HOME_TOKEN
+        const contextParent = parentOf(contextAncestor)
+        const parentId = contextToThoughtId(state, contextParent)
+        if (!parentId) {
+          throw new Error(`Expected parent to exist: ${contextParent.join(', ')}`)
+        }
+        return parentId
+      })()
+
+      // create Thought
+      const id = createId()
+      const lastUpdated = timestamp()
+      const thought: Thought = {
+        id,
+        children: [],
+        lastUpdated,
+        updatedBy: sessionId,
+        value,
+        rank: rank || Math.floor(Math.random() * 10000),
+        parentId,
+      }
+
+      // add to parent
+      const parent = getThoughtById(state, parentId)
+      parent.children.push(id)
+
+      // create Lexeme if it doesn't exist
+      const lexeme: Lexeme = {
+        ...(getLexeme(state, value) || {
+          id: createId(),
+          value,
+          contexts: [],
+          created: lastUpdated,
+          lastUpdated,
+          updatedBy: sessionId,
+        }),
+      }
+
+      // add thought to Lexeme contexts
+      lexeme.contexts.push(id)
+
+      // update state.thoughts
+      // parent thought has already been mutated
+      state.thoughts.thoughtIndex[id] = thought
+      state.thoughts.lexemeIndex[hashThought(value)] = lexeme
+
+      // console.log('new thought', thought)
+      // console.log('new lexeme', lexeme)
+    } else {
+      // TODO: Count if exists (only for i === context.length - 1)
+      // console.log('pathAncestor exists: ', contextAncestor)
+      // throw new Error('STOP')
+    }
+  })
+
+  return state
+}
+
 /** Merges thoughts into current state using importText to handle duplicates and merged descendants. */
-const mergeThoughts = (state: State, thoughts: ThoughtIndices) => {
-  // console.info(`Exporting ${chalk.blue(numParents(thoughts))} Parents to HTML`)
-  const stateBackup: State = {
-    ...stateStart,
-    thoughts: {
-      ...stateStart.thoughts,
-      ...thoughts,
-    },
+const mergeThoughts = (state: State, thoughts: RawThoughts) => {
+  /** Checks if the contextIndex uses the most up-to-date hashing function by checking the existence of the root context hash. This is NOT sufficient to determine if all Parents have a context property, which was added incrementally without a schemaVersion change. */
+  // const isModernHash = (thoughts: FirebaseThoughts) => '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
+
+  // schema v5
+  if ('lexemeIndex' in thoughts) {
+    console.log('Schema: v5')
+  }
+  // schema v3–4
+  else if ('contextIndex' in thoughts) {
+    if ('6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex) {
+      console.log('Schema: Modern hashing function')
+    } else {
+      console.log('Schema: Other with contextHash')
+
+      const numThoughts = Object.keys(thoughts.contextIndex).length
+      console.log(`${numThoughts} thoughts`)
+
+      Object.values(thoughts.contextIndex).forEach(parent => {
+        if (!parent.context) {
+          // TODO: Count missing context
+          // console.info('Missing context')
+          return
+        }
+
+        const context = Object.values(parent.context)
+        state = reconstructThought(state, context)
+
+        const children = Object.values(parent.children)
+        children.forEach(child => {
+          // unlike Parents, children actually have rank
+          state = reconstructThought(state, unroot([...context, child.value]), { rank: child.rank })
+        })
+
+        // TODO: Verify that the Path exists now
+        // const path = contextToPath(state, ['__ROOT__'])
+      })
+    }
+  }
+  // schema unrecognized
+  else {
+    throw new Error('Schema: Unrecognized. Properties: ' + Object.keys(thoughts).join(', '))
   }
 
+  // console.info(`Exporting ${chalk.blue(numParents(thoughts))} Parents to HTML`)
+  // const stateBackup: State = {
+  //   ...stateStart,
+  //   thoughts: {
+  //     ...stateStart.thoughts,
+  //     ...thoughts,
+  //   },
+  // }
+
   // import each child individually to reduce memory usage
-  const stateNew = getAllChildren(stateBackup, [HOME_TOKEN]).reduce((stateAccum, childId) => {
-    const child = getThoughtById(stateAccum, childId)
-    console.info(`Exporting ${child.value}`)
-    const html = exportContext(stateBackup, [child.value])
-    console.info(`Importing ${child.value}`)
-    const stateNew = importText(stateAccum, { text: html })
-    // console.info(
-    //   `New state has ${chalk.blue(numParents(stateNew))} Parents and ${chalk.blue(numLexemes(stateNew))} Lexemes`,
-    // )
+  // const stateNew = getAllChildren(stateBackup, [HOME_TOKEN]).reduce((stateAccum, childId) => {
+  //   const child = getThoughtById(stateAccum, childId)
+  //   console.info(`Exporting ${child.value}`)
+  //   const html = exportContext(stateBackup, [child.value])
+  //   console.info(`Importing ${child.value}`)
+  //   const stateNew = importText(stateAccum, { text: html })
+  //   // console.info(
+  //   //   `New state has ${chalk.blue(numParents(stateNew))} Parents and ${chalk.blue(numLexemes(stateNew))} Lexemes`,
+  //   // )
 
-    return stateNew
-  }, state)
+  //   return stateNew
+  // }, state)
 
-  return stateNew
+  return state
 }
 
 const main = () => {
@@ -270,18 +401,19 @@ const main = () => {
   const file1Ext = basename.slice(indexExt)
 
   // read base thoughts
-  // assume that they are completely valid, with modern hashes and proper context fields
+  // assume that they use schema v5
   console.info(`Reading current thoughts: ${file1}`)
   const thoughtsCurrent = readThoughts(file1) as unknown as ThoughtIndices
+  console.info('')
 
-  // read thoughts to be imported
+  // read backup thoughts to be imported
   // this can be a directory or a file
   const filesToImport = fs.lstatSync(file2).isDirectory()
     ? fs.readdirSync(file2).map(file => `${file2}/${file}`)
     : [file2]
 
-  // accumulate the new state by importing each input
-  let stateNew: State = { ...stateStart, thoughts: thoughtsCurrent }
+  // create a new state with the current thoughts
+  let state: State = { ...stateStart, thoughts: thoughtsCurrent }
   const errors: ErrorLog[] = []
   const success: string[] = []
 
@@ -289,11 +421,11 @@ const main = () => {
     // skip hidden files including .DS_Store
     if (path.basename(file).startsWith('.')) return
 
-    let thoughtsImported: ThoughtIndices
+    let thoughtsBackup: RawThoughts
 
     try {
       console.info(`Reading thoughts: ${file}`)
-      thoughtsImported = recreateParents(readThoughts(file))
+      thoughtsBackup = readThoughts(file)
     } catch (e) {
       console.error('Error reading')
       errors.push({ e: e as Error, file, message: 'Error reading' })
@@ -301,8 +433,14 @@ const main = () => {
       return
     }
 
+    // TODO: Check log to see if the backup has already been imported
+    console.info(`lastUpdated: ${(thoughtsBackup as any).lastUpdated}`)
+
     try {
-      stateNew = mergeThoughts(stateNew, thoughtsImported)
+      // replace state with merged thoughts
+      state = mergeThoughts(state, thoughtsBackup)
+
+      // TODO: Save progress
 
       // if we made it this far, there was no error
       success.push(file)
@@ -322,11 +460,11 @@ const main = () => {
   // merge updated thoughts back into firebase db
   const dbNew = {
     ...thoughtsCurrent,
-    // contextIndex: stateNew.thoughts.contextIndex,
-    thoughtIndex: stateNew.thoughts.thoughtIndex,
+    thoughtIndex: state.thoughts.thoughtIndex,
+    lexemeIndex: state.thoughts.lexemeIndex,
   }
   const fileNew = `output/${file1Base}-merged${file1Ext}`
-  // console.info(`Writing new database with ${chalk.blue(numParents(stateNew))} Parents to output`)
+  // console.info(`Writing new database with ${chalk.blue(numParents(state))} Parents to output`)
   fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
 
   if (errors.length === 0) {

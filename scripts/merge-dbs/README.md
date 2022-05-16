@@ -17,4 +17,4 @@ node build/scripts/merge-dbs/index.js ~/em-backups/2022-05-16.json  ~/em-backups
 Outputs two files:
 
 - `em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-contextIndex.json`
-- 'em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-thoughtIndex.json`
+- `em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-thoughtIndex.json`
