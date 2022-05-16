@@ -8,7 +8,11 @@ npm run build
 
 ## Usage
 
-`node build/scripts/merge/index.js sample/em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export.json sample/backups`
+- `node index.js [BASE_DB] [BACKUP_DB]`
+
+```
+node build/scripts/merge-dbs/index.js ~/em-backups/2022-05-16.json  ~/em-backups/backups\ 2021-01-01\ -\ 2021-01-31
+```
 
 Outputs two files:
 
