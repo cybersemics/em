@@ -8,6 +8,10 @@ import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 const contextToPath = (state: State, context: string[]): SimplePath | null => {
   if (isRoot(context)) return getRootPath(state)
 
+  if (context.length > 1 && context[0] === HOME_TOKEN) {
+    throw new Error(`Invalid Path. ${HOME_TOKEN} should be omitted from non-root contexts: ${context}`)
+  }
+
   // Also supports thoughts starting from em context
   const isEmContext = context[0] === EM_TOKEN
 
