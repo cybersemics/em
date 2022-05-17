@@ -81,15 +81,6 @@ const updateThoughts = (
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
 
-  // There is a bug that is saving full Thoughts into Lexeme.contexts.
-  // Throw here to help identify the upstream problem.
-  Object.values(lexemeIndexUpdates).forEach(lexemeUpdate => {
-    if (lexemeUpdate?.contexts.some(id => typeof id !== 'string')) {
-      console.error('Invalid Lexeme context', lexemeUpdate)
-      throw new Error('Invalid Lexeme context')
-    }
-  })
-
   // The thoughtIndex and lexemeIndex can consume more and more memory as thoughts are pulled from the db.
   // The contextCache and thoughtCache are used as a queue that is parallel to the thoughtIndex and lexemeIndex.
   // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)

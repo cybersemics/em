@@ -30,6 +30,27 @@ export interface FirebaseChangeHandlers {
     [FirebaseChangeTypes.Delete]?: (updates: ThoughtSubscriptionUpdates) => void
   }
 }
+
+// Firebase omits empty arrays, so account for that in the type.
+type FirebaseLexeme = Omit<Lexeme, 'contexts'> & { contexts?: ThoughtId[] }
+type FirebaseThought = Omit<Thought, 'children'> & { children?: ThoughtId[] }
+
+/** Converts a FirebaseLexeme to a proper Lexeme by ensuring contexts is defined. Firebase can omit empty arrays. */
+const lexemeFromFirebase = (firebaseLexeme: FirebaseLexeme | undefined): Lexeme | undefined =>
+  firebaseLexeme?.contexts
+    ? (firebaseLexeme as Lexeme)
+    : firebaseLexeme
+    ? { ...firebaseLexeme, contexts: [] }
+    : undefined
+
+/** Converts a FirebaseLexeme to a proper Lexeme by ensuring contexts is defined. Firebase can omit empty arrays. */
+const thoughtFromFirebase = (firebaseThought: FirebaseThought | undefined): Thought | undefined =>
+  firebaseThought?.children
+    ? (firebaseThought as Thought)
+    : firebaseThought
+    ? { ...firebaseThought, children: [] }
+    : undefined
+
 /**
  * Get all firebase related functions as an object.
  */
@@ -42,18 +63,21 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   /** Gets the Lexeme object by id. */
   async getLexemeById(id: string): Promise<Lexeme | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('lexemeIndex').child<Lexeme>(id)
+    const ref = userRef!.child('lexemeIndex').child<FirebaseLexeme>(id)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Firebase.Snapshot<Lexeme>) => {
-        resolve(snapshot.val())
+      ref.once('value', (snapshot: Firebase.Snapshot<FirebaseLexeme>) => {
+        const val = snapshot.val()
+        resolve(lexemeFromFirebase(val))
       }),
     )
   },
   /** Gets multiple Lexeme objects by ids. */
   async getLexemesByIds(ids: string[]): Promise<(Lexeme | undefined)[]> {
     const userRef = getUserRef(state)
-    const snapshots = await Promise.all(ids.map(id => userRef?.child('lexemeIndex').child<Lexeme>(id).once('value')))
-    return snapshots.map(snapshot => snapshot?.val())
+    const snapshots = await Promise.all(
+      ids.map(id => userRef?.child('lexemeIndex').child<FirebaseLexeme>(id).once('value')),
+    )
+    return snapshots.map(snapshot => lexemeFromFirebase(snapshot?.val()))
   },
 
   /**
@@ -64,7 +88,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     const ref = userRef!.child('thoughtIndex').child<Thought>(id)
     return new Promise(resolve =>
       ref.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
-        resolve(snapshot.val())
+        resolve(thoughtFromFirebase(snapshot.val()))
       }),
     )
   },
@@ -72,7 +96,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   getThoughtsByIds: async (ids: string[]): Promise<(Thought | undefined)[]> => {
     const userRef = getUserRef(state)
     const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child<Thought>(id).once('value')))
-    return snapshots.map(snapshot => snapshot?.val())
+    return snapshots.map(snapshot => thoughtFromFirebase(snapshot?.val()))
   },
   /** Updates Firebase data. */
   async update(updates: Index<any>) {
