@@ -8,6 +8,7 @@ import chalk from 'chalk'
 import _ from 'lodash'
 import { v4 as uid } from 'uuid'
 import memoryStore from './memoryStore'
+import time from './time'
 
 /*************************************************************************
  * MOCK BROWSER
@@ -119,6 +120,7 @@ const stateStart = initialState()
 
 /** Read a thought database from file. Normalizes contextIndex and thoughtIndex property names. */
 const readThoughts = (file: string): RawThoughts => {
+  const t = time()
   const input = fs.readFileSync(file, 'utf-8')
   const db = JSON.parse(input)
   const state = db.users?.[userId] || db
@@ -137,6 +139,8 @@ const readThoughts = (file: string): RawThoughts => {
 
   // console.info(`${chalk.blue(numParents(state))} Parents read`)
   // console.info('Done reading')
+
+  console.info(`Thoughts read (${t.measure()}s)`)
 
   return state
 }
@@ -320,6 +324,8 @@ const mergeThoughts = (state: State, thoughts: RawThoughts) => {
   /** Checks if the contextIndex uses the most up-to-date hashing function by checking the existence of the root context hash. This is NOT sufficient to determine if all Parents have a context property, which was added incrementally without a schemaVersion change. */
   // const isModernHash = (thoughts: FirebaseThoughts) => '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
 
+  const t = time()
+
   // schema v5
   if ('lexemeIndex' in thoughts) {
     console.log('Schema: v5')
@@ -382,6 +388,8 @@ const mergeThoughts = (state: State, thoughts: RawThoughts) => {
 
   //   return stateNew
   // }, state)
+
+  console.info(`Thoughts merged (${t.measure()}s)`)
 
   return state
 }
@@ -464,8 +472,13 @@ const main = () => {
     lexemeIndex: state.thoughts.lexemeIndex,
   }
   const fileNew = `output/${file1Base}-merged${file1Ext}`
+
+  const t = time()
+
   // console.info(`Writing new database with ${chalk.blue(numParents(state))} Parents to output`)
   fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
+
+  console.info(`Thoughts written (${t.measure()}s)`)
 
   if (errors.length === 0) {
     console.info(chalk.green('SUCCESS'))
