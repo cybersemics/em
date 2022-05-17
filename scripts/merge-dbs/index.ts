@@ -131,26 +131,29 @@ const readThoughts = (file: string): RawThoughts => {
   const t = time()
   const input = fs.readFileSync(file, 'utf-8')
   const db = JSON.parse(input)
-  const state = db.users?.[userId] || db
+  const rawThoughts = db.users?.[userId] || db
 
   // rename contextChildren -> contextIndex
-  if (state.contextChildren) {
-    state.contextIndex = state.contextChildren
-    delete state.contextChildren
+  if (rawThoughts.contextChildren) {
+    rawThoughts.contextIndex = rawThoughts.contextChildren
+    delete rawThoughts.contextChildren
   }
 
   // rename data -> thoughtIndex
-  if (state.data) {
-    state.thoughtIndex = state.data
-    delete state.data
+  if (rawThoughts.data) {
+    rawThoughts.thoughtIndex = rawThoughts.data
+    delete rawThoughts.data
   }
 
-  // console.info(`${chalk.blue(numParents(state))} Parents read`)
+  // console.info(`${chalk.blue(numParents(rawThoughts))} Parents read`)
   // console.info('Done reading')
 
-  console.info(`Thoughts read (${t.measure()}s)`)
+  const numThoughts = Object.keys(rawThoughts.contextIndex || rawThoughts.thoughtIndex).length
 
-  return state
+  console.info(`${numThoughts} thoughts read (${t.measure()}s)`)
+  console.info(`lastUpdated: ${(rawThoughts as any).lastUpdated}`)
+
+  return rawThoughts
 }
 
 /** Since the legacy contextIndex has no context property, it is impossible traverse the tree without the original hash function. Instead, recreate the contextIndex with new hashes from the thoughtIndex, which does have the context. Converts Firebase "arrays" to proper arrays. Leaves thoughtIndex as-is since it is not used to merge thoughts. */
@@ -256,6 +259,58 @@ const recreateParents = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIn
 //   }
 // }
 
+/** Insert a new thought by directly modifying state. */
+const createThought = (state: State, context: Context, value: string, { rank }: { rank?: number } = {}) => {
+  // TODO: Avoid redundant contextToPath
+  const parentId = (() => {
+    if (context.length <= 1) return HOME_TOKEN
+    const contextParent = parentOf(context)
+    const parentId = contextToThoughtId(state, contextParent)
+    if (!parentId) {
+      throw new Error(`Expected parent to exist: ${contextParent.join(', ')}`)
+    }
+    return parentId
+  })()
+
+  // create Thought
+  const id = createId()
+  const lastUpdated = timestamp()
+  const thought: Thought = {
+    id,
+    children: [],
+    lastUpdated,
+    updatedBy: sessionId,
+    value,
+    rank: rank || Math.floor(Math.random() * 10000),
+    parentId,
+  }
+
+  // add to parent
+  const parent = getThoughtById(state, parentId)
+  parent.children.push(id)
+
+  // create Lexeme if it doesn't exist
+  const lexeme: Lexeme = {
+    ...(getLexeme(state, value) || {
+      id: createId(),
+      value,
+      contexts: [],
+      created: lastUpdated,
+      lastUpdated,
+      updatedBy: sessionId,
+    }),
+  }
+
+  // add thought to Lexeme contexts
+  lexeme.contexts.push(id)
+
+  // update state.thoughts
+  // parent thought has already been mutated
+  state.thoughts.thoughtIndex[id] = thought
+  state.thoughts.lexemeIndex[hashThought(value)] = lexeme
+  return state
+}
+
 /** Recursively reconstructs the context and all its ancestors. */
 const reconstructThought = (state: State, context: Context, { rank }: { rank?: number } = {}): State => {
   // check the existence of the full context immediately so that we can avoid recursion
@@ -279,54 +334,7 @@ const reconstructThought = (state: State, context: Context, { rank }: { rank?: n
     // reconstruct thought
     if (!pathAncestor) {
       // console.log('Creating thought', contextAncestor)
-
-      // TODO: Avoid redundant contextToPath
-      const parentId = (() => {
-        if (contextAncestor.length <= 1) return HOME_TOKEN
-        const contextParent = parentOf(contextAncestor)
-        const parentId = contextToThoughtId(state, contextParent)
-        if (!parentId) {
-          throw new Error(`Expected parent to exist: ${contextParent.join(', ')}`)
-        }
-        return parentId
-      })()
-
-      // create Thought
-      const id = createId()
-      const lastUpdated = timestamp()
-      const thought: Thought = {
-        id,
-        children: [],
-        lastUpdated,
-        updatedBy: sessionId,
-        value,
-        rank: rank || Math.floor(Math.random() * 10000),
-        parentId,
-      }
-
-      // add to parent
-      const parent = getThoughtById(state, parentId)
-      parent.children.push(id)
-
-      // create Lexeme if it doesn't exist
-      const lexeme: Lexeme = {
-        ...(getLexeme(state, value) || {
-          id: createId(),
-          value,
-          contexts: [],
-          created: lastUpdated,
-          lastUpdated,
-          updatedBy: sessionId,
-        }),
-      }
-
-      // add thought to Lexeme contexts
-      lexeme.contexts.push(id)
-
-      // update state.thoughts
-      // parent thought has already been mutated
-      state.thoughts.thoughtIndex[id] = thought
-      state.thoughts.lexemeIndex[hashThought(value)] = lexeme
+      state = createThought(state, contextAncestor, value, { rank })
 
       // console.log('new thought', thought)
       // console.log('new lexeme', lexeme)
@@ -357,9 +365,6 @@ const mergeThoughts = (state: State, thoughts: RawThoughts) => {
       console.log('Schema: Modern hashing function')
     } else {
       console.log('Schema: Other with contextHash')
-
-      const numThoughts = Object.keys(thoughts.contextIndex).length
-      console.log(`${numThoughts} thoughts`)
 
       Object.values(thoughts.contextIndex).forEach(parent => {
         if (!parent.context) {
@@ -463,7 +468,6 @@ const main = () => {
     }
 
     // TODO: Check log to see if the backup has already been imported
-    console.info(`lastUpdated: ${(thoughtsBackup as any).lastUpdated}`)
 
     try {
       // replace state with merged thoughts
