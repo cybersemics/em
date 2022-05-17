@@ -2,7 +2,7 @@ import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { contextToThoughtId, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getLexeme, contextToThought, contextToPath } from '../../selectors'
+import { exportContext, getLexeme, contextToThought, contextToPath, getAllChildren } from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
@@ -2004,6 +2004,17 @@ it(`import sibling empty thoughts`, () => {
   <li></li>
   <li>b</li>
 </ul>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b`)
+})
+
+it(`mixed html with whitespaces as a new line`, () => {
+  const text = `- a\n<li>b</li>`
 
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
