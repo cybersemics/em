@@ -149,9 +149,10 @@ const readThoughts = (file: string): RawThoughts => {
   // console.info('Done reading')
 
   const numThoughts = Object.keys(rawThoughts.contextIndex || rawThoughts.thoughtIndex).length
+  const lastUpdated = (rawThoughts as any).lastUpdated
 
-  console.info(`${numThoughts} thoughts read (${t.measure()}s)`)
-  console.info(`lastUpdated: ${(rawThoughts as any).lastUpdated}`)
+  console.info(`Thoughts read: ${chalk.cyan(numThoughts)} ${t.print()}`)
+  console.info(`lastUpdated: ${lastUpdated ? new Date(lastUpdated).toLocaleString() : undefined}`)
 
   return rawThoughts
 }
@@ -354,6 +355,7 @@ const mergeThoughts = (state: State, thoughts: RawThoughts) => {
   // const isModernHash = (thoughts: FirebaseThoughts) => '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
 
   const t = time()
+  let missingContexts = 0
 
   // schema v5
   if ('lexemeIndex' in thoughts) {
@@ -368,8 +370,7 @@ const mergeThoughts = (state: State, thoughts: RawThoughts) => {
 
       Object.values(thoughts.contextIndex).forEach(parent => {
         if (!parent.context) {
-          // TODO: Count missing context
-          // console.info('Missing context')
+          missingContexts++
           return
         }
 
@@ -415,9 +416,17 @@ const mergeThoughts = (state: State, thoughts: RawThoughts) => {
   //   return stateNew
   // }, state)
 
-  console.info(`Thoughts merged (${t.measure()}s)`)
+  console.info(`Thoughts merged ${t.print()}`)
+  if (missingContexts > 0) {
+    console.info(`Missing contexts: ${chalk.cyan(missingContexts)}`)
+  }
 
-  return state
+  return {
+    state,
+    stats: {
+      missingContexts,
+    },
+  }
 }
 
 const main = () => {
@@ -450,6 +459,7 @@ const main = () => {
   let state: State = { ...stateStart, thoughts: thoughtsCurrent }
   const errors: ErrorLog[] = []
   const success: string[] = []
+  let missingContexts = 0
 
   filesToImport.forEach(file => {
     // skip hidden files including .DS_Store
@@ -471,7 +481,9 @@ const main = () => {
 
     try {
       // replace state with merged thoughts
-      state = mergeThoughts(state, thoughtsBackup)
+      const result = mergeThoughts(state, thoughtsBackup)
+      state = result.state
+      missingContexts += result.stats.missingContexts
 
       // TODO: Save progress
 
@@ -503,7 +515,7 @@ const main = () => {
   // console.info(`Writing new database with ${chalk.blue(numParents(state))} Parents to output`)
   fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
 
-  console.info(`Thoughts written (${t.measure()}s)`)
+  console.info(`Thoughts written ${t.print()}`)
 
   if (errors.length === 0) {
     console.info(chalk.green('SUCCESS'))
