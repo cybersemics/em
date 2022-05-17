@@ -57,7 +57,17 @@ import {
   pathToThought,
 } from '../../src/selectors'
 import { importText } from '../../src/reducers'
-import { Context, Index, Lexeme, State, Timestamp, Thought, ThoughtContext, ThoughtIndices } from '../../src/@types'
+import {
+  Context,
+  Index,
+  Lexeme,
+  SimplePath,
+  State,
+  Timestamp,
+  Thought,
+  ThoughtContext,
+  ThoughtIndices,
+} from '../../src/@types'
 
 /*************************************************************************
  * TYPES
@@ -313,7 +323,19 @@ const createThought = (state: State, context: Context, value: string, { rank }: 
 }
 
 /** Recursively reconstructs the context and all its ancestors. */
-const reconstructThought = (state: State, context: Context, { rank }: { rank?: number } = {}): State => {
+const reconstructThought = (
+  state: State,
+  context: Context,
+  {
+    rank,
+    skipAncestors,
+  }: {
+    // An optional rank that will override the thought's current rank if it exists. Otherwise a random rank is generated.
+    rank?: number
+    // If we know the ancestors exist, we can avoid unnecessary contextToPath calls.
+    skipAncestors?: boolean
+  } = {},
+): State => {
   // check the existence of the full context immediately so that we can avoid recursion
   const path = contextToPath(state, context)
   if (path) {
@@ -327,6 +349,9 @@ const reconstructThought = (state: State, context: Context, { rank }: { rank?: n
 
   // reconstruct each ancestor and then the thought itself
   context.forEach((value, i) => {
+    // skip ancestors for performance
+    if (skipAncestors && i < context.length - 1) return
+
     const contextAncestor = context.slice(0, i + 1)
 
     // reuse the full path check from the beginning to avoid recursion
@@ -380,7 +405,11 @@ const mergeThoughts = (state: State, thoughts: RawThoughts) => {
         const children = Object.values(parent.children)
         children.forEach(child => {
           // unlike Parents, children actually have rank
-          state = reconstructThought(state, unroot([...context, child.value]), { rank: child.rank })
+          // we can skip ancestor reconstruction since the thought was reconstructed above
+          state = reconstructThought(state, unroot([...context, child.value]), {
+            rank: child.rank,
+            skipAncestors: true,
+          })
         })
 
         // TODO: Verify that the Path exists now
