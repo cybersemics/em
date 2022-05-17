@@ -47,7 +47,15 @@ import {
   timestamp,
   unroot,
 } from '../../src/util'
-import { contextToPath, exportContext, getAllChildren, getLexeme, getThoughtById, hasLexeme } from '../../src/selectors'
+import {
+  contextToPath,
+  exportContext,
+  getAllChildren,
+  getLexeme,
+  getThoughtById,
+  hasLexeme,
+  pathToThought,
+} from '../../src/selectors'
 import { importText } from '../../src/reducers'
 import { Context, Index, Lexeme, State, Timestamp, Thought, ThoughtContext, ThoughtIndices } from '../../src/@types'
 
@@ -250,10 +258,23 @@ const recreateParents = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIn
 
 /** Recursively reconstructs the context and all its ancestors. */
 const reconstructThought = (state: State, context: Context, { rank }: { rank?: number } = {}): State => {
+  // check the existence of the full context immediately so that we can avoid recursion
+  const path = contextToPath(state, context)
+  if (path) {
+    // override the rank in case the thought was originally created from a Parent with no rank
+    if (rank !== undefined) {
+      const thought = pathToThought(state, path)
+      thought.rank = rank
+    }
+    return state
+  }
+
   // reconstruct each ancestor and then the thought itself
   context.forEach((value, i) => {
     const contextAncestor = context.slice(0, i + 1)
-    const pathAncestor = contextToPath(state, contextAncestor)
+
+    // reuse the full path check from the beginning to avoid recursion
+    const pathAncestor = i === context.length - 1 && !path ? null : contextToPath(state, contextAncestor)
 
     // reconstruct thought
     if (!pathAncestor) {
