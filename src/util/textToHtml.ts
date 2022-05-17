@@ -7,6 +7,8 @@ export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
 
+const multilineRegex = /\n/gim
+
 const regexpLeadingSpacesAndBullet = /^\s*(?:[-—▪◦•]|\*\s)?/
 
 // regex that checks if the value starts with closed html tag
@@ -94,8 +96,8 @@ const moveLeadingSpacesToBeginning = (line: string) => {
  */
 const parseBodyContent = (html: string) => {
   const content = bodyContent(html)
-  // If content has <li> tags, don't convert content to blocks and then again html.
-  if (regexpListItem.test(content)) {
+  // If content has <li> tags more than 1, don't convert content to blocks and then again html.
+  if (regexpListItem.test(content) && (content.match(multilineRegex) || []).length > 1) {
     return content
   }
   const stripped = strip(content, { preserveFormatting: true, stripAttributes: true })
