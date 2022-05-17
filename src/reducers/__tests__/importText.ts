@@ -2012,3 +2012,14 @@ it(`import sibling empty thoughts`, () => {
   - a
   - b`)
 })
+
+it(`mixed html with whitespaces as a new line`, () => {
+  const text = `- a\n<li>b</li>`
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b`)
+})
