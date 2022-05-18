@@ -30,10 +30,11 @@ export const isChildVisible = _.curry((state: State, context: Context, child: Th
   return !isFunction(child.value) && !hasChild(state, unroot([...context, child.value]), '=hidden')
 })
 
-// TODO: Rename this to something better.
 /** Returns the thoughts for the given thought id. */
-export const getAllChildrenById = (state: State, thoughtId: ThoughtId): ThoughtId[] =>
-  getThoughtById(state, thoughtId)?.children || noChildren
+export const getAllChildrenById = (state: State, thoughtId: ThoughtId): ThoughtId[] => {
+  const children = getThoughtById(state, thoughtId)?.children
+  return children?.length > 0 ? children : noThoughtIds
+}
 
 /** Returns the subthoughts (as Thoughts) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildrenAsThoughts = (state: State, context: Context) => {
