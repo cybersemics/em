@@ -38,13 +38,13 @@ const pushLocal = (
   }
   // thoughtIndex
   const thoughtIndexPromises = [
-    ...Object.keys(thoughtIndexUpdates).map(contextEncoded => {
-      const parentEntry = thoughtIndexUpdates[contextEncoded]
+    ...Object.keys(thoughtIndexUpdates).map(id => {
+      const thought = thoughtIndexUpdates[id]
 
       // some settings are propagated to localStorage for faster load on startup
-      const name = localStorageSettingsContexts[contextEncoded]
+      const name = localStorageSettingsContexts[id]
       if (name) {
-        const firstChild = parentEntry?.children.find(child => {
+        const firstChild = thought?.children.find(child => {
           const thought = updatedThoughtIndex[child]
           return thought && !isFunction(thought.value)
         })
@@ -54,8 +54,7 @@ const pushLocal = (
         }
       }
 
-      // Note: Since all the data of a thought is now on Parent instead of Child and LexemeIndex, so the thought should not be deleted if they don't have children
-      return parentEntry ? db.updateThought(contextEncoded as ThoughtId, parentEntry) : db.deleteThought(contextEncoded)
+      return thought ? db.updateThought(id as ThoughtId, thought) : db.deleteThought(id)
     }),
     db.updateLastUpdated(timestamp()),
   ]
@@ -105,22 +104,16 @@ const pushRemote =
 
     const prependedThoughtIndexUpdates = _.transform(
       thoughtIndexUpdates,
-      (accum, parentUpdate, key) => {
-        // fix undefined/NaN rank
-        const children = parentUpdate && parentUpdate.children
-        accum['thoughtIndex/' + key] =
-          children && children.length > 0
-            ? {
-                id: parentUpdate!.id,
-                value: parentUpdate!.value,
-                parentId: parentUpdate!.parentId,
-                lastUpdated: parentUpdate!.lastUpdated || timestamp(),
-                ...(parentUpdate!.archived ? { archived: parentUpdate!.archived } : null),
-                rank: parentUpdate!.rank,
-                children,
-                updatedBy: parentUpdate!.updatedBy || getSessionId(),
-              }
-            : null
+      (accum, thoughtUpdate, id) => {
+        accum['thoughtIndex/' + id] = thoughtUpdate
+          ? {
+              // whitelist properties for persistence
+              ...(_.pick(thoughtUpdate, ['id', 'value', 'parentId', 'rank', 'children']) as Thought),
+              lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
+              ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
+              updatedBy: thoughtUpdate.updatedBy || getSessionId(),
+            }
+          : null
       },
       {} as Index<Thought | null>,
     )

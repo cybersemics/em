@@ -269,7 +269,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     if (view !== 'Table') return false
     const childrenFiltered = allChildren
       .map(childId => getThoughtById(state, childId))
-      .filter(child => !isFunction(child.value))
+      .filter(child => child && !isFunction(child.value))
 
     if (childrenFiltered.length === 0) return false
 
