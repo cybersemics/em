@@ -97,7 +97,7 @@ const Bullet = ({
       }
 
   /** Return circle or triangle for the bullet. */
-  const foregroundShape = () => {
+  const foregroundShape = (style = {}) => {
     const foregroundShapeProps = showContexts
       ? {
           strokeWidth: '30',
@@ -112,7 +112,17 @@ const Bullet = ({
     const { ellipseRadius, path } = vendorSpecificData.foregroundShape
 
     return leaf ? (
-      <ellipse className='glyph-fg' ry={ellipseRadius} rx={ellipseRadius} cy='298' cx='297' {...foregroundShapeProps} />
+      <ellipse
+        className={classNames({
+          'glyph-fg': true,
+          ...style,
+        })}
+        ry={ellipseRadius}
+        rx={ellipseRadius}
+        cy='298'
+        cx='297'
+        {...foregroundShapeProps}
+      />
     ) : (
       <path
         className={classNames('glyph-fg', 'triangle')}
@@ -127,11 +137,6 @@ const Bullet = ({
     <span
       className={classNames({
         bullet: true,
-        // Since Thoughts and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
-        // Therefore render in a simple gray rather than an error color.
-        // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
-        gray: missing,
-        graypulse: pending,
         'show-contexts': showContexts,
         'invalid-option': invalid,
       })}
@@ -163,7 +168,13 @@ const Bullet = ({
               fill={dark ? '#ffffff' : '#000'}
             />
           )}
-          {foregroundShape()}
+          {foregroundShape({
+            // Since Thoughts and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
+            // Therefore render in a simple gray rather than an error color.
+            // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
+            gray: missing,
+            graypulse: pending,
+          })}
         </g>
       </svg>
     </span>
