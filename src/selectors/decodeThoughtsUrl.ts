@@ -37,14 +37,17 @@ const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
       : null
   })
 
-  const thoughtRanked = childIdsToThoughts(state, pathUnranked)
+  // validate thoughts and set path to null if any are missing
+  const thoughts = childIdsToThoughts(state, pathUnranked)
+  const thoughtsValidated = thoughts.length === pathUnranked.length ? thoughts : null
+
   // infer ranks of url path so that url can be /A/a1 instead of /A_0/a1_0 etc
   // if exists is specified and the thoughts are not yet loaded into state, return null
-  const path = !exists || thoughtRanked ? pathUnranked : null
+  const path = !exists || thoughtsValidated ? pathUnranked : null
 
   return {
     contextViews,
-    path: path,
+    path,
     owner: urlOwner,
   }
 }

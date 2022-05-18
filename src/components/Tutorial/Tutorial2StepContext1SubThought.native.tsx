@@ -32,7 +32,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
 
   const store = useStore<State>()
-  const children = childIdsToThoughts(store.getState(), rootChildren) ?? []
+  const children = childIdsToThoughts(store.getState(), rootChildren)
 
   if (context1SubthoughtisCreated) {
     return (

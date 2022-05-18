@@ -1,10 +1,8 @@
 import { getThoughtById } from './index'
-import { ThoughtId, State } from '../@types'
+import { Thought, ThoughtId, State } from '../@types'
 
-/** Converts a list of ThoughtIds to a list of Thoughts. If any one of the thoughts are not found, returns null. */
-const childIdsToThoughts = (state: State, childIds: ThoughtId[]) => {
-  const thoughts = childIds.map(id => getThoughtById(state, id)).filter(Boolean)
-  return thoughts.length < childIds.length ? null : thoughts
-}
+/** Converts a list of ThoughtIds to a list of Thoughts. May return a smaller list if any thoughts are missing. */
+const childIdsToThoughts = (state: State, childIds: ThoughtId[]): Thought[] =>
+  childIds.map(id => getThoughtById(state, id)).filter(Boolean)
 
 export default childIdsToThoughts

@@ -36,12 +36,16 @@ export const getAllChildrenById = (state: State, thoughtId: ThoughtId): ThoughtI
   getThoughtById(state, thoughtId)?.children || noChildren
 
 /** Returns the subthoughts (as Thoughts) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getAllChildrenAsThoughts = (state: State, context: Context) =>
-  childIdsToThoughts(state, getAllChildren(state, context)) ?? noChildren
+export const getAllChildrenAsThoughts = (state: State, context: Context) => {
+  const children = childIdsToThoughts(state, getAllChildren(state, context))
+  return children.length === 0 ? noChildren : children
+}
 
 /** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) =>
-  childIdsToThoughts(state, getAllChildrenById(state, id)) ?? noChildren
+export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) => {
+  const children = childIdsToThoughts(state, getAllChildrenById(state, id))
+  return children.length === 0 ? noChildren : children
+}
 
 /** Returns the subthoughts (as ThoughtIds) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {
@@ -166,7 +170,7 @@ export const getChildrenRanked = (state: State, context: Context): Thought[] =>
 /** Gets all children of a context sorted by their ranking using thought id. Returns a new object reference even if the children have not changed. */
 // @MIGRATION_TODO: Currently we are migrating to access by id instead of context.
 export const getChildrenRankedById = (state: State, thoughtId: ThoughtId): Thought[] => {
-  const allChildren = childIdsToThoughts(state, getAllChildrenById(state, thoughtId)) || []
+  const allChildren = childIdsToThoughts(state, getAllChildrenById(state, thoughtId))
   return sort(allChildren, compareByRank)
 }
 

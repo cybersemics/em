@@ -50,7 +50,7 @@ export const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, opti
 
   if (!thought) return []
 
-  const thoughts = childIdsToThoughts(state, thought.children) || []
+  const thoughts = childIdsToThoughts(state, thought.children)
 
   const children = ordered ? sort(thoughts, compareByRank) : thoughts
 

@@ -12,9 +12,10 @@ import childIdsToThoughts from './childIdsToThoughts'
 const splitChain = (state: State, path: Path): SimplePath[] => {
   const contextChain: SimplePath[] = [[] as unknown as SimplePath]
 
-  const pathThoughtsArray = childIdsToThoughts(state, path) ?? []
+  const pathThoughts = childIdsToThoughts(state, path)
+  const pathThoughtsValidated = pathThoughts.length === path.length ? pathThoughts : []
 
-  pathThoughtsArray.forEach((value, i) => {
+  pathThoughtsValidated.forEach((value, i) => {
     // push thought onto the last component of the context chain
     contextChain[contextChain.length - 1].push(path[i]) // eslint-disable-line fp/no-mutating-methods
 
@@ -22,8 +23,9 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
     // or if crossing context view boundary, push the SimplePath of the context
     const showContexts = isContextViewActive(state, pathToContext(state, path.slice(0, i + 1) as Path))
     if (showContexts && i < path.length - 1) {
-      const contexts = (i > 0 && childIdsToThoughts(state, getContexts(state, pathThoughtsArray[i + 1].value))) || []
-      const matchingContext = contexts.find(cx => cx.id === pathThoughtsArray[i + 1].id)
+      const contexts =
+        (i > 0 && childIdsToThoughts(state, getContexts(state, pathThoughtsValidated[i + 1].value))) || []
+      const matchingContext = contexts.find(cx => cx.id === pathThoughtsValidated[i + 1].id)
 
       const context = matchingContext && thoughtToContext(state, matchingContext.id)
       // NOTE: contextToPath will call splitChain, creating indirect recursion

@@ -188,9 +188,7 @@ const saveThoughts = (
        */
       const getLastAddedChild = () => {
         const thought = updatedState.thoughts.thoughtIndex[contextEncoded]
-        return (childIdsToThoughts(updatedState, thought.children) ?? []).find(
-          child => child.value === nonDuplicateValue,
-        )
+        return childIdsToThoughts(updatedState, thought.children).find(child => child.value === nonDuplicateValue)
       }
 
       const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()!.id]

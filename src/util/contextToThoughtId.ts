@@ -53,9 +53,7 @@ const recursiveThoughtFinder = (
 ): Thought | null => {
   if (target.length === 0 && thought.children.length === 0) return null
 
-  const children = childIdsToThoughts(state, thought.children) ?? []
-
-  if (thought.children.length > children.length) return null
+  const children = childIdsToThoughts(state, thought.children)
 
   const child = children.find(child => {
     const targetValue = target[targetIndex]

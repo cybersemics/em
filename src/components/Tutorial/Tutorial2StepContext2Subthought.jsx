@@ -21,7 +21,7 @@ import StaticSuperscript from '../StaticSuperscript'
 // eslint-disable-next-line jsdoc/require-jsdoc
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {
   const state = store.getState()
-  const children = childIdsToThoughts(state, rootChildren) ?? []
+  const children = childIdsToThoughts(state, rootChildren)
 
   // e.g. Work
   return (

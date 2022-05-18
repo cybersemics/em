@@ -36,7 +36,7 @@ const { smallText, italic } = commonStyles
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }: IComponentProps) => {
   const state = store.getState()
 
-  const children = childIdsToThoughts(state, rootChildren) ?? []
+  const children = childIdsToThoughts(state, rootChildren)
   // e.g. Work
   return (
     children.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
@@ -58,7 +58,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
 
-  const children = childIdsToThoughts(state, rootChildren) ?? []
+  const children = childIdsToThoughts(state, rootChildren)
 
   if (isContext2SubthoughtCreated) {
     return (

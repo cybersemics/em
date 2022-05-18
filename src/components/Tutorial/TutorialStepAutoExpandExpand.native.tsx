@@ -42,7 +42,7 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }: IComponentP
  * @returns The array that holds all the thoughts that that don't have a cursor, but have children.
  */
 const thoughtsNoCursorWithChild = (cursor: Path, rootChildren: ThoughtId[]) => {
-  const children = childIdsToThoughts(store.getState(), rootChildren) ?? []
+  const children = childIdsToThoughts(store.getState(), rootChildren)
 
   const cursorThought = childIdsToThoughts(store.getState(), cursor)
   const noCursorThoughts = cursorThought ? children.filter(c => c.value !== cursorThought[0].value) : children
