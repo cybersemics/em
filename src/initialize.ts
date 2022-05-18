@@ -37,7 +37,7 @@ import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
 import * as selection from './device/selection'
-import { getAllChildrenAsThoughts } from './selectors/getChildren'
+import { getAllChildren, getAllChildrenAsThoughts } from './selectors/getChildren'
 
 // enable to collect moize usage stats
 // do not enable in production
@@ -210,8 +210,10 @@ const windowEm = {
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   contextToThought: withState(contextToThought),
+  getAllChildren: withState(getAllChildren),
   getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
   getChildrenRanked: withState(getChildrenRanked),
+  getThoughtById: withState(getThoughtById),
   contextToThoughtId,
   hashThought,
   isPending: withState(isPending),
