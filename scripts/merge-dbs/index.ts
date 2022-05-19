@@ -128,6 +128,9 @@ interface ProgressReport {
   path: string
   schema: number
   size: number
+  lexemesBase: number
+  lexemesRead: number
+  lexemesSaved: number
   thoughtsBase: number
   thoughtsRead: number
   thoughtsSaved: number
@@ -161,15 +164,15 @@ const stateStart = initialState()
 /** Generates a checksum of string content. */
 const checksum = (value: string) => crypto.createHash('sha256').update(value).digest('base64')
 
-/** Gets the number of Thoughts in the State or Thoughts. */
-const numThoughts = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughtsV4) => {
+/** Gets the number of Lexemes in the State or Thoughts. */
+const numLexemes = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughtsV4) => {
   const thoughts: RawThoughts = (stateOrThoughts as State).thoughts || stateOrThoughts
   const lexemeIndex = (thoughts as unknown as FirebaseThoughtsV5).lexemeIndex || thoughts.thoughtIndex
   return Object.keys(lexemeIndex).length
 }
 
-/** Gets the number of Lexemes in the State or Thoughts. */
-const numLexemes = (stateOrThoughts: State | RawThoughts) => {
+/** Gets the number of Thoughts in the State or Thoughts. */
+const numThoughts = (stateOrThoughts: State | RawThoughts) => {
   const thoughts: RawThoughts = (stateOrThoughts as State).thoughts || stateOrThoughts
   const thoughtIndex = (thoughts as unknown as FirebaseThoughtsV4).contextIndex || thoughts.thoughtIndex
   return Object.keys(thoughtIndex).length
@@ -512,17 +515,21 @@ const initProgress = (file: string) => {
     {} as Index<boolean>,
   )
 
-  /** Returns true if a progress report with the given checksum exists. */
-  const exists = (checksum: string) => progressMap[checksum]
-
   /** Adds a progress report and updates the checksum map. */
   const add = (progressReport: ProgressReport) => {
     progress.backupsCompleted.push(progressReport)
     progressMap[progressReport.checksum] = true
   }
 
+  /** Encodes the progress stats. */
+  const encode = () => JSON.stringify(progress, null, 2)
+
+  /** Returns true if a progress report with the given checksum exists. */
+  const exists = (checksum: string) => progressMap[checksum]
+
   return {
     add,
+    encode,
     exists,
   }
 }
@@ -546,6 +553,7 @@ const main = () => {
   const { lastUpdated, rawThoughts: thoughtsCurrent } = readThoughts(file1)
 
   console.info(`Thoughts read: ${chalk.cyan(numThoughts(thoughtsCurrent))}`)
+  console.info(`Lexemes read: ${chalk.cyan(numLexemes(thoughtsCurrent))}`)
   console.info(`lastUpdated: ${lastUpdated ? new Date(lastUpdated).toString() : undefined}`)
 
   // read backup thoughts to be imported
@@ -578,6 +586,7 @@ const main = () => {
 
     // save the number of current thoughts before thoughtsCurrent gets modified
     const numThoughtsCurrent = numThoughts(thoughtsCurrent)
+    const numLexemesCurrent = numLexemes(thoughtsCurrent)
 
     try {
       const readResult = readThoughts(file)
@@ -633,13 +642,16 @@ const main = () => {
         schema: result.schema,
         size: fs.statSync(fileNew).size / 1024000, // MB
         time: timeStart.measure(),
+        lexemesBase: numLexemesCurrent,
+        lexemesRead: numLexemes(thoughtsBackup),
+        lexemesSaved: numLexemes(dbNew),
         thoughtsBase: numThoughtsCurrent,
         thoughtsRead: numThoughts(thoughtsBackup),
         thoughtsSaved: numThoughts(dbNew),
       }
 
       progress.add(progressReport)
-      fs.writeFileSync('output/progress.json', JSON.stringify(progress, null, 2))
+      fs.writeFileSync('output/progress.json', progress.encode())
       console.info('Progress saved', progressReport)
 
       merged++
