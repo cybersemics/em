@@ -1,4 +1,6 @@
-Imports one em database into another.
+Merges **em** databases.
+
+Handles old schema and reconstructs all thoughts.
 
 ## Build
 
@@ -6,15 +8,18 @@ Imports one em database into another.
 npm run build
 ```
 
+## Setup
+
+1. Place backup dbs in a new directory.
+2. Save a db with schema v5 as `db.json` in the same directory to serve as the base db. All backups will be merged into the base.
+
 ## Usage
 
-- `node index.js [BASE_DB] [BACKUP_DB]`
-
 ```
-node build/scripts/merge-dbs/index.js ~/em-backups/2022-05-16.json  ~/em-backups/backups\ 2021-01-01\ -\ 2021-01-31
+node build/scripts/merge-dbs/index.js ~/em-backups/backups
 ```
 
-Outputs two files:
-
-- `em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-contextIndex.json`
-- `em-proto-wWpM1PlkbFSbPTXzOvRwFwaHf052-export-thoughtIndex.json`
+- Reads all backup files in the specified directory.
+- Reads the base db from `db.json`.
+- Overwrites `db.json` with the merged db.
+- Saves progress to `progress.json` after each backup is merged to enable resume.

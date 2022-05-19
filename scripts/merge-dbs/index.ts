@@ -75,10 +75,6 @@ import {
  * TYPES
  ************************************************************************/
 
-interface Database {
-  users: Index<RawThoughts>
-}
-
 interface Child {
   id: string
   lastUpdated: Timestamp
@@ -156,7 +152,7 @@ interface Progress {
 const userId = 'm9S244ovF7fVrwpAoqoWxcz08s52'
 
 const helpText = `Usage:
-  node build/scripts/merge-dbs/index.js ~/em-backups/2022-05-16.json  ~/em-backups/backups\ 2021-01-01\ -\ 2021-01-31
+  node build/scripts/merge-dbs/index.js ~/em-backups/backups
 `
 
 const sessionId = createId()
@@ -341,16 +337,16 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
   // schema v5
   if ('lexemeIndex' in thoughts) {
     schema = 5
-    console.log(`Schema: v${schema}`)
+    console.info(`Schema: v${schema}`)
   }
   // schema v3–4
   else if ('contextIndex' in thoughts) {
     if ('6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex) {
       schema = 4
-      console.log(`Schema: v${schema}`)
+      console.info(`Schema: v${schema}`)
     } else {
       schema = 3
-      console.log(`Schema: v${schema}`)
+      console.info(`Schema: v${schema}`)
 
       // reconstruct Thoughts from Parents
       Object.values(thoughts.contextIndex).forEach(parent => {
@@ -407,7 +403,7 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
   }
 }
 
-/** Loads a progress file and provides an API to add progress or check if a backup has already been merged. */
+/** Loads a progress file and provides an API to add progress, save progress, or check if a backup has already been merged. */
 const initProgress = (file: string) => {
   const progress: Progress = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : { backupsCompleted: [] }
 
@@ -426,46 +422,44 @@ const initProgress = (file: string) => {
     progressMap[progressReport.checksum] = true
   }
 
-  /** Encodes the progress stats. */
-  const encode = () => JSON.stringify(progress, null, 2)
-
   /** Returns true if a progress report with the given checksum exists. */
   const exists = (checksum: string) => progressMap[checksum]
 
+  /** Saves the progress stats to the file. */
+  const save = () => fs.writeFileSync(file, JSON.stringify(progress, null, 2))
+
   return {
     add,
-    encode,
     exists,
+    save,
   }
 }
 
 const main = () => {
-  const [, , file1, file2] = process.argv
+  const [, , dir] = process.argv
 
   // check args
-  if (process.argv.length < 4) {
+  if (process.argv.length < 3) {
     console.info(helpText)
     process.exit(0)
+  } else if (!fs.existsSync(`${dir}/db.json`)) {
+    console.error('Missing db.json. Please save a base db with schema v5 to [DIR]/db.json.')
   }
-
-  const basename = path.basename(file1)
-  const indexExt = basename.lastIndexOf('.')
-  const file1Base = basename.slice(0, indexExt)
-  const file1Ext = basename.slice(indexExt)
 
   // read base thoughts
   // assume that they use schema v5
-  const { lastUpdated, rawThoughts: thoughtsCurrent } = readThoughts(file1)
+  const { lastUpdated, rawThoughts: thoughtsCurrent } = readThoughts(`${dir}/db.json`)
 
   console.info(`Thoughts read: ${chalk.cyan(numThoughts(thoughtsCurrent))}`)
   console.info(`Lexemes read: ${chalk.cyan(numLexemes(thoughtsCurrent))}`)
   console.info(`lastUpdated: ${lastUpdated ? new Date(lastUpdated).toString() : undefined}`)
 
-  // read backup thoughts to be imported
-  // this can be a directory or a file
-  const filesToImport = fs.lstatSync(file2).isDirectory()
-    ? fs.readdirSync(file2).map(file => `${file2}/${file}`)
-    : [file2]
+  // read directory of backups to be imported
+  const filesToImport = fs
+    .readdirSync(dir)
+    // skip progress file and hidden files including .DS_Store
+    .filter(file => file !== 'db.json' && file !== 'progress.json' && file !== 'debug.log' && !file.startsWith('.'))
+    .map(file => `${dir}/${file}`)
 
   console.info(`Files to import: ${filesToImport.length}`)
 
@@ -476,13 +470,10 @@ const main = () => {
   let skipped = 0
   let merged = 0
 
-  const progress = initProgress('output/progress.json')
+  const progress = initProgress(`${dir}/progress.json`)
 
   console.info('')
   filesToImport.forEach(file => {
-    // skip hidden files including .DS_Store
-    if (path.basename(file).startsWith('.')) return
-
     let thoughtsBackup: RawThoughts
     let lastUpdated: number
     let rawText: string
@@ -520,21 +511,18 @@ const main = () => {
       // replace state with merged thoughts
       const result = mergeThoughts(state, thoughtsBackup)
 
-      // write new state to output directory
-      fs.mkdirSync('output', { recursive: true })
-
       // merge updated thoughts back into firebase db
       const dbNew = {
         ...thoughtsCurrent,
         thoughtIndex: result.thoughts.thoughtIndex,
         lexemeIndex: result.thoughts.lexemeIndex,
       }
-      const fileNew = `output/${file1Base}-merged${file1Ext}`
 
       const timeWriteFile = time()
 
-      // console.info(`Writing new database with ${chalk.blue(numParents(state))} Parents to output`)
-      fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
+      // write new state to base db
+      fs.mkdirSync(dir, { recursive: true })
+      fs.writeFileSync(`${dir}/db.json`, JSON.stringify(dbNew, null, 2))
 
       console.info(`Thoughts written ${timeWriteFile.print()}`)
 
@@ -545,7 +533,7 @@ const main = () => {
         missingContexts: result.missingContexts,
         path: file,
         schema: result.schema,
-        size: fs.statSync(fileNew).size / 1024000, // MB
+        size: fs.statSync(`${dir}/db.json`).size / 1024000, // MB
         time: timeStart.measure(),
         lexemesBase: numLexemesCurrent,
         lexemesRead: numLexemes(thoughtsBackup),
@@ -556,7 +544,7 @@ const main = () => {
       }
 
       progress.add(progressReport)
-      fs.writeFileSync('output/progress.json', progress.encode())
+      progress.save()
       console.info('Progress saved', progressReport)
 
       merged++
@@ -578,7 +566,7 @@ const main = () => {
   } else {
     console.info('Writing error log')
     const debugOutput = errors.map(error => `${error.file}\n${error.message}\n${error.e.stack}`).join('\n')
-    fs.writeFileSync('output/debug.log', debugOutput)
+    fs.writeFileSync(`${dir}/debug.log`, debugOutput)
 
     if (success.length > 0) {
       console.info('')
@@ -592,7 +580,7 @@ const main = () => {
     console.info(
       `${chalk.red(
         success.length > 0 ? 'PARTIAL SUCCESS' : 'FAIL',
-      )}! See output/debug.log for error messages and stack trace.`,
+      )}! See debug.log for error messages and stack trace.`,
     )
   }
 }
