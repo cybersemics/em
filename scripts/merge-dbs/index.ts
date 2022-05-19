@@ -219,97 +219,7 @@ const recreateParents = (thoughts: FirebaseThoughtsV4 | ThoughtIndices): Thought
     thoughtIndex: {},
     lexemeIndex: {},
   }
-
-  // // // build a new contextIndex by iterating through each legacy Lexeme
-  // // const contextIndex = lexemes.reduce<Index<Parent>>((accum, lexeme) => {
-  // //   // invalid Lexeme
-  // //   if (lexeme.value == null) return accum
-
-  // //   // read legacy memberOf property as contexts
-  // //   const contexts: ThoughtContext[] = Object.values((lexeme as any).memberOf || lexeme.contexts || {})
-
-  // //   // skip missing contexts
-  // //   if (!contexts) return accum
-
-  // //   // add each legacy ThoughtContext as a Child to a Parent
-  // //   contexts.forEach(cx => {
-  // //     // skip ThoughtContext without context property
-  // //     if (!cx.context) return
-
-  // //     const context = Object.values(cx.context)
-  // //     const key = hashContext(context)
-  // //     const parentOld = accum[key]
-  // //     const childrenOld = Object.values(parentOld?.children || {})
-  // //     accum[key] = {
-  // //       ...parentOld,
-  // //       id: key,
-  // //       children: [...childrenOld, { value: lexeme.value, rank: cx.rank || Math.random() * 10e8 }],
-  // //       context,
-  // //       lastUpdated: cx.lastUpdated || timestamp(),
-  // //       updatedBy,
-  // //     }
-  // //   })
-
-  // //   return accum
-  // // }, {})
-
-  // const thoughtsNew: ThoughtIndices & { isContextIndexRehashed: boolean } = {
-  //   contextIndex,
-  //   thoughtIndex: thoughts.thoughtIndex,
-  //   // track recalculated contexthash to avoid recalculating again in mergeThoughts
-  //   isContextIndexRehashed: true,
-  // }
-
-  // return thoughtsNew
 }
-
-/** Normalizes the contextIndex by converting Firebase "arrays" to proper arrays and recalculating context hashes if needed. Skips hash recalculation if isContextIndexRehashed is true. */
-// const normalizeFirebaseArrays = (thoughts: FirebaseThoughtsV4 | ThoughtIndices): ThoughtIndices => {
-//   // if the contextIndex already has proper arrays, return it as-is to avoid NOOP iteration
-//   // assume the first Parent is representative
-//   const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseThought
-//   if (Array.isArray(firstParent.context) && Array.isArray(firstParent.children)) return thoughts as ThoughtIndices
-
-//   console.info(`Normalizing ${chalk.blue(numParents(thoughts))} Parents`)
-
-//   // track how many parents do not have a context property
-//   // a few are okay, but they are skipped so en masse is a problem
-//   let missingContexts = 0
-
-//   // convert Firebase "arrays" to proper arrays
-//   // thoughtIndex is not used, so we don't have to normalize it
-//   const contextIndexNew = Object.keys(thoughts.contextIndex as Index<FirebaseThought>).reduce((accum, key) => {
-//     const parent = thoughts.contextIndex[key]
-
-//     // there are some invalid Parents with missing context field
-//     if (!parent.context) {
-//       missingContexts++
-//       return {}
-//     }
-
-//     // convert Parent.children Firebase "array"
-//     const children = Object.values(parent.children || {})
-//     const context = Object.values(parent.context || {})
-
-//     return {
-//       ...accum,
-//       [key]: {
-//         ...parent,
-//         children,
-//         context,
-//       },
-//     }
-//   }, {})
-
-//   if (missingContexts > 10) {
-//     console.warn('More than 10 Parents with missing context property:', missingContexts)
-//   }
-
-//   return {
-//     ...thoughts,
-//     contextIndex: contextIndexNew,
-//   }
-// }
 
 /** Insert a new thought by directly modifying state. */
 const createThought = (state: State, context: Context, value: string, { rank }: { rank?: number } = {}) => {
@@ -400,15 +310,7 @@ const reconstructThought = (
 
     // reconstruct thought
     if (!pathAncestor) {
-      // console.log('Creating thought', contextAncestor)
       state = createThought(state, contextAncestor, value, { rank })
-
-      // console.log('new thought', thought)
-      // console.log('new lexeme', lexeme)
-    } else {
-      // TODO: Count if exists (only for i === context.length - 1)
-      // console.log('pathAncestor exists: ', contextAncestor)
-      // throw new Error('STOP')
     }
   })
 
@@ -456,9 +358,6 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
             skipAncestors: true,
           })
         })
-
-        // TODO: Verify that the Path exists now
-        // const path = contextToPath(state, ['__ROOT__'])
       })
     }
   }
@@ -466,29 +365,6 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
   else {
     throw new Error('Schema: Unrecognized. Properties: ' + Object.keys(thoughts).join(', '))
   }
-
-  // console.info(`Exporting ${chalk.blue(numParents(thoughts))} Parents to HTML`)
-  // const stateBackup: State = {
-  //   ...stateStart,
-  //   thoughts: {
-  //     ...stateStart.thoughts,
-  //     ...thoughts,
-  //   },
-  // }
-
-  // import each child individually to reduce memory usage
-  // const stateNew = getAllChildren(stateBackup, [HOME_TOKEN]).reduce((stateAccum, childId) => {
-  //   const child = getThoughtById(stateAccum, childId)
-  //   console.info(`Exporting ${child.value}`)
-  //   const html = exportContext(stateBackup, [child.value])
-  //   console.info(`Importing ${child.value}`)
-  //   const stateNew = importText(stateAccum, { text: html })
-  //   // console.info(
-  //   //   `New state has ${chalk.blue(numParents(stateNew))} Parents and ${chalk.blue(numLexemes(stateNew))} Lexemes`,
-  //   // )
-
-  //   return stateNew
-  // }, state)
 
   console.info(`Thoughts merged ${t.print()}`)
   if (missingContexts > 0) {
