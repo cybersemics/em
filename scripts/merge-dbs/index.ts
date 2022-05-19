@@ -87,7 +87,7 @@ interface Child {
 }
 
 // firebase stores arrays as objects
-type FirebaseThought = Thought & {
+type FirebaseThought = Omit<Thought, 'children' | 'context'> & {
   children: Index<Child>
   context?: Index<string>
 }
@@ -96,9 +96,17 @@ type FirebaseLexeme = Lexeme & {
   contexts: Index<ThoughtId>
 }
 
+type FirebaseLexemeV4 = Omit<Lexeme, 'contexts'> & {
+  contexts?: Index<{
+    context?: Index<string>
+    lastUpdated?: string
+    rank?: number
+  }>
+}
+
 interface FirebaseThoughtsV4 {
   contextIndex: Index<FirebaseThought>
-  thoughtIndex: Index<FirebaseLexeme>
+  thoughtIndex: Index<FirebaseLexemeV4>
 }
 
 interface FirebaseThoughtsV5 {
@@ -165,7 +173,7 @@ const stateStart = initialState()
 const checksum = (value: string) => crypto.createHash('sha256').update(value).digest('base64')
 
 /** Gets the number of Lexemes in the State or Thoughts. */
-const numLexemes = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughtsV4) => {
+const numLexemes = (stateOrThoughts: State | RawThoughts) => {
   const thoughts: RawThoughts = (stateOrThoughts as State).thoughts || stateOrThoughts
   const lexemeIndex = (thoughts as unknown as FirebaseThoughtsV5).lexemeIndex || thoughts.thoughtIndex
   return Object.keys(lexemeIndex).length
@@ -278,9 +286,13 @@ const reconstructThought = (
   state: State,
   context: Context,
   {
+    loose,
     rank,
     skipAncestors,
   }: {
+    // Normalizes the head of the context before checking for existing contexts
+    // Useful for reconstructing from Lexemes, because a Lexeme's value is normalized
+    loose?: boolean
     // An optional rank that will override the thought's current rank if it exists. Otherwise a random rank is generated.
     rank?: number
     // If we know the ancestors exist, we can avoid unnecessary contextToPath calls.
@@ -288,10 +300,10 @@ const reconstructThought = (
   } = {},
 ): State => {
   // check the existence of the full context immediately so that we can avoid recursion
-  const path = contextToPath(state, context)
+  const path = contextToPath(state, context, { loose: true })
   if (path) {
     // override the rank in case the thought was originally created from a Parent with no rank
-    if (rank !== undefined) {
+    if (rank !== undefined && !loose) {
       const thought = pathToThought(state, path)
       thought.rank = rank
     }
@@ -340,6 +352,7 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
       schema = 3
       console.log(`Schema: v${schema}`)
 
+      // reconstruct Thoughts from Parents
       Object.values(thoughts.contextIndex).forEach(parent => {
         if (!parent.context) {
           missingContexts++
@@ -357,6 +370,22 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
             rank: child.rank,
             skipAncestors: true,
           })
+        })
+      })
+
+      // reconstruct Thoughts from Lexemes
+      Object.values(thoughts.thoughtIndex).forEach(lexeme => {
+        if (!lexeme.contexts) {
+          missingContexts++
+          return
+        }
+        Object.values(lexeme.contexts).forEach(cx => {
+          if (!cx.context) {
+            missingContexts++
+            return
+          }
+          const context = unroot([...Object.values(cx.context), lexeme.value])
+          state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
         })
       })
     }
