@@ -9,6 +9,7 @@ import _ from 'lodash'
 import { v4 as uid } from 'uuid'
 import memoryStore from './memoryStore'
 import time from './time'
+import crypto from 'crypto'
 
 /*************************************************************************
  * MOCK BROWSER
@@ -66,6 +67,7 @@ import {
   Timestamp,
   Thought,
   ThoughtContext,
+  ThoughtId,
   ThoughtIndices,
 } from '../../src/@types'
 
@@ -84,28 +86,56 @@ interface Child {
   value: string
 }
 
-interface FirebaseParent {
-  id?: string
-  // firebase stores arrays as objects
+// firebase stores arrays as objects
+type FirebaseThought = Thought & {
   children: Index<Child>
-  context: Index<string>
-  lastUpdated: Timestamp
-  pending?: boolean
-  updatedBy: string
+  context?: Index<string>
 }
 
-interface FirebaseThoughts {
-  contextIndex: Index<FirebaseParent>
-  // Firebase thoughtIndex is actually a FirebaseLexeme, but exportContext doesn't use it so we can quiet the type checker
-  thoughtIndex: Index<Lexeme>
+type FirebaseLexeme = Lexeme & {
+  contexts: Index<ThoughtId>
 }
 
-type RawThoughts = FirebaseThoughts | ThoughtIndices
+interface FirebaseThoughtsV4 {
+  contextIndex: Index<FirebaseThought>
+  thoughtIndex: Index<FirebaseLexeme>
+}
+
+interface FirebaseThoughtsV5 {
+  thoughtIndex: Index<FirebaseThought>
+  lexemeIndex: Index<FirebaseLexeme>
+}
+
+type RawThoughts = FirebaseThoughtsV4 | FirebaseThoughtsV5 | ThoughtIndices
 
 interface ErrorLog {
   e: Error
   file: string
   message: string
+}
+
+interface MergeResult {
+  missingContexts: number
+  schema: number
+  thoughts: ThoughtIndices
+}
+
+interface ProgressReport {
+  backupDate: string
+  checksum: string
+  date: string
+  missingContexts: number
+  path: string
+  schema: number
+  size: number
+  thoughtsBase: number
+  thoughtsRead: number
+  thoughtsSaved: number
+  time: number
+}
+
+interface Progress {
+  backupsCompleted: ProgressReport[]
 }
 
 /*************************************************************************
@@ -125,20 +155,28 @@ let prevContext: Context = []
 const stateStart = initialState()
 
 /*****************************************************************
- * SCRIPT
+ * FUNCTIONS
  *****************************************************************/
 
-// /** Gets the number of Lexemes in the State or Thoughts. */
-// const numLexemes = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughts) =>
-//   Object.keys(((stateOrThoughts as State).thoughts || (stateOrThoughts as ThoughtIndices)).thoughtIndex).length
+/** Generates a checksum of string content. */
+const checksum = (value: string) => crypto.createHash('sha256').update(value).digest('base64')
 
-// /** Gets the number of Parents in the State or Thoughts. */
-// const numParents = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughts) =>
-//   Object.keys(((stateOrThoughts as State).thoughts || (stateOrThoughts as ThoughtIndices)).contextIndex).length
+/** Gets the number of Thoughts in the State or Thoughts. */
+const numThoughts = (stateOrThoughts: State | ThoughtIndices | FirebaseThoughtsV4) => {
+  const thoughts: RawThoughts = (stateOrThoughts as State).thoughts || stateOrThoughts
+  const lexemeIndex = (thoughts as unknown as FirebaseThoughtsV5).lexemeIndex || thoughts.thoughtIndex
+  return Object.keys(lexemeIndex).length
+}
+
+/** Gets the number of Lexemes in the State or Thoughts. */
+const numLexemes = (stateOrThoughts: State | RawThoughts) => {
+  const thoughts: RawThoughts = (stateOrThoughts as State).thoughts || stateOrThoughts
+  const thoughtIndex = (thoughts as unknown as FirebaseThoughtsV4).contextIndex || thoughts.thoughtIndex
+  return Object.keys(thoughtIndex).length
+}
 
 /** Read a thought database from file. Normalizes contextIndex and thoughtIndex property names. */
-const readThoughts = (file: string): RawThoughts => {
-  const t = time()
+const readThoughts = (file: string) => {
   const input = fs.readFileSync(file, 'utf-8')
   const db = JSON.parse(input)
   const rawThoughts = db.users?.[userId] || db
@@ -158,17 +196,17 @@ const readThoughts = (file: string): RawThoughts => {
   // console.info(`${chalk.blue(numParents(rawThoughts))} Parents read`)
   // console.info('Done reading')
 
-  const numThoughts = Object.keys(rawThoughts.contextIndex || rawThoughts.thoughtIndex).length
   const lastUpdated = (rawThoughts as any).lastUpdated
 
-  console.info(`Thoughts read: ${chalk.cyan(numThoughts)} ${t.print()}`)
-  console.info(`lastUpdated: ${lastUpdated ? new Date(lastUpdated).toLocaleString() : undefined}`)
-
-  return rawThoughts
+  return {
+    lastUpdated,
+    rawText: input,
+    rawThoughts: rawThoughts as RawThoughts,
+  }
 }
 
 /** Since the legacy contextIndex has no context property, it is impossible traverse the tree without the original hash function. Instead, recreate the contextIndex with new hashes from the thoughtIndex, which does have the context. Converts Firebase "arrays" to proper arrays. Leaves thoughtIndex as-is since it is not used to merge thoughts. */
-const recreateParents = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
+const recreateParents = (thoughts: FirebaseThoughtsV4 | ThoughtIndices): ThoughtIndices => {
   const lexemes = Object.values(thoughts.thoughtIndex)
   console.info(`Recalculating context hash from ${chalk.blue(lexemes.length)} Lexemes`)
 
@@ -223,10 +261,10 @@ const recreateParents = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIn
 }
 
 /** Normalizes the contextIndex by converting Firebase "arrays" to proper arrays and recalculating context hashes if needed. Skips hash recalculation if isContextIndexRehashed is true. */
-// const normalizeFirebaseArrays = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIndices => {
+// const normalizeFirebaseArrays = (thoughts: FirebaseThoughtsV4 | ThoughtIndices): ThoughtIndices => {
 //   // if the contextIndex already has proper arrays, return it as-is to avoid NOOP iteration
 //   // assume the first Parent is representative
-//   const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseParent
+//   const firstParent = Object.values(thoughts.contextIndex)[0] as Parent | FirebaseThought
 //   if (Array.isArray(firstParent.context) && Array.isArray(firstParent.children)) return thoughts as ThoughtIndices
 
 //   console.info(`Normalizing ${chalk.blue(numParents(thoughts))} Parents`)
@@ -237,7 +275,7 @@ const recreateParents = (thoughts: FirebaseThoughts | ThoughtIndices): ThoughtIn
 
 //   // convert Firebase "arrays" to proper arrays
 //   // thoughtIndex is not used, so we don't have to normalize it
-//   const contextIndexNew = Object.keys(thoughts.contextIndex as Index<FirebaseParent>).reduce((accum, key) => {
+//   const contextIndexNew = Object.keys(thoughts.contextIndex as Index<FirebaseThought>).reduce((accum, key) => {
 //     const parent = thoughts.contextIndex[key]
 
 //     // there are some invalid Parents with missing context field
@@ -375,23 +413,27 @@ const reconstructThought = (
 }
 
 /** Merges thoughts into current state using importText to handle duplicates and merged descendants. */
-const mergeThoughts = (state: State, thoughts: RawThoughts) => {
+const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
   /** Checks if the contextIndex uses the most up-to-date hashing function by checking the existence of the root context hash. This is NOT sufficient to determine if all Parents have a context property, which was added incrementally without a schemaVersion change. */
-  // const isModernHash = (thoughts: FirebaseThoughts) => '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
+  // const isModernHash = (thoughts: FirebaseThoughtsV4) => '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex
 
   const t = time()
   let missingContexts = 0
+  let schema: number
 
   // schema v5
   if ('lexemeIndex' in thoughts) {
-    console.log('Schema: v5')
+    schema = 5
+    console.log(`Schema: v${schema}`)
   }
   // schema v3–4
   else if ('contextIndex' in thoughts) {
     if ('6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex) {
-      console.log('Schema: Modern hashing function')
+      schema = 4
+      console.log(`Schema: v${schema}`)
     } else {
-      console.log('Schema: Other with contextHash')
+      schema = 3
+      console.log(`Schema: v${schema}`)
 
       Object.values(thoughts.contextIndex).forEach(parent => {
         if (!parent.context) {
@@ -451,10 +493,37 @@ const mergeThoughts = (state: State, thoughts: RawThoughts) => {
   }
 
   return {
-    state,
-    stats: {
-      missingContexts,
-    },
+    missingContexts,
+    schema,
+    thoughts: state.thoughts,
+  }
+}
+
+/** Loads a progress file and provides an API to add progress or check if a backup has already been merged. */
+const initProgress = (file: string) => {
+  const progress: Progress = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : { backupsCompleted: [] }
+
+  // O(1) lookup by checksum
+  const progressMap = progress.backupsCompleted.reduce(
+    (accum, current) => ({
+      ...accum,
+      [current.checksum]: true,
+    }),
+    {} as Index<boolean>,
+  )
+
+  /** Returns true if a progress report with the given checksum exists. */
+  const exists = (checksum: string) => progressMap[checksum]
+
+  /** Adds a progress report and updates the checksum map. */
+  const add = (progressReport: ProgressReport) => {
+    progress.backupsCompleted.push(progressReport)
+    progressMap[progressReport.checksum] = true
+  }
+
+  return {
+    add,
+    exists,
   }
 }
 
@@ -474,9 +543,10 @@ const main = () => {
 
   // read base thoughts
   // assume that they use schema v5
-  console.info(`Reading current thoughts: ${file1}`)
-  const thoughtsCurrent = readThoughts(file1) as unknown as ThoughtIndices
-  console.info('')
+  const { lastUpdated, rawThoughts: thoughtsCurrent } = readThoughts(file1)
+
+  console.info(`Thoughts read: ${chalk.cyan(numThoughts(thoughtsCurrent))}`)
+  console.info(`lastUpdated: ${lastUpdated ? new Date(lastUpdated).toString() : undefined}`)
 
   // read backup thoughts to be imported
   // this can be a directory or a file
@@ -484,21 +554,37 @@ const main = () => {
     ? fs.readdirSync(file2).map(file => `${file2}/${file}`)
     : [file2]
 
+  console.info(`Files to import: ${filesToImport.length}`)
+
   // create a new state with the current thoughts
-  let state: State = { ...stateStart, thoughts: thoughtsCurrent }
+  let state: State = { ...stateStart, thoughts: thoughtsCurrent as ThoughtIndices }
   const errors: ErrorLog[] = []
   const success: string[] = []
-  let missingContexts = 0
+  let skipped = 0
+  let merged = 0
 
+  const progress = initProgress('output/progress.json')
+
+  console.info('')
   filesToImport.forEach(file => {
     // skip hidden files including .DS_Store
     if (path.basename(file).startsWith('.')) return
 
     let thoughtsBackup: RawThoughts
+    let lastUpdated: number
+    let rawText: string
+
+    const timeStart = time()
+
+    // save the number of current thoughts before thoughtsCurrent gets modified
+    const numThoughtsCurrent = numThoughts(thoughtsCurrent)
 
     try {
-      console.info(`Reading thoughts: ${file}`)
-      thoughtsBackup = readThoughts(file)
+      const readResult = readThoughts(file)
+
+      lastUpdated = readResult.lastUpdated
+      rawText = readResult.rawText
+      thoughtsBackup = readResult.rawThoughts
     } catch (e) {
       console.error('Error reading')
       errors.push({ e: e as Error, file, message: 'Error reading' })
@@ -506,17 +592,57 @@ const main = () => {
       return
     }
 
-    // TODO: Check log to see if the backup has already been imported
+    // skip files that have already been merged
+    const backupChecksum = checksum(rawText)
+    if (progress.exists(backupChecksum)) {
+      skipped++
+      return
+    }
+
+    console.info(`Thoughts read: ${chalk.cyan(numThoughts(thoughtsBackup))} ${timeStart.print()}`)
+    console.info(`lastUpdated: ${lastUpdated ? new Date(lastUpdated).toString() : undefined}`)
 
     try {
       // replace state with merged thoughts
       const result = mergeThoughts(state, thoughtsBackup)
-      state = result.state
-      missingContexts += result.stats.missingContexts
 
-      // TODO: Save progress
+      // write new state to output directory
+      fs.mkdirSync('output', { recursive: true })
 
-      // if we made it this far, there was no error
+      // merge updated thoughts back into firebase db
+      const dbNew = {
+        ...thoughtsCurrent,
+        thoughtIndex: result.thoughts.thoughtIndex,
+        lexemeIndex: result.thoughts.lexemeIndex,
+      }
+      const fileNew = `output/${file1Base}-merged${file1Ext}`
+
+      const timeWriteFile = time()
+
+      // console.info(`Writing new database with ${chalk.blue(numParents(state))} Parents to output`)
+      fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
+
+      console.info(`Thoughts written ${timeWriteFile.print()}`)
+
+      const progressReport: ProgressReport = {
+        checksum: backupChecksum,
+        date: new Date().toString(),
+        backupDate: new Date(lastUpdated).toString(),
+        missingContexts: result.missingContexts,
+        path: file,
+        schema: result.schema,
+        size: fs.statSync(fileNew).size / 1024000, // MB
+        time: timeStart.measure(),
+        thoughtsBase: numThoughtsCurrent,
+        thoughtsRead: numThoughts(thoughtsBackup),
+        thoughtsSaved: numThoughts(dbNew),
+      }
+
+      progress.add(progressReport)
+      fs.writeFileSync('output/progress.json', JSON.stringify(progress, null, 2))
+      console.info('Progress saved', progressReport)
+
+      merged++
       success.push(file)
     } catch (e) {
       console.error('Error merging')
@@ -528,24 +654,8 @@ const main = () => {
     console.info('')
   })
 
-  // write new state to output directory
-  fs.mkdirSync('output', { recursive: true })
-
-  // merge updated thoughts back into firebase db
-  const dbNew = {
-    ...thoughtsCurrent,
-    thoughtIndex: state.thoughts.thoughtIndex,
-    lexemeIndex: state.thoughts.lexemeIndex,
-  }
-  const fileNew = `output/${file1Base}-merged${file1Ext}`
-
-  const t = time()
-
-  // console.info(`Writing new database with ${chalk.blue(numParents(state))} Parents to output`)
-  fs.writeFileSync(fileNew, JSON.stringify(dbNew, null, 2))
-
-  console.info(`Thoughts written ${t.print()}`)
-
+  console.info(`Files skipped: ${chalk.cyan(skipped)}`)
+  console.info(`Files merged: ${chalk.cyan(merged)}`)
   if (errors.length === 0) {
     console.info(chalk.green('SUCCESS'))
   } else {
