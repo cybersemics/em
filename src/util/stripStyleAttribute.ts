@@ -24,7 +24,7 @@ const allowedStyleProperties = [
   {
     property: 'font',
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
-      if (styleProperty.value === 'normal' || styleProperty.value === '300') {
+      if (styleProperty.value === 'normal' || +styleProperty.value <= 400) {
         return false
       }
       return ['font-style', 'font-weight'].includes(styleProperty.name)
@@ -79,6 +79,9 @@ const stripStyleAttribute = (style: string) => {
       .filter(property => property.enabled !== false)
       .find(allowedStyleProperty => property.name.startsWith(allowedStyleProperty.property))
     if (styleProperty && (!styleProperty.test || styleProperty.test(property, styles))) {
+      if (property.name === 'font-weight' && +property.value >= 500) {
+        return acc + `${property.name}: 700;`
+      }
       return acc + `${property.name}: ${property.value};`
     }
     return acc
