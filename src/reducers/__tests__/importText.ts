@@ -986,6 +986,45 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
   })
 })
 
+it('should strip tags whose font weight is less than or equal to 400', () => {
+  const paste = `<span style="font-weight:400;">Hello world. </span> <span style="font-weight:100;">This is a test </span>`
+  const actual = importExport(paste)
+  const expectedOutput = `<ul>
+  <li>__ROOT__${EMPTY_SPACE}
+    <ul>
+      <li>Hello world.  This is a test</li>
+    </ul>
+  </li>
+</ul>`
+  expect(actual).toBe(expectedOutput)
+})
+
+it('should convert font weight to 700 if the font weight in a tag is greater than or equal to 500', () => {
+  const paste = `<span style="font-weight: 500;">Hello world. </span><span style="font-weight: 800;">This is a test </span>`
+  const actual = importExport(paste)
+  const expectedOutput = `<ul>
+  <li>__ROOT__${EMPTY_SPACE}
+    <ul>
+      <li><span style="font-weight: 700;">Hello world. </span><span style="font-weight: 700;">This is a test </span></li>
+    </ul>
+  </li>
+</ul>`
+  expect(actual).toBe(expectedOutput)
+})
+
+it('should not strip whole tag unless other style apart from font-weight should be preserved', () => {
+  const paste = `<span style="font-weight: 400; font-style: italic;">a</span>`
+  const actual = importExport(paste)
+  const expectedOutput = `<ul>
+  <li>__ROOT__${EMPTY_SPACE}
+    <ul>
+      <li><span style="font-style: italic;">a</span></li>
+    </ul>
+  </li>
+</ul>`
+  expect(actual).toBe(expectedOutput)
+})
+
 it('allow formatting tags', () => {
   const text = `
     - guardians <b>of the </b><b>galaxy </b>
