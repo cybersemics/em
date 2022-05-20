@@ -1,5 +1,3 @@
-import { property } from 'lodash'
-
 interface StyleProperty {
   name: string
   value: string
