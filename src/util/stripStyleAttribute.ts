@@ -1,3 +1,5 @@
+import { property } from 'lodash'
+
 interface StyleProperty {
   name: string
   value: string
@@ -79,9 +81,9 @@ const stripStyleAttribute = (style: string) => {
       .filter(property => property.enabled !== false)
       .find(allowedStyleProperty => property.name.startsWith(allowedStyleProperty.property))
     if (styleProperty && (!styleProperty.test || styleProperty.test(property, styles))) {
-      return property.name === 'font-weight' && +property.value >= 500
-        ? acc + `${property.name}: 700;`
-        : acc + `${property.name}: ${property.value};`
+      return (
+        acc + `${property.name}: ${property.name === 'font-weight' && +property.value >= 500 ? 700 : property.value};`
+      )
     }
     return acc
   }, '')
