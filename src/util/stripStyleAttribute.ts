@@ -79,10 +79,9 @@ const stripStyleAttribute = (style: string) => {
       .filter(property => property.enabled !== false)
       .find(allowedStyleProperty => property.name.startsWith(allowedStyleProperty.property))
     if (styleProperty && (!styleProperty.test || styleProperty.test(property, styles))) {
-      if (property.name === 'font-weight' && +property.value >= 500) {
-        return acc + `${property.name}: 700;`
-      }
-      return acc + `${property.name}: ${property.value};`
+      return property.name === 'font-weight' && +property.value >= 500
+        ? acc + `${property.name}: 700;`
+        : acc + `${property.name}: ${property.value};`
     }
     return acc
   }, '')
