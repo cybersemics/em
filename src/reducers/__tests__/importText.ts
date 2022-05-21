@@ -2,7 +2,7 @@ import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { contextToThoughtId, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getLexeme, contextToThought, contextToPath } from '../../selectors'
+import { exportContext, getLexeme, contextToThought, contextToPath, getAllChildren } from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
@@ -1104,6 +1104,20 @@ it('import multiple thoughts to end of home context with other thoughts', () => 
   - c
     - d
   - e`)
+})
+
+it('imported single line paragraph should be treated as a single thought, it shoud not be splitted.', () => {
+  const text = `<ul>
+  <li><i><b>The New Criterion</b></i><span style="font-weight: 400;"> is a </span>New York<span style="font-weight: 400;">–based monthly </span>literary magazine<span style="font-weight: 400;"> and journal of artistic and </span>cultural criticism<span style="font-weight: 400;">, 
+edited by </span>Roger Kimball<span style="font-weight: 400;"> (editor and publisher) and </span>James Panero<span style="font-weight: 400;"> (executive editor). 
+It has sections for criticism of poetry, theater, art, music, the media, and books. It was founded in 1982 by </span>Hilton Kramer<span style="font-weight: 400;">, former art critic for </span><i>The New York Times</i><span style="font-weight: 400;">, and Samuel Lipman, a pianist and music critic.</span>  </li>
+</ul>`
+
+  const stateNew = importText(initialState(), { text })
+
+  const rootChildren = getAllChildren(stateNew, [HOME_TOKEN])
+
+  expect(rootChildren.length).toBe(1)
 })
 
 it('import single line with style attributes', () => {
