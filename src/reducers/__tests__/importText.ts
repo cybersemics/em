@@ -1108,9 +1108,9 @@ it('import multiple thoughts to end of home context with other thoughts', () => 
 
 it('imported single line paragraph should be treated as a single thought, it shoud not be splitted.', () => {
   const text = `<ul>
-  <li><i><b>The New Criterion</b></i><span style="font-weight: 400;"> is a </span>New York<span style="font-weight: 400;">–based monthly </span>literary magazine<span style="font-weight: 400;"> and journal of artistic and </span>cultural criticism<span style="font-weight: 400;">, 
-edited by </span>Roger Kimball<span style="font-weight: 400;"> (editor and publisher) and </span>James Panero<span style="font-weight: 400;"> (executive editor). 
-It has sections for criticism of poetry, theater, art, music, the media, and books. It was founded in 1982 by </span>Hilton Kramer<span style="font-weight: 400;">, former art critic for </span><i>The New York Times</i><span style="font-weight: 400;">, and Samuel Lipman, a pianist and music critic.</span>  </li>
+  <li><i><b>The New Criterion</b></i><span style="font-weight: 400;">is a</span>New York<span style="font-weight: 400;">-based monthly</span>literary magazine<span style="font-weight: 400;">and journal of artistic and</span>cultural criticism<span style="font-weight: 400;">, 
+edited by</span>Roger Kimball<span style="font-weight: 400;">(editor and publisher) and</span>James Panero<span style="font-weight: 400;">(executive editor). 
+It has sections for criticism of poetry, theater, art, music, the media, and books. It was founded in 1982 by</span>Hilton Kramer<span style="font-weight: 400;">, former art critic for</span><i>The New York Times</i><span style="font-weight: 400;">, and Samuel Lipman, a pianist and music critic.</span>  </li>
 </ul>`
 
   const stateNew = importText(initialState(), { text })
