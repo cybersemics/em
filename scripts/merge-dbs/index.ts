@@ -91,33 +91,32 @@ type FirebaseThought = Omit<Thought, 'children' | 'context'> & {
 type FirebaseLexeme = Lexeme & {
   contexts: Index<ThoughtId>
 }
+interface FirebaseThoughtContext {
+  context?: Index<string>
+  lastUpdated?: string
+  rank?: number
+}
 
-type FirebaseLexemeV2 = {
+type FirebaseLexemeV3 = {
   lastUpdated: Timestamp
-  memberOf: {
-    context?: string[]
-    rank: number
-  }[]
+  memberOf: FirebaseThoughtContext[]
   value: string
 }
 
 type FirebaseLexemeV4 = Omit<Lexeme, 'contexts'> & {
-  contexts?: Index<{
-    context?: Index<string>
-    lastUpdated?: string
-    rank?: number
-  }>
+  contexts?: Index<FirebaseThoughtContext>
 }
 
-interface FirebaseThoughtsV2 {
-  contextChildren: Index<unknown>
-  data: Index<FirebaseLexemeV2>
+interface FirebaseThoughtsV3 {
+  contextIndex?: Index<FirebaseThought>
+  contextChildren?: Index<FirebaseThought>
+  data: Index<FirebaseLexemeV3>
 }
 
 interface FirebaseThoughtsV4 {
   // data can coexist with thoughtIndex (?)
   // See: 2020-01-05.json
-  data: Index<FirebaseLexemeV2>
+  data: Index<FirebaseLexemeV3>
   contextIndex: Index<FirebaseThought>
   thoughtIndex: Index<FirebaseLexemeV4>
   schemaVersion?: number
@@ -129,7 +128,7 @@ interface FirebaseThoughtsV5 {
   schemaVersion?: number
 }
 
-type RawThoughts = FirebaseThoughtsV2 | FirebaseThoughtsV4 | FirebaseThoughtsV5 | ThoughtIndices
+type RawThoughts = FirebaseThoughtsV3 | FirebaseThoughtsV4 | FirebaseThoughtsV5 | ThoughtIndices
 
 interface ErrorLog {
   e: Error
@@ -359,12 +358,17 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
     throw new Error(`Schema unsupported: v${schema}`)
   }
   // schema v3–4 (June 2020 – Dec 2021)
-  else if ('contextIndex' in thoughts) {
-    schema = thoughts.schemaVersion ?? '6f94eccb7b23a8040cd73b60ba7c5abf' in thoughts.contextIndex ? 4 : 3
+  // schema 2–3 (~Jan–May 2020)
+  // V3 uses concatenated contexts as keys
+  // v3 uses hashes
+  else {
+    schema =
+      (thoughts as FirebaseThoughtsV4).schemaVersion ??
+      ('6f94eccb7b23a8040cd73b60ba7c5abf' in (thoughts.contextIndex ?? {}) ? 4 : 3)
     console.info(`Schema: v${schema}`)
 
     // reconstruct Thoughts from Parents
-    Object.values(thoughts.contextIndex).forEach(parent => {
+    Object.values(thoughts.contextIndex ?? {}).forEach(parent => {
       // this also skips contextIndex when it was Index<Child[]>, which has no context information
       if (!parent.context) {
         missingContexts++
@@ -386,22 +390,24 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
     })
 
     // reconstruct Thoughts from Lexemes
-    Object.values(thoughts.thoughtIndex || []).forEach(lexeme => {
-      if (!lexeme.contexts) {
-        missingContexts++
-        return
-      }
-      Object.values(lexeme.contexts).forEach(cx => {
-        if (!cx.context) {
+    Object.values((thoughts as FirebaseThoughtsV4).thoughtIndex || (thoughts as FirebaseThoughtsV3).data || []).forEach(
+      (lexeme: FirebaseLexemeV3 | FirebaseLexemeV4) => {
+        if (!(lexeme as FirebaseLexemeV4).contexts && !(lexeme as FirebaseLexemeV3).memberOf) {
           missingContexts++
           return
         }
-        const context = unroot([...Object.values(cx.context), lexeme.value])
-        state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
-      })
-    })
+        Object.values((lexeme as FirebaseLexemeV4).contexts || (lexeme as FirebaseLexemeV3).memberOf).forEach(cx => {
+          if (!cx.context) {
+            missingContexts++
+            return
+          }
+          const context = unroot([...Object.values(cx.context), lexeme.value])
+          state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
+        })
+      },
+    )
 
-    // reconstruct old Lexemes
+    // reconstruct Thoughts from old Lexemes
     Object.values(thoughts.data || []).forEach(lexeme => {
       if (!lexeme.memberOf) {
         missingContexts++
@@ -416,36 +422,6 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
         state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
       })
     })
-  }
-  // schema 2–3 (~Jan–May 2020)
-  // v2 uses concatenated contexts as keys
-  // v3 uses
-  // otherwise
-  else if ('contextChildren' in thoughts && 'data' in thoughts) {
-    schema = 2
-    console.info(`Schema: v${schema}`)
-
-    // cannot reconstruct thoughts from contextChildren, since they do not contain context
-
-    // reconstruct Thoughts from Lexemes
-    Object.values(thoughts.data).forEach(lexeme => {
-      if (!lexeme.memberOf) {
-        missingContexts++
-        return
-      }
-      Object.values(lexeme.memberOf).forEach(cx => {
-        if (!cx.context) {
-          missingContexts++
-          return
-        }
-        const context = unroot([...Object.values(cx.context), lexeme.value])
-        state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
-      })
-    })
-  }
-  // schema unrecognized
-  else {
-    throw new Error('Schema unrecognized. Properties: ' + Object.keys(thoughts).join(', '))
   }
 
   console.info(`Thoughts merged ${t.print()}`)
