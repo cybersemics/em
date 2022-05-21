@@ -188,39 +188,31 @@ const checksum = (value: string) => crypto.createHash('sha256').update(value).di
 
 /** Gets the number of Lexemes in the State or Thoughts. */
 const numLexemes = (stateOrThoughts: State | RawThoughts) => {
-  const thoughts: RawThoughts = (stateOrThoughts as State).thoughts || stateOrThoughts
-  const lexemeIndex = (thoughts as unknown as FirebaseThoughtsV5).lexemeIndex || thoughts.thoughtIndex
+  const thoughts: RawThoughts = ((stateOrThoughts as State).thoughts as RawThoughts) || stateOrThoughts
+  const lexemeIndex =
+    (thoughts as FirebaseThoughtsV5).lexemeIndex ||
+    (thoughts as FirebaseThoughtsV4).thoughtIndex ||
+    (thoughts as FirebaseThoughtsV3).data ||
+    {}
   return Object.keys(lexemeIndex).length
 }
 
 /** Gets the number of Thoughts in the State or Thoughts. */
 const numThoughts = (stateOrThoughts: State | RawThoughts) => {
-  const thoughts: RawThoughts = (stateOrThoughts as State).thoughts || stateOrThoughts
-  const thoughtIndex = (thoughts as unknown as FirebaseThoughtsV4).contextIndex || thoughts.thoughtIndex
+  const thoughts: RawThoughts = ((stateOrThoughts as State).thoughts as RawThoughts) || stateOrThoughts
+  const thoughtIndex =
+    (thoughts as FirebaseThoughtsV3).contextChildren ||
+    (thoughts as FirebaseThoughtsV4).contextIndex ||
+    (thoughts as FirebaseThoughtsV5).thoughtIndex ||
+    {}
   return Object.keys(thoughtIndex).length
 }
 
-/** Read a thought database from file. Normalizes contextIndex and thoughtIndex property names. */
+/** Read a thought database from file. */
 const readThoughts = (file: string) => {
   const input = fs.readFileSync(file, 'utf-8')
   const db = JSON.parse(input)
   const rawThoughts = db.users?.[userId] || db
-
-  // rename contextChildren -> contextIndex
-  if (rawThoughts.contextChildren) {
-    rawThoughts.contextIndex = rawThoughts.contextChildren
-    delete rawThoughts.contextChildren
-  }
-
-  // rename data -> thoughtIndex
-  if (rawThoughts.data) {
-    rawThoughts.thoughtIndex = rawThoughts.data
-    delete rawThoughts.data
-  }
-
-  // console.info(`${chalk.blue(numParents(rawThoughts))} Parents read`)
-  // console.info('Done reading')
-
   const lastUpdated = (rawThoughts as any).lastUpdated
 
   return {
@@ -364,11 +356,13 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
   else {
     schema =
       (thoughts as FirebaseThoughtsV4).schemaVersion ??
-      ('6f94eccb7b23a8040cd73b60ba7c5abf' in (thoughts.contextIndex ?? {}) ? 4 : 3)
+      ('data/__EMPTY__' in thoughts ? 1 : '6f94eccb7b23a8040cd73b60ba7c5abf' in (thoughts.contextIndex ?? {}) ? 4 : 3)
     console.info(`Schema: v${schema}`)
 
     // reconstruct Thoughts from Parents
-    Object.values(thoughts.contextIndex ?? {}).forEach(parent => {
+    Object.values(
+      (thoughts as FirebaseThoughtsV4).contextIndex || (thoughts as FirebaseThoughtsV3).contextChildren || {},
+    ).forEach(parent => {
       // this also skips contextIndex when it was Index<Child[]>, which has no context information
       if (!parent.context) {
         missingContexts++
@@ -390,35 +384,24 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
     })
 
     // reconstruct Thoughts from Lexemes
-    Object.values((thoughts as FirebaseThoughtsV4).thoughtIndex || (thoughts as FirebaseThoughtsV3).data || []).forEach(
-      (lexeme: FirebaseLexemeV3 | FirebaseLexemeV4) => {
-        if (!(lexeme as FirebaseLexemeV4).contexts && !(lexeme as FirebaseLexemeV3).memberOf) {
-          missingContexts++
-          return
-        }
-        Object.values((lexeme as FirebaseLexemeV4).contexts || (lexeme as FirebaseLexemeV3).memberOf).forEach(cx => {
-          if (!cx.context) {
-            missingContexts++
-            return
-          }
-          const context = unroot([...Object.values(cx.context), lexeme.value])
-          state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
-        })
-      },
-    )
-
-    // reconstruct Thoughts from old Lexemes
-    Object.values(thoughts.data || []).forEach(lexeme => {
-      if (!lexeme.memberOf) {
+    const thoughtIndex =
+      schema === 1
+        ? thoughts
+        : (thoughts as FirebaseThoughtsV4).thoughtIndex || (thoughts as FirebaseThoughtsV3).data || []
+    Object.values(thoughtIndex).forEach((lexeme: FirebaseLexemeV3 | FirebaseLexemeV4) => {
+      const contexts = (lexeme as FirebaseLexemeV4)?.contexts || (lexeme as FirebaseLexemeV3)?.memberOf
+      if (!contexts) {
         missingContexts++
         return
       }
-      Object.values(lexeme.memberOf).forEach(cx => {
-        if (!cx.context) {
+      Object.values(contexts).forEach(cx => {
+        // very old schemas can contain a bare array of contexts
+        const thoughtContext = Array.isArray(cx) ? (cx as Context) : cx.context
+        if (!thoughtContext) {
           missingContexts++
           return
         }
-        const context = unroot([...Object.values(cx.context), lexeme.value])
+        const context = unroot([...Object.values(thoughtContext), lexeme.value])
         state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
       })
     })
