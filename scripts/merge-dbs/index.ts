@@ -128,7 +128,7 @@ interface FirebaseThoughtsV5 {
   schemaVersion?: number
 }
 
-type RawThoughts = FirebaseThoughtsV3 | FirebaseThoughtsV4 | FirebaseThoughtsV5 | ThoughtIndices
+type RawThoughts = FirebaseThoughtsV3 | FirebaseThoughtsV4 | FirebaseThoughtsV5 | ThoughtIndices | string[]
 
 interface ErrorLog {
   e: Error
@@ -211,7 +211,9 @@ const numThoughts = (stateOrThoughts: State | RawThoughts) => {
 /** Read a thought database from file. */
 const readThoughts = (file: string) => {
   const input = fs.readFileSync(file, 'utf-8')
-  const db = JSON.parse(input)
+  // if a file starts with a dash, interpret it as plain text
+  // split the lines and pass as thoughts
+  const db = input.startsWith('- ') ? input.split('\n') : JSON.parse(input)
   const rawThoughts = db.users?.[userId] || db
   const lastUpdated = (rawThoughts as any).lastUpdated
 
@@ -349,61 +351,101 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
     schema = 5
     throw new Error(`Schema unsupported: v${schema}`)
   }
+
   // schema v3–4 (June 2020 – Dec 2021)
   // schema 2–3 (~Jan–May 2020)
   // V3 uses concatenated contexts as keys
   // v3 uses hashes
-  else {
-    schema =
-      (thoughts as FirebaseThoughtsV4).schemaVersion ??
-      ('data/__EMPTY__' in thoughts ? 1 : '6f94eccb7b23a8040cd73b60ba7c5abf' in (thoughts.contextIndex ?? {}) ? 4 : 3)
-    console.info(`Schema: v${schema}`)
+  schema =
+    (thoughts as FirebaseThoughtsV4).schemaVersion ??
+    ('data/__EMPTY__' in thoughts
+      ? 1
+      : '6f94eccb7b23a8040cd73b60ba7c5abf' in ((thoughts as FirebaseThoughtsV4).contextIndex ?? {})
+      ? 4
+      : 3)
+  console.info(`Schema: v${schema}`)
 
-    // reconstruct Thoughts from Parents
-    Object.values(
-      (thoughts as FirebaseThoughtsV4).contextIndex || (thoughts as FirebaseThoughtsV3).contextChildren || {},
-    ).forEach(parent => {
-      // this also skips contextIndex when it was Index<Child[]>, which has no context information
-      if (!parent.context) {
-        missingContexts++
-        return
-      }
+  // reconstruct Thoughts from Parents
+  Object.values(
+    (thoughts as FirebaseThoughtsV4).contextIndex || (thoughts as FirebaseThoughtsV3).contextChildren || {},
+  ).forEach(parent => {
+    // this also skips contextIndex when it was Index<Child[]>, which has no context information
+    if (!parent.context) {
+      missingContexts++
+      return
+    }
 
-      const context = Object.values(parent.context)
-      state = reconstructThought(state, context)
+    const context = Object.values(parent.context)
+    state = reconstructThought(state, context)
 
-      const children = Object.values(parent.children)
-      children.forEach(child => {
-        // unlike Parents, children actually have rank
-        // we can skip ancestor reconstruction since the thought was reconstructed above
-        state = reconstructThought(state, unroot([...context, child.value]), {
-          rank: child.rank,
-          skipAncestors: true,
-        })
+    const children = Object.values(parent.children)
+    children.forEach(child => {
+      // unlike Parents, children actually have rank
+      // we can skip ancestor reconstruction since the thought was reconstructed above
+      state = reconstructThought(state, unroot([...context, child.value]), {
+        rank: child.rank,
+        skipAncestors: true,
       })
     })
+  })
 
-    // reconstruct Thoughts from Lexemes
-    const thoughtIndex =
-      schema === 1
-        ? thoughts
-        : (thoughts as FirebaseThoughtsV4).thoughtIndex || (thoughts as FirebaseThoughtsV3).data || []
-    Object.values(thoughtIndex).forEach((lexeme: FirebaseLexemeV3 | FirebaseLexemeV4) => {
-      const contexts = (lexeme as FirebaseLexemeV4)?.contexts || (lexeme as FirebaseLexemeV3)?.memberOf
-      if (!contexts) {
+  // reconstruct Thoughts from Lexemes
+  const thoughtIndex =
+    schema === 1
+      ? thoughts
+      : (thoughts as FirebaseThoughtsV4).thoughtIndex || (thoughts as FirebaseThoughtsV3).data || []
+  Object.values(thoughtIndex).forEach((lexeme: FirebaseLexemeV3 | FirebaseLexemeV4) => {
+    const contexts = (lexeme as FirebaseLexemeV4)?.contexts || (lexeme as FirebaseLexemeV3)?.memberOf
+    if (!contexts) {
+      missingContexts++
+      return
+    }
+    Object.values(contexts).forEach(cx => {
+      // very old schemas can contain a bare array of contexts
+      const thoughtContext = Array.isArray(cx) ? (cx as Context) : cx.context
+      if (!thoughtContext) {
         missingContexts++
         return
       }
-      Object.values(contexts).forEach(cx => {
-        // very old schemas can contain a bare array of contexts
-        const thoughtContext = Array.isArray(cx) ? (cx as Context) : cx.context
-        if (!thoughtContext) {
-          missingContexts++
-          return
-        }
-        const context = unroot([...Object.values(thoughtContext), lexeme.value])
-        state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
-      })
+      const context = unroot([...Object.values(thoughtContext), lexeme.value])
+      state = reconstructThought(state, context, { ...('rank' in cx ? { rank: cx.rank } : null), loose: true })
+    })
+  })
+
+  // reconstruct Thoughts from Plaintext
+  if (Array.isArray(thoughts) && typeof thoughts[0] === 'string') {
+    const stack = [
+      {
+        context: [] as Context,
+        nextRank: 100,
+      },
+    ]
+    thoughts.forEach(line => {
+      // thought may contain whitespace at end
+      // don't let it mess up the depth calculation
+      const trimmed = line.trimStart()
+      const depth = (line.length - trimmed.length) / 2
+      const depthPrev = stack.length - 2
+      const depthDiff = depthPrev - depth
+      const value = trimmed.slice(2).trimEnd()
+      // cannot increase depth by more than 1
+      if (depthDiff < -1) {
+        console.error('depthPrev', depthPrev)
+        console.error('depth', depth)
+        console.error('stack', stack)
+        throw new Error('Depth should only increase by 1')
+      }
+      for (let i = 0; i < depthDiff + 1; i++) {
+        stack.pop()
+      }
+      const parent = stack[stack.length - 1]
+      const next = {
+        context: [...parent.context, value],
+        nextRank: 100,
+      }
+      state = reconstructThought(state, next.context, { rank: parent.nextRank })
+      parent.nextRank++
+      stack.push(next)
     })
   }
 
@@ -422,8 +464,8 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
 /** Loads a progress file and provides an API to add progress, save progress, or check if a backup has already been merged. */
 const initProgress = (file: string) => {
   const progress: Progress = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : { backupsCompleted: [] }
-
   // O(1) lookup by checksum
+
   const progressMap = progress.backupsCompleted.reduce(
     (accum, current) => ({
       ...accum,
