@@ -94,8 +94,8 @@ const moveLeadingSpacesToBeginning = (line: string) => {
  */
 const parseBodyContent = (html: string) => {
   const content = bodyContent(html)
-  // If content has <li> tags more than 1, don't convert content to blocks and then again html.
-  if (regexpListItem.test(content) && (content.match(regexpListItem) || []).length > 1) {
+  // If content has <li> and more than 1 multiline whitespace, don't convert content to blocks and then again html.
+  if (regexpListItem.test(content) && (content.match(/\n/gim) || []).length > 1) {
     // A RegExp object with the g flag keeps track of the lastIndex where a match occurred, so on subsequent matches it will start from the last used index, instead of 0. This ensures we reset last used index everytime the test is executed that prevents falsy alternating behavior
     regexpListItem.lastIndex = 0
     return content
