@@ -500,7 +500,8 @@ const main = () => {
     console.info(helpText)
     process.exit(0)
   } else if (!fs.existsSync(`${dir}/db.json`)) {
-    console.error('Missing db.json. Please save a base db with schema v5 to [DIR]/db.json.')
+    console.error(chalk.red('Missing db.json. Please save a base db with schema v5 to [DIR]/db.json.'))
+    process.exit(1)
   }
 
   // read base thoughts
