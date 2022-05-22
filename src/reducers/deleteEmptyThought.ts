@@ -81,13 +81,14 @@ const deleteEmptyThought = (state: State): State => {
   }
   // delete from beginning and merge with previous sibling
   else if (offset === 0 && !showContexts) {
-    const { value, rank } = cursorThought
+    const { value, rank, splitSource } = cursorThought
     const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
     const prev = prevSibling(state, value, pathToContext(state, rootedParentOf(state, cursor)), rank)
 
     // only if there is a previous sibling
     if (prev) {
-      const valueNew = prev.value + value
+      // if splitSource equals prev sibling thought id, then add an intervening space to preserve the original space while splitting from the source thought
+      const valueNew = splitSource === prev.id ? prev.value + ' ' + value : prev.value + value
       const pathPrevNew = appendToPath(parentOf(simplePath), prev.id)
 
       return reducerFlow([

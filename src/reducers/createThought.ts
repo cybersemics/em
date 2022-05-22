@@ -11,13 +11,14 @@ interface Payload {
   rank: number
   id?: ThoughtId
   addAsContext?: boolean
+  splitSource?: ThoughtId
 }
 /**
  * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-const createThought = (state: State, { context, value, rank, addAsContext, id }: Payload) => {
+const createThought = (state: State, { context, value, rank, addAsContext, id, splitSource }: Payload) => {
   // create thought if non-existent
   const lexeme: Lexeme = {
     ...(getLexeme(state, value) || {
@@ -64,6 +65,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id }:
       rank: addAsContext ? getNextRank(state, [value]) : rank,
       value: newValue,
       updatedBy: getSessionId(),
+      splitSource,
     }
   }
 
