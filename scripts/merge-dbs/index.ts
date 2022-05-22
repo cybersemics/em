@@ -402,7 +402,7 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
     }
     Object.values(contexts).forEach(cx => {
       // very old schemas can contain a bare array of contexts
-      const thoughtContext = Array.isArray(cx) ? (cx as Context) : cx.context
+      const thoughtContext = Array.isArray(cx) ? (cx as Context) : cx?.context
       if (!thoughtContext) {
         missingContexts++
         return
