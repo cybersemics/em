@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { Path, SimplePath, State } from '../@types'
+import { Path, SimplePath, State, ThoughtId } from '../@types'
 
 // constants
 import {
@@ -62,6 +62,7 @@ export interface NewThoughtPayload {
   offset?: number
   aboveMeta?: boolean
   preventSetCursor?: boolean
+  splitSource?: ThoughtId
 }
 
 /** Adds a new thought to the cursor. Calculates the rank to add the new thought above, below, or within a thought.
@@ -82,6 +83,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     offset,
     preventSetCursor,
     aboveMeta,
+    splitSource,
   }: NewThoughtPayload = payload
 
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
@@ -160,6 +162,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       rank: newRank,
       value,
       id: newThoughtId,
+      splitSource,
     }),
     (newState: State) => {
       const parentPath = !preventSetCursor ? unroot(insertNewSubthought ? path : parentOf(path)) : null

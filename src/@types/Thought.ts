@@ -15,4 +15,6 @@ export interface Thought {
   // takes precedence over value for sorting purposes
   // used to preserve the sort order of thoughts that are edited to empty instead of moving them back to their insertion point
   sortValue?: string
+  // used to track if a space is required when merging two siblings/thoughts
+  splitSource?: ThoughtId
 }

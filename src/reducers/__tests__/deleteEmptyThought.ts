@@ -15,6 +15,7 @@ import newThought from '../newThought'
 import setCursor from '../setCursor'
 import importTextReducer from '../importText'
 import archiveThought from '../archiveThought'
+import splitThought from '../splitThought'
 
 it('delete empty thought', () => {
   const steps = [newThought('a'), newThought(''), deleteEmptyThought]
@@ -252,4 +253,44 @@ describe('mount', () => {
     expect(window.getSelection()?.focusNode?.textContent).toBe('applebanana')
     expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
+})
+
+it('merge thought should respect space if any (whitespace at end of left splitted value)', () => {
+  const steps = [
+    newThought('hello world'),
+    splitThought({
+      splitResult: {
+        left: 'hello ',
+        right: 'world',
+      },
+    }),
+    deleteEmptyThought,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - hello world`)
+})
+
+it('merge thought should respect space if any (whitespace at front of right splitted value)', () => {
+  const steps = [
+    newThought('hello world'),
+    splitThought({
+      splitResult: {
+        left: 'hello',
+        right: ' world',
+      },
+    }),
+    deleteEmptyThought,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - hello world`)
 })
