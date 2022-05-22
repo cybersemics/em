@@ -420,7 +420,7 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
         nextRank: 100,
       },
     ]
-    thoughts.forEach(line => {
+    thoughts.forEach((line, i) => {
       // thought may contain whitespace at end
       // don't let it mess up the depth calculation
       const trimmed = line.trimStart()
@@ -428,19 +428,27 @@ const mergeThoughts = (state: State, thoughts: RawThoughts): MergeResult => {
       const depthPrev = stack.length - 2
       const depthDiff = depthPrev - depth
       const value = trimmed.slice(2).trimEnd()
+      // increase starting depth if there is an explicit root
+      if (isRoot([value])) {
+        stack.push({
+          context: [] as Context,
+          nextRank: 100,
+        })
+        return
+      }
       // cannot increase depth by more than 1
       if (depthDiff < -1) {
         console.error('depthPrev', depthPrev)
         console.error('depth', depth)
         console.error('stack', stack)
-        throw new Error('Depth should only increase by 1')
+        throw new Error(`Depth should only increase by 1. Line ${i}: [${line}]`)
       }
       for (let i = 0; i < depthDiff + 1; i++) {
         stack.pop()
       }
       const parent = stack[stack.length - 1]
       const next = {
-        context: [...parent.context, value],
+        context: unroot([...parent.context, value]),
         nextRank: 100,
       }
       state = reconstructThought(state, next.context, { rank: parent.nextRank })
