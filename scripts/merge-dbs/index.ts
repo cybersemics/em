@@ -10,6 +10,7 @@ import { v4 as uid } from 'uuid'
 import memoryStore from './memoryStore'
 import time from './time'
 import crypto from 'crypto'
+import blankdb from './blank-db.json'
 
 /*************************************************************************
  * MOCK BROWSER
@@ -498,15 +499,23 @@ const main = () => {
   // check args
   if (process.argv.length < 3) {
     console.info(helpText)
-    process.exit(0)
-  } else if (!fs.existsSync(`${dir}/db.json`)) {
-    console.error(chalk.red('Missing db.json. Please save a base db with schema v5 to [DIR]/db.json.'))
     process.exit(1)
+  }
+
+  const hasBaseDb = fs.existsSync(`${dir}/db.json`)
+
+  if (!hasBaseDb) {
+    console.warn(chalk.yellow('Missing db.json. Merging into blank database.'))
   }
 
   // read base thoughts
   // assume that they use schema v5
-  const { lastUpdated, rawThoughts: thoughtsCurrent } = readThoughts(`${dir}/db.json`)
+  const { lastUpdated, rawThoughts: thoughtsCurrent } = hasBaseDb
+    ? readThoughts(`${dir}/db.json`)
+    : {
+        lastUpdated: Date.now(),
+        rawThoughts: blankdb as unknown as RawThoughts,
+      }
 
   console.info(`Thoughts read: ${chalk.cyan(numThoughts(thoughtsCurrent))}`)
   console.info(`Lexemes read: ${chalk.cyan(numLexemes(thoughtsCurrent))}`)
