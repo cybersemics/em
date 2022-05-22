@@ -151,11 +151,10 @@ interface ProgressReport {
   schema: number
   size: number
   lexemesBase: number
-  lexemesRead: number
   lexemesSaved: number
   thoughtsBase: number
-  thoughtsRead: number
   thoughtsSaved: number
+  thoughtsAdded: number
   time: number
 }
 
@@ -585,6 +584,8 @@ const main = () => {
 
       console.info(`Thoughts written ${timeWriteFile.print()}`)
 
+      const thoughtsSaved = numThoughts(dbNew)
+
       const progressReport: ProgressReport = {
         checksum: backupChecksum,
         date: new Date().toString(),
@@ -595,11 +596,10 @@ const main = () => {
         size: fs.statSync(`${dir}/db.json`).size / 1024000, // MB
         time: timeStart.measure(),
         lexemesBase: numLexemesCurrent,
-        lexemesRead: numLexemes(thoughtsBackup),
         lexemesSaved: numLexemes(dbNew),
         thoughtsBase: numThoughtsCurrent,
-        thoughtsRead: numThoughts(thoughtsBackup),
-        thoughtsSaved: numThoughts(dbNew),
+        thoughtsSaved,
+        thoughtsAdded: thoughtsSaved - numThoughtsCurrent,
       }
 
       progress.add(progressReport)
