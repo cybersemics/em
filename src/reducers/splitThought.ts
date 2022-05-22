@@ -48,8 +48,8 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
       offset: 0,
       // must allow the cursor to be set since it is used as the destination for the children
       preventSetCursor: false,
-      // pass splitSource as prop if the left splitted value has whitespace at the end
-      ...(/\s+$/g.test(splitResult.left) ? { splitSource: headThought.id } : {}),
+      // pass splitSource as prop if the left splitted value has whitespace at the end or right splitted value has whitespace at the front
+      ...(/\s+$/g.test(splitResult.left) || /^\s+/g.test(splitResult.right) ? { splitSource: headThought.id } : {}),
     }),
 
     // move children

@@ -255,13 +255,33 @@ describe('mount', () => {
   })
 })
 
-it('merge thought should respect space if any', () => {
+it('merge thought should respect space if any (whitespace at end of left splitted value)', () => {
   const steps = [
     newThought('hello world'),
     splitThought({
       splitResult: {
         left: 'hello ',
         right: 'world',
+      },
+    }),
+    deleteEmptyThought,
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - hello world`)
+})
+
+it('merge thought should respect space if any (whitespace at front of right splitted value)', () => {
+  const steps = [
+    newThought('hello world'),
+    splitThought({
+      splitResult: {
+        left: 'hello',
+        right: ' world',
       },
     }),
     deleteEmptyThought,
