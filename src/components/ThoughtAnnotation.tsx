@@ -1,23 +1,12 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import classNames from 'classnames'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getContexts, theme, rootedParentOf, getAncestorByValue } from '../selectors'
-import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } from '../@types'
-import {
-  ellipsizeUrl,
-  equalPath,
-  hashContext,
-  head,
-  headValue,
-  isURL,
-  once,
-  parentOf,
-  pathToContext,
-  publishMode,
-} from '../util'
+import { decodeThoughtsUrl, findDescendant, getContexts, theme, rootedParentOf, getAncestorByValue } from '../selectors'
+import { Connected, Index, SimplePath, State, ThoughtId, Path } from '../@types'
+import { ellipsizeUrl, equalPath, hashContext, head, headValue, isURL, once, parentOf, publishMode } from '../util'
 
 // components
 import HomeLink from './HomeLink'
@@ -25,7 +14,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 import { isInternalLink } from '../device/router'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 interface ThoughtAnnotationProps {
   dark?: boolean
@@ -45,8 +34,9 @@ interface ThoughtAnnotationProps {
 }
 
 /** Sets the innerHTML of the ngram text. */
-const getTextMarkup = (state: State, isEditing: boolean, value: string, thoughts: Context) => {
-  const labelChildren = getAllChildrenAsThoughts(state, [...thoughts, '=label'])
+const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId) => {
+  const labelId = findDescendant(state, id, '=label')
+  const labelChildren = labelId ? getAllChildrenAsThoughtsById(state, labelId) : []
   const { editingValue } = state
   return {
     __html: isEditing
@@ -127,9 +117,11 @@ const ThoughtAnnotation = ({
 
   const state = store.getState()
   const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
-  const thoughts = pathToContext(state, simplePath)
   const isExpanded = !!state.expanded[hashContext(simplePath)]
-  const childrenUrls = once(() => getAllChildrenAsThoughts(state, thoughts).filter(child => isURL(child.value)))
+  const childrenUrls = once(() =>
+    getAllChildrenAsThoughtsById(state, head(simplePath)).filter(child => isURL(child.value)),
+  )
+  const [numContexts, setNumContexts] = useState(0)
 
   /**
    * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -141,15 +133,19 @@ const ThoughtAnnotation = ({
    */
 
   /** Returns true if the thought is not archived. */
-  const isNotArchive = (thoughtContext: ThoughtContext) =>
-    // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
-    showHiddenThoughts || !getAncestorByValue(state, thoughtContext, '=archive')
+  const isNotArchive = (id: ThoughtId) => {
+    const state = store.getState()
+    return state.showHiddenThoughts || !getAncestorByValue(state, id, '=archive')
+  }
 
-  const numContexts = useSelector((state: State) => {
-    // no contexts if thought is empty
-    const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []
-    return contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
-  })
+  const contexts = useSelector((state: State) => getContexts(state, isRealTimeContextUpdate ? editingValue! : value))
+
+  // delay rendering of superscript for performance
+  // recalculate when Lexemes are loaded
+  // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
+  useEffect(() => {
+    setNumContexts(contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0))
+  }, [contexts, showHiddenThoughts])
 
   const url = isURL(value)
     ? value
@@ -177,7 +173,7 @@ const ThoughtAnnotation = ({
           <span
             className='subthought-text'
             style={style}
-            dangerouslySetInnerHTML={getTextMarkup(state, !!isEditing, value, thoughts)}
+            dangerouslySetInnerHTML={getTextMarkup(state, !!isEditing, value, head(simplePath))}
           />
           {
             // do not render url icon on root thoughts in publish mode

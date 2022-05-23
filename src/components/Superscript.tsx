@@ -1,5 +1,6 @@
-import React, { FC } from 'react'
-import { connect } from 'react-redux'
+import React, { FC, useEffect, useState } from 'react'
+import { connect, useSelector } from 'react-redux'
+import { store } from '../store'
 import { hasLexeme, getContexts, rootedParentOf, getAncestorByValue } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { parentOf, equalArrays, head, headValue, pathToContext } from '../util'
@@ -7,16 +8,11 @@ import { ThoughtId, Context, Index, SimplePath, State } from '../@types'
 
 interface SuperscriptProps {
   contextViews?: Index<boolean>
-  empty?: boolean
-  numContexts?: number
   showContexts?: boolean
-  showModal?: string | null
   showSingle?: boolean
   superscript?: boolean
-  thoughts?: Context
   simplePath: SimplePath
-  simplePathLive?: SimplePath
-  thoughtRaw?: ThoughtId
+  thoughts?: Context
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -37,47 +33,50 @@ const mapStateToProps = (state: State, props: SuperscriptProps) => {
 
   const simplePathLive = editing ? (parentOf(props.simplePath).concat(head(cursor!)) as SimplePath) : simplePath
 
-  /** Gets the number of contexts of the thoughtsLive signifier. */
-  const numContexts = () => {
-    const contexts = getContexts(state, head(thoughtsLive))
-    // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
-    return (
-      showHiddenThoughts
-        ? contexts
-        : contexts.filter(thoughtContext => !getAncestorByValue(state, thoughtContext, '=archive'))
-    ).length
-  }
-
   return {
     contextViews,
-    thoughts,
+    empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
+    showHiddenThoughts,
     simplePathLive,
     simplePath,
+    thoughts,
     // thoughtRaw is the head that is removed when showContexts is true
     thoughtRaw: props.showContexts ? head(props.simplePath) : head(simplePathLive),
-    empty: thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true, // ensure re-render when thought becomes empty
-    numContexts: hasLexeme(state, head(thoughtsLive)) ? numContexts() : 0,
     showModal,
   }
 }
 
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
-const Superscript: FC<SuperscriptProps> = ({ empty, numContexts, showSingle, superscript = true }) => {
-  // showContexts = showContexts || isContextViewActive(store.getState(), simplePath)
-  // const numDescendantCharacters = getDescendants(showContexts ? simplePathLive.concat(thoughtRaw) : simplePathLive )
-  //   .reduce((charCount, child) => charCount + child.length, 0)
+const Superscript: FC<ReturnType<typeof mapStateToProps> & SuperscriptProps> = ({
+  empty,
+  showSingle,
+  showHiddenThoughts,
+  simplePath,
+  simplePathLive,
+  superscript = true,
+}) => {
+  const [numContexts, setNumContexts] = useState(0)
+
+  const contexts = useSelector((state: State) => getContexts(state, head(simplePathLive || simplePath)))
+
+  /** Returns true if the thought is not archived. */
+  const isNotArchive = (id: ThoughtId) => {
+    const state = store.getState()
+    return state.showHiddenThoughts || !getAncestorByValue(state, id, '=archive')
+  }
+
+  // delay rendering of superscript for performance
+  // recalculate when Lexemes are loaded
+  // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
+  useEffect(() => {
+    setNumContexts(contexts.filter(isNotArchive).length)
+  }, [contexts, showHiddenThoughts])
 
   return (
     <span className='superscript-container'>
       {
         !empty && superscript && numContexts! > (showSingle ? 0 : 1) ? (
-          <span className='num-contexts'>
-            {' '}
-            {/* Make the container position:relative so that the modal is positioned correctly */}
-            {numContexts ? <sup>{numContexts}</sup> : null}
-            {/* render the depth-bar inside the superscript so that it gets re-rendered with it */}
-            {/* <DepthBar/> */}
-          </span>
+          <span className='num-contexts'> {numContexts ? <sup>{numContexts}</sup> : null}</span>
         ) : null /* <DepthBar/> */
       }
     </span>
