@@ -4,6 +4,7 @@ import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../constants'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
+const CURRENT_YEAR = new Date().getFullYear()
 
 const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
@@ -26,10 +27,10 @@ const parseDate = (s: string) =>
   Date.parse(
     // eslint-disable-next-line @typescript-eslint/no-extra-parens
     regexShortDateWithDash.test(s)
-      ? `${s}-${new Date().getFullYear()}`
+      ? `${s}-${CURRENT_YEAR}`
       : // eslint-disable-next-line @typescript-eslint/no-extra-parens
       regexShortDateWithSlash.test(s)
-      ? `${s}/${new Date().getFullYear()}`
+      ? `${s}/${CURRENT_YEAR}`
       : s,
   )
 
