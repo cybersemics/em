@@ -47,6 +47,7 @@ import {
 import {
   attribute,
   childIdsToThoughts,
+  findDescendant,
   getChildren,
   getChildrenRanked,
   getSortPreference,
@@ -253,6 +254,9 @@ const ThoughtContainer = ({
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
+  const thoughtId = head(simplePath)
+  const thoughts = pathToContext(state, simplePath)
+  const context = parentOf(thoughts)
 
   useEffect(() => {
     if (isBeingHoveredOver) {
@@ -303,8 +307,6 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  const thoughts = pathToContext(state, simplePath)
-  const context = parentOf(thoughts)
   const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
 
   const options =
@@ -324,7 +326,11 @@ const ThoughtContainer = ({
           // do not apply to =let itself i.e. =let/x/=style should not apply to =let
           !equalArrays([...thoughts, child.value], env![child.value])),
     )
-    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {}))
+    .map(child =>
+      child.value in { ...env }
+        ? getStyle(state, contextToThoughtId(state, env![child.value]))
+        : getGlobalStyle(child.value) || {},
+    )
     .reduce<React.CSSProperties>(
       (accum, style) => ({
         ...accum,
@@ -355,11 +361,10 @@ const ThoughtContainer = ({
 
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
-  const styleSelf = useSelector((state: State) => getStyle(state, thoughts))
-  const styleContainer = getStyle(state, thoughts, { container: true })
-  const styleContainerZoom = isEditingPath
-    ? getStyle(state, thoughts.concat('=focus', 'Zoom'), { container: true })
-    : null
+  const styleSelf = useSelector((state: State) => getStyle(state, thoughtId))
+  const styleContainer = getStyle(state, thoughtId, { container: true })
+  const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
+  const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 

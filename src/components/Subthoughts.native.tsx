@@ -68,7 +68,7 @@ import { View } from 'moti'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
 import { TouchableOpacity } from 'react-native'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -101,11 +101,8 @@ const EMPTY_OBJECT = {}
 const isLeaf = (state: State, context: Context) => getChildren(state, context).length === 0
 
 /** Finds the the first env context with =focus/Zoom. */
-const findFirstEnvContextWithZoom = (
-  state: State,
-  { context, env }: { context: Context; env: LazyEnv },
-): Context | null => {
-  const children = getAllChildrenAsThoughts(state, context)
+const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): Context | null => {
+  const children = getAllChildrenAsThoughtsById(state, id)
   const child = children.find(child => {
     /** Returns true if the env context has zoom. */
     const hasZoom = () => {
@@ -186,16 +183,16 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
   const zoomCursor =
-    cursorContext &&
-    (attributeEquals(state, cursorContext, '=focus', 'Zoom') ||
-      attributeEquals(state, parentOf(cursorContext).concat('=children'), '=focus', 'Zoom') ||
-      findFirstEnvContextWithZoom(state, { context: cursorContext, env }))
+    cursor &&
+    (attributeEquals(state, cursorContext!, '=focus', 'Zoom') ||
+      attributeEquals(state, parentOf(cursorContext!).concat('=children'), '=focus', 'Zoom') ||
+      findFirstEnvContextWithZoom(state, { id: head(cursor), env }))
 
   const zoomParent =
-    cursorContext &&
-    (attributeEquals(state, parentOf(cursorContext), '=focus', 'Zoom') ||
-      attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
-      findFirstEnvContextWithZoom(state, { context: pathToContext(state, rootedParentOf(state, cursor!)), env }))
+    cursor &&
+    (attributeEquals(state, parentOf(cursorContext!), '=focus', 'Zoom') ||
+      attributeEquals(state, parentOf(parentOf(cursorContext!)).concat('=children'), '=focus', 'Zoom') ||
+      findFirstEnvContextWithZoom(state, { id: head(rootedParentOf(state, cursor)), env }))
 
   return {
     contextBinding,
@@ -619,11 +616,11 @@ export const SubthoughtsComponent = ({
             }
 
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
-            const childContext = pathToContext(state, childPath)
             const childEnvZoomId = once(() => {
-              const context = findFirstEnvContextWithZoom(state, { context: childContext, env })
+              const context = findFirstEnvContextWithZoom(state, { id: child.id, env })
               return context && contextToThoughtId(state, context)
             })
+
             /** Returns true if the cursor in in the child path. */
             const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
 

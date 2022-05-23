@@ -61,7 +61,7 @@ import {
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 import { getNextRankById } from '../selectors/getNextRank'
 
 /** The type of the exported Subthoughts. */
@@ -93,11 +93,8 @@ const EMPTY_OBJECT = {}
 const isLeaf = (state: State, context: Context) => getChildren(state, context).length === 0
 
 /** Finds the the first env context with =focus/Zoom. */
-const findFirstEnvContextWithZoom = (
-  state: State,
-  { context, env }: { context: Context; env: LazyEnv },
-): Context | null => {
-  const children = getAllChildrenAsThoughts(state, context)
+const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): Context | null => {
+  const children = getAllChildrenAsThoughtsById(state, id)
   const child = children.find(child => {
     /** Returns true if the env context has zoom. */
     const hasZoom = () => {
@@ -240,16 +237,16 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
   const zoomCursor =
-    cursorContext &&
-    (attributeEquals(state, cursorContext, '=focus', 'Zoom') ||
-      attributeEquals(state, parentOf(cursorContext).concat('=children'), '=focus', 'Zoom') ||
-      findFirstEnvContextWithZoom(state, { context: cursorContext, env }))
+    cursor &&
+    (attributeEquals(state, cursorContext!, '=focus', 'Zoom') ||
+      attributeEquals(state, parentOf(cursorContext!).concat('=children'), '=focus', 'Zoom') ||
+      findFirstEnvContextWithZoom(state, { id: head(cursor), env }))
 
   const zoomParent =
-    cursorContext &&
-    (attributeEquals(state, parentOf(cursorContext), '=focus', 'Zoom') ||
-      attributeEquals(state, parentOf(parentOf(cursorContext)).concat('=children'), '=focus', 'Zoom') ||
-      findFirstEnvContextWithZoom(state, { context: pathToContext(state, rootedParentOf(state, cursor!)), env }))
+    cursor &&
+    (attributeEquals(state, parentOf(cursorContext!), '=focus', 'Zoom') ||
+      attributeEquals(state, parentOf(parentOf(cursorContext!)).concat('=children'), '=focus', 'Zoom') ||
+      findFirstEnvContextWithZoom(state, { id: head(rootedParentOf(state, cursor)), env }))
 
   const isEditingAncestor = isEditingPath && !isEditing
 
@@ -713,13 +710,11 @@ export const SubthoughtsComponent = ({
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
 
-  const contextChildren = [...unroot(context), '=children'] // children of parent with =children
-  const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
-  const styleChildren = getStyle(state, contextChildren)
-  const styleGrandChildren = getStyle(state, contextGrandchildren)
-
-  const childrenAttributeId = findDescendant(state, thoughtId, ['=children'])
+  const childrenAttributeId = findDescendant(state, thoughtId, '=children')
   const grandchildrenAttributeId = findDescendant(state, thoughtId, ['=grandchildren'])
+  const styleChildren = getStyle(state, childrenAttributeId)
+  const styleGrandChildren = getStyle(state, grandchildrenAttributeId)
+
   const hideBulletsChildren = childrenAttributeId && attribute(state, childrenAttributeId, '=bullet') === 'None'
   const hideBulletsGrandchildren =
     grandchildrenAttributeId && attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
@@ -773,19 +768,22 @@ export const SubthoughtsComponent = ({
                   // TODO: childPath should be unrooted, but if we change it it breaks
                   // figure out what is incorrectly depending on childPath being rooted
                   const childPath = getChildPath(state, child.id, simplePath, showContexts)
-                  const childContext = pathToContext(state, childPath)
-                  const childContextEnvZoom = once(() =>
-                    findFirstEnvContextWithZoom(state, { context: childContext, env }),
-                  )
+                  const childEnvZoomId = once(() => {
+                    const context = findFirstEnvContextWithZoom(state, { id: child.id, env })
+                    return context && contextToThoughtId(state, context)
+                  })
 
                   /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
                   const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
 
                   /** Gets the =focus/Zoom/=style of the child path. */
-                  const styleZoom = () => getStyle(state, [...childContext, '=focus', 'Zoom'])
+                  const styleZoom = () => {
+                    const zoomId = findDescendant(state, child.id, ['=focus', 'Zoom'])
+                    return getStyle(state, zoomId)
+                  }
 
                   /** Gets the style of the Zoom applied via env. */
-                  const styleEnvZoom = () => (childContextEnvZoom() ? getStyle(state, childContextEnvZoom()!) : null)
+                  const styleEnvZoom = () => (childEnvZoomId() ? getStyle(state, childEnvZoomId()!) : null)
 
                   const style = {
                     ...styleGrandChildren,
@@ -853,10 +851,8 @@ export const SubthoughtsComponent = ({
             // TODO: childPath should be unrooted, but if we change it it breaks
             // figure out what is incorrectly depending on childPath being rooted
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
-            const childContext = pathToContext(state, childPath)
-            const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(state, { context: childContext, env }))
             const childEnvZoomId = once(() => {
-              const context = findFirstEnvContextWithZoom(state, { context: childContext, env })
+              const context = findFirstEnvContextWithZoom(state, { id: child.id, env })
               return context && contextToThoughtId(state, context)
             })
 
@@ -864,10 +860,15 @@ export const SubthoughtsComponent = ({
             const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
 
             /** Gets the =focus/Zoom/=style of the child path. */
-            const styleZoom = () => getStyle(state, [...childContext, '=focus', 'Zoom'])
+            const styleZoom = () => {
+              const zoomId = findDescendant(state, head(childPath), ['=focus', 'Zoom'])
+              return getStyle(state, zoomId)
+            }
 
             /** Gets the style of the Zoom applied via env. */
-            const styleEnvZoom = () => (childContextEnvZoom() ? getStyle(state, childContextEnvZoom()!) : null)
+            const styleEnvZoom = () => {
+              return childEnvZoomId() ? getStyle(state, childEnvZoomId()) : null
+            }
 
             const style = {
               ...styleGrandChildren,
