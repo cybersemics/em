@@ -1,11 +1,11 @@
 import { isTouch, isSafari } from '../browser'
 import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
 import { getSetting, pathToThought, hasChild, isContextViewActive } from '../selectors'
-import { parentOf, ellipsize, pathToContext } from '../util'
+import { ellipsize, head, parentOf, pathToContext } from '../util'
 import { alert } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
-import { Thunk, Context, Path, SplitResult, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { Thunk, Context, Path, SplitResult, State } from '../@types'
 
 /** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
 const isDuplicateOnSplit = (splitResult: SplitResult, context: Context | null, state: State) => {
@@ -56,8 +56,7 @@ const newThought =
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
     // Determine if thought at path is uneditable
-    const contextOfCursor = path && pathToContext(state, path)
-    const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
+    const uneditable = path && hasChild(state, head(path), '=uneditable')
 
     const showContexts = path && isContextViewActive(state, parentOf(pathToContext(state, path)))
 

@@ -10,10 +10,10 @@ export { default as decodeContextUrl } from './decodeContextUrl'
 export { default as decodeThoughtsUrl } from './decodeThoughtsUrl'
 export { default as expandThoughts } from './expandThoughts'
 export { default as exportContext } from './exportContext'
+export { default as findDescendant } from './findDescendant'
 export { default as getAncestorBy, getAncestorByValue } from './getAncestorBy'
 export { default as getChildPath } from './getChildPath'
 export { default as getContexts } from './getContexts'
-export { default as thoughtToContext } from './thoughtToContext'
 export { default as getContextsSortedAndRanked } from './getContextsSortedAndRanked'
 export { getDescendantContexts, getDescendantThoughtIds, someDescendants } from './getDescendants'
 export { default as getEditingPath } from './getEditingPath'
@@ -55,6 +55,7 @@ export { default as simplifyPath } from './simplifyPath'
 export { default as splitChain } from './splitChain'
 export { default as subtree } from './subtree'
 export { default as theme } from './theme'
+export { default as thoughtToContext } from './thoughtToContext'
 export { default as thoughtToPath } from './thoughtToPath'
 export { default as thoughtsEditingFromChain } from './thoughtsEditingFromChain'
 export { default as visibleDistanceAboveCursor } from './visibleDistanceAboveCursor'
@@ -63,6 +64,7 @@ export {
   getAllChildren,
   getAllChildrenById,
   getChildren,
+  getChildrenById,
   getChildrenRanked,
   getChildrenRankedById,
   getAllChildrenSorted,

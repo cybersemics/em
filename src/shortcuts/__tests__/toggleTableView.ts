@@ -1,5 +1,5 @@
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { attribute } from '../../selectors'
+import attributeByContext from '../../test-helpers/attributeByContext'
 import { importText } from '../../action-creators'
 import toggleTableViewShortcut from '../toggleTableView'
 import executeShortcut from '../../test-helpers/executeShortcut'
@@ -24,7 +24,7 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
   executeShortcut(toggleTableViewShortcut, { store })
 
   // parent of cursor should have =view attribute set to Table
-  expect(attribute(store.getState(), ['a'], '=view')).toBe('Table')
+  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Table')
 })
 
 it('toggle on table view of parent of cursor (initial state =view attribute set to Prose)', () => {
@@ -48,7 +48,7 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
   executeShortcut(toggleTableViewShortcut, { store })
 
   // parent of cursor should have =view attribute set to Table
-  expect(attribute(store.getState(), ['a'], '=view')).toBe('Table')
+  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Table')
 })
 
 it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
@@ -73,5 +73,5 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
   executeShortcut(toggleTableViewShortcut, { store })
 
   // parent of cursor should not have =view attribute set to Table
-  expect(attribute(store.getState(), ['a'], '=view')).toBe(null)
+  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe(null)
 })

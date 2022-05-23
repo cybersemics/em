@@ -10,20 +10,23 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
 
   const isNullaryAttribute = value === undefined
 
-  const path = contextToPath(state, unroot([...context, key]))
+  const path = contextToPath(state, context)
+  const attributePath = contextToPath(state, unroot([...context, key]))
 
-  const exists = !isNullaryAttribute ? attributeEquals(state, context, key, value!) : hasChild(state, context, key)
+  const exists = !isNullaryAttribute
+    ? attributeEquals(state, context, key, value!)
+    : !path || hasChild(state, head(path), key)
 
-  return path && exists
+  return attributePath && exists
     ? // delete existing attribute
       deleteThought(state, {
         context,
-        thoughtId: head(path),
+        thoughtId: head(attributePath),
       })
     : // create new attribute
       reducerFlow([
         // create attribute if it does not exist
-        !hasChild(state, context, key)
+        !path || !hasChild(state, head(path), key)
           ? state =>
               createThought(state, {
                 context,

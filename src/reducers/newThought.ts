@@ -43,6 +43,7 @@ import {
   getRootPath,
   getSetting,
   getSortPreference,
+  getThoughtById,
   hasChild,
   isContextViewActive,
   rootedParentOf,
@@ -104,17 +105,21 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const simplePath = simplifyPath(state, path)
 
   const thoughts = pathToContext(state, simplePath)
-  const context = pathToContext(state, rootedParentOf(state, simplePath))
+  const parentPath = rootedParentOf(state, simplePath)
+  const context = pathToContext(state, parentPath)
+  const thoughtId = head(simplePath)
+  const parentId = head(parentPath)
 
   // prevent adding Subthought to readonly or unextendable Thought
-  const sourceContext = insertNewSubthought ? thoughts : context
-  if (hasChild(state, sourceContext, '=readonly')) {
+  const sourceId = insertNewSubthought ? thoughtId : parentId
+  const sourceThought = getThoughtById(state, sourceId)
+  if (hasChild(state, sourceId, '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(head(sourceContext))}" is read-only. No subthoughts may be added.`,
+      value: `"${ellipsize(sourceThought.value)}" is read-only. No subthoughts may be added.`,
     })
-  } else if (hasChild(state, sourceContext, '=unextendable')) {
+  } else if (hasChild(state, sourceId, '=unextendable')) {
     return alert(state, {
-      value: `"${ellipsize(head(sourceContext))}" is unextendable. No subthoughts may be added.`,
+      value: `"${ellipsize(sourceThought.value)}" is unextendable. No subthoughts may be added.`,
     })
   }
 

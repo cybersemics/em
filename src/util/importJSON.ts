@@ -2,17 +2,7 @@ import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf, childIdsToThoughts } from '../selectors'
 import { Block, Context, Index, Lexeme, Thought, SimplePath, State, Timestamp, ThoughtIndices, Path } from '../@types'
-import {
-  appendToPath,
-  hashThought,
-  head,
-  parentOf,
-  pathToContext,
-  removeContext,
-  timestamp,
-  headId,
-  unroot,
-} from '../util'
+import { appendToPath, hashThought, head, pathToContext, removeContext, timestamp, headId, unroot } from '../util'
 import { createId } from './createId'
 import { getSessionId } from './sessionManager'
 import { mergeThoughts } from './mergeThoughts'
@@ -267,7 +257,7 @@ export const importJSON = (
 ) => {
   const initialLexemeIndex: Index<Lexeme> = {}
   const initialThoughtIndex: Index<Thought> = {}
-  const context = pathToContext(state, parentOf(simplePath))
+  const context = pathToContext(state, rootedParentOf(state, simplePath))
   const destThought = state.thoughts.thoughtIndex[head(simplePath)]
   const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(state, simplePath)).length === 0
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it

@@ -11,7 +11,7 @@ import {
   setNoteFocus,
   toggleNote,
 } from '../action-creators'
-import { equalArrays, pathToContext, strip } from '../util'
+import { equalArrays, head, pathToContext, strip } from '../util'
 import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
 import { Path, State } from '../@types'
 
@@ -39,6 +39,7 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
 const Note = ({ path }: NoteProps) => {
   const state = store.getState()
   const context = pathToContext(state, path)
+  const thoughtId = head(path)
   const dispatch = useDispatch()
   const [justPasted, setJustPasted] = useState(false)
 
@@ -63,13 +64,13 @@ const Note = ({ path }: NoteProps) => {
 
   if (!hasNote || isContextViewActive(state, context)) return null
 
-  const note = attribute(state, context, '=note')
+  const note = attribute(state, thoughtId, '=note')
 
   /** Handles note keyboard shortcuts. */
   const onKeyDown = (e: IKeyDown) => {
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
-    const note = attribute(store.getState(), context, '=note')
+    const note = attribute(store.getState(), thoughtId, '=note')
 
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp') {

@@ -33,7 +33,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
     } else if (
       !(contextViewActive
         ? isAncestorsVisible(state, thoughtToContext(state, child.id)!)
-        : showHiddenThoughts || isChildVisible(state, context, child))
+        : showHiddenThoughts || isChildVisible(state, child))
     ) {
       return false
     } else {

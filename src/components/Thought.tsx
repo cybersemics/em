@@ -26,6 +26,7 @@ import useLongPress from '../hooks/useLongPress'
 // util
 import {
   appendToPath,
+  contextToThoughtId,
   equalArrays,
   equalPath,
   hashPath,
@@ -160,7 +161,9 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
         : // parent
           equalPath(parentOf(cursor), path)))
 
-  const contextBinding = parseJsonSafe(attribute(state, contextLive, '=bindContext') ?? '') as SimplePath | undefined
+  const contextBinding = parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '') as
+    | SimplePath
+    | undefined
 
   // Note: An active expand hover top thought cannot be a cusor's grandparent as it is already treated as cursor's parent.
   const isCursorGrandparent =
@@ -183,8 +186,8 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isLeaf,
     publish: !search && publishMode(),
     simplePathLive,
-    view: attribute(state, contextLive, '=view'),
-    parentView: attribute(state, parentOf(contextLive), '=view'),
+    view: attribute(state, head(simplePath), '=view'),
+    parentView: attribute(state, head(parentOf(simplePath)), '=view'),
     editing,
   }
 }
@@ -342,9 +345,13 @@ const ThoughtContainer = ({
             // do not apply to =let itself i.e. =let/x/=style should not apply to =let
             !equalArrays([...thoughts, child.value], env![child.value])),
       )
-      .map(child =>
-        child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
-      )
+      .map(child => {
+        const envChildContext = env![child.value]
+        const envChildId = envChildContext && contextToThoughtId(state, envChildContext)
+        return child.value in { ...env }
+          ? envChildId && attribute(state, envChildId, '=bullet')
+          : getGlobalBullet(child.value)
+      })
 
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 

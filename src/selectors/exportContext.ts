@@ -1,5 +1,5 @@
 import { attribute, getChildrenRanked } from '../selectors'
-import { head, isFunction, isRoot, unroot } from '../util'
+import { contextToThoughtId, head, isFunction, isRoot, unroot } from '../util'
 import { Context, MimeType, Thought, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
@@ -43,10 +43,13 @@ export const exportContext = (
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
   const children = getChildrenRanked(state, context)
   const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
+  const thoughtId = contextToThoughtId(state, context)
 
   const childrenFiltered = children.filter(
     and(
-      excludeSrc && attribute(state, context, '=src') ? (child: Thought) => isFunction(child.value) : true,
+      excludeSrc && thoughtId && attribute(state, thoughtId, '=src')
+        ? (child: Thought) => isFunction(child.value)
+        : true,
       !excludeMeta && excludeArchived ? (child: Thought) => child.value !== '=archive' : true,
       excludeMeta ? (child: Thought) => !isFunction(child.value) || child.value === '=note' : true,
     ),

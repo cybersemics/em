@@ -1,8 +1,9 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { ellipsize, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
+import { ellipsize, head, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
 import {
   getChildren,
+  getChildrenById,
   getThoughtBefore,
   getChildrenRanked,
   hasChild,
@@ -59,8 +60,8 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
   const prevThought = getThoughtBefore(state, simplePath)
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(state, cursor)
-  const uneditable = contextOfCursor && hasChild(state, contextOfCursor, '=uneditable')
-  const children = getChildren(state, contextOfCursor)
+  const uneditable = contextOfCursor && hasChild(state, head(cursor), '=uneditable')
+  const children = getChildrenById(state, head(cursor))
 
   if (prevThought && uneditable) {
     dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))

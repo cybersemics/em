@@ -212,10 +212,11 @@ const Editable = ({
   thought,
 }: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
   const state = store.getState()
+  const thoughtId = head(simplePath)
   const thoughts = pathToContext(state, simplePath)
   const value = thought.value || ''
-  const readonly = hasChild(state, thoughts, '=readonly')
-  const uneditable = hasChild(state, thoughts, '=uneditable')
+  const readonly = hasChild(state, thoughtId, '=readonly')
+  const uneditable = hasChild(state, thoughtId, '=uneditable')
   const context =
     showContexts && thoughts.length > 2
       ? parentOf(parentOf(thoughts))

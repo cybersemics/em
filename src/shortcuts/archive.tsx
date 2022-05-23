@@ -16,10 +16,9 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
 
   if (cursor) {
     const cursorThought = getThoughtById(state, head(cursor))
-    const context = pathToContext(state, cursor)
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
-    } else if (hasChild(state, context, '=readonly')) {
+    } else if (hasChild(state, head(cursor), '=readonly')) {
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH

@@ -21,7 +21,6 @@ const subCategorizeOne = (state: State) => {
   if (!cursor) return state
 
   const cursorParent = parentOf(cursor)
-  const context = pathToContext(state, cursorParent)
 
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
@@ -30,14 +29,14 @@ const subCategorizeOne = (state: State) => {
     })
   }
   // cancel if parent is readonly
-  else if (hasChild(state, context, '=readonly')) {
+  else if (hasChild(state, head(cursorParent), '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursorParent))}" is read-only so "${headValue(
         state,
         cursor,
       )}" cannot be subcategorized.`,
     })
-  } else if (hasChild(state, context, '=unextendable')) {
+  } else if (hasChild(state, head(cursorParent), '=unextendable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursorParent))}" is unextendable so "${headValue(
         state,

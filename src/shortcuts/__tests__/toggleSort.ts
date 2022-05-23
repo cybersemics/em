@@ -1,6 +1,6 @@
-import { EM_TOKEN } from '../../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { attribute, contextToPath } from '../../selectors'
+import { contextToPath } from '../../selectors'
 import {
   editThought,
   importText,
@@ -17,6 +17,7 @@ import { store } from '../../store'
 import { findThoughtByText } from '../../test-helpers/queries'
 import { findAllByPlaceholderText } from '@testing-library/react'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import attributeByContext from '../../test-helpers/attributeByContext'
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
   const store = createTestStore()
@@ -36,7 +37,7 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
 
   executeShortcut(toggleSortShortcut, { store })
 
-  expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
+  expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
 })
 
 it('toggle sort preference descending of cursor (initial state with =sort/Alphabetical)', () => {
@@ -60,8 +61,8 @@ it('toggle sort preference descending of cursor (initial state with =sort/Alphab
 
   executeShortcut(toggleSortShortcut, { store })
 
-  expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
-  expect(attribute(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
+  expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
+  expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
 })
 
 it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/desc)', () => {
@@ -85,7 +86,7 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/
 
   executeShortcut(toggleSortShortcut, { store })
 
-  expect(attribute(store.getState(), ['a'], '=sort')).toBe(null)
+  expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
 })
 
 it('toggle off sort preference of cursor (initial state with =sort/Alphabetical and Global Sort Alphabetical/desc)', () => {
@@ -127,7 +128,7 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical 
   ])
 
   executeShortcut(toggleSortShortcut, { store })
-  expect(attribute(store.getState(), ['a'], '=sort')).toBe(null)
+  expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
 })
 
 it('toggle off sort preference of cursor (initial state without =sort attribute and Global Sort Alphabetical/desc)', () => {
@@ -166,7 +167,7 @@ it('toggle off sort preference of cursor (initial state without =sort attribute 
   ])
 
   executeShortcut(toggleSortShortcut, { store })
-  expect(attribute(store.getState(), ['a'], '=sort')).toBe('None')
+  expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('None')
 })
 
 it('toggle on sort preference of home context when cursor is null (initial state without =sort attribute)', () => {
@@ -189,7 +190,7 @@ it('toggle on sort preference of home context when cursor is null (initial state
 
   executeShortcut(toggleSortShortcut, { store })
 
-  expect(attribute(store.getState(), [], '=sort')).toBe('Alphabetical')
+  expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
 })
 
 it('toggle sort preference descending of home context when cursor is null (initial state with =sort/Alphabetical)', () => {
@@ -210,8 +211,8 @@ it('toggle sort preference descending of home context when cursor is null (initi
 
   executeShortcut(toggleSortShortcut, { store })
 
-  expect(attribute(store.getState(), [], '=sort')).toBe('Alphabetical')
-  expect(attribute(store.getState(), ['=sort'], 'Alphabetical')).toBe('Desc')
+  expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
+  expect(attributeByContext(store.getState(), ['=sort'], 'Alphabetical')).toBe('Desc')
 })
 
 it('override global Alphabetical with local Alphabetical/desc', () => {
@@ -243,8 +244,8 @@ it('override global Alphabetical with local Alphabetical/desc', () => {
 
   executeShortcut(toggleSortShortcut, { store })
 
-  expect(attribute(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
-  expect(attribute(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
+  expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe('Alphabetical')
+  expect(attributeByContext(store.getState(), ['a', '=sort'], 'Alphabetical')).toBe('Desc')
 })
 
 describe('DOM', () => {

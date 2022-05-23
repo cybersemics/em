@@ -1,8 +1,8 @@
-import { Context, State } from '../@types'
-import { getAllChildrenAsThoughts } from './getChildren'
+import { getAllChildrenAsThoughtsById } from './getChildren'
+import { State, ThoughtId } from '../@types'
 
 /** Returns true if the given context has a child with the given value. O(children). */
-const hasChild = (state: State, context: Context, value: string) =>
-  !!getAllChildrenAsThoughts(state, context).find(child => child.value === value)
+const hasChild = (state: State, thoughtId: ThoughtId, value: string) =>
+  !!getAllChildrenAsThoughtsById(state, thoughtId).find(child => child.value === value)
 
 export default hasChild

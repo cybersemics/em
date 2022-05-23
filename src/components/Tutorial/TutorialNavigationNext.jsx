@@ -21,7 +21,7 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../../selectors/getChildren'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {
@@ -33,7 +33,7 @@ const mapStateToProps = state => {
   return {
     thoughtIndex,
     expanded,
-    rootChildren: getAllChildrenAsThoughts(state, [HOME_TOKEN]),
+    rootChildren: getAllChildrenAsThoughtsById(state, HOME_TOKEN),
     tutorialChoice: +getSetting(state, 'Tutorial Choice') || 0,
     tutorialStep: +getSetting(state, 'Tutorial Step') || 1,
     cursorValue: cursor && headValue(state, cursor),

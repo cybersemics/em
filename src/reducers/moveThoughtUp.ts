@@ -20,8 +20,9 @@ const moveThoughtUp = (state: State) => {
 
   if (!cursor) return state
 
-  const thoughts = pathToContext(state, cursor)
+  const thoughtId = head(cursor)
   const pathParent = parentOf(cursor)
+  const parentId = head(pathParent)
   const context = pathToContext(state, pathParent)
 
   const cursorThought = getThoughtById(state, head(cursor))
@@ -43,19 +44,19 @@ const moveThoughtUp = (state: State) => {
     return alert(state, {
       value: `Cannot move subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" while sort is enabled.`,
     })
-  } else if (hasChild(state, thoughts, '=readonly')) {
+  } else if (hasChild(state, thoughtId, '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursor))}" is read-only and cannot be moved.`,
     })
-  } else if (hasChild(state, thoughts, '=immovable')) {
+  } else if (hasChild(state, thoughtId, '=immovable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursor))}" is immovable.`,
     })
-  } else if (hasChild(state, context, '=readonly')) {
+  } else if (hasChild(state, parentId, '=readonly')) {
     return alert(state, {
       value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" are read-only and cannot be moved.`,
     })
-  } else if (hasChild(state, context, '=immovable')) {
+  } else if (hasChild(state, parentId, '=immovable')) {
     return alert(state, {
       value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" are immovable.`,
     })

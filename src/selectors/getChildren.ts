@@ -25,9 +25,12 @@ const noThoughtIds: ThoughtId[] = []
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Thought[]
 
+/** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
+type GetThoughtsById = (state: State, id: ThoughtId) => Thought[]
+
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-export const isChildVisible = _.curry((state: State, context: Context, child: Thought) => {
-  return !isFunction(child.value) && !hasChild(state, unroot([...context, child.value]), '=hidden')
+export const isChildVisible = _.curry((state: State, child: Thought) => {
+  return !isFunction(child.value) && !hasChild(state, child.id, '=hidden')
 })
 
 /** Returns the thoughts for the given thought id. */
@@ -57,7 +60,13 @@ export const getAllChildren = (state: State, context: Context) => {
 /** Makes a getAllChildren function that only returns visible thoughts. */
 const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: State, context: Context) => {
   const children = getThoughtsFunction(state, context)
-  return state.showHiddenThoughts ? children : children.filter(isChildVisible(state, context))
+  return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
+})
+
+/** Makes a getAllChildren function that only returns visible thoughts. */
+const getVisibleThoughtsById = _.curry((getThoughtsFunction: GetThoughtsById, state: State, id: ThoughtId) => {
+  const children = getThoughtsFunction(state, id)
+  return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
 })
 
 /** Makes a getAllChildren function that only returns visible thoughts with cursor check. */
@@ -72,11 +81,14 @@ const getVisibleThoughtsWithCursorCheck = _.curry(
 /** Returns true if the context has any visible children. */
 export const hasChildren = (state: State, context: Context) => {
   const children = getAllChildrenAsThoughts(state, context)
-  return state.showHiddenThoughts ? children.length > 0 : children.some(isChildVisible(state, context))
+  return state.showHiddenThoughts ? children.length > 0 : children.some(isChildVisible(state))
 }
 
 /** Gets all visible children of a Context, unordered. */
 export const getChildren = getVisibleThoughts(getAllChildrenAsThoughts)
+
+/** Gets all visible children of an id, unordered. */
+export const getChildrenById = getVisibleThoughtsById(getAllChildrenAsThoughtsById)
 
 /** Gets all children of a Context sorted by rank or sort preference. */
 export const getAllChildrenSorted = (state: State, context: Context) => {
@@ -204,7 +216,7 @@ const isChildVisibleWithCursorCheck = _.curry((state: State, path: SimplePath, t
 
   return (
     state.showHiddenThoughts ||
-    isChildVisible(state, context, thought) ||
+    isChildVisible(state, thought) ||
     isChildInCursor(state, path, thought) ||
     isDescendantOfMetaCursor(state, childContext)
   )

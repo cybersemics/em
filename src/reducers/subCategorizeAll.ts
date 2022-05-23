@@ -1,6 +1,17 @@
 import { HOME_PATH } from '../constants'
 import { alert, moveThought, newThought } from '../reducers'
-import { appendToPath, parentOf, ellipsize, headValue, isEM, pathToContext, once, reducerFlow, isRoot } from '../util'
+import {
+  appendToPath,
+  parentOf,
+  ellipsize,
+  head,
+  headValue,
+  isEM,
+  pathToContext,
+  once,
+  reducerFlow,
+  isRoot,
+} from '../util'
 import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 import { State } from '../@types'
 
@@ -22,7 +33,6 @@ const subCategorizeAll = (state: State) => {
   if (!cursor) return state
 
   const cursorParent = parentOf(cursor)
-  const context = pathToContext(state, cursorParent)
 
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
@@ -31,14 +41,14 @@ const subCategorizeAll = (state: State) => {
     })
   }
   // cancel if parent is readonly
-  else if (hasChild(state, context, '=readonly')) {
+  else if (hasChild(state, head(cursorParent), '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursorParent))}" is read-only so "${headValue(
         state,
         cursor,
       )}" cannot be subcategorized.`,
     })
-  } else if (hasChild(state, context, '=unextendable')) {
+  } else if (hasChild(state, head(cursorParent), '=unextendable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursorParent))}" is unextendable so "${headValue(
         state,

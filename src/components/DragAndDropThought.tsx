@@ -52,18 +52,18 @@ export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerP
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ConnectedThoughtContainerProps) => {
   const state = store.getState()
-  const thoughts = pathToContext(state, props.simplePathLive!)
-  const context = parentOf(pathToContext(state, props.simplePathLive!))
+  const thoughtId = head(props.simplePathLive!)
+  const pathParentId = head(parentOf(props.simplePathLive!))
   const isDraggable = props.isVisible || props.isCursorParent
 
   return (
     isDocumentEditable() &&
     !!isDraggable &&
     (!isTouch || globals.touched) &&
-    !hasChild(state, thoughts, '=immovable') &&
-    !hasChild(state, thoughts, '=readonly') &&
-    !hasChild(state, context, '=immovable') &&
-    !hasChild(state, context, '=readonly')
+    !hasChild(state, thoughtId, '=immovable') &&
+    !hasChild(state, thoughtId, '=readonly') &&
+    !hasChild(state, pathParentId, '=immovable') &&
+    !hasChild(state, pathParentId, '=readonly')
   )
 }
 

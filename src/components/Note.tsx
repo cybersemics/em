@@ -12,7 +12,7 @@ import {
   setNoteFocus,
   toggleNote,
 } from '../action-creators'
-import { equalArrays, pathToContext, strip } from '../util'
+import { equalArrays, head, pathToContext, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
@@ -42,6 +42,7 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
 const Note = ({ path }: NoteProps) => {
   const state = store.getState()
   const context = pathToContext(state, path)
+  const thoughtId = head(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
   const [justPasted, setJustPasted] = useState(false)
@@ -60,7 +61,7 @@ const Note = ({ path }: NoteProps) => {
     if (isContextViewActive(state, context)) return null
     const noteThought = contextToThought(state, [...context, '=note'])
     if (noteThought?.pending) return null
-    return attribute(state, context, '=note')
+    return attribute(state, thoughtId, '=note')
   })
 
   if (note === null) return null
@@ -69,7 +70,7 @@ const Note = ({ path }: NoteProps) => {
   const onKeyDown = (e: React.KeyboardEvent) => {
     // delete empty note
     // need to get updated note attribute (not the note in the outside scope)
-    const note = attribute(store.getState(), context, '=note')
+    const note = attribute(store.getState(), thoughtId, '=note')
 
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp') {

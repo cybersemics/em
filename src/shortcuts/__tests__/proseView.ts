@@ -1,9 +1,9 @@
 import { createTestStore } from '../../test-helpers/createTestStore'
 import proseViewShortcut from '../proseView'
-import { attribute } from '../../selectors'
 import { importText } from '../../action-creators'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import attributeByContext from '../../test-helpers/attributeByContext'
 
 it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {
   const store = createTestStore()
@@ -23,7 +23,7 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
   executeShortcut(proseViewShortcut, { store })
 
   // parent of cursor should have =view attribute set to Prose
-  expect(attribute(store.getState(), ['a'], '=view')).toBe('Prose')
+  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Prose')
 })
 
 it('toggle on prose view of parent of cursor (inital state with =view attribute set to Table)', () => {
@@ -46,7 +46,7 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
   executeShortcut(proseViewShortcut, { store })
 
   // parent of cursor should have =view attribute set to Prose
-  expect(attribute(store.getState(), ['a'], '=view')).toBe('Prose')
+  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Prose')
 })
 
 it('toggle off prose view of parent of cursor', () => {
@@ -69,5 +69,5 @@ it('toggle off prose view of parent of cursor', () => {
   executeShortcut(proseViewShortcut, { store })
 
   // parent of cursor should not have =view attribute set to Prose
-  expect(attribute(store.getState(), ['a'], '=view')).toBe(null)
+  expect(attributeByContext(store.getState(), ['a'], '=view')).toBe(null)
 })

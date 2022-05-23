@@ -116,8 +116,8 @@ function expandThoughtsRecursive(
 
   /** Returns true if the child should be pinned open. */
   const isPinned = (child: ThoughtId | ThoughtContext) => {
-    const context = pathToContext(state, appendToPath(simplePath, child))
-    return attribute(state, context, '=pin')
+    const path = appendToPath(simplePath, child)
+    return attribute(state, head(path), '=pin')
   }
 
   /** Returns true if the child should be pinned closed. */

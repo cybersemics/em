@@ -27,7 +27,7 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
   /** Returns first moved child path as new cursor after collapse. */
   const getNewCursor = (updatedState: State) => {
     const firstVisibleChildOfPrevCursor = (
-      state.showHiddenThoughts ? children : children.filter(isChildVisible(state, context))
+      state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
     )[0]
 
     const childrenOfMovedContext = getChildren(updatedState, rootedParentOf(updatedState, context))

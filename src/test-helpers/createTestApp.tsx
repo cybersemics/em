@@ -57,7 +57,6 @@ const createTestApp = async () => {
   await act(async () => {
     const root = document.body.appendChild(document.createElement('div'))
 
-    global.window = Object.create(window)
     window.location.hostname = 'localhost'
 
     // using test drag and drop backend and context

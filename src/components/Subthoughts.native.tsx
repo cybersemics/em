@@ -23,11 +23,12 @@ import {
 import {
   // appendToPath,
   checkIfPathShareSubcontext,
+  contextToThoughtId,
   // ellipsize,
   // equalArrays,
   equalPath,
   hashPath,
-  // head,
+  head,
   headValue,
   isAbsolute,
   isDescendant,
@@ -41,7 +42,6 @@ import {
   parseJsonSafe,
   parseLet,
   pathToContext,
-  unroot,
 } from '../util'
 
 // selectors
@@ -51,6 +51,8 @@ import {
   attributeEquals,
   childIdsToThoughts,
   childrenFilterPredicate,
+  contextToPath,
+  findDescendant,
   getAllChildren,
   getAllChildrenSorted,
   getChildPath,
@@ -104,9 +106,14 @@ const findFirstEnvContextWithZoom = (
   { context, env }: { context: Context; env: LazyEnv },
 ): Context | null => {
   const children = getAllChildrenAsThoughts(state, context)
-  const child = children.find(
-    child => isFunction(child.value) && child.value in env && attribute(state, env[child.value], '=focus') === 'Zoom',
-  )
+  const child = children.find(child => {
+    /** Returns true if the env context has zoom. */
+    const hasZoom = () => {
+      const envChildPath = contextToPath(state, env[child.value])
+      return envChildPath && attribute(state, head(envChildPath), '=focus') === 'Zoom'
+    }
+    return isFunction(child.value) && child.value in env && hasZoom()
+  })
   return child ? [...env[child.value], '=focus', 'Zoom'] : null
 }
 
@@ -142,7 +149,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const contextLive = pathToContext(state, simplePathLive)
   const cursorContext = cursor ? pathToContext(state, cursor) : null
 
-  const contextBinding = parseJsonSafe(attribute(state, contextLive, '=bindContext') ?? '', undefined) as
+  const contextBinding = parseJsonSafe(attribute(state, head(simplePathLive), '=bindContext') ?? '', undefined) as
     | Path
     | undefined
 
@@ -444,7 +451,7 @@ export const SubthoughtsComponent = ({
     }) ||
     globalSort
   const { cursor } = state
-  const context = pathToContext(state, simplePath)
+  const thoughtId = head(simplePath)
   //  const value = headValue(simplePath)
   const resolvedPath = path ?? simplePath
 
@@ -582,10 +589,11 @@ export const SubthoughtsComponent = ({
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
 
-  const contextChildren = [...unroot(context), '=children'] // children of parent with =children
-  const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
-  const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
-  const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
+  const childrenAttributeId = findDescendant(state, thoughtId, ['=children'])
+  const grandchildrenAttributeId = findDescendant(state, thoughtId, ['=grandchildren'])
+  const hideBulletsChildren = childrenAttributeId && attribute(state, childrenAttributeId, '=bullet') === 'None'
+  const hideBulletsGrandchildren =
+    grandchildrenAttributeId && attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
   // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
   return (
@@ -612,18 +620,25 @@ export const SubthoughtsComponent = ({
 
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
             const childContext = pathToContext(state, childPath)
-            const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(state, { context: childContext, env }))
+            const childEnvZoomId = once(() => {
+              const context = findFirstEnvContextWithZoom(state, { context: childContext, env })
+              return context && contextToThoughtId(state, context)
+            })
             /** Returns true if the cursor in in the child path. */
             const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
 
             /** Returns true if the bullet should be hidden. */
-            const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
+            const hideBullet = () => attribute(state, head(childPath), '=bullet') === 'None'
 
             /** Returns true if the bullet should be hidden if zoomed. */
-            const hideBulletZoom = (): boolean =>
-              isEditingChildPath() &&
-              (attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None' ||
-                (!!childContextEnvZoom() && attribute(state, childContextEnvZoom()!, '=bullet') === 'None'))
+            const hideBulletZoom = (): boolean => {
+              if (!isEditingChildPath()) return false
+              const zoomId = findDescendant(state, head(childPath), ['=focus', 'Zoom'])
+              return (
+                (zoomId && attribute(state, zoomId, '=bullet') === 'None') ||
+                (!!childEnvZoomId() && attribute(state, childEnvZoomId()!, '=bullet') === 'None')
+              )
+            }
 
             /** Gets the =focus/Zoom/=style of the child path. */
 

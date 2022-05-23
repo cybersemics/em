@@ -16,6 +16,7 @@ import { ThoughtId, Context, GesturePath, Index, LazyEnv, Path, SimplePath, Stat
 import {
   appendToPath,
   checkIfPathShareSubcontext,
+  contextToThoughtId,
   ellipsize,
   equalArrays,
   equalPath,
@@ -44,6 +45,8 @@ import {
   attributeEquals,
   childIdsToThoughts,
   childrenFilterPredicate,
+  contextToPath,
+  findDescendant,
   getAllChildren,
   getAllChildrenSorted,
   getChildPath,
@@ -95,9 +98,14 @@ const findFirstEnvContextWithZoom = (
   { context, env }: { context: Context; env: LazyEnv },
 ): Context | null => {
   const children = getAllChildrenAsThoughts(state, context)
-  const child = children.find(
-    child => isFunction(child.value) && child.value in env && attribute(state, env[child.value], '=focus') === 'Zoom',
-  )
+  const child = children.find(child => {
+    /** Returns true if the env context has zoom. */
+    const hasZoom = () => {
+      const envChildPath = contextToPath(state, env[child.value])
+      return envChildPath && attribute(state, head(envChildPath), '=focus') === 'Zoom'
+    }
+    return isFunction(child.value) && child.value in env && hasZoom()
+  })
   return child ? [...env[child.value], '=focus', 'Zoom'] : null
 }
 
@@ -135,7 +143,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const contextLive = pathToContext(state, simplePathLive)
   const cursorContext = cursor ? pathToContext(state, cursor) : null
 
-  const contextBinding = parseJsonSafe(attribute(state, contextLive, '=bindContext') ?? '', undefined) as
+  const contextBinding = parseJsonSafe(attribute(state, head(simplePathLive), '=bindContext') ?? '', undefined) as
     | Path
     | undefined
 
@@ -265,7 +273,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   /** Returns true if the thought is in table view and has more than two columns. This is the case when every row has at least two matching children in column 2. If this is the case, it will get rendered in multi column mode where grandchildren are used as header columns. */
   const isMultiColumnTable = () => {
-    const view = attribute(state, thoughtsLive, '=view')
+    const view = attribute(state, head(simplePathLive), '=view')
     if (view !== 'Table') return false
     const childrenFiltered = allChildren
       .map(childId => getThoughtById(state, childId))
@@ -562,6 +570,7 @@ export const SubthoughtsComponent = ({
   const state = store.getState()
   const [page, setPage] = useState(1)
   const { cursor } = state
+  const thoughtId = head(simplePath)
   const context = pathToContext(state, simplePath)
   const thought = getThoughtById(state, head(simplePath))
   const { value } = thought
@@ -708,8 +717,12 @@ export const SubthoughtsComponent = ({
   const contextGrandchildren = [...unroot(parentOf(context)), '=grandchildren'] // context of grandparent with =grandchildren
   const styleChildren = getStyle(state, contextChildren)
   const styleGrandChildren = getStyle(state, contextGrandchildren)
-  const hideBulletsChildren = attribute(state, contextChildren, '=bullet') === 'None'
-  const hideBulletsGrandchildren = attribute(state, contextGrandchildren, '=bullet') === 'None'
+
+  const childrenAttributeId = findDescendant(state, thoughtId, ['=children'])
+  const grandchildrenAttributeId = findDescendant(state, thoughtId, ['=grandchildren'])
+  const hideBulletsChildren = childrenAttributeId && attribute(state, childrenAttributeId, '=bullet') === 'None'
+  const hideBulletsGrandchildren =
+    grandchildrenAttributeId && attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
   const headerChildren = getAllChildren(state, [...unroot(context), filteredChildren[0]?.value])
@@ -842,6 +855,10 @@ export const SubthoughtsComponent = ({
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
             const childContext = pathToContext(state, childPath)
             const childContextEnvZoom = once(() => findFirstEnvContextWithZoom(state, { context: childContext, env }))
+            const childEnvZoomId = once(() => {
+              const context = findFirstEnvContextWithZoom(state, { context: childContext, env })
+              return context && contextToThoughtId(state, context)
+            })
 
             /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
             const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
@@ -864,13 +881,17 @@ export const SubthoughtsComponent = ({
             }
 
             /** Returns true if the bullet should be hidden. */
-            const hideBullet = () => attribute(state, childContext, '=bullet') === 'None'
+            const hideBullet = () => attribute(state, head(childPath), '=bullet') === 'None'
 
             /** Returns true if the bullet should be hidden if zoomed. */
-            const hideBulletZoom = (): boolean =>
-              isEditingChildPath() &&
-              (attribute(state, [...childContext, '=focus', 'Zoom'], '=bullet') === 'None' ||
-                (!!childContextEnvZoom() && attribute(state, childContextEnvZoom()!, '=bullet') === 'None'))
+            const hideBulletZoom = (): boolean => {
+              if (!isEditingChildPath()) return false
+              const zoomId = findDescendant(state, head(childPath), ['=focus', 'Zoom'])
+              return (
+                (zoomId && attribute(state, zoomId, '=bullet') === 'None') ||
+                (!!childEnvZoomId() && attribute(state, childEnvZoomId()!, '=bullet') === 'None')
+              )
+            }
 
             const appendedChildPath = appendChildPath(state, childPath, path)
             const isChildCursor = cursor && equalPath(appendedChildPath, state.cursor)

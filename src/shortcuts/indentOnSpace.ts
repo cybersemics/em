@@ -1,4 +1,4 @@
-import { isDocumentEditable, pathToContext } from '../util'
+import { head, isDocumentEditable } from '../util'
 import { hasChild } from '../selectors'
 import { indent } from '../action-creators'
 import { Shortcut, State } from '../@types'
@@ -10,12 +10,11 @@ const canExecute = (getState: () => State) => {
   const { cursor } = state
   if (!cursor) return false
 
-  const cursorContext = pathToContext(state, cursor)
+  /** Returns true if the cursor is immovable. */
+  const immovable = () => hasChild(state, head(cursor), '=immovable')
 
-  // eslint-disable-next-line
-  const immovable = () => hasChild(state, cursorContext, '=immovable')
-  // eslint-disable-next-line
-  const readonly = () => hasChild(state, cursorContext, '=readonly')
+  /** Returns true if the cursor is readonly. */
+  const readonly = () => hasChild(state, head(cursor), '=readonly')
 
   // isActive is not enough on its own, because there is a case where there is a selection object but no focusNode and we want to still execute the shortcut
   if (!selection.isActive() && selection.isText()) return false

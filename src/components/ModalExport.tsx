@@ -30,7 +30,7 @@ import useOnClickOutside from 'use-onclickoutside'
 import download from '../device/download'
 import * as selection from '../device/selection'
 import { Context, ExportOption, Thought, Path, SimplePath, State, ThoughtsInterface } from '../@types'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 /** Use a throttled callback. */
 // https://stackoverflow.com/a/62017005/480608
@@ -241,16 +241,14 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
  *****************************************************************************/
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
-const ModalExport: FC<{ context: Context; simplePath: SimplePath; cursor: Path }> = ({
-  context,
-  simplePath,
-  cursor,
-}) => {
+const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath, cursor }) => {
   const store = useStore()
   const dispatch = useDispatch()
   const state = store.getState()
+  const context = pathToContext(state, simplePath)
   const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
+  const titleId = contextToThoughtId(state, contextTitle)
+  const titleChild = titleId ? getAllChildrenAsThoughtsById(state, titleId)[0] : null
   const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
   const titleShort = ellipsize(title)
@@ -648,7 +646,7 @@ const ModalExportWrapper = () => {
 
   return (
     <PullProvider context={context}>
-      <ModalExport simplePath={simplePath} cursor={cursor} context={context} />
+      <ModalExport simplePath={simplePath} cursor={cursor} />
     </PullProvider>
   )
 }

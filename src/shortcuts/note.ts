@@ -1,6 +1,6 @@
 import { attribute, simplifyPath } from '../selectors'
 import PencilIcon from '../components/icons/PencilIcon'
-import { isDocumentEditable, pathToContext } from '../util'
+import { head, isDocumentEditable } from '../util'
 import { toggleNote } from '../action-creators'
 import { Shortcut } from '../@types'
 import { HOME_PATH } from '../constants'
@@ -25,8 +25,8 @@ const noteShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
-    return attribute(state, context, '=note') != null
+    const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
+    return attribute(state, head(path), '=note') != null
   },
 }
 

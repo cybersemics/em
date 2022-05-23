@@ -13,7 +13,7 @@ const deleteAtribute = (state: State, { path, key }: { path: Path; key: string }
   const thoughtAttribute = getAllChildrenAsThoughtsById(state, head(path)).find(child => child.value === key)
   const pathAttribute = thoughtAttribute ? [...path, thoughtAttribute.id] : null
 
-  return pathAttribute && hasChild(state, context, key)
+  return pathAttribute && hasChild(state, head(path), key)
     ? deleteThought(state, {
         context,
         showContexts: false,

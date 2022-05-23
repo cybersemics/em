@@ -1,9 +1,9 @@
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { attribute } from '../../selectors'
 import { importText } from '../../action-creators'
 import pinSubthoughtsShortcut from '../pinSubthoughts'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import attributeByContext from '../../test-helpers/attributeByContext'
 
 it('toggle on when there is no =pinChildren', () => {
   const store = createTestStore()
@@ -27,7 +27,7 @@ it('toggle on when there is no =pinChildren', () => {
   executeShortcut(pinSubthoughtsShortcut, { store })
 
   // parent of cursor should have =pinChildren set to true
-  expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('true')
+  expect(attributeByContext(store.getState(), ['a'], '=pinChildren')).toBe('true')
 })
 
 it('toggle on when =pinChildren is false', () => {
@@ -54,7 +54,7 @@ it('toggle on when =pinChildren is false', () => {
   executeShortcut(pinSubthoughtsShortcut, { store })
 
   // parent of cursor should have =pinChildren set to true
-  expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe('true')
+  expect(attributeByContext(store.getState(), ['a'], '=pinChildren')).toBe('true')
 })
 
 it('remove =pinChildren when toggling off from true', () => {
@@ -81,5 +81,5 @@ it('remove =pinChildren when toggling off from true', () => {
   executeShortcut(pinSubthoughtsShortcut, { store })
 
   // parent of cursor should not have =pinChildren set to true
-  expect(attribute(store.getState(), ['a'], '=pinChildren')).toBe(null)
+  expect(attributeByContext(store.getState(), ['a'], '=pinChildren')).toBe(null)
 })
