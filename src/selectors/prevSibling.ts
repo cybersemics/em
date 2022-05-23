@@ -7,7 +7,7 @@ import {
   isAncestorsVisible,
   getSortPreference,
 } from '../selectors'
-import { head } from '../util'
+import { contextToThoughtId, head } from '../util'
 import { Context, Thought, State } from '../@types'
 import thoughtToContext from './thoughtToContext'
 
@@ -22,8 +22,13 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   const getContextSiblings = () => getContextsSortedAndRanked(state, head(context))
 
   /** Gets siblings of thought. */
-  const getThoughtSiblings = () =>
-    (getSortPreference(state, context).type === 'Alphabetical' ? getChildrenSorted : getChildrenRanked)(state, context)
+  const getThoughtSiblings = () => {
+    const id = contextToThoughtId(state, context)
+    return (id && getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSorted : getChildrenRanked)(
+      state,
+      context,
+    )
+  }
 
   const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings()
   let prev = null // eslint-disable-line fp/no-let

@@ -366,7 +366,7 @@ const ThoughtContainer = ({
   const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
   const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
 
-  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
+  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
   const draggingThoughtValue = state.draggingThought
     ? getThoughtById(state, headId(state.draggingThought))?.value

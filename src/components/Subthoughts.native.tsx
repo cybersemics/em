@@ -57,7 +57,7 @@ import {
   getAllChildrenSorted,
   getChildPath,
   getChildren,
-  getChildrenRanked,
+  getChildrenRankedById,
   getContextsSortedAndRanked,
   getEditingPath,
   getGlobalSortPreference,
@@ -473,8 +473,8 @@ export const SubthoughtsComponent = ({
     childrenForced || showContexts
       ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : sortPreference?.type !== 'None'
-      ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
-      : getChildrenRanked(state, pathToContext(state, contextBinding || simplePath))
+      ? getAllChildrenSorted(state, thoughtId) // TODO: contextBinding
+      : getChildrenRankedById(state, thoughtId) // TODO: contextBinding
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding

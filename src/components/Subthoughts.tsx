@@ -10,7 +10,7 @@ import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import { ThoughtId, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { ThoughtId, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State } from '../@types'
 
 // util
 import {
@@ -264,7 +264,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   */
   const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
 
-  const sortPreference = getSortPreference(state, pathToContext(state, simplePathLive))
+  const sortPreference = getSortPreference(state, head(simplePathLive))
 
   const hashedPath = hashPath(pathLive)
 
@@ -594,29 +594,13 @@ export const SubthoughtsComponent = ({
     childrenForced || showContexts
       ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : contextSortType !== 'None'
-      ? getAllChildrenSorted(state, pathToContext(state, contextBinding || simplePath))
+      ? getAllChildrenSorted(state, thoughtId)
       : /*
           @MIGRATION_TODO: Thought should be accessed using path or id instead of context.
           Due to pending merge mechanism, sometimes a context can have duplicates for a brief moment. So access by context can be problematic.
           Migrate all possible context based selectors to use path or thought ids.
         */
         getChildrenRankedById(state, head(simplePath))
-
-  // check duplicate ranks for debugging
-  // React prints a warning, but it does not show which thoughts are colliding
-  if (globals.checkDuplicateRanks) {
-    children.reduce((accum, child) => {
-      const match = accum[child.rank]
-      if (match) {
-        console.warn('Duplicate child rank', match[0], child)
-        console.warn('simplePath', simplePath)
-      }
-      return {
-        ...accum,
-        [child.rank]: [...match, child],
-      }
-    }, {} as Index<ThoughtId[] | ThoughtContext[]>)
-  }
 
   const cursorThoughtArray = cursor && childIdsToThoughts(state, cursor)
   // Ensure that editable newThought is visible.
@@ -718,7 +702,7 @@ export const SubthoughtsComponent = ({
   const hideBulletsChildren = childrenAttributeId && attribute(state, childrenAttributeId, '=bullet') === 'None'
   const hideBulletsGrandchildren =
     grandchildrenAttributeId && attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
-  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
+  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
   /** In a Multi Column table, gets the children that serve as the column headers. */
   const headerChildrenWithFirstColumn = () => {

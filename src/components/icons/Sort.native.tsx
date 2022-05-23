@@ -4,14 +4,13 @@ import { useSelector } from 'react-redux'
 import { HOME_PATH } from '../../constants'
 import { Icon as IconType, State } from '../../@types'
 import { simplifyPath, getSortPreference } from '../../selectors'
-import { pathToContext } from '../../util'
+import { head } from '../../util'
 
 /** Get sort direction of cursor. */
 const getCursorSortDirection = (state: State) => {
   const { cursor } = state
   const simplePath = simplifyPath(state, cursor || HOME_PATH)
-  const context = pathToContext(state, simplePath)
-  return getSortPreference(state, context).direction
+  return getSortPreference(state, head(simplePath)).direction
 }
 
 /** Ascending Icon Component. */

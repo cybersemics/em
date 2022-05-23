@@ -152,7 +152,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       : insertNewSubthought || !simplePath
       ? // if inserting an empty thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
         // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
-        value === '' && getSortPreference(state, thoughts).type === 'Alphabetical' && getLastSortedChildPath()
+        value === '' && getSortPreference(state, thoughtId).type === 'Alphabetical' && getLastSortedChildPath()
         ? getRankAfter(state, getLastSortedChildPath()!)
         : getNextRank(state, thoughts)
       : getRankAfter(state, simplePath)

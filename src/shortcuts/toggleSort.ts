@@ -2,7 +2,7 @@ import { HOME_PATH } from '../constants'
 import { simplifyPath, getSortPreference } from '../selectors'
 import { alert, deleteAttribute, toggleAttribute } from '../action-creators'
 import Icon from '../components/icons/Sort'
-import { pathToContext, unroot } from '../util'
+import { head, pathToContext, unroot } from '../util'
 import { Shortcut, SortPreference } from '../@types'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 
@@ -41,8 +41,9 @@ const toggleSortShortcut: Shortcut = {
     const { cursor } = state
 
     const simplePath = cursor || HOME_PATH
+    const id = head(simplePath)
     const context = pathToContext(state, simplePath)
-    const currentSortPreference = getSortPreference(state, context)
+    const currentSortPreference = getSortPreference(state, id)
     const globalSortPreference = getGlobalSortPreference(state)
     const nextSortPreference = decideNextSortPreference(currentSortPreference)
 
@@ -107,9 +108,9 @@ const toggleSortShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
 
-    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
+    const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
 
-    return getSortPreference(state, context).type === 'Alphabetical'
+    return getSortPreference(state, head(path)).type === 'Alphabetical'
   },
 }
 

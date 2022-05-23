@@ -99,9 +99,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const { path } = props
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePathLive!
-  const simpleThoughts = pathToContext(state, props.simplePathLive!)
-  const context = parentOf(simpleThoughts)
-  const isSorted = getSortPreference(state, context).type !== 'None'
+  const isSorted = getSortPreference(state, head(props.simplePathLive!)).type !== 'None'
 
   const distance = cursor ? cursor?.length - thoughtsTo.length : 0
 

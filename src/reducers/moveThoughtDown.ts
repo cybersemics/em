@@ -22,7 +22,6 @@ const moveThoughtDown = (state: State) => {
 
   const thoughtId = head(cursor)
   const pathParent = parentOf(cursor)
-  const context = pathToContext(state, pathParent)
   const parentId = head(pathParent)
   const cursorThought = getThoughtById(state, head(cursor))
   const { value, rank } = cursorThought
@@ -36,7 +35,7 @@ const moveThoughtDown = (state: State) => {
   if (!nextThought && !nextUnclePath) return state
 
   // get sorted state
-  const isSorted = getSortPreference(state, context).type !== 'None'
+  const isSorted = getSortPreference(state, parentId).type !== 'None'
 
   if (isSorted && !nextUnclePath) {
     return alert(state, {
