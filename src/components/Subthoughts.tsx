@@ -720,10 +720,14 @@ export const SubthoughtsComponent = ({
     grandchildrenAttributeId && attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
-  const headerChildren = getAllChildren(state, [...unroot(context), filteredChildren[0]?.value])
-    .map(childId => getThoughtById(state, childId))
-    .filter(x => x && !isFunction(x.value))
-  const headerChildrenWithFirstColumn = [{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren
+  /** In a Multi Column table, gets the children that serve as the column headers. */
+  const headerChildrenWithFirstColumn = () => {
+    if (!isMultiColumnTable) return []
+    const headerChildren = getAllChildren(state, [...unroot(context), filteredChildren[0]?.value])
+      .map(childId => getThoughtById(state, childId))
+      .filter(x => x && !isFunction(x.value))
+    return isMultiColumnTable ? ([{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren) : []
+  }
 
   return (
     <>
@@ -756,7 +760,7 @@ export const SubthoughtsComponent = ({
             /* TODO: Consolidate with filteredChildren items */
             isMultiColumnTable && (
               <li className='child is-multi-column'>
-                {headerChildrenWithFirstColumn.map((child, i) => {
+                {headerChildrenWithFirstColumn().map((child, i) => {
                   if ((child as any).headerFirstColumn) {
                     return <ul key=''></ul>
                   }
