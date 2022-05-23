@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { getSortPreference, hasChild } from '../selectors'
+import { getSortPreference, hasChild, thoughtToPath } from '../selectors'
 import {
   compareByRank,
   compareThought,
@@ -8,9 +8,8 @@ import {
   isAbsolute,
   isFunction,
   sort,
-  pathToContext,
   unroot,
-  isDescendant,
+  isDescendantPath,
   splice,
   head,
 } from '../util'
@@ -200,27 +199,24 @@ const isChildInCursor = (state: State, path: Path, child: Thought) => {
   return state.cursor && state.cursor[childPath.length - 1] === child.id
 }
 
-/** Check if the cursor is a meta attribute && the given context is the descendant of the cursor.  */
-const isDescendantOfMetaCursor = (state: State, context: Context): boolean => {
+/** Check if the cursor is a meta attribute && the given Path is the descendant of the cursor.  */
+const isDescendantOfMetaCursor = (state: State, path: Path): boolean => {
   if (!state.cursor) return false
 
   const { value: cursorValue } = getThoughtById(state, head(state.cursor))
 
-  return isFunction(cursorValue) && isDescendant(pathToContext(state, state.cursor), context)
+  return isFunction(cursorValue) && isDescendantPath(path, state.cursor)
 }
 
 /** Checks if the child is visible or if the child lies within the cursor or is descendant of the meta cursor. */
-const isChildVisibleWithCursorCheck = _.curry((state: State, path: SimplePath, thought: Thought) => {
-  const context = pathToContext(state, path)
-  const childContext = unroot([...context, thought.value])
-
-  return (
+const isChildVisibleWithCursorCheck = _.curry(
+  (state: State, path: SimplePath, thought: Thought) =>
     state.showHiddenThoughts ||
     isChildVisible(state, thought) ||
     isChildInCursor(state, path, thought) ||
-    isDescendantOfMetaCursor(state, childContext)
-  )
-}, 3)
+    isDescendantOfMetaCursor(state, thoughtToPath(state, thought.id)),
+  3,
+)
 
 /** Checks if the child is created after latest absolute context toggle. */
 const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: ThoughtId | ThoughtContext) => {
