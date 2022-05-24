@@ -9,18 +9,14 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { headValue } from '../../util'
-
-// selectors
-import { getContexts, getChildrenRanked, childIdsToThoughts } from '../../selectors'
-
+import { contextToThoughtId, headValue } from '../../util'
+import { findDescendant, getContexts, getChildrenRankedById } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
-
-import { ThoughtId, Path } from '../../@types'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { doStringsMatch } from '../../util/doStringsMatch'
+import { ThoughtId, Path } from '../../@types'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT2_PARENT
 
@@ -36,16 +32,14 @@ const { smallText, italic } = commonStyles
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }: IComponentProps) => {
   const state = store.getState()
 
-  const children = childIdsToThoughts(state, rootChildren)
+  const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
+  const tutorialChoiceId =
+    tutorialChoiceParentId && findDescendant(state, tutorialChoiceParentId, TUTORIAL_CONTEXT[tutorialChoice])
   // e.g. Work
   return (
-    children.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
-    // e.g. Work/To Do
-    getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child =>
-      doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
-    ) &&
+    tutorialChoiceId &&
     // e.g. Work/To Do/y
-    getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+    getChildrenRankedById(state, tutorialChoiceId).length > 0
   )
 }
 
@@ -58,8 +52,6 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
 
-  const children = childIdsToThoughts(state, rootChildren)
-
   if (isContext2SubthoughtCreated) {
     return (
       <Fragment>
@@ -68,6 +60,9 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
       </Fragment>
     )
   }
+
+  const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
+
   return (
     <Fragment>
       <Text style={smallText}>Very good!</Text>
@@ -96,9 +91,9 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
       </Text>
       {
         // e.g. Work
-        children.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT2_PARENT[tutorialChoice])) &&
+        tutorialChoiceParentId &&
         // e.g. Work/To Do
-        getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(child =>
+        getChildrenRankedById(state, tutorialChoiceParentId).find(child =>
           doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
         ) ? (
           <>

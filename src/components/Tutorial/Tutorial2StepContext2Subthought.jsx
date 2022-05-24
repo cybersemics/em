@@ -10,28 +10,23 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { headValue, isRoot, joinConjunction } from '../../util'
-
-// selectors
-import { getContexts, getChildrenRanked, childIdsToThoughts, parentOfThought } from '../../selectors'
-
+import { contextToThoughtId, headValue, isRoot, joinConjunction } from '../../util'
+import { findDescendant, getContexts, getChildrenRankedById, getChildrenRanked, parentOfThought } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {
   const state = store.getState()
-  const children = childIdsToThoughts(state, rootChildren)
 
+  const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
+  const tutorialChoiceId =
+    tutorialChoiceParentId && findDescendant(state, tutorialChoiceParentId, TUTORIAL_CONTEXT[tutorialChoice])
   // e.g. Work
   return (
-    children.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) &&
-    // e.g. Work/To Do
-    getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(
-      child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
-    ) &&
+    tutorialChoiceId &&
     // e.g. Work/To Do/y
-    getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice], TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+    getChildrenRankedById(state, tutorialChoiceId).length > 0
   )
 }
 

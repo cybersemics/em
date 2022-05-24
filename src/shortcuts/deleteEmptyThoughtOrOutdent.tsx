@@ -5,7 +5,7 @@ import {
   getChildren,
   getChildrenById,
   getThoughtBefore,
-  getChildrenRanked,
+  getChildrenRankedById,
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
@@ -41,7 +41,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
 
   const contextChain = splitChain(state, cursor)
   const path = lastThoughtsFromContextChain(state, contextChain)
-  const hasChildren = getChildrenRanked(state, pathToContext(state, path)).length > 0
+  const hasChildren = getChildrenRankedById(state, head(path)).length > 0
   const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 

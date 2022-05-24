@@ -1,5 +1,5 @@
-import { head, pathToContext } from '../util'
-import { getChildrenSorted } from '../selectors'
+import { head } from '../util'
+import { getChildrenSortedById } from '../selectors'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
 import getThoughtById from './getThoughtById'
@@ -9,7 +9,7 @@ const getThoughtBefore = (state: State, simplePath: SimplePath) => {
   const cursorThought = getThoughtById(state, head(simplePath))
   const { value, rank } = cursorThought
   const parentPath = rootedParentOf(state, simplePath)
-  const children = getChildrenSorted(state, pathToContext(state, parentPath))
+  const children = getChildrenSortedById(state, head(parentPath))
 
   // if there are no children, start with rank 0
   if (children.length === 0) {

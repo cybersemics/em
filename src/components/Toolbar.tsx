@@ -18,6 +18,7 @@ import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
 import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import { subtree, theme } from '../selectors'
+import { contextToThoughtId } from '../util'
 import { Icon, State, Timer } from '../@types'
 
 // components
@@ -189,7 +190,8 @@ const Toolbar = ({
   }
 
   // fallback to defaults if user does not have Settings defined
-  const userShortcutIds = subtree(store.getState(), ['Settings', 'Toolbar', 'Visible:'])
+  const visibleShortcutsId = contextToThoughtId(store.getState(), ['Settings', 'Toolbar', 'Visible:'])
+  const userShortcutIds = (visibleShortcutsId ? subtree(store.getState(), visibleShortcutsId) : [])
     .map(subthought => subthought.value)
     .filter(shortcutById)
   const shortcutIds = userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS

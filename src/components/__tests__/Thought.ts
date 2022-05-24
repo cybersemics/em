@@ -1,7 +1,7 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { getChildrenRanked } from '../../selectors'
+import { getChildrenRankedById, getChildrenRanked } from '../../selectors'
 import { importText } from '../../action-creators'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -34,7 +34,7 @@ it('create, navigate, and edit thoughts', async () => {
   windowEvent('keydown', { key: 'Enter', shiftKey: true, ctrlKey: true })
 
   // state
-  const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
+  const rootSubthoughts = getChildrenRankedById(store.getState(), HOME_TOKEN)
   expect(rootSubthoughts).toHaveLength(1)
   expect(rootSubthoughts[0]).toMatchObject({ value: 'a', rank: 0 })
 
@@ -121,7 +121,7 @@ it('do not allow edit to duplicate thought', async () => {
   windowEvent('keydown', { key: 'Escape' })
 
   // state
-  const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
+  const rootSubthoughts = getChildrenRankedById(store.getState(), HOME_TOKEN)
   expect(rootSubthoughts).toMatchObject([
     { value: 'a', rank: 0 },
     { value: 'b', rank: 1 },
@@ -152,7 +152,7 @@ it('allow duplicate empty thoughts', async () => {
   windowEvent('keydown', { key: 'Escape' })
 
   // state
-  const rootSubthoughts = getChildrenRanked(store.getState(), [HOME_TOKEN])
+  const rootSubthoughts = getChildrenRankedById(store.getState(), HOME_TOKEN)
   expect(rootSubthoughts).toMatchObject([
     { value: '', rank: 0 },
     { value: 'a', rank: 1 },

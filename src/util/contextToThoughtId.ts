@@ -21,8 +21,7 @@ import { childIdsToThoughts, getThoughtById } from '../selectors'
 
 /** Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. */
 export const contextToThoughtId = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {
-  const root = isRoot(thoughts)
-  if (root) return thoughts[0] as ThoughtId
+  if (isRoot(thoughts)) return thoughts[0] as ThoughtId
 
   const startsWithEM = thoughts[0] === EM_TOKEN
   const rootThought = getThoughtById(state, startsWithEM ? EM_TOKEN : (state.rootContext[0] as ThoughtId))

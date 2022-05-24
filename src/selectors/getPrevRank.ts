@@ -1,11 +1,12 @@
-import { getChildrenRanked } from '../selectors'
-import { isFunction } from '../util'
+import { getChildrenRankedById } from '../selectors'
+import { contextToThoughtId, isFunction } from '../util'
 import { Context, State } from '../@types'
 
 /** Gets a rank that comes before all visible thoughts in a context. */
 // TODO: Take context not path
 const getPrevRank = (state: State, context: Context, { aboveMeta }: { aboveMeta?: boolean } = {}) => {
-  const children = getChildrenRanked(state, context)
+  const id = contextToThoughtId(state, context)
+  const children = id ? getChildrenRankedById(state, id) : []
 
   // no children
   if (children.length === 0) return 0

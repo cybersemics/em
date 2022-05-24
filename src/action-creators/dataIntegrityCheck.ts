@@ -6,7 +6,7 @@ import { parentOf, equalThoughtValue, hashThought, head, pathToContext, timestam
 
 // selectors
 import {
-  getChildrenRanked,
+  getChildrenRankedById,
   getLexeme,
   getSetting,
   getThoughtById,
@@ -110,7 +110,7 @@ const dataIntegrityCheck =
       }
 
       // recreate thoughts missing in thoughtIndex
-      // const contextSubthoughts = getChildrenRanked(state, pathContext)
+      // const contextSubthoughts = getChildrenRankedById(state, pathContext)
       if (recreateMissingThoughtIndex) {
         const thoughtIndexUpdates = lexeme.contexts.reduce((accum: any, cx: ThoughtContext) => {
           const otherContextChildren = getThoughtById(state, cx).children
@@ -161,9 +161,9 @@ const dataIntegrityCheck =
 
       // sync divergent ranks
       if (syncDivergentRanks) {
-        const thoughtIndexThoughtsMatchingValue = getChildrenRanked(
+        const thoughtIndexThoughtsMatchingValue = getChildrenRankedById(
           state,
-          rootedParentOf(state, pathToContext(state, simplePath)),
+          head(rootedParentOf(state, simplePath)),
         ).filter(equalThoughtValue(value))
 
         if (thoughtIndexThoughtsMatchingValue.length > 0) {

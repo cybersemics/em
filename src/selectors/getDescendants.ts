@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { compareByRank, sort, unroot } from '../util'
-import { getChildrenRanked } from '../selectors'
+import { compareByRank, contextToThoughtId, sort, unroot } from '../util'
+import { getChildrenRankedById } from '../selectors'
 import { Context, Thought, State, ThoughtId } from '../@types'
-import { getAllChildrenAsThoughts } from './getChildren'
+import { getAllChildrenAsThoughtsById } from './getChildren'
 import childIdsToThoughts from './childIdsToThoughts'
 import getThoughtById from './getThoughtById'
 
@@ -29,7 +29,8 @@ interface OptionsContextInternal extends OptionsContext {
 /** Generates a flat list of all descendant Contexts. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed. */
 export const getDescendantContexts = (state: State, context: Context, options: OptionsContext = {}): Context[] => {
   const { filterFunction, ordered, recur } = options as OptionsContextInternal
-  const children = (ordered ? getChildrenRanked : getAllChildrenAsThoughts)(state, context)
+  const id = contextToThoughtId(state, context)
+  const children = id ? (ordered ? getChildrenRankedById : getAllChildrenAsThoughtsById)(state, id) : []
   const filteredChildren = filterFunction ? children.filter(thought => filterFunction(thought, context)) : children
   // only append current thought in recursive calls
   return (recur ? [context] : []).concat(

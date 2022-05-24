@@ -1,4 +1,4 @@
-import { attribute, getChildrenRanked } from '../selectors'
+import { attribute, getChildrenRankedById } from '../selectors'
 import { contextToThoughtId, head, isFunction, isRoot, unroot } from '../util'
 import { Context, MimeType, Thought, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
@@ -41,9 +41,9 @@ export const exportContext = (
   const tab2 = tab1 + '  '
   const childrenPrefix = format === 'text/html' ? `\n${tab2}<ul>` : ''
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
-  const children = getChildrenRanked(state, context)
-  const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
   const thoughtId = contextToThoughtId(state, context)
+  const children = thoughtId ? getChildrenRankedById(state, thoughtId) : []
+  const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 
   const childrenFiltered = children.filter(
     and(

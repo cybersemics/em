@@ -69,6 +69,7 @@ export {
   getChildrenRankedById,
   getAllChildrenSorted,
   getChildrenSorted,
+  getChildrenSortedById,
   hasChildren,
   isChildVisible,
   childrenFilterPredicate,

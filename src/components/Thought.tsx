@@ -49,7 +49,7 @@ import {
   childIdsToThoughts,
   findDescendant,
   getChildren,
-  getChildrenRanked,
+  getChildrenRankedById,
   getSortPreference,
   getStyle,
   getThoughtById,
@@ -302,7 +302,7 @@ const ThoughtContainer = ({
 
   const children = childrenForced
     ? childIdsToThoughts(state, childrenForced)
-    : getChildrenRanked(state, pathToContext(state, contextBinding || simplePathLive))
+    : getChildrenRankedById(state, head(simplePathLive)) // TODO: contextBinding
 
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))

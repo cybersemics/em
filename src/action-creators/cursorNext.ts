@@ -5,7 +5,7 @@ import { appendToPath, parentOf, pathToContext } from '../util'
 import { Thunk } from '../@types'
 
 // must be imported after util (???)
-import { attributeEquals, getChildrenSorted, getThoughtAfter, simplifyPath } from '../selectors'
+import { attributeEquals, getChildrenSortedById, getThoughtAfter, simplifyPath } from '../selectors'
 
 /** Moves the cursor to the next sibling, ignoring descendants. */
 const cursorNext = (): Thunk => (dispatch, getState) => {
@@ -13,7 +13,7 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
   const { cursor } = state
 
   if (!cursor) {
-    const children = getChildrenSorted(state, [HOME_TOKEN])
+    const children = getChildrenSortedById(state, HOME_TOKEN)
     if (children.length > 0) {
       dispatch(setCursor({ path: [children[0].id] }))
       scrollCursorIntoView()

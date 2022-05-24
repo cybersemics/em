@@ -1,7 +1,7 @@
 import React from 'react'
 import Gravatar from 'react-gravatar'
 import { store } from '../store'
-import { attribute, getChildrenRanked } from '../selectors'
+import { attribute, findDescendant, getChildrenRankedById } from '../selectors'
 import { contextToThoughtId } from '../util'
 import { Context } from '../@types'
 
@@ -11,7 +11,8 @@ const Byline = ({ context }: { context: Context }) => {
   // load =publish meta data
   const contextPublish = context.concat('=publish')
   const publishId = contextToThoughtId(state, contextPublish)
-  const bylineChildren = getChildrenRanked(state, contextPublish.concat('Byline'))
+  const bylineId = publishId ? findDescendant(state, publishId, 'Byline') : null
+  const bylineChildren = bylineId ? getChildrenRankedById(state, bylineId) : []
   const email = publishId && attribute(state, publishId, 'Email')
 
   return email || bylineChildren.length > 0 ? (

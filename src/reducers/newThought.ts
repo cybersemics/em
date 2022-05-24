@@ -35,7 +35,7 @@ import {
 
 // selectors
 import {
-  getChildrenSorted,
+  getChildrenSortedById,
   getNextRank,
   getPrevRank,
   getRankAfter,
@@ -128,7 +128,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
   const getLastSortedChildPath = once((): SimplePath | null => {
-    const lastChild = _.last(getChildrenSorted(state, thoughts))
+    const lastChild = _.last(getChildrenSortedById(state, thoughtId))
     return lastChild ? appendToPath(simplePath, lastChild.id) : null
   })
 
