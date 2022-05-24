@@ -613,7 +613,7 @@ export const SubthoughtsComponent = ({
 
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
-  const proposedPageSize = isRoot(simplePath) ? Infinity : PAGINATION_SIZE * page
+  const proposedPageSize = PAGINATION_SIZE * page
   if (editIndex > proposedPageSize - 1) {
     setPage(page + 1)
     return null
