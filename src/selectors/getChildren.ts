@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { getSortPreference, hasChild, thoughtToPath } from '../selectors'
+import { getSortPreference, thoughtToPath } from '../selectors'
 import {
   compareByRank,
   compareThought,
@@ -29,7 +29,8 @@ type GetThoughtsById = (state: State, id: ThoughtId) => Thought[]
 
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
 export const isChildVisible = _.curry((state: State, child: Thought) => {
-  return !isFunction(child.value) && !hasChild(state, child.id, '=hidden')
+  // temporarily disable =hidden for performance
+  return !isFunction(child.value) // && !hasChild(state, child.id, '=hidden')
 })
 
 /** Returns the thoughts for the given thought id. */

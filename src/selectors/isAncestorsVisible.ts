@@ -1,7 +1,6 @@
 import { Context, State } from '../@types'
-import { contextToThoughtId, isFunction } from '../util'
+import { isFunction } from '../util'
 import _ from 'lodash'
-import hasChild from './hasChild'
 
 /**
  * Checks if all ancestors of a context is visible.
@@ -12,10 +11,13 @@ const isAncestorsVisible = _.curry((state: State, context: Context) => {
     (!context.some(isFunction) &&
       // check if some ancestor have hidden attribute
       !context.some((value, index) => {
-        const currentContext = context.slice(0, index + 1)
-        if (isFunction(value)) return true
-        const thoughtId = contextToThoughtId(state, currentContext)
-        return thoughtId && hasChild(state, thoughtId, '=hidden')
+        // const currentContext = context.slice(0, index + 1)
+
+        // temporarily disable =hidden for performance
+        return isFunction(value)
+        // if (isFunction(value)) return true
+        // const thoughtId = contextToThoughtId(state, currentContext)
+        // return thoughtId && hasChild(state, thoughtId, '=hidden')
       }))
   )
 })
