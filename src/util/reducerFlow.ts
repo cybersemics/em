@@ -1,6 +1,6 @@
 import { State } from '../@types'
 
-type UnaryReducer<S> = (state: S) => S | null
+type UnaryReducer<S> = (state: S) => Partial<S> | null
 
 /**
  * Composes a list of reducers in order and merges the results.
@@ -11,10 +11,14 @@ type UnaryReducer<S> = (state: S) => S | null
 export const reducerFlow =
   <S = State>(reducers: (UnaryReducer<S> | null)[]) =>
   (initialState?: S) =>
-    reducers.reduce(
-      (state, reducer) => ({
-        ...state,
-        ...(reducer ? reducer(state as any) : null),
-      }),
-      initialState as S,
-    )
+    reducers.reduce((state, reducer) => {
+      const stateNew = reducer?.(state) || state
+      // return state reference as-is if unchanged
+      // stateNew is allowed to be partial, so we need to merge it into state
+      return stateNew === state
+        ? state
+        : {
+            ...state,
+            ...stateNew,
+          }
+    }, initialState as S)
