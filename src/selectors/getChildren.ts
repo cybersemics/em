@@ -1,6 +1,7 @@
 import _ from 'lodash'
-import { getSortPreference, thoughtToPath } from '../selectors'
+import { getSortPreference } from '../selectors'
 import {
+  appendToPath,
   compareByRank,
   compareThought,
   compareThoughtDescending,
@@ -208,7 +209,7 @@ const isChildVisibleWithCursorCheck = _.curry(
     state.showHiddenThoughts ||
     isChildVisible(state, thought) ||
     isChildInCursor(state, path, thought) ||
-    isDescendantOfMetaCursor(state, thoughtToPath(state, thought.id)),
+    isDescendantOfMetaCursor(state, appendToPath(path, thought.id)),
   3,
 )
 
