@@ -2,14 +2,14 @@ import React, { FC } from 'react'
 import { connect } from 'react-redux'
 
 import { ABSOLUTE_PATH, HOME_PATH } from '../constants'
-import { getSetting, getAllChildren, isTutorial } from '../selectors'
+import { getSetting, isTutorial } from '../selectors'
 import { isAbsolute } from '../util'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
-import { childrenFilterPredicate } from '../selectors/getChildren'
+import { childrenFilterPredicate, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import Editable from './Editable'
 import { SimplePath, State } from '../@types'
 import { storage } from '../util/storage'
@@ -39,7 +39,7 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   const isAbsoluteContext = isAbsolute(rootContext)
-  const children = getAllChildren(state, rootContext)
+  const children = getAllChildrenAsThoughts(state, rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
