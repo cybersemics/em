@@ -171,31 +171,38 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
 
-      const undoOrRedoState =
-        actionType === 'undoAction'
-          ? undoReducer(state, undoPatches)
-          : actionType === 'redoAction'
-          ? redoReducer(state, redoPatches)
-          : null
+      // Handle undoAction and redoAction.
+      // They are defined in the redux enhancer rather than in /reducers.
+      if (actionType === 'undoAction' || actionType === 'redoAction') {
+        const undoOrRedoState =
+          actionType === 'undoAction'
+            ? undoReducer(state, undoPatches)
+            : actionType === 'redoAction'
+            ? redoReducer(state, redoPatches)
+            : null
 
-      if (undoOrRedoState) {
         // do not omit pushQueue because that includes updates added by updateThoughts
         const omitted = _.pick(
           state,
           statePropertiesToOmit.filter(k => k !== 'pushQueue'),
         )
-        return { ...undoOrRedoState, ...omitted }
+
+        return { ...undoOrRedoState!, ...omitted }
       }
 
+      // otherwise run the normal reducer for the action
       const newState = reducer(state, action)
-      if (!UNDOABLE_ACTIONS[actionType]) {
-        return newState
-      }
 
-      // ignore the first importText since it is part of app initialization and should not be undone
-      // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
-      // https://github.com/cybersemics/em/issues/1494
-      if (actionType === 'importText' && !newState.undoPatches.length) {
+      if (
+        // bail if state has not changed
+        state === newState ||
+        // bail if the action is not undoable
+        !UNDOABLE_ACTIONS[actionType] ||
+        // ignore the first importText since it is part of app initialization and should not be undoable
+        // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
+        // See: https://github.com/cybersemics/em/issues/1494
+        (actionType === 'importText' && !newState.undoPatches.length)
+      ) {
         return newState
       }
 
