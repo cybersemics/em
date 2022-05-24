@@ -144,7 +144,7 @@ const ThoughtAnnotation = ({
   // recalculate when Lexemes are loaded
   // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
   useEffect(() => {
-    setNumContexts(contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0))
+    setNumContexts(value === '' ? 0 : contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0))
   }, [contexts, showHiddenThoughts])
 
   const url = isURL(value)
