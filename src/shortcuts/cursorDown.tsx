@@ -1,7 +1,7 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { parentOf, headValue, pathToContext } from '../util'
-import { attributeEquals } from '../selectors'
+import { head, headValue } from '../util'
+import { attributeEquals, rootedParentOf } from '../selectors'
 import { cursorDown } from '../action-creators'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
@@ -42,8 +42,8 @@ const cursorDownShortcut: Shortcut = {
     if (!cursor) return true
 
     // use default browser behavior in prose mode
-    const contextRanked = parentOf(cursor)
-    const isProseView = attributeEquals(state, pathToContext(state, contextRanked), '=view', 'Prose')
+    const parentId = head(rootedParentOf(state, cursor))
+    const isProseView = attributeEquals(state, parentId, '=view', 'Prose')
     const isProseMode = isProseView && selection.isActive() && selection.offset()! < headValue(state, cursor).length - 1
     if (isProseMode) return false
 

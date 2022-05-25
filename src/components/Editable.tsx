@@ -215,6 +215,7 @@ const Editable = ({
   const thoughtId = head(simplePath)
   const thoughts = pathToContext(state, simplePath)
   const value = thought.value || ''
+  const parentId = head(rootedParentOf(state, simplePath))
   const readonly = hasChild(state, thoughtId, '=readonly')
   const uneditable = hasChild(state, thoughtId, '=uneditable')
   const context =
@@ -225,7 +226,7 @@ const Editable = ({
       : state.rootContext
   const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
-  const isTableColumn1 = attributeEquals(store.getState(), context, '=view', 'Table')
+  const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const editableNonceRef = useRef(state.editableNonce)

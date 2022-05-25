@@ -1,6 +1,6 @@
 import React from 'react'
 import { attributeEquals, simplifyPath } from '../selectors'
-import { pathToContext } from '../util'
+import { head, pathToContext } from '../util'
 import { alert, toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
 import { HOME_PATH } from '../constants'
@@ -46,7 +46,7 @@ const pinSubthoughtsShortcut: Shortcut = {
     // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
-      const pinned = attributeEquals(state, context, '=pinChildren', 'true')
+      const pinned = attributeEquals(state, head(simplePath), '=pinChildren', 'true')
       dispatch(
         alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts', { clearDelay: 2000, showCloseLink: false }),
       )
@@ -63,8 +63,8 @@ const pinSubthoughtsShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
-    return attributeEquals(state, context, '=pinChildren', 'true')
+    const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
+    return attributeEquals(state, head(path), '=pinChildren', 'true')
   },
 }
 

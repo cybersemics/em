@@ -1,6 +1,6 @@
 import { Key } from 'ts-key-enum'
-import { attributeEquals, simplifyPath } from '../selectors'
-import { parentOf, isDocumentEditable, pathToContext } from '../util'
+import { attributeEquals, rootedParentOf, simplifyPath } from '../selectors'
+import { head, parentOf, isDocumentEditable } from '../util'
 import { cursorBack, outdent } from '../action-creators'
 import { Shortcut } from '../@types'
 
@@ -18,8 +18,8 @@ const moveCursorBackward: Shortcut = {
 
     const path = simplifyPath(state, cursor)
     // parentOf twice because we are checking if this thought is in column 2 of a table
-    const contextGrandparent = parentOf(parentOf(pathToContext(state, path)))
-    const isTable = attributeEquals(state, contextGrandparent, '=view', 'Table')
+    const grandparentId = head(rootedParentOf(state, parentOf(path)))
+    const isTable = attributeEquals(state, grandparentId, '=view', 'Table')
 
     dispatch(isTable ? cursorBack() : outdent())
   },

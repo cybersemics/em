@@ -230,6 +230,9 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // otherwise props changes and causes unnecessary re-renders
   const envSelf = parseLet(state, pathToContext(state, simplePath))
   const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
+  const parentChildrenAttributeId = cursor && findDescendant(state, head(rootedParentOf(state, cursor)), '=children')
+  const grandparentChildrenAttributeId =
+    cursor && findDescendant(state, head(rootedParentOf(state, parentOf(cursor))), '=children')
   /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
     1. Force actualDistance to 2 to hide thoughts.
@@ -237,14 +240,14 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   */
   const zoomCursor =
     cursor &&
-    (attributeEquals(state, cursorContext!, '=focus', 'Zoom') ||
-      attributeEquals(state, parentOf(cursorContext!).concat('=children'), '=focus', 'Zoom') ||
+    (attributeEquals(state, head(cursor), '=focus', 'Zoom') ||
+      attributeEquals(state, parentChildrenAttributeId, '=focus', 'Zoom') ||
       findFirstEnvContextWithZoom(state, { id: head(cursor), env }))
 
   const zoomParent =
     cursor &&
-    (attributeEquals(state, parentOf(cursorContext!), '=focus', 'Zoom') ||
-      attributeEquals(state, parentOf(parentOf(cursorContext!)).concat('=children'), '=focus', 'Zoom') ||
+    (attributeEquals(state, head(rootedParentOf(state, cursor)), '=focus', 'Zoom') ||
+      attributeEquals(state, grandparentChildrenAttributeId, '=focus', 'Zoom') ||
       findFirstEnvContextWithZoom(state, { id: head(rootedParentOf(state, cursor)), env }))
 
   const isEditingAncestor = isEditingPath && !isEditing

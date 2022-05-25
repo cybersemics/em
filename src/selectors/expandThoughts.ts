@@ -10,6 +10,7 @@ import {
 import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   appendToPath,
+  contextToThoughtId,
   equalArrays,
   hashPath,
   head,
@@ -31,21 +32,22 @@ const childValue = (state: State, child: ThoughtId | ThoughtContext, showContext
   showContexts ? parentOfThought(state, child)!.value : getThoughtById(state, child)?.value
 
 /** Returns true if the context is in table view. */
-const isTable = (state: State, context: Context) => attributeEquals(state, context, '=view', 'Table')
+const isTable = (state: State, id: ThoughtId) => attributeEquals(state, id, '=view', 'Table')
 
 /** Returns true if all children of the context should be pinned open. */
-const pinChildren = (state: State, context: Context) => attributeEquals(state, context, '=pinChildren', 'true')
+const pinChildren = (state: State, id: ThoughtId) => attributeEquals(state, id, '=pinChildren', 'true')
 
 /** Returns true if the context is the first column in a table view. */
-const isTableColumn1 = (state: State, context: Context) => attributeEquals(state, parentOf(context), '=view', 'Table')
+const isTableColumn1 = (state: State, path: Path) => attributeEquals(state, head(parentOf(path)), '=view', 'Table')
 
 /**
  * Check for =publish/=attributes/pinChildren in publish mode.
  * Note: Use 'pinChildren' so it is not interpreted in editing mode.
  */
-const publishPinChildren = (state: State, context: Context) =>
-  publishMode() &&
-  attributeEquals(state, unroot([...context, '=publish', '=attributes']) as Context, 'pinChildren', 'true')
+const publishPinChildren = (state: State, context: Context) => {
+  const id = contextToThoughtId(state, unroot([...context, '=publish', '=attributes']) as Context)
+  return id && publishMode() && attributeEquals(state, id, 'pinChildren', 'true')
+}
 
 function expandThoughts(state: State, path: Path | null): Index<Path>
 function expandThoughts<B extends boolean>(
@@ -113,6 +115,7 @@ function expandThoughtsRecursive(
   }
 
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
+  const thoughtId = head(path)
 
   /** Returns true if the child should be pinned open. */
   const isPinned = (child: ThoughtId | ThoughtContext) => {
@@ -167,14 +170,14 @@ function expandThoughtsRecursive(
 
   const isOnlyChildNoUrl =
     grandchildren &&
-    !isTableColumn1(state, simpleContext) &&
+    !isTableColumn1(state, simplePath) &&
     (grandchildren.length >= 1 || !isURL(childValue(state, grandchildren[0], showContexts)))
 
   const childrenPinned =
     isOnlyChildNoUrl ||
-    isTable(state, simpleContext) ||
-    pinChildren(state, simpleContext) ||
-    publishPinChildren(state, simpleContext)
+    isTable(state, thoughtId) ||
+    pinChildren(state, thoughtId) ||
+    publishPinChildren(state, simplePath)
       ? visibleChildren
       : visibleChildren.filter(child => {
           const value = child.value

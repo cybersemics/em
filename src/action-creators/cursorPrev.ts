@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../constants'
 import { setCursor, suppressExpansion } from '../action-creators'
-import { getThoughtBefore, simplifyPath, getChildrenSortedById, attributeEquals } from '../selectors'
-import { appendToPath, parentOf, pathToContext } from '../util'
+import { getThoughtBefore, simplifyPath, getChildrenSortedById, attributeEquals, rootedParentOf } from '../selectors'
+import { appendToPath, head } from '../util'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import { Thunk } from '../@types'
 
@@ -22,12 +22,11 @@ const cursorPrev = (): Thunk => (dispatch, getState) => {
   const prev = getThoughtBefore(state, simplifyPath(state, cursor))
   if (!prev) return
 
-  const path = appendToPath(parentOf(cursor), prev.id)
-  const context = pathToContext(state, path)
-  const contextParent = pathToContext(state, parentOf(path))
+  const path = appendToPath(rootedParentOf(state, cursor), prev.id)
+  const parentId = head(rootedParentOf(state, path))
   const isCursorPinned =
-    attributeEquals(state, context, '=pin', 'true') || attributeEquals(state, contextParent, '=pinChildren', 'true')
-  const isTable = attributeEquals(state, contextParent, '=view', 'Table')
+    attributeEquals(state, head(path), '=pin', 'true') || attributeEquals(state, parentId, '=pinChildren', 'true')
+  const isTable = attributeEquals(state, parentId, '=view', 'Table')
 
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession
   if (!isCursorPinned && !isTable) dispatch(suppressExpansion({ duration: 100 }))

@@ -1,6 +1,6 @@
 import React from 'react'
 import { attributeEquals, simplifyPath } from '../selectors'
-import { isDocumentEditable, pathToContext } from '../util'
+import { head, isDocumentEditable, pathToContext } from '../util'
 import { toggleAttribute } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
 import { HOME_PATH } from '../constants'
@@ -54,8 +54,8 @@ const proseViewShortcut: Shortcut = {
   isActive: getState => {
     const state = getState()
     const { cursor } = state
-    const context = pathToContext(state, cursor ? simplifyPath(state, cursor) : HOME_PATH)
-    return attributeEquals(state, context, '=view', 'Prose')
+    const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
+    return attributeEquals(state, head(path), '=view', 'Prose')
   },
 }
 

@@ -1,6 +1,6 @@
 import { Key } from 'ts-key-enum'
-import { attributeEquals, getAllChildren, simplifyPath } from '../selectors'
-import { parentOf, isDocumentEditable, pathToContext } from '../util'
+import { attributeEquals, getAllChildrenById, rootedParentOf, simplifyPath } from '../selectors'
+import { head, isDocumentEditable } from '../util'
 import { Dispatch } from 'react'
 import { Shortcut } from '../@types'
 
@@ -28,10 +28,9 @@ const moveCursorForward: Shortcut = {
     const { cursor } = state
     if (!cursor) return
     const path = simplifyPath(state, cursor)
-    const context = pathToContext(state, path)
-    const contextParent = parentOf(context)
-    const isTable = attributeEquals(state, contextParent, '=view', 'Table')
-    const hasChildren = getAllChildren(state, context).length > 0
+    const parentId = head(rootedParentOf(state, path))
+    const isTable = attributeEquals(state, parentId, '=view', 'Table')
+    const hasChildren = getAllChildrenById(state, head(path)).length > 0
 
     dispatch(
       isTable

@@ -14,7 +14,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
   const attributePath = contextToPath(state, unroot([...context, key]))
 
   const exists = !isNullaryAttribute
-    ? attributeEquals(state, context, key, value!)
+    ? path && attributeEquals(state, head(path), key, value!)
     : !path || hasChild(state, head(path), key)
 
   return attributePath && exists
