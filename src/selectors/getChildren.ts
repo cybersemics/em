@@ -19,8 +19,8 @@ import childIdsToThoughts from './childIdsToThoughts'
 import getThoughtById from './getThoughtById'
 
 // use global instance of empty array so object reference doesn't change
-const noChildren: Thought[] = []
-const noThoughtIds: ThoughtId[] = []
+const NO_CHILDREN: Thought[] = []
+const NO_THOUGHT_IDS: ThoughtId[] = []
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
 type GetThoughts = (state: State, context: Context) => Thought[]
@@ -37,25 +37,25 @@ export const isChildVisible = _.curry((state: State, child: Thought) => {
 /** Returns the thoughts for the given thought id. */
 export const getAllChildrenById = (state: State, thoughtId: ThoughtId): ThoughtId[] => {
   const children = getThoughtById(state, thoughtId)?.children
-  return children?.length > 0 ? children : noThoughtIds
+  return children?.length > 0 ? children : NO_THOUGHT_IDS
 }
 
 /** Returns the subthoughts (as Thoughts) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildrenAsThoughts = (state: State, context: Context) => {
   const children = childIdsToThoughts(state, getAllChildren(state, context))
-  return children.length === 0 ? noChildren : children
+  return children.length === 0 ? NO_CHILDREN : children
 }
 
 /** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) => {
   const children = childIdsToThoughts(state, getAllChildrenById(state, id))
-  return children.length === 0 ? noChildren : children
+  return children.length === 0 ? NO_CHILDREN : children
 }
 
 /** Returns the subthoughts (as ThoughtIds) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildren = (state: State, context: Context) => {
   const id = contextToThoughtId(state, context)
-  return id ? getAllChildrenById(state, id) : noThoughtIds
+  return id ? getAllChildrenById(state, id) : NO_THOUGHT_IDS
 }
 
 /** Makes a getAllChildren function that only returns visible thoughts. */
@@ -93,7 +93,7 @@ export const getAllChildrenSorted = (state: State, id: ThoughtId) => {
  * Note: It doesn't check if thought lies within the cursor path or is descendant of meta cursor.
  */
 export const getChildrenSortedById = (state: State, id: ThoughtId | null) => {
-  return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : noChildren
+  return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : NO_CHILDREN
 }
 
 /** Gets all visible children of a Context sorted by rank or sort preference.
@@ -101,7 +101,7 @@ export const getChildrenSortedById = (state: State, id: ThoughtId | null) => {
  */
 export const getChildrenSorted = (state: State, context: Context) => {
   const id = contextToThoughtId(state, context)
-  return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : noChildren
+  return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : NO_CHILDREN
 }
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
@@ -176,7 +176,7 @@ const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
 /** Gets all children of a Context sorted by their ranking. Returns a new object reference even if the children have not changed. */
 export const getChildrenRanked = (state: State, context: Context): Thought[] => {
   const id = contextToThoughtId(state, context)
-  return id ? getChildrenSortedBy(state, id, compareByRank) : noChildren
+  return id ? getChildrenSortedBy(state, id, compareByRank) : NO_CHILDREN
 }
 
 /** Gets all children of a context sorted by their ranking using thought id. Returns a new object reference even if the children have not changed. */
