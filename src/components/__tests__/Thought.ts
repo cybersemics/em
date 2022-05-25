@@ -2,7 +2,6 @@ import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { getChildrenRankedById, getChildrenRanked } from '../../selectors'
-import { importText } from '../../action-creators'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
@@ -99,35 +98,6 @@ it.skip('caret is set on new subthought', async () => {
   const { focusNode, focusOffset } = window.getSelection() || {}
   expect(focusNode?.textContent).toEqual('a1')
   expect(focusOffset).toEqual(0)
-})
-
-it('do not allow edit to duplicate thought', async () => {
-  store.dispatch(
-    importText({
-      text: `
-      - a
-      - b
-      - c`,
-    }),
-  )
-
-  wrapper.update()
-
-  // try to change `c` to `a`
-  const editableSubthought = wrapper.find('div.editable').at(2)
-  await editableSubthought.simulate('change', { target: { value: 'a' } })
-
-  // trigger throttled change event
-  windowEvent('keydown', { key: 'Escape' })
-
-  // state
-  const rootSubthoughts = getChildrenRankedById(store.getState(), HOME_TOKEN)
-  expect(rootSubthoughts).toMatchObject([
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 1 },
-    { value: 'c', rank: 2 },
-  ])
-  expect(rootSubthoughts).toHaveLength(3)
 })
 
 // @MIGRATION_TODO: On hitting enter in the last empty visible child, it triggers outdent. So the following test fails because it is triggering outdent. Previously it was working because `isLastVisibleChild` had a bug that it is always false for child of root context.

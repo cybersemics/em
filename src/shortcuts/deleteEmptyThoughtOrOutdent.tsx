@@ -12,12 +12,10 @@ import {
   simplifyPath,
   splitChain,
 } from '../selectors'
-import { HOME_PATH } from '../constants'
 import { isTouch } from '../browser'
-import { alert, deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
+import { deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
 import { Icon as IconType, Shortcut, State, Thunk } from '../@types'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import * as selection from '../device/selection'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
@@ -95,33 +93,6 @@ const canExecuteOutdent = (state: State) => {
   )
 }
 
-/** A selector that returns true if merged thought value is duplicate. */
-const isMergedThoughtDuplicate = (state: State) => {
-  const { cursor, editingValue } = state
-  if (!cursor) return false
-  // If we are going to delete empty thought
-  if (headValue(state, cursor) === '' || editingValue === '') return false
-
-  const simplePath = simplifyPath(state, cursor)
-  const prevThought = getThoughtBefore(state, simplePath)
-  if (!prevThought) return false
-  const contextChain = splitChain(state, cursor)
-  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
-  const path = lastThoughtsFromContextChain(state, contextChain)
-  const mergedThoughtValue = prevThought.value + headValue(state, cursor)
-  const context = pathToContext(
-    state,
-    showContexts && contextChain.length > 1
-      ? contextChain[contextChain.length - 2]
-      : !showContexts && path.length > 1
-      ? parentOf(path)
-      : HOME_PATH,
-  )
-  const siblings = getAllChildrenAsThoughts(state, context)
-  const isDuplicate = !siblings.every(child => child.value !== mergedThoughtValue)
-  return isDuplicate
-}
-
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
 const canExecute = (getState: () => State) => {
   const state = getState()
@@ -135,15 +106,6 @@ const exec: Shortcut['exec'] = (dispatch, getState) => {
     dispatch(deleteEmptyThought)
   } else if (canExecuteOutdent(state)) {
     dispatch(outdent())
-  }
-  // additional check for duplicates
-  else if (isMergedThoughtDuplicate(state)) {
-    dispatch(
-      alert('Duplicate thoughts are not allowed within the same context.', {
-        alertType: 'duplicateThoughts',
-        clearDelay: 2000,
-      }),
-    )
   } else {
     dispatch(deleteEmptyThought)
   }

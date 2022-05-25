@@ -1,10 +1,8 @@
 import _ from 'lodash'
 import React, { useEffect, useRef, useState } from 'react'
-import { Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { unescape } from 'html-escaper'
 import {
-  alert,
   // cursorBack,
   cursorCleared,
   // editing,
@@ -54,7 +52,6 @@ import {
   isURL,
   pathToContext,
   strip,
-  normalizeThought,
   // offsetFromClosestParent,
 } from '../util'
 
@@ -91,41 +88,6 @@ interface EditableProps {
   transient?: boolean
   onEdit?: (args: { context: Context; path: Path; oldValue: string; newValue: string }) => void
 }
-
-interface Alert {
-  type: 'alert'
-  value: string | null
-  alertType: string
-}
-
-/** Toggle duplication alert. Use closure for storing timeoutId in order to cancel dispatching alert if it's necessary. */
-const duplicateAlertToggler = () => {
-  let timeoutId: number | undefined // eslint-disable-line fp/no-let
-  return (show: boolean, dispatch: Dispatch<Alert>) => {
-    if (show) {
-      // TODO: Fix global setTimeout type
-      timeoutId = setTimeout(() => {
-        dispatch(
-          alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }),
-        )
-        timeoutId = undefined
-      }, 2000) as any as number
-      return
-    }
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-      timeoutId = undefined
-    }
-
-    setTimeout(() => {
-      if (store.getState().alert && store.getState().alert?.alertType === 'duplicateThoughts') {
-        dispatch(alert(null, { alertType: 'duplicateThoughts' }))
-      }
-    })
-  }
-}
-
-const showDuplicationAlert = duplicateAlertToggler()
 
 // track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
 // otherwise it can trigger unnecessary re-renders
@@ -356,7 +318,6 @@ const Editable = ({
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
-      showDuplicationAlert(false, dispatch)
     }
   }, [isEditing, cursorOffset, state.dragInProgress])
 
@@ -376,8 +337,6 @@ const Editable = ({
     dispatch(setEditingValue(newValue))
 
     if (newValue === oldValue) {
-      showDuplicationAlert(false, dispatch)
-
       if (readonly || uneditable || options) invalidStateError(null)
 
       // if we cancel the edit, we have to cancel pending its
@@ -388,22 +347,6 @@ const Editable = ({
     }
 
     const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
-
-    const thoughtsInContext = getAllChildrenAsThoughts(state, context)
-
-    const normalizedNewValue = normalizeThought(newValue)
-
-    const hasDuplicate =
-      newValue !== '' &&
-      thoughtsInContext.some(thought => rank !== thought.rank && normalizeThought(thought.value) === normalizedNewValue)
-    if (hasDuplicate) {
-      showDuplicationAlert(true, dispatch)
-      throttledChangeRef.current.cancel() // see above
-
-      return
-    } else {
-      showDuplicationAlert(false, dispatch)
-    }
 
     if (readonly) {
       dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
@@ -498,11 +441,6 @@ const Editable = ({
 
     const { invalidState } = state
     throttledChangeRef.current.flush()
-
-    // reset rendered value to previous non-duplicate
-    // if (contentRef.current) {
-    //   showDuplicationAlert(false, dispatch)
-    // }
 
     // on blur remove error, remove invalid-option class, and reset editable html
     if (invalidState) {

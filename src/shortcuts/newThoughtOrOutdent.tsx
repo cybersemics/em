@@ -3,7 +3,7 @@ import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
 import { head, isDocumentEditable, isRoot } from '../util'
-import { alert, newThought, outdent } from '../action-creators'
+import { newThought, outdent } from '../action-creators'
 import { getThoughtById, isLastVisibleChild, rootedParentOf, simplifyPath } from '../selectors'
 import * as selection from '../device/selection'
 
@@ -29,15 +29,9 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string }) => {
   const state = getState()
-  const { cursor, editingValue } = state
+  const { cursor } = state
 
   const cursorHeadThought = cursor && getThoughtById(state, head(cursor))
-
-  // if current edited thought is duplicate and user hits enter
-  if (cursor && editingValue && cursorHeadThought && cursorHeadThought.value !== editingValue) {
-    dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }))
-    return
-  }
 
   // when Enter is pressed on a last empty thought, outdent it
   if (
