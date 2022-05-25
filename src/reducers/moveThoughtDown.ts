@@ -67,7 +67,7 @@ const moveThoughtDown = (state: State) => {
       ? // next thought (unsorted)
         getRankAfter(state, simplifyPath(state, pathParent).concat(nextThought.id) as SimplePath)
       : // first thought in next uncle
-        getPrevRank(state, pathToContext(state, nextUnclePath!))
+        getPrevRank(state, head(nextUnclePath!))
 
   const newPathParent = nextThought && !isSorted ? pathParent : nextUnclePath!
   const newPath = appendToPath(newPathParent, head(cursor))

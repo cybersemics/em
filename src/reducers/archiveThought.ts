@@ -50,7 +50,7 @@ export const pathAndRankToArchive = (
   const rankedArchive = getAllChildrenAsThoughts(state, context).find(equalThoughtValue('=archive'))
   if (!rankedArchive) return null
   const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive.id) : parentOf(path)
-  const newRank = getPrevRank(state, pathToContext(state, archivePath))
+  const newRank = getPrevRank(state, head(archivePath))
   return {
     path: [...parentOf(path), rankedArchive.id, head(path)],
     rank: newRank,

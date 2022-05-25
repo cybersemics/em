@@ -36,7 +36,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     moveThought({
       oldPath: simplePath,
       newPath: simplePathWithNewRank,
-      newRank: getRankBefore(state, simplePath)
+      newRank: getRankBefore(state, simplePath),
     }),
 
     // new thought
@@ -45,7 +45,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       const contextEmpty = pathToContext(state, simplePath as Path)
       return createThought(state, {
         context: contextEmpty,
-        rank: getPrevRank(state, contextEmpty),
+        rank: getPrevRank(state, head(simplePath!)),
         value,
       })
     },

@@ -31,7 +31,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
               createThought(state, {
                 context,
                 value: key,
-                rank: getPrevRank(state, context),
+                rank: path ? getPrevRank(state, head(path)) : 0,
               })
           : null,
 

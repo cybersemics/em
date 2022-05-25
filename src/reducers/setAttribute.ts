@@ -1,19 +1,20 @@
 import _ from 'lodash'
 import { getPrevRank } from '../selectors'
 import { createThought, setFirstSubthought } from '../reducers'
-import { reducerFlow } from '../util'
+import { contextToThoughtId, reducerFlow } from '../util'
 import { Context, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Sets an attribute on the given context. */
-const setAttribute = (state: State, { context, key, value }: { context: Context; key: string; value?: string }) =>
-  reducerFlow([
+const setAttribute = (state: State, { context, key, value }: { context: Context; key: string; value?: string }) => {
+  const id = contextToThoughtId(state, context)
+  return reducerFlow([
     !getAllChildrenAsThoughts(state, context).some(child => child.value === key)
       ? state =>
           createThought(state, {
             context,
             value: key,
-            rank: getPrevRank(state, context),
+            rank: getPrevRank(state, id!),
           })
       : null,
 
@@ -24,5 +25,6 @@ const setAttribute = (state: State, { context, key, value }: { context: Context;
         })
       : null,
   ])(state)
+}
 
 export default _.curryRight(setAttribute)

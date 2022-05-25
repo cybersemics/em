@@ -11,7 +11,7 @@ it('get rank above all children', () => {
   const id = contextToThoughtId(stateNew, ['a'])
   const children = getAllChildrenSorted(stateNew, id!)
 
-  expect(getPrevRank(stateNew, ['a'])).toBeLessThan(children[0].rank)
+  expect(getPrevRank(stateNew, id!)).toBeLessThan(children[0].rank)
 })
 
 it('get rank less than visible children but greater than hidden children', () => {
@@ -28,8 +28,8 @@ it('get rank less than visible children but greater than hidden children', () =>
   const firstVisible = children[firstVisibleIndex]
   const lastHidden = children[firstVisibleIndex - 1]
 
-  expect(getPrevRank(stateNew, ['a'])).toBeLessThan(firstVisible.rank)
-  expect(getPrevRank(stateNew, ['a'])).toBeGreaterThan(lastHidden.rank)
+  expect(getPrevRank(stateNew, id!)).toBeLessThan(firstVisible.rank)
+  expect(getPrevRank(stateNew, id!)).toBeGreaterThan(lastHidden.rank)
 })
 
 it('get rank greater than all hidden children', () => {
@@ -39,7 +39,7 @@ it('get rank greater than all hidden children', () => {
   const id = contextToThoughtId(stateNew, ['a'])
   const children = getAllChildrenSorted(stateNew, id!)
 
-  expect(getPrevRank(stateNew, ['a'])).toBeGreaterThan(children[children.length - 1].rank)
+  expect(getPrevRank(stateNew, id!)).toBeGreaterThan(children[children.length - 1].rank)
 })
 
 it('get rank less than all children hidden with aboveMeta: true', () => {
@@ -49,5 +49,5 @@ it('get rank less than all children hidden with aboveMeta: true', () => {
   const id = contextToThoughtId(stateNew, ['a'])
   const children = getAllChildrenSorted(stateNew, id!)
 
-  expect(getPrevRank(stateNew, ['a'], { aboveMeta: true })).toBeLessThan(children[0].rank)
+  expect(getPrevRank(stateNew, id!, { aboveMeta: true })).toBeLessThan(children[0].rank)
 })

@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { getPrevRank, contextToPath } from '../selectors'
+import { head } from '../util'
 import { editThought, createThought } from '../reducers'
 import { Context, SimplePath, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -23,7 +24,7 @@ const setFirstSubthoughts = (state: State, { context, value }: { context: Contex
       createThought(state, {
         context,
         value,
-        rank: getPrevRank(state, context),
+        rank: path ? getPrevRank(state, head(path)) : 0,
       })
 }
 
