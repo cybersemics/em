@@ -62,7 +62,6 @@ import {
   rootedParentOf,
 } from '../selectors'
 import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
-import { getNextRankById } from '../selectors/getNextRank'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -399,13 +398,13 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
           type: 'createThought',
           value: toThought.value,
           context: pathToContext(state, thoughtsFrom),
-          rank: getNextRank(state, pathToContext(state, thoughtsFrom)),
+          rank: getNextRank(state, head(thoughtsFrom)),
         }
       : {
           type: 'moveThought',
           oldPath: thoughtsFrom,
           newPath,
-          newRank: getNextRankById(state, head(thoughtsTo)),
+          newRank: getNextRank(state, head(thoughtsTo)),
         },
   )
 

@@ -154,7 +154,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
         // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
         value === '' && getSortPreference(state, thoughtId).type === 'Alphabetical' && getLastSortedChildPath()
         ? getRankAfter(state, getLastSortedChildPath()!)
-        : getNextRank(state, thoughts)
+        : getNextRank(state, thoughtId)
       : getRankAfter(state, simplePath)
 
   const newThoughtId = createId()

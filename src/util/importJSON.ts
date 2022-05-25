@@ -261,7 +261,7 @@ export const importJSON = (
   const destThought = state.thoughts.thoughtIndex[head(simplePath)]
   const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(state, simplePath)).length === 0
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
-  const rankStart = destEmpty ? destThought.rank : getNextRank(state, pathToContext(state, simplePath))
+  const rankStart = destEmpty ? destThought.rank : getNextRank(state, head(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
   const rootedPath = rootedParentOf(state, simplePath)
   const rootedContext = pathToContext(state, rootedPath)

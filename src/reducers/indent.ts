@@ -47,7 +47,7 @@ const indent = (state: State) => {
     oldPath: cursor,
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
-    newRank: getNextRank(state, pathToContext(state, appendToPath(parentOf(cursor), prev.id))),
+    newRank: getNextRank(state, prev.id),
   })
 }
 

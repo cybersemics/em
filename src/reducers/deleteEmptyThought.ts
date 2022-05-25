@@ -106,7 +106,7 @@ const deleteEmptyThought = (state: State): State => {
             moveThought(state, {
               oldPath: appendToPath(simplePath, child.id),
               newPath: appendToPath(pathPrevNew, child.id),
-              newRank: getNextRank(state, pathToContext(state, pathPrevNew)) + i,
+              newRank: getNextRank(state, head(pathPrevNew)) + i,
             }),
         ),
 

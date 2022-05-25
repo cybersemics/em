@@ -1,8 +1,7 @@
 import _ from 'lodash'
 import { moveThought, updateThoughts } from '.'
 import { Lexeme, Path, State } from '../@types'
-import { getThoughtById } from '../selectors'
-import { getNextRankById } from '../selectors/getNextRank'
+import { getNextRank, getThoughtById } from '../selectors'
 import { appendToPath, equalPath, hashThought, head, normalizeThought, reducerFlow, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 
@@ -31,7 +30,7 @@ const mergeThoughts = (
     throw new Error('Cannot merge two thoughts with different values.')
   }
 
-  const nextRank = getNextRankById(state, targetThought.id)
+  const nextRank = getNextRank(state, targetThought.id)
 
   // moving the children of the source thought to the end of the target context.
   const newStateAfterMove = reducerFlow([

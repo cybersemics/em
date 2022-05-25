@@ -60,7 +60,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
     }
 
     const context = pathToContext(state, path)
-    const newRank = getNextRank(state, pathToContext(state, path))
+    const newRank = getNextRank(state, head(path))
 
     const newThoughtId = createId()
 

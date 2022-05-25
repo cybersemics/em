@@ -5,7 +5,7 @@ import { appendToPath, head, parentOf, pathToContext, reducerFlow } from '../uti
 import moveThought from './moveThought'
 import deleteThought from './deleteThought'
 import { State } from '../@types'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 /** Join two or more thoughts split by spaces. */
 const join = (state: State) => {
@@ -15,13 +15,14 @@ const join = (state: State) => {
 
   const path = cursor
   const simplePath = simplifyPath(state, path)
+  const parentId = head(parentOf(simplePath))
   const context = pathToContext(state, parentOf(simplePath))
-  const contextChildren = getAllChildrenAsThoughts(state, context)
+  const contextChildren = getAllChildrenAsThoughtsById(state, parentId)
   const thoughtId = head(simplePath)
   const { value, rank } = getThoughtById(state, thoughtId)
   const siblings = contextChildren.filter(child => child.value !== value && child.rank !== rank)
 
-  let minNextRank = getNextRank(state, context)
+  let minNextRank = getNextRank(state, parentId)
 
   const reducers = contextChildren
     .map((sibling, i) => {

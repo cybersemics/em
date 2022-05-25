@@ -62,7 +62,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
       parentId: thought.id,
       children: [],
       lastUpdated: timestamp(),
-      rank: addAsContext ? getNextRank(state, [value]) : rank,
+      rank: addAsContext ? getNextRank(state, id) : rank,
       value: newValue,
       updatedBy: getSessionId(),
       splitSource,
