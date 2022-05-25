@@ -1,13 +1,12 @@
 import { getChildrenSortedById, getSortPreference } from '../selectors'
-import { contextToThoughtId, equalThoughtRanked, equalThoughtSorted } from '../util'
-import { Context, State } from '../@types'
+import { equalThoughtRanked, equalThoughtSorted } from '../util'
+import { State, ThoughtId } from '../@types'
 
 /** Gets the next sibling after a thought according to its parent's sort preference. */
-const nextSibling = (state: State, value: string, context: Context, rank: number) => {
-  const id = contextToThoughtId(state, context)
-  const siblings = id ? getChildrenSortedById(state, id) : []
+const nextSibling = (state: State, parentId: ThoughtId, value: string, rank: number) => {
+  const siblings = parentId ? getChildrenSortedById(state, parentId) : []
   const i = siblings.findIndex(child =>
-    id && getSortPreference(state, id).type === 'Alphabetical'
+    parentId && getSortPreference(state, parentId).type === 'Alphabetical'
       ? equalThoughtSorted(child, { value, rank })
       : equalThoughtRanked(child, { value, rank }),
   )

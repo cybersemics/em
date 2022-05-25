@@ -2,7 +2,17 @@ import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf, childIdsToThoughts } from '../selectors'
 import { Block, Context, Index, Lexeme, Thought, SimplePath, State, Timestamp, ThoughtIndices, Path } from '../@types'
-import { appendToPath, hashThought, head, pathToContext, removeContext, timestamp, headId, unroot } from '../util'
+import {
+  appendToPath,
+  contextToThoughtId,
+  hashThought,
+  head,
+  pathToContext,
+  removeContext,
+  timestamp,
+  headId,
+  unroot,
+} from '../util'
 import { createId } from './createId'
 import { getSessionId } from './sessionManager'
 import { mergeThoughts } from './mergeThoughts'
@@ -243,7 +253,8 @@ const getContextsNum = (blocks: Block[]): number => {
 const getRankIncrement = (state: State, blocks: Block[], context: Context, destThought: Thought, rankStart: number) => {
   const destValue = destThought.value
   const destRank = destThought.rank
-  const next = nextSibling(state, destValue, context, destRank) // paste after last child of current thought
+  const parentId = contextToThoughtId(state, context)
+  const next = parentId ? nextSibling(state, parentId, destValue, destRank) : 0 // paste after last child of current thought
   const rankIncrement = next ? (next.rank - rankStart) / (getContextsNum(blocks) || 1) : 1 // prevent divide by zero
   return rankIncrement
 }
