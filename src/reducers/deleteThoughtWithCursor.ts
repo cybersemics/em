@@ -41,6 +41,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     // }
   }
   const simplePath = simplifyPath(state, path)
+  const parentId = head(rootedParentOf(state, simplePath))
   const thoughts = pathToContext(state, simplePath)
   const context = rootedParentOf(state, thoughts)
 
@@ -89,7 +90,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       const next = once(() =>
         showContexts
           ? getContextsSortedAndRanked(state, headValue(state, parentOf(simplePath)))[0]
-          : firstVisibleChild(state, context),
+          : firstVisibleChild(state, parentId),
       )
 
       // Typescript validates with apply but not spread operator here

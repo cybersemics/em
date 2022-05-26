@@ -1,6 +1,6 @@
 import { TUTORIAL_STEP_START } from '../constants'
 import { firstVisibleChild, getSetting } from '../selectors'
-import { appendToPath, pathToContext } from '../util'
+import { appendToPath, head } from '../util'
 import { newThought } from '../reducers'
 import { State } from '../@types'
 
@@ -16,9 +16,7 @@ const newGrandChild = (state: State) => {
   // cancel if cursor is not available or tutorial has just started
   if (!cursor || (tutorial && tutorialStep === TUTORIAL_STEP_START)) return state
 
-  const cursorContext = pathToContext(state, cursor)
-
-  const firstChild = firstVisibleChild(state, cursorContext)
+  const firstChild = firstVisibleChild(state, head(cursor))
 
   // stop if there is no visible children
   if (!firstChild) return state

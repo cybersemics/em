@@ -1,7 +1,7 @@
 import { HOME_PATH } from '../constants'
 import { setCursor } from '../reducers'
 import { firstVisibleChild } from '../selectors'
-import { pathToContext, unroot } from '../util'
+import { head, unroot } from '../util'
 import { State } from '../@types'
 
 /** Moves the cursor forward in the cursorHistory. */
@@ -15,7 +15,7 @@ const cursorForward = (state: State) => {
   else {
     const cursor = state.cursor || HOME_PATH
 
-    const firstChild = firstVisibleChild(state, pathToContext(state, cursor))
+    const firstChild = firstVisibleChild(state, head(cursor))
     if (!firstChild) return state
 
     const cursorNew = unroot([...cursor, firstChild.id])

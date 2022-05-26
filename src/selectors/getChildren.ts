@@ -92,14 +92,6 @@ export const getChildrenSortedById = (state: State, id: ThoughtId | null) => {
   return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : NO_CHILDREN
 }
 
-/** Gets all visible children of a Context sorted by rank or sort preference.
- * Note: It doesn't check if thought lies within the cursor path or is descendant of meta cursor.
- */
-export const getChildrenSorted = (state: State, context: Context) => {
-  const id = contextToThoughtId(state, context)
-  return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : NO_CHILDREN
-}
-
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>) =>
   sort(getAllChildrenAsThoughtsById(state, id), compare)
@@ -176,7 +168,7 @@ export const getChildrenRanked = (state: State, thoughtId: ThoughtId | null): Th
 }
 
 /** Returns the first visible child of a context. */
-export const firstVisibleChild = (state: State, context: Context) => getChildrenSorted(state, context)[0]
+export const firstVisibleChild = (state: State, id: ThoughtId) => getChildrenSortedById(state, id)[0]
 
 /** Returns the first visible child (with cursor check) of a context. */
 export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath, context: Context) => {
