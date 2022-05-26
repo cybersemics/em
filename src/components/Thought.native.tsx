@@ -51,7 +51,6 @@ import {
   getThoughtById,
   getStyle,
   hasChildren,
-  isContextViewActive,
   rootedParentOf,
 } from '../selectors'
 import { View } from 'moti'

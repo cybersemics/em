@@ -123,8 +123,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     })
   }
 
-  const showContexts = isContextViewActive(state, thoughts)
-  const showContextsParent = isContextViewActive(state, pathToContext(state, parentOf(simplePath)))
+  const showContexts = isContextViewActive(state, path)
+  const showContextsParent = isContextViewActive(state, rootedParentOf(state, simplePath))
 
   /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
   const getLastSortedChildPath = once((): SimplePath | null => {

@@ -126,10 +126,9 @@ function expandThoughtsRecursive(
   /** Returns true if the child should be pinned closed. */
   const isPinClosed = (child: ThoughtId | ThoughtContext) => isPinned(child) === 'false'
 
-  const simpleContext = pathToContext(state, simplePath)
   const context = pathToContext(state, path)
 
-  const showContexts = isContextViewActive(state, simpleContext)
+  const showContexts = isContextViewActive(state, path)
 
   const childrenUnfiltered = getAllChildrenAsThoughts(state, head(simplePath))
 

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import {
   expandThoughts,
   getContexts,
@@ -42,7 +42,7 @@ const appendVisiblePathsChildren = (
       const thoughtId = head(path)
 
       // @MIGRATION-TODO: Fix this after context view starts working
-      const showContexts = isContextViewActive(state, [])
+      const showContexts = isContextViewActive(state, HOME_PATH)
       const thought = getThoughtById(state, thoughtId)
 
       const children = thought

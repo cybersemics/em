@@ -67,7 +67,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   if (!path) return state
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, parentOf(pathToContext(state, path)))
+  const showContexts = isContextViewActive(state, rootedParentOf(state, path))
   const contextChain = splitChain(state, path)
   const simplePath = contextChain.length > 1 ? lastThoughtsFromContextChain(state, contextChain) : (path as SimplePath)
   const pathParent =

@@ -134,11 +134,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const isEditing = equalPath(cursor, resolvedPath)
 
   const pathLive = isEditing ? cursor! : resolvedPath
-  const thoughtsLive = pathToContext(state, pathLive)
-  const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
-  const showContextsParent = isContextViewActive(state, parentOf(thoughtsLive))
+  const showContexts = props.showContexts || isContextViewActive(state, pathLive)
+  const showContextsParent = isContextViewActive(state, rootedParentOf(state, pathLive))
 
-  const simplePath = showContexts && showContextsParent ? parentOf(props.simplePath) : props.simplePath
+  const simplePath = showContexts && showContextsParent ? rootedParentOf(state, props.simplePath) : props.simplePath
 
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor

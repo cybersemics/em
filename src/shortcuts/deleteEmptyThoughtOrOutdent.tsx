@@ -1,6 +1,6 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { ellipsize, head, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
+import { ellipsize, head, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
 import {
   getChildren,
   getThoughtBefore,
@@ -34,7 +34,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   if (isDivider(headValue(state, cursor))) return true
 
   // can't delete in context view (TODO)
-  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
+  const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))
   if (showContexts) return false
 
   const contextChain = splitChain(state, cursor)

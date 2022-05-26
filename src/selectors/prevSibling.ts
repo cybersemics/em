@@ -1,4 +1,5 @@
 import {
+  contextToPath,
   getContextsSortedAndRanked,
   getChildrenRanked,
   getChildrenSorted,
@@ -16,7 +17,8 @@ import thoughtToContext from './thoughtToContext'
  */
 const prevSibling = (state: State, value: string, context: Context, rank: number): Thought | null => {
   const { showHiddenThoughts } = state
-  const contextViewActive = isContextViewActive(state, context)
+  const path = contextToPath(state, context)
+  const contextViewActive = isContextViewActive(state, path)
 
   /** Gets siblings of a context. */
   const getContextSiblings = () => getContextsSortedAndRanked(state, head(context))

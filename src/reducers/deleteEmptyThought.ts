@@ -35,7 +35,7 @@ const deleteEmptyThought = (state: State): State => {
   const { value } = cursorThought
 
   const offset = state.cursorOffset ?? 0
-  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
+  const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))
   const context = pathToContext(state, cursor)
   const simplePath = simplifyPath(state, cursor)
   const allChildren = getChildrenRanked(state, head(cursor))

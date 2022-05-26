@@ -26,7 +26,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   const path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(path)))
+  const showContexts = isContextViewActive(state, rootedParentOf(state, path))
   // @MIGRATION_TODO: Fix the context view related logic here.
   if (showContexts) {
     // Get thought in ContextView

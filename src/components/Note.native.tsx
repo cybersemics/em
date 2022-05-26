@@ -62,7 +62,7 @@ const Note = ({ path }: NoteProps) => {
     }
   }, [state.cursor, state.editing, state.noteFocus])
 
-  if (!hasNote || isContextViewActive(state, context)) return null
+  if (!hasNote || isContextViewActive(state, path)) return null
 
   const note = attribute(state, thoughtId, '=note')
 

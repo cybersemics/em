@@ -673,7 +673,7 @@ const Editable = ({
 
     const state = store.getState()
 
-    showContexts = showContexts || isContextViewActive(state, pathToContext(state, simplePath))
+    showContexts = showContexts || isContextViewActive(state, path)
 
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 

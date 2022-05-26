@@ -58,7 +58,7 @@ const Note = ({ path }: NoteProps) => {
 
   /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
   const note: string | null = useSelector((state: State) => {
-    if (isContextViewActive(state, context)) return null
+    if (isContextViewActive(state, path)) return null
     const noteThought = contextToThought(state, [...context, '=note'])
     if (noteThought?.pending) return null
     return attribute(state, thoughtId, '=note')
