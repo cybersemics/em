@@ -1,5 +1,5 @@
-import { HOME_PATH, HOME_TOKEN } from '../constants'
-import { appendToPath, parentOf, head, pathToContext, once } from '../util'
+import { HOME_PATH } from '../constants'
+import { appendToPath, parentOf, head, once } from '../util'
 import {
   nextSibling as thoughtNextSibling,
   firstVisibleChildWithCursorCheck,
@@ -195,9 +195,7 @@ const nextInThoughtView = (
   path: Path,
   ignoreChildren?: boolean,
 ): NextThoughtResult | null => {
-  const firstChild =
-    !ignoreChildren &&
-    firstVisibleChildWithCursorCheck(state, path as SimplePath, pathToContext(state, path) || [HOME_TOKEN])
+  const firstChild = !ignoreChildren && firstVisibleChildWithCursorCheck(state, path as SimplePath)
 
   /** Returns the next uncle in the thought view. */
   const nextUncleInThoughtView = () => {

@@ -13,7 +13,7 @@ import {
   splice,
   head,
 } from '../util'
-import { ThoughtId, ComparatorFunction, Context, ThoughtContext, Thought, Path, State, SimplePath } from '../@types'
+import { ThoughtId, ComparatorFunction, ThoughtContext, Thought, Path, State, SimplePath } from '../@types'
 import childIdsToThoughts from './childIdsToThoughts'
 import getThoughtById from './getThoughtById'
 
@@ -151,7 +151,7 @@ export const getChildrenRanked = (state: State, thoughtId: ThoughtId | null): Th
 export const firstVisibleChild = (state: State, id: ThoughtId) => getChildrenSorted(state, id)[0]
 
 /** Returns the first visible child (with cursor check) of a context. */
-export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath, context: Context) => {
+export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath) => {
   const children = getAllChildrenSorted(state, head(path))
   return (state.showHiddenThoughts ? children : children.filter(isChildVisibleWithCursorCheck(state, path)))[0]
 }
