@@ -6,6 +6,7 @@ import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
 import { headValue, once } from '../../util'
 import { getSetting } from '../../selectors'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import { tutorial } from '../../action-creators'
 import { Connected, GesturePath, State } from '../../@types'
 
@@ -33,7 +34,6 @@ import {
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
