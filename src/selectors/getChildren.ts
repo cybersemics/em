@@ -23,10 +23,7 @@ const NO_CHILDREN: Thought[] = []
 const NO_THOUGHT_IDS: ThoughtId[] = []
 
 /** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
-type GetThoughts = (state: State, context: Context) => Thought[]
-
-/** A selector that retrieves thoughts from a context and performs other functions like sorting or filtering. */
-type GetThoughtsById = (state: State, id: ThoughtId) => Thought[]
+type GetThoughtsSelector = (state: State, id: ThoughtId) => Thought[]
 
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
 export const isChildVisible = _.curry((state: State, child: Thought) => {
@@ -55,13 +52,7 @@ export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) => {
 }
 
 /** Makes a function that only returns visible thoughts. */
-const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: State, context: Context) => {
-  const children = getThoughtsFunction(state, context)
-  return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
-})
-
-/** Makes a function that only returns visible thoughts. */
-const getVisibleThoughtsById = _.curry((getThoughtsFunction: GetThoughtsById, state: State, id: ThoughtId) => {
+const getVisibleThoughtsById = _.curry((getThoughtsFunction: GetThoughtsSelector, state: State, id: ThoughtId) => {
   const children = getThoughtsFunction(state, id)
   return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
 })
@@ -71,9 +62,6 @@ export const hasChildren = (state: State, context: Context) => {
   const children = getAllChildrenAsThoughts(state, context)
   return state.showHiddenThoughts ? children.length > 0 : children.some(isChildVisible(state))
 }
-
-/** Gets all visible children of a Context, unordered. */
-export const getChildren = getVisibleThoughts(getAllChildrenAsThoughts)
 
 /** Gets all visible children of an id, unordered. */
 export const getChildrenById = getVisibleThoughtsById(getAllChildrenAsThoughtsById)

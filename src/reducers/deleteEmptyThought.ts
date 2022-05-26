@@ -11,7 +11,7 @@ import {
 } from '../util'
 import {
   getNextRank,
-  getChildren,
+  getChildrenById,
   getChildrenRanked,
   isContextViewActive,
   prevSibling,
@@ -39,7 +39,7 @@ const deleteEmptyThought = (state: State): State => {
   const context = pathToContext(state, cursor)
   const simplePath = simplifyPath(state, cursor)
   const allChildren = getChildrenRanked(state, head(cursor))
-  const visibleChildren = getChildren(state, context)
+  const visibleChildren = getChildrenById(state, head(cursor))
   const isEmpty = headValue(state, cursor) === '' || state.cursorCleared
 
   // delete an empty thought with no children

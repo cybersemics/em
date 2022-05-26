@@ -2,13 +2,13 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { ellipsize, head, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
 import {
-  getChildren,
   getChildrenById,
   getThoughtBefore,
   getChildrenRanked,
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
+  rootedParentOf,
   simplifyPath,
   splitChain,
 } from '../selectors'
@@ -89,7 +89,7 @@ const canExecuteOutdent = (state: State) => {
     selection.offset() === 0 &&
     isDocumentEditable() &&
     headValue(state, cursor).length !== 0 &&
-    getChildren(state, parentOf(pathToContext(state, cursor))).length === 1
+    getChildrenById(state, head(rootedParentOf(state, cursor))).length === 1
   )
 }
 

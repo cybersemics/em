@@ -49,7 +49,7 @@ import {
   getAllChildren,
   getAllChildrenSorted,
   getChildPath,
-  getChildren,
+  getChildrenById,
   getChildrenRanked,
   getContextsSortedAndRanked,
   getEditingPath,
@@ -87,8 +87,8 @@ if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
 const PAGINATION_SIZE = 100
 const EMPTY_OBJECT = {}
 
-/** Check if the given path is a leaf. */
-const isLeaf = (state: State, context: Context) => getChildren(state, context).length === 0
+/** Check if the given thought is a leaf. */
+const isLeaf = (state: State, id: ThoughtId) => getChildrenById(state, id).length === 0
 
 /** Finds the the first env context with =focus/Zoom. */
 const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): Context | null => {
@@ -136,7 +136,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
   const idLive = head(simplePathLive)
-  const cursorContext = cursor ? pathToContext(state, cursor) : null
 
   const contextBinding = parseJsonSafe(attribute(state, idLive, '=bindContext') ?? '', undefined) as Path | undefined
 
@@ -144,7 +143,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
   // TODO: Resolve cursor to a simplePath
-  const isCursorLeaf = cursorContext && isLeaf(state, cursorContext)
+  const isCursorLeaf = cursor && isLeaf(state, head(cursor))
 
   const cursorDepth = cursor ? cursor.length - (isCursorLeaf ? 1 : 0) : 0
 
@@ -648,7 +647,7 @@ export const SubthoughtsComponent = ({
     Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
     */
 
-    const isCursorLeaf = cursor && isLeaf(state, pathToContext(state, cursor))
+    const isCursorLeaf = cursor && isLeaf(state, head(cursor))
 
     const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 

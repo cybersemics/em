@@ -1,5 +1,5 @@
 import { head, normalizeThought, parentOf, pathToContext, reducerFlow, unroot } from '../util'
-import { getChildren, getRankBefore, isChildVisible, rootedParentOf, simplifyPath } from '../selectors'
+import { getChildrenById, getRankBefore, isChildVisible, rootedParentOf, simplifyPath } from '../selectors'
 import { archiveThought, moveThought, setCursor } from '../reducers'
 import _ from 'lodash'
 import deleteThought from './deleteThought'
@@ -30,7 +30,7 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
       state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
     )[0]
 
-    const childrenOfMovedContext = getChildren(updatedState, rootedParentOf(updatedState, context))
+    const childrenOfMovedContext = getChildrenById(updatedState, head(rootedParentOf(updatedState, simpleCursor)))
 
     if (!firstVisibleChildOfPrevCursor) return unroot([...parentOf(path)])
 

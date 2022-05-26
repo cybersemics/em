@@ -45,7 +45,7 @@ import {
   attribute,
   childIdsToThoughts,
   findDescendant,
-  getChildren,
+  getChildrenById,
   getChildrenRanked,
   getSortPreference,
   getStyle,
@@ -156,8 +156,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     (!!cursor &&
       (distance === 2
         ? // grandparent
-          equalPath(rootedParentOf(state, parentOf(cursor)), path) &&
-          getChildren(state, pathToContext(state, cursor)).length === 0
+          equalPath(rootedParentOf(state, parentOf(cursor)), path) && getChildrenById(state, head(cursor)).length === 0
         : // parent
           equalPath(parentOf(cursor), path)))
 

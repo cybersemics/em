@@ -1,6 +1,6 @@
 import { HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import { pathToContext } from '../util'
-import { getChildren } from './getChildren'
+import { head } from '../util'
+import { getChildrenById } from '../selectors'
 import { State } from '../@types'
 
 /**
@@ -8,6 +8,6 @@ import { State } from '../@types'
  */
 const visibleDistanceAboveCursor = (state: State) =>
   MAX_DISTANCE_FROM_CURSOR -
-  (getChildren(state, state.cursor ? pathToContext(state, state.cursor) : [HOME_TOKEN]).length === 0 ? 1 : 2)
+  (getChildrenById(state, state.cursor ? head(state.cursor) : HOME_TOKEN).length === 0 ? 1 : 2)
 
 export default visibleDistanceAboveCursor
