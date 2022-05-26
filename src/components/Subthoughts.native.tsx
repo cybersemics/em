@@ -144,7 +144,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
   const idLive = head(simplePathLive)
-  const contextLive = pathToContext(state, simplePathLive)
   const cursorContext = cursor ? pathToContext(state, cursor) : null
 
   const contextBinding = parseJsonSafe(attribute(state, head(simplePathLive), '=bindContext') ?? '', undefined) as
