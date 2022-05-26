@@ -52,19 +52,22 @@ const Note = ({ path }: NoteProps) => {
   // set the caret on the note if editing this thought and noteFocus is true
   useEffect(() => {
     const state = store.getState()
-    // cursor must be true if editing
-    if (
-      state.editing &&
-      state.noteFocus &&
-      equalArrays(pathToContext(state, simplifyPath(state, state.cursor!)), context)
-    ) {
+    // cursor must be true if note is focused
+    if (state.noteFocus && equalArrays(pathToContext(state, simplifyPath(state, state.cursor!)), context)) {
       // TODO: Set the caret to the end of the note
+      // selection.set(noteRef.current!, { end: true })
     }
-  }, [state.cursor, state.editing, state.noteFocus])
+  }, [state.noteFocus])
 
-  if (!hasNote || isContextViewActive(state, path)) return null
+  /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
+  const note: string | null = useSelector((state: State) => {
+    if (isContextViewActive(state, path)) return null
+    const noteThought = contextToThought(state, [...context, '=note'])
+    if (noteThought?.pending) return null
+    return attribute(state, thoughtId, '=note')
+  })
 
-  const note = attribute(state, thoughtId, '=note')
+  if (note === null) return null
 
   /** Handles note keyboard shortcuts. */
   const onKeyDown = (e: IKeyDown) => {
