@@ -64,7 +64,7 @@ export {
   getAllChildren,
   getChildren,
   getChildrenById,
-  getChildrenRankedById,
+  getChildrenRanked,
   getAllChildrenSorted,
   getChildrenSorted,
   getChildrenSortedById,

@@ -1,14 +1,7 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 // import { treeDelete } from '../util/recentlyEditedTree'
-import {
-  getChildrenRankedById,
-  getLexeme,
-  getThoughtById,
-  hasLexeme,
-  rootedParentOf,
-  thoughtToPath,
-} from '../selectors'
+import { getChildrenRanked, getLexeme, getThoughtById, hasLexeme, rootedParentOf, thoughtToPath } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
@@ -120,7 +113,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
       },
     }
 
-    return getChildrenRankedById(stateNew, thought.id).reduce(
+    return getChildrenRanked(stateNew, thought.id).reduce(
       (accum, child) => {
         const hashedKey = hashThought(child.value)
         const lexeme = getLexeme(stateNew, child.value)

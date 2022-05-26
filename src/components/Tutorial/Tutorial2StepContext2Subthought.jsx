@@ -11,7 +11,7 @@ import {
 } from '../../constants'
 
 import { contextToThoughtId, headValue, isRoot, joinConjunction } from '../../util'
-import { findDescendant, getContexts, getChildrenRankedById, parentOfThought } from '../../selectors'
+import { findDescendant, getContexts, getChildrenRanked, parentOfThought } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 
@@ -26,7 +26,7 @@ const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {
   return (
     tutorialChoiceId &&
     // e.g. Work/To Do/y
-    getChildrenRankedById(state, tutorialChoiceId).length > 0
+    getChildrenRanked(state, tutorialChoiceId).length > 0
   )
 }
 
@@ -76,7 +76,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
           child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),
         ) &&
         // e.g. Work/To Do
-        getChildrenRankedById(state, tutorialChoiceParentId).find(
+        getChildrenRanked(state, tutorialChoiceParentId).find(
           child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
         ) ? (
           <p>

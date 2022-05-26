@@ -1,7 +1,7 @@
 import { EM_TOKEN } from '../constants'
 import { contextToThoughtId, isFunction } from '../util'
 import { keyValueBy } from '../util/keyValueBy'
-import { getChildrenRankedById } from '../selectors'
+import { getChildrenRanked } from '../selectors'
 import { Context, State } from '../@types'
 import { storage } from '../util/storage'
 
@@ -17,7 +17,7 @@ const localCached = (context: Context | string) =>
 /** Returns subthoughts of /em/Settings/...context, not including meta subthoughts. */
 const getStateSetting = (state: State, context: Context | string): string | undefined => {
   const id = contextToThoughtId(state, [EM_TOKEN, 'Settings'].concat(context))
-  return (getChildrenRankedById(state, id).find(child => !isFunction(child.value)) || {}).value
+  return (getChildrenRanked(state, id).find(child => !isFunction(child.value)) || {}).value
 }
 
 /** Returns subthoughts of /em/Settings/...context, not including meta subthoughts. Falls back to localStorage. */

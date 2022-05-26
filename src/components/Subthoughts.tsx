@@ -50,7 +50,7 @@ import {
   getAllChildrenSorted,
   getChildPath,
   getChildren,
-  getChildrenRankedById,
+  getChildrenRanked,
   getContextsSortedAndRanked,
   getEditingPath,
   getNextRank,
@@ -598,7 +598,7 @@ export const SubthoughtsComponent = ({
           Due to pending merge mechanism, sometimes a context can have duplicates for a brief moment. So access by context can be problematic.
           Migrate all possible context based selectors to use path or thought ids.
         */
-        getChildrenRankedById(state, head(simplePath))
+        getChildrenRanked(state, head(simplePath))
 
   const cursorThoughtArray = cursor && childIdsToThoughts(state, cursor)
   // Ensure that editable newThought is visible.

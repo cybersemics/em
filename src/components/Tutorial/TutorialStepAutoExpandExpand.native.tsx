@@ -1,6 +1,6 @@
 import React from 'react'
 import { store } from '../../store'
-import { childIdsToThoughts, getAllChildren, getChildrenRankedById } from '../../selectors'
+import { childIdsToThoughts, getAllChildren, getChildrenRanked } from '../../selectors'
 import { ellipsize } from '../../util'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
@@ -17,7 +17,7 @@ interface IComponentProps {
 const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }: IComponentProps) => {
   const uncle = thoughtsNoCursorWithChild(cursor, rootChildren)[0]
   /** Gets the first child of the first thought in the root that is not the cursor. */
-  const childWithNoCursorParent = uncle ? getChildrenRankedById(store.getState(), uncle.id)[0] : null
+  const childWithNoCursorParent = uncle ? getChildrenRanked(store.getState(), uncle.id)[0] : null
 
   const hiddenChild = ellipsize(childWithNoCursorParent?.value || '') || ''
 

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../constants'
 import { appendToPath, parentOf, pathToContext, reducerFlow, strip, head } from '../util'
-import { getChildrenRankedById, simplifyPath, getThoughtById } from '../selectors'
+import { getChildrenRanked, simplifyPath, getThoughtById } from '../selectors'
 import { editableRender, editThought, moveThought, newThought, deleteData } from '../reducers'
 import { Path, SplitResult, State } from '../@types'
 
@@ -57,7 +57,7 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
       // we can safely assume that the cursor has been set to the newly created thought that contains valueRight
       const childNew = getThoughtById(state, head(state.cursor!))
       const pathRight = appendToPath(parentOf(simplePath), childNew.id)
-      const children = getChildrenRankedById(state, head(pathLeft))
+      const children = getChildrenRanked(state, head(pathLeft))
 
       return reducerFlow(
         children.map((child, i) =>

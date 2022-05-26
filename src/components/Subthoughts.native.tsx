@@ -57,7 +57,7 @@ import {
   getAllChildrenSorted,
   getChildPath,
   getChildren,
-  getChildrenRankedById,
+  getChildrenRanked,
   getContextsSortedAndRanked,
   getEditingPath,
   getGlobalSortPreference,
@@ -477,7 +477,7 @@ export const SubthoughtsComponent = ({
       ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : sortPreference?.type !== 'None'
       ? getAllChildrenSorted(state, thoughtId) // TODO: contextBinding
-      : getChildrenRankedById(state, thoughtId) // TODO: contextBinding
+      : getChildrenRanked(state, thoughtId) // TODO: contextBinding
 
   // check duplicate ranks for debugging
   // React prints a warning, but it does not show which thoughts are colliding

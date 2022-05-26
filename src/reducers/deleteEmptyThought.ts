@@ -12,7 +12,7 @@ import {
 import {
   getNextRank,
   getChildren,
-  getChildrenRankedById,
+  getChildrenRanked,
   isContextViewActive,
   prevSibling,
   simplifyPath,
@@ -38,7 +38,7 @@ const deleteEmptyThought = (state: State): State => {
   const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
   const context = pathToContext(state, cursor)
   const simplePath = simplifyPath(state, cursor)
-  const allChildren = getChildrenRankedById(state, head(cursor))
+  const allChildren = getChildrenRanked(state, head(cursor))
   const visibleChildren = getChildren(state, context)
   const isEmpty = headValue(state, cursor) === '' || state.cursorCleared
 

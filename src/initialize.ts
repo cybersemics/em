@@ -8,7 +8,7 @@ import {
   getContexts,
   contextToThought,
   getLexeme,
-  getChildrenRankedById,
+  getChildrenRanked,
   isPending,
   decodeThoughtsUrl,
   getThoughtById,
@@ -215,7 +215,7 @@ const windowEm = {
   ),
   getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
   getAllChildrenRankedByContext: withState((state: State, context: Context) =>
-    getChildrenRankedById(state, contextToThought(state, context)?.id || null),
+    getChildrenRanked(state, contextToThought(state, context)?.id || null),
   ),
   getThoughtById: withState(getThoughtById),
   contextToThoughtId,

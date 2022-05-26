@@ -1,5 +1,5 @@
 import { error, loadFromUrl, newThought, setResourceCache as setResourceCacheActionCreator } from '../action-creators'
-import { attribute, getChildren, getChildrenRankedById, simplifyPath } from '../selectors'
+import { attribute, getChildren, getChildrenRanked, simplifyPath } from '../selectors'
 import { appendToPath, head, pathToContext } from '../util'
 import { Thunk, Path } from '../@types'
 
@@ -20,7 +20,7 @@ const loadResource =
       dispatch(newThought({ at: path, insertNewSubthought: true, preventSetCursor: true }))
 
       const simplePath = simplifyPath(state, path)
-      const childrenNew = getChildrenRankedById(state, head(simplePath))
+      const childrenNew = getChildrenRanked(state, head(simplePath))
       const thoughtNew = childrenNew[childrenNew.length - 1]
       const newThoughtPath = appendToPath(simplePath, thoughtNew.id)
 

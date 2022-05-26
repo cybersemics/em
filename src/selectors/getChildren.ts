@@ -81,7 +81,7 @@ export const getChildrenById = getVisibleThoughtsById(getAllChildrenAsThoughtsBy
 /** Gets all children of a Context sorted by rank or sort preference. */
 export const getAllChildrenSorted = (state: State, id: ThoughtId) => {
   const getThoughtsFunction =
-    getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedAlphabetical : getChildrenRankedById
+    getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedAlphabetical : getChildrenRanked
   return getThoughtsFunction(state, id)
 }
 
@@ -170,7 +170,7 @@ const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
 }
 
 /** Gets all children of a thought sorted by rank. Returns a new object reference even if the children have not changed. */
-export const getChildrenRankedById = (state: State, thoughtId: ThoughtId | null): Thought[] => {
+export const getChildrenRanked = (state: State, thoughtId: ThoughtId | null): Thought[] => {
   const allChildren = childIdsToThoughts(state, getAllChildren(state, thoughtId))
   return sort(allChildren, compareByRank)
 }

@@ -1,6 +1,6 @@
 import {
   getContextsSortedAndRanked,
-  getChildrenRankedById,
+  getChildrenRanked,
   getChildrenSortedById,
   isChildVisible,
   isContextViewActive,
@@ -25,10 +25,7 @@ const prevSibling = (state: State, value: string, context: Context, rank: number
   const getThoughtSiblings = () => {
     const id = contextToThoughtId(state, context)
     if (!id) return []
-    return (getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedById : getChildrenRankedById)(
-      state,
-      id,
-    )
+    return (getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedById : getChildrenRanked)(state, id)
   }
 
   const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings()

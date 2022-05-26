@@ -1,6 +1,6 @@
 import { store } from '../../store'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
-import { getChildrenRankedById } from '../../selectors'
+import { getChildrenRanked } from '../../selectors'
 import { contextToThoughtId } from '../../util'
 
 /** Returns true if the first context thought has been created, e.g. /Home/To Do/x. */
@@ -12,11 +12,11 @@ export const context1SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {
   return (
     rootChildren.find(child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) &&
     // e.g. Home/To Do
-    getChildrenRankedById(state, [context1Id]).find(
+    getChildrenRanked(state, [context1Id]).find(
       child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
     ) &&
     // e.g. Home/To Do/x
-    getChildrenRankedById(state, [context1Id, TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+    getChildrenRanked(state, [context1Id, TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
   )
 }
 
@@ -29,10 +29,10 @@ export const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {
   return (
     rootChildren.find(child => child.value.toLowerCase() === context2Id.toLowerCase()) &&
     // e.g. Work/To Do
-    getChildrenRankedById(state, [context2Id]).find(
+    getChildrenRanked(state, [context2Id]).find(
       child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
     ) &&
     // e.g. Work/To Do/y
-    getChildrenRankedById(state, [context2Id, TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
+    getChildrenRanked(state, [context2Id, TUTORIAL_CONTEXT[tutorialChoice]]).length > 0
   )
 }
