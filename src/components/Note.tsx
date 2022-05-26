@@ -19,7 +19,7 @@ import {
   setNoteFocus,
   toggleNote,
 } from '../action-creators'
-import { equalArrays, head, pathToContext, strip } from '../util'
+import { head, pathToContext, strip } from '../util'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
@@ -48,7 +48,6 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ path }: NoteProps) => {
   const state = store.getState()
-  const context = pathToContext(state, path)
   const thoughtId = head(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
@@ -58,7 +57,7 @@ const Note = ({ path }: NoteProps) => {
   useEffect(() => {
     const state = store.getState()
     // cursor must be true if note is focused
-    if (state.noteFocus && equalArrays(pathToContext(state, simplifyPath(state, state.cursor!)), context)) {
+    if (state.noteFocus && state.cursor && head(state.cursor) === head(path)) {
       selection.set(noteRef.current!, { end: true })
     }
   }, [state.noteFocus])
@@ -104,6 +103,8 @@ const Note = ({ path }: NoteProps) => {
 
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
+    // calculate pathToContext onChange not in render for performance
+    const context = pathToContext(state, path)
     const value = justPasted
       ? // if just pasted, strip all HTML from value
         (setJustPasted(false), strip(e.target.value))

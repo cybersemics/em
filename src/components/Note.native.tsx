@@ -18,7 +18,7 @@ import {
   setNoteFocus,
   toggleNote,
 } from '../action-creators'
-import { equalArrays, head, pathToContext, strip } from '../util'
+import { head, pathToContext, strip } from '../util'
 import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
 import { Path, State } from '../@types'
 
@@ -45,7 +45,6 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ path }: NoteProps) => {
   const state = store.getState()
-  const context = pathToContext(state, path)
   const thoughtId = head(path)
   const dispatch = useDispatch()
   const [justPasted, setJustPasted] = useState(false)
@@ -54,7 +53,7 @@ const Note = ({ path }: NoteProps) => {
   useEffect(() => {
     const state = store.getState()
     // cursor must be true if note is focused
-    if (state.noteFocus && equalArrays(pathToContext(state, simplifyPath(state, state.cursor!)), context)) {
+    if (state.noteFocus && state.cursor && head(state.cursor) === head(path)) {
       // TODO: Set the caret to the end of the note
       // selection.set(noteRef.current!, { end: true })
     }
@@ -94,6 +93,8 @@ const Note = ({ path }: NoteProps) => {
 
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
+    // calculate pathToContext onChange not in render for performance
+    const context = pathToContext(state, path)
     const value = justPasted
       ? // if just pasted, strip all HTML from value
         (setJustPasted(false), strip(e))
