@@ -3,13 +3,13 @@ import { simplifyPath } from '../selectors'
 import { head, pathToContext, reducerFlow } from '../util'
 import { HeadingLevel } from '../shortcuts/headings'
 import { State } from '../@types'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Set or remove a heading on the cursor. */
 const heading = (state: State, { level }: { level: HeadingLevel }): State => {
   if (!state.cursor) return state
   const context = pathToContext(state, simplifyPath(state, state.cursor))
-  const headingChildren = getAllChildrenAsThoughtsById(state, head(state.cursor)).filter(child =>
+  const headingChildren = getAllChildrenAsThoughts(state, head(state.cursor)).filter(child =>
     /^=heading[1-9]$/.test(child.value),
   )
   return reducerFlow([

@@ -6,7 +6,7 @@ import { getAllChildren } from '../../selectors'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
 import { Path, Thought } from '../../@types'
-import { getAllChildrenAsThoughtsById } from '../../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 
 const { smallText, italic } = commonStyles
 
@@ -14,12 +14,12 @@ const { smallText, italic } = commonStyles
 const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
   const state = store.getState()
   const cursorContext = pathToContext(state, cursor || [])
-  const cursorChildren = cursor ? getAllChildrenAsThoughtsById(state, head(cursor)) : []
+  const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
   const isCursorLeaf = cursorChildren.length === 0
   const contextAncestor = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
   const contextAncestorId = contextToThoughtId(state, contextAncestor)
 
-  const ancestorThoughtChildren = getAllChildrenAsThoughtsById(
+  const ancestorThoughtChildren = getAllChildrenAsThoughts(
     state,
     contextAncestor.length === 0 ? HOME_TOKEN : contextAncestorId,
   )

@@ -38,7 +38,7 @@ export const getAllChildren = (state: State, thoughtId: ThoughtId | null): Thoug
 }
 
 /** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId | null) => {
+export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null) => {
   const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
 }
@@ -51,12 +51,12 @@ const getVisibleThoughtsById = _.curry((getThoughtsFunction: GetThoughtsSelector
 
 /** Returns true if the context has any visible children. */
 export const hasChildren = (state: State, id: ThoughtId) => {
-  const children = getAllChildrenAsThoughtsById(state, id)
+  const children = getAllChildrenAsThoughts(state, id)
   return state.showHiddenThoughts ? children.length > 0 : children.some(isChildVisible(state))
 }
 
 /** Gets all visible children of an id, unordered. */
-export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughtsById)
+export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
 
 /** Gets all children of a Context sorted by rank or sort preference. */
 export const getAllChildrenSorted = (state: State, id: ThoughtId) => {
@@ -74,7 +74,7 @@ export const getChildrenSorted = (state: State, id: ThoughtId | null) => {
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>) =>
-  sort(getAllChildrenAsThoughtsById(state, id), compare)
+  sort(getAllChildrenAsThoughts(state, id), compare)
 
 /** Returns the absolute difference between to child ranks. */
 const rankDiff = (a: Thought, b: Thought) => Math.abs(a?.rank - b?.rank)

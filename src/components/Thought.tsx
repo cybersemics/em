@@ -57,7 +57,7 @@ import {
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /**********************************************************************
  * Redux
@@ -307,7 +307,7 @@ const ThoughtContainer = ({
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
   const optionsId = findDescendant(state, parentId, '=options')
-  const childrenOptions = getAllChildrenAsThoughtsById(state, optionsId)
+  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
 
   const options =
     !isFunction(value) && childrenOptions.length > 0

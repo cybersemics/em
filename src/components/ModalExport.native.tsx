@@ -14,7 +14,7 @@ import { FontAwesome5 } from '@expo/vector-icons'
 import { ActionButton } from './ActionButton'
 import Clipboard from 'expo-clipboard'
 import { Text } from './Text.native'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface AdvancedSetting {
   id: string
@@ -154,7 +154,7 @@ const ModalExport = () => {
   const simplePath = simplifyPath(state, cursor)
   const context = pathToContext(state, simplePath)
   const titleId = findDescendant(state, head(simplePath), ['=publish', 'Title'])
-  const titleChild = getAllChildrenAsThoughtsById(state, titleId)[0]
+  const titleChild = getAllChildrenAsThoughts(state, titleId)[0]
   const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
 

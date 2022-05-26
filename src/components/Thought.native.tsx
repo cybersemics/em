@@ -58,7 +58,7 @@ import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
 import { StyleSheet } from 'react-native'
 import ThoughtAnnotation from './ThoughtAnnotation'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /**********************************************************************
  * Redux
@@ -292,7 +292,7 @@ const ThoughtContainer = ({
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
   const optionsId = findDescendant(state, parentId, '=options')
-  const childrenOptions = getAllChildrenAsThoughtsById(state, optionsId)
+  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options =
     !isFunction(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
 

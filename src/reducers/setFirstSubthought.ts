@@ -3,12 +3,12 @@ import { getPrevRank, contextToPath } from '../selectors'
 import { contextToThoughtId, head } from '../util'
 import { editThought, createThought } from '../reducers'
 import { Context, SimplePath, State } from '../@types'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Sets the value of the first subthought in the given context. */
 const setFirstSubthoughts = (state: State, { context, value }: { context: Context; value: string }) => {
   const id = contextToThoughtId(state, context)
-  const oldFirstThoughtRanked = getAllChildrenAsThoughtsById(state, id)[0]
+  const oldFirstThoughtRanked = getAllChildrenAsThoughts(state, id)[0]
 
   const path = contextToPath(state, context)
 

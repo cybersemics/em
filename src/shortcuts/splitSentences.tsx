@@ -6,7 +6,7 @@ import { Action } from 'redux'
 import { isContextViewActive } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { Thunk, Icon as IconType, Shortcut } from '../@types'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -55,7 +55,7 @@ const splitSentencesShortcut: Shortcut = {
         : !showContexts && cursor.length > 1
         ? parentOf(cursor)
         : [HOME_TOKEN])
-    const siblings = path && getAllChildrenAsThoughtsById(state, head(path)).map(({ value }) => value)
+    const siblings = path && getAllChildrenAsThoughts(state, head(path)).map(({ value }) => value)
     const duplicates = _.intersection(sentences, siblings)
     if (duplicates.length !== 0) {
       dispatch(

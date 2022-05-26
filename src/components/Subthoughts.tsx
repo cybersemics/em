@@ -60,7 +60,7 @@ import {
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -92,7 +92,7 @@ const isLeaf = (state: State, id: ThoughtId) => getChildren(state, id).length ==
 
 /** Finds the the first env context with =focus/Zoom. */
 const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): Context | null => {
-  const children = getAllChildrenAsThoughtsById(state, id)
+  const children = getAllChildrenAsThoughts(state, id)
   const child = children.find(child => {
     /** Returns true if the env context has zoom. */
     const hasZoom = () => {

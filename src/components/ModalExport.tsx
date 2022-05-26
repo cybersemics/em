@@ -36,7 +36,7 @@ import useOnClickOutside from 'use-onclickoutside'
 import download from '../device/download'
 import * as selection from '../device/selection'
 import { Context, ExportOption, Thought, Path, SimplePath, State, ThoughtsInterface } from '../@types'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Use a throttled callback. */
 // https://stackoverflow.com/a/62017005/480608
@@ -253,7 +253,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   const state = store.getState()
   const context = pathToContext(state, simplePath)
   const titleId = findDescendant(state, head(simplePath), ['=publish', 'Title'])
-  const titleChild = getAllChildrenAsThoughtsById(state, titleId)[0]
+  const titleChild = getAllChildrenAsThoughts(state, titleId)[0]
   const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
   const titleShort = ellipsize(title)

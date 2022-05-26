@@ -25,7 +25,7 @@ import {
   unroot,
 } from '../util'
 import parentOfThought from './parentOfThought'
-import { getAllChildrenAsThoughtsById } from './getChildren'
+import { getAllChildrenAsThoughts } from './getChildren'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (state: State, child: ThoughtId | ThoughtContext, showContexts: boolean) =>
@@ -131,7 +131,7 @@ function expandThoughtsRecursive(
 
   const showContexts = isContextViewActive(state, simpleContext)
 
-  const childrenUnfiltered = getAllChildrenAsThoughtsById(state, head(simplePath))
+  const childrenUnfiltered = getAllChildrenAsThoughts(state, head(simplePath))
 
   // Note: A path that is ancestor of the expansion path or expansion path itself should always be expanded.
   const visibleChildren = state.showHiddenThoughts

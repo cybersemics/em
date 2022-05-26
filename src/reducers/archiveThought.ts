@@ -36,7 +36,7 @@ import {
 
 // reducers
 import { alert, deleteThought, moveThought, newThought, setCursor } from '../reducers'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Returns path to the archive of the given context. */
 export const pathAndRankToArchive = (
@@ -47,7 +47,7 @@ export const pathAndRankToArchive = (
   path: Path
   rank: number
 } | null => {
-  const rankedArchive = getAllChildrenAsThoughtsById(state, head(pathParent)).find(equalThoughtValue('=archive'))
+  const rankedArchive = getAllChildrenAsThoughts(state, head(pathParent)).find(equalThoughtValue('=archive'))
   if (!rankedArchive) return null
   const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive.id) : parentOf(path)
   const newRank = getPrevRank(state, head(archivePath))
@@ -89,7 +89,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(state, path)
   const hasDescendants = getAllChildren(state, head(path)).length !== 0
-  const allChildren = getAllChildrenAsThoughtsById(state, head(simplePath))
+  const allChildren = getAllChildrenAsThoughts(state, head(simplePath))
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
   const alertLabel = ellipsize(value === '=note' ? 'note ' + allChildren[0]?.value || '' : value)
 

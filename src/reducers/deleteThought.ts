@@ -5,7 +5,7 @@ import { getChildrenRanked, getLexeme, getThoughtById, hasLexeme, rootedParentOf
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface Payload {
   context: Context
@@ -99,7 +99,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   const contextViewsNew = { ...state.contextViews }
   if (parent) delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getAllChildrenAsThoughtsById(state, parent?.id || null).filter(
+  const subthoughts = getAllChildrenAsThoughts(state, parent?.id || null).filter(
     child => child.id !== deletedThought.id,
   )
 

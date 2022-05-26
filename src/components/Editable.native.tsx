@@ -67,7 +67,7 @@ import {
   rootedParentOf,
 } from '../selectors'
 import { ViewStyle } from 'react-native'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import { stripEmptyFormattingTags } from '../util/stripEmptyFormattingTags'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -135,7 +135,7 @@ const Editable = ({
       ? parentOf(thoughts)
       : state.rootContext
   const optionsId = findDescendant(state, parentId, '=options')
-  const childrenOptions = getAllChildrenAsThoughtsById(state, optionsId)
+  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
   // store the old value so that we have a transcendental head when it is changed
@@ -150,7 +150,7 @@ const Editable = ({
   const lexeme = getLexeme(state, value)
 
   const labelId = findDescendant(state, parentId, '=label')
-  const childrenLabel = getAllChildrenAsThoughtsById(state, labelId)
+  const childrenLabel = getAllChildrenAsThoughts(state, labelId)
 
   // side effect to set old value ref to head value from updated simplePath.
   useEffect(() => {

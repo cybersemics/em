@@ -33,7 +33,7 @@ import {
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
-import { getAllChildrenAsThoughtsById } from '../../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
@@ -47,7 +47,7 @@ const mapStateToProps = (state: State) => {
   return {
     contextViews,
     cursor,
-    rootChildren: getAllChildrenAsThoughtsById(state, HOME_TOKEN),
+    rootChildren: getAllChildrenAsThoughts(state, HOME_TOKEN),
     tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT1_PARENT,
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
   }

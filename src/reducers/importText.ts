@@ -24,7 +24,7 @@ import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
 import { getSessionId } from '../util/sessionManager'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 // a list item tag
@@ -176,7 +176,7 @@ const importText = (
      */
     const getDestinationPath = (): SimplePath => {
       if (!shouldImportIntoDummy) return simplePath
-      const newDummyThought = getAllChildrenAsThoughtsById(updatedState, head(simplePath)).find(
+      const newDummyThought = getAllChildrenAsThoughts(updatedState, head(simplePath)).find(
         child => child.value === uuid,
       )
       return (newDummyThought ? [...simplePath, newDummyThought.id] : simplePath) as SimplePath

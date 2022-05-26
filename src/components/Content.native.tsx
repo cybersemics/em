@@ -9,7 +9,7 @@ import { head, isAbsolute } from '../util'
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
-import { childrenFilterPredicate, getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { childrenFilterPredicate, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import Editable from './Editable'
 import { SimplePath, State } from '../@types'
 import { storage } from '../util/storage'
@@ -41,7 +41,7 @@ const mapStateToProps = (state: State) => {
   const isAbsoluteContext = isAbsolute(rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
-  const children = getAllChildrenAsThoughtsById(state, head(rankedRoot))
+  const children = getAllChildrenAsThoughts(state, head(rankedRoot))
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
 
   return {

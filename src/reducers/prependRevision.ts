@@ -3,18 +3,18 @@ import { newThought } from '../reducers'
 import { findDescendant } from '../selectors'
 import { appendToPath, getPublishUrl, head, reducerFlow } from '../util'
 import { Path, State } from '../@types'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */
 const prependRevision = (state: State, { path, cid }: { path: Path; cid: string }) => {
   /** Gets the =publish thought. */
   const publishChild = (state: State) =>
-    getAllChildrenAsThoughtsById(state, head(path)).find(child => child.value === '=publish')
+    getAllChildrenAsThoughts(state, head(path)).find(child => child.value === '=publish')
 
   /** Gets the =publish/Revisions thought. */
   const revisionsChild = (state: State) => {
     const publishId = findDescendant(state, head(path), '=publish')
-    return getAllChildrenAsThoughtsById(state, publishId).find(child => child.value === 'Revisions')
+    return getAllChildrenAsThoughts(state, publishId).find(child => child.value === 'Revisions')
   }
 
   return reducerFlow([

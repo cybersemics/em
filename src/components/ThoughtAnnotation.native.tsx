@@ -20,7 +20,7 @@ import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
 import { TouchableOpacity } from 'react-native'
 import { isInternalLink } from '../device/router'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 const { from, animate } = fadeIn
 
@@ -44,7 +44,7 @@ interface ThoughtAnnotationProps {
 /** Sets the innerHTML of the ngram text. */
 const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId) => {
   const labelId = findDescendant(state, id, '=label')
-  const labelChildren = labelId ? getAllChildrenAsThoughtsById(state, labelId) : []
+  const labelChildren = labelId ? getAllChildrenAsThoughts(state, labelId) : []
   const { editingValue } = state
   return {
     __html: isEditing
@@ -124,9 +124,7 @@ const ThoughtAnnotation = ({
   const state = store.getState()
   const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
   const isExpanded = !!state.expanded[hashPath(simplePath)]
-  const childrenUrls = once(() =>
-    getAllChildrenAsThoughtsById(state, head(simplePath)).filter(child => isURL(child.value)),
-  )
+  const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
 
   // no contexts if thought is empty
   const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []

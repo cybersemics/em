@@ -3,7 +3,7 @@ import { deleteLexeme, updateLastUpdated } from '../data-providers/dexie'
 import { hashThought, timestamp } from '../util'
 import { getLexeme, getThoughtById } from '../selectors'
 import { State } from '../@types'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Deletes the value from the lexemeIndex. */
 const deleteData = (state: State, { value }: { value: string }) => {
@@ -24,7 +24,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.stringify(parent)}`)
         return state
       }
-      const childrenNew = getAllChildrenAsThoughtsById(state, parent.id).filter(
+      const childrenNew = getAllChildrenAsThoughts(state, parent.id).filter(
         child => hashThought(child.value) !== hashThought(value),
       )
 

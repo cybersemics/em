@@ -1,4 +1,4 @@
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import { Thunk } from '../@types'
 import { EM_TOKEN } from '../constants'
 import { findDescendant } from '../selectors'
@@ -22,7 +22,7 @@ const tutorial =
     /** Returns true if the tutorial settings have been loaded into memory (via pullQueue). */
     const isTutorialSettingsLoaded = () => {
       const tutorialSettingId = findDescendant(getState(), EM_TOKEN, ['Settings', 'Tutorial'])
-      const children = getAllChildrenAsThoughtsById(getState(), tutorialSettingId)
+      const children = getAllChildrenAsThoughts(getState(), tutorialSettingId)
       return children.length > 0
     }
 

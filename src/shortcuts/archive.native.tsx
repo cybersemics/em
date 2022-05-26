@@ -6,7 +6,7 @@ import { appendToPath, ellipsize, head, isEM, isRoot } from '../util'
 import { alert, archiveThought, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
 import Svg, { G, Path } from 'react-native-svg'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 let undoArchiveTimer: number // eslint-disable-line fp/no-let
 
@@ -24,7 +24,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
-      const allChildren = getAllChildrenAsThoughtsById(state, head(path))
+      const allChildren = getAllChildrenAsThoughts(state, head(path))
       const childNote = allChildren.find(child => child.value === '=note')
       // we know there is a =note child if noteFocus is true
       // we just need to get the Child object so that archiveThought has the full path
