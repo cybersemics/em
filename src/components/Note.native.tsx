@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { store } from '../store'
-import { attribute, getEditingPath, contextToThought, isContextViewActive, simplifyPath } from '../selectors'
+import {
+  attribute,
+  findDescendant,
+  getEditingPath,
+  getThoughtById,
+  isContextViewActive,
+  simplifyPath,
+} from '../selectors'
 import {
   cursorDown,
   deleteAttribute,
@@ -43,12 +50,6 @@ const Note = ({ path }: NoteProps) => {
   const dispatch = useDispatch()
   const [justPasted, setJustPasted] = useState(false)
 
-  /** Returns true if this context has a non-pending note.. */
-  const hasNote = useSelector((state: State) => {
-    const noteThought = contextToThought(state, [...context, '=note'])
-    return noteThought && !noteThought.pending
-  })
-
   // set the caret on the note if editing this thought and noteFocus is true
   useEffect(() => {
     const state = store.getState()
@@ -62,7 +63,8 @@ const Note = ({ path }: NoteProps) => {
   /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
   const note: string | null = useSelector((state: State) => {
     if (isContextViewActive(state, path)) return null
-    const noteThought = contextToThought(state, [...context, '=note'])
+    const noteId = findDescendant(state, thoughtId, '=note')
+    const noteThought = noteId ? getThoughtById(state, noteId) : null
     if (noteThought?.pending) return null
     return attribute(state, thoughtId, '=note')
   })

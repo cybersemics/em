@@ -2,7 +2,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import { attribute, getEditingPath, contextToThought, isContextViewActive, simplifyPath } from '../selectors'
+import {
+  attribute,
+  findDescendant,
+  getEditingPath,
+  getThoughtById,
+  isContextViewActive,
+  simplifyPath,
+} from '../selectors'
 import {
   cursorDown,
   deleteAttribute,
@@ -59,7 +66,8 @@ const Note = ({ path }: NoteProps) => {
   /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
   const note: string | null = useSelector((state: State) => {
     if (isContextViewActive(state, path)) return null
-    const noteThought = contextToThought(state, [...context, '=note'])
+    const noteId = findDescendant(state, thoughtId, '=note')
+    const noteThought = noteId ? getThoughtById(state, noteId) : null
     if (noteThought?.pending) return null
     return attribute(state, thoughtId, '=note')
   })
