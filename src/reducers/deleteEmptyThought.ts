@@ -14,7 +14,7 @@ import {
   getChildren,
   getChildrenRanked,
   isContextViewActive,
-  prevSibling,
+  prevSiblingById,
   simplifyPath,
   rootedParentOf,
   getThoughtById,
@@ -83,7 +83,7 @@ const deleteEmptyThought = (state: State): State => {
   else if (offset === 0 && !showContexts) {
     const { value, rank, splitSource } = cursorThought
     const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
-    const prev = prevSibling(state, value, pathToContext(state, rootedParentOf(state, cursor)), rank)
+    const prev = prevSiblingById(state, value, rootedParentOf(state, cursor), rank)
 
     // only if there is a previous sibling
     if (prev) {

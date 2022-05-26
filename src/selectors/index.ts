@@ -49,7 +49,7 @@ export { default as lastThoughtsFromContextChain } from './lastThoughtsFromConte
 export { default as nextSibling } from './nextSibling'
 export { default as rootedParentOf } from './rootedParentOf'
 export { default as pathExists } from './pathExists'
-export { default as prevSibling } from './prevSibling'
+export { prevSiblingById } from './prevSibling'
 export { default as contextToPath } from './contextToPath'
 export { default as simplifyPath } from './simplifyPath'
 export { default as splitChain } from './splitChain'

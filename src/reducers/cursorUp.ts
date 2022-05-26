@@ -1,15 +1,14 @@
 import { HOME_PATH } from '../constants'
 import { setCursor } from '../reducers'
-import { rootedParentOf, prevSibling, getThoughtById } from '../selectors'
-import { appendToPath, parentOf, head, pathToContext, unroot, isRoot } from '../util'
+import { rootedParentOf, prevSiblingById, getThoughtById } from '../selectors'
+import { appendToPath, parentOf, head, unroot, isRoot } from '../util'
 import { State } from '../@types'
 
 /** Moves the cursor to the previous sibling. */
 const cursorUp = (state: State) => {
   const { cursor } = state
   const path = cursor || HOME_PATH
-  const contextRanked = rootedParentOf(state, path)
-  const context = pathToContext(state, contextRanked)
+  const pathParent = rootedParentOf(state, path)
 
   const cursorThought = getThoughtById(state, head(path))
 
@@ -20,7 +19,7 @@ const cursorUp = (state: State) => {
 
   const { value, rank } = cursorThought
 
-  const thoughtBefore = prevSibling(state, value, context, rank)
+  const thoughtBefore = prevSiblingById(state, value, pathParent, rank)
   const pathBefore = thoughtBefore && unroot(appendToPath(parentOf(path), thoughtBefore.id))
   // const prevNieces = thoughtBefore && getChildrenRanked(pathBefore)
   // const prevNiece = prevNieces && prevNieces[prevNieces.length - 1]
@@ -32,8 +31,8 @@ const cursorUp = (state: State) => {
     thoughtBefore
       ? pathBefore
       : // select parent
-      !isRoot(context)
-      ? contextRanked
+      !isRoot(pathParent)
+      ? pathParent
       : // previous niece
         // prevNiece ? unroot(pathBefore.concat(prevNiece))
         null // see TODO
