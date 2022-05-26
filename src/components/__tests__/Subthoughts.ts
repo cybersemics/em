@@ -8,7 +8,7 @@ import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 import { Context, Path, SimplePath, State } from '../../@types'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { getAllChildren } from '../../selectors'
+import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { screen } from '@testing-library/dom'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
@@ -567,7 +567,7 @@ describe('expand thoughts', () => {
     // update DOM
     wrapper.update()
 
-    const childrenContextA = getAllChildren(store.getState(), ['a'])
+    const childrenContextA = getAllChildrenByContext(store.getState(), ['a'])
 
     /** */
     const thoughtB = () => wrapper.find(Subthoughts).filterWhere(wherePath(store.getState(), ['a', 'b']))
@@ -583,7 +583,7 @@ describe('expand thoughts', () => {
       }),
     )
 
-    const updatedChildrenContextA = getAllChildren(store.getState(), ['a'])
+    const updatedChildrenContextA = getAllChildrenByContext(store.getState(), ['a'])
 
     // children of context ['a'] shouldn't change as this test requires Subthought to rerender due to change in expanded
     expect(updatedChildrenContextA).toBe(childrenContextA)

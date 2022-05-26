@@ -1,7 +1,14 @@
 /* eslint-disable */
 import _ from 'lodash'
 import { editThought, moveThought, createThought, setCursor, subCategorizeOne, editableRender } from '../reducers'
-import { getPrevRank, getRankBefore, getAllChildren, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
+import {
+  getPrevRank,
+  getRankBefore,
+  getAllChildrenById,
+  simplifyPath,
+  rootedParentOf,
+  getThoughtById,
+} from '../selectors'
 import { appendToPath, parentOf, headValue, pathToContext, reducerFlow, headId, head } from '../util'
 import { Path, SimplePath, State } from '../@types'
 
@@ -16,7 +23,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
 
   // const rank = headRank(simplePath)
   const context = pathToContext(state, simplePath)
-  const children = getAllChildren(state, context)
+  const children = getAllChildrenById(state, head(simplePath))
 
   // if there are no children
   if (children.length === 0) return subCategorizeOne(state)

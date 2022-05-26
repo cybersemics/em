@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getLexeme, getAllChildren, contextToThought, getThoughtById } from '../selectors'
+import { getNextRank, getLexeme, getAllChildrenById, contextToThought, getThoughtById } from '../selectors'
 import { createId, hashThought, head, timestamp } from '../util'
 import { Context, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { getSessionId } from '../util/sessionManager'
@@ -45,7 +45,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
   if (context.length > 0) {
     const newValue = addAsContext ? head(context) : value
 
-    const children = getAllChildren(state, contextActual)
+    const children = getAllChildrenById(state, thought.id)
       .filter(child => child !== id)
       .concat(id)
 

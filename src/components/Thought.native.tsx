@@ -45,7 +45,6 @@ import {
   attribute,
   childIdsToThoughts,
   findDescendant,
-  getAllChildren,
   getChildren,
   getChildrenRankedById,
   getSortPreference,

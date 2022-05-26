@@ -1,7 +1,7 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
-import { getAllChildren, contextToThought } from '../../selectors'
+import { contextToThought } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import getThoughtByIdFromDB from '../../data-providers/data-helpers/getThoughtById'
@@ -13,6 +13,7 @@ import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helper
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
+import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
@@ -65,7 +66,7 @@ it('load thought', async () => {
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const children = getAllChildren(store.getState(), [HOME_TOKEN])
+  const children = getAllChildrenByContext(store.getState(), [HOME_TOKEN])
   expect(children).toHaveLength(0)
 
   // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
@@ -78,7 +79,7 @@ it('load thought', async () => {
 
   await refreshTestApp()
 
-  const childrenAfterInitialize = getAllChildren(store.getState(), [HOME_TOKEN])
+  const childrenAfterInitialize = getAllChildrenByContext(store.getState(), [HOME_TOKEN])
   expect(childrenAfterInitialize).toMatchObject([thoughtA?.id])
 })
 
@@ -142,12 +143,12 @@ it('load buffered thoughts', async () => {
   await refreshTestApp()
 
   const state = store.getState()
-  expect(getAllChildren(state, [HOME_TOKEN])).toMatchObject([thoughtA.id])
-  expect(getAllChildren(state, ['a'])).toMatchObject([thoughtB.id])
-  expect(getAllChildren(state, ['a', 'b'])).toMatchObject([thoughtC.id])
-  expect(getAllChildren(state, ['a', 'b', 'c'])).toMatchObject([thoughtD.id])
-  expect(getAllChildren(state, ['a', 'b', 'c', 'd'])).toMatchObject([thoughtE.id])
-  expect(getAllChildren(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
+  expect(getAllChildrenByContext(state, [HOME_TOKEN])).toMatchObject([thoughtA.id])
+  expect(getAllChildrenByContext(state, ['a'])).toMatchObject([thoughtB.id])
+  expect(getAllChildrenByContext(state, ['a', 'b'])).toMatchObject([thoughtC.id])
+  expect(getAllChildrenByContext(state, ['a', 'b', 'c'])).toMatchObject([thoughtD.id])
+  expect(getAllChildrenByContext(state, ['a', 'b', 'c', 'd'])).toMatchObject([thoughtE.id])
+  expect(getAllChildrenByContext(state, ['a', 'b', 'c', 'd', 'e'])).toMatchObject([])
 })
 
 it('delete thought with buffered descendants', async () => {

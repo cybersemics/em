@@ -4,7 +4,6 @@ import {
   exportContext,
   getContexts,
   getLexeme,
-  getAllChildren,
   getChildrenRanked,
   getRankAfter,
   contextToThought,
@@ -14,11 +13,11 @@ import {
 } from '../../selectors'
 import { importText, newSubthought, newThought } from '../../reducers'
 import { State } from '../../@types'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-
-import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('move within root', () => {
   const steps = [
@@ -360,7 +359,7 @@ it('merge duplicate with new rank', () => {
   const thoughtA = contextToThought(stateNew, ['a'])!
 
   // use destinate rank of duplicate thoughts
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([thoughtM.id])
+  expect(getAllChildrenByContext(stateNew, ['a'])).toMatchObject([thoughtM.id])
 
   expect(thoughtM.parentId).toBe(thoughtA.id)
 
@@ -398,7 +397,7 @@ it('merge with duplicate with duplicate rank', () => {
   const thoughtM = contextToThought(stateNew, ['a', 'm'])
 
   // use destinate rank of duplicate thoughts
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([thoughtM?.id])
+  expect(getAllChildrenByContext(stateNew, ['a'])).toMatchObject([thoughtM?.id])
 
   // merged thought should only exist in destination context
   expect(getContexts(stateNew, 'm')).toMatchObject([thoughtM?.id])

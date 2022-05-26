@@ -7,8 +7,8 @@ import {
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
-import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
-import { equalPath, hashPath, headValue, isDescendant, pathToContext } from '../util'
+import { chain, expandThoughts, getSetting, getAllChildrenById, simplifyPath } from '../selectors'
+import { equalPath, hashPath, head, headValue, isDescendant, pathToContext } from '../util'
 import { settings } from '../reducers'
 import { Index, Path, SimplePath, State, TutorialChoice } from '../@types'
 import globals from '../globals'
@@ -97,7 +97,7 @@ const setCursor = (
   const hasThoughtCollapsed = () =>
     state.cursor &&
     !expanded[hashPath(state.cursor)] &&
-    (getAllChildren(state, context).length > 0 ||
+    (getAllChildrenById(state, head(simplePath)).length > 0 ||
       (state.cursor.length > (thoughtsResolved || []).length &&
         thoughtsResolved &&
         !isDescendant(pathToContext(state, thoughtsResolved), context)))

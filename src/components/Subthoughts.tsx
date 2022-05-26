@@ -35,7 +35,6 @@ import {
   parseJsonSafe,
   parseLet,
   pathToContext,
-  unroot,
 } from '../util'
 
 // selectors
@@ -47,7 +46,7 @@ import {
   childrenFilterPredicate,
   contextToPath,
   findDescendant,
-  getAllChildren,
+  getAllChildrenById,
   getAllChildrenSorted,
   getChildPath,
   getChildren,
@@ -136,12 +135,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
-  const contextLive = pathToContext(state, simplePathLive)
+  const idLive = head(simplePathLive)
   const cursorContext = cursor ? pathToContext(state, cursor) : null
 
-  const contextBinding = parseJsonSafe(attribute(state, head(simplePathLive), '=bindContext') ?? '', undefined) as
-    | Path
-    | undefined
+  const contextBinding = parseJsonSafe(attribute(state, idLive, '=bindContext') ?? '', undefined) as Path | undefined
 
   // If the cursor is a leaf, use cursorDepth of cursor.length - 1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
@@ -161,7 +158,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     : 0
 
   // TODO: Memoize childrenFiltered and pass to render instead of using dummy values to force a re-render
-  const allChildren = getAllChildren(state, contextLive)
+  const allChildren = getAllChildrenById(state, idLive)
 
   // encode the children's values and ranks, since the allChildren array will not change when ranks change (i.e. moveThoughtUp/Down)
   // this can be removed once childrenFiltered is memoized and passed to render
@@ -266,7 +263,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   */
   const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
 
-  const sortPreference = getSortPreference(state, head(simplePathLive))
+  const sortPreference = getSortPreference(state, idLive)
 
   const hashedPath = hashPath(pathLive)
 
@@ -280,7 +277,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
     if (childrenFiltered.length === 0) return false
 
-    const firstColumnChildren = getAllChildren(state, [...contextLive, childrenFiltered[0].value])
+    const firstColumnId = findDescendant(state, idLive, childrenFiltered[0].value)
+    const firstColumnChildren = getAllChildrenById(state, firstColumnId)
       .map(childId => getThoughtById(state, childId))
       .filter(child => child && !isFunction(child.value))
 
@@ -288,8 +286,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     const columnMap = firstColumnChildren.reduce((accum, child) => ({ ...accum, [child.value]: true }), {})
 
     const otherChildren = childrenFiltered.slice(1).map(child => {
-      const childContext = [...contextLive, child.value]
-      const grandchildren = getAllChildren(state, childContext)
+      const grandchildren = getAllChildrenById(state, child.id)
         .map(childId => getThoughtById(state, childId))
         .filter(child => child && !isFunction(child.value))
       return grandchildren
@@ -322,7 +319,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     zoomCursor,
     zoomParent,
     // Re-render if children change and when children Thought entry in thoughtIndex is available.
-    // Uses getAllChildren for efficient change detection. Probably does not work in context view.
+    // Uses getAllChildrenById for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
     __allChildren: hasChildrenLoaded ? allChildren : null,
     __allChildrenValuesAndRanks: hasChildrenLoaded ? allChildrenValuesAndRanks : null,
@@ -570,7 +567,6 @@ export const SubthoughtsComponent = ({
   const [page, setPage] = useState(1)
   const { cursor } = state
   const thoughtId = head(simplePath)
-  const context = pathToContext(state, simplePath)
   const thought = getThoughtById(state, head(simplePath))
   const { value } = thought
   const resolvedPath = path ?? simplePath
@@ -709,7 +705,7 @@ export const SubthoughtsComponent = ({
   /** In a Multi Column table, gets the children that serve as the column headers. */
   const headerChildrenWithFirstColumn = () => {
     if (!isMultiColumnTable) return []
-    const headerChildren = getAllChildren(state, [...unroot(context), filteredChildren[0]?.value])
+    const headerChildren = getAllChildrenById(state, filteredChildren[0]?.id)
       .map(childId => getThoughtById(state, childId))
       .filter(x => x && !isFunction(x.value))
     return isMultiColumnTable ? ([{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren) : []

@@ -34,15 +34,17 @@ export const isChildVisible = _.curry((state: State, child: Thought) => {
   return !isFunction(child.value) // && !hasChild(state, child.id, '=hidden')
 })
 
-/** Returns the thoughts for the given thought id. */
-export const getAllChildrenById = (state: State, thoughtId: ThoughtId): ThoughtId[] => {
+/** Returns the thoughts for the given thought id. If the children have not changed, returns the same object reference. If given null, returns an empty array. */
+export const getAllChildrenById = (state: State, thoughtId: ThoughtId | null): ThoughtId[] => {
+  if (!thoughtId) return NO_THOUGHT_IDS
   const children = getThoughtById(state, thoughtId)?.children
   return children?.length > 0 ? children : NO_THOUGHT_IDS
 }
 
 /** Returns the subthoughts (as Thoughts) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildrenAsThoughts = (state: State, context: Context) => {
-  const children = childIdsToThoughts(state, getAllChildren(state, context))
+  const id = contextToThoughtId(state, context)
+  const children = childIdsToThoughts(state, getAllChildrenById(state, id))
   return children.length === 0 ? NO_CHILDREN : children
 }
 
@@ -52,19 +54,13 @@ export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) => {
   return children.length === 0 ? NO_CHILDREN : children
 }
 
-/** Returns the subthoughts (as ThoughtIds) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getAllChildren = (state: State, context: Context) => {
-  const id = contextToThoughtId(state, context)
-  return id ? getAllChildrenById(state, id) : NO_THOUGHT_IDS
-}
-
-/** Makes a getAllChildren function that only returns visible thoughts. */
+/** Makes a function that only returns visible thoughts. */
 const getVisibleThoughts = _.curry((getThoughtsFunction: GetThoughts, state: State, context: Context) => {
   const children = getThoughtsFunction(state, context)
   return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
 })
 
-/** Makes a getAllChildren function that only returns visible thoughts. */
+/** Makes a function that only returns visible thoughts. */
 const getVisibleThoughtsById = _.curry((getThoughtsFunction: GetThoughtsById, state: State, id: ThoughtId) => {
   const children = getThoughtsFunction(state, id)
   return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))

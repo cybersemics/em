@@ -1,6 +1,6 @@
 import React from 'react'
 import { store } from '../../store'
-import { childIdsToThoughts, getAllChildren, getChildrenRankedById } from '../../selectors'
+import { childIdsToThoughts, getAllChildrenById, getChildrenRankedById } from '../../selectors'
 import { ellipsize } from '../../util'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
@@ -46,7 +46,7 @@ const thoughtsNoCursorWithChild = (cursor: Path, rootChildren: ThoughtId[]) => {
 
   const cursorThought = childIdsToThoughts(store.getState(), cursor)
   const noCursorThoughts = cursorThought ? children.filter(c => c.value !== cursorThought[0].value) : children
-  return noCursorThoughts.filter(t => getAllChildren(store.getState(), [t.value]).length > 0)
+  return noCursorThoughts.filter(t => getAllChildrenById(store.getState(), t.id).length > 0)
 }
 
 export default TutorialStepAutoExpandExpand

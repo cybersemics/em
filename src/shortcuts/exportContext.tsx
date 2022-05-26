@@ -1,6 +1,6 @@
 import React from 'react'
 import { showModal } from '../action-creators'
-import { getAllChildren } from '../selectors'
+import { getAllChildrenById } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
@@ -56,7 +56,7 @@ const exportContextShortcut: Shortcut = {
   canExecute: getState => {
     const state = getState()
     if (state.cursor) return true
-    return getAllChildren(state, [HOME_TOKEN]).length > 0
+    return getAllChildrenById(state, HOME_TOKEN).length > 0
   },
   exec: dispatch => dispatch(showModal({ id: 'export' })),
 }

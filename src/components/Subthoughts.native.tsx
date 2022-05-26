@@ -53,7 +53,7 @@ import {
   childrenFilterPredicate,
   contextToPath,
   findDescendant,
-  getAllChildren,
+  getAllChildrenById,
   getAllChildrenSorted,
   getChildPath,
   getChildren,
@@ -143,6 +143,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
+  const idLive = head(simplePathLive)
   const contextLive = pathToContext(state, simplePathLive)
   const cursorContext = cursor ? pathToContext(state, cursor) : null
 
@@ -169,7 +170,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const hashedPath = hashPath(resolvedPath)
 
-  const allChildren = getAllChildren(state, contextLive)
+  const allChildren = getAllChildrenById(state, idLive)
 
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
@@ -211,7 +212,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     zoomCursor,
     zoomParent,
     // Re-render if children change.
-    // Uses getAllChildren for efficient change detection. Probably does not work in context view.
+    // Uses getAllChildrenById for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
     __allChildren: allChildren,
     // We need to re-render when actualDistance changes, but it is complicated and expensive.

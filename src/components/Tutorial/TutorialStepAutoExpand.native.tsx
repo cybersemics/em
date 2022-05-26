@@ -8,7 +8,7 @@ import { HOME_TOKEN } from '../../constants'
 import { parentOf, ellipsize, head, headValue, pathToContext } from '../../util'
 
 // selectors
-import { getAllChildren } from '../../selectors'
+import { getAllChildrenById } from '../../selectors'
 
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
@@ -59,7 +59,7 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
           ) : (
             <Fragment> Add a subthought and I'll show you.</Fragment>
           )
-        ) : getAllChildren(state, [HOME_TOKEN]).length === 0 ? (
+        ) : getAllChildrenById(state, HOME_TOKEN).length === 0 ? (
           ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.'
         ) : (
           ' Oops! Please focus on one of the thoughts.'

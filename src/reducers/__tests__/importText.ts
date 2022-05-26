@@ -2,7 +2,7 @@ import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { contextToThoughtId, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getLexeme, contextToThought, contextToPath, getAllChildren } from '../../selectors'
+import { exportContext, getLexeme, contextToThought, contextToPath, getAllChildrenById } from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
@@ -1154,7 +1154,7 @@ It has sections for criticism of poetry, theater, art, music, the media, and boo
 
   const stateNew = importText(initialState(), { text })
 
-  const rootChildren = getAllChildren(stateNew, [HOME_TOKEN])
+  const rootChildren = getAllChildrenById(stateNew, HOME_TOKEN)
 
   expect(rootChildren.length).toBe(1)
 })

@@ -1,20 +1,14 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { contextToThoughtId, initialState, reducerFlow } from '../../util'
-import {
-  exportContext,
-  getContexts,
-  getAllChildren,
-  getLexeme,
-  contextToThought,
-  parentOfThought,
-} from '../../selectors'
+import { exportContext, getContexts, getLexeme, contextToThought, parentOfThought } from '../../selectors'
 import { newThought, importText } from '../../reducers'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
-import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
+import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('edit a thought', () => {
   const steps = [
@@ -96,7 +90,7 @@ it('edit a descendant', () => {
   const parent = parentOfThought(stateNew, aa1Id)
   expect(parent?.id).toBe(aId)
 
-  expect(getAllChildren(stateNew, ['a'])).toMatchObject([aa1Id])
+  expect(getAllChildrenByContext(stateNew, ['a'])).toMatchObject([aa1Id])
 })
 
 it('edit a thought with descendants', () => {

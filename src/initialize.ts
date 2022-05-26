@@ -1,3 +1,4 @@
+import { Context, Firebase, State, ThoughtSubscriptionUpdates, Thunk } from './@types'
 import './App.css'
 import _ from 'lodash'
 import moize from 'moize'
@@ -31,13 +32,12 @@ import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import { SessionType } from './util/sessionManager'
 import * as sessionManager from './util/sessionManager'
-import { Firebase, State, ThoughtSubscriptionUpdates, Thunk } from './@types'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
 import globals from './globals'
 import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
 import * as selection from './device/selection'
-import { getAllChildren, getAllChildrenAsThoughts } from './selectors/getChildren'
+import { getAllChildrenById, getAllChildrenAsThoughts } from './selectors/getChildren'
 
 // enable to collect moize usage stats
 // do not enable in production
@@ -210,7 +210,9 @@ const windowEm = {
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   contextToThought: withState(contextToThought),
-  getAllChildren: withState(getAllChildren),
+  getAllChildrenByContext: withState((state: State, context: Context) =>
+    getAllChildrenById(state, contextToThought(state, context)?.id || null),
+  ),
   getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
   getChildrenRanked: withState(getChildrenRanked),
   getThoughtById: withState(getThoughtById),
