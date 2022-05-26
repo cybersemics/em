@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
-import { head } from '../util'
+import { contextToThoughtId, head } from '../util'
 import { Context, State } from '../@types'
 import { TouchableOpacity, Text, StyleSheet } from 'react-native'
 import { commonStyles } from '../style/commonStyles'
@@ -23,11 +23,12 @@ interface BulletProps {
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
   const lexeme = getLexeme(state, head(props.context))
+  const id = contextToThoughtId(state, props.context)
   return {
     // if being edited and meta validation error has occured
     invalid: !lexeme || (!!props.isEditing && invalidState),
     // re-render when leaf status changes
-    isLeaf: !hasChildren(state, props.context),
+    isLeaf: id && !hasChildren(state, id),
     pending: isPending(state, props.context),
     showContexts: isContextViewActive(state, props.context),
   }

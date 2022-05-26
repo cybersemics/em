@@ -145,7 +145,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const simplePathLive = isEditing
     ? (parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath)
     : simplePath
-  const contextLive = pathToContext(state, simplePathLive)
 
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
 
@@ -170,7 +169,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
   const isExpanded = !!expanded[hashPath(path)]
-  const isLeaf = !hasChildren(state, contextLive)
+  const isLeaf = !hasChildren(state, head(simplePathLive))
 
   return {
     contextBinding,

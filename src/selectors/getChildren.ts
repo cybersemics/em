@@ -58,8 +58,8 @@ const getVisibleThoughtsById = _.curry((getThoughtsFunction: GetThoughtsSelector
 })
 
 /** Returns true if the context has any visible children. */
-export const hasChildren = (state: State, context: Context) => {
-  const children = getAllChildrenAsThoughts(state, context)
+export const hasChildren = (state: State, id: ThoughtId) => {
+  const children = getAllChildrenAsThoughtsById(state, id)
   return state.showHiddenThoughts ? children.length > 0 : children.some(isChildVisible(state))
 }
 
