@@ -1,5 +1,5 @@
 import { equalThoughtValue, head } from '../util'
-import { getChildrenSortedById } from '../selectors'
+import { getChildrenSorted } from '../selectors'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
 import getThoughtById from './getThoughtById'
@@ -8,7 +8,7 @@ import getThoughtById from './getThoughtById'
 const getThoughtAfter = (state: State, simplePath: SimplePath) => {
   const { value, rank } = getThoughtById(state, head(simplePath))
   const parentPath = rootedParentOf(state, simplePath)
-  const children = getChildrenSortedById(state, head(parentPath))
+  const children = getChildrenSorted(state, head(parentPath))
 
   if (children.length === 0) {
     return null
