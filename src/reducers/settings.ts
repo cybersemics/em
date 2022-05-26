@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { EM_TOKEN } from '../constants'
-import { appendToPath, contextToThoughtId, isFunction } from '../util'
+import { appendToPath, isFunction } from '../util'
 import { editThought } from '../reducers'
-import { getChildrenRanked, contextToPath } from '../selectors'
+import { contextToThoughtId, getChildrenRanked, contextToPath } from '../selectors'
 import { SimplePath, State } from '../@types'
 
 /** Sets a setting thought. */

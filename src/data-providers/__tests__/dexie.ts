@@ -1,14 +1,14 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
-import { getLexeme } from '../../selectors'
+import { contextToThoughtId, getLexeme } from '../../selectors'
 import { clear, newThought } from '../../action-creators'
 import initDB, * as db from '../dexie'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getLexeme'
 import testTimer from '../../test-helpers/testTimer'
-import { contextToThoughtId, storage } from '../../util'
+import { storage } from '../../util'
 import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
 
 /*

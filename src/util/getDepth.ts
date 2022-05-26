@@ -1,4 +1,5 @@
-import { contextToThoughtId, unroot } from '../util'
+import { unroot } from '../util'
+import { contextToThoughtId } from '../selectors'
 import { Context, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 

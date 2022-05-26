@@ -1,6 +1,13 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { contextToThoughtId, initialState, reducerFlow } from '../../util'
-import { exportContext, getContexts, getLexeme, contextToThought, parentOfThought } from '../../selectors'
+import { initialState, reducerFlow } from '../../util'
+import {
+  contextToThoughtId,
+  exportContext,
+  getContexts,
+  getLexeme,
+  contextToThought,
+  parentOfThought,
+} from '../../selectors'
 import { newThought, importText } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'

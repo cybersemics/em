@@ -1,8 +1,8 @@
 import { HOME_TOKEN } from '../constants'
-import { createId, contextToThoughtId, hashThought, owner } from '../util'
+import { createId, hashThought, owner } from '../util'
 import { loadRemoteState } from '../action-creators'
 import { Firebase, Thought, State, Thunk } from '../@types'
-import { getThoughtById } from '../selectors'
+import { contextToThoughtId, getThoughtById } from '../selectors'
 
 /**
  * Loads a public context when the url contains a userId of a different user.

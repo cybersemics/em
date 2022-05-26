@@ -6,8 +6,8 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-import { contextToThoughtId, headValue } from '../../util'
-import { childIdsToThoughts, getChildrenRanked } from '../../selectors'
+import { headValue } from '../../util'
+import { childIdsToThoughts, contextToThoughtId, getChildrenRanked } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
 import { ThoughtId, Path, State } from '../../@types'

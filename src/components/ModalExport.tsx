@@ -9,7 +9,6 @@ import {
   ellipsize,
   exportPhrase,
   getPublishUrl,
-  contextToThoughtId,
   head,
   isDocumentEditable,
   isFunction,
@@ -20,6 +19,7 @@ import {
 } from '../util'
 import { alert, error, closeModal, pull } from '../action-creators'
 import {
+  contextToThoughtId,
   exportContext,
   findDescendant,
   getDescendantThoughtIds,

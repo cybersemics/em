@@ -10,8 +10,8 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { contextToThoughtId, headValue, isRoot, joinConjunction } from '../../util'
-import { findDescendant, getContexts, getChildrenRanked, parentOfThought } from '../../selectors'
+import { headValue, isRoot, joinConjunction } from '../../util'
+import { contextToThoughtId, findDescendant, getContexts, getChildrenRanked, parentOfThought } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 

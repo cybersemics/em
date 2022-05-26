@@ -1,6 +1,5 @@
 import { Context, State } from '../@types'
-import { getChildrenRanked } from '../selectors'
-import { contextToThoughtId } from '../util'
+import { contextToThoughtId, getChildrenRanked } from '../selectors'
 
 /** Gets  children of a Context sorted by rank. */
 const getChildrenRankedByContext = (state: State, context: Context) =>

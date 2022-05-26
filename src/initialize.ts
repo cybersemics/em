@@ -7,12 +7,13 @@ import { store } from './store'
 import {
   getContexts,
   contextToThought,
+  contextToThoughtId,
   getLexeme,
   getChildrenRanked,
   decodeThoughtsUrl,
   getThoughtById,
 } from './selectors'
-import { contextToThoughtId, hashThought, initEvents, isRoot, owner, urlDataSource } from './util'
+import { hashThought, initEvents, isRoot, owner, urlDataSource } from './util'
 import {
   authenticate,
   loadPublicThoughts,

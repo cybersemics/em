@@ -2,6 +2,7 @@ import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, M
 import {
   attribute,
   attributeEquals,
+  contextToThoughtId,
   getAllChildren,
   getThoughtById,
   isContextViewActive,
@@ -10,7 +11,6 @@ import {
 import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   appendToPath,
-  contextToThoughtId,
   equalArrays,
   hashPath,
   head,

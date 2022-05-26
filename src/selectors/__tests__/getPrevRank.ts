@@ -1,5 +1,5 @@
-import { contextToThoughtId, initialState, isFunction, reducerFlow } from '../../util'
-import { getAllChildrenSorted } from '../../selectors'
+import { initialState, isFunction, reducerFlow } from '../../util'
+import { contextToThoughtId, getAllChildrenSorted } from '../../selectors'
 import { importText, newSubthought, newThought } from '../../reducers'
 import getPrevRank from '../getPrevRank'
 

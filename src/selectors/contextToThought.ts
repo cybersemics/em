@@ -1,6 +1,5 @@
 import { Context, Thought, State } from '../@types'
-import { contextToThoughtId } from '../util'
-import { getThoughtById } from '../selectors'
+import { contextToThoughtId, getThoughtById } from '../selectors'
 
 /**
  * Gets the head Thought of a context.

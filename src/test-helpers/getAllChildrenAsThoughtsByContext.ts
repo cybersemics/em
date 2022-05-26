@@ -1,6 +1,6 @@
 import { Context, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { contextToThoughtId } from '../util'
+import { contextToThoughtId } from '../selectors'
 
 /** Gets all children of a Context. */
 const getAllChildrenAsThoughtsByContext = (state: State, context: Context) =>

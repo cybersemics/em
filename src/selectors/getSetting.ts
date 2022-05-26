@@ -1,7 +1,7 @@
 import { EM_TOKEN } from '../constants'
-import { contextToThoughtId, isFunction } from '../util'
+import { isFunction } from '../util'
 import { keyValueBy } from '../util/keyValueBy'
-import { getChildrenRanked } from '../selectors'
+import { contextToThoughtId, getChildrenRanked } from '../selectors'
 import { Context, State } from '../@types'
 import { storage } from '../util/storage'
 

@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { getPrevRank, contextToPath } from '../selectors'
-import { contextToThoughtId, head } from '../util'
+import { contextToThoughtId, getPrevRank, contextToPath } from '../selectors'
+import { head } from '../util'
 import { editThought, createThought } from '../reducers'
 import { Context, SimplePath, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'

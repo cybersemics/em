@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { getPrevRank } from '../selectors'
+import { contextToThoughtId, getPrevRank } from '../selectors'
 import { createThought, setFirstSubthought } from '../reducers'
-import { contextToThoughtId, reducerFlow } from '../util'
+import { reducerFlow } from '../util'
 import { Context, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 

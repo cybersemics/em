@@ -1,5 +1,5 @@
-import { attribute, getChildrenRanked } from '../selectors'
-import { contextToThoughtId, head, isFunction, isRoot, unroot } from '../util'
+import { attribute, contextToThoughtId, getChildrenRanked } from '../selectors'
+import { head, isFunction, isRoot, unroot } from '../util'
 import { Context, MimeType, Thought, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'

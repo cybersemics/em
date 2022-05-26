@@ -1,11 +1,8 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
 
-import { contextToThoughtId } from '../../util'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
-
-// selectors
-import { childIdsToThoughts, getContexts } from '../../selectors'
+import { childIdsToThoughts, contextToThoughtId, getContexts } from '../../selectors'
 
 import { ThoughtId, Path, State } from '../../@types'
 import { Text } from '../Text.native'

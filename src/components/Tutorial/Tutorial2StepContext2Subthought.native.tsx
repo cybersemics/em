@@ -9,8 +9,8 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { contextToThoughtId, headValue } from '../../util'
-import { findDescendant, getContexts, getChildrenRanked } from '../../selectors'
+import { headValue } from '../../util'
+import { contextToThoughtId, findDescendant, getContexts, getChildrenRanked } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 import { Text } from '../Text.native'

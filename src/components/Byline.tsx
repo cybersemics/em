@@ -1,8 +1,7 @@
 import React from 'react'
 import Gravatar from 'react-gravatar'
 import { store } from '../store'
-import { attribute, findDescendant, getChildrenRanked } from '../selectors'
-import { contextToThoughtId } from '../util'
+import { attribute, contextToThoughtId, findDescendant, getChildrenRanked } from '../selectors'
 import { Context } from '../@types'
 
 /** An author byline to a published article. */

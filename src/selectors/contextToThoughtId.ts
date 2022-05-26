@@ -2,11 +2,11 @@
 // import globals from '../globals'
 import { EM_TOKEN } from '../constants'
 import { Context, Thought, State, ThoughtId } from '../@types'
-import { isRoot } from './isRoot'
+import { isRoot } from '../util'
 import { childIdsToThoughts, getThoughtById } from '../selectors'
 
 /** Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. */
-export const contextToThoughtId = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {
+const contextToThoughtId = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {
   if (isRoot(thoughts)) return thoughts[0] as ThoughtId
 
   const startsWithEM = thoughts[0] === EM_TOKEN
@@ -64,3 +64,5 @@ const recursiveThoughtFinder = (
 
   return recursiveThoughtFinder(state, nextThought, target, targetIndex + 1, [...visitedId, child.id])
 }
+
+export default contextToThoughtId

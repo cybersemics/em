@@ -1,8 +1,15 @@
 import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
-import { contextToThoughtId, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
+import { hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getLexeme, contextToThought, contextToPath, getAllChildren } from '../../selectors'
+import {
+  contextToThoughtId,
+  exportContext,
+  getLexeme,
+  contextToThought,
+  contextToPath,
+  getAllChildren,
+} from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
