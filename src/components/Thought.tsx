@@ -26,8 +26,6 @@ import useLongPress from '../hooks/useLongPress'
 // util
 import {
   appendToPath,
-  contextToThoughtId,
-  equalArrays,
   equalPath,
   hashPath,
   head,
@@ -70,7 +68,7 @@ export interface ThoughtContainerProps {
   path: Path
   cursor?: Path | null
   depth?: number
-  env?: Index<Context>
+  env?: Index<ThoughtId>
   expandedContextThought?: Path
   hideBullet?: boolean
   isDeepHovering?: boolean
@@ -324,13 +322,9 @@ const ThoughtContainer = ({
         // children that have an entry in the environment
         (child.value in { ...env } &&
           // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-          !equalArrays([...thoughts, child.value], env![child.value])),
+          child.id !== env![child.value]),
     )
-    .map(child =>
-      child.value in { ...env }
-        ? getStyle(state, contextToThoughtId(state, env![child.value]))
-        : getGlobalStyle(child.value) || {},
-    )
+    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {}))
     .reduce<React.CSSProperties>(
       (accum, style) => ({
         ...accum,
@@ -349,15 +343,11 @@ const ThoughtContainer = ({
           // children that have an entry in the environment
           (child.value in { ...env } &&
             // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-            !equalArrays([...thoughts, child.value], env![child.value])),
+            child.id !== env![child.value]),
       )
-      .map(child => {
-        const envChildContext = env![child.value]
-        const envChildId = envChildContext && contextToThoughtId(state, envChildContext)
-        return child.value in { ...env }
-          ? envChildId && attribute(state, envChildId, '=bullet')
-          : getGlobalBullet(child.value)
-      })
+      .map(child =>
+        child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
+      )
 
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
