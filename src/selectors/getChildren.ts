@@ -35,7 +35,7 @@ export const isChildVisible = _.curry((state: State, child: Thought) => {
 })
 
 /** Returns the thoughts for the given thought id. If the children have not changed, returns the same object reference. If given null, returns an empty array. */
-export const getAllChildrenById = (state: State, thoughtId: ThoughtId | null): ThoughtId[] => {
+export const getAllChildren = (state: State, thoughtId: ThoughtId | null): ThoughtId[] => {
   if (!thoughtId) return NO_THOUGHT_IDS
   const children = getThoughtById(state, thoughtId)?.children
   return children?.length > 0 ? children : NO_THOUGHT_IDS
@@ -44,13 +44,13 @@ export const getAllChildrenById = (state: State, thoughtId: ThoughtId | null): T
 /** Returns the subthoughts (as Thoughts) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildrenAsThoughts = (state: State, context: Context) => {
   const id = contextToThoughtId(state, context)
-  const children = childIdsToThoughts(state, getAllChildrenById(state, id))
+  const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
 }
 
 /** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
 export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) => {
-  const children = childIdsToThoughts(state, getAllChildrenById(state, id))
+  const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
 }
 
@@ -178,7 +178,7 @@ export const getChildrenRanked = (state: State, context: Context): Thought[] => 
 /** Gets all children of a context sorted by their ranking using thought id. Returns a new object reference even if the children have not changed. */
 // @MIGRATION_TODO: Currently we are migrating to access by id instead of context.
 export const getChildrenRankedById = (state: State, thoughtId: ThoughtId): Thought[] => {
-  const allChildren = childIdsToThoughts(state, getAllChildrenById(state, thoughtId))
+  const allChildren = childIdsToThoughts(state, getAllChildren(state, thoughtId))
   return sort(allChildren, compareByRank)
 }
 

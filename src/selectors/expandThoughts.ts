@@ -2,7 +2,7 @@ import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, M
 import {
   attribute,
   attributeEquals,
-  getAllChildrenById,
+  getAllChildren,
   getThoughtById,
   isContextViewActive,
   simplifyPath,
@@ -165,7 +165,7 @@ function expandThoughtsRecursive(
 
   const grandchildren =
     visibleChildren.length === 1 && firstChild.value != null && isPinned(firstChild.id) !== 'false'
-      ? getAllChildrenById(state, firstChild.id)
+      ? getAllChildren(state, firstChild.id)
       : null
 
   const isOnlyChildNoUrl =

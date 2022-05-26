@@ -1,7 +1,7 @@
 import { HOME_PATH } from '../constants'
 import { head, isRoot } from '../util'
 import { importText, setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getAllChildrenById } from '../selectors'
+import { decodeThoughtsUrl, getAllChildren } from '../selectors'
 import { Thunk } from '../@types'
 
 interface Options {
@@ -28,7 +28,7 @@ const loadFromUrl =
     const { path: decodedPath } = decodeThoughtsUrl(state, { exists: false })
 
     // set cursor to first child if cursor is not provided via url
-    const firstChild = decodedPath ? getAllChildrenById(state, head(decodedPath))?.[0] : null
+    const firstChild = decodedPath ? getAllChildren(state, head(decodedPath))?.[0] : null
 
     if (decodedPath) {
       dispatch(

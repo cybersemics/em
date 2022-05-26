@@ -53,7 +53,7 @@ import {
   childrenFilterPredicate,
   contextToPath,
   findDescendant,
-  getAllChildrenById,
+  getAllChildren,
   getAllChildrenSorted,
   getChildPath,
   getChildren,
@@ -170,7 +170,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const hashedPath = hashPath(resolvedPath)
 
-  const allChildren = getAllChildrenById(state, idLive)
+  const allChildren = getAllChildren(state, idLive)
 
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
@@ -212,7 +212,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     zoomCursor,
     zoomParent,
     // Re-render if children change.
-    // Uses getAllChildrenById for efficient change detection. Probably does not work in context view.
+    // Uses getAllChildren for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
     __allChildren: allChildren,
     // We need to re-render when actualDistance changes, but it is complicated and expensive.

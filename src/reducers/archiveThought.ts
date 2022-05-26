@@ -19,7 +19,7 @@ import {
 
 // selectors
 import {
-  getAllChildrenById,
+  getAllChildren,
   getContextsSortedAndRanked,
   hasChild,
   isContextViewActive,
@@ -88,7 +88,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const isEmpty = value === ''
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(state, path)
-  const hasDescendants = getAllChildrenById(state, head(path)).length !== 0
+  const hasDescendants = getAllChildren(state, head(path)).length !== 0
   const allChildren = getAllChildrenAsThoughts(state, thoughts)
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
   const alertLabel = ellipsize(value === '=note' ? 'note ' + allChildren[0]?.value || '' : value)

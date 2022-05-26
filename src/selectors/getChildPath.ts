@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { getAllChildrenById, getThoughtById, contextToPath } from '../selectors'
+import { getAllChildren, getThoughtById, contextToPath } from '../selectors'
 import { hashThought, head, unroot } from '../util'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import { ThoughtId, SimplePath, State, ThoughtContext } from '../@types'
@@ -11,7 +11,7 @@ import { getAllChildrenAsThoughts } from './getChildren'
 const resolve = (state: State, childId: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>
   resolveArray([
     // slow, but ensures getChildPath doesn't get memoized when children change
-    showContexts && parentOfThought(state, childId)!.value ? resolvePath(getAllChildrenById(state, childId)) : '',
+    showContexts && parentOfThought(state, childId)!.value ? resolvePath(getAllChildren(state, childId)) : '',
     childId,
     resolvePath(simplePath),
     showContexts,

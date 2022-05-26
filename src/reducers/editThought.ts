@@ -1,6 +1,6 @@
 import _ from 'lodash'
 // import { treeChange } from '../util/recentlyEditedTree'
-import { getLexeme, getAllChildrenById, getThoughtById } from '../selectors'
+import { getLexeme, getAllChildren, getThoughtById } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { Context, Lexeme, SimplePath, State, Timestamp } from '../@types'
 
@@ -98,7 +98,7 @@ const editThought = (
     }
   }
 
-  const thoughtNewSubthoughts = getAllChildrenById(state, parentofEditedThought.id)
+  const thoughtNewSubthoughts = getAllChildren(state, parentofEditedThought.id)
     .filter(child => child !== editedThought.id)
     .concat(editedThoughtId)
 

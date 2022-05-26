@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import editThought from './editThought'
-import { getAllChildrenById, getChildPath, getNextRank, getThoughtById, simplifyPath } from '../selectors'
+import { getAllChildren, getChildPath, getNextRank, getThoughtById, simplifyPath } from '../selectors'
 import { appendToPath, head, parentOf, pathToContext, reducerFlow } from '../util'
 import moveThought from './moveThought'
 import deleteThought from './deleteThought'
@@ -27,7 +27,7 @@ const join = (state: State) => {
   const reducers = contextChildren
     .map((sibling, i) => {
       const pathToSibling = appendToPath(parentOf(simplePath), sibling.id)
-      const children = getAllChildrenById(state, sibling.id)
+      const children = getAllChildren(state, sibling.id)
 
       return children.map((child, j) => {
         const oldPath = getChildPath(state, child, pathToSibling)

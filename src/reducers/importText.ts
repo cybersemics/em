@@ -17,7 +17,7 @@ import {
   validateRoam,
 } from '../util'
 import { editThought, setCursor, updateThoughts, editingValue } from '../reducers'
-import { getAllChildrenById, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
+import { getAllChildren, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
 import { Path, SimplePath, State, Timestamp } from '../@types'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
@@ -154,11 +154,10 @@ const importText = (
 
     const uuid = createId()
 
-    const isDestContextEmpty = getAllChildrenById(state, head(simplePath)).length === 0
+    const isDestContextEmpty = getAllChildren(state, head(simplePath)).length === 0
 
     /** Check if destination's parent context has more than one children. */
-    const isDestParentContextEmpty = () =>
-      getAllChildrenById(state, head(rootedParentOf(state, simplePath))).length <= 1
+    const isDestParentContextEmpty = () => getAllChildren(state, head(rootedParentOf(state, simplePath))).length <= 1
 
     const destEmpty = destThought.value === '' && isDestContextEmpty
 

@@ -61,7 +61,7 @@ export { default as thoughtsEditingFromChain } from './thoughtsEditingFromChain'
 export { default as visibleDistanceAboveCursor } from './visibleDistanceAboveCursor'
 export {
   firstVisibleChild,
-  getAllChildrenById,
+  getAllChildren,
   getChildren,
   getChildrenById,
   getChildrenRanked,

@@ -1,13 +1,6 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import {
-  getNextRank,
-  getLexeme,
-  getAllChildrenById,
-  nextSibling,
-  rootedParentOf,
-  childIdsToThoughts,
-} from '../selectors'
+import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf, childIdsToThoughts } from '../selectors'
 import {
   Block,
   Context,
@@ -284,7 +277,7 @@ export const importJSON = (
   const initialThoughtIndex: Index<Thought> = {}
   const parentId = head(rootedParentOf(state, simplePath))
   const destThought = state.thoughts.thoughtIndex[head(simplePath)]
-  const destEmpty = destThought.value === '' && getAllChildrenById(state, head(simplePath)).length === 0
+  const destEmpty = destThought.value === '' && getAllChildren(state, head(simplePath)).length === 0
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, head(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, parentId, destThought, rankStart)
@@ -298,7 +291,7 @@ export const importJSON = (
       initialLexemeIndex[hashThought('')] = removeContext(state, lexeme, destThought.id)
       initialThoughtIndex[id] = {
         ...state.thoughts.thoughtIndex[id],
-        children: getAllChildrenById(state, head(path)).filter(child => child !== destThought.id),
+        children: getAllChildren(state, head(path)).filter(child => child !== destThought.id),
         lastUpdated,
         updatedBy,
       }

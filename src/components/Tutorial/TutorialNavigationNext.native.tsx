@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import TutorialNavigationButton from './TutorialNavigationButton.native'
 import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
 import { headValue } from '../../util'
-import { getSetting, getAllChildrenById } from '../../selectors'
+import { getSetting, getAllChildren } from '../../selectors'
 import { tutorialNext } from '../../action-creators'
 
 import {
@@ -46,7 +46,7 @@ const TutorialNavigationNext = () => {
     return {
       thoughtIndex,
       expanded,
-      rootChildren: getAllChildrenById(state, HOME_TOKEN),
+      rootChildren: getAllChildren(state, HOME_TOKEN),
       tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0),
       tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
       cursorValue: cursor && headValue(state, cursor),

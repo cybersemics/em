@@ -1,7 +1,7 @@
 import React from 'react'
 import { store } from '../../store'
 import { isTouch } from '../../browser'
-import { getAllChildrenById, getChildrenRankedById } from '../../selectors'
+import { getAllChildren, getChildrenRankedById } from '../../selectors'
 import { ellipsize } from '../../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -35,7 +35,7 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }) => {
  */
 const thoughtsNoCursorWithChild = (cursor, rootChildren) => {
   const noCursorThoughts = cursor ? rootChildren.filter(c => c.value !== cursor[0].value) : rootChildren
-  return noCursorThoughts.filter(t => getAllChildrenById(store.getState(), t.id).length > 0)
+  return noCursorThoughts.filter(t => getAllChildren(store.getState(), t.id).length > 0)
 }
 
 export default TutorialStepAutoExpandExpand
