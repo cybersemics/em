@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext, isPending } from '../../selectors'
+import { contextToThought, exportContext, isPending } from '../../selectors'
 import { store as appStore } from '../../store'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
@@ -110,7 +110,8 @@ it('only fetch the descendants up to the possible conflicting path', async () =>
 
   await timer.runAllAsync()
 
-  expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(true)
+  const id = contextToThought(appStore.getState(), ['p', 'b'])
+  expect(isPending(appStore.getState(), id)).toEqual(true)
   appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
 
   // wait for pullBeforeMove middleware to execute
@@ -128,6 +129,8 @@ it('only fetch the descendants up to the possible conflicting path', async () =>
 
   timer.useRealTimer()
 
-  expect(isPending(appStore.getState(), ['p', 'b'])).toEqual(false)
-  expect(isPending(appStore.getState(), ['p', 'b', 'c', '3'])).toEqual(true)
+  const idPB = contextToThought(appStore.getState(), ['p', 'b'])
+  const idPBC3 = contextToThought(appStore.getState(), ['p', 'b', 'c', '3'])
+  expect(isPending(appStore.getState(), idPB)).toEqual(false)
+  expect(isPending(appStore.getState(), idPBC3)).toEqual(true)
 })

@@ -1,9 +1,9 @@
+import { State, SimplePath, Thought } from '../@types'
 import React, { useRef } from 'react'
 import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { theme, getLexeme, isContextViewActive, isPending } from '../selectors'
-import { head } from '../util'
-import { Context, State, SimplePath } from '../@types'
+import { theme, getLexeme, isPending } from '../selectors'
+import { isContextViewActiveById } from '../selectors/isContextViewActive'
 import { isTouch, isMac, isSafari, isiPhone } from '../browser'
 
 // other bullets
@@ -14,7 +14,7 @@ interface BulletProps {
   leaf?: boolean
   onClick: (event: React.MouseEvent) => void
   showContexts?: boolean
-  context: Context
+  thought: Thought
   publish?: boolean
   simplePath: SimplePath
   hideBullet?: boolean
@@ -24,14 +24,14 @@ interface BulletProps {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
-  const lexeme = getLexeme(state, head(props.context))
+  const lexeme = getLexeme(state, props.thought.value)
   return {
     // if being edited and meta validation error has occured
     invalid: !!props.isEditing && invalidState,
     missing: !lexeme,
     fontSize: state.fontSize,
-    pending: isPending(state, props.context),
-    showContexts: isContextViewActive(state, props.context),
+    pending: isPending(state, props.thought),
+    showContexts: isContextViewActiveById(state, props.thought.id),
     dark: theme(state) !== 'Light',
   }
 }

@@ -1,5 +1,5 @@
 import { contextToThoughtId } from '../util'
-import { State } from '../@types'
+import { State, ThoughtId } from '../@types'
 
 /** Return true if the context view is active for the given key, including selected subthoughts. */
 const isContextViewActive = (state: State, unrankedPath: string[]) => {
@@ -15,5 +15,8 @@ const isContextViewActive = (state: State, unrankedPath: string[]) => {
   // const subthought = once(() => getSubthoughtUnderSelection(head(unrankedPath), 3, { state }))
   // return contextViews[hashContext(unrankedPath)] || (subthought() && contextViews[hashContext(parentOf(unrankedPath).concat(subthought()))])
 }
+
+/** Return true if the context view is active for the given id, including selected subthoughts. */
+export const isContextViewActiveById = (state: State, id: ThoughtId) => !!state.contextViews[id]
 
 export default isContextViewActive

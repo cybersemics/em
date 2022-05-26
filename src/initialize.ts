@@ -9,7 +9,6 @@ import {
   contextToThought,
   getLexeme,
   getChildrenRanked,
-  isPending,
   decodeThoughtsUrl,
   getThoughtById,
 } from './selectors'
@@ -220,7 +219,6 @@ const windowEm = {
   getThoughtById: withState(getThoughtById),
   contextToThoughtId,
   hashThought,
-  isPending: withState(isPending),
   moize,
 }
 

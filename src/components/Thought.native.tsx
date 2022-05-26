@@ -48,6 +48,7 @@ import {
   getChildren,
   getChildrenRanked,
   getSortPreference,
+  getThoughtById,
   getStyle,
   hasChildren,
   isContextViewActive,
@@ -390,7 +391,7 @@ const ThoughtContainer = ({
         {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
           <Bullet
             isEditing={isEditing}
-            context={pathToContext(state, simplePath)}
+            thought={getThoughtById(state, thoughtId)}
             leaf={isLeaf}
             onClick={() => {
               if (!isEditing || children.length === 0) {

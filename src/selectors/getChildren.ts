@@ -46,7 +46,7 @@ export const getAllChildrenAsThoughts = (state: State, context: Context) => {
 }
 
 /** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId) => {
+export const getAllChildrenAsThoughtsById = (state: State, id: ThoughtId | null) => {
   const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
 }

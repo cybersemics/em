@@ -448,7 +448,6 @@ const ThoughtContainer = ({
           {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
               isEditing={isEditing}
-              context={pathToContext(state, simplePath)}
               leaf={isLeaf}
               onClick={(e: React.MouseEvent) => {
                 if (!isEditing || children.length === 0) {
@@ -457,6 +456,7 @@ const ThoughtContainer = ({
                 }
               }}
               simplePath={simplePath}
+              thought={getThoughtById(state, thoughtId)}
               hideBullet={hideBullet}
               publish={publish}
               isDragging={isDragging}
