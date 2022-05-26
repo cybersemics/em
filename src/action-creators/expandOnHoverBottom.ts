@@ -1,6 +1,6 @@
 import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
 import { head, headId, pathToContext } from '../util'
-import { getChildrenById } from '../selectors'
+import { getChildren } from '../selectors'
 import { clearExpandBottom, expandBottom } from './index'
 import { Path, Thunk, Timer } from '../@types'
 
@@ -18,7 +18,7 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
   const hoveringContext = hoveringPath && pathToContext(state, hoveringPath)
 
   const shouldExpand =
-    hoverId === DROP_TARGET.EmptyDrop && hoveringPath && getChildrenById(state, head(hoveringPath)).length > 0
+    hoverId === DROP_TARGET.EmptyDrop && hoveringPath && getChildren(state, head(hoveringPath)).length > 0
 
   /** Clears active delayed dispatch. */
   const clearTimer = () => {

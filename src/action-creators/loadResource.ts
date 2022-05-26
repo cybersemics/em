@@ -1,5 +1,5 @@
 import { error, loadFromUrl, newThought, setResourceCache as setResourceCacheActionCreator } from '../action-creators'
-import { attribute, getChildrenById, getChildrenRanked, simplifyPath } from '../selectors'
+import { attribute, getChildren, getChildrenRanked, simplifyPath } from '../selectors'
 import { appendToPath, head } from '../util'
 import { Thunk, Path } from '../@types'
 
@@ -12,7 +12,7 @@ const loadResource =
     const src = attribute(state, head(path), '=src')
 
     /** Returns true if the path has any children. */
-    const hasVisibleChildren = () => getChildrenById(state, head(path)).length > 0
+    const hasVisibleChildren = () => getChildren(state, head(path)).length > 0
 
     if (src && !resourceCache[src] && !hasVisibleChildren()) {
       // create empty thought in which to load the source

@@ -62,7 +62,7 @@ export { default as visibleDistanceAboveCursor } from './visibleDistanceAboveCur
 export {
   firstVisibleChild,
   getAllChildren,
-  getChildrenById,
+  getChildren,
   getChildrenRanked,
   getAllChildrenSorted,
   getChildrenSorted,

@@ -2,7 +2,7 @@ import React from 'react'
 import { Key } from 'ts-key-enum'
 import { ellipsize, head, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
 import {
-  getChildrenById,
+  getChildren,
   getThoughtBefore,
   getChildrenRanked,
   hasChild,
@@ -59,7 +59,7 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(state, cursor)
   const uneditable = contextOfCursor && hasChild(state, head(cursor), '=uneditable')
-  const children = getChildrenById(state, head(cursor))
+  const children = getChildren(state, head(cursor))
 
   if (prevThought && uneditable) {
     dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))
@@ -89,7 +89,7 @@ const canExecuteOutdent = (state: State) => {
     selection.offset() === 0 &&
     isDocumentEditable() &&
     headValue(state, cursor).length !== 0 &&
-    getChildrenById(state, head(rootedParentOf(state, cursor))).length === 1
+    getChildren(state, head(rootedParentOf(state, cursor))).length === 1
   )
 }
 

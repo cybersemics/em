@@ -64,7 +64,7 @@ export const hasChildren = (state: State, context: Context) => {
 }
 
 /** Gets all visible children of an id, unordered. */
-export const getChildrenById = getVisibleThoughtsById(getAllChildrenAsThoughtsById)
+export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughtsById)
 
 /** Gets all children of a Context sorted by rank or sort preference. */
 export const getAllChildrenSorted = (state: State, id: ThoughtId) => {

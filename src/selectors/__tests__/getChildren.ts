@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { getChildrenById } from '../../selectors'
+import { getChildren } from '../../selectors'
 import { newThought, toggleHiddenThoughts } from '../../reducers'
 
 describe('get visible children', () => {
@@ -9,7 +9,7 @@ describe('get visible children', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(getChildrenById(stateNew, HOME_TOKEN)).toMatchObject([{ value: 'a' }])
+    expect(getChildren(stateNew, HOME_TOKEN)).toMatchObject([{ value: 'a' }])
   })
 
   it('when showHiddenThoughts is off', () => {
@@ -17,6 +17,6 @@ describe('get visible children', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(getChildrenById(stateNew, HOME_TOKEN)).toMatchObject([{ value: 'a' }, { value: '=b' }])
+    expect(getChildren(stateNew, HOME_TOKEN)).toMatchObject([{ value: 'a' }, { value: '=b' }])
   })
 })

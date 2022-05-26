@@ -56,7 +56,7 @@ import {
   getAllChildren,
   getAllChildrenSorted,
   getChildPath,
-  getChildrenById,
+  getChildren,
   getChildrenRanked,
   getContextsSortedAndRanked,
   getEditingPath,
@@ -98,7 +98,7 @@ const PAGINATION_SIZE = 100
 const EMPTY_OBJECT = {}
 
 /** Check if the given path is a leaf. */
-const isLeaf = (state: State, id: ThoughtId) => getChildrenById(state, id).length === 0
+const isLeaf = (state: State, id: ThoughtId) => getChildren(state, id).length === 0
 
 /** Finds the the first env context with =focus/Zoom. */
 const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): Context | null => {
