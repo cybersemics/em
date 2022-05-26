@@ -1,9 +1,10 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { getChildrenRankedById, getChildrenRanked } from '../../selectors'
+import { getChildrenRankedById } from '../../selectors'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
@@ -37,7 +38,7 @@ it('create, navigate, and edit thoughts', async () => {
   expect(rootSubthoughts).toHaveLength(1)
   expect(rootSubthoughts[0]).toMatchObject({ value: 'a', rank: 0 })
 
-  const subthoughts = getChildrenRanked(store.getState(), ['a'])
+  const subthoughts = getChildrenRankedByContext(store.getState(), ['a'])
   expect(subthoughts).toHaveLength(2)
   expect(subthoughts[0]).toMatchObject({ value: '', rank: -1 })
   expect(subthoughts[1]).toMatchObject({ value: 'a1', rank: 0 })
@@ -69,7 +70,7 @@ it('create, edit, format and delete empty thought', async () => {
 // Intermittent test failure. Unable to reproduce locally.
 //   Expected: ""
 //   Received: "Hit the Enter key to add a new thought.A  AFeedback | HelpVersion: 162.0.0"
-it.skip('caret is set on new thought', async () => {
+it('caret is set on new thought', async () => {
   windowEvent('keydown', { key: 'Enter' })
   jest.runOnlyPendingTimers()
   wrapper.update()
@@ -100,7 +101,6 @@ it.skip('caret is set on new subthought', async () => {
   expect(focusOffset).toEqual(0)
 })
 
-// @MIGRATION_TODO: On hitting enter in the last empty visible child, it triggers outdent. So the following test fails because it is triggering outdent. Previously it was working because `isLastVisibleChild` had a bug that it is always false for child of root context.
 it('allow duplicate empty thoughts', async () => {
   // create empty thought
   windowEvent('keydown', { key: 'Enter' })

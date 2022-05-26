@@ -1,9 +1,10 @@
 import { initialState, reducerFlow, removeHome } from '../../util'
 import { join } from '../../reducers'
 import { HOME_TOKEN } from '../../constants'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import importText from '../importText'
-import { exportContext, getChildrenRanked } from '../../selectors'
+import { exportContext } from '../../selectors'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 
 it('joins two simple thoughts', () => {
   const text = `- a
@@ -68,7 +69,7 @@ it('generates unique & non-conflicting ranks', () => {
 
   const newState = reducerFlow(steps)(initialState())
 
-  const children = getChildrenRanked(newState, ['a', 'm n o'])
+  const children = getChildrenRankedByContext(newState, ['a', 'm n o'])
 
   expect(new Set(children.map(child => child.rank)).size).toBe(4)
 })

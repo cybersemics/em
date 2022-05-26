@@ -169,15 +169,8 @@ const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
   return sortedFinal
 }
 
-/** Gets all children of a Context sorted by their ranking. Returns a new object reference even if the children have not changed. */
-export const getChildrenRanked = (state: State, context: Context): Thought[] => {
-  const id = contextToThoughtId(state, context)
-  return id ? getChildrenSortedBy(state, id, compareByRank) : NO_CHILDREN
-}
-
-/** Gets all children of a context sorted by their ranking using thought id. Returns a new object reference even if the children have not changed. */
-// @MIGRATION_TODO: Currently we are migrating to access by id instead of context.
-export const getChildrenRankedById = (state: State, thoughtId: ThoughtId): Thought[] => {
+/** Gets all children of a thought sorted by rank. Returns a new object reference even if the children have not changed. */
+export const getChildrenRankedById = (state: State, thoughtId: ThoughtId | null): Thought[] => {
   const allChildren = childIdsToThoughts(state, getAllChildren(state, thoughtId))
   return sort(allChildren, compareByRank)
 }

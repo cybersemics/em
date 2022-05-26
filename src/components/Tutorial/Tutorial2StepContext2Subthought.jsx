@@ -11,7 +11,7 @@ import {
 } from '../../constants'
 
 import { contextToThoughtId, headValue, isRoot, joinConjunction } from '../../util'
-import { findDescendant, getContexts, getChildrenRankedById, getChildrenRanked, parentOfThought } from '../../selectors'
+import { findDescendant, getContexts, getChildrenRankedById, parentOfThought } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 
@@ -37,6 +37,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
   const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
   const contexts = getContexts(state, caseSensitiveValue)
   const contextParentThoughts = contexts.map(thoughtId => parentOfThought(state, thoughtId))
+  const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
 
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
 
@@ -75,7 +76,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
           child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),
         ) &&
         // e.g. Work/To Do
-        getChildrenRanked(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]]).find(
+        getChildrenRankedById(state, tutorialChoiceParentId).find(
           child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
         ) ? (
           <p>

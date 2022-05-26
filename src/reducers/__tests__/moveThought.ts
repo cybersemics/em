@@ -4,7 +4,6 @@ import {
   exportContext,
   getContexts,
   getLexeme,
-  getChildrenRanked,
   getRankAfter,
   contextToThought,
   pathToThought,
@@ -15,6 +14,7 @@ import { importText, newSubthought, newThought } from '../../reducers'
 import { State } from '../../@types'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
@@ -580,7 +580,7 @@ it('move with nested duplicate thoughts and merge their children', () => {
   expect(getContexts(stateNew, 'b')).toMatchObject([thoughtB.id])
 
   // context ['p', 'a'] should not have any garbage children
-  expect(getChildrenRanked(stateNew, ['p', 'a'])).toHaveLength(0)
+  expect(getChildrenRankedByContext(stateNew, ['p', 'a'])).toHaveLength(0)
 
   const thoughtC = contextToThought(stateNew, ['a', 'b', 'c'])!
 
@@ -589,7 +589,7 @@ it('move with nested duplicate thoughts and merge their children', () => {
   expect(getContexts(stateNew, 'c')).toMatchObject([thoughtC.id])
 
   // context ['p', 'a', 'b'] should not have any garbage children
-  expect(getChildrenRanked(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
+  expect(getChildrenRankedByContext(stateNew, ['p', 'a', 'b'])).toHaveLength(0)
 })
 
 it('data integrity test', () => {
