@@ -3,7 +3,7 @@ import { Key } from 'ts-key-enum'
 import { Icon as IconType, Shortcut } from '../@types'
 import { isTouch } from '../browser'
 import { headValue, isDocumentEditable } from '../util'
-import { alert, newThought, outdent } from '../action-creators'
+import { newThought, outdent } from '../action-creators'
 import { isLastVisibleChild, simplifyPath } from '../selectors'
 import Svg, { G, Path } from 'react-native-svg'
 
@@ -19,13 +19,7 @@ const Icon = ({ fill = 'black', size = 20 }: IconType) => (
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string }) => {
   const state = getState()
-  const { cursor, editingValue } = state
-
-  // if current edited thought is duplicate and user hits enter
-  if (cursor && editingValue && headValue(state, cursor) !== editingValue) {
-    dispatch(alert('Duplicate thoughts are not allowed within the same context.', { alertType: 'duplicateThoughts' }))
-    return
-  }
+  const { cursor } = state
 
   // when Enter is pressed on a last empty thought, outdent it
   if (

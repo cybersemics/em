@@ -1,22 +1,9 @@
 import { isTouch, isSafari } from '../browser'
-import { HOME_TOKEN, TUTORIAL_STEP_START } from '../constants'
+import { TUTORIAL_STEP_START } from '../constants'
 import { getSetting, pathToThought, hasChild, isContextViewActive } from '../selectors'
 import { ellipsize, head, parentOf, pathToContext } from '../util'
-import { alert } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { Thunk, Context, Path, SplitResult, State } from '../@types'
-
-/** Split editingValue by offset and check if splitted parts are duplicate with siblings. */
-const isDuplicateOnSplit = (splitResult: SplitResult, context: Context | null, state: State) => {
-  const { editingValue } = state
-  if (!editingValue) return false
-  const siblings = getAllChildrenAsThoughts(state, context || [HOME_TOKEN])
-  return (
-    splitResult.left === splitResult.right ||
-    siblings.some(sibling => sibling.value === splitResult.left || sibling.value === splitResult.right)
-  )
-}
+import { Thunk, Path, SplitResult } from '../@types'
 
 /**
  * Creates a new thought.
@@ -60,13 +47,6 @@ const newThought =
 
     const showContexts = path && isContextViewActive(state, parentOf(pathToContext(state, path)))
 
-    const context =
-      path &&
-      (showContexts && path.length > 2
-        ? pathToContext(state, parentOf(parentOf(path)))
-        : !showContexts && path.length > 1
-        ? pathToContext(state, parentOf(path))
-        : [HOME_TOKEN])
     // split the thought at the selection
     // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near
     // do not split with gesture, as Enter is avialable and separate in the context of mobile
@@ -85,15 +65,6 @@ const newThought =
       asyncFocus()
     }
     if (split) {
-      if (isDuplicateOnSplit(splitResult!, context, state)) {
-        dispatch(
-          alert('Duplicate thoughts are not allowed within the same context.', {
-            alertType: 'duplicateThoughts',
-            clearDelay: 2000,
-          }),
-        )
-        return
-      }
       dispatch(
         uneditable && path && thought
           ? { type: 'error', value: `"${ellipsize(thought?.value)}" is uneditable and cannot be split.` }
