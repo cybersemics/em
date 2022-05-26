@@ -26,7 +26,7 @@ import {
   lastThoughtsFromContextChain,
   nextSibling,
   rootedParentOf,
-  prevSiblingById,
+  prevSibling,
   splitChain,
   thoughtsEditingFromChain,
   parentOfThought,
@@ -127,7 +127,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   }
 
   // prev must be calculated before dispatching deleteThought
-  const prev = showContexts ? prevContext() : prevSiblingById(state, value, pathParent, rank)
+  const prev = showContexts ? prevContext() : prevSibling(state, value, pathParent, rank)
 
   const next =
     !prev && showContexts

@@ -12,7 +12,7 @@ import {
   getContextsSortedAndRanked,
   isContextViewActive,
   rootedParentOf,
-  prevSiblingById,
+  prevSibling,
   simplifyPath,
   thoughtsEditingFromChain,
   parentOfThought,
@@ -64,7 +64,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   }
 
   // prev must be calculated before dispatching deleteThought
-  const prev = showContexts ? prevContext() : prevSiblingById(state, value, rootedParentOf(state, simplePath), rank)
+  const prev = showContexts ? prevContext() : prevSibling(state, value, rootedParentOf(state, simplePath), rank)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>

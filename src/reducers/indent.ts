@@ -1,5 +1,5 @@
 import { alert, moveThought } from '../reducers'
-import { getNextRank, hasChild, rootedParentOf, prevSiblingById, getThoughtById } from '../selectors'
+import { getNextRank, hasChild, rootedParentOf, prevSibling, getThoughtById } from '../selectors'
 import { State } from '../@types'
 import { appendToPath, ellipsize, head, headValue, isEM, isRoot, parentOf } from '../util'
 import * as selection from '../device/selection'
@@ -13,7 +13,7 @@ const indent = (state: State) => {
   const headCursorThought = getThoughtById(state, head(cursor))
 
   const { value, rank } = headCursorThought
-  const prev = prevSiblingById(state, value, rootedParentOf(state, cursor), rank)
+  const prev = prevSibling(state, value, rootedParentOf(state, cursor), rank)
 
   if (!prev) return state
 

@@ -15,7 +15,7 @@ import thoughtToContext from './thoughtToContext'
 /**
  * Gets the previous sibling of a thought according to its parent's sort preference.
  */
-export const prevSiblingById = (state: State, value: string, path: Path, rank: number): Thought | null => {
+export const prevSibling = (state: State, value: string, path: Path, rank: number): Thought | null => {
   const { showHiddenThoughts } = state
   const thought = getThoughtById(state, head(path))
   if (!thought) return null
@@ -53,3 +53,5 @@ export const prevSiblingById = (state: State, value: string, path: Path, rank: n
 
   return prevChild
 }
+
+export default prevSibling
