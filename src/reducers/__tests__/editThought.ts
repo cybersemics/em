@@ -2,13 +2,13 @@ import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import { contextToThoughtId, initialState, reducerFlow } from '../../util'
 import { exportContext, getContexts, getLexeme, contextToThought, parentOfThought } from '../../selectors'
 import { newThought, importText } from '../../reducers'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 
 it('edit a thought', () => {
   const steps = [
@@ -39,7 +39,7 @@ it('edit a thought', () => {
 
   expect(getContexts(stateNew, 'aa')).toMatchObject([thought!.id])
 
-  expect(getAllChildrenAsThoughts(stateNew, [HOME_TOKEN])).toMatchObject([
+  expect(getAllChildrenAsThoughtsByContext(stateNew, [HOME_TOKEN])).toMatchObject([
     {
       id: contextToThoughtId(stateNew, ['b'])!,
       value: 'b',
@@ -129,7 +129,7 @@ it('edit a thought with descendants', () => {
 
   expect(thought?.parentId).toBe(HOME_TOKEN)
 
-  expect(getAllChildrenAsThoughts(stateNew, ['aa'])).toMatchObject([
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['aa'])).toMatchObject([
     {
       value: 'a1',
       rank: 0,
@@ -180,7 +180,7 @@ it('edit a thought existing in mutliple contexts', () => {
   // abc should exist in context a
   expect(getContexts(stateNew, 'abc')).toMatchObject([thoughtABC.id])
 
-  expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject([
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
     {
       value: 'abc',
       rank: 0,
@@ -224,7 +224,7 @@ it('edit a thought that exists in another context', () => {
   // ab should exist in both contexts a and b
   expect(getContexts(stateNew, 'ab')).toMatchObject([thoughtInContextA!.id, thoughtInContextB!.id])
 
-  expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject([
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
     {
       value: 'ab',
       rank: 0,
@@ -232,7 +232,9 @@ it('edit a thought that exists in another context', () => {
     },
   ])
 
-  expect(getAllChildrenAsThoughts(stateNew, ['b'])).toMatchObject([{ value: 'ab', rank: 0, id: thoughtInContextB.id }])
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['b'])).toMatchObject([
+    { value: 'ab', rank: 0, id: thoughtInContextB.id },
+  ])
 })
 
 it('edit a child with the same value as its parent', () => {
@@ -262,7 +264,9 @@ it('edit a child with the same value as its parent', () => {
   expect(getContexts(stateNew, 'ab')).toMatchObject([thoughtInContextA!.id])
 
   expect(thoughtInContextA?.parentId).toBe(thoughtA.id)
-  expect(getAllChildrenAsThoughts(stateNew, ['a'])).toMatchObject([{ value: 'ab', rank: 0, id: thoughtInContextA.id }])
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
+    { value: 'ab', rank: 0, id: thoughtInContextA.id },
+  ])
 
   // cursor should be /a/ab
   matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [

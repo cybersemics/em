@@ -1,19 +1,12 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
-
-// constants
 import { HOME_TOKEN } from '../../constants'
-
-// util
-import { parentOf, ellipsize, head, headValue, pathToContext } from '../../util'
-
-// selectors
+import { contextToThoughtId, parentOf, ellipsize, head, headValue, pathToContext } from '../../util'
 import { getAllChildren } from '../../selectors'
-
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
 import { Path, Thought } from '../../@types'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../../selectors/getChildren'
 
 const { smallText, italic } = commonStyles
 
@@ -21,13 +14,14 @@ const { smallText, italic } = commonStyles
 const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
   const state = store.getState()
   const cursorContext = pathToContext(state, cursor || [])
-  const cursorChildren = getAllChildrenAsThoughts(state, cursorContext)
+  const cursorChildren = cursor ? getAllChildrenAsThoughtsById(state, head(cursor)) : []
   const isCursorLeaf = cursorChildren.length === 0
-  const ancestorThought = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
+  const contextAncestor = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
+  const contextAncestorId = contextToThoughtId(state, contextAncestor)
 
-  const ancestorThoughtChildren = getAllChildrenAsThoughts(
+  const ancestorThoughtChildren = getAllChildrenAsThoughtsById(
     state,
-    ancestorThought.length === 0 ? [HOME_TOKEN] : ancestorThought,
+    contextAncestor.length === 0 ? HOME_TOKEN : contextAncestorId,
   )
   const isCursorRootChildren = (cursor || []).length === 1
 
@@ -47,7 +41,7 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
               <Fragment> Try tapping on </Fragment>
               <Fragment>
                 thought "{ellipsize(subThoughtNotCursor(ancestorThoughtChildren)?.value || '')}"{' '}
-                {ancestorThought.length !== 0 && `or "${ellipsize(head(ancestorThought))}"`}{' '}
+                {contextAncestor.length !== 0 && `or "${ellipsize(head(contextAncestor))}"`}{' '}
               </Fragment>
               <Fragment>
                 {' '}

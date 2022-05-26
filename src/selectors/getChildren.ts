@@ -5,7 +5,6 @@ import {
   compareByRank,
   compareThought,
   compareThoughtDescending,
-  contextToThoughtId,
   isAbsolute,
   isFunction,
   sort,
@@ -36,13 +35,6 @@ export const getAllChildren = (state: State, thoughtId: ThoughtId | null): Thoug
   if (!thoughtId) return NO_THOUGHT_IDS
   const children = getThoughtById(state, thoughtId)?.children
   return children?.length > 0 ? children : NO_THOUGHT_IDS
-}
-
-/** Returns the subthoughts (as Thoughts) of the given context unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getAllChildrenAsThoughts = (state: State, context: Context) => {
-  const id = contextToThoughtId(state, context)
-  const children = childIdsToThoughts(state, getAllChildren(state, id))
-  return children.length === 0 ? NO_CHILDREN : children
 }
 
 /** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */

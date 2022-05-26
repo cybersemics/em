@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { HOME_PATH } from '../constants'
-import { ThoughtId, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { ThoughtId, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {
@@ -36,18 +36,18 @@ import {
 
 // reducers
 import { alert, deleteThought, moveThought, newThought, setCursor } from '../reducers'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 /** Returns path to the archive of the given context. */
 export const pathAndRankToArchive = (
   state: State,
   path: Path,
-  context: Context,
+  pathParent: Path,
 ): {
   path: Path
   rank: number
 } | null => {
-  const rankedArchive = getAllChildrenAsThoughts(state, context).find(equalThoughtValue('=archive'))
+  const rankedArchive = getAllChildrenAsThoughtsById(state, head(pathParent)).find(equalThoughtValue('=archive'))
   if (!rankedArchive) return null
   const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive.id) : parentOf(path)
   const newRank = getPrevRank(state, head(archivePath))
@@ -89,7 +89,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(state, path)
   const hasDescendants = getAllChildren(state, head(path)).length !== 0
-  const allChildren = getAllChildrenAsThoughts(state, thoughts)
+  const allChildren = getAllChildrenAsThoughtsById(state, head(simplePath))
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
   const alertLabel = ellipsize(value === '=note' ? 'note ' + allChildren[0]?.value || '' : value)
 
@@ -181,7 +181,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
           // execute moveThought after newThought has updated the state
           (state: State) => {
-            const { path: newPath, rank } = pathAndRankToArchive(state, showContexts ? simplePath : path!, context)!
+            const { path: newPath, rank } = pathAndRankToArchive(state, showContexts ? simplePath : path!, pathParent)!
             return moveThought(state, {
               oldPath: path,
               // TODO: Are we sure pathToArchive cannot return null?

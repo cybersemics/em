@@ -23,7 +23,7 @@ import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCu
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { State } from '../@types'
 import archiveThought from './archiveThought'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {
@@ -59,7 +59,7 @@ const deleteEmptyThought = (state: State): State => {
       }),
       // move the child archive up a level so it does not get permanently deleted
       state => {
-        const childArchive = getAllChildrenAsThoughts(state, context).find(child => child.value === '=archive')
+        const childArchive = getAllChildrenAsThoughtsById(state, head(cursor)).find(child => child.value === '=archive')
         return childArchive
           ? moveThought(state, {
               oldPath: [...cursor, childArchive.id],

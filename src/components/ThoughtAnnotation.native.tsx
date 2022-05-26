@@ -4,20 +4,9 @@ import { connect } from 'react-redux'
 import { store } from '../store'
 import { REGEXP_PUNCTUATIONS } from '../constants'
 import { setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getContexts, theme, rootedParentOf, getAncestorByValue } from '../selectors'
-import { Connected, Context, Index, SimplePath, State, ThoughtContext, Path } from '../@types'
-import {
-  ellipsizeUrl,
-  equalPath,
-  hashPath,
-  head,
-  headValue,
-  isURL,
-  once,
-  parentOf,
-  pathToContext,
-  publishMode,
-} from '../util'
+import { decodeThoughtsUrl, findDescendant, getContexts, theme, rootedParentOf, getAncestorByValue } from '../selectors'
+import { Connected, Index, SimplePath, State, ThoughtContext, ThoughtId, Path } from '../@types'
+import { ellipsizeUrl, equalPath, hashPath, head, headValue, isURL, once, parentOf, publishMode } from '../util'
 
 // components
 import HomeLink from './HomeLink'
@@ -31,7 +20,7 @@ import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
 import { TouchableOpacity } from 'react-native'
 import { isInternalLink } from '../device/router'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 const { from, animate } = fadeIn
 
@@ -53,8 +42,9 @@ interface ThoughtAnnotationProps {
 }
 
 /** Sets the innerHTML of the ngram text. */
-const getTextMarkup = (state: State, isEditing: boolean, value: string, thoughts: Context) => {
-  const labelChildren = getAllChildrenAsThoughts(state, [...thoughts, '=label'])
+const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId) => {
+  const labelId = findDescendant(state, id, '=label')
+  const labelChildren = labelId ? getAllChildrenAsThoughtsById(state, labelId) : []
   const { editingValue } = state
   return {
     __html: isEditing
@@ -133,9 +123,10 @@ const ThoughtAnnotation = ({
 
   const state = store.getState()
   const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
-  const thoughts = pathToContext(state, simplePath)
   const isExpanded = !!state.expanded[hashPath(simplePath)]
-  const childrenUrls = once(() => getAllChildrenAsThoughts(state, thoughts).filter(child => isURL(child.value)))
+  const childrenUrls = once(() =>
+    getAllChildrenAsThoughtsById(state, head(simplePath)).filter(child => isURL(child.value)),
+  )
 
   // no contexts if thought is empty
   const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []
@@ -169,7 +160,7 @@ const ThoughtAnnotation = ({
         <HomeLink />
       ) : (
         <View from={from} animate={animate} transition={{ type: 'timing' }}>
-          <Text>{getTextMarkup(state, !!isEditing, value, thoughts).__html}</Text>
+          <Text>{getTextMarkup(state, !!isEditing, value, head(simplePath)).__html}</Text>
           {
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />

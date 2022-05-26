@@ -4,7 +4,7 @@ import { archiveThought, moveThought, setCursor } from '../reducers'
 import _ from 'lodash'
 import deleteThought from './deleteThought'
 import { Path, State } from '../@types'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 interface Options {
   deleteCursor?: boolean
@@ -22,7 +22,7 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
   const simpleCursor = simplifyPath(state, path)
   const context = pathToContext(state, simpleCursor)
 
-  const children = getAllChildrenAsThoughts(state, context)
+  const children = getAllChildrenAsThoughtsById(state, head(simpleCursor))
 
   /** Returns first moved child path as new cursor after collapse. */
   const getNewCursor = (updatedState: State) => {

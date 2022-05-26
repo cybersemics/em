@@ -5,7 +5,7 @@ import { getChildrenRanked, getLexeme, getThoughtById, hasLexeme, rootedParentOf
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 interface Payload {
   context: Context
@@ -99,7 +99,9 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   const contextViewsNew = { ...state.contextViews }
   if (parent) delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getAllChildrenAsThoughts(state, context).filter(child => child.id !== deletedThought.id)
+  const subthoughts = getAllChildrenAsThoughtsById(state, parent?.id || null).filter(
+    child => child.id !== deletedThought.id,
+  )
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
   const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {

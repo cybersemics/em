@@ -1,6 +1,7 @@
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 import { Thunk } from '../@types'
 import { EM_TOKEN } from '../constants'
+import { findDescendant } from '../selectors'
 
 /** Creates a Promise resolver that delays by a logarithmically increasing amount of time. */
 const logarithmicDelayResolver = () => {
@@ -20,7 +21,8 @@ const tutorial =
   async (dispatch, getState) => {
     /** Returns true if the tutorial settings have been loaded into memory (via pullQueue). */
     const isTutorialSettingsLoaded = () => {
-      const children = getAllChildrenAsThoughts(getState(), [EM_TOKEN, 'Settings', 'Tutorial'])
+      const tutorialSettingId = findDescendant(getState(), EM_TOKEN, ['Settings', 'Tutorial'])
+      const children = getAllChildrenAsThoughtsById(getState(), tutorialSettingId)
       return children.length > 0
     }
 

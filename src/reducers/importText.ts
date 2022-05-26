@@ -24,7 +24,7 @@ import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
 import { getSessionId } from '../util/sessionManager'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 // a list item tag
@@ -78,7 +78,6 @@ const importText = (
 
   path = path || HOME_PATH
   const simplePath = simplifyPath(state, path)
-  const context = pathToContext(state, simplePath)
   const convertedText = isRoam ? text : textToHtml(text)
   const numLines = (convertedText.match(regexpListItem) || []).length
   const thoughtId = head(path)
@@ -177,7 +176,9 @@ const importText = (
      */
     const getDestinationPath = (): SimplePath => {
       if (!shouldImportIntoDummy) return simplePath
-      const newDummyThought = getAllChildrenAsThoughts(updatedState, context).find(child => child.value === uuid)
+      const newDummyThought = getAllChildrenAsThoughtsById(updatedState, head(simplePath)).find(
+        child => child.value === uuid,
+      )
       return (newDummyThought ? [...simplePath, newDummyThought.id] : simplePath) as SimplePath
     }
 

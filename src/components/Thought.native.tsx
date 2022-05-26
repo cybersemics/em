@@ -58,7 +58,7 @@ import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
 import { StyleSheet } from 'react-native'
 import ThoughtAnnotation from './ThoughtAnnotation'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
 
 /**********************************************************************
  * Redux
@@ -240,6 +240,7 @@ const ThoughtContainer = ({
   const thoughtId = head(simplePath)
   const thoughts = pathToContext(state, simplePath)
   const context = parentOf(thoughts)
+  const parentId = head(rootedParentOf(state, simplePath))
 
   useEffect(() => {
     if (isBeingHoveredOver) {
@@ -290,7 +291,8 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
+  const optionsId = findDescendant(state, parentId, '=options')
+  const childrenOptions = getAllChildrenAsThoughtsById(state, optionsId)
   const options =
     !isFunction(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
 
