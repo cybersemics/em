@@ -1,7 +1,7 @@
 import { State } from '../../@types'
 import { HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import { createId } from '../createId'
-import { contextToThoughtId } from '../contextToThoughtId'
+import { contextToThoughtId } from '../../selectors'
 import { initialState } from '../initialState'
 import { timestamp } from '../timestamp'
 
