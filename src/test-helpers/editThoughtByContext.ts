@@ -8,12 +8,12 @@ import { HOME_TOKEN } from '../constants'
 import { editThought as editThoughtThunk } from '../action-creators'
 
 /**
- * Edit thought at the given unranked path first matched.
+ * Edit thought at the given Context.
  *
  * @param at: Unranked path to the thought.
  *
  */
-const editThoughtAtFirstMatch = _.curryRight(
+const editThoughtByContext = _.curryRight(
   (state: State, payload: Omit<editThoughtPayload, 'context' | 'path'> & { at: string[] }) => {
     const path = contextToPath(state, payload.at)
     if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
@@ -33,7 +33,7 @@ const editThoughtAtFirstMatch = _.curryRight(
  *
  * @param at: Unranked path to the thought.
  */
-export const editThoughtAtFirstMatchActionCreator = (
+export const editThoughtByContextActionCreator = (
   payload: Omit<editThoughtPayload, 'context' | 'path'> & { at: string[] },
 ): Thunk => {
   return (dispatch, getState) => {
@@ -52,4 +52,4 @@ export const editThoughtAtFirstMatchActionCreator = (
   }
 }
 
-export default editThoughtAtFirstMatch
+export default editThoughtByContext

@@ -12,7 +12,7 @@ import testTimer from '../../test-helpers/testTimer'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
-import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
+import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 
 /*
@@ -301,7 +301,7 @@ it('edit thought with buffered descendants', async () => {
 
   // delete thought with buffered descendants
   store.dispatch(
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       at: ['a'],
       oldValue: 'a',
       newValue: 'k',

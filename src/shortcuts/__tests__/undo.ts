@@ -11,7 +11,7 @@ import * as undoUtils from '../../selectors/isUndoEnabled'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
-import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
+import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 
 const timer = testTimer()
 
@@ -53,7 +53,7 @@ it('undo thought change', () => {
         - b`,
     }),
     setCursorFirstMatchActionCreator(['a']),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'aa',
       oldValue: 'a',
       at: ['a'],
@@ -122,7 +122,7 @@ it('group all navigation actions following an undoable(non-navigation) action an
     }),
     setCursorFirstMatchActionCreator(['b']),
     { type: 'indent' },
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'b1',
       oldValue: 'b',
       rankInContext: 0,
@@ -175,7 +175,7 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
           - d`,
     }),
     setCursor({ path: null }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       oldValue: 'b',
       newValue: 'bd',
       rankInContext: 0,
@@ -231,7 +231,7 @@ it('newThought action should be merged with the succeeding patch', () => {
     }),
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       oldValue: 'd',
       newValue: 'd1',
       rankInContext: 3,
@@ -260,12 +260,12 @@ it('undo contiguous changes', () => {
         - A
         - B`,
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic',
       oldValue: 'A',
       at: ['A'],
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic City',
       oldValue: 'Atlantic',
       at: ['Atlantic'],
@@ -314,7 +314,7 @@ it('clear patches when any undoable action is dispatched', () => {
         - B`,
       preventSetCursor: true,
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic',
       oldValue: 'A',
       at: ['A'],

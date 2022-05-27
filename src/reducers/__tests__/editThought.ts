@@ -10,7 +10,7 @@ import {
 } from '../../selectors'
 import { newThought, importText } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
-import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
+import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
@@ -22,7 +22,7 @@ it('edit a thought', () => {
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
     setCursorFirstMatch(['a']),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: 'aa',
       oldValue: 'a',
       at: ['a'],
@@ -73,7 +73,7 @@ it('edit a descendant', () => {
       value: 'b',
       at: ['a'],
     }),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: 'aa1',
       oldValue: 'a1',
       at: ['a', 'a1'],
@@ -105,7 +105,7 @@ it('edit a thought with descendants', () => {
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a2' }),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: 'aa',
       oldValue: 'a',
       at: ['a'],
@@ -159,7 +159,7 @@ it('edit a thought existing in mutliple contexts', () => {
       at: ['a'],
     }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: 'abc',
       oldValue: 'ab',
       at: ['a', 'ab'],
@@ -205,7 +205,7 @@ it('edit a thought that exists in another context', () => {
       at: ['a'],
     }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: 'ab',
       oldValue: 'a',
       at: ['b', 'a'],
@@ -248,7 +248,7 @@ it('edit a child with the same value as its parent', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: 'ab',
       oldValue: 'a',
       at: ['a', 'a'],
@@ -290,12 +290,12 @@ it('do not duplicate children when new and old context are same', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b', insertNewSubthought: true }),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: 'as',
       oldValue: 'a',
       at: ['a'],
     }),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: 'a',
       oldValue: 'as',
       at: ['as'],
@@ -324,7 +324,7 @@ it('data integrity test', () => {
       text,
     }),
     setCursorFirstMatch(['a']),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       at: ['a'],
       oldValue: 'a',
       newValue: 'azkaban',
@@ -353,7 +353,7 @@ it('data integrity test after editing a parent with multiple descendants with sa
       text,
     }),
     setCursorFirstMatch(['']),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       at: [''],
       oldValue: '',
       newValue: 'x',
@@ -378,7 +378,7 @@ describe('changing thought with duplicate descendent', () => {
         - b
           - ac`,
       }),
-      editThoughtAtFirstMatch({
+      editThoughtByContext({
         newValue: 'ac',
         oldValue: 'a',
         at: ['a'],
@@ -409,7 +409,7 @@ describe('changing thought with duplicate descendent', () => {
         - b
           - a`,
       }),
-      editThoughtAtFirstMatch({
+      editThoughtByContext({
         newValue: 'ac',
         oldValue: 'a',
         at: ['a'],

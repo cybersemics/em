@@ -9,7 +9,7 @@ import getContext from '../data-helpers/getContext'
 import dbGetThought from '../data-helpers/getLexeme'
 import testTimer from '../../test-helpers/testTimer'
 import { storage } from '../../util'
-import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
+import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
@@ -74,7 +74,7 @@ describe('integration', () => {
 
     store.dispatch([
       { type: 'newThought', value: '' },
-      editThoughtAtFirstMatchActionCreator({
+      editThoughtByContextActionCreator({
         at: [''],
         oldValue: '',
         newValue: 'a',

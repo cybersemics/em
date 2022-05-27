@@ -12,7 +12,7 @@ import {
 } from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
-import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
+import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 import { ImportTextPayload } from '../../reducers/importText'
 import _ from 'lodash'
 
@@ -457,7 +457,7 @@ it('replace empty cursor', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `b` to empty thought since importText skips empty thoughts
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: '',
       oldValue: 'b',
       at: ['a', 'b'],
@@ -490,7 +490,7 @@ it('replace empty cursor without affecting siblings', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `c` to empty thought since importText skips empty thoughts
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: '',
       oldValue: 'c',
       at: ['a', 'c'],
@@ -583,7 +583,7 @@ it('single-line nested html tags', () => {
     importText({ text }),
 
     // manually change `b` to empty thought to not see 'b' end of the new value.
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: '',
       oldValue: 'b',
       at: ['a', 'b'],

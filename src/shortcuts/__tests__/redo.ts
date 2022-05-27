@@ -3,7 +3,7 @@ import { childIdsToThoughts, exportContext } from '../../selectors'
 import { importText } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
+import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 
 it('redo thought change', () => {
   const store = createTestStore()
@@ -15,7 +15,7 @@ it('redo thought change', () => {
         - b`,
     }),
     { type: 'cursorUp' },
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'aa',
       oldValue: 'a',
       at: ['a'],
@@ -56,7 +56,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'arizona',
       oldValue: 'a',
       at: ['a'],
@@ -66,7 +66,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'cursorUp' },
     { type: 'cursorDown' },
 
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'boston',
       oldValue: 'b',
       at: ['arizona', 'b'],
@@ -104,17 +104,17 @@ it('redo contiguous changes', () => {
         - A
         - B`,
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic',
       oldValue: 'A',
       at: ['A'],
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic ',
       oldValue: 'Atlantic',
       at: ['Atlantic'],
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic City',
       oldValue: 'Atlantic ',
       at: ['Atlantic '],
