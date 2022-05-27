@@ -775,7 +775,7 @@ export const SubthoughtsComponent = ({
             re-renders.
           */
                   return child ? (
-                    <ul className='children'>
+                    <ul className='children' key={`${child.id}-${child.rank}`}>
                       <Thought
                         allowSingleContext={allowSingleContextParent}
                         depth={depth + 1}
