@@ -12,7 +12,8 @@ import {
 } from '../action-creators'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
-import { equalArrays, head, keyValueBy } from '../util'
+import { equalArrays, head, keyValueBy, normalizeThought } from '../util'
+import { getThoughtById } from '../selectors'
 import { Thunk, Index, Lexeme, PushBatch, State, ThoughtId } from '../@types'
 
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only lexemeIndexUpdates. */
@@ -47,30 +48,40 @@ const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => (
 
 /** Merges conflicting Lexemes from two different LexemeIndexUpdates. Only returns Lexemes with actual conflicts. Used to merge pulled Lexemes into a PushBatch. */
 const mergeConflictingLexemeIndexUpdates = (
+  state: State,
   lexemeIndexUpdatesA: Index<Lexeme | null>,
   lexemeIndexUpdatesB: Index<Lexeme | null>,
 ): Index<Lexeme> =>
-  Object.keys(lexemeIndexUpdatesB).reduce<Index<Lexeme>>((acc, thoughtId) => {
-    const lexemeA = lexemeIndexUpdatesA[thoughtId]
-    const lexemeB = lexemeIndexUpdatesB[thoughtId]
+  Object.keys(lexemeIndexUpdatesB).reduce<Index<Lexeme>>((acc, key) => {
+    const lexemeA = lexemeIndexUpdatesA[key]
+    const lexemeB = lexemeIndexUpdatesB[key]
 
-    // return either lexeme is missing since we are only merging conflicting updates
+    // Bail if either lexeme is missing since we are only merging conflicting updates.
     if (!lexemeA || !lexemeB) return acc
 
-    /** Returns the lexeme's contexts in the pulled state without the lexemeA contexts. */
-    const lexemeBcontextsDiff = lexemeB.contexts.filter(thoughtIdB => {
-      const isInA = lexemeA.contexts.some(thoughtIdA => thoughtIdA === thoughtIdB)
-      return !isInA
+    // If pulled Lexeme A contexts have been edited, the thought values may no longer be in conflict.
+    // Inserting them would result in an invalid Lexeme context added to Lexeme B.
+    // Filter out Lexeme A contexts whose values no longer match the Lexeme value.
+    // Only merge thoughts that are still conflicting with Lexeme B contexts, or are completely new.
+    // See: https://github.com/cybersemics/em/issues/1559
+    const lexemeAContextsFiltered = lexemeA.contexts.filter(id => {
+      const thought = getThoughtById(state, id)
+      return !thought || normalizeThought(thought.value) === normalizeThought(lexemeA.value)
     })
+
+    // get the Lexeme's contexts in the pulled state without the lexemeA contexts
+    const lexemeBcontextsDiff = lexemeB.contexts.filter(
+      thoughtIdB => !lexemeAContextsFiltered.some(thoughtIdA => thoughtIdA === thoughtIdB),
+    )
 
     // if there are contexts in lexemeB that are not in A, then return without updates
     if (lexemeBcontextsDiff.length === 0) return acc
 
     return {
       ...acc,
-      [thoughtId]: {
+      [key]: {
         ...lexemeA,
-        contexts: [...lexemeA.contexts, ...lexemeBcontextsDiff],
+        contexts: [...lexemeAContextsFiltered, ...lexemeBcontextsDiff],
       },
     }
   }, {})
@@ -106,7 +117,11 @@ const pullPendingLexemes =
       }
     }, {})
 
-    const lexemeIndexUpdatesMerged = mergeConflictingLexemeIndexUpdates(lexemeIndexPulled, batch.lexemeIndexUpdates)
+    const lexemeIndexUpdatesMerged = mergeConflictingLexemeIndexUpdates(
+      state,
+      lexemeIndexPulled,
+      batch.lexemeIndexUpdates,
+    )
 
     // dispatch updateThoughts on Redux state only with the merged Lexemes to update the UI with new superscripts
     if (Object.keys(lexemeIndexUpdatesMerged).length > 0) {
