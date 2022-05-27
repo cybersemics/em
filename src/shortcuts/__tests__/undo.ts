@@ -1,6 +1,6 @@
 import { store as appStore } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { childIdsToThoughts, exportContext, contextToPath } from '../../selectors'
+import { childIdsToThoughts, exportContext } from '../../selectors'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
@@ -53,13 +53,11 @@ it('undo thought change', () => {
         - b`,
     }),
     setCursorFirstMatchActionCreator(['a']),
-    {
-      type: 'editThought',
+    editThoughtAtFirstMatchActionCreator({
       newValue: 'aa',
       oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }],
-    },
+      at: ['a'],
+    }),
     { type: 'undoAction' },
   ])
 
@@ -124,17 +122,12 @@ it('group all navigation actions following an undoable(non-navigation) action an
     }),
     setCursorFirstMatchActionCreator(['b']),
     { type: 'indent' },
-    (dispatch, getState) => {
-      const state = getState()
-      dispatch({
-        type: 'editThought',
-        newValue: 'b1',
-        oldValue: 'b',
-        context: ['a'],
-        rankInContext: 0,
-        path: contextToPath(state, ['a', 'b']),
-      })
-    },
+    editThoughtAtFirstMatchActionCreator({
+      newValue: 'b1',
+      oldValue: 'b',
+      rankInContext: 0,
+      at: ['a', 'b'],
+    }),
     { type: 'cursorBack' },
     { type: 'moveThoughtDown' },
     { type: 'cursorDown' },
@@ -182,17 +175,12 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
           - d`,
     }),
     setCursor({ path: null }),
-    {
-      type: 'editThought',
-      context: ['a'],
+    editThoughtAtFirstMatchActionCreator({
       oldValue: 'b',
       newValue: 'bd',
       rankInContext: 0,
-      path: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
-      ],
-    },
+      at: ['a', 'b'],
+    }),
     // dispensible set cursor (which only updates datanonce)
     setCursor({ path: null }),
     // undo setCursor and thoughtChange in a sinle action
