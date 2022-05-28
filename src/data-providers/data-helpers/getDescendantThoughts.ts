@@ -1,6 +1,6 @@
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
-import { hashThought, isFunction, keyValueBy, never } from '../../util'
+import { createChildrenMap, hashThought, isFunction, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
 import { Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
 import { thoughtToContext, getThoughtById } from '../../selectors'
@@ -98,8 +98,22 @@ async function* getDescendantThoughts(
           }))
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
-    const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => {
-      return { [id]: thoughts[i] }
+    const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: thoughts[i] }))
+
+    // insert the new thoughtIndex into the state just for createChildrenMap
+    // otherwise createChildrenMap will not be able to find the new child and thus not properly detect meta attributes which are stored differently
+    const stateWithNewThoughtIndex = {
+      ...state,
+      thoughts: {
+        ...state.thoughts,
+        thoughtIndex: { ...state.thoughts.thoughtIndex, ...thoughtIndex },
+      },
+    }
+
+    // set childrenMap on each thought
+    // this must be done after all thoughts have been inserted, because siblings are not always present when a thought is created, causing them to be omitted from the childrenMap
+    Object.values(thoughtIndex).forEach(thought => {
+      thought.childrenMap = createChildrenMap(stateWithNewThoughtIndex, thought.children)
     })
 
     const thoughtHashes = thoughtIdsValidated.map(id => {

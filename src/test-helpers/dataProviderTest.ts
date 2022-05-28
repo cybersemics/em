@@ -344,7 +344,7 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(it)
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts.thoughtIndex).toEqual({
+      expect(thoughts.thoughtIndex).toMatchObject({
         [thoughtX.id]: thoughtIndex[thoughtX.id],
         [thoughtY.id]: {
           id: thoughtY.id,
@@ -386,7 +386,7 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await all(getDescendantThoughts(provider, thoughtX.id, initialState(), { maxDepth: 2 }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      expect(thoughts.thoughtIndex).toEqual({
+      expect(thoughts.thoughtIndex).toMatchObject({
         ..._.pick(thoughtIndex, [thoughtX.id, thoughtY.id]),
         // grandchildren are pending
         [thoughtZ.id]: {

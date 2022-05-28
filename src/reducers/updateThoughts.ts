@@ -120,7 +120,7 @@ const updateThoughts = (
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
     lexemeIndexUpdates,
-    thoughtIndexUpdates,
+    thoughtIndexUpdates: thoughtIndexUpdates,
     recentlyEdited: recentlyEditedNew,
     updates,
     pendingDeletes,

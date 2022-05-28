@@ -3,9 +3,7 @@ import _ from 'lodash'
 import { getLexeme, getAllChildren, getThoughtById } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { Context, Lexeme, SimplePath, State, Timestamp } from '../@types'
-
-// util
-import { addContext, hashThought, headId, isDivider, removeContext, timestamp } from '../util'
+import { addContext, createChildrenMap, hashThought, headId, isDivider, removeContext, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 
 export interface editThoughtPayload {
@@ -45,9 +43,9 @@ const editThought = (
     return state
   }
 
-  const parentofEditedThought = getThoughtById(state, editedThought.parentId)
+  const parentOfEditedThought = getThoughtById(state, editedThought.parentId)
 
-  if (!parentofEditedThought) {
+  if (!parentOfEditedThought) {
     console.error('Parent not found')
     return state
   }
@@ -98,7 +96,7 @@ const editThought = (
     }
   }
 
-  const thoughtNewSubthoughts = getAllChildren(state, parentofEditedThought.id)
+  const childrenNew = getAllChildren(state, parentOfEditedThought.id)
     .filter(child => child !== editedThought.id)
     .concat(editedThoughtId)
 
@@ -108,21 +106,31 @@ const editThought = (
     [newKey]: lexemeNew,
   }
 
+  const thoughtNew = {
+    ...editedThought,
+    value: newValue,
+    // store the last non-empty value to preserve the sort order of thoughts edited to empty
+    sortValue: newValue || oldValue || editedThought.sortValue,
+    lastUpdated: timestamp(),
+    updatedBy: getSessionId(),
+  }
+
+  // insert the new thought into the state just for createChildrenMap
+  // otherwise createChildrenMap will not be able to find the new child and thus not properly detect meta attributes which are stored differently
+  const stateWithNewThought = {
+    ...state,
+    thoughts: { ...state.thoughts, thoughtIndex: { ...state.thoughts.thoughtIndex, [editedThought.id]: thoughtNew } },
+  }
+
   const thoughtIndexUpdates = {
-    [parentofEditedThought.id]: {
-      ...parentofEditedThought,
-      children: thoughtNewSubthoughts,
+    [parentOfEditedThought.id]: {
+      ...parentOfEditedThought,
+      children: childrenNew,
+      childrenMap: createChildrenMap(stateWithNewThought, childrenNew),
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     },
-    [editedThought.id]: {
-      ...editedThought,
-      value: newValue,
-      // store the last non-empty value to preserve the sort order of thoughts edited to empty
-      sortValue: newValue || oldValue || editedThought.sortValue,
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
-    },
+    [editedThought.id]: thoughtNew,
     // ...thoughtIndexDescendantUpdates,
   }
 

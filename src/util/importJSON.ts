@@ -14,7 +14,17 @@ import {
   Thought,
   ThoughtId,
 } from '../@types'
-import { appendToPath, hashThought, head, pathToContext, removeContext, timestamp, headId, unroot } from '../util'
+import {
+  appendToPath,
+  createChildrenMap,
+  hashThought,
+  head,
+  pathToContext,
+  removeContext,
+  timestamp,
+  headId,
+  unroot,
+} from '../util'
 import { createId } from './createId'
 import { getSessionId } from './sessionManager'
 import { mergeThoughts } from './mergeThoughts'
@@ -72,12 +82,15 @@ const insertThought = (
     updatedBy,
   }
 
+  const childrenNew = [...thoughtOld.children, newThoughtId]
+
   const thoughtNew: Thought = {
     // TODO: merging thoughtOld results in pending: true when importing into initialState. Is that correct?
     ...thoughtOld,
     value: head(rootContext),
     parentId: thoughtOld.parentId,
-    children: [...thoughtOld.children, newThoughtId],
+    children: childrenNew,
+    childrenMap: createChildrenMap(state, childrenNew),
     lastUpdated,
     updatedBy,
   }
@@ -234,6 +247,24 @@ const saveThoughts = (
       duplicateIndex: {},
     },
   )
+
+  // insert the new thoughtIndex into the state just for createChildrenMap
+  // otherwise createChildrenMap will not be able to find the new child and thus not properly detect meta attributes which are stored differently
+  const stateWithNewThoughtIndex = {
+    ...state,
+    thoughts: {
+      ...state.thoughts,
+      thoughtIndex: { ...state.thoughts.thoughtIndex, ...updates.thoughtIndex },
+    },
+  }
+
+  // set childrenMap on each thought
+  // this must be done after all thoughts have been inserted, because siblings are not always present when a thought is created, causing them to be omitted from the childrenMap
+  Object.values(updates.thoughtIndex).forEach(update => {
+    if (!update) return
+    update.childrenMap = createChildrenMap(stateWithNewThoughtIndex, update.children)
+  })
+
   return {
     thoughtIndex: updates.thoughtIndex,
     lexemeIndex: updates.lexemeIndex,
@@ -289,9 +320,10 @@ export const importJSON = (
     const lexeme = getLexeme(state, '')
     if (lexeme) {
       initialLexemeIndex[hashThought('')] = removeContext(state, lexeme, destThought.id)
+      const childrenNew = getAllChildren(state, head(path)).filter(child => child !== destThought.id)
       initialThoughtIndex[id] = {
         ...state.thoughts.thoughtIndex[id],
-        children: getAllChildren(state, head(path)).filter(child => child !== destThought.id),
+        children: childrenNew,
         lastUpdated,
         updatedBy,
       }

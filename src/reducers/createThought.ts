@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
 import { getNextRank, getLexeme, getAllChildren, contextToThoughtId, getThoughtById } from '../selectors'
-import { createId, hashThought, head, timestamp } from '../util'
+import { createChildrenMap, createId, hashThought, head, timestamp } from '../util'
 import { Context, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { getSessionId } from '../util/sessionManager'
 
@@ -49,15 +49,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
       .filter(child => child !== id)
       .concat(id)
 
-    thoughtIndexUpdates[parentId] = {
-      ...getThoughtById(state, parentId),
-      id: parentId,
-      children,
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
-    }
-
-    thoughtIndexUpdates[id] = {
+    const thoughtNew = {
       id,
       parentId: parentId,
       children: [],
@@ -65,7 +57,25 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
       rank: addAsContext ? getNextRank(state, id) : rank,
       value: newValue,
       updatedBy: getSessionId(),
-      splitSource,
+      ...(splitSource ? { splitSource } : null),
+    }
+    thoughtIndexUpdates[id] = thoughtNew
+
+    // insert the new thought into the state just for createChildrenMap
+    // otherwise createChildrenMap will not be able to find the new child and thus not properly detect meta attributes which are stored differently
+    const stateWithNewThought = {
+      ...state,
+      thoughts: { ...state.thoughts, thoughtIndex: { ...state.thoughts.thoughtIndex, [id]: thoughtNew } },
+    }
+
+    const parent = getThoughtById(state, parentId)
+    thoughtIndexUpdates[parentId] = {
+      ...parent,
+      id: parentId,
+      children,
+      childrenMap: createChildrenMap(stateWithNewThought, children),
+      lastUpdated: timestamp(),
+      updatedBy: getSessionId(),
     }
   }
 
