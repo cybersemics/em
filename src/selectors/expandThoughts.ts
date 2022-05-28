@@ -153,10 +153,7 @@ function expandThoughtsRecursive(
         /** Check if the path is equal to the expansion path. */
         const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
-        return (
-          (!isFunction(value) || isExpansionBasePath() || isAncestor()) &&
-          (!isPinClosed(child.id) || isExpansionBasePath())
-        )
+        return (!isFunction(value) && !isPinClosed(child.id)) || isExpansionBasePath() || isAncestor()
       })
 
   // expand if child is only child and its child is not url

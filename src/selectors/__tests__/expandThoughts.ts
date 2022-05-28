@@ -265,6 +265,7 @@ describe('=pin', () => {
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
   })
+
   it('thoughts with =pin/false is not expanded even if ancestor has =pinChildren/true', () => {
     const text = `
     - a
@@ -285,6 +286,22 @@ describe('=pin', () => {
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
   })
+})
+
+it('children of cursor should always be visible, it should take precedence over =pin/false', () => {
+  const text = `
+    - a
+      - =pin
+        - false
+      - b
+        - c
+    `
+
+  const steps = [importText({ text }), setCursorFirstMatch(['a', 'b'])]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
 })
 
 describe('=pinChildren', () => {
