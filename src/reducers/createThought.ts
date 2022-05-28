@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { updateThoughts } from '../reducers'
-import { getNextRank, getLexeme, getAllChildren, contextToThought, getThoughtById } from '../selectors'
+import { getNextRank, getLexeme, getAllChildren, contextToThoughtId, getThoughtById } from '../selectors'
 import { createId, hashThought, head, timestamp } from '../util'
 import { Context, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { getSessionId } from '../util/sessionManager'
@@ -36,22 +36,22 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
 
   // store children indexed by the encoded context for O(1) lookup of children
   // @MIGRATION_NOTE: getThought cannot find paths with context views.
-  const thought = contextToThought(state, contextActual)
+  const parentId = contextToThoughtId(state, contextActual)
 
-  if (!thought) return state
+  if (!parentId) return state
 
   const thoughtIndexUpdates: Index<Thought> = {}
 
   if (context.length > 0) {
     const newValue = addAsContext ? head(context) : value
 
-    const children = getAllChildren(state, contextActual)
+    const children = getAllChildren(state, parentId)
       .filter(child => child !== id)
       .concat(id)
 
-    thoughtIndexUpdates[thought.id] = {
-      ...getThoughtById(state, thought.id),
-      id: thought.id,
+    thoughtIndexUpdates[parentId] = {
+      ...getThoughtById(state, parentId),
+      id: parentId,
       children,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
@@ -59,7 +59,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
 
     thoughtIndexUpdates[id] = {
       id,
-      parentId: thought.id,
+      parentId: parentId,
       children: [],
       lastUpdated: timestamp(),
       rank: addAsContext ? getNextRank(state, id) : rank,

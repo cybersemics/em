@@ -1,7 +1,6 @@
 import _ from 'lodash'
-import { deleteLexeme, updateLastUpdated } from '../data-providers/dexie'
 import { hashThought, timestamp } from '../util'
-import { getLexeme, thoughtToContext, getThoughtById } from '../selectors'
+import { getLexeme, getThoughtById } from '../selectors'
 import { State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
@@ -10,8 +9,6 @@ const deleteData = (state: State, { value }: { value: string }) => {
   const lexemeIndex = { ...state.thoughts.lexemeIndex }
   const lexeme = getLexeme(state, value)
   delete lexemeIndex[hashThought(value)] // eslint-disable-line fp/no-delete
-  deleteLexeme(hashThought(value))
-  updateLastUpdated(timestamp())
 
   // delete value from all contexts
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
@@ -24,19 +21,18 @@ const deleteData = (state: State, { value }: { value: string }) => {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.stringify(parent)}`)
         return state
       }
-      const contextEncoded = parent.id
-      const childrenNew = getAllChildrenAsThoughts(state, thoughtToContext(state, parent.id)!).filter(
+      const childrenNew = getAllChildrenAsThoughts(state, parent.id).filter(
         child => hashThought(child.value) !== hashThought(value),
       )
 
       // delete the entry if there are no more children
       if (childrenNew.length === 0) {
-        delete thoughtIndex[contextEncoded] // eslint-disable-line fp/no-delete
+        delete thoughtIndex[parent.id] // eslint-disable-line fp/no-delete
       }
       // otherwise update with new children
       else {
-        thoughtIndex[contextEncoded] = {
-          ...thoughtIndex[contextEncoded],
+        thoughtIndex[parent.id] = {
+          ...thoughtIndex[parent.id],
           children: childrenNew.map(({ id }) => id),
           lastUpdated: timestamp(),
         }

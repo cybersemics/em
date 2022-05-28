@@ -1,14 +1,14 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { ellipsize, head, headValue, isDivider, isDocumentEditable, parentOf, pathToContext } from '../util'
+import { ellipsize, head, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
 import {
   getChildren,
-  getChildrenById,
   getThoughtBefore,
-  getChildrenRankedById,
+  getChildrenRanked,
   hasChild,
   isContextViewActive,
   lastThoughtsFromContextChain,
+  rootedParentOf,
   simplifyPath,
   splitChain,
 } from '../selectors'
@@ -34,12 +34,12 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   if (isDivider(headValue(state, cursor))) return true
 
   // can't delete in context view (TODO)
-  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
+  const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))
   if (showContexts) return false
 
   const contextChain = splitChain(state, cursor)
   const path = lastThoughtsFromContextChain(state, contextChain)
-  const hasChildren = getChildrenRankedById(state, head(path)).length > 0
+  const hasChildren = getChildrenRanked(state, head(path)).length > 0
   const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 
@@ -59,7 +59,7 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(state, cursor)
   const uneditable = contextOfCursor && hasChild(state, head(cursor), '=uneditable')
-  const children = getChildrenById(state, head(cursor))
+  const children = getChildren(state, head(cursor))
 
   if (prevThought && uneditable) {
     dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))
@@ -89,7 +89,7 @@ const canExecuteOutdent = (state: State) => {
     selection.offset() === 0 &&
     isDocumentEditable() &&
     headValue(state, cursor).length !== 0 &&
-    getChildren(state, parentOf(pathToContext(state, cursor))).length === 1
+    getChildren(state, head(rootedParentOf(state, cursor))).length === 1
   )
 }
 

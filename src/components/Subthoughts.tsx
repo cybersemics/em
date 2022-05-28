@@ -10,13 +10,12 @@ import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { alert, error, dragInProgress } from '../action-creators'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import { ThoughtId, Context, GesturePath, Index, LazyEnv, Path, SimplePath, State } from '../@types'
+import { ThoughtId, GesturePath, Index, LazyEnv, Path, SimplePath, State } from '../@types'
 
 // util
 import {
   appendToPath,
   checkIfPathShareSubcontext,
-  contextToThoughtId,
   ellipsize,
   equalArrays,
   equalPath,
@@ -35,7 +34,6 @@ import {
   parseJsonSafe,
   parseLet,
   pathToContext,
-  unroot,
 } from '../util'
 
 // selectors
@@ -45,13 +43,12 @@ import {
   attributeEquals,
   childIdsToThoughts,
   childrenFilterPredicate,
-  contextToPath,
   findDescendant,
   getAllChildren,
   getAllChildrenSorted,
   getChildPath,
   getChildren,
-  getChildrenRankedById,
+  getChildrenRanked,
   getContextsSortedAndRanked,
   getEditingPath,
   getNextRank,
@@ -61,7 +58,7 @@ import {
   isContextViewActive,
   rootedParentOf,
 } from '../selectors'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -69,7 +66,7 @@ interface SubthoughtsProps {
   allowSingleContextParent?: boolean
   childrenForced?: ThoughtId[]
   depth?: number
-  env?: Index<Context>
+  env?: Index<ThoughtId>
   expandable?: boolean
   isHeader?: boolean
   isParentHovering?: boolean
@@ -88,21 +85,14 @@ if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
 const PAGINATION_SIZE = 100
 const EMPTY_OBJECT = {}
 
-/** Check if the given path is a leaf. */
-const isLeaf = (state: State, context: Context) => getChildren(state, context).length === 0
+/** Check if the given thought is a leaf. */
+const isLeaf = (state: State, id: ThoughtId) => getChildren(state, id).length === 0
 
-/** Finds the the first env context with =focus/Zoom. */
-const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): Context | null => {
-  const children = getAllChildrenAsThoughtsById(state, id)
-  const child = children.find(child => {
-    /** Returns true if the env context has zoom. */
-    const hasZoom = () => {
-      const envChildPath = contextToPath(state, env[child.value])
-      return envChildPath && attribute(state, head(envChildPath), '=focus') === 'Zoom'
-    }
-    return isFunction(child.value) && child.value in env && hasZoom()
-  })
-  return child ? [...env[child.value], '=focus', 'Zoom'] : null
+/** Finds the the first env entry with =focus/Zoom. */
+const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
+  const children = getAllChildrenAsThoughts(state, id)
+  const child = children.find(child => env[child.value] && attribute(state, env[child.value], '=focus') === 'Zoom')
+  return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
 }
 
 /********************************************************************
@@ -126,28 +116,23 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const pathLive = isEditing ? cursor! : resolvedPath
 
-  // @MIGRATION_TODO: Access the context through nestered iteration instead of generating everytime here.
-  const thoughtsLive = pathToContext(state, pathLive)
-  const showContexts = props.showContexts || isContextViewActive(state, thoughtsLive)
-  const showContextsParent = isContextViewActive(state, parentOf(thoughtsLive))
+  const showContexts = props.showContexts || isContextViewActive(state, pathLive)
+  const showContextsParent = isContextViewActive(state, rootedParentOf(state, pathLive))
 
-  const simplePath = showContexts && showContextsParent ? parentOf(props.simplePath) : props.simplePath
+  const simplePath = showContexts && showContextsParent ? rootedParentOf(state, props.simplePath) : props.simplePath
 
   // use live thoughts if editing
   // if editing, replace the head with the live value from the cursor
   const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
-  const contextLive = pathToContext(state, simplePathLive)
-  const cursorContext = cursor ? pathToContext(state, cursor) : null
+  const idLive = head(simplePathLive)
 
-  const contextBinding = parseJsonSafe(attribute(state, head(simplePathLive), '=bindContext') ?? '', undefined) as
-    | Path
-    | undefined
+  const contextBinding = parseJsonSafe(attribute(state, idLive, '=bindContext') ?? '', undefined) as Path | undefined
 
   // If the cursor is a leaf, use cursorDepth of cursor.length - 1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
   // In this case, the grandparent must be given the cursor-parent className so it is not hidden (below)
   // TODO: Resolve cursor to a simplePath
-  const isCursorLeaf = cursorContext && isLeaf(state, cursorContext)
+  const isCursorLeaf = cursor && isLeaf(state, head(cursor))
 
   const cursorDepth = cursor ? cursor.length - (isCursorLeaf ? 1 : 0) : 0
 
@@ -161,7 +146,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     : 0
 
   // TODO: Memoize childrenFiltered and pass to render instead of using dummy values to force a re-render
-  const allChildren = getAllChildren(state, contextLive)
+  const allChildren = getAllChildren(state, idLive)
 
   // encode the children's values and ranks, since the allChildren array will not change when ranks change (i.e. moveThoughtUp/Down)
   // this can be removed once childrenFiltered is memoized and passed to render
@@ -228,7 +213,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
-  const envSelf = parseLet(state, pathToContext(state, simplePath))
+  const envSelf = parseLet(state, simplePath)
   const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
   const parentChildrenAttributeId = cursor && findDescendant(state, head(rootedParentOf(state, cursor)), '=children')
   const grandparentChildrenAttributeId =
@@ -266,7 +251,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   */
   const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
 
-  const sortPreference = getSortPreference(state, head(simplePathLive))
+  const sortPreference = getSortPreference(state, idLive)
 
   const hashedPath = hashPath(pathLive)
 
@@ -280,7 +265,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
     if (childrenFiltered.length === 0) return false
 
-    const firstColumnChildren = getAllChildren(state, [...contextLive, childrenFiltered[0].value])
+    const firstColumnId = findDescendant(state, idLive, childrenFiltered[0].value)
+    const firstColumnChildren = getAllChildren(state, firstColumnId)
       .map(childId => getThoughtById(state, childId))
       .filter(child => child && !isFunction(child.value))
 
@@ -288,8 +274,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     const columnMap = firstColumnChildren.reduce((accum, child) => ({ ...accum, [child.value]: true }), {})
 
     const otherChildren = childrenFiltered.slice(1).map(child => {
-      const childContext = [...contextLive, child.value]
-      const grandchildren = getAllChildren(state, childContext)
+      const grandchildren = getAllChildren(state, child.id)
         .map(childId => getThoughtById(state, childId))
         .filter(child => child && !isFunction(child.value))
       return grandchildren
@@ -570,7 +555,6 @@ export const SubthoughtsComponent = ({
   const [page, setPage] = useState(1)
   const { cursor } = state
   const thoughtId = head(simplePath)
-  const context = pathToContext(state, simplePath)
   const thought = getThoughtById(state, head(simplePath))
   const { value } = thought
   const resolvedPath = path ?? simplePath
@@ -602,7 +586,7 @@ export const SubthoughtsComponent = ({
           Due to pending merge mechanism, sometimes a context can have duplicates for a brief moment. So access by context can be problematic.
           Migrate all possible context based selectors to use path or thought ids.
         */
-        getChildrenRankedById(state, head(simplePath))
+        getChildrenRanked(state, head(simplePath))
 
   const cursorThoughtArray = cursor && childIdsToThoughts(state, cursor)
   // Ensure that editable newThought is visible.
@@ -652,7 +636,7 @@ export const SubthoughtsComponent = ({
     Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
     */
 
-    const isCursorLeaf = cursor && isLeaf(state, pathToContext(state, cursor))
+    const isCursorLeaf = cursor && isLeaf(state, head(cursor))
 
     const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
@@ -701,15 +685,14 @@ export const SubthoughtsComponent = ({
   const styleChildren = getStyle(state, childrenAttributeId)
   const styleGrandChildren = getStyle(state, grandchildrenAttributeId)
 
-  const hideBulletsChildren = childrenAttributeId && attribute(state, childrenAttributeId, '=bullet') === 'None'
-  const hideBulletsGrandchildren =
-    grandchildrenAttributeId && attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
+  const hideBulletsChildren = attribute(state, childrenAttributeId, '=bullet') === 'None'
+  const hideBulletsGrandchildren = attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
   /** In a Multi Column table, gets the children that serve as the column headers. */
   const headerChildrenWithFirstColumn = () => {
     if (!isMultiColumnTable) return []
-    const headerChildren = getAllChildren(state, [...unroot(context), filteredChildren[0]?.value])
+    const headerChildren = getAllChildren(state, filteredChildren[0]?.id)
       .map(childId => getThoughtById(state, childId))
       .filter(x => x && !isFunction(x.value))
     return isMultiColumnTable ? ([{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren) : []
@@ -758,10 +741,7 @@ export const SubthoughtsComponent = ({
                   // TODO: childPath should be unrooted, but if we change it it breaks
                   // figure out what is incorrectly depending on childPath being rooted
                   const childPath = getChildPath(state, child.id, simplePath, showContexts)
-                  const childEnvZoomId = once(() => {
-                    const context = findFirstEnvContextWithZoom(state, { id: child.id, env })
-                    return context && contextToThoughtId(state, context)
-                  })
+                  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env }))
 
                   /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
                   const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
@@ -772,16 +752,13 @@ export const SubthoughtsComponent = ({
                     return getStyle(state, zoomId)
                   }
 
-                  /** Gets the style of the Zoom applied via env. */
-                  const styleEnvZoom = () => (childEnvZoomId() ? getStyle(state, childEnvZoomId()!) : null)
-
                   const style = {
                     ...styleGrandChildren,
                     ...styleChildren,
                     ...(isEditingChildPath()
                       ? {
                           ...styleZoom(),
-                          ...styleEnvZoom(),
+                          ...getStyle(state, childEnvZoomId()),
                         }
                       : null),
                   }
@@ -798,7 +775,7 @@ export const SubthoughtsComponent = ({
             re-renders.
           */
                   return child ? (
-                    <ul className='children'>
+                    <ul className='children' key={`${child.id}-${child.rank}`}>
                       <Thought
                         allowSingleContext={allowSingleContextParent}
                         depth={depth + 1}
@@ -841,10 +818,7 @@ export const SubthoughtsComponent = ({
             // TODO: childPath should be unrooted, but if we change it it breaks
             // figure out what is incorrectly depending on childPath being rooted
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
-            const childEnvZoomId = once(() => {
-              const context = findFirstEnvContextWithZoom(state, { id: child.id, env })
-              return context && contextToThoughtId(state, context)
-            })
+            const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env }))
 
             /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
             const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
@@ -855,18 +829,13 @@ export const SubthoughtsComponent = ({
               return getStyle(state, zoomId)
             }
 
-            /** Gets the style of the Zoom applied via env. */
-            const styleEnvZoom = () => {
-              return childEnvZoomId() ? getStyle(state, childEnvZoomId()) : null
-            }
-
             const style = {
               ...styleGrandChildren,
               ...styleChildren,
               ...(isEditingChildPath()
                 ? {
                     ...styleZoom(),
-                    ...styleEnvZoom(),
+                    ...getStyle(state, childEnvZoomId()),
                   }
                 : null),
             }
@@ -879,8 +848,8 @@ export const SubthoughtsComponent = ({
               if (!isEditingChildPath()) return false
               const zoomId = findDescendant(state, head(childPath), ['=focus', 'Zoom'])
               return (
-                (zoomId && attribute(state, zoomId, '=bullet') === 'None') ||
-                (!!childEnvZoomId() && attribute(state, childEnvZoomId()!, '=bullet') === 'None')
+                attribute(state, zoomId, '=bullet') === 'None' ||
+                attribute(state, childEnvZoomId(), '=bullet') === 'None'
               )
             }
 

@@ -1,4 +1,4 @@
-import { getChildrenRankedById } from '../selectors'
+import { getChildrenRanked } from '../selectors'
 import { head, isRoot } from '../util'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
@@ -10,7 +10,7 @@ const getRankBefore = (state: State, simplePath: SimplePath) => {
   const thought = getThoughtById(state, thoughtId)
   const { value, rank } = thought
   const parentPath = rootedParentOf(state, simplePath)
-  const children = getChildrenRankedById(state, head(parentPath))
+  const children = getChildrenRanked(state, head(parentPath))
 
   if (isRoot(simplePath)) {
     throw new Error(

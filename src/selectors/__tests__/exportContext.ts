@@ -3,7 +3,7 @@ import { importText } from '../../reducers'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import exportContext from '../exportContext'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
+import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 
 it('meta and archived thoughts are included', () => {
   const text = `- a
@@ -134,7 +134,7 @@ it('export multi-line thoughts as separate thoughts', () => {
 
   const steps = [
     importText({ text }),
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       oldValue: 'Hello',
       newValue: 'Hello\nworld',
       at: ['a', 'b', 'Hello'],

@@ -9,7 +9,7 @@ import classNames from 'classnames'
 import { store } from '../store'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import { appendToPath, createId, head, pathToContext, unroot } from '../util'
-import { getNextRank, getChildrenRankedById } from '../selectors'
+import { getNextRank, getChildrenRanked } from '../selectors'
 import { cursorBack, createThought, setCursor } from '../action-creators'
 import asyncFocus from '../device/asyncFocus'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
@@ -39,7 +39,7 @@ interface NewThoughtDispatchProps {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: NewThoughtProps) => {
   const { cursor } = state
-  const children = getChildrenRankedById(state, head(props.path))
+  const children = getChildrenRanked(state, head(props.path))
   return {
     cursor,
     show: !children.length || children[children.length - 1].value !== '',

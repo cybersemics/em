@@ -1,8 +1,8 @@
 import _ from 'lodash'
 import { EM_TOKEN } from '../constants'
-import { appendToPath, contextToThoughtId, isFunction } from '../util'
+import { appendToPath, isFunction } from '../util'
 import { editThought } from '../reducers'
-import { getChildrenRankedById, contextToPath } from '../selectors'
+import { contextToThoughtId, getChildrenRanked, contextToPath } from '../selectors'
 import { SimplePath, State } from '../@types'
 
 /** Sets a setting thought. */
@@ -11,7 +11,7 @@ const settings = (state: State, { key, value }: { key: string; value: string }) 
   const context = [EM_TOKEN, 'Settings', key]
   const id = contextToThoughtId(state, context)
 
-  const oldThoughtRanked = id ? getChildrenRankedById(state, id).find(child => !isFunction(child.value)) : null
+  const oldThoughtRanked = id ? getChildrenRanked(state, id).find(child => !isFunction(child.value)) : null
 
   if (!oldThoughtRanked) {
     console.warn('Missing oldThoughtRanked in Settings update:', key, value)

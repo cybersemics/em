@@ -1,35 +1,35 @@
 import {
   getContextsSortedAndRanked,
-  getChildrenRankedById,
-  getChildrenSortedById,
+  getChildrenRanked,
+  getChildrenSorted,
+  getThoughtById,
   isChildVisible,
   isContextViewActive,
   isAncestorsVisible,
   getSortPreference,
 } from '../selectors'
-import { contextToThoughtId, head } from '../util'
-import { Context, Thought, State } from '../@types'
+import { head } from '../util'
+import { State, Path, Thought } from '../@types'
 import thoughtToContext from './thoughtToContext'
 
 /**
  * Gets the previous sibling of a thought according to its parent's sort preference.
  */
-const prevSibling = (state: State, value: string, context: Context, rank: number): Thought | null => {
+export const prevSibling = (state: State, value: string, path: Path, rank: number): Thought | null => {
   const { showHiddenThoughts } = state
-  const contextViewActive = isContextViewActive(state, context)
+  const thought = getThoughtById(state, head(path))
+  if (!thought) return null
+  const contextViewActive = isContextViewActive(state, path)
 
   /** Gets siblings of a context. */
-  const getContextSiblings = () => getContextsSortedAndRanked(state, head(context))
+  const getContextSiblings = () => getContextsSortedAndRanked(state, thought.value)
 
   /** Gets siblings of thought. */
-  const getThoughtSiblings = () => {
-    const id = contextToThoughtId(state, context)
-    if (!id) return []
-    return (getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedById : getChildrenRankedById)(
+  const getThoughtSiblings = () =>
+    (getSortPreference(state, thought.id).type === 'Alphabetical' ? getChildrenSorted : getChildrenRanked)(
       state,
-      id,
+      thought.id,
     )
-  }
 
   const siblings = contextViewActive ? getContextSiblings() : getThoughtSiblings()
   let prev = null // eslint-disable-line fp/no-let

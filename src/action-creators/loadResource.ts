@@ -1,6 +1,6 @@
 import { error, loadFromUrl, newThought, setResourceCache as setResourceCacheActionCreator } from '../action-creators'
-import { attribute, getChildren, getChildrenRankedById, simplifyPath } from '../selectors'
-import { appendToPath, head, pathToContext } from '../util'
+import { attribute, getChildren, getChildrenRanked, simplifyPath } from '../selectors'
+import { appendToPath, head } from '../util'
 import { Thunk, Path } from '../@types'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
@@ -9,18 +9,17 @@ const loadResource =
   (dispatch, getState) => {
     const state = getState()
     const { resourceCache } = state
-    const context = pathToContext(state, path)
     const src = attribute(state, head(path), '=src')
 
     /** Returns true if the path has any children. */
-    const hasVisibleChildren = () => getChildren(state, context).length > 0
+    const hasVisibleChildren = () => getChildren(state, head(path)).length > 0
 
     if (src && !resourceCache[src] && !hasVisibleChildren()) {
       // create empty thought in which to load the source
       dispatch(newThought({ at: path, insertNewSubthought: true, preventSetCursor: true }))
 
       const simplePath = simplifyPath(state, path)
-      const childrenNew = getChildrenRankedById(state, head(simplePath))
+      const childrenNew = getChildrenRanked(state, head(simplePath))
       const thoughtNew = childrenNew[childrenNew.length - 1]
       const newThoughtPath = appendToPath(simplePath, thoughtNew.id)
 

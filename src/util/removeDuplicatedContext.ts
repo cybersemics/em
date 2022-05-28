@@ -1,6 +1,5 @@
 import { Context, Lexeme, State } from '../@types'
-import { getThoughtById } from '../selectors'
-import { contextToThoughtId } from './contextToThoughtId'
+import { contextToThoughtId, getThoughtById } from '../selectors'
 
 // @MIGRATION_TODO: Use id instead of context.
 /** Returns a new lexeme remove duplicated given context. */

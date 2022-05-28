@@ -1,9 +1,8 @@
+import { State, Thought } from '../@types'
 import React from 'react'
 import { connect } from 'react-redux'
-
-import { getLexeme, hasChildren, isContextViewActive, isPending } from '../selectors'
-import { head } from '../util'
-import { Context, State } from '../@types'
+import { getLexeme, hasChildren, isPending } from '../selectors'
+import { isContextViewActiveById } from '../selectors/isContextViewActive'
 import { TouchableOpacity, Text, StyleSheet } from 'react-native'
 import { commonStyles } from '../style/commonStyles'
 
@@ -16,20 +15,20 @@ interface BulletProps {
   leaf?: boolean
   onClick: (event: any) => void
   showContexts?: boolean
-  context: Context
+  thought: Thought
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
-  const lexeme = getLexeme(state, head(props.context))
+  const lexeme = getLexeme(state, props.thought.value)
   return {
     // if being edited and meta validation error has occured
     invalid: !lexeme || (!!props.isEditing && invalidState),
     // re-render when leaf status changes
-    isLeaf: !hasChildren(state, props.context),
-    pending: isPending(state, props.context),
-    showContexts: isContextViewActive(state, props.context),
+    isLeaf: !hasChildren(state, props.thought.id),
+    pending: isPending(state, props.thought),
+    showContexts: isContextViewActiveById(state, props.thought.id),
   }
 }
 

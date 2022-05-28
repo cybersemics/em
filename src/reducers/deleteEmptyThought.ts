@@ -12,7 +12,7 @@ import {
 import {
   getNextRank,
   getChildren,
-  getChildrenRankedById,
+  getChildrenRanked,
   isContextViewActive,
   prevSibling,
   simplifyPath,
@@ -35,11 +35,11 @@ const deleteEmptyThought = (state: State): State => {
   const { value } = cursorThought
 
   const offset = state.cursorOffset ?? 0
-  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(cursor)))
+  const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))
   const context = pathToContext(state, cursor)
   const simplePath = simplifyPath(state, cursor)
-  const allChildren = getChildrenRankedById(state, head(cursor))
-  const visibleChildren = getChildren(state, context)
+  const allChildren = getChildrenRanked(state, head(cursor))
+  const visibleChildren = getChildren(state, head(cursor))
   const isEmpty = headValue(state, cursor) === '' || state.cursorCleared
 
   // delete an empty thought with no children
@@ -59,7 +59,7 @@ const deleteEmptyThought = (state: State): State => {
       }),
       // move the child archive up a level so it does not get permanently deleted
       state => {
-        const childArchive = getAllChildrenAsThoughts(state, context).find(child => child.value === '=archive')
+        const childArchive = getAllChildrenAsThoughts(state, head(cursor)).find(child => child.value === '=archive')
         return childArchive
           ? moveThought(state, {
               oldPath: [...cursor, childArchive.id],
@@ -83,7 +83,7 @@ const deleteEmptyThought = (state: State): State => {
   else if (offset === 0 && !showContexts) {
     const { value, rank, splitSource } = cursorThought
     const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
-    const prev = prevSibling(state, value, pathToContext(state, rootedParentOf(state, cursor)), rank)
+    const prev = prevSibling(state, value, rootedParentOf(state, cursor), rank)
 
     // only if there is a previous sibling
     if (prev) {

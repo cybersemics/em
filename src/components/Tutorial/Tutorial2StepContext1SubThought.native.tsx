@@ -6,8 +6,8 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-import { contextToThoughtId, headValue } from '../../util'
-import { childIdsToThoughts, getChildrenRankedById } from '../../selectors'
+import { headValue } from '../../util'
+import { childIdsToThoughts, contextToThoughtId, getChildrenRanked } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
 import { ThoughtId, Path, State } from '../../@types'
@@ -61,7 +61,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
         tutorialChoiceId &&
         children.find(child => doStringsMatch(child.value, TUTORIAL_CONTEXT1_PARENT[tutorialChoice])) &&
         // e.g. Home/To Do
-        getChildrenRankedById(store.getState(), tutorialChoiceId).find(child =>
+        getChildrenRanked(store.getState(), tutorialChoiceId).find(child =>
           doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
         ) ? (
           <Text style={smallText}>

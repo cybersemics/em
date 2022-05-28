@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 
 import { ABSOLUTE_PATH, HOME_PATH } from '../constants'
 import { getSetting, isTutorial } from '../selectors'
-import { isAbsolute } from '../util'
+import { head, isAbsolute } from '../util'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
@@ -39,9 +39,9 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   const isAbsoluteContext = isAbsolute(rootContext)
-  const children = getAllChildrenAsThoughts(state, rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
+  const children = getAllChildrenAsThoughts(state, head(rankedRoot))
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
 
   return {

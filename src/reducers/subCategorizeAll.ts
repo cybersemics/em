@@ -1,7 +1,7 @@
 import { HOME_PATH } from '../constants'
 import { alert, moveThought, newThought } from '../reducers'
 import { appendToPath, parentOf, ellipsize, head, headValue, isEM, once, reducerFlow, isRoot } from '../util'
-import { getChildrenRankedById, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
+import { getChildrenRanked, hasChild, lastThoughtsFromContextChain, simplifyPath, splitChain } from '../selectors'
 import { State } from '../@types'
 
 // attributes that apply to the parent and should not be moved with subCategorizeAll
@@ -52,7 +52,7 @@ const subCategorizeAll = (state: State) => {
       ? parentOf(contextChain.length > 1 ? lastThoughtsFromContextChain(state, contextChain) : cursor)
       : HOME_PATH
 
-  const children = getChildrenRankedById(state, head(simplifyPath(state, path)))
+  const children = getChildrenRanked(state, head(simplifyPath(state, path)))
   const pathParent = cursor.length > 1 ? cursorParent : HOME_PATH
 
   // filter out meta children that should not be moved
@@ -62,7 +62,7 @@ const subCategorizeAll = (state: State) => {
   // use fresh state
   const getThoughtNew = once((state: State) => {
     const parentPath = simplifyPath(state, pathParent)
-    const childrenNew = getChildrenRankedById(state, head(parentPath))
+    const childrenNew = getChildrenRanked(state, head(parentPath))
     return childrenNew[0]
   })
 

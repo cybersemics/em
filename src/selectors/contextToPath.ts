@@ -2,7 +2,7 @@ import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { appendToPath, isRoot } from '../util'
 import { SimplePath, State } from '../@types'
 import getRootPath from './getRootPath'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** DEPRECATED: Converts a Context to a Path. This is a lossy function! If there is a duplicate thought in the same context, it takes the first. It should be removed. */
 const contextToPath = (state: State, context: string[]): SimplePath | null => {
@@ -21,7 +21,7 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
   try {
     return contextUnrooted.reduce<SimplePath>((acc, value, i) => {
       const prevParentId = acc[acc.length - 1] || startingThoughtId
-      const children = getAllChildrenAsThoughtsById(state, prevParentId)
+      const children = getAllChildrenAsThoughts(state, prevParentId)
       const firstChild = children.find(child => child.value === value)
 
       if (!firstChild) throw Error('Thought not found')

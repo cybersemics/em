@@ -5,7 +5,7 @@ import { isTouch } from '../browser'
 import { cursorBack as cursorBackActionCreator, expandContextThought, closeModal } from '../action-creators'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { getSetting, isTutorial } from '../selectors'
-import { isAbsolute, publishMode } from '../util'
+import { head, isAbsolute, publishMode } from '../util'
 
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
@@ -40,9 +40,9 @@ const mapStateToProps = (state: State) => {
   const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
 
   const isAbsoluteContext = isAbsolute(rootContext)
-  const children = getAllChildrenAsThoughts(state, rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
+  const children = getAllChildrenAsThoughts(state, head(rankedRoot))
   const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
 
   return {

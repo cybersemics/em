@@ -1,8 +1,8 @@
 import * as immer from 'immer'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
 import { settings } from '../reducers'
-import { expandThoughts, getContexts, getSetting } from '../selectors'
-import { contextToThoughtId, headValue, pathToContext, reducerFlow } from '../util'
+import { contextToThoughtId, expandThoughts, getContexts, getSetting } from '../selectors'
+import { headValue, pathToContext, reducerFlow } from '../util'
 import { Context, State } from '../@types'
 import globals from '../globals'
 

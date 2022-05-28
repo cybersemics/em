@@ -14,7 +14,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 import { isInternalLink } from '../device/router'
-import { getAllChildrenAsThoughtsById } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface ThoughtAnnotationProps {
   dark?: boolean
@@ -36,7 +36,7 @@ interface ThoughtAnnotationProps {
 /** Sets the innerHTML of the ngram text. */
 const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId) => {
   const labelId = findDescendant(state, id, '=label')
-  const labelChildren = labelId ? getAllChildrenAsThoughtsById(state, labelId) : []
+  const labelChildren = labelId ? getAllChildrenAsThoughts(state, labelId) : []
   const { editingValue } = state
   return {
     __html: isEditing
@@ -118,9 +118,7 @@ const ThoughtAnnotation = ({
   const state = store.getState()
   const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
   const isExpanded = !!state.expanded[hashContext(simplePath)]
-  const childrenUrls = once(() =>
-    getAllChildrenAsThoughtsById(state, head(simplePath)).filter(child => isURL(child.value)),
-  )
+  const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
   const [numContexts, setNumContexts] = useState(0)
 
   /**

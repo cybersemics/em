@@ -1,7 +1,7 @@
 import React from 'react'
 import { store } from '../../store'
 import { isTouch } from '../../browser'
-import { getAllChildren, getChildrenRankedById } from '../../selectors'
+import { getAllChildren, getChildrenRanked } from '../../selectors'
 import { ellipsize } from '../../util'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -9,7 +9,7 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }) => {
   const uncle = thoughtsNoCursorWithChild(cursor, rootChildren)[0]
 
   /** Gets the first child of the first thought in the root that is not the cursor. */
-  const childWithNoCursorParent = uncle ? getChildrenRankedById(store.getState(), uncle.id)[0] : null
+  const childWithNoCursorParent = uncle ? getChildrenRanked(store.getState(), uncle.id)[0] : null
 
   const hiddenChild = ellipsize(childWithNoCursorParent?.value) || ''
 
@@ -35,7 +35,7 @@ const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }) => {
  */
 const thoughtsNoCursorWithChild = (cursor, rootChildren) => {
   const noCursorThoughts = cursor ? rootChildren.filter(c => c.value !== cursor[0].value) : rootChildren
-  return noCursorThoughts.filter(t => getAllChildren(store.getState(), [t.value]).length > 0)
+  return noCursorThoughts.filter(t => getAllChildren(store.getState(), t.id).length > 0)
 }
 
 export default TutorialStepAutoExpandExpand

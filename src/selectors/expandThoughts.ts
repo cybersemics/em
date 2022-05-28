@@ -2,6 +2,7 @@ import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, M
 import {
   attribute,
   attributeEquals,
+  contextToThoughtId,
   getAllChildren,
   getThoughtById,
   isContextViewActive,
@@ -10,7 +11,6 @@ import {
 import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@types'
 import {
   appendToPath,
-  contextToThoughtId,
   equalArrays,
   hashPath,
   head,
@@ -25,7 +25,7 @@ import {
   unroot,
 } from '../util'
 import parentOfThought from './parentOfThought'
-import { getAllChildrenAsThoughtsById } from './getChildren'
+import { getAllChildrenAsThoughts } from './getChildren'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (state: State, child: ThoughtId | ThoughtContext, showContexts: boolean) =>
@@ -127,12 +127,11 @@ function expandThoughtsRecursive(
   const isPinClosed = (child: ThoughtId | ThoughtContext) =>
     isPinned(child) === 'false' && state.cursor && state.cursor.includes(thoughtId)
 
-  const simpleContext = pathToContext(state, simplePath)
   const context = pathToContext(state, path)
 
-  const showContexts = isContextViewActive(state, simpleContext)
+  const showContexts = isContextViewActive(state, path)
 
-  const childrenUnfiltered = getAllChildrenAsThoughtsById(state, head(simplePath))
+  const childrenUnfiltered = getAllChildrenAsThoughts(state, head(simplePath))
 
   // Note: A path that is ancestor of the expansion path or expansion path itself should always be expanded.
   const visibleChildren = state.showHiddenThoughts
@@ -166,7 +165,7 @@ function expandThoughtsRecursive(
 
   const grandchildren =
     visibleChildren.length === 1 && firstChild.value != null && isPinned(firstChild.id) !== 'false'
-      ? getAllChildren(state, unroot([...simpleContext, firstChild.value]))
+      ? getAllChildren(state, firstChild.id)
       : null
 
   const isOnlyChildNoUrl =

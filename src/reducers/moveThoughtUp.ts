@@ -1,6 +1,6 @@
 import { alert, moveThought } from '../reducers'
 import { SimplePath, State } from '../@types'
-import { appendToPath, parentOf, ellipsize, head, headValue, pathToContext } from '../util'
+import { appendToPath, parentOf, ellipsize, head, headValue } from '../util'
 import {
   getNextRank,
   getRankBefore,
@@ -27,7 +27,7 @@ const moveThoughtUp = (state: State) => {
   const cursorThought = getThoughtById(state, head(cursor))
   const { value, rank } = cursorThought
 
-  const prevThought = prevSibling(state, value, rootedParentOf(state, pathToContext(state, cursor)), rank)
+  const prevThought = prevSibling(state, value, rootedParentOf(state, cursor), rank)
 
   // if the cursor is the first thought or the context is sorted, move the thought to the end of its prev uncle
   const prevUncleThought = pathParent.length > 0 ? getThoughtBefore(state, simplifyPath(state, pathParent)) : null

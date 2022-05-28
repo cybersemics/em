@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { HOME_PATH } from '../constants'
-import { ThoughtId, Context, Path, SimplePath, State, ThoughtContext } from '../@types'
+import { ThoughtId, Path, SimplePath, State, ThoughtContext } from '../@types'
 
 // util
 import {
@@ -42,12 +42,12 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 export const pathAndRankToArchive = (
   state: State,
   path: Path,
-  context: Context,
+  pathParent: Path,
 ): {
   path: Path
   rank: number
 } | null => {
-  const rankedArchive = getAllChildrenAsThoughts(state, context).find(equalThoughtValue('=archive'))
+  const rankedArchive = getAllChildrenAsThoughts(state, head(pathParent)).find(equalThoughtValue('=archive'))
   if (!rankedArchive) return null
   const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive.id) : parentOf(path)
   const newRank = getPrevRank(state, head(archivePath))
@@ -67,7 +67,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   if (!path) return state
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, parentOf(pathToContext(state, path)))
+  const showContexts = isContextViewActive(state, rootedParentOf(state, path))
   const contextChain = splitChain(state, path)
   const simplePath = contextChain.length > 1 ? lastThoughtsFromContextChain(state, contextChain) : (path as SimplePath)
   const pathParent =
@@ -88,8 +88,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const isEmpty = value === ''
   const isArchive = value === '=archive'
   const isArchived = isThoughtArchived(state, path)
-  const hasDescendants = getAllChildren(state, pathToContext(state, path)).length !== 0
-  const allChildren = getAllChildrenAsThoughts(state, thoughts)
+  const hasDescendants = getAllChildren(state, head(path)).length !== 0
+  const allChildren = getAllChildrenAsThoughts(state, head(simplePath))
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
   const alertLabel = ellipsize(value === '=note' ? 'note ' + allChildren[0]?.value || '' : value)
 
@@ -127,7 +127,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   }
 
   // prev must be calculated before dispatching deleteThought
-  const prev = showContexts ? prevContext() : prevSibling(state, value, context, rank)
+  const prev = showContexts ? prevContext() : prevSibling(state, value, pathParent, rank)
 
   const next =
     !prev && showContexts
@@ -181,7 +181,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
           // execute moveThought after newThought has updated the state
           (state: State) => {
-            const { path: newPath, rank } = pathAndRankToArchive(state, showContexts ? simplePath : path!, context)!
+            const { path: newPath, rank } = pathAndRankToArchive(state, showContexts ? simplePath : path!, pathParent)!
             return moveThought(state, {
               oldPath: path,
               // TODO: Are we sure pathToArchive cannot return null?

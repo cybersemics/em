@@ -78,7 +78,6 @@ const importText = (
 
   path = path || HOME_PATH
   const simplePath = simplifyPath(state, path)
-  const context = pathToContext(state, simplePath)
   const convertedText = isRoam ? text : textToHtml(text)
   const numLines = (convertedText.match(regexpListItem) || []).length
   const thoughtId = head(path)
@@ -154,10 +153,10 @@ const importText = (
 
     const uuid = createId()
 
-    const isDestContextEmpty = getAllChildren(state, context).length === 0
+    const isDestContextEmpty = getAllChildren(state, head(simplePath)).length === 0
 
     /** Check if destination's parent context has more than one children. */
-    const isDestParentContextEmpty = () => getAllChildren(state, rootedParentOf(state, context)).length <= 1
+    const isDestParentContextEmpty = () => getAllChildren(state, head(rootedParentOf(state, simplePath))).length <= 1
 
     const destEmpty = destThought.value === '' && isDestContextEmpty
 
@@ -177,7 +176,9 @@ const importText = (
      */
     const getDestinationPath = (): SimplePath => {
       if (!shouldImportIntoDummy) return simplePath
-      const newDummyThought = getAllChildrenAsThoughts(updatedState, context).find(child => child.value === uuid)
+      const newDummyThought = getAllChildrenAsThoughts(updatedState, head(simplePath)).find(
+        child => child.value === uuid,
+      )
       return (newDummyThought ? [...simplePath, newDummyThought.id] : simplePath) as SimplePath
     }
 

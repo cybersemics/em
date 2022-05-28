@@ -8,13 +8,11 @@ import thoughtToContext from './thoughtToContext'
 import { getAllChildrenAsThoughts } from './getChildren'
 
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */
-const resolve = (state: State, child: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>
+const resolve = (state: State, childId: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>
   resolveArray([
     // slow, but ensures getChildPath doesn't get memoized when children change
-    showContexts && parentOfThought(state, child)!.value
-      ? resolvePath(getAllChildren(state, thoughtToContext(state, child)!))
-      : '',
-    child,
+    showContexts && parentOfThought(state, childId)!.value ? resolvePath(getAllChildren(state, childId)) : '',
+    childId,
     resolvePath(simplePath),
     showContexts,
   ])
@@ -24,9 +22,7 @@ const getChildPath = _.memoize(
   (state: State, child: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean): SimplePath => {
     const simplePathHeadThought = getThoughtById(state, head(simplePath))
     const otherSubthought = (
-      showContexts && parentOfThought(state, child)!.id
-        ? getAllChildrenAsThoughts(state, thoughtToContext(state, child)!)
-        : []
+      showContexts && parentOfThought(state, child)!.id ? getAllChildrenAsThoughts(state, child) : []
     ).find(child => hashThought(child.value) === hashThought(simplePathHeadThought.value))?.id
 
     const path = showContexts && contextToPath(state, thoughtToContext(state, child)!)

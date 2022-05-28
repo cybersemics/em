@@ -26,7 +26,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   const path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, pathToContext(state, parentOf(path)))
+  const showContexts = isContextViewActive(state, rootedParentOf(state, path))
   // @MIGRATION_TODO: Fix the context view related logic here.
   if (showContexts) {
     // Get thought in ContextView
@@ -41,6 +41,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     // }
   }
   const simplePath = simplifyPath(state, path)
+  const parentId = head(rootedParentOf(state, simplePath))
   const thoughts = pathToContext(state, simplePath)
   const context = rootedParentOf(state, thoughts)
 
@@ -63,7 +64,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   }
 
   // prev must be calculated before dispatching deleteThought
-  const prev = showContexts ? prevContext() : prevSibling(state, value, context, rank)
+  const prev = showContexts ? prevContext() : prevSibling(state, value, rootedParentOf(state, simplePath), rank)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>
@@ -89,7 +90,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       const next = once(() =>
         showContexts
           ? getContextsSortedAndRanked(state, headValue(state, parentOf(simplePath)))[0]
-          : firstVisibleChild(state, context),
+          : firstVisibleChild(state, parentId),
       )
 
       // Typescript validates with apply but not spread operator here

@@ -38,7 +38,7 @@ const bindContextShortcut: Shortcut = {
 
     const contextRanked = rootedParentOf(state, cursor)
 
-    if (!cursor || !isContextViewActive(state, pathToContext(state, contextRanked))) return
+    if (!cursor || !isContextViewActive(state, contextRanked)) return
 
     const contextChain = splitChain(state, cursor)
     const contextBound = pathToContext(state, lastThoughtsFromContextChain(state, contextChain))

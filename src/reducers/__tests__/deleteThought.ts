@@ -1,9 +1,10 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { getContexts, getAllChildren, contextToThought, getThoughtById } from '../../selectors'
+import { getContexts, contextToThought, getThoughtById } from '../../selectors'
 import { newSubthought, newThought, deleteEmptyThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
+import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 
 it('delete from root', () => {
   const steps = [newThought('a'), newThought('b'), deleteThoughtAtFirstMatch(['b'])]
@@ -33,9 +34,9 @@ it('delete descendants of root thought', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex
-  expect(getAllChildren(stateNew, [HOME_TOKEN])).toEqual([])
-  expect(getAllChildren(stateNew, ['a'])).toEqual([])
-  expect(getAllChildren(stateNew, ['b', 'c'])).toEqual([])
+  expect(getAllChildrenByContext(stateNew, [HOME_TOKEN])).toEqual([])
+  expect(getAllChildrenByContext(stateNew, ['a'])).toEqual([])
+  expect(getAllChildrenByContext(stateNew, ['b', 'c'])).toEqual([])
 
   // lexemeIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
@@ -50,8 +51,8 @@ it('delete thought with duplicate child', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex
-  expect(getAllChildren(stateNew, [HOME_TOKEN])).toEqual([])
-  expect(getAllChildren(stateNew, ['a'])).toEqual([])
+  expect(getAllChildrenByContext(stateNew, [HOME_TOKEN])).toEqual([])
+  expect(getAllChildrenByContext(stateNew, ['a'])).toEqual([])
 
   // lexemeIndex
   expect(getContexts(stateNew, 'a')).toEqual([])
@@ -86,7 +87,7 @@ it('delete the intended empty thought when there are multiple', () => {
 
   const state = initialState()
   const stateNew = reducerFlow(steps)(state)
-  const rootChildren = getAllChildren(stateNew, [HOME_TOKEN])
+  const rootChildren = getAllChildrenByContext(stateNew, [HOME_TOKEN])
   const thoughtIdToBeDeleted = rootChildren[rootChildren.length - 1]
 
   const thoughtToBeDeleted = getThoughtById(stateNew, thoughtIdToBeDeleted)

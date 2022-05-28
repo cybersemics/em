@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, mergeThoughts, updateThoughts } from '../reducers'
-import { expandThoughts, getThoughtById, getChildrenRankedById, rootedParentOf } from '../selectors'
+import { expandThoughts, getThoughtById, getChildrenRanked, rootedParentOf } from '../selectors'
 import { Path, SimplePath, State } from '../@types'
 import { appendToPath, head, isDescendantPath, normalizeThought, pathToContext, reducerFlow, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
@@ -37,7 +37,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const destinationThought = getThoughtById(state, destinationThoughtId)
 
   const sameContext = sourceParentThought.id === destinationThoughtId
-  const childrenOfDestination = getChildrenRankedById(state, destinationThoughtId)
+  const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
 
   /**
    * Find first normalized duplicate thought.
@@ -144,7 +144,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
     !skipRerank
       ? state => {
           const rankPrecision = 10e-8
-          const children = getChildrenRankedById(state, head(rootedParentOf(state, newPath)))
+          const children = getChildrenRanked(state, head(rootedParentOf(state, newPath)))
           const ranksTooClose = children.some((thought, i) => {
             if (i === 0) return false
             const secondThought = getThoughtById(state, children[i - 1].id)

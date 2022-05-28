@@ -1,6 +1,5 @@
 import { Context, State } from '../@types'
-import { attribute } from '../selectors'
-import { contextToThoughtId } from '../util'
+import { attribute, contextToThoughtId } from '../selectors'
 
 /** Gets the value of an attribute by Context. */
 const attributeByContext = (state: State, context: Context, attributeName: string) => {

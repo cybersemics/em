@@ -9,8 +9,8 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { contextToThoughtId, headValue } from '../../util'
-import { findDescendant, getContexts, getChildrenRankedById } from '../../selectors'
+import { headValue } from '../../util'
+import { contextToThoughtId, findDescendant, getContexts, getChildrenRanked } from '../../selectors'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 import { Text } from '../Text.native'
@@ -39,7 +39,7 @@ const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }: IComponentP
   return (
     tutorialChoiceId &&
     // e.g. Work/To Do/y
-    getChildrenRankedById(state, tutorialChoiceId).length > 0
+    getChildrenRanked(state, tutorialChoiceId).length > 0
   )
 }
 
@@ -93,7 +93,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
         // e.g. Work
         tutorialChoiceParentId &&
         // e.g. Work/To Do
-        getChildrenRankedById(state, tutorialChoiceParentId).find(child =>
+        getChildrenRanked(state, tutorialChoiceParentId).find(child =>
           doStringsMatch(child.value, TUTORIAL_CONTEXT[tutorialChoice]),
         ) ? (
           <>

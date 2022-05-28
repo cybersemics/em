@@ -1,5 +1,4 @@
 import { isContextViewActive, getContexts, contextToPath } from '../selectors'
-import { pathToContext } from '../util'
 import { Path, SimplePath, State } from '../@types'
 import thoughtToContext from './thoughtToContext'
 import childIdsToThoughts from './childIdsToThoughts'
@@ -21,7 +20,7 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
 
     // push an empty array when we encounter a contextView so that the next thought gets pushed onto a new component of the context chain
     // or if crossing context view boundary, push the SimplePath of the context
-    const showContexts = isContextViewActive(state, pathToContext(state, path.slice(0, i + 1) as Path))
+    const showContexts = isContextViewActive(state, path.slice(0, i + 1) as Path)
     if (showContexts && i < path.length - 1) {
       const contexts =
         (i > 0 && childIdsToThoughts(state, getContexts(state, pathThoughtsValidated[i + 1].value))) || []

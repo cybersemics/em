@@ -1,9 +1,9 @@
 import React, { Dispatch } from 'react'
 import _ from 'lodash'
-import { parentOf, headValue, pathToContext, splitSentence } from '../util'
+import { head, headValue, splitSentence } from '../util'
 import { alert, splitSentences } from '../action-creators'
 import { Action } from 'redux'
-import { isContextViewActive } from '../selectors'
+import { isContextViewActive, rootedParentOf } from '../selectors'
 import { HOME_TOKEN } from '../constants'
 import { Icon as IconType, Shortcut, Thunk } from '../@types'
 import Svg, { Path, G } from 'react-native-svg'
@@ -41,15 +41,15 @@ const splitSentencesShortcut: Shortcut = {
       return
     }
     // check if splitSentences creates duplicates
-    const showContexts = cursor && isContextViewActive(state, parentOf(pathToContext(state, cursor)))
-    const context =
+    const showContexts = cursor && isContextViewActive(state, rootedParentOf(state, cursor))
+    const path =
       cursor &&
       (showContexts && cursor.length > 2
-        ? pathToContext(state, parentOf(parentOf(cursor)))
+        ? rootedParentOf(state, rootedParentOf(state, cursor))
         : !showContexts && cursor.length > 1
-        ? pathToContext(state, parentOf(cursor))
+        ? rootedParentOf(state, cursor)
         : [HOME_TOKEN])
-    const siblings = context && getAllChildrenAsThoughts(state, context).map(({ value }) => value)
+    const siblings = path && getAllChildrenAsThoughts(state, head(path)).map(({ value }) => value)
     const duplicates = _.intersection(sentences, siblings)
     if (duplicates.length !== 0) {
       dispatch(

@@ -2,9 +2,16 @@ import React, { createContext, FC, useCallback, useContext, useEffect, useRef, u
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { and } from 'fp-and-or'
 import { HOME_PATH } from '../constants'
-import { exportPhrase, contextToThoughtId, head, isFunction, isRoot, pathToContext, removeHome, unroot } from '../util'
+import { exportPhrase, head, isFunction, isRoot, pathToContext, removeHome } from '../util'
 import { alert, error, pull, modalComplete } from '../action-creators'
-import { exportContext, getDescendantThoughtIds, getThoughtById, simplifyPath } from '../selectors'
+import {
+  contextToThoughtId,
+  exportContext,
+  findDescendant,
+  getDescendantThoughtIds,
+  getThoughtById,
+  simplifyPath,
+} from '../selectors'
 import Modal from './Modal'
 
 import { Context, ExportOption, Thought, State, ThoughtsInterface } from '../@types'
@@ -153,8 +160,8 @@ const ModalExport = () => {
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
   const context = pathToContext(state, simplePath)
-  const contextTitle = unroot(context.concat(['=publish', 'Title']))
-  const titleChild = getAllChildrenAsThoughts(state, contextTitle)[0]
+  const titleId = findDescendant(state, head(simplePath), ['=publish', 'Title'])
+  const titleChild = getAllChildrenAsThoughts(state, titleId)[0]
   const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
 

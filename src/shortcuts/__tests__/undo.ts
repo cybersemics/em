@@ -1,6 +1,6 @@
 import { store as appStore } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { childIdsToThoughts, exportContext, contextToPath } from '../../selectors'
+import { childIdsToThoughts, exportContext } from '../../selectors'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { createMockStore } from '../../test-helpers/createMockStore'
@@ -11,7 +11,7 @@ import * as undoUtils from '../../selectors/isUndoEnabled'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
-import { editThoughtAtFirstMatchActionCreator } from '../../test-helpers/editThoughtAtFirstMatch'
+import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 
 const timer = testTimer()
 
@@ -53,13 +53,11 @@ it('undo thought change', () => {
         - b`,
     }),
     setCursorFirstMatchActionCreator(['a']),
-    {
-      type: 'editThought',
+    editThoughtByContextActionCreator({
       newValue: 'aa',
       oldValue: 'a',
-      context: [HOME_TOKEN],
-      path: [{ value: 'a', rank: 0 }],
-    },
+      at: ['a'],
+    }),
     { type: 'undoAction' },
   ])
 
@@ -124,17 +122,12 @@ it('group all navigation actions following an undoable(non-navigation) action an
     }),
     setCursorFirstMatchActionCreator(['b']),
     { type: 'indent' },
-    (dispatch, getState) => {
-      const state = getState()
-      dispatch({
-        type: 'editThought',
-        newValue: 'b1',
-        oldValue: 'b',
-        context: ['a'],
-        rankInContext: 0,
-        path: contextToPath(state, ['a', 'b']),
-      })
-    },
+    editThoughtByContextActionCreator({
+      newValue: 'b1',
+      oldValue: 'b',
+      rankInContext: 0,
+      at: ['a', 'b'],
+    }),
     { type: 'cursorBack' },
     { type: 'moveThoughtDown' },
     { type: 'cursorDown' },
@@ -182,17 +175,12 @@ it('ignore dead actions/Combine dispensible actions with the preceding patch', (
           - d`,
     }),
     setCursor({ path: null }),
-    {
-      type: 'editThought',
-      context: ['a'],
+    editThoughtByContextActionCreator({
       oldValue: 'b',
       newValue: 'bd',
       rankInContext: 0,
-      path: [
-        { value: 'a', rank: 0 },
-        { value: 'b', rank: 0 },
-      ],
-    },
+      at: ['a', 'b'],
+    }),
     // dispensible set cursor (which only updates datanonce)
     setCursor({ path: null }),
     // undo setCursor and thoughtChange in a sinle action
@@ -243,7 +231,7 @@ it('newThought action should be merged with the succeeding patch', () => {
     }),
     { type: 'newThought', value: 'c' },
     { type: 'newThought', value: 'd' },
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       oldValue: 'd',
       newValue: 'd1',
       rankInContext: 3,
@@ -272,12 +260,12 @@ it('undo contiguous changes', () => {
         - A
         - B`,
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic',
       oldValue: 'A',
       at: ['A'],
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic City',
       oldValue: 'Atlantic',
       at: ['Atlantic'],
@@ -326,7 +314,7 @@ it('clear patches when any undoable action is dispatched', () => {
         - B`,
       preventSetCursor: true,
     }),
-    editThoughtAtFirstMatchActionCreator({
+    editThoughtByContextActionCreator({
       newValue: 'Atlantic',
       oldValue: 'A',
       at: ['A'],

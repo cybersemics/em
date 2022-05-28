@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../constants'
 import { setCursor } from '../reducers'
-import { getChildrenSortedById } from '../selectors'
+import { getChildrenSorted } from '../selectors'
 import { nextThought } from '../util'
 import { State } from '../@types'
 
@@ -21,7 +21,7 @@ const cursorDown = (state: State) => {
   }
   // if no cursor, move cursor to first thought in root
   else {
-    const children = getChildrenSortedById(state, HOME_TOKEN)
+    const children = getChildrenSorted(state, HOME_TOKEN)
     return children.length > 0 ? setCursor(state, { path: [children[0].id] }) : state
   }
 }

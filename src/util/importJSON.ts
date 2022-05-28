@@ -1,18 +1,20 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf, childIdsToThoughts } from '../selectors'
-import { Block, Context, Index, Lexeme, Thought, SimplePath, State, Timestamp, ThoughtIndices, Path } from '../@types'
 import {
-  appendToPath,
-  contextToThoughtId,
-  hashThought,
-  head,
-  pathToContext,
-  removeContext,
-  timestamp,
-  headId,
-  unroot,
-} from '../util'
+  Block,
+  Context,
+  Index,
+  Lexeme,
+  Path,
+  SimplePath,
+  State,
+  Timestamp,
+  ThoughtIndices,
+  Thought,
+  ThoughtId,
+} from '../@types'
+import { appendToPath, hashThought, head, pathToContext, removeContext, timestamp, headId, unroot } from '../util'
 import { createId } from './createId'
 import { getSessionId } from './sessionManager'
 import { mergeThoughts } from './mergeThoughts'
@@ -250,10 +252,15 @@ const getContextsNum = (blocks: Block[]): number => {
 }
 
 /** Calculate rankIncrement value based on rank of next sibling or its absence. */
-const getRankIncrement = (state: State, blocks: Block[], context: Context, destThought: Thought, rankStart: number) => {
+const getRankIncrement = (
+  state: State,
+  blocks: Block[],
+  parentId: ThoughtId,
+  destThought: Thought,
+  rankStart: number,
+) => {
   const destValue = destThought.value
   const destRank = destThought.rank
-  const parentId = contextToThoughtId(state, context)
   const next = parentId ? nextSibling(state, parentId, destValue, destRank) : 0 // paste after last child of current thought
   const rankIncrement = next ? (next.rank - rankStart) / (getContextsNum(blocks) || 1) : 1 // prevent divide by zero
   return rankIncrement
@@ -268,24 +275,23 @@ export const importJSON = (
 ) => {
   const initialLexemeIndex: Index<Lexeme> = {}
   const initialThoughtIndex: Index<Thought> = {}
-  const context = pathToContext(state, rootedParentOf(state, simplePath))
+  const parentId = head(rootedParentOf(state, simplePath))
   const destThought = state.thoughts.thoughtIndex[head(simplePath)]
-  const destEmpty = destThought.value === '' && getAllChildren(state, pathToContext(state, simplePath)).length === 0
+  const destEmpty = destThought.value === '' && getAllChildren(state, head(simplePath)).length === 0
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, head(simplePath))
-  const rankIncrement = getRankIncrement(state, blocks, context, destThought, rankStart)
-  const rootedPath = rootedParentOf(state, simplePath)
-  const rootedContext = pathToContext(state, rootedPath)
-  const contextEncoded = headId(rootedPath)
+  const rankIncrement = getRankIncrement(state, blocks, parentId, destThought, rankStart)
+  const path = rootedParentOf(state, simplePath)
+  const id = headId(path)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
     const lexeme = getLexeme(state, '')
     if (lexeme) {
       initialLexemeIndex[hashThought('')] = removeContext(state, lexeme, destThought.id)
-      initialThoughtIndex[contextEncoded] = {
-        ...state.thoughts.thoughtIndex[contextEncoded],
-        children: getAllChildren(state, rootedContext).filter(child => child !== destThought.id),
+      initialThoughtIndex[id] = {
+        ...state.thoughts.thoughtIndex[id],
+        children: getAllChildren(state, head(path)).filter(child => child !== destThought.id),
         lastUpdated,
         updatedBy,
       }
@@ -314,7 +320,7 @@ export const importJSON = (
   )
 
   // get the last child imported in the first level so the cursor can be set
-  const thought = initialThoughtIndex[contextEncoded]
+  const thought = initialThoughtIndex[id]
   const lastChildIndex = (thought?.children.length || 0) + blocksNormalized.length - 1
   const importContextEncoded = headId(importPath)
   const lastChildFirstLevel = thoughtIndex[importContextEncoded]?.children[lastChildIndex]

@@ -1,7 +1,7 @@
 import { isTouch, isSafari } from '../browser'
 import { TUTORIAL_STEP_START } from '../constants'
-import { getSetting, pathToThought, hasChild, isContextViewActive } from '../selectors'
-import { ellipsize, head, parentOf, pathToContext } from '../util'
+import { getSetting, pathToThought, rootedParentOf, hasChild, isContextViewActive } from '../selectors'
+import { ellipsize, head } from '../util'
 import asyncFocus from '../device/asyncFocus'
 import { Thunk, Path, SplitResult } from '../@types'
 
@@ -45,7 +45,7 @@ const newThought =
     // Determine if thought at path is uneditable
     const uneditable = path && hasChild(state, head(path), '=uneditable')
 
-    const showContexts = path && isContextViewActive(state, parentOf(pathToContext(state, path)))
+    const showContexts = path && isContextViewActive(state, rootedParentOf(state, path))
 
     // split the thought at the selection
     // do not split at the beginning of a line as the common case is to want to create a new thought after, and shift + Enter is so near

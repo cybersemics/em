@@ -1,11 +1,18 @@
 import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
-import { contextToThoughtId, hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
+import { hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import { exportContext, getLexeme, contextToThought, contextToPath, getAllChildren } from '../../selectors'
+import {
+  contextToThoughtId,
+  exportContext,
+  getLexeme,
+  contextToThought,
+  contextToPath,
+  getAllChildren,
+} from '../../selectors'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
-import editThoughtAtFirstMatch from '../../test-helpers/editThoughtAtFirstMatch'
+import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 import { ImportTextPayload } from '../../reducers/importText'
 import _ from 'lodash'
 
@@ -450,7 +457,7 @@ it('replace empty cursor', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `b` to empty thought since importText skips empty thoughts
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: '',
       oldValue: 'b',
       at: ['a', 'b'],
@@ -483,7 +490,7 @@ it('replace empty cursor without affecting siblings', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `c` to empty thought since importText skips empty thoughts
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: '',
       oldValue: 'c',
       at: ['a', 'c'],
@@ -576,7 +583,7 @@ it('single-line nested html tags', () => {
     importText({ text }),
 
     // manually change `b` to empty thought to not see 'b' end of the new value.
-    editThoughtAtFirstMatch({
+    editThoughtByContext({
       newValue: '',
       oldValue: 'b',
       at: ['a', 'b'],
@@ -1154,7 +1161,7 @@ It has sections for criticism of poetry, theater, art, music, the media, and boo
 
   const stateNew = importText(initialState(), { text })
 
-  const rootChildren = getAllChildren(stateNew, [HOME_TOKEN])
+  const rootChildren = getAllChildren(stateNew, HOME_TOKEN)
 
   expect(rootChildren.length).toBe(1)
 })

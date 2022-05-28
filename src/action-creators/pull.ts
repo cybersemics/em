@@ -175,7 +175,8 @@ const pull =
     // https://github.com/cybersemics/em/issues/1344
     const stateNew = getState()
 
-    if (thoughtIds.includes(ROOT_ENCODED) && !hasPending && isPending(stateNew, [HOME_TOKEN])) {
+    const homeThought = getThoughtById(stateNew, HOME_TOKEN)
+    if (thoughtIds.includes(ROOT_ENCODED) && !hasPending && isPending(stateNew, homeThought)) {
       dispatch(
         updateThoughts({
           thoughtIndexUpdates: {

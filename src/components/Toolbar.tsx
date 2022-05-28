@@ -17,8 +17,7 @@ import { isTouch } from '../browser'
 import { store } from '../store'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
 import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import { subtree, theme } from '../selectors'
-import { contextToThoughtId } from '../util'
+import { contextToThoughtId, subtree, theme } from '../selectors'
 import { Icon, State, Timer } from '../@types'
 
 // components

@@ -1,6 +1,6 @@
 import React from 'react'
 import { store } from '../../store'
-import { childIdsToThoughts, getAllChildren, getChildrenRankedById } from '../../selectors'
+import { childIdsToThoughts, getAllChildren, getChildrenRanked } from '../../selectors'
 import { ellipsize } from '../../util'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
@@ -17,7 +17,7 @@ interface IComponentProps {
 const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }: IComponentProps) => {
   const uncle = thoughtsNoCursorWithChild(cursor, rootChildren)[0]
   /** Gets the first child of the first thought in the root that is not the cursor. */
-  const childWithNoCursorParent = uncle ? getChildrenRankedById(store.getState(), uncle.id)[0] : null
+  const childWithNoCursorParent = uncle ? getChildrenRanked(store.getState(), uncle.id)[0] : null
 
   const hiddenChild = ellipsize(childWithNoCursorParent?.value || '') || ''
 
@@ -46,7 +46,7 @@ const thoughtsNoCursorWithChild = (cursor: Path, rootChildren: ThoughtId[]) => {
 
   const cursorThought = childIdsToThoughts(store.getState(), cursor)
   const noCursorThoughts = cursorThought ? children.filter(c => c.value !== cursorThought[0].value) : children
-  return noCursorThoughts.filter(t => getAllChildren(store.getState(), [t.value]).length > 0)
+  return noCursorThoughts.filter(t => getAllChildren(store.getState(), t.id).length > 0)
 }
 
 export default TutorialStepAutoExpandExpand

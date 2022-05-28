@@ -16,7 +16,7 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
 
   // const rank = headRank(simplePath)
   const context = pathToContext(state, simplePath)
-  const children = getAllChildren(state, context)
+  const children = getAllChildren(state, head(simplePath))
 
   // if there are no children
   if (children.length === 0) return subCategorizeOne(state)

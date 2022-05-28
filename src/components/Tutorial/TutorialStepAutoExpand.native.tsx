@@ -1,15 +1,8 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
-
-// constants
 import { HOME_TOKEN } from '../../constants'
-
-// util
 import { parentOf, ellipsize, head, headValue, pathToContext } from '../../util'
-
-// selectors
-import { getAllChildren } from '../../selectors'
-
+import { contextToThoughtId, getAllChildren } from '../../selectors'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
 import { Path, Thought } from '../../@types'
@@ -21,13 +14,14 @@ const { smallText, italic } = commonStyles
 const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
   const state = store.getState()
   const cursorContext = pathToContext(state, cursor || [])
-  const cursorChildren = getAllChildrenAsThoughts(state, cursorContext)
+  const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
   const isCursorLeaf = cursorChildren.length === 0
-  const ancestorThought = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
+  const contextAncestor = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
+  const contextAncestorId = contextToThoughtId(state, contextAncestor)
 
   const ancestorThoughtChildren = getAllChildrenAsThoughts(
     state,
-    ancestorThought.length === 0 ? [HOME_TOKEN] : ancestorThought,
+    contextAncestor.length === 0 ? HOME_TOKEN : contextAncestorId,
   )
   const isCursorRootChildren = (cursor || []).length === 1
 
@@ -47,7 +41,7 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
               <Fragment> Try tapping on </Fragment>
               <Fragment>
                 thought "{ellipsize(subThoughtNotCursor(ancestorThoughtChildren)?.value || '')}"{' '}
-                {ancestorThought.length !== 0 && `or "${ellipsize(head(ancestorThought))}"`}{' '}
+                {contextAncestor.length !== 0 && `or "${ellipsize(head(contextAncestor))}"`}{' '}
               </Fragment>
               <Fragment>
                 {' '}
@@ -59,7 +53,7 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor: Path }) => {
           ) : (
             <Fragment> Add a subthought and I'll show you.</Fragment>
           )
-        ) : getAllChildren(state, [HOME_TOKEN]).length === 0 ? (
+        ) : getAllChildren(state, HOME_TOKEN).length === 0 ? (
           ' Oops! There are no thoughts in the tree. Please add some thoughts to continue with the tutorial.'
         ) : (
           ' Oops! Please focus on one of the thoughts.'

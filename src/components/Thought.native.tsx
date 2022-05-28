@@ -23,8 +23,6 @@ import useLongPress from '../hooks/useLongPress'
 
 // util
 import {
-  contextToThoughtId,
-  equalArrays,
   equalPath,
   hashContext,
   hashPath,
@@ -45,13 +43,12 @@ import {
   attribute,
   childIdsToThoughts,
   findDescendant,
-  getAllChildren,
   getChildren,
-  getChildrenRankedById,
+  getChildrenRanked,
   getSortPreference,
+  getThoughtById,
   getStyle,
   hasChildren,
-  isContextViewActive,
   rootedParentOf,
 } from '../selectors'
 import { View } from 'moti'
@@ -71,7 +68,7 @@ export interface ThoughtContainerProps {
   path: Path
   cursor?: Path | null
   depth?: number
-  env?: Index<Context>
+  env?: Index<ThoughtId>
   expandedContextThought?: Path
   hideBullet?: boolean
   isDeepHovering?: boolean
@@ -145,7 +142,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const simplePathLive = isEditing
     ? (parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath)
     : simplePath
-  const contextLive = pathToContext(state, simplePathLive)
 
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
 
@@ -157,8 +153,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     (!!cursor &&
       (distance === 2
         ? // grandparent
-          equalPath(rootedParentOf(state, parentOf(cursor)), path) &&
-          getChildren(state, pathToContext(state, cursor)).length === 0
+          equalPath(rootedParentOf(state, parentOf(cursor)), path) && getChildren(state, head(cursor)).length === 0
         : // parent
           equalPath(parentOf(cursor), path)))
 
@@ -171,7 +166,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
   const isExpanded = !!expanded[hashPath(path)]
-  const isLeaf = !hasChildren(state, contextLive)
+  const isLeaf = !hasChildren(state, head(simplePathLive))
 
   return {
     contextBinding,
@@ -242,6 +237,7 @@ const ThoughtContainer = ({
   const thoughtId = head(simplePath)
   const thoughts = pathToContext(state, simplePath)
   const context = parentOf(thoughts)
+  const parentId = head(rootedParentOf(state, simplePath))
 
   useEffect(() => {
     if (isBeingHoveredOver) {
@@ -287,12 +283,13 @@ const ThoughtContainer = ({
 
   const children = childrenForced
     ? childIdsToThoughts(state, childrenForced)
-    : getChildrenRankedById(state, head(simplePathLive)) // TODO: contextBinding
+    : getChildrenRanked(state, head(simplePathLive)) // TODO: contextBinding
 
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
+  const optionsId = findDescendant(state, parentId, '=options')
+  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options =
     !isFunction(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
 
@@ -304,13 +301,9 @@ const ThoughtContainer = ({
         // children that have an entry in the environment
         (child.value in { ...env } &&
           // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-          !equalArrays([...thoughts, child.value], env![child.value])),
+          child.id !== env![child.value]),
     )
-    .map(child =>
-      child.value in { ...env }
-        ? getStyle(state, contextToThoughtId(state, env![child.value]))
-        : getGlobalStyle(child.value) || {},
-    )
+    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {}))
     .reduce<React.CSSProperties>(
       (accum, style) => ({
         ...accum,
@@ -329,15 +322,11 @@ const ThoughtContainer = ({
           // children that have an entry in the environment
           (child.value in { ...env } &&
             // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-            !equalArrays([...thoughts, child.value], env![child.value])),
+            child.id !== env![child.value]),
       )
-      .map(child => {
-        const envChildContext = env![child.value]
-        const envChildId = envChildContext && contextToThoughtId(state, envChildContext)
-        return child.value in { ...env }
-          ? envChildId && attribute(state, envChildId, '=bullet')
-          : getGlobalBullet(child.value)
-      })
+      .map(child =>
+        child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
+      )
 
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
@@ -393,7 +382,7 @@ const ThoughtContainer = ({
         {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
           <Bullet
             isEditing={isEditing}
-            context={pathToContext(state, simplePath)}
+            thought={getThoughtById(state, thoughtId)}
             leaf={isLeaf}
             onClick={() => {
               if (!isEditing || children.length === 0) {

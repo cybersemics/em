@@ -4,11 +4,12 @@ import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
-import { getUserRef, contextToThoughtId, isFunction, logWithTime, timestamp } from '../util'
+import { getUserRef, isFunction, logWithTime, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { storage } from '../util/storage'
+import { contextToThoughtId } from '../selectors'
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (

@@ -10,7 +10,7 @@ const hashPathURL = (state: State, path: Path) => {
   const queryString = window.location.search
   const thoughtsEncoded = path
     // Note: Since thouhtId is a uuid, so they are url safe
-    .map((thoughtId, i) => thoughtId + (isContextViewActive(state, path.slice(0, i + 1)) ? '~' : ''))
+    .map((thoughtId, i) => thoughtId + (isContextViewActive(state, path.slice(0, i + 1) as Path) ? '~' : ''))
     .join('/')
 
   return `/${userId}/${thoughtsEncoded}${queryString}`

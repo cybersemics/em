@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
-import { contextToThoughtId, initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import { initialState, reducerFlow } from '../../util'
+import { contextToThoughtId, exportContext } from '../../selectors'
 import newThought from '../newThought'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import { setCursor } from '..'

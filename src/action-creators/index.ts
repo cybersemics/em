@@ -26,7 +26,6 @@ export const cursorForward = reducerToThunk<typeof reducers.cursorForward>('curs
 export const cursorHistory = reducerToThunk<typeof reducers.cursorHistory>('cursorHistory')
 export const cursorUp = reducerToThunk<typeof reducers.cursorUp>('cursorUp')
 export const deleteAttribute = reducerToThunk<typeof reducers.deleteAttribute>('deleteAttribute')
-export const deleteData = reducerToThunk<typeof reducers.deleteData>('deleteData')
 export const deleteEmptyThought = reducerToThunk<typeof reducers.deleteEmptyThought>('deleteEmptyThought')
 export const deleteThoughtWithCursor =
   reducerToThunk<typeof reducers.deleteThoughtWithCursor>('deleteThoughtWithCursor')
@@ -93,6 +92,7 @@ export { default as cursorNext } from './cursorNext'
 export { default as cursorPrev } from './cursorPrev'
 export { default as dataIntegrityCheck } from './dataIntegrityCheck'
 export { default as dragInProgress } from './dragInProgress'
+export { default as deleteData } from './deleteData'
 export { default as expandContextThought } from './expandContextThought'
 export { default as expandOnHoverBottom } from './expandOnHoverBottom'
 export { default as expandOnHoverTop } from './expandOnHoverTop'

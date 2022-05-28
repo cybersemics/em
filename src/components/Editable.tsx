@@ -59,6 +59,7 @@ import {
 // selectors
 import {
   attributeEquals,
+  findDescendant,
   getContexts,
   getSetting,
   getLexeme,
@@ -187,7 +188,8 @@ const Editable = ({
       : !showContexts && thoughts.length > 1
       ? parentOf(thoughts)
       : state.rootContext
-  const childrenOptions = getAllChildrenAsThoughts(state, [...context, '=options'])
+  const optionsId = findDescendant(state, parentId, '=options')
+  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
   // store the old value so that we have a transcendental head when it is changed
@@ -200,7 +202,8 @@ const Editable = ({
   }, [state.editableNonce])
 
   const lexeme = getLexeme(state, value)
-  const childrenLabel = getAllChildrenAsThoughts(state, [...thoughts, '=label'])
+  const labelId = findDescendant(state, parentId, '=label')
+  const childrenLabel = getAllChildrenAsThoughts(state, labelId)
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef<HTMLInputElement>(null)
@@ -670,7 +673,7 @@ const Editable = ({
 
     const state = store.getState()
 
-    showContexts = showContexts || isContextViewActive(state, pathToContext(state, simplePath))
+    showContexts = showContexts || isContextViewActive(state, path)
 
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 

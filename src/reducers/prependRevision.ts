@@ -1,20 +1,21 @@
 import _ from 'lodash'
 import { newThought } from '../reducers'
-import { appendToPath, concatOne, getPublishUrl, pathToContext, reducerFlow, unroot } from '../util'
+import { findDescendant } from '../selectors'
+import { appendToPath, getPublishUrl, head, reducerFlow } from '../util'
 import { Path, State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */
 const prependRevision = (state: State, { path, cid }: { path: Path; cid: string }) => {
-  const context = pathToContext(state, path)
-
   /** Gets the =publish thought. */
   const publishChild = (state: State) =>
-    getAllChildrenAsThoughts(state, context).find(child => child.value === '=publish')
+    getAllChildrenAsThoughts(state, head(path)).find(child => child.value === '=publish')
 
   /** Gets the =publish/Revisions thought. */
-  const revisionsChild = (state: State) =>
-    getAllChildrenAsThoughts(state, unroot(concatOne(context, '=publish'))).find(child => child.value === 'Revisions')
+  const revisionsChild = (state: State) => {
+    const publishId = findDescendant(state, head(path), '=publish')
+    return getAllChildrenAsThoughts(state, publishId).find(child => child.value === 'Revisions')
+  }
 
   return reducerFlow([
     // insert =publish if it does not exist

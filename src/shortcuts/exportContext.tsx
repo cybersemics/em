@@ -56,7 +56,7 @@ const exportContextShortcut: Shortcut = {
   canExecute: getState => {
     const state = getState()
     if (state.cursor) return true
-    return getAllChildren(state, [HOME_TOKEN]).length > 0
+    return getAllChildren(state, HOME_TOKEN).length > 0
   },
   exec: dispatch => dispatch(showModal({ id: 'export' })),
 }

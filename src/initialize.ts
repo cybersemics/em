@@ -1,3 +1,4 @@
+import { Context, Firebase, State, ThoughtSubscriptionUpdates, Thunk } from './@types'
 import './App.css'
 import _ from 'lodash'
 import moize from 'moize'
@@ -5,14 +6,13 @@ import initDB, * as db from './data-providers/dexie'
 import { store } from './store'
 import {
   getContexts,
-  contextToThought,
+  contextToThoughtId,
   getLexeme,
   getChildrenRanked,
-  isPending,
   decodeThoughtsUrl,
   getThoughtById,
 } from './selectors'
-import { contextToThoughtId, hashThought, initEvents, isRoot, owner, urlDataSource } from './util'
+import { hashThought, initEvents, isRoot, owner, urlDataSource } from './util'
 import {
   authenticate,
   loadPublicThoughts,
@@ -31,7 +31,6 @@ import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import { SessionType } from './util/sessionManager'
 import * as sessionManager from './util/sessionManager'
-import { Firebase, State, ThoughtSubscriptionUpdates, Thunk } from './@types'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
 import globals from './globals'
 import { subscribe } from './data-providers/firebase'
@@ -209,14 +208,18 @@ const windowEm = {
   testHelpers,
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
-  contextToThought: withState(contextToThought),
-  getAllChildren: withState(getAllChildren),
-  getAllChildrenAsThoughts: withState(getAllChildrenAsThoughts),
-  getChildrenRanked: withState(getChildrenRanked),
+  getAllChildrenByContext: withState((state: State, context: Context) =>
+    getAllChildren(state, contextToThoughtId(state, context) || null),
+  ),
+  getAllChildrenAsThoughts: withState((state: State, context: Context) =>
+    getAllChildrenAsThoughts(state, contextToThoughtId(state, context) || null),
+  ),
+  getAllChildrenRankedByContext: withState((state: State, context: Context) =>
+    getChildrenRanked(state, contextToThoughtId(state, context) || null),
+  ),
   getThoughtById: withState(getThoughtById),
   contextToThoughtId,
   hashThought,
-  isPending: withState(isPending),
   moize,
 }
 

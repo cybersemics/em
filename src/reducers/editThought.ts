@@ -98,7 +98,7 @@ const editThought = (
     }
   }
 
-  const thoughtNewSubthoughts = getAllChildren(state, context)
+  const thoughtNewSubthoughts = getAllChildren(state, parentofEditedThought.id)
     .filter(child => child !== editedThought.id)
     .concat(editedThoughtId)
 

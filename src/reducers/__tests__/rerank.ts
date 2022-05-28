@@ -17,7 +17,7 @@ it('recalculate absolute ranks while preserving relative order to avoid rank pre
 
   const state = reducerFlow(steps)(initialState())
 
-  expect(getChildrenRanked(state, [HOME_TOKEN])).toMatchObject([
+  expect(getChildrenRanked(state, HOME_TOKEN)).toMatchObject([
     { value: 'a', rank: 0 },
     { value: 'b', rank: 1 },
     { value: 'c', rank: 2 },
@@ -51,7 +51,7 @@ it('rerank on moveThought if ranks are too close', () => {
 
   const state = reducerFlow(steps)(initialState())
 
-  expect(getChildrenRanked(state, [HOME_TOKEN])).toMatchObject([
+  expect(getChildrenRanked(state, HOME_TOKEN)).toMatchObject([
     { value: 'b', rank: 0 },
     { value: 'c', rank: 1 },
     { value: 'a', rank: 2 }, // 'a' is still moved to the end of the list

@@ -1,4 +1,4 @@
-import { getChildrenSortedById } from '../selectors'
+import { getChildrenSorted } from '../selectors'
 import { head } from '../util'
 import { SimplePath, State } from '../@types'
 import rootedParentOf from './rootedParentOf'
@@ -8,7 +8,7 @@ import rootedParentOf from './rootedParentOf'
  */
 const isLastVisibleChild = (state: State, simplePath: SimplePath) => {
   const parentId = head(rootedParentOf(state, simplePath))
-  const children = getChildrenSortedById(state, parentId)
+  const children = getChildrenSorted(state, parentId)
   return head(simplePath) === children[children.length - 1].id
 }
 
