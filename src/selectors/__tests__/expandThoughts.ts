@@ -266,7 +266,7 @@ describe('=pin', () => {
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
   })
 
-  it('=pinChildren/true should take precedence over =pin/false', () => {
+  it('thoughts with =pin/false is not expanded even if ancestor has =pinChildren/true', () => {
     const text = `
     - a
       - =pinChildren
@@ -283,7 +283,7 @@ describe('=pin', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
   })
 })

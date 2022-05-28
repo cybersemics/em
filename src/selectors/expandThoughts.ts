@@ -124,7 +124,8 @@ function expandThoughtsRecursive(
   }
 
   /** Returns true if the child should be pinned closed. */
-  const isPinClosed = (child: ThoughtId | ThoughtContext) => isPinned(child) === 'false'
+  const isPinClosed = (child: ThoughtId | ThoughtContext) =>
+    isPinned(child) === 'false' && state.cursor && state.cursor.includes(thoughtId)
 
   const simpleContext = pathToContext(state, simplePath)
   const context = pathToContext(state, path)
@@ -154,7 +155,10 @@ function expandThoughtsRecursive(
         /** Check if the path is equal to the expansion path. */
         const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
-        return !isFunction(value) || isExpansionBasePath() || (isAncestor() && !isPinClosed(child.parentId))
+        return (
+          (!isFunction(value) || isExpansionBasePath() || isAncestor()) &&
+          (!isPinClosed(child.id) || isExpansionBasePath())
+        )
       })
 
   // expand if child is only child and its child is not url
