@@ -155,11 +155,11 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
 
         return {
           ...accum,
-          pendingDeletes: [
+          pendingDeletes: _.uniq([
             ...(accum.pendingDeletes || []),
             ...(accumRecursive.pendingDeletes || []),
             ...(recursiveResults.pendingDeletes || []),
-          ],
+          ]),
           lexemeIndex: {
             ...accum.lexemeIndex,
             ...recursiveResults.lexemeIndex,
