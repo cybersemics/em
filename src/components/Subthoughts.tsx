@@ -50,7 +50,6 @@ import {
   getChildren,
   getChildrenRanked,
   getContextsSortedAndRanked,
-  getEditingPath,
   getNextRank,
   getSortPreference,
   getStyle,
@@ -121,10 +120,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const simplePath = showContexts && showContextsParent ? rootedParentOf(state, props.simplePath) : props.simplePath
 
-  // use live thoughts if editing
-  // if editing, replace the head with the live value from the cursor
-  const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
-  const idLive = head(simplePathLive)
+  const idLive = head(simplePath)
 
   const contextBinding = parseJsonSafe(attribute(state, idLive, '=bindContext') ?? '', undefined) as Path | undefined
 
@@ -257,7 +253,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   /** Returns true if the thought is in table view and has more than two columns. This is the case when every row has at least two matching children in column 2. If this is the case, it will get rendered in multi column mode where grandchildren are used as header columns. */
   const isMultiColumnTable = () => {
-    const view = attribute(state, head(simplePathLive), '=view')
+    const view = attribute(state, head(simplePath), '=view')
     if (view !== 'Table') return false
     const childrenFiltered = allChildren
       .map(childId => getThoughtById(state, childId))
@@ -299,7 +295,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     isMultiColumnTable: isMultiColumnTable(),
     showContexts,
     showHiddenThoughts,
-    simplePath: simplePathLive,
+    simplePath,
     // pass sortType and sortDirection since they are scalars
     // passing sortPreference directly would re-render the component each time, since the preference object reference changes
     sortType: sortPreference.type,

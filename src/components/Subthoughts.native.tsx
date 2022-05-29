@@ -55,7 +55,6 @@ import {
   getChildren,
   getChildrenRanked,
   getContextsSortedAndRanked,
-  getEditingPath,
   getGlobalSortPreference,
   isContextViewActive,
   rootedParentOf,
@@ -128,12 +127,9 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const simplePath = showContexts && showContextsParent ? rootedParentOf(state, props.simplePath) : props.simplePath
 
-  // use live thoughts if editing
-  // if editing, replace the head with the live value from the cursor
-  const simplePathLive = isEditing && !showContextsParent ? getEditingPath(state, props.simplePath) : simplePath
-  const idLive = head(simplePathLive)
+  const idLive = head(simplePath)
 
-  const contextBinding = parseJsonSafe(attribute(state, head(simplePathLive), '=bindContext') ?? '', undefined) as
+  const contextBinding = parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '', undefined) as
     | Path
     | undefined
 
@@ -191,7 +187,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     isEditingAncestor: isEditingPath && !isEditing,
     showContexts,
     showHiddenThoughts,
-    simplePath: simplePathLive,
+    simplePath,
     // expand thought due to cursor and hover expansion
     isExpanded: !!store.getState().expanded[hashedPath] || !!expandedBottom?.[hashedPath],
     isAbsoluteContext,

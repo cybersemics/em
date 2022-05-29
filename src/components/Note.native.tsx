@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { store } from '../store'
-import {
-  attribute,
-  findDescendant,
-  getEditingPath,
-  getThoughtById,
-  isContextViewActive,
-  simplifyPath,
-} from '../selectors'
+import { attribute, findDescendant, getThoughtById, isContextViewActive, simplifyPath } from '../selectors'
 import {
   cursorDown,
   deleteAttribute,
@@ -30,11 +23,10 @@ interface NoteProps {
 const setCursorOnLiveThought = ({ path }: { path: Path }) => {
   const state = store.getState()
   const simplePath = simplifyPath(state, path)
-  const simplePathLive = getEditingPath(state, simplePath)
 
   store.dispatch(
     setCursor({
-      path: simplePathLive,
+      path: simplePath,
       cursorHistoryClear: true,
       editing: true,
       noteFocus: true,
